@@ -17,7 +17,6 @@ type LinocoinApp struct {
 	*bam.BaseApp
 	router     bam.Router
 	cdc        *wire.Codec
-	multiStore sdk.CommitMultiStore
 
 	// The key to access the substores.
 	capKeyMainStore *sdk.KVStoreKey
