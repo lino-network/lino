@@ -2,3 +2,5 @@ package: github.com/lino-network/lino
 import:
 - package: github.com/cosmos/cosmos-sdk
   version: sdk2
+- package: github.com/tendermint/tendermint
+  version: sdk2

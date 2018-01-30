@@ -1,12 +1,12 @@
-hash: dca707e9882953e40323bffde377971cfb913bfdac4ec54bf9e54e4ec76ccfe9
-updated: 2018-01-27T18:53:29.899347703-08:00
+hash: b57827ca9fd4ff62dee6fed7444846909187467f35c025931e8360aba3ecb24e
+updated: 2018-01-29T23:54:31.570807369-08:00
 imports:
 - name: github.com/btcsuite/btcd
-  version: 2e60448ffcc6bf78332d1fe590260095f554dd78
+  version: c7588cbf7690cd9f047a28efa2dcd8f2435a4e5e
   subpackages:
   - btcec
 - name: github.com/cosmos/cosmos-sdk
-  version: df7cd9e670dfbaf2091befbed76fe99f0f524a7a
+  version: 3b09a3033a0551bf46447949eae5e328339952d4
   subpackages:
   - baseapp
   - store
@@ -35,7 +35,7 @@ imports:
   - sortkeys
   - types
 - name: github.com/golang/protobuf
-  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
+  version: 1643683e1b54a9e88ad26d98f81400c8c9d9f4f9
   subpackages:
   - proto
   - ptypes
@@ -71,7 +71,7 @@ imports:
   - server
   - types
 - name: github.com/tendermint/ed25519
-  version: d8387025d2b9d158cf4efb07e7ebf814bcce2057
+  version: 1f52c6f8b8a5c7908aff4497c186af344b428925
   subpackages:
   - edwards25519
   - extra25519
@@ -85,6 +85,8 @@ imports:
   - data
 - name: github.com/tendermint/iavl
   version: ae2ea4a62f60c72dae81ca6642944ca28cf59889
+- name: github.com/tendermint/tendermint
+  version: b8d9f30ea6196e280ff3a4b879f3281c4e727c4d
 - name: github.com/tendermint/tmlibs
   version: dc2111f0ddc779216e99758660a15ec831135706
   subpackages:
@@ -106,7 +108,7 @@ imports:
   - ripemd160
   - salsa20/salsa
 - name: golang.org/x/net
-  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
+  version: cd69bc3fc700721b709c3a59e16e24c67b58f6ff
   subpackages:
   - context
   - http2
@@ -123,7 +125,7 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: a8101f21cf983e773d0c1133ebc5424792003214
+  version: f676e0f3ac6395ff1a529ae59a6670878a8371a6
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
