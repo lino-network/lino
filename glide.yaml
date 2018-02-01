@@ -1,6 +1,62 @@
 package: github.com/lino-network/lino
 import:
-- package: github.com/cosmos/cosmos-sdk
-  version: sdk2
+- package: github.com/gorilla/websocket
+- package: github.com/pkg/errors
+  version: ^0.8.0
+- package: github.com/spf13/cobra
+- package: github.com/spf13/pflag
+- package: github.com/spf13/viper
+- package: github.com/tendermint/abci
+  version: ~0.5.0
+  subpackages:
+  - server
+  - types
+- package: github.com/tendermint/basecoin
+  version: ~0.6.2
+- package: github.com/tendermint/go-crypto
+  version: ~0.2.2
+  subpackages:
+  - cmd
+  - keys
+- package: github.com/tendermint/go-wire
+  version: ~0.6.2
+  subpackages:
+  - data
+- package: github.com/tendermint/light-client
+  version: ~0.10.3
+  subpackages:
+  - commands
+  - commands/proofs
+  - commands/seeds
+  - commands/txs
+  - proofs
+- package: github.com/tendermint/merkleeyes
+  version: ~0.2.4
+  subpackages:
+  - client
+  - iavl
 - package: github.com/tendermint/tendermint
-  version: sdk2
+  version: ~0.10.2
+  subpackages:
+  - config
+  - node
+  - proxy
+  - rpc/client
+  - rpc/core/types
+  - rpc/lib/client
+  - rpc/lib/types
+  - types
+- package: github.com/tendermint/tmlibs
+  version: ~0.2.2
+  subpackages:
+  - cli
+  - cli/flags
+  - common
+  - events
+  - log
+  - logger
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+  - require
