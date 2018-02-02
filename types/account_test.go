@@ -15,6 +15,7 @@ func TestNilAccount(t *testing.T) {
 	//note that the assert.True is used instead of assert.Equal because looking at pointers
 	assert.True(t, &acc != accCopy, "Account Copy Error, acc1: %v, acc2: %v", &acc, accCopy)
 	assert.Equal(t, acc.Sequence, accCopy.Sequence)
+	assert.Equal(t, acc.PostSequence, accCopy.PostSequence)
 
 	//test sending nils for panic
 	var nilAcc *Account

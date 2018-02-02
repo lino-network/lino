@@ -69,6 +69,14 @@ func (s *State) SetAccount(addr []byte, acc *types.Account) {
 	types.SetAccount(s, addr, acc)
 }
 
+func (s *State) GetPost(pid []byte) *types.Post {
+	return types.GetPost(s, pid)
+}
+
+func (s *State) SetPost(pid []byte, post *types.Post) {
+	types.SetPost(s, pid, post)
+}
+
 func (s *State) CacheWrap() *State {
 	cache := types.NewKVCache(s)
 	return &State{

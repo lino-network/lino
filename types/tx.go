@@ -223,6 +223,51 @@ func (tx *AppTx) String() string {
 
 //-----------------------------------------------------------------------------
 
+type PostTx struct {
+	Address   data.Bytes       `json:"address"`   // Hash of the PubKey
+	Title     string           `json:title`
+	Content   string           `json:content`
+	Sequence  int              `json:"sequence"`  // Must be 1 greater than the last committed PostTx
+	Signature crypto.Signature `json:"signature"` // Depends on the PubKey type and the whole Tx
+	PubKey    crypto.PubKey    `json:"pub_key"`   // Is present iff Sequence == 0
+}
+
+func (tx *PostTx) SignBytes(chainID string) []byte {
+	signBytes := wire.BinaryBytes(chainID)
+	sig := tx.Signature
+	tx.Signature = crypto.Signature{}
+	signBytes = append(signBytes, wire.BinaryBytes(tx)...)
+	tx.Signature = sig
+	return signBytes
+}
+
+func (tx *PostTx) SetSignature(sig crypto.Signature) bool {
+	tx.Signature = sig
+	return true
+}
+
+func (tx PostTx) ValidateBasic() abci.Result {
+	if len(tx.Address) != 20 {
+		return abci.ErrBaseInvalidInput.AppendLog("Invalid address length")
+	}
+	if tx.Sequence <= 0 {
+		return abci.ErrBaseInvalidInput.AppendLog("Sequence must be greater than 0")
+	}
+	if tx.Sequence == 1 && tx.PubKey.Empty() {
+		return abci.ErrBaseInvalidInput.AppendLog("PubKey must be present when Sequence == 1")
+	}
+	if tx.Sequence > 1 && !tx.PubKey.Empty() {
+		return abci.ErrBaseInvalidInput.AppendLog("PubKey must be nil when Sequence > 1")
+	}
+	return abci.OK
+}
+
+func (tx *PostTx) String() string {
+	return Fmt("PostTx{%v, %v, %v, %v}", tx.Address, tx.Title, tx.Content, tx.Sequence)
+}
+
+//-----------------------------------------------------------------------------
+
 func TxID(chainID string, tx Tx) []byte {
 	signBytes := tx.SignBytes(chainID)
 	return wire.BinaryRipemd160(signBytes)
