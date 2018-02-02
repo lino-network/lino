@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/pkg/errors"
-	bc "github.com/tendermint/basecoin/types"
+	bc "github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
 	keys "github.com/tendermint/go-crypto/keys"
 	wire "github.com/tendermint/go-wire"

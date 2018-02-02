@@ -17,8 +17,8 @@ import (
 	"github.com/tendermint/merkleeyes/iavl"
 	cmn "github.com/tendermint/tmlibs/common"
 
-	"github.com/tendermint/basecoin/plugins/ibc"
-	"github.com/tendermint/basecoin/types"
+	"github.com/lino-network/lino/plugins/ibc"
+	"github.com/lino-network/lino/types"
 	"github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 )

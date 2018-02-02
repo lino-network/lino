@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tendermint/basecoin/types"
+	"github.com/lino-network/lino/types"
 )
 
 type plugin struct {

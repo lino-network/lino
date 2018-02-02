@@ -14,7 +14,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	cmn "github.com/tendermint/tmlibs/common"
 
-	btypes "github.com/tendermint/basecoin/types"
+	btypes "github.com/lino-network/lino/types"
 )
 
 //-------------------------

@@ -20,10 +20,10 @@ import (
 
 // BaseCli represents the base command when called without any subcommands
 var BaseCli = &cobra.Command{
-	Use:   "basecli",
+	Use:   "linocli",
 	Short: "Light client for tendermint",
-	Long: `Basecli is an version of tmcli including custom logic to
-present a nice (not raw hex) interface to the basecoin blockchain structure.
+	Long: `Linocli is an version of tmcli including custom logic to
+present a nice (not raw hex) interface to the linocoin blockchain structure.
 
 This is a useful tool, but also serves to demonstrate how one can configure
 tmcli to work for any custom abci app.

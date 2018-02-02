@@ -55,7 +55,7 @@ func initCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) != 1 {
-		return fmt.Errorf("`init` takes one argument, a linocoin account address. Generate one using `basecli keys new mykey`")
+		return fmt.Errorf("`init` takes one argument, a linocoin account address. Generate one using `linocli keys new mykey`")
 	}
 	userAddr := args[0]
 	// verify this account is correct

@@ -11,7 +11,7 @@ import (
 	abci "github.com/tendermint/abci/types"
 	wire "github.com/tendermint/go-wire"
 
-	"github.com/tendermint/basecoin/types"
+	"github.com/lino-network/lino/types"
 
 	client "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"

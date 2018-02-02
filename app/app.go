@@ -11,9 +11,9 @@ import (
 	cmn "github.com/tendermint/tmlibs/common"
 	"github.com/tendermint/tmlibs/log"
 
-	sm "github.com/tendermint/basecoin/state"
-	"github.com/tendermint/basecoin/types"
-	"github.com/tendermint/basecoin/version"
+	sm "github.com/lino-network/lino/state"
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/version"
 )
 
 const (

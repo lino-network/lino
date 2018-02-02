@@ -7,7 +7,7 @@ import (
 	keys "github.com/tendermint/go-crypto/keys"
 	wire "github.com/tendermint/go-wire"
 
-	bc "github.com/tendermint/basecoin/types"
+	bc "github.com/lino-network/lino/types"
 )
 
 // AppTx Application transaction structure for client
