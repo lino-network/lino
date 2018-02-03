@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	"github.com/tendermint/tmlibs/events"
@@ -353,5 +354,6 @@ func adjustByOutputs(state *State, accounts map[string]*types.Account, outs []ty
 }
 
 func getUsername(account types.Account) string{
+	fmt.Println(string(account.PubKey.Address()))
 	return string(account.PubKey.Address())
 }

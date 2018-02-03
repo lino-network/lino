@@ -79,7 +79,7 @@ func doSendTx(cmd *cobra.Command, args []string) error {
 
 func readSendTxFlags(tx *btypes.SendTx) error {
 	// parse to address
-	to, err := parseChainAddress(viper.GetString(FlagTo))
+	to, err := ParseChainAddress(viper.GetString(FlagTo))
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func readSendTxFlags(tx *btypes.SendTx) error {
 	return nil
 }
 
-func parseChainAddress(toFlag string) ([]byte, error) {
+func ParseChainAddress(toFlag string) ([]byte, error) {
 	var toHex string
 	var chainPrefix string
 	spl := strings.Split(toFlag, "/")

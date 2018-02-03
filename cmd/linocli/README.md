@@ -1,53 +1,52 @@
-# Basic run through of using basecli....
+# Basic run through of using linocli....
 
 To keep things clear, let's have two shells...
 
-`$` is for basecoin (server), `%` is for basecli (client)
+`$` is for linocoin (server), `%` is for linocli (client)
 
-## Set up your basecli with a new key
+## Set up your linocli with a new key
 
 ```
 % export BCHOME=~/.democli
-% basecli keys new demo
-% basecli keys get demo -o json
+% linocli keys new demo
+% linocli keys get demo -o json
 ```
 
 And set up a few more keys for fun...
 
 ```
-% basecli keys new buddy
-% basecli keys list
-% ME=$(basecli keys get demo | awk '{print $2}')
-% YOU=$(basecli keys get buddy | awk '{print $2}')
+% linocli keys new buddy
+% linocli keys list
+% ME=$(linocli keys get demo | awk '{print $2}')
+% YOU=$(linocli keys get buddy | awk '{print $2}')
 ```
 
-## Set up a clean basecoin, initialized with your account
+## Set up a clean linocoin, initialized with your account
 
 ```
 $ export BCHOME=~/.demoserve
-$ basecoin init $ME
-$ basecoin start
+$ linocoin init $ME
+$ linocoin start
 ```
 
-## Connect your basecli the first time
+## Connect your linocli the first time
 
 ```
-% basecli init --chain-id test_chain_id --node tcp://localhost:46657
+% linocli init --chain-id test_chain_id --node tcp://localhost:46657
 ```
 
 ## Check your balances...
 
 ```
-% basecli query account $ME
-% basecli query account $YOU
+% linocli query account $ME
+% linocli query account $YOU
 ```
 
 ## Send the money
 
 ```
-% basecli tx send --name demo --amount 1000mycoin --sequence 1 --to $YOU
+% linocli tx send --name demo --amount 1000mycoin --sequence 1 --to $YOU
 -> copy hash to HASH
-% basecli query tx $HASH
-% basecli query account $YOU
+% linocli query tx $HASH
+% linocli query account $YOU
 ```
-

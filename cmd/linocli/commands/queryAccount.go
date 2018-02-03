@@ -10,7 +10,7 @@ import (
 	proofcmd "github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/proofs"
 
-	btypes "github.com/lino-network/linon/types"
+	btypes "github.com/lino-network/lino/types"
 )
 
 var AccountQueryCmd = &cobra.Command{

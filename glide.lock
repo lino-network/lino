@@ -111,16 +111,6 @@ imports:
   - example/dummy
   - server
   - types
-- name: github.com/tendermint/basecoin
-  version: 47dd2c6c487a94c9abb3a4e1f952252ec5ccea00
-  subpackages:
-  - app
-  - cmd/basecli/commands
-  - cmd/basecoin/commands
-  - plugins/ibc
-  - state
-  - types
-  - version
 - name: github.com/tendermint/ed25519
   version: 1f52c6f8b8a5c7908aff4497c186af344b428925
   subpackages:

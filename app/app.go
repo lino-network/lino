@@ -156,9 +156,13 @@ func (app *Linocoin) Query(reqQuery abci.RequestQuery) (resQuery abci.ResponseQu
 	}
 
 	// handle special path for account info
-	if reqQuery.Path == "/account" {
-		reqQuery.Path = "/key"
-		reqQuery.Data = types.AccountKey(reqQuery.Data)
+	switch reqQuery.Path {
+		case "/account":
+			reqQuery.Path = "/key"
+			reqQuery.Data = types.AccountKey(reqQuery.Data)
+
+		case "/post":
+			reqQuery.Path = "/key"
 	}
 
 	resQuery, err := app.eyesCli.QuerySync(reqQuery)

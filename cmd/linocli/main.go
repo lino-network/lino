@@ -14,8 +14,8 @@ import (
 	"github.com/tendermint/light-client/commands/txs"
 	"github.com/tendermint/tmlibs/cli"
 
-	bcmd "github.com/tendermint/basecoin/cmd/basecli/commands"
-	coincmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
+	bcmd "github.com/lino-network/lino/cmd/linocli/commands"
+	coincmd "github.com/lino-network/lino/cmd/linocoin/commands"
 )
 
 // BaseCli represents the base command when called without any subcommands
@@ -39,11 +39,13 @@ func main() {
 	pr.AddCommand(proofs.TxCmd)
 	pr.AddCommand(proofs.KeyCmd)
 	pr.AddCommand(bcmd.AccountQueryCmd)
+	pr.AddCommand(bcmd.PostQueryCmd)
 
 	// you will always want this for the base send command
 	proofs.TxPresenters.Register("base", bcmd.BaseTxPresenter{})
 	tr := txs.RootCmd
 	tr.AddCommand(bcmd.SendTxCmd)
+	tr.AddCommand(bcmd.PostTxCmd)
 
 	// Set up the various commands to use
 	BaseCli.AddCommand(
