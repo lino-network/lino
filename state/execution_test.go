@@ -8,7 +8,7 @@ import (
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/tmlibs/log"
 
-	"github.com//lino-network/lino//plugins/ibc"
+	"github.com/lino-network/lino/plugins/ibc"
 	"github.com/lino-network/lino/types"
 )
 
@@ -228,6 +228,32 @@ func TestValidateOutputsAdvanced(t *testing.T) {
 	assert.True(res.IsErr(), "validateInputBasic: expected error on bad tx output. Error: %v", res.Error())
 }
 
+func TestValidatePostAdvanced(t *testing.T) {
+	assert := assert.New(t)
+	et := newExecTest()
+
+	acc := types.MakeAcc("post")
+
+	//validatePostAdvanced
+	tx := types.MakePostTx(1, acc)
+	signBytes := tx.SignBytes(et.chainID)
+
+	//unsigned case
+	res := validatePostAdvanced(&acc.Account, signBytes, *tx)
+	assert.True(res.IsErr(), "validateInputAdvanced: expected error on tx input without signature")
+
+	//good signed case
+	tx.Signature = acc.Sign(signBytes)
+	res = validatePostAdvanced(&acc.Account, signBytes, *tx)
+	assert.True(res.IsOK(), "validateInputAdvanced: expected no error on good tx input. Error: %v", res.Error())
+
+	//bad sequence case
+	acc.PostSequence = 1
+	tx.Signature = acc.Sign(signBytes)
+	res = validatePostAdvanced(&acc.Account, signBytes, *tx)
+	assert.Equal(abci.CodeType_BaseInvalidSequence, res.Code, "validateInputAdvanced: expected error on tx input with bad sequence")
+}
+
 func TestSumOutput(t *testing.T) {
 	assert := assert.New(t)
 	et := newExecTest()
@@ -350,4 +376,74 @@ func TestSendTxIBC(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(coins.Coins, tx.Outputs[0].Coins)
 	assert.EqualValues(coins.Address, dstAddress)
+}
+
+func TestPostTx(t *testing.T) {
+	assert := assert.New(t)
+	et := newExecTest()
+
+	tx := types.MakePostTx(1, et.accOut)
+	signBytes := tx.SignBytes(et.chainID)
+	tx.Signature = et.accOut.Sign(signBytes)
+	//ExecTx
+	et.acc2State(et.accOut)
+
+	initPostSeq := et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+
+	// Test seq equal to 1
+	res := ExecTx(et.state, nil, tx, false, nil)
+	assert.True(res.IsOK(), "ExecTx/Good PostTx: Expected OK return from ExecTx, Error: %v", res)
+	endPostSeq := et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+	assert.Equal(endPostSeq, initPostSeq + 1)
+
+	// Test seq larger than 1
+	tx = types.MakePostTx(2, et.accOut)
+	signBytes = tx.SignBytes(et.chainID)
+	tx.Signature = et.accOut.Sign(signBytes)
+	initPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+
+	res = ExecTx(et.state, nil, tx, false, nil)
+	assert.True(res.IsOK(), "ExecTx/Good PostTx: Expected OK return from ExecTx, Error: %v", res)
+	endPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+	assert.Equal(endPostSeq, initPostSeq + 1)
+
+	// Invalid seq no
+	tx = types.MakePostTx(100, et.accOut)
+	signBytes = tx.SignBytes(et.chainID)
+	tx.Signature = et.accOut.Sign(signBytes)
+	initPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+
+	res = ExecTx(et.state, nil, tx, false, nil)
+	assert.Equal(abci.CodeType_BaseInvalidSequence, res.Code, "ExecTx/Bad PostTx: expected error on tx input with bad sequence")
+	endPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+	assert.Equal(endPostSeq, initPostSeq)
+
+	// Unsigned post
+	tx = types.MakePostTx(3, et.accOut)
+	signBytes = tx.SignBytes(et.chainID)
+	initPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+
+	res = ExecTx(et.state, nil, tx, false, nil)
+	assert.Equal(abci.ErrBaseInvalidSignature.Code, res.Code, "ExecTx/Bad PostTx: expected error on tx input with bad sequence")
+	endPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+	assert.Equal(endPostSeq, initPostSeq)
+
+	// Unknown Address
+	acc := types.MakeAcc("post")
+	tx = types.MakePostTx(3, acc)
+	signBytes = tx.SignBytes(et.chainID)
+	tx.Signature = acc.Sign(signBytes)
+	initPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+
+	res = ExecTx(et.state, nil, tx, false, nil)
+	assert.Equal(abci.ErrBaseUnknownAddress, res, "ExecTx/Bad PostTx: expected error on tx input with bad sequence")
+	endPostSeq = et.state.GetAccount(et.accOut.Account.PubKey.Address()).PostSequence
+	assert.Equal(endPostSeq, initPostSeq)
+}
+
+func TestGetUsername(t *testing.T) {
+	assert := assert.New(t)
+	et := newExecTest()
+
+	assert.Equal(getUsername(et.accOut.Account), string(et.accOut.Account.PubKey.Address()))
 }

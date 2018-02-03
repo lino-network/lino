@@ -154,6 +154,36 @@ func ExecTx(state *State, pgz *types.Plugins, tx types.Tx, isCheckTx bool, evc e
 		}
 		return res
 
+	case *types.PostTx:
+		res := tx.ValidateBasic()
+		if res.IsErr() {
+			return res
+		}
+		// Get post author account
+		pAcc := state.GetAccount(tx.Address)
+		if pAcc == nil {
+			return abci.ErrBaseUnknownAddress
+		}
+		if !tx.PubKey.Empty() {
+			pAcc.PubKey = tx.PubKey
+		}
+
+		signBytes := tx.SignBytes(chainID)
+		res = validatePostAdvanced(pAcc, signBytes, *tx)
+		if res.IsErr() {
+			state.logger.Info(cmn.Fmt("validatePostAdvanced failed on %X: %v", tx.Address, res))
+			return res.PrependLog("in validatePostAdvanced()")
+		}
+		pAcc.PostSequence += 1
+		post := &types.Post {
+			Title: tx.Title,
+			Author: getUsername(*pAcc),
+			Sequence: pAcc.PostSequence,
+			Content: tx.Content,
+		}
+		state.SetAccount(tx.Address, pAcc)
+		state.SetPost(post.PostID(), post)
+		return abci.NewResultOK(types.TxID(chainID, tx), "")
 	default:
 		return abci.ErrBaseEncodingError.SetLog("Unknown tx type")
 	}
@@ -267,6 +297,19 @@ func validateOutputsBasic(outs []types.TxOutput) (res abci.Result) {
 	return abci.OK
 }
 
+func validatePostAdvanced(acc *types.Account, signBytes []byte, post types.PostTx) (res abci.Result) {
+	// Check sequence
+	seq := acc.PostSequence
+	if seq+1 != post.Sequence {
+		return abci.ErrBaseInvalidSequence.AppendLog(cmn.Fmt("Got %v, expected %v. (acc.seq=%v)", post.Sequence, seq+1, acc.PostSequence))
+	}
+	// Check signatures
+	if !acc.PubKey.VerifyBytes(signBytes, post.Signature) {
+		return abci.ErrBaseInvalidSignature.AppendLog(cmn.Fmt("SignBytes: %X", signBytes))
+	}
+	return abci.OK
+}
+
 func sumOutputs(outs []types.TxOutput) (total types.Coins) {
 	for _, out := range outs {
 		total = total.Plus(out.Coins)
@@ -307,4 +350,8 @@ func adjustByOutputs(state *State, accounts map[string]*types.Account, outs []ty
 			state.SetAccount(outAddress, acc)
 		}
 	}
+}
+
+func getUsername(account types.Account) string{
+	return string(account.PubKey.Address())
 }

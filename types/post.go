@@ -9,7 +9,7 @@ import (
 type Post struct {
 	Title    string `json:"denom"`
 	Author   string `json:"author"`
-	Sequence int64  `json:"seq"`
+	Sequence int  `json:"seq"`
 	Content  string `json:"content"`
 }
 

@@ -28,12 +28,15 @@ const (
 	// Account transactions
 	TxTypeSend = byte(0x01)
 	TxTypeApp  = byte(0x02)
+	TxTypePost  = byte(0x03)
 	TxNameSend = "send"
 	TxNameApp  = "app"
+	TxNamePost  = "post"
 )
 
 func (_ *SendTx) AssertIsTx() {}
 func (_ *AppTx) AssertIsTx()  {}
+func (_ *PostTx) AssertIsTx()  {}
 
 var txMapper data.Mapper
 
@@ -41,7 +44,8 @@ var txMapper data.Mapper
 func init() {
 	txMapper = data.NewMapper(TxS{}).
 		RegisterImplementation(&SendTx{}, TxNameSend, TxTypeSend).
-		RegisterImplementation(&AppTx{}, TxNameApp, TxTypeApp)
+		RegisterImplementation(&AppTx{}, TxNameApp, TxTypeApp).
+		RegisterImplementation(&PostTx{}, TxNamePost, TxTypePost)
 }
 
 // TxS add json serialization to Tx

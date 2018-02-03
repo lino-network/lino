@@ -97,6 +97,25 @@ func MakeSendTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *SendTx {
 	return tx
 }
 
+func MakePostTx(seq int, accOut PrivAccount) *PostTx {
+	if seq > 1 {
+		return &PostTx{
+			Address:  accOut.PubKey.Address(),
+			Title:    "Title",
+			Content:  "Content",
+			Sequence: seq,
+		}	
+	} else {
+		return &PostTx{
+			Address:  accOut.PubKey.Address(),
+			Title:    "Title",
+			Content:  "Content",
+			Sequence: seq,
+			PubKey: accOut.PubKey,
+		}
+	}
+}
+
 func SignTx(chainID string, tx *SendTx, accs ...PrivAccount) {
 	signBytes := tx.SignBytes(chainID)
 	for i, _ := range tx.Inputs {
