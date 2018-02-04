@@ -185,6 +185,38 @@ func ExecTx(state *State, pgz *types.Plugins, tx types.Tx, isCheckTx bool, evc e
 		state.SetAccount(tx.Address, pAcc)
 		state.SetPost(post.PostID(), post)
 		return abci.NewResultOK(types.TxID(chainID, tx), "")
+	case *types.LikeTx:
+		res := tx.ValidateBasic()
+		if res.IsErr() {
+			return res
+		}
+		// Get post author account
+		account := state.GetAccount(tx.From)
+		if account == nil {
+			if tx.PubKey.Empty() {
+				return abci.ErrBaseUnknownAddress
+			}
+			account = &types.Account{}
+			account.PubKey = tx.PubKey
+			state.SetAccount(tx.From, account)
+		}
+
+		signBytes := tx.SignBytes(chainID)
+		res = validateLikeAdvanced(account, signBytes, *tx)
+		if res.IsErr() {
+			state.logger.Info(cmn.Fmt("validateLikeAdvanced failed on %X: %v", tx.From, res))
+			return res.PrependLog("in validateLikeAdvanced()")
+		}
+		like := types.Like{
+			From : tx.From,
+			To   : tx.To,
+		}
+		if tx.IsLike {
+			state.AddLike(like);
+		} else {
+			state.RemoveLike(like);
+		}
+		return abci.NewResultOK(types.TxID(chainID, tx), "")
 	default:
 		return abci.ErrBaseEncodingError.SetLog("Unknown tx type")
 	}
@@ -306,6 +338,14 @@ func validatePostAdvanced(acc *types.Account, signBytes []byte, post types.PostT
 	}
 	// Check signatures
 	if !acc.PubKey.VerifyBytes(signBytes, post.Signature) {
+		return abci.ErrBaseInvalidSignature.AppendLog(cmn.Fmt("SignBytes: %X", signBytes))
+	}
+	return abci.OK
+}
+
+func validateLikeAdvanced(acc *types.Account, signBytes []byte, like types.LikeTx) (res abci.Result) {
+	// Check signatures
+	if !acc.PubKey.VerifyBytes(signBytes, like.Signature) {
 		return abci.ErrBaseInvalidSignature.AppendLog(cmn.Fmt("SignBytes: %X", signBytes))
 	}
 	return abci.OK

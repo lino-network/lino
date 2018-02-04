@@ -29,14 +29,17 @@ const (
 	TxTypeSend = byte(0x01)
 	TxTypeApp  = byte(0x02)
 	TxTypePost  = byte(0x03)
+	TxTypeLike  = byte(0x71)
 	TxNameSend = "send"
 	TxNameApp  = "app"
 	TxNamePost  = "post"
+	TxNameLike = "like"
 )
 
 func (_ *SendTx) AssertIsTx() {}
 func (_ *AppTx) AssertIsTx()  {}
 func (_ *PostTx) AssertIsTx()  {}
+func (_ *LikeTx) AssertIsTx()  {}
 
 var txMapper data.Mapper
 
@@ -45,7 +48,8 @@ func init() {
 	txMapper = data.NewMapper(TxS{}).
 		RegisterImplementation(&SendTx{}, TxNameSend, TxTypeSend).
 		RegisterImplementation(&AppTx{}, TxNameApp, TxTypeApp).
-		RegisterImplementation(&PostTx{}, TxNamePost, TxTypePost)
+		RegisterImplementation(&PostTx{}, TxNamePost, TxTypePost).
+		RegisterImplementation(&LikeTx{}, TxNameLike, TxTypeLike)
 }
 
 // TxS add json serialization to Tx
@@ -271,6 +275,43 @@ func (tx *PostTx) String() string {
 }
 
 //-----------------------------------------------------------------------------
+
+// feature-like
+type LikeTx struct {
+	From      data.Bytes       `json:"from"`      // address
+	To        []byte           `json:"to"`        // post_id
+	IsLike    bool             `json:"is_set"`    // like or dislike
+	Signature crypto.Signature `json:"signature"` // Depends on the PubKey type and the whole Tx
+	PubKey    crypto.PubKey    `json:"pub_key"`   // Is present iff Sequence == 0
+}
+
+func (tx *LikeTx) SignBytes(chainID string) []byte {
+	signBytes := wire.BinaryBytes(chainID)
+	sig := tx.Signature
+	tx.Signature = crypto.Signature{}
+	signBytes = append(signBytes, wire.BinaryBytes(tx)...)
+	tx.Signature = sig
+	return signBytes
+}
+
+func (tx *LikeTx) SetSignature(sig crypto.Signature) bool {
+	tx.Signature = sig
+	return true
+}
+
+func (tx LikeTx) ValidateBasic() abci.Result {
+	if len(tx.From) != 20 {
+		return abci.ErrBaseInvalidInput.AppendLog("Invalid address length")
+	}
+	return abci.OK
+}
+
+func (tx *LikeTx) String() string {
+	return Fmt("LikeTx{ set %v from %v to %v. (%v, %v) }",
+		tx.IsLike, tx.From, tx.To, tx.Signature, tx.PubKey)
+}
+
+// feature-like ends
 
 func TxID(chainID string, tx Tx) []byte {
 	signBytes := tx.SignBytes(chainID)
