@@ -200,7 +200,6 @@ func ExecTx(state *State, pgz *types.Plugins, tx types.Tx, isCheckTx bool, evc e
 			account.PubKey = tx.PubKey
 			state.SetAccount(tx.From, account)
 		}
-
 		signBytes := tx.SignBytes(chainID)
 		res = validateLikeAdvanced(account, signBytes, *tx)
 		if res.IsErr() {

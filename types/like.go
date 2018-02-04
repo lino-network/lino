@@ -2,17 +2,19 @@ package types
 
 import (
 	"fmt"
-	"github.com/tendermint/go-wire/data"
 	"github.com/tendermint/go-wire"
 	"bytes"
-	"reflect"
 )
 
 type Like struct {
-	From     data.Bytes       `json:"from"`      // address
+	From     []byte           `json:"from"`      // address
 	To       []byte           `json:"to"`        // post_id
 }
 type LikeId []byte
+
+func (this *Like) EqualsTo(other *Like) bool {
+	return bytes.Equal(this.From, other.From) && bytes.Equal(this.From, other.From)
+}
 
 type LikeSummary struct {
 	Likes    []LikeId
@@ -80,7 +82,7 @@ func removeLikeFromSummary(summary *LikeSummary, like_id LikeId) {
 	for i, v := range summary.Likes {
 		if (bytes.Equal(v, like_id)) {
 			summary.Likes = append(summary.Likes[:i], summary.Likes[i + 1:]...)
-			break
+			return
 		}
 	}
 	panic("Removing a Like that does not exist in LikeSummary")
@@ -106,7 +108,7 @@ func insertLike(store KVStore, like *Like) LikeId {
 func likeExist(store KVStore, to_insert Like, summary *LikeSummary) bool {
 	for _, like_id := range summary.Likes {
 		like := readLike(store, like_id)
-		if reflect.DeepEqual(like, to_insert) {
+		if like.EqualsTo(&to_insert) {
 			return true
 		}
 	}

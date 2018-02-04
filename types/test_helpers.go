@@ -116,6 +116,24 @@ func MakePostTx(seq int, accOut PrivAccount) *PostTx {
 	}
 }
 
+func MakeLikeTx(from PrivAccount, post_id []byte, is_like, is_first_time bool) *LikeTx {
+	if is_first_time {
+		return &LikeTx{
+			From:  from.PubKey.Address(),
+			To: post_id,
+			IsLike: is_like,
+			PubKey: from.PubKey,
+		}
+	} else {
+		return &LikeTx{
+			From:  from.PubKey.Address(),
+			To: post_id,
+			IsLike: is_like,
+		}
+	}
+}
+
+
 func SignTx(chainID string, tx *SendTx, accs ...PrivAccount) {
 	signBytes := tx.SignBytes(chainID)
 	for i, _ := range tx.Inputs {

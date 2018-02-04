@@ -91,7 +91,7 @@ func TestLikeTxSignable(t *testing.T) {
 	signBytes := likeTx.SignBytes(chainID)
 	signBytesHex := fmt.Sprintf("%X", signBytes)
 	fmt.Println(signBytesHex)
-	expected := ""
+	expected := "010A746573745F636861696E010106696E707574310105706F737431000000"
 
 	assert.Equal(t, signBytesHex, expected,
 		"Got unexpected sign string for LikeTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
