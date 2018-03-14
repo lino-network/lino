@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/go-crypto"
 )
 
 // Identifier is used to map the url in post
@@ -68,7 +67,8 @@ type View struct {
 // DonateList stores all donation of the post
 type DonateList struct {
 	Donates []Donate `json:"donates"`
-	Reward  Coins    `json:"reward"`
+	// TODO: Using sdk.Coins for now
+	Reward sdk.Coins `json:"reward"`
 }
 
 // Donate struct, only used in DonateList
