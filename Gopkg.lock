@@ -159,6 +159,12 @@
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/lino-network/lino"
+  packages = ["app"]
+  revision = "fedcbfc69055ecc1171f8f48290ac7d61e58f937"
+
+[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "c3beff4c2358b44d0493c7dda585e7db7ff28ae6"
@@ -479,6 +485,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "018986bcc5743cb3ab05f204047d20675e9314d0e2bf229c2f8f30b033a12b6e"
+  inputs-digest = "ed315d2285f5dca5031f8695f1511e9a97fd9ff22bfe5c56e3c4bf92709df337"
   solver-name = "gps-cdcl"
   solver-version = 1
