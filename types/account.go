@@ -6,36 +6,33 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
-type AccountKey []byte
-
-// Lino Account
-// key: Username AccountKey
+// Account is general Lino Account information
 type Account struct {
-	Created  uint64        `json:"created"`
+	Key      AccountKey    `json:"key"`
+	Created  Height        `json:"created"`
 	PostKey  crypto.PubKey `json:"post_key"`
 	OwnerKey crypto.PubKey `json:"owner_key"`
 	Address  sdk.Address   `json:"address"`
 }
 
-// AccountBank embeds base account, handle the balence, which implements sdk.Account
+// AccountBank embeds base account, handle the balance, which implements sdk.Account
 type AccountBank struct {
 	auth.BaseAccount
 }
 
 // AccountMeta stores tiny and frequently updated fields.
-// key: Username AccountKey
 type AccountMeta struct {
-	LastActivity   uint64 `json:"last_activity"`
+	LastActivity   Height `json:"last_activity"`
 	ActivityBurden uint64 `json:"activity_burden"`
-	LastABBlock    uint64 `json:"last_activity_burden_block"`
+	LastABBlock    Height `json:"last_activity_burden_block"`
 }
 
-// key: Username AccountKey
-type Follower struct {
+// Followers records all followers belong to one user
+type Followers struct {
 	Followers []AccountKey `json:"followers"`
 }
 
-// key: Username AccountKey
+// Followings records all followers belong to one user
 type Followings struct {
 	Followings []AccountKey `json:"followings"`
 }
