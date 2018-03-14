@@ -2,13 +2,14 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/tendermint/go-crypto"
 )
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Key      AccountKey    `json:"key"`
+	Username AccountKey    `json:"key"`
 	Created  Height        `json:"created"`
 	PostKey  crypto.PubKey `json:"post_key"`
 	OwnerKey crypto.PubKey `json:"owner_key"`
@@ -37,43 +38,28 @@ type Followings struct {
 	Followings []AccountKey `json:"followings"`
 }
 
-// Account interface is general interfacc for account. Embed sdk Account.
-type Account interface {
-	// embed sdk.Account
-	sdk.Account
-
-	GetUsername() AccountKey
-	SetUsername(AccountKey) error // errors if already set.
-
-	GetPostKey() crypto.PubKey
-	SetPostKey(crypto.PubKey) error
-
-	GetOwnerKey() crypto.PubKey
-	SetOwnerKey(crypto.PubKey) error
-
-	GetCreated() Height
-	SetCreated(Height) error // errors if already set.
-
-	GetLastActivity() Height
-	SetLastActivity(Height) error
-
-	GetActivityBurden() uint64
-	SetActivityBurden(uint64) error // set AB Block too.
-
-	GetLastABBlock() Height
-
-	GetFollowers() Followers
-	SetFollowers(Followers) error
-
-	GetFollowings() Followings
-	SetFollowings(Followings) error
-}
-
 // AccountManager stores and retrieves accounts from stores
 // retrieved from the context.
 type AccountManager interface {
-	AccountExist(ctx sdk.Context, accKey AccountKey) bool
 	// Account getter/setter
-	GetAccount(ctx sdk.Context, accKey AccountKey) Account
-	SetAccount(ctx sdk.Context, acc Account)
+	GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error)
+	SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *AccountInfo) sdk.Error
+
+	GetBankFromAccountKey(ctx sdk.Context, accKey AccountKey) (*AccountBank, sdk.Error)
+	GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error)
+	SetBank(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error
+
+	GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error)
+	SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *AccountMeta) sdk.Error
+
+	GetFollowers(ctx sdk.Context, accKey AccountKey) (*Followers, sdk.Error)
+	SetFollowers(ctx sdk.Context, accKey AccountKey, followers *Followers) sdk.Error
+
+	GetFollowings(ctx sdk.Context, accKey AccountKey) (*Followings, sdk.Error)
+	SetFollowings(ctx sdk.Context, accKey AccountKey, followings *Followings) sdk.Error
+}
+
+func RegisterWireLinoAccount(cdc *wire.Codec) {
+	// Register crypto.[PubKey] types.
+	wire.RegisterCrypto(cdc)
 }
