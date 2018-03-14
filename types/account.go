@@ -6,8 +6,8 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
-// Account is general Lino Account information
-type Account struct {
+// AccountInfo stores general Lino Account information
+type AccountInfo struct {
 	Key      AccountKey    `json:"key"`
 	Created  Height        `json:"created"`
 	PostKey  crypto.PubKey `json:"post_key"`
@@ -35,4 +35,45 @@ type Followers struct {
 // Followings records all followers belong to one user
 type Followings struct {
 	Followings []AccountKey `json:"followings"`
+}
+
+// Account interface is general interfacc for account. Embed sdk Account.
+type Account interface {
+	// embed sdk.Account
+	sdk.Account
+
+	GetUsername() AccountKey
+	SetUsername(AccountKey) error // errors if already set.
+
+	GetPostKey() crypto.PubKey
+	SetPostKey(crypto.PubKey) error
+
+	GetOwnerKey() crypto.PubKey
+	SetOwnerKey(crypto.PubKey) error
+
+	GetCreated() Height
+	SetCreated(Height) error // errors if already set.
+
+	GetLastActivity() Height
+	SetLastActivity(Height) error
+
+	GetActivityBurden() uint64
+	SetActivityBurden(uint64) error // set AB Block too.
+
+	GetLastABBlock() Height
+
+	GetFollowers() Followers
+	SetFollowers(Followers) error
+
+	GetFollowings() Followings
+	SetFollowings(Followings) error
+}
+
+// AccountManager stores and retrieves accounts from stores
+// retrieved from the context.
+type AccountManager interface {
+	AccountExist(ctx sdk.Context, accKey AccountKey) bool
+	// Account getter/setter
+	GetAccount(ctx sdk.Context, accKey AccountKey) Account
+	SetAccount(ctx sdk.Context, acc Account)
 }
