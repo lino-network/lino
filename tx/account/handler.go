@@ -31,6 +31,9 @@ func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg
 	if err != nil {
 		return ErrAccRegisterFail("Get bank failed").Result()
 	}
+	if bank.Username != "" {
+		return ErrAccRegisterFail("Already registered").Result()
+	}
 	if (RegisterFee.IsGTE(bank.Coins)) {
 		return ErrAccRegisterFail("Register Fee Doesn't enough").Result()
 	}
@@ -45,7 +48,12 @@ func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg
 	if err := am.SetInfo(ctx, accInfo.Username, &accInfo); err != nil {
 		return ErrAccRegisterFail("Set info failed").Result()
 	}
-	
+
+	bank.Username = msg.NewUser
+	if err = am.SetBank(ctx, accInfo.Address, bank); err != nil {
+		return ErrAccRegisterFail("Set bank failed").Result()
+	}
+
 	accMeta := types.AccountMeta{
 		LastActivity: types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,

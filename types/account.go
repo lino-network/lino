@@ -15,12 +15,13 @@ type AccountInfo struct {
 	Address  sdk.Address   `json:"address"`
 }
 
-// AccountBank embeds base account, handle the balance, which implements sdk.Account
+// AccountBank uses Address as the key instead of Username
 type AccountBank struct {
 	Address  sdk.Address   `json:"address"`
 	Coins    sdk.Coins     `json:"coins"`
 	PubKey   crypto.PubKey `json:"public_key"`
 	Sequence int64         `json:"sequence"`
+	Username AccountKey    `json:"Username"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.

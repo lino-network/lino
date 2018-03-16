@@ -16,7 +16,7 @@ const (
 	CodeAccRegisterFailed sdk.CodeType = 303
 
 	// UsernameReCheck is used to check user registration.
-	UsernameReCheck = "[a-zA-Z0-9]([a-z0-9_-]){2,20}"
+	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
 	// MaximumUsernameLength maximum username length
