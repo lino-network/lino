@@ -13,6 +13,7 @@ const (
 	// CodeInvalidUsername indicates the username format is invalid.
 	CodeInvalidUsername sdk.CodeType = 301
 	CodeAccountManagerFail sdk.CodeType = 302
+	CodeAccRegisterFailed sdk.CodeType = 303
 
 	// UsernameReCheck is used to check user registration.
 	UsernameReCheck = "[a-zA-Z0-9]([a-z0-9_-]){2,20}"
@@ -20,4 +21,7 @@ const (
 	MinimumUsernameLength = 3
 	// MaximumUsernameLength maximum username length
 	MaximumUsernameLength = 20
+
+	// DefaultAcitivityBurden for user when account is registered
+	DefaultActivityBurden = 100
 )

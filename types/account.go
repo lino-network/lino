@@ -3,7 +3,6 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/tendermint/go-crypto"
 )
 
@@ -18,7 +17,10 @@ type AccountInfo struct {
 
 // AccountBank embeds base account, handle the balance, which implements sdk.Account
 type AccountBank struct {
-	auth.BaseAccount
+	Address  sdk.Address   `json:"address"`
+	Coins    sdk.Coins     `json:"coins"`
+	PubKey   crypto.PubKey `json:"public_key"`
+	Sequence int64         `json:"sequence"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
@@ -42,6 +44,7 @@ type Followings struct {
 // retrieved from the context.
 type AccountManager interface {
 	// Account getter/setter
+	AccountExist(ctx sdk.Context, accKey AccountKey) bool
 	GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error)
 	SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *AccountInfo) sdk.Error
 

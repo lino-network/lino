@@ -1,34 +1,12 @@
 package account
 
 import (
-	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
-	dbm "github.com/tendermint/tmlibs/db"
 	"testing"
 )
-
-// Construct some global addrs and txs for tests.
-var (
-	KVStoreKey = sdk.NewKVStoreKey("account")
-)
-
-func newLinoAccountManager() linoAccountManager {
-	return NewLinoAccountManager(KVStoreKey)
-}
-
-func getContext() sdk.Context {
-	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(KVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
-
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
-}
 
 func TestAccountInfo(t *testing.T) {
 	lam := newLinoAccountManager()
@@ -56,7 +34,7 @@ func TestInvalidAccountInfo(t *testing.T) {
 
 	resultPtr, err := lam.GetInfo(ctx, types.AccountKey("test"))
 	assert.Nil(t, resultPtr)
-	assert.Equal(t, err, ErrCodeAccountManagerFail("linoAccountManager get info failed: info doesn't exist"))
+	assert.Equal(t, err, ErrAccountManagerFail("linoAccountManager get info failed: info doesn't exist"))
 }
 
 func TestAccountBank(t *testing.T) {
@@ -75,11 +53,9 @@ func TestAccountBank(t *testing.T) {
 	assert.Nil(t, err)
 
 	accBank := types.AccountBank{
-		auth.BaseAccount{
-			Address: priv.PubKey().Address(),
-			PubKey:  priv.PubKey(),
-			Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
-		},
+		Address: priv.PubKey().Address(),
+		PubKey:  priv.PubKey(),
+		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err = lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

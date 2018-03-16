@@ -1,4 +1,3 @@
-//nolint
 package account
 
 import (
@@ -15,6 +14,8 @@ func codeToDefaultMsg(code CodeType) string {
 		return "Invalid username format"
 	case types.CodeAccountManagerFail:
 		return "Account manager internal error"
+	case types.CodeAccRegisterFailed:
+		return "Account register failed"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -27,8 +28,12 @@ func ErrInvalidUsername(msg string) sdk.Error {
 	return newError(types.CodeInvalidUsername, msg)
 }
 
-func ErrCodeAccountManagerFail(msg string) sdk.Error {
+func ErrAccountManagerFail(msg string) sdk.Error {
 	return newError(types.CodeAccountManagerFail, msg)
+}
+
+func ErrAccRegisterFail(msg string) sdk.Error {
+	return newError(types.CodeAccRegisterFailed, msg)
 }
 
 //----------------------------------------
