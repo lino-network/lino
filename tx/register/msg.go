@@ -1,4 +1,4 @@
-package account
+package register
 
 import (
 	"encoding/json"
@@ -6,14 +6,14 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/lino-network/lino/types"
 )
 
 // RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
 type RegisterMsg struct {
-	NewUser     types.AccountKey `json:"new_user"`
-	Address     sdk.Address    `json:"address"`
+	NewUser types.AccountKey `json:"new_user"`
+	Address sdk.Address      `json:"address"`
 }
 
 var _ sdk.Msg = RegisterMsg{}
@@ -21,13 +21,13 @@ var _ sdk.Msg = RegisterMsg{}
 // NewSendMsg - construct arbitrary multi-in, multi-out send msg.
 func NewRegisterMsg(newUser string, address sdk.Address) RegisterMsg {
 	return RegisterMsg{
-		NewUser:     types.AccountKey(newUser),
-		Address:   	 address,
+		NewUser: types.AccountKey(newUser),
+		Address: address,
 	}
 }
 
 // Implements Msg.
-func (msg RegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg RegisterMsg) Type() string { return types.RegisterRouterName } // TODO: "account/register"
 
 // Implements Msg.
 func (msg RegisterMsg) ValidateBasic() sdk.Error {

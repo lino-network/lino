@@ -1,8 +1,9 @@
-package account
+package register
 
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
@@ -12,8 +13,8 @@ var (
 	TestKVStoreKey = sdk.NewKVStoreKey("account")
 )
 
-func newLinoAccountManager() LinoAccountManager {
-	return NewLinoAccountManager(TestKVStoreKey)
+func newLinoAccountManager() acc.LinoAccountManager {
+	return acc.NewLinoAccountManager(TestKVStoreKey)
 }
 
 func getContext() sdk.Context {

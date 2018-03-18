@@ -1,9 +1,9 @@
-package account
+package register
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	"testing"
 )
 
 func TestRegisterUsername(t *testing.T) {
@@ -39,8 +39,8 @@ func TestRegisterUsername(t *testing.T) {
 
 	// Illegel character
 	registerList := [...]string{"register#", "_register", "-register", "reg@ister",
-								"reg*ister", "register!", "register()", "reg$ister",
-								"reg=ister", "register^", "register.", "reg$ister,"}
+		"reg*ister", "register!", "register()", "reg$ister",
+		"reg=ister", "register^", "register.", "reg$ister,"}
 	for _, register := range registerList {
 		msg = NewRegisterMsg(register, address)
 		result = msg.ValidateBasic()

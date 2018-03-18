@@ -1,11 +1,12 @@
 package account
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
-	"testing"
 )
 
 func TestAccountInfo(t *testing.T) {
@@ -34,7 +35,7 @@ func TestInvalidAccountInfo(t *testing.T) {
 
 	resultPtr, err := lam.GetInfo(ctx, types.AccountKey("test"))
 	assert.Nil(t, resultPtr)
-	assert.Equal(t, err, ErrAccountManagerFail("linoAccountManager get info failed: info doesn't exist"))
+	assert.Equal(t, err, ErrAccountManagerFail("LinoAccountManager get info failed: info doesn't exist"))
 }
 
 func TestAccountBank(t *testing.T) {

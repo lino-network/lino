@@ -9,18 +9,25 @@ const (
 	// Base SDK reserves 0 ~ 99.
 	// Coin errors reserve 100 ~ 199.
 	// Lino authentication errors reserve 200 ~ 299.
-	// Lino account handler errors reserve 300 ~ 399.
-	// CodeInvalidUsername indicates the username format is invalid.
-	CodeInvalidUsername sdk.CodeType = 301
-	CodeAccountManagerFail sdk.CodeType = 302
-	CodeAccRegisterFailed sdk.CodeType = 303
+	// Lino register handler errors reserve 300 ~ 309.
+	CodeInvalidUsername   sdk.CodeType = 301
+	CodeAccRegisterFailed sdk.CodeType = 302
+
+	// Lino account handler errors reserve 310 ~ 399
+	CodeAccountManagerFail sdk.CodeType = 310
+
+	// RegisterRouterName is used for routing in app
+	RegisterRouterName = "register"
 
 	// AccountRouterName is used for routing in app
 	AccountRouterName = "account"
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
+
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
+
 	// MaximumUsernameLength maximum username length
 	MaximumUsernameLength = 20
 

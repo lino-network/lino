@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/register"
 )
 
 type registerTxCallback func(cmd *cobra.Command, args []string) error
@@ -36,7 +36,7 @@ func sendRegisterTx(cdc *wire.Codec) registerTxCallback {
 		}
 
 		// create the message
-		msg := account.NewRegisterMsg(name, addr)
+		msg := register.NewRegisterMsg(name, addr)
 
 		// get password
 		// buf := client.BufferStdin()
