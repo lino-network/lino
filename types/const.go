@@ -15,7 +15,9 @@ const (
 	CodeAccountManagerFail sdk.CodeType = 302
 	CodeAccRegisterFailed sdk.CodeType = 303
 
-	// UsernameReCheck is used to check user registration.
+	// AccountRouterName is used for routing in app
+	AccountRouterName = "account"
+	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
@@ -24,4 +26,7 @@ const (
 
 	// DefaultAcitivityBurden for user when account is registered
 	DefaultActivityBurden = 100
+
+	// MsgType is uesd to register App codec
+	msgTypeRegister = 0x1
 )

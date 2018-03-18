@@ -27,7 +27,6 @@
     "examples/basecoin/app",
     "examples/basecoin/types",
     "examples/basecoin/x/cool",
-    "examples/basecoin/x/cool/commands",
     "examples/basecoin/x/sketchy",
     "server",
     "store",
@@ -157,12 +156,6 @@
   name = "github.com/kr/logfmt"
   packages = ["."]
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/lino-network/lino"
-  packages = ["app"]
-  revision = "fedcbfc69055ecc1171f8f48290ac7d61e58f937"
 
 [[projects]]
   name = "github.com/magiconair/properties"
@@ -485,6 +478,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ed315d2285f5dca5031f8695f1511e9a97fd9ff22bfe5c56e3c4bf92709df337"
+  inputs-digest = "36af7623e3d798bc04a732081622dd48b544fa4bffa1db0034232bb83a8109b9"
   solver-name = "gps-cdcl"
   solver-version = 1

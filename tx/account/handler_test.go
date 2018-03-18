@@ -15,7 +15,7 @@ func TestRegisterBankDoesntExist(t *testing.T) {
 	priv := crypto.GenPrivKeyEd25519()
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg("register", priv.PubKey())
+	msg := NewRegisterMsg("register", priv.PubKey().Address())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Get bank failed").Result())
 }
@@ -36,7 +36,7 @@ func TestRegister(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey().Address())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -92,7 +92,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey().Address())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Register Fee Doesn't enough").Result())
 }
@@ -113,7 +113,7 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey().Address())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 	result = handler(ctx, msg)
@@ -137,10 +137,10 @@ func TestReRegister(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey().Address())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	msg = NewRegisterMsg(newRegister, priv.PubKey())
+	msg = NewRegisterMsg(newRegister, priv.PubKey().Address())
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Already registered").Result())
 }

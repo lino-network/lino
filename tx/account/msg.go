@@ -7,27 +7,27 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
-	"github.com/tendermint/go-crypto"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
 type RegisterMsg struct {
 	NewUser     types.AccountKey `json:"new_user"`
-	NewPubKey   crypto.PubKey    `json:"new_public_key"`
+	Address     sdk.Address    `json:"address"`
 }
 
 var _ sdk.Msg = RegisterMsg{}
 
 // NewSendMsg - construct arbitrary multi-in, multi-out send msg.
-func NewRegisterMsg(newUser string, pubkey crypto.PubKey) RegisterMsg {
+func NewRegisterMsg(newUser string, address sdk.Address) RegisterMsg {
 	return RegisterMsg{
 		NewUser:     types.AccountKey(newUser),
-		NewPubKey:   pubkey,
+		Address:   	 address,
 	}
 }
 
 // Implements Msg.
-func (msg RegisterMsg) Type() string { return "account" } // TODO: "account/register"
+func (msg RegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 // Implements Msg.
 func (msg RegisterMsg) ValidateBasic() sdk.Error {
@@ -43,11 +43,15 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 	if !match {
 		return ErrInvalidUsername("illeagle input")
 	}
+
+	if len(msg.Address) == 0 {
+		return bank.ErrInvalidAddress(msg.Address.String())
+	}
 	return nil
 }
 
 func (msg RegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{Newuser:%v, New PubKey:%v}", msg.NewUser, msg.NewPubKey)
+	return fmt.Sprintf("RegisterMsg{Newuser:%v, Address:%v}", msg.NewUser, msg.Address)
 }
 
 // Implements Msg.

@@ -27,7 +27,7 @@ func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg
 	if am.AccountExist(ctx, msg.NewUser) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
-	bank, err := am.GetBankFromAddress(ctx, msg.NewPubKey.Address())
+	bank, err := am.GetBankFromAddress(ctx, msg.Address)
 	if err != nil {
 		return ErrAccRegisterFail("Get bank failed").Result()
 	}
@@ -41,9 +41,9 @@ func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg
 	accInfo := types.AccountInfo{
 		Username: msg.NewUser,
 		Created:  types.Height(ctx.BlockHeight()),
-		PostKey:  msg.NewPubKey,
-		OwnerKey: msg.NewPubKey,
-		Address:  msg.NewPubKey.Address(),
+		PostKey:  bank.PubKey,
+		OwnerKey: bank.PubKey,
+		Address:  msg.Address,
 	}
 	if err := am.SetInfo(ctx, accInfo.Username, &accInfo); err != nil {
 		return ErrAccRegisterFail("Set info failed").Result()
