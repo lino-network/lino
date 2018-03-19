@@ -55,7 +55,6 @@ func TestAccountBank(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		PubKey:  priv.PubKey(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err = lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
