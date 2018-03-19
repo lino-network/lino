@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -13,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/auth"
 	"github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 )
@@ -44,14 +43,15 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	}
 	lb.accountManager = account.NewLinoAccountManager(lb.capKeyMainStore)
 
-	app.Router().
+	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
-	lb.MountStoresIAVL(lb.capKeyMainStore) // , app.capKeyIBCStore)
+	lb.MountStoresIAVL(lb.capKeyMainStore)
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
 	err := lb.LoadLatestVersion(lb.capKeyMainStore)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -84,22 +84,22 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 
 // custom logic for basecoin initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	stateJSON := req.AppStateBytes
+	// stateJSON := req.AppStateBytes
 
-	genesisState := new(types.GenesisState)
-	err := json.Unmarshal(stateJSON, genesisState)
-	if err != nil {
-		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
-		// return sdk.ErrGenesisParse("").TraceCause(err, "")
-	}
+	// genesisState := new(sdk.GenesisState)
+	// err := json.Unmarshal(stateJSON, genesisState)
+	// if err != nil {
+	// 	panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
+	// 	// return sdk.ErrGenesisParse("").TraceCause(err, "")
+	// }
 
-	for _, gacc := range genesisState.Accounts {
-		_, err := gacc.ToAppAccount()
-		if err != nil {
-			panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
-			//	return sdk.ErrGenesisParse("").TraceCause(err, "")
-		}
-		// lb.accountMapper.SetAccount(ctx, acc)
-	}
+	// for _, gacc := range genesisState.Accounts {
+	// 	_, err := gacc.ToAppAccount()
+	// 	if err != nil {
+	// 		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
+	// 		//	return sdk.ErrGenesisParse("").TraceCause(err, "")
+	// 	}
+	// 	// lb.accountMapper.SetAccount(ctx, acc)
+	// }
 	return abci.ResponseInitChain{}
 }
