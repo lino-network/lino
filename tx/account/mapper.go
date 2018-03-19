@@ -10,7 +10,7 @@ var AccountInfoPrefix = []byte("AccountInfo/")
 var AccountBankPrefix = []byte("AccountBank/")
 var AccountMetaPrefix = []byte("AccountMeta/")
 var AccountFollowersPrefix = []byte("Followers/")
-var AccountFollowingsPrefix = []byte("Followering/")
+var AccountFollowingsPrefix = []byte("Followerings/")
 
 var _ types.AccountManager = (*LinoAccountManager)(nil)
 
