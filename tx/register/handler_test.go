@@ -27,7 +27,6 @@ func TestRegister(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		PubKey:  priv.PubKey(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
@@ -83,7 +82,6 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		PubKey:  priv.PubKey(),
 		Coins:   RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
 	}
 	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
@@ -104,7 +102,6 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		PubKey:  priv.PubKey(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
@@ -128,7 +125,6 @@ func TestReRegister(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		PubKey:  priv.PubKey(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)

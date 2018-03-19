@@ -19,13 +19,12 @@ type AccountInfo struct {
 type AccountBank struct {
 	Address  sdk.Address   `json:"address"`
 	Coins    sdk.Coins     `json:"coins"`
-	PubKey   crypto.PubKey `json:"public_key"`
-	Sequence int64         `json:"sequence"`
 	Username AccountKey    `json:"Username"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
+	Sequence int64         `json:"sequence"`
 	LastActivity   Height `json:"last_activity"`
 	ActivityBurden uint64 `json:"activity_burden"`
 	LastABBlock    Height `json:"last_activity_burden_block"`
