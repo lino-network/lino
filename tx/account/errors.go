@@ -15,13 +15,10 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	}
 }
 
-//----------------------------------------
 // Error constructors
 func ErrAccountManagerFail(msg string) sdk.Error {
 	return newError(types.CodeAccountManagerFail, msg)
 }
-
-//----------------------------------------
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
 	if msg != "" {

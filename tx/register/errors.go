@@ -17,7 +17,6 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	}
 }
 
-//----------------------------------------
 // Error constructors
 
 func ErrInvalidUsername(msg string) sdk.Error {
@@ -27,8 +26,6 @@ func ErrInvalidUsername(msg string) sdk.Error {
 func ErrAccRegisterFail(msg string) sdk.Error {
 	return newError(types.CodeAccRegisterFailed, msg)
 }
-
-//----------------------------------------
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
 	if msg != "" {

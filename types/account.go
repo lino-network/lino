@@ -31,20 +31,21 @@ type AccountMeta struct {
 	LastABBlock    Height `json:"last_activity_burden_block"`
 }
 
-// Followers records all followers belong to one user
-type Followers struct {
-	Followers []AccountKey `json:"followers"`
+// Follower records all follower belong to one user
+type Follower struct {
+	Follower []AccountKey `json:"follower"`
 }
 
-// Followings records all followers belong to one user
-type Followings struct {
-	Followings []AccountKey `json:"followings"`
+// Following records all follower belong to one user
+type Following struct {
+	Following []AccountKey `json:"following"`
 }
 
 // AccountManager stores and retrieves accounts from stores
 // retrieved from the context.
 type AccountManager interface {
 	// Account getter/setter
+	CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) (*AccountInfo, sdk.Error)
 	AccountExist(ctx sdk.Context, accKey AccountKey) bool
 	GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error)
 	SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *AccountInfo) sdk.Error
@@ -56,11 +57,11 @@ type AccountManager interface {
 	GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error)
 	SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *AccountMeta) sdk.Error
 
-	GetFollowers(ctx sdk.Context, accKey AccountKey) (*Followers, sdk.Error)
-	SetFollowers(ctx sdk.Context, accKey AccountKey, followers *Followers) sdk.Error
+	GetFollower(ctx sdk.Context, accKey AccountKey) (*Follower, sdk.Error)
+	SetFollower(ctx sdk.Context, accKey AccountKey, follower *Follower) sdk.Error
 
-	GetFollowings(ctx sdk.Context, accKey AccountKey) (*Followings, sdk.Error)
-	SetFollowings(ctx sdk.Context, accKey AccountKey, followings *Followings) sdk.Error
+	GetFollowing(ctx sdk.Context, accKey AccountKey) (*Following, sdk.Error)
+	SetFollowing(ctx sdk.Context, accKey AccountKey, following *Following) sdk.Error
 }
 
 func RegisterWireLinoAccount(cdc *wire.Codec) {

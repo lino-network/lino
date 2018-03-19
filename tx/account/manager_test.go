@@ -83,28 +83,28 @@ func TestAccountMeta(t *testing.T) {
 	assert.Equal(t, accMeta, *resultPtr, "Account meta should be equal")
 }
 
-func TestAccountFollowers(t *testing.T) {
+func TestAccountFollower(t *testing.T) {
 	lam := newLinoAccountManager()
 	ctx := getContext()
 
-	followers := types.Followers{Followers: []types.AccountKey{}}
-	err := lam.SetFollowers(ctx, types.AccountKey("test"), &followers)
+	follower := types.Follower{Follower: []types.AccountKey{}}
+	err := lam.SetFollower(ctx, types.AccountKey("test"), &follower)
 	assert.Nil(t, err)
 
-	resultPtr, err := lam.GetFollowers(ctx, types.AccountKey("test"))
+	resultPtr, err := lam.GetFollower(ctx, types.AccountKey("test"))
 	assert.Nil(t, err)
-	assert.Equal(t, followers, *resultPtr, "Account followers should be equal")
+	assert.Equal(t, follower, *resultPtr, "Account follower should be equal")
 }
 
-func TestAccountFollowings(t *testing.T) {
+func TestAccountFollowing(t *testing.T) {
 	lam := newLinoAccountManager()
 	ctx := getContext()
 
-	followings := types.Followings{Followings: []types.AccountKey{}}
-	err := lam.SetFollowings(ctx, types.AccountKey("test"), &followings)
+	following := types.Following{Following: []types.AccountKey{}}
+	err := lam.SetFollowing(ctx, types.AccountKey("test"), &following)
 	assert.Nil(t, err)
 
-	resultPtr, err := lam.GetFollowings(ctx, types.AccountKey("test"))
+	resultPtr, err := lam.GetFollowing(ctx, types.AccountKey("test"))
 	assert.Nil(t, err)
-	assert.Equal(t, followings, *resultPtr, "Account followers should be equal")
+	assert.Equal(t, following, *resultPtr, "Account follower should be equal")
 }

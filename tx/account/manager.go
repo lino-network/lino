@@ -4,13 +4,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+	"github.com/tendermint/go-crypto"
 )
 
 var AccountInfoPrefix = []byte("AccountInfo/")
 var AccountBankPrefix = []byte("AccountBank/")
 var AccountMetaPrefix = []byte("AccountMeta/")
-var AccountFollowersPrefix = []byte("Followers/")
-var AccountFollowingsPrefix = []byte("Followerings/")
+var AccountFollowerPrefix = []byte("Follower/")
+var AccountFollowingPrefix = []byte("Followering/")
 
 var _ types.AccountManager = (*LinoAccountManager)(nil)
 
@@ -32,6 +33,44 @@ func NewLinoAccountManager(key sdk.StoreKey) LinoAccountManager {
 	}
 	types.RegisterWireLinoAccount(cdc)
 	return lam
+}
+
+// Implements types.AccountManager.
+func (lam LinoAccountManager) CreateAccount(ctx sdk.Context, accKey types.AccountKey, pubkey crypto.PubKey, accBank *types.AccountBank) (*types.AccountInfo, sdk.Error) {
+	accInfo := types.AccountInfo{
+		Username: accKey,
+		Created:  types.Height(ctx.BlockHeight()),
+		PostKey:  pubkey,
+		OwnerKey: pubkey,
+		Address:  pubkey.Address(),
+	}
+	if err := lam.SetInfo(ctx, accInfo.Username, &accInfo); err != nil {
+		return nil, err
+	}
+
+	accBank.Username = accKey
+	if err := lam.SetBank(ctx, accInfo.Address, accBank); err != nil {
+		return nil, err
+	}
+
+	accMeta := types.AccountMeta{
+		LastActivity:   types.Height(ctx.BlockHeight()),
+		ActivityBurden: types.DefaultActivityBurden,
+		LastABBlock:    types.Height(ctx.BlockHeight()),
+	}
+	if err := lam.SetMeta(ctx, accInfo.Username, &accMeta); err != nil {
+		return nil, err
+	}
+
+	follower := types.Follower{Follower: []types.AccountKey{}}
+	if err := lam.SetFollower(ctx, accInfo.Username, &follower); err != nil {
+		return nil, err
+	}
+	following := types.Following{Following: []types.AccountKey{}}
+	if err := lam.SetFollowing(ctx, accInfo.Username, &following); err != nil {
+		return nil, err
+	}
+	return &accInfo, nil
 }
 
 // Implements types.AccountManager.
@@ -133,52 +172,52 @@ func (lam LinoAccountManager) SetMeta(ctx sdk.Context, accKey types.AccountKey, 
 }
 
 // Implements types.AccountManager.
-func (lam LinoAccountManager) GetFollowers(ctx sdk.Context, accKey types.AccountKey) (*types.Followers, sdk.Error) {
+func (lam LinoAccountManager) GetFollower(ctx sdk.Context, accKey types.AccountKey) (*types.Follower, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	followersByte := store.Get(accountFollowersKey(accKey))
-	if followersByte == nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager get followers failed: followers doesn't exist")
+	followerByte := store.Get(accountFollowerKey(accKey))
+	if followerByte == nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager get follower failed: follower doesn't exist")
 	}
-	followers := new(types.Followers)
-	if err := lam.cdc.UnmarshalBinary(followersByte, followers); err != nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager get followers failed: unmarshal failed")
+	follower := new(types.Follower)
+	if err := lam.cdc.UnmarshalBinary(followerByte, follower); err != nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager get follower failed: unmarshal failed")
 	}
-	return followers, nil
+	return follower, nil
 }
 
 // Implements types.AccountManager.
-func (lam LinoAccountManager) SetFollowers(ctx sdk.Context, accKey types.AccountKey, followers *types.Followers) sdk.Error {
+func (lam LinoAccountManager) SetFollower(ctx sdk.Context, accKey types.AccountKey, follower *types.Follower) sdk.Error {
 	store := ctx.KVStore(lam.key)
-	followersByte, err := lam.cdc.MarshalBinary(*followers)
+	followerByte, err := lam.cdc.MarshalBinary(*follower)
 	if err != nil {
 		return ErrAccountManagerFail("LinoAccountManager set meta failed")
 	}
-	store.Set(accountFollowersKey(accKey), followersByte)
+	store.Set(accountFollowerKey(accKey), followerByte)
 	return nil
 }
 
 // Implements types.AccountManager.
-func (lam LinoAccountManager) GetFollowings(ctx sdk.Context, accKey types.AccountKey) (*types.Followings, sdk.Error) {
+func (lam LinoAccountManager) GetFollowing(ctx sdk.Context, accKey types.AccountKey) (*types.Following, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	followingsByte := store.Get(accountFollowingsKey(accKey))
-	if followingsByte == nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager get followings failed: followers doesn't exist")
+	followingByte := store.Get(accountFollowingKey(accKey))
+	if followingByte == nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager get following failed: follower doesn't exist")
 	}
-	followings := new(types.Followings)
-	if err := lam.cdc.UnmarshalBinary(followingsByte, followings); err != nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager get followings failed: unmarshal failed")
+	following := new(types.Following)
+	if err := lam.cdc.UnmarshalBinary(followingByte, following); err != nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager get following failed: unmarshal failed")
 	}
-	return followings, nil
+	return following, nil
 }
 
 // Implements types.AccountManager.
-func (lam LinoAccountManager) SetFollowings(ctx sdk.Context, accKey types.AccountKey, followings *types.Followings) sdk.Error {
+func (lam LinoAccountManager) SetFollowing(ctx sdk.Context, accKey types.AccountKey, following *types.Following) sdk.Error {
 	store := ctx.KVStore(lam.key)
-	followingsByte, err := lam.cdc.MarshalBinary(*followings)
+	followingByte, err := lam.cdc.MarshalBinary(*following)
 	if err != nil {
 		return ErrAccountManagerFail("LinoAccountManager set meta failed")
 	}
-	store.Set(accountFollowingsKey(accKey), followingsByte)
+	store.Set(accountFollowingKey(accKey), followingByte)
 	return nil
 }
 
@@ -194,10 +233,10 @@ func accountMetaKey(accKey types.AccountKey) []byte {
 	return append(AccountMetaPrefix, accKey...)
 }
 
-func accountFollowersKey(accKey types.AccountKey) []byte {
-	return append(AccountFollowersPrefix, accKey...)
+func accountFollowerKey(accKey types.AccountKey) []byte {
+	return append(AccountFollowerPrefix, accKey...)
 }
 
-func accountFollowingsKey(accKey types.AccountKey) []byte {
-	return append(AccountFollowingsPrefix, accKey...)
+func accountFollowingKey(accKey types.AccountKey) []byte {
+	return append(AccountFollowingPrefix, accKey...)
 }

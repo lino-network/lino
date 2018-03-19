@@ -1,15 +1,10 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/tx/register"
 )
 
 type registerTxCallback func(cmd *cobra.Command, args []string) error
@@ -27,16 +22,16 @@ func RegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 
 // send register transaction to the blockchain
 func sendRegisterTx(cdc *wire.Codec) registerTxCallback {
-	return func(cmd *cobra.Command, args []string) error {
-		name := viper.GetString(client.FlagName)
-		// get the address from the name flag
-		addr, err := builder.GetFromAddress()
-		if err != nil {
-			return err
-		}
+	// return func(cmd *cobra.Command, args []string) error {
+	// 	name := viper.GetString(client.FlagName)
+	// 	// get the address from the name flag
+	// 	addr, err := builder.GetFromAddress()
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
 		// create the message
-		msg := register.NewRegisterMsg(name, addr)
+		// msg := register.NewRegisterMsg(name, addr)
 
 		// get password
 		// buf := client.BufferStdin()
@@ -47,13 +42,13 @@ func sendRegisterTx(cdc *wire.Codec) registerTxCallback {
 		// }
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(msg, cdc)
+		// res, err := builder.SignBuildBroadcast(msg, cdc)
 
-		if err != nil {
-			return err
-		}
+		// if err != nil {
+		// 	return err
+		// }
 
-		fmt.Printf("Committed at block %d. Hash: %s\n", res.Height, res.Hash.String())
+		//fmt.Printf("Committed at block %d. Hash: %s\n", res.Height, res.Hash.String())
 		return nil
-	}
+	// }
 }

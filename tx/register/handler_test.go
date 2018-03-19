@@ -14,7 +14,7 @@ func TestRegisterBankDoesntExist(t *testing.T) {
 	priv := crypto.GenPrivKeyEd25519()
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg("register", priv.PubKey().Address())
+	msg := NewRegisterMsg("register", priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Get bank failed").Result())
 }
@@ -35,7 +35,7 @@ func TestRegister(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey().Address())
+	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -64,15 +64,15 @@ func TestRegister(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *metaPtr, "Account meta should be equal")
 
-	followers := types.Followers{Followers: []types.AccountKey{}}
-	followersPtr, err := lam.GetFollowers(ctx, types.AccountKey(register))
+	follower := types.Follower{Follower: []types.AccountKey{}}
+	followerPtr, err := lam.GetFollower(ctx, types.AccountKey(register))
 	assert.Nil(t, err)
-	assert.Equal(t, followers, *followersPtr, "Account followers should be equal")
+	assert.Equal(t, follower, *followerPtr, "Account follower should be equal")
 
-	followings := types.Followings{Followings: []types.AccountKey{}}
-	followingsPtr, err := lam.GetFollowings(ctx, types.AccountKey(register))
+	following := types.Following{Following: []types.AccountKey{}}
+	followingPtr, err := lam.GetFollowing(ctx, types.AccountKey(register))
 	assert.Nil(t, err)
-	assert.Equal(t, followings, *followingsPtr, "Account followers should be equal")
+	assert.Equal(t, following, *followingPtr, "Account follower should be equal")
 }
 
 func TestRegisterFeeInsufficient(t *testing.T) {
@@ -91,7 +91,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey().Address())
+	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Register Fee Doesn't enough").Result())
 }
@@ -112,7 +112,7 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey().Address())
+	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 	result = handler(ctx, msg)
@@ -136,10 +136,10 @@ func TestReRegister(t *testing.T) {
 
 	handler := NewHandler(lam)
 
-	msg := NewRegisterMsg(register, priv.PubKey().Address())
+	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	msg = NewRegisterMsg(newRegister, priv.PubKey().Address())
+	msg = NewRegisterMsg(newRegister, priv.PubKey())
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrAccRegisterFail("Already registered").Result())
 }
