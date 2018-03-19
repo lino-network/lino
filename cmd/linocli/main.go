@@ -13,10 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	coolcmd "github.com/cosmos/cosmos-sdk/examples/basecoin/x/cool/commands"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/commands"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/commands"
+	acccmd "github.com/lino-network/lino/tx/account/commands"
 
 	"github.com/cosmos/cosmos-sdk/examples/basecoin/app"
 	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
@@ -42,32 +42,32 @@ func main() {
 	cdc := app.MakeCodec()
 
 	// add standard rpc, and tx commands
-	rpc.AddCommands(basecliCmd)
-	basecliCmd.AddCommand(client.LineBreak)
-	tx.AddCommands(basecliCmd, cdc)
-	basecliCmd.AddCommand(client.LineBreak)
+	rpc.AddCommands(linocliCmd)
+	linocliCmd.AddCommand(client.LineBreak)
+	tx.AddCommands(linocliCmd, cdc)
+	linocliCmd.AddCommand(client.LineBreak)
 
 	// TODO(Lino): Customize our own command
-	// // add query/post commands (custom to binary)
-	// basecliCmd.AddCommand(
-	// 	client.GetCommands(
-	// 		authcmd.GetAccountCmd("main", cdc, types.GetParseAccount(cdc)),
-	// 	)...)
-	// basecliCmd.AddCommand(
-	// 	client.PostCommands(
-	// 		bankcmd.SendTxCmd(cdc),
-	// 	)...)
-	// basecliCmd.AddCommand(
-	// 	client.PostCommands(
-	// 		coolcmd.QuizTxCmd(cdc),
-	// 	)...)
-	// basecliCmd.AddCommand(
+	// add query/post commands (custom to binary)
+	linocliCmd.AddCommand(
+	 	client.GetCommands(
+			authcmd.GetAccountCmd("main", cdc, types.GetParseAccount(cdc)),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			bankcmd.SendTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			acccmd.RegisterTxCmd(cdc),
+		)...)
+	// linocliCmd.AddCommand(
 	// 	client.PostCommands(
 	// 		coolcmd.SetTrendTxCmd(cdc),
 	// 	)...)
 
 	// add proxy, version and key info
-	basecliCmd.AddCommand(
+	linocliCmd.AddCommand(
 		client.LineBreak,
 		lcd.ServeCommand(),
 		keys.Commands(),
@@ -76,6 +76,6 @@ func main() {
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(basecliCmd, "BC", os.ExpandEnv("$HOME/.linocli"))
+	executor := cli.PrepareMainCmd(linocliCmd, "BC", os.ExpandEnv("$HOME/.linocli"))
 	executor.Execute()
 }

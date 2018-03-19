@@ -2,22 +2,26 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
 )
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Key      AccountKey    `json:"key"`
+	Username AccountKey    `json:"key"`
 	Created  Height        `json:"created"`
 	PostKey  crypto.PubKey `json:"post_key"`
 	OwnerKey crypto.PubKey `json:"owner_key"`
 	Address  sdk.Address   `json:"address"`
 }
 
-// AccountBank embeds base account, handle the balance, which implements sdk.Account
+// AccountBank uses Address as the key instead of Username
 type AccountBank struct {
-	auth.BaseAccount
+	Address  sdk.Address   `json:"address"`
+	Coins    sdk.Coins     `json:"coins"`
+	PubKey   crypto.PubKey `json:"public_key"`
+	Sequence int64         `json:"sequence"`
+	Username AccountKey    `json:"Username"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
@@ -27,53 +31,40 @@ type AccountMeta struct {
 	LastABBlock    Height `json:"last_activity_burden_block"`
 }
 
-// Followers records all followers belong to one user
-type Followers struct {
-	Followers []AccountKey `json:"followers"`
+// Follower records all follower belong to one user
+type Follower struct {
+	Follower []AccountKey `json:"follower"`
 }
 
-// Followings records all followers belong to one user
-type Followings struct {
-	Followings []AccountKey `json:"followings"`
-}
-
-// Account interface is general interfacc for account. Embed sdk Account.
-type Account interface {
-	// embed sdk.Account
-	sdk.Account
-
-	GetUsername() AccountKey
-	SetUsername(AccountKey) error // errors if already set.
-
-	GetPostKey() crypto.PubKey
-	SetPostKey(crypto.PubKey) error
-
-	GetOwnerKey() crypto.PubKey
-	SetOwnerKey(crypto.PubKey) error
-
-	GetCreated() Height
-	SetCreated(Height) error // errors if already set.
-
-	GetLastActivity() Height
-	SetLastActivity(Height) error
-
-	GetActivityBurden() uint64
-	SetActivityBurden(uint64) error // set AB Block too.
-
-	GetLastABBlock() Height
-
-	GetFollowers() Followers
-	SetFollowers(Followers) error
-
-	GetFollowings() Followings
-	SetFollowings(Followings) error
+// Following records all follower belong to one user
+type Following struct {
+	Following []AccountKey `json:"following"`
 }
 
 // AccountManager stores and retrieves accounts from stores
 // retrieved from the context.
 type AccountManager interface {
-	AccountExist(ctx sdk.Context, accKey AccountKey) bool
 	// Account getter/setter
-	GetAccount(ctx sdk.Context, accKey AccountKey) Account
-	SetAccount(ctx sdk.Context, acc Account)
+	CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) (*AccountInfo, sdk.Error)
+	AccountExist(ctx sdk.Context, accKey AccountKey) bool
+	GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error)
+	SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *AccountInfo) sdk.Error
+
+	GetBankFromAccountKey(ctx sdk.Context, accKey AccountKey) (*AccountBank, sdk.Error)
+	GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error)
+	SetBank(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error
+
+	GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error)
+	SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *AccountMeta) sdk.Error
+
+	GetFollower(ctx sdk.Context, accKey AccountKey) (*Follower, sdk.Error)
+	SetFollower(ctx sdk.Context, accKey AccountKey, follower *Follower) sdk.Error
+
+	GetFollowing(ctx sdk.Context, accKey AccountKey) (*Following, sdk.Error)
+	SetFollowing(ctx sdk.Context, accKey AccountKey, following *Following) sdk.Error
+}
+
+func RegisterWireLinoAccount(cdc *wire.Codec) {
+	// Register crypto.[PubKey] types.
+	wire.RegisterCrypto(cdc)
 }

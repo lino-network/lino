@@ -12,7 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
+	"github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/register"
+	"github.com/lino-network/lino/types"
 )
 
 const (
@@ -27,6 +29,9 @@ type LinoBlockchain struct {
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
 	capKeyIBCStore  *sdk.KVStoreKey
+
+	// Manage getting and setting accounts
+	accountManager types.AccountManager
 }
 
 func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
@@ -37,6 +42,10 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		capKeyMainStore: sdk.NewKVStoreKey("main"),
 		capKeyIBCStore:  sdk.NewKVStoreKey("ibc"),
 	}
+	lb.accountManager = account.NewLinoAccountManager(lb.capKeyMainStore)
+
+	app.Router().
+		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)

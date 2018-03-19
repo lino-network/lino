@@ -46,6 +46,7 @@ func defaultOptions(args []string) (json.RawMessage, error) {
         ]
       }]
     }`, addr)
+    fmt.Println("default address:", addr)
 	return json.RawMessage(opts), nil
 }
 
