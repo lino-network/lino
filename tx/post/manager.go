@@ -35,6 +35,7 @@ func NewPostMananger(key sdk.StoreKey) postManager {
 		key: key,
 		cdc: cdc,
 	}
+	// TODO(Lino) Register cdc here.
 }
 
 func (pm postManager) get(ctx sdk.Context, postKey types.PostKey, errFunc NotFoundErrFunc, prefix []byte) ([]byte, sdk.Error) {
