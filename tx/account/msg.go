@@ -43,22 +43,9 @@ func TransferToAddr(addr string) TransferOption {
 	}
 }
 
-// type GrantMsg struct {
-// }
-//
-// type RecoverMsg struct {
-// }
-//
-// type UpdateMsg struct {
-// }
-
 var _ sdk.Msg = FollowMsg{}
 var _ sdk.Msg = UnfollowMsg{}
 var _ sdk.Msg = TransferMsg{}
-
-// var _ sdk.Msg = GrantMsg{}
-// var _ sdk.Msg = RecoverMsg{}
-// var _ sdk.Msg = UpdateMsg{}
 
 //----------------------------------------
 // Follow Msg Implementations
