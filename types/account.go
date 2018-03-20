@@ -6,6 +6,8 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
+type Memo uint64
+
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
 	Username AccountKey    `json:"key"`
