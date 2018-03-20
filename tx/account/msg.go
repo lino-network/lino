@@ -1,10 +1,12 @@
 package account
 
+// nolint
 import (
 	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tx "github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/lino-network/lino/types"
 )
 
@@ -41,21 +43,22 @@ func TransferToAddr(addr string) TransferOption {
 	}
 }
 
-type GrantMsg struct {
-}
-
-type RecoverMsg struct {
-}
-
-type UpdateMsg struct {
-}
+// type GrantMsg struct {
+// }
+//
+// type RecoverMsg struct {
+// }
+//
+// type UpdateMsg struct {
+// }
 
 var _ sdk.Msg = FollowMsg{}
 var _ sdk.Msg = UnfollowMsg{}
 var _ sdk.Msg = TransferMsg{}
-var _ sdk.Msg = GrantMsg{}
-var _ sdk.Msg = RecoverMsg{}
-var _ sdk.Msg = UpdateMsg{}
+
+// var _ sdk.Msg = GrantMsg{}
+// var _ sdk.Msg = RecoverMsg{}
+// var _ sdk.Msg = UpdateMsg{}
 
 //----------------------------------------
 // Follow Msg Implementations
@@ -146,16 +149,16 @@ func (msg UnfollowMsg) GetSigners() []sdk.Address {
 
 func NewTransferMsg(sender string, amount sdk.Coins, memo []byte, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
-		Sender:       types.AccountKey(sender),
-		Amount:       amount,
-		Memo:         memo,
-		ReceiverName: nil,
-		ReceiverAddr: nil,
+		Sender: types.AccountKey(sender),
+		Amount: amount,
+		Memo:   memo,
+		// ReceiverName: types.AccountKey(""),
+		// ReceiverAddr: sdk.Address,
 	}
 	for _, setter := range setters {
 		setter(msg)
 	}
-	return msg
+	return *msg
 }
 
 func (msg TransferMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
@@ -167,20 +170,21 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 	}
 
 	// should have either receiver's addr or username
-	if msg.ReceiverAddr == nil && msg.ReceiverName == nil {
+	if len(msg.ReceiverAddr) == 0 && len(msg.ReceiverName) == 0 {
 		return ErrInvalidUsername("invalid receiver")
 	}
 
 	// cannot transfer a negative amount of money
 	if msg.Amount.IsPositive() == false {
-		return ErrInvalidCoins("invalid coin amount")
+		return tx.ErrInvalidCoins("invalid coin amount")
 	}
 
 	return nil
 }
 
 func (msg TransferMsg) String() string {
-	return fmt.Sprintf("TransferMsg{Sender:%v, Receiver:%v}", msg.Sender, msg.Receiver)
+	return fmt.Sprintf("TransferMsg{Sender:%v, ReceiverName:%v, ReceiverAddr:%v}",
+		msg.Sender, msg.ReceiverName, msg.ReceiverAddr)
 }
 
 func (msg TransferMsg) Get(key interface{}) (value interface{}) {

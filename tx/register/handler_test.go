@@ -1,11 +1,12 @@
 package register
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
-	"testing"
 )
 
 func TestRegisterBankDoesntExist(t *testing.T) {
@@ -29,7 +30,7 @@ func TestRegister(t *testing.T) {
 		Address: priv.PubKey().Address(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
-	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
+	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
 
 	handler := NewHandler(lam)
@@ -84,7 +85,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 		Address: priv.PubKey().Address(),
 		Coins:   RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
 	}
-	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
+	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
 
 	handler := NewHandler(lam)
@@ -104,7 +105,7 @@ func TestRegisterDuplicate(t *testing.T) {
 		Address: priv.PubKey().Address(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
-	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
+	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
 
 	handler := NewHandler(lam)
@@ -127,7 +128,7 @@ func TestReRegister(t *testing.T) {
 		Address: priv.PubKey().Address(),
 		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
-	err := lam.SetBank(ctx, priv.PubKey().Address(), &accBank)
+	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
 
 	handler := NewHandler(lam)

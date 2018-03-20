@@ -49,7 +49,7 @@ func (lam LinoAccountManager) CreateAccount(ctx sdk.Context, accKey types.Accoun
 	}
 
 	accBank.Username = accKey
-	if err := lam.SetBank(ctx, accInfo.Address, accBank); err != nil {
+	if err := lam.SetBankFromAddress(ctx, accInfo.Address, accBank); err != nil {
 		return nil, err
 	}
 
@@ -151,11 +151,11 @@ func (lam LinoAccountManager) SetBankFromAccountKey(ctx sdk.Context, accKey type
 	store := ctx.KVStore(lam.key)
 	infoByte := store.Get(accountInfoKey(accKey))
 	if infoByte == nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager set bank failed: user doesn't exist")
+		return ErrAccountManagerFail("LinoAccountManager set bank failed: user doesn't exist")
 	}
 	info := new(types.AccountInfo)
 	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
-		return nil, ErrAccountManagerFail("LinoAccountManager set bank failed: unmarshal failed")
+		return ErrAccountManagerFail("LinoAccountManager set bank failed: unmarshal failed")
 	}
 
 	return lam.SetBankFromAddress(ctx, info.Address, accBank)

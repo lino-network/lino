@@ -11,7 +11,7 @@ import (
 func NewHandler(am types.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case RegisterMsg:
+		case FollowMsg:
 			return handleFollowMsg(ctx, am, msg)
 		case UnfollowMsg:
 			return handleUnfollowMsg(ctx, am, msg)
@@ -37,7 +37,7 @@ func handleFollowMsg(ctx sdk.Context, am types.AccountManager, msg FollowMsg) sd
 	}
 
 	if isInFollowerList(msg.Follower, followerList) == false {
-		*followerList = append(*followerList, msg.Follower)
+		followerList.Follower = append(followerList.Follower, msg.Follower)
 		if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
 			return ErrAccountManagerFail("Set follower failed").Result()
 		}
@@ -50,7 +50,7 @@ func handleFollowMsg(ctx sdk.Context, am types.AccountManager, msg FollowMsg) sd
 	}
 
 	if isInFollowingList(msg.Followee, followingList) == false {
-		*followingList = append(*followingList, msg.Followee)
+		followingList.Following = append(followingList.Following, msg.Followee)
 		if err := am.SetFollowing(ctx, msg.Followee, followingList); err != nil {
 			return ErrAccountManagerFail("Set following failed").Result()
 		}
@@ -71,9 +71,9 @@ func handleUnfollowMsg(ctx sdk.Context, am types.AccountManager, msg UnfollowMsg
 		return ErrAccountManagerFail("Get follower list failed").Result()
 	}
 
-	for index, user := range *followerList {
+	for index, user := range followerList.Follower {
 		if user == msg.Follower {
-			*followerList = append(*followerList[:index], *followerList[index+1]...)
+			followerList.Follower = append(followerList.Follower[:index], followerList.Follower[index+1:]...)
 			if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
 				return ErrAccountManagerFail("Set follower failed").Result()
 			}
@@ -87,9 +87,9 @@ func handleUnfollowMsg(ctx sdk.Context, am types.AccountManager, msg UnfollowMsg
 		return ErrAccountManagerFail("Get following list failed").Result()
 	}
 
-	for index, user := range *followingList {
+	for index, user := range followingList.Following {
 		if user == msg.Followee {
-			*followingList = append(*followingList[:index], *followingList[index+1]...)
+			followingList.Following = append(followingList.Following[:index], followingList.Following[index+1:]...)
 			if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
 				return ErrAccountManagerFail("Set following failed").Result()
 			}
@@ -112,7 +112,7 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 		return ErrAccountManagerFail("Get sender's account bank failed").Result()
 	}
 
-	if *senderBank.Coins.IsGTE(msg.Amount) == false {
+	if senderBank.Coins.IsGTE(msg.Amount) == false {
 		return ErrAccountManagerFail("Sender's coins are not enough").Result()
 	}
 
@@ -123,7 +123,7 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 	}
 
 	// send coins using username
-	if am.AccountExist(msg.ReceiverName) {
+	if am.AccountExist(ctx, msg.ReceiverName) {
 		if receiverBank, err := am.GetBankFromAccountKey(ctx, msg.ReceiverName); err == nil {
 			receiverBank.Coins.Plus(msg.Amount)
 			if setErr := am.SetBankFromAccountKey(ctx, msg.ReceiverName, receiverBank); setErr != nil {
@@ -140,10 +140,10 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 		receiverBank.Coins.Plus(msg.Amount)
 	} else {
 		// account bank not found, create a new one for this address
-		receiverBank = types.AccountBank{
+		receiverBank = &types.AccountBank{
 			Address:  msg.ReceiverAddr,
 			Coins:    msg.Amount,
-			Username: nil,
+			Username: "",
 		}
 	}
 
@@ -154,8 +154,8 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 }
 
 // helper function
-func isInFollowerList(me types.AccountKey, lst *Follower) bool {
-	for _, user := range *lst {
+func isInFollowerList(me types.AccountKey, lst *types.Follower) bool {
+	for _, user := range lst.Follower {
 		if user == me {
 			return true
 		}
@@ -163,8 +163,8 @@ func isInFollowerList(me types.AccountKey, lst *Follower) bool {
 	return false
 }
 
-func isInFollowingList(me types.AccountKey, lst *Following) bool {
-	for _, user := range *lst {
+func isInFollowingList(me types.AccountKey, lst *types.Following) bool {
+	for _, user := range lst.Following {
 		if user == me {
 			return true
 		}
