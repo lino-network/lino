@@ -73,6 +73,14 @@ func ErrPostContentExceedMaxLength() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post content exceeds max length limitation"))
 }
 
+func ErrPostAuthorDoesntExist() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post author doesn't exist"))
+}
+
+func ErrPostExist() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post already exists"))
+}
+
 func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg

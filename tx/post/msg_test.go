@@ -10,7 +10,7 @@ import (
 func TestCreate(t *testing.T) {
 	author := acc.AccountKey("TestAuthor")
 	// test valid post
-	postInfo := CreateInfo{
+	post := types.Post{
 		PostID:       "TestPostID",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -20,35 +20,34 @@ func TestCreate(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 	}
-	createMsg := NewCreateMsg(postInfo)
+	createMsg := NewCreatePostMsg(post)
 	result := createMsg.ValidateBasic()
 	assert.Nil(t, result)
 
 	// test missing post id
-	postInfo.PostID = ""
+	post.PostID = ""
 
-	createMsg = NewCreateMsg(postInfo)
+	createMsg = NewCreatePostMsg(post)
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostCreateNoPostID())
 
-	postInfo.Author = ""
-	postInfo.PostID = "testPost"
-	createMsg = NewCreateMsg(postInfo)
+	post.Author = ""
+	post.PostID = "testPost"
+	createMsg = NewCreatePostMsg(post)
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostCreateNoAuthor())
 
 	// test exceeding max title length
-
-	postInfo.Author = author
-	postInfo.Title = string(make([]byte, 51))
-	createMsg = NewCreateMsg(postInfo)
+	post.Author = author
+	post.Title = string(make([]byte, 51))
+	createMsg = NewCreatePostMsg(post)
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostTitleExceedMaxLength())
 
 	// test exceeding max content length
-	postInfo.Title = string(make([]byte, 50))
-	postInfo.Content = string(make([]byte, 1001))
-	createMsg = NewCreateMsg(postInfo)
+	post.Title = string(make([]byte, 50))
+	post.Content = string(make([]byte, 1001))
+	createMsg = NewCreatePostMsg(post)
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostContentExceedMaxLength())
 }

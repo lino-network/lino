@@ -17,7 +17,7 @@ var (
 
 // TODO(Lino) Register cdc here.
 // temporary use old wire.
-// this will help use to marshal and unmarshal interface type.
+// this will help marshal and unmarshal interface type.
 const msgTypePost = 0x1
 const msgTypePostMeta = 0x2
 const msgTypePostLike = 0x3
@@ -33,7 +33,6 @@ var _ = oldwire.RegisterInterface(
 	oldwire.ConcreteType{PostDonations{}, msgTypePostDonations},
 )
 
-// Implements PostManager
 type PostManager struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
@@ -69,6 +68,74 @@ func (pm PostManager) set(ctx sdk.Context, postKey PostKey, postStruct PostInter
 		return ErrPostMarshalError(err)
 	}
 	store.Set(append(prefix, postKey...), val)
+	return nil
+}
+
+func (pm PostManager) updateComment(ctx sdk.Context, post *types.Post) sdk.Error {
+	if len(post.ParentAuthor) == 0 {
+		return nil
+	}
+	parentPostKey := types.GetPostKey(post.ParentAuthor, post.ParentPostID)
+	postComments, err := pm.GetPostComments(ctx, parentPostKey)
+	if err != nil {
+		return err
+	}
+	postComments.Comments = append(postComments.Comments, types.GetPostKey(post.Author, post.PostID))
+	if err := pm.SetPostComments(ctx, parentPostKey, postComments); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pm PostManager) isPostExist(ctx sdk.Context, postKey types.PostKey) bool {
+	val, _ := pm.get(ctx, postKey, ErrPostNotFound, postKeyPrefix)
+	if val != nil {
+		return true
+	}
+	return false
+}
+
+// Create the post
+func (pm PostManager) CreatePost(ctx sdk.Context, post *types.Post) sdk.Error {
+	postKey := types.GetPostKey(post.Author, post.PostID)
+	if pm.isPostExist(ctx, postKey) {
+		return ErrPostExist()
+	}
+	if err := pm.updateComment(ctx, post); err != nil {
+		return err
+	}
+	if err := pm.SetPost(ctx, post); err != nil {
+		return err
+	}
+	postMeta := &types.PostMeta{
+		Created:      types.Height(ctx.BlockHeight()),
+		LastUpdate:   types.Height(ctx.BlockHeight()),
+		LastActivity: types.Height(ctx.BlockHeight()),
+		AllowReplies: true, // Default
+	}
+	if err := pm.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return err
+	}
+
+	postLikes := &types.PostLikes{}
+	if err := pm.SetPostLikes(ctx, postKey, postLikes); err != nil {
+		return err
+	}
+
+	postComments := &types.PostComments{}
+	if err := pm.SetPostComments(ctx, postKey, postComments); err != nil {
+		return err
+	}
+
+	postViews := &types.PostViews{}
+	if err := pm.SetPostViews(ctx, postKey, postViews); err != nil {
+		return err
+	}
+
+	postDonations := &types.PostDonations{}
+	if err := pm.SetPostDonations(ctx, postKey, postDonations); err != nil {
+		return err
+	}
 	return nil
 }
 
