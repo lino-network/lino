@@ -102,9 +102,55 @@ func handleUnfollowMsg(ctx sdk.Context, am types.AccountManager, msg UnfollowMsg
 
 // Handle TransferMsg
 func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg) sdk.Result {
-	if !am.AccountExist(ctx, msg.Follower) || !am.AccountExist(ctx, msg.Followee) {
+	if !am.AccountExist(ctx, msg.Sender) {
 		return ErrUsernameNotFound("Username not found").Result()
 	}
+
+	// check if the sender has enough money
+	senderBank, err := am.GetBankFromAccountKey(ctx, msg.Sender)
+	if err != nil {
+		return ErrAccountManagerFail("Get sender's account bank failed").Result()
+	}
+
+	if *senderBank.Coins.IsGTE(msg.Amount) == false {
+		return ErrAccountManagerFail("Sender's coins are not enough").Result()
+	}
+
+	// withdraw money from sender's bank
+	senderBank.Coins.Minus(msg.Amount)
+	if err := am.SetBankFromAccountKey(ctx, msg.Sender, senderBank); err != nil {
+		return ErrAccountManagerFail("Set sender's bank failed").Result()
+	}
+
+	// send coins using username
+	if am.AccountExist(msg.ReceiverName) {
+		if receiverBank, err := am.GetBankFromAccountKey(ctx, msg.ReceiverName); err == nil {
+			receiverBank.Coins.Plus(msg.Amount)
+			if setErr := am.SetBankFromAccountKey(ctx, msg.ReceiverName, receiverBank); setErr != nil {
+				return ErrAccountManagerFail("Set receiver's bank failed").Result()
+			}
+			return sdk.Result{}
+		}
+	}
+
+	// send coins using address
+	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
+	if err == nil {
+		// account bank exists
+		receiverBank.Coins.Plus(msg.Amount)
+	} else {
+		// account bank not found, create a new one for this address
+		receiverBank = types.AccountBank{
+			Address:  msg.ReceiverAddr,
+			Coins:    msg.Amount,
+			Username: nil,
+		}
+	}
+
+	if setErr := am.SetBankFromAddress(ctx, msg.ReceiverAddr, receiverBank); setErr != nil {
+		return ErrAccountManagerFail("Set receiver's bank failed").Result()
+	}
+	return sdk.Result{}
 }
 
 // helper function

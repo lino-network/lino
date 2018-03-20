@@ -136,7 +136,7 @@ func (lam LinoAccountManager) GetBankFromAddress(ctx sdk.Context, address sdk.Ad
 }
 
 // Implements types.AccountManager.
-func (lam LinoAccountManager) SetBank(ctx sdk.Context, address sdk.Address, accBank *types.AccountBank) sdk.Error {
+func (lam LinoAccountManager) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *types.AccountBank) sdk.Error {
 	store := ctx.KVStore(lam.key)
 	bankByte, err := lam.cdc.MarshalBinary(*accBank)
 	if err != nil {
@@ -144,6 +144,21 @@ func (lam LinoAccountManager) SetBank(ctx sdk.Context, address sdk.Address, accB
 	}
 	store.Set(accountBankKey(address), bankByte)
 	return nil
+}
+
+// Implements types.AccountManager.
+func (lam LinoAccountManager) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *types.AccountBank) sdk.Error {
+	store := ctx.KVStore(lam.key)
+	infoByte := store.Get(accountInfoKey(accKey))
+	if infoByte == nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager set bank failed: user doesn't exist")
+	}
+	info := new(types.AccountInfo)
+	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
+		return nil, ErrAccountManagerFail("LinoAccountManager set bank failed: unmarshal failed")
+	}
+
+	return lam.SetBankFromAddress(ctx, info.Address, accBank)
 }
 
 // Implements types.AccountManager.
