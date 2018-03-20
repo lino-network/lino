@@ -10,35 +10,43 @@ import (
 
 // CreateMsg contains information to create a post
 type CreateMsg struct {
-	Info CreateInfo `json:"createInfo"`
+	CreateInfo
 }
 
-// CreateInfo is used to construct CreateMsg
 type CreateInfo struct {
-	Permlink       string            `json:"permlink"`
-	Title          string            `json:"title"`
-	Content        string            `json:"content"`
-	Author         types.AccountKey  `json:"author"`
-	ParentAuthor   types.AccountKey  `json:"parentAuthor"`
-	ParentPermlink string            `json:"parentPermlink"`
-	SourceAuthor   types.AccountKey  `json:"sourceAuthor"`
-	SourcePermlink string            `json:"sourcePermlink"`
-	Links          types.LinkMapping `json:"links"`
+	PostID       string               `json:"post_id"`
+	Title        string               `json:"title"`
+	Content      string               `json:"content"`
+	Author       types.AccountKey     `json:"author"`
+	ParentAuthor types.AccountKey     `json:"parent_author"`
+	ParentPostID string               `json:"parent_permlink"`
+	SourceAuthor types.AccountKey     `json:"source_author"`
+	SourcePostID string               `json:"source_permlink"`
+	Links        types.IDToURLMapping `json:"links"`
 }
 
 // NewCreateMsg constructs a post msg
 func NewCreateMsg(createInfo CreateInfo) CreateMsg {
-	return CreateMsg{Info: createInfo}
+	return CreateMsg{CreateInfo: createInfo}
 }
 
 // Type implements sdk.Msg
-func (msg CreateMsg) Type() string { return "post/create" }
+func (msg CreateMsg) Type() string { return "post" } // TODO change to "post/create", wait for base app udpate
 
 // ValidateBasic implements sdk.Msg
 func (msg CreateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink exists
-	if len(msg.Info.Permlink) == 0 {
-		return ErrPostCreateNoPermlink()
+	if len(msg.PostID) == 0 {
+		return ErrPostCreateNoPostID()
+	}
+	if len(msg.Author) == 0 {
+		return ErrPostCreateNoAuthor()
+	}
+	if len(msg.Title) > types.MaxPostTitleLength {
+		return ErrPostTitleExceedMaxLength()
+	}
+	if len(msg.Content) > types.MaxPostContentLength {
+		return ErrPostContentExceedMaxLength()
 	}
 	return nil
 }
@@ -59,9 +67,9 @@ func (msg CreateMsg) GetSignBytes() []byte {
 
 // GetSigners implements Msg.
 func (msg CreateMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Info.Author)}
+	return []sdk.Address{sdk.Address(msg.Author)}
 }
 
 func (msg CreateMsg) String() string {
-	return fmt.Sprintf("Post.CreateMsg{Info:%v}", msg.Info)
+	return fmt.Sprintf("Post.CreateMsg{Info:%v}", msg.CreateInfo)
 }

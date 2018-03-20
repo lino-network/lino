@@ -46,4 +46,10 @@ const (
 
 	// MsgType is uesd to register App codec
 	msgTypeRegister = 0x1
+
+	// MinimumUsernameLength minimum username length
+	MaxPostTitleLength = 50
+
+	// MaximumUsernameLength maximum username length
+	MaxPostContentLength = 1000
 )

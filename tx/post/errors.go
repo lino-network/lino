@@ -57,8 +57,20 @@ func ErrPostUnmarshalError(err error) sdk.Error {
 	return newError(types.CodePostUnmarshalError, fmt.Sprintf("Post unmarshal error: %s", err.Error()))
 }
 
-func ErrPostCreateNoPermlink() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty permlink"))
+func ErrPostCreateNoPostID() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty post id"))
+}
+
+func ErrPostCreateNoAuthor() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty author"))
+}
+
+func ErrPostTitleExceedMaxLength() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post title exceeds max length limitation"))
+}
+
+func ErrPostContentExceedMaxLength() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post content exceeds max length limitation"))
 }
 
 func msgOrDefaultMsg(msg string, code CodeType) string {

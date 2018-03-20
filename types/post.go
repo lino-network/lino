@@ -4,28 +4,47 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Identifier is used to map the url in post
+// Identifier is used to map the url in post.
 type Identifier string
 
 // URL used to link resources like vedio, text or photo.
 type URL string
 
-// LinkMapping records mapping between Identifier and URL
-type LinkMapping map[Identifier]URL
+// PostIntreface needs to be implemented by all post related struct.
+type PostInterface interface {
+	AssertPostInterface()
+}
 
-// LikeMapping records mapping between AccountKey and Like
-type LikeMapping map[AccountKey]Like
+var _ PostInterface = Post{}
+var _ PostInterface = PostMeta{}
+var _ PostInterface = PostLikes{}
+var _ PostInterface = PostComments{}
+var _ PostInterface = PostViews{}
+var _ PostInterface = PostDonations{}
+
+func (_ Post) AssertPostInterface()          {}
+func (_ PostMeta) AssertPostInterface()      {}
+func (_ PostLikes) AssertPostInterface()     {}
+func (_ PostComments) AssertPostInterface()  {}
+func (_ PostViews) AssertPostInterface()     {}
+func (_ PostDonations) AssertPostInterface() {}
 
 // Post can also use to present comment(with parent) or repost(with source)
 type Post struct {
-	Key     PostKey     `json:"key"`
-	Title   string      `json:"title"`
-	Content string      `json:"content"`
-	Author  AccountKey  `json:"author"`
-	Parent  PostKey     `json:"Parent"`
-	Source  PostKey     `json:"source"`
-	Created Height      `json:"created"`
-	Links   LinkMapping `json:"links"`
+	PostID  string           `json:"post_id"`
+	Title   string           `json:"title"`
+	Content string           `json:"content"`
+	Author  AccountKey       `json:"author"`
+	Parent  PostKey          `json:"Parent"`
+	Source  PostKey          `json:"source"`
+	Created Height           `json:"created"`
+	Links   []IDToURLMapping `json:"links"`
+}
+
+// Donation struct, only used in PostDonations
+type IDToURLMapping struct {
+	Identifier string `json:"identifier"`
+	URL        string `json:"url"`
 }
 
 // PostMeta stores tiny and frequently updated fields.
@@ -33,13 +52,12 @@ type PostMeta struct {
 	LastUpdate   Height `json:"last_update"`
 	LastActivity Height `json:"last_activity"`
 	AllowReplies bool   `json:"allow_replies"`
-	AllowLike    bool   `json:"allow_like"`
 }
 
 // PostLikes stores all likes of the post
 type PostLikes struct {
-	Likes       LikeMapping `json:"likes"`
-	TotalWeight int64       `json:"total_weight"`
+	Likes       []Like `json:"likes"`
+	TotalWeight int64  `json:"total_weight"`
 }
 
 // Like struct, only used in PostLikes
@@ -97,4 +115,9 @@ type PostManager interface {
 
 	GetPostDonations(ctx sdk.Context, postKey PostKey) (*PostDonations, sdk.Error)
 	SetPostDonations(ctx sdk.Context, postKey PostKey, PostDonations *PostDonations) sdk.Error
+}
+
+// GetPostKey try to generate PostKey from AccountKey and PostID
+func GetPostKey(author AccountKey, postID string) PostKey {
+	return PostKey(string(author) + "#" + postID)
 }

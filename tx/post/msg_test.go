@@ -9,34 +9,46 @@ import (
 
 func TestCreate(t *testing.T) {
 	author := types.AccountKey("TestAuthor")
+	// test valid post
 	postInfo := CreateInfo{
-		Permlink:       "TestPermlink",
-		Title:          "TestTitle",
-		Content:        "TestContent",
-		Author:         author,
-		ParentAuthor:   "",
-		ParentPermlink: "",
-		SourceAuthor:   "",
-		SourcePermlink: "",
-		Links:          nil,
+		PostID:       "TestPostID",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       author,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
 	}
 	createMsg := NewCreateMsg(postInfo)
 	result := createMsg.ValidateBasic()
 	assert.Nil(t, result)
 
-	postInfo = CreateInfo{
-		Permlink:       "",
-		Title:          "TestTitle",
-		Content:        "TestContent",
-		Author:         author,
-		ParentAuthor:   "",
-		ParentPermlink: "",
-		SourceAuthor:   "",
-		SourcePermlink: "",
-		Links:          nil,
-	}
+	// test missing post id
+	postInfo.PostID = ""
 
 	createMsg = NewCreateMsg(postInfo)
 	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostCreateNoPermlink())
+	assert.Equal(t, result, ErrPostCreateNoPostID())
+
+	postInfo.Author = ""
+	postInfo.PostID = "testPost"
+	createMsg = NewCreateMsg(postInfo)
+	result = createMsg.ValidateBasic()
+	assert.Equal(t, result, ErrPostCreateNoAuthor())
+
+	// test exceeding max title length
+
+	postInfo.Author = author
+	postInfo.Title = string(make([]byte, 51))
+	createMsg = NewCreateMsg(postInfo)
+	result = createMsg.ValidateBasic()
+	assert.Equal(t, result, ErrPostTitleExceedMaxLength())
+
+	// test exceeding max title length
+	postInfo.Title = string(make([]byte, 50))
+	postInfo.Content = string(make([]byte, 1001))
+	createMsg = NewCreateMsg(postInfo)
+	result = createMsg.ValidateBasic()
+	assert.Equal(t, result, ErrPostContentExceedMaxLength())
 }

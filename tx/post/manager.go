@@ -1,11 +1,10 @@
 package post
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+	oldwire "github.com/tendermint/go-wire"
 )
 
 var (
@@ -17,8 +16,26 @@ var (
 	postDonationsKeyPrefix = []byte("donations/")
 )
 
+// TODO(Lino) Register cdc here.
+// temporary use old wire.
+// this will help use to marshal and unmarshal interface type.
+const msgTypePost = 0x1
+const msgTypePostMeta = 0x2
+const msgTypePostLike = 0x3
+const msgTypePostComments = 0x4
+const msgTypePostDonations = 0x5
+
+var _ = oldwire.RegisterInterface(
+	struct{ types.PostInterface }{},
+	oldwire.ConcreteType{types.Post{}, msgTypePost},
+	oldwire.ConcreteType{types.PostMeta{}, msgTypePostMeta},
+	oldwire.ConcreteType{types.PostLikes{}, msgTypePostLike},
+	oldwire.ConcreteType{types.PostComments{}, msgTypePostComments},
+	oldwire.ConcreteType{types.PostDonations{}, msgTypePostDonations},
+)
+
 // Implements types.PostManager
-type postManager struct {
+type PostManager struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
 
@@ -28,17 +45,16 @@ type postManager struct {
 
 // NewPostManager returns a new types.PostManager that
 // uses go-wire to (binary) encode and decode concrete types.Post
-func NewPostMananger(key sdk.StoreKey) postManager {
+func NewPostMananger(key sdk.StoreKey) PostManager {
 	cdc := wire.NewCodec()
 
-	return postManager{
+	return PostManager{
 		key: key,
 		cdc: cdc,
 	}
-	// TODO(Lino) Register cdc here.
 }
 
-func (pm postManager) get(ctx sdk.Context, postKey types.PostKey, errFunc NotFoundErrFunc, prefix []byte) ([]byte, sdk.Error) {
+func (pm PostManager) get(ctx sdk.Context, postKey types.PostKey, errFunc NotFoundErrFunc, prefix []byte) ([]byte, sdk.Error) {
 	store := ctx.KVStore(pm.key)
 	val := store.Get(append(prefix, postKey...))
 	if val == nil {
@@ -47,9 +63,9 @@ func (pm postManager) get(ctx sdk.Context, postKey types.PostKey, errFunc NotFou
 	return val, nil
 }
 
-func (pm postManager) set(ctx sdk.Context, postKey types.PostKey, postStruct interface{}, prefix []byte) sdk.Error {
+func (pm PostManager) set(ctx sdk.Context, postKey types.PostKey, postStruct types.PostInterface, prefix []byte) sdk.Error {
 	store := ctx.KVStore(pm.key)
-	val, err := json.Marshal(postStruct)
+	val, err := oldwire.MarshalJSON(postStruct)
 	if err != nil {
 		return ErrPostMarshalError(err)
 	}
@@ -57,107 +73,101 @@ func (pm postManager) set(ctx sdk.Context, postKey types.PostKey, postStruct int
 	return nil
 }
 
-func (pm postManager) GetPost(ctx sdk.Context, postKey types.PostKey) (*types.Post, sdk.Error) {
+func (pm PostManager) GetPost(ctx sdk.Context, postKey types.PostKey) (*types.Post, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostNotFound, postKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
-	post := &types.Post{}
-	unmarshalErr := json.Unmarshal(val, post)
-	if unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	post := new(types.Post)
+	if err := oldwire.UnmarshalJSON(val, post); err != nil {
+		return nil, ErrPostUnmarshalError(err)
 	}
 	return post, nil
 }
 
-func (pm postManager) SetPost(ctx sdk.Context, post *types.Post) sdk.Error {
-	return pm.set(ctx, post.Key, post, postKeyPrefix)
+func (pm PostManager) SetPost(ctx sdk.Context, post *types.Post) sdk.Error {
+	return pm.set(ctx, types.GetPostKey(post.Author, post.PostID), post, postKeyPrefix)
 }
 
-func (pm postManager) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*types.PostMeta, sdk.Error) {
+func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*types.PostMeta, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostMetaNotFound, postMetaKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
 	postMeta := &types.PostMeta{}
-	unmarshalErr := json.Unmarshal(val, postMeta)
-	if unmarshalErr != nil {
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postMeta); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postMeta, nil
 }
 
-func (pm postManager) SetPostMeta(ctx sdk.Context, postKey types.PostKey, postMeta *types.PostMeta) sdk.Error {
+func (pm PostManager) SetPostMeta(ctx sdk.Context, postKey types.PostKey, postMeta *types.PostMeta) sdk.Error {
 	return pm.set(ctx, postKey, postMeta, postMetaKeyPrefix)
 }
 
-func (pm postManager) GetPostLikes(ctx sdk.Context, postKey types.PostKey) (*types.PostLikes, sdk.Error) {
+func (pm PostManager) GetPostLikes(ctx sdk.Context, postKey types.PostKey) (*types.PostLikes, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostLikesNotFound, postLikesKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
 	postLikes := &types.PostLikes{}
-	unmarshalErr := json.Unmarshal(val, postLikes)
-	if unmarshalErr != nil {
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postLikes); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postLikes, nil
 }
 
-func (pm postManager) SetPostLikes(ctx sdk.Context, postKey types.PostKey, postLikes *types.PostLikes) sdk.Error {
+func (pm PostManager) SetPostLikes(ctx sdk.Context, postKey types.PostKey, postLikes *types.PostLikes) sdk.Error {
 	return pm.set(ctx, postKey, postLikes, postLikesKeyPrefix)
 }
 
-func (pm postManager) GetPostComments(ctx sdk.Context, postKey types.PostKey) (*types.PostComments, sdk.Error) {
+func (pm PostManager) GetPostComments(ctx sdk.Context, postKey types.PostKey) (*types.PostComments, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostCommentsNotFound, postCommentsKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
 	postComments := &types.PostComments{}
-	unmarshalErr := json.Unmarshal(val, postComments)
-	if unmarshalErr != nil {
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postComments); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postComments, nil
 }
 
-func (pm postManager) SetPostComments(ctx sdk.Context, postKey types.PostKey, postComments *types.PostComments) sdk.Error {
+func (pm PostManager) SetPostComments(ctx sdk.Context, postKey types.PostKey, postComments *types.PostComments) sdk.Error {
 	return pm.set(ctx, postKey, postComments, postCommentsKeyPrefix)
 }
 
-func (pm postManager) GetPostViews(ctx sdk.Context, postKey types.PostKey) (*types.PostViews, sdk.Error) {
+func (pm PostManager) GetPostViews(ctx sdk.Context, postKey types.PostKey) (*types.PostViews, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostViewsNotFound, postViewsKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
 	postViews := &types.PostViews{}
-	unmarshalErr := json.Unmarshal(val, postViews)
-	if unmarshalErr != nil {
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postViews); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postViews, nil
 }
 
-func (pm postManager) SetPostViews(ctx sdk.Context, postKey types.PostKey, postViews *types.PostViews) sdk.Error {
+func (pm PostManager) SetPostViews(ctx sdk.Context, postKey types.PostKey, postViews *types.PostViews) sdk.Error {
 	return pm.set(ctx, postKey, postViews, postViewsKeyPrefix)
 }
 
-func (pm postManager) GetPostDonations(ctx sdk.Context, postKey types.PostKey) (*types.PostDonations, sdk.Error) {
+func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey types.PostKey) (*types.PostDonations, sdk.Error) {
 	val, err := pm.get(ctx, postKey, ErrPostDonationsNotFound, postDonationsKeyPrefix)
 	if err != nil {
 		return nil, err
 	}
 	postDonations := &types.PostDonations{}
-	unmarshalErr := json.Unmarshal(val, postDonations)
-	if unmarshalErr != nil {
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postDonations, nil
 }
 
-func (pm postManager) SetPostDonations(ctx sdk.Context, postKey types.PostKey, postDonations *types.PostDonations) sdk.Error {
+func (pm PostManager) SetPostDonations(ctx sdk.Context, postKey types.PostKey, postDonations *types.PostDonations) sdk.Error {
 	return pm.set(ctx, postKey, postDonations, postDonationsKeyPrefix)
 }
 
-// Check postManager implements PostManager interface
-var _ types.PostManager = postManager{}
+// Check PostManager implements PostManager interface
+var _ types.PostManager = PostManager{}
