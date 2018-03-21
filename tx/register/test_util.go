@@ -13,7 +13,7 @@ var (
 	TestKVStoreKey = sdk.NewKVStoreKey("account")
 )
 
-func newLinoAccountManager() acc.LinoAccountManager {
+func newLinoAccountManager() acc.AccountManager {
 	return acc.NewLinoAccountManager(TestKVStoreKey)
 }
 

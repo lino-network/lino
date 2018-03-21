@@ -5,10 +5,9 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(am types.AccountManager) sdk.Handler {
+func NewHandler(am AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case FollowMsg:
@@ -25,7 +24,7 @@ func NewHandler(am types.AccountManager) sdk.Handler {
 }
 
 // Handle FollowMsg
-func handleFollowMsg(ctx sdk.Context, am types.AccountManager, msg FollowMsg) sdk.Result {
+func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
 	followerList, err := am.GetFollower(ctx, msg.Followee)
 	if err != nil {
 		return ErrAccountManagerFail("Get follower list failed").Result()
@@ -56,7 +55,7 @@ func handleFollowMsg(ctx sdk.Context, am types.AccountManager, msg FollowMsg) sd
 }
 
 // Handle UnfollowMsg
-func handleUnfollowMsg(ctx sdk.Context, am types.AccountManager, msg UnfollowMsg) sdk.Result {
+func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
 	followerList, err := am.GetFollower(ctx, msg.Followee)
 	if err != nil {
 		return ErrAccountManagerFail("Get follower list failed").Result()
@@ -87,19 +86,19 @@ func handleUnfollowMsg(ctx sdk.Context, am types.AccountManager, msg UnfollowMsg
 }
 
 // Handle TransferMsg
-func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg) sdk.Result {
+func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
 	// check if the sender has enough money
 	senderBank, err := am.GetBankFromAccountKey(ctx, msg.Sender)
 	if err != nil {
 		return ErrAccountManagerFail("Get sender's account bank failed").Result()
 	}
 
-	if !senderBank.Coins.IsGTE(msg.Amount) {
+	if !senderBank.Balance.IsGTE(msg.Amount) {
 		return ErrAccountManagerFail("Sender's coins are not enough").Result()
 	}
 
 	// withdraw money from sender's bank
-	senderBank.Coins = senderBank.Coins.Minus(msg.Amount)
+	senderBank.Balance = senderBank.Balance.Minus(msg.Amount)
 	if err := am.SetBankFromAccountKey(ctx, msg.Sender, senderBank); err != nil {
 		return ErrAccountManagerFail("Set sender's bank failed").Result()
 	}
@@ -107,7 +106,7 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 	// send coins using username
 	if am.AccountExist(ctx, msg.ReceiverName) {
 		if receiverBank, err := am.GetBankFromAccountKey(ctx, msg.ReceiverName); err == nil {
-			receiverBank.Coins = receiverBank.Coins.Plus(msg.Amount)
+			receiverBank.Balance = receiverBank.Balance.Plus(msg.Amount)
 			if setErr := am.SetBankFromAccountKey(ctx, msg.ReceiverName, receiverBank); setErr != nil {
 				return ErrAccountManagerFail("Set receiver's bank failed").Result()
 			}
@@ -119,12 +118,12 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
 	if err == nil {
 		// account bank exists
-		receiverBank.Coins = receiverBank.Coins.Plus(msg.Amount)
+		receiverBank.Balance = receiverBank.Balance.Plus(msg.Amount)
 	} else {
 		// account bank not found, create a new one for this address
-		receiverBank = &types.AccountBank{
+		receiverBank = &AccountBank{
 			Address: msg.ReceiverAddr,
-			Coins:   msg.Amount,
+			Balance: msg.Amount,
 		}
 	}
 
@@ -135,7 +134,7 @@ func handleTransferMsg(ctx sdk.Context, am types.AccountManager, msg TransferMsg
 }
 
 // helper function
-func findAccountInList(me types.AccountKey, lst []types.AccountKey) int {
+func findAccountInList(me AccountKey, lst []AccountKey) int {
 	for index, user := range lst {
 		if user == me {
 			return index

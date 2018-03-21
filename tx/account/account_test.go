@@ -1,15 +1,15 @@
 package account
 
 import (
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateAccount(t *testing.T) {
-	user := types.AccountKey("user")
+	user := AccountKey("user")
 	lam := newLinoAccountManager()
-	acc := NewLinoAccount(user, lam)
+	acc := NewLinoAccount(user, &lam)
 	assert.Nil(t, acc.accountInfo)
 	assert.Nil(t, acc.accountBank)
 	assert.Nil(t, acc.accountMeta)

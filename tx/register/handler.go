@@ -5,12 +5,12 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
 var RegisterFee = sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 100}}
 
-func NewHandler(am types.AccountManager) sdk.Handler {
+func NewHandler(am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case RegisterMsg:
@@ -23,7 +23,7 @@ func NewHandler(am types.AccountManager) sdk.Handler {
 }
 
 // Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg) sdk.Result {
+func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
 	if am.AccountExist(ctx, msg.NewUser) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
