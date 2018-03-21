@@ -26,12 +26,17 @@ const (
 	CodePostNotFound sdk.CodeType = 402
 	// CodePostCreateError occurs when create msg fails some precondition
 	CodePostCreateError sdk.CodeType = 403
+	// CodePostLikeError occurs when like msg fails
+	CodePostLikeError sdk.CodeType = 404
 
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
 
 	// AccountRouterName is used for routing in app
 	AccountRouterName = "account"
+
+	// AccountRouterName is used for routing in app
+	PostRouterName = "post"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
@@ -53,4 +58,10 @@ const (
 
 	// MaximumUsernameLength maximum username length
 	MaxPostContentLength = 1000
+
+	// MaxLikeWeight indicates the 100.00% maximum like weight.
+	MaxLikeWeight = 10000
+
+	// MinLikeWeight indicates the -100.00% maximum like weight.
+	MinLikeWeight = -10000
 )

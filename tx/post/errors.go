@@ -89,6 +89,18 @@ func ErrPostExist() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post already exists"))
 }
 
+func ErrPostLikeNoUsername() sdk.Error {
+	return newError(types.CodePostLikeError, fmt.Sprintf("Like from invalid user"))
+}
+
+func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
+	return newError(types.CodePostLikeError, fmt.Sprintf("Like weight overflow: %v", weight))
+}
+
+func ErrPostLikeInvalidTarget() sdk.Error {
+	return newError(types.CodePostLikeError, fmt.Sprintf("Like target post invalid"))
+}
+
 func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg
