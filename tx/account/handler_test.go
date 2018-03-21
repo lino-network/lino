@@ -173,3 +173,29 @@ func TestInvalidUnfollow(t *testing.T) {
 	assert.Equal(t, 1, len(followingList.Following))
 
 }
+
+// func TestTransferNormal(t *testing.T) {
+// 	lam := newLinoAccountManager()
+// 	ctx := getContext()
+// 	handler := NewHandler(lam)
+//
+// 	// create two test users
+// 	createTestAccount(ctx, lam, "user1")
+// 	createTestAccount(ctx, lam, "user2")
+//
+// 	amount := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
+// 	// let user1 follows user2
+// 	msg := NewFollowMsg("user1", "user2")
+// 	result := handler(ctx, msg)
+// 	assert.Equal(t, result, sdk.Result{})
+//
+// 	// check user1 in the user2's follower list
+// 	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
+// 	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
+// 	assert.Equal(t, true, idx >= 0)
+//
+// 	// check user2 in the user1's following list
+// 	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
+// 	idx = findAccountInList(AccountKey("user2"), followingList.Following)
+// 	assert.Equal(t, true, idx >= 0)
+// }
