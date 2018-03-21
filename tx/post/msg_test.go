@@ -3,12 +3,12 @@ package post
 import (
 	"testing"
 
-	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreate(t *testing.T) {
-	author := types.AccountKey("TestAuthor")
+	author := acc.AccountKey("TestAuthor")
 	// test valid post
 	postInfo := CreateInfo{
 		PostID:       "TestPostID",

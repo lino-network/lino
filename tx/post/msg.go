@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
@@ -14,15 +15,15 @@ type CreateMsg struct {
 }
 
 type CreateInfo struct {
-	PostID       string               `json:"post_id"`
-	Title        string               `json:"title"`
-	Content      string               `json:"content"`
-	Author       types.AccountKey     `json:"author"`
-	ParentAuthor types.AccountKey     `json:"parent_author"`
-	ParentPostID string               `json:"parent_post_id"`
-	SourceAuthor types.AccountKey     `json:"source_author"`
-	SourcePostID string               `json:"source_post_id"`
-	Links        types.IDToURLMapping `json:"links"`
+	PostID       string         `json:"post_id"`
+	Title        string         `json:"title"`
+	Content      string         `json:"content"`
+	Author       acc.AccountKey `json:"author"`
+	ParentAuthor acc.AccountKey `json:"parent_author"`
+	ParentPostID string         `json:"parent_post_id"`
+	SourceAuthor acc.AccountKey `json:"source_author"`
+	SourcePostID string         `json:"source_post_id"`
+	Links        IDToURLMapping `json:"links"`
 }
 
 // NewCreateMsg constructs a post msg
