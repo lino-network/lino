@@ -16,6 +16,16 @@ const (
 	// Lino account handler errors reserve 310 ~ 399
 	CodeAccountManagerFail sdk.CodeType = 310
 
+	// Lino post handler errors reserve 400 ~ 499
+	// CodePostMarshalError indicates error occurs during marshal
+	CodePostMarshalError sdk.CodeType = 400
+	// CodePostUnmarshalError indicates error occurs during unmarshal
+	CodePostUnmarshalError sdk.CodeType = 401
+	// CodePostNotFound indicates the post is not in store.
+	CodePostNotFound sdk.CodeType = 402
+	// CodePostCreateError occurs when create msg fails some precondition
+	CodePostCreateError sdk.CodeType = 403
+
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
 
@@ -36,4 +46,10 @@ const (
 
 	// MsgType is uesd to register App codec
 	msgTypeRegister = 0x1
+
+	// MinimumUsernameLength minimum username length
+	MaxPostTitleLength = 50
+
+	// MaximumUsernameLength maximum username length
+	MaxPostContentLength = 1000
 )
