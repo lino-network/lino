@@ -56,7 +56,6 @@ func (lam LinoAccountManager) CreateAccount(ctx sdk.Context, accKey types.Accoun
 	accMeta := types.AccountMeta{
 		LastActivity:   types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,
-		LastABBlock:    types.Height(ctx.BlockHeight()),
 	}
 	if err := lam.SetMeta(ctx, accInfo.Username, &accMeta); err != nil {
 		return nil, err

@@ -28,7 +28,7 @@ func TestRegister(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -58,7 +58,6 @@ func TestRegister(t *testing.T) {
 	accMeta := types.AccountMeta{
 		LastActivity:   types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,
-		LastABBlock:    types.Height(ctx.BlockHeight()),
 	}
 	metaPtr, err := lam.GetMeta(ctx, types.AccountKey(register))
 	assert.Nil(t, err)
@@ -83,7 +82,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
+		Balance: RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -103,7 +102,7 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -126,7 +125,7 @@ func TestReRegister(t *testing.T) {
 
 	accBank := types.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

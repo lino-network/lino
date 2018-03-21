@@ -34,7 +34,7 @@ func handleRegisterMsg(ctx sdk.Context, am types.AccountManager, msg RegisterMsg
 	if bank.Username != "" {
 		return ErrAccRegisterFail("Already registered").Result()
 	}
-	if RegisterFee.IsGTE(bank.Coins) {
+	if RegisterFee.IsGTE(bank.Balance) {
 		return ErrAccRegisterFail("Register Fee Doesn't enough").Result()
 	}
 
