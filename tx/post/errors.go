@@ -89,6 +89,14 @@ func ErrPostExist() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post already exists"))
 }
 
+func ErrLikePostDoesntExist() sdk.Error {
+	return newError(types.CodePostLikeError, fmt.Sprintf("Target post doesn't exists"))
+}
+
+func ErrDonatePostDoesntExist() sdk.Error {
+	return newError(types.CodePostLikeError, fmt.Sprintf("Target post doesn't exists"))
+}
+
 func ErrPostLikeNoUsername() sdk.Error {
 	return newError(types.CodePostLikeError, fmt.Sprintf("Like needs have username"))
 }

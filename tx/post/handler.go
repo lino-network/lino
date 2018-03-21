@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
@@ -21,6 +22,7 @@ func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
+
 	}
 }
 
@@ -28,7 +30,7 @@ func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg CreatePostMsg) sdk.Result {
 	account := acc.NewProxyAccount(msg.Author, &am)
 	if !account.IsAccountExist(ctx) {
-		return ErrPostCreateNonExistAuthor().Result()
+		return acc.ErrUsernameNotFound(string(msg.Author)).Result()
 	}
 	post := NewProxyPost(msg.Author, msg.PostID, &pm)
 	if post.IsPostExist(ctx) {
@@ -58,94 +60,67 @@ func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	return sdk.Result{}
 }
 
-// Handle DonateMsg
-func handleLikeMsg(ctx sdk.Context, pm types.PostManager, am types.AccountManager, msg LikeMsg) sdk.Result {
-	_, err := am.GetMeta(ctx, msg.Username)
-	if err != nil {
-		return err.Result()
+// Handle LikeMsg
+func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg LikeMsg) sdk.Result {
+	account := acc.NewProxyAccount(msg.Username, &am)
+	if !account.IsAccountExist(ctx) {
+		return acc.ErrUsernameNotFound(string(msg.Username)).Result()
 	}
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
-	postMeta, err := pm.GetPostMeta(ctx, postKey)
-	if err != nil {
-		return err.Result()
+	post := NewProxyPost(msg.Author, msg.PostID, &pm)
+	if !post.IsPostExist(ctx) {
+		return ErrLikePostDoesntExist().Result()
 	}
 	// TODO: check acitivity burden
-	postLikes, err := pm.GetPostLikes(ctx, postKey)
-	if err != nil {
+	like := Like{Username: msg.Username, Weight: msg.Weight}
+	if err := post.AddOrUpdateLikeToPost(ctx, like); err != nil {
 		return err.Result()
 	}
-	index := getLikeFromList(postLikes.Likes, username)
-	if index == -1 {
-		like := types.Like{
-			Username: msg.Username,
-			Weight:   msg.Weight,
-		}
-		postLikes.Likes = append(postLikes.Likes, like)
-		postLikes.TotalWeight += like.Weight
-	} else {
-		postLikes.TotalWeight -= postLikes.Likes[index].Weight
-		postLikes.Likes[index].Weight = msg.Weight
-		postLikes.TotalWeight += postLikes.Likes[index].Weight
+	if err := account.UpdateLastActivity(ctx); err != nil {
+		return err.Result()
 	}
-	postMeta.LastActicity = types.Height(ctx.BlockHeight())
 
-	if err := pm.SetPostLikes(ctx, postKey, postLikes); err != nil {
+	// apply change to storage
+	if err := post.Apply(ctx); err != nil {
 		return err.Result()
 	}
-	if err := pm.SetPostMeta(ctx, postKey, postMeta); err != nil {
+	if err := account.Apply(ctx); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 // Handle DonateMsg
-func handleDonateMsg(ctx sdk.Context, pm types.PostManager, am types.AccountManager, msg DonateMsg) sdk.Result {
-	_, err := am.GetMeta(ctx, msg.Username)
-	if err != nil {
-		return err.Result()
+func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg DonateMsg) sdk.Result {
+	account := acc.NewProxyAccount(msg.Username, &am)
+	if !account.IsAccountExist(ctx) {
+		return acc.ErrUsernameNotFound(string(msg.Username)).Result()
 	}
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
-	postMeta, err := pm.GetPostMeta(ctx, postKey)
-	if err != nil {
-		return err.Result()
+	post := NewProxyPost(msg.Author, msg.PostID, &pm)
+	if !post.IsPostExist(ctx) {
+		return ErrDonatePostDoesntExist().Result()
 	}
 	// TODO: check acitivity burden
-	postDonations, err := pm.GetPostDonations(ctx, postKey)
-	if err != nil {
+	if err := account.MinusCoins(ctx, msg.Amount); err != nil {
 		return err.Result()
 	}
-	bank, err := GetBankFromAccountKey(ctx, msg.Username)
-
-	if msg.Amount.IsGTE(bank.Coins) {
-		return ErrPostDonateInsufficient().Result()
-	}
-	donation := types.Donation{
+	donation := Donation{
 		Username: msg.Username,
 		Amount:   msg.Amount,
 		Created:  types.Height(ctx.BlockHeight()),
 	}
-	postDonations.Donations = append(postDonations.Donations, donation)
-	postDonations.Reward = postDonations.Reward.Plus(donation.Amount)
-	bank.Coins = bank.Coins.Minus(msg.Amount)
-	postMeta.LastActicity = types.Height(ctx.BlockHeight())
+	if err := post.AddDonation(ctx, donation); err != nil {
+		return err.Result()
+	}
+	if err := account.UpdateLastActivity(ctx); err != nil {
+		return err.Result()
+	}
 
-	if err := am.SetBank(ctx, bank.Address, bank); err != nil {
+	// apply change to storage
+	if err := post.Apply(ctx); err != nil {
 		return err.Result()
 	}
-	if err := pm.SetPostDonations(ctx, postKey, postDonations); err != nil {
-		return err.Result()
-	}
-	if err := pm.SetPostMeta(ctx, postKey, postMeta); err != nil {
+	if err := account.Apply(ctx); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
-}
-
-func getLikeFromList(likes []types.Like, user types.AccountKey) int64 {
-	for i, like := range likes {
-		if like.Username == user {
-			return i
-		}
-	}
-	return -1
 }

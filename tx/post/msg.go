@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
@@ -16,17 +17,17 @@ type CreatePostMsg struct {
 
 // LikeMsg sent from a user to a post
 type LikeMsg struct {
-	Username types.AccountKey
+	Username acc.AccountKey
 	Weight   int64
-	Author   types.AccountKey
+	Author   acc.AccountKey
 	PostID   string
 }
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username types.AccountKey
+	Username acc.AccountKey
 	Amount   sdk.Coins
-	Author   types.AccountKey
+	Author   acc.AccountKey
 	PostID   string
 }
 
@@ -36,7 +37,7 @@ func NewCreatePostMsg(postInfo PostInfo) CreatePostMsg {
 }
 
 // NewLikeMsg constructs a like msg
-func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, postID string) LikeMsg {
+func NewLikeMsg(user acc.AccountKey, weight int64, author acc.AccountKey, postID string) LikeMsg {
 	return LikeMsg{
 		Username: user,
 		Weight:   weight,
@@ -46,7 +47,7 @@ func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, po
 }
 
 // NewDonateMsg constructs a like msg
-func NewDonateMsg(user types.AccountKey, amount sdk.Coins, author types.AccountKey, postID string) DonateMsg {
+func NewDonateMsg(user acc.AccountKey, amount sdk.Coins, author acc.AccountKey, postID string) DonateMsg {
 	return DonateMsg{
 		Username: user,
 		Amount:   amount,
@@ -105,7 +106,7 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 		return bank.ErrInvalidCoins(msg.Amount.String())
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrPostLikeInvalidTarget()
+		return ErrPostDonateInvalidTarget()
 	}
 	return nil
 }

@@ -5,15 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/stretchr/testify/assert"
 )
-
-func newAmount(amount int64) sdk.Coins {
-	return sdk.Coins{
-		{"lino", amount},
-	}
-}
 
 func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Error) {
 	result := donateMsg.ValidateBasic()
@@ -26,7 +20,7 @@ func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 }
 
 func TestCreatePostMsg(t *testing.T) {
-	author := types.AccountKey("TestAuthor")
+	author := acc.AccountKey("TestAuthor")
 	// test valid post
 	post := PostInfo{
 		PostID:       "TestPostID",
@@ -75,14 +69,14 @@ func TestLikeMsg(t *testing.T) {
 		likeMsg     LikeMsg
 		expectError sdk.Error
 	}{
-		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"), nil},
-		{NewLikeMsg(types.AccountKey("test"), -10000, types.AccountKey("author"), "postID"), nil},
-		{NewLikeMsg(types.AccountKey("test"), 10001, types.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(10001)},
-		{NewLikeMsg(types.AccountKey("test"), -10001, types.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(-10001)},
-		{NewLikeMsg(types.AccountKey(""), 10000, types.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
-		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey(""), ""), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey("author"), "postID"), nil},
+		{NewLikeMsg(acc.AccountKey("test"), -10000, acc.AccountKey("author"), "postID"), nil},
+		{NewLikeMsg(acc.AccountKey("test"), 10001, acc.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(10001)},
+		{NewLikeMsg(acc.AccountKey("test"), -10001, acc.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(-10001)},
+		{NewLikeMsg(acc.AccountKey(""), 10000, acc.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
+		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey(""), ""), ErrPostLikeInvalidTarget()},
 	}
 
 	for _, cs := range cases {
@@ -95,13 +89,13 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey("author"), "postID"), nil},
-		{NewDonateMsg(types.AccountKey(""), newAmount(1), types.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(0), types.AccountKey("author"), "postID"), bank.ErrInvalidCoins("0lino")},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(-1), types.AccountKey("author"), "postID"), bank.ErrInvalidCoins("-1lino")},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), "postID"), nil},
+		{NewDonateMsg(acc.AccountKey(""), newAmount(1), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(0), acc.AccountKey("author"), "postID"), bank.ErrInvalidCoins("0lino")},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(-1), acc.AccountKey("author"), "postID"), bank.ErrInvalidCoins("-1lino")},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {
