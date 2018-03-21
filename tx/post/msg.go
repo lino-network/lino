@@ -19,9 +19,9 @@ type CreateInfo struct {
 	Content      string               `json:"content"`
 	Author       types.AccountKey     `json:"author"`
 	ParentAuthor types.AccountKey     `json:"parent_author"`
-	ParentPostID string               `json:"parent_permlink"`
+	ParentPostID string               `json:"parent_post_id"`
 	SourceAuthor types.AccountKey     `json:"source_author"`
-	SourcePostID string               `json:"source_permlink"`
+	SourcePostID string               `json:"source_post_id"`
 	Links        types.IDToURLMapping `json:"links"`
 }
 

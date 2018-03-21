@@ -45,7 +45,7 @@ func TestCreate(t *testing.T) {
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostTitleExceedMaxLength())
 
-	// test exceeding max title length
+	// test exceeding max content length
 	postInfo.Title = string(make([]byte, 50))
 	postInfo.Content = string(make([]byte, 1001))
 	createMsg = NewCreateMsg(postInfo)
