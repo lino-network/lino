@@ -153,3 +153,37 @@ func TestHandlerCreateComment(t *testing.T) {
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrPostCommentsNotFound(GetPostKey(user, "newComment")).Result())
 }
+
+func TestHandlerPostLike(t *testing.T) {
+	pm := newPostManager()
+	lam := acc.NewLinoAccountManager(TestKVStoreKey)
+	ctx := getContext()
+
+	handler := NewHandler(pm, lam)
+
+	priv, bank := privAndBank()
+	user := types.AccountKey("testuser")
+	_, err := lam.CreateAccount(ctx, user, priv.PubKey(), bank)
+	assert.Nil(t, err)
+
+	// test valid like
+	post := types.Post{
+		PostID:       "TestPostID",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
+	}
+	msg := NewCreatePostMsg(post)
+	result := handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	// test invlaid author
+	post.Author = types.AccountKey("invalid")
+	msg = NewLikeMsg(user, 10000, user, "TestPostID")
+	result = handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+}

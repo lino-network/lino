@@ -90,7 +90,7 @@ func ErrPostExist() sdk.Error {
 }
 
 func ErrPostLikeNoUsername() sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Like from invalid user"))
+	return newError(types.CodePostLikeError, fmt.Sprintf("Like needs have username"))
 }
 
 func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
@@ -99,6 +99,18 @@ func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
 
 func ErrPostLikeInvalidTarget() sdk.Error {
 	return newError(types.CodePostLikeError, fmt.Sprintf("Like target post invalid"))
+}
+
+func ErrPostDonateNoUsername() sdk.Error {
+	return newError(types.CodePostDonateError, fmt.Sprintf("Donate needs have username"))
+}
+
+func ErrPostDonateInvalidTarget() sdk.Error {
+	return newError(types.CodePostDonateError, fmt.Sprintf("Donate target post invalid"))
+}
+
+func ErrPostDonateInsufficient() sdk.Error {
+	return newError(types.CodePostDonateError, fmt.Sprintf("Balance no enough"))
 }
 
 func msgOrDefaultMsg(msg string, code CodeType) string {

@@ -99,9 +99,9 @@ func TestDonationMsg(t *testing.T) {
 		{NewDonateMsg(types.AccountKey(""), newAmount(1), types.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
 		{NewDonateMsg(types.AccountKey("test"), newAmount(0), types.AccountKey("author"), "postID"), bank.ErrInvalidCoins("0lino")},
 		{NewDonateMsg(types.AccountKey("test"), newAmount(-1), types.AccountKey("author"), "postID"), bank.ErrInvalidCoins("-1lino")},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), ""), ErrPostLikeInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), newAmount(1), types.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {

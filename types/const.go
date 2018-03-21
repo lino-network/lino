@@ -28,6 +28,8 @@ const (
 	CodePostCreateError sdk.CodeType = 403
 	// CodePostLikeError occurs when like msg fails
 	CodePostLikeError sdk.CodeType = 404
+	// CodePostDonateError occurs when donate msg fails
+	CodePostDonateError sdk.CodeType = 405
 
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"

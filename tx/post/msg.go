@@ -96,7 +96,7 @@ func (msg LikeMsg) ValidateBasic() sdk.Error {
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink exists
 	if len(msg.Username) == 0 {
-		return ErrPostLikeNoUsername()
+		return ErrPostDonateNoUsername()
 	}
 	if !msg.Amount.IsValid() {
 		return bank.ErrInvalidCoins(msg.Amount.String())
