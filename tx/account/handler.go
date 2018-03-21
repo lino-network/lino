@@ -51,7 +51,7 @@ func handleFollowMsg(ctx sdk.Context, am types.AccountManager, msg FollowMsg) sd
 
 	if isInFollowingList(msg.Followee, followingList) == false {
 		followingList.Following = append(followingList.Following, msg.Followee)
-		if err := am.SetFollowing(ctx, msg.Followee, followingList); err != nil {
+		if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
 			return ErrAccountManagerFail("Set following failed").Result()
 		}
 	}
