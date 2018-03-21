@@ -6,6 +6,8 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
+type Memo uint64
+
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
 	Username AccountKey    `json:"key"`
@@ -51,7 +53,8 @@ type AccountManager interface {
 
 	GetBankFromAccountKey(ctx sdk.Context, accKey AccountKey) (*AccountBank, sdk.Error)
 	GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error)
-	SetBank(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error
+	SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error
+	SetBankFromAccountKey(ctx sdk.Context, accKey AccountKey, accBank *AccountBank) sdk.Error
 
 	GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error)
 	SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *AccountMeta) sdk.Error

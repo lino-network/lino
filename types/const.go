@@ -12,6 +12,7 @@ const (
 	// Lino register handler errors reserve 300 ~ 309.
 	CodeInvalidUsername   sdk.CodeType = 301
 	CodeAccRegisterFailed sdk.CodeType = 302
+	CodeUsernameNotFound  sdk.CodeType = 303
 
 	// Lino account handler errors reserve 310 ~ 399
 	CodeAccountManagerFail sdk.CodeType = 310
