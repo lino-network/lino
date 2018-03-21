@@ -24,13 +24,13 @@ func TestFollow(t *testing.T) {
 
 	// check user1 in the user2's follower list
 	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	flag := isInFollowerList(types.AccountKey("user1"), followerList)
-	assert.Equal(t, true, flag)
+	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	assert.Equal(t, true, idx >= 0)
 
 	// check user2 in the user1's following list
 	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	flag = isInFollowingList(types.AccountKey("user2"), followingList)
-	assert.Equal(t, true, flag)
+	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	assert.Equal(t, true, idx >= 0)
 }
 
 func TestFollowUserNotExist(t *testing.T) {
@@ -44,12 +44,18 @@ func TestFollowUserNotExist(t *testing.T) {
 	// let user2(not exists) follows user1
 	msg := NewFollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound("Username not found").Result())
+	assert.Equal(t, result, ErrAccountManagerFail("Get following list failed").Result())
+
+	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user1"))
+	assert.Equal(t, 0, len(followerList.Follower))
 
 	// let user1 follows user3(not exists)
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound("Username not found").Result())
+	assert.Equal(t, result, ErrAccountManagerFail("Get follower list failed").Result())
+
+	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
+	assert.Equal(t, 0, len(followingList.Following))
 }
 
 func TestFollowAgain(t *testing.T) {
@@ -72,14 +78,14 @@ func TestFollowAgain(t *testing.T) {
 
 	// check user1 is user2's only follower
 	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	flag := isInFollowerList(types.AccountKey("user1"), followerList)
-	assert.Equal(t, true, flag)
+	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	assert.Equal(t, 0, idx)
 	assert.Equal(t, 1, len(followerList.Follower))
 
 	// check user2 is the only one in the user1's following list
 	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	flag = isInFollowingList(types.AccountKey("user2"), followingList)
-	assert.Equal(t, true, flag)
+	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	assert.Equal(t, 0, idx)
 	assert.Equal(t, 1, len(followingList.Following))
 }
 
@@ -104,13 +110,13 @@ func TestUnfollow(t *testing.T) {
 
 	// check user1 is not in the user2's follower list
 	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	flag := isInFollowerList(types.AccountKey("user1"), followerList)
-	assert.Equal(t, false, flag)
+	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	assert.Equal(t, -1, idx)
 
 	// check user2 is not in the user1's following list
 	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	flag = isInFollowingList(types.AccountKey("user2"), followingList)
-	assert.Equal(t, false, flag)
+	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	assert.Equal(t, -1, idx)
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
@@ -123,12 +129,12 @@ func TestUnfollowUserNotExist(t *testing.T) {
 	// let user2(not exists) unfollows user1
 	msg := NewUnfollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound("Username not found").Result())
+	assert.Equal(t, result, ErrAccountManagerFail("Get following list failed").Result())
 
 	// let user1 unfollows user3(not exists)
 	msg = NewUnfollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound("Username not found").Result())
+	assert.Equal(t, result, ErrAccountManagerFail("Get follower list failed").Result())
 }
 
 func TestInvalidUnfollow(t *testing.T) {
@@ -157,14 +163,14 @@ func TestInvalidUnfollow(t *testing.T) {
 
 	// check user1 in the user2's follower list
 	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	flag := isInFollowerList(types.AccountKey("user1"), followerList)
-	assert.Equal(t, true, flag)
+	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	assert.Equal(t, true, idx >= 0)
 	assert.Equal(t, 1, len(followerList.Follower))
 
 	// check user2 in the user1's following list
 	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	flag = isInFollowingList(types.AccountKey("user2"), followingList)
-	assert.Equal(t, true, flag)
+	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	assert.Equal(t, true, idx >= 0)
 	assert.Equal(t, 1, len(followingList.Following))
 
 }
