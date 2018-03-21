@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,13 +22,13 @@ func TestFollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
+	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
 	assert.Equal(t, true, idx >= 0)
 
 	// check user2 in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
+	idx = findAccountInList(AccountKey("user2"), followingList.Following)
 	assert.Equal(t, true, idx >= 0)
 }
 
@@ -46,7 +45,7 @@ func TestFollowUserNotExist(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, result, ErrAccountManagerFail("Get following list failed").Result())
 
-	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user1"))
+	followerList, _ := lam.GetFollower(ctx, AccountKey("user1"))
 	assert.Equal(t, 0, len(followerList.Follower))
 
 	// let user1 follows user3(not exists)
@@ -54,7 +53,7 @@ func TestFollowUserNotExist(t *testing.T) {
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrAccountManagerFail("Get follower list failed").Result())
 
-	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
+	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
 	assert.Equal(t, 0, len(followingList.Following))
 }
 
@@ -77,14 +76,14 @@ func TestFollowAgain(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is user2's only follower
-	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
+	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
 	assert.Equal(t, 0, idx)
 	assert.Equal(t, 1, len(followerList.Follower))
 
 	// check user2 is the only one in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
+	idx = findAccountInList(AccountKey("user2"), followingList.Following)
 	assert.Equal(t, 0, idx)
 	assert.Equal(t, 1, len(followingList.Following))
 }
@@ -109,13 +108,13 @@ func TestUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is not in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
+	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
 	assert.Equal(t, -1, idx)
 
 	// check user2 is not in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
+	idx = findAccountInList(AccountKey("user2"), followingList.Following)
 	assert.Equal(t, -1, idx)
 }
 
@@ -162,14 +161,14 @@ func TestInvalidUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, types.AccountKey("user2"))
-	idx := findAccountInList(types.AccountKey("user1"), followerList.Follower)
+	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
+	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
 	assert.Equal(t, true, idx >= 0)
 	assert.Equal(t, 1, len(followerList.Follower))
 
 	// check user2 in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, types.AccountKey("user1"))
-	idx = findAccountInList(types.AccountKey("user2"), followingList.Following)
+	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
+	idx = findAccountInList(AccountKey("user2"), followingList.Following)
 	assert.Equal(t, true, idx >= 0)
 	assert.Equal(t, 1, len(followingList.Following))
 

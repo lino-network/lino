@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
@@ -26,9 +27,9 @@ func TestRegister(t *testing.T) {
 	ctx := getContext()
 	priv := crypto.GenPrivKeyEd25519()
 
-	accBank := types.AccountBank{
+	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -39,38 +40,37 @@ func TestRegister(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	accInfo := types.AccountInfo{
-		Username: types.AccountKey(register),
+	accInfo := acc.AccountInfo{
+		Username: acc.AccountKey(register),
 		Created:  types.Height(0),
 		PostKey:  priv.PubKey(),
 		OwnerKey: priv.PubKey(),
 		Address:  priv.PubKey().Address(),
 	}
-	infoPtr, err := lam.GetInfo(ctx, types.AccountKey(register))
+	infoPtr, err := lam.GetInfo(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
 	assert.Equal(t, accInfo, *infoPtr, "Account info should be equal")
 
-	bankPtr, err := lam.GetBankFromAccountKey(ctx, types.AccountKey(register))
+	bankPtr, err := lam.GetBankFromAccountKey(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
-	accBank.Username = types.AccountKey(register)
+	accBank.Username = acc.AccountKey(register)
 	assert.Equal(t, accBank, *bankPtr, "Account bank should be equal")
 
-	accMeta := types.AccountMeta{
+	accMeta := acc.AccountMeta{
 		LastActivity:   types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,
-		LastABBlock:    types.Height(ctx.BlockHeight()),
 	}
-	metaPtr, err := lam.GetMeta(ctx, types.AccountKey(register))
+	metaPtr, err := lam.GetMeta(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *metaPtr, "Account meta should be equal")
 
-	follower := types.Follower{Follower: []types.AccountKey{}}
-	followerPtr, err := lam.GetFollower(ctx, types.AccountKey(register))
+	follower := acc.Follower{Follower: []acc.AccountKey{}}
+	followerPtr, err := lam.GetFollower(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
 	assert.Equal(t, follower, *followerPtr, "Account follower should be equal")
 
-	following := types.Following{Following: []types.AccountKey{}}
-	followingPtr, err := lam.GetFollowing(ctx, types.AccountKey(register))
+	following := acc.Following{Following: []acc.AccountKey{}}
+	followingPtr, err := lam.GetFollowing(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
 	assert.Equal(t, following, *followingPtr, "Account follower should be equal")
 }
@@ -81,9 +81,9 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 	ctx := getContext()
 	priv := crypto.GenPrivKeyEd25519()
 
-	accBank := types.AccountBank{
+	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
+		Balance: RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -101,9 +101,9 @@ func TestRegisterDuplicate(t *testing.T) {
 	ctx := getContext()
 	priv := crypto.GenPrivKeyEd25519()
 
-	accBank := types.AccountBank{
+	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -124,9 +124,9 @@ func TestReRegister(t *testing.T) {
 	ctx := getContext()
 	priv := crypto.GenPrivKeyEd25519()
 
-	accBank := types.AccountBank{
+	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

@@ -6,14 +6,15 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/tendermint/go-crypto"
 )
 
 // RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
 type RegisterMsg struct {
-	NewUser   types.AccountKey `json:"new_user"`
-	NewPubKey crypto.PubKey    `json:"new_public_key"`
+	NewUser   acc.AccountKey `json:"new_user"`
+	NewPubKey crypto.PubKey  `json:"new_public_key"`
 }
 
 var _ sdk.Msg = RegisterMsg{}
@@ -21,7 +22,7 @@ var _ sdk.Msg = RegisterMsg{}
 // NewSendMsg - construct arbitrary multi-in, multi-out send msg.
 func NewRegisterMsg(newUser string, pubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
-		NewUser:   types.AccountKey(newUser),
+		NewUser:   acc.AccountKey(newUser),
 		NewPubKey: pubkey,
 	}
 }

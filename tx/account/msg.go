@@ -11,29 +11,29 @@ import (
 )
 
 type FollowMsg struct {
-	Follower types.AccountKey `json:"follower"`
-	Followee types.AccountKey `json:"followee"`
+	Follower AccountKey `json:"follower"`
+	Followee AccountKey `json:"followee"`
 }
 
 type UnfollowMsg struct {
-	Follower types.AccountKey `json:"follower"`
-	Followee types.AccountKey `json:"followee"`
+	Follower AccountKey `json:"follower"`
+	Followee AccountKey `json:"followee"`
 }
 
 // we can support to transfer to an user or an address
 type TransferMsg struct {
-	Sender       types.AccountKey `json:"sender"`
-	ReceiverName types.AccountKey `json:"receiver_name"`
-	ReceiverAddr sdk.Address      `json:"receiver_addr"`
-	Amount       sdk.Coins        `json:"amount"`
-	Memo         []byte           `json:"memo"`
+	Sender       AccountKey  `json:"sender"`
+	ReceiverName AccountKey  `json:"receiver_name"`
+	ReceiverAddr sdk.Address `json:"receiver_addr"`
+	Amount       sdk.Coins   `json:"amount"`
+	Memo         []byte      `json:"memo"`
 }
 
 type TransferOption func(*TransferMsg)
 
 func TransferToUser(userName string) TransferOption {
 	return func(args *TransferMsg) {
-		args.ReceiverName = types.AccountKey(userName)
+		args.ReceiverName = AccountKey(userName)
 	}
 }
 
@@ -52,8 +52,8 @@ var _ sdk.Msg = TransferMsg{}
 
 func NewFollowMsg(follower string, followee string) FollowMsg {
 	return FollowMsg{
-		Follower: types.AccountKey(follower),
-		Followee: types.AccountKey(followee),
+		Follower: AccountKey(follower),
+		Followee: AccountKey(followee),
 	}
 }
 
@@ -94,8 +94,8 @@ func (msg FollowMsg) GetSigners() []sdk.Address {
 
 func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	return UnfollowMsg{
-		Follower: types.AccountKey(follower),
-		Followee: types.AccountKey(followee),
+		Follower: AccountKey(follower),
+		Followee: AccountKey(followee),
 	}
 }
 
@@ -136,7 +136,7 @@ func (msg UnfollowMsg) GetSigners() []sdk.Address {
 
 func NewTransferMsg(sender string, amount sdk.Coins, memo []byte, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
-		Sender: types.AccountKey(sender),
+		Sender: AccountKey(sender),
 		Amount: amount,
 		Memo:   memo,
 		// ReceiverName: types.AccountKey(""),

@@ -1,6 +1,6 @@
 package types
 
-// AccountKey key format in KVStore
+// PostKey key format in KVStore
 type AccountKey string
 
 // PostKey key format in KVStore
