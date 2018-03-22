@@ -37,9 +37,9 @@ func TransferToUser(userName string) TransferOption {
 	}
 }
 
-func TransferToAddr(addr string) TransferOption {
+func TransferToAddr(addr sdk.Address) TransferOption {
 	return func(args *TransferMsg) {
-		args.ReceiverAddr = sdk.Address(addr)
+		args.ReceiverAddr = addr
 	}
 }
 

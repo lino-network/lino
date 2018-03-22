@@ -82,7 +82,7 @@ func TestTransferMsg(t *testing.T) {
 	assert.Nil(t, result)
 
 	// normal transfer to an address
-	receiverAddr := "2137192887931"
+	receiverAddr := sdk.Address("2137192887931")
 	msg = NewTransferMsg(sender, amount, memo, TransferToAddr(receiverAddr))
 	result = msg.ValidateBasic()
 	assert.Nil(t, result)
@@ -94,7 +94,7 @@ func TestTransferMsg(t *testing.T) {
 
 	// invalid transfer: both username and address are invalid
 	receiverName = ""
-	receiverAddr = ""
+	receiverAddr = sdk.Address("")
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName), TransferToAddr(receiverAddr))
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, ErrInvalidUsername(("invalid receiver")))

@@ -31,14 +31,14 @@ func privAndBank() (crypto.PrivKey, *AccountBank) {
 	priv := crypto.GenPrivKeyEd25519()
 	accBank := &AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	return priv.Wrap(), accBank
 }
 
-func createTestAccount(ctx sdk.Context, lam AccountManager, username string) {
+func createTestAccount(ctx sdk.Context, lam AccountManager, username string) *Account {
 	priv, bank := privAndBank()
 	acc := NewLinoAccount(AccountKey(username), &lam)
 	acc.CreateAccount(ctx, AccountKey(username), priv.PubKey(), bank)
 	acc.Apply(ctx)
+	return acc
 }

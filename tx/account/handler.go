@@ -88,21 +88,13 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 
 // Handle TransferMsg
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
-	// check if the sender has enough money
-	senderBank, err := am.GetBankFromAccountKey(ctx, msg.Sender)
-	if err != nil {
-		return ErrAccountManagerFail("Get sender's account bank failed").Result()
-	}
-
-	if !senderBank.Balance.IsGTE(msg.Amount) {
-		return ErrAccountManagerFail("Sender's coins are not enough").Result()
-	}
-
 	// withdraw money from sender's bank
-	senderBank.Balance = senderBank.Balance.Minus(msg.Amount)
-	if err := am.SetBankFromAccountKey(ctx, msg.Sender, senderBank); err != nil {
-		return ErrAccountManagerFail("Set sender's bank failed").Result()
+	accSender := NewLinoAccount(msg.Sender, &am)
+	if err := accSender.MinusCoins(ctx, msg.Amount); err != nil {
+		return ErrAccountManagerFail("Withdraw money from sender's bank failed").Result()
 	}
+
+	accSender.Apply(ctx)
 
 	// both username and address provided
 	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
@@ -114,17 +106,17 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	}
 
 	// send coins using username
-	if len(msg.ReceiverName) != 0 && am.AccountExist(ctx, msg.ReceiverName) {
-		if receiverBank, err := am.GetBankFromAccountKey(ctx, msg.ReceiverName); err == nil {
-			receiverBank.Balance = receiverBank.Balance.Plus(msg.Amount)
-			if setErr := am.SetBankFromAccountKey(ctx, msg.ReceiverName, receiverBank); setErr != nil {
-				return ErrAccountManagerFail("Set receiver's bank failed").Result()
-			}
-			return sdk.Result{}
+	if len(msg.ReceiverName) != 0 {
+		accReceiver := NewLinoAccount(msg.ReceiverName, &am)
+		if err := accReceiver.AddCoins(ctx, msg.Amount); err != nil {
+			return ErrAccountManagerFail("Add money to receiver's bank failed").Result()
 		}
+
+		accReceiver.Apply(ctx)
+		return sdk.Result{}
 	}
 
-	// send coins using address
+	// send coins using address (even no account bank associated with this addr)
 	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
 	if err == nil {
 		// account bank exists

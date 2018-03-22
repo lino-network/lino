@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -174,22 +175,68 @@ func TestInvalidUnfollow(t *testing.T) {
 
 }
 
-// func TestTransferNormal(t *testing.T) {
-// 	lam := newLinoAccountManager()
-// 	ctx := getContext()
-// 	handler := NewHandler(lam)
-//
-// 	// create two test users
-// 	createTestAccount(ctx, lam, "user1")
-// 	createTestAccount(ctx, lam, "user2")
-//
-// 	amount := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
-// 	memo := []byte("This is a memo!")
-//
-// 	// let user1 transfers 200 to user2
-// 	msg := NewTransferMsg(AccountKey("user1"), amount, memo, TransferToUser("user2"))
-// 	result := handler(ctx, msg)
-// 	assert.Equal(t, sdk.Result{}, result)
-// 	assert.Equal(t, expe, actual)
-//
-// }
+func TestTransferNormal(t *testing.T) {
+	lam := newLinoAccountManager()
+	ctx := getContext()
+	handler := NewHandler(lam)
+
+	// create two test users
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
+
+	c2000 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(2000)}}
+	c200 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(200)}}
+	c0 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
+	c1800 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1800)}}
+	c1600 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1600)}}
+
+	acc1.AddCoins(ctx, c2000)
+
+	acc1.Apply(ctx)
+	acc2.Apply(ctx)
+
+	memo := []byte("This is a memo!")
+
+	// let user1 transfers 200 to user2 (by username)
+	msg := NewTransferMsg("user1", c200, memo, TransferToUser("user2"))
+	result := handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	acc2Balance, _ := acc2.GetBankBalance(ctx)
+
+	assert.Equal(t, true, acc1Balance.IsEqual(c1800))
+	assert.Equal(t, true, acc2Balance.IsEqual(c200))
+
+	//let user1 transfers 1600 to user2 (by both username and address)
+	acc1.clear()
+	acc2.clear()
+
+	acc2Addr, _ := acc2.GetBankAddress(ctx)
+	msg = NewTransferMsg("user1", c1600, memo, TransferToUser("user2"), TransferToAddr(acc2Addr))
+	result = handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	acc1Balance, _ = acc1.GetBankBalance(ctx)
+	acc2Balance, _ = acc2.GetBankBalance(ctx)
+
+	assert.Equal(t, true, acc1Balance.IsEqual(c200))
+	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
+
+	//let user1 transfers 1600 to user2 (by  address)
+	acc1.clear()
+	acc2.clear()
+
+	msg = NewTransferMsg("user1", c200, memo, TransferToAddr(acc2Addr))
+	result = handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	acc1Balance, _ = acc1.GetBankBalance(ctx)
+	acc2Balance, _ = acc2.GetBankBalance(ctx)
+
+	fmt.Println(acc1Balance)
+	fmt.Println(acc2Balance)
+	assert.Equal(t, true, acc1Balance.IsEqual(c0))
+	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
+
+}

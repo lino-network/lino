@@ -104,6 +104,36 @@ func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey cry
 	return nil
 }
 
+func (acc *Account) AddCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+	if err := acc.checkAccountBank(ctx); err != nil {
+		return err
+	}
+	acc.accountBank.Balance = acc.accountBank.Balance.Plus(coins)
+	acc.writeBankFlag = true
+	return nil
+}
+
+func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+	if err := acc.checkAccountBank(ctx); err != nil {
+		return err
+	}
+
+	if !acc.accountBank.Balance.IsGTE(coins) {
+		return ErrAccountManagerFail("Account bank's coins are not enough")
+	}
+
+	c0 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
+	acc.accountBank.Balance = acc.accountBank.Balance.Minus(coins)
+
+	// API return empty when the result is 0 coin
+	if len(acc.accountBank.Balance) == 0 {
+		acc.accountBank.Balance = c0
+	}
+
+	acc.writeBankFlag = true
+	return nil
+}
+
 func (acc *Account) GetUsername(ctx sdk.Context) AccountKey {
 	return acc.username
 }
@@ -216,7 +246,23 @@ func (acc *Account) Apply(ctx sdk.Context) sdk.Error {
 			return err
 		}
 	}
+
+	acc.clear()
+
 	return nil
+}
+
+func (acc *Account) clear() {
+	acc.writeInfoFlag = false
+	acc.writeBankFlag = false
+	acc.writeMetaFlag = false
+	acc.writeFollowerFlag = false
+	acc.writeFollowingFlag = false
+	acc.accountInfo = nil
+	acc.accountBank = nil
+	acc.accountMeta = nil
+	acc.follower = nil
+	acc.following = nil
 }
 
 func (acc *Account) checkAccountInfo(ctx sdk.Context) (err sdk.Error) {
