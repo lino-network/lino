@@ -94,8 +94,6 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		return ErrAccountManagerFail("Withdraw money from sender's bank failed").Result()
 	}
 
-	accSender.Apply(ctx)
-
 	// both username and address provided
 	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
 		// check if username and address match
@@ -111,7 +109,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		if err := accReceiver.AddCoins(ctx, msg.Amount); err != nil {
 			return ErrAccountManagerFail("Add money to receiver's bank failed").Result()
 		}
-
+		accSender.Apply(ctx)
 		accReceiver.Apply(ctx)
 		return sdk.Result{}
 	}
@@ -132,6 +130,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if setErr := am.SetBankFromAddress(ctx, msg.ReceiverAddr, receiverBank); setErr != nil {
 		return ErrAccountManagerFail("Set receiver's bank failed").Result()
 	}
+	accSender.Apply(ctx)
 	return sdk.Result{}
 }
 

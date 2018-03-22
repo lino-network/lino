@@ -256,3 +256,79 @@ func TestTransferNormal(t *testing.T) {
 	assert.Equal(t, true, generatedBank.Balance.IsEqual(c100))
 
 }
+
+func TestSenderCoinNotEnough(t *testing.T) {
+	lam := newLinoAccountManager()
+	ctx := getContext()
+	handler := NewHandler(lam)
+
+	// create two test users
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
+
+	acc1.AddCoins(ctx, c200)
+
+	acc1.Apply(ctx)
+	acc2.Apply(ctx)
+
+	memo := []byte("This is a memo!")
+
+	// let user1 transfers 2000 to user2
+	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("user2"))
+	result := handler(ctx, msg)
+	assert.Equal(t, ErrAccountManagerFail("Withdraw money from sender's bank failed").Result(), result)
+
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(c200))
+}
+
+func TestUsernameAddressMismatch(t *testing.T) {
+	lam := newLinoAccountManager()
+	ctx := getContext()
+	handler := NewHandler(lam)
+
+	// create two test users
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
+
+	acc1.AddCoins(ctx, c2000)
+	acc2.AddCoins(ctx, c2000)
+
+	acc1.Apply(ctx)
+	acc2.Apply(ctx)
+
+	memo := []byte("This is a memo!")
+	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
+
+	// let user1 transfers 2000 to user2 (provide both name and address)
+	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
+	result := handler(ctx, msg)
+	assert.Equal(t, ErrAccountManagerFail("Username and address mismatch").Result(), result)
+
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	acc2Balance, _ := acc2.GetBankBalance(ctx)
+
+	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
+	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
+}
+
+func TestReceiverUsernameIncorrect(t *testing.T) {
+	lam := newLinoAccountManager()
+	ctx := getContext()
+	handler := NewHandler(lam)
+
+	// create two test users
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoins(ctx, c2000)
+	acc1.Apply(ctx)
+
+	memo := []byte("This is a memo!")
+
+	// let user1 transfers 2000 to a random user
+	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("dnqwondqowindow"))
+	result := handler(ctx, msg)
+	assert.Equal(t, ErrAccountManagerFail("Add money to receiver's bank failed").Result(), result)
+
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
+}
