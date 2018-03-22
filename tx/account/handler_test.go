@@ -1,11 +1,20 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	c0    = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
+	c100  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(100)}}
+	c200  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(200)}}
+	c1600 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1600)}}
+	c1800 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1800)}}
+	c1900 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1900)}}
+	c2000 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(2000)}}
 )
 
 func TestFollow(t *testing.T) {
@@ -184,12 +193,6 @@ func TestTransferNormal(t *testing.T) {
 	acc1 := createTestAccount(ctx, lam, "user1")
 	acc2 := createTestAccount(ctx, lam, "user2")
 
-	c2000 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(2000)}}
-	c200 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(200)}}
-	c0 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
-	c1800 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1800)}}
-	c1600 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(1600)}}
-
 	acc1.AddCoins(ctx, c2000)
 
 	acc1.Apply(ctx)
@@ -223,20 +226,33 @@ func TestTransferNormal(t *testing.T) {
 	assert.Equal(t, true, acc1Balance.IsEqual(c200))
 	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
 
-	//let user1 transfers 1600 to user2 (by  address)
+	//let user1 transfers 100 to user2 (by  address)
 	acc1.clear()
 	acc2.clear()
 
-	msg = NewTransferMsg("user1", c200, memo, TransferToAddr(acc2Addr))
+	msg = NewTransferMsg("user1", c100, memo, TransferToAddr(acc2Addr))
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
 	acc1Balance, _ = acc1.GetBankBalance(ctx)
 	acc2Balance, _ = acc2.GetBankBalance(ctx)
 
-	fmt.Println(acc1Balance)
-	fmt.Println(acc2Balance)
+	assert.Equal(t, true, acc1Balance.IsEqual(c100))
+	assert.Equal(t, true, acc2Balance.IsEqual(c1900))
+
+	//let user1 transfers 100 to a random address
+	acc1.clear()
+	acc2.clear()
+
+	randomAddr := sdk.Address("sdajsdbiqwbdiub")
+	msg = NewTransferMsg("user1", c100, memo, TransferToAddr(randomAddr))
+	result = handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	acc1Balance, _ = acc1.GetBankBalance(ctx)
+	generatedBank, _ := lam.GetBankFromAddress(ctx, randomAddr)
+
 	assert.Equal(t, true, acc1Balance.IsEqual(c0))
-	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
+	assert.Equal(t, true, generatedBank.Balance.IsEqual(c100))
 
 }
