@@ -5,10 +5,10 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
-func NewHandler(pm types.PostManager, am types.AccountManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
@@ -21,15 +21,35 @@ func NewHandler(pm types.PostManager, am types.AccountManager) sdk.Handler {
 }
 
 // Handle RegisterMsg
-func handleCreatePostMsg(ctx sdk.Context, pm types.PostManager, am types.AccountManager, msg CreatePostMsg) sdk.Result {
-	_, err := am.GetMeta(ctx, msg.Author)
-	if err != nil {
+func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg CreatePostMsg) sdk.Result {
+	account := acc.NewProxyAccount(msg.Author, &am)
+	if !account.IsAccountExist(ctx) {
+		return ErrPostCreateNonExistAuthor().Result()
+	}
+	post := NewProxyPost(msg.Author, msg.PostID, &pm)
+	if post.IsPostExist(ctx) {
+		return ErrPostExist().Result()
+	}
+	if err := post.CreatePost(ctx, &msg.PostInfo); err != nil {
 		return err.Result()
 	}
-	// TODO: check activity burden
-	if err := pm.CreatePost(ctx, &msg.Post); err != nil {
+	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
+		parentPost := NewProxyPost(msg.ParentAuthor, msg.ParentPostID, &pm)
+		if err := parentPost.AddComment(ctx, post.GetPostKey()); err != nil {
+			return err.Result()
+		}
+		if err := parentPost.Apply(ctx); err != nil {
+			return err.Result()
+		}
+	}
+	if err := post.Apply(ctx); err != nil {
 		return err.Result()
 	}
-	// TODO: update user activity
+	if err := account.UpdateLastActivity(ctx); err != nil {
+		return err.Result()
+	}
+	if err := account.Apply(ctx); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }

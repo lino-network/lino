@@ -9,13 +9,14 @@ import (
 // PostKey key format in KVStore
 type PostKey string
 
-// Identifier is used to map the url in post.
+// Identifier is used to map the url in post
 type Identifier string
 
-// URL used to link resources like vedio, text or photo.
+// URL used to link resources like vedio, text or photo
 type URL string
 
-// PostIntreface needs to be implemented by all post related struct.
+// PostIntreface needs to be implemented by all post related struct
+// this is needed in post manager
 type PostInterface interface {
 	AssertPostInterface()
 }
@@ -108,6 +109,7 @@ func GetPostKey(author acc.AccountKey, postID string) PostKey {
 	return PostKey(string(author) + "#" + postID)
 }
 
+// post is the proxy for all storage structs defined above
 type post struct {
 	author             acc.AccountKey `json:"author"`
 	postID             string         `json:"post_ID"`
@@ -127,8 +129,8 @@ type post struct {
 	postDonations      *PostDonations `json:"post_donations"`
 }
 
-// NewLinoAccount return the account pointer
-func NewPost(author acc.AccountKey, postID string, postManager *PostManager) *post {
+// create NewProxyPost
+func NewProxyPost(author acc.AccountKey, postID string, postManager *PostManager) *post {
 	return &post{
 		author:      author,
 		postID:      postID,
@@ -149,6 +151,63 @@ func (p *post) GetPostKey() PostKey {
 	return p.postKey
 }
 
+// check if post exist
+func (p *post) IsPostExist(ctx sdk.Context) bool {
+	if err := p.checkPostInfo(ctx); err != nil {
+		return false
+	}
+	return true
+}
+
+// create the post
+func (p *post) CreatePost(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
+	if p.IsPostExist(ctx) {
+		return ErrPostExist()
+	}
+	p.writePostInfo = true
+	p.postInfo = postInfo
+	p.writePostMeta = true
+	p.postMeta = &PostMeta{
+		Created:      types.Height(ctx.BlockHeight()),
+		LastUpdate:   types.Height(ctx.BlockHeight()),
+		LastActivity: types.Height(ctx.BlockHeight()),
+		AllowReplies: true, // Default
+	}
+	p.writePostLikes = true
+	p.postLikes = &PostLikes{Likes: []Like{}}
+	p.writePostComments = true
+	p.postComments = &PostComments{Comments: []PostKey{}}
+	p.writePostViews = true
+	p.postViews = &PostViews{Views: []View{}}
+	p.writePostDonations = true
+	p.postDonations = &PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
+	return nil
+}
+
+// add comment to post comment list
+func (p *post) AddComment(ctx sdk.Context, comment PostKey) sdk.Error {
+	if err := p.checkPostComments(ctx); err != nil {
+		return err
+	}
+	p.writePostComments = true
+	p.postComments.Comments = append(p.postComments.Comments, comment)
+	if err := p.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// update comment last activity
+func (p *post) UpdateLastActivity(ctx sdk.Context) sdk.Error {
+	if err := p.checkPostMeta(ctx); err != nil {
+		return err
+	}
+	p.writePostMeta = true
+	p.postMeta.LastActivity = types.Height(ctx.BlockHeight())
+	return nil
+}
+
+// check if PostInfo exists
 func (p *post) checkPostInfo(ctx sdk.Context) (err sdk.Error) {
 	if p.postInfo == nil {
 		p.postInfo, err = p.postManager.GetPostInfo(ctx, p.GetPostKey())
@@ -156,6 +215,23 @@ func (p *post) checkPostInfo(ctx sdk.Context) (err sdk.Error) {
 	return err
 }
 
+// check if PostComments exists
+func (p *post) checkPostComments(ctx sdk.Context) (err sdk.Error) {
+	if p.postComments == nil {
+		p.postComments, err = p.postManager.GetPostComments(ctx, p.GetPostKey())
+	}
+	return err
+}
+
+// check if PostMeta exists
+func (p *post) checkPostMeta(ctx sdk.Context) (err sdk.Error) {
+	if p.postMeta == nil {
+		p.postMeta, err = p.postManager.GetPostMeta(ctx, p.GetPostKey())
+	}
+	return err
+}
+
+// apply all changes to storage
 func (p *post) Apply(ctx sdk.Context) sdk.Error {
 	if p.writePostInfo {
 		if err := p.postManager.SetPostInfo(ctx, p.postInfo); err != nil {
@@ -187,5 +263,23 @@ func (p *post) Apply(ctx sdk.Context) sdk.Error {
 			return err
 		}
 	}
+	p.clear()
+
 	return nil
+}
+
+// clear current post proxy
+func (p *post) clear() {
+	p.writePostInfo = false
+	p.writePostMeta = false
+	p.writePostLikes = false
+	p.writePostComments = false
+	p.writePostViews = false
+	p.writePostDonations = false
+	p.postInfo = nil
+	p.postMeta = nil
+	p.postLikes = nil
+	p.postComments = nil
+	p.postViews = nil
+	p.postDonations = nil
 }

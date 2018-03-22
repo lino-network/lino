@@ -10,7 +10,7 @@ import (
 func TestCreate(t *testing.T) {
 	author := acc.AccountKey("TestAuthor")
 	// test valid post
-	post := types.Post{
+	post := PostInfo{
 		PostID:       "TestPostID",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),

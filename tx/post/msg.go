@@ -5,18 +5,17 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
 // CreatePostMsg contains information to create a post
 type CreatePostMsg struct {
-	types.Post
+	PostInfo
 }
 
 // NewCreatePostMsg constructs a post msg
-func NewCreatePostMsg(post types.Post) CreatePostMsg {
-	return CreatePostMsg{Post: post}
+func NewCreatePostMsg(postInfo PostInfo) CreatePostMsg {
+	return CreatePostMsg{PostInfo: postInfo}
 }
 
 // Type implements sdk.Msg
@@ -60,5 +59,5 @@ func (msg CreatePostMsg) GetSigners() []sdk.Address {
 }
 
 func (msg CreatePostMsg) String() string {
-	return fmt.Sprintf("Post.CreatePostMsg{post:%v}", msg.Post)
+	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostInfo)
 }

@@ -65,6 +65,14 @@ func ErrPostCreateNoAuthor() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty author"))
 }
 
+func ErrPostCreateNonExistAuthor() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with non-exist author"))
+}
+
+func ErrPostCreateNoParentPost() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with invalid parent post"))
+}
+
 func ErrPostTitleExceedMaxLength() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post title exceeds max length limitation"))
 }
