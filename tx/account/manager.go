@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
-	"github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 var AccountInfoPrefix = []byte("AccountInfo/")
@@ -31,43 +31,6 @@ func NewLinoAccountManager(key sdk.StoreKey) AccountManager {
 	}
 	RegisterWireLinoAccount(cdc)
 	return lam
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) (*AccountInfo, sdk.Error) {
-	accInfo := AccountInfo{
-		Username: accKey,
-		Created:  types.Height(ctx.BlockHeight()),
-		PostKey:  pubkey,
-		OwnerKey: pubkey,
-		Address:  pubkey.Address(),
-	}
-	if err := lam.SetInfo(ctx, accInfo.Username, &accInfo); err != nil {
-		return nil, err
-	}
-
-	accBank.Username = accKey
-	if err := lam.SetBankFromAddress(ctx, accInfo.Address, accBank); err != nil {
-		return nil, err
-	}
-
-	accMeta := AccountMeta{
-		LastActivity:   types.Height(ctx.BlockHeight()),
-		ActivityBurden: types.DefaultActivityBurden,
-	}
-	if err := lam.SetMeta(ctx, accInfo.Username, &accMeta); err != nil {
-		return nil, err
-	}
-
-	follower := Follower{Follower: []AccountKey{}}
-	if err := lam.SetFollower(ctx, accInfo.Username, &follower); err != nil {
-		return nil, err
-	}
-	following := Following{Following: []AccountKey{}}
-	if err := lam.SetFollowing(ctx, accInfo.Username, &following); err != nil {
-		return nil, err
-	}
-	return &accInfo, nil
 }
 
 // Implements types.AccountManager.
@@ -251,4 +214,41 @@ func accountFollowerKey(accKey AccountKey) []byte {
 
 func accountFollowingKey(accKey AccountKey) []byte {
 	return append(AccountFollowingPrefix, accKey...)
+}
+
+// Implements types.AccountManager.
+func (lam AccountManager) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) (*AccountInfo, sdk.Error) {
+	accInfo := AccountInfo{
+		Username: accKey,
+		Created:  types.Height(ctx.BlockHeight()),
+		PostKey:  pubkey,
+		OwnerKey: pubkey,
+		Address:  pubkey.Address(),
+	}
+	if err := lam.SetInfo(ctx, accInfo.Username, &accInfo); err != nil {
+		return nil, err
+	}
+
+	accBank.Username = accKey
+	if err := lam.SetBankFromAddress(ctx, accInfo.Address, accBank); err != nil {
+		return nil, err
+	}
+
+	accMeta := AccountMeta{
+		LastActivity:   types.Height(ctx.BlockHeight()),
+		ActivityBurden: types.DefaultActivityBurden,
+	}
+	if err := lam.SetMeta(ctx, accInfo.Username, &accMeta); err != nil {
+		return nil, err
+	}
+
+	follower := Follower{Follower: []AccountKey{}}
+	if err := lam.SetFollower(ctx, accInfo.Username, &follower); err != nil {
+		return nil, err
+	}
+	following := Following{Following: []AccountKey{}}
+	if err := lam.SetFollowing(ctx, accInfo.Username, &following); err != nil {
+		return nil, err
+	}
+	return &accInfo, nil
 }

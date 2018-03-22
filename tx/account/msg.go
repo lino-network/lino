@@ -37,9 +37,9 @@ func TransferToUser(userName string) TransferOption {
 	}
 }
 
-func TransferToAddr(addr string) TransferOption {
+func TransferToAddr(addr sdk.Address) TransferOption {
 	return func(args *TransferMsg) {
-		args.ReceiverAddr = sdk.Address(addr)
+		args.ReceiverAddr = addr
 	}
 }
 
@@ -139,8 +139,6 @@ func NewTransferMsg(sender string, amount sdk.Coins, memo []byte, setters ...Tra
 		Sender: AccountKey(sender),
 		Amount: amount,
 		Memo:   memo,
-		// ReceiverName: types.AccountKey(""),
-		// ReceiverAddr: sdk.Address,
 	}
 	for _, setter := range setters {
 		setter(msg)
@@ -164,6 +162,11 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 	// cannot transfer a negative amount of money
 	if msg.Amount.IsPositive() == false {
 		return tx.ErrInvalidCoins("invalid coin amount")
+	}
+
+	// cannot transfer othe coin types
+	if len(msg.Amount) != 1 || msg.Amount[0].Denom != "lino" {
+		return tx.ErrInvalidCoins("invalid coin type")
 	}
 
 	return nil

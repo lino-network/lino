@@ -67,11 +67,71 @@ func RegisterWireLinoAccount(cdc *wire.Codec) {
 }
 
 // NewLinoAccount return the account pointer
-func NewLinoAccount(username AccountKey, accManager *AccountManager) *Account {
+func NewProxyAccount(username AccountKey, accManager *AccountManager) *Account {
 	return &Account{
 		username:       username,
 		accountManager: accManager,
 	}
+}
+
+// Implements types.AccountManager.
+func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) sdk.Error {
+	acc.writeInfoFlag = true
+	acc.accountInfo = &AccountInfo{
+		Username: accKey,
+		Created:  types.Height(ctx.BlockHeight()),
+		PostKey:  pubkey,
+		OwnerKey: pubkey,
+		Address:  pubkey.Address(),
+	}
+
+	acc.writeBankFlag = true
+	accBank.Username = accKey
+	acc.accountBank = accBank
+
+	acc.writeMetaFlag = true
+	acc.accountMeta = &AccountMeta{
+		LastActivity:   types.Height(ctx.BlockHeight()),
+		ActivityBurden: types.DefaultActivityBurden,
+	}
+
+	acc.writeFollowerFlag = true
+	acc.follower = &Follower{Follower: []AccountKey{}}
+
+	acc.writeFollowingFlag = true
+	acc.following = &Following{Following: []AccountKey{}}
+
+	return nil
+}
+
+func (acc *Account) AddCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+	if err := acc.checkAccountBank(ctx); err != nil {
+		return err
+	}
+	acc.accountBank.Balance = acc.accountBank.Balance.Plus(coins)
+	acc.writeBankFlag = true
+	return nil
+}
+
+func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+	if err := acc.checkAccountBank(ctx); err != nil {
+		return err
+	}
+
+	if !acc.accountBank.Balance.IsGTE(coins) {
+		return ErrAccountManagerFail("Account bank's coins are not enough")
+	}
+
+	c0 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
+	acc.accountBank.Balance = acc.accountBank.Balance.Minus(coins)
+
+	// API return empty when the result is 0 coin
+	if len(acc.accountBank.Balance) == 0 {
+		acc.accountBank.Balance = c0
+	}
+
+	acc.writeBankFlag = true
+	return nil
 }
 
 func (acc *Account) GetUsername(ctx sdk.Context) AccountKey {
@@ -186,7 +246,23 @@ func (acc *Account) Apply(ctx sdk.Context) sdk.Error {
 			return err
 		}
 	}
+
+	acc.clear()
+
 	return nil
+}
+
+func (acc *Account) clear() {
+	acc.writeInfoFlag = false
+	acc.writeBankFlag = false
+	acc.writeMetaFlag = false
+	acc.writeFollowerFlag = false
+	acc.writeFollowingFlag = false
+	acc.accountInfo = nil
+	acc.accountBank = nil
+	acc.accountMeta = nil
+	acc.follower = nil
+	acc.following = nil
 }
 
 func (acc *Account) checkAccountInfo(ctx sdk.Context) (err sdk.Error) {
