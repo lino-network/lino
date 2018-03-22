@@ -67,7 +67,7 @@ func RegisterWireLinoAccount(cdc *wire.Codec) {
 }
 
 // NewLinoAccount return the account pointer
-func NewLinoAccount(username AccountKey, accManager *AccountManager) *Account {
+func NewProxyAccount(username AccountKey, accManager *AccountManager) *Account {
 	return &Account{
 		username:       username,
 		accountManager: accManager,

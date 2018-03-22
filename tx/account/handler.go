@@ -89,7 +89,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 // Handle TransferMsg
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
 	// withdraw money from sender's bank
-	accSender := NewLinoAccount(msg.Sender, &am)
+	accSender := NewProxyAccount(msg.Sender, &am)
 	if err := accSender.MinusCoins(ctx, msg.Amount); err != nil {
 		return ErrAccountManagerFail("Withdraw money from sender's bank failed").Result()
 	}
@@ -97,7 +97,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// both username and address provided
 	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
 		// check if username and address match
-		associatedAddr, err := NewLinoAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
+		associatedAddr, err := NewProxyAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
 		if !bytes.Equal(associatedAddr, msg.ReceiverAddr) || err != nil {
 			return ErrAccountManagerFail("Username and address mismatch").Result()
 		}
@@ -105,7 +105,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
-		accReceiver := NewLinoAccount(msg.ReceiverName, &am)
+		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
 		if err := accReceiver.AddCoins(ctx, msg.Amount); err != nil {
 			return ErrAccountManagerFail("Add money to receiver's bank failed").Result()
 		}
