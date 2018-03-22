@@ -1,6 +1,7 @@
 package account
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 
@@ -103,8 +104,17 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		return ErrAccountManagerFail("Set sender's bank failed").Result()
 	}
 
+	// both username and address provided
+	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
+		// check if username and address match
+		associatedAddr, err := NewLinoAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
+		if !bytes.Equal(associatedAddr, msg.ReceiverAddr) || err != nil {
+			return ErrAccountManagerFail("Username and address mismatch").Result()
+		}
+	}
+
 	// send coins using username
-	if am.AccountExist(ctx, msg.ReceiverName) {
+	if len(msg.ReceiverName) != 0 && am.AccountExist(ctx, msg.ReceiverName) {
 		if receiverBank, err := am.GetBankFromAccountKey(ctx, msg.ReceiverName); err == nil {
 			receiverBank.Balance = receiverBank.Balance.Plus(msg.Amount)
 			if setErr := am.SetBankFromAccountKey(ctx, msg.ReceiverName, receiverBank); setErr != nil {

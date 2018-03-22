@@ -74,6 +74,36 @@ func NewLinoAccount(username AccountKey, accManager *AccountManager) *Account {
 	}
 }
 
+// Implements types.AccountManager.
+func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) sdk.Error {
+	acc.writeInfoFlag = true
+	acc.accountInfo = &AccountInfo{
+		Username: accKey,
+		Created:  types.Height(ctx.BlockHeight()),
+		PostKey:  pubkey,
+		OwnerKey: pubkey,
+		Address:  pubkey.Address(),
+	}
+
+	acc.writeBankFlag = true
+	accBank.Username = accKey
+	acc.accountBank = accBank
+
+	acc.writeMetaFlag = true
+	acc.accountMeta = &AccountMeta{
+		LastActivity:   types.Height(ctx.BlockHeight()),
+		ActivityBurden: types.DefaultActivityBurden,
+	}
+
+	acc.writeFollowerFlag = true
+	acc.follower = &Follower{Follower: []AccountKey{}}
+
+	acc.writeFollowingFlag = true
+	acc.following = &Following{Following: []AccountKey{}}
+
+	return nil
+}
+
 func (acc *Account) GetUsername(ctx sdk.Context) AccountKey {
 	return acc.username
 }

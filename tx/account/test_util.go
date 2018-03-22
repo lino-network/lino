@@ -38,6 +38,7 @@ func privAndBank() (crypto.PrivKey, *AccountBank) {
 
 func createTestAccount(ctx sdk.Context, lam AccountManager, username string) {
 	priv, bank := privAndBank()
-	user := AccountKey(username)
-	lam.CreateAccount(ctx, user, priv.PubKey(), bank)
+	acc := NewLinoAccount(AccountKey(username), &lam)
+	acc.CreateAccount(ctx, AccountKey(username), priv.PubKey(), bank)
+	acc.Apply(ctx)
 }
