@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tx "github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/lino-network/lino/types"
 )
 
@@ -161,12 +160,12 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 
 	// cannot transfer a negative amount of money
 	if msg.Amount.IsPositive() == false {
-		return tx.ErrInvalidCoins("invalid coin amount")
+		return sdk.ErrInvalidCoins("invalid coin amount")
 	}
 
 	// cannot transfer othe coin types
 	if len(msg.Amount) != 1 || msg.Amount[0].Denom != "lino" {
-		return tx.ErrInvalidCoins("invalid coin type")
+		return sdk.ErrInvalidCoins("invalid coin type")
 	}
 
 	return nil

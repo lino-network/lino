@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
@@ -100,10 +99,10 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 		return ErrPostDonateNoUsername()
 	}
 	if !msg.Amount.IsValid() {
-		return bank.ErrInvalidCoins(msg.Amount.String())
+		return sdk.ErrInvalidCoins(msg.Amount.String())
 	}
 	if !msg.Amount.IsPositive() {
-		return bank.ErrInvalidCoins(msg.Amount.String())
+		return sdk.ErrInvalidCoins(msg.Amount.String())
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
 		return ErrPostDonateInvalidTarget()

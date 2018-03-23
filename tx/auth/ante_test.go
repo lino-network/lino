@@ -112,7 +112,7 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 }
 
 func newTestTx(ctx sdk.Context, msg sdk.Msg, privs []crypto.PrivKey, seqs []int64) sdk.Tx {
-	signBytes := sdk.StdSignBytes(ctx.ChainID(), seqs, msg)
+	signBytes := sdk.StdSignBytes(ctx.ChainID(), seqs, sdk.StdFee{}, msg)
 	return newTestTxWithSignBytes(msg, privs, seqs, signBytes)
 }
 
@@ -121,7 +121,7 @@ func newTestTxWithSignBytes(msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, s
 	for i, priv := range privs {
 		sigs[i] = sdk.StdSignature{PubKey: priv.PubKey(), Signature: priv.Sign(signBytes), Sequence: seqs[i]}
 	}
-	tx := sdk.NewStdTx(msg, sigs)
+	tx := sdk.NewStdTx(msg, sdk.StdFee{}, sigs)
 	return tx
 }
 

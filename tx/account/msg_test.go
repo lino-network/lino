@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tx "github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -104,23 +103,23 @@ func TestTransferMsg(t *testing.T) {
 	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: -2323}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, tx.ErrInvalidCoins("invalid coin amount"))
+	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
 
 	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, tx.ErrInvalidCoins("invalid coin amount"))
+	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
 
 	// invalid transfer: type is invalid
 	amount = sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 213213}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, tx.ErrInvalidCoins("invalid coin type"))
+	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
 
 	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 231},
 		sdk.Coin{Denom: "lino", Amount: 12}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, tx.ErrInvalidCoins("invalid coin type"))
+	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
 
 }
