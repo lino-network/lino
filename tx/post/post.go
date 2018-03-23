@@ -184,13 +184,47 @@ func (p *post) CreatePost(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
 	return nil
 }
 
+// add or update like from the user if like exists
+func (p *post) AddOrUpdateLikeToPost(ctx sdk.Context, like Like) sdk.Error {
+	if err := p.checkPostLikes(ctx); err != nil {
+		return err
+	}
+	index := getLikeFromList(p.postLikes.Likes, like)
+	if index != -1 {
+		p.postLikes.TotalWeight -= p.postLikes.Likes[index].Weight
+		p.postLikes.Likes[index].Weight = like.Weight
+	} else {
+		p.postLikes.Likes = append(p.postLikes.Likes, like)
+	}
+	p.postLikes.TotalWeight += like.Weight
+	p.writePostLikes = true
+	if err := p.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 // add comment to post comment list
 func (p *post) AddComment(ctx sdk.Context, comment PostKey) sdk.Error {
 	if err := p.checkPostComments(ctx); err != nil {
 		return err
 	}
-	p.writePostComments = true
 	p.postComments.Comments = append(p.postComments.Comments, comment)
+	p.writePostComments = true
+	if err := p.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// add donation to post comment list
+func (p *post) AddDonation(ctx sdk.Context, donation Donation) sdk.Error {
+	if err := p.checkPostDonations(ctx); err != nil {
+		return err
+	}
+	p.postDonations.Donations = append(p.postDonations.Donations, donation)
+	p.postDonations.Reward = p.postDonations.Reward.Plus(donation.Amount)
+	p.writePostDonations = true
 	if err := p.UpdateLastActivity(ctx); err != nil {
 		return err
 	}
@@ -202,8 +236,8 @@ func (p *post) UpdateLastActivity(ctx sdk.Context) sdk.Error {
 	if err := p.checkPostMeta(ctx); err != nil {
 		return err
 	}
-	p.writePostMeta = true
 	p.postMeta.LastActivity = types.Height(ctx.BlockHeight())
+	p.writePostMeta = true
 	return nil
 }
 
@@ -211,6 +245,22 @@ func (p *post) UpdateLastActivity(ctx sdk.Context) sdk.Error {
 func (p *post) checkPostInfo(ctx sdk.Context) (err sdk.Error) {
 	if p.postInfo == nil {
 		p.postInfo, err = p.postManager.GetPostInfo(ctx, p.GetPostKey())
+	}
+	return err
+}
+
+// check if PostMeta exists
+func (p *post) checkPostMeta(ctx sdk.Context) (err sdk.Error) {
+	if p.postMeta == nil {
+		p.postMeta, err = p.postManager.GetPostMeta(ctx, p.GetPostKey())
+	}
+	return err
+}
+
+// check if PostComments exists
+func (p *post) checkPostLikes(ctx sdk.Context) (err sdk.Error) {
+	if p.postLikes == nil {
+		p.postLikes, err = p.postManager.GetPostLikes(ctx, p.GetPostKey())
 	}
 	return err
 }
@@ -223,10 +273,10 @@ func (p *post) checkPostComments(ctx sdk.Context) (err sdk.Error) {
 	return err
 }
 
-// check if PostMeta exists
-func (p *post) checkPostMeta(ctx sdk.Context) (err sdk.Error) {
-	if p.postMeta == nil {
-		p.postMeta, err = p.postManager.GetPostMeta(ctx, p.GetPostKey())
+// check if PostComments exists
+func (p *post) checkPostDonations(ctx sdk.Context) (err sdk.Error) {
+	if p.postDonations == nil {
+		p.postDonations, err = p.postManager.GetPostDonations(ctx, p.GetPostKey())
 	}
 	return err
 }
@@ -282,4 +332,14 @@ func (p *post) clear() {
 	p.postComments = nil
 	p.postViews = nil
 	p.postDonations = nil
+}
+
+// get like index from like list, return -1 if like doesn't exist
+func getLikeFromList(likes []Like, targetLike Like) (index int) {
+	for i, like := range likes {
+		if like.Username == targetLike.Username {
+			return i
+		}
+	}
+	return -1
 }
