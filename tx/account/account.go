@@ -193,6 +193,15 @@ func (acc *Account) GetLastActivity(ctx sdk.Context) (types.Height, sdk.Error) {
 	return acc.accountMeta.LastActivity, nil
 }
 
+func (acc *Account) IncreaseSequenceByOne(ctx sdk.Context) sdk.Error {
+	if err := acc.checkAccountMeta(ctx); err != nil {
+		return err
+	}
+	acc.accountMeta.Sequence += 1
+	acc.writeMetaFlag = true
+	return nil
+}
+
 func (acc *Account) GetActivityBurden(ctx sdk.Context) (int64, sdk.Error) {
 	if err := acc.checkAccountMeta(ctx); err != nil {
 		return 0, err
