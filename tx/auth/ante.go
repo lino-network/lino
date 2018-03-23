@@ -6,10 +6,11 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
-func NewAnteHandler(accountManager types.AccountManager) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -55,36 +56,32 @@ func NewAnteHandler(accountManager types.AccountManager) sdk.AnteHandler {
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			accMeta, err := accountManager.GetMeta(ctx, types.AccountKey(signer))
+			account := acc.NewProxyAccount(acc.AccountKey(signer), &am)
+			seq, err := account.GetSequence(ctx)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
-			if accMeta == nil {
-				return ctx, sdk.ErrUnauthorized("get signer meta failed").Result(), true
-			}
-
-			if accMeta.Sequence != sigs[i].Sequence {
+			if seq != sigs[i].Sequence {
 				return ctx, sdk.ErrInvalidSequence(
-						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, accMeta.Sequence)).Result(),
+						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, seq)).Result(),
 					true
 			}
-			accMeta.Sequence = accMeta.Sequence + 1
+			if err := account.IncreaseSequenceByOne(ctx); err != nil {
+				return ctx, err.Result(), true
+			}
 
-			accInfo, err := accountManager.GetInfo(ctx, types.AccountKey(signer))
+			pubKey, err := account.GetOwnerKey(ctx)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
-			if accInfo == nil {
-				return ctx, sdk.ErrUnauthorized("signer doesn't exist").Result(), true
-			}
 			// TODO(Lino): match postkey and owner key.
-			if !reflect.DeepEqual(accInfo.OwnerKey, sigs[i].PubKey) {
+			if !reflect.DeepEqual(*pubKey, sigs[i].PubKey) {
 				return ctx, sdk.ErrUnauthorized("signer mismatch").Result(), true
 			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
 				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
 			}
-			if err := accountManager.SetMeta(ctx, types.AccountKey(signer), accMeta); err != nil {
+			if err := account.Apply(ctx); err != nil {
 				return ctx, err.Result(), true
 			}
 		}

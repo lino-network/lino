@@ -15,6 +15,14 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
+func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) crypto.PrivKey {
+	priv, bank := privAndBank()
+	account := acc.NewProxyAccount(acc.AccountKey(username), &lam)
+	account.CreateAccount(ctx, acc.AccountKey(username), priv.PubKey(), bank)
+	account.Apply(ctx)
+	return priv
+}
+
 func setupMultiStore() (sdk.MultiStore, *sdk.KVStoreKey) {
 	db := dbm.NewMemDB()
 	capKey := sdk.NewKVStoreKey("capkey")
@@ -26,7 +34,7 @@ func setupMultiStore() (sdk.MultiStore, *sdk.KVStoreKey) {
 }
 
 type TestMsg struct {
-	signers []types.AccountKey
+	signers []acc.AccountKey
 }
 
 func (msg *TestMsg) Type() string                            { return "normal msg" }
@@ -47,7 +55,7 @@ func (msg *TestMsg) GetSigners() []sdk.Address {
 	return addrs
 }
 
-func newTestMsg(accKeys ...types.AccountKey) *TestMsg {
+func newTestMsg(accKeys ...acc.AccountKey) *TestMsg {
 	return &TestMsg{
 		signers: accKeys,
 	}
@@ -78,11 +86,11 @@ func newRegisterTestMsg(addr sdk.Address) *RegisterTestMsg {
 }
 
 // generate a priv key and return it with its address
-func privAndBank() (crypto.PrivKey, *types.AccountBank) {
+func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
 	priv := crypto.GenPrivKeyEd25519()
-	accBank := &types.AccountBank{
+	accBank := &acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Coins:   sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
 	}
 	return priv.Wrap(), accBank
 }
@@ -124,17 +132,10 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	lam := acc.NewLinoAccountManager(capKey)
 	anteHandler := NewAnteHandler(lam)
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
-
-	// keys and addresses
-	priv1, bank1 := privAndBank()
-	priv2, bank2 := privAndBank()
-	user1 := types.AccountKey("user1")
-	user2 := types.AccountKey("user2")
-
-	_, err := lam.CreateAccount(ctx, user1, priv1.PubKey(), bank1)
-	assert.Nil(t, err)
-	_, err = lam.CreateAccount(ctx, user2, priv2.PubKey(), bank2)
-	assert.Nil(t, err)
+	user1 := acc.AccountKey("user1")
+	user2 := acc.AccountKey("user2")
+	priv1 := createTestAccount(ctx, lam, string(user1))
+	priv2 := createTestAccount(ctx, lam, string(user2))
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -167,10 +168,10 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 	// keys and addresses
 	priv1, bank1 := privAndBank()
 	priv2, _ := privAndBank()
-	// user1 := types.AccountKey("user1")
-	// user2 := types.AccountKey("user2")
+	// user1 := acc.AccountKey("user1")
+	// user2 := acc.AccountKey("user2")
 
-	err := lam.SetBank(ctx, priv1.PubKey().Address(), bank1)
+	err := lam.SetBankFromAddress(ctx, priv1.PubKey().Address(), bank1)
 	assert.Nil(t, err)
 
 	// msg and signatures
@@ -207,15 +208,11 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
 
 	// keys and addresses
-	priv1, bank1 := privAndBank()
-	priv2, bank2 := privAndBank()
-	user1 := types.AccountKey("user1")
-	user2 := types.AccountKey("user2")
+	user1 := acc.AccountKey("user1")
+	user2 := acc.AccountKey("user2")
 
-	_, err := lam.CreateAccount(ctx, user1, priv1.PubKey(), bank1)
-	assert.Nil(t, err)
-	_, err = lam.CreateAccount(ctx, user2, priv2.PubKey(), bank2)
-	assert.Nil(t, err)
+	priv1 := createTestAccount(ctx, lam, string(user1))
+	priv2 := createTestAccount(ctx, lam, string(user2))
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -225,6 +222,10 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
+	account := acc.NewProxyAccount(user1, &lam)
+	seq, err := account.GetSequence(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(1))
 
 	// test no signatures
 	privs, seqs = []crypto.PrivKey{}, []int64{}
@@ -247,5 +248,3 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
 }
-
-
