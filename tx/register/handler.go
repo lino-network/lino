@@ -8,7 +8,7 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 )
 
-var RegisterFee = sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 100}}
+var RegisterFee = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
 
 func NewHandler(am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
@@ -24,7 +24,8 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
-	if am.AccountExist(ctx, msg.NewUser) {
+	account := acc.NewProxyAccount(msg.NewUser, &am)
+	if account.IsAccountExist(ctx) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
 	bank, err := am.GetBankFromAddress(ctx, msg.NewPubKey.Address())
@@ -38,7 +39,10 @@ func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) 
 		return ErrAccRegisterFail("Register Fee Doesn't enough").Result()
 	}
 
-	if _, err := am.CreateAccount(ctx, msg.NewUser, msg.NewPubKey, bank); err != nil {
+	if err := account.CreateAccount(ctx, msg.NewUser, msg.NewPubKey, bank); err != nil {
+		return err.Result()
+	}
+	if err := account.Apply(ctx); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
