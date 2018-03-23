@@ -67,5 +67,5 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 
 // Implements Msg.
 func (msg RegisterMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.NewUser)}
+	return []sdk.Address{msg.NewPubKey.Address()}
 }

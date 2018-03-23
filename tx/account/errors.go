@@ -32,6 +32,10 @@ func ErrAccountManagerFail(msg string) sdk.Error {
 	return newError(types.CodeAccountManagerFail, msg)
 }
 
+func ErrAccountCreateFail(msg string) sdk.Error {
+	return newError(types.CodeAccountManagerFail, msg)
+}
+
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
 	if msg != "" {
 		return msg

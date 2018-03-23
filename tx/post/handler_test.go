@@ -16,10 +16,8 @@ func TestHandlerCreatePost(t *testing.T) {
 
 	handler := NewHandler(pm, lam)
 
-	priv, bank := privAndBank()
 	user := acc.AccountKey("testuser")
-	_, err := lam.CreateAccount(ctx, user, priv.PubKey(), bank)
-	assert.Nil(t, err)
+	createTestAccount(ctx, lam, string(user))
 
 	// test valid post
 	postInfo := PostInfo{
@@ -62,10 +60,9 @@ func TestHandlerCreateComment(t *testing.T) {
 	ctx := getContext()
 
 	handler := NewHandler(pm, lam)
-	priv, bank := privAndBank()
+
 	user := acc.AccountKey("testuser")
-	_, err := lam.CreateAccount(ctx, user, priv.PubKey(), bank)
-	assert.Nil(t, err)
+	createTestAccount(ctx, lam, string(user))
 
 	postInfo := PostInfo{
 		PostID:       "TestPostID",
