@@ -23,29 +23,29 @@ func codeToDefaultMsg(code CodeType) string {
 	}
 }
 
-type NotFoundErrFunc func(types.PostKey) sdk.Error
+type NotFoundErrFunc func(PostKey) sdk.Error
 
-func ErrPostNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post not found for key: %s", postKey))
 }
 
-func ErrPostMetaNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostMetaNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post meta not found for key: %s", postKey))
 }
 
-func ErrPostLikesNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostLikesNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post likes not found for key: %s", postKey))
 }
 
-func ErrPostCommentsNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostCommentsNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post comments not found for key: %s", postKey))
 }
 
-func ErrPostViewsNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostViewsNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post views not found for key: %s", postKey))
 }
 
-func ErrPostDonationsNotFound(postKey types.PostKey) sdk.Error {
+func ErrPostDonationsNotFound(postKey PostKey) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post donations not found for key: %s", postKey))
 }
 
@@ -65,12 +65,28 @@ func ErrPostCreateNoAuthor() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty author"))
 }
 
+func ErrPostCreateNonExistAuthor() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with non-exist author"))
+}
+
+func ErrPostCreateNoParentPost() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Create with invalid parent post"))
+}
+
 func ErrPostTitleExceedMaxLength() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post title exceeds max length limitation"))
 }
 
 func ErrPostContentExceedMaxLength() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Post content exceeds max length limitation"))
+}
+
+func ErrPostAuthorDoesntExist() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post author doesn't exist"))
+}
+
+func ErrPostExist() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post already exists"))
 }
 
 func msgOrDefaultMsg(msg string, code CodeType) string {

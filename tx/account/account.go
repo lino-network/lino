@@ -133,6 +133,12 @@ func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error)
 	acc.writeBankFlag = true
 	return nil
 }
+func (acc *Account) IsAccountExist(ctx sdk.Context) bool {
+	if err := acc.checkAccountInfo(ctx); err != nil {
+		return false
+	}
+	return true
+}
 
 func (acc *Account) GetUsername(ctx sdk.Context) AccountKey {
 	return acc.username
