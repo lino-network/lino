@@ -1,6 +1,7 @@
 package validator
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 )
 
@@ -9,7 +10,7 @@ type ValidatorAccount struct {
 	validatorName acc.AccountKey `json:"validator_name"`
 	votes         []Vote         `json:"votes"`
 	totalWeight   int64          `json:"total_weight"`
-	deposit       int64          `json:"deposit"`
+	deposit       sdk.Coins      `json:"deposit"`
 }
 
 // Validator candidate list

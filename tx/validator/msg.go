@@ -21,6 +21,7 @@ type VoteMsg struct {
 type ValidatorRegisterMsg struct {
 	ValidatorName acc.AccountKey `json:"validator_name"`
 	PubKey        crypto.PubKey  `json:"new_public_key"`
+	Deposit       sdk.Coins      `json:"deposit"`
 }
 
 //----------------------------------------
@@ -77,10 +78,11 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // RegisterValidatorMsg Msg Implementations
 
-func NewValidatorRegisterMsg(validator string, pubkey crypto.PubKey) ValidatorRegisterMsg {
+func NewValidatorRegisterMsg(validator string, pubkey crypto.PubKey, deposit sdk.Coins) ValidatorRegisterMsg {
 	msg := ValidatorRegisterMsg{
 		ValidatorName: acc.AccountKey(validator),
 		PubKey:        pubkey,
+		Deposit:       deposit,
 	}
 	return msg
 }

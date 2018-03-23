@@ -30,7 +30,7 @@ func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
 }
 
 // Implements ValidatorManager
-func (vm ValidatorManager) IsAccountExist(ctx sdk.Context, accKey acc.AccountKey) bool {
+func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey acc.AccountKey) bool {
 	store := ctx.KVStore(vm.key)
 	if infoByte := store.Get(validatorKey(accKey)); infoByte == nil {
 		return false
