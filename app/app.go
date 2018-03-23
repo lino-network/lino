@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 
-	"github.com/lino-network/lino/tx/account"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
 	"github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
@@ -30,7 +30,7 @@ type LinoBlockchain struct {
 	capKeyIBCStore  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountManager types.AccountManager
+	accountManager acc.AccountManager
 }
 
 func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
@@ -41,7 +41,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		capKeyMainStore: sdk.NewKVStoreKey("main"),
 		capKeyIBCStore:  sdk.NewKVStoreKey("ibc"),
 	}
-	lb.accountManager = account.NewLinoAccountManager(lb.capKeyMainStore)
+	lb.accountManager = acc.NewLinoAccountManager(lb.capKeyMainStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager))
@@ -77,7 +77,7 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	// are registered by MakeTxCodec in bank.RegisterWire.
 	err := lb.cdc.UnmarshalBinary(txBytes, &tx)
 	if err != nil {
-		return nil, sdk.ErrTxParse("").TraceCause(err, "")
+		return nil, sdk.ErrTxDecode("").TraceCause(err, "")
 	}
 	return tx, nil
 }
