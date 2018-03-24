@@ -21,7 +21,7 @@ const (
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
-func DonationTxCmd(cdc *wire.Codec) *cobra.Command {
+func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "donate",
 		Short: "donate to a post",

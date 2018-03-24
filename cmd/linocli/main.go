@@ -62,6 +62,14 @@ func main() {
 		client.PostCommands(
 			postcmd.PostTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.LikeTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.DonateTxCmd(cdc),
+		)...)
 	// linocliCmd.AddCommand(
 	// 	client.PostCommands(
 	// 		coolcmd.SetTrendTxCmd(cdc),
