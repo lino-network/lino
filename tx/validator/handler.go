@@ -43,10 +43,9 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 
 	account := &ValidatorAccount{
 		Validator:     abci.Validator{PubKey: msg.PubKey.Bytes(), Power: msg.Deposit.AmountOf("lino")},
-		validatorName: msg.ValidatorName,
-		deposit:       msg.Deposit,
+		ValidatorName: msg.ValidatorName,
+		Deposit:       msg.Deposit,
 	}
-	fmt.Println(account)
 
 	vm.SetValidatorAccount(ctx, msg.ValidatorName, account)
 
@@ -64,6 +63,11 @@ func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, 
 		return ErrValidatorManagerFail("validator not found").Result()
 	}
 
+	// withdraw money from voter's bank
+	proxyAcc := acc.NewProxyAccount(msg.Voter, &am)
+	if err := proxyAcc.MinusCoins(ctx, msg.Power); err != nil {
+		return ErrValidatorManagerFail("Withdraw money from voter's bank failed").Result()
+	}
 	validator, _ := vm.GetValidatorAccount(ctx, msg.ValidatorName)
 	vote := Vote{
 		voter:         msg.Voter,
@@ -71,10 +75,11 @@ func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, 
 		validatorName: msg.ValidatorName,
 	}
 
-	validator.votes = append(validator.votes, vote)
+	validator.Votes = append(validator.Votes, vote)
 	validator.Power += msg.Power.AmountOf("lino")
 	vm.SetValidatorAccount(ctx, msg.ValidatorName, validator)
 	vm.TryJoinValidatorList(ctx, msg.ValidatorName, false)
 
+	proxyAcc.Apply(ctx)
 	return sdk.Result{}
 }

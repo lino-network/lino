@@ -48,7 +48,7 @@ func (vm ValidatorManager) GetValidatorAccount(ctx sdk.Context, accKey acc.Accou
 		return nil, ErrValidatorManagerFail("ValidatorManager get account failed: account doesn't exist")
 	}
 	acc := new(ValidatorAccount)
-	if err := vm.cdc.UnmarshalBinary(accountByte, acc); err != nil {
+	if err := vm.cdc.UnmarshalJSON(accountByte, acc); err != nil {
 		return nil, ErrValidatorManagerFail("ValidatorManager get account failed")
 	}
 	return acc, nil
@@ -57,7 +57,7 @@ func (vm ValidatorManager) GetValidatorAccount(ctx sdk.Context, accKey acc.Accou
 // Implements ValidatorManager
 func (vm ValidatorManager) SetValidatorAccount(ctx sdk.Context, accKey acc.AccountKey, account *ValidatorAccount) sdk.Error {
 	store := ctx.KVStore(vm.key)
-	accountByte, err := vm.cdc.MarshalBinary(*account)
+	accountByte, err := vm.cdc.MarshalJSON(*account)
 	if err != nil {
 		return ErrValidatorManagerFail("ValidatorManager set account failed")
 	}
@@ -73,7 +73,7 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context, accKey acc.AccountK
 		return nil, ErrValidatorManagerFail("ValidatorManager get account list failed: account list doesn't exist")
 	}
 	lst := new(ValidatorList)
-	if err := vm.cdc.UnmarshalBinary(listByte, lst); err != nil {
+	if err := vm.cdc.UnmarshalJSON(listByte, lst); err != nil {
 		return nil, ErrValidatorManagerFail("ValidatorManager get account list failed")
 	}
 	return lst, nil
@@ -82,7 +82,7 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context, accKey acc.AccountK
 // Implements ValidatorManager
 func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, accKey acc.AccountKey, lst *ValidatorList) sdk.Error {
 	store := ctx.KVStore(vm.key)
-	listByte, err := vm.cdc.MarshalBinary(*lst)
+	listByte, err := vm.cdc.MarshalJSON(*lst)
 	if err != nil {
 		return ErrValidatorManagerFail("ValidatorManager set account list failed")
 	}
@@ -100,43 +100,42 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, validatorName a
 	defer vm.SetValidatorList(ctx, ValidatorListKey, lst)
 	// add to validator pool if needed
 	if addToPool {
-		lst.validatorPool = append(lst.validatorPool, validatorName)
+		lst.ValidatorPool = append(lst.ValidatorPool, validatorName)
 	}
 
 	// add to list directly if validator list is not full
-	if len(lst.validators) < types.ValidatorListSize {
-		if curValidator.Power < lst.lowestPower.AmountOf("lino") {
-			lst.lowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: curValidator.Power}}
-			lst.lowestValidator = curValidator.validatorName
+	if len(lst.Validators) < types.ValidatorListSize {
+		if curValidator.Power < lst.LowestPower.AmountOf("lino") || len(lst.Validators) == 0 {
+			lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: curValidator.Power}}
+			lst.LowestValidator = curValidator.ValidatorName
 		}
-		lst.validators = append(lst.validators, curValidator.validatorName)
+		lst.Validators = append(lst.Validators, curValidator.ValidatorName)
 		return true
 	}
 
 	// replace the validator with lowest power
-	if curValidator.Power > lst.lowestPower.AmountOf("lino") {
+	if curValidator.Power > lst.LowestPower.AmountOf("lino") {
 		newLowestPower := curValidator.Power
-		newLowestValidator := curValidator.validatorName
+		newLowestValidator := curValidator.ValidatorName
 
 		// iterate through validator list to
 		// 1. replace the lowest validator, 2.find new lowest validator and power
-		for idx, accKey := range lst.validators {
+		for idx, accKey := range lst.Validators {
 			acc, _ := vm.GetValidatorAccount(ctx, accKey)
 			//replacement
-			if acc.validatorName == lst.lowestValidator {
-				lst.validators[idx] = curValidator.validatorName
+			if acc.ValidatorName == lst.LowestValidator {
+				lst.Validators[idx] = curValidator.ValidatorName
 			}
 			// update lowest power and validator
 			if acc.Power < newLowestPower {
 				newLowestPower = acc.Power
-				newLowestValidator = acc.validatorName
+				newLowestValidator = acc.ValidatorName
 			}
 		}
 
 		// set the new lowest power
-		lst.lowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: newLowestPower}}
-		lst.lowestValidator = newLowestValidator
-
+		lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: newLowestPower}}
+		lst.LowestValidator = newLowestValidator
 		return true
 	}
 	return false

@@ -9,18 +9,17 @@ import (
 // Validator Account
 type ValidatorAccount struct {
 	abci.Validator
-	validatorName acc.AccountKey `json:"validator_name"`
-	votes         []Vote         `json:"votes"`
-	deposit       sdk.Coins      `json:"deposit"`
+	ValidatorName acc.AccountKey `json:"validator_name"`
+	Votes         []Vote         `json:"votes"`
+	Deposit       sdk.Coins      `json:"deposit"`
 }
 
 // Validator list
 type ValidatorList struct {
-	validatorListKey acc.AccountKey   `json:"validator_list_key"`
-	validators       []acc.AccountKey `json:"validators"`
-	validatorPool    []acc.AccountKey `json:"validatorPool"`
-	lowestPower      sdk.Coins        `json:"lowest_power"`
-	lowestValidator  acc.AccountKey   `json:"lowest_validator"`
+	Validators      []acc.AccountKey `json:"validators"`
+	ValidatorPool   []acc.AccountKey `json:"validatorPool"`
+	LowestPower     sdk.Coins        `json:"lowest_power"`
+	LowestValidator acc.AccountKey   `json:"lowest_validator"`
 }
 
 // User's vote
