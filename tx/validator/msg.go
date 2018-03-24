@@ -15,7 +15,7 @@ import (
 type VoteMsg struct {
 	Voter         acc.AccountKey `json:"voter"`
 	ValidatorName acc.AccountKey `json:"validator_name"`
-	Weight        int64          `json:"weight"`
+	Power         sdk.Coins      `json:"power"`
 }
 
 type ValidatorRegisterMsg struct {
@@ -27,11 +27,11 @@ type ValidatorRegisterMsg struct {
 //----------------------------------------
 // Vote Msg Implementations
 
-func NewVoteMsg(voter string, validator string, weight int64) VoteMsg {
+func NewVoteMsg(voter string, validator string, power sdk.Coins) VoteMsg {
 	msg := VoteMsg{
 		Voter:         acc.AccountKey(voter),
 		ValidatorName: acc.AccountKey(validator),
-		Weight:        weight,
+		Power:         power,
 	}
 	return msg
 }
@@ -47,7 +47,7 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 	}
 
 	// cannot vote a negative amount of votes
-	if msg.Weight <= 0 {
+	if !msg.Power.IsPositive() {
 		return tx.ErrInvalidCoins("invalid votes")
 	}
 
@@ -56,7 +56,7 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 
 func (msg VoteMsg) String() string {
 	return fmt.Sprintf("VoteMsg{Voter:%v, ValidatorName:%v, Votes:%v}",
-		msg.Voter, msg.ValidatorName, msg.Weight)
+		msg.Voter, msg.ValidatorName, msg.Power)
 }
 
 func (msg VoteMsg) Get(key interface{}) (value interface{}) {

@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	abci "github.com/tendermint/abci/types"
 )
 
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
@@ -29,9 +30,9 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return ErrValidatorManagerFail("account exist").Result()
 	}
 
-	// Must have an acount before becoming a validator
+	// Must have an normal acount before becoming a validator
 	if !am.AccountExist(ctx, msg.ValidatorName) {
-		return ErrValidatorManagerFail("account exist").Result()
+		return ErrValidatorManagerFail("normal account not found").Result()
 	}
 
 	// withdraw money from validator's bank
@@ -39,21 +40,18 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 	if err := proxyAcc.MinusCoins(ctx, msg.Deposit); err != nil {
 		return ErrValidatorManagerFail("Withdraw money from validator's bank failed").Result()
 	}
-	// TODO: publick key?
+
 	account := &ValidatorAccount{
+		Validator:     abci.Validator{PubKey: msg.PubKey.Bytes(), Power: msg.Deposit.AmountOf("lino")},
 		validatorName: msg.ValidatorName,
-		//totalWeight:   msg.Deposit,
-		deposit: msg.Deposit,
+		deposit:       msg.Deposit,
 	}
+	fmt.Println(account)
 
 	vm.SetValidatorAccount(ctx, msg.ValidatorName, account)
 
-	// add to validator list
-	// TODO: key?
-	// lstPtr, _ := vm.GetValidatorList(ctx, "validatoryKey")
-	// lstPtr.validators = append(lstPtr.validators, msg.ValidatorName)
-	// vm.SetValidatorList(ctx, "validatoryKey", lstPtr)
-	vm.TryJoinValidatorList(ctx, msg.ValidatorName)
+	// add to pool and try to add to validator list
+	vm.TryJoinValidatorList(ctx, msg.ValidatorName, true)
 
 	proxyAcc.Apply(ctx)
 	return sdk.Result{}
@@ -69,14 +67,14 @@ func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, 
 	validator, _ := vm.GetValidatorAccount(ctx, msg.ValidatorName)
 	vote := Vote{
 		voter:         msg.Voter,
-		weight:        msg.Weight,
+		power:         msg.Power,
 		validatorName: msg.ValidatorName,
 	}
 
 	validator.votes = append(validator.votes, vote)
-	//validator.totalWeight += msg.Weight
+	validator.Power += msg.Power.AmountOf("lino")
 	vm.SetValidatorAccount(ctx, msg.ValidatorName, validator)
-	vm.TryJoinValidatorList(ctx, msg.ValidatorName)
+	vm.TryJoinValidatorList(ctx, msg.ValidatorName, false)
 
 	return sdk.Result{}
 }
