@@ -29,7 +29,7 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, msg)
+		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, sdk.StdFee{}, msg)
 
 		msgType := msg.Type()
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/stretchr/testify/assert"
 )
@@ -91,8 +90,8 @@ func TestDonationMsg(t *testing.T) {
 	}{
 		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), "postID"), nil},
 		{NewDonateMsg(acc.AccountKey(""), newAmount(1), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(0), acc.AccountKey("author"), "postID"), bank.ErrInvalidCoins("0lino")},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(-1), acc.AccountKey("author"), "postID"), bank.ErrInvalidCoins("-1lino")},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(0), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("0lino")},
+		{NewDonateMsg(acc.AccountKey("test"), newAmount(-1), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("-1lino")},
 		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
 		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
 		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
