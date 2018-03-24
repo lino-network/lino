@@ -28,6 +28,7 @@ func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) 
 	if account.IsAccountExist(ctx) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
+	fmt.Println("==================Get bank:", msg.NewPubKey.Address())
 	bank, err := am.GetBankFromAddress(ctx, msg.NewPubKey.Address())
 	if err != nil {
 		return ErrAccRegisterFail("Get bank failed").Result()

@@ -118,6 +118,7 @@ func TestRegisterDuplicate(t *testing.T) {
 }
 
 func TestReRegister(t *testing.T) {
+
 	register := "register"
 	newRegister := "newRegister"
 	lam := newLinoAccountManager()

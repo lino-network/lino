@@ -24,10 +24,8 @@
     "client/lcd",
     "client/rpc",
     "client/tx",
-    "examples/basecoin/app",
     "examples/basecoin/types",
     "examples/basecoin/x/cool",
-    "examples/basecoin/x/sketchy",
     "mock",
     "server",
     "store",
@@ -39,9 +37,7 @@
     "x/auth/rest",
     "x/bank",
     "x/bank/commands",
-    "x/bank/rest",
-    "x/ibc",
-    "x/staking"
+    "x/bank/rest"
   ]
   revision = "950797dd6f0d06261cb24e0b60d1b2debbc3a1fc"
 
@@ -490,6 +486,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5778527a4c74aa65cf458f93fbe63a2708a4b38f9fcd3cbdbbdcc17e1c48daa"
+  inputs-digest = "c6a2ff438f88d110b91d120f17c02e0f9d792ce6fc48bcf0aae18f343a32ddb2"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -12,9 +12,9 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
 
-	"github.com/lino-network/lino/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/lino-network/lino/app"
 )
 
 // linoCmd is the entry point for this binary
@@ -40,13 +40,15 @@ func defaultOptions(args []string) (json.RawMessage, error) {
         "address": "%s",
         "coins": [
           {
-            "denom": "mycoin",
-            "amount": 9007199254740992
+            "denom": "lino",
+            "amount": 10000000000
           }
-        ]
+        ],
+        "name": "Lino"
+
       }]
     }`, addr)
-    fmt.Println("default address:", addr)
+	fmt.Println("default address:", addr)
 	return json.RawMessage(opts), nil
 }
 

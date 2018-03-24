@@ -14,12 +14,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/commands"
-	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/commands"
 	acccmd "github.com/lino-network/lino/tx/account/commands"
+	postcmd "github.com/lino-network/lino/tx/post/commands"
+	registercmd "github.com/lino-network/lino/tx/register/commands"
 
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/app"
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
+	"github.com/lino-network/lino/app"
 )
 
 // linocliCmd is the entry point for this binary
@@ -47,19 +46,29 @@ func main() {
 	tx.AddCommands(linocliCmd, cdc)
 	linocliCmd.AddCommand(client.LineBreak)
 
-	// TODO(Lino): Customize our own command
-	// add query/post commands (custom to binary)
 	linocliCmd.AddCommand(
-	 	client.GetCommands(
-			authcmd.GetAccountCmd("main", cdc, types.GetParseAccount(cdc)),
+		client.PostCommands(
+			registercmd.RegisterTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			bankcmd.SendTxCmd(cdc),
+			acccmd.TransferTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			acccmd.RegisterTxCmd(cdc),
+			acccmd.FollowTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.PostTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.LikeTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.DonateTxCmd(cdc),
 		)...)
 	// linocliCmd.AddCommand(
 	// 	client.PostCommands(
@@ -69,7 +78,7 @@ func main() {
 	// add proxy, version and key info
 	linocliCmd.AddCommand(
 		client.LineBreak,
-		lcd.ServeCommand(),
+		lcd.ServeCommand(cdc),
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
