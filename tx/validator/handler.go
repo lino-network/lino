@@ -50,9 +50,10 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 
 	// add to validator list
 	// TODO: key?
-	lstPtr, _ := vm.GetValidatorList(ctx, "validatoryKey")
-	lstPtr.validators = append(lstPtr.validators, *account)
-	vm.SetValidatorList(ctx, "validatoryKey", lstPtr)
+	// lstPtr, _ := vm.GetValidatorList(ctx, "validatoryKey")
+	// lstPtr.validators = append(lstPtr.validators, msg.ValidatorName)
+	// vm.SetValidatorList(ctx, "validatoryKey", lstPtr)
+	vm.TryJoinValidatorList(ctx, msg.ValidatorName)
 
 	proxyAcc.Apply(ctx)
 	return sdk.Result{}
@@ -75,5 +76,7 @@ func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, 
 	validator.votes = append(validator.votes, vote)
 	//validator.totalWeight += msg.Weight
 	vm.SetValidatorAccount(ctx, msg.ValidatorName, validator)
+	vm.TryJoinValidatorList(ctx, msg.ValidatorName)
+
 	return sdk.Result{}
 }

@@ -15,8 +15,9 @@ type ValidatorAccount struct {
 
 // Validator candidate list
 type ValidatorList struct {
-	validatorListKey acc.AccountKey     `json:"validator_list_key"`
-	validators       []ValidatorAccount `json:"validators"`
+	validatorListKey acc.AccountKey   `json:"validator_list_key"`
+	validators       []acc.AccountKey `json:"validators"`
+	minWeight        int64            `json:"min_weight"`
 }
 
 // User's vote

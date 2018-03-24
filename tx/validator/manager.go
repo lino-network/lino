@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 )
 
 var ValidatorAccountPrefix = []byte("ValidatorAccountInfo/")
@@ -86,6 +87,49 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, accKey acc.AccountK
 	}
 	store.Set(validatorListKey(accKey), listByte)
 	return nil
+}
+
+// try to join the validator list.
+// the action will success if either
+// 1. the validator list is not full
+// or 2. someone in the validator list has a lower weight than current validator
+func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, accKey acc.AccountKey) bool {
+	validator, _ := vm.GetValidatorAccount(ctx, accKey)
+	lst, _ := vm.GetValidatorList(ctx, "validatoryKey")
+	validatorList := lst.validators
+	// add to list directly
+	if len(validatorList) < types.ValidatorListSize {
+		if validator.totalWeight < lst.minWeight {
+			lst.minWeight = validator.totalWeight
+		}
+		validatorList = append(validatorList, validator.validatorName)
+		vm.SetValidatorList(ctx, "validatoryKey", lst)
+		return true
+	}
+
+	// replace the validator with lowest weight
+	if validator.totalWeight > lst.minWeight {
+
+		newMinWeight := validator.totalWeight
+		for idx, accKey := range validatorList {
+			acc, _ := vm.GetValidatorAccount(ctx, accKey)
+			//delete the validator has the lowest weight, add new validator
+			if acc.totalWeight == lst.minWeight {
+				validatorList = append(validatorList[:idx], validatorList[idx+1:]...)
+				validatorList = append(validatorList, validator.validatorName)
+			}
+
+			if acc.totalWeight < newMinWeight {
+				newMinWeight = acc.totalWeight
+			}
+		}
+
+		// update the lowest weight in the validator list
+		lst.minWeight = newMinWeight
+		vm.SetValidatorList(ctx, "validatoryKey", lst)
+		return true
+	}
+	return false
 }
 
 func validatorKey(accKey acc.AccountKey) []byte {
