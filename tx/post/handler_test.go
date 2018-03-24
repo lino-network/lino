@@ -119,7 +119,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postInfo)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrPostCommentsNotFound(GetPostKey(user, "invalid parent")).Result())
+	assert.Equal(t, result, ErrPostCommentsNotFound(PostCommentsKey(GetPostKey(user, "invalid parent"))).Result())
 
 	// test duplicate comment
 	postInfo.Author = user
@@ -139,7 +139,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postInfo)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrPostCommentsNotFound(GetPostKey(user, "newComment")).Result())
+	assert.Equal(t, result, ErrPostCommentsNotFound(PostCommentsKey(GetPostKey(user, "newComment"))).Result())
 }
 
 func TestHandlerPostLike(t *testing.T) {

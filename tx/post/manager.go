@@ -52,27 +52,27 @@ func NewPostMananger(key sdk.StoreKey) PostManager {
 	}
 }
 
-func (pm PostManager) get(ctx sdk.Context, postKey PostKey, errFunc NotFoundErrFunc, prefix []byte) ([]byte, sdk.Error) {
+func (pm PostManager) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) ([]byte, sdk.Error) {
 	store := ctx.KVStore(pm.key)
-	val := store.Get(append(prefix, postKey...))
+	val := store.Get(key)
 	if val == nil {
-		return nil, errFunc(postKey)
+		return nil, errFunc(key)
 	}
 	return val, nil
 }
 
-func (pm PostManager) set(ctx sdk.Context, postKey PostKey, postStruct PostInterface, prefix []byte) sdk.Error {
+func (pm PostManager) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
 	store := ctx.KVStore(pm.key)
 	val, err := oldwire.MarshalJSON(postStruct)
 	if err != nil {
 		return ErrPostMarshalError(err)
 	}
-	store.Set(append(prefix, postKey...), val)
+	store.Set(key, val)
 	return nil
 }
 
 func (pm PostManager) GetPostInfo(ctx sdk.Context, postKey PostKey) (*PostInfo, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostNotFound, postKeyPrefix)
+	val, err := pm.get(ctx, PostInfoKey(postKey), ErrPostNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +84,11 @@ func (pm PostManager) GetPostInfo(ctx sdk.Context, postKey PostKey) (*PostInfo, 
 }
 
 func (pm PostManager) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
-	return pm.set(ctx, GetPostKey(postInfo.Author, postInfo.PostID), postInfo, postKeyPrefix)
+	return pm.set(ctx, PostInfoKey(GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
 }
 
 func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey PostKey) (*PostMeta, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostMetaNotFound, postMetaKeyPrefix)
+	val, err := pm.get(ctx, PostMetaKey(postKey), ErrPostMetaNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -100,11 +100,11 @@ func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey PostKey) (*PostMeta, 
 }
 
 func (pm PostManager) SetPostMeta(ctx sdk.Context, postKey PostKey, postMeta *PostMeta) sdk.Error {
-	return pm.set(ctx, postKey, postMeta, postMetaKeyPrefix)
+	return pm.set(ctx, PostMetaKey(postKey), postMeta)
 }
 
 func (pm PostManager) GetPostLikes(ctx sdk.Context, postKey PostKey) (*PostLikes, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostLikesNotFound, postLikesKeyPrefix)
+	val, err := pm.get(ctx, PostLikesKey(postKey), ErrPostLikesNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -116,11 +116,11 @@ func (pm PostManager) GetPostLikes(ctx sdk.Context, postKey PostKey) (*PostLikes
 }
 
 func (pm PostManager) SetPostLikes(ctx sdk.Context, postKey PostKey, postLikes *PostLikes) sdk.Error {
-	return pm.set(ctx, postKey, postLikes, postLikesKeyPrefix)
+	return pm.set(ctx, PostLikesKey(postKey), postLikes)
 }
 
 func (pm PostManager) GetPostComments(ctx sdk.Context, postKey PostKey) (*PostComments, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostCommentsNotFound, postCommentsKeyPrefix)
+	val, err := pm.get(ctx, PostCommentsKey(postKey), ErrPostCommentsNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -132,11 +132,11 @@ func (pm PostManager) GetPostComments(ctx sdk.Context, postKey PostKey) (*PostCo
 }
 
 func (pm PostManager) SetPostComments(ctx sdk.Context, postKey PostKey, postComments *PostComments) sdk.Error {
-	return pm.set(ctx, postKey, postComments, postCommentsKeyPrefix)
+	return pm.set(ctx, PostCommentsKey(postKey), postComments)
 }
 
 func (pm PostManager) GetPostViews(ctx sdk.Context, postKey PostKey) (*PostViews, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostViewsNotFound, postViewsKeyPrefix)
+	val, err := pm.get(ctx, PostViewsKey(postKey), ErrPostViewsNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -148,11 +148,11 @@ func (pm PostManager) GetPostViews(ctx sdk.Context, postKey PostKey) (*PostViews
 }
 
 func (pm PostManager) SetPostViews(ctx sdk.Context, postKey PostKey, postViews *PostViews) sdk.Error {
-	return pm.set(ctx, postKey, postViews, postViewsKeyPrefix)
+	return pm.set(ctx, PostViewsKey(postKey), postViews)
 }
 
 func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey PostKey) (*PostDonations, sdk.Error) {
-	val, err := pm.get(ctx, postKey, ErrPostDonationsNotFound, postDonationsKeyPrefix)
+	val, err := pm.get(ctx, PostDonationKey(postKey), ErrPostDonationsNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -164,5 +164,29 @@ func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey PostKey) (*PostD
 }
 
 func (pm PostManager) SetPostDonations(ctx sdk.Context, postKey PostKey, postDonations *PostDonations) sdk.Error {
-	return pm.set(ctx, postKey, postDonations, postDonationsKeyPrefix)
+	return pm.set(ctx, PostDonationKey(postKey), postDonations)
+}
+
+func PostInfoKey(postKey PostKey) []byte {
+	return append(postKeyPrefix, postKey...)
+}
+
+func PostMetaKey(postKey PostKey) []byte {
+	return append(postMetaKeyPrefix, postKey...)
+}
+
+func PostLikesKey(postKey PostKey) []byte {
+	return append(postLikesKeyPrefix, postKey...)
+}
+
+func PostViewsKey(postKey PostKey) []byte {
+	return append(postViewsKeyPrefix, postKey...)
+}
+
+func PostCommentsKey(postKey PostKey) []byte {
+	return append(postCommentsKeyPrefix, postKey...)
+}
+
+func PostDonationKey(postKey PostKey) []byte {
+	return append(postDonationsKeyPrefix, postKey...)
 }
