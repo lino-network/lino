@@ -15,6 +15,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/lino-network/lino/app"
+	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/go-crypto/keys"
+	"github.com/tendermint/go-crypto/keys/words"
+	oldwire "github.com/tendermint/go-wire"
 )
 
 // linoCmd is the entry point for this binary
@@ -28,27 +32,27 @@ var (
 // defaultOptions sets up the app_options for the
 // default genesis file
 func defaultOptions(args []string) (json.RawMessage, error) {
-	addr, secret, err := server.GenerateCoinKey()
+	pubKey, secret, err := generateCoinKey()
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
 
+	b, _ := oldwire.MarshalJSON(*pubKey)
 	opts := fmt.Sprintf(`{
-      "accounts": [{
-        "address": "%s",
-        "coins": [
-          {
-            "denom": "lino",
-            "amount": 10000000000
-          }
-        ],
-        "name": "Lino"
-
-      }]
-    }`, addr)
-	fmt.Println("default address:", addr)
+	      "accounts": [{
+	        "coins": [
+	          {
+	            "denom": "lino",
+	            "amount": 10000000000
+	          }
+	        ],
+	        "name": "Lino",
+	        "pub_key": %s
+	      }]
+	    }`, b)
+	fmt.Println("default address:", pubKey.Address())
 	return json.RawMessage(opts), nil
 }
 
@@ -77,4 +81,24 @@ func main() {
 	rootDir := os.ExpandEnv("$HOME/.lino")
 	executor := cli.PrepareBaseCmd(linoCmd, "BC", rootDir)
 	executor.Execute()
+}
+
+func generateCoinKey() (*crypto.PubKey, string, error) {
+	// construct an in-memory key store
+	codec, err := words.LoadCodec("english")
+	if err != nil {
+		return nil, "", err
+	}
+	keybase := keys.New(
+		dbm.NewMemDB(),
+		codec,
+	)
+
+	// generate a private key, with recovery phrase
+	info, secret, err := keybase.Create("name", "pass", keys.AlgoEd25519)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &info.PubKey, secret, nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/register"
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
@@ -15,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
+	oldwire "github.com/tendermint/go-wire"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -37,9 +39,37 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		// create the message
-		msg := register.NewRegisterMsg(name, *pubKey)
+		b, _ := oldwire.MarshalJSON(*pubKey)
+		fmt.Println(string(b))
+		opts := fmt.Sprintf(`{
+	      "accounts": [{
+	        "address": "%s",
+	        "coins": [
+	          {
+	            "denom": "lino",
+	            "amount": 10000000000
+	          }
+	        ],
+	        "name": "Lino",
+	        "pub_key": %s
 
+	      }]
+	    }`, pubKey.Address(), b)
+		fmt.Println(opts)
+
+		genesisState := new(acc.GenesisState)
+		err = oldwire.UnmarshalJSON([]byte(opts), genesisState)
+		fmt.Println(*genesisState)
+
+		for _, gacc := range genesisState.Accounts {
+			fmt.Println(gacc)
+			// lb.accountMapper.SetAccount(ctx, acc)
+		}
+
+		// // create the message
+		msg := register.NewRegisterMsg(name, *pubKey)
+		// fmt.Println(fmt.Sprintf("pubkey: %v", *pubKey))
+		// fmt.Println(fmt.Sprintf("pubkey to bytes: %v", string(pubKey.Bytes())))
 		// get password
 		buf := sdkcli.BufferStdin()
 		prompt := fmt.Sprintf("Password to sign with '%s':", name)

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -127,7 +126,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	stateJSON := req.AppStateBytes
 
 	genesisState := new(acc.GenesisState)
-	err := json.Unmarshal(stateJSON, genesisState)
+	err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	if err != nil {
 		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
 	}
@@ -145,18 +144,46 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 // convert GenesisAccount to AppAccount
 func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
-	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.Address)
+	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.PubKey.Address())
 	if err == nil {
 		// account bank exists
-		panic(sdk.ErrGenesisParse("genesis account already exist"))
+		panic(sdk.ErrGenesisParse("genesis bank already exist"))
 	} else {
 		// account bank not found, create a new one for this address
 		bank = &acc.AccountBank{
-			Address: ga.Address,
+			Address: ga.PubKey.Address(),
 			Balance: ga.Coins,
 		}
-		if setErr := lb.accountManager.SetBankFromAddress(ctx, ga.Address, bank); setErr != nil {
-			panic(sdk.ErrGenesisParse("set genesis account failed"))
+		if setErr := lb.accountManager.SetBankFromAddress(ctx, bank.Address, bank); setErr != nil {
+			panic(sdk.ErrGenesisParse("set genesis bank failed"))
+		}
+		account := acc.NewProxyAccount(acc.AccountKey(ga.Name), &lb.accountManager)
+		if account.IsAccountExist(ctx) {
+			panic(sdk.ErrGenesisParse("genesis account already exist"))
+		}
+		if err := account.CreateAccount(ctx, acc.AccountKey(ga.Name), ga.PubKey, bank); err != nil {
+			panic(err)
+		}
+
+		deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
+		// withdraw money from validator's bank
+		if err := account.MinusCoins(ctx, deposit); err != nil {
+			panic(err)
+		}
+		ownerKey, getErr := account.GetOwnerKey(ctx)
+		if getErr != nil {
+			panic(err)
+		}
+		val := &validator.Validator{
+			ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: deposit.AmountOf("lino")},
+			Username:      account.GetUsername(ctx),
+			Deposit:       deposit,
+		}
+		if setErr := lb.valManager.SetValidator(ctx, account.GetUsername(ctx), val); setErr != nil {
+			panic(setErr)
+		}
+		if err := account.Apply(ctx); err != nil {
+			panic(err)
 		}
 	}
 	return nil

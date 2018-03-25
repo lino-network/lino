@@ -57,9 +57,9 @@ func (vm ValidatorManager) GetValidator(ctx sdk.Context, accKey acc.AccountKey) 
 }
 
 // Implements ValidatorManager
-func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, account *Validator) sdk.Error {
+func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, validator *Validator) sdk.Error {
 	store := ctx.KVStore(vm.key)
-	accountByte, err := vm.cdc.MarshalJSON(*account)
+	accountByte, err := vm.cdc.MarshalJSON(*validator)
 	if err != nil {
 		return ErrValidatorManagerFail("ValidatorManager set account failed")
 	}
