@@ -23,30 +23,30 @@ func codeToDefaultMsg(code CodeType) string {
 	}
 }
 
-type NotFoundErrFunc func(PostKey) sdk.Error
+type NotFoundErrFunc func([]byte) sdk.Error
 
-func ErrPostNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post not found for key: %s", postKey))
+func ErrPostNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post not found for key: %s", key))
 }
 
-func ErrPostMetaNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post meta not found for key: %s", postKey))
+func ErrPostMetaNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post meta not found for key: %s", key))
 }
 
-func ErrPostLikesNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post likes not found for key: %s", postKey))
+func ErrPostLikesNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post likes not found for key: %s", key))
 }
 
-func ErrPostCommentsNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post comments not found for key: %s", postKey))
+func ErrPostCommentsNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post comments not found for key: %s", key))
 }
 
-func ErrPostViewsNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post views not found for key: %s", postKey))
+func ErrPostViewsNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post views not found for key: %s", key))
 }
 
-func ErrPostDonationsNotFound(postKey PostKey) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post donations not found for key: %s", postKey))
+func ErrPostDonationsNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post donations not found for key: %s", key))
 }
 
 func ErrPostMarshalError(err error) sdk.Error {

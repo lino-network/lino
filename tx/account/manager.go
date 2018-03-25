@@ -34,7 +34,7 @@ func NewLinoAccountManager(key sdk.StoreKey) AccountManager {
 // Implements types.AccountManager.
 func (lam AccountManager) AccountExist(ctx sdk.Context, accKey AccountKey) bool {
 	store := ctx.KVStore(lam.key)
-	if infoByte := store.Get(accountInfoKey(accKey)); infoByte == nil {
+	if infoByte := store.Get(AccountInfoKey(accKey)); infoByte == nil {
 		return false
 	}
 	return true
@@ -43,7 +43,7 @@ func (lam AccountManager) AccountExist(ctx sdk.Context, accKey AccountKey) bool 
 // Implements types.AccountManager.
 func (lam AccountManager) GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(accountInfoKey(accKey))
+	infoByte := store.Get(AccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get info failed: info doesn't exist")
 	}
@@ -61,14 +61,14 @@ func (lam AccountManager) SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *A
 	if err != nil {
 		return ErrAccountManagerFail("LinoAccountManager set info failed")
 	}
-	store.Set(accountInfoKey(accKey), infoByte)
+	store.Set(AccountInfoKey(accKey), infoByte)
 	return nil
 }
 
 // Implements types.AccountManager.
 func (lam AccountManager) GetBankFromAccountKey(ctx sdk.Context, accKey AccountKey) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(accountInfoKey(accKey))
+	infoByte := store.Get(AccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get bank failed: user doesn't exist")
 	}
@@ -82,7 +82,7 @@ func (lam AccountManager) GetBankFromAccountKey(ctx sdk.Context, accKey AccountK
 // Implements types.AccountManager.
 func (lam AccountManager) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	bankByte := store.Get(accountBankKey(address))
+	bankByte := store.Get(AccountBankKey(address))
 	if bankByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get bank failed: bank doesn't exist")
 	}
@@ -100,14 +100,14 @@ func (lam AccountManager) SetBankFromAddress(ctx sdk.Context, address sdk.Addres
 	if err != nil {
 		return ErrAccountManagerFail("AccountManager set bank failed")
 	}
-	store.Set(accountBankKey(address), bankByte)
+	store.Set(AccountBankKey(address), bankByte)
 	return nil
 }
 
 // Implements types.AccountManager.
 func (lam AccountManager) SetBankFromAccountKey(ctx sdk.Context, accKey AccountKey, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(accountInfoKey(accKey))
+	infoByte := store.Get(AccountInfoKey(accKey))
 	if infoByte == nil {
 		return ErrAccountManagerFail("AccountManager set bank failed: user doesn't exist")
 	}
@@ -122,7 +122,7 @@ func (lam AccountManager) SetBankFromAccountKey(ctx sdk.Context, accKey AccountK
 // Implements types.AccountManager.
 func (lam AccountManager) GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	metaByte := store.Get(accountMetaKey(accKey))
+	metaByte := store.Get(AccountMetaKey(accKey))
 	if metaByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get meta failed: meta doesn't exist")
 	}
@@ -140,14 +140,14 @@ func (lam AccountManager) SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *A
 	if err != nil {
 		return ErrAccountManagerFail("AccountManager set meta failed")
 	}
-	store.Set(accountMetaKey(accKey), metaByte)
+	store.Set(AccountMetaKey(accKey), metaByte)
 	return nil
 }
 
 // Implements types.AccountManager.
 func (lam AccountManager) GetFollower(ctx sdk.Context, accKey AccountKey) (*Follower, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	followerByte := store.Get(accountFollowerKey(accKey))
+	followerByte := store.Get(AccountFollowerKey(accKey))
 	if followerByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get follower failed: follower doesn't exist")
 	}
@@ -165,14 +165,14 @@ func (lam AccountManager) SetFollower(ctx sdk.Context, accKey AccountKey, follow
 	if err != nil {
 		return ErrAccountManagerFail("AccountManager set meta failed")
 	}
-	store.Set(accountFollowerKey(accKey), followerByte)
+	store.Set(AccountFollowerKey(accKey), followerByte)
 	return nil
 }
 
 // Implements types.AccountManager.
 func (lam AccountManager) GetFollowing(ctx sdk.Context, accKey AccountKey) (*Following, sdk.Error) {
 	store := ctx.KVStore(lam.key)
-	followingByte := store.Get(accountFollowingKey(accKey))
+	followingByte := store.Get(AccountFollowingKey(accKey))
 	if followingByte == nil {
 		return nil, ErrAccountManagerFail("AccountManager get following failed: follower doesn't exist")
 	}
@@ -190,26 +190,26 @@ func (lam AccountManager) SetFollowing(ctx sdk.Context, accKey AccountKey, follo
 	if err != nil {
 		return ErrAccountManagerFail("AccountManager set meta failed")
 	}
-	store.Set(accountFollowingKey(accKey), followingByte)
+	store.Set(AccountFollowingKey(accKey), followingByte)
 	return nil
 }
 
-func accountInfoKey(accKey AccountKey) []byte {
+func AccountInfoKey(accKey AccountKey) []byte {
 	return append(AccountInfoPrefix, accKey...)
 }
 
-func accountBankKey(address sdk.Address) []byte {
+func AccountBankKey(address sdk.Address) []byte {
 	return append(AccountBankPrefix, address...)
 }
 
-func accountMetaKey(accKey AccountKey) []byte {
+func AccountMetaKey(accKey AccountKey) []byte {
 	return append(AccountMetaPrefix, accKey...)
 }
 
-func accountFollowerKey(accKey AccountKey) []byte {
+func AccountFollowerKey(accKey AccountKey) []byte {
 	return append(AccountFollowerPrefix, accKey...)
 }
 
-func accountFollowingKey(accKey AccountKey) []byte {
+func AccountFollowingKey(accKey AccountKey) []byte {
 	return append(AccountFollowingPrefix, accKey...)
 }

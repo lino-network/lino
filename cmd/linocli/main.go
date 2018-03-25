@@ -70,10 +70,19 @@ func main() {
 		client.PostCommands(
 			postcmd.DonateTxCmd(cdc),
 		)...)
-	// linocliCmd.AddCommand(
-	// 	client.PostCommands(
-	// 		coolcmd.SetTrendTxCmd(cdc),
-	// 	)...)
+
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			acccmd.GetBankCmd("account", cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			acccmd.GetAccountCmd("account", cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			postcmd.GetPostCmd("post", cdc),
+		)...)
 
 	// add proxy, version and key info
 	linocliCmd.AddCommand(
