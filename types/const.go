@@ -31,14 +31,21 @@ const (
 	// CodePostDonateError occurs when donate msg fails
 	CodePostDonateError sdk.CodeType = 405
 
+	// Lino validator handler errors reserve 500 ~ 599
+	CodeValidatorHandlerFailed sdk.CodeType = 500
+	CodeValidatorManagerFailed sdk.CodeType = 501
+
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
 
 	// AccountRouterName is used for routing in app
 	AccountRouterName = "account"
 
-	// AccountRouterName is used for routing in app
+	// PostRouterName is used for routing in app
 	PostRouterName = "post"
+
+	// ValidatorRouterName is used for routing in app
+	ValidatorRouterName = "post"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

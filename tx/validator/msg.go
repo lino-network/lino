@@ -6,10 +6,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tx "github.com/cosmos/cosmos-sdk/x/bank"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
-	"github.com/tendermint/go-crypto"
 )
 
 type VoteMsg struct {
@@ -19,9 +17,8 @@ type VoteMsg struct {
 }
 
 type ValidatorRegisterMsg struct {
-	ValidatorName acc.AccountKey `json:"validator_name"`
-	PubKey        crypto.PubKey  `json:"new_public_key"`
-	Deposit       sdk.Coins      `json:"deposit"`
+	Username acc.AccountKey `json:"username"`
+	Deposit  sdk.Coins      `json:"deposit"`
 }
 
 //----------------------------------------
@@ -48,7 +45,7 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 
 	// cannot vote a negative amount of votes
 	if !msg.Power.IsPositive() {
-		return tx.ErrInvalidCoins("invalid votes")
+		return sdk.ErrInvalidCoins("invalid votes")
 	}
 
 	return nil
@@ -78,11 +75,10 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // RegisterValidatorMsg Msg Implementations
 
-func NewValidatorRegisterMsg(validator string, pubkey crypto.PubKey, deposit sdk.Coins) ValidatorRegisterMsg {
+func NewValidatorRegisterMsg(validator string, deposit sdk.Coins) ValidatorRegisterMsg {
 	msg := ValidatorRegisterMsg{
-		ValidatorName: acc.AccountKey(validator),
-		PubKey:        pubkey,
-		Deposit:       deposit,
+		Username: acc.AccountKey(validator),
+		Deposit:  deposit,
 	}
 	return msg
 }
@@ -90,8 +86,8 @@ func NewValidatorRegisterMsg(validator string, pubkey crypto.PubKey, deposit sdk
 func (msg ValidatorRegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
-	if len(msg.ValidatorName) < types.MinimumUsernameLength ||
-		len(msg.ValidatorName) > types.MaximumUsernameLength {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername("illegal length")
 	}
 
@@ -99,7 +95,7 @@ func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg ValidatorRegisterMsg) String() string {
-	return fmt.Sprintf("VoteMsg{ValidatorName:%v}", msg.ValidatorName)
+	return fmt.Sprintf("RegisterMsg{Username:%v}", msg.Username)
 }
 
 func (msg ValidatorRegisterMsg) Get(key interface{}) (value interface{}) {
@@ -115,5 +111,5 @@ func (msg ValidatorRegisterMsg) GetSignBytes() []byte {
 }
 
 func (msg ValidatorRegisterMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.ValidatorName)}
+	return []sdk.Address{sdk.Address(msg.Username)}
 }

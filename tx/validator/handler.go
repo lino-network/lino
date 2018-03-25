@@ -17,7 +17,7 @@ func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 		case VoteMsg:
 			return handleVoteMsg(ctx, vm, am, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -25,34 +25,42 @@ func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorRegisterMsg) sdk.Result {
+	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
 	// This name has been registered
-	if vm.IsValidatorExist(ctx, msg.ValidatorName) {
-		return ErrValidatorManagerFail("account exist").Result()
+	if vm.IsValidatorExist(ctx, msg.Username) {
+		return ErrValidatorHandlerFail("validator exists").Result()
 	}
 
 	// Must have an normal acount before becoming a validator
-	if !am.AccountExist(ctx, msg.ValidatorName) {
-		return ErrValidatorManagerFail("normal account not found").Result()
+	if !proxyAcc.IsAccountExist(ctx) {
+		return ErrValidatorHandlerFail("user account not found").Result()
 	}
 
 	// withdraw money from validator's bank
-	proxyAcc := acc.NewProxyAccount(msg.ValidatorName, &am)
 	if err := proxyAcc.MinusCoins(ctx, msg.Deposit); err != nil {
-		return ErrValidatorManagerFail("Withdraw money from validator's bank failed").Result()
+		return ErrValidatorHandlerFail("Withdraw money from validator's bank failed").Result()
 	}
-
-	account := &ValidatorAccount{
-		Validator:     abci.Validator{PubKey: msg.PubKey.Bytes(), Power: msg.Deposit.AmountOf("lino")},
-		ValidatorName: msg.ValidatorName,
+	ownerKey, getErr := proxyAcc.GetOwnerKey(ctx)
+	if getErr != nil {
+		return ErrValidatorHandlerFail("Get owner key failed").Result()
+	}
+	account := &Validator{
+		ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: msg.Deposit.AmountOf("lino")},
+		Username:      msg.Username,
 		Deposit:       msg.Deposit,
 	}
 
-	vm.SetValidatorAccount(ctx, msg.ValidatorName, account)
+	if setErr := vm.SetValidator(ctx, msg.Username, account); setErr != nil {
+		return ErrValidatorHandlerFail("Set Validator failed").Result()
+	}
 
 	// add to pool and try to add to validator list
-	vm.TryJoinValidatorList(ctx, msg.ValidatorName, true)
-
-	proxyAcc.Apply(ctx)
+	if _, joinErr := vm.TryJoinValidatorList(ctx, msg.Username, true); joinErr != nil {
+		return ErrValidatorHandlerFail("Try to join validator list error").Result()
+	}
+	if err := proxyAcc.Apply(ctx); err != nil {
+		return ErrValidatorHandlerFail("Proxy account apply failed").Result()
+	}
 	return sdk.Result{}
 }
 
@@ -60,26 +68,35 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg VoteMsg) sdk.Result {
 	// Validator not found
 	if !vm.IsValidatorExist(ctx, msg.ValidatorName) {
-		return ErrValidatorManagerFail("validator not found").Result()
+		return ErrValidatorHandlerFail("validator not found").Result()
 	}
 
 	// withdraw money from voter's bank
 	proxyAcc := acc.NewProxyAccount(msg.Voter, &am)
 	if err := proxyAcc.MinusCoins(ctx, msg.Power); err != nil {
-		return ErrValidatorManagerFail("Withdraw money from voter's bank failed").Result()
+		return ErrValidatorHandlerFail("Withdraw money from voter's bank failed").Result()
 	}
-	validator, _ := vm.GetValidatorAccount(ctx, msg.ValidatorName)
+	validator, getErr := vm.GetValidator(ctx, msg.ValidatorName)
+	if getErr != nil {
+		return ErrValidatorHandlerFail("Get Validator failed").Result()
+	}
 	vote := Vote{
-		voter:         msg.Voter,
-		power:         msg.Power,
-		validatorName: msg.ValidatorName,
+		Voter: msg.Voter,
+		Power: msg.Power,
 	}
 
 	validator.Votes = append(validator.Votes, vote)
-	validator.Power += msg.Power.AmountOf("lino")
-	vm.SetValidatorAccount(ctx, msg.ValidatorName, validator)
-	vm.TryJoinValidatorList(ctx, msg.ValidatorName, false)
+	validator.ABCIValidator.Power += msg.Power.AmountOf("lino")
 
-	proxyAcc.Apply(ctx)
+	if setErr := vm.SetValidator(ctx, msg.ValidatorName, validator); setErr != nil {
+		return ErrValidatorHandlerFail("Set Validator failed").Result()
+	}
+	if _, joinErr := vm.TryJoinValidatorList(ctx, msg.ValidatorName, false); joinErr != nil {
+		return ErrValidatorHandlerFail("Try to join validator list error").Result()
+	}
+
+	if err := proxyAcc.Apply(ctx); err != nil {
+		return ErrValidatorHandlerFail("Proxy account apply failed").Result()
+	}
 	return sdk.Result{}
 }

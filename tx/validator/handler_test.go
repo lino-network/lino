@@ -38,7 +38,7 @@ func TestRegisterBasic(t *testing.T) {
 	// let user1 register as validator
 	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorRegisterMsg("user1", *ownerKey, deposit)
+	msg := NewValidatorRegisterMsg("user1", deposit)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -50,15 +50,15 @@ func TestRegisterBasic(t *testing.T) {
 	// now user1 should be the only validator (WOW, dictator!)
 	verifyList, _ := vm.GetValidatorList(ctx, ValidatorListKey)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c200))
-	assert.Equal(t, acc.AccountKey("user1"), verifyList.Validators[0])
-	assert.Equal(t, acc.AccountKey("user1"), verifyList.ValidatorPool[0])
-	assert.Equal(t, 1, len(verifyList.Validators))
-	assert.Equal(t, 1, len(verifyList.ValidatorPool))
+	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
+	assert.Equal(t, acc.AccountKey("user1"), verifyList.AllValidators[0])
+	assert.Equal(t, 1, len(verifyList.OncallValidators))
+	assert.Equal(t, 1, len(verifyList.AllValidators))
 
 	// make sure the validator's account info (power&pubKey) is correct
-	verifyAccount, _ := vm.GetValidatorAccount(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, int64(200), verifyAccount.GetPower())
-	assert.Equal(t, ownerKey.Bytes(), verifyAccount.GetPubKey())
+	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
+	assert.Equal(t, int64(200), verifyAccount.ABCIValidator.GetPower())
+	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
 
 }
 
@@ -85,8 +85,8 @@ func TestVoteBasic(t *testing.T) {
 
 	// let user1 register as validator
 	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
-	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorRegisterMsg("user1", *ownerKey, deposit)
+	//ownerKey, _ := acc1.GetOwnerKey(ctx)
+	msg := NewValidatorRegisterMsg("user1", deposit)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -101,7 +101,7 @@ func TestVoteBasic(t *testing.T) {
 	assert.Equal(t, true, acc1Balance.IsEqual(c1800))
 	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
 
-	verifyAccount, _ := vm.GetValidatorAccount(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, int64(400), verifyAccount.GetPower())
+	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
+	assert.Equal(t, int64(400), verifyAccount.ABCIValidator.GetPower())
 
 }

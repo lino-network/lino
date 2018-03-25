@@ -7,24 +7,23 @@ import (
 )
 
 // Validator Account
-type ValidatorAccount struct {
-	abci.Validator
-	ValidatorName acc.AccountKey `json:"validator_name"`
+type Validator struct {
+	ABCIValidator abci.Validator
+	Username      acc.AccountKey `json:"username"`
 	Votes         []Vote         `json:"votes"`
 	Deposit       sdk.Coins      `json:"deposit"`
 }
 
 // Validator list
 type ValidatorList struct {
-	Validators      []acc.AccountKey `json:"validators"`
-	ValidatorPool   []acc.AccountKey `json:"validatorPool"`
-	LowestPower     sdk.Coins        `json:"lowest_power"`
-	LowestValidator acc.AccountKey   `json:"lowest_validator"`
+	OncallValidators []acc.AccountKey `json:"oncall_validators"`
+	AllValidators    []acc.AccountKey `json:"all_validators"`
+	LowestPower      sdk.Coins        `json:"lowest_power"`
+	LowestValidator  acc.AccountKey   `json:"lowest_validator"`
 }
 
 // User's vote
 type Vote struct {
-	voter         acc.AccountKey `json:"voter"`
-	power         sdk.Coins      `json:"power"`
-	validatorName acc.AccountKey `json:"validator_name"`
+	Voter acc.AccountKey `json:"voter"`
+	Power sdk.Coins      `json:"power"`
 }

@@ -11,7 +11,11 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	case types.CodeInvalidUsername:
 		return "Invalid username format"
 	case types.CodeAccRegisterFailed:
-		return "Account register failed"
+		return "Validator register failed"
+	case types.CodeValidatorHandlerFailed:
+		return "Validator handler failed"
+	case types.CodeValidatorManagerFailed:
+		return "Validator manager failed"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -19,7 +23,11 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 
 // Error constructors
 func ErrValidatorManagerFail(msg string) sdk.Error {
-	return newError(types.CodeAccRegisterFailed, msg)
+	return newError(types.CodeValidatorManagerFailed, msg)
+}
+
+func ErrValidatorHandlerFail(msg string) sdk.Error {
+	return newError(types.CodeValidatorHandlerFailed, msg)
 }
 
 func ErrInvalidUsername(msg string) sdk.Error {
