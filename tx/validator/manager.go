@@ -68,7 +68,7 @@ func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, 
 }
 
 // Implements ValidatorManager
-func (vm ValidatorManager) GetValidatorList(ctx sdk.Context, accKey acc.AccountKey) (*ValidatorList, sdk.Error) {
+func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*ValidatorList, sdk.Error) {
 	store := ctx.KVStore(vm.key)
 	listByte := store.Get(validatorListKey(ValidatorListKey))
 	if listByte == nil {
@@ -82,7 +82,7 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context, accKey acc.AccountK
 }
 
 // Implements ValidatorManager
-func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, accKey acc.AccountKey, lst *ValidatorList) sdk.Error {
+func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *ValidatorList) sdk.Error {
 	store := ctx.KVStore(vm.key)
 	listByte, err := vm.cdc.MarshalJSON(*lst)
 	if err != nil {
@@ -101,11 +101,11 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 	if getErr != nil {
 		return getErr
 	}
-	lst, getListErr := vm.GetValidatorList(ctx, ValidatorListKey)
+	lst, getListErr := vm.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
-	defer vm.SetValidatorList(ctx, ValidatorListKey, lst)
+	defer vm.SetValidatorList(ctx, lst)
 	// add to validator pool if needed
 	if addToPool {
 		lst.AllValidators = append(lst.AllValidators, username)
@@ -113,7 +113,7 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 
 	// add to list directly if validator list is not full
 	if len(lst.OncallValidators) < types.ValidatorListSize {
-		if curValidator.ABCIValidator.Power < lst.LowestPower.AmountOf("lino") || len(lst.OncallValidators) == 0 {
+		if len(lst.OncallValidators) == 0 || curValidator.ABCIValidator.Power < lst.LowestPower.AmountOf("lino") {
 			lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: curValidator.ABCIValidator.Power}}
 			lst.LowestValidator = curValidator.Username
 		}
@@ -144,7 +144,7 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 
 // remove the user from both oncall and allValidators lists
 func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	lst, getListErr := vm.GetValidatorList(ctx, ValidatorListKey)
+	lst, getListErr := vm.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
@@ -152,7 +152,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 	lst.AllValidators = remove(username, lst.AllValidators)
 	lst.OncallValidators = remove(username, lst.OncallValidators)
 
-	if err := vm.SetValidatorList(ctx, ValidatorListKey, lst); err != nil {
+	if err := vm.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
 
@@ -180,7 +180,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 	if joinErr := vm.TryJoinValidatorList(ctx, bestCandidate, false); joinErr != nil {
 		return joinErr
 	}
-	if err := vm.SetValidatorList(ctx, ValidatorListKey, lst); err != nil {
+	if err := vm.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
 

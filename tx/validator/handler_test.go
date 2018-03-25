@@ -33,7 +33,7 @@ func TestRegisterBasic(t *testing.T) {
 		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
 	}
 
-	vm.SetValidatorList(ctx, ValidatorListKey, lst)
+	vm.SetValidatorList(ctx, lst)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -53,7 +53,7 @@ func TestRegisterBasic(t *testing.T) {
 	assert.Equal(t, true, vm.IsValidatorExist(ctx, acc.AccountKey("user1")))
 
 	// now user1 should be the only validator (WOW, dictator!)
-	verifyList, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c200))
 	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
 	assert.Equal(t, acc.AccountKey("user1"), verifyList.AllValidators[0])
@@ -77,7 +77,7 @@ func TestVoteBasic(t *testing.T) {
 		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
 	}
 
-	vm.SetValidatorList(ctx, ValidatorListKey, lst)
+	vm.SetValidatorList(ctx, lst)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -121,7 +121,7 @@ func TestValidatorReplacement(t *testing.T) {
 		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
 	}
 
-	vm.SetValidatorList(ctx, ValidatorListKey, lst)
+	vm.SetValidatorList(ctx, lst)
 
 	// create 21 test users
 	users := make([]*acc.Account, 21)
@@ -137,7 +137,7 @@ func TestValidatorReplacement(t *testing.T) {
 	}
 
 	// check validator list, the lowest power is 10
-	verifyList, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c10))
 	assert.Equal(t, acc.AccountKey("user0"), verifyList.LowestValidator)
 	assert.Equal(t, 21, len(verifyList.OncallValidators))
@@ -153,7 +153,7 @@ func TestValidatorReplacement(t *testing.T) {
 	msg := NewValidatorRegisterMsg("noPowerUser", deposit)
 	result := handler(ctx, msg)
 
-	verifyList2, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList2, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c10))
 	assert.Equal(t, acc.AccountKey("user0"), verifyList.LowestValidator)
@@ -170,7 +170,7 @@ func TestValidatorReplacement(t *testing.T) {
 	msg2 := NewValidatorRegisterMsg("powerfulUser", deposit2)
 	result2 := handler(ctx, msg2)
 
-	verifyList3, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList3, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result2)
 	assert.Equal(t, true, verifyList3.LowestPower.IsEqual(c20))
 	assert.Equal(t, acc.AccountKey("user1"), verifyList3.LowestValidator)
@@ -200,7 +200,7 @@ func TestValidatorReplacement(t *testing.T) {
 	msgVote := NewVoteMsg("voter", "user0", c11)
 	result3 := handler(ctx, msgVote)
 
-	verifyList4, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList4, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result3)
 	assert.Equal(t, true, verifyList4.LowestPower.IsEqual(c21))
 	assert.Equal(t, acc.AccountKey("user0"), verifyList4.LowestValidator)
@@ -218,7 +218,7 @@ func TestRemoveBasic(t *testing.T) {
 		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
 	}
 
-	vm.SetValidatorList(ctx, ValidatorListKey, lst)
+	vm.SetValidatorList(ctx, lst)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "goodUser")
@@ -235,12 +235,12 @@ func TestRemoveBasic(t *testing.T) {
 	handler(ctx, msg1)
 	handler(ctx, msg2)
 
-	verifyList, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, 2, len(verifyList.OncallValidators))
 	assert.Equal(t, 2, len(verifyList.AllValidators))
 
 	vm.RemoveValidatorFromAllLists(ctx, "badUser")
-	verifyList2, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	verifyList2, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(verifyList2.OncallValidators))
 	assert.Equal(t, 1, len(verifyList2.AllValidators))
 	assert.Equal(t, acc.AccountKey("goodUser"), verifyList2.OncallValidators[0])
