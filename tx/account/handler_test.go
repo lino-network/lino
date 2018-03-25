@@ -276,7 +276,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	// let user1 transfers 2000 to user2
 	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("user2"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountManagerFail("Withdraw money from sender's bank failed").Result(), result)
+	assert.Equal(t, ErrAccountManagerFail("Account bank's coins are not enough").Result(), result)
 
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
 	assert.Equal(t, true, acc1Balance.IsEqual(c200))

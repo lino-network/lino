@@ -40,7 +40,7 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 	if findAccountInList(msg.Follower, followerList.Follower) == -1 {
 		followerList.Follower = append(followerList.Follower, msg.Follower)
 		if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
-			return ErrAccountManagerFail("Set follower failed").Result()
+			return err.Result()
 		}
 	}
 
@@ -48,7 +48,7 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 	if findAccountInList(msg.Followee, followingList.Following) == -1 {
 		followingList.Following = append(followingList.Following, msg.Followee)
 		if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
-			return ErrAccountManagerFail("Set following failed").Result()
+			return err.Result()
 		}
 	}
 
@@ -71,7 +71,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 	if idx := findAccountInList(msg.Follower, followerList.Follower); idx != -1 {
 		followerList.Follower = append(followerList.Follower[:idx], followerList.Follower[idx+1:]...)
 		if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
-			return ErrAccountManagerFail("Set follower failed").Result()
+			return err.Result()
 		}
 	}
 
@@ -79,7 +79,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 	if idx := findAccountInList(msg.Followee, followingList.Following); idx != -1 {
 		followingList.Following = append(followingList.Following[:idx], followingList.Following[idx+1:]...)
 		if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
-			return ErrAccountManagerFail("Set following failed").Result()
+			return err.Result()
 		}
 	}
 
@@ -91,7 +91,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// withdraw money from sender's bank
 	accSender := NewProxyAccount(msg.Sender, &am)
 	if err := accSender.MinusCoins(ctx, msg.Amount); err != nil {
-		return ErrAccountManagerFail("Withdraw money from sender's bank failed").Result()
+		return err.Result()
 	}
 
 	// both username and address provided
@@ -128,7 +128,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	}
 
 	if setErr := am.SetBankFromAddress(ctx, msg.ReceiverAddr, receiverBank); setErr != nil {
-		return ErrAccountManagerFail("Set receiver's bank failed").Result()
+		return setErr.Result()
 	}
 	accSender.Apply(ctx)
 	return sdk.Result{}
