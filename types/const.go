@@ -45,7 +45,7 @@ const (
 	PostRouterName = "post"
 
 	// ValidatorRouterName is used for routing in app
-	ValidatorRouterName = "post"
+	ValidatorRouterName = "validator"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

@@ -25,15 +25,14 @@ type ValidatorRegisterMsg struct {
 // Vote Msg Implementations
 
 func NewVoteMsg(voter string, validator string, power sdk.Coins) VoteMsg {
-	msg := VoteMsg{
+	return VoteMsg{
 		Voter:         acc.AccountKey(voter),
 		ValidatorName: acc.AccountKey(validator),
 		Power:         power,
 	}
-	return msg
 }
 
-func (msg VoteMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg VoteMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
 
 func (msg VoteMsg) ValidateBasic() sdk.Error {
 	if len(msg.Voter) < types.MinimumUsernameLength ||
@@ -76,14 +75,13 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 // RegisterValidatorMsg Msg Implementations
 
 func NewValidatorRegisterMsg(validator string, deposit sdk.Coins) ValidatorRegisterMsg {
-	msg := ValidatorRegisterMsg{
+	return ValidatorRegisterMsg{
 		Username: acc.AccountKey(validator),
 		Deposit:  deposit,
 	}
-	return msg
 }
 
-func (msg ValidatorRegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg ValidatorRegisterMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
 
 func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
