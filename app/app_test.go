@@ -1,21 +1,11 @@
 package app
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/x/cool"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
