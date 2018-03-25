@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
@@ -94,14 +96,14 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, accKey acc.AccountK
 // 1. the validator list is not full
 // or 2. someone in the validator list has a lower power than current validator
 // return a boolean to indicate if the user has became an oncall validator
-func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.AccountKey, addToPool bool) (bool, sdk.Error) {
+func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.AccountKey, addToPool bool) sdk.Error {
 	curValidator, getErr := vm.GetValidator(ctx, username)
 	if getErr != nil {
-		return false, ErrValidatorManagerFail("Get validator failed")
+		return getErr
 	}
-	lst, setErr := vm.GetValidatorList(ctx, ValidatorListKey)
-	if setErr != nil {
-		return false, ErrValidatorManagerFail("Set validator failed")
+	lst, getListErr := vm.GetValidatorList(ctx, ValidatorListKey)
+	if getListErr != nil {
+		return getListErr
 	}
 	defer vm.SetValidatorList(ctx, ValidatorListKey, lst)
 	// add to validator pool if needed
@@ -116,7 +118,7 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 			lst.LowestValidator = curValidator.Username
 		}
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
-		return true, nil
+		return nil
 	}
 
 	// replace the validator with lowest power
@@ -125,7 +127,7 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, getErr := vm.GetValidator(ctx, validatorKey)
 			if getErr != nil {
-				return false, ErrValidatorManagerFail("Get validator failed")
+				return getErr
 			}
 			if validator.Username == lst.LowestValidator {
 				lst.OncallValidators[idx] = curValidator.Username
@@ -133,25 +135,82 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 		}
 
 		// 2. iterate through validator list to update lowest power&validator
-		newLowestPower := curValidator.ABCIValidator.Power
-		newLowestValidator := curValidator.Username
-
-		for _, validatorKey := range lst.OncallValidators {
-			validator, getErr := vm.GetValidator(ctx, validatorKey)
-			if getErr != nil {
-				return false, ErrValidatorManagerFail("Get validator failed")
-			}
-			if validator.ABCIValidator.Power < newLowestPower {
-				newLowestPower = validator.ABCIValidator.Power
-				newLowestValidator = validator.Username
-			}
-		}
-		// set the new lowest power
-		lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: newLowestPower}}
-		lst.LowestValidator = newLowestValidator
-		return true, nil
+		//updateErr := nil
+		lst = vm.updateLowestValidator(ctx, lst)
+		return nil
 	}
-	return false, nil
+	return nil
+}
+
+// remove the user from both oncall and allValidators lists
+func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username acc.AccountKey) sdk.Error {
+	lst, getListErr := vm.GetValidatorList(ctx, ValidatorListKey)
+	if getListErr != nil {
+		return getListErr
+	}
+
+	lst.AllValidators = remove(username, lst.AllValidators)
+	lst.OncallValidators = remove(username, lst.OncallValidators)
+
+	if err := vm.SetValidatorList(ctx, ValidatorListKey, lst); err != nil {
+		return err
+	}
+
+	lst = vm.updateLowestValidator(ctx, lst)
+
+	// find the person has the biggest power among people in the allValidators lists
+	// but not in the oncall validator list
+	bestCandidate := acc.AccountKey("")
+	bestCandidatePower := int64(0)
+
+	for i, validatorName := range lst.AllValidators {
+		validator, getErr := vm.GetValidator(ctx, lst.AllValidators[i])
+		if getErr != nil {
+			return getErr
+		}
+
+		// not in the oncall list and has a larger power
+		if findAccountInList(validatorName, lst.OncallValidators) == -1 &&
+			validator.ABCIValidator.Power > bestCandidatePower {
+			bestCandidate = validator.Username
+			bestCandidatePower = validator.ABCIValidator.Power
+		}
+	}
+
+	if joinErr := vm.TryJoinValidatorList(ctx, bestCandidate, false); joinErr != nil {
+		return joinErr
+	}
+	if err := vm.SetValidatorList(ctx, ValidatorListKey, lst); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func remove(me acc.AccountKey, users []acc.AccountKey) []acc.AccountKey {
+	for idx, username := range users {
+		if me == username {
+			users = append(users[:idx], users[idx+1:]...)
+		}
+	}
+	return users
+}
+
+func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context, lst *ValidatorList) *ValidatorList {
+	newLowestPower := int64(math.MaxInt64)
+	newLowestValidator := acc.AccountKey("")
+
+	for _, validatorKey := range lst.OncallValidators {
+		validator, _ := vm.GetValidator(ctx, validatorKey)
+		if validator.ABCIValidator.Power < newLowestPower {
+			newLowestPower = validator.ABCIValidator.Power
+			newLowestValidator = validator.Username
+		}
+	}
+	// set the new lowest power
+	lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: newLowestPower}}
+	lst.LowestValidator = newLowestValidator
+	return lst
 }
 
 func validatorKey(accKey acc.AccountKey) []byte {
@@ -160,4 +219,13 @@ func validatorKey(accKey acc.AccountKey) []byte {
 
 func validatorListKey(accKey acc.AccountKey) []byte {
 	return append(ValidatorListPrefix, accKey...)
+}
+
+func findAccountInList(me acc.AccountKey, lst []acc.AccountKey) int {
+	for index, user := range lst {
+		if user == me {
+			return index
+		}
+	}
+	return -1
 }

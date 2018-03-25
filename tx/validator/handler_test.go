@@ -207,3 +207,42 @@ func TestValidatorReplacement(t *testing.T) {
 	assert.Equal(t, 21, len(verifyList3.OncallValidators))
 	assert.Equal(t, 23, len(verifyList3.AllValidators))
 }
+
+func TestRemoveBasic(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newValidatorManager()
+	ctx := getContext()
+	handler := NewHandler(vm, lam)
+
+	lst := &ValidatorList{
+		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
+	}
+
+	vm.SetValidatorList(ctx, ValidatorListKey, lst)
+
+	// create two test users
+	acc1 := createTestAccount(ctx, lam, "goodUser")
+	acc2 := createTestAccount(ctx, lam, "badUser")
+	acc1.AddCoins(ctx, c2000)
+	acc1.Apply(ctx)
+	acc2.AddCoins(ctx, c2000)
+	acc2.Apply(ctx)
+
+	// let both users register as validator
+	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
+	msg1 := NewValidatorRegisterMsg("goodUser", deposit)
+	msg2 := NewValidatorRegisterMsg("badUser", deposit)
+	handler(ctx, msg1)
+	handler(ctx, msg2)
+
+	verifyList, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	assert.Equal(t, 2, len(verifyList.OncallValidators))
+	assert.Equal(t, 2, len(verifyList.AllValidators))
+
+	vm.RemoveValidatorFromAllLists(ctx, "badUser")
+	verifyList2, _ := vm.GetValidatorList(ctx, ValidatorListKey)
+	assert.Equal(t, 1, len(verifyList2.OncallValidators))
+	assert.Equal(t, 1, len(verifyList2.AllValidators))
+	assert.Equal(t, acc.AccountKey("goodUser"), verifyList2.OncallValidators[0])
+	assert.Equal(t, acc.AccountKey("goodUser"), verifyList2.AllValidators[0])
+}
