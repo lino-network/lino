@@ -164,7 +164,7 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 	}
 
 	// cannot transfer othe coin types
-	if len(msg.Amount) != 1 || msg.Amount[0].Denom != "lino" {
+	if len(msg.Amount) != 1 || msg.Amount[0].Denom != types.Denom {
 		return sdk.ErrInvalidCoins("invalid coin type")
 	}
 

@@ -12,7 +12,8 @@ type GenesisState struct {
 
 // GenesisAccount doesn't need pubkey or sequence
 type GenesisAccount struct {
-	Name   string        `json:"name"`
-	Coins  sdk.Coins     `json:"coins"`
-	PubKey crypto.PubKey `json:"pub_key"`
+	Name      string        `json:"name"`
+	Coins     sdk.Coins     `json:"coins"`
+	PubKey    crypto.PubKey `json:"pub_key"`
+	ValPubKey crypto.PubKey `json:"validator_pub_key"`
 }

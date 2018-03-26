@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -24,7 +25,7 @@ func newPostManager() PostManager {
 
 func newAmount(amount int64) sdk.Coins {
 	return sdk.Coins{
-		{"lino", amount},
+		{types.Denom, amount},
 	}
 }
 
@@ -41,7 +42,7 @@ func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
 	priv := crypto.GenPrivKeyEd25519()
 	accBank := &acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 123}},
+		Balance: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 123}},
 	}
 	return priv.Wrap(), accBank
 }

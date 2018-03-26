@@ -18,7 +18,10 @@ import (
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
-	oldwire "github.com/tendermint/go-wire"
+
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+	tmtypes "github.com/tendermint/tendermint/types"
+	cmn "github.com/tendermint/tmlibs/common"
 )
 
 // linoCmd is the entry point for this binary
@@ -39,7 +42,29 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
 
-	b, _ := oldwire.MarshalJSON(*pubKey)
+	config, err := tcmd.ParseConfig()
+	if err != nil {
+		return nil, err
+	}
+	// private validator
+	privValFile := config.PrivValidatorFile()
+	var privValidator *tmtypes.PrivValidatorFS
+	if cmn.FileExists(privValFile) {
+		privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
+	} else {
+		privValidator = tmtypes.GenPrivValidatorFS(privValFile)
+		privValidator.Save()
+	}
+
+	pubKeyBytes, err := json.Marshal(*pubKey)
+	if err != nil {
+		return nil, err
+	}
+	valPubKeyBytes, err := json.Marshal(privValidator.PubKey)
+	if err != nil {
+		return nil, err
+	}
+
 	opts := fmt.Sprintf(`{
 	      "accounts": [{
 	        "coins": [
@@ -49,9 +74,10 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 	          }
 	        ],
 	        "name": "Lino",
-	        "pub_key": %s
+	        "pub_key": %s,
+	        "validator_pub_key": %s
 	      }]
-	    }`, b)
+	    }`, pubKeyBytes, valPubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
 	return json.RawMessage(opts), nil
 }

@@ -4,17 +4,18 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	c0    = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
-	c100  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
-	c200  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
-	c1600 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1600}}
-	c1800 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1800}}
-	c1900 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1900}}
-	c2000 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 2000}}
+	c0    = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}}
+	c100  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
+	c200  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
+	c1600 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1600}}
+	c1800 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1800}}
+	c1900 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1900}}
+	c2000 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 2000}}
 )
 
 func TestFollow(t *testing.T) {

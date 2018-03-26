@@ -39,33 +39,6 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		b, _ := oldwire.MarshalJSON(*pubKey)
-		fmt.Println(string(b))
-		opts := fmt.Sprintf(`{
-	      "accounts": [{
-	        "address": "%s",
-	        "coins": [
-	          {
-	            "denom": "lino",
-	            "amount": 10000000000
-	          }
-	        ],
-	        "name": "Lino",
-	        "pub_key": %s
-
-	      }]
-	    }`, pubKey.Address(), b)
-		fmt.Println(opts)
-
-		genesisState := new(acc.GenesisState)
-		err = oldwire.UnmarshalJSON([]byte(opts), genesisState)
-		fmt.Println(*genesisState)
-
-		for _, gacc := range genesisState.Accounts {
-			fmt.Println(gacc)
-			// lb.accountMapper.SetAccount(ctx, acc)
-		}
-
 		// // create the message
 		msg := register.NewRegisterMsg(name, *pubKey)
 		// fmt.Println(fmt.Sprintf("pubkey: %v", *pubKey))

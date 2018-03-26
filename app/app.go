@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -67,12 +68,16 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 	lb.MountStoresIAVL(lb.capKeyAccountStore)
 	lb.MountStoresIAVL(lb.capKeyPostStore)
+	lb.MountStoresIAVL(lb.capKeyValStore)
 	lb.MountStoresIAVL(lb.capKeyIBCStore)
 	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyPostStore); err != nil {
+		cmn.Exit(err.Error())
+	}
+	if err := lb.LoadLatestVersion(lb.capKeyValStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyIBCStore); err != nil {
@@ -126,7 +131,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	stateJSON := req.AppStateBytes
 
 	genesisState := new(acc.GenesisState)
-	err := oldwire.UnmarshalJSON(stateJSON, genesisState)
+	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
+	err := json.Unmarshal(stateJSON, genesisState)
 	if err != nil {
 		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
 	}
@@ -165,17 +171,13 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 			panic(err)
 		}
 
-		deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
+		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
 		// withdraw money from validator's bank
 		if err := account.MinusCoins(ctx, deposit); err != nil {
 			panic(err)
 		}
-		ownerKey, getErr := account.GetOwnerKey(ctx)
-		if getErr != nil {
-			panic(err)
-		}
 		val := &validator.Validator{
-			ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: deposit.AmountOf("lino")},
+			ABCIValidator: abci.Validator{PubKey: ga.ValPubKey.Bytes(), Power: deposit.AmountOf(types.Denom)},
 			Username:      account.GetUsername(ctx),
 			Deposit:       deposit,
 		}

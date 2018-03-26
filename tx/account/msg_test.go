@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,7 +74,7 @@ func TestTransferMsg(t *testing.T) {
 	// normal transfer to a username
 	sender := "userA"
 	receiverName := "userB"
-	amount := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 123}}
+	amount := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 123}}
 	memo := []byte("This is a memo!")
 
 	msg := NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
@@ -100,12 +101,12 @@ func TestTransferMsg(t *testing.T) {
 
 	// invalid transfer: amount is invalid
 	receiverName = "userB"
-	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: -2323}}
+	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: -2323}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
 
-	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
+	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
@@ -116,8 +117,8 @@ func TestTransferMsg(t *testing.T) {
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
 
-	amount = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 231},
-		sdk.Coin{Denom: "lino", Amount: 12}}
+	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 231},
+		sdk.Coin{Denom: types.Denom, Amount: 12}}
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
