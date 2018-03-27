@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -45,7 +46,7 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return getErr.Result()
 	}
 	account := &Validator{
-		ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: msg.Deposit.AmountOf("lino")},
+		ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
 		Username:      msg.Username,
 		Deposit:       msg.Deposit,
 	}
@@ -86,7 +87,7 @@ func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, 
 	}
 
 	validator.Votes = append(validator.Votes, vote)
-	validator.ABCIValidator.Power += msg.Power.AmountOf("lino")
+	validator.ABCIValidator.Power += msg.Power.AmountOf(types.Denom)
 
 	if setErr := vm.SetValidator(ctx, msg.ValidatorName, validator); setErr != nil {
 		return setErr.Result()

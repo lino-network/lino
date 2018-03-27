@@ -83,7 +83,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: "Lino", Amount: 1}}),
+		Balance: RegisterFee.Minus(sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1}}),
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

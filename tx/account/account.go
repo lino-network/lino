@@ -134,7 +134,7 @@ func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error)
 		return ErrAccountManagerFail("Account bank's coins are not enough")
 	}
 
-	c0 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64(0)}}
+	c0 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64(0)}}
 	acc.accountBank.Balance = acc.accountBank.Balance.Minus(coins)
 
 	// API return empty when the result is 0 coin

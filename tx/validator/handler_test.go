@@ -6,21 +6,22 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	c0    = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
-	c10   = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 10}}
-	c11   = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 11}}
-	c20   = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 20}}
-	c21   = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 21}}
-	c100  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
-	c200  = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
-	c1600 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1600}}
-	c1800 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1800}}
-	c1900 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 1900}}
-	c2000 = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 2000}}
+	c0    = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}}
+	c10   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 10}}
+	c11   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 11}}
+	c20   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 20}}
+	c21   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 21}}
+	c100  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
+	c200  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
+	c1600 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1600}}
+	c1800 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1800}}
+	c1900 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1900}}
+	c2000 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 2000}}
 )
 
 func TestRegisterBasic(t *testing.T) {
@@ -30,7 +31,7 @@ func TestRegisterBasic(t *testing.T) {
 	handler := NewHandler(vm, lam)
 
 	lst := &ValidatorList{
-		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
+		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
 	}
 
 	vm.SetValidatorList(ctx, lst)
@@ -41,7 +42,7 @@ func TestRegisterBasic(t *testing.T) {
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
-	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
+	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
 	msg := NewValidatorRegisterMsg("user1", deposit)
 	result := handler(ctx, msg)
@@ -74,7 +75,7 @@ func TestVoteBasic(t *testing.T) {
 	handler := NewHandler(vm, lam)
 
 	lst := &ValidatorList{
-		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
+		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
 	}
 
 	vm.SetValidatorList(ctx, lst)
@@ -89,7 +90,7 @@ func TestVoteBasic(t *testing.T) {
 	acc2.Apply(ctx)
 
 	// let user1 register as validator
-	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
+	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
 	//ownerKey, _ := acc1.GetOwnerKey(ctx)
 	msg := NewValidatorRegisterMsg("user1", deposit)
 	result := handler(ctx, msg)
@@ -118,7 +119,7 @@ func TestValidatorReplacement(t *testing.T) {
 	handler := NewHandler(vm, lam)
 
 	lst := &ValidatorList{
-		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
+		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
 	}
 
 	vm.SetValidatorList(ctx, lst)
@@ -130,7 +131,7 @@ func TestValidatorReplacement(t *testing.T) {
 		users[i].AddCoins(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
-		deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: int64((i + 1) * 10)}}
+		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i + 1) * 10)}}
 		msg := NewValidatorRegisterMsg("user"+strconv.Itoa(i), deposit)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
@@ -149,7 +150,7 @@ func TestValidatorReplacement(t *testing.T) {
 	acc1.Apply(ctx)
 
 	//check the user hasn't been added to oncall validators but in the pool
-	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 5}}
+	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 5}}
 	msg := NewValidatorRegisterMsg("noPowerUser", deposit)
 	result := handler(ctx, msg)
 
@@ -166,7 +167,7 @@ func TestValidatorReplacement(t *testing.T) {
 	acc2.Apply(ctx)
 
 	//check the user has been added to oncall validators and in the pool
-	deposit2 := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 88}}
+	deposit2 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 88}}
 	msg2 := NewValidatorRegisterMsg("powerfulUser", deposit2)
 	result2 := handler(ctx, msg2)
 
@@ -215,7 +216,7 @@ func TestRemoveBasic(t *testing.T) {
 	handler := NewHandler(vm, lam)
 
 	lst := &ValidatorList{
-		LowestPower: sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}},
+		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
 	}
 
 	vm.SetValidatorList(ctx, lst)
@@ -229,7 +230,7 @@ func TestRemoveBasic(t *testing.T) {
 	acc2.Apply(ctx)
 
 	// let both users register as validator
-	deposit := sdk.Coins{sdk.Coin{Denom: "lino", Amount: 200}}
+	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
 	msg1 := NewValidatorRegisterMsg("goodUser", deposit)
 	msg2 := NewValidatorRegisterMsg("badUser", deposit)
 	handler(ctx, msg1)

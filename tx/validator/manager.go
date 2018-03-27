@@ -57,9 +57,9 @@ func (vm ValidatorManager) GetValidator(ctx sdk.Context, accKey acc.AccountKey) 
 }
 
 // Implements ValidatorManager
-func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, account *Validator) sdk.Error {
+func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, validator *Validator) sdk.Error {
 	store := ctx.KVStore(vm.key)
-	accountByte, err := vm.cdc.MarshalJSON(*account)
+	accountByte, err := vm.cdc.MarshalJSON(*validator)
 	if err != nil {
 		return ErrValidatorManagerFail("ValidatorManager set account failed")
 	}
@@ -113,8 +113,8 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 
 	// add to list directly if validator list is not full
 	if len(lst.OncallValidators) < types.ValidatorListSize {
-		if len(lst.OncallValidators) == 0 || curValidator.ABCIValidator.Power < lst.LowestPower.AmountOf("lino") {
-			lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: curValidator.ABCIValidator.Power}}
+		if len(lst.OncallValidators) == 0 || curValidator.ABCIValidator.Power < lst.LowestPower.AmountOf(types.Denom) {
+			lst.LowestPower = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: curValidator.ABCIValidator.Power}}
 			lst.LowestValidator = curValidator.Username
 		}
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
@@ -122,7 +122,7 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 	}
 
 	// replace the validator with lowest power
-	if curValidator.ABCIValidator.Power > lst.LowestPower.AmountOf("lino") {
+	if curValidator.ABCIValidator.Power > lst.LowestPower.AmountOf(types.Denom) {
 		// 1. iterate through validator list to replace the lowest validator
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, getErr := vm.GetValidator(ctx, validatorKey)
@@ -208,7 +208,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context, lst *Validator
 		}
 	}
 	// set the new lowest power
-	lst.LowestPower = sdk.Coins{sdk.Coin{Denom: "lino", Amount: newLowestPower}}
+	lst.LowestPower = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: newLowestPower}}
 	lst.LowestValidator = newLowestValidator
 	return lst
 }

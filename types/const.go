@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	Denom = "lino"
 	// ABCI Response Codes
 	// Base SDK reserves 0 ~ 99.
 	// Coin errors reserve 100 ~ 199.

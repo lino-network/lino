@@ -68,12 +68,16 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 	lb.MountStoresIAVL(lb.capKeyAccountStore)
 	lb.MountStoresIAVL(lb.capKeyPostStore)
+	lb.MountStoresIAVL(lb.capKeyValStore)
 	lb.MountStoresIAVL(lb.capKeyIBCStore)
 	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyPostStore); err != nil {
+		cmn.Exit(err.Error())
+	}
+	if err := lb.LoadLatestVersion(lb.capKeyValStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyIBCStore); err != nil {
@@ -127,6 +131,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	stateJSON := req.AppStateBytes
 
 	genesisState := new(acc.GenesisState)
+	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	err := json.Unmarshal(stateJSON, genesisState)
 	if err != nil {
 		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
@@ -145,18 +150,42 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 // convert GenesisAccount to AppAccount
 func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
-	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.Address)
+	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.PubKey.Address())
 	if err == nil {
 		// account bank exists
-		panic(sdk.ErrGenesisParse("genesis account already exist"))
+		panic(sdk.ErrGenesisParse("genesis bank already exist"))
 	} else {
 		// account bank not found, create a new one for this address
 		bank = &acc.AccountBank{
-			Address: ga.Address,
+			Address: ga.PubKey.Address(),
 			Balance: ga.Coins,
 		}
-		if setErr := lb.accountManager.SetBankFromAddress(ctx, ga.Address, bank); setErr != nil {
-			panic(sdk.ErrGenesisParse("set genesis account failed"))
+		if setErr := lb.accountManager.SetBankFromAddress(ctx, bank.Address, bank); setErr != nil {
+			panic(sdk.ErrGenesisParse("set genesis bank failed"))
+		}
+		account := acc.NewProxyAccount(acc.AccountKey(ga.Name), &lb.accountManager)
+		if account.IsAccountExist(ctx) {
+			panic(sdk.ErrGenesisParse("genesis account already exist"))
+		}
+		if err := account.CreateAccount(ctx, acc.AccountKey(ga.Name), ga.PubKey, bank); err != nil {
+			panic(err)
+		}
+
+		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
+		// withdraw money from validator's bank
+		if err := account.MinusCoins(ctx, deposit); err != nil {
+			panic(err)
+		}
+		val := &validator.Validator{
+			ABCIValidator: abci.Validator{PubKey: ga.ValPubKey.Bytes(), Power: deposit.AmountOf(types.Denom)},
+			Username:      account.GetUsername(ctx),
+			Deposit:       deposit,
+		}
+		if setErr := lb.valManager.SetValidator(ctx, account.GetUsername(ctx), val); setErr != nil {
+			panic(setErr)
+		}
+		if err := account.Apply(ctx); err != nil {
+			panic(err)
 		}
 	}
 	return nil

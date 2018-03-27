@@ -6,9 +6,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 )
 
-var RegisterFee = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 100}}
+var RegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
 
 func NewHandler(am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
@@ -28,7 +29,7 @@ func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) 
 	if account.IsAccountExist(ctx) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
-	fmt.Println("==================Get bank:", msg.NewPubKey.Address())
+
 	bank, err := am.GetBankFromAddress(ctx, msg.NewPubKey.Address())
 	if err != nil {
 		return ErrAccRegisterFail("Get bank failed").Result()
