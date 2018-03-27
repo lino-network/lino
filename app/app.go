@@ -46,9 +46,9 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	var lb = &LinoBlockchain{
 		BaseApp:            bam.NewBaseApp(appName, logger, db),
 		cdc:                MakeCodec(),
-		capKeyAccountStore: sdk.NewKVStoreKey("account"),
-		capKeyPostStore:    sdk.NewKVStoreKey("post"),
-		capKeyValStore:     sdk.NewKVStoreKey("validator"),
+		capKeyAccountStore: sdk.NewKVStoreKey(types.AccountKVStoreKey),
+		capKeyPostStore:    sdk.NewKVStoreKey(types.PostKVStoreKey),
+		capKeyValStore:     sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
 		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
 	}
 	lb.accountManager = acc.NewLinoAccountManager(lb.capKeyAccountStore)
@@ -128,8 +128,11 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 
 // custom logic for basecoin initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	stateJSON := req.AppStateBytes
+	if err := lb.valManager.Init(ctx); err != nil {
+		panic(err)
+	}
 
+	stateJSON := req.AppStateBytes
 	genesisState := new(acc.GenesisState)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	err := json.Unmarshal(stateJSON, genesisState)
@@ -184,6 +187,9 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 		if setErr := lb.valManager.SetValidator(ctx, account.GetUsername(ctx), val); setErr != nil {
 			panic(setErr)
 		}
+		if joinErr := lb.valManager.TryJoinValidatorList(ctx, account.GetUsername(ctx), false); joinErr != nil {
+			panic(joinErr)
+		}
 		if err := account.Apply(ctx); err != nil {
 			panic(err)
 		}
@@ -192,15 +198,24 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if ctx.BlockHeight()%types.ValidatorTenure != 0 {
-		// TODO
+	absentValidators := req.GetAbsentValidators()
+	if absentValidators != nil {
+		// TODO Err handling
+		lb.valManager.UpdateAbsentValidator(ctx, absentValidators)
 	}
+	// TODO Err handling
+	lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators())
 	return abci.ResponseBeginBlock{}
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	if ctx.BlockHeight()%types.ValidatorTenure != 0 {
-		// TODO
+	valList, err := lb.valManager.GetOncallValList(ctx)
+	if err != nil {
+		panic(err)
 	}
-	return abci.ResponseEndBlock{}
+	ABCIValList := make([]abci.Validator, len(valList))
+	for i, validator := range valList {
+		ABCIValList[i] = validator.ABCIValidator
+	}
+	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }

@@ -6,12 +6,13 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
-// Validator Account
+// Validator is basic structure records all validator information
 type Validator struct {
 	ABCIValidator abci.Validator
 	Username      acc.AccountKey `json:"username"`
 	Votes         []Vote         `json:"votes"`
 	Deposit       sdk.Coins      `json:"deposit"`
+	AbsentVote    int            `json:"absent_vote"`
 }
 
 // Validator list

@@ -17,8 +17,10 @@ import (
 	acccmd "github.com/lino-network/lino/tx/account/commands"
 	postcmd "github.com/lino-network/lino/tx/post/commands"
 	registercmd "github.com/lino-network/lino/tx/register/commands"
+	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
 
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/types"
 )
 
 // linocliCmd is the entry point for this binary
@@ -70,18 +72,30 @@ func main() {
 		client.PostCommands(
 			postcmd.DonateTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			validatorcmd.RegisterValidatorTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			acccmd.GetBankCmd("account", cdc),
+			acccmd.GetBankCmd(types.AccountKVStoreKey, cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			acccmd.GetAccountCmd("account", cdc),
+			acccmd.GetAccountCmd(types.AccountKVStoreKey, cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			postcmd.GetPostCmd("post", cdc),
+			postcmd.GetPostCmd(types.PostKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			validatorcmd.GetValidatorsCmd(types.ValidatorKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			validatorcmd.GetValidatorCmd(types.ValidatorKVStoreKey, cdc),
 		)...)
 
 	// add proxy, version and key info

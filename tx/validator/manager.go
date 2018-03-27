@@ -1,17 +1,19 @@
 package validator
 
 import (
+	"fmt"
 	"math"
+	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
+	abci "github.com/tendermint/abci/types"
 )
 
 var ValidatorAccountPrefix = []byte("ValidatorAccountInfo/")
-var ValidatorListPrefix = []byte("ValidatorList/")
-var ValidatorListKey = acc.AccountKey("ValidatorListKey")
+var ValidatorListPrefixWithKey = []byte("ValidatorList/ValidatorListKey")
 
 // Validator Manager implements types.AccountManager
 type ValidatorManager struct {
@@ -27,16 +29,30 @@ type ValidatorManager struct {
 func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
 	cdc := wire.NewCodec()
 
-	return ValidatorManager{
+	vm := ValidatorManager{
 		key: key,
 		cdc: cdc,
 	}
+
+	return vm
+}
+
+// Implements ValidatorManager
+func (vm ValidatorManager) Init(ctx sdk.Context) sdk.Error {
+	lst := &ValidatorList{
+		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
+	}
+
+	if err := vm.SetValidatorList(ctx, lst); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Implements ValidatorManager
 func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey acc.AccountKey) bool {
 	store := ctx.KVStore(vm.key)
-	if infoByte := store.Get(validatorKey(accKey)); infoByte == nil {
+	if infoByte := store.Get(ValidatorKey(accKey)); infoByte == nil {
 		return false
 	}
 	return true
@@ -45,32 +61,32 @@ func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey acc.AccountK
 // Implements ValidatorManager
 func (vm ValidatorManager) GetValidator(ctx sdk.Context, accKey acc.AccountKey) (*Validator, sdk.Error) {
 	store := ctx.KVStore(vm.key)
-	accountByte := store.Get(validatorKey(accKey))
-	if accountByte == nil {
-		return nil, ErrValidatorManagerFail("ValidatorManager get account failed: account doesn't exist")
+	validatorByte := store.Get(ValidatorKey(accKey))
+	if validatorByte == nil {
+		return nil, ErrValidatorManagerFail("ValidatorManager get validator failed: validator doesn't exist")
 	}
-	acc := new(Validator)
-	if err := vm.cdc.UnmarshalJSON(accountByte, acc); err != nil {
-		return nil, ErrValidatorManagerFail("ValidatorManager get account failed")
+	validator := new(Validator)
+	if err := vm.cdc.UnmarshalJSON(validatorByte, validator); err != nil {
+		return nil, ErrValidatorManagerFail("ValidatorManager get validator failed")
 	}
-	return acc, nil
+	return validator, nil
 }
 
 // Implements ValidatorManager
 func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, validator *Validator) sdk.Error {
 	store := ctx.KVStore(vm.key)
-	accountByte, err := vm.cdc.MarshalJSON(*validator)
+	validatorByte, err := vm.cdc.MarshalJSON(*validator)
 	if err != nil {
-		return ErrValidatorManagerFail("ValidatorManager set account failed")
+		return ErrValidatorManagerFail("ValidatorManager set validator failed")
 	}
-	store.Set(validatorKey(accKey), accountByte)
+	store.Set(ValidatorKey(accKey), validatorByte)
 	return nil
 }
 
 // Implements ValidatorManager
 func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*ValidatorList, sdk.Error) {
 	store := ctx.KVStore(vm.key)
-	listByte := store.Get(validatorListKey(ValidatorListKey))
+	listByte := store.Get(ValidatorListKey())
 	if listByte == nil {
 		return nil, ErrValidatorManagerFail("ValidatorManager get account list failed: account list doesn't exist")
 	}
@@ -88,7 +104,80 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *ValidatorList)
 	if err != nil {
 		return ErrValidatorManagerFail("ValidatorManager set account list failed")
 	}
-	store.Set(validatorListKey(ValidatorListKey), listByte)
+	store.Set(ValidatorListKey(), listByte)
+	return nil
+}
+
+// Implements ValidatorManager
+func (vm ValidatorManager) GetOncallValList(ctx sdk.Context) ([]Validator, sdk.Error) {
+	lst, getListErr := vm.GetValidatorList(ctx)
+	if getListErr != nil {
+		return nil, getListErr
+	}
+	oncallList := make([]Validator, len(lst.OncallValidators))
+	for i, validatorName := range lst.OncallValidators {
+		validator, err := vm.GetValidator(ctx, validatorName)
+		if err != nil {
+			return nil, err
+		}
+		oncallList[i] = *validator
+	}
+	return oncallList, nil
+}
+
+// Implements ValidatorManager
+func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidators []int32) sdk.Error {
+	lst, getListErr := vm.GetValidatorList(ctx)
+	if getListErr != nil {
+		return getListErr
+	}
+	for _, idx := range absentValidators {
+		if idx > int32(len(lst.OncallValidators)) {
+			return ErrValidatorManagerFail("absent validator index out of range")
+		}
+		validator, err := vm.GetValidator(ctx, lst.OncallValidators[idx])
+		if err != nil {
+			return err
+		}
+		validator.AbsentVote += 1
+
+		if err := vm.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Implements ValidatorManager
+func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineValidators []abci.Evidence) sdk.Error {
+	lst, getListErr := vm.GetValidatorList(ctx)
+	if getListErr != nil {
+		return getListErr
+	}
+	fireList := []acc.AccountKey{}
+	for _, validatorName := range lst.OncallValidators {
+		validator, err := vm.GetValidator(ctx, validatorName)
+		if err != nil {
+			return err
+		}
+		if validator.AbsentVote > types.AbsentLimitation {
+			fireList = append(fireList, validatorName)
+			continue
+		}
+		for _, evidence := range ByzantineValidators {
+			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.PubKey) {
+				fireList = append(fireList, validatorName)
+			}
+		}
+	}
+	fmt.Println(fireList)
+	for _, validatorName := range fireList {
+		if err := vm.RemoveValidatorFromAllLists(ctx, validatorName); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -105,7 +194,6 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 	if getListErr != nil {
 		return getListErr
 	}
-	defer vm.SetValidatorList(ctx, lst)
 	// add to validator pool if needed
 	if addToPool {
 		lst.AllValidators = append(lst.AllValidators, username)
@@ -118,11 +206,8 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 			lst.LowestValidator = curValidator.Username
 		}
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
-		return nil
-	}
-
-	// replace the validator with lowest power
-	if curValidator.ABCIValidator.Power > lst.LowestPower.AmountOf(types.Denom) {
+	} else if curValidator.ABCIValidator.Power > lst.LowestPower.AmountOf(types.Denom) {
+		// replace the validator with lowest power
 		// 1. iterate through validator list to replace the lowest validator
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, getErr := vm.GetValidator(ctx, validatorKey)
@@ -136,8 +221,10 @@ func (vm ValidatorManager) TryJoinValidatorList(ctx sdk.Context, username acc.Ac
 
 		// 2. iterate through validator list to update lowest power&validator
 		//updateErr := nil
-		lst = vm.updateLowestValidator(ctx, lst)
-		return nil
+		vm.updateLowestValidator(ctx, lst)
+	}
+	if err := vm.SetValidatorList(ctx, lst); err != nil {
+		return err
 	}
 	return nil
 }
@@ -156,7 +243,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 		return err
 	}
 
-	lst = vm.updateLowestValidator(ctx, lst)
+	vm.updateLowestValidator(ctx, lst)
 
 	// find the person has the biggest power among people in the allValidators lists
 	// but not in the oncall validator list
@@ -177,8 +264,10 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 		}
 	}
 
-	if joinErr := vm.TryJoinValidatorList(ctx, bestCandidate, false); joinErr != nil {
-		return joinErr
+	if bestCandidate != acc.AccountKey("") {
+		if joinErr := vm.TryJoinValidatorList(ctx, bestCandidate, false); joinErr != nil {
+			return joinErr
+		}
 	}
 	if err := vm.SetValidatorList(ctx, lst); err != nil {
 		return err
@@ -196,7 +285,7 @@ func remove(me acc.AccountKey, users []acc.AccountKey) []acc.AccountKey {
 	return users
 }
 
-func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context, lst *ValidatorList) *ValidatorList {
+func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context, lst *ValidatorList) {
 	newLowestPower := int64(math.MaxInt64)
 	newLowestValidator := acc.AccountKey("")
 
@@ -210,15 +299,14 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context, lst *Validator
 	// set the new lowest power
 	lst.LowestPower = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: newLowestPower}}
 	lst.LowestValidator = newLowestValidator
-	return lst
 }
 
-func validatorKey(accKey acc.AccountKey) []byte {
+func ValidatorKey(accKey acc.AccountKey) []byte {
 	return append(ValidatorAccountPrefix, accKey...)
 }
 
-func validatorListKey(accKey acc.AccountKey) []byte {
-	return append(ValidatorListPrefix, accKey...)
+func ValidatorListKey() []byte {
+	return ValidatorListPrefixWithKey
 }
 
 func findAccountInList(me acc.AccountKey, lst []acc.AccountKey) int {

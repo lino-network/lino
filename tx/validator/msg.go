@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
+	"github.com/tendermint/go-crypto"
 )
 
 type VoteMsg struct {
@@ -17,8 +18,9 @@ type VoteMsg struct {
 }
 
 type ValidatorRegisterMsg struct {
-	Username acc.AccountKey `json:"username"`
-	Deposit  sdk.Coins      `json:"deposit"`
+	Username  acc.AccountKey `json:"username"`
+	Deposit   sdk.Coins      `json:"deposit"`
+	ValPubKey crypto.PubKey  `json:"validator_public_key"`
 }
 
 //----------------------------------------
@@ -43,6 +45,9 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 	}
 
 	// cannot vote a negative amount of votes
+	if !msg.Power.IsValid() {
+		return sdk.ErrInvalidCoins(msg.Power.String())
+	}
 	if !msg.Power.IsPositive() {
 		return sdk.ErrInvalidCoins("invalid votes")
 	}
@@ -74,10 +79,11 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // RegisterValidatorMsg Msg Implementations
 
-func NewValidatorRegisterMsg(validator string, deposit sdk.Coins) ValidatorRegisterMsg {
+func NewValidatorRegisterMsg(validator string, deposit sdk.Coins, pubKey crypto.PubKey) ValidatorRegisterMsg {
 	return ValidatorRegisterMsg{
-		Username: acc.AccountKey(validator),
-		Deposit:  deposit,
+		Username:  acc.AccountKey(validator),
+		Deposit:   deposit,
+		ValPubKey: pubKey,
 	}
 }
 
@@ -88,12 +94,18 @@ func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername("illegal length")
 	}
+	if !msg.Deposit.IsValid() {
+		return sdk.ErrInvalidCoins(msg.Deposit.String())
+	}
+	if !msg.Deposit.IsPositive() {
+		return sdk.ErrInvalidCoins(msg.Deposit.String())
+	}
 
 	return nil
 }
 
 func (msg ValidatorRegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{Username:%v}", msg.Username)
+	return fmt.Sprintf("ValidatorRegisterMsg{Username:%v, Deposit:%v, PubKey:%v}", msg.Username, msg.Deposit, msg.ValPubKey)
 }
 
 func (msg ValidatorRegisterMsg) Get(key interface{}) (value interface{}) {
