@@ -32,12 +32,20 @@ const (
 	// CodePostDonateError occurs when donate msg fails
 	CodePostDonateError sdk.CodeType = 405
 
-	// Lino validator handler errors reserve 500 ~ 599
+	// validator errors reserve 500 ~ 599
 	CodeValidatorHandlerFailed sdk.CodeType = 500
 	CodeValidatorManagerFailed sdk.CodeType = 501
 
 	// Event errors reserve 600 ~ 699
 	CodeEventExecuteError sdk.CodeType = 600
+
+	// AccountKVStoreKey presents store which keeps account related value
+	AccountKVStoreKey = "account"
+	// PostKVStoreKey presents store which keeps post related value
+	PostKVStoreKey = "post"
+	// ValidatorKVStoreKey presents store which keeps validator related value
+	ValidatorKVStoreKey = "validator"
+
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
 
@@ -76,6 +84,4 @@ const (
 
 	// MinLikeWeight indicates the -100.00% maximum like weight.
 	MinLikeWeight = -10000
-	// Validator List Size
-	ValidatorListSize = 21
 )

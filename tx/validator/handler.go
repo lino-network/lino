@@ -10,6 +10,8 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
+var ValRegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}
+
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -37,16 +39,18 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return ErrValidatorHandlerFail("user account not found").Result()
 	}
 
+	// check minimum requirements
+	if ValRegisterFee.IsGTE(msg.Deposit) {
+		return ErrValidatorHandlerFail("Register Fee Doesn't enough").Result()
+	}
+
 	// withdraw money from validator's bank
 	if err := proxyAcc.MinusCoins(ctx, msg.Deposit); err != nil {
 		return err.Result()
 	}
-	ownerKey, getErr := proxyAcc.GetOwnerKey(ctx)
-	if getErr != nil {
-		return getErr.Result()
-	}
+
 	account := &Validator{
-		ABCIValidator: abci.Validator{PubKey: ownerKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
+		ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
 		Username:      msg.Username,
 		Deposit:       msg.Deposit,
 	}
