@@ -22,6 +22,10 @@ func ErrEventExecuteError(key []byte) sdk.Error {
 	return newError(types.CodeEventExecuteError, fmt.Sprintf("Event execute failed"))
 }
 
+func ErrWrongEventType() sdk.Error {
+	return newError(types.CodeEventExecuteError, fmt.Sprintf("Wrong event type"))
+}
+
 func ErrEventNotFound(key []byte) sdk.Error {
 	return newError(types.CodeEventExecuteError, fmt.Sprintf("Event not found for key: %s", key))
 }

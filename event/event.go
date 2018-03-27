@@ -10,9 +10,7 @@ import (
 
 type EventListKey string
 
-type Event interface {
-	execute() sdk.Error
-}
+type Event interface{}
 
 type EventList struct {
 	Events []Event `json:"events"`

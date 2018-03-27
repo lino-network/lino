@@ -68,8 +68,17 @@ func (em EventManager) ExecuteEvents(ctx sdk.Context, key EventListKey) sdk.Erro
 	}
 
 	for _, event := range lst.Events {
-		if err := event.execute(); err != nil {
-			return err
+		switch event := event.(type) {
+		case PostRewardEvent:
+			if err := event.execute(); err != nil {
+				return err
+			}
+		case DonateRewardEvent:
+			if err := event.execute(); err != nil {
+				return err
+			}
+		default:
+			return ErrWrongEventType()
 		}
 	}
 
