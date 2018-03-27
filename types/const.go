@@ -36,6 +36,8 @@ const (
 	CodeValidatorHandlerFailed sdk.CodeType = 500
 	CodeValidatorManagerFailed sdk.CodeType = 501
 
+	// Event errors reserve 600 ~ 699
+	CodeEventExecuteError sdk.CodeType = 600
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
 
