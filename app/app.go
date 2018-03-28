@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
 	"github.com/lino-network/lino/tx/post"
@@ -34,11 +35,13 @@ type LinoBlockchain struct {
 	capKeyPostStore    *sdk.KVStoreKey
 	capKeyValStore     *sdk.KVStoreKey
 	capKeyIBCStore     *sdk.KVStoreKey
+	capKeyGlobalStore  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountManager acc.AccountManager
 	postManager    post.PostManager
 	valManager     validator.ValidatorManager
+	globalManager  global.GlobalManager
 }
 
 func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
@@ -49,17 +52,19 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		capKeyAccountStore: sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		capKeyPostStore:    sdk.NewKVStoreKey(types.PostKVStoreKey),
 		capKeyValStore:     sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		capKeyGlobalStore:  sdk.NewKVStoreKey(types.GlobalKVStoreKey),
 		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
 	}
 	lb.accountManager = acc.NewLinoAccountManager(lb.capKeyAccountStore)
 	lb.postManager = post.NewPostMananger(lb.capKeyPostStore)
 	lb.valManager = validator.NewValidatorMananger(lb.capKeyValStore)
+	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
-		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager)).
-		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager))
+		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager), nil).
+		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager), nil).
+		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), nil).
+		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), nil)
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -69,6 +74,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.MountStoresIAVL(lb.capKeyAccountStore)
 	lb.MountStoresIAVL(lb.capKeyPostStore)
 	lb.MountStoresIAVL(lb.capKeyValStore)
+	lb.MountStoresIAVL(lb.capKeyGlobalStore)
 	lb.MountStoresIAVL(lb.capKeyIBCStore)
 	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
@@ -78,6 +84,9 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyValStore); err != nil {
+		cmn.Exit(err.Error())
+	}
+	if err := lb.LoadLatestVersion(lb.capKeyGlobalStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyIBCStore); err != nil {

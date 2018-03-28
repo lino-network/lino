@@ -3,6 +3,7 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
@@ -21,6 +22,10 @@ func newLinoAccountManager() acc.AccountManager {
 
 func newPostManager() PostManager {
 	return NewPostMananger(TestKVStoreKey)
+}
+
+func newPostManagerAndGlobalManager() (PostManager, global.GlobalManager) {
+	return NewPostMananger(TestKVStoreKey), global.NewGlobalManager(TestKVStoreKey)
 }
 
 func newAmount(amount int64) sdk.Coins {

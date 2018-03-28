@@ -10,11 +10,11 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	pm := newPostManager()
+	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	handler := NewHandler(pm, lam)
+	handler := NewHandler(pm, lam, gm)
 
 	user := acc.AccountKey("testuser")
 	createTestAccount(ctx, lam, string(user))
@@ -40,12 +40,9 @@ func TestHandlerCreatePost(t *testing.T) {
 		LastUpdate:   0,
 		LastActivity: 0,
 		AllowReplies: true,
+		TotalReward:  sdk.Coins{},
 	}
-	postViews := PostViews{Views: []View{}}
-	postLikes := PostLikes{Likes: []Like{}}
-	postComments := PostComments{Comments: []PostKey{}}
-	postDonations := PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
-	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta)
 
 	// test invlaid author
 	postInfo.Author = acc.AccountKey("invalid")
@@ -55,11 +52,11 @@ func TestHandlerCreatePost(t *testing.T) {
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	pm := newPostManager()
+	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	handler := NewHandler(pm, lam)
+	handler := NewHandler(pm, lam, gm)
 
 	user := acc.AccountKey("testuser")
 	createTestAccount(ctx, lam, string(user))
@@ -96,12 +93,10 @@ func TestHandlerCreateComment(t *testing.T) {
 		LastUpdate:   1,
 		LastActivity: 1,
 		AllowReplies: true,
+		TotalReward:  sdk.Coins{},
 	}
-	postViews := PostViews{Views: []View{}}
-	postLikes := PostLikes{Likes: []Like{}}
-	postComments := PostComments{Comments: []PostKey{}}
-	postDonations := PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
-	checkPostKVStore(t, ctx, pm, GetPostKey(user, "comment"), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+
+	checkPostKVStore(t, ctx, pm, GetPostKey(user, "comment"), postInfo, postMeta)
 
 	// check parent
 	postInfo.PostID = "TestPostID"
@@ -109,8 +104,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.ParentPostID = ""
 	postMeta.Created = 0
 	postMeta.LastUpdate = 0
-	postComments = PostComments{Comments: []PostKey{GetPostKey(user, "comment")}}
-	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta)
 
 	// test invalid parent
 	postInfo.PostID = "invalid post"
@@ -119,7 +113,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postInfo)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrPostCommentsNotFound(PostCommentsKey(GetPostKey(user, "invalid parent"))).Result())
+	assert.Equal(t, result, ErrPostMetaNotFound(GetPostMetaKey(GetPostKey(user, "invalid parent"))).Result())
 
 	// test duplicate comment
 	postInfo.Author = user
@@ -139,17 +133,17 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postInfo)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrPostCommentsNotFound(PostCommentsKey(GetPostKey(user, "newComment"))).Result())
+	assert.Equal(t, result, ErrPostMetaNotFound(GetPostMetaKey(GetPostKey(user, "newComment"))).Result())
 }
 
 func TestHandlerPostLike(t *testing.T) {
-	pm := newPostManager()
+	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
 	user := "username"
 	postID := "postID"
-	handler := NewHandler(pm, lam)
+	handler := NewHandler(pm, lam, gm)
 	createTestAccount(ctx, lam, user)
 	createTestPost(ctx, lam, pm, user, postID)
 
@@ -170,47 +164,45 @@ func TestHandlerPostLike(t *testing.T) {
 		Links:        []IDToURLMapping{},
 	}
 	postMeta := PostMeta{
-		Created:      0,
-		LastUpdate:   0,
-		LastActivity: 0,
-		AllowReplies: true,
+		Created:         0,
+		LastUpdate:      0,
+		LastActivity:    0,
+		AllowReplies:    true,
+		TotalLikeCount:  1,
+		TotalLikeWeight: 10000,
+		TotalReward:     sdk.Coins{},
 	}
-	postViews := PostViews{Views: []View{}}
-	postLikes := PostLikes{Likes: []Like{Like{Username: acc.AccountKey(user), Weight: 10000}}, TotalWeight: 10000}
-	postComments := PostComments{Comments: []PostKey{}}
-	postDonations := PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test update like
 	likeMsg = NewLikeMsg(acc.AccountKey(user), -10000, acc.AccountKey(user), postID)
 	result = handler(ctx, likeMsg)
 	assert.Equal(t, result, sdk.Result{})
-
-	postLikes = PostLikes{Likes: []Like{Like{Username: acc.AccountKey(user), Weight: -10000}}, TotalWeight: -10000}
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	postMeta.TotalLikeWeight = -10000
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid like target post
 	likeMsg = NewLikeMsg(acc.AccountKey(user), -10000, acc.AccountKey(user), "invalid")
 	result = handler(ctx, likeMsg)
 	assert.Equal(t, result, ErrLikePostDoesntExist().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid like username
 	likeMsg = NewLikeMsg(acc.AccountKey("invalid"), 10000, acc.AccountKey(user), postID)
 	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
 
+	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	pm := newPostManager()
+	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
 	user := "username"
 	postID := "postID"
-	handler := NewHandler(pm, lam)
+	handler := NewHandler(pm, lam, gm)
 	createTestAccount(ctx, lam, user)
 	createTestPost(ctx, lam, pm, user, postID)
 
@@ -231,38 +223,33 @@ func TestHandlerPostDonate(t *testing.T) {
 		Links:        []IDToURLMapping{},
 	}
 	postMeta := PostMeta{
-		Created:      0,
-		LastUpdate:   0,
-		LastActivity: 0,
-		AllowReplies: true,
+		Created:          0,
+		LastUpdate:       0,
+		LastActivity:     0,
+		AllowReplies:     true,
+		TotalDonateCount: 1,
+		TotalReward:      sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}},
 	}
-	postViews := PostViews{Views: []View{}}
-	postLikes := PostLikes{Likes: []Like{}}
-	postComments := PostComments{Comments: []PostKey{}}
-	postDonations := PostDonations{Donations: []Donation{
-		Donation{
-			Username: donateMsg.Username,
-			Amount:   donateMsg.Amount,
-			Created:  types.Height(ctx.BlockHeight()),
-		}}, Reward: newAmount(100),
-	}
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid donation target
 	donateMsg = NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), "invalid")
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, ErrDonatePostDoesntExist().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid username
 	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), newAmount(100), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
+
 	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test insufficient deposit
 	donateMsg = NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
+
 	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 }

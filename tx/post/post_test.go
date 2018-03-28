@@ -3,6 +3,7 @@ package post
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -19,22 +20,13 @@ func TestNewPost(t *testing.T) {
 	assert.NotNil(t, post.postManager)
 	assert.Nil(t, post.postInfo)
 	assert.Nil(t, post.postMeta)
-	assert.Nil(t, post.postLikes)
-	assert.Nil(t, post.postComments)
-	assert.Nil(t, post.postViews)
-	assert.Nil(t, post.postDonations)
 	assert.False(t, post.writePostInfo)
 	assert.False(t, post.writePostMeta)
-	assert.False(t, post.writePostLikes)
-	assert.False(t, post.writePostComments)
-	assert.False(t, post.writePostViews)
-	assert.False(t, post.writePostDonations)
 }
 
 // checkPostKVStore checks all post related structs in the post manager
-func checkPostKVStore(t *testing.T, ctx sdk.Context, pm PostManager, postKey PostKey,
-	postInfo PostInfo, postMeta PostMeta, postLikes PostLikes,
-	postComments PostComments, postViews PostViews, postDonations PostDonations) {
+func checkPostKVStore(t *testing.T, ctx sdk.Context, pm PostManager,
+	postKey PostKey, postInfo PostInfo, postMeta PostMeta) {
 	// check all post related structs in KVStore
 	postPtr, err := pm.GetPostInfo(ctx, postKey)
 	assert.Nil(t, err)
@@ -42,18 +34,6 @@ func checkPostKVStore(t *testing.T, ctx sdk.Context, pm PostManager, postKey Pos
 	postMetaPtr, err := pm.GetPostMeta(ctx, postKey)
 	assert.Nil(t, err)
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
-	postLikesPtr, err := pm.GetPostLikes(ctx, postKey)
-	assert.Nil(t, err)
-	assert.Equal(t, postLikes, *postLikesPtr, "Post like list should be equal")
-	postCommentsPtr, err := pm.GetPostComments(ctx, postKey)
-	assert.Nil(t, err)
-	assert.Equal(t, postComments, *postCommentsPtr, "Post comments should be equal")
-	postViewsPtr, err := pm.GetPostViews(ctx, postKey)
-	assert.Nil(t, err)
-	assert.Equal(t, postViews, *postViewsPtr, "Post views should be equal")
-	postDonationsPtr, err := pm.GetPostDonations(ctx, postKey)
-	assert.Nil(t, err)
-	assert.Equal(t, postDonations, *postDonationsPtr, "Post donations should be equal")
 }
 
 // test create post
@@ -89,25 +69,15 @@ func TestCreatePost(t *testing.T) {
 		AllowReplies: true,
 	}
 	assert.Equal(t, postMeta, *post.postMeta, "Post meta should be equal")
-	postLikes := PostLikes{Likes: []Like{}}
-	assert.Equal(t, postLikes, *post.postLikes, "Post like list should be equal")
-	postComments := PostComments{Comments: []PostKey{}}
-	assert.Equal(t, postComments, *post.postComments, "Post comments should be equal")
-	postViews := PostViews{Views: []View{}}
-	assert.Equal(t, postViews, *post.postViews, "Post views should be equal")
-	postDonations := PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
-	assert.Equal(t, postDonations, *post.postDonations, "Post donations should be equal")
 
 	// after apply the post proxy should be cleared
 	post.Apply(ctx)
+	assert.Nil(t, post.postInfo)
 	assert.Nil(t, post.postMeta)
-	assert.Nil(t, post.postLikes)
-	assert.Nil(t, post.postViews)
-	assert.Nil(t, post.postComments)
-	assert.Nil(t, post.postDonations)
 
 	// after apply check KVStore
-	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	postMeta.TotalReward = sdk.Coins{}
+	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
 	// test recreate post
 	err = post.CreatePost(ctx, &postInfo)
 	assert.Equal(t, err, ErrPostExist())
@@ -139,7 +109,9 @@ func TestComment(t *testing.T) {
 	post.Apply(ctx)
 
 	ctx = ctx.WithBlockHeight(2)
-	err = post.AddComment(ctx, PostKey("test"))
+
+	postComment := Comment{Author: author, PostID: "test", Created: types.Height(100)}
+	err = post.AddComment(ctx, postComment)
 	assert.Nil(t, err)
 	post.Apply(ctx)
 
@@ -149,10 +121,7 @@ func TestComment(t *testing.T) {
 		LastUpdate:   1,
 		LastActivity: 2,
 		AllowReplies: true,
+		TotalReward:  sdk.Coins{},
 	}
-	postViews := PostViews{Views: []View{}}
-	postLikes := PostLikes{Likes: []Like{}}
-	postComments := PostComments{Comments: []PostKey{PostKey("test")}}
-	postDonations := PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
-	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
+	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
 }

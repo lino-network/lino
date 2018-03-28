@@ -5,11 +5,12 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
@@ -22,7 +23,6 @@ func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
-
 	}
 }
 
@@ -41,7 +41,8 @@ func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
 		parentPost := NewProxyPost(msg.ParentAuthor, msg.ParentPostID, &pm)
-		if err := parentPost.AddComment(ctx, post.GetPostKey()); err != nil {
+		comment := Comment{Author: post.GetAuthor(), PostID: post.GetPostID(), Created: types.Height(ctx.BlockHeight())}
+		if err := parentPost.AddComment(ctx, comment); err != nil {
 			return err.Result()
 		}
 		if err := parentPost.Apply(ctx); err != nil {
@@ -71,7 +72,7 @@ func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg L
 		return ErrLikePostDoesntExist().Result()
 	}
 	// TODO: check acitivity burden
-	like := Like{Username: msg.Username, Weight: msg.Weight}
+	like := Like{Username: msg.Username, Weight: msg.Weight, Created: types.Height(ctx.BlockHeight())}
 	if err := post.AddOrUpdateLikeToPost(ctx, like); err != nil {
 		return err.Result()
 	}

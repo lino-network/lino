@@ -3,16 +3,18 @@ package post
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	oldwire "github.com/tendermint/go-wire"
 )
 
 var (
-	postKeyPrefix          = []byte("post/")
-	postMetaKeyPrefix      = []byte("meta/")
-	postLikesKeyPrefix     = []byte("likes/")
-	postCommentsKeyPrefix  = []byte("comments/")
-	postViewsKeyPrefix     = []byte("views/")
-	postDonationsKeyPrefix = []byte("donations/")
+	postSubStore          = []byte{0x00} // SubStore for all post info
+	postMetaSubStore      = []byte{0x01} // SubStore for all post mata info
+	postLikeSubStore      = []byte{0x02} // SubStore for all like to post
+	postCommentSubStore   = []byte{0x03} // SubStore for all comments
+	postViewsSubStore     = []byte{0x04} // SubStore for all views
+	postDonationsSubStore = []byte{0x05} // SubStore for all donations
 )
 
 // TODO(Lino) Register cdc here.
@@ -21,16 +23,20 @@ var (
 const msgTypePost = 0x1
 const msgTypePostMeta = 0x2
 const msgTypePostLike = 0x3
-const msgTypePostComments = 0x4
-const msgTypePostDonations = 0x5
+const msgTypePostReport = 0x4
+const msgTypePostView = 0x5
+const msgTypePostComment = 0x6
+const msgTypePostDonations = 0x7
 
 var _ = oldwire.RegisterInterface(
 	struct{ PostInterface }{},
 	oldwire.ConcreteType{PostInfo{}, msgTypePost},
 	oldwire.ConcreteType{PostMeta{}, msgTypePostMeta},
-	oldwire.ConcreteType{PostLikes{}, msgTypePostLike},
-	oldwire.ConcreteType{PostComments{}, msgTypePostComments},
-	oldwire.ConcreteType{PostDonations{}, msgTypePostDonations},
+	oldwire.ConcreteType{Like{}, msgTypePostLike},
+	oldwire.ConcreteType{Report{}, msgTypePostReport},
+	oldwire.ConcreteType{View{}, msgTypePostView},
+	oldwire.ConcreteType{Comment{}, msgTypePostComment},
+	oldwire.ConcreteType{Donation{}, msgTypePostDonations},
 )
 
 type PostManager struct {
@@ -72,7 +78,7 @@ func (pm PostManager) set(ctx sdk.Context, key []byte, postStruct PostInterface)
 }
 
 func (pm PostManager) GetPostInfo(ctx sdk.Context, postKey PostKey) (*PostInfo, sdk.Error) {
-	val, err := pm.get(ctx, PostInfoKey(postKey), ErrPostNotFound)
+	val, err := pm.get(ctx, GetPostInfoKey(postKey), ErrPostNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -84,15 +90,15 @@ func (pm PostManager) GetPostInfo(ctx sdk.Context, postKey PostKey) (*PostInfo, 
 }
 
 func (pm PostManager) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
-	return pm.set(ctx, PostInfoKey(GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
+	return pm.set(ctx, GetPostInfoKey(GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
 }
 
 func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey PostKey) (*PostMeta, sdk.Error) {
-	val, err := pm.get(ctx, PostMetaKey(postKey), ErrPostMetaNotFound)
+	val, err := pm.get(ctx, GetPostMetaKey(postKey), ErrPostMetaNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postMeta := &PostMeta{}
+	postMeta := new(PostMeta)
 	if unmarshalErr := oldwire.UnmarshalJSON(val, postMeta); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
@@ -100,93 +106,117 @@ func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey PostKey) (*PostMeta, 
 }
 
 func (pm PostManager) SetPostMeta(ctx sdk.Context, postKey PostKey, postMeta *PostMeta) sdk.Error {
-	return pm.set(ctx, PostMetaKey(postKey), postMeta)
+	return pm.set(ctx, GetPostMetaKey(postKey), postMeta)
 }
 
-func (pm PostManager) GetPostLikes(ctx sdk.Context, postKey PostKey) (*PostLikes, sdk.Error) {
-	val, err := pm.get(ctx, PostLikesKey(postKey), ErrPostLikesNotFound)
+func (pm PostManager) GetPostLike(ctx sdk.Context, postKey PostKey, likeUser acc.AccountKey) (*Like, sdk.Error) {
+	val, err := pm.get(ctx, GetPostLikeKey(postKey, likeUser), ErrPostLikeNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postLikes := &PostLikes{}
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postLikes); unmarshalErr != nil {
+	postLike := new(Like)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postLike); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
-	return postLikes, nil
+	return postLike, nil
 }
 
-func (pm PostManager) SetPostLikes(ctx sdk.Context, postKey PostKey, postLikes *PostLikes) sdk.Error {
-	return pm.set(ctx, PostLikesKey(postKey), postLikes)
+func (pm PostManager) SetPostLike(ctx sdk.Context, postKey PostKey, postLike *Like) sdk.Error {
+	return pm.set(ctx, GetPostLikeKey(postKey, postLike.Username), postLike)
 }
 
-func (pm PostManager) GetPostComments(ctx sdk.Context, postKey PostKey) (*PostComments, sdk.Error) {
-	val, err := pm.get(ctx, PostCommentsKey(postKey), ErrPostCommentsNotFound)
+func (pm PostManager) GetPostComment(ctx sdk.Context, postKey PostKey, commentPostKey PostKey) (*Comment, sdk.Error) {
+	val, err := pm.get(ctx, GetPostCommentKey(postKey, commentPostKey), ErrPostCommentNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postComments := &PostComments{}
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postComments); unmarshalErr != nil {
+	postComment := new(Comment)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postComment); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
-	return postComments, nil
+	return postComment, nil
 }
 
-func (pm PostManager) SetPostComments(ctx sdk.Context, postKey PostKey, postComments *PostComments) sdk.Error {
-	return pm.set(ctx, PostCommentsKey(postKey), postComments)
+func (pm PostManager) SetPostComment(ctx sdk.Context, postKey PostKey, postComment *Comment) sdk.Error {
+	return pm.set(ctx, GetPostCommentKey(postKey, GetPostKey(postComment.Author, postComment.PostID)), postComment)
 }
 
-func (pm PostManager) GetPostViews(ctx sdk.Context, postKey PostKey) (*PostViews, sdk.Error) {
-	val, err := pm.get(ctx, PostViewsKey(postKey), ErrPostViewsNotFound)
+func (pm PostManager) GetPostView(ctx sdk.Context, postKey PostKey, viewUser acc.AccountKey) (*View, sdk.Error) {
+	val, err := pm.get(ctx, GetPostViewKey(postKey, viewUser), ErrPostViewNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postViews := &PostViews{}
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postViews); unmarshalErr != nil {
+	postView := new(View)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postView); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
-	return postViews, nil
+	return postView, nil
 }
 
-func (pm PostManager) SetPostViews(ctx sdk.Context, postKey PostKey, postViews *PostViews) sdk.Error {
-	return pm.set(ctx, PostViewsKey(postKey), postViews)
+func (pm PostManager) SetPostView(ctx sdk.Context, postKey PostKey, postView *View) sdk.Error {
+	return pm.set(ctx, GetPostViewKey(postKey, postView.Username), postView)
 }
 
-func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey PostKey) (*PostDonations, sdk.Error) {
-	val, err := pm.get(ctx, PostDonationKey(postKey), ErrPostDonationsNotFound)
+func (pm PostManager) GetPostDonation(ctx sdk.Context, postKey PostKey, donateUser acc.AccountKey) (*Donation, sdk.Error) {
+	val, err := pm.get(ctx, GetPostDonationKey(postKey, donateUser), ErrPostDonationNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postDonations := &PostDonations{}
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
+	postDonation := new(Donation)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonation); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
-	return postDonations, nil
+	return postDonation, nil
 }
 
-func (pm PostManager) SetPostDonations(ctx sdk.Context, postKey PostKey, postDonations *PostDonations) sdk.Error {
-	return pm.set(ctx, PostDonationKey(postKey), postDonations)
+func (pm PostManager) SetPostDonation(ctx sdk.Context, postKey PostKey, postDonation *Donation) sdk.Error {
+	return pm.set(ctx, GetPostDonationKey(postKey, postDonation.Username), postDonation)
 }
 
-func PostInfoKey(postKey PostKey) []byte {
-	return append(postKeyPrefix, postKey...)
+func GetPostInfoKey(postKey PostKey) []byte {
+	return append([]byte(postSubStore), postKey...)
 }
 
-func PostMetaKey(postKey PostKey) []byte {
-	return append(postMetaKeyPrefix, postKey...)
+func GetPostMetaKey(postKey PostKey) []byte {
+	return append([]byte(postMetaSubStore), postKey...)
 }
 
-func PostLikesKey(postKey PostKey) []byte {
-	return append(postLikesKeyPrefix, postKey...)
+// PostLikePrefix format is LikeSubStore / PostKey
+// which can be used to access all likes belong to this post
+func GetPostLikePrefix(postKey PostKey) []byte {
+	return append(append([]byte(postLikeSubStore), postKey...), types.KeySeparator...)
 }
 
-func PostViewsKey(postKey PostKey) []byte {
-	return append(postViewsKeyPrefix, postKey...)
+func GetPostLikeKey(postKey PostKey, likeUser acc.AccountKey) []byte {
+	return append(GetPostLikePrefix(postKey), likeUser...)
 }
 
-func PostCommentsKey(postKey PostKey) []byte {
-	return append(postCommentsKeyPrefix, postKey...)
+// PostViewPrefix format is ViewSubStore / PostKey
+// which can be used to access all views belong to this post
+func GetPostViewPrefix(postKey PostKey) []byte {
+	return append(append([]byte(postViewsSubStore), postKey...), types.KeySeparator...)
 }
 
-func PostDonationKey(postKey PostKey) []byte {
-	return append(postDonationsKeyPrefix, postKey...)
+func GetPostViewKey(postKey PostKey, viewUser acc.AccountKey) []byte {
+	return append(GetPostViewPrefix(postKey), viewUser...)
+}
+
+// PostCommentPrefix format is CommentSubStore / PostKey
+// which can be used to access all comments belong to this post
+func GetPostCommentPrefix(postKey PostKey) []byte {
+	return append(append([]byte(postCommentSubStore), postKey...), types.KeySeparator...)
+}
+
+func GetPostCommentKey(postKey PostKey, commentPostKey PostKey) []byte {
+	return append(GetPostCommentPrefix(postKey), commentPostKey...)
+}
+
+// PostDonationPrefix format is DonationSubStore / PostKey
+// which can be used to access all donations belong to this post
+func GetPostDonationPrefix(postKey PostKey) []byte {
+	return append(append([]byte(postDonationsSubStore), postKey...), types.KeySeparator...)
+}
+
+func GetPostDonationKey(postKey PostKey, donateUser acc.AccountKey) []byte {
+	return append(GetPostDonationPrefix(postKey), donateUser...)
 }

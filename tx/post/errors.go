@@ -33,20 +33,20 @@ func ErrPostMetaNotFound(key []byte) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post meta not found for key: %s", key))
 }
 
-func ErrPostLikesNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post likes not found for key: %s", key))
+func ErrPostLikeNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post like not found for key: %s", key))
 }
 
-func ErrPostCommentsNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post comments not found for key: %s", key))
+func ErrPostCommentNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post comment not found for key: %s", key))
 }
 
-func ErrPostViewsNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post views not found for key: %s", key))
+func ErrPostViewNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post view not found for key: %s", key))
 }
 
-func ErrPostDonationsNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post donations not found for key: %s", key))
+func ErrPostDonationNotFound(key []byte) sdk.Error {
+	return newError(types.CodePostNotFound, fmt.Sprintf("Post donation not found for key: %s", key))
 }
 
 func ErrPostMarshalError(err error) sdk.Error {

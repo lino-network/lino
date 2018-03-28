@@ -1,4 +1,4 @@
-package event
+package global
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ var (
 )
 
 func TestPostRewardEvent(t *testing.T) {
-	em := NewEventManager(TestKVStoreKey)
+	gm := NewGlobalManager(TestKVStoreKey)
 	ctx := getContext()
 
 	e1 := PostRewardEvent{
@@ -33,10 +33,10 @@ func TestPostRewardEvent(t *testing.T) {
 	blockHeight := types.Height(100)
 	lstKey := HeightToEventListKey(blockHeight)
 
-	err := em.SetEventList(ctx, lstKey, &lst)
+	err := gm.SetEventList(ctx, lstKey, &lst)
 	assert.Nil(t, err)
 
-	res := em.ExecuteEvents(ctx, lstKey)
+	res := gm.ExecuteEvents(ctx, lstKey)
 	assert.Nil(t, res)
 }
 
