@@ -1,6 +1,8 @@
 package account
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 )
@@ -20,20 +22,60 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 }
 
 // Error constructors
-func ErrUsernameNotFound(msg string) sdk.Error {
-	return newError(types.CodeUsernameNotFound, msg)
+func ErrUsernameNotFound() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
 }
 
-func ErrInvalidUsername(msg string) sdk.Error {
-	return newError(types.CodeInvalidUsername, msg)
+func ErrInvalidUsername() sdk.Error {
+	return newError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }
 
-func ErrAccountManagerFail(msg string) sdk.Error {
-	return newError(types.CodeAccountManagerFail, msg)
+func ErrAccountCoinNotEnough() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's coins are not enough"))
 }
 
-func ErrAccountCreateFail(msg string) sdk.Error {
-	return newError(types.CodeAccountManagerFail, msg)
+func ErrAccountCreateFail(accKey AccountKey) sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account exist: %v", accKey))
+}
+
+func ErrUsernameAddressMismatch() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Username and address mismatch"))
+}
+
+func ErrGetInfoFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get info failed"))
+}
+
+func ErrSetInfoFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set info failed"))
+}
+
+func ErrGetBankFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get bank failed"))
+}
+
+func ErrSetBankFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set bank failed"))
+}
+
+func ErrGetMetaFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get meta failed"))
+}
+
+func ErrSetMetaFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set meta failed"))
+}
+
+func ErrAddMoneyFailed() sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Add money to bank failed"))
+}
+
+func ErrAccountMarshalError(err error) sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account marshal error: %s", err.Error()))
+}
+
+func ErrAccountUnmarshalError(err error) sdk.Error {
+	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account unmarshal error: %s", err.Error()))
 }
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {

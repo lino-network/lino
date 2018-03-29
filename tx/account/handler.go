@@ -26,63 +26,59 @@ func NewHandler(am AccountManager) sdk.Handler {
 
 // Handle FollowMsg
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
-	followerList, err := am.GetFollower(ctx, msg.Followee)
-	if err != nil {
-		return ErrAccountManagerFail("Get follower list failed").Result()
+	proxyFollowee := NewProxyAccount(msg.Followee, &am)
+	proxyFollower := NewProxyAccount(msg.Follower, &am)
+	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
+		return ErrUsernameNotFound().Result()
 	}
-
-	followingList, err := am.GetFollowing(ctx, msg.Follower)
-	if err != nil {
-		return ErrAccountManagerFail("Get following list failed").Result()
-	}
-
 	// add the "msg.Follower" to the "msg.Followee" 's follower list.
-	if findAccountInList(msg.Follower, followerList.Follower) == -1 {
-		followerList.Follower = append(followerList.Follower, msg.Follower)
-		if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
-			return err.Result()
-		}
+	// add "msg.Followee/msg.Follower" key under "follower" prefix.
+	// if findAccountInList(msg.Follower, followerList.Follower) == -1 {
+	// 	followerList.Follower = append(followerList.Follower, msg.Follower)
+	if err := proxyFollowee.SetFollower(ctx, msg.Follower); err != nil {
+		return err.Result()
 	}
 
 	// add the "msg.Followee" to the "msg.Follower" 's following list.
-	if findAccountInList(msg.Followee, followingList.Following) == -1 {
-		followingList.Following = append(followingList.Following, msg.Followee)
-		if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
-			return err.Result()
-		}
+	// add "msg.Follower/msg.Followee" key under "following" prefix
+	//if findAccountInList(msg.Followee, followingList.Following) == -1 {
+	//followingList.Following = append(followingList.Following, msg.Followee)
+	if err := proxyFollower.SetFollowing(ctx, msg.Followee); err != nil {
+		return err.Result()
 	}
-
+	//}
+	proxyFollowee.Apply(ctx)
+	proxyFollower.Apply(ctx)
 	return sdk.Result{}
 }
 
 // Handle UnfollowMsg
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
-	followerList, err := am.GetFollower(ctx, msg.Followee)
-	if err != nil {
-		return ErrAccountManagerFail("Get follower list failed").Result()
+	proxyFollowee := NewProxyAccount(msg.Followee, &am)
+	proxyFollower := NewProxyAccount(msg.Follower, &am)
+
+	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
+		return ErrUsernameNotFound().Result()
 	}
 
-	followingList, err := am.GetFollowing(ctx, msg.Follower)
-	if err != nil {
-		return ErrAccountManagerFail("Get following list failed").Result()
+	// add the "msg.Follower" to the "msg.Followee" 's follower list.
+	// add "msg.Followee/msg.Follower" key under "follower" prefix.
+	// if findAccountInList(msg.Follower, followerList.Follower) == -1 {
+	// 	followerList.Follower = append(followerList.Follower, msg.Follower)
+	if err := proxyFollowee.RemoveFollower(ctx, msg.Follower); err != nil {
+		return err.Result()
 	}
 
-	// remove the "msg.Follower" from the "msg.Followee" 's follower list.
-	if idx := findAccountInList(msg.Follower, followerList.Follower); idx != -1 {
-		followerList.Follower = append(followerList.Follower[:idx], followerList.Follower[idx+1:]...)
-		if err := am.SetFollower(ctx, msg.Followee, followerList); err != nil {
-			return err.Result()
-		}
+	// add the "msg.Followee" to the "msg.Follower" 's following list.
+	// add "msg.Follower/msg.Followee" key under "following" prefix
+	//if findAccountInList(msg.Followee, followingList.Following) == -1 {
+	//followingList.Following = append(followingList.Following, msg.Followee)
+	if err := proxyFollower.RemoveFollowing(ctx, msg.Followee); err != nil {
+		return err.Result()
 	}
-
-	// remove the "msg.Followee" from the "msg.Follower" 's following list.
-	if idx := findAccountInList(msg.Followee, followingList.Following); idx != -1 {
-		followingList.Following = append(followingList.Following[:idx], followingList.Following[idx+1:]...)
-		if err := am.SetFollowing(ctx, msg.Follower, followingList); err != nil {
-			return err.Result()
-		}
-	}
-
+	//}
+	proxyFollowee.Apply(ctx)
+	proxyFollower.Apply(ctx)
 	return sdk.Result{}
 }
 
@@ -99,7 +95,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		// check if username and address match
 		associatedAddr, err := NewProxyAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
 		if !bytes.Equal(associatedAddr, msg.ReceiverAddr) || err != nil {
-			return ErrAccountManagerFail("Username and address mismatch").Result()
+			return ErrUsernameAddressMismatch().Result()
 		}
 	}
 
@@ -107,7 +103,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if len(msg.ReceiverName) != 0 {
 		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
 		if err := accReceiver.AddCoins(ctx, msg.Amount); err != nil {
-			return ErrAccountManagerFail("Add money to receiver's bank failed").Result()
+			return ErrAddMoneyFailed().Result()
 		}
 		accSender.Apply(ctx)
 		accReceiver.Apply(ctx)
@@ -132,14 +128,4 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	}
 	accSender.Apply(ctx)
 	return sdk.Result{}
-}
-
-// helper function
-func findAccountInList(me AccountKey, lst []AccountKey) int {
-	for index, user := range lst {
-		if user == me {
-			return index
-		}
-	}
-	return -1
 }

@@ -63,16 +63,6 @@ func TestRegister(t *testing.T) {
 	metaPtr, err := lam.GetMeta(ctx, acc.AccountKey(register))
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *metaPtr, "Account meta should be equal")
-
-	follower := acc.Follower{Follower: []acc.AccountKey{}}
-	followerPtr, err := lam.GetFollower(ctx, acc.AccountKey(register))
-	assert.Nil(t, err)
-	assert.Equal(t, follower, *followerPtr, "Account follower should be equal")
-
-	following := acc.Following{Following: []acc.AccountKey{}}
-	followingPtr, err := lam.GetFollowing(ctx, acc.AccountKey(register))
-	assert.Nil(t, err)
-	assert.Equal(t, following, *followingPtr, "Account follower should be equal")
 }
 
 func TestRegisterFeeInsufficient(t *testing.T) {

@@ -84,4 +84,6 @@ const (
 
 	// MinLikeWeight indicates the -100.00% maximum like weight.
 	MinLikeWeight = -10000
+
+	KeySeparator = "/"
 )

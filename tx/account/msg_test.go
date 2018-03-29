@@ -19,24 +19,24 @@ func TestFollowMsg(t *testing.T) {
 	follower = "re"
 	msg = NewFollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	follower = "registerregisterregis"
 	msg = NewFollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	// Followee Username length invalid
 	follower = "userA"
 	followee = "re"
 	msg = NewFollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	followee = "registerregisterregis"
 	msg = NewFollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 }
 
 func TestUnfollowMsg(t *testing.T) {
@@ -50,24 +50,24 @@ func TestUnfollowMsg(t *testing.T) {
 	follower = "re"
 	msg = NewUnfollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	follower = "registerregisterregis"
 	msg = NewUnfollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	// Followee Username length invalid
 	follower = "userA"
 	followee = "re"
 	msg = NewUnfollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	followee = "registerregisterregis"
 	msg = NewUnfollowMsg(follower, followee)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername("illegal length"))
+	assert.Equal(t, result, ErrInvalidUsername())
 }
 
 func TestTransferMsg(t *testing.T) {
@@ -90,14 +90,14 @@ func TestTransferMsg(t *testing.T) {
 	// invalid transfer: no receiver provided
 	msg = NewTransferMsg(sender, amount, memo)
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername(("invalid receiver")))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	// invalid transfer: both username and address are invalid
 	receiverName = ""
 	receiverAddr = sdk.Address("")
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName), TransferToAddr(receiverAddr))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername(("invalid receiver")))
+	assert.Equal(t, result, ErrInvalidUsername())
 
 	// invalid transfer: amount is invalid
 	receiverName = "userB"

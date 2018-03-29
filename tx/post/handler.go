@@ -30,7 +30,7 @@ func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg CreatePostMsg) sdk.Result {
 	account := acc.NewProxyAccount(msg.Author, &am)
 	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound(string(msg.Author)).Result()
+		return acc.ErrUsernameNotFound().Result()
 	}
 	post := NewProxyPost(msg.Author, msg.PostID, &pm)
 	if post.IsPostExist(ctx) {
@@ -64,7 +64,7 @@ func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager,
 func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg LikeMsg) sdk.Result {
 	account := acc.NewProxyAccount(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound(string(msg.Username)).Result()
+		return acc.ErrUsernameNotFound().Result()
 	}
 	post := NewProxyPost(msg.Author, msg.PostID, &pm)
 	if !post.IsPostExist(ctx) {
@@ -93,7 +93,7 @@ func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg L
 func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg DonateMsg) sdk.Result {
 	account := acc.NewProxyAccount(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound(string(msg.Username)).Result()
+		return acc.ErrUsernameNotFound().Result()
 	}
 	post := NewProxyPost(msg.Author, msg.PostID, &pm)
 	if !post.IsPostExist(ctx) {
