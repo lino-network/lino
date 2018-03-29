@@ -39,17 +39,9 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		// // create the message
 		msg := register.NewRegisterMsg(name, *pubKey)
-		// fmt.Println(fmt.Sprintf("pubkey: %v", *pubKey))
-		// fmt.Println(fmt.Sprintf("pubkey to bytes: %v", string(pubKey.Bytes())))
-		// get password
-		buf := sdkcli.BufferStdin()
-		prompt := fmt.Sprintf("Password to sign with '%s':", name)
-		passphrase, err := sdkcli.GetPassword(prompt, buf)
-		if err != nil {
-			return err
-		}
+
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(name, passphrase, msg, cdc)
+		res, err := builder.SignBuildBroadcast(name, msg, cdc)
 
 		if err != nil {
 			return err

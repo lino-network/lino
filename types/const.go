@@ -45,6 +45,8 @@ const (
 	PostKVStoreKey = "post"
 	// ValidatorKVStoreKey presents store which keeps validator related value
 	ValidatorKVStoreKey = "validator"
+	// EventKVStoreKey presents store which keeps event related value
+	GlobalKVStoreKey = "global"
 
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
@@ -85,5 +87,6 @@ const (
 	// MinLikeWeight indicates the -100.00% maximum like weight.
 	MinLikeWeight = -10000
 
+	// KeySeparator used to separate different key component
 	KeySeparator = "/"
 )

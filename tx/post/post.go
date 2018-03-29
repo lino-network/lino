@@ -23,17 +23,19 @@ type PostInterface interface {
 
 var _ PostInterface = PostInfo{}
 var _ PostInterface = PostMeta{}
-var _ PostInterface = PostLikes{}
-var _ PostInterface = PostComments{}
-var _ PostInterface = PostViews{}
-var _ PostInterface = PostDonations{}
+var _ PostInterface = Like{}
+var _ PostInterface = Report{}
+var _ PostInterface = Comment{}
+var _ PostInterface = View{}
+var _ PostInterface = Donation{}
 
-func (_ PostInfo) AssertPostInterface()      {}
-func (_ PostMeta) AssertPostInterface()      {}
-func (_ PostLikes) AssertPostInterface()     {}
-func (_ PostComments) AssertPostInterface()  {}
-func (_ PostViews) AssertPostInterface()     {}
-func (_ PostDonations) AssertPostInterface() {}
+func (_ PostInfo) AssertPostInterface() {}
+func (_ PostMeta) AssertPostInterface() {}
+func (_ Like) AssertPostInterface()     {}
+func (_ Report) AssertPostInterface()   {}
+func (_ Comment) AssertPostInterface()  {}
+func (_ View) AssertPostInterface()     {}
+func (_ Donation) AssertPostInterface() {}
 
 // PostInfo can also use to present comment(with parent) or repost(with source)
 type PostInfo struct {
@@ -48,7 +50,7 @@ type PostInfo struct {
 	Links        []IDToURLMapping `json:"links"`
 }
 
-// Donation struct, only used in PostDonations
+// Donation struct, only used in Donation
 type IDToURLMapping struct {
 	Identifier string `json:"identifier"`
 	URL        string `json:"url"`
@@ -56,53 +58,56 @@ type IDToURLMapping struct {
 
 // PostMeta stores tiny and frequently updated fields.
 type PostMeta struct {
-	Created      types.Height `json:"created"`
-	LastUpdate   types.Height `json:"last_update"`
-	LastActivity types.Height `json:"last_activity"`
-	AllowReplies bool         `json:"allow_replies"`
-}
-
-// PostLikes stores all likes of the post
-type PostLikes struct {
-	Likes       []Like `json:"likes"`
-	TotalWeight int64  `json:"total_weight"`
+	Created           types.Height `json:"created"`
+	LastUpdate        types.Height `json:"last_update"`
+	LastActivity      types.Height `json:"last_activity"`
+	AllowReplies      bool         `json:"allow_replies"`
+	TotalLikeCount    int64        `json:"total_like_count"`
+	TotalDonateCount  int64        `json:"total_donate_count"`
+	TotalLikeWeight   int64        `json:"total_like_weight"`
+	TotalDislikeStake int64        `json:"total_dislike_stake"`
+	TotalReportStake  int64        `json:"total_report_stake"`
+	TotalReward       sdk.Coins    `json:"reward"`
 }
 
 // Like struct, only used in PostLikes
 type Like struct {
 	Username acc.AccountKey `json:"username"`
 	Weight   int64          `json:"weight"`
+	Created  types.Height   `json:"created"`
 }
+type Likes []Like
 
-// PostComments stores all comments of the post
-type PostComments struct {
-	Comments []PostKey `json:"comments"`
+// Like struct, only used in PostLikes
+type Report struct {
+	Username acc.AccountKey `json:"username"`
+	Stake    int64          `json:"stake"`
+	Created  types.Height   `json:"created"`
 }
+type Reports []Report
 
-// PostViews stores all views of the post
-type PostViews struct {
-	Views []View `json:"views"`
+// View struct, only used in View
+type Comment struct {
+	Author  acc.AccountKey `json:"author"`
+	PostID  string         `json:"post_key"`
+	Created types.Height   `json:"created"`
 }
+type Comments []Comment
 
-// View struct, only used in PostViews
+// View struct, only used in View
 type View struct {
 	Username acc.AccountKey `json:"username"`
 	Created  types.Height   `json:"created"`
 }
+type Views []View
 
-// PostDonations stores all donation of the post
-type PostDonations struct {
-	Donations []Donation `json:"donates"`
-	// TODO: Using sdk.Coins for now
-	Reward sdk.Coins `json:"reward"`
-}
-
-// Donation struct, only used in PostDonations
+// Donation struct, only used in Donation
 type Donation struct {
 	Username acc.AccountKey `json:"username"`
 	Amount   sdk.Coins      `json:"amount"`
 	Created  types.Height   `json:"created"`
 }
+type Donations []Donation
 
 // GetPostKey try to generate PostKey from acc.AccountKey and PostID
 func GetPostKey(author acc.AccountKey, postID string) PostKey {
@@ -111,22 +116,14 @@ func GetPostKey(author acc.AccountKey, postID string) PostKey {
 
 // post is the proxy for all storage structs defined above
 type post struct {
-	author             acc.AccountKey `json:"author"`
-	postID             string         `json:"post_ID"`
-	postKey            PostKey        `json:"post_key"`
-	postManager        *PostManager   `json:"postManager"`
-	writePostInfo      bool           `json:"write_post_info"`
-	writePostMeta      bool           `json:"write_post_meta"`
-	writePostLikes     bool           `json:"write_post_likes"`
-	writePostComments  bool           `json:"write_post_comments"`
-	writePostViews     bool           `json:"write_post_views"`
-	writePostDonations bool           `json:"write_post_donations"`
-	postInfo           *PostInfo      `json:"post_info"`
-	postMeta           *PostMeta      `json:"post_meta"`
-	postLikes          *PostLikes     `json:"post_likes"`
-	postComments       *PostComments  `json:"post_comments"`
-	postViews          *PostViews     `json:"post_views"`
-	postDonations      *PostDonations `json:"post_donations"`
+	author        acc.AccountKey `json:"author"`
+	postID        string         `json:"post_ID"`
+	postKey       PostKey        `json:"post_key"`
+	postManager   *PostManager   `json:"postManager"`
+	writePostInfo bool           `json:"write_post_info"`
+	writePostMeta bool           `json:"write_post_meta"`
+	postInfo      *PostInfo      `json:"post_info"`
+	postMeta      *PostMeta      `json:"post_meta"`
 }
 
 // create NewProxyPost
@@ -173,63 +170,59 @@ func (p *post) CreatePost(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
 		LastActivity: types.Height(ctx.BlockHeight()),
 		AllowReplies: true, // Default
 	}
-	p.writePostLikes = true
-	p.postLikes = &PostLikes{Likes: []Like{}}
-	p.writePostComments = true
-	p.postComments = &PostComments{Comments: []PostKey{}}
-	p.writePostViews = true
-	p.postViews = &PostViews{Views: []View{}}
-	p.writePostDonations = true
-	p.postDonations = &PostDonations{Donations: []Donation{}, Reward: sdk.Coins{}}
 	return nil
 }
 
 // add or update like from the user if like exists
-func (p *post) AddOrUpdateLikeToPost(ctx sdk.Context, like Like) sdk.Error {
-	if err := p.checkPostLikes(ctx); err != nil {
+func (p *post) AddOrUpdateLikeToPost(ctx sdk.Context, likeToAddOrUpdate Like) sdk.Error {
+	if err := p.checkPostMeta(ctx); err != nil {
 		return err
 	}
-	index := getLikeFromList(p.postLikes.Likes, like)
-	if index != -1 {
-		p.postLikes.TotalWeight -= p.postLikes.Likes[index].Weight
-		p.postLikes.Likes[index].Weight = like.Weight
+	like, _ := p.postManager.GetPostLike(ctx, p.GetPostKey(), likeToAddOrUpdate.Username)
+	if like != nil {
+		p.postMeta.TotalLikeWeight -= like.Weight
 	} else {
-		p.postLikes.Likes = append(p.postLikes.Likes, like)
+		p.postMeta.TotalLikeCount += 1
 	}
-	p.postLikes.TotalWeight += like.Weight
-	p.writePostLikes = true
-	if err := p.UpdateLastActivity(ctx); err != nil {
-		return err
-	}
-	return nil
+	p.writePostMeta = true
+	like = &likeToAddOrUpdate
+	p.postMeta.TotalLikeWeight += like.Weight
+	return p.postManager.SetPostLike(ctx, p.GetPostKey(), like)
 }
 
 // add comment to post comment list
-func (p *post) AddComment(ctx sdk.Context, comment PostKey) sdk.Error {
-	if err := p.checkPostComments(ctx); err != nil {
-		return err
-	}
-	p.postComments.Comments = append(p.postComments.Comments, comment)
-	p.writePostComments = true
+func (p *post) AddComment(ctx sdk.Context, comment Comment) sdk.Error {
 	if err := p.UpdateLastActivity(ctx); err != nil {
 		return err
 	}
+	return p.postManager.SetPostComment(ctx, p.GetPostKey(), &comment)
+}
+
+// add donation to post donation list
+func (p *post) AddDonation(ctx sdk.Context, donation Donation) sdk.Error {
+	if err := p.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+	if err := p.postManager.SetPostDonation(ctx, p.GetPostKey(), &donation); err != nil {
+		return err
+	}
+	p.postMeta.TotalReward = p.postMeta.TotalReward.Plus(donation.Amount)
+	p.postMeta.TotalDonateCount = p.postMeta.TotalDonateCount + 1
 	return nil
 }
 
-// add donation to post comment list
-func (p *post) AddDonation(ctx sdk.Context, donation Donation) sdk.Error {
-	if err := p.checkPostDonations(ctx); err != nil {
-		return err
-	}
-	p.postDonations.Donations = append(p.postDonations.Donations, donation)
-	p.postDonations.Reward = p.postDonations.Reward.Plus(donation.Amount)
-	p.writePostDonations = true
+// add view to post view list
+func (p *post) AddView(ctx sdk.Context, view View) sdk.Error {
 	if err := p.UpdateLastActivity(ctx); err != nil {
 		return err
 	}
-	return nil
+	return p.postManager.SetPostView(ctx, p.GetPostKey(), &view)
 }
+
+// add report to post report list
+// func (p *post) AddReport(ctx sdk.Context, report Report) sdk.Error {
+// 	return p.postManager.SetPostReport(ctx, p.GetPostKey(), &report)
+// }
 
 // update comment last activity
 func (p *post) UpdateLastActivity(ctx sdk.Context) sdk.Error {
@@ -257,30 +250,6 @@ func (p *post) checkPostMeta(ctx sdk.Context) (err sdk.Error) {
 	return err
 }
 
-// check if PostComments exists
-func (p *post) checkPostLikes(ctx sdk.Context) (err sdk.Error) {
-	if p.postLikes == nil {
-		p.postLikes, err = p.postManager.GetPostLikes(ctx, p.GetPostKey())
-	}
-	return err
-}
-
-// check if PostComments exists
-func (p *post) checkPostComments(ctx sdk.Context) (err sdk.Error) {
-	if p.postComments == nil {
-		p.postComments, err = p.postManager.GetPostComments(ctx, p.GetPostKey())
-	}
-	return err
-}
-
-// check if PostComments exists
-func (p *post) checkPostDonations(ctx sdk.Context) (err sdk.Error) {
-	if p.postDonations == nil {
-		p.postDonations, err = p.postManager.GetPostDonations(ctx, p.GetPostKey())
-	}
-	return err
-}
-
 // apply all changes to storage
 func (p *post) Apply(ctx sdk.Context) sdk.Error {
 	if p.writePostInfo {
@@ -293,26 +262,6 @@ func (p *post) Apply(ctx sdk.Context) sdk.Error {
 			return err
 		}
 	}
-	if p.writePostLikes {
-		if err := p.postManager.SetPostLikes(ctx, p.GetPostKey(), p.postLikes); err != nil {
-			return err
-		}
-	}
-	if p.writePostComments {
-		if err := p.postManager.SetPostComments(ctx, p.GetPostKey(), p.postComments); err != nil {
-			return err
-		}
-	}
-	if p.writePostViews {
-		if err := p.postManager.SetPostViews(ctx, p.GetPostKey(), p.postViews); err != nil {
-			return err
-		}
-	}
-	if p.writePostDonations {
-		if err := p.postManager.SetPostDonations(ctx, p.GetPostKey(), p.postDonations); err != nil {
-			return err
-		}
-	}
 	p.clear()
 
 	return nil
@@ -322,24 +271,6 @@ func (p *post) Apply(ctx sdk.Context) sdk.Error {
 func (p *post) clear() {
 	p.writePostInfo = false
 	p.writePostMeta = false
-	p.writePostLikes = false
-	p.writePostComments = false
-	p.writePostViews = false
-	p.writePostDonations = false
 	p.postInfo = nil
 	p.postMeta = nil
-	p.postLikes = nil
-	p.postComments = nil
-	p.postViews = nil
-	p.postDonations = nil
-}
-
-// get like index from like list, return -1 if like doesn't exist
-func getLikeFromList(likes []Like, targetLike Like) (index int) {
-	for i, like := range likes {
-		if like.Username == targetLike.Username {
-			return i
-		}
-	}
-	return -1
 }

@@ -1,4 +1,4 @@
-package event
+package global
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,37 +17,37 @@ var _ = oldwire.RegisterInterface(
 	oldwire.ConcreteType{DonateRewardEvent{}, eventTypeDonateReward},
 )
 
-type EventManager struct {
+type GlobalManager struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
 	cdc *wire.Codec
 }
 
-func NewEventManager(key sdk.StoreKey) EventManager {
+func NewGlobalManager(key sdk.StoreKey) GlobalManager {
 	cdc := wire.NewCodec()
-	em := EventManager{
+	gm := GlobalManager{
 		key: key,
 		cdc: cdc,
 	}
-	return em
+	return gm
 }
 
-func (em EventManager) GetEventList(ctx sdk.Context, key EventListKey) (*EventList, sdk.Error) {
-	store := ctx.KVStore(em.key)
+func (gm GlobalManager) GetEventList(ctx sdk.Context, key EventListKey) (*EventList, sdk.Error) {
+	store := ctx.KVStore(gm.key)
 	listByte := store.Get(eventListKey(key))
 	if listByte == nil {
 		return nil, ErrEventNotFound(eventListKey(key))
 	}
 	lst := new(EventList)
-	if err := em.cdc.UnmarshalJSON(listByte, lst); err != nil {
+	if err := gm.cdc.UnmarshalJSON(listByte, lst); err != nil {
 		return nil, ErrEventUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (em EventManager) SetEventList(ctx sdk.Context, key EventListKey, lst *EventList) sdk.Error {
-	store := ctx.KVStore(em.key)
-	listByte, err := em.cdc.MarshalJSON(*lst)
+func (gm GlobalManager) SetEventList(ctx sdk.Context, key EventListKey, lst *EventList) sdk.Error {
+	store := ctx.KVStore(gm.key)
+	listByte, err := gm.cdc.MarshalJSON(*lst)
 	if err != nil {
 		return ErrEventMarshalError(err)
 	}
@@ -55,14 +55,14 @@ func (em EventManager) SetEventList(ctx sdk.Context, key EventListKey, lst *Even
 	return nil
 }
 
-func (em EventManager) removeEventList(ctx sdk.Context, key EventListKey) sdk.Error {
-	store := ctx.KVStore(em.key)
+func (gm GlobalManager) removeEventList(ctx sdk.Context, key EventListKey) sdk.Error {
+	store := ctx.KVStore(gm.key)
 	store.Delete(eventListKey(key))
 	return nil
 }
 
-func (em EventManager) ExecuteEvents(ctx sdk.Context, key EventListKey) sdk.Error {
-	lst, err := em.GetEventList(ctx, key)
+func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, key EventListKey) sdk.Error {
+	lst, err := gm.GetEventList(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (em EventManager) ExecuteEvents(ctx sdk.Context, key EventListKey) sdk.Erro
 		}
 	}
 
-	if err := em.removeEventList(ctx, key); err != nil {
+	if err := gm.removeEventList(ctx, key); err != nil {
 		return err
 	}
 	return nil

@@ -24,8 +24,6 @@
     "client/lcd",
     "client/rpc",
     "client/tx",
-    "examples/basecoin/types",
-    "examples/basecoin/x/cool",
     "mock",
     "server",
     "store",
@@ -39,7 +37,7 @@
     "x/bank/commands",
     "x/bank/rest"
   ]
-  revision = "950797dd6f0d06261cb24e0b60d1b2debbc3a1fc"
+  revision = "2e5943e1bf13457da37a3535f0ffbd96346e8b45"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -331,7 +329,6 @@
   version = "v0.7.0"
 
 [[projects]]
-  branch = "bucky/dep"
   name = "github.com/tendermint/tendermint"
   packages = [
     "blockchain",
@@ -370,7 +367,8 @@
     "version",
     "wire"
   ]
-  revision = "214817ed1765a1df5727d295e05120fc68b4b6d1"
+  revision = "6f9956990c444d53f62f2a3905ed410cfe9afe77"
+  version = "v0.17.1"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -424,7 +422,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
+  revision = "13d03a9a82fba647c21a0ef8fba44a795d0f0835"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -480,12 +478,12 @@
 [[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "7f97868eec74b32b0982dd158a51a446d1da7eb5"
-  version = "v2.1.1"
+  revision = "86f5ed62f8a0ee96bd888d2efdfd6d4fb100a4eb"
+  version = "v2.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c6a2ff438f88d110b91d120f17c02e0f9d792ce6fc48bcf0aae18f343a32ddb2"
+  inputs-digest = "999be792b13b647478d6c9a891b62be948adc9cded56f57dac19f61b2ee73fe7"
   solver-name = "gps-cdcl"
   solver-version = 1

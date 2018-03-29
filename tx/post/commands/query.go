@@ -11,8 +11,8 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 )
 
-// GetBankCmd returns a query bank that will display the
-// state of the bank at a given address
+// GetPostCmd returns a query post that will display the
+// info and meta of the post at a given author and postID
 func GetPostCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	cmdr := commander{
 		storeName,
@@ -40,7 +40,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	postID := args[1]
 	postKey := post.GetPostKey(acc.AccountKey(author), postID)
 
-	res, err := builder.Query(post.PostInfoKey(postKey), c.storeName)
+	res, err := builder.Query(post.GetPostInfoKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(post.PostMetaKey(postKey), c.storeName)
+	res, err = builder.Query(post.GetPostMetaKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -58,43 +58,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(post.PostLikesKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	postLikes := new(post.PostLikes)
-	if err := c.cdc.UnmarshalBinary(res, postLikes); err != nil {
-		return err
-	}
-
-	res, err = builder.Query(post.PostCommentsKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	postComments := new(post.PostComments)
-	if err := c.cdc.UnmarshalBinary(res, postComments); err != nil {
-		return err
-	}
-
-	res, err = builder.Query(post.PostViewsKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	postViews := new(post.PostViews)
-	if err := c.cdc.UnmarshalBinary(res, postViews); err != nil {
-		return err
-	}
-
-	res, err = builder.Query(post.PostDonationKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	postDonations := new(post.PostDonations)
-	if err := c.cdc.UnmarshalBinary(res, postDonations); err != nil {
-		return err
-	}
-
-	if err := client.PrintIndent(postInfo, postMeta, postLikes, postComments, postViews, postDonations); err != nil {
+	if err := client.PrintIndent(postInfo, postMeta); err != nil {
 		return err
 	}
 

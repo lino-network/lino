@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/tx/account"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -18,6 +17,7 @@ import (
 
 // nolint
 const (
+	FlagSender       = "sender"
 	FlagReceiverName = "receiver_name"
 	FlagReceiverAddr = "receiver_addr"
 	FlagAmount       = "amount"
@@ -31,6 +31,7 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "Create and sign a transfer tx",
 		RunE:  sendTransferTx(cdc),
 	}
+	cmd.Flags().String(FlagSender, "", "money sender")
 	cmd.Flags().String(FlagReceiverName, "", "receiver username")
 	cmd.Flags().String(FlagReceiverAddr, "", "receiver address")
 	cmd.Flags().String(FlagAmount, "", "amount to transfer")
@@ -41,7 +42,7 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		sender := viper.GetString(sdkcli.FlagName)
+		sender := viper.GetString(FlagSender)
 		receiverName := viper.GetString(FlagReceiverName)
 		receiverAddr, err := hex.DecodeString(viper.GetString(FlagReceiverAddr))
 		if err != nil {
@@ -54,15 +55,8 @@ func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		msg := acc.NewTransferMsg(sender, amount, []byte(viper.GetString(FlagMemo)), acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
 
-		// get password
-		buf := sdkcli.BufferStdin()
-		prompt := fmt.Sprintf("Password to sign with '%s':", sender)
-		passphrase, err := sdkcli.GetPassword(prompt, buf)
-		if err != nil {
-			return err
-		}
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(sender, passphrase, msg, cdc)
+		res, err := builder.SignBuildBroadcast(sender, msg, cdc)
 
 		if err != nil {
 			return err

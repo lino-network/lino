@@ -11,15 +11,15 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // nolint
 const (
-	FlagWeight = "weight"
-	FlagAuthor = "parent_author"
+	FlagLikeUser = "likeUser"
+	FlagWeight   = "weight"
+	FlagAuthor   = "parent_author"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -29,6 +29,7 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "like a post or dislike a post",
 		RunE:  sendLikeTx(cdc),
 	}
+	cmd.Flags().String(FlagLikeUser, "", "like user of this transaction")
 	cmd.Flags().String(FlagPostID, "", "post id to identify this post for the author")
 	cmd.Flags().String(FlagAuthor, "", "title for the post")
 	cmd.Flags().String(FlagWeight, "", "content for the post")
@@ -38,7 +39,7 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		username := viper.GetString(sdkcli.FlagName)
+		username := viper.GetString(FlagLikeUser)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
 		weight, err := strconv.Atoi(viper.GetString(FlagWeight))
@@ -48,15 +49,8 @@ func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		msg := post.NewLikeMsg(acc.AccountKey(username), int64(weight), acc.AccountKey(author), postID)
 
-		// get password
-		buf := sdkcli.BufferStdin()
-		prompt := fmt.Sprintf("Password to sign with '%s':", username)
-		passphrase, err := sdkcli.GetPassword(prompt, buf)
-		if err != nil {
-			return err
-		}
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(username, passphrase, msg, cdc)
+		res, err := builder.SignBuildBroadcast(username, msg, cdc)
 
 		if err != nil {
 			return err

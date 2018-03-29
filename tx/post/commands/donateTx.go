@@ -10,14 +10,14 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 const (
-	FlagAmount = "amount"
+	FlagDonator = "donator"
+	FlagAmount  = "amount"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -27,6 +27,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "donate to a post",
 		RunE:  sendDonateTx(cdc),
 	}
+	cmd.Flags().String(FlagDonator, "", "donator of this transaction")
 	cmd.Flags().String(FlagAuthor, "", "author of the target post")
 	cmd.Flags().String(FlagPostID, "", "post id of the target post")
 	cmd.Flags().String(FlagAmount, "", "amount of the donation")
@@ -36,7 +37,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		username := viper.GetString(sdkcli.FlagName)
+		username := viper.GetString(FlagDonator)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
 
@@ -47,15 +48,8 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		msg := post.NewDonateMsg(acc.AccountKey(username), amount, acc.AccountKey(author), postID)
 
-		// get password
-		buf := sdkcli.BufferStdin()
-		prompt := fmt.Sprintf("Password to sign with '%s':", username)
-		passphrase, err := sdkcli.GetPassword(prompt, buf)
-		if err != nil {
-			return err
-		}
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(username, passphrase, msg, cdc)
+		res, err := builder.SignBuildBroadcast(username, msg, cdc)
 
 		if err != nil {
 			return err
