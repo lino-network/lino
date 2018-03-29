@@ -154,13 +154,13 @@ func (lam AccountManager) IsMyFollower(ctx sdk.Context, me AccountKey, follower 
 }
 
 // Implements types.AccountManager.
-func (lam AccountManager) SetFollowerMeta(ctx sdk.Context, me AccountKey, follower AccountKey, meta FollowerMeta) sdk.Error {
+func (lam AccountManager) SetFollowerMeta(ctx sdk.Context, me AccountKey, meta FollowerMeta) sdk.Error {
 	store := ctx.KVStore(lam.key)
 	metaByte, err := lam.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrAccountMarshalError(err)
 	}
-	store.Set(GetFollowerKey(me, follower), metaByte)
+	store.Set(GetFollowerKey(me, meta.FollowerName), metaByte)
 	return nil
 }
 
@@ -177,13 +177,13 @@ func (lam AccountManager) IsMyFollowing(ctx sdk.Context, me AccountKey, followee
 }
 
 // Implements types.AccountManager.
-func (lam AccountManager) SetFollowingMeta(ctx sdk.Context, me AccountKey, followee AccountKey, meta FollowingMeta) sdk.Error {
+func (lam AccountManager) SetFollowingMeta(ctx sdk.Context, me AccountKey, meta FollowingMeta) sdk.Error {
 	store := ctx.KVStore(lam.key)
 	metaByte, err := lam.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrAccountMarshalError(err)
 	}
-	store.Set(GetFollowingKey(me, followee), metaByte)
+	store.Set(GetFollowingKey(me, meta.FolloweeName), metaByte)
 	return nil
 }
 

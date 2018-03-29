@@ -234,7 +234,7 @@ func (acc *Account) SetFollower(ctx sdk.Context, follower AccountKey) sdk.Error 
 		CreatedAt:    types.Height(ctx.BlockHeight()),
 		FollowerName: follower,
 	}
-	acc.accountManager.SetFollowerMeta(ctx, acc.username, follower, meta)
+	acc.accountManager.SetFollowerMeta(ctx, acc.username, meta)
 	return nil
 }
 
@@ -250,7 +250,7 @@ func (acc *Account) SetFollowing(ctx sdk.Context, followee AccountKey) sdk.Error
 		CreatedAt:    types.Height(ctx.BlockHeight()),
 		FolloweeName: followee,
 	}
-	acc.accountManager.SetFollowingMeta(ctx, acc.username, followee, meta)
+	acc.accountManager.SetFollowingMeta(ctx, acc.username, meta)
 	return nil
 }
 
