@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
@@ -36,30 +35,28 @@ type AccountMeta struct {
 	ActivityBurden int64        `json:"activity_burden"`
 }
 
-// Follower records all follower belong to one user
-type Follower struct {
-	Follower []AccountKey `json:"follower"`
+// record all meta info about this relation
+type FollowerMeta struct {
+	CreatedAt    types.Height `json:"created_at"`
+	FollowerName AccountKey   `json:"follower_name"`
 }
 
-// Following records all follower belong to one user
-type Following struct {
-	Following []AccountKey `json:"following"`
+// record all meta info about this relation
+type FollowingMeta struct {
+	CreatedAt    types.Height `json:"created_at"`
+	FolloweeName AccountKey   `json:"followee_name"`
 }
 
 // linoaccount encapsulates all basic struct
 type Account struct {
-	username           AccountKey      `json:"username"`
-	writeInfoFlag      bool            `json:"write_info_flag"`
-	writeBankFlag      bool            `json:"write_bank_flag"`
-	writeMetaFlag      bool            `json:"write_meta_flag"`
-	writeFollowerFlag  bool            `json:"write_follower_flag"`
-	writeFollowingFlag bool            `json:"write_following_flag"`
-	accountManager     *AccountManager `json:"account_manager"`
-	accountInfo        *AccountInfo    `json:"account_info"`
-	accountBank        *AccountBank    `json:"account_bank"`
-	accountMeta        *AccountMeta    `json:"account_meta"`
-	follower           *Follower       `json:"follower"`
-	following          *Following      `json:"following"`
+	username       AccountKey      `json:"username"`
+	writeInfoFlag  bool            `json:"write_info_flag"`
+	writeBankFlag  bool            `json:"write_bank_flag"`
+	writeMetaFlag  bool            `json:"write_meta_flag"`
+	accountManager *AccountManager `json:"account_manager"`
+	accountInfo    *AccountInfo    `json:"account_info"`
+	accountBank    *AccountBank    `json:"account_bank"`
+	accountMeta    *AccountMeta    `json:"account_meta"`
 }
 
 func RegisterWireLinoAccount(cdc *wire.Codec) {
@@ -75,7 +72,7 @@ func NewProxyAccount(username AccountKey, accManager *AccountManager) *Account {
 	}
 }
 
-// check if post exist
+// check if account exist
 func (acc *Account) IsAccountExist(ctx sdk.Context) bool {
 	if err := acc.checkAccountInfo(ctx); err != nil {
 		return false
@@ -86,7 +83,7 @@ func (acc *Account) IsAccountExist(ctx sdk.Context) bool {
 // Implements types.AccountManager.
 func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey crypto.PubKey, accBank *AccountBank) sdk.Error {
 	if acc.IsAccountExist(ctx) {
-		return ErrAccountCreateFail(fmt.Sprintf("account exist: %v", accKey))
+		return ErrAccountCreateFail(accKey)
 	}
 	acc.writeInfoFlag = true
 	acc.accountInfo = &AccountInfo{
@@ -106,13 +103,6 @@ func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey cry
 		LastActivity:   types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,
 	}
-
-	acc.writeFollowerFlag = true
-	acc.follower = &Follower{Follower: []AccountKey{}}
-
-	acc.writeFollowingFlag = true
-	acc.following = &Following{Following: []AccountKey{}}
-
 	return nil
 }
 
@@ -131,7 +121,7 @@ func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error)
 	}
 
 	if !acc.accountBank.Balance.IsGTE(coins) {
-		return ErrAccountManagerFail("Account bank's coins are not enough")
+		return ErrAccountCoinNotEnough()
 	}
 
 	c0 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64(0)}}
@@ -215,26 +205,68 @@ func (acc *Account) GetActivityBurden(ctx sdk.Context) (int64, sdk.Error) {
 	return acc.accountMeta.ActivityBurden, nil
 }
 
-func (acc *Account) GetFollower(ctx sdk.Context) (*Follower, sdk.Error) {
-	if err := acc.checkAccountFollower(ctx); err != nil {
-		return nil, err
-	}
-	return acc.follower, nil
-}
-
-func (acc *Account) GetFollowing(ctx sdk.Context) (*Following, sdk.Error) {
-	if err := acc.checkAccountFollowing(ctx); err != nil {
-		return nil, err
-	}
-	return acc.following, nil
-}
-
 func (acc *Account) UpdateLastActivity(ctx sdk.Context) sdk.Error {
 	if err := acc.checkAccountMeta(ctx); err != nil {
 		return err
 	}
 	acc.writeMetaFlag = true
 	acc.accountMeta.LastActivity = types.Height(ctx.BlockHeight())
+	return nil
+}
+
+func (acc *Account) IsMyFollower(ctx sdk.Context, follower AccountKey) bool {
+	return acc.accountManager.IsMyFollower(ctx, acc.username, follower)
+}
+
+func (acc *Account) IsMyFollowing(ctx sdk.Context, followee AccountKey) bool {
+	return acc.accountManager.IsMyFollowing(ctx, acc.username, followee)
+}
+
+func (acc *Account) SetFollower(ctx sdk.Context, follower AccountKey) sdk.Error {
+	if err := acc.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+
+	if acc.IsMyFollower(ctx, follower) {
+		return nil
+	}
+	meta := FollowerMeta{
+		CreatedAt:    types.Height(ctx.BlockHeight()),
+		FollowerName: follower,
+	}
+	acc.accountManager.SetFollowerMeta(ctx, acc.username, follower, meta)
+	return nil
+}
+
+func (acc *Account) SetFollowing(ctx sdk.Context, followee AccountKey) sdk.Error {
+	if err := acc.UpdateLastActivity(ctx); err != nil {
+		return err
+	}
+
+	if acc.IsMyFollowing(ctx, followee) {
+		return nil
+	}
+	meta := FollowingMeta{
+		CreatedAt:    types.Height(ctx.BlockHeight()),
+		FolloweeName: followee,
+	}
+	acc.accountManager.SetFollowingMeta(ctx, acc.username, followee, meta)
+	return nil
+}
+
+func (acc *Account) RemoveFollower(ctx sdk.Context, follower AccountKey) sdk.Error {
+	if !acc.accountManager.IsMyFollower(ctx, acc.username, follower) {
+		return nil
+	}
+	acc.accountManager.RemoveFollowerMeta(ctx, acc.username, follower)
+	return nil
+}
+
+func (acc *Account) RemoveFollowing(ctx sdk.Context, followee AccountKey) sdk.Error {
+	if !acc.accountManager.IsMyFollowing(ctx, acc.username, followee) {
+		return nil
+	}
+	acc.accountManager.RemoveFollowingMeta(ctx, acc.username, followee)
 	return nil
 }
 
@@ -257,19 +289,8 @@ func (acc *Account) Apply(ctx sdk.Context) sdk.Error {
 			return err
 		}
 	}
-	if acc.writeFollowerFlag {
-		if err := acc.accountManager.SetFollower(ctx, acc.username, acc.follower); err != nil {
-			return err
-		}
-	}
-	if acc.writeFollowingFlag {
-		if err := acc.accountManager.SetFollowing(ctx, acc.username, acc.following); err != nil {
-			return err
-		}
-	}
 
 	acc.clear()
-
 	return nil
 }
 
@@ -277,13 +298,9 @@ func (acc *Account) clear() {
 	acc.writeInfoFlag = false
 	acc.writeBankFlag = false
 	acc.writeMetaFlag = false
-	acc.writeFollowerFlag = false
-	acc.writeFollowingFlag = false
 	acc.accountInfo = nil
 	acc.accountBank = nil
 	acc.accountMeta = nil
-	acc.follower = nil
-	acc.following = nil
 }
 
 func (acc *Account) checkAccountInfo(ctx sdk.Context) (err sdk.Error) {
@@ -306,20 +323,6 @@ func (acc *Account) checkAccountBank(ctx sdk.Context) (err sdk.Error) {
 func (acc *Account) checkAccountMeta(ctx sdk.Context) (err sdk.Error) {
 	if acc.accountMeta == nil {
 		acc.accountMeta, err = acc.accountManager.GetMeta(ctx, acc.username)
-	}
-	return err
-}
-
-func (acc *Account) checkAccountFollower(ctx sdk.Context) (err sdk.Error) {
-	if acc.follower == nil {
-		acc.follower, err = acc.accountManager.GetFollower(ctx, acc.username)
-	}
-	return err
-}
-
-func (acc *Account) checkAccountFollowing(ctx sdk.Context) (err sdk.Error) {
-	if acc.following == nil {
-		acc.following, err = acc.accountManager.GetFollowing(ctx, acc.username)
 	}
 	return err
 }

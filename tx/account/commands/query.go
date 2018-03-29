@@ -61,7 +61,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 	key := sdk.Address(bz)
 
-	res, err := builder.Query(acc.AccountBankKey(key), c.storeName)
+	res, err := builder.Query(acc.GetAccountBankKey(key), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	accKey := acc.AccountKey(args[0])
 
-	res, err := builder.Query(acc.AccountInfoKey(accKey), c.storeName)
+	res, err := builder.Query(acc.GetAccountInfoKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(acc.AccountBankKey(info.Address), c.storeName)
+	res, err = builder.Query(acc.GetAccountBankKey(info.Address), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(acc.AccountMetaKey(accKey), c.storeName)
+	res, err = builder.Query(acc.GetAccountMetaKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -116,25 +116,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(acc.AccountFollowerKey(accKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	follower := new(acc.Follower)
-	if err := c.cdc.UnmarshalBinary(res, follower); err != nil {
-		return err
-	}
-
-	res, err = builder.Query(acc.AccountFollowingKey(accKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	following := new(acc.Following)
-	if err := c.cdc.UnmarshalBinary(res, following); err != nil {
-		return err
-	}
-
-	if err := client.PrintIndent(info, bank, meta, follower, following); err != nil {
+	if err := client.PrintIndent(info, bank, meta); err != nil {
 		return err
 	}
 	return nil

@@ -51,7 +51,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	postInfo.Author = acc.AccountKey("invalid")
 	msg = NewCreatePostMsg(postInfo)
 	result = handler(ctx, msg)
-	assert.Equal(t, result, acc.ErrUsernameNotFound("invalid").Result())
+	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
 }
 
 func TestHandlerCreateComment(t *testing.T) {
@@ -198,7 +198,7 @@ func TestHandlerPostLike(t *testing.T) {
 	// test invalid like username
 	likeMsg = NewLikeMsg(acc.AccountKey("invalid"), 10000, acc.AccountKey(user), postID)
 	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, acc.ErrUsernameNotFound(string(likeMsg.Username)).Result())
+	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
 
 }
@@ -257,12 +257,12 @@ func TestHandlerPostDonate(t *testing.T) {
 	// test invalid username
 	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), newAmount(100), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
-	assert.Equal(t, result, acc.ErrUsernameNotFound(string(donateMsg.Username)).Result())
+	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
 
 	// test insufficient deposit
 	donateMsg = NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
-	assert.Equal(t, result, acc.ErrAccountManagerFail("Account bank's coins are not enough").Result())
+	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta, postLikes, postComments, postViews, postDonations)
 }

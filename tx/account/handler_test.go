@@ -24,8 +24,8 @@ func TestFollow(t *testing.T) {
 	handler := NewHandler(lam)
 
 	// create two test users
-	createTestAccount(ctx, lam, "user1")
-	createTestAccount(ctx, lam, "user2")
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
 
 	// let user1 follows user2
 	msg := NewFollowMsg("user1", "user2")
@@ -33,14 +33,10 @@ func TestFollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
-	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
-	assert.Equal(t, true, idx >= 0)
+	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
 
 	// check user2 in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
-	idx = findAccountInList(AccountKey("user2"), followingList.Following)
-	assert.Equal(t, true, idx >= 0)
+	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
 }
 
 func TestFollowUserNotExist(t *testing.T) {
@@ -49,23 +45,20 @@ func TestFollowUserNotExist(t *testing.T) {
 	handler := NewHandler(lam)
 
 	// create test user
-	createTestAccount(ctx, lam, "user1")
+	acc1 := createTestAccount(ctx, lam, "user1")
 
 	// let user2(not exists) follows user1
 	msg := NewFollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrAccountManagerFail("Get following list failed").Result())
 
-	followerList, _ := lam.GetFollower(ctx, AccountKey("user1"))
-	assert.Equal(t, 0, len(followerList.Follower))
+	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, false, acc1.IsMyFollower(ctx, "user2"))
 
 	// let user1 follows user3(not exists)
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrAccountManagerFail("Get follower list failed").Result())
-
-	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
-	assert.Equal(t, 0, len(followingList.Following))
+	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, false, acc1.IsMyFollowing(ctx, "user3"))
 }
 
 func TestFollowAgain(t *testing.T) {
@@ -74,8 +67,8 @@ func TestFollowAgain(t *testing.T) {
 	handler := NewHandler(lam)
 
 	// create two test users
-	createTestAccount(ctx, lam, "user1")
-	createTestAccount(ctx, lam, "user2")
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
 
 	// let user1 follows user2 twice
 	msg := NewFollowMsg("user1", "user2")
@@ -87,16 +80,10 @@ func TestFollowAgain(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is user2's only follower
-	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
-	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
-	assert.Equal(t, 0, idx)
-	assert.Equal(t, 1, len(followerList.Follower))
+	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
 
 	// check user2 is the only one in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
-	idx = findAccountInList(AccountKey("user2"), followingList.Following)
-	assert.Equal(t, 0, idx)
-	assert.Equal(t, 1, len(followingList.Following))
+	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
 }
 
 func TestUnfollow(t *testing.T) {
@@ -105,8 +92,8 @@ func TestUnfollow(t *testing.T) {
 	handler := NewHandler(lam)
 
 	// create two test users
-	createTestAccount(ctx, lam, "user1")
-	createTestAccount(ctx, lam, "user2")
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
 
 	// let user1 follows user2
 	msg := NewFollowMsg("user1", "user2")
@@ -119,14 +106,10 @@ func TestUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is not in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
-	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
-	assert.Equal(t, -1, idx)
+	assert.Equal(t, false, acc2.IsMyFollower(ctx, "user1"))
 
 	// check user2 is not in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
-	idx = findAccountInList(AccountKey("user2"), followingList.Following)
-	assert.Equal(t, -1, idx)
+	assert.Equal(t, false, acc1.IsMyFollowing(ctx, "user2"))
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
@@ -139,12 +122,12 @@ func TestUnfollowUserNotExist(t *testing.T) {
 	// let user2(not exists) unfollows user1
 	msg := NewUnfollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrAccountManagerFail("Get following list failed").Result())
+	assert.Equal(t, result, ErrUsernameNotFound().Result())
 
 	// let user1 unfollows user3(not exists)
 	msg = NewUnfollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrAccountManagerFail("Get follower list failed").Result())
+	assert.Equal(t, result, ErrUsernameNotFound().Result())
 }
 
 func TestInvalidUnfollow(t *testing.T) {
@@ -152,8 +135,8 @@ func TestInvalidUnfollow(t *testing.T) {
 	ctx := getContext()
 	handler := NewHandler(lam)
 	// create test user
-	createTestAccount(ctx, lam, "user1")
-	createTestAccount(ctx, lam, "user2")
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc2 := createTestAccount(ctx, lam, "user2")
 	createTestAccount(ctx, lam, "user3")
 
 	// let user1 follows user2
@@ -172,16 +155,10 @@ func TestInvalidUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	followerList, _ := lam.GetFollower(ctx, AccountKey("user2"))
-	idx := findAccountInList(AccountKey("user1"), followerList.Follower)
-	assert.Equal(t, true, idx >= 0)
-	assert.Equal(t, 1, len(followerList.Follower))
+	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
 
 	// check user2 in the user1's following list
-	followingList, _ := lam.GetFollowing(ctx, AccountKey("user1"))
-	idx = findAccountInList(AccountKey("user2"), followingList.Following)
-	assert.Equal(t, true, idx >= 0)
-	assert.Equal(t, 1, len(followingList.Following))
+	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
 
 }
 
@@ -277,7 +254,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	// let user1 transfers 2000 to user2
 	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("user2"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountManagerFail("Account bank's coins are not enough").Result(), result)
+	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
 
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
 	assert.Equal(t, true, acc1Balance.IsEqual(c200))
@@ -304,7 +281,7 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	// let user1 transfers 2000 to user2 (provide both name and address)
 	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountManagerFail("Username and address mismatch").Result(), result)
+	assert.Equal(t, ErrUsernameAddressMismatch().Result(), result)
 
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
 	acc2Balance, _ := acc2.GetBankBalance(ctx)
@@ -328,7 +305,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", c2000, memo, TransferToUser("dnqwondqowindow"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountManagerFail("Add money to receiver's bank failed").Result(), result)
+	assert.Equal(t, ErrAddMoneyFailed().Result(), result)
 
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
 	assert.Equal(t, true, acc1Balance.IsEqual(c2000))

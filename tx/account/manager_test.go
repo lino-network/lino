@@ -34,7 +34,7 @@ func TestInvalidAccountInfo(t *testing.T) {
 
 	resultPtr, err := lam.GetInfo(ctx, AccountKey("test"))
 	assert.Nil(t, resultPtr)
-	assert.Equal(t, err, ErrAccountManagerFail("AccountManager get info failed: info doesn't exist"))
+	assert.Equal(t, err, ErrGetInfoFailed())
 }
 
 func TestAccountBank(t *testing.T) {
@@ -79,30 +79,4 @@ func TestAccountMeta(t *testing.T) {
 	resultPtr, err := lam.GetMeta(ctx, AccountKey("test"))
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *resultPtr, "Account meta should be equal")
-}
-
-func TestAccountFollower(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-
-	follower := Follower{Follower: []AccountKey{}}
-	err := lam.SetFollower(ctx, AccountKey("test"), &follower)
-	assert.Nil(t, err)
-
-	resultPtr, err := lam.GetFollower(ctx, AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, follower, *resultPtr, "Account follower should be equal")
-}
-
-func TestAccountFollowing(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-
-	following := Following{Following: []AccountKey{}}
-	err := lam.SetFollowing(ctx, AccountKey("test"), &following)
-	assert.Nil(t, err)
-
-	resultPtr, err := lam.GetFollowing(ctx, AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, following, *resultPtr, "Account follower should be equal")
 }

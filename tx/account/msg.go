@@ -63,7 +63,7 @@ func (msg FollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
+		return ErrInvalidUsername()
 	}
 	return nil
 }
@@ -105,7 +105,7 @@ func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
+		return ErrInvalidUsername()
 	}
 	return nil
 }
@@ -150,12 +150,12 @@ func (msg TransferMsg) Type() string { return types.AccountRouterName } // TODO:
 func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) < types.MinimumUsernameLength ||
 		len(msg.Sender) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
+		return ErrInvalidUsername()
 	}
 
 	// should have either receiver's addr or username
 	if len(msg.ReceiverAddr) == 0 && len(msg.ReceiverName) == 0 {
-		return ErrInvalidUsername("invalid receiver")
+		return ErrInvalidUsername()
 	}
 
 	// cannot transfer a negative amount of money
