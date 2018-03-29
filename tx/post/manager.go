@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	postSubStore          = []byte{0x00} // SubStore for all post info
+	postInfoSubStore      = []byte{0x00} // SubStore for all post info
 	postMetaSubStore      = []byte{0x01} // SubStore for all post mata info
 	postLikeSubStore      = []byte{0x02} // SubStore for all like to post
 	postCommentSubStore   = []byte{0x03} // SubStore for all comments
