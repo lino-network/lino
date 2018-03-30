@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -89,4 +91,10 @@ const (
 
 	// KeySeparator used to separate different key component
 	KeySeparator = "/"
+
+	// Freezing period for validator withdraw deposit
+	ValidatorWithdrawFreezingPeriod = Height(1000)
+
+	// Infinite freezing period
+	InfiniteFreezingPeriod = Height(math.MaxInt64)
 )

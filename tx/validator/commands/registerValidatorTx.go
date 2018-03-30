@@ -61,7 +61,7 @@ func sendRegisterValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 		// // create the message
-		msg := validator.NewValidatorRegisterMsg(name, amount, privValidator.PubKey)
+		msg := validator.NewValidatorDepositMsg(name, amount, privValidator.PubKey)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := builder.SignBuildBroadcast(name, msg, cdc)

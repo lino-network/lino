@@ -45,7 +45,7 @@ type commander struct {
 }
 
 func (c commander) getValidatorsCmd(cmd *cobra.Command, args []string) error {
-	res, err := builder.Query(validator.ValidatorListKey(), c.storeName)
+	res, err := builder.Query(validator.GetValidatorListKey(), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (c commander) getValidatorCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	accKey := acc.AccountKey(args[0])
 
-	res, err := builder.Query(validator.ValidatorKey(accKey), c.storeName)
+	res, err := builder.Query(validator.GetValidatorKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}

@@ -43,7 +43,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorRegisterMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -55,53 +55,15 @@ func TestRegisterBasic(t *testing.T) {
 	// now user1 should be the only validator (WOW, dictator!)
 	verifyList, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, verifyList.LowestPower, c1600)
-	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
-	assert.Equal(t, acc.AccountKey("user1"), verifyList.AllValidators[0])
 	assert.Equal(t, 1, len(verifyList.OncallValidators))
 	assert.Equal(t, 1, len(verifyList.AllValidators))
+	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
+	assert.Equal(t, acc.AccountKey("user1"), verifyList.AllValidators[0])
 
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
 	assert.Equal(t, int64(1600), verifyAccount.ABCIValidator.GetPower())
 	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
-}
-
-func TestVoteBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newValidatorManager()
-	ctx := getContext()
-	handler := NewHandler(vm, lam)
-	vm.Init(ctx)
-
-	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
-	acc1.AddCoins(ctx, c2000)
-	acc1.Apply(ctx)
-
-	acc2.AddCoins(ctx, c2000)
-	acc2.Apply(ctx)
-
-	// let user1 register as validator
-	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorRegisterMsg("user1", c1600, *ownerKey)
-	result := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, result)
-
-	// let user2 vote 2000 to user1
-	msgVote := NewVoteMsg("user2", "user1", c200)
-	result2 := handler(ctx, msgVote)
-	assert.Equal(t, sdk.Result{}, result2)
-
-	// check user1's power has been increased, and user2's money has been withdrawn
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	acc2Balance, _ := acc2.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(c400))
-	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
-
-	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, int64(1800), verifyAccount.ABCIValidator.GetPower())
-
 }
 
 func TestValidatorReplacement(t *testing.T) {
@@ -120,7 +82,7 @@ func TestValidatorReplacement(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1001)}}
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
-		msg := NewValidatorRegisterMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -140,7 +102,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user hasn't been added to oncall validators but in the pool
 	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1005}}
 	ownerKey1, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorRegisterMsg("noPowerUser", deposit, *ownerKey1)
+	msg := NewValidatorDepositMsg("noPowerUser", deposit, *ownerKey1)
 	result := handler(ctx, msg)
 
 	verifyList2, _ := vm.GetValidatorList(ctx)
@@ -158,7 +120,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user has been added to oncall validators and in the pool
 	deposit2 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1088}}
 	ownerKey2, _ := acc2.GetOwnerKey(ctx)
-	msg2 := NewValidatorRegisterMsg("powerfulUser", deposit2, *ownerKey2)
+	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, *ownerKey2)
 	result2 := handler(ctx, msg2)
 
 	verifyList3, _ := vm.GetValidatorList(ctx)
@@ -181,22 +143,6 @@ func TestValidatorReplacement(t *testing.T) {
 	if !flag {
 		assert.Fail(t, "Powerful user should have been added")
 	}
-
-	// create a user to vote a validator candidate
-	acc3 := createTestAccount(ctx, lam, "voter")
-	acc3.AddCoins(ctx, c2000)
-	acc3.Apply(ctx)
-
-	// let voter vote 11 to user0, and user0 (power21) will replace user1 (power20)
-	msgVote := NewVoteMsg("voter", "user0", c11)
-	result3 := handler(ctx, msgVote)
-
-	verifyList4, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, sdk.Result{}, result3)
-	assert.Equal(t, true, verifyList4.LowestPower.IsEqual(c1022))
-	assert.Equal(t, acc.AccountKey("user0"), verifyList4.LowestValidator)
-	assert.Equal(t, 21, len(verifyList3.OncallValidators))
-	assert.Equal(t, 23, len(verifyList3.AllValidators))
 }
 
 func TestRemoveBasic(t *testing.T) {
@@ -218,8 +164,8 @@ func TestRemoveBasic(t *testing.T) {
 
 	// let both users register as validator
 	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1200}}
-	msg1 := NewValidatorRegisterMsg("goodUser", deposit, *ownerKey1)
-	msg2 := NewValidatorRegisterMsg("badUser", deposit, *ownerKey2)
+	msg1 := NewValidatorDepositMsg("goodUser", deposit, *ownerKey1)
+	msg2 := NewValidatorDepositMsg("badUser", deposit, *ownerKey2)
 	handler(ctx, msg1)
 	handler(ctx, msg2)
 
