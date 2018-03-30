@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 
+	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
@@ -143,7 +144,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	}
 
 	stateJSON := req.AppStateBytes
-	genesisState := new(acc.GenesisState)
+	genesisState := new(genesis.GenesisState)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	err := json.Unmarshal(stateJSON, genesisState)
 	if err != nil {
@@ -161,14 +162,14 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 }
 
 // convert GenesisAccount to AppAccount
-func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) sdk.Error {
+func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
 	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.PubKey.Address())
 	if err == nil {
 		// account bank exists
 		panic(sdk.ErrGenesisParse("genesis bank already exist"))
 	} else {
-		coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino)))
+		coin, err := types.LinoToCoin(ga.Lino)
 		if err != nil {
 			panic(err)
 		}

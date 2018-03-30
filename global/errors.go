@@ -22,6 +22,10 @@ func ErrEventExecuteError(key []byte) sdk.Error {
 	return newError(types.CodeEventExecuteError, fmt.Sprintf("Event execute failed"))
 }
 
+func ErrInflationGenesisError() sdk.Error {
+	return newError(types.CodeGlobalManagerGenesisError, fmt.Sprintf("inflation allocation over than 1"))
+}
+
 func ErrWrongEventType() sdk.Error {
 	return newError(types.CodeEventExecuteError, fmt.Sprintf("Wrong event type"))
 }

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("event")
+	TestKVStoreKey = sdk.NewKVStoreKey("global")
 )
 
 func TestPostRewardEvent(t *testing.T) {

@@ -1,8 +1,11 @@
 package global
 
 import (
+	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/genesis"
+	"github.com/lino-network/lino/types"
 	oldwire "github.com/tendermint/go-wire"
 )
 
@@ -12,8 +15,9 @@ var (
 	statisticsSubStore              = []byte{0x02} // SubStore for statistics
 	globalMetaSubStore              = []byte{0x03} // SubStore for global meta
 	allocationSubStore              = []byte{0x04} // SubStore for allocation
-	infraInternalAllocationSubStore = []byte{0x05} // SubStore for infrat internal allocation
-	consumptionMetaSubStore         = []byte{0x06} // SubStore for consumption meta
+	inflationPoolSubStore           = []byte{0x05} // SubStore for allocation
+	infraInternalAllocationSubStore = []byte{0x06} // SubStore for infrat internal allocation
+	consumptionMetaSubStore         = []byte{0x07} // SubStore for consumption meta
 )
 
 const eventTypePostReward = 0x1
@@ -38,6 +42,85 @@ func NewGlobalManager(key sdk.StoreKey) GlobalManager {
 		cdc: cdc,
 	}
 	return gm
+}
+
+// InitGenesis - store the genesis trend
+func (gm GlobalManager) InitGenesis(ctx sdk.Context, data json.RawMessage) error {
+	var state genesis.GenesisState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return err
+	}
+	globalState := state.GlobalState
+	if err := gm.initGlobalState(ctx, globalState); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gm GlobalManager) initGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
+	globalMeta := &GlobalMeta{
+		TotalLino:  state.TotalLino,
+		GrowthRate: state.GrowthRate,
+	}
+
+	if err := gm.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
+	}
+	if err := gm.SetGlobalStatistics(ctx, &GlobalStatistics{}); err != nil {
+		return err
+	}
+	if !state.InfraAllocation.
+		Add(state.ContentCreatorAllocation).
+		Add(state.DeveloperAllocation).
+		Add(state.ValidatorAllocation).
+		Equal(sdk.NewRat(1)) {
+		return ErrInflationGenesisError()
+	}
+
+	globalAllocation := &GlobalAllocation{
+		InfraAllocation:          state.InfraAllocation,
+		ContentCreatorAllocation: state.ContentCreatorAllocation,
+		DeveloperAllocation:      state.DeveloperAllocation,
+		ValidatorAllocation:      state.ValidatorAllocation,
+	}
+	if err := gm.SetGlobalAllocation(ctx, globalAllocation); err != nil {
+		return err
+	}
+	inflaInflationCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.InfraAllocation)))
+	if err != nil {
+		return err
+	}
+
+	contentCreatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ContentCreatorAllocation)))
+	if err != nil {
+		return err
+	}
+	developerCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.DeveloperAllocation)))
+	if err != nil {
+		return err
+	}
+	validatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ValidatorAllocation)))
+	if err != nil {
+		return err
+	}
+	inflationPool := &InflationPool{
+		InfraInflationPool:          inflaInflationCoin,
+		ContentCreatorInflationPool: contentCreatorCoin,
+		DeveloperInflationPool:      developerCoin,
+		ValidatorInflationPool:      validatorCoin,
+	}
+	if err := gm.SetInflationPool(ctx, inflationPool); err != nil {
+		return err
+	}
+
+	consumptionMeta := &ConsumptionMeta{
+		ConsumptionFrictionRate: state.ConsumptionFrictionRate,
+		FreezingPeriodHr:        state.FreezingPeriodHr,
+	}
+	if err := gm.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (gm GlobalManager) GetHeightEventList(ctx sdk.Context, key EventListKey) (*HeightEventList, sdk.Error) {
@@ -188,6 +271,29 @@ func (gm GlobalManager) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalA
 	return nil
 }
 
+func (gm GlobalManager) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
+	store := ctx.KVStore(gm.key)
+	inflationPoolBytes := store.Get(GetInflationPoolKey())
+	if inflationPoolBytes == nil {
+		return nil, ErrGlobalAllocationNotFound()
+	}
+	inflationPool := new(InflationPool)
+	if err := gm.cdc.UnmarshalJSON(inflationPoolBytes, inflationPool); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return inflationPool, nil
+}
+
+func (gm GlobalManager) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
+	store := ctx.KVStore(gm.key)
+	inflationPoolBytes, err := gm.cdc.MarshalJSON(*inflationPool)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetInflationPoolKey(), inflationPoolBytes)
+	return nil
+}
+
 func (gm GlobalManager) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
 	store := ctx.KVStore(gm.key)
 	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
@@ -229,6 +335,10 @@ func GetGlobalMetaKey() []byte {
 
 func GetAllocationKey() []byte {
 	return allocationSubStore
+}
+
+func GetInflationPoolKey() []byte {
+	return inflationPoolSubStore
 }
 
 func GetInfraInternalAllocationKey() []byte {

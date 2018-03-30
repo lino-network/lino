@@ -2,10 +2,11 @@ package global
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 )
 
 type GlobalMeta struct {
-	TotalLino        sdk.Coins `json:"total_lino"`
+	TotalLino        types.LNO `json:"total_lino"`
 	TotalConsumption sdk.Rat   `json:"total_consumption"`
 	GrowthRate       sdk.Rat   `json:"growth_rate"`
 }
@@ -27,7 +28,6 @@ type GlobalStatistics struct {
 // DeveloperAllocation percentage of inflation for developers
 // ValidatorAllocation percentage of inflation for validators
 type GlobalAllocation struct {
-	TotalLinoInflationPool   sdk.Rat `json:"total_lino_inflation_pool"`
 	InfraAllocation          sdk.Rat `json:"infra_allocation"`
 	ContentCreatorAllocation sdk.Rat `json:"content_creator_allocation"`
 	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`
@@ -37,6 +37,18 @@ type GlobalAllocation struct {
 type InfraInternalAllocation struct {
 	StorageAllocation sdk.Rat `json:"storage_allocation"`
 	CDNAllocation     sdk.Rat `json:"CDN_allocation"`
+}
+
+// InflationPool, determined by GlobalAllocation
+// InfraInflationPool inflation pool for infra
+// ContentCreatorInflationPool inflation pool for content creator
+// DeveloperInflationPool inflation pool for developer
+// ValidatorInflationPool inflation pool for validator
+type InflationPool struct {
+	InfraInflationPool          types.Coin `json:"infra_inflation_pool"`
+	ContentCreatorInflationPool types.Coin `json:"content_creator_inflation_pool"`
+	DeveloperInflationPool      types.Coin `json:"developer_inflation_pool"`
+	ValidatorInflationPool      types.Coin `json:"validator_inflation_pool"`
 }
 
 // ConsumptionMeta
