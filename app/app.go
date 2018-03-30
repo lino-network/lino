@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -196,7 +197,11 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 		if setErr := lb.valManager.SetValidator(ctx, account.GetUsername(ctx), val); setErr != nil {
 			panic(setErr)
 		}
-		if joinErr := lb.valManager.TryJoinValidatorList(ctx, account.GetUsername(ctx), false); joinErr != nil {
+
+		if addErr := lb.valManager.AddToCandidatePool(ctx, account.GetUsername(ctx)); addErr != nil {
+			panic(addErr)
+		}
+		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, account.GetUsername(ctx)); joinErr != nil {
 			panic(joinErr)
 		}
 		if err := account.Apply(ctx); err != nil {

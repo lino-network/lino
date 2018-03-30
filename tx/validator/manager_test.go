@@ -27,7 +27,7 @@ func TestAbsentValidator(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1001)}}
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
-		msg := NewValidatorRegisterMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}

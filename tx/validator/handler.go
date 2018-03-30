@@ -15,10 +15,12 @@ var ValRegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case ValidatorRegisterMsg:
-			return handleRegisterMsg(ctx, vm, am, msg)
-		case VoteMsg:
-			return handleVoteMsg(ctx, vm, am, msg)
+		case ValidatorDepositMsg:
+			return handleDepositMsg(ctx, vm, am, msg)
+		case ValidatorWithdrawMsg:
+			return handleWithdrawMsg(ctx, vm, am, msg)
+		case ValidatorRevokeMsg:
+			return handleRevokeMsg(ctx, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -26,41 +28,45 @@ func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	}
 }
 
-// Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorRegisterMsg) sdk.Result {
+// Handle DepositMsg
+func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
-	// This name has been registered
-	if vm.IsValidatorExist(ctx, msg.Username) {
-		return ErrValidatorHandlerFail("validator exists").Result()
-	}
-
-	// Must have an normal acount before becoming a validator
+	// Must have an normal acount
 	if !proxyAcc.IsAccountExist(ctx) {
-		return ErrValidatorHandlerFail("user account not found").Result()
+		return ErrUsernameNotFound().Result()
 	}
-
-	// check minimum requirements
-	if ValRegisterFee.IsGTE(msg.Deposit) {
-		return ErrValidatorHandlerFail("Register Fee Doesn't enough").Result()
-	}
-
 	// withdraw money from validator's bank
-	if err := proxyAcc.MinusCoins(ctx, msg.Deposit); err != nil {
+	err := proxyAcc.MinusCoins(ctx, msg.Deposit)
+	if err != nil {
 		return err.Result()
 	}
 
-	account := &Validator{
-		ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
-		Username:      msg.Username,
-		Deposit:       msg.Deposit,
+	var account *Validator
+	// This name has not been registered
+	if !vm.IsValidatorExist(ctx, msg.Username) {
+		account = &Validator{
+			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
+			Username:      msg.Username,
+			Deposit:       msg.Deposit,
+			IsByzantine:   false,
+		}
+		if setErr := vm.SetValidator(ctx, msg.Username, account); setErr != nil {
+			return setErr.Result()
+		}
+		vm.AddToCandidatePool(ctx, msg.Username)
+	} else {
+		account, err = vm.GetValidator(ctx, msg.Username)
+		if err != nil {
+			return err.Result()
+		}
+		account.Deposit = account.Deposit.Plus(msg.Deposit)
 	}
 
 	if setErr := vm.SetValidator(ctx, msg.Username, account); setErr != nil {
 		return setErr.Result()
 	}
-
-	// add to pool and try to add to validator list
-	if joinErr := vm.TryJoinValidatorList(ctx, msg.Username, true); joinErr != nil {
+	// add to pool and try to become oncall validator
+	if joinErr := vm.TryBecomeOncallValidator(ctx, msg.Username); joinErr != nil {
 		return joinErr.Result()
 	}
 	if err := proxyAcc.Apply(ctx); err != nil {
@@ -69,38 +75,36 @@ func handleRegisterMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 	return sdk.Result{}
 }
 
-// Handle VoteMsg
-func handleVoteMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg VoteMsg) sdk.Result {
-	// Validator not found
-	if !vm.IsValidatorExist(ctx, msg.ValidatorName) {
-		return ErrValidatorHandlerFail("validator not found").Result()
-	}
-
-	// withdraw money from voter's bank
-	proxyAcc := acc.NewProxyAccount(msg.Voter, &am)
-	if err := proxyAcc.MinusCoins(ctx, msg.Power); err != nil {
-		return err.Result()
-	}
-	validator, getErr := vm.GetValidator(ctx, msg.ValidatorName)
+// Handle Withdraw Msg
+func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorWithdrawMsg) sdk.Result {
+	validator, getErr := vm.GetValidator(ctx, msg.Username)
 	if getErr != nil {
 		return getErr.Result()
 	}
-	vote := Vote{
-		Voter: msg.Voter,
-		Power: msg.Power,
+
+	// check the deposit is available now
+	if ctx.BlockHeight() < int64(validator.WithdrawAvailableAt) {
+		return ErrDepositNotAvailable().Result()
 	}
 
-	validator.Votes = append(validator.Votes, vote)
-	validator.ABCIValidator.Power += msg.Power.AmountOf(types.Denom)
-
-	if setErr := vm.SetValidator(ctx, msg.ValidatorName, validator); setErr != nil {
-		return setErr.Result()
+	if !validator.Deposit.IsPositive() {
+		return ErrNoDeposit().Result()
 	}
-	if joinErr := vm.TryJoinValidatorList(ctx, msg.ValidatorName, false); joinErr != nil {
-		return joinErr.Result()
+	// add money to validator's bank
+	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
+	if err := proxyAcc.AddCoins(ctx, validator.Deposit); err != nil {
+		return err.Result()
 	}
 
 	if err := proxyAcc.Apply(ctx); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle RevokeMsg
+func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, msg ValidatorRevokeMsg) sdk.Result {
+	if err := vm.RemoveValidatorFromAllLists(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
