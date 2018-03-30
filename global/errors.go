@@ -38,6 +38,26 @@ func ErrEventUnmarshalError(err error) sdk.Error {
 	return newError(types.CodeEventExecuteError, fmt.Sprintf("Event unmarshal error: %s", err.Error()))
 }
 
+func ErrGlobalStatisticsNotFound() sdk.Error {
+	return newError(types.CodeGlobalManagerError, fmt.Sprintf("Global statistic not found"))
+}
+
+func ErrGlobalMetaNotFound() sdk.Error {
+	return newError(types.CodeGlobalManagerError, fmt.Sprintf("Global meta not found"))
+}
+
+func ErrGlobalAllocationNotFound() sdk.Error {
+	return newError(types.CodeGlobalManagerError, fmt.Sprintf("Global allocation not found"))
+}
+
+func ErrInfraAllocationNotFound() sdk.Error {
+	return newError(types.CodeGlobalManagerError, fmt.Sprintf("Infra internal allocation not found"))
+}
+
+func ErrGlobalConsumptionMetaNotFound() sdk.Error {
+	return newError(types.CodeGlobalManagerError, fmt.Sprintf("Global consumption meta not found"))
+}
+
 func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg

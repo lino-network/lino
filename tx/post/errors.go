@@ -61,6 +61,10 @@ func ErrPostCreateNoPostID() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty post id"))
 }
 
+func ErrCommentAndRepostError() sdk.Error {
+	return newError(types.CodePostCreateError, fmt.Sprintf("Post can't be comment and repost at the same time"))
+}
+
 func ErrPostCreateNoAuthor() sdk.Error {
 	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty author"))
 }

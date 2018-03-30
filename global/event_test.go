@@ -26,17 +26,17 @@ func TestPostRewardEvent(t *testing.T) {
 		DonateID: 20,
 	}
 
-	lst := EventList{}
+	lst := HeightEventList{}
 	lst.Events = append(lst.Events, e1)
 	lst.Events = append(lst.Events, e2)
 
 	blockHeight := types.Height(100)
 	lstKey := HeightToEventListKey(blockHeight)
 
-	err := gm.SetEventList(ctx, lstKey, &lst)
+	err := gm.SetHeightEventList(ctx, lstKey, &lst)
 	assert.Nil(t, err)
 
-	res := gm.ExecuteEvents(ctx, lstKey)
+	res := gm.ExecuteHeightEvents(ctx, lstKey)
 	assert.Nil(t, res)
 }
 

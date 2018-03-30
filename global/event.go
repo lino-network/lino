@@ -12,7 +12,13 @@ type EventListKey string
 
 type Event interface{}
 
-type EventList struct {
+// Height -> HeightEventList
+type HeightEventList struct {
+	Events []Event `json:"events"`
+}
+
+// Minute -> TimeEventList
+type TimeEventList struct {
 	Events []Event `json:"events"`
 }
 
