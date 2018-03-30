@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	postSubStore          = []byte{0x00} // SubStore for all post info
+	postInfoSubStore      = []byte{0x00} // SubStore for all post info
 	postMetaSubStore      = []byte{0x01} // SubStore for all post mata info
 	postLikeSubStore      = []byte{0x02} // SubStore for all like to post
 	postCommentSubStore   = []byte{0x03} // SubStore for all comments
@@ -157,24 +157,24 @@ func (pm PostManager) SetPostView(ctx sdk.Context, postKey PostKey, postView *Vi
 	return pm.set(ctx, GetPostViewKey(postKey, postView.Username), postView)
 }
 
-func (pm PostManager) GetPostDonation(ctx sdk.Context, postKey PostKey, donateUser acc.AccountKey) (*Donation, sdk.Error) {
+func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey PostKey, donateUser acc.AccountKey) (*Donations, sdk.Error) {
 	val, err := pm.get(ctx, GetPostDonationKey(postKey, donateUser), ErrPostDonationNotFound)
 	if err != nil {
 		return nil, err
 	}
-	postDonation := new(Donation)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonation); unmarshalErr != nil {
+	postDonations := new(Donations)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
-	return postDonation, nil
+	return postDonations, nil
 }
 
-func (pm PostManager) SetPostDonation(ctx sdk.Context, postKey PostKey, postDonation *Donation) sdk.Error {
-	return pm.set(ctx, GetPostDonationKey(postKey, postDonation.Username), postDonation)
+func (pm PostManager) SetPostDonations(ctx sdk.Context, postKey PostKey, postDonations *Donations) sdk.Error {
+	return pm.set(ctx, GetPostDonationKey(postKey, postDonations.Username), postDonations)
 }
 
 func GetPostInfoKey(postKey PostKey) []byte {
-	return append([]byte(postSubStore), postKey...)
+	return append([]byte(postInfoSubStore), postKey...)
 }
 
 func GetPostMetaKey(postKey PostKey) []byte {

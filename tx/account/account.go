@@ -35,6 +35,12 @@ type AccountMeta struct {
 	ActivityBurden int64        `json:"activity_burden"`
 }
 
+// AccountInfraConsumption records infra utility consumption
+type AccountInfraConsumption struct {
+	Storage   int64 `json:"storage"`
+	Bandwidth int64 `json:"bandwidth"`
+}
+
 // record all meta info about this relation
 type FollowerMeta struct {
 	CreatedAt    types.Height `json:"created_at"`

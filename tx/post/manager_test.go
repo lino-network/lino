@@ -95,11 +95,11 @@ func TestPostDonate(t *testing.T) {
 	ctx := getContext()
 	user := acc.AccountKey("test")
 
-	postDonation := Donation{Username: user, Created: types.Height(100), Amount: sdk.Coins{}}
-	err := pm.SetPostDonation(ctx, PostKey("test"), &postDonation)
+	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: types.Height(100), Amount: sdk.Coins{}}}}
+	err := pm.SetPostDonations(ctx, PostKey("test"), &postDonations)
 	assert.Nil(t, err)
 
-	resultPtr, err := pm.GetPostDonation(ctx, PostKey("test"), user)
+	resultPtr, err := pm.GetPostDonations(ctx, PostKey("test"), user)
 	assert.Nil(t, err)
-	assert.Equal(t, postDonation, *resultPtr, "Post donation should be equal")
+	assert.Equal(t, postDonations, *resultPtr, "Post donation should be equal")
 }

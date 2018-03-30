@@ -39,7 +39,8 @@ const (
 	CodeValidatorManagerFailed sdk.CodeType = 501
 
 	// Event errors reserve 600 ~ 699
-	CodeEventExecuteError sdk.CodeType = 600
+	CodeEventExecuteError  sdk.CodeType = 600
+	CodeGlobalManagerError sdk.CodeType = 601
 
 	// AccountKVStoreKey presents store which keeps account related value
 	AccountKVStoreKey = "account"

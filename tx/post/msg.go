@@ -69,6 +69,11 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Author) == 0 {
 		return ErrPostCreateNoAuthor()
 	}
+	if (len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0) &&
+		(len(msg.SourceAuthor) > 0 || len(msg.SourcePostID) > 0) {
+		fmt.Println("inside err")
+		return ErrCommentAndRepostError()
+	}
 	if len(msg.Title) > types.MaxPostTitleLength {
 		return ErrPostTitleExceedMaxLength()
 	}

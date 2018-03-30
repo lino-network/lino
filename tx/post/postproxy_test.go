@@ -13,7 +13,7 @@ func TestNewPost(t *testing.T) {
 	user := acc.AccountKey("user")
 	postID := "post ID"
 
-	post := NewProxyPost(user, postID, &pm)
+	post := NewPostProxy(user, postID, &pm)
 	assert.Equal(t, user, post.GetAuthor())
 	assert.Equal(t, postID, post.GetPostID())
 	assert.Equal(t, GetPostKey(user, postID), post.GetPostKey())
@@ -43,7 +43,7 @@ func TestCreatePost(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1)
 	author := acc.AccountKey("author")
 	postID := "TestPostID"
-	post := NewProxyPost(author, postID, &pm)
+	post := NewPostProxy(author, postID, &pm)
 	assert.False(t, post.IsPostExist(ctx))
 	// test valid postInfo
 	postInfo := PostInfo{
@@ -89,7 +89,7 @@ func TestComment(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1)
 	author := acc.AccountKey("author")
 	postID := "TestPostID"
-	post := NewProxyPost(author, postID, &pm)
+	post := NewPostProxy(author, postID, &pm)
 	assert.False(t, post.IsPostExist(ctx))
 
 	// test valid postInfo

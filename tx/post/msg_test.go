@@ -1,6 +1,7 @@
 package post
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,6 +17,26 @@ func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Err
 func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 	result := likeMsg.ValidateBasic()
 	assert.Equal(t, result, expectError)
+}
+
+func testCommentAndRepostValidate(t *testing.T, postInfo PostInfo, expectError sdk.Error) {
+	createMsg := NewCreatePostMsg(postInfo)
+	result := createMsg.ValidateBasic()
+	fmt.Println(expectError, result)
+	assert.Equal(t, expectError, result)
+}
+
+func getCommentAndRepost(t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostInfo {
+	return PostInfo{
+		PostID:       "TestPostID",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       "author",
+		ParentAuthor: acc.AccountKey(parentAuthor),
+		ParentPostID: parentPostID,
+		SourceAuthor: acc.AccountKey(sourceAuthor),
+		SourcePostID: sourcePostID,
+	}
 }
 
 func TestCreatePostMsg(t *testing.T) {
@@ -61,6 +82,32 @@ func TestCreatePostMsg(t *testing.T) {
 	createMsg = NewCreatePostMsg(post)
 	result = createMsg.ValidateBasic()
 	assert.Equal(t, result, ErrPostContentExceedMaxLength())
+}
+
+func TestCommentAndRepost(t *testing.T) {
+	parentAuthor := "Parent"
+	parentPostID := "ParentPostID"
+	sourceAuthor := "Source"
+	sourcePostID := "SourcePostID"
+
+	cases := []struct {
+		postInfo    PostInfo
+		expectError sdk.Error
+	}{
+		{getCommentAndRepost(t, "", "", "", ""), nil},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, "", ""), nil},
+		{getCommentAndRepost(t, "", "", sourceAuthor, sourcePostID), nil},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, ""), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, "", sourcePostID), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, "", parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostError()},
+	}
+	for _, cs := range cases {
+		fmt.Println(cs)
+		testCommentAndRepostValidate(t, cs.postInfo, cs.expectError)
+	}
 }
 
 func TestLikeMsg(t *testing.T) {
