@@ -9,6 +9,7 @@ import (
 type LNO = sdk.Rat
 
 var ZeroLNO = sdk.NewRat(0)
+var LowerBoundLNO = sdk.NewRat(1, Decimals)
 var UpperBoundLNO = sdk.NewRat(math.MaxInt64 / Decimals)
 
 // Coin hold some amount of one currency
@@ -24,8 +25,8 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if lino.GT(UpperBoundLNO) {
 		return Coin{}, sdk.ErrInvalidCoins("LNO overflow")
 	}
-	if lino.LT(ZeroLNO) {
-		return Coin{}, sdk.ErrInvalidCoins("LNO can't be negative")
+	if lino.LT(LowerBoundLNO) {
+		return Coin{}, sdk.ErrInvalidCoins("LNO can't be less than lower bound")
 	}
 	return Coin{Amount: sdk.Rat(lino).Mul(sdk.NewRat(Decimals)).Evaluate()}, nil
 }

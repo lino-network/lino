@@ -108,7 +108,6 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 	      	},
 	      	"freezing_period_hr": 168
 	      }
-	      ""
 	    }`, pubKeyBytes, valPubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
 	return json.RawMessage(opts), nil
