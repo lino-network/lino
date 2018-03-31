@@ -22,7 +22,7 @@ func TestAbsentValidator(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
@@ -93,7 +93,7 @@ func TestGetOncallList(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))

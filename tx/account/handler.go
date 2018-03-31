@@ -86,8 +86,12 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 // Handle TransferMsg
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
 	// withdraw money from sender's bank
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
 	accSender := NewProxyAccount(msg.Sender, &am)
-	if err := accSender.MinusCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
+	if err := accSender.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
 
@@ -103,7 +107,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
 		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
-		if err := accReceiver.AddCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
+		if err := accReceiver.AddCoin(ctx, coin); err != nil {
 			return ErrAddMoneyFailed().Result()
 		}
 		accSender.Apply(ctx)
@@ -115,12 +119,12 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
 	if err == nil {
 		// account bank exists
-		receiverBank.Balance = receiverBank.Balance.Plus(types.LinoToCoin(msg.Amount))
+		receiverBank.Balance = receiverBank.Balance.Plus(coin)
 	} else {
 		// account bank not found, create a new one for this address
 		receiverBank = &AccountBank{
 			Address: msg.ReceiverAddr,
-			Balance: types.LinoToCoin(msg.Amount),
+			Balance: coin,
 		}
 	}
 

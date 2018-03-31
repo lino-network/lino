@@ -92,6 +92,10 @@ func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm gl
 
 // Handle DonateMsg
 func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg DonateMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
 	account := acc.NewProxyAccount(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
@@ -101,11 +105,11 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 		return ErrDonatePostDoesntExist().Result()
 	}
 	// TODO: check acitivity burden
-	if err := account.MinusCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
+	if err := account.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
 	donation := Donation{
-		Amount:  types.LinoToCoin(msg.Amount),
+		Amount:  coin,
 		Created: types.Height(ctx.BlockHeight()),
 	}
 	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {

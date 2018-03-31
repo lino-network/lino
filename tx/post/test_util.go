@@ -45,7 +45,7 @@ func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
 	priv := crypto.GenPrivKeyEd25519()
 	accBank := &acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.LinoToCoin(types.LNO(sdk.NewRat(123))),
+		Balance: types.Coin{123 * types.Decimals},
 	}
 	return priv.Wrap(), accBank
 }

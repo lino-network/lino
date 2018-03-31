@@ -104,6 +104,6 @@ func TestTransferMsg(t *testing.T) {
 	amount = types.LNO(sdk.NewRat(-1900))
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidLinoAmount())
+	assert.Equal(t, result, sdk.ErrInvalidCoins("LNO can't be negative"))
 
 }

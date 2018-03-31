@@ -43,8 +43,10 @@ func (msg ValidatorDepositMsg) ValidateBasic() sdk.Error {
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-	if !types.LinoToCoin(msg.Deposit).IsPositive() {
-		return ErrNoDeposit()
+
+	_, err := types.LinoToCoin(msg.Deposit)
+	if err != nil {
+		return err
 	}
 
 	return nil

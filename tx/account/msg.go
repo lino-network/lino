@@ -157,8 +157,9 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.ReceiverAddr) == 0 && len(msg.ReceiverName) == 0 {
 		return ErrInvalidUsername()
 	}
-	if !types.LinoToCoin(msg.Amount).IsPositive() {
-		return ErrInvalidLinoAmount()
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
 	}
 
 	return nil

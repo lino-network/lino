@@ -9,8 +9,6 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var RegisterFee = types.LinoToCoin(types.LNO(sdk.NewRat(10)))
-
 func NewHandler(am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -37,7 +35,12 @@ func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) 
 	if bank.Username != "" {
 		return ErrAccRegisterFail("Already registered").Result()
 	}
-	if RegisterFee.IsGTE(bank.Balance) {
+
+	registerFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(10)))
+	if err != nil {
+		return err.Result()
+	}
+	if registerFee.IsGTE(bank.Balance) {
 		return ErrAccRegisterFail("Register Fee Doesn't enough").Result()
 	}
 

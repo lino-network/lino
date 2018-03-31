@@ -193,8 +193,13 @@ func (vm ValidatorManager) AddToCandidatePool(ctx sdk.Context, username acc.Acco
 	if getErr != nil {
 		return getErr
 	}
+
+	valRegisterFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
+	if err != nil {
+		return sdk.ErrInvalidCoins("invalid register fee")
+	}
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(ValRegisterFee) {
+	if !curValidator.Deposit.IsGTE(valRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 
@@ -226,8 +231,14 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 	if getErr != nil {
 		return getErr
 	}
+
+	valRegisterFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
+	if err != nil {
+		return sdk.ErrInvalidCoins("invalid register fee")
+	}
+
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(ValRegisterFee) {
+	if !curValidator.Deposit.IsGTE(valRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 

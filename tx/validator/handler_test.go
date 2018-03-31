@@ -27,6 +27,23 @@ var (
 	l1800 = types.LNO(sdk.NewRat(1800))
 	l1900 = types.LNO(sdk.NewRat(1900))
 	l2000 = types.LNO(sdk.NewRat(2000))
+
+	c0    = types.Coin{0 * types.Decimals}
+	c10   = types.Coin{10 * types.Decimals}
+	c11   = types.Coin{11 * types.Decimals}
+	c20   = types.Coin{20 * types.Decimals}
+	c21   = types.Coin{21 * types.Decimals}
+	c100  = types.Coin{100 * types.Decimals}
+	c200  = types.Coin{200 * types.Decimals}
+	c400  = types.Coin{400 * types.Decimals}
+	c1000 = types.Coin{1000 * types.Decimals}
+	c1011 = types.Coin{1011 * types.Decimals}
+	c1021 = types.Coin{1021 * types.Decimals}
+	c1022 = types.Coin{1022 * types.Decimals}
+	c1600 = types.Coin{1600 * types.Decimals}
+	c1800 = types.Coin{1800 * types.Decimals}
+	c1900 = types.Coin{1900 * types.Decimals}
+	c2000 = types.Coin{2000 * types.Decimals}
 )
 
 func TestRegisterBasic(t *testing.T) {
@@ -38,7 +55,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -49,12 +66,12 @@ func TestRegisterBasic(t *testing.T) {
 
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, acc1Balance, types.LinoToCoin(l400))
+	assert.Equal(t, acc1Balance, c400)
 	assert.Equal(t, true, vm.IsValidatorExist(ctx, acc.AccountKey("user1")))
 
 	// now user1 should be the only validator (WOW, dictator!)
 	verifyList, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, verifyList.LowestPower, types.LinoToCoin(l1600))
+	assert.Equal(t, verifyList.LowestPower, c1600)
 	assert.Equal(t, 1, len(verifyList.OncallValidators))
 	assert.Equal(t, 1, len(verifyList.AllValidators))
 	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
@@ -62,7 +79,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, types.LinoToCoin(l1600).Amount, verifyAccount.ABCIValidator.GetPower())
+	assert.Equal(t, c1600.Amount, verifyAccount.ABCIValidator.GetPower())
 	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
 }
 
@@ -75,7 +92,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -98,7 +115,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -146,7 +163,7 @@ func TestRevokeTwiceWontChangeFreezingPeriod(t *testing.T) {
 
 	// create user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -185,7 +202,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	users := make([]*acc.Account, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i+1))
-		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1000)))
@@ -198,7 +215,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	lst, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst.OncallValidators))
 	assert.Equal(t, 24, len(lst.AllValidators))
-	assert.Equal(t, types.LinoToCoin(types.LNO(sdk.NewRat(1040))), lst.LowestPower)
+	assert.Equal(t, types.Coin{1040 * types.Decimals}, lst.LowestPower)
 	assert.Equal(t, acc.AccountKey("user4"), lst.LowestValidator)
 
 	// lowest validator depoist coins will change the ranks
@@ -209,7 +226,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 
 	lst2, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
-	assert.Equal(t, types.LinoToCoin(types.LNO(sdk.NewRat(1050))), lst2.LowestPower)
+	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst2.LowestPower)
 	assert.Equal(t, acc.AccountKey("user5"), lst2.LowestValidator)
 
 	// now user1, 2, 3 are substitutions
@@ -219,7 +236,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	lst3, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, types.LinoToCoin(types.LNO(sdk.NewRat(1050))), lst3.LowestPower)
+	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst3.LowestPower)
 	assert.Equal(t, acc.AccountKey("user5"), lst3.LowestValidator)
 	assert.Equal(t, 23, len(lst3.AllValidators))
 
@@ -232,7 +249,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 
 	lst4, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, types.LinoToCoin(types.LNO(sdk.NewRat(1030))), lst4.LowestPower)
+	assert.Equal(t, types.Coin{1030 * types.Decimals}, lst4.LowestPower)
 	assert.Equal(t, acc.AccountKey("user3"), lst4.LowestValidator)
 	assert.Equal(t, 22, len(lst4.AllValidators))
 }
@@ -246,7 +263,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -271,7 +288,7 @@ func TestWithdrawBasic(t *testing.T) {
 	result3 := handler(ctx, withdrawMsg)
 	assert.Equal(t, ErrDepositNotAvailable().Result(), result3)
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(types.LinoToCoin(l400)))
+	assert.Equal(t, true, acc1Balance.IsEqual(c400))
 
 	// user1 can withdraw if the block height has increased 1000
 	acc1.Apply(ctx)
@@ -280,7 +297,7 @@ func TestWithdrawBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result4)
 
 	acc1BalanceNew, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1BalanceNew.IsEqual(types.LinoToCoin(l2000)))
+	assert.Equal(t, true, acc1BalanceNew.IsEqual(c2000))
 }
 
 func TestWithdrawTwice(t *testing.T) {
@@ -292,7 +309,7 @@ func TestWithdrawTwice(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -315,7 +332,7 @@ func TestWithdrawTwice(t *testing.T) {
 	assert.Equal(t, ErrNoDeposit().Result(), result3)
 
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(types.LinoToCoin(l2000)))
+	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
 
 }
 
@@ -328,7 +345,7 @@ func TestDepositBasic(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
@@ -343,12 +360,12 @@ func TestDepositBasic(t *testing.T) {
 
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, acc1Balance, types.LinoToCoin(l200))
+	assert.Equal(t, acc1Balance, c200)
 	assert.Equal(t, true, vm.IsValidatorExist(ctx, acc.AccountKey("user1")))
 
 	// check the lowest power is 1800 now (1600 + 200)
 	verifyList, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, types.LinoToCoin(l1800), verifyList.LowestPower)
+	assert.Equal(t, c1800, verifyList.LowestPower)
 	assert.Equal(t, 1, len(verifyList.OncallValidators))
 	assert.Equal(t, 1, len(verifyList.AllValidators))
 	assert.Equal(t, acc.AccountKey("user1"), verifyList.OncallValidators[0])
@@ -356,7 +373,7 @@ func TestDepositBasic(t *testing.T) {
 
 	// check deposit and power is correct
 	validator, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, true, validator.Deposit.IsEqual(types.LinoToCoin(l1800)))
+	assert.Equal(t, true, validator.Deposit.IsEqual(c1800))
 }
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
@@ -385,7 +402,7 @@ func TestValidatorReplacement(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
@@ -397,14 +414,14 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// check validator list, the lowest power is 10
 	verifyList, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, true, verifyList.LowestPower.IsEqual(types.LinoToCoin(l1011)))
+	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c1011))
 	assert.Equal(t, acc.AccountKey("user0"), verifyList.LowestValidator)
 	assert.Equal(t, 21, len(verifyList.OncallValidators))
 	assert.Equal(t, 21, len(verifyList.AllValidators))
 
 	// create a user failed to join oncall validator list (not enough power)
 	acc1 := createTestAccount(ctx, lam, "noPowerUser")
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	//check the user hasn't been added to oncall validators but in the pool
@@ -415,14 +432,14 @@ func TestValidatorReplacement(t *testing.T) {
 
 	verifyList2, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
-	assert.Equal(t, true, verifyList.LowestPower.IsEqual(types.LinoToCoin(l1011)))
+	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c1011))
 	assert.Equal(t, acc.AccountKey("user0"), verifyList.LowestValidator)
 	assert.Equal(t, 21, len(verifyList2.OncallValidators))
 	assert.Equal(t, 22, len(verifyList2.AllValidators))
 
 	// create a user success to join oncall validator list
 	acc2 := createTestAccount(ctx, lam, "powerfulUser")
-	acc2.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc2.AddCoin(ctx, c2000)
 	acc2.Apply(ctx)
 
 	//check the user has been added to oncall validators and in the pool
@@ -433,7 +450,7 @@ func TestValidatorReplacement(t *testing.T) {
 
 	verifyList3, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result2)
-	assert.Equal(t, true, verifyList3.LowestPower.IsEqual(types.LinoToCoin(l1021)))
+	assert.Equal(t, true, verifyList3.LowestPower.IsEqual(c1021))
 	assert.Equal(t, acc.AccountKey("user1"), verifyList3.LowestValidator)
 	assert.Equal(t, 21, len(verifyList3.OncallValidators))
 	assert.Equal(t, 23, len(verifyList3.AllValidators))
@@ -465,9 +482,9 @@ func TestRemoveBasic(t *testing.T) {
 	ownerKey1, _ := acc1.GetOwnerKey(ctx)
 	acc2 := createTestAccount(ctx, lam, "badUser")
 	ownerKey2, _ := acc2.GetOwnerKey(ctx)
-	acc1.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
-	acc2.AddCoin(ctx, types.LinoToCoin(l2000))
+	acc2.AddCoin(ctx, c2000)
 	acc2.Apply(ctx)
 
 	// let both users register as validator

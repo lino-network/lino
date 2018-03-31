@@ -292,7 +292,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		LastActivity:     0,
 		AllowReplies:     true,
 		TotalDonateCount: 1,
-		TotalReward:      types.LinoToCoin(types.LNO(sdk.NewRat(100))),
+		TotalReward:      types.Coin{100 * types.Decimals},
 	}
 
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)

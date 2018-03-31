@@ -2,11 +2,14 @@ package types
 
 import (
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math"
 )
 
-type LNO sdk.Rat
+type LNO = sdk.Rat
+
+var ZeroLNO = sdk.NewRat(0)
+var UpperBoundLNO = sdk.NewRat(math.MaxInt64 / Decimals)
 
 // Coin hold some amount of one currency
 type Coin struct {
@@ -17,8 +20,14 @@ func NewCoin(amount int64) Coin {
 	return Coin{Amount: amount}
 }
 
-func LinoToCoin(lino LNO) Coin {
-	return Coin{Amount: sdk.Rat(lino).Mul(sdk.NewRat(Decimals)).Evaluate()}
+func LinoToCoin(lino LNO) (Coin, sdk.Error) {
+	if lino.GT(UpperBoundLNO) {
+		return Coin{}, sdk.ErrInvalidCoins("LNO overflow")
+	}
+	if lino.LT(ZeroLNO) {
+		return Coin{}, sdk.ErrInvalidCoins("LNO can't be negative")
+	}
+	return Coin{Amount: sdk.Rat(lino).Mul(sdk.NewRat(Decimals)).Evaluate()}, nil
 }
 
 func RatToCoin(amount sdk.Rat) Coin {

@@ -10,8 +10,6 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
-var ValRegisterFee = types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
-
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -35,8 +33,14 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	if !proxyAcc.IsAccountExist(ctx) {
 		return ErrUsernameNotFound().Result()
 	}
+
+	coin, err := types.LinoToCoin(msg.Deposit)
+	if err != nil {
+		return err.Result()
+	}
+
 	// withdraw money from validator's bank
-	err := proxyAcc.MinusCoin(ctx, types.LinoToCoin(msg.Deposit))
+	err = proxyAcc.MinusCoin(ctx, coin)
 	if err != nil {
 		return err.Result()
 	}
@@ -46,10 +50,10 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	if !vm.IsValidatorExist(ctx, msg.Username) {
 
 		validator := &Validator{
-			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: types.LinoToCoin(msg.Deposit).Amount},
+			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: coin.Amount},
 
 			Username:    msg.Username,
-			Deposit:     types.LinoToCoin(msg.Deposit),
+			Deposit:     coin,
 			IsByzantine: false,
 		}
 		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
@@ -63,7 +67,7 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		if err != nil {
 			return err.Result()
 		}
-		validator.Deposit = validator.Deposit.Plus(types.LinoToCoin(msg.Deposit))
+		validator.Deposit = validator.Deposit.Plus(coin)
 		validator.ABCIValidator.Power = validator.Deposit.Amount
 		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
 			return setErr.Result()

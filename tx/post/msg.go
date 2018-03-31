@@ -106,8 +106,10 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
 		return ErrPostDonateInvalidTarget()
 	}
-	if !types.LinoToCoin(msg.Amount).IsPositive() {
-		return ErrInvalidLinoAmount()
+
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
 	}
 	return nil
 }

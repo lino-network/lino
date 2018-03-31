@@ -29,7 +29,7 @@ func TestRegister(t *testing.T) {
 
 	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.LinoToCoin(types.LNO(sdk.NewRat(123))),
+		Balance: types.Coin{123 * types.Decimals},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -73,7 +73,7 @@ func TestRegisterFeeInsufficient(t *testing.T) {
 
 	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: RegisterFee.Minus(types.NewCoin(int64(1))),
+		Balance: types.Coin{1},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -93,7 +93,7 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.LinoToCoin(types.LNO(sdk.NewRat(123))),
+		Balance: types.Coin{123 * types.Decimals},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
@@ -117,7 +117,7 @@ func TestReRegister(t *testing.T) {
 
 	accBank := acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.LinoToCoin(types.LNO(sdk.NewRat(123))),
+		Balance: types.Coin{123 * types.Decimals},
 	}
 	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
