@@ -17,6 +17,7 @@ type GlobalProxy struct {
 	globalStatistics             *GlobalStatistics        `json:"statistics"`
 	globalAllocation             *GlobalAllocation        `json:"global_allocation"`
 	infraInternalAllocation      *InfraInternalAllocation `json:"infra_internal_allocation"`
+	inflationPool                *InflationPool           `json:"inflation_pool"`
 	consumptionMeta              *ConsumptionMeta         `json:"consumption_meta"`
 }
 
@@ -28,9 +29,9 @@ func NewGlobalProxy(gm *GlobalManager) *GlobalProxy {
 }
 
 func (gp *GlobalProxy) RegisterEventAtHeight(ctx sdk.Context, height types.Height, event Event) sdk.Error {
-	eventList, err := gp.globalManager.GetHeightEventList(ctx, HeightToEventListKey(height))
-	if err != nil {
-		return err
+	eventList, _ := gp.globalManager.GetHeightEventList(ctx, HeightToEventListKey(height))
+	if eventList == nil {
+		eventList = &HeightEventList{Events: []Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
 	if err := gp.globalManager.SetHeightEventList(ctx, HeightToEventListKey(height), eventList); err != nil {
