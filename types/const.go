@@ -94,8 +94,8 @@ const (
 	KeySeparator = "/"
 
 	// Freezing period for validator withdraw deposit
-	ValidatorWithdrawFreezingPeriod = Height(1000)
+	ValidatorWithdrawFreezingPeriod = Height(int64(1000))
 
 	// Infinite freezing period
-	InfiniteFreezingPeriod = Height(math.MaxInt64)
+	InfiniteFreezingPeriod = Height(int64(math.MaxInt32))
 )

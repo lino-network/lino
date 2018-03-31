@@ -24,3 +24,5 @@ type ValidatorList struct {
 	LowestPower      sdk.Coins        `json:"lowest_power"`
 	LowestValidator  acc.AccountKey   `json:"lowest_validator"`
 }
+
+var ValRegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}

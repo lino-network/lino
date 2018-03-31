@@ -10,8 +10,6 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
-var ValRegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}
-
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -41,28 +39,29 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		return err.Result()
 	}
 
-	var account *Validator
+	var validator *Validator
 	// This name has not been registered
 	if !vm.IsValidatorExist(ctx, msg.Username) {
-		account = &Validator{
+		validator = &Validator{
 			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
 			Username:      msg.Username,
 			Deposit:       msg.Deposit,
 			IsByzantine:   false,
 		}
-		if setErr := vm.SetValidator(ctx, msg.Username, account); setErr != nil {
+		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
 			return setErr.Result()
 		}
 		vm.AddToCandidatePool(ctx, msg.Username)
 	} else {
-		account, err = vm.GetValidator(ctx, msg.Username)
+		validator, err = vm.GetValidator(ctx, msg.Username)
 		if err != nil {
 			return err.Result()
 		}
-		account.Deposit = account.Deposit.Plus(msg.Deposit)
+		validator.Deposit = validator.Deposit.Plus(msg.Deposit)
+		validator.ABCIValidator.Power = validator.Deposit.AmountOf("lino")
 	}
 
-	if setErr := vm.SetValidator(ctx, msg.Username, account); setErr != nil {
+	if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
 		return setErr.Result()
 	}
 	// add to pool and try to become oncall validator
@@ -81,12 +80,10 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 	if getErr != nil {
 		return getErr.Result()
 	}
-
 	// check the deposit is available now
 	if ctx.BlockHeight() < int64(validator.WithdrawAvailableAt) {
 		return ErrDepositNotAvailable().Result()
 	}
-
 	if !validator.Deposit.IsPositive() {
 		return ErrNoDeposit().Result()
 	}
@@ -95,8 +92,12 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 	if err := proxyAcc.AddCoins(ctx, validator.Deposit); err != nil {
 		return err.Result()
 	}
-
 	if err := proxyAcc.Apply(ctx); err != nil {
+		return err.Result()
+	}
+
+	validator.Deposit = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
+	if err := vm.SetValidator(ctx, msg.Username, validator); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
