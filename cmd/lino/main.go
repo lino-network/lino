@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/genesis"
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
@@ -67,58 +69,78 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 
 	opts := fmt.Sprintf(`{
 	      "accounts": [{
-	        "coin": [
-	          {
-	            "amount": 10000000000
-	          }
-	        ],
 	        "name": "Lino",
+	        "lino": 10000000000,
 	        "pub_key": %s,
 	        "validator_pub_key": %s
 	      }],
 	      "global_state": {
-	      	"total_lino":
-	          {
-	            "amount": 10000000000
-	          },
+	      	"total_lino": 10000000000,
 	      	"growth_rate": {
 	      		"num": 98,
-	      		"denum": 1000
+	      		"denom": 1000
 	      	},
 	      	"infra_allocation": {
 	      		"num": 20,
-	      		"denum": 100
+	      		"denom": 100
 	      	},
 	      	"content_creator_allocation": {
 	      		"num": 55,
-	      		"denum": 100
+	      		"denom": 100
 	      	},
 	      	"developer_allocation": {
 	      		"num": 20,
-	      		"denum": 100
+	      		"denom": 100
 	      	},
 	      	"validator_allocation": {
 	      		"num": 5,
-	      		"denum": 100
+	      		"denom": 100
 	      	},
 	      	"consumption_friction_rate": {
 	      		"num": 1,
-	      		"denum": 100
+	      		"denom": 100
 	      	},
 	      	"freezing_period_hr": 168
 	      }
 	    }`, pubKeyBytes, valPubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
+
+	genesisState := new(genesis.GenesisState)
+
+	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
+	err = json.Unmarshal(json.RawMessage(opts), genesisState)
+	if err != nil {
+		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
+	}
+	fmt.Println(genesisState)
 	return json.RawMessage(opts), secret, pubKey.Address(), nil
 }
 
 // generate Lino application
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
-	db, err := dbm.NewGoLevelDB("lino", rootDir)
+	dbAcc, err := dbm.NewGoLevelDB("LinoBlockchain-acc", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
-	lb := app.NewLinoBlockchain(logger, db)
+	dbPost, err := dbm.NewGoLevelDB("LinoBlockchain-post", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbVal, err := dbm.NewGoLevelDB("LinoBlockchain-val", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbs := map[string]dbm.DB{
+		"acc":    dbAcc,
+		"post":   dbPost,
+		"val":    dbVal,
+		"global": dbGlobal,
+	}
+	lb := app.NewLinoBlockchain(logger, dbs)
 	return lb, nil
 }
 

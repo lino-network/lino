@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -46,10 +47,10 @@ type LinoBlockchain struct {
 	globalManager  global.GlobalManager
 }
 
-func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
+func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
 	// create your application object
 	var lb = &LinoBlockchain{
-		BaseApp:            bam.NewBaseApp(appName, logger, db),
+		BaseApp:            bam.NewBaseApp(appName, logger, dbs["acc"]),
 		cdc:                MakeCodec(),
 		capKeyAccountStore: sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		capKeyPostStore:    sdk.NewKVStoreKey(types.PostKVStoreKey),
@@ -65,19 +66,19 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager), nil).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager), nil).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), lb.globalManager.InitGenesis).
-		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), lb.valManager.InitGenesis)
+		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), nil).
+		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), nil)
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetEndBlocker(lb.endBlocker)
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
-	lb.MountStoresIAVL(lb.capKeyAccountStore)
-	lb.MountStoresIAVL(lb.capKeyPostStore)
-	lb.MountStoresIAVL(lb.capKeyValStore)
-	lb.MountStoresIAVL(lb.capKeyGlobalStore)
-	lb.MountStoresIAVL(lb.capKeyIBCStore)
+
+	lb.MountStoreWithDB(lb.capKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
+	lb.MountStoreWithDB(lb.capKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
+	lb.MountStoreWithDB(lb.capKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
+	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
 	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
@@ -89,9 +90,6 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		cmn.Exit(err.Error())
 	}
 	if err := lb.LoadLatestVersion(lb.capKeyGlobalStore); err != nil {
-		cmn.Exit(err.Error())
-	}
-	if err := lb.LoadLatestVersion(lb.capKeyIBCStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	return lb
@@ -148,11 +146,16 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	stateJSON := req.AppStateBytes
 	genesisState := new(genesis.GenesisState)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
-	err := json.Unmarshal(stateJSON, genesisState)
-	if err != nil {
+	if err := json.Unmarshal(stateJSON, genesisState); err != nil {
 		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
 	}
 
+	if err := lb.valManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.globalManager.InitGlobalState(ctx, genesisState.GlobalState); err != nil {
+		panic(err)
+	}
 	for _, gacc := range genesisState.Accounts {
 		if err := lb.toAppAccount(ctx, gacc); err != nil {
 			panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
@@ -171,7 +174,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccou
 		// account bank exists
 		panic(sdk.ErrGenesisParse("genesis bank already exist"))
 	} else {
-		coin, err := types.LinoToCoin(ga.Lino)
+		fmt.Println(ga)
+		coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino)))
 		if err != nil {
 			panic(err)
 		}

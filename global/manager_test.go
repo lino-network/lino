@@ -11,7 +11,7 @@ import (
 
 func initGlobalManager(t *testing.T, ctx sdk.Context, gm GlobalManager) error {
 	globalState := genesis.GlobalState{
-		TotalLino:                types.LNO(sdk.NewRat(10000)),
+		TotalLino:                10000,
 		GrowthRate:               sdk.Rat{98, 1000},
 		InfraAllocation:          sdk.Rat{20, 100},
 		ContentCreatorAllocation: sdk.Rat{55, 100},
@@ -20,7 +20,7 @@ func initGlobalManager(t *testing.T, ctx sdk.Context, gm GlobalManager) error {
 		ConsumptionFrictionRate:  sdk.Rat{1, 100},
 		FreezingPeriodHr:         24 * 7,
 	}
-	return gm.initGlobalState(ctx, globalState)
+	return gm.InitGlobalState(ctx, globalState)
 }
 
 func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalManager, expectGlobalStatistic GlobalStatistics,
