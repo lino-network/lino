@@ -23,3 +23,5 @@ type ValidatorList struct {
 	LowestPower      types.Coin       `json:"lowest_power"`
 	LowestValidator  acc.AccountKey   `json:"lowest_validator"`
 }
+
+var valRegisterFee = types.Coin{Amount: 1000 * types.Decimals}

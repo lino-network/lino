@@ -189,23 +189,19 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 	return nil
 }
 
-func (vm ValidatorManager) AddToCandidatePool(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	curValidator, getErr := vm.GetValidator(ctx, username)
-	if getErr != nil {
-		return getErr
-	}
-
-	valRegisterFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
-	if err != nil {
-		return sdk.ErrInvalidCoins("invalid register fee")
+func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username acc.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
+	curValidator := &Validator{
+		ABCIValidator: abci.Validator{PubKey: pubKey, Power: coin.Amount},
+		Username:      username,
+		Deposit:       coin,
+		IsByzantine:   false,
 	}
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(valRegisterFee) {
+	if !coin.IsGTE(valRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 
 	lst, getListErr := vm.GetValidatorList(ctx)
-
 	if getListErr != nil {
 		return getListErr
 	}
@@ -218,6 +214,9 @@ func (vm ValidatorManager) AddToCandidatePool(ctx sdk.Context, username acc.Acco
 	lst.AllValidators = append(lst.AllValidators, username)
 	if err := vm.SetValidatorList(ctx, lst); err != nil {
 		return err
+	}
+	if setErr := vm.SetValidator(ctx, username, curValidator); setErr != nil {
+		return setErr
 	}
 	return nil
 }
