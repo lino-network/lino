@@ -16,7 +16,7 @@ func TestAbsentValidator(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.Init(ctx)
+	vm.InitGenesis(ctx, nil)
 
 	// create 21 test users
 	users := make([]*acc.Account, 21)
@@ -87,7 +87,7 @@ func TestGetOncallList(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.Init(ctx)
+	vm.InitGenesis(ctx, nil)
 
 	// create 21 test users
 	users := make([]*acc.Account, 21)
