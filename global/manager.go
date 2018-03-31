@@ -1,7 +1,6 @@
 package global
 
 import (
-	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/genesis"
@@ -44,22 +43,9 @@ func NewGlobalManager(key sdk.StoreKey) GlobalManager {
 	return gm
 }
 
-// InitGenesis - store the genesis trend
-func (gm GlobalManager) InitGenesis(ctx sdk.Context, data json.RawMessage) error {
-	var state genesis.GenesisState
-	if err := json.Unmarshal(data, &state); err != nil {
-		return err
-	}
-	globalState := state.GlobalState
-	if err := gm.initGlobalState(ctx, globalState); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (gm GlobalManager) initGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
+func (gm GlobalManager) InitGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
 	globalMeta := &GlobalMeta{
-		TotalLino:  state.TotalLino,
+		TotalLino:  sdk.NewRat(state.TotalLino),
 		GrowthRate: state.GrowthRate,
 	}
 
