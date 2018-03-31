@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"encoding/json"
 	"math"
 	"reflect"
 
@@ -35,9 +36,9 @@ func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
 	return vm
 }
 
-func (vm ValidatorManager) Init(ctx sdk.Context) sdk.Error {
+func (vm ValidatorManager) InitGenesis(ctx sdk.Context, data json.RawMessage) error {
 	lst := &ValidatorList{
-		LowestPower: types.NewCoin(int64(0)),
+		LowestPower: types.Coin{0},
 	}
 
 	if err := vm.SetValidatorList(ctx, lst); err != nil {

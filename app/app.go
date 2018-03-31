@@ -65,8 +65,8 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager), nil).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager), nil).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), nil).
-		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), nil)
+		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), lb.globalManager.InitGenesis).
+		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), lb.valManager.InitGenesis)
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -139,10 +139,6 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 
 // custom logic for basecoin initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	if err := lb.valManager.Init(ctx); err != nil {
-		panic(err)
-	}
-
 	stateJSON := req.AppStateBytes
 	genesisState := new(genesis.GenesisState)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
