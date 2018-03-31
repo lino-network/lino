@@ -1,7 +1,6 @@
 package account
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
@@ -13,7 +12,7 @@ type GenesisState struct {
 // GenesisAccount doesn't need pubkey or sequence
 type GenesisAccount struct {
 	Name      string        `json:"name"`
-	Coins     sdk.Coins     `json:"coins"`
+	Lino      int64         `json:"coin"`
 	PubKey    crypto.PubKey `json:"pub_key"`
 	ValPubKey crypto.PubKey `json:"validator_pub_key"`
 }

@@ -28,10 +28,8 @@ func newPostManagerAndGlobalManager() (PostManager, global.GlobalManager) {
 	return NewPostMananger(TestKVStoreKey), global.NewGlobalManager(TestKVStoreKey)
 }
 
-func newAmount(amount int64) sdk.Coins {
-	return sdk.Coins{
-		{types.Denom, amount},
-	}
+func newAmount(amount int64) types.Coin {
+	return types.NewCoin(amount)
 }
 
 func getContext() sdk.Context {
@@ -47,7 +45,7 @@ func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
 	priv := crypto.GenPrivKeyEd25519()
 	accBank := &acc.AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 123}},
+		Balance: types.LinoToCoin(types.LNO(sdk.NewRat(123))),
 	}
 	return priv.Wrap(), accBank
 }

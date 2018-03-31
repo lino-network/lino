@@ -3,7 +3,6 @@ package post
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +37,6 @@ func TestPostMeta(t *testing.T) {
 
 	postMeta := PostMeta{
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 	err := pm.SetPostMeta(ctx, PostKey("test"), &postMeta)
 	assert.Nil(t, err)
@@ -95,7 +93,7 @@ func TestPostDonate(t *testing.T) {
 	ctx := getContext()
 	user := acc.AccountKey("test")
 
-	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: types.Height(100), Amount: sdk.Coins{}}}}
+	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: types.Height(100)}}}
 	err := pm.SetPostDonations(ctx, PostKey("test"), &postDonations)
 	assert.Nil(t, err)
 

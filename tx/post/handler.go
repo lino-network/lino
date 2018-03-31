@@ -101,11 +101,11 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 		return ErrDonatePostDoesntExist().Result()
 	}
 	// TODO: check acitivity burden
-	if err := account.MinusCoins(ctx, msg.Amount); err != nil {
+	if err := account.MinusCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
 		return err.Result()
 	}
 	donation := Donation{
-		Amount:  msg.Amount,
+		Amount:  types.LinoToCoin(msg.Amount),
 		Created: types.Height(ctx.BlockHeight()),
 	}
 	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {

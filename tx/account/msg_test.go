@@ -74,7 +74,7 @@ func TestTransferMsg(t *testing.T) {
 	// normal transfer to a username
 	sender := "userA"
 	receiverName := "userB"
-	amount := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 123}}
+	amount := types.LNO(sdk.NewRat(1900))
 	memo := []byte("This is a memo!")
 
 	msg := NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
@@ -101,26 +101,9 @@ func TestTransferMsg(t *testing.T) {
 
 	// invalid transfer: amount is invalid
 	receiverName = "userB"
-	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: -2323}}
+	amount = types.LNO(sdk.NewRat(-1900))
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
-
-	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}}
-	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin amount"))
-
-	// invalid transfer: type is invalid
-	amount = sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 213213}}
-	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
-
-	amount = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 231},
-		sdk.Coin{Denom: types.Denom, Amount: 12}}
-	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, sdk.ErrInvalidCoins("invalid coin type"))
+	assert.Equal(t, result, ErrInvalidLinoAmount())
 
 }

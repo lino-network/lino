@@ -9,6 +9,7 @@ import (
 
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,12 +49,12 @@ func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
-		amount, err := sdk.ParseCoins(viper.GetString(FlagAmount))
+		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
 		if err != nil {
 			return err
 		}
 
-		msg := acc.NewTransferMsg(sender, amount, []byte(viper.GetString(FlagMemo)), acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
+		msg := acc.NewTransferMsg(sender, types.LNO(amount), []byte(viper.GetString(FlagMemo)), acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := builder.SignBuildBroadcast(sender, msg, cdc)

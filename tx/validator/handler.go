@@ -10,6 +10,8 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
+var ValRegisterFee = types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
+
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -34,7 +36,7 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		return ErrUsernameNotFound().Result()
 	}
 	// withdraw money from validator's bank
-	err := proxyAcc.MinusCoins(ctx, msg.Deposit)
+	err := proxyAcc.MinusCoin(ctx, types.LinoToCoin(msg.Deposit))
 	if err != nil {
 		return err.Result()
 	}
@@ -42,28 +44,32 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	var validator *Validator
 	// This name has not been registered
 	if !vm.IsValidatorExist(ctx, msg.Username) {
-		validator = &Validator{
-			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: msg.Deposit.AmountOf(types.Denom)},
-			Username:      msg.Username,
-			Deposit:       msg.Deposit,
-			IsByzantine:   false,
+
+		validator := &Validator{
+			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: types.LinoToCoin(msg.Deposit).Amount},
+
+			Username:    msg.Username,
+			Deposit:     types.LinoToCoin(msg.Deposit),
+			IsByzantine: false,
 		}
 		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
 			return setErr.Result()
 		}
-		vm.AddToCandidatePool(ctx, msg.Username)
+		if err := vm.AddToCandidatePool(ctx, msg.Username); err != nil {
+			return err.Result()
+		}
 	} else {
 		validator, err = vm.GetValidator(ctx, msg.Username)
 		if err != nil {
 			return err.Result()
 		}
-		validator.Deposit = validator.Deposit.Plus(msg.Deposit)
-		validator.ABCIValidator.Power = validator.Deposit.AmountOf("lino")
+		validator.Deposit = validator.Deposit.Plus(types.LinoToCoin(msg.Deposit))
+		validator.ABCIValidator.Power = validator.Deposit.Amount
+		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
+			return setErr.Result()
+		}
 	}
 
-	if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
-		return setErr.Result()
-	}
 	// add to pool and try to become oncall validator
 	if joinErr := vm.TryBecomeOncallValidator(ctx, msg.Username); joinErr != nil {
 		return joinErr.Result()
@@ -89,14 +95,14 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 	}
 	// add money to validator's bank
 	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
-	if err := proxyAcc.AddCoins(ctx, validator.Deposit); err != nil {
+	if err := proxyAcc.AddCoin(ctx, validator.Deposit); err != nil {
 		return err.Result()
 	}
 	if err := proxyAcc.Apply(ctx); err != nil {
 		return err.Result()
 	}
 
-	validator.Deposit = sdk.Coins{sdk.Coin{Denom: "lino", Amount: 0}}
+	validator.Deposit = types.NewCoin(0)
 	if err := vm.SetValidator(ctx, msg.Username, validator); err != nil {
 		return err.Result()
 	}

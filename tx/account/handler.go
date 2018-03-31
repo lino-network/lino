@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(am AccountManager) sdk.Handler {
@@ -86,7 +87,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
 	// withdraw money from sender's bank
 	accSender := NewProxyAccount(msg.Sender, &am)
-	if err := accSender.MinusCoins(ctx, msg.Amount); err != nil {
+	if err := accSender.MinusCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
 		return err.Result()
 	}
 
@@ -102,7 +103,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
 		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
-		if err := accReceiver.AddCoins(ctx, msg.Amount); err != nil {
+		if err := accReceiver.AddCoin(ctx, types.LinoToCoin(msg.Amount)); err != nil {
 			return ErrAddMoneyFailed().Result()
 		}
 		accSender.Apply(ctx)
@@ -114,12 +115,12 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
 	if err == nil {
 		// account bank exists
-		receiverBank.Balance = receiverBank.Balance.Plus(msg.Amount)
+		receiverBank.Balance = receiverBank.Balance.Plus(types.LinoToCoin(msg.Amount))
 	} else {
 		// account bank not found, create a new one for this address
 		receiverBank = &AccountBank{
 			Address: msg.ReceiverAddr,
-			Balance: msg.Amount,
+			Balance: types.LinoToCoin(msg.Amount),
 		}
 	}
 

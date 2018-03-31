@@ -37,7 +37,7 @@ func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
 
 func (vm ValidatorManager) Init(ctx sdk.Context) sdk.Error {
 	lst := &ValidatorList{
-		LowestPower: sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}},
+		LowestPower: types.NewCoin(int64(0)),
 	}
 
 	if err := vm.SetValidatorList(ctx, lst); err != nil {
@@ -245,7 +245,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
 		curValidator.WithdrawAvailableAt = types.InfiniteFreezingPeriod
 		//vm.updateLowestValidator(ctx)
-	} else if curValidator.ABCIValidator.Power > lst.LowestPower.AmountOf(types.Denom) {
+	} else if curValidator.ABCIValidator.Power > lst.LowestPower.Amount {
 		// replace the validator with lowest power
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, getErr := vm.GetValidator(ctx, validatorKey)
@@ -340,7 +340,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) {
 		}
 	}
 	// set the new lowest power
-	lst.LowestPower = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: newLowestPower}}
+	lst.LowestPower = types.NewCoin(newLowestPower)
 	lst.LowestValidator = newLowestValidator
 
 	vm.SetValidatorList(ctx, lst)

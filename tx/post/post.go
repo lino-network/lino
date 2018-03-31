@@ -68,7 +68,7 @@ type PostMeta struct {
 	TotalLikeWeight         int64        `json:"total_like_weight"`
 	TotalDislikeStake       int64        `json:"total_dislike_stake"`
 	TotalReportStake        int64        `json:"total_report_stake"`
-	TotalReward             sdk.Coins    `json:"reward"`
+	TotalReward             types.Coin   `json:"reward"`
 	PenaltyScore            sdk.Rat      `json:"penalty_score"`
 }
 
@@ -107,7 +107,7 @@ type Views []View
 // Donation struct, only used in Donation
 type Donation struct {
 	Username acc.AccountKey `json:"username"`
-	Amount   sdk.Coins      `json:"amount"`
+	Amount   types.Coin     `json:"amount"`
 	Created  types.Height   `json:"created"`
 }
 type Donations struct {

@@ -22,6 +22,10 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 }
 
 // Error constructors
+func ErrInvalidLinoAmount() sdk.Error {
+	return newError(types.CodeInvalidMsg, fmt.Sprintf("Invalid Lino amount"))
+}
+
 func ErrUsernameNotFound() sdk.Error {
 	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
 }

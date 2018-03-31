@@ -22,10 +22,10 @@ func TestAbsentValidator(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoins(ctx, c2000)
+		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
-		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1001)}}
+		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -93,10 +93,10 @@ func TestGetOncallList(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoins(ctx, c2000)
+		users[i].AddCoin(ctx, types.LinoToCoin(l2000))
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
-		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1001)}}
+		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)

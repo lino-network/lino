@@ -25,6 +25,10 @@ func codeToDefaultMsg(code CodeType) string {
 
 type NotFoundErrFunc func([]byte) sdk.Error
 
+func ErrInvalidLinoAmount() sdk.Error {
+	return newError(types.CodePostDonateError, fmt.Sprintf("Invalid Lino amount"))
+}
+
 func ErrPostNotFound(key []byte) sdk.Error {
 	return newError(types.CodePostNotFound, fmt.Sprintf("Post not found for key: %s", key))
 }

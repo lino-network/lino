@@ -9,7 +9,7 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var RegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
+var RegisterFee = types.LinoToCoin(types.LNO(sdk.NewRat(10)))
 
 func NewHandler(am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {

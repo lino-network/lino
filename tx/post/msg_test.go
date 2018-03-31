@@ -1,11 +1,11 @@
 package post
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,6 @@ func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 func testCommentAndRepostValidate(t *testing.T, postInfo PostInfo, expectError sdk.Error) {
 	createMsg := NewCreatePostMsg(postInfo)
 	result := createMsg.ValidateBasic()
-	fmt.Println(expectError, result)
 	assert.Equal(t, expectError, result)
 }
 
@@ -105,7 +104,6 @@ func TestCommentAndRepost(t *testing.T) {
 		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostError()},
 	}
 	for _, cs := range cases {
-		fmt.Println(cs)
 		testCommentAndRepostValidate(t, cs.postInfo, cs.expectError)
 	}
 }
@@ -135,13 +133,13 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), "postID"), nil},
-		{NewDonateMsg(acc.AccountKey(""), newAmount(1), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(0), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("0lino")},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(-1), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("-1lino")},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), newAmount(1), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), nil},
+		{NewDonateMsg(acc.AccountKey(""), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), ErrInvalidLinoAmount()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), ErrInvalidLinoAmount()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {

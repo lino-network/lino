@@ -40,7 +40,6 @@ func TestHandlerCreatePost(t *testing.T) {
 		LastUpdate:   0,
 		LastActivity: 0,
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta)
 
@@ -93,7 +92,6 @@ func TestHandlerCreateComment(t *testing.T) {
 		LastUpdate:   1,
 		LastActivity: 1,
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 
 	checkPostKVStore(t, ctx, pm, GetPostKey(user, "comment"), postInfo, postMeta)
@@ -178,7 +176,6 @@ func TestHandlerRepost(t *testing.T) {
 		LastUpdate:   1,
 		LastActivity: 1,
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 	checkPostKVStore(t, ctx, pm, GetPostKey(user, "repost"), postInfo, postMeta)
 
@@ -198,7 +195,6 @@ func TestHandlerRepost(t *testing.T) {
 		LastUpdate:   2,
 		LastActivity: 2,
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 	postInfo.SourceAuthor = user
 	postInfo.SourcePostID = "TestPostID"
@@ -239,7 +235,6 @@ func TestHandlerPostLike(t *testing.T) {
 		AllowReplies:    true,
 		TotalLikeCount:  1,
 		TotalLikeWeight: 10000,
-		TotalReward:     sdk.Coins{},
 	}
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
@@ -275,7 +270,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	createTestAccount(ctx, lam, user)
 	createTestPost(ctx, lam, pm, user, postID)
 
-	donateMsg := NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), postID)
+	donateMsg := NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
 	result := handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -297,26 +292,26 @@ func TestHandlerPostDonate(t *testing.T) {
 		LastActivity:     0,
 		AllowReplies:     true,
 		TotalDonateCount: 1,
-		TotalReward:      sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}},
+		TotalReward:      types.LinoToCoin(types.LNO(sdk.NewRat(100))),
 	}
 
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid donation target
-	donateMsg = NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), "invalid")
+	donateMsg = NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), "invalid")
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, ErrDonatePostDoesntExist().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test invalid username
-	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), newAmount(100), acc.AccountKey(user), postID)
+	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
 
 	// test insufficient deposit
-	donateMsg = NewDonateMsg(acc.AccountKey(user), newAmount(100), acc.AccountKey(user), postID)
+	donateMsg = NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())

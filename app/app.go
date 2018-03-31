@@ -171,7 +171,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 		// account bank not found, create a new one for this address
 		bank = &acc.AccountBank{
 			Address: ga.PubKey.Address(),
-			Balance: ga.Coins,
+			Balance: types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino))),
 		}
 		if setErr := lb.accountManager.SetBankFromAddress(ctx, bank.Address, bank); setErr != nil {
 			panic(sdk.ErrGenesisParse("set genesis bank failed"))
@@ -184,13 +184,13 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *acc.GenesisAccount) 
 			panic(err)
 		}
 
-		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
+		deposit := types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
 		// withdraw money from validator's bank
-		if err := account.MinusCoins(ctx, deposit); err != nil {
+		if err := account.MinusCoin(ctx, deposit); err != nil {
 			panic(err)
 		}
 		val := &validator.Validator{
-			ABCIValidator: abci.Validator{PubKey: ga.ValPubKey.Bytes(), Power: deposit.AmountOf(types.Denom)},
+			ABCIValidator: abci.Validator{PubKey: ga.ValPubKey.Bytes(), Power: deposit.Amount},
 			Username:      account.GetUsername(ctx),
 			Deposit:       deposit,
 		}

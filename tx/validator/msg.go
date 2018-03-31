@@ -13,7 +13,7 @@ import (
 
 type ValidatorDepositMsg struct {
 	Username  acc.AccountKey `json:"username"`
-	Deposit   sdk.Coins      `json:"deposit"`
+	Deposit   types.LNO      `json:"deposit"`
 	ValPubKey crypto.PubKey  `json:"validator_public_key"`
 }
 
@@ -28,7 +28,7 @@ type ValidatorRevokeMsg struct {
 //----------------------------------------
 // ValidatorDepositMsg Msg Implementations
 
-func NewValidatorDepositMsg(validator string, deposit sdk.Coins, pubKey crypto.PubKey) ValidatorDepositMsg {
+func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey) ValidatorDepositMsg {
 	return ValidatorDepositMsg{
 		Username:  acc.AccountKey(validator),
 		Deposit:   deposit,
@@ -43,11 +43,8 @@ func (msg ValidatorDepositMsg) ValidateBasic() sdk.Error {
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-	if !msg.Deposit.IsValid() {
-		return sdk.ErrInvalidCoins(msg.Deposit.String())
-	}
-	if !msg.Deposit.IsPositive() {
-		return sdk.ErrInvalidCoins(msg.Deposit.String())
+	if !types.LinoToCoin(msg.Deposit).IsPositive() {
+		return ErrNoDeposit()
 	}
 
 	return nil

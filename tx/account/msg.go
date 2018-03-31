@@ -24,7 +24,7 @@ type TransferMsg struct {
 	Sender       AccountKey  `json:"sender"`
 	ReceiverName AccountKey  `json:"receiver_name"`
 	ReceiverAddr sdk.Address `json:"receiver_addr"`
-	Amount       sdk.Coins   `json:"amount"`
+	Amount       types.LNO   `json:"amount"`
 	Memo         []byte      `json:"memo"`
 }
 
@@ -133,7 +133,7 @@ func (msg UnfollowMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // Transfer Msg Implementations
 
-func NewTransferMsg(sender string, amount sdk.Coins, memo []byte, setters ...TransferOption) TransferMsg {
+func NewTransferMsg(sender string, amount types.LNO, memo []byte, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
 		Sender: AccountKey(sender),
 		Amount: amount,
@@ -157,15 +157,8 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.ReceiverAddr) == 0 && len(msg.ReceiverName) == 0 {
 		return ErrInvalidUsername()
 	}
-
-	// cannot transfer a negative amount of money
-	if msg.Amount.IsPositive() == false {
-		return sdk.ErrInvalidCoins("invalid coin amount")
-	}
-
-	// cannot transfer othe coin types
-	if len(msg.Amount) != 1 || msg.Amount[0].Denom != types.Denom {
-		return sdk.ErrInvalidCoins("invalid coin type")
+	if !types.LinoToCoin(msg.Amount).IsPositive() {
+		return ErrInvalidLinoAmount()
 	}
 
 	return nil

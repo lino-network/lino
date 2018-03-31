@@ -76,7 +76,7 @@ func TestCreatePost(t *testing.T) {
 	assert.Nil(t, post.postMeta)
 
 	// after apply check KVStore
-	postMeta.TotalReward = sdk.Coins{}
+	postMeta.TotalReward = types.NewCoin(int64(0))
 	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
 	// test recreate post
 	err = post.CreatePost(ctx, &postInfo)
@@ -121,7 +121,6 @@ func TestComment(t *testing.T) {
 		LastUpdate:   1,
 		LastActivity: 2,
 		AllowReplies: true,
-		TotalReward:  sdk.Coins{},
 	}
 	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
 }

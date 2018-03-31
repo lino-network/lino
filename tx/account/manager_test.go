@@ -3,7 +3,7 @@ package account
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
 )
@@ -54,7 +54,7 @@ func TestAccountBank(t *testing.T) {
 
 	accBank := AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: sdk.Coins{sdk.Coin{Denom: "dummy", Amount: 123}},
+		Balance: types.NewCoin(int64(123)),
 	}
 	err = lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)
