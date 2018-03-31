@@ -34,17 +34,17 @@ var (
 
 // defaultOptions sets up the app_options for the
 // default genesis file
-func defaultOptions(args []string) (json.RawMessage, error) {
+func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error) {
 	pubKey, secret, err := generateCoinKey()
 	if err != nil {
-		return nil, err
+		return nil, "", nil, err
 	}
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
 
 	config, err := tcmd.ParseConfig()
 	if err != nil {
-		return nil, err
+		return nil, "", nil, err
 	}
 	// private validator
 	privValFile := config.PrivValidatorFile()
@@ -58,11 +58,11 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 
 	pubKeyBytes, err := json.Marshal(*pubKey)
 	if err != nil {
-		return nil, err
+		return nil, "", nil, err
 	}
 	valPubKeyBytes, err := json.Marshal(privValidator.PubKey)
 	if err != nil {
-		return nil, err
+		return nil, "", nil, err
 	}
 
 	opts := fmt.Sprintf(`{
@@ -110,7 +110,7 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 	      }
 	    }`, pubKeyBytes, valPubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
-	return json.RawMessage(opts), nil
+	return json.RawMessage(opts), secret, pubKey.Address(), nil
 }
 
 // generate Lino application

@@ -264,13 +264,15 @@ func TestHandlerPostDonate(t *testing.T) {
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	user := "username"
+	user1 := "user1"
+	user2 := "user2"
 	postID := "postID"
 	handler := NewHandler(pm, lam, gm)
-	createTestAccount(ctx, lam, user)
-	createTestPost(ctx, lam, pm, user, postID)
+	accProxy1 := createTestAccount(ctx, lam, user1)
+	accProxy2 := createTestAccount(ctx, lam, user2)
+	createTestPost(ctx, lam, pm, user1, postID)
 
-	donateMsg := NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
+	donateMsg := NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result := handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -279,7 +281,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
-		Author:       acc.AccountKey(user),
+		Author:       acc.AccountKey(user1),
 		ParentAuthor: "",
 		ParentPostID: "",
 		SourceAuthor: "",
@@ -295,25 +297,29 @@ func TestHandlerPostDonate(t *testing.T) {
 		TotalReward:      types.Coin{100 * types.Decimals},
 	}
 
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
+	acc1Balance, _ := accProxy1.GetBankBalance(ctx)
+	acc2Balance, _ := accProxy2.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{223 * types.Decimals}))
+	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{23 * types.Decimals}))
 	// test invalid donation target
-	donateMsg = NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), "invalid")
+	donateMsg = NewDonateMsg(acc.AccountKey(user1), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), "invalid")
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, ErrDonatePostDoesntExist().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
-	// test invalid username
-	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
+	// test invalid user1name
+	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
 	// test insufficient deposit
-	donateMsg = NewDonateMsg(acc.AccountKey(user), types.LNO(sdk.NewRat(100)), acc.AccountKey(user), postID)
+	donateMsg = NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())
-	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user), postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 }
