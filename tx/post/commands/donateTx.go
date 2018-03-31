@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
+	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,18 +42,16 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
 
-		amount, err := sdk.ParseCoins(viper.GetString(FlagAmount))
+		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
 		if err != nil {
 			return err
 		}
-
-		msg := post.NewDonateMsg(acc.AccountKey(username), amount, acc.AccountKey(author), postID)
+		msg := post.NewDonateMsg(acc.AccountKey(username), types.LNO(amount), acc.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(username, msg, cdc)
-
-		if err != nil {
-			return err
+		res, signErr := builder.SignBuildBroadcast(username, msg, cdc)
+		if signErr != nil {
+			return signErr
 		}
 
 		fmt.Printf("Committed at block %d. Hash: %s\n", res.Height, res.Hash.String())

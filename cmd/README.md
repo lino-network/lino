@@ -21,11 +21,11 @@ $ ./linocli keys add USERNAME
 Enter a passphrase for this key.
 Keep the generated address(for transfer) and seed phrase(for recover)
 
-## Transfer coins to your address
+## Transfer coin to your address
 ```
 $ ./linocli transfer --name=  --receiver_addr= --amount= --chain-id= --sequence=
 ```
-User other account to transfer some coins to your address
+User other account to transfer some coin to your address
 
 ## Register an account
 ```

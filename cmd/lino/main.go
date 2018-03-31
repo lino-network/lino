@@ -67,16 +67,48 @@ func defaultOptions(args []string) (json.RawMessage, error) {
 
 	opts := fmt.Sprintf(`{
 	      "accounts": [{
-	        "coins": [
+	        "coin": [
 	          {
-	            "denom": "lino",
 	            "amount": 10000000000
 	          }
 	        ],
 	        "name": "Lino",
 	        "pub_key": %s,
 	        "validator_pub_key": %s
-	      }]
+	      }],
+	      "global_state": {
+	      	"total_lino": [
+	          {
+	            "amount": 10000000000
+	          }
+	      	],
+	      	"growth_rate": {
+	      		"num": 98,
+	      		"denum": 1000,
+	      	},
+	      	"infra_allocation": {
+	      		"num": 20,
+	      		"denum": 100,
+	      	},
+	      	"content_creator_allocation": {
+	      		"num": 55,
+	      		"denum": 100,
+	      	},
+	      	"developer_allocation": {
+	      		"num": 20,
+	      		"denum": 100,
+	      	},
+	      	"validator_allocation": {
+	      		"num": 5,
+	      		"denum": 100,
+	      	},
+	      	"consumption_friction_rate": {
+	      		"num": 1,
+	      		"denum": 100,
+	      	},
+	      	"freezing_period_hr": 168
+	      }
+	      ""
 	    }`, pubKeyBytes, valPubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
 	return json.RawMessage(opts), nil

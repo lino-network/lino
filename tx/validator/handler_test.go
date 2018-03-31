@@ -11,22 +11,39 @@ import (
 )
 
 var (
-	c0    = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 0}}
-	c10   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 10}}
-	c11   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 11}}
-	c20   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 20}}
-	c21   = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 21}}
-	c100  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 100}}
-	c200  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 200}}
-	c400  = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 400}}
-	c1000 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}
-	c1011 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1011}}
-	c1021 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1021}}
-	c1022 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1022}}
-	c1600 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1600}}
-	c1800 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1800}}
-	c1900 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1900}}
-	c2000 = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 2000}}
+	l0    = types.LNO(sdk.NewRat(0))
+	l10   = types.LNO(sdk.NewRat(10))
+	l11   = types.LNO(sdk.NewRat(11))
+	l20   = types.LNO(sdk.NewRat(20))
+	l21   = types.LNO(sdk.NewRat(21))
+	l100  = types.LNO(sdk.NewRat(100))
+	l200  = types.LNO(sdk.NewRat(200))
+	l400  = types.LNO(sdk.NewRat(400))
+	l1000 = types.LNO(sdk.NewRat(1000))
+	l1011 = types.LNO(sdk.NewRat(1011))
+	l1021 = types.LNO(sdk.NewRat(1021))
+	l1022 = types.LNO(sdk.NewRat(1022))
+	l1600 = types.LNO(sdk.NewRat(1600))
+	l1800 = types.LNO(sdk.NewRat(1800))
+	l1900 = types.LNO(sdk.NewRat(1900))
+	l2000 = types.LNO(sdk.NewRat(2000))
+
+	c0    = types.Coin{0 * types.Decimals}
+	c10   = types.Coin{10 * types.Decimals}
+	c11   = types.Coin{11 * types.Decimals}
+	c20   = types.Coin{20 * types.Decimals}
+	c21   = types.Coin{21 * types.Decimals}
+	c100  = types.Coin{100 * types.Decimals}
+	c200  = types.Coin{200 * types.Decimals}
+	c400  = types.Coin{400 * types.Decimals}
+	c1000 = types.Coin{1000 * types.Decimals}
+	c1011 = types.Coin{1011 * types.Decimals}
+	c1021 = types.Coin{1021 * types.Decimals}
+	c1022 = types.Coin{1022 * types.Decimals}
+	c1600 = types.Coin{1600 * types.Decimals}
+	c1800 = types.Coin{1800 * types.Decimals}
+	c1900 = types.Coin{1900 * types.Decimals}
+	c2000 = types.Coin{2000 * types.Decimals}
 )
 
 func TestRegisterBasic(t *testing.T) {
@@ -38,12 +55,12 @@ func TestRegisterBasic(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -62,7 +79,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := vm.GetValidator(ctx, acc.AccountKey("user1"))
-	assert.Equal(t, int64(1600), verifyAccount.ABCIValidator.GetPower())
+	assert.Equal(t, c1600.Amount, verifyAccount.ABCIValidator.GetPower())
 	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
 }
 
@@ -75,12 +92,12 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c400, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l400, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrRegisterFeeNotEnough().Result(), result)
 
@@ -98,12 +115,12 @@ func TestRevokeBasic(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -146,12 +163,12 @@ func TestRevokeTwiceWontChangeFreezingPeriod(t *testing.T) {
 
 	// create user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -185,10 +202,10 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	users := make([]*acc.Account, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i+1))
-		users[i].AddCoins(ctx, c2000)
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
-		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1000)}}
+		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1000)))
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -198,18 +215,18 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	lst, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst.OncallValidators))
 	assert.Equal(t, 24, len(lst.AllValidators))
-	assert.Equal(t, int64(1040), lst.LowestPower.AmountOf("lino"))
+	assert.Equal(t, types.Coin{1040 * types.Decimals}, lst.LowestPower)
 	assert.Equal(t, acc.AccountKey("user4"), lst.LowestValidator)
 
 	// lowest validator depoist coins will change the ranks
 	ownerKey, _ := users[4].GetOwnerKey(ctx)
-	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64(15)}}
+	deposit := types.LNO(sdk.NewRat(15))
 	msg := NewValidatorDepositMsg("user4", deposit, *ownerKey)
 	result := handler(ctx, msg)
 
 	lst2, _ := vm.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
-	assert.Equal(t, int64(1050), lst2.LowestPower.AmountOf("lino"))
+	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst2.LowestPower)
 	assert.Equal(t, acc.AccountKey("user5"), lst2.LowestValidator)
 
 	// now user1, 2, 3 are substitutions
@@ -219,7 +236,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	lst3, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, int64(1050), lst3.LowestPower.AmountOf("lino"))
+	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst3.LowestPower)
 	assert.Equal(t, acc.AccountKey("user5"), lst3.LowestValidator)
 	assert.Equal(t, 23, len(lst3.AllValidators))
 
@@ -232,7 +249,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 
 	lst4, _ := vm.GetValidatorList(ctx)
-	assert.Equal(t, int64(1030), lst4.LowestPower.AmountOf("lino"))
+	assert.Equal(t, types.Coin{1030 * types.Decimals}, lst4.LowestPower)
 	assert.Equal(t, acc.AccountKey("user3"), lst4.LowestValidator)
 	assert.Equal(t, 22, len(lst4.AllValidators))
 }
@@ -246,12 +263,12 @@ func TestWithdrawBasic(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -292,12 +309,12 @@ func TestWithdrawTwice(t *testing.T) {
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -328,16 +345,16 @@ func TestDepositBasic(t *testing.T) {
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	// let user1 register as validator
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("user1", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
-	depositMsg := NewValidatorDepositMsg("user1", c200, *ownerKey)
+	depositMsg := NewValidatorDepositMsg("user1", l200, *ownerKey)
 	result2 := handler(ctx, depositMsg)
 	assert.Equal(t, sdk.Result{}, result2)
 
@@ -369,7 +386,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 	// let user1 register as validator
 	acc1 := createTestAccount(ctx, lam, "user1")
 	ownerKey, _ := acc1.GetOwnerKey(ctx)
-	msg := NewValidatorDepositMsg("qwqwndqwnd", c1600, *ownerKey)
+	msg := NewValidatorDepositMsg("qwqwndqwnd", l1600, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrUsernameNotFound().Result(), result)
 }
@@ -385,10 +402,10 @@ func TestValidatorReplacement(t *testing.T) {
 	users := make([]*acc.Account, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, lam, "user"+strconv.Itoa(i))
-		users[i].AddCoins(ctx, c2000)
+		users[i].AddCoin(ctx, c2000)
 		users[i].Apply(ctx)
 		// they will deposit 10,20,30...200, 210
-		deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64((i+1)*10) + int64(1001)}}
+		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
 		ownerKey, _ := users[i].GetOwnerKey(ctx)
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -404,11 +421,11 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// create a user failed to join oncall validator list (not enough power)
 	acc1 := createTestAccount(ctx, lam, "noPowerUser")
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
 
 	//check the user hasn't been added to oncall validators but in the pool
-	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1005}}
+	deposit := types.LNO(sdk.NewRat(1005))
 	ownerKey1, _ := acc1.GetOwnerKey(ctx)
 	msg := NewValidatorDepositMsg("noPowerUser", deposit, *ownerKey1)
 	result := handler(ctx, msg)
@@ -422,11 +439,11 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// create a user success to join oncall validator list
 	acc2 := createTestAccount(ctx, lam, "powerfulUser")
-	acc2.AddCoins(ctx, c2000)
+	acc2.AddCoin(ctx, c2000)
 	acc2.Apply(ctx)
 
 	//check the user has been added to oncall validators and in the pool
-	deposit2 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1088}}
+	deposit2 := types.LNO(sdk.NewRat(1088))
 	ownerKey2, _ := acc2.GetOwnerKey(ctx)
 	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, *ownerKey2)
 	result2 := handler(ctx, msg2)
@@ -465,13 +482,13 @@ func TestRemoveBasic(t *testing.T) {
 	ownerKey1, _ := acc1.GetOwnerKey(ctx)
 	acc2 := createTestAccount(ctx, lam, "badUser")
 	ownerKey2, _ := acc2.GetOwnerKey(ctx)
-	acc1.AddCoins(ctx, c2000)
+	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
-	acc2.AddCoins(ctx, c2000)
+	acc2.AddCoin(ctx, c2000)
 	acc2.Apply(ctx)
 
 	// let both users register as validator
-	deposit := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1200}}
+	deposit := types.LNO(sdk.NewRat(1200))
 	msg1 := NewValidatorDepositMsg("goodUser", deposit, *ownerKey1)
 	msg2 := NewValidatorDepositMsg("badUser", deposit, *ownerKey2)
 	handler(ctx, msg1)

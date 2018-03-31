@@ -25,7 +25,7 @@ type LikeMsg struct {
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
 	Username acc.AccountKey
-	Amount   sdk.Coins
+	Amount   types.LNO
 	Author   acc.AccountKey
 	PostID   string
 }
@@ -46,7 +46,7 @@ func NewLikeMsg(user acc.AccountKey, weight int64, author acc.AccountKey, postID
 }
 
 // NewDonateMsg constructs a like msg
-func NewDonateMsg(user acc.AccountKey, amount sdk.Coins, author acc.AccountKey, postID string) DonateMsg {
+func NewDonateMsg(user acc.AccountKey, amount types.LNO, author acc.AccountKey, postID string) DonateMsg {
 	return DonateMsg{
 		Username: user,
 		Amount:   amount,
@@ -103,14 +103,13 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) == 0 {
 		return ErrPostDonateNoUsername()
 	}
-	if !msg.Amount.IsValid() {
-		return sdk.ErrInvalidCoins(msg.Amount.String())
-	}
-	if !msg.Amount.IsPositive() {
-		return sdk.ErrInvalidCoins(msg.Amount.String())
-	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
 		return ErrPostDonateInvalidTarget()
+	}
+
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
 	}
 	return nil
 }

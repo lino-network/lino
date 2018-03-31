@@ -24,8 +24,8 @@ type AccountInfo struct {
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
 	Address  sdk.Address `json:"address"`
-	Balance  sdk.Coins   `json:"coins"`
-	Username AccountKey  `json:"Username"`
+	Balance  types.Coin  `json:"balance"`
+	Username AccountKey  `json:"username"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
@@ -112,31 +112,25 @@ func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey cry
 	return nil
 }
 
-func (acc *Account) AddCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+func (acc *Account) AddCoin(ctx sdk.Context, coin types.Coin) (err sdk.Error) {
 	if err := acc.checkAccountBank(ctx); err != nil {
 		return err
 	}
-	acc.accountBank.Balance = acc.accountBank.Balance.Plus(coins)
+	acc.accountBank.Balance = acc.accountBank.Balance.Plus(coin)
 	acc.writeBankFlag = true
 	return nil
 }
 
-func (acc *Account) MinusCoins(ctx sdk.Context, coins sdk.Coins) (err sdk.Error) {
+func (acc *Account) MinusCoin(ctx sdk.Context, coin types.Coin) (err sdk.Error) {
 	if err := acc.checkAccountBank(ctx); err != nil {
 		return err
 	}
 
-	if !acc.accountBank.Balance.IsGTE(coins) {
+	if !acc.accountBank.Balance.IsGTE(coin) {
 		return ErrAccountCoinNotEnough()
 	}
 
-	c0 := sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: int64(0)}}
-	acc.accountBank.Balance = acc.accountBank.Balance.Minus(coins)
-
-	// API return empty when the result is 0 coin
-	if len(acc.accountBank.Balance) == 0 {
-		acc.accountBank.Balance = c0
-	}
+	acc.accountBank.Balance = acc.accountBank.Balance.Minus(coin)
 
 	acc.writeBankFlag = true
 	return nil
@@ -167,9 +161,9 @@ func (acc *Account) GetPostKey(ctx sdk.Context) (*crypto.PubKey, sdk.Error) {
 	return &acc.accountInfo.PostKey, nil
 }
 
-func (acc *Account) GetBankBalance(ctx sdk.Context) (sdk.Coins, sdk.Error) {
+func (acc *Account) GetBankBalance(ctx sdk.Context) (types.Coin, sdk.Error) {
 	if err := acc.checkAccountBank(ctx); err != nil {
-		return nil, err
+		return types.Coin{}, err
 	}
 	return acc.accountBank.Balance, nil
 }

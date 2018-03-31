@@ -1,7 +1,6 @@
 package validator
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	types "github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
@@ -11,7 +10,7 @@ import (
 type Validator struct {
 	ABCIValidator       abci.Validator
 	Username            acc.AccountKey `json:"username"`
-	Deposit             sdk.Coins      `json:"deposit"`
+	Deposit             types.Coin     `json:"deposit"`
 	AbsentVote          int            `json:"absent_vote"`
 	WithdrawAvailableAt types.Height   `json:"withdraw_available_at"`
 	IsByzantine         bool           `json:"is_byzantine"`
@@ -21,8 +20,6 @@ type Validator struct {
 type ValidatorList struct {
 	OncallValidators []acc.AccountKey `json:"oncall_validators"`
 	AllValidators    []acc.AccountKey `json:"all_validators"`
-	LowestPower      sdk.Coins        `json:"lowest_power"`
+	LowestPower      types.Coin       `json:"lowest_power"`
 	LowestValidator  acc.AccountKey   `json:"lowest_validator"`
 }
-
-var ValRegisterFee = sdk.Coins{sdk.Coin{Denom: types.Denom, Amount: 1000}}

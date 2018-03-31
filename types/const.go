@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	Denom = "lino"
+	Denom    = "lino"
+	Decimals = 100000
 	// ABCI Response Codes
 	// Base SDK reserves 0 ~ 99.
 	// Coin errors reserve 100 ~ 199.
@@ -19,6 +20,7 @@ const (
 
 	// Lino account handler errors reserve 310 ~ 399
 	CodeAccountManagerFail sdk.CodeType = 310
+	CodeInvalidMsg         sdk.CodeType = 311
 
 	// Lino post handler errors reserve 400 ~ 499
 	// CodePostMarshalError indicates error occurs during marshal
