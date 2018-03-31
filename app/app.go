@@ -107,6 +107,9 @@ func MakeCodec() *wire.Codec {
 	const msgTypePost = 0x5
 	const msgTypeLike = 0x6
 	const msgTypeDonate = 0x7
+	const msgTypeValidatorDeposit = 0x8
+	const msgTypeValidatorWithdraw = 0x9
+	const msgTypeValidatorRevoke = 0x10
 	var _ = oldwire.RegisterInterface(
 		struct{ sdk.Msg }{},
 		oldwire.ConcreteType{register.RegisterMsg{}, msgTypeRegister},
@@ -116,6 +119,9 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{post.CreatePostMsg{}, msgTypePost},
 		oldwire.ConcreteType{post.LikeMsg{}, msgTypeLike},
 		oldwire.ConcreteType{post.DonateMsg{}, msgTypeDonate},
+		oldwire.ConcreteType{validator.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
+		oldwire.ConcreteType{validator.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
+		oldwire.ConcreteType{validator.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
 	)
 
 	// TODO(Lino): Register msg type and model.
