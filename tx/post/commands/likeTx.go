@@ -19,7 +19,7 @@ import (
 const (
 	FlagLikeUser = "likeUser"
 	FlagWeight   = "weight"
-	FlagAuthor   = "parent_author"
+	FlagAuthor   = "author"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
