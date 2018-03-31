@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
-	abci "github.com/tendermint/abci/types"
 )
 
 func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
@@ -44,26 +43,18 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	if err != nil {
 		return err.Result()
 	}
+	if err := proxyAcc.Apply(ctx); err != nil {
+		return err.Result()
+	}
 
-	var validator *Validator
-	// This name has not been registered
+	// Register the user if this name has not been registered
 	if !vm.IsValidatorExist(ctx, msg.Username) {
-
-		validator := &Validator{
-			ABCIValidator: abci.Validator{PubKey: msg.ValPubKey.Bytes(), Power: coin.Amount},
-
-			Username:    msg.Username,
-			Deposit:     coin,
-			IsByzantine: false,
-		}
-		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
-			return setErr.Result()
-		}
-		if err := vm.AddToCandidatePool(ctx, msg.Username); err != nil {
+		if err := vm.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin); err != nil {
 			return err.Result()
 		}
 	} else {
-		validator, err = vm.GetValidator(ctx, msg.Username)
+		// Deposit coins
+		validator, err := vm.GetValidator(ctx, msg.Username)
 		if err != nil {
 			return err.Result()
 		}
@@ -74,12 +65,9 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		}
 	}
 
-	// add to pool and try to become oncall validator
+	// Try to become oncall validator
 	if joinErr := vm.TryBecomeOncallValidator(ctx, msg.Username); joinErr != nil {
 		return joinErr.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
-		return err.Result()
 	}
 	return sdk.Result{}
 }
@@ -106,6 +94,7 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return err.Result()
 	}
 
+	// clear validator's deposit
 	validator.Deposit = types.NewCoin(0)
 	if err := vm.SetValidator(ctx, msg.Username, validator); err != nil {
 		return err.Result()

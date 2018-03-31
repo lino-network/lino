@@ -190,16 +190,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccou
 		if err := account.MinusCoin(ctx, deposit); err != nil {
 			panic(err)
 		}
-		val := &validator.Validator{
-			ABCIValidator: abci.Validator{PubKey: ga.ValPubKey.Bytes(), Power: deposit.Amount},
-			Username:      account.GetUsername(ctx),
-			Deposit:       deposit,
-		}
-		if setErr := lb.valManager.SetValidator(ctx, account.GetUsername(ctx), val); setErr != nil {
-			panic(setErr)
-		}
 
-		if addErr := lb.valManager.AddToCandidatePool(ctx, account.GetUsername(ctx)); addErr != nil {
+		if addErr := lb.valManager.RegisterValidator(ctx, account.GetUsername(ctx), ga.ValPubKey.Bytes(), deposit); addErr != nil {
 			panic(addErr)
 		}
 		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, account.GetUsername(ctx)); joinErr != nil {
