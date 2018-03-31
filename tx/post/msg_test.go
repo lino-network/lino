@@ -135,8 +135,8 @@ func TestDonationMsg(t *testing.T) {
 	}{
 		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), nil},
 		{NewDonateMsg(acc.AccountKey(""), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), nil},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("LNO can't be negative")},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
 		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
 		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},

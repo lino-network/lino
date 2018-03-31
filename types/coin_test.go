@@ -34,7 +34,10 @@ func TestLNOToCoin(t *testing.T) {
 		expectedCoin Coin
 	}{
 		{"1", Coin{1 * Decimals}},
-		{"0", Coin{0 * Decimals}},
+		{"92233720368547", Coin{92233720368547 * Decimals}},
+		{"0.001", Coin{0.001 * Decimals}},
+		{"0.0001", Coin{0.0001 * Decimals}},
+		{"0.00001", Coin{0.00001 * Decimals}},
 	}
 
 	for _, tc := range cases {
@@ -43,6 +46,24 @@ func TestLNOToCoin(t *testing.T) {
 		coin, err := LinoToCoin(LNO(rat))
 		assert.Nil(err)
 		assert.Equal(coin, tc.expectedCoin)
+	}
+
+	invalidCases := []struct {
+		inputString string
+	}{
+		{"92233720368548"},
+		{"-1"},
+		{"-0.1"},
+		{"922337203685470"},
+		{"0.000001"},
+		{"0"},
+	}
+
+	for _, tc := range invalidCases {
+		rat, err := sdk.NewRatFromDecimal(tc.inputString)
+		assert.Nil(err)
+		_, err = LinoToCoin(LNO(rat))
+		assert.NotNil(err)
 	}
 }
 
