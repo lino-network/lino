@@ -115,10 +115,12 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {
 		return err.Result()
 	}
+	if err := ProcessPostFriction(ctx, donation.Amount, post, am, gm); err != nil {
+		return err.Result()
+	}
 	if err := account.UpdateLastActivity(ctx); err != nil {
 		return err.Result()
 	}
-
 	// apply change to storage
 	if err := post.Apply(ctx); err != nil {
 		return err.Result()
@@ -129,10 +131,16 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	return sdk.Result{}
 }
 
-func ProcessPostFriction(ctx sdk.Context, amount sdk.Coins, post *PostProxy, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+func ProcessPostFriction(ctx sdk.Context, amount types.Coin, post *PostProxy, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
 	if !authorAccount.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+		return acc.ErrUsernameNotFound()
 	}
-	return sdk.Result{}
+	if err := authorAccount.AddCoin(ctx, amount); err != nil {
+		return err
+	}
+	if err := authorAccount.Apply(ctx); err != nil {
+		return err
+	}
+	return nil
 }
