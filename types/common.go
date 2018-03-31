@@ -1,7 +1,7 @@
 package types
 
 // Height is identity for each block
-type Height uint64
+type Height int64
 
 // Validator List Size
 var ValidatorListSize = 21

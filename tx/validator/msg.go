@@ -76,7 +76,7 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // ValidatorWithdrawMsg Msg Implementations
 
-func NewValidatorWithdrawMsg(validator string, withdraw sdk.Coins, pubKey crypto.PubKey) ValidatorWithdrawMsg {
+func NewValidatorWithdrawMsg(validator string) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
 		Username: acc.AccountKey(validator),
 	}
@@ -115,7 +115,7 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // ValidatorRevokeMsg Msg Implementations
 
-func NewValidatorRevokeMsg(validator string, pubKey crypto.PubKey) ValidatorRevokeMsg {
+func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
 		Username: acc.AccountKey(validator),
 	}
