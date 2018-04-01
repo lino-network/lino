@@ -14,7 +14,7 @@ type AccountKey string
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Username AccountKey    `json:"key"`
+	Username AccountKey    `json:"username"`
 	Created  types.Height  `json:"created"`
 	PostKey  crypto.PubKey `json:"post_key"`
 	OwnerKey crypto.PubKey `json:"owner_key"`

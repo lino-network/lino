@@ -51,7 +51,7 @@ func TestRegisterBasic(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -88,7 +88,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -111,7 +111,7 @@ func TestRevokeBasic(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -145,7 +145,7 @@ func TestRevokeNonExistUser(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// let user1(not exists) revoke candidancy
 	msg2 := NewValidatorRevokeMsg("user1")
@@ -159,7 +159,7 @@ func TestRevokeTwiceWontChangeFreezingPeriod(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create user
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -196,7 +196,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]*acc.Account, 24)
@@ -259,7 +259,7 @@ func TestWithdrawBasic(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -305,7 +305,7 @@ func TestWithdrawTwice(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -341,7 +341,7 @@ func TestDepositBasic(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create test user
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -381,7 +381,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// let user1 register as validator
 	acc1 := createTestAccount(ctx, lam, "user1")
@@ -396,7 +396,7 @@ func TestValidatorReplacement(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]*acc.Account, 21)
@@ -475,7 +475,7 @@ func TestRemoveBasic(t *testing.T) {
 	vm := newValidatorManager()
 	ctx := getContext()
 	handler := NewHandler(vm, lam)
-	vm.InitGenesis(ctx, nil)
+	vm.InitGenesis(ctx)
 
 	// create two test users
 	acc1 := createTestAccount(ctx, lam, "goodUser")

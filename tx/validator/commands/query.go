@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
-	"github.com/lino-network/lino/tx/validator"
+	val "github.com/lino-network/lino/tx/validator"
 )
 
 // GetValidatorsCmd returns all validators relative information
@@ -45,13 +45,13 @@ type commander struct {
 }
 
 func (c commander) getValidatorsCmd(cmd *cobra.Command, args []string) error {
-	res, err := builder.Query(validator.GetValidatorListKey(), c.storeName)
+	res, err := builder.Query(val.GetValidatorListKey(), c.storeName)
 	if err != nil {
 		return err
 	}
 
-	validatorList := new(validator.ValidatorList)
-	if err := c.cdc.UnmarshalBinary(res, validatorList); err != nil {
+	validatorList := new(val.ValidatorList)
+	if err := c.cdc.UnmarshalJSON(res, validatorList); err != nil {
 		return err
 	}
 
@@ -73,12 +73,12 @@ func (c commander) getValidatorCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	accKey := acc.AccountKey(args[0])
 
-	res, err := builder.Query(validator.GetValidatorKey(accKey), c.storeName)
+	res, err := builder.Query(val.GetValidatorKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
-	validator := new(validator.Validator)
-	if err := c.cdc.UnmarshalBinary(res, validator); err != nil {
+	validator := new(val.Validator)
+	if err := c.cdc.UnmarshalJSON(res, validator); err != nil {
 		return err
 	}
 
