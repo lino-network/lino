@@ -226,13 +226,20 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	valList, err := lb.valManager.GetOncallValList(ctx)
+	updateList, err := lb.valManager.GetValidatorUpdateList(ctx)
 	if err != nil {
 		panic(err)
 	}
-	ABCIValList := make([]abci.Validator, len(valList))
-	for i, validator := range valList {
+	ABCIValList := make([]abci.Validator, len(updateList.UpdateList))
+	for i, updateValidatorName := range updateList.UpdateList {
+		validator, err := lb.valManager.GetValidator(ctx, updateValidatorName)
+		if err != nil {
+			panic(err)
+		}
 		ABCIValList[i] = validator.ABCIValidator
+	}
+	if err := lb.valManager.ClearUpdateList(ctx); err != nil {
+		panic(err)
 	}
 	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }

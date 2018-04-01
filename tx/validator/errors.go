@@ -40,6 +40,14 @@ func ErrGetValidatorList() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator list failed"))
 }
 
+func ErrSetValidatorUpdateList() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator update list failed"))
+}
+
+func ErrGetValidatorUpdateList() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator update list failed"))
+}
+
 func ErrValidatorMarshalError(err error) sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
 }

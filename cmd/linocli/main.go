@@ -76,6 +76,14 @@ func main() {
 		client.PostCommands(
 			validatorcmd.RegisterValidatorTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			validatorcmd.WithdrawTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			validatorcmd.RevokeTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
