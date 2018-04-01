@@ -24,8 +24,4 @@ type ValidatorList struct {
 	LowestValidator  acc.AccountKey   `json:"lowest_validator"`
 }
 
-type UpdateValidatorList struct {
-	UpdateList []acc.AccountKey `json:"update_list"`
-}
-
 var valRegisterFee = types.Coin{Amount: 1000 * types.Decimals}
