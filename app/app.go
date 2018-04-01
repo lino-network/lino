@@ -20,7 +20,7 @@ import (
 	"github.com/lino-network/lino/tx/auth"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
-	"github.com/lino-network/lino/tx/validator"
+	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 )
 
@@ -43,8 +43,10 @@ type LinoBlockchain struct {
 	// Manage getting and setting accounts
 	accountManager acc.AccountManager
 	postManager    post.PostManager
-	valManager     validator.ValidatorManager
+	valManager     val.ValidatorManager
 	globalManager  global.GlobalManager
+
+	preValidators []val.Validator
 }
 
 func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
@@ -60,14 +62,14 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	}
 	lb.accountManager = acc.NewLinoAccountManager(lb.capKeyAccountStore)
 	lb.postManager = post.NewPostMananger(lb.capKeyPostStore)
-	lb.valManager = validator.NewValidatorMananger(lb.capKeyValStore)
+	lb.valManager = val.NewValidatorMananger(lb.capKeyValStore)
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager), nil).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager), nil).
 		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), nil).
-		AddRoute(types.ValidatorRouterName, validator.NewHandler(lb.valManager, lb.accountManager), nil)
+		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.valManager, lb.accountManager), nil)
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -92,6 +94,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	if err := lb.LoadLatestVersion(lb.capKeyGlobalStore); err != nil {
 		cmn.Exit(err.Error())
 	}
+	lb.preValidators = []val.Validator{}
 	return lb
 }
 
@@ -117,9 +120,9 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{post.CreatePostMsg{}, msgTypePost},
 		oldwire.ConcreteType{post.LikeMsg{}, msgTypeLike},
 		oldwire.ConcreteType{post.DonateMsg{}, msgTypeDonate},
-		oldwire.ConcreteType{validator.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
-		oldwire.ConcreteType{validator.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
-		oldwire.ConcreteType{validator.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
+		oldwire.ConcreteType{val.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
+		oldwire.ConcreteType{val.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
+		oldwire.ConcreteType{val.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
 	)
 
 	// TODO(Lino): Register msg type and model.
@@ -215,6 +218,11 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccou
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	var err sdk.Error
+	lb.preValidators, err = lb.valManager.GetOncallValList(ctx)
+	if err != nil {
+		panic(err)
+	}
 	absentValidators := req.GetAbsentValidators()
 	if absentValidators != nil {
 		// TODO Err handling
@@ -226,20 +234,28 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	updateList, err := lb.valManager.GetValidatorUpdateList(ctx)
+	curOncallList, err := lb.valManager.GetOncallValList(ctx)
 	if err != nil {
 		panic(err)
 	}
-	ABCIValList := make([]abci.Validator, len(updateList.UpdateList))
-	for i, updateValidatorName := range updateList.UpdateList {
-		validator, err := lb.valManager.GetValidator(ctx, updateValidatorName)
-		if err != nil {
-			panic(err)
+	ABCIValList := []abci.Validator{}
+	for _, preValidator := range lb.preValidators {
+		if FindValidatorInList(preValidator, curOncallList) == -1 {
+			preValidator.ABCIValidator.Power = 0
+			ABCIValList = append(ABCIValList, preValidator.ABCIValidator)
 		}
-		ABCIValList[i] = validator.ABCIValidator
 	}
-	if err := lb.valManager.ClearUpdateList(ctx); err != nil {
-		panic(err)
+	for _, validator := range curOncallList {
+		ABCIValList = append(ABCIValList, validator.ABCIValidator)
 	}
 	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
+}
+
+func FindValidatorInList(validator val.Validator, validatorList []val.Validator) int {
+	for i, curValidator := range validatorList {
+		if validator.Username == curValidator.Username {
+			return i
+		}
+	}
+	return -1
 }
