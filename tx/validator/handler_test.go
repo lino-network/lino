@@ -254,6 +254,47 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, 22, len(lst4.AllValidators))
 }
 
+func TestRevokeAndDepositAgain(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newValidatorManager()
+	ctx := getContext()
+	handler := NewHandler(vm, lam)
+	vm.InitGenesis(ctx)
+
+	// create user
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoin(ctx, c2000)
+	acc1.Apply(ctx)
+
+	// let user1 register as validator
+	ownerKey, _ := acc1.GetOwnerKey(ctx)
+	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	result := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, result)
+
+	lst, _ := vm.GetValidatorList(ctx)
+	assert.Equal(t, 1, len(lst.AllValidators))
+	assert.Equal(t, 1, len(lst.OncallValidators))
+
+	// let user1 revoke candidancy
+	msg2 := NewValidatorRevokeMsg("user1")
+	result2 := handler(ctx, msg2)
+	assert.Equal(t, sdk.Result{}, result2)
+
+	lstEmpty, _ := vm.GetValidatorList(ctx)
+	assert.Equal(t, 0, len(lstEmpty.AllValidators))
+	assert.Equal(t, 0, len(lstEmpty.OncallValidators))
+
+	// deposit again
+	msg3 := NewValidatorDepositMsg("user1", l100, *ownerKey)
+	result3 := handler(ctx, msg3)
+
+	lst2, _ := vm.GetValidatorList(ctx)
+	assert.Equal(t, sdk.Result{}, result3)
+	assert.Equal(t, 1, len(lst2.AllValidators))
+	assert.Equal(t, 1, len(lst2.OncallValidators))
+}
+
 func TestWithdrawBasic(t *testing.T) {
 	lam := newLinoAccountManager()
 	vm := newValidatorManager()
