@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 
@@ -38,7 +37,6 @@ func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
 }
 
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
-	fmt.Println("start init validator")
 	lst := &ValidatorList{
 		LowestPower: types.Coin{0},
 	}
@@ -213,10 +211,6 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username acc.Accou
 		return nil
 	}
 
-	lst.AllValidators = append(lst.AllValidators, username)
-	if err := vm.SetValidatorList(ctx, lst); err != nil {
-		return err
-	}
 	if setErr := vm.SetValidator(ctx, username, curValidator); setErr != nil {
 		return setErr
 	}
@@ -253,6 +247,12 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 	if FindAccountInList(username, lst.OncallValidators) != -1 {
 		return nil
 	}
+
+	// add to all validators list if not in the list
+	if FindAccountInList(username, lst.AllValidators) == -1 {
+		lst.AllValidators = append(lst.AllValidators, username)
+	}
+
 	// add to list directly if validator list is not full
 	if len(lst.OncallValidators) < types.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
