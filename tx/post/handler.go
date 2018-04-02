@@ -5,20 +5,19 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
-			return handleCreatePostMsg(ctx, pm, am, gm, msg)
+			return handleCreatePostMsg(ctx, pm, am, msg)
 		case DonateMsg:
-			return handleDonateMsg(ctx, pm, am, gm, msg)
+			return handleDonateMsg(ctx, pm, am, msg)
 		case LikeMsg:
-			return handleLikeMsg(ctx, pm, am, gm, msg)
+			return handleLikeMsg(ctx, pm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -27,8 +26,8 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 }
 
 // Handle RegisterMsg
-func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg CreatePostMsg) sdk.Result {
-	account := acc.NewProxyAccount(msg.Author, &am)
+func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg CreatePostMsg) sdk.Result {
+	account := acc.NewAccountProxy(msg.Author, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
 	}
@@ -62,8 +61,8 @@ func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager,
 }
 
 // Handle LikeMsg
-func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg LikeMsg) sdk.Result {
-	account := acc.NewProxyAccount(msg.Username, &am)
+func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg LikeMsg) sdk.Result {
+	account := acc.NewAccountProxy(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
 	}
@@ -91,12 +90,12 @@ func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm gl
 }
 
 // Handle DonateMsg
-func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg DonateMsg) sdk.Result {
+func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg DonateMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
-	account := acc.NewProxyAccount(msg.Username, &am)
+	account := acc.NewAccountProxy(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
 	}
@@ -115,7 +114,7 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {
 		return err.Result()
 	}
-	if err := ProcessPostFriction(ctx, donation.Amount, post, am, gm); err != nil {
+	if err := ProcessPostFriction(ctx, donation.Amount, post, am); err != nil {
 		return err.Result()
 	}
 	if err := account.UpdateLastActivity(ctx); err != nil {
@@ -131,8 +130,8 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	return sdk.Result{}
 }
 
-func ProcessPostFriction(ctx sdk.Context, amount types.Coin, post *PostProxy, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
+func ProcessPostFriction(ctx sdk.Context, amount types.Coin, post *PostProxy, am acc.AccountManager) sdk.Error {
+	authorAccount := acc.NewAccountProxy(post.GetAuthor(), &am)
 	if !authorAccount.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound()
 	}

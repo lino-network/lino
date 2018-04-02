@@ -26,7 +26,7 @@ func TestNewCoin(t *testing.T) {
 	}
 }
 
-func TestLNOToCoin(t *testing.T) {
+func TestTestLNOToCoin(t *testing.T) {
 	assert := assert.New(t)
 
 	cases := []struct {
@@ -43,7 +43,7 @@ func TestLNOToCoin(t *testing.T) {
 	for _, tc := range cases {
 		rat, err := sdk.NewRatFromDecimal(tc.inputString)
 		assert.Nil(err)
-		coin, err := LinoToCoin(LNO(rat))
+		coin, err := LinoToCoin(TestLNO(rat))
 		assert.Nil(err)
 		assert.Equal(coin, tc.expectedCoin)
 	}
@@ -62,7 +62,7 @@ func TestLNOToCoin(t *testing.T) {
 	for _, tc := range invalidCases {
 		rat, err := sdk.NewRatFromDecimal(tc.inputString)
 		assert.Nil(err)
-		_, err = LinoToCoin(LNO(rat))
+		_, err = LinoToCoin(TestLNO(rat))
 		assert.NotNil(err)
 	}
 }

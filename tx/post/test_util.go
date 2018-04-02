@@ -3,7 +3,6 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
@@ -22,10 +21,6 @@ func newLinoAccountManager() acc.AccountManager {
 
 func newPostManager() PostManager {
 	return NewPostMananger(TestKVStoreKey)
-}
-
-func newPostManagerAndGlobalManager() (PostManager, global.GlobalManager) {
-	return NewPostMananger(TestKVStoreKey), global.NewGlobalManager(TestKVStoreKey)
 }
 
 func newAmount(amount int64) types.Coin {
@@ -50,9 +45,9 @@ func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
 	return priv.Wrap(), accBank
 }
 
-func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) *acc.Account {
+func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) *acc.AccountProxy {
 	priv, bank := privAndBank()
-	account := acc.NewProxyAccount(acc.AccountKey(username), &lam)
+	account := acc.NewAccountProxy(acc.AccountKey(username), &lam)
 	account.CreateAccount(ctx, acc.AccountKey(username), priv.PubKey(), bank)
 	account.Apply(ctx)
 	return account

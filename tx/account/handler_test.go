@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	l0    = types.LNO(sdk.NewRat(0))
-	l100  = types.LNO(sdk.NewRat(100))
-	l200  = types.LNO(sdk.NewRat(200))
-	l1600 = types.LNO(sdk.NewRat(1600))
-	l1800 = types.LNO(sdk.NewRat(1800))
-	l1900 = types.LNO(sdk.NewRat(1900))
-	l2000 = types.LNO(sdk.NewRat(2000))
+	l0    = types.TestLNO(sdk.NewRat(0))
+	l100  = types.TestLNO(sdk.NewRat(100))
+	l200  = types.TestLNO(sdk.NewRat(200))
+	l1600 = types.TestLNO(sdk.NewRat(1600))
+	l1800 = types.TestLNO(sdk.NewRat(1800))
+	l1900 = types.TestLNO(sdk.NewRat(1900))
+	l2000 = types.TestLNO(sdk.NewRat(2000))
 	c0    = types.Coin{0}
 	c100  = types.Coin{100 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}

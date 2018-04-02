@@ -25,7 +25,7 @@ type LikeMsg struct {
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
 	Username acc.AccountKey
-	Amount   types.LNO
+	Amount   types.TestLNO
 	Author   acc.AccountKey
 	PostID   string
 }
@@ -46,7 +46,7 @@ func NewLikeMsg(user acc.AccountKey, weight int64, author acc.AccountKey, postID
 }
 
 // NewDonateMsg constructs a like msg
-func NewDonateMsg(user acc.AccountKey, amount types.LNO, author acc.AccountKey, postID string) DonateMsg {
+func NewDonateMsg(user acc.AccountKey, amount types.TestLNO, author acc.AccountKey, postID string) DonateMsg {
 	return DonateMsg{
 		Username: user,
 		Amount:   amount,

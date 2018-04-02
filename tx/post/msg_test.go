@@ -133,13 +133,13 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), nil},
-		{NewDonateMsg(acc.AccountKey(""), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), types.LNO(sdk.NewRat(1)), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), nil},
+		{NewDonateMsg(acc.AccountKey(""), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("TestLNO can't be less than lower bound")},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("TestLNO can't be less than lower bound")},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {

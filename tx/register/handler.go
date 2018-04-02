@@ -23,7 +23,7 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
-	account := acc.NewProxyAccount(msg.NewUser, &am)
+	account := acc.NewAccountProxy(msg.NewUser, &am)
 	if account.IsAccountExist(ctx) {
 		return ErrAccRegisterFail("Username exist").Result()
 	}
@@ -36,7 +36,7 @@ func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) 
 		return ErrAccRegisterFail("Already registered").Result()
 	}
 
-	registerFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(10)))
+	registerFee, err := types.LinoToCoin(types.TestLNO(sdk.NewRat(10)))
 	if err != nil {
 		return err.Result()
 	}

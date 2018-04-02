@@ -10,11 +10,11 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
+	pm := newPostManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	handler := NewHandler(pm, lam, gm)
+	handler := NewHandler(pm, lam)
 
 	user := acc.AccountKey("testuser")
 	createTestAccount(ctx, lam, string(user))
@@ -51,11 +51,11 @@ func TestHandlerCreatePost(t *testing.T) {
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
+	pm := newPostManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	handler := NewHandler(pm, lam, gm)
+	handler := NewHandler(pm, lam)
 
 	user := acc.AccountKey("testuser")
 	createTestAccount(ctx, lam, string(user))
@@ -135,11 +135,11 @@ func TestHandlerCreateComment(t *testing.T) {
 }
 
 func TestHandlerRepost(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
+	pm := newPostManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
-	handler := NewHandler(pm, lam, gm)
+	handler := NewHandler(pm, lam)
 
 	user := acc.AccountKey("testuser")
 	createTestAccount(ctx, lam, string(user))
@@ -202,13 +202,13 @@ func TestHandlerRepost(t *testing.T) {
 }
 
 func TestHandlerPostLike(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
+	pm := newPostManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
 	user := "username"
 	postID := "postID"
-	handler := NewHandler(pm, lam, gm)
+	handler := NewHandler(pm, lam)
 	createTestAccount(ctx, lam, user)
 	createTestPost(ctx, lam, pm, user, postID)
 
@@ -260,19 +260,19 @@ func TestHandlerPostLike(t *testing.T) {
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
+	pm := newPostManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
 
 	user1 := "user1"
 	user2 := "user2"
 	postID := "postID"
-	handler := NewHandler(pm, lam, gm)
+	handler := NewHandler(pm, lam)
 	accProxy1 := createTestAccount(ctx, lam, user1)
 	accProxy2 := createTestAccount(ctx, lam, user2)
 	createTestPost(ctx, lam, pm, user1, postID)
 
-	donateMsg := NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
+	donateMsg := NewDonateMsg(acc.AccountKey(user2), types.TestLNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result := handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -304,20 +304,20 @@ func TestHandlerPostDonate(t *testing.T) {
 	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{223 * types.Decimals}))
 	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{23 * types.Decimals}))
 	// test invalid donation target
-	donateMsg = NewDonateMsg(acc.AccountKey(user1), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), "invalid")
+	donateMsg = NewDonateMsg(acc.AccountKey(user1), types.TestLNO(sdk.NewRat(100)), acc.AccountKey(user1), "invalid")
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, ErrDonatePostDoesntExist().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
 	// test invalid user1name
-	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
+	donateMsg = NewDonateMsg(acc.AccountKey("invalid"), types.TestLNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
 	// test insufficient deposit
-	donateMsg = NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
+	donateMsg = NewDonateMsg(acc.AccountKey(user2), types.TestLNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())

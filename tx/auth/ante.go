@@ -54,9 +54,9 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 		if len(sigs) < len(signers) {
 			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
-		// signers get from msg should be verify first
+		// signers get from msg should be verified first
 		for i, signer := range signers {
-			account := acc.NewProxyAccount(acc.AccountKey(signer), &am)
+			account := acc.NewAccountProxy(acc.AccountKey(signer), &am)
 			seq, err := account.GetSequence(ctx)
 			if err != nil {
 				return ctx, err.Result(), true

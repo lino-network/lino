@@ -27,8 +27,8 @@ func NewHandler(am AccountManager) sdk.Handler {
 
 // Handle FollowMsg
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
-	proxyFollowee := NewProxyAccount(msg.Followee, &am)
-	proxyFollower := NewProxyAccount(msg.Follower, &am)
+	proxyFollowee := NewAccountProxy(msg.Followee, &am)
+	proxyFollower := NewAccountProxy(msg.Follower, &am)
 	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
 		return ErrUsernameNotFound().Result()
 	}
@@ -55,8 +55,8 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 
 // Handle UnfollowMsg
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
-	proxyFollowee := NewProxyAccount(msg.Followee, &am)
-	proxyFollower := NewProxyAccount(msg.Follower, &am)
+	proxyFollowee := NewAccountProxy(msg.Followee, &am)
+	proxyFollower := NewAccountProxy(msg.Follower, &am)
 
 	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
 		return ErrUsernameNotFound().Result()
@@ -90,7 +90,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	accSender := NewProxyAccount(msg.Sender, &am)
+	accSender := NewAccountProxy(msg.Sender, &am)
 	if err := accSender.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
@@ -98,7 +98,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// both username and address provided
 	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
 		// check if username and address match
-		associatedAddr, err := NewProxyAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
+		associatedAddr, err := NewAccountProxy(msg.ReceiverName, &am).GetBankAddress(ctx)
 		if !bytes.Equal(associatedAddr, msg.ReceiverAddr) || err != nil {
 			return ErrUsernameAddressMismatch().Result()
 		}
@@ -106,7 +106,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
-		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
+		accReceiver := NewAccountProxy(msg.ReceiverName, &am)
 		if err := accReceiver.AddCoin(ctx, coin); err != nil {
 			return ErrAddMoneyFailed().Result()
 		}

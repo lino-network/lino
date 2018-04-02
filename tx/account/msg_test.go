@@ -74,7 +74,7 @@ func TestTransferMsg(t *testing.T) {
 	// normal transfer to a username
 	sender := "userA"
 	receiverName := "userB"
-	amount := types.LNO(sdk.NewRat(1900))
+	amount := types.TestLNO(sdk.NewRat(1900))
 	memo := []byte("This is a memo!")
 
 	msg := NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
@@ -101,9 +101,9 @@ func TestTransferMsg(t *testing.T) {
 
 	// invalid transfer: amount is invalid
 	receiverName = "userB"
-	amount = types.LNO(sdk.NewRat(-1900))
+	amount = types.TestLNO(sdk.NewRat(-1900))
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
-	assert.Equal(t, result, sdk.ErrInvalidCoins("LNO can't be less than lower bound"))
+	assert.Equal(t, result, sdk.ErrInvalidCoins("TestLNO can't be less than lower bound"))
 
 }

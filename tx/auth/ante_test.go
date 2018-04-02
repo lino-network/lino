@@ -17,7 +17,7 @@ import (
 
 func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) crypto.PrivKey {
 	priv, bank := privAndBank()
-	account := acc.NewProxyAccount(acc.AccountKey(username), &lam)
+	account := acc.NewAccountProxy(acc.AccountKey(username), &lam)
 	account.CreateAccount(ctx, acc.AccountKey(username), priv.PubKey(), bank)
 	account.Apply(ctx)
 	return priv
@@ -222,7 +222,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
-	account := acc.NewProxyAccount(user1, &lam)
+	account := acc.NewAccountProxy(user1, &lam)
 	seq, err := account.GetSequence(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, seq, int64(1))

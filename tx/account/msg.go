@@ -21,11 +21,11 @@ type UnfollowMsg struct {
 
 // we can support to transfer to an user or an address
 type TransferMsg struct {
-	Sender       AccountKey  `json:"sender"`
-	ReceiverName AccountKey  `json:"receiver_name"`
-	ReceiverAddr sdk.Address `json:"receiver_addr"`
-	Amount       types.LNO   `json:"amount"`
-	Memo         []byte      `json:"memo"`
+	Sender       AccountKey    `json:"sender"`
+	ReceiverName AccountKey    `json:"receiver_name"`
+	ReceiverAddr sdk.Address   `json:"receiver_addr"`
+	Amount       types.TestLNO `json:"amount"`
+	Memo         []byte        `json:"memo"`
 }
 
 type TransferOption func(*TransferMsg)
@@ -56,7 +56,7 @@ func NewFollowMsg(follower string, followee string) FollowMsg {
 	}
 }
 
-func (msg FollowMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg FollowMsg) Type() string { return types.AccountRouterName }
 
 func (msg FollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
@@ -88,7 +88,6 @@ func (msg FollowMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Follower)}
 }
 
-//----------------------------------------
 // Unfollow Msg Implementations
 
 func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
@@ -98,7 +97,7 @@ func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	}
 }
 
-func (msg UnfollowMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg UnfollowMsg) Type() string { return types.AccountRouterName }
 
 func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
@@ -130,10 +129,9 @@ func (msg UnfollowMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Follower)}
 }
 
-//----------------------------------------
 // Transfer Msg Implementations
 
-func NewTransferMsg(sender string, amount types.LNO, memo []byte, setters ...TransferOption) TransferMsg {
+func NewTransferMsg(sender string, amount types.TestLNO, memo []byte, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
 		Sender: AccountKey(sender),
 		Amount: amount,
@@ -145,7 +143,7 @@ func NewTransferMsg(sender string, amount types.LNO, memo []byte, setters ...Tra
 	return *msg
 }
 
-func (msg TransferMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg TransferMsg) Type() string { return types.AccountRouterName }
 
 func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) < types.MinimumUsernameLength ||

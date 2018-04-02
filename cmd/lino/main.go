@@ -21,8 +21,6 @@ import (
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
 
-	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
 )
 
@@ -44,25 +42,7 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
 
-	config, err := tcmd.ParseConfig()
-	if err != nil {
-		return nil, "", nil, err
-	}
-	// private validator
-	privValFile := config.PrivValidatorFile()
-	var privValidator *tmtypes.PrivValidatorFS
-	if cmn.FileExists(privValFile) {
-		privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
-	} else {
-		privValidator = tmtypes.GenPrivValidatorFS(privValFile)
-		privValidator.Save()
-	}
-
 	pubKeyBytes, err := json.Marshal(*pubKey)
-	if err != nil {
-		return nil, "", nil, err
-	}
-	valPubKeyBytes, err := json.Marshal(privValidator.PubKey)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -72,37 +52,8 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 	        "name": "Lino",
 	        "lino": 10000000000,
 	        "pub_key": %s,
-	        "validator_pub_key": %s
-	      }],
-	      "global_state": {
-	      	"total_lino": 10000000000,
-	      	"growth_rate": {
-	      		"num": 98,
-	      		"denom": 1000
-	      	},
-	      	"infra_allocation": {
-	      		"num": 20,
-	      		"denom": 100
-	      	},
-	      	"content_creator_allocation": {
-	      		"num": 55,
-	      		"denom": 100
-	      	},
-	      	"developer_allocation": {
-	      		"num": 20,
-	      		"denom": 100
-	      	},
-	      	"validator_allocation": {
-	      		"num": 5,
-	      		"denom": 100
-	      	},
-	      	"consumption_friction_rate": {
-	      		"num": 1,
-	      		"denom": 100
-	      	},
-	      	"freezing_period_hr": 168
-	      }
-	    }`, pubKeyBytes, valPubKeyBytes)
+	      }]
+	    }`, pubKeyBytes)
 	fmt.Println("default address:", pubKey.Address())
 
 	genesisState := new(genesis.GenesisState)
@@ -126,19 +77,9 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbVal, err := dbm.NewGoLevelDB("LinoBlockchain-val", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
 	dbs := map[string]dbm.DB{
-		"acc":    dbAcc,
-		"post":   dbPost,
-		"val":    dbVal,
-		"global": dbGlobal,
+		"acc":  dbAcc,
+		"post": dbPost,
 	}
 	lb := app.NewLinoBlockchain(logger, dbs)
 	return lb, nil

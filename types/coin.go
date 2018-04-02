@@ -6,11 +6,11 @@ import (
 	"math"
 )
 
-type LNO = sdk.Rat
+type TestLNO = sdk.Rat
 
-var ZeroLNO = sdk.NewRat(0)
-var LowerBoundLNO = sdk.NewRat(1, Decimals)
-var UpperBoundLNO = sdk.NewRat(math.MaxInt64 / Decimals)
+var ZeroTestLNO = sdk.NewRat(0)
+var LowerBoundTestLNO = sdk.NewRat(1, Decimals)
+var UpperBoundTestLNO = sdk.NewRat(math.MaxInt64 / Decimals)
 
 // Coin hold some amount of one currency
 type Coin struct {
@@ -21,12 +21,12 @@ func NewCoin(amount int64) Coin {
 	return Coin{Amount: amount}
 }
 
-func LinoToCoin(lino LNO) (Coin, sdk.Error) {
-	if lino.GT(UpperBoundLNO) {
-		return Coin{}, sdk.ErrInvalidCoins("LNO overflow")
+func LinoToCoin(lino TestLNO) (Coin, sdk.Error) {
+	if lino.GT(UpperBoundTestLNO) {
+		return Coin{}, sdk.ErrInvalidCoins("TestLNO overflow")
 	}
-	if lino.LT(LowerBoundLNO) {
-		return Coin{}, sdk.ErrInvalidCoins("LNO can't be less than lower bound")
+	if lino.LT(LowerBoundTestLNO) {
+		return Coin{}, sdk.ErrInvalidCoins("TestLNO can't be less than lower bound")
 	}
 	return Coin{Amount: sdk.Rat(lino).Mul(sdk.NewRat(Decimals)).Evaluate()}, nil
 }

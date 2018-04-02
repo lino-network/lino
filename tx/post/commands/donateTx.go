@@ -41,12 +41,11 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		username := viper.GetString(FlagDonator)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
-
 		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
 		if err != nil {
 			return err
 		}
-		msg := post.NewDonateMsg(acc.AccountKey(username), types.LNO(amount), acc.AccountKey(author), postID)
+		msg := post.NewDonateMsg(acc.AccountKey(username), types.TestLNO(amount), acc.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := builder.SignBuildBroadcast(username, msg, cdc)
