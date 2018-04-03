@@ -44,6 +44,10 @@ func ErrUsernameNotFound() sdk.Error {
 	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
 }
 
+func ErrIllegalWithdraw() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Illegal withdraw"))
+}
+
 func ErrDepositNotAvailable() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Deposit not available"))
 }
