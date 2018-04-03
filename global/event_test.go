@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -19,25 +18,12 @@ func TestPostRewardEvent(t *testing.T) {
 	gm := NewGlobalManager(TestKVStoreKey)
 	ctx := getContext()
 
-	e1 := PostRewardEvent{
-		PostID: 20,
-	}
-	e2 := DonateRewardEvent{
-		DonateID: 20,
-	}
-
 	lst := HeightEventList{}
-	lst.Events = append(lst.Events, e1)
-	lst.Events = append(lst.Events, e2)
 
-	blockHeight := types.Height(100)
-	lstKey := HeightToEventListKey(blockHeight)
+	lstKey := HeightToEventListKey(100)
 
 	err := gm.SetHeightEventList(ctx, lstKey, &lst)
 	assert.Nil(t, err)
-
-	res := gm.ExecuteHeightEvents(ctx, lstKey)
-	assert.Nil(t, res)
 }
 
 func getContext() sdk.Context {

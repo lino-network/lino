@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	AccountInfoSubstore      = []byte{0x00}
-	AccountBankSubstore      = []byte{0x01}
-	AccountMetaSubstore      = []byte{0x02}
-	AccountFollowerSubstore  = []byte{0x03}
-	AccountFollowingSubstore = []byte{0x04}
+	AccountInfoSubstore       = []byte{0x00}
+	AccountBankSubstore       = []byte{0x01}
+	AccountMetaSubstore       = []byte{0x02}
+	AccountFollowerSubstore   = []byte{0x03}
+	AccountFollowingSubstore  = []byte{0x04}
+	AccountRewardPoolSubstore = []byte{0x04}
 )
 
 // LinoAccountManager implements types.AccountManager
@@ -193,6 +194,31 @@ func (lam AccountManager) RemoveFollowingMeta(ctx sdk.Context, me AccountKey, fo
 	return nil
 }
 
+// Implements types.AccountManager.
+func (lam AccountManager) GetRewardPool(ctx sdk.Context, accKey AccountKey) (*RewardPool, sdk.Error) {
+	store := ctx.KVStore(lam.key)
+	rewardByte := store.Get(GetRewardPoolKey(accKey))
+	if rewardByte == nil {
+		return nil, ErrGetMetaFailed()
+	}
+	rewardPool := new(RewardPool)
+	if err := lam.cdc.UnmarshalBinary(rewardByte, rewardPool); err != nil {
+		return nil, ErrAccountUnmarshalError(err)
+	}
+	return rewardPool, nil
+}
+
+// Implements types.AccountManager.
+func (lam AccountManager) SetRewardPool(ctx sdk.Context, accKey AccountKey, rewardPool *RewardPool) sdk.Error {
+	store := ctx.KVStore(lam.key)
+	rewardByte, err := lam.cdc.MarshalBinary(*rewardPool)
+	if err != nil {
+		return ErrSetMetaFailed()
+	}
+	store.Set(GetRewardPoolKey(accKey), rewardByte)
+	return nil
+}
+
 func GetAccountInfoKey(accKey AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
@@ -221,4 +247,8 @@ func GetFollowerKey(me AccountKey, myFollower AccountKey) []byte {
 // "following substore" + "me" + "my following"
 func GetFollowingKey(me AccountKey, myFollowing AccountKey) []byte {
 	return append(GetFollowingPrefix(me), myFollowing...)
+}
+
+func GetRewardPoolKey(accKey AccountKey) []byte {
+	return append(AccountRewardPoolSubstore, accKey...)
 }

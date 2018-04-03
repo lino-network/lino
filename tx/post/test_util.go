@@ -3,6 +3,7 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
@@ -15,6 +16,20 @@ import (
 var (
 	TestKVStoreKey = sdk.NewKVStoreKey("account")
 )
+
+func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+	globalState := genesis.GlobalState{
+		TotalLino:                10000,
+		GrowthRate:               sdk.Rat{98, 1000},
+		InfraAllocation:          sdk.Rat{20, 100},
+		ContentCreatorAllocation: sdk.Rat{55, 100},
+		DeveloperAllocation:      sdk.Rat{20, 100},
+		ValidatorAllocation:      sdk.Rat{5, 100},
+		ConsumptionFrictionRate:  sdk.Rat{1, 100},
+		FreezingPeriodHr:         24 * 7,
+	}
+	return gm.InitGlobalState(ctx, globalState)
+}
 
 func newLinoAccountManager() acc.AccountManager {
 	return acc.NewLinoAccountManager(TestKVStoreKey)
@@ -58,7 +73,7 @@ func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string)
 	return account
 }
 
-func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, username, postID string) *PostProxy {
+func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, username, postID string, redistributionRate sdk.Rat) *PostProxy {
 	createTestAccount(ctx, lam, username)
 	postInfo := PostInfo{
 		PostID:       postID,
@@ -70,6 +85,7 @@ func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, use
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: redistributionRate,
 	}
 	post := NewPostProxy(postInfo.Author, postInfo.PostID, &pm)
 	post.CreatePost(ctx, &postInfo)

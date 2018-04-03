@@ -13,6 +13,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -30,6 +31,7 @@ func TestHandlerCreatePost(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 	msg := NewCreatePostMsg(postInfo)
 	result := handler(ctx, msg)
@@ -54,6 +56,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -70,6 +73,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 	msg := NewCreatePostMsg(postInfo)
 	result := handler(ctx, msg)
@@ -138,6 +142,7 @@ func TestHandlerRepost(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -154,6 +159,7 @@ func TestHandlerRepost(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 	msg := NewCreatePostMsg(postInfo)
 	result := handler(ctx, msg)
@@ -205,12 +211,13 @@ func TestHandlerPostLike(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	user := "username"
 	postID := "postID"
 	handler := NewHandler(pm, lam, gm)
 	createTestAccount(ctx, lam, user)
-	createTestPost(ctx, lam, pm, user, postID)
+	createTestPost(ctx, lam, pm, user, postID, sdk.ZeroRat)
 
 	likeMsg := NewLikeMsg(acc.AccountKey(user), 10000, acc.AccountKey(user), postID)
 	result := handler(ctx, likeMsg)
@@ -227,6 +234,7 @@ func TestHandlerPostLike(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 	postMeta := PostMeta{
 		Created:         0,
@@ -263,6 +271,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	user1 := "user1"
 	user2 := "user2"
@@ -270,7 +279,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	handler := NewHandler(pm, lam, gm)
 	accProxy1 := createTestAccount(ctx, lam, user1)
 	accProxy2 := createTestAccount(ctx, lam, user2)
-	createTestPost(ctx, lam, pm, user1, postID)
+	createTestPost(ctx, lam, pm, user1, postID, sdk.ZeroRat)
 
 	donateMsg := NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result := handler(ctx, donateMsg)
@@ -287,6 +296,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 	postMeta := PostMeta{
 		Created:          0,
@@ -294,14 +304,14 @@ func TestHandlerPostDonate(t *testing.T) {
 		LastActivity:     0,
 		AllowReplies:     true,
 		TotalDonateCount: 1,
-		TotalReward:      types.Coin{100 * types.Decimals},
+		TotalReward:      types.Coin{99 * types.Decimals},
 	}
 
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
 
 	acc1Balance, _ := accProxy1.GetBankBalance(ctx)
 	acc2Balance, _ := accProxy2.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{223 * types.Decimals}))
+	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{222 * types.Decimals}))
 	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{23 * types.Decimals}))
 	// test invalid donation target
 	donateMsg = NewDonateMsg(acc.AccountKey(user1), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), "invalid")
@@ -322,4 +332,71 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	assert.Equal(t, result, acc.ErrAccountCoinNotEnough().Result())
 	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
+}
+
+func TestHandlerRePostDonate(t *testing.T) {
+	pm, gm := newPostManagerAndGlobalManager()
+	lam := acc.NewLinoAccountManager(TestKVStoreKey)
+	ctx := getContext()
+	InitGlobalManager(ctx, gm)
+
+	user1 := "user1"
+	user2 := "user2"
+	user3 := "user3"
+	postID := "postID"
+	handler := NewHandler(pm, lam, gm)
+	accProxy1 := createTestAccount(ctx, lam, user1)
+	accProxy2 := createTestAccount(ctx, lam, user2)
+	accProxy3 := createTestAccount(ctx, lam, user3)
+	createTestPost(ctx, lam, pm, user1, postID, sdk.NewRat(15, 100))
+	postInfo := PostInfo{
+		PostID:       "repost",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       acc.AccountKey(user2),
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: acc.AccountKey(user1),
+		SourcePostID: postID,
+		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: sdk.NewRat(15, 100),
+	}
+	msg := NewCreatePostMsg(postInfo)
+	result := handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	donateMsg := NewDonateMsg(acc.AccountKey(user3), types.LNO(sdk.NewRat(100)), acc.AccountKey(user2), "repost")
+	result = handler(ctx, donateMsg)
+	assert.Equal(t, result, sdk.Result{})
+
+	// after handler check KVStore
+	// check repost first
+	postMeta := PostMeta{
+		Created:          0,
+		LastUpdate:       0,
+		LastActivity:     0,
+		AllowReplies:     true,
+		TotalDonateCount: 1,
+		TotalReward:      types.Coin{sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(99, 100)).Evaluate()},
+	}
+
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user2), "repost"), postInfo, postMeta)
+
+	// check source post
+	postMeta.TotalReward = types.Coin{sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(99, 100)).Evaluate()}
+	postInfo.Author = acc.AccountKey(user1)
+	postInfo.PostID = postID
+	postInfo.SourceAuthor = ""
+	postInfo.SourcePostID = ""
+
+	checkPostKVStore(t, ctx, pm, GetPostKey(acc.AccountKey(user1), postID), postInfo, postMeta)
+
+	acc1Balance, _ := accProxy1.GetBankBalance(ctx)
+	acc2Balance, _ := accProxy2.GetBankBalance(ctx)
+	acc3Balance, _ := accProxy3.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{123 * types.Decimals}.
+		Plus(types.Coin{sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(99, 100)).Evaluate()})))
+	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{123 * types.Decimals}.
+		Plus(types.Coin{sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(99, 100)).Evaluate()})))
+	assert.Equal(t, true, acc3Balance.IsEqual(types.Coin{23 * types.Decimals}))
 }

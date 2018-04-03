@@ -14,11 +14,11 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
-			return handleCreatePostMsg(ctx, pm, am, gm, msg)
+			return handleCreatePostMsg(ctx, msg, pm, am, gm)
 		case DonateMsg:
-			return handleDonateMsg(ctx, pm, am, gm, msg)
+			return handleDonateMsg(ctx, msg, pm, am, gm)
 		case LikeMsg:
-			return handleLikeMsg(ctx, pm, am, gm, msg)
+			return handleLikeMsg(ctx, msg, pm, am, gm)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -27,7 +27,7 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 }
 
 // Handle RegisterMsg
-func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg CreatePostMsg) sdk.Result {
+func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
 	account := acc.NewProxyAccount(msg.Author, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
@@ -62,7 +62,7 @@ func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager,
 }
 
 // Handle LikeMsg
-func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg LikeMsg) sdk.Result {
+func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
 	account := acc.NewProxyAccount(msg.Username, &am)
 	if !account.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound().Result()
@@ -91,7 +91,9 @@ func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm gl
 }
 
 // Handle DonateMsg
-func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager, msg DonateMsg) sdk.Result {
+func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	globalProxy := global.NewGlobalProxy(&gm)
+
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -108,14 +110,25 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	if err := account.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
-	donation := Donation{
-		Amount:  coin,
-		Created: types.Height(ctx.BlockHeight()),
-	}
-	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {
+	sourcePost, err := post.GetRootSourcePost(ctx)
+	if err != nil {
 		return err.Result()
 	}
-	if err := ProcessPostFriction(ctx, donation.Amount, post, am, gm); err != nil {
+	if sourcePost != nil {
+		redistributionSplitRate, err := sourcePost.GetRedistributionSplitRate(ctx)
+		if err != nil {
+			return err.Result()
+		}
+		sourceIncome := types.Coin{sdk.NewRat(coin.Amount).Mul(sdk.OneRat.Sub(redistributionSplitRate)).Evaluate()}
+		coin.Amount -= sourceIncome.Amount
+		if err := ProcessDonationFriction(ctx, msg.Username, sourceIncome, sourcePost, am, globalProxy); err != nil {
+			return err.Result()
+		}
+		if err := sourcePost.Apply(ctx); err != nil {
+			return err.Result()
+		}
+	}
+	if err := ProcessDonationFriction(ctx, msg.Username, coin, post, am, globalProxy); err != nil {
 		return err.Result()
 	}
 	if err := account.UpdateLastActivity(ctx); err != nil {
@@ -131,12 +144,41 @@ func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm 
 	return sdk.Result{}
 }
 
-func ProcessPostFriction(ctx sdk.Context, amount types.Coin, post *PostProxy, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+func ProcessDonationFriction(
+	ctx sdk.Context, consumer acc.AccountKey, coin types.Coin,
+	post *PostProxy, am acc.AccountManager, globalProxy *global.GlobalProxy) sdk.Error {
+	if coin.IsZero() {
+		return nil
+	}
 	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
 	if !authorAccount.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound()
 	}
-	if err := authorAccount.AddCoin(ctx, amount); err != nil {
+	consumptionFrictionRate, err := globalProxy.GetConsumptionFrictionRate(ctx)
+	if err != nil {
+		return err
+	}
+	redistribute := types.Coin{sdk.NewRat(coin.Amount).Mul(consumptionFrictionRate).Evaluate()}
+	directDeposit := coin.Minus(redistribute)
+	if err := post.AddDonation(ctx, consumer, directDeposit); err != nil {
+		return err
+	}
+	if err := authorAccount.AddCoin(ctx, directDeposit); err != nil {
+		return err
+	}
+	if err := globalProxy.AddConsumption(ctx, coin); err != nil {
+		return err
+	}
+	if err := globalProxy.AddRedistributeCoin(ctx, redistribute); err != nil {
+		return err
+	}
+	rewardEvent := RewardEvent{
+		PostAuthor: post.GetAuthor(),
+		PostID:     post.GetPostID(),
+		Consumer:   consumer,
+		Amount:     coin,
+	}
+	if err := globalProxy.RegisterRedistributionEvent(ctx, rewardEvent); err != nil {
 		return err
 	}
 	if err := authorAccount.Apply(ctx); err != nil {

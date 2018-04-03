@@ -41,10 +41,10 @@ func (p *PostProxy) GetPostKey() PostKey {
 }
 
 func (p *PostProxy) GetRedistributionSplitRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
-	if err := p.checkPostMeta(ctx); err != nil {
+	if err := p.checkPostInfo(ctx); err != nil {
 		return sdk.Rat{}, err
 	}
-	return p.postMeta.RedistributionSplitRate, nil
+	return p.postInfo.RedistributionSplitRate, nil
 }
 
 // check if post exist
@@ -134,9 +134,13 @@ func (p *PostProxy) AddComment(ctx sdk.Context, comment Comment) sdk.Error {
 }
 
 // add donation to post donation list
-func (p *PostProxy) AddDonation(ctx sdk.Context, donator acc.AccountKey, donation Donation) sdk.Error {
+func (p *PostProxy) AddDonation(ctx sdk.Context, donator acc.AccountKey, amount types.Coin) sdk.Error {
 	if err := p.UpdateLastActivity(ctx); err != nil {
 		return err
+	}
+	donation := Donation{
+		Amount:  amount,
+		Created: types.Height(ctx.BlockHeight()),
 	}
 	donations, _ := p.postManager.GetPostDonations(ctx, p.GetPostKey(), donator)
 	if donations == nil {
@@ -146,6 +150,7 @@ func (p *PostProxy) AddDonation(ctx sdk.Context, donator acc.AccountKey, donatio
 	if err := p.postManager.SetPostDonations(ctx, p.GetPostKey(), donations); err != nil {
 		return err
 	}
+	p.writePostMeta = true
 	p.postMeta.TotalReward = p.postMeta.TotalReward.Plus(donation.Amount)
 	p.postMeta.TotalDonateCount = p.postMeta.TotalDonateCount + 1
 	return nil

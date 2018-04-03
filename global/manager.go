@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/types"
-	oldwire "github.com/tendermint/go-wire"
 )
 
 var (
@@ -21,12 +20,6 @@ var (
 
 const eventTypePostReward = 0x1
 const eventTypeDonateReward = 0x2
-
-var _ = oldwire.RegisterInterface(
-	struct{ Event }{},
-	oldwire.ConcreteType{PostRewardEvent{}, eventTypePostReward},
-	oldwire.ConcreteType{DonateRewardEvent{}, eventTypeDonateReward},
-)
 
 type GlobalManager struct {
 	// The (unexposed) key used to access the store from the Context.
@@ -155,36 +148,15 @@ func (gm GlobalManager) SetTimeEventList(ctx sdk.Context, key EventListKey, lst 
 	return nil
 }
 
-func (gm GlobalManager) removeHeightEventList(ctx sdk.Context, key EventListKey) sdk.Error {
+func (gm GlobalManager) RemoveHeightEventList(ctx sdk.Context, key EventListKey) sdk.Error {
 	store := ctx.KVStore(gm.key)
 	store.Delete(GetHeightEventListKey(key))
 	return nil
 }
 
-func (gm GlobalManager) ExecuteHeightEvents(ctx sdk.Context, key EventListKey) sdk.Error {
-	lst, err := gm.GetHeightEventList(ctx, key)
-	if err != nil {
-		return err
-	}
-
-	for _, event := range lst.Events {
-		switch event := event.(type) {
-		case PostRewardEvent:
-			if err := event.execute(); err != nil {
-				return err
-			}
-		case DonateRewardEvent:
-			if err := event.execute(); err != nil {
-				return err
-			}
-		default:
-			return ErrWrongEventType()
-		}
-	}
-
-	if err := gm.removeHeightEventList(ctx, key); err != nil {
-		return err
-	}
+func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, key EventListKey) sdk.Error {
+	store := ctx.KVStore(gm.key)
+	store.Delete(GetTimeEventListKey(key))
 	return nil
 }
 
