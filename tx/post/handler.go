@@ -110,10 +110,7 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if err := account.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
-	if err := post.AddDonation(ctx, msg.Username, coin); err != nil {
-		return err.Result()
-	}
-	if err := ProcessPostFriction(ctx, coin, post, am, globalProxy); err != nil {
+	if err := ProcessDonationFriction(ctx, msg.Username, coin, post, am, globalProxy); err != nil {
 		return err.Result()
 	}
 	if err := account.UpdateLastActivity(ctx); err != nil {
@@ -129,7 +126,9 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	return sdk.Result{}
 }
 
-func ProcessPostFriction(ctx sdk.Context, coin types.Coin, post *PostProxy, am acc.AccountManager, globalProxy *global.GlobalProxy) sdk.Error {
+func ProcessDonationFriction(
+	ctx sdk.Context, consumer acc.AccountKey, coin types.Coin,
+	post *PostProxy, am acc.AccountManager, globalProxy *global.GlobalProxy) sdk.Error {
 	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
 	if !authorAccount.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound()
@@ -139,13 +138,26 @@ func ProcessPostFriction(ctx sdk.Context, coin types.Coin, post *PostProxy, am a
 		return err
 	}
 	redistribute := types.Coin{sdk.NewRat(coin.Amount).Mul(consumptionFrictionRate).Evaluate()}
-	if err := authorAccount.AddCoin(ctx, coin.Minus(redistribute)); err != nil {
+	directDeposit := coin.Minus(redistribute)
+	if err := post.AddDonation(ctx, consumer, directDeposit); err != nil {
+		return err
+	}
+	if err := authorAccount.AddCoin(ctx, directDeposit); err != nil {
 		return err
 	}
 	if err := globalProxy.AddConsumption(ctx, coin); err != nil {
 		return err
 	}
 	if err := globalProxy.AddRedistributeCoin(ctx, redistribute); err != nil {
+		return err
+	}
+	rewardEvent := RewardEvent{
+		PostAuthor: post.GetAuthor(),
+		PostID:     post.GetPostID(),
+		Consumer:   consumer,
+		Amount:     coin,
+	}
+	if err := globalProxy.RegisterRedistributionEvent(ctx, rewardEvent); err != nil {
 		return err
 	}
 	if err := authorAccount.Apply(ctx); err != nil {

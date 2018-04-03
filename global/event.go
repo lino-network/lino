@@ -2,8 +2,6 @@ package global
 
 import (
 	"strconv"
-
-	types "github.com/lino-network/lino/types"
 )
 
 type EventListKey string
@@ -20,7 +18,7 @@ type TimeEventList struct {
 	Events []Event `json:"events"`
 }
 
-func HeightToEventListKey(height types.Height) EventListKey {
+func HeightToEventListKey(height int64) EventListKey {
 	return EventListKey(strconv.FormatInt(int64(height), 10))
 }
 

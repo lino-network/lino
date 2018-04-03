@@ -234,6 +234,30 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	heightEvents, _ := lb.globalManager.GetHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
+	if heightEvents != nil {
+		lb.executeEvents(ctx, heightEvents.Events)
+	}
+	timeEvents, _ := lb.globalManager.GetTimeEventList(ctx, global.UnixTimeToEventListKey(ctx.BlockHeight()))
+	if timeEvents != nil {
+		lb.executeEvents(ctx, timeEvents.Events)
+	}
+	return lb.updateValidators(ctx)
+}
+
+func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []global.Event) sdk.Error {
+	for _, event := range eventList {
+		switch e := event.(type) {
+		case post.RewardEvent:
+			if err := e.Execute(ctx, lb.postManager, lb.accountManager, lb.globalManager); err != nil {
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func (lb *LinoBlockchain) updateValidators(ctx sdk.Context) abci.ResponseEndBlock {
 	curOncallList, err := lb.valManager.GetOncallValList(ctx)
 	if err != nil {
 		panic(err)

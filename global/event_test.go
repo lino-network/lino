@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -21,8 +20,7 @@ func TestPostRewardEvent(t *testing.T) {
 
 	lst := HeightEventList{}
 
-	blockHeight := types.Height(100)
-	lstKey := HeightToEventListKey(blockHeight)
+	lstKey := HeightToEventListKey(100)
 
 	err := gm.SetHeightEventList(ctx, lstKey, &lst)
 	assert.Nil(t, err)
