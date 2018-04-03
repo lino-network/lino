@@ -5,23 +5,24 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(vm VoteManager, am acc.AccountManager) sdk.Handler {
+func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalProxy) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case VoterDepositMsg:
 			return handleDepositMsg(ctx, vm, am, msg)
 		case VoterWithdrawMsg:
-			return handleWithdrawMsg(ctx, vm, msg)
+			return handleWithdrawMsg(ctx, vm, gm, msg)
 		case VoterRevokeMsg:
-			return handleRevokeMsg(ctx, vm, msg)
+			return handleRevokeMsg(ctx, vm, gm, msg)
 		case DelegateMsg:
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case RevokeDelegationMsg:
-			return handleRevokeDelegationMsg(ctx, vm, msg)
+			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -66,7 +67,7 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, msg VoterWithdrawMsg) sdk.Result {
+func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoterWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -76,14 +77,14 @@ func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, msg VoterWithdrawMsg) sd
 		return ErrIllegalWithdraw().Result()
 	}
 
-	if err := vm.Withdraw(ctx, msg.Username, coin); err != nil {
+	if err := vm.Withdraw(ctx, msg.Username, coin, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 // Handle RevokeMsg
-func handleRevokeMsg(ctx sdk.Context, vm VoteManager, msg VoterRevokeMsg) sdk.Result {
+func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoterRevokeMsg) sdk.Result {
 	// TODO also a Validator
 	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
 	if getErr != nil {
@@ -91,12 +92,12 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, msg VoterRevokeMsg) sdk.Re
 	}
 
 	for _, delegator := range delegators {
-		if err := vm.ReturnCoinToDelegator(ctx, msg.Username, delegator); err != nil {
+		if err := vm.ReturnCoinToDelegator(ctx, msg.Username, delegator, gm); err != nil {
 			return err.Result()
 		}
 	}
 
-	if err := vm.WithdrawAll(ctx, msg.Username); err != nil {
+	if err := vm.WithdrawAll(ctx, msg.Username, gm); err != nil {
 		return err.Result()
 	}
 
@@ -131,8 +132,8 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 }
 
 // Handle RevokeDelegationMsg
-func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, msg RevokeDelegationMsg) sdk.Result {
-	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator); err != nil {
+func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg RevokeDelegationMsg) sdk.Result {
+	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator, gm); err != nil {
 		return err.Result()
 	}
 	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {

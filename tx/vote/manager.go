@@ -3,6 +3,7 @@ package vote
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
@@ -109,16 +110,29 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username acc.AccountKey, coin typ
 	return nil
 }
 
-func (vm VoteManager) Withdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin) sdk.Error {
-	return nil
-}
-
-func (vm VoteManager) WithdrawAll(ctx sdk.Context, username acc.AccountKey) sdk.Error {
+// this method won't check if it is a legal withdraw, caller should check by itself
+func (vm VoteManager) Withdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin, gm global.GlobalProxy) sdk.Error {
 	voter, getErr := vm.GetVoter(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
-	if err := vm.Withdraw(ctx, username, voter.Deposit); err != nil {
+	voter.Deposit = voter.Deposit.Minus(coin)
+
+	if err := vm.SetVoter(ctx, username, voter); err != nil {
+		return err
+	}
+	if err := vm.CreateReturnCoinEvent(ctx, username, coin, gm); err != nil {
+		return nil
+	}
+	return nil
+}
+
+func (vm VoteManager) WithdrawAll(ctx sdk.Context, username acc.AccountKey, gm global.GlobalProxy) sdk.Error {
+	voter, getErr := vm.GetVoter(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	if err := vm.Withdraw(ctx, username, voter.Deposit, gm); err != nil {
 		return err
 	}
 	return nil
@@ -180,7 +194,7 @@ func (vm VoteManager) GetAllDelegators(ctx sdk.Context, username acc.AccountKey)
 	return nil, nil
 }
 
-func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey) sdk.Error {
+func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, gm global.GlobalProxy) sdk.Error {
 	voter, getErr := vm.GetVoter(ctx, voterName)
 	if getErr != nil {
 		return getErr
@@ -191,11 +205,25 @@ func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.Accou
 	}
 
 	voter.DelegatedPower = voter.DelegatedPower.Minus(delegation.Amount)
-	// TODO return coin
+	if err := vm.CreateReturnCoinEvent(ctx, delegatorName, delegation.Amount, gm); err != nil {
+		return err
+	}
 	if err := vm.SetVoter(ctx, voterName, voter); err != nil {
 		return err
 	}
 	if err := vm.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
+		return err
+	}
+	return nil
+}
+
+// return coin to an user periodically
+func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.AccountKey, amount types.Coin, gm global.GlobalProxy) sdk.Error {
+	event := ReturnCoinEvent{
+		Username: username,
+		Amount:   amount,
+	}
+	if err := gm.RegisterEventAtHeight(ctx, types.Height(ctx.BlockHeight()+1000), event); err != nil {
 		return err
 	}
 	return nil
