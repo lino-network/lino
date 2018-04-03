@@ -66,10 +66,10 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager), nil).
-		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager), nil).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager), nil).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.valManager, lb.accountManager), nil)
+		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
+		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
+		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.valManager, lb.accountManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)

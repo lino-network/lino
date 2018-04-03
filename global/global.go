@@ -6,9 +6,10 @@ import (
 )
 
 type GlobalMeta struct {
-	TotalLino        types.LNO `json:"total_lino"`
-	TotalConsumption sdk.Rat   `json:"total_consumption"`
-	GrowthRate       sdk.Rat   `json:"growth_rate"`
+	TotalLino             types.LNO  `json:"total_lino"`
+	CumulativeConsumption types.Coin `json:"cumulative_consumption"`
+	AdditionLino          types.LNO  `json:"addition_lino"`
+	GrowthRate            sdk.Rat    `json:"growth_rate"`
 }
 
 // GlobalStatistics
@@ -58,9 +59,9 @@ type InflationPool struct {
 // ConsumptionWindow records all content related consumption within the freezing period
 // FreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
-	ConsumptionFrictionRate sdk.Rat `json:"consumption_friction_rate"`
-	ReportStakeWindow       sdk.Rat `json:"report_stake_window"`
-	DislikeStakeWindow      sdk.Rat `json:"dislike_stake_window"`
-	ConsumptionWindow       sdk.Rat `json:"consumption_window"`
-	FreezingPeriodHr        int64   `json:"freezing_period"`
+	ConsumptionFrictionRate sdk.Rat    `json:"consumption_friction_rate"`
+	ReportStakeWindow       sdk.Rat    `json:"report_stake_window"`
+	DislikeStakeWindow      sdk.Rat    `json:"dislike_stake_window"`
+	ConsumptionWindow       types.Coin `json:"consumption_window"`
+	FreezingPeriodHr        int64      `json:"freezing_period"`
 }

@@ -13,6 +13,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -54,6 +55,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -138,6 +140,7 @@ func TestHandlerRepost(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	handler := NewHandler(pm, lam, gm)
 
@@ -205,6 +208,7 @@ func TestHandlerPostLike(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	user := "username"
 	postID := "postID"
@@ -263,6 +267,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	pm, gm := newPostManagerAndGlobalManager()
 	lam := acc.NewLinoAccountManager(TestKVStoreKey)
 	ctx := getContext()
+	InitGlobalManager(ctx, gm)
 
 	user1 := "user1"
 	user2 := "user2"
@@ -301,7 +306,7 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	acc1Balance, _ := accProxy1.GetBankBalance(ctx)
 	acc2Balance, _ := accProxy2.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{223 * types.Decimals}))
+	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{222 * types.Decimals}))
 	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{23 * types.Decimals}))
 	// test invalid donation target
 	donateMsg = NewDonateMsg(acc.AccountKey(user1), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), "invalid")

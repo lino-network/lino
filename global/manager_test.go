@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func initGlobalManager(t *testing.T, ctx sdk.Context, gm GlobalManager) error {
+func InitGlobalManager(t *testing.T, ctx sdk.Context, gm GlobalManager) error {
 	globalState := genesis.GlobalState{
 		TotalLino:                10000,
 		GrowthRate:               sdk.Rat{98, 1000},
@@ -47,7 +47,7 @@ func TestGlobalManagerGenesis(t *testing.T) {
 	gm := NewGlobalManager(TestKVStoreKey)
 	ctx := getContext()
 
-	err := initGlobalManager(t, ctx, gm)
+	err := InitGlobalManager(t, ctx, gm)
 	assert.Nil(t, err)
 	globalMeta := GlobalMeta{
 		TotalLino:  types.LNO(sdk.NewRat(10000)),

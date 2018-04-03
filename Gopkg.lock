@@ -14,7 +14,6 @@
   revision = "2be2f12b358dc57d70b8f501b00be450192efbc3"
 
 [[projects]]
-  branch = "develop"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -39,7 +38,8 @@
     "x/ibc",
     "x/ibc/rest"
   ]
-  revision = "29d878a85e94fd0503dc7c08fd3d239721d102fc"
+  revision = "797aec2e717cb177c5481a16bb4ef6fc052e379c"
+  version = "v0.13.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -219,8 +219,8 @@
     ".",
     "mem"
   ]
-  revision = "bb8f1927f2a9d3ab41c9340aa034f6b803f4359c"
-  version = "v1.0.2"
+  revision = "63644898a8da0bc22138abf860edaf5277b6102e"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/spf13/cast"

@@ -7,18 +7,7 @@ import (
 
 // GlobalProxy encapsulates all basic struct
 type GlobalProxy struct {
-	writeGlobalMeta              bool                     `json:"write_global_meta"`
-	writeStatistics              bool                     `json:"write_statistics"`
-	writeGlobalAllocation        bool                     `json:"write_global_allocation"`
-	writeInfraInternalAllocation bool                     `json:"write_infra_internal_allocation"`
-	writeConsumptionMeta         bool                     `json:"write_consumption_meta"`
-	globalManager                *GlobalManager           `json:"global_manager"`
-	globalMeta                   *GlobalMeta              `json:"global_meta"`
-	globalStatistics             *GlobalStatistics        `json:"statistics"`
-	globalAllocation             *GlobalAllocation        `json:"global_allocation"`
-	infraInternalAllocation      *InfraInternalAllocation `json:"infra_internal_allocation"`
-	inflationPool                *InflationPool           `json:"inflation_pool"`
-	consumptionMeta              *ConsumptionMeta         `json:"consumption_meta"`
+	globalManager *GlobalManager `json:"global_manager"`
 }
 
 // NewGlobalProxy return the global proxy pointer
@@ -40,37 +29,61 @@ func (gp *GlobalProxy) RegisterEventAtHeight(ctx sdk.Context, height types.Heigh
 	return nil
 }
 
+func (gp *GlobalProxy) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event Event) sdk.Error {
+	eventList, _ := gp.globalManager.GetTimeEventList(ctx, UnixTimeToEventListKey(unixTime))
+	if eventList == nil {
+		eventList = &TimeEventList{Events: []Event{}}
+	}
+	eventList.Events = append(eventList.Events, event)
+	if err := gp.globalManager.SetTimeEventList(ctx, UnixTimeToEventListKey(unixTime), eventList); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (gp *GlobalProxy) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
-	if err := gp.checkConsumptionMeta(ctx); err != nil {
+	consumptionMeta, err := gp.globalManager.GetConsumptionMeta(ctx)
+	if err != nil {
 		return sdk.Rat{}, err
 	}
-	return gp.consumptionMeta.ConsumptionFrictionRate, nil
+	return consumptionMeta.ConsumptionFrictionRate, nil
 }
 
-func (gp *GlobalProxy) checkGlobalMeta(ctx sdk.Context) (err sdk.Error) {
-	if gp.globalMeta == nil {
-		gp.globalMeta, err = gp.globalManager.GetGlobalMeta(ctx)
+func (gp *GlobalProxy) AddRedistributeCoin(ctx sdk.Context, coin types.Coin) sdk.Error {
+	if coin.IsZero() {
+		return nil
 	}
-	return err
+	inflationPool, err := gp.globalManager.GetInflationPool(ctx)
+	if err != nil {
+		return err
+	}
+	inflationPool.ContentCreatorInflationPool = inflationPool.ContentCreatorInflationPool.Plus(coin)
+
+	if err := gp.globalManager.SetInflationPool(ctx, inflationPool); err != nil {
+		return err
+	}
+
+	consumptionMeta, err := gp.globalManager.GetConsumptionMeta(ctx)
+	if err != nil {
+		return err
+	}
+	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(coin)
+
+	if err := gp.globalManager.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (gp *GlobalProxy) checkGlobalStatistics(ctx sdk.Context) (err sdk.Error) {
-	if gp.globalStatistics == nil {
-		gp.globalStatistics, err = gp.globalManager.GetGlobalStatistics(ctx)
+func (gp *GlobalProxy) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Error {
+	globalMeta, err := gp.globalManager.GetGlobalMeta(ctx)
+	if err != nil {
+		return err
 	}
-	return err
-}
+	globalMeta.CumulativeConsumption = globalMeta.CumulativeConsumption.Plus(coin)
 
-func (gp *GlobalProxy) checkGlobalAllocation(ctx sdk.Context) (err sdk.Error) {
-	if gp.globalAllocation == nil {
-		gp.globalAllocation, err = gp.globalManager.GetGlobalAllocation(ctx)
+	if err := gp.globalManager.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
 	}
-	return err
-}
-
-func (gp *GlobalProxy) checkConsumptionMeta(ctx sdk.Context) (err sdk.Error) {
-	if gp.consumptionMeta == nil {
-		gp.consumptionMeta, err = gp.globalManager.GetConsumptionMeta(ctx)
-	}
-	return err
+	return nil
 }

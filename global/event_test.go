@@ -19,25 +19,13 @@ func TestPostRewardEvent(t *testing.T) {
 	gm := NewGlobalManager(TestKVStoreKey)
 	ctx := getContext()
 
-	e1 := PostRewardEvent{
-		PostID: 20,
-	}
-	e2 := DonateRewardEvent{
-		DonateID: 20,
-	}
-
 	lst := HeightEventList{}
-	lst.Events = append(lst.Events, e1)
-	lst.Events = append(lst.Events, e2)
 
 	blockHeight := types.Height(100)
 	lstKey := HeightToEventListKey(blockHeight)
 
 	err := gm.SetHeightEventList(ctx, lstKey, &lst)
 	assert.Nil(t, err)
-
-	res := gm.ExecuteHeightEvents(ctx, lstKey)
-	assert.Nil(t, res)
 }
 
 func getContext() sdk.Context {

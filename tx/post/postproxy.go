@@ -134,9 +134,13 @@ func (p *PostProxy) AddComment(ctx sdk.Context, comment Comment) sdk.Error {
 }
 
 // add donation to post donation list
-func (p *PostProxy) AddDonation(ctx sdk.Context, donator acc.AccountKey, donation Donation) sdk.Error {
+func (p *PostProxy) AddDonation(ctx sdk.Context, donator acc.AccountKey, amount types.Coin) sdk.Error {
 	if err := p.UpdateLastActivity(ctx); err != nil {
 		return err
+	}
+	donation := Donation{
+		Amount:  amount,
+		Created: types.Height(ctx.BlockHeight()),
 	}
 	donations, _ := p.postManager.GetPostDonations(ctx, p.GetPostKey(), donator)
 	if donations == nil {
