@@ -39,6 +39,19 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey acc.AccountKey) bool 
 	return true
 }
 
+func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin) bool {
+	voter, getErr := vm.GetVoter(ctx, username)
+	if getErr != nil {
+		return false
+	}
+	//reject if the remaining coins are less than register fee
+	res := voter.Deposit.Minus(coin)
+	if !res.IsGTE(valRegisterFee) {
+		return false
+	}
+	return true
+}
+
 func (vm VoteManager) GetVoter(ctx sdk.Context, accKey acc.AccountKey) (*Voter, sdk.Error) {
 	store := ctx.KVStore(vm.key)
 	voterByte := store.Get(GetVoterKey(accKey))
@@ -78,6 +91,12 @@ func (vm VoteManager) RegisterVoter(ctx sdk.Context, username acc.AccountKey, co
 	return nil
 }
 
+func (vm VoteManager) DeleteVoter(ctx sdk.Context, username acc.AccountKey) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	store.Delete(GetVoterKey(username))
+	return nil
+}
+
 func (vm VoteManager) Deposit(ctx sdk.Context, username acc.AccountKey, coin types.Coin) sdk.Error {
 	voter, err := vm.GetVoter(ctx, username)
 	if err != nil {
@@ -90,12 +109,104 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username acc.AccountKey, coin typ
 	return nil
 }
 
+func (vm VoteManager) Withdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin) sdk.Error {
+	return nil
+}
+
+func (vm VoteManager) WithdrawAll(ctx sdk.Context, username acc.AccountKey) sdk.Error {
+	voter, getErr := vm.GetVoter(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	if err := vm.Withdraw(ctx, username, voter.Deposit); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (vm VoteManager) GetDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) (*Delegation, sdk.Error) {
+	store := ctx.KVStore(vm.key)
+	delegationByte := store.Get(GetDelegationKey(voter, delegator))
+	if delegationByte == nil {
+		return nil, ErrGetDelegation()
+	}
+	delegation := new(Delegation)
+	if err := vm.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
+		return nil, ErrDelegationUnmarshalError(err)
+	}
+	return delegation, nil
+}
+
+func (vm VoteManager) SetDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey, delegation *Delegation) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	delegationByte, err := vm.cdc.MarshalJSON(*delegation)
+	if err != nil {
+		return ErrDelegationMarshalError(err)
+	}
+	store.Set(GetDelegationKey(voter, delegator), delegationByte)
+	return nil
+}
+
+func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, coin types.Coin) sdk.Error {
+	delegation, getErr := vm.GetDelegation(ctx, voterName, delegatorName)
+	if getErr != nil {
+		return getErr
+	}
+
+	voter, getErr := vm.GetVoter(ctx, voterName)
+	if getErr != nil {
+		return getErr
+	}
+
+	voter.DelegatedPower = voter.DelegatedPower.Plus(coin)
+	delegation.Amount = delegation.Amount.Plus(coin)
+
+	if err := vm.SetDelegation(ctx, voterName, delegatorName, delegation); err != nil {
+		return err
+	}
+	if err := vm.SetVoter(ctx, voterName, voter); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (vm VoteManager) DeleteDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	store.Delete(GetDelegationKey(voter, delegator))
+	return nil
+}
+
+func (vm VoteManager) GetAllDelegators(ctx sdk.Context, username acc.AccountKey) ([]acc.AccountKey, sdk.Error) {
+	return nil, nil
+}
+
+func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey) sdk.Error {
+	voter, getErr := vm.GetVoter(ctx, voterName)
+	if getErr != nil {
+		return getErr
+	}
+	delegation, getErr := vm.GetDelegation(ctx, voterName, delegatorName)
+	if getErr != nil {
+		return getErr
+	}
+
+	voter.DelegatedPower = voter.DelegatedPower.Minus(delegation.Amount)
+	// TODO return coin
+	if err := vm.SetVoter(ctx, voterName, voter); err != nil {
+		return err
+	}
+	if err := vm.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetDelegatorPrefix(me acc.AccountKey) []byte {
 	return append(append(DelegatorSubstore, me...), types.KeySeparator...)
 }
 
 // "delegator substore" + "me(voter)" + "my delegator"
-func GetDelegatorKey(me acc.AccountKey, myDelegator acc.AccountKey) []byte {
+func GetDelegationKey(me acc.AccountKey, myDelegator acc.AccountKey) []byte {
 	return append(GetDelegatorPrefix(me), myDelegator...)
 }
 

@@ -32,12 +32,28 @@ func ErrGetVoter() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
+func ErrGetDelegation() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get delegation failed"))
+}
+
+func ErrSetDelegation() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set delegation failed"))
+}
+
 func ErrVoterMarshalError(err error) sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter marshal error: %s", err.Error()))
 }
 
 func ErrVoterUnmarshalError(err error) sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter unmarshal error: %s", err.Error()))
+}
+
+func ErrDelegationMarshalError(err error) sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Delegation marshal error: %s", err.Error()))
+}
+
+func ErrDelegationUnmarshalError(err error) sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Delegation unmarshal error: %s", err.Error()))
 }
 
 func ErrUsernameNotFound() sdk.Error {

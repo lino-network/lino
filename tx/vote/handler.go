@@ -87,12 +87,12 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, msg VoterRevokeMsg) sdk.Re
 	// TODO also a Validator
 	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
 	if getErr != nil {
-		return nil
+		return getErr.Result()
 	}
 
 	for _, delegator := range delegators {
 		if err := vm.ReturnCoinToDelegator(ctx, msg.Username, delegator); err != nil {
-			return err
+			return err.Result()
 		}
 	}
 
@@ -101,7 +101,7 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, msg VoterRevokeMsg) sdk.Re
 	}
 
 	if err := vm.DeleteVoter(ctx, msg.Username); err != nil {
-		return err
+		return err.Result()
 	}
 	return sdk.Result{}
 }
@@ -133,10 +133,10 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 // Handle RevokeDelegationMsg
 func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, msg RevokeDelegationMsg) sdk.Result {
 	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator); err != nil {
-		return err
+		return err.Result()
 	}
-	if err := vm.RemoveDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
-		return err
+	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
+		return err.Result()
 	}
 	return sdk.Result{}
 }

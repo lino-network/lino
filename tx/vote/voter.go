@@ -11,4 +11,9 @@ type Voter struct {
 	DelegatedPower types.Coin     `json:"delegated_power"`
 }
 
+type Delegation struct {
+	Delegator acc.AccountKey `json:"delegator"`
+	Amount    types.Coin     `json:"amount"`
+}
+
 var valRegisterFee = types.Coin{Amount: 100 * types.Decimals}
