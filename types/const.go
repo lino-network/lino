@@ -45,6 +45,10 @@ const (
 	CodeGlobalManagerError        sdk.CodeType = 601
 	CodeGlobalManagerGenesisError sdk.CodeType = 602
 
+	// Vote errors reserve 700 ~ 799
+	CodeVoteHandlerFailed sdk.CodeType = 700
+	CodeVoteManagerFailed sdk.CodeType = 701
+
 	// AccountKVStoreKey presents store which keeps account related value
 	AccountKVStoreKey = "account"
 	// PostKVStoreKey presents store which keeps post related value
@@ -65,6 +69,9 @@ const (
 
 	// ValidatorRouterName is used for routing in app
 	ValidatorRouterName = "validator"
+
+	// VoterRounterName is used for routing in app
+	VoteRouterName = "voter"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
