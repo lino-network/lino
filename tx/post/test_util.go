@@ -73,7 +73,7 @@ func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string)
 	return account
 }
 
-func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, username, postID string) *PostProxy {
+func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, username, postID string, redistributionRate sdk.Rat) *PostProxy {
 	createTestAccount(ctx, lam, username)
 	postInfo := PostInfo{
 		PostID:       postID,
@@ -85,6 +85,7 @@ func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, use
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
+		RedistributionSplitRate: redistributionRate,
 	}
 	post := NewPostProxy(postInfo.Author, postInfo.PostID, &pm)
 	post.CreatePost(ctx, &postInfo)

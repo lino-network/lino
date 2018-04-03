@@ -110,6 +110,24 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if err := account.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
+	sourcePost, err := post.GetRootSourcePost(ctx)
+	if err != nil {
+		return err.Result()
+	}
+	if sourcePost != nil {
+		redistributionSplitRate, err := sourcePost.GetRedistributionSplitRate(ctx)
+		if err != nil {
+			return err.Result()
+		}
+		sourceIncome := types.Coin{sdk.NewRat(coin.Amount).Mul(sdk.OneRat.Sub(redistributionSplitRate)).Evaluate()}
+		coin.Amount -= sourceIncome.Amount
+		if err := ProcessDonationFriction(ctx, msg.Username, sourceIncome, sourcePost, am, globalProxy); err != nil {
+			return err.Result()
+		}
+		if err := sourcePost.Apply(ctx); err != nil {
+			return err.Result()
+		}
+	}
 	if err := ProcessDonationFriction(ctx, msg.Username, coin, post, am, globalProxy); err != nil {
 		return err.Result()
 	}
@@ -129,6 +147,9 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 func ProcessDonationFriction(
 	ctx sdk.Context, consumer acc.AccountKey, coin types.Coin,
 	post *PostProxy, am acc.AccountManager, globalProxy *global.GlobalProxy) sdk.Error {
+	if coin.IsZero() {
+		return nil
+	}
 	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
 	if !authorAccount.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound()
