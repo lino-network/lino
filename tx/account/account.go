@@ -53,6 +53,12 @@ type FollowingMeta struct {
 	FolloweeName AccountKey   `json:"followee_name"`
 }
 
+// reward get from the inflation pool
+type RewardPool struct {
+	OriginalIncome types.Coin `json:"original_income"`
+	ActualReward   types.Coin `json:"actual_reward"`
+}
+
 // linoaccount encapsulates all basic struct
 type Account struct {
 	username       AccountKey      `json:"username"`
@@ -109,6 +115,9 @@ func (acc *Account) CreateAccount(ctx sdk.Context, accKey AccountKey, pubkey cry
 		LastActivity:   types.Height(ctx.BlockHeight()),
 		ActivityBurden: types.DefaultActivityBurden,
 	}
+	if err := acc.accountManager.SetRewardPool(ctx, acc.GetUsername(), &RewardPool{}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -136,7 +145,7 @@ func (acc *Account) MinusCoin(ctx sdk.Context, coin types.Coin) (err sdk.Error) 
 	return nil
 }
 
-func (acc *Account) GetUsername(ctx sdk.Context) AccountKey {
+func (acc *Account) GetUsername() AccountKey {
 	return acc.username
 }
 
@@ -195,6 +204,19 @@ func (acc *Account) IncreaseSequenceByOne(ctx sdk.Context) sdk.Error {
 	}
 	acc.accountMeta.Sequence += 1
 	acc.writeMetaFlag = true
+	return nil
+}
+
+func (acc *Account) AddIncomeAndReward(ctx sdk.Context, originIncome, actualReward types.Coin) sdk.Error {
+	rewardPool, err := acc.accountManager.GetRewardPool(ctx, acc.GetUsername())
+	if err != nil {
+		return err
+	}
+	rewardPool.OriginalIncome.Amount += originIncome.Amount
+	rewardPool.ActualReward.Amount += actualReward.Amount
+	if err := acc.accountManager.SetRewardPool(ctx, acc.GetUsername(), rewardPool); err != nil {
+		return err
+	}
 	return nil
 }
 

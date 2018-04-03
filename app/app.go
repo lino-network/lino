@@ -47,6 +47,7 @@ type LinoBlockchain struct {
 	globalManager  global.GlobalManager
 
 	preValidators []val.Validator
+	lastBlockTime int64
 }
 
 func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
@@ -73,6 +74,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
+	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
@@ -204,10 +206,10 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccou
 			panic(err)
 		}
 
-		if addErr := lb.valManager.RegisterValidator(ctx, account.GetUsername(ctx), ga.ValPubKey.Bytes(), deposit); addErr != nil {
+		if addErr := lb.valManager.RegisterValidator(ctx, account.GetUsername(), ga.ValPubKey.Bytes(), deposit); addErr != nil {
 			panic(addErr)
 		}
-		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, account.GetUsername(ctx)); joinErr != nil {
+		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, account.GetUsername()); joinErr != nil {
 			panic(joinErr)
 		}
 		if err := account.Apply(ctx); err != nil {
@@ -218,6 +220,9 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccou
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	if lb.lastBlockTime == 0 {
+		lb.lastBlockTime = ctx.BlockHeader().Time
+	}
 	var err sdk.Error
 	lb.preValidators, err = lb.valManager.GetOncallValList(ctx)
 	if err != nil {
@@ -237,11 +242,17 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	heightEvents, _ := lb.globalManager.GetHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
 	if heightEvents != nil {
 		lb.executeEvents(ctx, heightEvents.Events)
+		lb.globalManager.RemoveHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
 	}
-	timeEvents, _ := lb.globalManager.GetTimeEventList(ctx, global.UnixTimeToEventListKey(ctx.BlockHeight()))
-	if timeEvents != nil {
-		lb.executeEvents(ctx, timeEvents.Events)
+	currentTime := ctx.BlockHeader().Time
+	for i := lb.lastBlockTime; i < currentTime; i += 1 {
+		timeEvents, _ := lb.globalManager.GetTimeEventList(ctx, global.UnixTimeToEventListKey(i))
+		if timeEvents != nil {
+			lb.executeEvents(ctx, timeEvents.Events)
+			lb.globalManager.RemoveTimeEventList(ctx, global.UnixTimeToEventListKey(i))
+		}
 	}
+	lb.lastBlockTime = ctx.BlockHeader().Time
 	return lb.updateValidators(ctx)
 }
 

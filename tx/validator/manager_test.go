@@ -58,8 +58,8 @@ func TestAbsentValidator(t *testing.T) {
 	assert.Equal(t, 17, len(validatorList2.AllValidators))
 
 	for _, idx := range absentList {
-		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(ctx), validatorList2.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(ctx), validatorList2.AllValidators))
+		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(), validatorList2.OncallValidators))
+		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(), validatorList2.AllValidators))
 	}
 
 	// byzantine
@@ -77,8 +77,8 @@ func TestAbsentValidator(t *testing.T) {
 	assert.Equal(t, 14, len(validatorList3.AllValidators))
 
 	for _, idx := range byzantineList {
-		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(ctx), validatorList3.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(ctx), validatorList3.AllValidators))
+		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(), validatorList3.OncallValidators))
+		assert.Equal(t, -1, FindAccountInList(users[idx].GetUsername(), validatorList3.AllValidators))
 	}
 }
 

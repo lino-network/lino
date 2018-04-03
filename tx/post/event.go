@@ -16,6 +16,10 @@ type RewardEvent struct {
 
 func (event RewardEvent) Execute(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	globalProxy := global.NewGlobalProxy(&gm)
+	reward, err := globalProxy.GetRewardAndPopFromWindow(ctx, event.Amount)
+	if err != nil {
+		return err
+	}
 	authorAccount := acc.NewProxyAccount(event.PostAuthor, &am)
 	if !authorAccount.IsAccountExist(ctx) {
 		return acc.ErrUsernameNotFound()
@@ -24,14 +28,10 @@ func (event RewardEvent) Execute(ctx sdk.Context, pm PostManager, am acc.Account
 	if !post.IsPostExist(ctx) {
 		return ErrDonatePostDoesntExist()
 	}
-	reward, err := globalProxy.GetRewardAndPopFromWindow(ctx, event.Amount)
-	if err != nil {
-		return err
-	}
 	if err := post.AddDonation(ctx, event.Consumer, reward); err != nil {
 		return err
 	}
-	if err := authorAccount.AddCoin(ctx, reward); err != nil {
+	if err := authorAccount.AddIncomeAndReward(ctx, event.Amount, reward); err != nil {
 		return err
 	}
 	if err := authorAccount.Apply(ctx); err != nil {

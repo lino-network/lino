@@ -148,9 +148,15 @@ func (gm GlobalManager) SetTimeEventList(ctx sdk.Context, key EventListKey, lst 
 	return nil
 }
 
-func (gm GlobalManager) removeHeightEventList(ctx sdk.Context, key EventListKey) sdk.Error {
+func (gm GlobalManager) RemoveHeightEventList(ctx sdk.Context, key EventListKey) sdk.Error {
 	store := ctx.KVStore(gm.key)
 	store.Delete(GetHeightEventListKey(key))
+	return nil
+}
+
+func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, key EventListKey) sdk.Error {
+	store := ctx.KVStore(gm.key)
+	store.Delete(GetTimeEventListKey(key))
 	return nil
 }
 
