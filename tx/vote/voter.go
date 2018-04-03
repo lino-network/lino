@@ -16,4 +16,4 @@ type Delegation struct {
 	Amount    types.Coin     `json:"amount"`
 }
 
-var valRegisterFee = types.Coin{Amount: 100 * types.Decimals}
+var valRegisterFee = types.Coin{Amount: 1000 * types.Decimals}

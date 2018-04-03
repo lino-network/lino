@@ -21,6 +21,7 @@ import (
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
+	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 )
 
@@ -123,6 +124,12 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{val.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
 		oldwire.ConcreteType{val.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
 		oldwire.ConcreteType{val.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
+	)
+
+	const returnCoinEvent = 0x1
+	var _ = oldwire.RegisterInterface(
+		struct{ global.Event }{},
+		oldwire.ConcreteType{vote.ReturnCoinEvent{}, returnCoinEvent},
 	)
 
 	// TODO(Lino): Register msg type and model.

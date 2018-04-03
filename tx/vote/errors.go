@@ -13,11 +13,11 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	case types.CodeInvalidUsername:
 		return "Invalid username format"
 	case types.CodeAccRegisterFailed:
-		return "Validator register failed"
-	case types.CodeValidatorHandlerFailed:
-		return "Validator handler failed"
-	case types.CodeValidatorManagerFailed:
-		return "Validator manager failed"
+		return "Voter register failed"
+	case types.CodeVoteHandlerFailed:
+		return "Vote handler failed"
+	case types.CodeVoteManagerFailed:
+		return "Vote manager failed"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -25,55 +25,55 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 
 // Error constructors
 func ErrSetVoter() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set voter failed"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Set voter failed"))
 }
 
 func ErrGetVoter() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get voter failed"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
 func ErrGetDelegation() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get delegation failed"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
 }
 
 func ErrSetDelegation() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set delegation failed"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Set delegation failed"))
 }
 
 func ErrVoterMarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter marshal error: %s", err.Error()))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Voter marshal error: %s", err.Error()))
 }
 
 func ErrVoterUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter unmarshal error: %s", err.Error()))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Voter unmarshal error: %s", err.Error()))
 }
 
 func ErrDelegationMarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Delegation marshal error: %s", err.Error()))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Delegation marshal error: %s", err.Error()))
 }
 
 func ErrDelegationUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Delegation unmarshal error: %s", err.Error()))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Delegation unmarshal error: %s", err.Error()))
 }
 
 func ErrUsernameNotFound() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Username not found"))
 }
 
 func ErrIllegalWithdraw() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Illegal withdraw"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Illegal withdraw"))
 }
 
 func ErrRegisterFeeNotEnough() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Register fee not enough"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Register fee not enough"))
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return newError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalida Username"))
 }
 
 func ErrAccountCoinNotEnough() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account bank's coins are not enough"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Account bank's coins are not enough"))
 }
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {

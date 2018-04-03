@@ -45,6 +45,10 @@ const (
 	CodeGlobalManagerError        sdk.CodeType = 601
 	CodeGlobalManagerGenesisError sdk.CodeType = 602
 
+	// Vote errors reserve 700 ~ 799
+	CodeVoteHandlerFailed sdk.CodeType = 700
+	CodeVoteManagerFailed sdk.CodeType = 701
+
 	// AccountKVStoreKey presents store which keeps account related value
 	AccountKVStoreKey = "account"
 	// PostKVStoreKey presents store which keeps post related value

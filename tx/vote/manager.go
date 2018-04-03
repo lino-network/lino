@@ -6,11 +6,19 @@ import (
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
+	oldwire "github.com/tendermint/go-wire"
 )
 
 var (
 	DelegatorSubstore = []byte{0x00}
 	VoterSubstore     = []byte{0x01}
+)
+
+const returnCoinEvent = 0x1
+
+var _ = oldwire.RegisterInterface(
+	struct{ global.Event }{},
+	oldwire.ConcreteType{ReturnCoinEvent{}, returnCoinEvent},
 )
 
 type VoteManager struct {
@@ -40,6 +48,14 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey acc.AccountKey) bool 
 	return true
 }
 
+func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) bool {
+	store := ctx.KVStore(vm.key)
+	if infoByte := store.Get(GetDelegationKey(voter, delegator)); infoByte == nil {
+		return false
+	}
+	return true
+}
+
 func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin) bool {
 	voter, getErr := vm.GetVoter(ctx, username)
 	if getErr != nil {
@@ -47,10 +63,7 @@ func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username acc.AccountKey, 
 	}
 	//reject if the remaining coins are less than register fee
 	res := voter.Deposit.Minus(coin)
-	if !res.IsGTE(valRegisterFee) {
-		return false
-	}
-	return true
+	return res.IsGTE(valRegisterFee)
 }
 
 func (vm VoteManager) GetVoter(ctx sdk.Context, accKey acc.AccountKey) (*Voter, sdk.Error) {
@@ -162,9 +175,18 @@ func (vm VoteManager) SetDelegation(ctx sdk.Context, voter acc.AccountKey, deleg
 }
 
 func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, coin types.Coin) sdk.Error {
-	delegation, getErr := vm.GetDelegation(ctx, voterName, delegatorName)
-	if getErr != nil {
-		return getErr
+	var delegation *Delegation
+	var getErr sdk.Error
+
+	if !vm.IsDelegationExist(ctx, voterName, delegatorName) {
+		delegation = &Delegation{
+			Delegator: delegatorName,
+		}
+	} else {
+		delegation, getErr = vm.GetDelegation(ctx, voterName, delegatorName)
+		if getErr != nil {
+			return getErr
+		}
 	}
 
 	voter, getErr := vm.GetVoter(ctx, voterName)
@@ -190,8 +212,23 @@ func (vm VoteManager) DeleteDelegation(ctx sdk.Context, voter acc.AccountKey, de
 	return nil
 }
 
-func (vm VoteManager) GetAllDelegators(ctx sdk.Context, username acc.AccountKey) ([]acc.AccountKey, sdk.Error) {
-	return nil, nil
+func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName acc.AccountKey) ([]acc.AccountKey, sdk.Error) {
+	store := ctx.KVStore(vm.key)
+	iterator := store.Iterator(subspace(GetDelegatorPrefix(voterName)))
+
+	var delegators []acc.AccountKey
+
+	for ; iterator.Valid(); iterator.Next() {
+		delegationBytes := iterator.Value()
+		var delegation Delegation
+		err := vm.cdc.UnmarshalJSON(delegationBytes, &delegation)
+		if err != nil {
+			return nil, ErrDelegationUnmarshalError(err)
+		}
+		delegators = append(delegators, delegation.Delegator)
+	}
+	iterator.Close()
+	return delegators, nil
 }
 
 func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, gm global.GlobalProxy) sdk.Error {
@@ -229,6 +266,15 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.Accoun
 	return nil
 }
 
+func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) (types.Coin, sdk.Error) {
+	voter, getErr := vm.GetVoter(ctx, voterName)
+	if getErr != nil {
+		return types.Coin{}, getErr
+	}
+	res := voter.Deposit.Plus(voter.DelegatedPower)
+	return res, nil
+}
+
 func GetDelegatorPrefix(me acc.AccountKey) []byte {
 	return append(append(DelegatorSubstore, me...), types.KeySeparator...)
 }
@@ -240,4 +286,11 @@ func GetDelegationKey(me acc.AccountKey, myDelegator acc.AccountKey) []byte {
 
 func GetVoterKey(me acc.AccountKey) []byte {
 	return append(VoterSubstore, me...)
+}
+
+func subspace(prefix []byte) (start, end []byte) {
+	end = make([]byte, len(prefix))
+	copy(end, prefix)
+	end[len(end)-1]++
+	return prefix, end
 }

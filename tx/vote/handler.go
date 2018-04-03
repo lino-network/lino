@@ -73,7 +73,7 @@ func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, m
 		return err.Result()
 	}
 
-	if vm.IsLegalWithdraw(ctx, msg.Username, coin) == false {
+	if !vm.IsLegalWithdraw(ctx, msg.Username, coin) {
 		return ErrIllegalWithdraw().Result()
 	}
 
