@@ -1,4 +1,4 @@
-package validator
+package vote
 
 import (
 	"fmt"
@@ -24,40 +24,20 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 }
 
 // Error constructors
-func ErrSetValidator() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator failed"))
+func ErrSetVoter() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set voter failed"))
 }
 
-func ErrGetValidator() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator failed"))
+func ErrGetVoter() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
-func ErrSetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator list failed"))
+func ErrVoterMarshalError(err error) sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter marshal error: %s", err.Error()))
 }
 
-func ErrGetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator list failed"))
-}
-
-func ErrValidatorMarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
-}
-
-func ErrValidatorUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator unmarshal error: %s", err.Error()))
-}
-
-func ErrAbsentValidatorNotCorrect() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("absent validator index out of range"))
-}
-
-func ErrAlreayInTheList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account has alreay in the list"))
-}
-
-func ErrNotInTheList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account not in the list"))
+func ErrVoterUnmarshalError(err error) sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Voter unmarshal error: %s", err.Error()))
 }
 
 func ErrUsernameNotFound() sdk.Error {

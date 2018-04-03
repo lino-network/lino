@@ -66,6 +66,9 @@ const (
 	// ValidatorRouterName is used for routing in app
 	ValidatorRouterName = "validator"
 
+	// VoterRounterName is used for routing in app
+	VoteRouterName = "voter"
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 

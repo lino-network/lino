@@ -13,7 +13,6 @@ import (
 
 var ValidatorAccountPrefix = []byte("ValidatorAccountInfo/")
 var ValidatorListPrefixWithKey = []byte("ValidatorList/ValidatorListKey")
-var ValidatorUpdateListPrefixWithKey = []byte("ValidatorList/ValidatorUpdates")
 
 // Validator Manager implements types.AccountManager
 type ValidatorManager struct {
@@ -390,10 +389,6 @@ func GetValidatorKey(accKey acc.AccountKey) []byte {
 
 func GetValidatorListKey() []byte {
 	return ValidatorListPrefixWithKey
-}
-
-func GetValidatorUpdatesKey() []byte {
-	return ValidatorUpdateListPrefixWithKey
 }
 
 func FindAccountInList(me acc.AccountKey, lst []acc.AccountKey) int {
