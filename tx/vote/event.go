@@ -12,6 +12,10 @@ type ReturnCoinEvent struct {
 	Amount   types.Coin     `json:"amount"`
 }
 
+type DecideProposalEvent struct {
+	ProposalID ProposalKey `json:"proposal_id"`
+}
+
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	account := acc.NewProxyAccount(event.Username, &am)
 	if !account.IsAccountExist(ctx) {
@@ -27,3 +31,8 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 
 	return nil
 }
+
+// func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+//   votes, getErr := vm
+// 	return nil
+// }

@@ -1,6 +1,8 @@
 package vote
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/global"
@@ -45,6 +47,14 @@ func NewVoteMananger(key sdk.StoreKey) VoteManager {
 func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey acc.AccountKey) bool {
 	store := ctx.KVStore(vm.key)
 	if infoByte := store.Get(GetVoterKey(accKey)); infoByte == nil {
+		return false
+	}
+	return true
+}
+
+func (vm VoteManager) IsProposalExist(ctx sdk.Context, proposalID ProposalKey) bool {
+	store := ctx.KVStore(vm.key)
+	if infoByte := store.Get(GetProposalKey(proposalID)); infoByte == nil {
 		return false
 	}
 	return true
@@ -129,6 +139,29 @@ func (vm VoteManager) GetProposal(ctx sdk.Context, proposalID ProposalKey) (*Cha
 }
 
 // onle support change parameter proposal now
+func (vm VoteManager) AddProposal(ctx sdk.Context, des *ChangeParameterDescription) sdk.Error {
+	newID, getErr := vm.GetNextProposalID()
+	if getErr != nil {
+		return getErr
+	}
+
+	proposal := Proposal{
+		ProposalID:   newID,
+		AgreeVote:    types.Coin{Amount: 0},
+		DisagreeVote: types.Coin{Amount: 0},
+	}
+
+	changeParameterProposal := &ChangeParameterProposal{
+		Proposal:                   proposal,
+		ChangeParameterDescription: *des,
+	}
+	if err := vm.SetProposal(ctx, newID, changeParameterProposal); err != nil {
+		return err
+	}
+	return nil
+}
+
+// onle support change parameter proposal now
 func (vm VoteManager) SetProposal(ctx sdk.Context, proposalID ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
 	store := ctx.KVStore(vm.key)
 	proposalByte, err := vm.cdc.MarshalJSON(*proposal)
@@ -136,6 +169,18 @@ func (vm VoteManager) SetProposal(ctx sdk.Context, proposalID ProposalKey, propo
 		return ErrProposalMarshalError(err)
 	}
 	store.Set(GetProposalKey(proposalID), proposalByte)
+	return nil
+}
+
+func (vm VoteManager) DeleteProposal(ctx sdk.Context, proposalID ProposalKey) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	store.Delete(GetProposalKey(proposalID))
+	return nil
+}
+
+func (vm VoteManager) DeleteVote(ctx sdk.Context, proposalID ProposalKey, voter acc.AccountKey) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	store.Delete(GetVoteKey(proposalID, voter))
 	return nil
 }
 
@@ -342,6 +387,13 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) 
 	}
 	res := voter.Deposit.Plus(voter.DelegatedPower)
 	return res, nil
+}
+
+func (vm VoteManager) GetNextProposalID() (ProposalKey, sdk.Error) {
+	str := nextProposalID.String()
+	one := big.NewInt(1)
+	nextProposalID.Add(nextProposalID, one)
+	return ProposalKey(str), nil
 }
 
 func GetDelegatorPrefix(me acc.AccountKey) []byte {

@@ -1,6 +1,8 @@
 package vote
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
 )
@@ -26,3 +28,6 @@ type ChangeParameterProposal struct {
 	Proposal
 	ChangeParameterDescription
 }
+
+var nextProposalID = big.NewInt(0)
+var ProposalDecideHr = int64(7 * 24)

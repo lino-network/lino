@@ -12,7 +12,7 @@ import (
 
 type VoteMsg struct {
 	Voter      acc.AccountKey `json:"voter"`
-	ProposalID int64          `json:"proposal_id"`
+	ProposalID ProposalKey    `json:"proposal_id"`
 	Result     bool           `json:"result"`
 }
 
@@ -270,7 +270,7 @@ func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
 	return VoteMsg{
 		Voter:      acc.AccountKey(voter),
-		ProposalID: proposalID,
+		ProposalID: ProposalKey(proposalID),
 		Result:     result,
 	}
 }
