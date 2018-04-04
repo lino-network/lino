@@ -10,6 +10,17 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+type VoteMsg struct {
+	Voter      acc.AccountKey `json:"voter"`
+	ProposalID int64          `json:"proposal_id"`
+	Result     bool           `json:"result"`
+}
+
+type CreateProposalMsg struct {
+	Creator acc.AccountKey `json:"creator"`
+	ChangeParameterDescription
+}
+
 type VoterDepositMsg struct {
 	Username acc.AccountKey `json:"username"`
 	Deposit  types.LNO      `json:"deposit"`
@@ -251,4 +262,85 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 
 func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Delegator)}
+}
+
+//----------------------------------------
+// VoteMsg Msg Implementations
+
+func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
+	return VoteMsg{
+		Voter:      acc.AccountKey(voter),
+		ProposalID: proposalID,
+		Result:     result,
+	}
+}
+
+func (msg VoteMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+
+func (msg VoteMsg) ValidateBasic() sdk.Error {
+	if len(msg.Voter) < types.MinimumUsernameLength ||
+		len(msg.Voter) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	return nil
+}
+
+func (msg VoteMsg) String() string {
+	return fmt.Sprintf("VoterMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
+}
+
+func (msg VoteMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg VoteMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg VoteMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Voter)}
+}
+
+//----------------------------------------
+// CreateProposalMsg Msg Implementations
+
+func NewCreateProposalMsgMsg(voter string, para ChangeParameterDescription) CreateProposalMsg {
+	return CreateProposalMsg{
+		Creator:                    acc.AccountKey(voter),
+		ChangeParameterDescription: para,
+	}
+}
+
+func (msg CreateProposalMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+
+func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
+	if len(msg.Creator) < types.MinimumUsernameLength ||
+		len(msg.Creator) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	return nil
+}
+
+func (msg CreateProposalMsg) String() string {
+	return fmt.Sprintf("CreateProposalMsg{Creator:%v}", msg.Creator)
+}
+
+func (msg CreateProposalMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg CreateProposalMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg CreateProposalMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Creator)}
 }

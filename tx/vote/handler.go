@@ -23,6 +23,10 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalProxy) sd
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
+		case VoteMsg:
+			return handleVoteMsg(ctx, vm, gm, msg)
+		case CreateProposalMsg:
+			return handleCreateProposalMsg(ctx, vm, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -139,5 +143,15 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
 		return err.Result()
 	}
+	return sdk.Result{}
+}
+
+// Handle VoteMsg
+func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoteMsg) sdk.Result {
+	return sdk.Result{}
+}
+
+// Handle CreateProposalMsg
+func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg CreateProposalMsg) sdk.Result {
 	return sdk.Result{}
 }
