@@ -33,6 +33,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 }
 
 func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+	// update the proposal list
 	lst, getErr := vm.GetProposalList(ctx)
 	if getErr != nil {
 		return getErr
@@ -46,6 +47,7 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 		return setErr
 	}
 
+	// get all votes to calculate the voting result
 	votes, getErr := vm.GetAllVotes(ctx, curID)
 	if getErr != nil {
 		return getErr
@@ -66,6 +68,8 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 		} else {
 			proposal.DisagreeVote = proposal.DisagreeVote.Plus(voterPower)
 		}
+		// delete this vote
+		vm.DeleteVote(ctx, curID, vote.Voter)
 	}
 
 	if err := vm.SetProposal(ctx, curID, proposal); err != nil {
@@ -77,7 +81,5 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 	}
 
 	// change parameter
-
-	// delete all votes
 	return nil
 }

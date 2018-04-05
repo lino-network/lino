@@ -34,7 +34,7 @@ type ProposalList struct {
 	PastProposal    []ProposalKey `json:"past_proposal"`
 }
 
-var nextProposalID = 0
+var nextProposalID = int64(0)
 var ProposalDecideHr = int64(7 * 24)
 var CoinReturnIntervalHr = int64(7 * 24)
 var CoinReturnTimes = int64(7)

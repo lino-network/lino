@@ -4,6 +4,7 @@ package vote
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
@@ -270,7 +271,7 @@ func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
 	return VoteMsg{
 		Voter:      acc.AccountKey(voter),
-		ProposalID: ProposalKey(proposalID),
+		ProposalID: ProposalKey(strconv.FormatInt(proposalID, 10)),
 		Result:     result,
 	}
 }

@@ -1,6 +1,8 @@
 package vote
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/global"
@@ -172,10 +174,10 @@ func (vm VoteManager) GetProposal(ctx sdk.Context, proposalID ProposalKey) (*Cha
 }
 
 // onle support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *ChangeParameterDescription) (ProposalKey, sdk.Error) {
+func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *ChangeParameterDescription) sdk.Error {
 	newID, getErr := vm.GetNextProposalID()
 	if getErr != nil {
-		return newID, getErr
+		return getErr
 	}
 
 	proposal := Proposal{
@@ -190,18 +192,19 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *
 		ChangeParameterDescription: *des,
 	}
 	if err := vm.SetProposal(ctx, newID, changeParameterProposal); err != nil {
-		return newID, err
+		return err
 	}
 
 	lst, getErr := vm.GetProposalList(ctx)
 	if getErr != nil {
-		return newID, getErr
+		return getErr
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
 	if err := vm.SetProposalList(ctx, lst); err != nil {
-		return newID, err
+		return err
 	}
-	return newID, nil
+
+	return nil
 }
 
 // onle support change parameter proposal now
@@ -450,7 +453,7 @@ func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.Globa
 
 func (vm VoteManager) GetNextProposalID() (ProposalKey, sdk.Error) {
 	nextProposalID += 1
-	return ProposalKey(nextProposalID), nil
+	return ProposalKey(strconv.FormatInt(nextProposalID, 10)), nil
 }
 
 func GetDelegatorPrefix(me acc.AccountKey) []byte {

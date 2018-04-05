@@ -1,6 +1,7 @@
 package vote
 
 import (
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +23,7 @@ var (
 	c100  = types.Coin{100 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}
 	c400  = types.Coin{400 * types.Decimals}
+	c600  = types.Coin{600 * types.Decimals}
 	c1000 = types.Coin{1000 * types.Decimals}
 	c1200 = types.Coin{1200 * types.Decimals}
 	c1600 = types.Coin{1600 * types.Decimals}
@@ -30,6 +32,7 @@ var (
 	c2600 = types.Coin{2600 * types.Decimals}
 	c3200 = types.Coin{3200 * types.Decimals}
 	c3600 = types.Coin{3600 * types.Decimals}
+	c4600 = types.Coin{4600 * types.Decimals}
 )
 
 func TestVoterDepositBasic(t *testing.T) {
@@ -225,21 +228,33 @@ func TestCreateProposal(t *testing.T) {
 	para := ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
+	proposalID1 := ProposalKey(strconv.FormatInt(int64(1), 10))
+	proposalID2 := ProposalKey(strconv.FormatInt(int64(2), 10))
+
 	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c3600)
+	acc1.AddCoin(ctx, c4600)
 	acc1.Apply(ctx)
 
 	// let user1 create a proposal
 	msg := NewCreateProposalMsg("user1", para)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
+	result2 := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, result2)
 
-	proposal, _ := vm.GetProposal(ctx, ProposalKey(1))
+	proposal, _ := vm.GetProposal(ctx, proposalID1)
 	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
 
 	// check use1's money has been reduced
 	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(c1600))
+	assert.Equal(t, true, acc1Balance.IsEqual(c600))
+
+	// check proposal list is correct
+	lst, _ := vm.GetProposalList(ctx)
+	assert.Equal(t, 2, len(lst.OngoingProposal))
+	assert.Equal(t, proposalID1, lst.OngoingProposal[0])
+	assert.Equal(t, proposalID2, lst.OngoingProposal[1])
+
 }
 
 func TestVoteBasic(t *testing.T) {
@@ -253,6 +268,7 @@ func TestVoteBasic(t *testing.T) {
 	para := ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
+	proposalID := int64(3)
 	acc1 := createTestAccount(ctx, lam, "user1")
 	acc1.AddCoin(ctx, c2000)
 	acc1.Apply(ctx)
@@ -270,7 +286,7 @@ func TestVoteBasic(t *testing.T) {
 	handler(ctx, msg)
 
 	// must become a voter before voting
-	voteMsg := NewVoteMsg("user2", 2, true)
+	voteMsg := NewVoteMsg("user2", proposalID, true)
 	result2 := handler(ctx, voteMsg)
 	assert.Equal(t, ErrGetVoter().Result(), result2)
 
@@ -285,17 +301,17 @@ func TestVoteBasic(t *testing.T) {
 	assert.Equal(t, ErrGetProposal().Result(), voteRes)
 
 	// successfully vote
-	voteMsg2 := NewVoteMsg("user2", 2, true)
-	voteMsg3 := NewVoteMsg("user3", 2, true)
+	voteMsg2 := NewVoteMsg("user2", proposalID, true)
+	voteMsg3 := NewVoteMsg("user3", proposalID, true)
 	handler(ctx, voteMsg2)
 	handler(ctx, voteMsg3)
 
 	// Check vote is correct
-	vote, _ := vm.GetVote(ctx, ProposalKey(2), "user2")
+	vote, _ := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	assert.Equal(t, true, vote.Result)
 	assert.Equal(t, acc.AccountKey("user2"), vote.Voter)
 
-	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(2))
+	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)))
 	assert.Equal(t, acc.AccountKey("user3"), voteList[1].Voter)
 
 }
