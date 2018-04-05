@@ -13,7 +13,7 @@ type ReturnCoinEvent struct {
 }
 
 type DecideProposalEvent struct {
-	ProposalID ProposalKey `json:"proposal_id"`
+	//ProposalID ProposalKey `json:"proposal_id"`
 }
 
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
@@ -33,12 +33,25 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 }
 
 func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-	votes, getErr := vm.GetAllVotes(ctx, event.ProposalID)
+	lst, getErr := vm.GetProposalList(ctx)
 	if getErr != nil {
 		return getErr
 	}
 
-	proposal, err := vm.GetProposal(ctx, event.ProposalID)
+	curID := lst.OngoingProposal[0]
+	lst.OngoingProposal = lst.OngoingProposal[1:]
+	lst.PastProposal = append(lst.PastProposal, curID)
+
+	if setErr := vm.SetProposalList(ctx, lst); setErr != nil {
+		return setErr
+	}
+
+	votes, getErr := vm.GetAllVotes(ctx, curID)
+	if getErr != nil {
+		return getErr
+	}
+
+	proposal, err := vm.GetProposal(ctx, curID)
 	if err != nil {
 		return err
 	}
@@ -55,7 +68,7 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 		}
 	}
 
-	if err := vm.SetProposal(ctx, event.ProposalID, proposal); err != nil {
+	if err := vm.SetProposal(ctx, curID, proposal); err != nil {
 		return err
 	}
 	// majority disagree this proposal

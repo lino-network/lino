@@ -179,16 +179,12 @@ func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountMana
 		return err.Result()
 	}
 
-	proposalID, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription)
+	_, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription)
 	if addErr != nil {
 		return addErr.Result()
 	}
-
-	// set a time event to decide the proposal in 7 days
-	event := DecideProposalEvent{
-		ProposalID: proposalID,
-	}
-	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(ProposalDecideHr*3600), event); err != nil {
+	//  set a time event to decide the proposal in 7 days
+	if err := vm.CreateDecideProposalEvent(ctx, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

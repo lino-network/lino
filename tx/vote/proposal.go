@@ -29,5 +29,12 @@ type ChangeParameterProposal struct {
 	ChangeParameterDescription
 }
 
+type ProposalList struct {
+	OngoingProposal []ProposalKey `json:"ongoing_proposal"`
+	PastProposal    []ProposalKey `json:"past_proposal"`
+}
+
 var nextProposalID = 0
 var ProposalDecideHr = int64(7 * 24)
+var CoinReturnIntervalHr = int64(7 * 24)
+var CoinReturnTimes = int64(7)

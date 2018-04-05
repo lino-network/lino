@@ -192,6 +192,11 @@ func TestWithdrawBasic(t *testing.T) {
 	acc1.AddCoin(ctx, c3600)
 	acc1.Apply(ctx)
 
+	// withdraw will fail if hasn't registed as voter
+	illegalWithdrawMsg := NewVoterWithdrawMsg("user1", l1600)
+	res := handler(ctx, illegalWithdrawMsg)
+	assert.Equal(t, ErrIllegalWithdraw().Result(), res)
+
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
 	handler(ctx, msg)
@@ -214,6 +219,7 @@ func TestCreateProposal(t *testing.T) {
 	gm := newGlobalProxy()
 	ctx := getContext()
 	handler := NewHandler(vm, lam, gm)
+	vm.InitGenesis(ctx)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
 	para := ChangeParameterDescription{
@@ -255,6 +261,10 @@ func TestVoteBasic(t *testing.T) {
 	acc2.AddCoin(ctx, c2000)
 	acc2.Apply(ctx)
 
+	acc3 := createTestAccount(ctx, lam, "user3")
+	acc3.AddCoin(ctx, c2000)
+	acc3.Apply(ctx)
+
 	// let user1 create a proposal
 	msg := NewCreateProposalMsg("user1", para)
 	handler(ctx, msg)
@@ -265,11 +275,27 @@ func TestVoteBasic(t *testing.T) {
 	assert.Equal(t, ErrGetVoter().Result(), result2)
 
 	depositMsg := NewVoterDepositMsg("user2", l1000)
+	depositMsg2 := NewVoterDepositMsg("user3", l2000)
 	handler(ctx, depositMsg)
+	handler(ctx, depositMsg2)
 
-	// Now user1 can vote
+	// Now user2 can vote, vote on a non exist proposal
+	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
+	voteRes := handler(ctx, invalidaVoteMsg)
+	assert.Equal(t, ErrGetProposal().Result(), voteRes)
+
+	// successfully vote
 	voteMsg2 := NewVoteMsg("user2", 2, true)
-	result3 := handler(ctx, voteMsg2)
-	assert.Equal(t, sdk.Result{}, result3)
+	voteMsg3 := NewVoteMsg("user3", 2, true)
+	handler(ctx, voteMsg2)
+	handler(ctx, voteMsg3)
+
+	// Check vote is correct
+	vote, _ := vm.GetVote(ctx, ProposalKey(2), "user2")
+	assert.Equal(t, true, vote.Result)
+	assert.Equal(t, acc.AccountKey("user2"), vote.Voter)
+
+	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(2))
+	assert.Equal(t, acc.AccountKey("user3"), voteList[1].Voter)
 
 }

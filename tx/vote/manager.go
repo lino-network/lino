@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	DelegatorSubstore = []byte{0x00}
-	VoterSubstore     = []byte{0x01}
-	ProposalSubstore  = []byte{0x02}
-	VoteSubstore      = []byte{0x03}
+	DelegatorSubstore    = []byte{0x00}
+	VoterSubstore        = []byte{0x01}
+	ProposalSubstore     = []byte{0x02}
+	VoteSubstore         = []byte{0x03}
+	ProposalListSubStore = []byte("ProposalList/ProposalListKey")
 )
 
 const returnCoinEvent = 0x1
@@ -42,6 +43,15 @@ func NewVoteMananger(key sdk.StoreKey) VoteManager {
 	}
 
 	return vm
+}
+
+func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
+	lst := &ProposalList{}
+
+	if err := vm.SetProposalList(ctx, lst); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey acc.AccountKey) bool {
@@ -108,7 +118,7 @@ func (vm VoteManager) GetVote(ctx sdk.Context, proposalID ProposalKey, voter acc
 		return nil, ErrGetVote()
 	}
 	vote := new(Vote)
-	if err := vm.cdc.UnmarshalJSON(voteByte, voter); err != nil {
+	if err := vm.cdc.UnmarshalJSON(voteByte, vote); err != nil {
 		return nil, ErrVoteUnmarshalError(err)
 	}
 	return vote, nil
@@ -121,6 +131,29 @@ func (vm VoteManager) SetVote(ctx sdk.Context, proposalID ProposalKey, voter acc
 		return ErrVoteMarshalError(err)
 	}
 	store.Set(GetVoteKey(proposalID, voter), voteByte)
+	return nil
+}
+
+func (vm VoteManager) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
+	store := ctx.KVStore(vm.key)
+	lstByte := store.Get(GetProposalListKey())
+	if lstByte == nil {
+		return nil, ErrGetProposal()
+	}
+	lst := new(ProposalList)
+	if err := vm.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+		return nil, ErrProposalUnmarshalError(err)
+	}
+	return lst, nil
+}
+
+func (vm VoteManager) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
+	store := ctx.KVStore(vm.key)
+	lstByte, err := vm.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrProposalMarshalError(err)
+	}
+	store.Set(GetProposalListKey(), lstByte)
 	return nil
 }
 
@@ -160,7 +193,14 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *
 		return newID, err
 	}
 
-	//_, err := vm.GetProposal(ctx, ProposalKey(1))
+	lst, getErr := vm.GetProposalList(ctx)
+	if getErr != nil {
+		return newID, getErr
+	}
+	lst.OngoingProposal = append(lst.OngoingProposal, newID)
+	if err := vm.SetProposalList(ctx, lst); err != nil {
+		return newID, err
+	}
 	return newID, nil
 }
 
@@ -371,18 +411,6 @@ func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.Accou
 	return nil
 }
 
-// return coin to an user periodically
-func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.AccountKey, amount types.Coin, gm global.GlobalProxy) sdk.Error {
-	event := ReturnCoinEvent{
-		Username: username,
-		Amount:   amount,
-	}
-	if err := gm.RegisterEventAtHeight(ctx, ctx.BlockHeight()+1000, event); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) (types.Coin, sdk.Error) {
 	voter, getErr := vm.GetVoter(ctx, voterName)
 	if getErr != nil {
@@ -390,6 +418,34 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) 
 	}
 	res := voter.Deposit.Plus(voter.DelegatedPower)
 	return res, nil
+}
+
+// return coin to an user periodically
+func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.AccountKey, amount types.Coin, gm global.GlobalProxy) sdk.Error {
+	pieceRat := amount.ToRat().Quo(sdk.NewRat(CoinReturnTimes))
+	piece := types.RatToCoin(pieceRat)
+	event := ReturnCoinEvent{
+		Username: username,
+		Amount:   piece,
+	}
+
+	// return coin with interval
+	for i := int64(1); i <= CoinReturnTimes; i++ {
+		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(CoinReturnIntervalHr*3600*i), event); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// decide the proposal in 7 days
+func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalProxy) sdk.Error {
+	event := DecideProposalEvent{}
+	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(ProposalDecideHr*3600), event); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (vm VoteManager) GetNextProposalID() (ProposalKey, sdk.Error) {
@@ -417,6 +473,10 @@ func GetVoteKey(proposalID ProposalKey, voter acc.AccountKey) []byte {
 
 func GetProposalKey(proposalID ProposalKey) []byte {
 	return append(ProposalSubstore, proposalID...)
+}
+
+func GetProposalListKey() []byte {
+	return ProposalListSubStore
 }
 
 func GetVoterKey(me acc.AccountKey) []byte {
