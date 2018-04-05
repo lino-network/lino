@@ -2,307 +2,123 @@ package global
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/genesis"
+	"github.com/lino-network/lino/global/model"
 	"github.com/lino-network/lino/types"
 )
 
-var (
-	heightEventListSubStore         = []byte{0x00} // SubStore for height event list
-	timeEventListSubStore           = []byte{0x01} // SubStore for time event list
-	statisticsSubStore              = []byte{0x02} // SubStore for statistics
-	globalMetaSubStore              = []byte{0x03} // SubStore for global meta
-	allocationSubStore              = []byte{0x04} // SubStore for allocation
-	inflationPoolSubStore           = []byte{0x05} // SubStore for allocation
-	infraInternalAllocationSubStore = []byte{0x06} // SubStore for infrat internal allocation
-	consumptionMetaSubStore         = []byte{0x07} // SubStore for consumption meta
-)
-
-const eventTypePostReward = 0x1
-const eventTypeDonateReward = 0x2
-
+// GlobalManager encapsulates all basic struct
 type GlobalManager struct {
-	// The (unexposed) key used to access the store from the Context.
-	key sdk.StoreKey
-	cdc *wire.Codec
+	globalStorage *model.GlobalStorage `json:"global_manager"`
 }
 
-func NewGlobalManager(key sdk.StoreKey) GlobalManager {
-	cdc := wire.NewCodec()
-	gm := GlobalManager{
-		key: key,
-		cdc: cdc,
+// NewGlobalManager return the global proxy pointer
+func NewGlobalManager(gs *model.GlobalStorage) *GlobalManager {
+	return &GlobalManager{
+		globalStorage: gs,
 	}
-	return gm
 }
 
-func (gm GlobalManager) InitGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
-	globalMeta := &GlobalMeta{
-		TotalLino:  sdk.NewRat(state.TotalLino),
-		GrowthRate: state.GrowthRate,
+func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, event model.Event) sdk.Error {
+	eventList, _ := gm.globalStorage.GetHeightEventList(ctx, height)
+	if eventList == nil {
+		eventList = &model.HeightEventList{Events: []model.Event{}}
 	}
+	eventList.Events = append(eventList.Events, event)
+	if err := gm.globalStorage.SetHeightEventList(ctx, height, eventList); err != nil {
+		return ErrGlobalManagerRegisterEventAtHeight(height).TraceCause(err, "")
+	}
+	return nil
+}
 
-	if err := gm.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return err
+func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event model.Event) sdk.Error {
+	eventList, _ := gm.globalStorage.GetTimeEventList(ctx, unixTime)
+	if eventList == nil {
+		eventList = &model.TimeEventList{Events: []model.Event{}}
 	}
-	if err := gm.SetGlobalStatistics(ctx, &GlobalStatistics{}); err != nil {
-		return err
+	eventList.Events = append(eventList.Events, event)
+	if err := gm.globalStorage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
+		return ErrGlobalManagerRegisterEventAtTime(unixTime).TraceCause(err, "")
 	}
-	if !state.InfraAllocation.
-		Add(state.ContentCreatorAllocation).
-		Add(state.DeveloperAllocation).
-		Add(state.ValidatorAllocation).
-		Equal(sdk.NewRat(1)) {
-		return ErrInflationGenesisError()
-	}
+	return nil
+}
 
-	globalAllocation := &GlobalAllocation{
-		InfraAllocation:          state.InfraAllocation,
-		ContentCreatorAllocation: state.ContentCreatorAllocation,
-		DeveloperAllocation:      state.DeveloperAllocation,
-		ValidatorAllocation:      state.ValidatorAllocation,
+func (gm *GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
+	if err != nil {
+		return sdk.Rat{}, err
 	}
-	if err := gm.SetGlobalAllocation(ctx, globalAllocation); err != nil {
-		return err
-	}
-	inflaInflationCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.InfraAllocation)))
+	return consumptionMeta.ConsumptionFrictionRate, nil
+}
+
+// register reward calculation event at 7 days later
+func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event model.Event) sdk.Error {
+	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
 	if err != nil {
 		return err
 	}
-
-	contentCreatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ContentCreatorAllocation)))
-	if err != nil {
-		return err
-	}
-	developerCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.DeveloperAllocation)))
-	if err != nil {
-		return err
-	}
-	validatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ValidatorAllocation)))
-	if err != nil {
-		return err
-	}
-	inflationPool := &InflationPool{
-		InfraInflationPool:          inflaInflationCoin,
-		ContentCreatorInflationPool: contentCreatorCoin,
-		DeveloperInflationPool:      developerCoin,
-		ValidatorInflationPool:      validatorCoin,
-	}
-	if err := gm.SetInflationPool(ctx, inflationPool); err != nil {
-		return err
-	}
-
-	consumptionMeta := &ConsumptionMeta{
-		ConsumptionFrictionRate: state.ConsumptionFrictionRate,
-		FreezingPeriodHr:        state.FreezingPeriodHr,
-	}
-	if err := gm.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (gm GlobalManager) GetHeightEventList(ctx sdk.Context, key EventListKey) (*HeightEventList, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	listByte := store.Get(GetHeightEventListKey(key))
-	if listByte == nil {
-		return nil, ErrEventNotFound(GetHeightEventListKey(key))
+// put a friction of user consumption to reward pool
+func (gm *GlobalManager) AddConsumptionFrictionToRewardPool(ctx sdk.Context, coin types.Coin) sdk.Error {
+	// skip micro micro payment (etc: 0.0001 LNO)
+	if coin.IsZero() {
+		return nil
 	}
-	lst := new(HeightEventList)
-	if err := gm.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return lst, nil
-}
 
-func (gm GlobalManager) SetHeightEventList(ctx sdk.Context, key EventListKey, lst *HeightEventList) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	listByte, err := gm.cdc.MarshalJSON(*lst)
+	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrAddConsumptionFrictionToRewardPool().TraceCause(err, "")
 	}
-	store.Set(GetHeightEventListKey(key), listByte)
+
+	// reward pool consists of a small friction of user consumption and hourly content creator reward
+	// consumption window will be used to calculate the percentage of reward to claim for this consumption
+	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(coin)
+	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(coin)
+
+	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return ErrAddConsumptionFrictionToRewardPool().TraceCause(err, "")
+	}
 	return nil
 }
 
-func (gm GlobalManager) GetTimeEventList(ctx sdk.Context, key EventListKey) (*TimeEventList, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	listByte := store.Get(GetTimeEventListKey(key))
-	if listByte == nil {
-		return nil, ErrEventNotFound(GetTimeEventListKey(key))
+// after 7 days, one consumption needs to claim its reward from consumption reward pool
+func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, coin types.Coin) (types.Coin, sdk.Error) {
+	if coin.IsZero() {
+		return types.NewCoin(0), nil
 	}
-	lst := new(TimeEventList)
-	if err := gm.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return lst, nil
-}
 
-func (gm GlobalManager) SetTimeEventList(ctx sdk.Context, key EventListKey, lst *TimeEventList) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	listByte, err := gm.cdc.MarshalJSON(*lst)
+	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return types.NewCoin(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
 	}
-	store.Set(GetTimeEventListKey(key), listByte)
-	return nil
-}
 
-func (gm GlobalManager) RemoveHeightEventList(ctx sdk.Context, key EventListKey) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	store.Delete(GetHeightEventListKey(key))
-	return nil
-}
+	// reward = (consumption reward pool) * ((this consumption) / (total consumption in 7 days window))
+	reward := types.RatToCoin(consumptionMeta.ConsumptionRewardPool.ToRat().
+		Mul(coin.ToRat().Quo(consumptionMeta.ConsumptionWindow.ToRat())))
 
-func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, key EventListKey) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	store.Delete(GetTimeEventListKey(key))
-	return nil
-}
+	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
+	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(coin)
 
-func (gm GlobalManager) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	statisticsBytes := store.Get(GetGlobalStatisticsKey())
-	if statisticsBytes == nil {
-		return nil, ErrGlobalStatisticsNotFound()
+	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return types.NewCoin(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
 	}
-	statistics := new(GlobalStatistics)
-	if err := gm.cdc.UnmarshalJSON(statisticsBytes, statistics); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return statistics, nil
+	return reward, nil
 }
 
-func (gm GlobalManager) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	statisticsBytes, err := gm.cdc.MarshalJSON(*statistics)
+// add consumption to global meta, which is used to compute GDP
+func (gm *GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Error {
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return err
 	}
-	store.Set(GetGlobalStatisticsKey(), statisticsBytes)
+	globalMeta.CumulativeConsumption = globalMeta.CumulativeConsumption.Plus(coin)
+
+	if err := gm.globalStorage.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
+	}
 	return nil
-}
-
-func (gm GlobalManager) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	globalMetaBytes := store.Get(GetGlobalMetaKey())
-	if globalMetaBytes == nil {
-		return nil, ErrGlobalMetaNotFound()
-	}
-	globalMeta := new(GlobalMeta)
-	if err := gm.cdc.UnmarshalJSON(globalMetaBytes, globalMeta); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return globalMeta, nil
-}
-
-func (gm GlobalManager) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	globalMetaBytes, err := gm.cdc.MarshalJSON(*globalMeta)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetGlobalMetaKey(), globalMetaBytes)
-	return nil
-}
-
-func (gm GlobalManager) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	allocationBytes := store.Get(GetAllocationKey())
-	if allocationBytes == nil {
-		return nil, ErrGlobalAllocationNotFound()
-	}
-	allocation := new(GlobalAllocation)
-	if err := gm.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return allocation, nil
-}
-
-func (gm GlobalManager) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	allocationBytes, err := gm.cdc.MarshalJSON(*allocation)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetAllocationKey(), allocationBytes)
-	return nil
-}
-
-func (gm GlobalManager) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	inflationPoolBytes := store.Get(GetInflationPoolKey())
-	if inflationPoolBytes == nil {
-		return nil, ErrGlobalAllocationNotFound()
-	}
-	inflationPool := new(InflationPool)
-	if err := gm.cdc.UnmarshalJSON(inflationPoolBytes, inflationPool); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return inflationPool, nil
-}
-
-func (gm GlobalManager) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	inflationPoolBytes, err := gm.cdc.MarshalJSON(*inflationPool)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetInflationPoolKey(), inflationPoolBytes)
-	return nil
-}
-
-func (gm GlobalManager) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
-	store := ctx.KVStore(gm.key)
-	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
-	if consumptionMetaBytes == nil {
-		return nil, ErrGlobalConsumptionMetaNotFound()
-	}
-	consumptionMeta := new(ConsumptionMeta)
-	if err := gm.cdc.UnmarshalJSON(consumptionMetaBytes, consumptionMeta); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return consumptionMeta, nil
-}
-
-func (gm GlobalManager) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
-	store := ctx.KVStore(gm.key)
-	consumptionMetaBytes, err := gm.cdc.MarshalJSON(*consumptionMeta)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetConsumptionMetaKey(), consumptionMetaBytes)
-	return nil
-}
-
-func GetHeightEventListKey(eventListKey EventListKey) []byte {
-	return append(heightEventListSubStore, eventListKey...)
-}
-
-func GetTimeEventListKey(eventListKey EventListKey) []byte {
-	return append(timeEventListSubStore, eventListKey...)
-}
-
-func GetGlobalStatisticsKey() []byte {
-	return statisticsSubStore
-}
-
-func GetGlobalMetaKey() []byte {
-	return globalMetaSubStore
-}
-
-func GetAllocationKey() []byte {
-	return allocationSubStore
-}
-
-func GetInflationPoolKey() []byte {
-	return inflationPoolSubStore
-}
-
-func GetInfraInternalAllocationKey() []byte {
-	return infraInternalAllocationSubStore
-}
-
-func GetConsumptionMetaKey() []byte {
-	return consumptionMetaSubStore
 }

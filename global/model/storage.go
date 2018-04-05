@@ -1,0 +1,319 @@
+package model
+
+import (
+	"fmt"
+	"strconv"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/genesis"
+	"github.com/lino-network/lino/types"
+)
+
+var (
+	heightEventListSubStore         = []byte{0x00} // SubStore for height event list
+	timeEventListSubStore           = []byte{0x01} // SubStore for time event list
+	statisticsSubStore              = []byte{0x02} // SubStore for statistics
+	globalMetaSubStore              = []byte{0x03} // SubStore for global meta
+	allocationSubStore              = []byte{0x04} // SubStore for allocation
+	inflationPoolSubStore           = []byte{0x05} // SubStore for allocation
+	infraInternalAllocationSubStore = []byte{0x06} // SubStore for infrat internal allocation
+	consumptionMetaSubStore         = []byte{0x07} // SubStore for consumption meta
+)
+
+type GlobalStorage struct {
+	// The (unexposed) key used to access the store from the Context.
+	key sdk.StoreKey
+	cdc *wire.Codec
+}
+
+func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
+	cdc := wire.NewCodec()
+	gs := GlobalStorage{
+		key: key,
+		cdc: cdc,
+	}
+	return gs
+}
+
+func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
+	globalMeta := &GlobalMeta{
+		TotalLino:             sdk.NewRat(state.TotalLino),
+		CumulativeConsumption: types.NewCoin(0),
+		GrowthRate:            state.GrowthRate,
+	}
+
+	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	if err := gs.SetGlobalStatistics(ctx, &GlobalStatistics{}); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	if !state.InfraAllocation.
+		Add(state.ContentCreatorAllocation).
+		Add(state.DeveloperAllocation).
+		Add(state.ValidatorAllocation).
+		Equal(sdk.NewRat(1)) {
+		return ErrGlobalStorageGenesisInflationFailed()
+	}
+
+	globalAllocation := &GlobalAllocation{
+		InfraAllocation:          state.InfraAllocation,
+		ContentCreatorAllocation: state.ContentCreatorAllocation,
+		DeveloperAllocation:      state.DeveloperAllocation,
+		ValidatorAllocation:      state.ValidatorAllocation,
+	}
+	if err := gs.SetGlobalAllocation(ctx, globalAllocation); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	infraInflationCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.InfraAllocation)))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+
+	contentCreatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ContentCreatorAllocation)))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	developerCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.DeveloperAllocation)))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	validatorCoin, err := types.LinoToCoin(types.LNO(sdk.Rat(globalMeta.TotalLino).Mul(globalMeta.GrowthRate).Mul(globalAllocation.ValidatorAllocation)))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	inflationPool := &InflationPool{
+		InfraInflationPool:          infraInflationCoin,
+		ContentCreatorInflationPool: contentCreatorCoin,
+		DeveloperInflationPool:      developerCoin,
+		ValidatorInflationPool:      validatorCoin,
+	}
+	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	fmt.Println(inflationPool)
+	inflationPool, _ = gs.GetInflationPool(ctx)
+	fmt.Println(inflationPool)
+
+	consumptionMeta := &ConsumptionMeta{
+		ConsumptionFrictionRate: state.ConsumptionFrictionRate,
+		ReportStakeWindow:       sdk.ZeroRat,
+		DislikeStakeWindow:      sdk.ZeroRat,
+		ConsumptionWindow:       types.NewCoin(0),
+		ConsumptionRewardPool:   types.NewCoin(0),
+		FreezingPeriodHr:        state.FreezingPeriodHr,
+	}
+	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	return nil
+}
+
+func (gs GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*HeightEventList, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	listByte := store.Get(GetHeightEventListKey(height))
+	if listByte == nil {
+		return nil, nil
+	}
+	lst := new(HeightEventList)
+	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return lst, nil
+}
+
+func (gs GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *HeightEventList) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	// event doesn't exist
+	listByte, err := gs.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetHeightEventListKey(height), listByte)
+	return nil
+}
+
+func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*TimeEventList, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	listByte := store.Get(GetTimeEventListKey(unixTime))
+	// event doesn't exist
+	if listByte == nil {
+		return nil, nil
+	}
+	lst := new(TimeEventList)
+	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return lst, nil
+}
+
+func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *TimeEventList) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	listByte, err := gs.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetTimeEventListKey(unixTime), listByte)
+	return nil
+}
+
+func (gs GlobalStorage) RemoveHeightEventList(ctx sdk.Context, height int64) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	store.Delete(GetHeightEventListKey(height))
+	return nil
+}
+
+func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	store.Delete(GetTimeEventListKey(unixTime))
+	return nil
+}
+
+func (gs GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	statisticsBytes := store.Get(GetGlobalStatisticsKey())
+	if statisticsBytes == nil {
+		return nil, ErrGlobalStatisticsNotFound()
+	}
+	statistics := new(GlobalStatistics)
+	if err := gs.cdc.UnmarshalJSON(statisticsBytes, statistics); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return statistics, nil
+}
+
+func (gs GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	statisticsBytes, err := gs.cdc.MarshalJSON(*statistics)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetGlobalStatisticsKey(), statisticsBytes)
+	return nil
+}
+
+func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	globalMetaBytes := store.Get(GetGlobalMetaKey())
+	if globalMetaBytes == nil {
+		return nil, ErrGlobalMetaNotFound()
+	}
+	globalMeta := new(GlobalMeta)
+	if err := gs.cdc.UnmarshalJSON(globalMetaBytes, globalMeta); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return globalMeta, nil
+}
+
+func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetGlobalMetaKey(), globalMetaBytes)
+	return nil
+}
+
+func (gs GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	allocationBytes := store.Get(GetAllocationKey())
+	if allocationBytes == nil {
+		return nil, ErrGlobalAllocationNotFound()
+	}
+	allocation := new(GlobalAllocation)
+	if err := gs.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return allocation, nil
+}
+
+func (gs GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	allocationBytes, err := gs.cdc.MarshalJSON(*allocation)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetAllocationKey(), allocationBytes)
+	return nil
+}
+
+func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	inflationPoolBytes := store.Get(GetInflationPoolKey())
+	if inflationPoolBytes == nil {
+		return nil, ErrGlobalAllocationNotFound()
+	}
+	inflationPool := new(InflationPool)
+	if err := gs.cdc.UnmarshalJSON(inflationPoolBytes, inflationPool); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return inflationPool, nil
+}
+
+func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
+	fmt.Println(string(inflationPoolBytes))
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetInflationPoolKey(), inflationPoolBytes)
+	return nil
+}
+
+func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
+	if consumptionMetaBytes == nil {
+		return nil, ErrGlobalConsumptionMetaNotFound()
+	}
+	consumptionMeta := new(ConsumptionMeta)
+	if err := gs.cdc.UnmarshalJSON(consumptionMetaBytes, consumptionMeta); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return consumptionMeta, nil
+}
+
+func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetConsumptionMetaKey(), consumptionMetaBytes)
+	return nil
+}
+
+func GetHeightEventListKey(height int64) []byte {
+	return append(heightEventListSubStore, strconv.FormatInt(height, 10)...)
+}
+
+func GetTimeEventListKey(unixTime int64) []byte {
+	return append(timeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
+}
+
+func GetGlobalStatisticsKey() []byte {
+	return statisticsSubStore
+}
+
+func GetGlobalMetaKey() []byte {
+	return globalMetaSubStore
+}
+
+func GetAllocationKey() []byte {
+	return allocationSubStore
+}
+
+func GetInflationPoolKey() []byte {
+	return inflationPoolSubStore
+}
+
+func GetInfraInternalAllocationKey() []byte {
+	return infraInternalAllocationSubStore
+}
+
+func GetConsumptionMetaKey() []byte {
+	return consumptionMetaSubStore
+}

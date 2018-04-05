@@ -2,253 +2,241 @@ package account
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/tendermint/go-crypto"
 )
 
-var (
-	AccountInfoSubstore       = []byte{0x00}
-	AccountBankSubstore       = []byte{0x01}
-	AccountMetaSubstore       = []byte{0x02}
-	AccountFollowerSubstore   = []byte{0x03}
-	AccountFollowingSubstore  = []byte{0x04}
-	AccountRewardPoolSubstore = []byte{0x04}
-)
-
-// LinoAccountManager implements types.AccountManager
+// linoaccount encapsulates all basic struct
 type AccountManager struct {
-	// The (unexposed) key used to access the store from the Context.
-	key sdk.StoreKey
-
-	// The wire codec for binary encoding/decoding of accounts.
-	cdc *wire.Codec
+	accountStorage *model.AccountStorage `json:"account_manager"`
 }
 
-// NewLinoAccountManager creates and returns a account manager
-func NewLinoAccountManager(key sdk.StoreKey) AccountManager {
-	cdc := wire.NewCodec()
-	lam := AccountManager{
-		key: key,
-		cdc: cdc,
+// NewLinoAccount return the account pointer
+func NewAccountManager(key sdk.StoreKey) *AccountManager {
+	return &AccountManager{
+		accountStorage: model.NewAccountStorage(key),
 	}
-	RegisterWireLinoAccount(cdc)
-	return lam
 }
 
-// Implements types.AccountManager.
-func (lam AccountManager) AccountExist(ctx sdk.Context, accKey AccountKey) bool {
-	store := ctx.KVStore(lam.key)
-	if infoByte := store.Get(GetAccountInfoKey(accKey)); infoByte == nil {
-		return false
-	}
-	return true
+// check if account exist
+func (accManager *AccountManager) IsAccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	accountInfo, _ := accManager.accountStorage.GetInfo(ctx, accKey)
+	return accountInfo != nil
 }
 
 // Implements types.AccountManager.
-func (lam AccountManager) GetInfo(ctx sdk.Context, accKey AccountKey) (*AccountInfo, sdk.Error) {
-	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
-	if infoByte == nil {
-		return nil, ErrGetInfoFailed()
+func (accManager *AccountManager) CreateAccount(
+	ctx sdk.Context, accKey types.AccountKey, pubkey crypto.PubKey, registerFee types.Coin) sdk.Error {
+	if accManager.IsAccountExist(ctx, accKey) {
+		return ErrAccountAlreadyExists(accKey)
 	}
-	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
-		return nil, ErrAccountUnmarshalError(err)
-	}
-	return info, nil
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetInfo(ctx sdk.Context, accKey AccountKey, accInfo *AccountInfo) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	infoByte, err := lam.cdc.MarshalBinary(*accInfo)
+	bank, err := accManager.accountStorage.GetBankFromAddress(ctx, pubkey.Address())
 	if err != nil {
-		return ErrSetInfoFailed()
+		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
-	store.Set(GetAccountInfoKey(accKey), infoByte)
+	if bank.Username != "" {
+		return ErrBankAlreadyRegistered()
+	}
+
+	if registerFee.IsGTE(bank.Balance) {
+		return ErrRegisterFeeInsufficient()
+	}
+
+	accountInfo := &model.AccountInfo{
+		Username: accKey,
+		Created:  ctx.BlockHeight(),
+		PostKey:  pubkey,
+		OwnerKey: pubkey,
+		Address:  pubkey.Address(),
+	}
+	if err := accManager.accountStorage.SetInfo(ctx, accKey, accountInfo); err != nil {
+		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	}
+
+	bank.Username = accKey
+	if err := accManager.accountStorage.SetBankFromAddress(ctx, pubkey.Address(), bank); err != nil {
+		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	}
+
+	accountMeta := &model.AccountMeta{
+		LastActivity:   ctx.BlockHeight(),
+		ActivityBurden: types.DefaultActivityBurden,
+	}
+	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
+		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	}
+	reward := &model.Reward{types.NewCoin(0), types.NewCoin(0)}
+	if err := accManager.accountStorage.SetReward(ctx, accKey, reward); err != nil {
+		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	}
 	return nil
 }
 
-// Implements types.AccountManager.
-func (lam AccountManager) GetBankFromAccountKey(ctx sdk.Context, accKey AccountKey) (*AccountBank, sdk.Error) {
-	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
-	if infoByte == nil {
-		return nil, ErrGetBankFailed()
+func (accManager *AccountManager) AddCoinToAddress(ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
+	bank, _ := accManager.accountStorage.GetBankFromAddress(ctx, address)
+	if bank == nil {
+		bank = &model.AccountBank{
+			Address: address,
+			Balance: coin,
+		}
+	} else {
+		bank.Balance = bank.Balance.Plus(coin)
 	}
-	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
-		return nil, ErrAccountUnmarshalError(err)
+	if err := accManager.accountStorage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
+		return ErrAddCoinToAddress(address).TraceCause(err, "")
 	}
-	return lam.GetBankFromAddress(ctx, info.Address)
+	return nil
 }
 
-// Implements types.AccountManager.
-func (lam AccountManager) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
-	store := ctx.KVStore(lam.key)
-	bankByte := store.Get(GetAccountBankKey(address))
-	if bankByte == nil {
-		return nil, ErrSetBankFailed()
-	}
-	bank := new(AccountBank)
-	if err := lam.cdc.UnmarshalBinary(bankByte, bank); err != nil {
-		return nil, ErrAccountUnmarshalError(err)
-	}
-	return bank, nil
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	bankByte, err := lam.cdc.MarshalBinary(*accBank)
+func (accManager *AccountManager) AddCoin(ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
+	accountBank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
-		return ErrSetBankFailed()
+		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
 	}
-	store.Set(GetAccountBankKey(address), bankByte)
+	accountBank.Balance = accountBank.Balance.Plus(coin)
+	if err := accManager.accountStorage.SetBankFromAddress(ctx, accountBank.Address, accountBank); err != nil {
+		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
+	}
 	return nil
 }
 
-// Implements types.AccountManager.
-func (lam AccountManager) SetBankFromAccountKey(ctx sdk.Context, accKey AccountKey, accBank *AccountBank) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
-	if infoByte == nil {
-		return ErrGetBankFailed()
-	}
-	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
-		return ErrAccountUnmarshalError(err)
-	}
-
-	return lam.SetBankFromAddress(ctx, info.Address, accBank)
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) GetMeta(ctx sdk.Context, accKey AccountKey) (*AccountMeta, sdk.Error) {
-	store := ctx.KVStore(lam.key)
-	metaByte := store.Get(GetAccountMetaKey(accKey))
-	if metaByte == nil {
-		return nil, ErrGetMetaFailed()
-	}
-	meta := new(AccountMeta)
-	if err := lam.cdc.UnmarshalBinary(metaByte, meta); err != nil {
-		return nil, ErrAccountUnmarshalError(err)
-	}
-	return meta, nil
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetMeta(ctx sdk.Context, accKey AccountKey, accMeta *AccountMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalBinary(*accMeta)
+func (accManager *AccountManager) MinusCoin(ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
+	accountBank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
-		return ErrSetMetaFailed()
+		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
 	}
-	store.Set(GetAccountMetaKey(accKey), metaByte)
+	if !accountBank.Balance.IsGTE(coin) {
+		return ErrAccountCoinNotEnough()
+	}
+	accountBank.Balance = accountBank.Balance.Minus(coin)
+	if err := accManager.accountStorage.SetBankFromAddress(ctx, accountBank.Address, accountBank); err != nil {
+		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
+	}
 	return nil
 }
 
-func (lam AccountManager) IsMyFollower(ctx sdk.Context, me AccountKey, follower AccountKey) bool {
-	store := ctx.KVStore(lam.key)
-	key := GetFollowerKey(me, follower)
-	return store.Has(key)
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetFollowerMeta(ctx sdk.Context, me AccountKey, meta FollowerMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalJSON(meta)
+func (accManager *AccountManager) GetBankAddress(ctx sdk.Context, accKey types.AccountKey) (sdk.Address, sdk.Error) {
+	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
-		return ErrAccountMarshalError(err)
+		return nil, ErrGetBankAddress(accKey).TraceCause(err, "")
 	}
-	store.Set(GetFollowerKey(me, meta.FollowerName), metaByte)
-	return nil
+	return accountInfo.Address, nil
 }
 
-func (lam AccountManager) RemoveFollowerMeta(ctx sdk.Context, me AccountKey, follower AccountKey) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	store.Delete(GetFollowerKey(me, follower))
-	return nil
-}
-
-func (lam AccountManager) IsMyFollowing(ctx sdk.Context, me AccountKey, followee AccountKey) bool {
-	store := ctx.KVStore(lam.key)
-	key := GetFollowingKey(me, followee)
-	return store.Has(key)
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetFollowingMeta(ctx sdk.Context, me AccountKey, meta FollowingMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalJSON(meta)
+func (accManager *AccountManager) GetOwnerKey(ctx sdk.Context, accKey types.AccountKey) (*crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
-		return ErrAccountMarshalError(err)
+		return nil, ErrGetOwnerKey(accKey).TraceCause(err, "")
 	}
-	store.Set(GetFollowingKey(me, meta.FolloweeName), metaByte)
-	return nil
+	return &accountInfo.OwnerKey, nil
 }
 
-func (lam AccountManager) RemoveFollowingMeta(ctx sdk.Context, me AccountKey, followee AccountKey) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	store.Delete(GetFollowingKey(me, followee))
-	return nil
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) GetRewardPool(ctx sdk.Context, accKey AccountKey) (*RewardPool, sdk.Error) {
-	store := ctx.KVStore(lam.key)
-	rewardByte := store.Get(GetRewardPoolKey(accKey))
-	if rewardByte == nil {
-		return nil, ErrGetMetaFailed()
-	}
-	rewardPool := new(RewardPool)
-	if err := lam.cdc.UnmarshalBinary(rewardByte, rewardPool); err != nil {
-		return nil, ErrAccountUnmarshalError(err)
-	}
-	return rewardPool, nil
-}
-
-// Implements types.AccountManager.
-func (lam AccountManager) SetRewardPool(ctx sdk.Context, accKey AccountKey, rewardPool *RewardPool) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	rewardByte, err := lam.cdc.MarshalBinary(*rewardPool)
+func (accManager *AccountManager) GetPostKey(ctx sdk.Context, accKey types.AccountKey) (*crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
-		return ErrSetMetaFailed()
+		return nil, ErrGetPostKey(accKey).TraceCause(err, "")
 	}
-	store.Set(GetRewardPoolKey(accKey), rewardByte)
+	return &accountInfo.PostKey, nil
+}
+
+func (accManager *AccountManager) GetBankBalance(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	accountBank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
+	if err != nil {
+		return types.Coin{}, ErrGetBankBalance(accKey).TraceCause(err, "")
+	}
+	return accountBank.Balance, nil
+}
+
+func (accManager *AccountManager) GetSequence(ctx sdk.Context, accKey types.AccountKey) (int64, sdk.Error) {
+	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
+	if err != nil {
+		return 0, ErrGetSequence(accKey).TraceCause(err, "")
+	}
+	return accountMeta.Sequence, nil
+}
+
+func (accManager *AccountManager) IncreaseSequenceByOne(ctx sdk.Context, accKey types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
+	if err != nil {
+		return ErrGetSequence(accKey).TraceCause(err, "")
+	}
+	accountMeta.Sequence += 1
+	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
+		return ErrIncreaseSequenceByOne(accKey).TraceCause(err, "")
+	}
 	return nil
 }
 
-func GetAccountInfoKey(accKey AccountKey) []byte {
-	return append(AccountInfoSubstore, accKey...)
+func (accManager *AccountManager) AddIncomeAndReward(ctx sdk.Context, accKey types.AccountKey, originIncome, actualReward types.Coin) sdk.Error {
+	reward, err := accManager.accountStorage.GetReward(ctx, accKey)
+	if err != nil {
+		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
+	}
+	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
+	reward.ActualReward = reward.ActualReward.Plus(actualReward)
+	if err := accManager.accountStorage.SetReward(ctx, accKey, reward); err != nil {
+		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
+	}
+	return nil
 }
 
-func GetAccountBankKey(address sdk.Address) []byte {
-	return append(AccountBankSubstore, address...)
+func (accManager *AccountManager) UpdateLastActivity(ctx sdk.Context, accKey types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
+	if err != nil {
+		return ErrUpdateLastActivity(accKey).TraceCause(err, "")
+	}
+	accountMeta.LastActivity = ctx.BlockHeight()
+	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
+		return ErrUpdateLastActivity(accKey).TraceCause(err, "")
+	}
+	return nil
 }
 
-func GetAccountMetaKey(accKey AccountKey) []byte {
-	return append(AccountMetaSubstore, accKey...)
+func (accManager *AccountManager) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
+	return accManager.accountStorage.IsMyFollower(ctx, me, follower)
 }
 
-func GetFollowerPrefix(me AccountKey) []byte {
-	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
+func (accManager *AccountManager) IsMyFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) bool {
+	return accManager.accountStorage.IsMyFollowee(ctx, me, followee)
 }
 
-func GetFollowingPrefix(me AccountKey) []byte {
-	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
+func (accManager *AccountManager) SetFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+	if accManager.accountStorage.IsMyFollower(ctx, me, follower) {
+		return nil
+	}
+	meta := model.FollowerMeta{
+		CreatedAt:    ctx.BlockHeight(),
+		FollowerName: follower,
+	}
+	accManager.accountStorage.SetFollowerMeta(ctx, follower, meta)
+	return nil
 }
 
-// "follower substore" + "me" + "my follower"
-func GetFollowerKey(me AccountKey, myFollower AccountKey) []byte {
-	return append(GetFollowerPrefix(me), myFollower...)
+func (accManager *AccountManager) SetFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) sdk.Error {
+	if accManager.accountStorage.IsMyFollowee(ctx, me, followee) {
+		return nil
+	}
+	meta := model.FollowingMeta{
+		CreatedAt:    ctx.BlockHeight(),
+		FolloweeName: followee,
+	}
+	accManager.accountStorage.SetFolloweeMeta(ctx, followee, meta)
+	return nil
 }
 
-// "following substore" + "me" + "my following"
-func GetFollowingKey(me AccountKey, myFollowing AccountKey) []byte {
-	return append(GetFollowingPrefix(me), myFollowing...)
+func (accManager *AccountManager) RemoveFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+	if !accManager.accountStorage.IsMyFollower(ctx, me, follower) {
+		return nil
+	}
+	accManager.accountStorage.RemoveFollowerMeta(ctx, follower, follower)
+	return nil
 }
 
-func GetRewardPoolKey(accKey AccountKey) []byte {
-	return append(AccountRewardPoolSubstore, accKey...)
+func (accManager *AccountManager) RemoveFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) sdk.Error {
+	if !accManager.accountStorage.IsMyFollowee(ctx, me, followee) {
+		return nil
+	}
+	accManager.accountStorage.RemoveFolloweeMeta(ctx, followee, followee)
+	return nil
 }

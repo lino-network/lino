@@ -14,6 +14,7 @@
   revision = "2be2f12b358dc57d70b8f501b00be450192efbc3"
 
 [[projects]]
+  branch = "develop"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -38,8 +39,7 @@
     "x/ibc",
     "x/ibc/rest"
   ]
-  revision = "797aec2e717cb177c5481a16bb4ef6fc052e379c"
-  version = "v0.13.0"
+  revision = "9fc9db00fbc16f7e1ead85cc114318462cd59e82"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -145,7 +145,7 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "f40e974e75af4e271d97ce0fc917af5898ae7bda"
+  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
   branch = "master"
@@ -404,7 +404,7 @@
     "ripemd160",
     "salsa20/salsa"
   ]
-  revision = "12892e8c234f4fe6f6803f052061de9057903bb2"
+  revision = "b2aa35443fbc700ab74c586ae79b81c171851023"
 
 [[projects]]
   branch = "master"
@@ -418,13 +418,13 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
+  revision = "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
+  revision = "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -451,7 +451,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "ab0870e398d5dd054b868c0db1481ab029b9a9f2"
+  revision = "35de2414665fc36f56b72d982c5af480d86de5ab"
 
 [[projects]]
   name = "google.golang.org/grpc"
