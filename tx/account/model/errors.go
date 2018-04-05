@@ -9,27 +9,27 @@ import (
 
 // Error constructors
 func ErrAccountInfoDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account info doesn't exist"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info doesn't exist"))
 }
 
 func ErrGetAccountInfo() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get account info failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get account info failed"))
 }
 
 func ErrAccountBankDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account info doesn't exist"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info doesn't exist"))
 }
 
 func ErrGetBankFromAccountKey() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get bank from account key failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get bank from account key failed"))
 }
 
 func ErrGetBankFromAddress() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get bank from address failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get bank from address failed"))
 }
 
 func ErrAccountStorageInternal() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account storage internal err"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account storage internal err"))
 }
 
 func ErrGetInfo() sdk.Error {
@@ -49,41 +49,41 @@ func ErrInvalidUsername() sdk.Error {
 }
 
 func ErrUsernameAddressMismatch() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Username and address mismatch"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("Username and address mismatch"))
 }
 
 func ErrSetInfoFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set info failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set info failed"))
 }
 
 func ErrSetBankFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set bank failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set bank failed"))
 }
 
 func ErrGetMetaFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get meta failed"))
 }
 
 func ErrSetMetaFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set meta failed"))
 }
 
 func ErrGetRewardFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get reward failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get reward failed"))
 }
 
 func ErrSetRewardFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set reward failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set reward failed"))
 }
 
 func ErrAddMoneyFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Add money to bank failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("Add money to bank failed"))
 }
 
 func ErrSetFollowerMeta() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("set follower meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("set follower meta failed"))
 }
 
 func ErrSetFollowingMeta() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("set following meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("set following meta failed"))
 }

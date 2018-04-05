@@ -39,7 +39,7 @@ func (accManager *AccountManager) CreateAccount(
 		return ErrBankAlreadyRegistered()
 	}
 
-	if registerFee.IsGTE(bank.Balance) {
+	if !bank.Balance.IsGTE(registerFee) {
 		return ErrRegisterFeeInsufficient()
 	}
 
@@ -197,8 +197,8 @@ func (accManager *AccountManager) IsMyFollower(ctx sdk.Context, me types.Account
 	return accManager.accountStorage.IsMyFollower(ctx, me, follower)
 }
 
-func (accManager *AccountManager) IsMyFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) bool {
-	return accManager.accountStorage.IsMyFollowee(ctx, me, followee)
+func (accManager *AccountManager) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
+	return accManager.accountStorage.IsMyFollowing(ctx, me, following)
 }
 
 func (accManager *AccountManager) SetFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
@@ -209,19 +209,19 @@ func (accManager *AccountManager) SetFollower(ctx sdk.Context, me types.AccountK
 		CreatedAt:    ctx.BlockHeight(),
 		FollowerName: follower,
 	}
-	accManager.accountStorage.SetFollowerMeta(ctx, follower, meta)
+	accManager.accountStorage.SetFollowerMeta(ctx, me, meta)
 	return nil
 }
 
-func (accManager *AccountManager) SetFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) sdk.Error {
-	if accManager.accountStorage.IsMyFollowee(ctx, me, followee) {
+func (accManager *AccountManager) SetFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+	if accManager.accountStorage.IsMyFollowing(ctx, me, following) {
 		return nil
 	}
 	meta := model.FollowingMeta{
-		CreatedAt:    ctx.BlockHeight(),
-		FolloweeName: followee,
+		CreatedAt:     ctx.BlockHeight(),
+		FollowingName: following,
 	}
-	accManager.accountStorage.SetFolloweeMeta(ctx, followee, meta)
+	accManager.accountStorage.SetFollowingMeta(ctx, me, meta)
 	return nil
 }
 
@@ -229,14 +229,14 @@ func (accManager *AccountManager) RemoveFollower(ctx sdk.Context, me types.Accou
 	if !accManager.accountStorage.IsMyFollower(ctx, me, follower) {
 		return nil
 	}
-	accManager.accountStorage.RemoveFollowerMeta(ctx, follower, follower)
+	accManager.accountStorage.RemoveFollowerMeta(ctx, me, follower)
 	return nil
 }
 
-func (accManager *AccountManager) RemoveFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) sdk.Error {
-	if !accManager.accountStorage.IsMyFollowee(ctx, me, followee) {
+func (accManager *AccountManager) RemoveFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+	if !accManager.accountStorage.IsMyFollowing(ctx, me, following) {
 		return nil
 	}
-	accManager.accountStorage.RemoveFolloweeMeta(ctx, followee, followee)
+	accManager.accountStorage.RemoveFollowingMeta(ctx, me, following)
 	return nil
 }

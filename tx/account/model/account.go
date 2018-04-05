@@ -45,8 +45,8 @@ type FollowerMeta struct {
 
 // record all meta info about this relation
 type FollowingMeta struct {
-	CreatedAt    int64            `json:"created_at"`
-	FolloweeName types.AccountKey `json:"followee_name"`
+	CreatedAt     int64            `json:"created_at"`
+	FollowingName types.AccountKey `json:"following_name"`
 }
 
 // reward get from the inflation pool

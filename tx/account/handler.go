@@ -38,7 +38,7 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 
 	// add the "msg.Followee" to the "msg.Follower" 's following list.
 	// add "msg.Follower/msg.Followee" key under "following" prefix
-	if err := am.SetFollowee(ctx, msg.Follower, msg.Followee); err != nil {
+	if err := am.SetFollowing(ctx, msg.Follower, msg.Followee); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -58,7 +58,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 
 	// add the "msg.Followee" to the "msg.Follower" 's following list.
 	// add "msg.Follower/msg.Followee" key under "following" prefix
-	if err := am.RemoveFollowee(ctx, msg.Follower, msg.Followee); err != nil {
+	if err := am.RemoveFollowing(ctx, msg.Follower, msg.Followee); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

@@ -40,10 +40,10 @@ func TestFollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	assert.Equal(t, true, lam.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
+	assert.Equal(t, true, lam.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 	// check user2 in the user1's following list
-	assert.Equal(t, true, lam.IsMyFollowee(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
+	assert.Equal(t, true, lam.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 }
 
 func TestFollowUserNotExist(t *testing.T) {
@@ -65,7 +65,7 @@ func TestFollowUserNotExist(t *testing.T) {
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrUsernameNotFound().Result())
-	assert.Equal(t, false, lam.IsMyFollowee(ctx, types.AccountKey("user1"), types.AccountKey("user3")))
+	assert.Equal(t, false, lam.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user3")))
 }
 
 func TestFollowAgain(t *testing.T) {
@@ -90,7 +90,7 @@ func TestFollowAgain(t *testing.T) {
 	assert.Equal(t, true, lam.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 is the only one in the user1's following list
-	assert.Equal(t, true, lam.IsMyFollowee(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
+	assert.Equal(t, true, lam.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 }
 
 func TestUnfollow(t *testing.T) {
@@ -116,7 +116,7 @@ func TestUnfollow(t *testing.T) {
 	assert.Equal(t, false, lam.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 is not in the user1's following list
-	assert.Equal(t, false, lam.IsMyFollowee(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
+	assert.Equal(t, false, lam.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
@@ -165,7 +165,7 @@ func TestInvalidUnfollow(t *testing.T) {
 	assert.Equal(t, true, lam.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 in the user1's following list
-	assert.Equal(t, true, lam.IsMyFollowee(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
+	assert.Equal(t, true, lam.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 }
 
@@ -189,7 +189,6 @@ func TestTransferNormal(t *testing.T) {
 
 	acc1Balance, _ := lam.GetBankBalance(ctx, types.AccountKey("user1"))
 	acc2Balance, _ := lam.GetBankBalance(ctx, types.AccountKey("user2"))
-
 	assert.Equal(t, true, acc1Balance.IsEqual(c1800))
 	assert.Equal(t, true, acc2Balance.IsEqual(c200))
 
@@ -265,13 +264,7 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	// let user1 transfers 2000 to user2 (provide both name and address)
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrUsernameAddressMismatch().Result(), result)
-
-	acc1Balance, _ := lam.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ := lam.GetBankBalance(ctx, types.AccountKey("user2"))
-
-	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
-	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
+	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
@@ -288,8 +281,5 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
-
-	acc1Balance, _ := lam.GetBankBalance(ctx, types.AccountKey("user1"))
-	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
+	assert.Equal(t, ErrTransferHandler(msg.Sender).Result().Code, result.Code)
 }

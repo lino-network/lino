@@ -3,131 +3,97 @@ package register
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
+	dbm "github.com/tendermint/tmlibs/db"
 )
 
-func TestRegisterBankDoesntExist(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
+// Construct some global addrs and txs for tests.
+var (
+	TestKVStoreKey = sdk.NewKVStoreKey("account")
+)
+
+func setupTest(t *testing.T) (*acc.AccountManager, sdk.Context, sdk.Handler) {
+	db := dbm.NewMemDB()
+	capKey := sdk.NewKVStoreKey("capkey")
+	ms := store.NewCommitMultiStore(db)
+	ms.MountStoreWithDB(capKey, sdk.StoreTypeIAVL, db)
+	ms.LoadLatestVersion()
+	am := acc.NewAccountManager(capKey)
+	handler := NewHandler(*am)
+	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
+
+	return am, ctx, handler
+}
+
+func createBank(t *testing.T, ctx sdk.Context, am *acc.AccountManager, coin types.Coin) crypto.PrivKey {
 	priv := crypto.GenPrivKeyEd25519()
-	handler := NewHandler(lam)
+	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin)
+	assert.Nil(t, err)
+
+	return priv.Wrap()
+}
+
+func TestRegisterBankDoesntExist(t *testing.T) {
+	_, ctx, handler := setupTest(t)
+	priv := crypto.GenPrivKeyEd25519()
 
 	msg := NewRegisterMsg("register", priv.PubKey())
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrAccRegisterFail("Get bank failed").Result())
+	assert.Equal(t, acc.ErrAccountCreateFailed(types.AccountKey("register")).Result().Code, result.Code)
 }
 
 func TestRegister(t *testing.T) {
 	register := "register"
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	priv := crypto.GenPrivKeyEd25519()
+	am, ctx, handler := setupTest(t)
+	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 
-	accBank := acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.Coin{123 * types.Decimals},
-	}
-	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
-	assert.Nil(t, err)
-
-	handler := NewHandler(lam)
+	assert.False(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 
 	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	accInfo := acc.AccountInfo{
-		Username: acc.AccountKey(register),
-		Created:  types.Height(0),
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
-	}
-	infoPtr, err := lam.GetInfo(ctx, acc.AccountKey(register))
-	assert.Nil(t, err)
-	assert.Equal(t, accInfo, *infoPtr, "Account info should be equal")
-
-	bankPtr, err := lam.GetBankFromAccountKey(ctx, acc.AccountKey(register))
-	assert.Nil(t, err)
-	accBank.Username = acc.AccountKey(register)
-	assert.Equal(t, accBank, *bankPtr, "Account bank should be equal")
-
-	accMeta := acc.AccountMeta{
-		LastActivity:   types.Height(ctx.BlockHeight()),
-		ActivityBurden: types.DefaultActivityBurden,
-	}
-	metaPtr, err := lam.GetMeta(ctx, acc.AccountKey(register))
-	assert.Nil(t, err)
-	assert.Equal(t, accMeta, *metaPtr, "Account meta should be equal")
+	assert.True(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 }
 
 func TestRegisterFeeInsufficient(t *testing.T) {
 	register := "register"
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	priv := crypto.GenPrivKeyEd25519()
-
-	accBank := acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.Coin{1},
-	}
-	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
-	assert.Nil(t, err)
-
-	handler := NewHandler(lam)
+	am, ctx, handler := setupTest(t)
+	priv := createBank(t, ctx, am, types.NewCoin(23*types.Decimals))
 
 	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrAccRegisterFail("Register Fee Doesn't enough").Result())
+	assert.Equal(t, acc.ErrRegisterFeeInsufficient().Result().Code, result.Code)
 }
 
 func TestRegisterDuplicate(t *testing.T) {
+	am, ctx, handler := setupTest(t)
+	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 	register := "register"
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	priv := crypto.GenPrivKeyEd25519()
-
-	accBank := acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.Coin{123 * types.Decimals},
-	}
-	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
-	assert.Nil(t, err)
-
-	handler := NewHandler(lam)
 
 	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrAccRegisterFail("Username exist").Result())
+	assert.Equal(t, result.Code, acc.ErrAccountAlreadyExists(types.AccountKey(register)).Result().Code)
 }
 
 func TestReRegister(t *testing.T) {
-
+	am, ctx, handler := setupTest(t)
+	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 	register := "register"
 	newRegister := "newRegister"
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	priv := crypto.GenPrivKeyEd25519()
-
-	accBank := acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.Coin{123 * types.Decimals},
-	}
-	err := lam.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
-	assert.Nil(t, err)
-
-	handler := NewHandler(lam)
 
 	msg := NewRegisterMsg(register, priv.PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 	msg = NewRegisterMsg(newRegister, priv.PubKey())
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrAccRegisterFail("Already registered").Result())
+	assert.Equal(t, result.Code, acc.ErrBankAlreadyRegistered().Result().Code)
 }

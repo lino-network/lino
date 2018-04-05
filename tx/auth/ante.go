@@ -56,8 +56,7 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			account := acc.NewProxyAccount(acc.AccountKey(signer), &am)
-			seq, err := account.GetSequence(ctx)
+			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
 			if err != nil {
 				return ctx, err.Result(), true
 			}
@@ -66,11 +65,11 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, seq)).Result(),
 					true
 			}
-			if err := account.IncreaseSequenceByOne(ctx); err != nil {
+			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
 				return ctx, err.Result(), true
 			}
 
-			pubKey, err := account.GetOwnerKey(ctx)
+			pubKey, err := am.GetOwnerKey(ctx, types.AccountKey(signer))
 			if err != nil {
 				return ctx, err.Result(), true
 			}
@@ -80,9 +79,6 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
 				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
-			}
-			if err := account.Apply(ctx); err != nil {
-				return ctx, err.Result(), true
 			}
 		}
 

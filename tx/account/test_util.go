@@ -29,7 +29,7 @@ func getContext() sdk.Context {
 
 func createTestAccount(ctx sdk.Context, am *AccountManager, username string) crypto.PrivKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(123*types.Decimals))
-	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(100*types.Decimals))
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
+	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
 	return priv.Wrap()
 }

@@ -159,25 +159,25 @@ func (lam AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKe
 	return nil
 }
 
-func (lam AccountStorage) IsMyFollowee(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) bool {
+func (lam AccountStorage) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
 	store := ctx.KVStore(lam.key)
-	key := GetFolloweeKey(me, followee)
+	key := GetFollowingKey(me, following)
 	return store.Has(key)
 }
 
-func (lam AccountStorage) SetFolloweeMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
+func (lam AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
 	store := ctx.KVStore(lam.key)
 	metaByte, err := lam.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrSetFollowingMeta().TraceCause(err, "")
 	}
-	store.Set(GetFolloweeKey(me, meta.FolloweeName), metaByte)
+	store.Set(GetFollowingKey(me, meta.FollowingName), metaByte)
 	return nil
 }
 
-func (lam AccountStorage) RemoveFolloweeMeta(ctx sdk.Context, me types.AccountKey, followee types.AccountKey) sdk.Error {
+func (lam AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
 	store := ctx.KVStore(lam.key)
-	store.Delete(GetFolloweeKey(me, followee))
+	store.Delete(GetFollowingKey(me, following))
 	return nil
 }
 
@@ -230,8 +230,8 @@ func GetFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
 }
 
 // "following substore" + "me" + "my following"
-func GetFolloweeKey(me types.AccountKey, myFollowee types.AccountKey) []byte {
-	return append(GetFollowingPrefix(me), myFollowee...)
+func GetFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
+	return append(GetFollowingPrefix(me), myFollowing...)
 }
 
 func GetRewardKey(accKey types.AccountKey) []byte {
