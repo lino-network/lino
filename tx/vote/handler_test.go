@@ -216,7 +216,7 @@ func TestWithdrawBasic(t *testing.T) {
 	assert.Equal(t, c1200, voter.Deposit)
 }
 
-func TestCreateProposal(t *testing.T) {
+func TestProposalBasic(t *testing.T) {
 	lam := newLinoAccountManager()
 	vm := newVoteManager()
 	gm := newGlobalProxy()
@@ -239,6 +239,12 @@ func TestCreateProposal(t *testing.T) {
 	msg := NewCreateProposalMsg("user1", para)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
+
+	// invalid create
+	invalidMsg := NewCreateProposalMsg("wqdkqwndkqwd", para)
+	resultInvalid := handler(ctx, invalidMsg)
+	assert.Equal(t, ErrUsernameNotFound().Result(), resultInvalid)
+
 	result2 := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result2)
 
@@ -254,6 +260,11 @@ func TestCreateProposal(t *testing.T) {
 	assert.Equal(t, 2, len(lst.OngoingProposal))
 	assert.Equal(t, proposalID1, lst.OngoingProposal[0])
 	assert.Equal(t, proposalID2, lst.OngoingProposal[1])
+
+	// test delete proposal
+	vm.DeleteProposal(ctx, proposalID2)
+	_, getErr := vm.GetProposal(ctx, proposalID2)
+	assert.Equal(t, ErrGetProposal(), getErr)
 
 }
 
@@ -295,6 +306,11 @@ func TestVoteBasic(t *testing.T) {
 	handler(ctx, depositMsg)
 	handler(ctx, depositMsg2)
 
+	// invalid deposit
+	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", l2000)
+	res := handler(ctx, invalidDepositMsg)
+	assert.Equal(t, ErrUsernameNotFound().Result(), res)
+
 	// Now user2 can vote, vote on a non exist proposal
 	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
 	voteRes := handler(ctx, invalidaVoteMsg)
@@ -313,5 +329,10 @@ func TestVoteBasic(t *testing.T) {
 
 	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)))
 	assert.Equal(t, acc.AccountKey("user3"), voteList[1].Voter)
+
+	// test delete vote
+	vm.DeleteVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	vote, getErr := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	assert.Equal(t, ErrGetVote(), getErr)
 
 }
