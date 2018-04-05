@@ -1,8 +1,6 @@
 package vote
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/global"
@@ -19,10 +17,12 @@ var (
 )
 
 const returnCoinEvent = 0x1
+const decideProposalEvent = 0x2
 
 var _ = oldwire.RegisterInterface(
 	struct{ global.Event }{},
 	oldwire.ConcreteType{ReturnCoinEvent{}, returnCoinEvent},
+	oldwire.ConcreteType{DecideProposalEvent{}, decideProposalEvent},
 )
 
 type VoteManager struct {
@@ -139,13 +139,14 @@ func (vm VoteManager) GetProposal(ctx sdk.Context, proposalID ProposalKey) (*Cha
 }
 
 // onle support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, des *ChangeParameterDescription) sdk.Error {
+func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *ChangeParameterDescription) (ProposalKey, sdk.Error) {
 	newID, getErr := vm.GetNextProposalID()
 	if getErr != nil {
-		return getErr
+		return newID, getErr
 	}
 
 	proposal := Proposal{
+		Creator:      creator,
 		ProposalID:   newID,
 		AgreeVote:    types.Coin{Amount: 0},
 		DisagreeVote: types.Coin{Amount: 0},
@@ -156,9 +157,11 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, des *ChangeParameterDescripti
 		ChangeParameterDescription: *des,
 	}
 	if err := vm.SetProposal(ctx, newID, changeParameterProposal); err != nil {
-		return err
+		return newID, err
 	}
-	return nil
+
+	//_, err := vm.GetProposal(ctx, ProposalKey(1))
+	return newID, nil
 }
 
 // onle support change parameter proposal now
@@ -390,10 +393,8 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) 
 }
 
 func (vm VoteManager) GetNextProposalID() (ProposalKey, sdk.Error) {
-	str := nextProposalID.String()
-	one := big.NewInt(1)
-	nextProposalID.Add(nextProposalID, one)
-	return ProposalKey(str), nil
+	nextProposalID += 1
+	return ProposalKey(nextProposalID), nil
 }
 
 func GetDelegatorPrefix(me acc.AccountKey) []byte {

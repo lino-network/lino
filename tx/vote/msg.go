@@ -308,7 +308,7 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // CreateProposalMsg Msg Implementations
 
-func NewCreateProposalMsgMsg(voter string, para ChangeParameterDescription) CreateProposalMsg {
+func NewCreateProposalMsg(voter string, para ChangeParameterDescription) CreateProposalMsg {
 	return CreateProposalMsg{
 		Creator:                    acc.AccountKey(voter),
 		ChangeParameterDescription: para,

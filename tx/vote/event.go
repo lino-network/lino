@@ -32,7 +32,39 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 	return nil
 }
 
-// func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-//   votes, getErr := vm
-// 	return nil
-// }
+func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+	votes, getErr := vm.GetAllVotes(ctx, event.ProposalID)
+	if getErr != nil {
+		return getErr
+	}
+
+	proposal, err := vm.GetProposal(ctx, event.ProposalID)
+	if err != nil {
+		return err
+	}
+
+	for _, vote := range votes {
+		voterPower, err := vm.GetVotingPower(ctx, vote.Voter)
+		if err != nil {
+			continue
+		}
+		if vote.Result == true {
+			proposal.AgreeVote = proposal.AgreeVote.Plus(voterPower)
+		} else {
+			proposal.DisagreeVote = proposal.DisagreeVote.Plus(voterPower)
+		}
+	}
+
+	if err := vm.SetProposal(ctx, event.ProposalID, proposal); err != nil {
+		return err
+	}
+	// majority disagree this proposal
+	if proposal.DisagreeVote.IsGTE(proposal.AgreeVote) {
+		return nil
+	}
+
+	// change parameter
+
+	// delete all votes
+	return nil
+}

@@ -1,18 +1,18 @@
 package vote
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	types "github.com/lino-network/lino/types"
 )
 
 type ProposalKey string
 
 type Proposal struct {
-	ProposalID   ProposalKey `json:"proposal_id"`
-	AgreeVote    types.Coin  `json:"agree_vote"`
-	DisagreeVote types.Coin  `json:"disagree_vote"`
+	Creator      acc.AccountKey `json:"creator"`
+	ProposalID   ProposalKey    `json:"proposal_id"`
+	AgreeVote    types.Coin     `json:"agree_vote"`
+	DisagreeVote types.Coin     `json:"disagree_vote"`
 }
 
 type ChangeParameterDescription struct {
@@ -29,5 +29,5 @@ type ChangeParameterProposal struct {
 	ChangeParameterDescription
 }
 
-var nextProposalID = big.NewInt(0)
+var nextProposalID = 0
 var ProposalDecideHr = int64(7 * 24)

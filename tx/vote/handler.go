@@ -146,6 +146,9 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 
 // Handle VoteMsg
 func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoteMsg) sdk.Result {
+	if !vm.IsVoterExist(ctx, msg.Voter) {
+		return ErrGetVoter().Result()
+	}
 	vote := Vote{
 		Voter:  msg.Voter,
 		Result: msg.Result,
@@ -176,13 +179,17 @@ func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountMana
 		return err.Result()
 	}
 
-	if err := vm.AddProposal(ctx, &msg.ChangeParameterDescription); err != nil {
-		return err.Result()
+	proposalID, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription)
+	if addErr != nil {
+		return addErr.Result()
 	}
 
 	// set a time event to decide the proposal in 7 days
-	// if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(ProposalDecideHr*3600), event); err != nil {
-	// 	return err
-	// }
+	event := DecideProposalEvent{
+		ProposalID: proposalID,
+	}
+	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(ProposalDecideHr*3600), event); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }

@@ -207,3 +207,69 @@ func TestWithdrawBasic(t *testing.T) {
 	voter, _ := vm.GetVoter(ctx, "user1")
 	assert.Equal(t, c1200, voter.Deposit)
 }
+
+func TestCreateProposal(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newVoteManager()
+	gm := newGlobalProxy()
+	ctx := getContext()
+	handler := NewHandler(vm, lam, gm)
+
+	rat := sdk.Rat{Denom: 10, Num: 5}
+	para := ChangeParameterDescription{
+		CDNAllocation: rat,
+	}
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoin(ctx, c3600)
+	acc1.Apply(ctx)
+
+	// let user1 create a proposal
+	msg := NewCreateProposalMsg("user1", para)
+	result := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, result)
+
+	proposal, _ := vm.GetProposal(ctx, ProposalKey(1))
+	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
+
+	// check use1's money has been reduced
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(c1600))
+}
+
+func TestVoteBasic(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newVoteManager()
+	gm := newGlobalProxy()
+	ctx := getContext()
+	handler := NewHandler(vm, lam, gm)
+
+	rat := sdk.Rat{Denom: 10, Num: 5}
+	para := ChangeParameterDescription{
+		CDNAllocation: rat,
+	}
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoin(ctx, c2000)
+	acc1.Apply(ctx)
+
+	acc2 := createTestAccount(ctx, lam, "user2")
+	acc2.AddCoin(ctx, c2000)
+	acc2.Apply(ctx)
+
+	// let user1 create a proposal
+	msg := NewCreateProposalMsg("user1", para)
+	handler(ctx, msg)
+
+	// must become a voter before voting
+	voteMsg := NewVoteMsg("user2", 2, true)
+	result2 := handler(ctx, voteMsg)
+	assert.Equal(t, ErrGetVoter().Result(), result2)
+
+	depositMsg := NewVoterDepositMsg("user2", l1000)
+	handler(ctx, depositMsg)
+
+	// Now user1 can vote
+	voteMsg2 := NewVoteMsg("user2", 2, true)
+	result3 := handler(ctx, voteMsg2)
+	assert.Equal(t, sdk.Result{}, result3)
+
+}
