@@ -1,103 +1,98 @@
 package post
 
 import (
-	"testing"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestPost(t *testing.T) {
+// test create post
+func TestCreatePost(t *testing.T) {
 	pm := newPostManager()
 	ctx := getContext()
-
+	ctx = ctx.WithBlockHeight(1)
+	author := acc.AccountKey("author")
+	postID := "TestPostID"
+	post := NewPostProxy(author, postID, &pm)
+	assert.False(t, post.IsPostExist(ctx))
+	// test valid postInfo
 	postInfo := PostInfo{
-		PostID:       "Test Post",
-		Title:        "Test Post",
-		Content:      "Test Post",
-		Author:       acc.AccountKey("author"),
+		PostID:       postID,
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       author,
 		ParentAuthor: "",
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []IDToURLMapping{},
 	}
-	err := pm.SetPostInfo(ctx, &postInfo)
+	err := post.CreatePost(ctx, &postInfo)
 	assert.Nil(t, err)
 
-	resultPtr, err := pm.GetPostInfo(ctx, GetPostKey(postInfo.Author, postInfo.PostID))
-	assert.Nil(t, err)
-	assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
-}
-
-func TestPostMeta(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-
+	// test created struct before apply
+	assert.Equal(t, postInfo, *post.postInfo, "postInfo should be equal")
 	postMeta := PostMeta{
+		Created:      1,
+		LastUpdate:   1,
+		LastActivity: 1,
 		AllowReplies: true,
 	}
-	err := pm.SetPostMeta(ctx, PostKey("test"), &postMeta)
-	assert.Nil(t, err)
+	assert.Equal(t, postMeta, *post.postMeta, "Post meta should be equal")
 
-	resultPtr, err := pm.GetPostMeta(ctx, PostKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, postMeta, *resultPtr, "Post meta should be equal")
+	// after apply the post proxy should be cleared
+	post.Apply(ctx)
+	assert.Nil(t, post.postInfo)
+	assert.Nil(t, post.postMeta)
+
+	// after apply check KVStore
+	postMeta.TotalReward = types.NewCoin(int64(0))
+	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
+	// test recreate post
+	err = post.CreatePost(ctx, &postInfo)
+	assert.Equal(t, err, ErrPostExist())
 }
 
-func TestPostLike(t *testing.T) {
+func TestComment(t *testing.T) {
 	pm := newPostManager()
 	ctx := getContext()
-	user := acc.AccountKey("test")
+	ctx = ctx.WithBlockHeight(1)
+	author := acc.AccountKey("author")
+	postID := "TestPostID"
+	post := NewPostProxy(author, postID, &pm)
+	assert.False(t, post.IsPostExist(ctx))
 
-	postLike := Like{Username: user, Weight: 10000, Created: types.Height(100)}
-	err := pm.SetPostLike(ctx, PostKey("test"), &postLike)
+	// test valid postInfo
+	postInfo := PostInfo{
+		PostID:       postID,
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       author,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
+		Links:        []IDToURLMapping{},
+	}
+	err := post.CreatePost(ctx, &postInfo)
 	assert.Nil(t, err)
+	post.Apply(ctx)
 
-	resultPtr, err := pm.GetPostLike(ctx, PostKey("test"), user)
+	ctx = ctx.WithBlockHeight(2)
+
+	postComment := Comment{Author: author, PostID: "test", Created: types.Height(100)}
+	err = post.AddComment(ctx, postComment)
 	assert.Nil(t, err)
-	assert.Equal(t, postLike, *resultPtr, "Post like should be equal")
-}
+	post.Apply(ctx)
 
-func TestPostComment(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postComment := Comment{Author: user, PostID: "test", Created: types.Height(100)}
-	err := pm.SetPostComment(ctx, PostKey("test"), &postComment)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostComment(ctx, PostKey("test"), GetPostKey(user, "test"))
-	assert.Nil(t, err)
-	assert.Equal(t, postComment, *resultPtr, "Post comment should be equal")
-}
-
-func TestPostView(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postView := View{Username: user, Created: types.Height(100)}
-	err := pm.SetPostView(ctx, PostKey("test"), &postView)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostView(ctx, PostKey("test"), user)
-	assert.Nil(t, err)
-	assert.Equal(t, postView, *resultPtr, "Post view should be equal")
-}
-
-func TestPostDonate(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: types.Height(100)}}}
-	err := pm.SetPostDonations(ctx, PostKey("test"), &postDonations)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostDonations(ctx, PostKey("test"), user)
-	assert.Nil(t, err)
-	assert.Equal(t, postDonations, *resultPtr, "Post donation should be equal")
+	// after apply check KVStore
+	postMeta := PostMeta{
+		Created:      1,
+		LastUpdate:   1,
+		LastActivity: 2,
+		AllowReplies: true,
+	}
+	checkPostKVStore(t, ctx, pm, post.GetPostKey(), postInfo, postMeta)
 }

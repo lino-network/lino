@@ -4,40 +4,32 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
-	types "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/types"
 )
 
 type RewardEvent struct {
-	PostAuthor acc.AccountKey `json:"post_author"`
-	PostID     string         `json:"post_id"`
-	Consumer   acc.AccountKey `json:"consumer"`
-	Amount     types.Coin     `json:"amount"`
+	PostAuthor types.AccountKey `json:"post_author"`
+	PostID     string           `json:"post_id"`
+	Consumer   types.AccountKey `json:"consumer"`
+	Amount     types.Coin       `json:"amount"`
 }
 
 func (event RewardEvent) Execute(ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-	globalProxy := global.NewGlobalProxy(&gm)
-	reward, err := globalProxy.GetRewardAndPopFromWindow(ctx, event.Amount)
+	reward, err := gm.GetRewardAndPopFromWindow(ctx, event.Amount)
 	if err != nil {
 		return err
 	}
-	authorAccount := acc.NewProxyAccount(event.PostAuthor, &am)
-	if !authorAccount.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
-	post := NewPostProxy(event.PostAuthor, event.PostID, &pm)
-	if !post.IsPostExist(ctx) {
-		return ErrDonatePostDoesntExist()
+	postKey := types.GetPostKey(event.PostAuthor, event.PostID)
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrDonatePostDoesntExist(postKey)
 	}
-	if err := post.AddDonation(ctx, event.Consumer, reward); err != nil {
+	if err := pm.AddDonation(ctx, postKey, event.Consumer, reward); err != nil {
 		return err
 	}
-	if err := authorAccount.AddIncomeAndReward(ctx, event.Amount, reward); err != nil {
-		return err
-	}
-	if err := authorAccount.Apply(ctx); err != nil {
-		return err
-	}
-	if err := post.Apply(ctx); err != nil {
+	if err := am.AddIncomeAndReward(ctx, event.PostAuthor, event.Amount, reward); err != nil {
 		return err
 	}
 	return nil

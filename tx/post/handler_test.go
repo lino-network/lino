@@ -10,18 +10,13 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
-	handler := NewHandler(pm, lam, gm)
-
-	user := acc.AccountKey("testuser")
-	createTestAccount(ctx, lam, string(user))
+	user := createTestAccount(ctx, am, "user1")
 
 	// test valid post
-	postInfo := PostInfo{
+	postCreateParams := PostCreateParams{
 		PostID:       "TestPostID",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -30,72 +25,62 @@ func TestHandlerCreatePost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
-	msg := NewCreatePostMsg(postInfo)
+	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-	// after handler check KVStore
-	postMeta := PostMeta{
-		Created:      0,
-		LastUpdate:   0,
-		LastActivity: 0,
-		AllowReplies: true,
-	}
-	checkPostKVStore(t, ctx, pm, GetPostKey(user, "TestPostID"), postInfo, postMeta)
+	assert.True(t, pm.IsPostExist(ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID)))
 
 	// test invlaid author
-	postInfo.Author = acc.AccountKey("invalid")
-	msg = NewCreatePostMsg(postInfo)
+	postCreateParams.Author = acc.AccountKey("invalid")
+	msg = NewCreatePostMsg(postCreateParams)
 	result = handler(ctx, msg)
-	assert.Equal(t, result, acc.ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrCreatePostAuthorNotFound(postCreateParams.Author).Result())
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
-	handler := NewHandler(pm, lam, gm)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, string(user))
 
-	user := acc.AccountKey("testuser")
-	createTestAccount(ctx, lam, string(user))
-
-	postInfo := PostInfo{
-		PostID:       "TestPostID",
+	// test comment
+	postCreateParams := PostCreateParams{
+		PostID:       "comment",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
 		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
+		ParentAuthor: user,
+		ParentPostID: postID,
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
-	msg := NewCreatePostMsg(postInfo)
+	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	// test comment
-	postInfo.Author = user
-	postInfo.PostID = "comment"
-	postInfo.ParentAuthor = user
-	postInfo.ParentPostID = "TestPostID"
-	msg = NewCreatePostMsg(postInfo)
-	ctx = ctx.WithBlockHeight(1)
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
 	// after handler check KVStore
-	// check comment
-	postMeta := PostMeta{
-		Created:      1,
-		LastUpdate:   1,
-		LastActivity: 1,
-		AllowReplies: true,
+	postInfo := model.PostInfo{
+		PostID:       postCreateParams.PostID,
+		Title:        postCreateParams.Title,
+		Content:      postCreateParams.Content,
+		Author:       postCreateParams.Author,
+		ParentAuthor: postCreateParams.ParentAuthor,
+		ParentPostID: postCreateParams.ParentPostID,
+		SourceAuthor: postCreateParams.SourceAuthor,
+		SourcePostID: postCreateParams.SourcePostID,
+		Links:        postCreateParams.Links,
+	}
+
+	postMeta := model.PostMeta{
+		Created:                 1,
+		LastUpdate:              1,
+		LastActivity:            1,
+		AllowReplies:            true,
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
 	checkPostKVStore(t, ctx, pm, GetPostKey(user, "comment"), postInfo, postMeta)
@@ -139,63 +124,63 @@ func TestHandlerCreateComment(t *testing.T) {
 }
 
 func TestHandlerRepost(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
-	handler := NewHandler(pm, lam, gm)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, string(user))
 
-	user := acc.AccountKey("testuser")
-	createTestAccount(ctx, lam, string(user))
-
-	postInfo := PostInfo{
-		PostID:       "TestPostID",
+	// test repost
+	postCreateParams := PostCreateParams{
+		PostID:       "repost",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
 		Author:       user,
 		ParentAuthor: "",
 		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		SourceAuthor: user,
+		SourcePostID: postID,
+		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
-	msg := NewCreatePostMsg(postInfo)
+	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	// test 1 depth repost
-	postInfo.Author = user
-	postInfo.PostID = "repost"
-	postInfo.SourceAuthor = user
-	postInfo.SourcePostID = "TestPostID"
-	msg = NewCreatePostMsg(postInfo)
-	ctx = ctx.WithBlockHeight(1)
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
 	// after handler check KVStore
-	// check 1 depth repost
-	postMeta := PostMeta{
-		Created:      1,
-		LastUpdate:   1,
-		LastActivity: 1,
-		AllowReplies: true,
+	postInfo := model.PostInfo{
+		PostID:       postCreateParams.PostID,
+		Title:        postCreateParams.Title,
+		Content:      postCreateParams.Content,
+		Author:       postCreateParams.Author,
+		ParentAuthor: postCreateParams.ParentAuthor,
+		ParentPostID: postCreateParams.ParentPostID,
+		SourceAuthor: postCreateParams.SourceAuthor,
+		SourcePostID: postCreateParams.SourcePostID,
+		Links:        postCreateParams.Links,
 	}
+
+	postMeta := model.PostMeta{
+		Created:                 1,
+		LastUpdate:              1,
+		LastActivity:            1,
+		AllowReplies:            true,
+		RedistributionSplitRate: sdk.ZeroRat,
+	}
+
 	checkPostKVStore(t, ctx, pm, GetPostKey(user, "repost"), postInfo, postMeta)
 
 	// test 2 depth repost
-	postInfo.PostID = "repost-repost"
-	postInfo.SourceAuthor = user
-	postInfo.SourcePostID = "repost"
-	msg = NewCreatePostMsg(postInfo)
+	postCreateParams.PostID = "repost-repost"
+	postCreateParams.SourceAuthor = user
+	postCreateParams.SourcePostID = "repost"
+	msg = NewCreatePostMsg(postCreateParams)
 	ctx = ctx.WithBlockHeight(2)
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
 	// after handler check KVStore
 	// check 2 depth repost
+	postInfo.PostID = "repost-repost"
 	postMeta = PostMeta{
 		Created:      2,
 		LastUpdate:   2,
@@ -208,16 +193,13 @@ func TestHandlerRepost(t *testing.T) {
 }
 
 func TestHandlerPostLike(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
 	user := "username"
 	postID := "postID"
-	handler := NewHandler(pm, lam, gm)
 	createTestAccount(ctx, lam, user)
-	createTestPost(ctx, lam, pm, user, postID, sdk.ZeroRat)
+	createTestPost(t, ctx, lam, pm, user, postID, sdk.ZeroRat)
 
 	likeMsg := NewLikeMsg(acc.AccountKey(user), 10000, acc.AccountKey(user), postID)
 	result := handler(ctx, likeMsg)
@@ -268,18 +250,15 @@ func TestHandlerPostLike(t *testing.T) {
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
 	user1 := "user1"
 	user2 := "user2"
 	postID := "postID"
-	handler := NewHandler(pm, lam, gm)
 	accProxy1 := createTestAccount(ctx, lam, user1)
 	accProxy2 := createTestAccount(ctx, lam, user2)
-	createTestPost(ctx, lam, pm, user1, postID, sdk.ZeroRat)
+	createTestPost(t, ctx, lam, pm, user1, postID, sdk.ZeroRat)
 
 	donateMsg := NewDonateMsg(acc.AccountKey(user2), types.LNO(sdk.NewRat(100)), acc.AccountKey(user1), postID)
 	result := handler(ctx, donateMsg)
@@ -335,20 +314,17 @@ func TestHandlerPostDonate(t *testing.T) {
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
-	pm, gm := newPostManagerAndGlobalManager()
-	lam := acc.NewLinoAccountManager(TestKVStoreKey)
-	ctx := getContext()
-	InitGlobalManager(ctx, gm)
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
 
 	user1 := "user1"
 	user2 := "user2"
 	user3 := "user3"
 	postID := "postID"
-	handler := NewHandler(pm, lam, gm)
 	accProxy1 := createTestAccount(ctx, lam, user1)
 	accProxy2 := createTestAccount(ctx, lam, user2)
 	accProxy3 := createTestAccount(ctx, lam, user3)
-	createTestPost(ctx, lam, pm, user1, postID, sdk.NewRat(15, 100))
+	createTestPost(t, ctx, lam, pm, user1, postID, sdk.NewRat(15, 100))
 	postInfo := PostInfo{
 		PostID:       "repost",
 		Title:        string(make([]byte, 50)),

@@ -28,161 +28,127 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 
 // Handle RegisterMsg
 func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	account := acc.NewProxyAccount(msg.Author, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+	if !am.IsAccountExist(ctx, msg.Author) {
+		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if post.IsPostExist(ctx) {
-		return ErrPostExist().Result()
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	if pm.IsPostExist(ctx, postKey) {
+		return ErrCreateExistPost(postKey).Result()
 	}
-	if err := post.CreatePost(ctx, &msg.PostInfo); err != nil {
+	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
 		return err.Result()
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
-		parentPost := NewPostProxy(msg.ParentAuthor, msg.ParentPostID, &pm)
-		comment := Comment{Author: post.GetAuthor(), PostID: post.GetPostID(), Created: types.Height(ctx.BlockHeight())}
-		if err := parentPost.AddComment(ctx, comment); err != nil {
-			return err.Result()
-		}
-		if err := parentPost.Apply(ctx); err != nil {
+		parentPostKey := types.GetPostKey(msg.ParentAuthor, msg.ParentPostID)
+		if err := pm.AddComment(ctx, parentPostKey, msg.Author, msg.PostID); err != nil {
 			return err.Result()
 		}
 	}
-	if err := post.Apply(ctx); err != nil {
+	if err := am.UpdateLastActivity(ctx, msg.Author); err != nil {
 		return err.Result()
 	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
-		return err.Result()
-	}
+
 	return sdk.Result{}
 }
 
 // Handle LikeMsg
 func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	account := acc.NewProxyAccount(msg.Username, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if !post.IsPostExist(ctx) {
-		return ErrLikePostDoesntExist().Result()
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrLikeNonExistPost(postKey).Result()
 	}
 	// TODO: check acitivity burden
-	like := Like{Username: msg.Username, Weight: msg.Weight, Created: types.Height(ctx.BlockHeight())}
-	if err := post.AddOrUpdateLikeToPost(ctx, like); err != nil {
+	if err := pm.AddOrUpdateLikeToPost(ctx, postKey, msg.Username, msg.Weight); err != nil {
 		return err.Result()
 	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
+	if err := am.UpdateLastActivity(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 
-	// apply change to storage
-	if err := post.Apply(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
-		return err.Result()
-	}
 	return sdk.Result{}
 }
 
 // Handle DonateMsg
 func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	globalProxy := global.NewGlobalProxy(&gm)
-
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
-		return err.Result()
+		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
-	account := acc.NewProxyAccount(msg.Username, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrDonateUserNotFound(msg.Username).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if !post.IsPostExist(ctx) {
-		return ErrDonatePostDoesntExist().Result()
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrDonatePostDoesntExist(postKey).Result()
 	}
 	// TODO: check acitivity burden
-	if err := account.MinusCoin(ctx, coin); err != nil {
-		return err.Result()
+	if err := am.MinusCoin(ctx, msg.Username, coin); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
-	sourcePost, err := post.GetRootSourcePost(ctx)
+	sourceAuthor, sourcePostID, err := pm.GetRootSourcePost(ctx, postKey)
 	if err != nil {
-		return err.Result()
+		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
-	if sourcePost != nil {
-		redistributionSplitRate, err := sourcePost.GetRedistributionSplitRate(ctx)
+	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
+		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePostKey)
 		if err != nil {
-			return err.Result()
+			return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 		}
-		sourceIncome := types.Coin{sdk.NewRat(coin.Amount).Mul(sdk.OneRat.Sub(redistributionSplitRate)).Evaluate()}
-		coin.Amount -= sourceIncome.Amount
-		if err := ProcessDonationFriction(ctx, msg.Username, sourceIncome, sourcePost, am, globalProxy); err != nil {
-			return err.Result()
-		}
-		if err := sourcePost.Apply(ctx); err != nil {
+		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat.Sub(redistributionSplitRate)))
+		coin = coin.Minus(sourceIncome)
+		if err := ProcessDonationFriction(ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, am, pm, gm); err != nil {
 			return err.Result()
 		}
 	}
-	if err := ProcessDonationFriction(ctx, msg.Username, coin, post, am, globalProxy); err != nil {
+	if err := ProcessDonationFriction(ctx, msg.Username, coin, msg.Author, msg.PostID, am, pm, gm); err != nil {
 		return err.Result()
 	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
-		return err.Result()
-	}
-	// apply change to storage
-	if err := post.Apply(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
+	if err := am.UpdateLastActivity(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func ProcessDonationFriction(
-	ctx sdk.Context, consumer acc.AccountKey, coin types.Coin,
-	post *PostProxy, am acc.AccountManager, globalProxy *global.GlobalProxy) sdk.Error {
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
+	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
+	postKey := types.GetPostKey(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
 	}
-	authorAccount := acc.NewProxyAccount(post.GetAuthor(), &am)
-	if !authorAccount.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound()
+	if !am.IsAccountExist(ctx, postAuthor) {
+		return ErrDonateAuthorNotFound(postKey, postAuthor)
 	}
-	consumptionFrictionRate, err := globalProxy.GetConsumptionFrictionRate(ctx)
+	consumptionFrictionRate, err := gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
-		return err
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	redistribute := types.Coin{sdk.NewRat(coin.Amount).Mul(consumptionFrictionRate).Evaluate()}
+	redistribute := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
 	directDeposit := coin.Minus(redistribute)
-	if err := post.AddDonation(ctx, consumer, directDeposit); err != nil {
-		return err
+	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := authorAccount.AddCoin(ctx, directDeposit); err != nil {
-		return err
+	if err := am.AddCoin(ctx, postAuthor, directDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := globalProxy.AddConsumption(ctx, coin); err != nil {
-		return err
+	if err := gm.AddConsumption(ctx, coin); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := globalProxy.AddRedistributeCoin(ctx, redistribute); err != nil {
-		return err
+	if err := gm.AddConsumptionFrictionToRewardPool(ctx, redistribute); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	rewardEvent := RewardEvent{
-		PostAuthor: post.GetAuthor(),
-		PostID:     post.GetPostID(),
+		PostAuthor: postAuthor,
+		PostID:     postID,
 		Consumer:   consumer,
 		Amount:     coin,
 	}
-	if err := globalProxy.RegisterRedistributionEvent(ctx, rewardEvent); err != nil {
-		return err
-	}
-	if err := authorAccount.Apply(ctx); err != nil {
-		return err
+	if err := gm.RegisterContentRewardEvent(ctx, rewardEvent); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	return nil
 }

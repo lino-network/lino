@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/genesis"
 )
 
 // GlobalManager encapsulates all basic struct
@@ -16,6 +17,11 @@ func NewGlobalManager(gs *model.GlobalStorage) *GlobalManager {
 	return &GlobalManager{
 		globalStorage: gs,
 	}
+}
+
+
+func (gm *GlobalManager) InitGlobalManager(ctx sdk.Context, state genesis.GlobalState) error {
+	return gm.globalStorage.InitGlobalState(ctx, state)
 }
 
 func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, event model.Event) sdk.Error {

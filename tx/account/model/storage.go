@@ -26,37 +26,36 @@ type AccountStorage struct {
 // NewLinoAccountStorage creates and returns a account manager
 func NewAccountStorage(key sdk.StoreKey) *AccountStorage {
 	cdc := wire.NewCodec()
-	lam := AccountStorage{
+	return &AccountStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return &lam
 }
 
-func (lam AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(as.key)
 	if infoByte := store.Get(GetAccountInfoKey(accKey)); infoByte == nil {
 		return false
 	}
 	return true
 }
 
-func (lam AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*AccountInfo, sdk.Error) {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*AccountInfo, sdk.Error) {
+	store := ctx.KVStore(as.key)
 	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountInfoDoesntExist()
 	}
 	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
 		return nil, ErrGetAccountInfo().TraceCause(err, "")
 	}
 	return info, nil
 }
 
-func (lam AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accInfo *AccountInfo) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	infoByte, err := lam.cdc.MarshalBinary(*accInfo)
+func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accInfo *AccountInfo) sdk.Error {
+	store := ctx.KVStore(as.key)
+	infoByte, err := as.cdc.MarshalBinary(*accInfo)
 	if err != nil {
 		return ErrSetInfoFailed()
 	}
@@ -64,35 +63,35 @@ func (lam AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accI
 	return nil
 }
 
-func (lam AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey) (*AccountBank, sdk.Error) {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey) (*AccountBank, sdk.Error) {
+	store := ctx.KVStore(as.key)
 	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountBankDoesntExist()
 	}
 	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
 		return nil, ErrGetBankFromAccountKey().TraceCause(err, "")
 	}
-	return lam.GetBankFromAddress(ctx, info.Address)
+	return as.GetBankFromAddress(ctx, info.Address)
 }
 
-func (lam AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
+	store := ctx.KVStore(as.key)
 	bankByte := store.Get(GetAccountBankKey(address))
 	if bankByte == nil {
 		return nil, ErrAccountBankDoesntExist()
 	}
 	bank := new(AccountBank)
-	if err := lam.cdc.UnmarshalBinary(bankByte, bank); err != nil {
+	if err := as.cdc.UnmarshalBinary(bankByte, bank); err != nil {
 		return nil, ErrGetBankFromAddress().TraceCause(err, "")
 	}
 	return bank, nil
 }
 
-func (lam AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	bankByte, err := lam.cdc.MarshalBinary(*accBank)
+func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
+	store := ctx.KVStore(as.key)
+	bankByte, err := as.cdc.MarshalBinary(*accBank)
 	if err != nil {
 		return ErrSetBankFailed().TraceCause(err, "")
 	}
@@ -100,36 +99,36 @@ func (lam AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Addres
 	return nil
 }
 
-func (lam AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *AccountBank) sdk.Error {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *AccountBank) sdk.Error {
+	store := ctx.KVStore(as.key)
 	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return ErrGetBankFromAccountKey()
 	}
 	info := new(AccountInfo)
-	if err := lam.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
 		return ErrGetBankFromAccountKey().TraceCause(err, "")
 	}
 
-	return lam.SetBankFromAddress(ctx, info.Address, accBank)
+	return as.SetBankFromAddress(ctx, info.Address, accBank)
 }
 
-func (lam AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*AccountMeta, sdk.Error) {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*AccountMeta, sdk.Error) {
+	store := ctx.KVStore(as.key)
 	metaByte := store.Get(GetAccountMetaKey(accKey))
 	if metaByte == nil {
 		return nil, ErrGetMetaFailed()
 	}
 	meta := new(AccountMeta)
-	if err := lam.cdc.UnmarshalBinary(metaByte, meta); err != nil {
+	if err := as.cdc.UnmarshalBinary(metaByte, meta); err != nil {
 		return nil, ErrGetMetaFailed().TraceCause(err, "")
 	}
 	return meta, nil
 }
 
-func (lam AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMeta *AccountMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalBinary(*accMeta)
+func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMeta *AccountMeta) sdk.Error {
+	store := ctx.KVStore(as.key)
+	metaByte, err := as.cdc.MarshalBinary(*accMeta)
 	if err != nil {
 		return ErrSetMetaFailed().TraceCause(err, "")
 	}
@@ -137,15 +136,15 @@ func (lam AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accM
 	return nil
 }
 
-func (lam AccountStorage) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
+	store := ctx.KVStore(as.key)
 	key := GetFollowerKey(me, follower)
 	return store.Has(key)
 }
 
-func (lam AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, meta FollowerMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalJSON(meta)
+func (as AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, meta FollowerMeta) sdk.Error {
+	store := ctx.KVStore(as.key)
+	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrSetFollowerMeta().TraceCause(err, "")
 	}
@@ -153,21 +152,21 @@ func (lam AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, 
 	return nil
 }
 
-func (lam AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+	store := ctx.KVStore(as.key)
 	store.Delete(GetFollowerKey(me, follower))
 	return nil
 }
 
-func (lam AccountStorage) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
+	store := ctx.KVStore(as.key)
 	key := GetFollowingKey(me, following)
 	return store.Has(key)
 }
 
-func (lam AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	metaByte, err := lam.cdc.MarshalJSON(meta)
+func (as AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
+	store := ctx.KVStore(as.key)
+	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrSetFollowingMeta().TraceCause(err, "")
 	}
@@ -175,28 +174,28 @@ func (lam AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey,
 	return nil
 }
 
-func (lam AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+	store := ctx.KVStore(as.key)
 	store.Delete(GetFollowingKey(me, following))
 	return nil
 }
 
-func (lam AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*Reward, sdk.Error) {
-	store := ctx.KVStore(lam.key)
+func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*Reward, sdk.Error) {
+	store := ctx.KVStore(as.key)
 	rewardByte := store.Get(GetRewardKey(accKey))
 	if rewardByte == nil {
 		return nil, ErrGetRewardFailed()
 	}
 	reward := new(Reward)
-	if err := lam.cdc.UnmarshalBinary(rewardByte, reward); err != nil {
+	if err := as.cdc.UnmarshalBinary(rewardByte, reward); err != nil {
 		return nil, ErrGetRewardFailed().TraceCause(err, "")
 	}
 	return reward, nil
 }
 
-func (lam AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
-	store := ctx.KVStore(lam.key)
-	rewardByte, err := lam.cdc.MarshalBinary(*reward)
+func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
+	store := ctx.KVStore(as.key)
+	rewardByte, err := as.cdc.MarshalBinary(*reward)
 	if err != nil {
 		return ErrSetRewardFailed().TraceCause(err, "")
 	}
