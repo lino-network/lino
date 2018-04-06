@@ -35,29 +35,26 @@ func (pm *PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool 
 }
 
 // return root source post
-func (pm *PostManager) GetRootSourcePost(ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
+func (pm *PostManager) GetSourcePost(ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, postKey)
 	if err != nil {
 		return types.AccountKey(""), "", ErrGetRootSourcePost(postKey).TraceCause(err, "")
 	}
-	if len(postInfo.SourceAuthor) == 0 && len(postInfo.SourcePostID) == 0 {
+
+	// check source post's source, that's the root
+	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
 		return types.AccountKey(""), "", nil
-	}
-	sourcePostKey := types.GetPostKey(postInfo.SourceAuthor, postInfo.SourcePostID)
-	rootAuthor, rootPostID, err := pm.GetRootSourcePost(ctx, sourcePostKey)
-	if err != nil {
-		return types.AccountKey(""), "", ErrGetRootSourcePost(postKey).TraceCause(err, "")
-	}
-	if rootAuthor == types.AccountKey("") || rootPostID == "" {
-		return postInfo.SourceAuthor, postInfo.SourcePostID, nil
 	} else {
-		return rootAuthor, rootPostID, nil
+		return postInfo.SourceAuthor, postInfo.SourcePostID, nil
 	}
 }
 
 func (pm *PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInfo) sdk.Error {
+	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
+		return nil
+	}
 	postKey := types.GetPostKey(postInfo.Author, postInfo.PostID)
-	rootAuthor, rootPostID, err := pm.GetRootSourcePost(ctx, postKey)
+	rootAuthor, rootPostID, err := pm.GetSourcePost(ctx, types.GetPostKey(postInfo.SourceAuthor, postInfo.SourcePostID))
 	if err != nil {
 		return ErrSetRootSourcePost(postKey).TraceCause(err, "")
 	}
@@ -167,7 +164,7 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 	if view != nil {
 		view.Times += 1
 	} else {
-		view := &model.View{Username: user, Created: ctx.BlockHeight(), Times: 1}
+		view = &model.View{Username: user, Created: ctx.BlockHeight(), Times: 1}
 	}
 
 	return pm.postStorage.SetPostView(ctx, postKey, view)

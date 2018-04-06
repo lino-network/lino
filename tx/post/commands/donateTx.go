@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
@@ -46,7 +45,7 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
-		msg := post.NewDonateMsg(acc.AccountKey(username), types.LNO(amount), acc.AccountKey(author), postID)
+		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := builder.SignBuildBroadcast(username, msg, cdc)

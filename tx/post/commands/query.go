@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
-	post "github.com/lino-network/lino/tx/post"
+	"github.com/lino-network/lino/tx/post/model"
+	"github.com/lino-network/lino/types"
 )
 
 // GetPostCmd returns a query post that will display the
@@ -38,22 +38,22 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	author := args[0]
 	postID := args[1]
-	postKey := post.GetPostKey(acc.AccountKey(author), postID)
+	postKey := types.GetPostKey(types.AccountKey(author), postID)
 
-	res, err := builder.Query(post.GetPostInfoKey(postKey), c.storeName)
+	res, err := builder.Query(model.GetPostInfoKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
-	postInfo := new(post.PostInfo)
+	postInfo := new(model.PostInfo)
 	if err := c.cdc.UnmarshalBinary(res, postInfo); err != nil {
 		return err
 	}
 
-	res, err = builder.Query(post.GetPostMetaKey(postKey), c.storeName)
+	res, err = builder.Query(model.GetPostMetaKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
-	postMeta := new(post.PostMeta)
+	postMeta := new(model.PostMeta)
 	if err := c.cdc.UnmarshalBinary(res, postMeta); err != nil {
 		return err
 	}

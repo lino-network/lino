@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,16 +26,15 @@ type GlobalStorage struct {
 	cdc *wire.Codec
 }
 
-func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
+func NewGlobalStorage(key sdk.StoreKey) *GlobalStorage {
 	cdc := wire.NewCodec()
-	gs := GlobalStorage{
+	return &GlobalStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return gs
 }
 
-func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
+func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalState) error {
 	globalMeta := &GlobalMeta{
 		TotalLino:             sdk.NewRat(state.TotalLino),
 		CumulativeConsumption: types.NewCoin(0),
@@ -92,9 +90,6 @@ func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSta
 	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
 	}
-	fmt.Println(inflationPool)
-	inflationPool, _ = gs.GetInflationPool(ctx)
-	fmt.Println(inflationPool)
 
 	consumptionMeta := &ConsumptionMeta{
 		ConsumptionFrictionRate: state.ConsumptionFrictionRate,
@@ -110,7 +105,7 @@ func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSta
 	return nil
 }
 
-func (gs GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*HeightEventList, sdk.Error) {
+func (gs *GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*HeightEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetHeightEventListKey(height))
 	if listByte == nil {
@@ -123,7 +118,7 @@ func (gs GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*Heig
 	return lst, nil
 }
 
-func (gs GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *HeightEventList) sdk.Error {
+func (gs *GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *HeightEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	// event doesn't exist
 	listByte, err := gs.cdc.MarshalJSON(*lst)
@@ -134,7 +129,7 @@ func (gs GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *H
 	return nil
 }
 
-func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*TimeEventList, sdk.Error) {
+func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*TimeEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetTimeEventListKey(unixTime))
 	// event doesn't exist
@@ -148,7 +143,7 @@ func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*Time
 	return lst, nil
 }
 
-func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *TimeEventList) sdk.Error {
+func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *TimeEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	listByte, err := gs.cdc.MarshalJSON(*lst)
 	if err != nil {
@@ -158,19 +153,19 @@ func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *T
 	return nil
 }
 
-func (gs GlobalStorage) RemoveHeightEventList(ctx sdk.Context, height int64) sdk.Error {
+func (gs *GlobalStorage) RemoveHeightEventList(ctx sdk.Context, height int64) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	store.Delete(GetHeightEventListKey(height))
 	return nil
 }
 
-func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
+func (gs *GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	store.Delete(GetTimeEventListKey(unixTime))
 	return nil
 }
 
-func (gs GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
+func (gs *GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	statisticsBytes := store.Get(GetGlobalStatisticsKey())
 	if statisticsBytes == nil {
@@ -183,7 +178,7 @@ func (gs GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics,
 	return statistics, nil
 }
 
-func (gs GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
+func (gs *GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	statisticsBytes, err := gs.cdc.MarshalJSON(*statistics)
 	if err != nil {
@@ -193,7 +188,7 @@ func (gs GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalS
 	return nil
 }
 
-func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
+func (gs *GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes := store.Get(GetGlobalMetaKey())
 	if globalMetaBytes == nil {
@@ -206,7 +201,7 @@ func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) 
 	return globalMeta, nil
 }
 
-func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
+func (gs *GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
 	if err != nil {
@@ -216,7 +211,7 @@ func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) s
 	return nil
 }
 
-func (gs GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
+func (gs *GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	allocationBytes := store.Get(GetAllocationKey())
 	if allocationBytes == nil {
@@ -229,7 +224,7 @@ func (gs GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation,
 	return allocation, nil
 }
 
-func (gs GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
+func (gs *GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	allocationBytes, err := gs.cdc.MarshalJSON(*allocation)
 	if err != nil {
@@ -239,7 +234,7 @@ func (gs GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalA
 	return nil
 }
 
-func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
+func (gs *GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes := store.Get(GetInflationPoolKey())
 	if inflationPoolBytes == nil {
@@ -252,10 +247,9 @@ func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.E
 	return inflationPool, nil
 }
 
-func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
+func (gs *GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
-	fmt.Println(string(inflationPoolBytes))
 	if err != nil {
 		return ErrEventMarshalError(err)
 	}
@@ -263,7 +257,7 @@ func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *Inflati
 	return nil
 }
 
-func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
+func (gs *GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
 	if consumptionMetaBytes == nil {
@@ -276,7 +270,7 @@ func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, s
 	return consumptionMeta, nil
 }
 
-func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
+func (gs *GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
 	if err != nil {

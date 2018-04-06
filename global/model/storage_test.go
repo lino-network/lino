@@ -25,7 +25,7 @@ func getContext() sdk.Context {
 	return sdk.NewContext(ms, abci.Header{}, false, nil)
 }
 
-func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage) error {
+func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm *GlobalStorage) error {
 	globalState := genesis.GlobalState{
 		TotalLino:                10000,
 		GrowthRate:               sdk.Rat{98, 1000},

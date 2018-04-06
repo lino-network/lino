@@ -14,7 +14,6 @@
   revision = "2be2f12b358dc57d70b8f501b00be450192efbc3"
 
 [[projects]]
-  branch = "develop"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -39,7 +38,8 @@
     "x/ibc",
     "x/ibc/rest"
   ]
-  revision = "9fc9db00fbc16f7e1ead85cc114318462cd59e82"
+  revision = "4f0acc4df8de03ac5b90b2173e5c1f73afb0c04e"
+  version = "v0.13.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -451,7 +451,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "35de2414665fc36f56b72d982c5af480d86de5ab"
+  revision = "aae13d27a44d62f039eeeb93e74e893886673932"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -486,6 +486,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "999be792b13b647478d6c9a891b62be948adc9cded56f57dac19f61b2ee73fe7"
+  inputs-digest = "2bdc90adf1af8d681d8764c02db039dac883d65873da9b6e6187fc373f830c41"
   solver-name = "gps-cdcl"
   solver-version = 1

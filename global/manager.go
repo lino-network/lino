@@ -13,9 +13,9 @@ type GlobalManager struct {
 }
 
 // NewGlobalManager return the global proxy pointer
-func NewGlobalManager(gs *model.GlobalStorage) *GlobalManager {
+func NewGlobalManager(key sdk.StoreKey) *GlobalManager {
 	return &GlobalManager{
-		globalStorage: gs,
+		globalStorage: model.NewGlobalStorage(key),
 	}
 }
 

@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/types"
 )
 
 // nolint
@@ -47,7 +47,7 @@ func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		msg := post.NewLikeMsg(acc.AccountKey(username), int64(weight), acc.AccountKey(author), postID)
+		msg := post.NewLikeMsg(types.AccountKey(username), int64(weight), types.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := builder.SignBuildBroadcast(username, msg, cdc)

@@ -35,14 +35,17 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if pm.IsPostExist(ctx, postKey) {
 		return ErrCreateExistPost(postKey).Result()
 	}
-	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
-		return err.Result()
-	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
 		parentPostKey := types.GetPostKey(msg.ParentAuthor, msg.ParentPostID)
+		if !pm.IsPostExist(ctx, parentPostKey) {
+			return ErrCommentInvalidParent(parentPostKey).Result()
+		}
 		if err := pm.AddComment(ctx, parentPostKey, msg.Author, msg.PostID); err != nil {
 			return err.Result()
 		}
+	}
+	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
+		return err.Result()
 	}
 	if err := am.UpdateLastActivity(ctx, msg.Author); err != nil {
 		return err.Result()
@@ -86,9 +89,9 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	}
 	// TODO: check acitivity burden
 	if err := am.MinusCoin(ctx, msg.Username, coin); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
+		return ErrDonateFailed(postKey).Result()
 	}
-	sourceAuthor, sourcePostID, err := pm.GetRootSourcePost(ctx, postKey)
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
 	if err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}

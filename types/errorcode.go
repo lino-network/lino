@@ -26,6 +26,10 @@ const (
 	CodePostCreateError    sdk.CodeType = 403
 	CodePostLikeError      sdk.CodeType = 404
 	CodePostDonateError    sdk.CodeType = 405
+	CodePostManagerError   sdk.CodeType = 406
+	CodePostHandlerError   sdk.CodeType = 407
+	CodePostMsgError       sdk.CodeType = 408
+	CodePostStorageError   sdk.CodeType = 409
 
 	// validator errors reserve 500 ~ 599
 	CodeValidatorHandlerFailed sdk.CodeType = 500

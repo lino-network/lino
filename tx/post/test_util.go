@@ -1,6 +1,8 @@
 package post
 
 import (
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/genesis"
@@ -8,6 +10,7 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -20,7 +23,7 @@ var (
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 )
 
-func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
 	globalState := genesis.GlobalState{
 		TotalLino:                10000,
 		GrowthRate:               sdk.Rat{98, 1000},
@@ -55,7 +58,7 @@ func getContext(height int64) sdk.Context {
 	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
 }
 
-func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey PostKey, postInfo PostInfo, postMeta PostMeta) {
+func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -66,7 +69,7 @@ func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey PostKey, postInfo P
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
 }
 
-func createTestAccount(ctx sdk.Context, am *AccountManager, username string) types.AccountKey {
+func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
@@ -75,9 +78,9 @@ func createTestAccount(ctx sdk.Context, am *AccountManager, username string) typ
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
-	am acc.AccountManager, pm PostManager, redistributionRate sdk.Rat) (types.AccountKey, postID) {
+	am *acc.AccountManager, pm *PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username)
-	postCreateParams := PostCreateParams{
+	postCreateParams := &PostCreateParams{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -86,7 +89,7 @@ func createTestPost(
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
 	err := pm.CreatePost(ctx, postCreateParams)
