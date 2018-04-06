@@ -32,6 +32,22 @@ func ErrGetVoter() sdk.Error {
 	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
+func ErrSetVote() sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Set vote failed"))
+}
+
+func ErrGetVote() sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get vote failed"))
+}
+
+func ErrSetProposal() sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Set proposal failed"))
+}
+
+func ErrGetProposal() sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get proposal failed"))
+}
+
 func ErrGetDelegation() sdk.Error {
 	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
 }
@@ -46,6 +62,22 @@ func ErrVoterMarshalError(err error) sdk.Error {
 
 func ErrVoterUnmarshalError(err error) sdk.Error {
 	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Voter unmarshal error: %s", err.Error()))
+}
+
+func ErrVoteMarshalError(err error) sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote marshal error: %s", err.Error()))
+}
+
+func ErrVoteUnmarshalError(err error) sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote unmarshal error: %s", err.Error()))
+}
+
+func ErrProposalMarshalError(err error) sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Proposal marshal error: %s", err.Error()))
+}
+
+func ErrProposalUnmarshalError(err error) sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Proposal unmarshal error: %s", err.Error()))
 }
 
 func ErrDelegationMarshalError(err error) sdk.Error {

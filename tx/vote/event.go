@@ -12,6 +12,10 @@ type ReturnCoinEvent struct {
 	Amount   types.Coin     `json:"amount"`
 }
 
+type DecideProposalEvent struct {
+	//ProposalID ProposalKey `json:"proposal_id"`
+}
+
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	account := acc.NewProxyAccount(event.Username, &am)
 	if !account.IsAccountExist(ctx) {
@@ -25,5 +29,57 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 		return err
 	}
 
+	return nil
+}
+
+func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+	// update the proposal list
+	lst, getErr := vm.GetProposalList(ctx)
+	if getErr != nil {
+		return getErr
+	}
+
+	curID := lst.OngoingProposal[0]
+	lst.OngoingProposal = lst.OngoingProposal[1:]
+	lst.PastProposal = append(lst.PastProposal, curID)
+
+	if setErr := vm.SetProposalList(ctx, lst); setErr != nil {
+		return setErr
+	}
+
+	// get all votes to calculate the voting result
+	votes, getErr := vm.GetAllVotes(ctx, curID)
+	if getErr != nil {
+		return getErr
+	}
+
+	proposal, err := vm.GetProposal(ctx, curID)
+	if err != nil {
+		return err
+	}
+
+	for _, vote := range votes {
+		voterPower, err := vm.GetVotingPower(ctx, vote.Voter)
+		if err != nil {
+			continue
+		}
+		if vote.Result == true {
+			proposal.AgreeVote = proposal.AgreeVote.Plus(voterPower)
+		} else {
+			proposal.DisagreeVote = proposal.DisagreeVote.Plus(voterPower)
+		}
+		// delete this vote
+		vm.DeleteVote(ctx, curID, vote.Voter)
+	}
+
+	if err := vm.SetProposal(ctx, curID, proposal); err != nil {
+		return err
+	}
+	// majority disagree this proposal
+	if proposal.DisagreeVote.IsGTE(proposal.AgreeVote) {
+		return nil
+	}
+
+	// change parameter
 	return nil
 }

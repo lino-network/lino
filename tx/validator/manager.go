@@ -11,8 +11,8 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
-var ValidatorAccountPrefix = []byte("ValidatorAccountInfo/")
-var ValidatorListPrefixWithKey = []byte("ValidatorList/ValidatorListKey")
+var ValidatorSubstore = []byte("Validator/")
+var ValidatorListSubstore = []byte("ValidatorList/ValidatorListKey")
 
 // Validator Manager implements types.AccountManager
 type ValidatorManager struct {
@@ -384,11 +384,11 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context, lst *ValidatorList)
 }
 
 func GetValidatorKey(accKey acc.AccountKey) []byte {
-	return append(ValidatorAccountPrefix, accKey...)
+	return append(ValidatorSubstore, accKey...)
 }
 
 func GetValidatorListKey() []byte {
-	return ValidatorListPrefixWithKey
+	return ValidatorListSubstore
 }
 
 func FindAccountInList(me acc.AccountKey, lst []acc.AccountKey) int {

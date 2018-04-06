@@ -1,6 +1,7 @@
 package vote
 
 import (
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +23,7 @@ var (
 	c100  = types.Coin{100 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}
 	c400  = types.Coin{400 * types.Decimals}
+	c600  = types.Coin{600 * types.Decimals}
 	c1000 = types.Coin{1000 * types.Decimals}
 	c1200 = types.Coin{1200 * types.Decimals}
 	c1600 = types.Coin{1600 * types.Decimals}
@@ -30,6 +32,7 @@ var (
 	c2600 = types.Coin{2600 * types.Decimals}
 	c3200 = types.Coin{3200 * types.Decimals}
 	c3600 = types.Coin{3600 * types.Decimals}
+	c4600 = types.Coin{4600 * types.Decimals}
 )
 
 func TestVoterDepositBasic(t *testing.T) {
@@ -192,6 +195,11 @@ func TestWithdrawBasic(t *testing.T) {
 	acc1.AddCoin(ctx, c3600)
 	acc1.Apply(ctx)
 
+	// withdraw will fail if hasn't registed as voter
+	illegalWithdrawMsg := NewVoterWithdrawMsg("user1", l1600)
+	res := handler(ctx, illegalWithdrawMsg)
+	assert.Equal(t, ErrIllegalWithdraw().Result(), res)
+
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
 	handler(ctx, msg)
@@ -206,4 +214,125 @@ func TestWithdrawBasic(t *testing.T) {
 
 	voter, _ := vm.GetVoter(ctx, "user1")
 	assert.Equal(t, c1200, voter.Deposit)
+}
+
+func TestProposalBasic(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newVoteManager()
+	gm := newGlobalProxy()
+	ctx := getContext()
+	handler := NewHandler(vm, lam, gm)
+	vm.InitGenesis(ctx)
+
+	rat := sdk.Rat{Denom: 10, Num: 5}
+	para := ChangeParameterDescription{
+		CDNAllocation: rat,
+	}
+	proposalID1 := ProposalKey(strconv.FormatInt(int64(1), 10))
+	proposalID2 := ProposalKey(strconv.FormatInt(int64(2), 10))
+
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoin(ctx, c4600)
+	acc1.Apply(ctx)
+
+	// let user1 create a proposal
+	msg := NewCreateProposalMsg("user1", para)
+	result := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, result)
+
+	// invalid create
+	invalidMsg := NewCreateProposalMsg("wqdkqwndkqwd", para)
+	resultInvalid := handler(ctx, invalidMsg)
+	assert.Equal(t, ErrUsernameNotFound().Result(), resultInvalid)
+
+	result2 := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, result2)
+
+	proposal, _ := vm.GetProposal(ctx, proposalID1)
+	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
+
+	// check use1's money has been reduced
+	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	assert.Equal(t, true, acc1Balance.IsEqual(c600))
+
+	// check proposal list is correct
+	lst, _ := vm.GetProposalList(ctx)
+	assert.Equal(t, 2, len(lst.OngoingProposal))
+	assert.Equal(t, proposalID1, lst.OngoingProposal[0])
+	assert.Equal(t, proposalID2, lst.OngoingProposal[1])
+
+	// test delete proposal
+	vm.DeleteProposal(ctx, proposalID2)
+	_, getErr := vm.GetProposal(ctx, proposalID2)
+	assert.Equal(t, ErrGetProposal(), getErr)
+
+}
+
+func TestVoteBasic(t *testing.T) {
+	lam := newLinoAccountManager()
+	vm := newVoteManager()
+	gm := newGlobalProxy()
+	ctx := getContext()
+	handler := NewHandler(vm, lam, gm)
+
+	rat := sdk.Rat{Denom: 10, Num: 5}
+	para := ChangeParameterDescription{
+		CDNAllocation: rat,
+	}
+	proposalID := int64(3)
+	acc1 := createTestAccount(ctx, lam, "user1")
+	acc1.AddCoin(ctx, c2000)
+	acc1.Apply(ctx)
+
+	acc2 := createTestAccount(ctx, lam, "user2")
+	acc2.AddCoin(ctx, c2000)
+	acc2.Apply(ctx)
+
+	acc3 := createTestAccount(ctx, lam, "user3")
+	acc3.AddCoin(ctx, c2000)
+	acc3.Apply(ctx)
+
+	// let user1 create a proposal
+	msg := NewCreateProposalMsg("user1", para)
+	handler(ctx, msg)
+
+	// must become a voter before voting
+	voteMsg := NewVoteMsg("user2", proposalID, true)
+	result2 := handler(ctx, voteMsg)
+	assert.Equal(t, ErrGetVoter().Result(), result2)
+
+	depositMsg := NewVoterDepositMsg("user2", l1000)
+	depositMsg2 := NewVoterDepositMsg("user3", l2000)
+	handler(ctx, depositMsg)
+	handler(ctx, depositMsg2)
+
+	// invalid deposit
+	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", l2000)
+	res := handler(ctx, invalidDepositMsg)
+	assert.Equal(t, ErrUsernameNotFound().Result(), res)
+
+	// Now user2 can vote, vote on a non exist proposal
+	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
+	voteRes := handler(ctx, invalidaVoteMsg)
+	assert.Equal(t, ErrGetProposal().Result(), voteRes)
+
+	// successfully vote
+	voteMsg2 := NewVoteMsg("user2", proposalID, true)
+	voteMsg3 := NewVoteMsg("user3", proposalID, true)
+	handler(ctx, voteMsg2)
+	handler(ctx, voteMsg3)
+
+	// Check vote is correct
+	vote, _ := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	assert.Equal(t, true, vote.Result)
+	assert.Equal(t, acc.AccountKey("user2"), vote.Voter)
+
+	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)))
+	assert.Equal(t, acc.AccountKey("user3"), voteList[1].Voter)
+
+	// test delete vote
+	vm.DeleteVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	vote, getErr := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	assert.Equal(t, ErrGetVote(), getErr)
+
 }

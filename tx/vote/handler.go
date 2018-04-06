@@ -23,6 +23,10 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalProxy) sd
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
+		case VoteMsg:
+			return handleVoteMsg(ctx, vm, gm, msg)
+		case CreateProposalMsg:
+			return handleCreateProposalMsg(ctx, vm, am, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -44,8 +48,7 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 	}
 
 	// withdraw money from voter's bank
-	err = proxyAcc.MinusCoin(ctx, coin)
-	if err != nil {
+	if err := proxyAcc.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
 	if err := proxyAcc.Apply(ctx); err != nil {
@@ -116,8 +119,7 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 	}
 
 	// withdraw money from delegator's bank
-	err = proxyAcc.MinusCoin(ctx, coin)
-	if err != nil {
+	if err := proxyAcc.MinusCoin(ctx, coin); err != nil {
 		return err.Result()
 	}
 	if err := proxyAcc.Apply(ctx); err != nil {
@@ -137,6 +139,51 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 		return err.Result()
 	}
 	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle VoteMsg
+func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoteMsg) sdk.Result {
+	if !vm.IsVoterExist(ctx, msg.Voter) {
+		return ErrGetVoter().Result()
+	}
+	vote := Vote{
+		Voter:  msg.Voter,
+		Result: msg.Result,
+	}
+
+	if !vm.IsProposalExist(ctx, msg.ProposalID) {
+		return ErrGetProposal().Result()
+	}
+	// will overwrite the old vote
+	if err := vm.SetVote(ctx, msg.ProposalID, msg.Voter, &vote); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle CreateProposalMsg
+func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalProxy, msg CreateProposalMsg) sdk.Result {
+	proxyAcc := acc.NewProxyAccount(msg.Creator, &am)
+	if !proxyAcc.IsAccountExist(ctx) {
+		return ErrUsernameNotFound().Result()
+	}
+
+	// withdraw money from creator's bank
+	if err := proxyAcc.MinusCoin(ctx, proposalRegisterFee); err != nil {
+		return err.Result()
+	}
+	if err := proxyAcc.Apply(ctx); err != nil {
+		return err.Result()
+	}
+
+	if addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
+		return addErr.Result()
+	}
+	//  set a time event to decide the proposal in 7 days
+	if err := vm.CreateDecideProposalEvent(ctx, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
