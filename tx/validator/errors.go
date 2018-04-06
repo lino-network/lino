@@ -28,25 +28,29 @@ func ErrSetValidator() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator failed"))
 }
 
-func ErrGetValidator() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator failed"))
-}
-
-func ErrSetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator list failed"))
-}
-
-func ErrGetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator list failed"))
-}
-
-func ErrValidatorMarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
-}
-
-func ErrValidatorUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator unmarshal error: %s", err.Error()))
-}
+// func ErrGetValidator() sdk.Error {
+// 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator failed"))
+// }
+//
+// //
+// func ErrSetValidatorList() sdk.Error {
+// 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator list failed"))
+// }
+//
+// //
+// func ErrGetValidatorList() sdk.Error {
+// 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator list failed"))
+// }
+//
+// //
+// func ErrValidatorMarshalError(err error) sdk.Error {
+// 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
+// }
+//
+// //
+// func ErrValidatorUnmarshalError(err error) sdk.Error {
+// 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator unmarshal error: %s", err.Error()))
+// }
 
 func ErrAbsentValidatorNotCorrect() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("absent validator index out of range"))

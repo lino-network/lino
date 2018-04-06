@@ -6,23 +6,22 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/tendermint/go-crypto"
 )
 
 type ValidatorDepositMsg struct {
-	Username  acc.AccountKey `json:"username"`
-	Deposit   types.LNO      `json:"deposit"`
-	ValPubKey crypto.PubKey  `json:"validator_public_key"`
+	Username  types.AccountKey `json:"username"`
+	Deposit   types.LNO        `json:"deposit"`
+	ValPubKey crypto.PubKey    `json:"validator_public_key"`
 }
 
 type ValidatorWithdrawMsg struct {
-	Username acc.AccountKey `json:"username"`
+	Username types.AccountKey `json:"username"`
 }
 
 type ValidatorRevokeMsg struct {
-	Username acc.AccountKey `json:"username"`
+	Username types.AccountKey `json:"username"`
 }
 
 //----------------------------------------
@@ -30,7 +29,7 @@ type ValidatorRevokeMsg struct {
 
 func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey) ValidatorDepositMsg {
 	return ValidatorDepositMsg{
-		Username:  acc.AccountKey(validator),
+		Username:  types.AccountKey(validator),
 		Deposit:   deposit,
 		ValPubKey: pubKey,
 	}
@@ -77,7 +76,7 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
 
 func NewValidatorWithdrawMsg(validator string) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
-		Username: acc.AccountKey(validator),
+		Username: types.AccountKey(validator),
 	}
 }
 
@@ -116,7 +115,7 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.Address {
 
 func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
-		Username: acc.AccountKey(validator),
+		Username: types.AccountKey(validator),
 	}
 }
 

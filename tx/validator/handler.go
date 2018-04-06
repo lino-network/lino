@@ -27,9 +27,8 @@ func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 
 // Handle DepositMsg
 func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
-	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
 	// Must have an normal acount
-	if !proxyAcc.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -39,11 +38,7 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	}
 
 	// withdraw money from validator's bank
-	err = proxyAcc.MinusCoin(ctx, coin)
-	if err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+	if err = am.MinusCoin(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 
@@ -54,13 +49,13 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		}
 	} else {
 		// Deposit coins
-		validator, err := vm.GetValidator(ctx, msg.Username)
+		validator, err := vm.storage.GetValidator(ctx, msg.Username)
 		if err != nil {
 			return err.Result()
 		}
 		validator.Deposit = validator.Deposit.Plus(coin)
 		validator.ABCIValidator.Power = validator.Deposit.Amount
-		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
+		if setErr := vm.storage.SetValidator(ctx, msg.Username, validator); setErr != nil {
 			return setErr.Result()
 		}
 	}
@@ -74,7 +69,7 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 
 // Handle Withdraw Msg
 func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorWithdrawMsg) sdk.Result {
-	validator, getErr := vm.GetValidator(ctx, msg.Username)
+	validator, getErr := vm.storage.GetValidator(ctx, msg.Username)
 	if getErr != nil {
 		return getErr.Result()
 	}
@@ -86,17 +81,13 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return ErrNoDeposit().Result()
 	}
 	// add money to validator's bank
-	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
-	if err := proxyAcc.AddCoin(ctx, validator.Deposit); err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+	if err := am.AddCoin(ctx, msg.Username, validator.Deposit); err != nil {
 		return err.Result()
 	}
 
 	// clear validator's deposit
 	validator.Deposit = types.NewCoin(0)
-	if err := vm.SetValidator(ctx, msg.Username, validator); err != nil {
+	if err := vm.storage.SetValidator(ctx, msg.Username, validator); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
