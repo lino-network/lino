@@ -19,6 +19,10 @@ type UnfollowMsg struct {
 	Followee types.AccountKey `json:"followee"`
 }
 
+type ClaimMsg struct {
+	Username types.AccountKey `json:"username"`
+}
+
 // we can support to transfer to an user or an address
 type TransferMsg struct {
 	Sender       types.AccountKey `json:"sender"`
@@ -44,6 +48,7 @@ func TransferToAddr(addr sdk.Address) TransferOption {
 
 var _ sdk.Msg = FollowMsg{}
 var _ sdk.Msg = UnfollowMsg{}
+var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
 
 //----------------------------------------
@@ -128,6 +133,45 @@ func (msg UnfollowMsg) GetSignBytes() []byte {
 
 func (msg UnfollowMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Follower)}
+}
+
+//----------------------------------------
+// Claim Msg Implementations
+
+func NewClaimMsg(username string) ClaimMsg {
+	return ClaimMsg{
+		Username: types.AccountKey(username),
+	}
+}
+
+func (msg ClaimMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+
+func (msg ClaimMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	return nil
+}
+
+func (msg ClaimMsg) String() string {
+	return fmt.Sprintf("ClaimMsg{Username:%v}", msg.Username)
+}
+
+func (msg ClaimMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg ClaimMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg ClaimMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
 //----------------------------------------

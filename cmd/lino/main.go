@@ -58,62 +58,34 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 		privValidator.Save()
 	}
 
-	pubKeyBytes, err := json.Marshal(*pubKey)
+	totalLino := int64(10000000000)
+	genesisAcc := genesis.GenesisAccount{
+		Name:      "Lino",
+		Lino:      totalLino,
+		PubKey:    pubKey,
+		ValPubKey: privValidator.PubKey,
+	}
+	globalState := genesis.GlobalState{
+		TotalLino:                totalLino,
+		GrowthRate:               sdk.NewRat(98, 1000),
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(50, 100),
+		DeveloperAllocation:      sdk.NewRat(20, 100),
+		ValidatorAllocation:      sdk.NewRat(10, 100),
+		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
+		FreezingPeriodHr:         24 * 7,
+	}
+	genesisState := genesis.GenesisState{
+		Accounts:    []genesis.GenesisAccount{genesisAcc},
+		GlobalState: globalState,
+	}
+
+	result, err := genesis.GetGenesisJson(genesisState)
 	if err != nil {
 		return nil, "", nil, err
 	}
-	valPubKeyBytes, err := json.Marshal(privValidator.PubKey)
-	if err != nil {
-		return nil, "", nil, err
-	}
 
-	opts := fmt.Sprintf(`{
-	      "accounts": [{
-	        "name": "Lino",
-	        "lino": 10000000000,
-	        "pub_key": %s,
-	        "validator_pub_key": %s
-	      }],
-	      "global_state": {
-	      	"total_lino": 10000000000,
-	      	"growth_rate": {
-	      		"num": 98,
-	      		"denom": 1000
-	      	},
-	      	"infra_allocation": {
-	      		"num": 20,
-	      		"denom": 100
-	      	},
-	      	"content_creator_allocation": {
-	      		"num": 55,
-	      		"denom": 100
-	      	},
-	      	"developer_allocation": {
-	      		"num": 20,
-	      		"denom": 100
-	      	},
-	      	"validator_allocation": {
-	      		"num": 5,
-	      		"denom": 100
-	      	},
-	      	"consumption_friction_rate": {
-	      		"num": 1,
-	      		"denom": 100
-	      	},
-	      	"freezing_period_hr": 168
-	      }
-	    }`, pubKeyBytes, valPubKeyBytes)
-	fmt.Println("default address:", pubKey.Address())
-
-	genesisState := new(genesis.GenesisState)
-
-	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
-	err = json.Unmarshal(json.RawMessage(opts), genesisState)
-	if err != nil {
-		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
-	}
-	fmt.Println(genesisState)
-	return json.RawMessage(opts), secret, pubKey.Address(), nil
+	return json.RawMessage(result), secret, pubKey.Address(), nil
 }
 
 // generate Lino application

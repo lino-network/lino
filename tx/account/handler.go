@@ -18,6 +18,8 @@ func NewHandler(am AccountManager) sdk.Handler {
 			return handleUnfollowMsg(ctx, am, msg)
 		case TransferMsg:
 			return handleTransferMsg(ctx, am, msg)
+		case ClaimMsg:
+			return handleClaimMsg(ctx, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -94,6 +96,15 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 	if setErr := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); setErr != nil {
 		return ErrTransferHandler(msg.Sender).TraceCause(setErr, "").Result()
+	}
+	return sdk.Result{}
+}
+
+// handle ClaimMsg
+func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result {
+	// claim reward
+	if err := am.ClaimReward(ctx, msg.Username); err != nil {
+		return err.Result()
 	}
 	return sdk.Result{}
 }

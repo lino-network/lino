@@ -26,9 +26,11 @@ type AccountBank struct {
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence       int64 `json:"sequence"`
-	LastActivity   int64 `json:"last_activity"`
-	ActivityBurden int64 `json:"activity_burden"`
+	Sequence         int64 `json:"sequence"`
+	LastActivity     int64 `json:"last_activity"`
+	ActivityBurden   int64 `json:"activity_burden"`
+	StakeRatio       int64 `json:"stake_ratio"`
+	LastSRUpdateTime int64 `json:"last_stake_ratio_update_time"`
 }
 
 // AccountInfraConsumption records infra utility consumption
@@ -53,4 +55,5 @@ type FollowingMeta struct {
 type Reward struct {
 	OriginalIncome types.Coin `json:"original_income"`
 	ActualReward   types.Coin `json:"actual_reward"`
+	UnclaimReward  types.Coin `json:"unclaim_reward"`
 }

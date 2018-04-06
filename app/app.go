@@ -114,6 +114,8 @@ func MakeCodec() *wire.Codec {
 	const msgTypeValidatorDeposit = 0x8
 	const msgTypeValidatorWithdraw = 0x9
 	const msgTypeValidatorRevoke = 0x10
+
+	const msgTypeClaim = 0x11
 	var _ = oldwire.RegisterInterface(
 		struct{ sdk.Msg }{},
 		oldwire.ConcreteType{register.RegisterMsg{}, msgTypeRegister},
@@ -126,6 +128,7 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{val.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
 		oldwire.ConcreteType{val.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
 		oldwire.ConcreteType{val.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
+		oldwire.ConcreteType{acc.ClaimMsg{}, msgTypeClaim},
 	)
 
 	const returnCoinEvent = 0x1
@@ -246,14 +249,14 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	heightEvents, _ := lb.globalManager.GetHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
+	heightEvents, _ := lb.globalManager.GetHeightEventListAtHeight(ctx, ctx.BlockHeight())
 	if heightEvents != nil {
 		lb.executeEvents(ctx, heightEvents.Events)
 		lb.globalManager.RemoveHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
 	}
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
-		timeEvents, _ := lb.globalManager.GetTimeEventList(ctx, global.UnixTimeToEventListKey(i))
+		timeEvents, _ := lb.globalManager.GetTimeEventListAtTime(ctx, i)
 		if timeEvents != nil {
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, global.UnixTimeToEventListKey(i))
@@ -263,7 +266,7 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	return lb.updateValidators(ctx)
 }
 
-func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []global.Event) sdk.Error {
+func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
