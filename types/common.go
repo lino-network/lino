@@ -11,6 +11,9 @@ type AccountKey string
 // PostKey key format in KVStore
 type PostKey string
 
+// ProposalKey key format in KVStore
+type ProposalKey string
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPostKey(author AccountKey, postID string) PostKey {
 	return PostKey(string(author) + "#" + postID)

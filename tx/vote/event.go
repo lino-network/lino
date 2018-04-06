@@ -8,24 +8,18 @@ import (
 )
 
 type ReturnCoinEvent struct {
-	Username acc.AccountKey `json:"username"`
-	Amount   types.Coin     `json:"amount"`
+	Username types.AccountKey `json:"username"`
+	Amount   types.Coin       `json:"amount"`
 }
 
-type DecideProposalEvent struct {
-	//ProposalID ProposalKey `json:"proposal_id"`
-}
+type DecideProposalEvent struct{}
 
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-	account := acc.NewProxyAccount(event.Username, &am)
-	if !account.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, event.Username) {
 		return acc.ErrUsernameNotFound()
 	}
 
-	if err := account.AddCoin(ctx, event.Amount); err != nil {
-		return err
-	}
-	if err := account.Apply(ctx); err != nil {
+	if err := am.AddCoin(ctx, event.Username, event.Amount); err != nil {
 		return err
 	}
 
@@ -34,7 +28,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.Acc
 
 func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	// update the proposal list
-	lst, getErr := vm.GetProposalList(ctx)
+	lst, getErr := vm.storage.GetProposalList(ctx)
 	if getErr != nil {
 		return getErr
 	}
@@ -43,17 +37,17 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 	lst.OngoingProposal = lst.OngoingProposal[1:]
 	lst.PastProposal = append(lst.PastProposal, curID)
 
-	if setErr := vm.SetProposalList(ctx, lst); setErr != nil {
+	if setErr := vm.storage.SetProposalList(ctx, lst); setErr != nil {
 		return setErr
 	}
 
 	// get all votes to calculate the voting result
-	votes, getErr := vm.GetAllVotes(ctx, curID)
+	votes, getErr := vm.storage.GetAllVotes(ctx, curID)
 	if getErr != nil {
 		return getErr
 	}
 
-	proposal, err := vm.GetProposal(ctx, curID)
+	proposal, err := vm.storage.GetProposal(ctx, curID)
 	if err != nil {
 		return err
 	}
@@ -69,10 +63,10 @@ func (event DecideProposalEvent) Execute(ctx sdk.Context, vm VoteManager, am acc
 			proposal.DisagreeVote = proposal.DisagreeVote.Plus(voterPower)
 		}
 		// delete this vote
-		vm.DeleteVote(ctx, curID, vote.Voter)
+		vm.storage.DeleteVote(ctx, curID, vote.Voter)
 	}
 
-	if err := vm.SetProposal(ctx, curID, proposal); err != nil {
+	if err := vm.storage.SetProposal(ctx, curID, proposal); err != nil {
 		return err
 	}
 	// majority disagree this proposal

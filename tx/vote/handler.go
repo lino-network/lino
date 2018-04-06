@@ -7,10 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalProxy) sdk.Handler {
+func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case VoterDepositMsg:
@@ -36,9 +37,8 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalProxy) sd
 
 // Handle DepositMsg
 func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
-	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
 	// Must have an normal acount
-	if !proxyAcc.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -48,10 +48,7 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 	}
 
 	// withdraw money from voter's bank
-	if err := proxyAcc.MinusCoin(ctx, coin); err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+	if err := am.MinusCoin(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 
@@ -70,7 +67,7 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoterWithdrawMsg) sdk.Result {
+func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -87,9 +84,9 @@ func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, m
 }
 
 // Handle RevokeMsg
-func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoterRevokeMsg) sdk.Result {
+func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
 	// TODO also a Validator
-	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
+	delegators, getErr := vm.storage.GetAllDelegators(ctx, msg.Username)
 	if getErr != nil {
 		return getErr.Result()
 	}
@@ -104,7 +101,7 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg
 		return err.Result()
 	}
 
-	if err := vm.DeleteVoter(ctx, msg.Username); err != nil {
+	if err := vm.storage.DeleteVoter(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -112,20 +109,15 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg
 
 // Handle DelegateMsg
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
-	proxyAcc := acc.NewProxyAccount(msg.Delegator, &am)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
 	// withdraw money from delegator's bank
-	if err := proxyAcc.MinusCoin(ctx, coin); err != nil {
+	if err := am.MinusCoin(ctx, msg.Delegator, coin); err != nil {
 		return err.Result()
 	}
-	if err := proxyAcc.Apply(ctx); err != nil {
-		return err.Result()
-	}
-
 	// add delegation relation
 	if addErr := vm.AddDelegation(ctx, msg.Voter, msg.Delegator, coin); addErr != nil {
 		return addErr.Result()
@@ -134,22 +126,22 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 }
 
 // Handle RevokeDelegationMsg
-func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg RevokeDelegationMsg) sdk.Result {
+func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg RevokeDelegationMsg) sdk.Result {
 	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator, gm); err != nil {
 		return err.Result()
 	}
-	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
+	if err := vm.storage.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 // Handle VoteMsg
-func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg VoteMsg) sdk.Result {
+func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoteMsg) sdk.Result {
 	if !vm.IsVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
 	}
-	vote := Vote{
+	vote := model.Vote{
 		Voter:  msg.Voter,
 		Result: msg.Result,
 	}
@@ -158,24 +150,20 @@ func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalProxy, msg V
 		return ErrGetProposal().Result()
 	}
 	// will overwrite the old vote
-	if err := vm.SetVote(ctx, msg.ProposalID, msg.Voter, &vote); err != nil {
+	if err := vm.storage.SetVote(ctx, msg.ProposalID, msg.Voter, &vote); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 // Handle CreateProposalMsg
-func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalProxy, msg CreateProposalMsg) sdk.Result {
-	proxyAcc := acc.NewProxyAccount(msg.Creator, &am)
-	if !proxyAcc.IsAccountExist(ctx) {
+func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager, msg CreateProposalMsg) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Creator) {
 		return ErrUsernameNotFound().Result()
 	}
 
 	// withdraw money from creator's bank
-	if err := proxyAcc.MinusCoin(ctx, proposalRegisterFee); err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+	if err := am.MinusCoin(ctx, msg.Creator, model.ProposalRegisterFee); err != nil {
 		return err.Result()
 	}
 

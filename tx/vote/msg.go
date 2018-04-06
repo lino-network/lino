@@ -7,44 +7,44 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 )
 
 type VoteMsg struct {
-	Voter      acc.AccountKey `json:"voter"`
-	ProposalID ProposalKey    `json:"proposal_id"`
-	Result     bool           `json:"result"`
+	Voter      types.AccountKey  `json:"voter"`
+	ProposalID types.ProposalKey `json:"proposal_id"`
+	Result     bool              `json:"result"`
 }
 
 type CreateProposalMsg struct {
-	Creator acc.AccountKey `json:"creator"`
-	ChangeParameterDescription
+	Creator types.AccountKey `json:"creator"`
+	model.ChangeParameterDescription
 }
 
 type VoterDepositMsg struct {
-	Username acc.AccountKey `json:"username"`
-	Deposit  types.LNO      `json:"deposit"`
+	Username types.AccountKey `json:"username"`
+	Deposit  types.LNO        `json:"deposit"`
 }
 
 type VoterWithdrawMsg struct {
-	Username acc.AccountKey `json:"username"`
-	Amount   types.LNO      `json:"amount"`
+	Username types.AccountKey `json:"username"`
+	Amount   types.LNO        `json:"amount"`
 }
 
 type VoterRevokeMsg struct {
-	Username acc.AccountKey `json:"username"`
+	Username types.AccountKey `json:"username"`
 }
 
 type DelegateMsg struct {
-	Delegator acc.AccountKey `json:"delegator"`
-	Voter     acc.AccountKey `json:"voter"`
-	Amount    types.LNO      `json:"amount"`
+	Delegator types.AccountKey `json:"delegator"`
+	Voter     types.AccountKey `json:"voter"`
+	Amount    types.LNO        `json:"amount"`
 }
 
 type RevokeDelegationMsg struct {
-	Delegator acc.AccountKey `json:"delegator"`
-	Voter     acc.AccountKey `json:"voter"`
+	Delegator types.AccountKey `json:"delegator"`
+	Voter     types.AccountKey `json:"voter"`
 }
 
 //----------------------------------------
@@ -52,7 +52,7 @@ type RevokeDelegationMsg struct {
 
 func NewVoterDepositMsg(username string, deposit types.LNO) VoterDepositMsg {
 	return VoterDepositMsg{
-		Username: acc.AccountKey(username),
+		Username: types.AccountKey(username),
 		Deposit:  deposit,
 	}
 }
@@ -96,7 +96,7 @@ func (msg VoterDepositMsg) GetSigners() []sdk.Address {
 // VoterWithdrawMsg Msg Implementations
 func NewVoterWithdrawMsg(username string, amount types.LNO) VoterWithdrawMsg {
 	return VoterWithdrawMsg{
-		Username: acc.AccountKey(username),
+		Username: types.AccountKey(username),
 		Amount:   amount,
 	}
 }
@@ -140,7 +140,7 @@ func (msg VoterWithdrawMsg) GetSigners() []sdk.Address {
 
 func NewVoterRevokeMsg(username string) VoterRevokeMsg {
 	return VoterRevokeMsg{
-		Username: acc.AccountKey(username),
+		Username: types.AccountKey(username),
 	}
 }
 
@@ -179,8 +179,8 @@ func (msg VoterRevokeMsg) GetSigners() []sdk.Address {
 
 func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMsg {
 	return DelegateMsg{
-		Delegator: acc.AccountKey(delegator),
-		Voter:     acc.AccountKey(voter),
+		Delegator: types.AccountKey(delegator),
+		Voter:     types.AccountKey(voter),
 		Amount:    amount,
 	}
 }
@@ -227,8 +227,8 @@ func (msg DelegateMsg) GetSigners() []sdk.Address {
 
 func NewRevokeDelegationMsg(delegator string, voter string) RevokeDelegationMsg {
 	return RevokeDelegationMsg{
-		Delegator: acc.AccountKey(delegator),
-		Voter:     acc.AccountKey(voter),
+		Delegator: types.AccountKey(delegator),
+		Voter:     types.AccountKey(voter),
 	}
 }
 
@@ -270,8 +270,8 @@ func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 
 func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
 	return VoteMsg{
-		Voter:      acc.AccountKey(voter),
-		ProposalID: ProposalKey(strconv.FormatInt(proposalID, 10)),
+		Voter:      types.AccountKey(voter),
+		ProposalID: types.ProposalKey(strconv.FormatInt(proposalID, 10)),
 		Result:     result,
 	}
 }
@@ -309,9 +309,9 @@ func (msg VoteMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // CreateProposalMsg Msg Implementations
 
-func NewCreateProposalMsg(voter string, para ChangeParameterDescription) CreateProposalMsg {
+func NewCreateProposalMsg(voter string, para model.ChangeParameterDescription) CreateProposalMsg {
 	return CreateProposalMsg{
-		Creator:                    acc.AccountKey(voter),
+		Creator:                    types.AccountKey(voter),
 		ChangeParameterDescription: para,
 	}
 }

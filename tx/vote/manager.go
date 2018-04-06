@@ -1,12 +1,9 @@
 package vote
 
 import (
-	"strconv"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/global"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	oldwire "github.com/tendermint/go-wire"
 )
@@ -28,251 +25,123 @@ var _ = oldwire.RegisterInterface(
 	oldwire.ConcreteType{DecideProposalEvent{}, decideProposalEvent},
 )
 
+// vote manager is the proxy for all storage structs defined above
 type VoteManager struct {
-	// The (unexposed) key used to access the store from the Context.
-	key sdk.StoreKey
-
-	// The wire codec for binary encoding/decoding of accounts.
-	cdc *wire.Codec
+	storage *model.VoteStorage `json:"vote_storage"`
 }
 
-// NewValidatorManager returns a new ValidatorManager
-func NewVoteMananger(key sdk.StoreKey) VoteManager {
-	cdc := wire.NewCodec()
-	vm := VoteManager{
-		key: key,
-		cdc: cdc,
+// create NewVoteManager
+func NewVoteManager(key sdk.StoreKey) *VoteManager {
+	return &VoteManager{
+		storage: model.NewVoteStorage(key),
 	}
-
-	return vm
 }
 
 func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
-	lst := &ProposalList{}
+	lst := &model.ProposalList{}
 
-	if err := vm.SetProposalList(ctx, lst); err != nil {
+	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey acc.AccountKey) bool {
-	store := ctx.KVStore(vm.key)
-	if infoByte := store.Get(GetVoterKey(accKey)); infoByte == nil {
-		return false
-	}
-	return true
+func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	voterByte, _ := vm.storage.GetVoter(ctx, accKey)
+	return voterByte != nil
 }
 
-func (vm VoteManager) IsProposalExist(ctx sdk.Context, proposalID ProposalKey) bool {
-	store := ctx.KVStore(vm.key)
-	if infoByte := store.Get(GetProposalKey(proposalID)); infoByte == nil {
-		return false
-	}
-	return true
+func (vm VoteManager) IsProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	proposalByte, _ := vm.storage.GetProposal(ctx, proposalID)
+	return proposalByte != nil
 }
 
-func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) bool {
-	store := ctx.KVStore(vm.key)
-	if infoByte := store.Get(GetDelegationKey(voter, delegator)); infoByte == nil {
-		return false
-	}
-	return true
+func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+	delegationByte, _ := vm.storage.GetDelegation(ctx, voter, delegator)
+	return delegationByte != nil
 }
 
-func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin) bool {
-	voter, getErr := vm.GetVoter(ctx, username)
+func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return false
 	}
 	//reject if the remaining coins are less than register fee
 	res := voter.Deposit.Minus(coin)
-	return res.IsGTE(voterRegisterFee)
-}
-
-func (vm VoteManager) GetVoter(ctx sdk.Context, accKey acc.AccountKey) (*Voter, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	voterByte := store.Get(GetVoterKey(accKey))
-	if voterByte == nil {
-		return nil, ErrGetVoter()
-	}
-	voter := new(Voter)
-	if err := vm.cdc.UnmarshalJSON(voterByte, voter); err != nil {
-		return nil, ErrVoterUnmarshalError(err)
-	}
-	return voter, nil
-}
-
-func (vm VoteManager) SetVoter(ctx sdk.Context, accKey acc.AccountKey, voter *Voter) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	voterByte, err := vm.cdc.MarshalJSON(*voter)
-	if err != nil {
-		return ErrVoterMarshalError(err)
-	}
-	store.Set(GetVoterKey(accKey), voterByte)
-	return nil
-}
-
-func (vm VoteManager) GetVote(ctx sdk.Context, proposalID ProposalKey, voter acc.AccountKey) (*Vote, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	voteByte := store.Get(GetVoteKey(proposalID, voter))
-	if voteByte == nil {
-		return nil, ErrGetVote()
-	}
-	vote := new(Vote)
-	if err := vm.cdc.UnmarshalJSON(voteByte, vote); err != nil {
-		return nil, ErrVoteUnmarshalError(err)
-	}
-	return vote, nil
-}
-
-func (vm VoteManager) SetVote(ctx sdk.Context, proposalID ProposalKey, voter acc.AccountKey, vote *Vote) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	voteByte, err := vm.cdc.MarshalJSON(*vote)
-	if err != nil {
-		return ErrVoteMarshalError(err)
-	}
-	store.Set(GetVoteKey(proposalID, voter), voteByte)
-	return nil
-}
-
-func (vm VoteManager) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	lstByte := store.Get(GetProposalListKey())
-	if lstByte == nil {
-		return nil, ErrGetProposal()
-	}
-	lst := new(ProposalList)
-	if err := vm.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (vm VoteManager) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	lstByte, err := vm.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrProposalMarshalError(err)
-	}
-	store.Set(GetProposalListKey(), lstByte)
-	return nil
+	return res.IsGTE(model.VoterRegisterFee)
 }
 
 // onle support change parameter proposal now
-func (vm VoteManager) GetProposal(ctx sdk.Context, proposalID ProposalKey) (*ChangeParameterProposal, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	proposalByte := store.Get(GetProposalKey(proposalID))
-	if proposalByte == nil {
-		return nil, ErrGetProposal()
-	}
-	proposal := new(ChangeParameterProposal)
-	if err := vm.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
-	}
-	return proposal, nil
-}
-
-// onle support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, creator acc.AccountKey, des *ChangeParameterDescription) sdk.Error {
-	newID, getErr := vm.GetNextProposalID()
+func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey, des *model.ChangeParameterDescription) sdk.Error {
+	newID, getErr := vm.storage.GetNextProposalID()
 	if getErr != nil {
 		return getErr
 	}
 
-	proposal := Proposal{
+	proposal := model.Proposal{
 		Creator:      creator,
 		ProposalID:   newID,
 		AgreeVote:    types.Coin{Amount: 0},
 		DisagreeVote: types.Coin{Amount: 0},
 	}
 
-	changeParameterProposal := &ChangeParameterProposal{
+	changeParameterProposal := &model.ChangeParameterProposal{
 		Proposal:                   proposal,
 		ChangeParameterDescription: *des,
 	}
-	if err := vm.SetProposal(ctx, newID, changeParameterProposal); err != nil {
+	if err := vm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
 		return err
 	}
 
-	lst, getErr := vm.GetProposalList(ctx)
+	lst, getErr := vm.storage.GetProposalList(ctx)
 	if getErr != nil {
 		return getErr
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
-	if err := vm.SetProposalList(ctx, lst); err != nil {
+	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// onle support change parameter proposal now
-func (vm VoteManager) SetProposal(ctx sdk.Context, proposalID ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	proposalByte, err := vm.cdc.MarshalJSON(*proposal)
-	if err != nil {
-		return ErrProposalMarshalError(err)
-	}
-	store.Set(GetProposalKey(proposalID), proposalByte)
-	return nil
-}
-
-func (vm VoteManager) DeleteProposal(ctx sdk.Context, proposalID ProposalKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	store.Delete(GetProposalKey(proposalID))
-	return nil
-}
-
-func (vm VoteManager) DeleteVote(ctx sdk.Context, proposalID ProposalKey, voter acc.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	store.Delete(GetVoteKey(proposalID, voter))
-	return nil
-}
-
-func (vm VoteManager) RegisterVoter(ctx sdk.Context, username acc.AccountKey, coin types.Coin) sdk.Error {
-	voter := &Voter{
+func (vm VoteManager) RegisterVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	voter := &model.Voter{
 		Username: username,
 		Deposit:  coin,
 	}
 	// check minimum requirements for registering as a voter
-	if !coin.IsGTE(voterRegisterFee) {
+	if !coin.IsGTE(model.VoterRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 
-	if setErr := vm.SetVoter(ctx, username, voter); setErr != nil {
+	if setErr := vm.storage.SetVoter(ctx, username, voter); setErr != nil {
 		return setErr
 	}
 	return nil
 }
 
-func (vm VoteManager) DeleteVoter(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	store.Delete(GetVoterKey(username))
-	return nil
-}
-
-func (vm VoteManager) Deposit(ctx sdk.Context, username acc.AccountKey, coin types.Coin) sdk.Error {
-	voter, err := vm.GetVoter(ctx, username)
+func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
 	}
 	voter.Deposit = voter.Deposit.Plus(coin)
-	if setErr := vm.SetVoter(ctx, username, voter); setErr != nil {
+	if setErr := vm.storage.SetVoter(ctx, username, voter); setErr != nil {
 		return setErr
 	}
 	return nil
 }
 
 // this method won't check if it is a legal withdraw, caller should check by itself
-func (vm VoteManager) Withdraw(ctx sdk.Context, username acc.AccountKey, coin types.Coin, gm global.GlobalProxy) sdk.Error {
-	voter, getErr := vm.GetVoter(ctx, username)
+func (vm VoteManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
 	voter.Deposit = voter.Deposit.Minus(coin)
 
-	if err := vm.SetVoter(ctx, username, voter); err != nil {
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
 	}
 	if err := vm.CreateReturnCoinEvent(ctx, username, coin, gm); err != nil {
@@ -281,8 +150,8 @@ func (vm VoteManager) Withdraw(ctx sdk.Context, username acc.AccountKey, coin ty
 	return nil
 }
 
-func (vm VoteManager) WithdrawAll(ctx sdk.Context, username acc.AccountKey, gm global.GlobalProxy) sdk.Error {
-	voter, getErr := vm.GetVoter(ctx, username)
+func (vm VoteManager) WithdrawAll(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
+	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
@@ -292,45 +161,22 @@ func (vm VoteManager) WithdrawAll(ctx sdk.Context, username acc.AccountKey, gm g
 	return nil
 }
 
-func (vm VoteManager) GetDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) (*Delegation, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	delegationByte := store.Get(GetDelegationKey(voter, delegator))
-	if delegationByte == nil {
-		return nil, ErrGetDelegation()
-	}
-	delegation := new(Delegation)
-	if err := vm.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
-		return nil, ErrDelegationUnmarshalError(err)
-	}
-	return delegation, nil
-}
-
-func (vm VoteManager) SetDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey, delegation *Delegation) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	delegationByte, err := vm.cdc.MarshalJSON(*delegation)
-	if err != nil {
-		return ErrDelegationMarshalError(err)
-	}
-	store.Set(GetDelegationKey(voter, delegator), delegationByte)
-	return nil
-}
-
-func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, coin types.Coin) sdk.Error {
-	var delegation *Delegation
+func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+	var delegation *model.Delegation
 	var getErr sdk.Error
 
 	if !vm.IsDelegationExist(ctx, voterName, delegatorName) {
-		delegation = &Delegation{
+		delegation = &model.Delegation{
 			Delegator: delegatorName,
 		}
 	} else {
-		delegation, getErr = vm.GetDelegation(ctx, voterName, delegatorName)
+		delegation, getErr = vm.storage.GetDelegation(ctx, voterName, delegatorName)
 		if getErr != nil {
 			return getErr
 		}
 	}
 
-	voter, getErr := vm.GetVoter(ctx, voterName)
+	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {
 		return getErr
 	}
@@ -338,65 +184,21 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName acc.AccountKey, d
 	voter.DelegatedPower = voter.DelegatedPower.Plus(coin)
 	delegation.Amount = delegation.Amount.Plus(coin)
 
-	if err := vm.SetDelegation(ctx, voterName, delegatorName, delegation); err != nil {
+	if err := vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation); err != nil {
 		return err
 	}
-	if err := vm.SetVoter(ctx, voterName, voter); err != nil {
+	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm VoteManager) DeleteDelegation(ctx sdk.Context, voter acc.AccountKey, delegator acc.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	store.Delete(GetDelegationKey(voter, delegator))
-	return nil
-}
-
-func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName acc.AccountKey) ([]acc.AccountKey, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	iterator := store.Iterator(subspace(GetDelegatorPrefix(voterName)))
-
-	var delegators []acc.AccountKey
-
-	for ; iterator.Valid(); iterator.Next() {
-		delegationBytes := iterator.Value()
-		var delegation Delegation
-		err := vm.cdc.UnmarshalJSON(delegationBytes, &delegation)
-		if err != nil {
-			return nil, ErrDelegationUnmarshalError(err)
-		}
-		delegators = append(delegators, delegation.Delegator)
-	}
-	iterator.Close()
-	return delegators, nil
-}
-
-func (vm VoteManager) GetAllVotes(ctx sdk.Context, proposalID ProposalKey) ([]Vote, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	iterator := store.Iterator(subspace(GetVotePrefix(proposalID)))
-
-	var votes []Vote
-
-	for ; iterator.Valid(); iterator.Next() {
-		voteBytes := iterator.Value()
-		var vote Vote
-		err := vm.cdc.UnmarshalJSON(voteBytes, &vote)
-		if err != nil {
-			return nil, ErrVoteUnmarshalError(err)
-		}
-		votes = append(votes, vote)
-	}
-	iterator.Close()
-	return votes, nil
-}
-
-func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.AccountKey, delegatorName acc.AccountKey, gm global.GlobalProxy) sdk.Error {
-	voter, getErr := vm.GetVoter(ctx, voterName)
+func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, gm global.GlobalManager) sdk.Error {
+	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {
 		return getErr
 	}
-	delegation, getErr := vm.GetDelegation(ctx, voterName, delegatorName)
+	delegation, getErr := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if getErr != nil {
 		return getErr
 	}
@@ -405,17 +207,17 @@ func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName acc.Accou
 	if err := vm.CreateReturnCoinEvent(ctx, delegatorName, delegation.Amount, gm); err != nil {
 		return err
 	}
-	if err := vm.SetVoter(ctx, voterName, voter); err != nil {
+	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
 		return err
 	}
-	if err := vm.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
+	if err := vm.storage.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) (types.Coin, sdk.Error) {
-	voter, getErr := vm.GetVoter(ctx, voterName)
+func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
+	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {
 		return types.Coin{}, getErr
 	}
@@ -424,8 +226,8 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName acc.AccountKey) 
 }
 
 // return coin to an user periodically
-func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.AccountKey, amount types.Coin, gm global.GlobalProxy) sdk.Error {
-	pieceRat := amount.ToRat().Quo(sdk.NewRat(CoinReturnTimes))
+func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username types.AccountKey, amount types.Coin, gm global.GlobalManager) sdk.Error {
+	pieceRat := amount.ToRat().Quo(sdk.NewRat(model.CoinReturnTimes))
 	piece := types.RatToCoin(pieceRat)
 	event := ReturnCoinEvent{
 		Username: username,
@@ -433,8 +235,8 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.Accoun
 	}
 
 	// return coin with interval
-	for i := int64(1); i <= CoinReturnTimes; i++ {
-		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(CoinReturnIntervalHr*3600*i), event); err != nil {
+	for i := int64(1); i <= model.CoinReturnTimes; i++ {
+		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(model.CoinReturnIntervalHr*3600*i), event); err != nil {
 			return err
 		}
 	}
@@ -443,52 +245,10 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username acc.Accoun
 }
 
 // decide the proposal in 7 days
-func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalProxy) sdk.Error {
+func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
 	event := DecideProposalEvent{}
-	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(ProposalDecideHr*3600), event); err != nil {
+	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(model.ProposalDecideHr*3600), event); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (vm VoteManager) GetNextProposalID() (ProposalKey, sdk.Error) {
-	nextProposalID += 1
-	return ProposalKey(strconv.FormatInt(nextProposalID, 10)), nil
-}
-
-func GetDelegatorPrefix(me acc.AccountKey) []byte {
-	return append(append(DelegatorSubstore, me...), types.KeySeparator...)
-}
-
-// "delegator substore" + "me(voter)" + "my delegator"
-func GetDelegationKey(me acc.AccountKey, myDelegator acc.AccountKey) []byte {
-	return append(GetDelegatorPrefix(me), myDelegator...)
-}
-
-func GetVotePrefix(id ProposalKey) []byte {
-	return append(append(VoteSubstore, id...), types.KeySeparator...)
-}
-
-// "vote substore" + "proposalID" + "voter"
-func GetVoteKey(proposalID ProposalKey, voter acc.AccountKey) []byte {
-	return append(GetVotePrefix(proposalID), voter...)
-}
-
-func GetProposalKey(proposalID ProposalKey) []byte {
-	return append(ProposalSubstore, proposalID...)
-}
-
-func GetProposalListKey() []byte {
-	return ProposalListSubStore
-}
-
-func GetVoterKey(me acc.AccountKey) []byte {
-	return append(VoterSubstore, me...)
-}
-
-func subspace(prefix []byte) (start, end []byte) {
-	end = make([]byte, len(prefix))
-	copy(end, prefix)
-	end[len(end)-1]++
-	return prefix, end
 }
