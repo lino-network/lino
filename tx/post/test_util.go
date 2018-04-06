@@ -96,23 +96,3 @@ func createTestPost(
 	assert.Nil(t, err)
 	return user, postID
 }
-
-func createEvent(
-	t *testing.T, gm *global.GlobalManager, height int64, heightEventList global.HeightEventList) (types.AccountKey, string) {
-	user := createTestAccount(ctx, am, username)
-	postCreateParams := &PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionRate,
-	}
-	err := pm.CreatePost(ctx, postCreateParams)
-	assert.Nil(t, err)
-	return user, postID
-}

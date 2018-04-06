@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,16 +36,12 @@ var (
 )
 
 func TestVoterDepositBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c3600)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c3600)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -54,34 +50,28 @@ func TestVoterDepositBasic(t *testing.T) {
 	handler(ctx, msg)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	assert.Equal(t, c400, acc1Balance)
-	assert.Equal(t, true, vm.IsVoterExist(ctx, acc.AccountKey("user1")))
+	assert.Equal(t, true, vm.IsVoterExist(ctx, user1))
 
 	// make sure the voter's account info is correct
-	voter, _ := vm.GetVoter(ctx, acc.AccountKey("user1"))
+	voter, _ := vm.storage.GetVoter(ctx, user1)
 	assert.Equal(t, c3200, voter.Deposit)
 }
 
 func TestDelegateBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 
 	// create test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c2000)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c2000)
 
-	acc2 := createTestAccount(ctx, lam, "user2")
-	acc2.AddCoin(ctx, c2000)
-	acc2.Apply(ctx)
+	user2 := createTestAccount(ctx, am, "user2")
+	am.AddCoin(ctx, user2, c2000)
 
-	acc3 := createTestAccount(ctx, lam, "user3")
-	acc3.AddCoin(ctx, c2000)
-	acc3.Apply(ctx)
+	user3 := createTestAccount(ctx, am, "user3")
+	am.AddCoin(ctx, user3, c2000)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -94,13 +84,13 @@ func TestDelegateBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// make sure the voter's voting power is correct
-	voter, _ := vm.GetVoter(ctx, acc.AccountKey("user1"))
+	voter, _ := vm.storage.GetVoter(ctx, user1)
 	assert.Equal(t, c1600, voter.Deposit)
 	assert.Equal(t, c2000, voter.DelegatedPower)
 
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(c3600))
-	acc2Balance, _ := acc2.GetBankBalance(ctx)
+	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 	assert.Equal(t, true, acc2Balance.IsEqual(c0))
 
 	// let user3 delegate power to user1
@@ -109,37 +99,31 @@ func TestDelegateBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 
 	// check delegator list is correct
-	delegators, _ := vm.GetAllDelegators(ctx, "user1")
+	delegators, _ := vm.storage.GetAllDelegators(ctx, "user1")
 	assert.Equal(t, 2, len(delegators))
-	assert.Equal(t, acc.AccountKey("user2"), delegators[0])
-	assert.Equal(t, acc.AccountKey("user3"), delegators[1])
+	assert.Equal(t, user2, delegators[0])
+	assert.Equal(t, user3, delegators[1])
 
 	// check delegation are correct
-	delegation1, _ := vm.GetDelegation(ctx, "user1", "user2")
-	delegation2, _ := vm.GetDelegation(ctx, "user1", "user3")
+	delegation1, _ := vm.storage.GetDelegation(ctx, "user1", "user2")
+	delegation2, _ := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, c2000, delegation1.Amount)
 	assert.Equal(t, c1000, delegation2.Amount)
 }
 
 func TestRevokeBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 
 	// create test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c2000)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c2000)
 
-	acc2 := createTestAccount(ctx, lam, "user2")
-	acc2.AddCoin(ctx, c2000)
-	acc2.Apply(ctx)
+	user2 := createTestAccount(ctx, am, "user2")
+	am.AddCoin(ctx, user2, c2000)
 
-	acc3 := createTestAccount(ctx, lam, "user3")
-	acc3.AddCoin(ctx, c2000)
-	acc3.Apply(ctx)
+	user3 := createTestAccount(ctx, am, "user3")
+	am.AddCoin(ctx, user3, c2000)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -152,7 +136,7 @@ func TestRevokeBasic(t *testing.T) {
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", l1000)
 	handler(ctx, msg3)
-	_, res := vm.GetDelegation(ctx, "user1", "user3")
+	_, res := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Nil(t, res)
 
 	// let user3 reovke delegation
@@ -161,9 +145,9 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// make sure user3 won't get coins immediately, but user1 power down immediately
-	voter, _ := vm.GetVoter(ctx, "user1")
-	acc3Balance, _ := acc3.GetBankBalance(ctx)
-	_, getErr := vm.GetDelegation(ctx, "user1", "user3")
+	voter, _ := vm.storage.GetVoter(ctx, "user1")
+	acc3Balance, _ := am.GetBankBalance(ctx, user3)
+	_, getErr := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, ErrGetDelegation(), getErr)
 	assert.Equal(t, c1000, voter.DelegatedPower)
 	assert.Equal(t, true, acc3Balance.IsEqual(c1000))
@@ -174,10 +158,10 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
-	_, err := vm.GetDelegation(ctx, "user1", "user2")
-	_, err2 := vm.GetVoter(ctx, "user1")
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	acc2Balance, _ := acc2.GetBankBalance(ctx)
+	_, err := vm.storage.GetDelegation(ctx, "user1", "user2")
+	_, err2 := vm.storage.GetVoter(ctx, "user1")
+	acc1Balance, _ := am.GetBankBalance(ctx, user1)
+	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, ErrGetVoter(), err2)
 	assert.Equal(t, c400, acc1Balance)
@@ -185,15 +169,11 @@ func TestRevokeBasic(t *testing.T) {
 }
 
 func TestWithdrawBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c3600)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c3600)
 
 	// withdraw will fail if hasn't registed as voter
 	illegalWithdrawMsg := NewVoterWithdrawMsg("user1", l1600)
@@ -212,28 +192,24 @@ func TestWithdrawBasic(t *testing.T) {
 	result3 := handler(ctx, msg3)
 	assert.Equal(t, sdk.Result{}, result3)
 
-	voter, _ := vm.GetVoter(ctx, "user1")
+	voter, _ := vm.storage.GetVoter(ctx, "user1")
 	assert.Equal(t, c1200, voter.Deposit)
 }
 
 func TestProposalBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
-	para := ChangeParameterDescription{
+	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID1 := ProposalKey(strconv.FormatInt(int64(1), 10))
-	proposalID2 := ProposalKey(strconv.FormatInt(int64(2), 10))
+	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
+	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c4600)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c4600)
 
 	// let user1 create a proposal
 	msg := NewCreateProposalMsg("user1", para)
@@ -248,49 +224,43 @@ func TestProposalBasic(t *testing.T) {
 	result2 := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result2)
 
-	proposal, _ := vm.GetProposal(ctx, proposalID1)
+	proposal, _ := vm.storage.GetProposal(ctx, proposalID1)
 	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
 
 	// check use1's money has been reduced
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
+	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	assert.Equal(t, true, acc1Balance.IsEqual(c600))
 
 	// check proposal list is correct
-	lst, _ := vm.GetProposalList(ctx)
+	lst, _ := vm.storage.GetProposalList(ctx)
 	assert.Equal(t, 2, len(lst.OngoingProposal))
 	assert.Equal(t, proposalID1, lst.OngoingProposal[0])
 	assert.Equal(t, proposalID2, lst.OngoingProposal[1])
 
 	// test delete proposal
-	vm.DeleteProposal(ctx, proposalID2)
-	_, getErr := vm.GetProposal(ctx, proposalID2)
+	vm.storage.DeleteProposal(ctx, proposalID2)
+	_, getErr := vm.storage.GetProposal(ctx, proposalID2)
 	assert.Equal(t, ErrGetProposal(), getErr)
 
 }
 
 func TestVoteBasic(t *testing.T) {
-	lam := newLinoAccountManager()
-	vm := newVoteManager()
-	gm := newGlobalProxy()
-	ctx := getContext()
-	handler := NewHandler(vm, lam, gm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
-	para := ChangeParameterDescription{
+	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
 	proposalID := int64(3)
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c2000)
-	acc1.Apply(ctx)
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c2000)
 
-	acc2 := createTestAccount(ctx, lam, "user2")
-	acc2.AddCoin(ctx, c2000)
-	acc2.Apply(ctx)
+	user2 := createTestAccount(ctx, am, "user2")
+	am.AddCoin(ctx, user2, c2000)
 
-	acc3 := createTestAccount(ctx, lam, "user3")
-	acc3.AddCoin(ctx, c2000)
-	acc3.Apply(ctx)
+	user3 := createTestAccount(ctx, am, "user3")
+	am.AddCoin(ctx, user3, c2000)
 
 	// let user1 create a proposal
 	msg := NewCreateProposalMsg("user1", para)
@@ -323,16 +293,16 @@ func TestVoteBasic(t *testing.T) {
 	handler(ctx, voteMsg3)
 
 	// Check vote is correct
-	vote, _ := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	vote, _ := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	assert.Equal(t, true, vote.Result)
-	assert.Equal(t, acc.AccountKey("user2"), vote.Voter)
+	assert.Equal(t, user2, vote.Voter)
 
-	voteList, _ := vm.GetAllVotes(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)))
-	assert.Equal(t, acc.AccountKey("user3"), voteList[1].Voter)
+	voteList, _ := vm.storage.GetAllVotes(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)))
+	assert.Equal(t, user3, voteList[1].Voter)
 
 	// test delete vote
-	vm.DeleteVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	vote, getErr := vm.GetVote(ctx, ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	vm.storage.DeleteVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	vote, getErr := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	assert.Equal(t, ErrGetVote(), getErr)
 
 }

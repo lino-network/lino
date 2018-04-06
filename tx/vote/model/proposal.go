@@ -30,8 +30,3 @@ type ProposalList struct {
 	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
 	PastProposal    []types.ProposalKey `json:"past_proposal"`
 }
-
-var nextProposalID = int64(0)
-var ProposalDecideHr = int64(7 * 24)
-var CoinReturnIntervalHr = int64(7 * 24)
-var CoinReturnTimes = int64(7)

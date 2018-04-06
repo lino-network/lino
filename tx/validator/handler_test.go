@@ -23,6 +23,7 @@ var (
 	l1011 = types.LNO(sdk.NewRat(1011))
 	l1021 = types.LNO(sdk.NewRat(1021))
 	l1022 = types.LNO(sdk.NewRat(1022))
+	l1500 = types.LNO(sdk.NewRat(1500))
 	l1600 = types.LNO(sdk.NewRat(1600))
 	l1800 = types.LNO(sdk.NewRat(1800))
 	l1900 = types.LNO(sdk.NewRat(1900))
@@ -40,6 +41,7 @@ var (
 	c1011 = types.Coin{1011 * types.Decimals}
 	c1021 = types.Coin{1021 * types.Decimals}
 	c1022 = types.Coin{1022 * types.Decimals}
+	c1500 = types.Coin{1500 * types.Decimals}
 	c1600 = types.Coin{1600 * types.Decimals}
 	c1800 = types.Coin{1800 * types.Decimals}
 	c1900 = types.Coin{1900 * types.Decimals}
@@ -47,8 +49,8 @@ var (
 )
 
 func TestRegisterBasic(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create two test users
@@ -81,8 +83,8 @@ func TestRegisterBasic(t *testing.T) {
 }
 
 func TestRegisterFeeNotEnough(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create test user
@@ -101,8 +103,8 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 }
 
 func TestRevokeBasic(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create two test users
@@ -126,14 +128,16 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	verifyList2, _ := vm.storage.GetValidatorList(ctx)
+	validator, _ := vm.storage.GetValidator(ctx, "user1")
 	assert.Equal(t, 0, len(verifyList2.OncallValidators))
 	assert.Equal(t, 0, len(verifyList2.AllValidators))
+	assert.Equal(t, c0, validator.Deposit)
 
 }
 
 func TestRevokeNonExistUser(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// let user1(not exists) revoke candidancy
@@ -142,44 +146,10 @@ func TestRevokeNonExistUser(t *testing.T) {
 	assert.Equal(t, model.ErrGetValidator().Result(), result2)
 }
 
-// ming zi yao chang <-. <-
-func TestRevokeTwiceWontChangeFreezingPeriod(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
-	vm.InitGenesis(ctx)
-
-	// create user
-	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
-
-	// let user1 register as validator
-	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
-	result := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, result)
-
-	// let user1 revoke candidancy
-	msg2 := NewValidatorRevokeMsg("user1")
-	result2 := handler(ctx, msg2)
-	assert.Equal(t, sdk.Result{}, result2)
-
-	// check withdraw available time is correct
-	val, _ := vm.storage.GetValidator(ctx, user1)
-	assert.Equal(t, types.ValidatorWithdrawFreezingPeriod, val.WithdrawAvailableAt)
-
-	// adjust block height and revoke again
-	ctx.WithBlockHeight(800)
-	result3 := handler(ctx, msg2)
-	assert.Equal(t, ErrNotInTheList().Result(), result3)
-	val2, _ := vm.storage.GetValidator(ctx, user1)
-	assert.Equal(t, types.ValidatorWithdrawFreezingPeriod, val2.WithdrawAvailableAt)
-
-}
-
 // this is the same situation as we find Byzantine and replace the Byzantine
 func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 1)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create 21 test users
@@ -238,8 +208,8 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 }
 
 func TestRevokeAndDepositAgain(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 1)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create user
@@ -248,7 +218,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1000, *ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -266,7 +236,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	assert.Equal(t, 0, len(lstEmpty.OncallValidators))
 
 	// deposit again
-	msg3 := NewValidatorDepositMsg("user1", l100, *ownerKey)
+	msg3 := NewValidatorDepositMsg("user1", l1000, *ownerKey)
 	result3 := handler(ctx, msg3)
 
 	lst2, _ := vm.storage.GetValidatorList(ctx)
@@ -276,8 +246,8 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 }
 
 func TestWithdrawBasic(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create test user
@@ -296,63 +266,14 @@ func TestWithdrawBasic(t *testing.T) {
 	assert.Equal(t, user1, verifyList.AllValidators[0])
 
 	// user1 cannot withdraw if is oncall validator
-	withdrawMsg := NewValidatorWithdrawMsg("user1")
+	withdrawMsg := NewValidatorWithdrawMsg("user1", l1600)
 	result2 := handler(ctx, withdrawMsg)
-	assert.Equal(t, ErrDepositNotAvailable().Result(), result2)
-
-	// user1 cannot withdraw if in the freezing period
-	revokeMsg := NewValidatorRevokeMsg("user1")
-	handler(ctx, revokeMsg)
-	result3 := handler(ctx, withdrawMsg)
-	assert.Equal(t, ErrDepositNotAvailable().Result(), result3)
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, true, acc1Balance.IsEqual(c400))
-
-	// user1 can withdraw if the block height has increased 1000
-	ctx = ctx.WithBlockHeight(int64(types.ValidatorWithdrawFreezingPeriod))
-	result4 := handler(ctx, withdrawMsg)
-	assert.Equal(t, sdk.Result{}, result4)
-
-	acc1BalanceNew, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, true, acc1BalanceNew.IsEqual(c2000))
-}
-
-func TestWithdrawTwice(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
-	vm.InitGenesis(ctx)
-
-	// create two test users
-	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
-
-	// let user1 register as validator
-	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
-	result := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, result)
-
-	// withdraw first time
-	withdrawMsg := NewValidatorWithdrawMsg("user1")
-	revokeMsg := NewValidatorRevokeMsg("user1")
-
-	handler(ctx, revokeMsg)
-	ctx = ctx.WithBlockHeight(int64(types.ValidatorWithdrawFreezingPeriod))
-	result2 := handler(ctx, withdrawMsg)
-	assert.Equal(t, sdk.Result{}, result2)
-
-	// withdraw again
-	result3 := handler(ctx, withdrawMsg)
-	assert.Equal(t, ErrNoDeposit().Result(), result3)
-
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
-
+	assert.Equal(t, ErrIllegalWithdraw().Result(), result2)
 }
 
 func TestDepositBasic(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create test user
@@ -388,8 +309,8 @@ func TestDepositBasic(t *testing.T) {
 }
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// let user1 register as validator
@@ -401,8 +322,8 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 }
 
 func TestValidatorReplacement(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create 21 test users
@@ -475,8 +396,8 @@ func TestValidatorReplacement(t *testing.T) {
 }
 
 func TestRemoveBasic(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create two test users

@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
-	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 )
 
@@ -54,7 +53,7 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 
 	// Register the user if this name has not been registered
 	if !vm.IsVoterExist(ctx, msg.Username) {
-		if err := vm.RegisterVoter(ctx, msg.Username, coin); err != nil {
+		if err := vm.AddVoter(ctx, msg.Username, coin); err != nil {
 			return err.Result()
 		}
 	} else {
@@ -86,7 +85,7 @@ func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
 // Handle RevokeMsg
 func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
 	// TODO also a Validator
-	delegators, getErr := vm.storage.GetAllDelegators(ctx, msg.Username)
+	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
 	if getErr != nil {
 		return getErr.Result()
 	}
@@ -101,7 +100,7 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, m
 		return err.Result()
 	}
 
-	if err := vm.storage.DeleteVoter(ctx, msg.Username); err != nil {
+	if err := vm.DeleteVoter(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -130,7 +129,7 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator, gm); err != nil {
 		return err.Result()
 	}
-	if err := vm.storage.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
+	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -141,16 +140,12 @@ func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg
 	if !vm.IsVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
 	}
-	vote := model.Vote{
-		Voter:  msg.Voter,
-		Result: msg.Result,
-	}
 
 	if !vm.IsProposalExist(ctx, msg.ProposalID) {
 		return ErrGetProposal().Result()
 	}
-	// will overwrite the old vote
-	if err := vm.storage.SetVote(ctx, msg.ProposalID, msg.Voter, &vote); err != nil {
+
+	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -163,7 +158,7 @@ func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountMana
 	}
 
 	// withdraw money from creator's bank
-	if err := am.MinusCoin(ctx, msg.Creator, model.ProposalRegisterFee); err != nil {
+	if err := am.MinusCoin(ctx, msg.Creator, types.ProposalRegisterFee); err != nil {
 		return err.Result()
 	}
 

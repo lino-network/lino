@@ -221,8 +221,8 @@ func (vm VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 }
 
 func (vm VoteStorage) GetNextProposalID() (types.ProposalKey, sdk.Error) {
-	nextProposalID += 1
-	return types.ProposalKey(strconv.FormatInt(nextProposalID, 10)), nil
+	types.NextProposalID += 1
+	return types.ProposalKey(strconv.FormatInt(types.NextProposalID, 10)), nil
 }
 
 func GetDelegatorPrefix(me types.AccountKey) []byte {

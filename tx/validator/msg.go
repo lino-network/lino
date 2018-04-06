@@ -18,6 +18,7 @@ type ValidatorDepositMsg struct {
 
 type ValidatorWithdrawMsg struct {
 	Username types.AccountKey `json:"username"`
+	Amount   types.LNO        `json:"amount"`
 }
 
 type ValidatorRevokeMsg struct {
@@ -74,9 +75,10 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // ValidatorWithdrawMsg Msg Implementations
 
-func NewValidatorWithdrawMsg(validator string) ValidatorWithdrawMsg {
+func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
 		Username: types.AccountKey(validator),
+		Amount:   amount,
 	}
 }
 
@@ -86,6 +88,10 @@ func (msg ValidatorWithdrawMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
+	}
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
 	}
 	return nil
 }

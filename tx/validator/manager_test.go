@@ -11,8 +11,8 @@ import (
 )
 
 func TestAbsentValidator(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create 21 test users
@@ -80,8 +80,8 @@ func TestAbsentValidator(t *testing.T) {
 }
 
 func TestGetOncallList(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	handler := NewHandler(*vm, *am)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(*vm, *am, *gm)
 	vm.InitGenesis(ctx)
 
 	// create 21 test users
