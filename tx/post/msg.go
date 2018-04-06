@@ -5,38 +5,51 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
+// PostCreateParams can also use to publish comment(with parent) or repost(with source)
+type PostCreateParams struct {
+	PostID                  string                 `json:"post_id"`
+	Title                   string                 `json:"title"`
+	Content                 string                 `json:"content"`
+	Author                  types.AccountKey       `json:"author"`
+	ParentAuthor            types.AccountKey       `json:"parent_author"`
+	ParentPostID            string                 `json:"parent_postID"`
+	SourceAuthor            types.AccountKey       `json:"source_author"`
+	SourcePostID            string                 `json:"source_postID"`
+	Links                   []types.IDToURLMapping `json:"links"`
+	RedistributionSplitRate sdk.Rat                `json:"redistribution_split_rate"`
+}
+
 // CreatePostMsg contains information to create a post
 type CreatePostMsg struct {
-	PostInfo
+	PostCreateParams
 }
 
 // LikeMsg sent from a user to a post
 type LikeMsg struct {
-	Username acc.AccountKey
+	Username types.AccountKey
 	Weight   int64
-	Author   acc.AccountKey
+	Author   types.AccountKey
 	PostID   string
 }
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username acc.AccountKey
+	Username types.AccountKey
 	Amount   types.LNO
-	Author   acc.AccountKey
+	Author   types.AccountKey
 	PostID   string
 }
 
 // NewCreatePostMsg constructs a post msg
-func NewCreatePostMsg(postInfo PostInfo) CreatePostMsg {
-	return CreatePostMsg{PostInfo: postInfo}
+func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
+	return CreatePostMsg{PostCreateParams: postCreateParams}
 }
 
 // NewLikeMsg constructs a like msg
-func NewLikeMsg(user acc.AccountKey, weight int64, author acc.AccountKey, postID string) LikeMsg {
+func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, postID string) LikeMsg {
 	return LikeMsg{
 		Username: user,
 		Weight:   weight,
@@ -46,7 +59,7 @@ func NewLikeMsg(user acc.AccountKey, weight int64, author acc.AccountKey, postID
 }
 
 // NewDonateMsg constructs a like msg
-func NewDonateMsg(user acc.AccountKey, amount types.LNO, author acc.AccountKey, postID string) DonateMsg {
+func NewDonateMsg(user types.AccountKey, amount types.LNO, author types.AccountKey, postID string) DonateMsg {
 	return DonateMsg{
 		Username: user,
 		Amount:   amount,
@@ -157,7 +170,7 @@ func (msg DonateMsg) GetSigners() []sdk.Address {
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
-	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostInfo)
+	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostCreateParams)
 }
 func (msg LikeMsg) String() string {
 	return fmt.Sprintf("Post.LikeMsg{like from: %v, weight: %v, post auther:%v, post id: %v}", msg.Username, msg.Weight, msg.Author, msg.PostID)

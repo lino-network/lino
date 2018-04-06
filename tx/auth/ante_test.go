@@ -3,38 +3,42 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
+
+	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
+
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) crypto.PrivKey {
-	priv, bank := privAndBank()
-	account := acc.NewProxyAccount(acc.AccountKey(username), &lam)
-	account.CreateAccount(ctx, acc.AccountKey(username), priv.PubKey(), bank)
-	account.Apply(ctx)
-	return priv
+func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
+	priv := crypto.GenPrivKeyEd25519()
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
+	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	return priv.Wrap(), types.AccountKey(username)
 }
 
-func setupMultiStore() (sdk.MultiStore, *sdk.KVStoreKey) {
+func setupTest() (*acc.AccountManager, sdk.Context, sdk.AnteHandler) {
 	db := dbm.NewMemDB()
 	capKey := sdk.NewKVStoreKey("capkey")
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(capKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
+	am := acc.NewAccountManager(capKey)
+	anteHandler := NewAnteHandler(*am)
+	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
 
-	return ms, capKey
+	return am, ctx, anteHandler
 }
 
 type TestMsg struct {
-	signers []acc.AccountKey
+	signers []types.AccountKey
 }
 
 func (msg *TestMsg) Type() string                            { return "normal msg" }
@@ -55,7 +59,7 @@ func (msg *TestMsg) GetSigners() []sdk.Address {
 	return addrs
 }
 
-func newTestMsg(accKeys ...acc.AccountKey) *TestMsg {
+func newTestMsg(accKeys ...types.AccountKey) *TestMsg {
 	return &TestMsg{
 		signers: accKeys,
 	}
@@ -85,16 +89,6 @@ func newRegisterTestMsg(addr sdk.Address) *RegisterTestMsg {
 	}
 }
 
-// generate a priv key and return it with its address
-func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
-	priv := crypto.GenPrivKeyEd25519()
-	accBank := &acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.NewCoin(int64(123)),
-	}
-	return priv.Wrap(), accBank
-}
-
 // run the tx through the anteHandler and ensure its valid
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx) {
 	_, result, abort := anteHandler(ctx, tx)
@@ -108,7 +102,6 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 	_, r, abort := anteHandler(ctx, tx)
 	assert.True(t, abort)
 	assert.Equal(t, result, r)
-	fmt.Println(r)
 }
 
 func newTestTx(ctx sdk.Context, msg sdk.Msg, privs []crypto.PrivKey, seqs []int64) sdk.Tx {
@@ -128,14 +121,10 @@ func newTestTxWithSignBytes(msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, s
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerSigErrors(t *testing.T) {
 	// setup
-	ms, capKey := setupMultiStore()
-	lam := acc.NewLinoAccountManager(capKey)
-	anteHandler := NewAnteHandler(lam)
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
-	user1 := acc.AccountKey("user1")
-	user2 := acc.AccountKey("user2")
-	priv1 := createTestAccount(ctx, lam, string(user1))
-	priv2 := createTestAccount(ctx, lam, string(user2))
+	am, ctx, anteHandler := setupTest()
+	// get private key and username
+	priv1, user1 := createTestAccount(ctx, am, "user1")
+	priv2, user2 := createTestAccount(ctx, am, "user2")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -159,19 +148,10 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerRegisterTx(t *testing.T) {
-	// setup
-	ms, capKey := setupMultiStore()
-	lam := acc.NewLinoAccountManager(capKey)
-	anteHandler := NewAnteHandler(lam)
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
-
-	// keys and addresses
-	priv1, bank1 := privAndBank()
-	priv2, _ := privAndBank()
-	// user1 := acc.AccountKey("user1")
-	// user2 := acc.AccountKey("user2")
-
-	err := lam.SetBankFromAddress(ctx, priv1.PubKey().Address(), bank1)
+	am, ctx, anteHandler := setupTest()
+	priv1 := crypto.GenPrivKeyEd25519().Wrap()
+	priv2 := crypto.GenPrivKeyEd25519().Wrap()
+	err := am.AddCoinToAddress(ctx, priv1.PubKey().Address(), types.NewCoin(0))
 	assert.Nil(t, err)
 
 	// msg and signatures
@@ -201,18 +181,10 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerNormalTx(t *testing.T) {
-	// setup
-	ms, capKey := setupMultiStore()
-	lam := acc.NewLinoAccountManager(capKey)
-	anteHandler := NewAnteHandler(lam)
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
-
-	// keys and addresses
-	user1 := acc.AccountKey("user1")
-	user2 := acc.AccountKey("user2")
-
-	priv1 := createTestAccount(ctx, lam, string(user1))
-	priv2 := createTestAccount(ctx, lam, string(user2))
+	am, ctx, anteHandler := setupTest()
+	// keys and username
+	priv1, user1 := createTestAccount(ctx, am, "user1")
+	priv2, _ := createTestAccount(ctx, am, "user2")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -222,8 +194,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
-	account := acc.NewProxyAccount(user1, &lam)
-	seq, err := account.GetSequence(ctx)
+	seq, err := am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
 	assert.Equal(t, seq, int64(1))
 
@@ -244,7 +215,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
 
 	// test wrong sig number
-	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{1, 0}
+	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{2, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
 }

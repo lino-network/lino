@@ -3,101 +3,51 @@ package post
 import (
 	"testing"
 
-	acc "github.com/lino-network/lino/tx/account"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPost(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-
-	postInfo := PostInfo{
-		PostID:       "Test Post",
-		Title:        "Test Post",
-		Content:      "Test Post",
-		Author:       acc.AccountKey("author"),
+// test create post
+func TestCreatePost(t *testing.T) {
+	ctx, _, pm, _ := setupTest(t, 1)
+	author := types.AccountKey("author")
+	postID := "TestPostID"
+	// test valid postInfo
+	postCreateParams := PostCreateParams{
+		PostID:       postID,
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       author,
 		ParentAuthor: "",
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		Links:        []types.IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
-	err := pm.SetPostInfo(ctx, &postInfo)
+	err := pm.CreatePost(ctx, &postCreateParams)
 	assert.Nil(t, err)
 
-	resultPtr, err := pm.GetPostInfo(ctx, GetPostKey(postInfo.Author, postInfo.PostID))
-	assert.Nil(t, err)
-	assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
-}
-
-func TestPostMeta(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-
-	postMeta := PostMeta{
-		AllowReplies: true,
+	postInfo := model.PostInfo{
+		PostID:       postCreateParams.PostID,
+		Title:        postCreateParams.Title,
+		Content:      postCreateParams.Content,
+		Author:       postCreateParams.Author,
+		ParentAuthor: postCreateParams.ParentAuthor,
+		ParentPostID: postCreateParams.ParentPostID,
+		SourceAuthor: postCreateParams.SourceAuthor,
+		SourcePostID: postCreateParams.SourcePostID,
+		Links:        postCreateParams.Links,
 	}
-	err := pm.SetPostMeta(ctx, PostKey("test"), &postMeta)
-	assert.Nil(t, err)
 
-	resultPtr, err := pm.GetPostMeta(ctx, PostKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, postMeta, *resultPtr, "Post meta should be equal")
-}
-
-func TestPostLike(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postLike := Like{Username: user, Weight: 10000, Created: types.Height(100)}
-	err := pm.SetPostLike(ctx, PostKey("test"), &postLike)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostLike(ctx, PostKey("test"), user)
-	assert.Nil(t, err)
-	assert.Equal(t, postLike, *resultPtr, "Post like should be equal")
-}
-
-func TestPostComment(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postComment := Comment{Author: user, PostID: "test", Created: types.Height(100)}
-	err := pm.SetPostComment(ctx, PostKey("test"), &postComment)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostComment(ctx, PostKey("test"), GetPostKey(user, "test"))
-	assert.Nil(t, err)
-	assert.Equal(t, postComment, *resultPtr, "Post comment should be equal")
-}
-
-func TestPostView(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postView := View{Username: user, Created: types.Height(100)}
-	err := pm.SetPostView(ctx, PostKey("test"), &postView)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostView(ctx, PostKey("test"), user)
-	assert.Nil(t, err)
-	assert.Equal(t, postView, *resultPtr, "Post view should be equal")
-}
-
-func TestPostDonate(t *testing.T) {
-	pm := newPostManager()
-	ctx := getContext()
-	user := acc.AccountKey("test")
-
-	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: types.Height(100)}}}
-	err := pm.SetPostDonations(ctx, PostKey("test"), &postDonations)
-	assert.Nil(t, err)
-
-	resultPtr, err := pm.GetPostDonations(ctx, PostKey("test"), user)
-	assert.Nil(t, err)
-	assert.Equal(t, postDonations, *resultPtr, "Post donation should be equal")
+	postMeta := model.PostMeta{
+		Created:                 1,
+		LastUpdate:              1,
+		LastActivity:            1,
+		AllowReplies:            true,
+		RedistributionSplitRate: sdk.ZeroRat,
+	}
+	checkPostKVStore(t, ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
 }

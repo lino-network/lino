@@ -7,10 +7,11 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
+	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/builder"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -43,16 +44,17 @@ func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		author := viper.GetString(FlagAuthor)
-		postInfo := post.PostInfo{
-			Author:       acc.AccountKey(author),
-			PostID:       viper.GetString(FlagPostID),
-			Title:        viper.GetString(FlagTitle),
-			Content:      viper.GetString(FlagContent),
-			ParentAuthor: acc.AccountKey(viper.GetString(FlagParentAuthor)),
-			ParentPostID: viper.GetString(FlagParentPostID),
+		postCreateParams := post.PostCreateParams{
+			Author:                  types.AccountKey(author),
+			PostID:                  viper.GetString(FlagPostID),
+			Title:                   viper.GetString(FlagTitle),
+			Content:                 viper.GetString(FlagContent),
+			ParentAuthor:            types.AccountKey(viper.GetString(FlagParentAuthor)),
+			ParentPostID:            viper.GetString(FlagParentPostID),
+			RedistributionSplitRate: sdk.ZeroRat,
 		}
 
-		msg := post.NewCreatePostMsg(postInfo)
+		msg := post.NewCreatePostMsg(postCreateParams)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := builder.SignBuildBroadcast(author, msg, cdc)

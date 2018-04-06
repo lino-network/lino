@@ -1,4 +1,4 @@
-package global
+package model
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -8,7 +8,6 @@ import (
 type GlobalMeta struct {
 	TotalLino             types.LNO  `json:"total_lino"`
 	CumulativeConsumption types.Coin `json:"cumulative_consumption"`
-	AdditionLino          types.LNO  `json:"addition_lino"`
 	GrowthRate            sdk.Rat    `json:"growth_rate"`
 }
 
@@ -63,5 +62,6 @@ type ConsumptionMeta struct {
 	ReportStakeWindow       sdk.Rat    `json:"report_stake_window"`
 	DislikeStakeWindow      sdk.Rat    `json:"dislike_stake_window"`
 	ConsumptionWindow       types.Coin `json:"consumption_window"`
+	ConsumptionRewardPool   types.Coin `json:"consumption_window"`
 	FreezingPeriodHr        int64      `json:"freezing_period"`
 }

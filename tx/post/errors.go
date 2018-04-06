@@ -7,137 +7,110 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-type CodeType = sdk.CodeType
-
-// NOTE: Don't stringer this, we'll put better messages in later.
-func codeToDefaultMsg(code CodeType) string {
-	switch code {
-	case types.CodePostNotFound:
-		return "Post Not Found"
-	case types.CodePostMarshalError:
-		return "Post Marshal Error"
-	case types.CodePostUnmarshalError:
-		return "Post Unmarshal Error"
-	default:
-		return sdk.CodeToDefaultMsg(code)
-	}
+func ErrGetRedistributionSplitRate(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v redistribution split rate failed", postKey))
 }
 
-type NotFoundErrFunc func([]byte) sdk.Error
-
-func ErrInvalidLinoAmount() sdk.Error {
-	return newError(types.CodePostDonateError, fmt.Sprintf("Invalid Lino amount"))
+func ErrGetRootSourcePost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v root source post failed", postKey))
 }
 
-func ErrPostNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post not found for key: %s", key))
+func ErrSetRootSourcePost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager set %v root source post failed", postKey))
 }
 
-func ErrPostMetaNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post meta not found for key: %s", key))
+func ErrCreatePost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed", postKey))
 }
 
-func ErrPostLikeNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post like not found for key: %s", key))
+func ErrPostExist(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post %v already exist", postKey))
 }
 
-func ErrPostCommentNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post comment not found for key: %s", key))
+func ErrAddOrUpdateLikeToPost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update like to post %v failed", postKey))
 }
 
-func ErrPostViewNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post view not found for key: %s", key))
+func ErrAddDonation(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", postKey))
 }
 
-func ErrPostDonationNotFound(key []byte) sdk.Error {
-	return newError(types.CodePostNotFound, fmt.Sprintf("Post donation not found for key: %s", key))
+func ErrUpdateLastActivity(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("update post %v last activity failed", postKey))
 }
 
-func ErrPostMarshalError(err error) sdk.Error {
-	return newError(types.CodePostMarshalError, fmt.Sprintf("Post marshal error: %s", err.Error()))
+func ErrCreatePostAuthorNotFound(author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post author %v not found", author))
 }
 
-func ErrPostUnmarshalError(err error) sdk.Error {
-	return newError(types.CodePostUnmarshalError, fmt.Sprintf("Post unmarshal error: %s", err.Error()))
+func ErrCreateExistPost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post failed, post %v already exist", postKey))
+}
+
+func ErrLikePostUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, user %v not found", user))
+}
+
+func ErrLikeNonExistPost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, target post %v not found", postKey))
+}
+
+func ErrDonateFailed(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed", postKey))
+}
+
+func ErrDonateUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, user %v not found", user))
+}
+
+func ErrDonateAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, post %v author %v not found", postKey, author))
+}
+
+func ErrDonatePostDoesntExist(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post doesn't exist", postKey))
 }
 
 func ErrPostCreateNoPostID() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty post id"))
-}
-
-func ErrCommentAndRepostError() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Post can't be comment and repost at the same time"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Create with empty post id"))
 }
 
 func ErrPostCreateNoAuthor() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Create with empty author"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Create with empty author"))
 }
 
-func ErrPostCreateNonExistAuthor() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Create with non-exist author"))
+func ErrCommentAndRepostError() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post can't be comment and repost at the same time"))
 }
 
-func ErrPostCreateNoParentPost() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Create with invalid parent post"))
-}
-
-func ErrPostTitleExceedMaxLength() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Post title exceeds max length limitation"))
-}
-
-func ErrPostContentExceedMaxLength() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Post content exceeds max length limitation"))
-}
-
-func ErrPostAuthorDoesntExist() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Post author doesn't exist"))
-}
-
-func ErrPostExist() sdk.Error {
-	return newError(types.CodePostCreateError, fmt.Sprintf("Post already exists"))
-}
-
-func ErrLikePostDoesntExist() sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Target post doesn't exists"))
-}
-
-func ErrDonatePostDoesntExist() sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Target post doesn't exists"))
+func ErrCommentInvalidParent(parentPostKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("comment post parent %v doesn't exist", parentPostKey))
 }
 
 func ErrPostLikeNoUsername() sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Like needs have username"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like needs have username"))
 }
 
 func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Like weight overflow: %v", weight))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like weight overflow: %v", weight))
 }
 
 func ErrPostLikeInvalidTarget() sdk.Error {
-	return newError(types.CodePostLikeError, fmt.Sprintf("Like target post invalid"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like target post invalid"))
+}
+
+func ErrPostTitleExceedMaxLength() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post title exceeds max length limitation"))
+}
+
+func ErrPostContentExceedMaxLength() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post content exceeds max length limitation"))
 }
 
 func ErrPostDonateNoUsername() sdk.Error {
-	return newError(types.CodePostDonateError, fmt.Sprintf("Donate needs have username"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate needs have username"))
 }
 
 func ErrPostDonateInvalidTarget() sdk.Error {
-	return newError(types.CodePostDonateError, fmt.Sprintf("Donate target post invalid"))
-}
-
-func ErrPostDonateInsufficient() sdk.Error {
-	return newError(types.CodePostDonateError, fmt.Sprintf("Balance no enough"))
-}
-
-func msgOrDefaultMsg(msg string, code CodeType) string {
-	if msg != "" {
-		return msg
-	} else {
-		return codeToDefaultMsg(code)
-	}
-}
-
-func newError(code CodeType, msg string) sdk.Error {
-	msg = msgOrDefaultMsg(msg, code)
-	return sdk.NewError(code, msg)
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate target post invalid"))
 }

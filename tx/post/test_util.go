@@ -1,12 +1,16 @@
 package post
 
 import (
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -14,10 +18,12 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("account")
+	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestPostKVStoreKey    = sdk.NewKVStoreKey("post")
+	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 )
 
-func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
 	globalState := genesis.GlobalState{
 		TotalLino:                10000,
 		GrowthRate:               sdk.Rat{98, 1000},
@@ -28,67 +34,65 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 		ConsumptionFrictionRate:  sdk.Rat{1, 100},
 		FreezingPeriodHr:         24 * 7,
 	}
-	return gm.InitGlobalState(ctx, globalState)
+	return gm.InitGlobalManager(ctx, globalState)
 }
 
-func newLinoAccountManager() acc.AccountManager {
-	return acc.NewLinoAccountManager(TestKVStoreKey)
+func setupTest(t *testing.T, height int64) (sdk.Context, *acc.AccountManager, *PostManager, *global.GlobalManager) {
+	ctx := getContext(height)
+	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
+	postManager := NewPostManager(TestPostKVStoreKey)
+	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey)
+	err := InitGlobalManager(ctx, globalManager)
+	assert.Nil(t, err)
+	return ctx, accManager, postManager, globalManager
 }
 
-func newPostManager() PostManager {
-	return NewPostMananger(TestKVStoreKey)
-}
-
-func newPostManagerAndGlobalManager() (PostManager, global.GlobalManager) {
-	return NewPostMananger(TestKVStoreKey), global.NewGlobalManager(TestKVStoreKey)
-}
-
-func newAmount(amount int64) types.Coin {
-	return types.NewCoin(amount)
-}
-
-func getContext() sdk.Context {
+func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
 }
 
-func privAndBank() (crypto.PrivKey, *acc.AccountBank) {
+func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
+	// check all post related structs in KVStore
+	postStorage := model.NewPostStorage(TestPostKVStoreKey)
+	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
+	assert.Nil(t, err)
+	assert.Equal(t, postInfo, *postPtr, "postInfo should be equal")
+	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
+	assert.Nil(t, err)
+	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
+}
+
+func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	accBank := &acc.AccountBank{
-		Address: priv.PubKey().Address(),
-		Balance: types.Coin{123 * types.Decimals},
-	}
-	return priv.Wrap(), accBank
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
+	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	return types.AccountKey(username)
 }
 
-func createTestAccount(ctx sdk.Context, lam acc.AccountManager, username string) *acc.Account {
-	priv, bank := privAndBank()
-	account := acc.NewProxyAccount(acc.AccountKey(username), &lam)
-	account.CreateAccount(ctx, acc.AccountKey(username), priv.PubKey(), bank)
-	account.Apply(ctx)
-	return account
-}
-
-func createTestPost(ctx sdk.Context, lam acc.AccountManager, pm PostManager, username, postID string, redistributionRate sdk.Rat) *PostProxy {
-	createTestAccount(ctx, lam, username)
-	postInfo := PostInfo{
+func createTestPost(
+	t *testing.T, ctx sdk.Context, username, postID string,
+	am *acc.AccountManager, pm *PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
+	user := createTestAccount(ctx, am, username)
+	postCreateParams := &PostCreateParams{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
-		Author:       acc.AccountKey(username),
+		Author:       user,
 		ParentAuthor: "",
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []IDToURLMapping{},
+		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
-	post := NewPostProxy(postInfo.Author, postInfo.PostID, &pm)
-	post.CreatePost(ctx, &postInfo)
-	post.Apply(ctx)
-	return post
+	err := pm.CreatePost(ctx, postCreateParams)
+	assert.Nil(t, err)
+	return user, postID
 }

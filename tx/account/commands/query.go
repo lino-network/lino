@@ -12,7 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/account/model"
+	"github.com/lino-network/lino/types"
 )
 
 // GetBankCmd returns a query bank that will display the
@@ -61,12 +62,12 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 	key := sdk.Address(bz)
 
-	res, err := builder.Query(acc.GetAccountBankKey(key), c.storeName)
+	res, err := builder.Query(model.GetAccountBankKey(key), c.storeName)
 	if err != nil {
 		return err
 	}
 
-	bank := new(acc.AccountBank)
+	bank := new(model.AccountBank)
 	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
 		return err
 	}
@@ -87,31 +88,31 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// find the key to look up the account
-	accKey := acc.AccountKey(args[0])
+	accKey := types.AccountKey(args[0])
 
-	res, err := builder.Query(acc.GetAccountInfoKey(accKey), c.storeName)
+	res, err := builder.Query(model.GetAccountInfoKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
-	info := new(acc.AccountInfo)
+	info := new(model.AccountInfo)
 	if err := c.cdc.UnmarshalBinary(res, info); err != nil {
 		return err
 	}
 
-	res, err = builder.Query(acc.GetAccountBankKey(info.Address), c.storeName)
+	res, err = builder.Query(model.GetAccountBankKey(info.Address), c.storeName)
 	if err != nil {
 		return err
 	}
-	bank := new(acc.AccountBank)
+	bank := new(model.AccountBank)
 	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
 		return err
 	}
 
-	res, err = builder.Query(acc.GetAccountMetaKey(accKey), c.storeName)
+	res, err = builder.Query(model.GetAccountMetaKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
-	meta := new(acc.AccountMeta)
+	meta := new(model.AccountMeta)
 	if err := c.cdc.UnmarshalBinary(res, meta); err != nil {
 		return err
 	}

@@ -27,59 +27,40 @@ func NewHandler(am AccountManager) sdk.Handler {
 
 // Handle FollowMsg
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
-	proxyFollowee := NewProxyAccount(msg.Followee, &am)
-	proxyFollower := NewProxyAccount(msg.Follower, &am)
-	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
 	}
 	// add the "msg.Follower" to the "msg.Followee" 's follower list.
 	// add "msg.Followee/msg.Follower" key under "follower" prefix.
-	// if findAccountInList(msg.Follower, followerList.Follower) == -1 {
-	// 	followerList.Follower = append(followerList.Follower, msg.Follower)
-	if err := proxyFollowee.SetFollower(ctx, msg.Follower); err != nil {
+	if err := am.SetFollower(ctx, msg.Followee, msg.Follower); err != nil {
 		return err.Result()
 	}
 
 	// add the "msg.Followee" to the "msg.Follower" 's following list.
 	// add "msg.Follower/msg.Followee" key under "following" prefix
-	//if findAccountInList(msg.Followee, followingList.Following) == -1 {
-	//followingList.Following = append(followingList.Following, msg.Followee)
-	if err := proxyFollower.SetFollowing(ctx, msg.Followee); err != nil {
+	if err := am.SetFollowing(ctx, msg.Follower, msg.Followee); err != nil {
 		return err.Result()
 	}
-	//}
-	proxyFollowee.Apply(ctx)
-	proxyFollower.Apply(ctx)
 	return sdk.Result{}
 }
 
 // Handle UnfollowMsg
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
-	proxyFollowee := NewProxyAccount(msg.Followee, &am)
-	proxyFollower := NewProxyAccount(msg.Follower, &am)
-
-	if !proxyFollowee.IsAccountExist(ctx) || !proxyFollower.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
 	}
 
 	// add the "msg.Follower" to the "msg.Followee" 's follower list.
 	// add "msg.Followee/msg.Follower" key under "follower" prefix.
-	// if findAccountInList(msg.Follower, followerList.Follower) == -1 {
-	// 	followerList.Follower = append(followerList.Follower, msg.Follower)
-	if err := proxyFollowee.RemoveFollower(ctx, msg.Follower); err != nil {
+	if err := am.RemoveFollower(ctx, msg.Followee, msg.Follower); err != nil {
 		return err.Result()
 	}
 
 	// add the "msg.Followee" to the "msg.Follower" 's following list.
 	// add "msg.Follower/msg.Followee" key under "following" prefix
-	//if findAccountInList(msg.Followee, followingList.Following) == -1 {
-	//followingList.Following = append(followingList.Following, msg.Followee)
-	if err := proxyFollower.RemoveFollowing(ctx, msg.Followee); err != nil {
+	if err := am.RemoveFollowing(ctx, msg.Follower, msg.Followee); err != nil {
 		return err.Result()
 	}
-	//}
-	proxyFollowee.Apply(ctx)
-	proxyFollower.Apply(ctx)
 	return sdk.Result{}
 }
 
@@ -90,47 +71,29 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	accSender := NewProxyAccount(msg.Sender, &am)
-	if err := accSender.MinusCoin(ctx, coin); err != nil {
+	if err := am.MinusCoin(ctx, msg.Sender, coin); err != nil {
 		return err.Result()
 	}
 
 	// both username and address provided
 	if len(msg.ReceiverName) != 0 && len(msg.ReceiverAddr) != 0 {
 		// check if username and address match
-		associatedAddr, err := NewProxyAccount(msg.ReceiverName, &am).GetBankAddress(ctx)
+		associatedAddr, err := am.GetBankAddress(ctx, msg.ReceiverName)
 		if !bytes.Equal(associatedAddr, msg.ReceiverAddr) || err != nil {
-			return ErrUsernameAddressMismatch().Result()
+			return ErrTransferHandler(msg.Sender).Result()
 		}
 	}
 
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
-		accReceiver := NewProxyAccount(msg.ReceiverName, &am)
-		if err := accReceiver.AddCoin(ctx, coin); err != nil {
-			return ErrAddMoneyFailed().Result()
+		if err := am.AddCoin(ctx, msg.ReceiverName, coin); err != nil {
+			return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 		}
-		accSender.Apply(ctx)
-		accReceiver.Apply(ctx)
 		return sdk.Result{}
 	}
 
-	// send coins using address (even no account bank associated with this addr)
-	receiverBank, err := am.GetBankFromAddress(ctx, msg.ReceiverAddr)
-	if err == nil {
-		// account bank exists
-		receiverBank.Balance = receiverBank.Balance.Plus(coin)
-	} else {
-		// account bank not found, create a new one for this address
-		receiverBank = &AccountBank{
-			Address: msg.ReceiverAddr,
-			Balance: coin,
-		}
+	if setErr := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); setErr != nil {
+		return ErrTransferHandler(msg.Sender).TraceCause(setErr, "").Result()
 	}
-
-	if setErr := am.SetBankFromAddress(ctx, msg.ReceiverAddr, receiverBank); setErr != nil {
-		return setErr.Result()
-	}
-	accSender.Apply(ctx)
 	return sdk.Result{}
 }
