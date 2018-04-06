@@ -44,31 +44,3 @@ func ErrPostMarshalError(err error) sdk.Error {
 func ErrPostUnmarshalError(err error) sdk.Error {
 	return sdk.NewError(types.CodePostUnmarshalError, fmt.Sprintf("Post unmarshal error: %s", err.Error()))
 }
-
-func ErrPostCreateNonExistAuthor() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Create with non-exist author"))
-}
-
-func ErrPostCreateNoParentPost() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Create with invalid parent post"))
-}
-
-func ErrPostAuthorDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Post author doesn't exist"))
-}
-
-func ErrPostExist() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Post already exists"))
-}
-
-func ErrLikePostDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Target post doesn't exists"))
-}
-
-func ErrDonatePostDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Target post doesn't exists"))
-}
-
-func ErrPostDonateInsufficient() sdk.Error {
-	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Balance no enough"))
-}

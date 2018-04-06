@@ -39,7 +39,7 @@ func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm *GlobalStorage) error {
 	return gm.InitGlobalState(ctx, globalState)
 }
 
-func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
+func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm *GlobalStorage, expectGlobalStatistic GlobalStatistics,
 	expectGlobalMeta GlobalMeta, expectGlobalAllocation GlobalAllocation, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
 	globalStatistic, err := gm.GetGlobalStatistics(ctx)

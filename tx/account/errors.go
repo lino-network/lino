@@ -64,6 +64,10 @@ func ErrAddIncomeAndReward(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add income and reward for user %v failed", accKey))
 }
 
+func ErrClaimReward(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("claim user %v reward failed", accKey))
+}
+
 func ErrUpdateLastActivity(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v last activity failed", accKey))
 }

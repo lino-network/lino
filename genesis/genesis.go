@@ -1,14 +1,15 @@
 package genesis
 
 import (
+	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
 // State to Unmarshal
 type GenesisState struct {
-	Accounts    []*GenesisAccount `json:"accounts"`
-	GlobalState GlobalState       `json:"global_state"`
+	Accounts    []GenesisAccount `json:"accounts"`
+	GlobalState GlobalState      `json:"global_state"`
 }
 
 // GenesisAccount doesn't need pubkey or sequence
@@ -28,4 +29,12 @@ type GlobalState struct {
 	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
 	ConsumptionFrictionRate  sdk.Rat `json:"consumption_friction_rate"`
 	FreezingPeriodHr         int64   `json:"freezing_period_hr"`
+}
+
+func GetGenesisJson(genesisState GenesisState) (string, error) {
+	output, err := json.MarshalIndent(genesisState, "", "\t")
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }

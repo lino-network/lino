@@ -105,20 +105,20 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSt
 	return nil
 }
 
-func (gs *GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*HeightEventList, sdk.Error) {
+func (gs *GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*types.HeightEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetHeightEventListKey(height))
 	if listByte == nil {
 		return nil, nil
 	}
-	lst := new(HeightEventList)
+	lst := new(types.HeightEventList)
 	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
 		return nil, ErrEventUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (gs *GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *HeightEventList) sdk.Error {
+func (gs *GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *types.HeightEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	// event doesn't exist
 	listByte, err := gs.cdc.MarshalJSON(*lst)
@@ -129,21 +129,21 @@ func (gs *GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *
 	return nil
 }
 
-func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*TimeEventList, sdk.Error) {
+func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetTimeEventListKey(unixTime))
 	// event doesn't exist
 	if listByte == nil {
 		return nil, nil
 	}
-	lst := new(TimeEventList)
+	lst := new(types.TimeEventList)
 	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
 		return nil, ErrEventUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *TimeEventList) sdk.Error {
+func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *types.TimeEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	listByte, err := gs.cdc.MarshalJSON(*lst)
 	if err != nil {

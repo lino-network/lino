@@ -19,15 +19,14 @@ func NewGlobalManager(key sdk.StoreKey) *GlobalManager {
 	}
 }
 
-
 func (gm *GlobalManager) InitGlobalManager(ctx sdk.Context, state genesis.GlobalState) error {
 	return gm.globalStorage.InitGlobalState(ctx, state)
 }
 
-func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, event model.Event) sdk.Error {
+func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, event types.Event) sdk.Error {
 	eventList, _ := gm.globalStorage.GetHeightEventList(ctx, height)
 	if eventList == nil {
-		eventList = &model.HeightEventList{Events: []model.Event{}}
+		eventList = &types.HeightEventList{Events: []types.Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
 	if err := gm.globalStorage.SetHeightEventList(ctx, height, eventList); err != nil {
@@ -36,10 +35,28 @@ func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, ev
 	return nil
 }
 
-func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event model.Event) sdk.Error {
+func (gm *GlobalManager) GetHeightEventListAtHeight(ctx sdk.Context, height int64) (*types.HeightEventList) {
+	eventList, _ := gm.globalStorage.GetHeightEventList(ctx, height)
+	return eventList
+}
+
+func (gm *GlobalManager) RemoveHeightEventList(ctx sdk.Context, height int64) sdk.Error {
+	return gm.globalStorage.RemoveHeightEventList(ctx, height)
+}
+
+func (gm *GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) (*types.TimeEventList) {
+	eventList, _ := gm.globalStorage.GetTimeEventList(ctx, unixTime)
+	return eventList
+}
+
+func (gm *GlobalManager) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
+	return gm.globalStorage.RemoveTimeEventList(ctx, unixTime)
+}
+
+func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
 	eventList, _ := gm.globalStorage.GetTimeEventList(ctx, unixTime)
 	if eventList == nil {
-		eventList = &model.TimeEventList{Events: []model.Event{}}
+		eventList = &types.TimeEventList{Events: []types.Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
 	if err := gm.globalStorage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
@@ -57,7 +74,7 @@ func (gm *GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, s
 }
 
 // register reward calculation event at 7 days later
-func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event model.Event) sdk.Error {
+func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event types.Event) sdk.Error {
 	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
 	if err != nil {
 		return err
