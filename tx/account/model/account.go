@@ -19,18 +19,18 @@ type AccountInfo struct {
 
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
-	Address  sdk.Address      `json:"address"`
-	Balance  types.Coin       `json:"balance"`
-	Username types.AccountKey `json:"username"`
+	Address          sdk.Address      `json:"address"`
+	Balance          types.Coin       `json:"balance"`
+	Username         types.AccountKey `json:"username"`
+	StakeRatio       int64            `json:"stake_ratio"`
+	LastSRUpdateTime int64            `json:"last_stake_ratio_update_time"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence         int64 `json:"sequence"`
-	LastActivity     int64 `json:"last_activity"`
-	ActivityBurden   int64 `json:"activity_burden"`
-	StakeRatio       int64 `json:"stake_ratio"`
-	LastSRUpdateTime int64 `json:"last_stake_ratio_update_time"`
+	Sequence       int64 `json:"sequence"`
+	LastActivity   int64 `json:"last_activity"`
+	ActivityBurden int64 `json:"activity_burden"`
 }
 
 // AccountInfraConsumption records infra utility consumption

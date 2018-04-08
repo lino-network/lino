@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -21,7 +20,6 @@ import (
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
-	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 )
 
@@ -42,12 +40,11 @@ type LinoBlockchain struct {
 	capKeyGlobalStore  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountManager acc.AccountManager
-	postManager    post.PostManager
-	valManager     val.ValidatorManager
-	globalManager  global.GlobalManager
+	accountManager *acc.AccountManager
+	postManager    *post.PostManager
+	valManager     *val.ValidatorManager
+	globalManager  *global.GlobalManager
 
-	preValidators []val.Validator
 	lastBlockTime int64
 }
 
@@ -62,16 +59,16 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 		capKeyGlobalStore:  sdk.NewKVStoreKey(types.GlobalKVStoreKey),
 		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
 	}
-	lb.accountManager = acc.NewLinoAccountManager(lb.capKeyAccountStore)
-	lb.postManager = post.NewPostMananger(lb.capKeyPostStore)
-	lb.valManager = val.NewValidatorMananger(lb.capKeyValStore)
+	lb.accountManager = acc.NewAccountManager(lb.capKeyAccountStore)
+	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
+	lb.valManager = val.NewValidatorManager(lb.capKeyValStore)
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
-		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.valManager, lb.accountManager))
+		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
+		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
+		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
+		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.valManager, *lb.accountManager, *lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -84,7 +81,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.capKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
 	lb.MountStoreWithDB(lb.capKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
 	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -97,7 +94,6 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	if err := lb.LoadLatestVersion(lb.capKeyGlobalStore); err != nil {
 		cmn.Exit(err.Error())
 	}
-	lb.preValidators = []val.Validator{}
 	return lb
 }
 
@@ -131,12 +127,6 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{acc.ClaimMsg{}, msgTypeClaim},
 	)
 
-	const returnCoinEvent = 0x1
-	var _ = oldwire.RegisterInterface(
-		struct{ global.Event }{},
-		oldwire.ConcreteType{vote.ReturnCoinEvent{}, returnCoinEvent},
-	)
-
 	// TODO(Lino): Register msg type and model.
 	cdc := wire.NewCodec()
 
@@ -168,7 +158,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-	if err := lb.globalManager.InitGlobalState(ctx, genesisState.GlobalState); err != nil {
+	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
 	for _, gacc := range genesisState.Accounts {
@@ -182,49 +172,33 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 }
 
 // convert GenesisAccount to AppAccount
-func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga *genesis.GenesisAccount) sdk.Error {
+func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
-	bank, err := lb.accountManager.GetBankFromAddress(ctx, ga.PubKey.Address())
-	if err == nil {
-		// account bank exists
-		panic(sdk.ErrGenesisParse("genesis bank already exist"))
-	} else {
-		fmt.Println(ga)
-		coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino)))
-		if err != nil {
-			panic(err)
-		}
-		// account bank not found, create a new one for this address
-		bank = &acc.AccountBank{
-			Address: ga.PubKey.Address(),
-			Balance: coin,
-		}
-		if setErr := lb.accountManager.SetBankFromAddress(ctx, bank.Address, bank); setErr != nil {
-			panic(sdk.ErrGenesisParse("set genesis bank failed"))
-		}
-		account := acc.NewProxyAccount(acc.AccountKey(ga.Name), &lb.accountManager)
-		if account.IsAccountExist(ctx) {
-			panic(sdk.ErrGenesisParse("genesis account already exist"))
-		}
-		if err := account.CreateAccount(ctx, acc.AccountKey(ga.Name), ga.PubKey, bank); err != nil {
-			panic(err)
-		}
+	coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino)))
+	if err != nil {
+		panic(err)
+	}
+	if setErr := lb.accountManager.AddCoinToAddress(ctx, ga.PubKey.Address(), coin); setErr != nil {
+		panic(sdk.ErrGenesisParse("set genesis bank failed"))
+	}
+	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
+		panic(sdk.ErrGenesisParse("genesis account already exist"))
+	}
+	if err := lb.accountManager.CreateAccount(ctx, types.AccountKey(ga.Name), ga.PubKey, types.NewCoin(0)); err != nil {
+		panic(err)
+	}
 
-		deposit := types.Coin{1000 * types.Decimals}
-		// withdraw money from validator's bank
-		if err := account.MinusCoin(ctx, deposit); err != nil {
-			panic(err)
-		}
+	deposit := types.NewCoin(1000 * types.Decimals)
+	// withdraw money from validator's bank
+	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(ga.Name), deposit); err != nil {
+		panic(err)
+	}
 
-		if addErr := lb.valManager.RegisterValidator(ctx, account.GetUsername(), ga.ValPubKey.Bytes(), deposit); addErr != nil {
-			panic(addErr)
-		}
-		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, account.GetUsername()); joinErr != nil {
-			panic(joinErr)
-		}
-		if err := account.Apply(ctx); err != nil {
-			panic(err)
-		}
+	if addErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), deposit); addErr != nil {
+		panic(addErr)
+	}
+	if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
+		panic(joinErr)
 	}
 	return nil
 }
@@ -233,9 +207,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if lb.lastBlockTime == 0 {
 		lb.lastBlockTime = ctx.BlockHeader().Time
 	}
-	var err sdk.Error
-	lb.preValidators, err = lb.valManager.GetOncallValList(ctx)
-	if err != nil {
+	if err := lb.valManager.SetPreRoundValidators(ctx); err != nil {
 		panic(err)
 	}
 	absentValidators := req.GetAbsentValidators()
@@ -249,58 +221,34 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	heightEvents, _ := lb.globalManager.GetHeightEventListAtHeight(ctx, ctx.BlockHeight())
-	if heightEvents != nil {
+	if heightEvents := lb.globalManager.GetHeightEventListAtHeight(ctx, ctx.BlockHeight()); heightEvents != nil {
 		lb.executeEvents(ctx, heightEvents.Events)
-		lb.globalManager.RemoveHeightEventList(ctx, global.HeightToEventListKey(ctx.BlockHeight()))
+		lb.globalManager.RemoveHeightEventList(ctx, ctx.BlockHeight())
 	}
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
-		timeEvents, _ := lb.globalManager.GetTimeEventListAtTime(ctx, i)
-		if timeEvents != nil {
+		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
 			lb.executeEvents(ctx, timeEvents.Events)
-			lb.globalManager.RemoveTimeEventList(ctx, global.UnixTimeToEventListKey(i))
+			lb.globalManager.RemoveTimeEventList(ctx, i)
 		}
 	}
 	lb.lastBlockTime = ctx.BlockHeader().Time
-	return lb.updateValidators(ctx)
+	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }
 
 func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
-			if err := e.Execute(ctx, lb.postManager, lb.accountManager, lb.globalManager); err != nil {
+			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager); err != nil {
 				continue
 			}
 		}
 	}
 	return nil
-}
-
-func (lb *LinoBlockchain) updateValidators(ctx sdk.Context) abci.ResponseEndBlock {
-	curOncallList, err := lb.valManager.GetOncallValList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	ABCIValList := []abci.Validator{}
-	for _, preValidator := range lb.preValidators {
-		if FindValidatorInList(preValidator, curOncallList) == -1 {
-			preValidator.ABCIValidator.Power = 0
-			ABCIValList = append(ABCIValList, preValidator.ABCIValidator)
-		}
-	}
-	for _, validator := range curOncallList {
-		ABCIValList = append(ABCIValList, validator.ABCIValidator)
-	}
-	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
-}
-
-func FindValidatorInList(validator val.Validator, validatorList []val.Validator) int {
-	for i, curValidator := range validatorList {
-		if validator.Username == curValidator.Username {
-			return i
-		}
-	}
-	return -1
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
+var maxStakeRatio int64 = 24 * 3600 * 7
+
 // linoaccount encapsulates all basic struct
 type AccountManager struct {
 	accountStorage *model.AccountStorage `json:"account_manager"`
@@ -73,6 +75,17 @@ func (accManager *AccountManager) CreateAccount(
 	return nil
 }
 
+// use coin to present stake to prevent overflow
+func (accManager *AccountManager) GetStake(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	bank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
+	if err != nil {
+		return types.NewCoin(0), ErrGetStake(accKey).TraceCause(err, "")
+	}
+	return types.RatToCoin(sdk.NewRat(
+		min(bank.StakeRatio+(ctx.BlockHeader().Time-bank.LastSRUpdateTime), maxStakeRatio), maxStakeRatio).
+		Mul(bank.Balance.ToRat())), nil
+}
+
 func (accManager *AccountManager) AddCoinToAddress(ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
 	bank, _ := accManager.accountStorage.GetBankFromAddress(ctx, address)
 	if bank == nil {
@@ -81,8 +94,14 @@ func (accManager *AccountManager) AddCoinToAddress(ctx sdk.Context, address sdk.
 			Balance: coin,
 		}
 	} else {
+		// stakeRatio = stakeRatio * originBalance / newBalance
+		bank.StakeRatio = sdk.NewRat(
+			min(bank.StakeRatio+(ctx.BlockHeader().Time-bank.LastSRUpdateTime), maxStakeRatio), maxStakeRatio).
+			Mul(bank.Balance.ToRat()).
+			Quo(bank.Balance.Plus(coin).ToRat()).Evaluate()
 		bank.Balance = bank.Balance.Plus(coin)
 	}
+	bank.LastSRUpdateTime = ctx.BlockHeader().Time
 	if err := accManager.accountStorage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
 		return ErrAddCoinToAddress(address).TraceCause(err, "")
 	}
@@ -90,12 +109,11 @@ func (accManager *AccountManager) AddCoinToAddress(ctx sdk.Context, address sdk.
 }
 
 func (accManager *AccountManager) AddCoin(ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
-	accountBank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
+	address, err := accManager.GetBankAddress(ctx, accKey)
 	if err != nil {
 		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
 	}
-	accountBank.Balance = accountBank.Balance.Plus(coin)
-	if err := accManager.accountStorage.SetBankFromAddress(ctx, accountBank.Address, accountBank); err != nil {
+	if err := accManager.AddCoinToAddress(ctx, address, coin); err != nil {
 		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
 	}
 	return nil
@@ -255,4 +273,18 @@ func (accManager *AccountManager) RemoveFollowing(ctx sdk.Context, me types.Acco
 	}
 	accManager.accountStorage.RemoveFollowingMeta(ctx, me, following)
 	return nil
+}
+
+func min(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int64) int64 {
+	if a < b {
+		return b
+	}
+	return a
 }

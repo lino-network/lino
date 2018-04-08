@@ -68,6 +68,10 @@ func ErrClaimReward(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("claim user %v reward failed", accKey))
 }
 
+func ErrGetStake(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get user %v stake failed", accKey))
+}
+
 func ErrUpdateLastActivity(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v last activity failed", accKey))
 }
