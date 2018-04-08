@@ -2,9 +2,9 @@ package global
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global/model"
 	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/genesis"
 )
 
 // GlobalManager encapsulates all basic struct
@@ -35,7 +35,7 @@ func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, ev
 	return nil
 }
 
-func (gm *GlobalManager) GetHeightEventListAtHeight(ctx sdk.Context, height int64) (*types.HeightEventList) {
+func (gm *GlobalManager) GetHeightEventListAtHeight(ctx sdk.Context, height int64) *types.HeightEventList {
 	eventList, _ := gm.globalStorage.GetHeightEventList(ctx, height)
 	return eventList
 }
@@ -44,7 +44,7 @@ func (gm *GlobalManager) RemoveHeightEventList(ctx sdk.Context, height int64) sd
 	return gm.globalStorage.RemoveHeightEventList(ctx, height)
 }
 
-func (gm *GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) (*types.TimeEventList) {
+func (gm *GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) *types.TimeEventList {
 	eventList, _ := gm.globalStorage.GetTimeEventList(ctx, unixTime)
 	return eventList
 }

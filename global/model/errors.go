@@ -8,7 +8,7 @@ import (
 )
 
 func ErrGlobalStorageGenesisInflationFailed() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("inflation allocation more than 100%"))
+	return sdk.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("inflation allocation more than 100 percent"))
 }
 
 func ErrGlobalStorageGenesisFailed() sdk.Error {

@@ -5,110 +5,69 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/global"
+	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 )
 
-var ValidatorSubstore = []byte("Validator/")
-var ValidatorListSubstore = []byte("ValidatorList/ValidatorListKey")
-
-// Validator Manager implements types.AccountManager
+// validator manager is the proxy for all storage structs defined above
 type ValidatorManager struct {
-	// The (unexposed) key used to access the store from the Context.
-	key sdk.StoreKey
-
-	// The wire codec for binary encoding/decoding of accounts.
-	cdc *wire.Codec
+	storage *model.ValidatorStorage `json:"validator_storage"`
 }
 
-// NewValidatorManager returns a new ValidatorManager
-func NewValidatorMananger(key sdk.StoreKey) ValidatorManager {
-	cdc := wire.NewCodec()
-
-	vm := ValidatorManager{
-		key: key,
-		cdc: cdc,
+// create NewValidatorManager
+func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
+	return &ValidatorManager{
+		storage: model.NewValidatorStorage(key),
 	}
-
-	return vm
 }
 
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
-	lst := &ValidatorList{
+	lst := &model.ValidatorList{
 		LowestPower: types.Coin{0},
 	}
 
-	if err := vm.SetValidatorList(ctx, lst); err != nil {
+	if err := vm.storage.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey acc.AccountKey) bool {
-	store := ctx.KVStore(vm.key)
-	if infoByte := store.Get(GetValidatorKey(accKey)); infoByte == nil {
+func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	infoByte, _ := vm.storage.GetValidator(ctx, accKey)
+	return infoByte != nil
+}
+
+func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+	validator, getErr := vm.storage.GetValidator(ctx, username)
+	if getErr != nil {
 		return false
 	}
-	return true
+
+	// reject if this is an oncall validator
+	lst, getErr := vm.storage.GetValidatorList(ctx)
+	if getErr != nil {
+		return false
+	}
+
+	if FindAccountInList(username, lst.OncallValidators) != -1 {
+		return false
+	}
+	//reject if the remaining coins are less than register fee
+	res := validator.Deposit.Minus(coin)
+	return res.IsGTE(types.ValidatorRegisterFee)
 }
 
-func (vm ValidatorManager) GetValidator(ctx sdk.Context, accKey acc.AccountKey) (*Validator, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	validatorByte := store.Get(GetValidatorKey(accKey))
-	if validatorByte == nil {
-		return nil, ErrGetValidator()
-	}
-	validator := new(Validator)
-	if err := vm.cdc.UnmarshalJSON(validatorByte, validator); err != nil {
-		return nil, ErrValidatorUnmarshalError(err)
-	}
-	return validator, nil
-}
-
-func (vm ValidatorManager) SetValidator(ctx sdk.Context, accKey acc.AccountKey, validator *Validator) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	validatorByte, err := vm.cdc.MarshalJSON(*validator)
-	if err != nil {
-		return ErrValidatorMarshalError(err)
-	}
-	store.Set(GetValidatorKey(accKey), validatorByte)
-	return nil
-}
-
-func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*ValidatorList, sdk.Error) {
-	store := ctx.KVStore(vm.key)
-	listByte := store.Get(GetValidatorListKey())
-	if listByte == nil {
-		return nil, ErrGetValidatorList()
-	}
-	lst := new(ValidatorList)
-	if err := vm.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrValidatorUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *ValidatorList) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	listByte, err := vm.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrSetValidatorList()
-	}
-	store.Set(GetValidatorListKey(), listByte)
-	return nil
-}
-
-func (vm ValidatorManager) GetOncallValList(ctx sdk.Context) ([]Validator, sdk.Error) {
-	lst, getListErr := vm.GetValidatorList(ctx)
+func (vm ValidatorManager) GetOncallValList(ctx sdk.Context) ([]model.Validator, sdk.Error) {
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return nil, getListErr
 	}
 
-	oncallList := make([]Validator, len(lst.OncallValidators))
+	oncallList := make([]model.Validator, len(lst.OncallValidators))
 	for i, validatorName := range lst.OncallValidators {
-		validator, err := vm.GetValidator(ctx, validatorName)
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +77,7 @@ func (vm ValidatorManager) GetOncallValList(ctx sdk.Context) ([]Validator, sdk.E
 }
 
 func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidators []int32) sdk.Error {
-	lst, getListErr := vm.GetValidatorList(ctx)
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
@@ -127,13 +86,13 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 		if idx > int32(len(lst.OncallValidators)) {
 			return ErrAbsentValidatorNotCorrect()
 		}
-		validator, err := vm.GetValidator(ctx, lst.OncallValidators[idx])
+		validator, err := vm.storage.GetValidator(ctx, lst.OncallValidators[idx])
 		if err != nil {
 			return err
 		}
 		validator.AbsentVote += 1
 
-		if err := vm.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
+		if err := vm.storage.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
 			return err
 		}
 	}
@@ -141,28 +100,28 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 	return nil
 }
 
-func (vm ValidatorManager) MarkByzantine(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	byzantine, err := vm.GetValidator(ctx, username)
+func (vm ValidatorManager) MarkByzantine(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	byzantine, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	byzantine.IsByzantine = true
-	if err := vm.SetValidator(ctx, username, byzantine); err != nil {
+	if err := vm.storage.SetValidator(ctx, username, byzantine); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineValidators []abci.Evidence) sdk.Error {
-	lst, getListErr := vm.GetValidatorList(ctx)
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
-	fireList := []acc.AccountKey{}
+	fireList := []types.AccountKey{}
 
 	for _, validatorName := range lst.OncallValidators {
-		validator, err := vm.GetValidator(ctx, validatorName)
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
 			return err
 		}
@@ -188,19 +147,19 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 	return nil
 }
 
-func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username acc.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
-	curValidator := &Validator{
+func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
+	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: coin.Amount},
 		Username:      username,
 		Deposit:       coin,
 		IsByzantine:   false,
 	}
 	// check minimum requirements
-	if !coin.IsGTE(valRegisterFee) {
+	if !coin.IsGTE(types.ValidatorRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 
-	lst, getListErr := vm.GetValidatorList(ctx)
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
@@ -210,8 +169,49 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username acc.Accou
 		return nil
 	}
 
-	if setErr := vm.SetValidator(ctx, username, curValidator); setErr != nil {
+	if setErr := vm.storage.SetValidator(ctx, username, curValidator); setErr != nil {
 		return setErr
+	}
+	return nil
+}
+
+func (vm ValidatorManager) Deposit(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	validator, err := vm.storage.GetValidator(ctx, username)
+	if err != nil {
+		return err
+	}
+	validator.Deposit = validator.Deposit.Plus(coin)
+	validator.ABCIValidator.Power = validator.Deposit.Amount
+	if setErr := vm.storage.SetValidator(ctx, username, validator); setErr != nil {
+		return setErr
+	}
+	return nil
+}
+
+// this method won't check if it is a legal withdraw, caller should check by itself
+func (vm ValidatorManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+	validator, getErr := vm.storage.GetValidator(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	validator.Deposit = validator.Deposit.Minus(coin)
+
+	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
+		return err
+	}
+	if err := vm.CreateReturnCoinEvent(ctx, username, coin, gm); err != nil {
+		return nil
+	}
+	return nil
+}
+
+func (vm ValidatorManager) WithdrawAll(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
+	validator, getErr := vm.storage.GetValidator(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	if err := vm.Withdraw(ctx, username, validator.Deposit, gm); err != nil {
+		return err
 	}
 	return nil
 }
@@ -221,8 +221,8 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username acc.Accou
 // or 2. someone in the validator list has a lower power than current validator
 // return a boolean to indicate if the user has became an oncall validator
 // Also, set WithdrawAvailableAt to be infinite if become an oncall validator
-func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	curValidator, getErr := vm.GetValidator(ctx, username)
+func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	curValidator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
@@ -237,7 +237,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 		return ErrRegisterFeeNotEnough()
 	}
 
-	lst, getListErr := vm.GetValidatorList(ctx)
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
@@ -255,12 +255,11 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 	// add to list directly if validator list is not full
 	if len(lst.OncallValidators) < types.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
-		curValidator.WithdrawAvailableAt = types.InfiniteFreezingPeriod
 		//vm.updateLowestValidator(ctx)
 	} else if curValidator.ABCIValidator.Power > lst.LowestPower.Amount {
 		// replace the validator with lowest power
 		for idx, validatorKey := range lst.OncallValidators {
-			validator, getErr := vm.GetValidator(ctx, validatorKey)
+			validator, getErr := vm.storage.GetValidator(ctx, validatorKey)
 			if getErr != nil {
 				return getErr
 			}
@@ -268,14 +267,12 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 				lst.OncallValidators[idx] = curValidator.Username
 			}
 		}
-		curValidator.WithdrawAvailableAt = types.InfiniteFreezingPeriod
-		//vm.updateLowestValidator(ctx)
 	}
 
-	if err := vm.SetValidatorList(ctx, lst); err != nil {
+	if err := vm.storage.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
-	if err := vm.SetValidator(ctx, curValidator.Username, curValidator); err != nil {
+	if err := vm.storage.SetValidator(ctx, curValidator.Username, curValidator); err != nil {
 		return err
 	}
 
@@ -283,16 +280,14 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ac
 }
 
 // remove the user from both oncall and allValidators lists
-// Also, set WithdrawAvailableAt to a freezing period
-func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username acc.AccountKey) sdk.Error {
-	curValidator, getErr := vm.GetValidator(ctx, username)
+func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	curValidator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
 
 	curValidator.ABCIValidator.Power = 0
-
-	lst, getListErr := vm.GetValidatorList(ctx)
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
 	}
@@ -302,20 +297,15 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 	}
 
 	lst.AllValidators = remove(username, lst.AllValidators)
-
 	lst.OncallValidators = remove(username, lst.OncallValidators)
 
-	if curValidator.IsByzantine {
-		//TODO return deposit to pool?
-		curValidator.WithdrawAvailableAt = types.Height(ctx.BlockHeight() + int64(types.ValidatorWithdrawFreezingPeriod))
-	} else {
-		curValidator.WithdrawAvailableAt = types.Height(ctx.BlockHeight() + int64(types.ValidatorWithdrawFreezingPeriod))
-	}
-
-	if err := vm.SetValidatorList(ctx, lst); err != nil {
+	//TODO return deposit to pool?
+	// if curValidator.IsByzantine {
+	// }
+	if err := vm.storage.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
-	if err := vm.SetValidator(ctx, curValidator.Username, curValidator); err != nil {
+	if err := vm.storage.SetValidator(ctx, curValidator.Username, curValidator); err != nil {
 		return err
 	}
 
@@ -325,7 +315,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 		return findErr
 	}
 
-	if bestCandidate != acc.AccountKey("") {
+	if bestCandidate != types.AccountKey("") {
 		if joinErr := vm.TryBecomeOncallValidator(ctx, bestCandidate); joinErr != nil {
 			return joinErr
 		}
@@ -333,7 +323,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 	return nil
 }
 
-func remove(me acc.AccountKey, users []acc.AccountKey) []acc.AccountKey {
+func remove(me types.AccountKey, users []types.AccountKey) []types.AccountKey {
 	for idx, username := range users {
 		if me == username {
 			users = append(users[:idx], users[idx+1:]...)
@@ -343,12 +333,12 @@ func remove(me acc.AccountKey, users []acc.AccountKey) []acc.AccountKey {
 }
 
 func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) {
-	lst, _ := vm.GetValidatorList(ctx)
+	lst, _ := vm.storage.GetValidatorList(ctx)
 	newLowestPower := int64(math.MaxInt64)
-	newLowestValidator := acc.AccountKey("")
+	newLowestValidator := types.AccountKey("")
 
 	for _, validatorKey := range lst.OncallValidators {
-		validator, _ := vm.GetValidator(ctx, validatorKey)
+		validator, _ := vm.storage.GetValidator(ctx, validatorKey)
 		if validator.ABCIValidator.Power < newLowestPower {
 			newLowestPower = validator.ABCIValidator.Power
 			newLowestValidator = validator.Username
@@ -358,17 +348,17 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) {
 	lst.LowestPower = types.NewCoin(newLowestPower)
 	lst.LowestValidator = newLowestValidator
 
-	vm.SetValidatorList(ctx, lst)
+	vm.storage.SetValidatorList(ctx, lst)
 }
 
 // find the person has the biggest power among people in the allValidators lists
 // but not in the oncall validator list
-func (vm ValidatorManager) getBestCandidate(ctx sdk.Context, lst *ValidatorList) (acc.AccountKey, sdk.Error) {
-	bestCandidate := acc.AccountKey("")
+func (vm ValidatorManager) getBestCandidate(ctx sdk.Context, lst *model.ValidatorList) (types.AccountKey, sdk.Error) {
+	bestCandidate := types.AccountKey("")
 	bestCandidatePower := int64(0)
 
 	for i, validatorName := range lst.AllValidators {
-		validator, getErr := vm.GetValidator(ctx, lst.AllValidators[i])
+		validator, getErr := vm.storage.GetValidator(ctx, lst.AllValidators[i])
 		if getErr != nil {
 			return bestCandidate, getErr
 		}
@@ -383,15 +373,25 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context, lst *ValidatorList)
 
 }
 
-func GetValidatorKey(accKey acc.AccountKey) []byte {
-	return append(ValidatorSubstore, accKey...)
+// return coin to an user periodically
+func (vm ValidatorManager) CreateReturnCoinEvent(ctx sdk.Context, username types.AccountKey, amount types.Coin, gm global.GlobalManager) sdk.Error {
+	pieceRat := amount.ToRat().Quo(sdk.NewRat(types.CoinReturnTimes))
+	piece := types.RatToCoin(pieceRat)
+	event := ReturnCoinEvent{
+		Username: username,
+		Amount:   piece,
+	}
+
+	// return coin with interval
+	for i := int64(1); i <= types.CoinReturnTimes; i++ {
+		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func GetValidatorListKey() []byte {
-	return ValidatorListSubstore
-}
-
-func FindAccountInList(me acc.AccountKey, lst []acc.AccountKey) int {
+func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
 	for index, user := range lst {
 		if user == me {
 			return index

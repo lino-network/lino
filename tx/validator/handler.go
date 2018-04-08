@@ -5,19 +5,20 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
+func NewHandler(vm ValidatorManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
 			return handleDepositMsg(ctx, vm, am, msg)
 		case ValidatorWithdrawMsg:
-			return handleWithdrawMsg(ctx, vm, am, msg)
+			return handleWithdrawMsg(ctx, vm, am, gm, msg)
 		case ValidatorRevokeMsg:
-			return handleRevokeMsg(ctx, vm, msg)
+			return handleRevokeMsg(ctx, vm, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -27,9 +28,8 @@ func NewHandler(vm ValidatorManager, am acc.AccountManager) sdk.Handler {
 
 // Handle DepositMsg
 func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
-	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
 	// Must have an normal acount
-	if !proxyAcc.IsAccountExist(ctx) {
+	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -39,11 +39,7 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 	}
 
 	// withdraw money from validator's bank
-	err = proxyAcc.MinusCoin(ctx, coin)
-	if err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+	if err = am.MinusCoin(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 
@@ -54,14 +50,8 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 		}
 	} else {
 		// Deposit coins
-		validator, err := vm.GetValidator(ctx, msg.Username)
-		if err != nil {
+		if err := vm.Deposit(ctx, msg.Username, coin); err != nil {
 			return err.Result()
-		}
-		validator.Deposit = validator.Deposit.Plus(coin)
-		validator.ABCIValidator.Power = validator.Deposit.Amount
-		if setErr := vm.SetValidator(ctx, msg.Username, validator); setErr != nil {
-			return setErr.Result()
 		}
 	}
 
@@ -73,38 +63,29 @@ func handleDepositMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManage
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, msg ValidatorWithdrawMsg) sdk.Result {
-	validator, getErr := vm.GetValidator(ctx, msg.Username)
-	if getErr != nil {
-		return getErr.Result()
-	}
-	// check the deposit is available now
-	if ctx.BlockHeight() < int64(validator.WithdrawAvailableAt) {
-		return ErrDepositNotAvailable().Result()
-	}
-	if !validator.Deposit.IsPositive() {
-		return ErrNoDeposit().Result()
-	}
-	// add money to validator's bank
-	proxyAcc := acc.NewProxyAccount(msg.Username, &am)
-	if err := proxyAcc.AddCoin(ctx, validator.Deposit); err != nil {
-		return err.Result()
-	}
-	if err := proxyAcc.Apply(ctx); err != nil {
+func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, gm global.GlobalManager, msg ValidatorWithdrawMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
 		return err.Result()
 	}
 
-	// clear validator's deposit
-	validator.Deposit = types.NewCoin(0)
-	if err := vm.SetValidator(ctx, msg.Username, validator); err != nil {
+	if !vm.IsLegalWithdraw(ctx, msg.Username, coin) {
+		return ErrIllegalWithdraw().Result()
+	}
+
+	if err := vm.Withdraw(ctx, msg.Username, coin, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 // Handle RevokeMsg
-func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, msg ValidatorRevokeMsg) sdk.Result {
+func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorRevokeMsg) sdk.Result {
 	if err := vm.RemoveValidatorFromAllLists(ctx, msg.Username); err != nil {
+		return err.Result()
+	}
+
+	if err := vm.WithdrawAll(ctx, msg.Username, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

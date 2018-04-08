@@ -6,23 +6,23 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/tendermint/go-crypto"
 )
 
 type ValidatorDepositMsg struct {
-	Username  acc.AccountKey `json:"username"`
-	Deposit   types.LNO      `json:"deposit"`
-	ValPubKey crypto.PubKey  `json:"validator_public_key"`
+	Username  types.AccountKey `json:"username"`
+	Deposit   types.LNO        `json:"deposit"`
+	ValPubKey crypto.PubKey    `json:"validator_public_key"`
 }
 
 type ValidatorWithdrawMsg struct {
-	Username acc.AccountKey `json:"username"`
+	Username types.AccountKey `json:"username"`
+	Amount   types.LNO        `json:"amount"`
 }
 
 type ValidatorRevokeMsg struct {
-	Username acc.AccountKey `json:"username"`
+	Username types.AccountKey `json:"username"`
 }
 
 //----------------------------------------
@@ -30,7 +30,7 @@ type ValidatorRevokeMsg struct {
 
 func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey) ValidatorDepositMsg {
 	return ValidatorDepositMsg{
-		Username:  acc.AccountKey(validator),
+		Username:  types.AccountKey(validator),
 		Deposit:   deposit,
 		ValPubKey: pubKey,
 	}
@@ -75,9 +75,10 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // ValidatorWithdrawMsg Msg Implementations
 
-func NewValidatorWithdrawMsg(validator string) ValidatorWithdrawMsg {
+func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
-		Username: acc.AccountKey(validator),
+		Username: types.AccountKey(validator),
+		Amount:   amount,
 	}
 }
 
@@ -87,6 +88,10 @@ func (msg ValidatorWithdrawMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
+	}
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -116,7 +121,7 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.Address {
 
 func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
-		Username: acc.AccountKey(validator),
+		Username: types.AccountKey(validator),
 	}
 }
 

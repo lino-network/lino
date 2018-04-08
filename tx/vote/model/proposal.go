@@ -1,18 +1,15 @@
-package vote
+package model
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	types "github.com/lino-network/lino/types"
 )
 
-type ProposalKey string
-
 type Proposal struct {
-	Creator      acc.AccountKey `json:"creator"`
-	ProposalID   ProposalKey    `json:"proposal_id"`
-	AgreeVote    types.Coin     `json:"agree_vote"`
-	DisagreeVote types.Coin     `json:"disagree_vote"`
+	Creator      types.AccountKey  `json:"creator"`
+	ProposalID   types.ProposalKey `json:"proposal_id"`
+	AgreeVote    types.Coin        `json:"agree_vote"`
+	DisagreeVote types.Coin        `json:"disagree_vote"`
 }
 
 type ChangeParameterDescription struct {
@@ -30,11 +27,6 @@ type ChangeParameterProposal struct {
 }
 
 type ProposalList struct {
-	OngoingProposal []ProposalKey `json:"ongoing_proposal"`
-	PastProposal    []ProposalKey `json:"past_proposal"`
+	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
+	PastProposal    []types.ProposalKey `json:"past_proposal"`
 }
-
-var nextProposalID = int64(0)
-var ProposalDecideHr = int64(7 * 24)
-var CoinReturnIntervalHr = int64(7 * 24)
-var CoinReturnTimes = int64(7)

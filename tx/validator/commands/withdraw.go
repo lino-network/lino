@@ -9,9 +9,13 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/validator"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/builder"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+)
+
+const (
+	FlagName = "name"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -26,16 +30,20 @@ func WithdrawTxCmd(cdc *wire.Codec) *cobra.Command {
 
 func withDrawTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		name := viper.GetString(sdkcli.FlagName)
+		name := viper.GetString(FlagName)
 
-		// // create the message
-		msg := validator.NewValidatorWithdrawMsg(name)
-
-		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(name, msg, cdc)
-
+		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
 		if err != nil {
 			return err
+		}
+		// // create the message
+		msg := validator.NewValidatorWithdrawMsg(name, amount)
+
+		// build and sign the transaction, then broadcast to Tendermint
+		res, signErr := builder.SignBuildBroadcast(name, msg, cdc)
+
+		if signErr != nil {
+			return signErr
 		}
 
 		fmt.Printf("Committed at block %d. Hash: %s\n", res.Height, res.Hash.String())
