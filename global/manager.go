@@ -23,7 +23,7 @@ func (gm *GlobalManager) InitGlobalManager(ctx sdk.Context, state genesis.Global
 	return gm.globalStorage.InitGlobalState(ctx, state)
 }
 
-func (gm *GlobalManager) RegisterEventAtHeight(ctx sdk.Context, height int64, event types.Event) sdk.Error {
+func (gm *GlobalManager) registerEventAtHeight(ctx sdk.Context, height int64, event types.Event) sdk.Error {
 	eventList, _ := gm.globalStorage.GetHeightEventList(ctx, height)
 	if eventList == nil {
 		eventList = &types.HeightEventList{Events: []types.Event{}}
@@ -53,7 +53,7 @@ func (gm *GlobalManager) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sd
 	return gm.globalStorage.RemoveTimeEventList(ctx, unixTime)
 }
 
-func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
+func (gm *GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
 	eventList, _ := gm.globalStorage.GetTimeEventList(ctx, unixTime)
 	if eventList == nil {
 		eventList = &types.TimeEventList{Events: []types.Event{}}
@@ -79,8 +79,18 @@ func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event types
 	if err != nil {
 		return err
 	}
-	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
+	if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
 		return err
+	}
+	return nil
+}
+
+// register coin return event with a time interval
+func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Event) sdk.Error {
+	for i := int64(1); i <= types.CoinReturnTimes; i++ {
+		if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
+			return err
+		}
 	}
 	return nil
 }

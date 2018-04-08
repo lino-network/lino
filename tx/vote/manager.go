@@ -242,11 +242,8 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username types.Acco
 		Amount:   piece,
 	}
 
-	// return coin with interval
-	for i := int64(1); i <= types.CoinReturnTimes; i++ {
-		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
-			return err
-		}
+	if err := gm.RegisterCoinReturnEvent(ctx, event); err != nil {
+		return err
 	}
 
 	return nil
