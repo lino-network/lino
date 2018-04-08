@@ -7,6 +7,7 @@ import (
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
+	"time"
 )
 
 // Construct some global addrs and txs for tests.
@@ -24,7 +25,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
 }
 
 func createTestAccount(ctx sdk.Context, am *AccountManager, username string) crypto.PrivKey {
