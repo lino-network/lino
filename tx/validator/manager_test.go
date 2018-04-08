@@ -35,18 +35,18 @@ func TestAbsentValidator(t *testing.T) {
 	validatorList, _ := vm.storage.GetValidatorList(ctx)
 	for _, idx := range absentList {
 		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
-		assert.Equal(t, validator.AbsentVote, 1)
+		assert.Equal(t, validator.AbsentCommit, 1)
 	}
 
 	// absent exceeds limitation
-	for i := 0; i < types.AbsentLimitation; i++ {
+	for i := 0; i < types.AbsentCommitLimitation; i++ {
 		err := vm.UpdateAbsentValidator(ctx, absentList)
 		assert.Nil(t, err)
 	}
 
 	for _, idx := range absentList {
 		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
-		assert.Equal(t, validator.AbsentVote, 101)
+		assert.Equal(t, validator.AbsentCommit, 101)
 	}
 	err = vm.FireIncompetentValidator(ctx, []abci.Evidence{})
 	assert.Nil(t, err)

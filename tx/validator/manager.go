@@ -73,6 +73,11 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 		return false
 	}
 
+	// reject if withdraw is less than minimum withdraw
+	if !coin.IsGTE(types.ValidatorMinimumWithdraw) {
+		return false
+	}
+
 	// reject if this is an oncall validator
 	lst, getErr := vm.storage.GetValidatorList(ctx)
 	if getErr != nil {
@@ -118,7 +123,7 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 		if err != nil {
 			return err
 		}
-		validator.AbsentVote += 1
+		validator.AbsentCommit += 1
 
 		if err := vm.storage.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
 			return err
@@ -141,6 +146,19 @@ func (vm ValidatorManager) MarkByzantine(ctx sdk.Context, username types.Account
 	return nil
 }
 
+func (vm ValidatorManager) MarkAbsentVote(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	validator, err := vm.storage.GetValidator(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	validator.AbsentVote += 1
+	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineValidators []abci.Evidence) sdk.Error {
 	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
@@ -153,10 +171,16 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 		if err != nil {
 			return err
 		}
-		if validator.AbsentVote > types.AbsentLimitation {
+		if validator.AbsentCommit > types.AbsentCommitLimitation {
 			fireList = append(fireList, validatorName)
 			continue
 		}
+
+		if validator.AbsentVote > types.AbsentVoteLimitation {
+			fireList = append(fireList, validatorName)
+			continue
+		}
+
 		for _, evidence := range ByzantineValidators {
 			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.PubKey) {
 				fireList = append(fireList, validatorName)

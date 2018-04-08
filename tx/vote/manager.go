@@ -66,6 +66,10 @@ func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey
 	if getErr != nil {
 		return false
 	}
+	// reject if withdraw is less than minimum withdraw
+	if !coin.IsGTE(types.VoterMinimumWithdraw) {
+		return false
+	}
 	//reject if the remaining coins are less than register fee
 	res := voter.Deposit.Minus(coin)
 	return res.IsGTE(types.VoterRegisterFee)
