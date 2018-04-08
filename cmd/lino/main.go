@@ -14,6 +14,7 @@ import (
 	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
@@ -62,7 +63,7 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 	genesisAcc := genesis.GenesisAccount{
 		Name:      "Lino",
 		Lino:      totalLino,
-		PubKey:    pubKey,
+		PubKey:    *pubKey,
 		ValPubKey: privValidator.PubKey,
 	}
 	globalState := genesis.GlobalState{

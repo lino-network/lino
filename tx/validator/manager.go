@@ -13,7 +13,8 @@ import (
 
 // validator manager is the proxy for all storage structs defined above
 type ValidatorManager struct {
-	storage *model.ValidatorStorage `json:"validator_storage"`
+	storage            *model.ValidatorStorage `json:"validator_storage"`
+	preRoundValidators []model.Validator       `json:"pre_round_validators"`
 }
 
 // create NewValidatorManager
@@ -21,6 +22,33 @@ func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
 	return &ValidatorManager{
 		storage: model.NewValidatorStorage(key),
 	}
+}
+
+func (vm *ValidatorManager) SetPreRoundValidators(ctx sdk.Context) sdk.Error {
+	var err sdk.Error
+	vm.preRoundValidators, err = vm.GetOncallValList(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (vm *ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
+	curOncallList, err := vm.GetOncallValList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ABCIValList := []abci.Validator{}
+	for _, preValidator := range vm.preRoundValidators {
+		if findValidatorInList(preValidator, curOncallList) == -1 {
+			preValidator.ABCIValidator.Power = 0
+			ABCIValList = append(ABCIValList, preValidator.ABCIValidator)
+		}
+	}
+	for _, validator := range curOncallList {
+		ABCIValList = append(ABCIValList, validator.ABCIValidator)
+	}
+	return ABCIValList, nil
 }
 
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
@@ -395,6 +423,15 @@ func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
 	for index, user := range lst {
 		if user == me {
 			return index
+		}
+	}
+	return -1
+}
+
+func findValidatorInList(validator model.Validator, validatorList []model.Validator) int {
+	for i, curValidator := range validatorList {
+		if validator.Username == curValidator.Username {
+			return i
 		}
 	}
 	return -1
