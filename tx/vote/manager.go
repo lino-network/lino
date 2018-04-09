@@ -249,12 +249,9 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username types.Acco
 	return nil
 }
 
-// decide the proposal in 7 days
 func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
 	event := DecideProposalEvent{}
-	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(types.ProposalDecideHr*3600), event); err != nil {
-		return err
-	}
+	gm.RegisterProposalDecideEvent(ctx, event)
 	return nil
 }
 

@@ -95,6 +95,13 @@ func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Ev
 	return nil
 }
 
+func (gm *GlobalManager) RegisterProposalDecideEvent(ctx sdk.Context, event types.Event) sdk.Error {
+	if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(types.ProposalDecideHr*3600), event); err != nil {
+		return err
+	}
+	return nil
+}
+
 // put a friction of user consumption to reward pool
 func (gm *GlobalManager) AddConsumptionFrictionToRewardPool(ctx sdk.Context, coin types.Coin) sdk.Error {
 	// skip micro micro payment (etc: 0.0001 LNO)
@@ -154,4 +161,20 @@ func (gm *GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Er
 		return err
 	}
 	return nil
+}
+
+func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHours int64) (types.Coin, sdk.Error) {
+	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
+	if getErr != nil {
+		return types.NewCoin(0), getErr
+	}
+
+	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHours+1))
+	resCoin := types.RatToCoin(resRat)
+	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Minus(resCoin)
+
+	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
+		return types.NewCoin(0), err
+	}
+	return resCoin, nil
 }
