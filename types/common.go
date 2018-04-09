@@ -28,11 +28,11 @@ type IDToURLMapping struct {
 }
 
 // TODO need to store into KV
-var VoterRegisterFee = Coin{Amount: 1000 * Decimals}
-var VoterMinimumWithdraw = Coin{Amount: 50 * Decimals}
-var ProposalRegisterFee = Coin{Amount: 2000 * Decimals}
-var ValidatorRegisterFee = Coin{Amount: 1000 * Decimals}
-var ValidatorMinimumWithdraw = Coin{Amount: 50 * Decimals}
+var VoterRegisterFee = NewCoin(1000 * Decimals)
+var VoterMinimumWithdraw = NewCoin(50 * Decimals)
+var ProposalRegisterFee = NewCoin(2000 * Decimals)
+var ValidatorRegisterFee = NewCoin(1000 * Decimals)
+var ValidatorMinimumWithdraw = NewCoin(50 * Decimals)
 var NextProposalID = int64(0)
 var ProposalDecideHr = int64(7 * 24)
 var CoinReturnIntervalHr = int64(7 * 24)
