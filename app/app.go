@@ -208,6 +208,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	if lb.lastBlockTime == 0 {
 		lb.lastBlockTime = ctx.BlockHeader().Time
+		lb.pastMinutes = ctx.BlockHeader().Time
 	}
 
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
