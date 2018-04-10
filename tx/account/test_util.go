@@ -1,6 +1,8 @@
 package account
 
 import (
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
@@ -12,20 +14,22 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("account")
+	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
 )
 
-func newLinoAccountManager() *AccountManager {
-	return NewAccountManager(TestKVStoreKey)
+func setupTest(t *testing.T, height int64) (sdk.Context, *AccountManager) {
+	ctx := getContext(height)
+	accManager := NewAccountManager(TestAccountKVStoreKey)
+	return ctx, accManager
 }
 
-func getContext() sdk.Context {
+func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
+	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
 }
 
 func createTestAccount(ctx sdk.Context, am *AccountManager, username string) crypto.PrivKey {

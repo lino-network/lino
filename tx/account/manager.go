@@ -7,7 +7,11 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
-var maxStakeRatio int64 = 24 * 3600 * 7
+// how many days the stake will increase to the maximum
+var CoinDays int64 = 8
+
+// the minimal requirement to open an account
+var OpenBankFee types.Coin = types.NewCoin(5 * types.Decimals)
 
 // linoaccount encapsulates all basic struct
 type AccountManager struct {
@@ -81,34 +85,62 @@ func (accManager *AccountManager) GetStake(ctx sdk.Context, accKey types.Account
 	if err != nil {
 		return types.NewCoin(0), ErrGetStake(accKey).TraceCause(err, "")
 	}
-	return types.RatToCoin(sdk.NewRat(
-		min(bank.StakeRatio+(ctx.BlockHeader().Time-bank.LastSRUpdateTime), maxStakeRatio), maxStakeRatio).
-		Mul(bank.Balance.ToRat())), nil
+	pendingStakeQueue, err := accManager.accountStorage.GetPendingStakeQueue(ctx, bank.Address)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+
+	accManager.removeExpiredTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
+
+	stake := bank.Stake
+	for _, pendingStake := range pendingStakeQueue.PendingStakeList {
+		stake = stake.Plus(
+			types.RatToCoin(
+				sdk.NewRat(ctx.BlockHeader().Time-pendingStake.StartTime,
+					pendingStake.EndTime-pendingStake.StartTime).
+					Mul(pendingStake.Coin.ToRat())))
+	}
+	if err := accManager.accountStorage.SetPendingStakeQueue(ctx, bank.Address, pendingStakeQueue); err != nil {
+		return types.NewCoin(0), err
+	}
+
+	if err := accManager.accountStorage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
+		return types.NewCoin(0), err
+	}
+	return stake, nil
+
 }
 
-func (accManager *AccountManager) AddCoinToAddress(ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
+func (accManager *AccountManager) AddCoinToAddress(
+	ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
 	bank, _ := accManager.accountStorage.GetBankFromAddress(ctx, address)
 	if bank == nil {
 		bank = &model.AccountBank{
 			Address: address,
 			Balance: coin,
 		}
+		if err := accManager.accountStorage.SetPendingStakeQueue(ctx, address, &model.PendingStakeQueue{}); err != nil {
+			return err
+		}
 	} else {
-		// stakeRatio = stakeRatio * originBalance / newBalance
-		bank.StakeRatio = sdk.NewRat(
-			min(bank.StakeRatio+(ctx.BlockHeader().Time-bank.LastSRUpdateTime), maxStakeRatio), maxStakeRatio).
-			Mul(bank.Balance.ToRat()).
-			Quo(bank.Balance.Plus(coin).ToRat()).Evaluate()
 		bank.Balance = bank.Balance.Plus(coin)
 	}
-	bank.LastSRUpdateTime = ctx.BlockHeader().Time
+	pendingStake := model.PendingStake{
+		StartTime: ctx.BlockHeader().Time,
+		EndTime:   ctx.BlockHeader().Time + CoinDays*24*3600,
+		Coin:      coin,
+	}
+	if err := accManager.addPendingStakeToQueue(ctx, address, pendingStake); err != nil {
+		return ErrAddCoinToAddress(address).TraceCause(err, "")
+	}
 	if err := accManager.accountStorage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
 		return ErrAddCoinToAddress(address).TraceCause(err, "")
 	}
 	return nil
 }
 
-func (accManager *AccountManager) AddCoin(ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
+func (accManager *AccountManager) AddCoin(
+	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
 	address, err := accManager.GetBankAddress(ctx, accKey)
 	if err != nil {
 		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
@@ -119,7 +151,8 @@ func (accManager *AccountManager) AddCoin(ctx sdk.Context, accKey types.AccountK
 	return nil
 }
 
-func (accManager *AccountManager) MinusCoin(ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
+func (accManager *AccountManager) MinusCoin(
+	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
 	accountBank, err := accManager.accountStorage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
 		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
@@ -127,7 +160,43 @@ func (accManager *AccountManager) MinusCoin(ctx sdk.Context, accKey types.Accoun
 	if !accountBank.Balance.IsGTE(coin) {
 		return ErrAccountCoinNotEnough()
 	}
+	pendingStakeQueue, err := accManager.accountStorage.GetPendingStakeQueue(ctx, accountBank.Address)
+	if err != nil {
+		return err
+	}
 	accountBank.Balance = accountBank.Balance.Minus(coin)
+
+	// update pending stake queue, remove expired transaction
+	accManager.removeExpiredTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
+
+	for len(pendingStakeQueue.PendingStakeList) > 0 {
+		pendingStake := pendingStakeQueue.PendingStakeList[0]
+		unstakeCoin := types.RatToCoin(
+			sdk.NewRat(pendingStake.EndTime-ctx.BlockHeader().Time,
+				pendingStake.EndTime-pendingStake.StartTime).
+				Mul(pendingStake.Coin.ToRat()))
+		if coin.IsGTE(unstakeCoin) {
+			// if withdraw coin is larger than unstakeCoin, withdraw all unstake coin and pop from queue
+			accountBank.Stake = accountBank.Stake.Plus(pendingStakeQueue.PendingStakeList[0].Coin.Minus(unstakeCoin))
+			coin = coin.Minus(unstakeCoin)
+			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
+		} else {
+			// new end time = current time + (unstake - withdraw)/unstake*(end time - current time)
+			pendingStake.EndTime = ctx.BlockHeader().Time +
+				unstakeCoin.Minus(coin).ToRat().Quo(unstakeCoin.ToRat()).
+					Mul(sdk.NewRat(pendingStake.EndTime-ctx.BlockHeader().Time)).Evaluate()
+			pendingStake.Coin = pendingStake.Coin.Minus(coin)
+			coin = types.NewCoin(0)
+			break
+		}
+	}
+	if coin.IsPositive() {
+		accountBank.Stake = accountBank.Balance
+	}
+	if err := accManager.accountStorage.SetPendingStakeQueue(ctx, accountBank.Address, pendingStakeQueue); err != nil {
+		return err
+	}
+
 	if err := accManager.accountStorage.SetBankFromAddress(ctx, accountBank.Address, accountBank); err != nil {
 		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
 	}
@@ -186,11 +255,13 @@ func (accManager *AccountManager) IncreaseSequenceByOne(ctx sdk.Context, accKey 
 	return nil
 }
 
-func (accManager *AccountManager) AddIncomeAndReward(ctx sdk.Context, accKey types.AccountKey, originIncome, actualReward types.Coin) sdk.Error {
+func (accManager *AccountManager) AddIncomeAndReward(
+	ctx sdk.Context, accKey types.AccountKey, originIncome, actualReward types.Coin) sdk.Error {
 	reward, err := accManager.accountStorage.GetReward(ctx, accKey)
 	if err != nil {
 		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
 	}
+	// 1% of total income
 	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
 	reward.ActualReward = reward.ActualReward.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
@@ -215,7 +286,8 @@ func (accManager *AccountManager) ClaimReward(ctx sdk.Context, accKey types.Acco
 	return nil
 }
 
-func (accManager *AccountManager) UpdateLastActivity(ctx sdk.Context, accKey types.AccountKey) sdk.Error {
+func (accManager *AccountManager) UpdateLastActivity(
+	ctx sdk.Context, accKey types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
 	if err != nil {
 		return ErrUpdateLastActivity(accKey).TraceCause(err, "")
@@ -227,15 +299,18 @@ func (accManager *AccountManager) UpdateLastActivity(ctx sdk.Context, accKey typ
 	return nil
 }
 
-func (accManager *AccountManager) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
+func (accManager *AccountManager) IsMyFollower(
+	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
 	return accManager.accountStorage.IsMyFollower(ctx, me, follower)
 }
 
-func (accManager *AccountManager) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
+func (accManager *AccountManager) IsMyFollowing(
+	ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
 	return accManager.accountStorage.IsMyFollowing(ctx, me, following)
 }
 
-func (accManager *AccountManager) SetFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+func (accManager *AccountManager) SetFollower(
+	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
 	if accManager.accountStorage.IsMyFollower(ctx, me, follower) {
 		return nil
 	}
@@ -247,7 +322,8 @@ func (accManager *AccountManager) SetFollower(ctx sdk.Context, me types.AccountK
 	return nil
 }
 
-func (accManager *AccountManager) SetFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+func (accManager *AccountManager) SetFollowing(
+	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
 	if accManager.accountStorage.IsMyFollowing(ctx, me, following) {
 		return nil
 	}
@@ -259,7 +335,8 @@ func (accManager *AccountManager) SetFollowing(ctx sdk.Context, me types.Account
 	return nil
 }
 
-func (accManager *AccountManager) RemoveFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+func (accManager *AccountManager) RemoveFollower(
+	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
 	if !accManager.accountStorage.IsMyFollower(ctx, me, follower) {
 		return nil
 	}
@@ -267,12 +344,35 @@ func (accManager *AccountManager) RemoveFollower(ctx sdk.Context, me types.Accou
 	return nil
 }
 
-func (accManager *AccountManager) RemoveFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+func (accManager *AccountManager) RemoveFollowing(
+	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
 	if !accManager.accountStorage.IsMyFollowing(ctx, me, following) {
 		return nil
 	}
 	accManager.accountStorage.RemoveFollowingMeta(ctx, me, following)
 	return nil
+}
+
+func (accManager *AccountManager) addPendingStakeToQueue(
+	ctx sdk.Context, address sdk.Address, pendingStake model.PendingStake) sdk.Error {
+	pendingStakeQueue, err := accManager.accountStorage.GetPendingStakeQueue(ctx, address)
+	if err != nil {
+		return err
+	}
+	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList, pendingStake)
+	return accManager.accountStorage.SetPendingStakeQueue(ctx, address, pendingStakeQueue)
+}
+
+func (accManager *AccountManager) removeExpiredTXFromPendingStakeQueue(
+	ctx sdk.Context, bank *model.AccountBank, pendingStakeQueue *model.PendingStakeQueue) {
+	for len(pendingStakeQueue.PendingStakeList) > 0 {
+		if pendingStakeQueue.PendingStakeList[0].EndTime < ctx.BlockHeader().Time {
+			bank.Stake = bank.Stake.Plus(pendingStakeQueue.PendingStakeList[0].Coin)
+			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
+		} else {
+			break
+		}
+	}
 }
 
 func min(a, b int64) int64 {

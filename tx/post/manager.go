@@ -108,14 +108,25 @@ func (pm *PostManager) AddOrUpdateLikeToPost(ctx sdk.Context, postKey types.Post
 		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
 	}
 	like, _ := pm.postStorage.GetPostLike(ctx, postKey, user)
+	// Revoke privous
 	if like != nil {
-		postMeta.TotalLikeWeight -= like.Weight
+		if like.Weight > 0 {
+			postMeta.TotalLikeWeight -= like.Weight
+		}
+		if like.Weight < 0 {
+			postMeta.TotalDislikeWeight += like.Weight
+		}
 		like.Weight = weight
 	} else {
 		postMeta.TotalLikeCount += 1
 		like = &model.Like{Username: user, Weight: weight, Created: ctx.BlockHeight()}
 	}
-	postMeta.TotalLikeWeight += weight
+	if like.Weight > 0 {
+		postMeta.TotalLikeWeight += like.Weight
+	}
+	if like.Weight < 0 {
+		postMeta.TotalDislikeWeight -= like.Weight
+	}
 	if err := pm.postStorage.SetPostLike(ctx, postKey, like); err != nil {
 		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
 	}

@@ -17,7 +17,7 @@ func ErrGetAccountInfo() sdk.Error {
 }
 
 func ErrAccountBankDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info doesn't exist"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank doesn't exist"))
 }
 
 func ErrGetBankFromAccountKey() sdk.Error {
@@ -73,6 +73,14 @@ func ErrGetRewardFailed() sdk.Error {
 }
 
 func ErrSetRewardFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set reward failed"))
+}
+
+func ErrGetPendingStakeFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get pending stake failed"))
+}
+
+func ErrSetPendingStakeFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set reward failed"))
 }
 

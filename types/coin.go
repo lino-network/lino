@@ -53,6 +53,11 @@ func (coin Coin) IsZero() bool {
 	return coin.Amount == 0
 }
 
+// IsGT returns true if the receiver is greater value
+func (coin Coin) IsGT(other Coin) bool {
+	return coin.Amount > other.Amount
+}
+
 // IsGTE returns true if they are the same type and the receiver is
 // an equal or greater value
 func (coin Coin) IsGTE(other Coin) bool {
