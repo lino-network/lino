@@ -46,6 +46,8 @@ type LinoBlockchain struct {
 	globalManager  *global.GlobalManager
 
 	lastBlockTime int64
+	// for recurring time based event
+	pastMinutes int64
 }
 
 func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
@@ -168,6 +170,14 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 		// lb.accountMapper.SetAccount(ctx, acc)
 	}
+	if lb.lastBlockTime == 0 {
+		lb.lastBlockTime = ctx.BlockHeader().Time
+	}
+
+	if lb.pastMinutes == 0 {
+		lb.pastMinutes = ctx.BlockHeader().Time / 60
+	}
+
 	return abci.ResponseInitChain{}
 }
 
@@ -204,8 +214,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if lb.lastBlockTime == 0 {
-		lb.lastBlockTime = ctx.BlockHeader().Time
+	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
+		lb.increaseMinute(ctx)
 	}
 	if err := lb.valManager.SetPreRoundValidators(ctx); err != nil {
 		panic(err)
@@ -251,4 +261,31 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		}
 	}
 	return nil
+}
+
+func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
+	lb.pastMinutes += 1
+	if lb.pastMinutes%60 == 0 {
+		lb.executeHourlyEvent(ctx)
+	}
+}
+
+func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
+	lb.distributeInflationToValidator(ctx)
+}
+
+func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
+	validators, getErr := lb.valManager.GetOncallValList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
+	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, lb.pastMinutes/60)
+	if err != nil {
+		panic(err)
+	}
+	// give inflation to each validator evenly
+	ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(validators))))
+	for _, validator := range validators {
+		lb.accountManager.AddCoin(ctx, validator.Username, types.RatToCoin(ratPerValidator))
+	}
 }

@@ -66,6 +66,10 @@ func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey
 	if getErr != nil {
 		return false
 	}
+	// reject if withdraw is less than minimum withdraw
+	if !coin.IsGTE(types.VoterMinimumWithdraw) {
+		return false
+	}
 	//reject if the remaining coins are less than register fee
 	res := voter.Deposit.Minus(coin)
 	return res.IsGTE(types.VoterRegisterFee)
@@ -238,22 +242,16 @@ func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username types.Acco
 		Amount:   piece,
 	}
 
-	// return coin with interval
-	for i := int64(1); i <= types.CoinReturnTimes; i++ {
-		if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
-			return err
-		}
+	if err := gm.RegisterCoinReturnEvent(ctx, event); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// decide the proposal in 7 days
 func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
 	event := DecideProposalEvent{}
-	if err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time+(types.ProposalDecideHr*3600), event); err != nil {
-		return err
-	}
+	gm.RegisterProposalDecideEvent(ctx, event)
 	return nil
 }
 

@@ -3,7 +3,9 @@ package types
 // Validator List Size
 var ValidatorListSize = 21
 
-var AbsentLimitation = 100
+var AbsentCommitLimitation = 100
+
+var AbsentVoteLimitation = 100
 
 // AccountKey key format in KVStore
 type AccountKey string
@@ -26,9 +28,11 @@ type IDToURLMapping struct {
 }
 
 // TODO need to store into KV
-var VoterRegisterFee = Coin{Amount: 1000 * Decimals}
-var ProposalRegisterFee = Coin{Amount: 2000 * Decimals}
-var ValidatorRegisterFee = Coin{Amount: 1000 * Decimals}
+var VoterRegisterFee = NewCoin(1000 * Decimals)
+var VoterMinimumWithdraw = NewCoin(50 * Decimals)
+var ProposalRegisterFee = NewCoin(2000 * Decimals)
+var ValidatorRegisterFee = NewCoin(1000 * Decimals)
+var ValidatorMinimumWithdraw = NewCoin(50 * Decimals)
 var NextProposalID = int64(0)
 var ProposalDecideHr = int64(7 * 24)
 var CoinReturnIntervalHr = int64(7 * 24)

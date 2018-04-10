@@ -63,4 +63,7 @@ const (
 
 	// Infinite freezing period
 	InfiniteFreezingPeriod = int64(math.MaxInt32)
+
+	// as defined by a julian year of 365.25 days
+	HoursPerYear = 8766
 )
