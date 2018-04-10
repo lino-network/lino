@@ -8,23 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	l0    = types.LNO(sdk.NewRat(0))
-	l100  = types.LNO(sdk.NewRat(100))
-	l200  = types.LNO(sdk.NewRat(200))
-	l1600 = types.LNO(sdk.NewRat(1600))
-	l1800 = types.LNO(sdk.NewRat(1800))
-	l1900 = types.LNO(sdk.NewRat(1900))
-	l2000 = types.LNO(sdk.NewRat(2000))
-	c0    = types.Coin{0}
-	c100  = types.Coin{100 * types.Decimals}
-	c200  = types.Coin{200 * types.Decimals}
-	c1600 = types.Coin{1600 * types.Decimals}
-	c1800 = types.Coin{1800 * types.Decimals}
-	c1900 = types.Coin{1900 * types.Decimals}
-	c2000 = types.Coin{2000 * types.Decimals}
-)
-
 func TestFollow(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	handler := NewHandler(*am)
@@ -171,7 +154,7 @@ func TestTransferNormal(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
 	memo := []byte("This is a memo!")
 
@@ -183,7 +166,7 @@ func TestTransferNormal(t *testing.T) {
 	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
 	acc2Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user2"))
 	assert.Equal(t, c1800, acc1Balance)
-	assert.Equal(t, true, acc2Balance.IsEqual(c200))
+	assert.Equal(t, true, acc2Balance.IsEqual(c300))
 
 	acc2Addr, _ := am.GetBankAddress(ctx, types.AccountKey("user2"))
 	msg = NewTransferMsg("user1", l1600, memo, TransferToUser("user2"), TransferToAddr(acc2Addr))
@@ -194,7 +177,7 @@ func TestTransferNormal(t *testing.T) {
 	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
 
 	assert.Equal(t, true, acc1Balance.IsEqual(c200))
-	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
+	assert.Equal(t, true, acc2Balance.IsEqual(c1900))
 
 	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(acc2Addr))
 	result = handler(ctx, msg)
@@ -204,7 +187,7 @@ func TestTransferNormal(t *testing.T) {
 	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
 
 	assert.Equal(t, true, acc1Balance.IsEqual(c100))
-	assert.Equal(t, true, acc2Balance.IsEqual(c1900))
+	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
 
 	randomAddr := sdk.Address("sdajsdbiqwbdiub")
 	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(randomAddr))
@@ -225,7 +208,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1600)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1500)
 
 	memo := []byte("This is a memo!")
 
@@ -246,8 +229,8 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
-	am.AddCoin(ctx, types.AccountKey("user2"), c2000)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddCoin(ctx, types.AccountKey("user2"), c1900)
 
 	memo := []byte("This is a memo!")
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
@@ -264,7 +247,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
 	memo := []byte("This is a memo!")
 

@@ -113,6 +113,9 @@ func (accManager *AccountManager) GetStake(ctx sdk.Context, accKey types.Account
 
 func (accManager *AccountManager) AddCoinToAddress(
 	ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
+	if coin.IsZero() {
+		return nil
+	}
 	bank, _ := accManager.accountStorage.GetBankFromAddress(ctx, address)
 	if bank == nil {
 		bank = &model.AccountBank{
@@ -182,10 +185,10 @@ func (accManager *AccountManager) MinusCoin(
 			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
 		} else {
 			// new end time = current time + (unstake - withdraw)/unstake*(end time - current time)
-			pendingStake.EndTime = ctx.BlockHeader().Time +
+			pendingStakeQueue.PendingStakeList[0].EndTime = ctx.BlockHeader().Time +
 				unstakeCoin.Minus(coin).ToRat().Quo(unstakeCoin.ToRat()).
-					Mul(sdk.NewRat(pendingStake.EndTime-ctx.BlockHeader().Time)).Evaluate()
-			pendingStake.Coin = pendingStake.Coin.Minus(coin)
+					Mul(sdk.NewRat(pendingStakeQueue.PendingStakeList[0].EndTime-ctx.BlockHeader().Time)).Evaluate()
+			pendingStakeQueue.PendingStakeList[0].Coin = pendingStakeQueue.PendingStakeList[0].Coin.Minus(coin)
 			coin = types.NewCoin(0)
 			break
 		}
