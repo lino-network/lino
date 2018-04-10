@@ -14,13 +14,15 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case VoterDepositMsg:
-			return handleDepositMsg(ctx, vm, am, msg)
+			return handleVoterDepositMsg(ctx, vm, am, msg)
 		case VoterWithdrawMsg:
-			return handleWithdrawMsg(ctx, vm, gm, msg)
+			return handleVoterWithdrawMsg(ctx, vm, gm, msg)
 		case VoterRevokeMsg:
 			return handleRevokeMsg(ctx, vm, gm, msg)
 		case DelegateMsg:
 			return handleDelegateMsg(ctx, vm, am, msg)
+		case DelegatorWithdrawMsg:
+			return handleDelegatorWithdrawMsg(ctx, vm, gm, msg)
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
 		case VoteMsg:
@@ -35,7 +37,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 }
 
 // Handle DepositMsg
-func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
+func handleVoterDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
@@ -66,13 +68,13 @@ func handleDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, ms
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
+func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
-	if !vm.IsLegalWithdraw(ctx, msg.Username, coin) {
+	if !vm.IsLegalVoterWithdraw(ctx, msg.Username, coin) {
 		return ErrIllegalWithdraw().Result()
 	}
 
@@ -91,7 +93,7 @@ func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, m
 	}
 
 	for _, delegator := range delegators {
-		if err := vm.ReturnCoinToDelegator(ctx, msg.Username, delegator, gm); err != nil {
+		if err := vm.ReturnAllCoinsToDelegator(ctx, msg.Username, delegator, gm); err != nil {
 			return err.Result()
 		}
 	}
@@ -124,12 +126,26 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 	return sdk.Result{}
 }
 
-// Handle RevokeDelegationMsg
-func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg RevokeDelegationMsg) sdk.Result {
-	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator, gm); err != nil {
+// Handle DelegatorWithdrawMsg
+func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg DelegatorWithdrawMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
 		return err.Result()
 	}
-	if err := vm.DeleteDelegation(ctx, msg.Voter, msg.Delegator); err != nil {
+
+	if !vm.IsLegalDelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin) {
+		return ErrIllegalWithdraw().Result()
+	}
+
+	if err := vm.ReturnCoinToDelegator(ctx, msg.Voter, msg.Delegator, coin, gm); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle RevokeDelegationMsg
+func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg RevokeDelegationMsg) sdk.Result {
+	if err := vm.ReturnAllCoinsToDelegator(ctx, msg.Voter, msg.Delegator, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

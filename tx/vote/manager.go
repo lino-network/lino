@@ -61,18 +61,32 @@ func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter types.AccountKey,
 	return delegationByte != nil
 }
 
-func (vm VoteManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+func (vm VoteManager) IsLegalVoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return false
 	}
-	// reject if withdraw is less than minimum withdraw
+	// reject if withdraw is less than minimum voter withdraw
 	if !coin.IsGTE(types.VoterMinimumWithdraw) {
 		return false
 	}
 	//reject if the remaining coins are less than register fee
 	res := voter.Deposit.Minus(coin)
 	return res.IsGTE(types.VoterRegisterFee)
+}
+
+func (vm VoteManager) IsLegalDelegatorWithdraw(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) bool {
+	delegation, getErr := vm.storage.GetDelegation(ctx, voterName, delegatorName)
+	if getErr != nil {
+		return false
+	}
+	// reject if withdraw is less than minimum delegator withdraw
+	if !coin.IsGTE(types.DelegatorMinimumWithdraw) {
+		return false
+	}
+	//reject if the remaining delegation are less than zero
+	res := delegation.Amount.Minus(coin)
+	return res.IsNotNegative()
 }
 
 // onle support change parameter proposal now
@@ -210,24 +224,45 @@ func (vm VoteManager) WithdrawAll(ctx sdk.Context, username types.AccountKey, gm
 	return nil
 }
 
-func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+	// change voter's delegated power
 	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {
 		return getErr
 	}
+	voter.DelegatedPower = voter.DelegatedPower.Minus(coin)
+	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
+		return err
+	}
+
+	// change this delegation's amount
 	delegation, getErr := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if getErr != nil {
 		return getErr
 	}
+	delegation.Amount = delegation.Amount.Minus(coin)
 
-	voter.DelegatedPower = voter.DelegatedPower.Minus(delegation.Amount)
-	if err := vm.CreateReturnCoinEvent(ctx, delegatorName, delegation.Amount, gm); err != nil {
+	if delegation.Amount.IsZero() {
+		if err := vm.storage.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
+			return err
+		}
+	} else {
+		vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation)
+	}
+
+	// return coin to delegator
+	if err := vm.CreateReturnCoinEvent(ctx, delegatorName, coin, gm); err != nil {
 		return err
 	}
-	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
-		return err
+	return nil
+}
+
+func (vm VoteManager) ReturnAllCoinsToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, gm global.GlobalManager) sdk.Error {
+	delegation, getErr := vm.storage.GetDelegation(ctx, voterName, delegatorName)
+	if getErr != nil {
+		return getErr
 	}
-	if err := vm.storage.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
+	if err := vm.ReturnCoinToDelegator(ctx, voterName, delegatorName, delegation.Amount, gm); err != nil {
 		return err
 	}
 	return nil
