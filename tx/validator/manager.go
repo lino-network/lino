@@ -206,11 +206,13 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.Acc
 		Deposit:       coin,
 		IsByzantine:   false,
 	}
-	// check minimum requirements
+	// check minimum validator deposit requirements
 	if !coin.IsGTE(types.ValidatorRegisterFee) {
 		return ErrRegisterFeeNotEnough()
 	}
 
+	// must be a voter and maintain a minimum voting deposit
+	// TODO
 	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr

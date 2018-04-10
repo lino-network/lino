@@ -18,7 +18,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case VoterWithdrawMsg:
 			return handleVoterWithdrawMsg(ctx, vm, gm, msg)
 		case VoterRevokeMsg:
-			return handleRevokeMsg(ctx, vm, gm, msg)
+			return handleVoterRevokeMsg(ctx, vm, gm, msg)
 		case DelegateMsg:
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case DelegatorWithdrawMsg:
@@ -84,25 +84,16 @@ func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 	return sdk.Result{}
 }
 
-// Handle RevokeMsg
-func handleRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
-	// TODO also a Validator
-	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
-	if getErr != nil {
-		return getErr.Result()
+// Handle VoterRevokeMsg
+func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
+	// reject if this is a validator
+	if vm.IsValidator(ctx, msg.Username) {
+		return ErrValidatorCannotRevoke().Result()
 	}
-
-	for _, delegator := range delegators {
-		if err := vm.ReturnAllCoinsToDelegator(ctx, msg.Username, delegator, gm); err != nil {
-			return err.Result()
-		}
-	}
-
-	if err := vm.WithdrawAll(ctx, msg.Username, gm); err != nil {
+	if err := vm.ReturnAllCoinsToDelegators(ctx, msg.Username, gm); err != nil {
 		return err.Result()
 	}
-
-	if err := vm.DeleteVoter(ctx, msg.Username); err != nil {
+	if err := vm.WithdrawAll(ctx, msg.Username, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
