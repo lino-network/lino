@@ -170,6 +170,14 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 		// lb.accountMapper.SetAccount(ctx, acc)
 	}
+	if lb.lastBlockTime == 0 {
+		lb.lastBlockTime = ctx.BlockHeader().Time
+	}
+
+	if lb.pastMinutes == 0 {
+		lb.pastMinutes = ctx.BlockHeader().Time / 60
+	}
+
 	return abci.ResponseInitChain{}
 }
 
@@ -206,11 +214,6 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if lb.lastBlockTime == 0 {
-		lb.lastBlockTime = ctx.BlockHeader().Time
-		lb.pastMinutes = ctx.BlockHeader().Time
-	}
-
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
