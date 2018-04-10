@@ -30,7 +30,7 @@ func checkAccountInfo(t *testing.T, ctx sdk.Context, accKey types.AccountKey, ac
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	infoPtr, err := accStorage.GetInfo(ctx, accKey)
 	assert.Nil(t, err)
-	assert.Equal(t, accInfo, *infoPtr, "accout meta should be equal")
+	assert.Equal(t, accInfo, *infoPtr, "accout info should be equal")
 }
 
 func checkAccountMeta(t *testing.T, ctx sdk.Context, accKey types.AccountKey, accMeta model.AccountMeta) {
@@ -38,6 +38,13 @@ func checkAccountMeta(t *testing.T, ctx sdk.Context, accKey types.AccountKey, ac
 	metaPtr, err := accStorage.GetMeta(ctx, accKey)
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *metaPtr, "accout meta should be equal")
+}
+
+func checkAccountReward(t *testing.T, ctx sdk.Context, accKey types.AccountKey, reward model.Reward) {
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	rewardPtr, err := accStorage.GetReward(ctx, accKey)
+	assert.Nil(t, err)
+	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
 }
 
 func TestIsAccountExist(t *testing.T) {
@@ -140,6 +147,9 @@ func TestCreateAccount(t *testing.T) {
 		ActivityBurden: types.DefaultActivityBurden,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
+
+	reward := model.Reward{types.NewCoin(0), types.NewCoin(0), types.NewCoin(0)}
+	checkAccountReward(t, ctx, accKey, reward)
 
 	// username already took
 	err = am.CreateAccount(ctx, accKey, priv.PubKey(), types.NewCoin(0))
