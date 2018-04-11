@@ -12,6 +12,12 @@ var CoinDays int64 = 8
 
 var TotalCoinDaysSec int64 = CoinDays * 24 * 3600
 
+// maximum transaction cpacity cost
+var TransactionCapacityUsage = types.NewCoin(1 * types.Decimals)
+
+// transaction cpacity recover period
+var TransactionCapacityRecoverPeriod = 24 * 3600 * 8
+
 // linoaccount encapsulates all basic struct
 type AccountManager struct {
 	accountStorage *model.AccountStorage `json:"account_manager"`
@@ -65,8 +71,7 @@ func (accManager *AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivity:   ctx.BlockHeight(),
-		ActivityBurden: types.DefaultActivityBurden,
+		LastActivity: ctx.BlockHeight(),
 	}
 	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
@@ -286,19 +291,6 @@ func (accManager *AccountManager) ClaimReward(ctx sdk.Context, accKey types.Acco
 	return nil
 }
 
-func (accManager *AccountManager) UpdateLastActivity(
-	ctx sdk.Context, accKey types.AccountKey) sdk.Error {
-	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
-	if err != nil {
-		return ErrUpdateLastActivity(accKey).TraceCause(err, "")
-	}
-	accountMeta.LastActivity = ctx.BlockHeight()
-	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
-		return ErrUpdateLastActivity(accKey).TraceCause(err, "")
-	}
-	return nil
-}
-
 func (accManager *AccountManager) IsMyFollower(
 	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
 	return accManager.accountStorage.IsMyFollower(ctx, me, follower)
@@ -350,6 +342,38 @@ func (accManager *AccountManager) RemoveFollowing(
 		return nil
 	}
 	accManager.accountStorage.RemoveFollowingMeta(ctx, me, following)
+	return nil
+}
+
+func (accManager *AccountManager) CheckUserTPSCapacity(
+	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
+	accountMeta, err := accManager.accountStorage.GetMeta(ctx, accKey)
+	if err != nil {
+		return ErrCheckUserTPSCapacity(accKey).TraceCause(err, "")
+	}
+	stake, err := accManager.GetStake(ctx, me)
+	if err != nil {
+		return ErrCheckUserTPSCapacity(accKey).TraceCause(err, "")
+	}
+	if accountMeta.TransactionCapacity.IsGTE(stake) {
+		accountMeta.TransactionCapacity = stake
+	} else {
+		accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Plus(
+			types.RatToCoin(
+				stake.Minus(accountMeta.TransactionCapacity).ToRat().
+					Mul(types.NewRat(
+						ctx.BlockHeader().Time-accountMeta.LastActivity,
+						TransactionCapacityRecoverPeriod))))
+	}
+	currentUsage := types.RatToCoin(TransactionCapacityUsage.ToRat().Mul(tpsCapacityRatio))
+	if currentUsage.GT(accountMeta.TransactionCapacity) {
+		return ErrAccountTPSCapacityNotEnough(me)
+	}
+	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentUsage)
+	accountMeta.LastActivity = ctx.BlockHeader().Time
+	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
+		return ErrIncreaseSequenceByOne(accKey).TraceCause(err, "")
+	}
 	return nil
 }
 

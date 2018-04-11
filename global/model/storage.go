@@ -18,6 +18,7 @@ var (
 	inflationPoolSubStore           = []byte{0x05} // SubStore for allocation
 	infraInternalAllocationSubStore = []byte{0x06} // SubStore for infrat internal allocation
 	consumptionMetaSubStore         = []byte{0x07} // SubStore for consumption meta
+	TPSSubStore                     = []byte{0x08} // SubStore for consumption meta
 )
 
 type GlobalStorage struct {
@@ -98,6 +99,13 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSt
 		ConsumptionWindow:       types.NewCoin(0),
 		ConsumptionRewardPool:   types.NewCoin(0),
 		FreezingPeriodHr:        state.FreezingPeriodHr,
+	}
+	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	tps := &TPS{
+		CurrentTPS: sdk.ZeroRat,
+		MaxTPS:     sdk.NewRat(1000),
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
@@ -303,6 +311,29 @@ func (gs *GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *Co
 	return nil
 }
 
+func (gs *GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	tpsBytes := store.Get(GetTPSKey())
+	if consumptionMetaBytes == nil {
+		return nil, ErrGlobalTPSNotFound()
+	}
+	tps := new(TPS)
+	if err := gs.cdc.UnmarshalJSON(tpsBytes, tps); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return tps, nil
+}
+
+func (gs *GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	tpsBytes, err := gs.cdc.MarshalJSON(*tps)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetTPSKey(), tpsBytes)
+	return nil
+}
+
 func GetHeightEventListKey(height int64) []byte {
 	return append(heightEventListSubStore, strconv.FormatInt(height, 10)...)
 }
@@ -333,4 +364,8 @@ func GetInfraInternalAllocationKey() []byte {
 
 func GetConsumptionMetaKey() []byte {
 	return consumptionMetaSubStore
+}
+
+func GetTPSKey() []byte {
+	return TPSSubStore
 }

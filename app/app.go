@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -97,7 +98,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.capKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
 	lb.MountStoreWithDB(lb.capKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
 	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
-	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager, *lb.globalManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -235,7 +236,8 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
-	if err := lb.valManager.SetPreRoundValidators(ctx); err != nil {
+	fmt.Println(lb.lastBlockTime, ctx.BlockHeader().Time, req.Header.Time)
+	if err := lb.valManager.SetPreBlockValidators(ctx); err != nil {
 		panic(err)
 	}
 	absentValidators := req.GetAbsentValidators()

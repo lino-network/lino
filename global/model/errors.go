@@ -42,3 +42,7 @@ func ErrInfraAllocationNotFound() sdk.Error {
 func ErrGlobalConsumptionMetaNotFound() sdk.Error {
 	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global consumption meta not found"))
 }
+
+func ErrGlobalTPSNotFound() sdk.Error {
+	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global tps not found"))
+}

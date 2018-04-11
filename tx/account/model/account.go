@@ -40,9 +40,9 @@ type PendingStake struct {
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence       int64 `json:"sequence"`
-	LastActivity   int64 `json:"last_activity"`
-	ActivityBurden int64 `json:"activity_burden"`
+	Sequence            int64      `json:"sequence"`
+	LastActivity        int64      `json:"last_activity"`
+	TransactionCapacity types.Coin `json:"transaction_capacity"`
 }
 
 // AccountInfraConsumption records infra utility consumption

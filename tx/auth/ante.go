@@ -10,7 +10,7 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -79,6 +79,13 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
 				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
+			}
+			tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+			if err != nil {
+				return ctx, err.Result(), true
+			}
+			if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(signer), tpsCapacityRatio); err != nil {
+				return ctx, err.Result(), true
 			}
 		}
 

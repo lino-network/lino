@@ -77,8 +77,12 @@ func ErrGetStake(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get user %v stake failed", accKey))
 }
 
-func ErrUpdateLastActivity(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v last activity failed", accKey))
+func ErrCheckUserTPSCapacity(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v transaction capacity failed", accKey))
+}
+
+func ErrAccountTPSCapacityNotEnough(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v transaction capacity not enough, please wait", accKey))
 }
 
 func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
