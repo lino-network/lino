@@ -10,9 +10,6 @@ import (
 // how many days the stake will increase to the maximum
 var CoinDays int64 = 8
 
-// the minimal requirement to open an account
-var OpenBankFee types.Coin = types.NewCoin(5 * types.Decimals)
-
 // linoaccount encapsulates all basic struct
 type AccountManager struct {
 	accountStorage *model.AccountStorage `json:"account_manager"`

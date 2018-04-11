@@ -62,16 +62,6 @@ func TestRegister(t *testing.T) {
 	assert.True(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 }
 
-func TestRegisterFeeInsufficient(t *testing.T) {
-	register := "register"
-	am, ctx, handler := setupTest(t)
-	priv := createBank(t, ctx, am, types.NewCoin(23*types.Decimals))
-
-	msg := NewRegisterMsg(register, priv.PubKey())
-	result := handler(ctx, msg)
-	assert.Equal(t, acc.ErrRegisterFeeInsufficient().Result().Code, result.Code)
-}
-
 func TestRegisterDuplicate(t *testing.T) {
 	am, ctx, handler := setupTest(t)
 	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
