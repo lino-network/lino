@@ -235,7 +235,6 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
-
 	if err := lb.valManager.SetPreBlockValidators(ctx); err != nil {
 		panic(err)
 	}
