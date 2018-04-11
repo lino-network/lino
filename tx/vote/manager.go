@@ -53,12 +53,13 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 	return voterByte != nil
 }
 
-func (vm VoteManager) IsValidator(ctx sdk.Context, accKey types.AccountKey) bool {
-	voter, getErr := vm.storage.GetVoter(ctx, accKey)
-	if getErr != nil {
-		return false
+func (vm VoteManager) IsOncallValidator(ctx sdk.Context, username types.AccountKey) bool {
+	for _, validator := range vm.OncallValidators {
+		if validator == username {
+			return true
+		}
 	}
-	return voter.IsValidator
+	return false
 }
 
 func (vm VoteManager) IsProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
@@ -88,7 +89,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(ctx sdk.Context, username types.Accou
 
 	// reject if this is a validator and  remaining coins are less than
 	// the minimum voting deposit he/she should keep
-	if voter.IsValidator && !remaining.IsGTE(types.ValidatorMinimumVotingDeposit) {
+	if vm.IsOncallValidator(ctx, username) && !remaining.IsGTE(types.ValidatorMinimumVotingDeposit) {
 		return false
 	}
 	return true
@@ -189,9 +190,8 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 
 func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter := &model.Voter{
-		Username:    username,
-		Deposit:     coin,
-		IsValidator: false,
+		Username: username,
+		Deposit:  coin,
 	}
 	// check minimum requirements for registering as a voter
 	if !coin.IsGTE(types.VoterRegisterFee) {

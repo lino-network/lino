@@ -188,14 +188,15 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 }
 
 func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
+	// check minimum validator deposit requirements
+	if !coin.IsGTE(types.ValidatorRegisterFee) {
+		return ErrRegisterFeeNotEnough()
+	}
+
 	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
 		Deposit:       coin,
-	}
-	// check minimum validator deposit requirements
-	if !coin.IsGTE(types.ValidatorRegisterFee) {
-		return ErrRegisterFeeNotEnough()
 	}
 
 	// TODO

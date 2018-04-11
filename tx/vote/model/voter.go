@@ -8,7 +8,6 @@ type Voter struct {
 	Username       types.AccountKey `json:"username"`
 	Deposit        types.Coin       `json:"deposit"`
 	DelegatedPower types.Coin       `json:"delegated_power"`
-	IsValidator    bool             `json:"is_validator"`
 }
 
 type Vote struct {
