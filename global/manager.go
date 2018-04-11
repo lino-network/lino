@@ -163,6 +163,18 @@ func (gm *GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Er
 	return nil
 }
 
+func (gm *GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
+	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
+	if getErr != nil {
+		return getErr
+	}
+	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Plus(coin)
+	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHours int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {

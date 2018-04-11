@@ -42,6 +42,12 @@ type DelegateMsg struct {
 	Amount    types.LNO        `json:"amount"`
 }
 
+type DelegatorWithdrawMsg struct {
+	Delegator types.AccountKey `json:"delegator"`
+	Voter     types.AccountKey `json:"voter"`
+	Amount    types.LNO        `json:"amount"`
+}
+
 type RevokeDelegationMsg struct {
 	Delegator types.AccountKey `json:"delegator"`
 	Voter     types.AccountKey `json:"voter"`
@@ -344,4 +350,50 @@ func (msg CreateProposalMsg) GetSignBytes() []byte {
 
 func (msg CreateProposalMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
+}
+
+//----------------------------------------
+// DelegatoWithdrawMsg Msg Implementations
+func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) DelegatorWithdrawMsg {
+	return DelegatorWithdrawMsg{
+		Delegator: types.AccountKey(delegator),
+		Voter:     types.AccountKey(voter),
+		Amount:    amount,
+	}
+}
+
+func (msg DelegatorWithdrawMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+
+func (msg DelegatorWithdrawMsg) ValidateBasic() sdk.Error {
+	if len(msg.Delegator) < types.MinimumUsernameLength ||
+		len(msg.Delegator) > types.MaximumUsernameLength ||
+		len(msg.Voter) < types.MinimumUsernameLength ||
+		len(msg.Voter) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (msg DelegatorWithdrawMsg) String() string {
+	return fmt.Sprintf("DelegatorWithdrawMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
+}
+
+func (msg DelegatorWithdrawMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg DelegatorWithdrawMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Delegator)}
 }
