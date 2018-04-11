@@ -20,6 +20,7 @@ import (
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
 
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/server"
 	"github.com/lino-network/lino/types"
 )
 
@@ -113,6 +114,7 @@ func main() {
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
+		server.StartLocalServerCmd(),
 	)
 
 	// prepare and add flags
