@@ -10,6 +10,7 @@ import (
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
@@ -22,6 +23,7 @@ var (
 	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
 	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
 	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
+	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
 )
 
 func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
@@ -38,14 +40,15 @@ func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, globalState)
 }
 
-func setupTest(t *testing.T, height int64) (sdk.Context, *acc.AccountManager, *ValidatorManager, *global.GlobalManager) {
+func setupTest(t *testing.T, height int64) (sdk.Context, *acc.AccountManager, *ValidatorManager, *vote.VoteManager, *global.GlobalManager) {
 	ctx := getContext(height)
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
 	postManager := NewValidatorManager(TestValidatorKVStoreKey)
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey)
+	voteManager := vote.NewVoteManager(TestVoteKVStoreKey)
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, postManager, globalManager
+	return ctx, accManager, postManager, voteManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -54,6 +57,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)

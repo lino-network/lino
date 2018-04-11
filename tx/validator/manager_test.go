@@ -11,9 +11,9 @@ import (
 )
 
 func TestAbsentValidator(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
@@ -29,28 +29,28 @@ func TestAbsentValidator(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 	absentList := []int32{0, 1, 10, 20}
-	err := vm.UpdateAbsentValidator(ctx, absentList)
+	err := valManager.UpdateAbsentValidator(ctx, absentList)
 	assert.Nil(t, err)
 
-	validatorList, _ := vm.storage.GetValidatorList(ctx)
+	validatorList, _ := valManager.storage.GetValidatorList(ctx)
 	for _, idx := range absentList {
-		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
 		assert.Equal(t, validator.AbsentCommit, 1)
 	}
 
 	// absent exceeds limitation
 	for i := 0; i < types.AbsentCommitLimitation; i++ {
-		err := vm.UpdateAbsentValidator(ctx, absentList)
+		err := valManager.UpdateAbsentValidator(ctx, absentList)
 		assert.Nil(t, err)
 	}
 
 	for _, idx := range absentList {
-		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
 		assert.Equal(t, validator.AbsentCommit, 101)
 	}
-	err = vm.FireIncompetentValidator(ctx, []abci.Evidence{})
+	err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{}, *gm)
 	assert.Nil(t, err)
-	validatorList2, _ := vm.storage.GetValidatorList(ctx)
+	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 17, len(validatorList2.OncallValidators))
 	assert.Equal(t, 17, len(validatorList2.AllValidators))
 
@@ -66,10 +66,10 @@ func TestAbsentValidator(t *testing.T) {
 		ownerKey, _ := am.GetOwnerKey(ctx, users[idx])
 		byzantines = append(byzantines, abci.Evidence{PubKey: ownerKey.Bytes()})
 	}
-	err = vm.FireIncompetentValidator(ctx, byzantines)
+	err = valManager.FireIncompetentValidator(ctx, byzantines, *gm)
 	assert.Nil(t, err)
 
-	validatorList3, _ := vm.storage.GetValidatorList(ctx)
+	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 14, len(validatorList3.OncallValidators))
 	assert.Equal(t, 14, len(validatorList3.AllValidators))
 
@@ -80,9 +80,9 @@ func TestAbsentValidator(t *testing.T) {
 }
 
 func TestGetOncallList(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
@@ -98,9 +98,9 @@ func TestGetOncallList(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 
-	lst, _ := vm.GetOncallValList(ctx)
+	lst, _ := valManager.GetOncallValidatorList(ctx)
 	for idx, validator := range lst {
-		assert.Equal(t, users[idx], validator.Username)
+		assert.Equal(t, users[idx], validator)
 	}
 
 }

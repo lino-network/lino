@@ -16,6 +16,7 @@ var (
 	l11   = types.LNO(sdk.NewRat(11))
 	l20   = types.LNO(sdk.NewRat(20))
 	l21   = types.LNO(sdk.NewRat(21))
+	l40   = types.LNO(sdk.NewRat(40))
 	l100  = types.LNO(sdk.NewRat(100))
 	l200  = types.LNO(sdk.NewRat(200))
 	l400  = types.LNO(sdk.NewRat(400))
@@ -49,9 +50,9 @@ var (
 )
 
 func TestRegisterBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
@@ -66,10 +67,10 @@ func TestRegisterBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	assert.Equal(t, acc1Balance, c400)
-	assert.Equal(t, true, vm.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 
 	// now user1 should be the only validator (WOW, dictator!)
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, verifyList.LowestPower, c1600)
 	assert.Equal(t, 1, len(verifyList.OncallValidators))
 	assert.Equal(t, 1, len(verifyList.AllValidators))
@@ -77,15 +78,15 @@ func TestRegisterBasic(t *testing.T) {
 	assert.Equal(t, user1, verifyList.AllValidators[0])
 
 	// make sure the validator's account info (power&pubKey) is correct
-	verifyAccount, _ := vm.storage.GetValidator(ctx, user1)
+	verifyAccount, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, c1600.Amount, verifyAccount.ABCIValidator.GetPower())
 	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
 }
 
 func TestRegisterFeeNotEnough(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
@@ -97,15 +98,15 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrRegisterFeeNotEnough().Result(), result)
 
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(verifyList.OncallValidators))
 	assert.Equal(t, 0, len(verifyList.AllValidators))
 }
 
 func TestRevokeBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
@@ -118,7 +119,7 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// now user1 should be the only validator
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, user1, verifyList.OncallValidators[0])
 	assert.Equal(t, user1, verifyList.AllValidators[0])
 
@@ -127,8 +128,8 @@ func TestRevokeBasic(t *testing.T) {
 	result2 := handler(ctx, msg2)
 	assert.Equal(t, sdk.Result{}, result2)
 
-	verifyList2, _ := vm.storage.GetValidatorList(ctx)
-	validator, _ := vm.storage.GetValidator(ctx, "user1")
+	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
+	validator, _ := valManager.storage.GetValidator(ctx, "user1")
 	assert.Equal(t, 0, len(verifyList2.OncallValidators))
 	assert.Equal(t, 0, len(verifyList2.AllValidators))
 	assert.Equal(t, c0, validator.Deposit)
@@ -136,9 +137,9 @@ func TestRevokeBasic(t *testing.T) {
 }
 
 func TestRevokeNonExistUser(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// let user1(not exists) revoke candidancy
 	msg2 := NewValidatorRevokeMsg("user1")
@@ -148,9 +149,9 @@ func TestRevokeNonExistUser(t *testing.T) {
 
 // this is the same situation as we find Byzantine and replace the Byzantine
 func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 24)
@@ -165,7 +166,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 
-	lst, _ := vm.storage.GetValidatorList(ctx)
+	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst.OncallValidators))
 	assert.Equal(t, 24, len(lst.AllValidators))
 	assert.Equal(t, types.Coin{1040 * types.Decimals}, lst.LowestPower)
@@ -177,7 +178,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	msg := NewValidatorDepositMsg("user4", deposit, *ownerKey)
 	result := handler(ctx, msg)
 
-	lst2, _ := vm.storage.GetValidatorList(ctx)
+	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
 	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst2.LowestPower)
 	assert.Equal(t, users[4], lst2.LowestValidator)
@@ -188,7 +189,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	result2 := handler(ctx, revokeMsg)
 	assert.Equal(t, sdk.Result{}, result2)
 
-	lst3, _ := vm.storage.GetValidatorList(ctx)
+	lst3, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, types.Coin{1050 * types.Decimals}, lst3.LowestPower)
 	assert.Equal(t, users[4], lst3.LowestValidator)
 	assert.Equal(t, 23, len(lst3.AllValidators))
@@ -201,16 +202,16 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	result3 := handler(ctx, revokeMsg2)
 	assert.Equal(t, sdk.Result{}, result3)
 
-	lst4, _ := vm.storage.GetValidatorList(ctx)
+	lst4, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, types.Coin{1030 * types.Decimals}, lst4.LowestPower)
 	assert.Equal(t, users[2], lst4.LowestValidator)
 	assert.Equal(t, 22, len(lst4.AllValidators))
 }
 
 func TestRevokeAndDepositAgain(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create user
 	user1 := createTestAccount(ctx, am, "user1")
@@ -222,7 +223,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
-	lst, _ := vm.storage.GetValidatorList(ctx)
+	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(lst.AllValidators))
 	assert.Equal(t, 1, len(lst.OncallValidators))
 
@@ -231,7 +232,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	result2 := handler(ctx, msg2)
 	assert.Equal(t, sdk.Result{}, result2)
 
-	lstEmpty, _ := vm.storage.GetValidatorList(ctx)
+	lstEmpty, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(lstEmpty.AllValidators))
 	assert.Equal(t, 0, len(lstEmpty.OncallValidators))
 
@@ -239,16 +240,16 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	msg3 := NewValidatorDepositMsg("user1", l1000, *ownerKey)
 	result3 := handler(ctx, msg3)
 
-	lst2, _ := vm.storage.GetValidatorList(ctx)
+	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result3)
 	assert.Equal(t, 1, len(lst2.AllValidators))
 	assert.Equal(t, 1, len(lst2.OncallValidators))
 }
 
 func TestWithdrawBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
@@ -261,7 +262,7 @@ func TestWithdrawBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// now user1 should be the only validator
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, user1, verifyList.OncallValidators[0])
 	assert.Equal(t, user1, verifyList.AllValidators[0])
 
@@ -272,9 +273,9 @@ func TestWithdrawBasic(t *testing.T) {
 }
 
 func TestDepositBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
@@ -293,10 +294,10 @@ func TestDepositBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	assert.Equal(t, acc1Balance, c200)
-	assert.Equal(t, true, vm.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 
 	// check the lowest power is 1800 now (1600 + 200)
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, c1800, verifyList.LowestPower)
 	assert.Equal(t, 1, len(verifyList.OncallValidators))
 	assert.Equal(t, 1, len(verifyList.AllValidators))
@@ -304,14 +305,38 @@ func TestDepositBasic(t *testing.T) {
 	assert.Equal(t, user1, verifyList.AllValidators[0])
 
 	// check deposit and power is correct
-	validator, _ := vm.storage.GetValidator(ctx, user1)
+	validator, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, true, validator.Deposit.IsEqual(c1800))
 }
 
+// func TestWithdrawAndSubstitution(t *testing.T) {
+// 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+// 	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+// 	valManager.InitGenesis(ctx)
+//
+// 	// create 21 test users
+// 	users := make([]types.AccountKey, 24)
+// 	for i := 0; i < 24; i++ {
+// 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
+// 		am.AddCoin(ctx, users[i], c2000)
+// 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
+// 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1000)))
+// 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
+// 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
+// 		result := handler(ctx, msg)
+// 		assert.Equal(t, sdk.Result{}, result)
+// 	}
+//
+// 	withdrawMsg := NewValidatorWithdrawMsg("user4", l20)
+// 	result := handler(ctx, withdrawMsg)
+// 	assert.Equal(t, sdk.Result{}, result)
+//
+// }
+
 func TestDepositWithoutLinoAccount(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// let user1 register as validator
 	user1 := createTestAccount(ctx, am, "user1")
@@ -322,9 +347,9 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 }
 
 func TestValidatorReplacement(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
@@ -340,7 +365,7 @@ func TestValidatorReplacement(t *testing.T) {
 	}
 
 	// check validator list, the lowest power is 10
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c1011))
 	assert.Equal(t, users[0], verifyList.LowestValidator)
 	assert.Equal(t, 21, len(verifyList.OncallValidators))
@@ -356,7 +381,7 @@ func TestValidatorReplacement(t *testing.T) {
 	msg := NewValidatorDepositMsg("noPowerUser", deposit, *ownerKey1)
 	result := handler(ctx, msg)
 
-	verifyList2, _ := vm.storage.GetValidatorList(ctx)
+	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result)
 	assert.Equal(t, true, verifyList.LowestPower.IsEqual(c1011))
 	assert.Equal(t, users[0], verifyList.LowestValidator)
@@ -373,7 +398,7 @@ func TestValidatorReplacement(t *testing.T) {
 	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, *ownerKey2)
 	result2 := handler(ctx, msg2)
 
-	verifyList3, _ := vm.storage.GetValidatorList(ctx)
+	verifyList3, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, sdk.Result{}, result2)
 	assert.Equal(t, true, verifyList3.LowestPower.IsEqual(c1021))
 	assert.Equal(t, users[1], verifyList3.LowestValidator)
@@ -396,9 +421,9 @@ func TestValidatorReplacement(t *testing.T) {
 }
 
 func TestRemoveBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create two test users
 	goodUser := createTestAccount(ctx, am, "goodUser")
@@ -415,12 +440,12 @@ func TestRemoveBasic(t *testing.T) {
 	handler(ctx, msg1)
 	handler(ctx, msg2)
 
-	verifyList, _ := vm.storage.GetValidatorList(ctx)
+	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 2, len(verifyList.OncallValidators))
 	assert.Equal(t, 2, len(verifyList.AllValidators))
 
-	vm.RemoveValidatorFromAllLists(ctx, "badUser")
-	verifyList2, _ := vm.storage.GetValidatorList(ctx)
+	valManager.RemoveValidatorFromAllLists(ctx, "badUser")
+	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(verifyList2.OncallValidators))
 	assert.Equal(t, 1, len(verifyList2.AllValidators))
 	assert.Equal(t, goodUser, verifyList2.OncallValidators[0])

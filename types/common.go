@@ -42,3 +42,7 @@ var ValidatorMinimumVotingDeposit = NewCoin(3000 * Decimals)
 
 var CoinReturnIntervalHr = int64(7 * 24)
 var CoinReturnTimes = int64(7)
+
+var PenaltyMissVote = NewCoin(200 * Decimals)
+var PenaltyMissCommit = NewCoin(200 * Decimals)
+var PenaltyByzantine = NewCoin(200 * Decimals)

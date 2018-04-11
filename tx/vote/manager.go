@@ -27,7 +27,9 @@ var _ = oldwire.RegisterInterface(
 
 // vote manager is the proxy for all storage structs defined above
 type VoteManager struct {
-	storage *model.VoteStorage `json:"vote_storage"`
+	storage           *model.VoteStorage `json:"vote_storage"`
+	OncallValidators  []types.AccountKey `json:"oncall_validators"`
+	PenaltyValidators []types.AccountKey `json:"penalty_validators"`
 }
 
 // create NewVoteManager

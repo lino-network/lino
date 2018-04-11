@@ -20,6 +20,7 @@ import (
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
+	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 )
 
@@ -44,6 +45,7 @@ type LinoBlockchain struct {
 	postManager    *post.PostManager
 	valManager     *val.ValidatorManager
 	globalManager  *global.GlobalManager
+	voteManager    *vote.VoteManager
 
 	lastBlockTime int64
 	// for recurring time based event
@@ -65,12 +67,14 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
 	lb.valManager = val.NewValidatorManager(lb.capKeyValStore)
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
+	lb.voteManager = vote.NewVoteManager(lb.capKeyGlobalStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.valManager, *lb.accountManager, *lb.globalManager))
+		AddRoute(types.VoteRouterName, vote.NewHandler(*lb.voteManager, *lb.accountManager, *lb.globalManager)).
+		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.valManager, *lb.accountManager, *lb.voteManager, *lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -170,14 +174,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 		// lb.accountMapper.SetAccount(ctx, acc)
 	}
-	if lb.lastBlockTime == 0 {
-		lb.lastBlockTime = ctx.BlockHeader().Time
-	}
-
-	if lb.pastMinutes == 0 {
-		lb.pastMinutes = ctx.BlockHeader().Time / 60
-	}
-
 	return abci.ResponseInitChain{}
 }
 
@@ -214,6 +210,14 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	if lb.lastBlockTime == 0 {
+		lb.lastBlockTime = ctx.BlockHeader().Time
+	}
+
+	if lb.pastMinutes == 0 {
+		lb.pastMinutes = ctx.BlockHeader().Time / 60
+	}
+
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
@@ -222,19 +226,39 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	}
 	absentValidators := req.GetAbsentValidators()
 	if absentValidators != nil {
-		// TODO Err handling
-		lb.valManager.UpdateAbsentValidator(ctx, absentValidators)
+		if err := lb.valManager.UpdateAbsentValidator(ctx, absentValidators); err != nil {
+			panic(err)
+		}
 	}
-	// TODO Err handling
-	lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators())
+
+	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators()); err != nil {
+		panic(err)
+	}
 	return abci.ResponseBeginBlock{}
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	lb.syncValidatorWithVoteManager(ctx)
+	lb.executeHeightEvents(ctx)
+	lb.executeTimeEvents(ctx)
+
+	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	lb.punishValidatorsDidntVote(ctx)
+	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
+}
+
+func (lb *LinoBlockchain) executeHeightEvents(ctx sdk.Context) {
 	if heightEvents := lb.globalManager.GetHeightEventListAtHeight(ctx, ctx.BlockHeight()); heightEvents != nil {
 		lb.executeEvents(ctx, heightEvents.Events)
 		lb.globalManager.RemoveHeightEventList(ctx, ctx.BlockHeight())
 	}
+}
+
+func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
@@ -243,12 +267,6 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 		}
 	}
 	lb.lastBlockTime = ctx.BlockHeader().Time
-	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }
 
 func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
@@ -275,7 +293,7 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
-	validators, getErr := lb.valManager.GetOncallValList(ctx)
+	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
 		panic(getErr)
 	}
@@ -286,6 +304,23 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	// give inflation to each validator evenly
 	ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(validators))))
 	for _, validator := range validators {
-		lb.accountManager.AddCoin(ctx, validator.Username, types.RatToCoin(ratPerValidator))
+		lb.accountManager.AddCoin(ctx, validator, types.RatToCoin(ratPerValidator))
 	}
+}
+
+func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
+	// tell voting committe the newest oncall validators
+	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
+	lb.voteManager.OncallValidators = validators
+}
+
+func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
+	// punish these validators who didn't vote
+	if err := lb.valManager.PunishValidatorDidntVote(ctx, lb.voteManager.PenaltyValidators, *lb.globalManager); err != nil {
+		panic(err)
+	}
+	lb.voteManager.PenaltyValidators = lb.voteManager.PenaltyValidators[:0]
 }
