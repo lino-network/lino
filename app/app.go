@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -236,7 +235,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
-	fmt.Println(lb.lastBlockTime, ctx.BlockHeader().Time, req.Header.Time)
+
 	if err := lb.valManager.SetPreBlockValidators(ctx); err != nil {
 		panic(err)
 	}

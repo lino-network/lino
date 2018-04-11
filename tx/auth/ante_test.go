@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
+	"github.com/lino-network/lino/genesis"
+	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 
@@ -24,17 +27,35 @@ func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string)
 	return priv.Wrap(), types.AccountKey(username)
 }
 
-func setupTest() (*acc.AccountManager, sdk.Context, sdk.AnteHandler) {
-	db := dbm.NewMemDB()
-	capKey := sdk.NewKVStoreKey("capkey")
-	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(capKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
-	am := acc.NewAccountManager(capKey)
-	anteHandler := NewAnteHandler(*am)
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "mychainid"}, false, nil)
+func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
+	globalState := genesis.GlobalState{
+		TotalLino:                10000,
+		GrowthRate:               sdk.Rat{98, 1000},
+		InfraAllocation:          sdk.Rat{20, 100},
+		ContentCreatorAllocation: sdk.Rat{55, 100},
+		DeveloperAllocation:      sdk.Rat{20, 100},
+		ValidatorAllocation:      sdk.Rat{5, 100},
+		ConsumptionFrictionRate:  sdk.Rat{1, 100},
+		FreezingPeriodHr:         24 * 7,
+	}
+	return gm.InitGlobalManager(ctx, globalState)
+}
 
-	return am, ctx, anteHandler
+func setupTest() (*acc.AccountManager, *global.GlobalManager, sdk.Context, sdk.AnteHandler) {
+	db := dbm.NewMemDB()
+	accountCapKey := sdk.NewKVStoreKey("account")
+	globalCapKey := sdk.NewKVStoreKey("global")
+	ms := store.NewCommitMultiStore(db)
+	ms.MountStoreWithDB(accountCapKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(globalCapKey, sdk.StoreTypeIAVL, db)
+	ms.LoadLatestVersion()
+	ctx := sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
+	am := acc.NewAccountManager(accountCapKey)
+	gm := global.NewGlobalManager(globalCapKey)
+	InitGlobalManager(ctx, gm)
+	anteHandler := NewAnteHandler(*am, *gm)
+
+	return am, gm, ctx, anteHandler
 }
 
 type TestMsg struct {
@@ -121,7 +142,7 @@ func newTestTxWithSignBytes(msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, s
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerSigErrors(t *testing.T) {
 	// setup
-	am, ctx, anteHandler := setupTest()
+	am, _, ctx, anteHandler := setupTest()
 	// get private key and username
 	priv1, user1 := createTestAccount(ctx, am, "user1")
 	priv2, user2 := createTestAccount(ctx, am, "user2")
@@ -148,7 +169,7 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerRegisterTx(t *testing.T) {
-	am, ctx, anteHandler := setupTest()
+	am, _, ctx, anteHandler := setupTest()
 	priv1 := crypto.GenPrivKeyEd25519().Wrap()
 	priv2 := crypto.GenPrivKeyEd25519().Wrap()
 	err := am.AddCoinToAddress(ctx, priv1.PubKey().Address(), types.NewCoin(0))
@@ -181,7 +202,7 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerNormalTx(t *testing.T) {
-	am, ctx, anteHandler := setupTest()
+	am, _, ctx, anteHandler := setupTest()
 	// keys and username
 	priv1, user1 := createTestAccount(ctx, am, "user1")
 	priv2, _ := createTestAccount(ctx, am, "user2")
@@ -218,4 +239,33 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{2, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
+}
+
+// Test various error cases in the AnteHandler control flow.
+func TestTPSCapacity(t *testing.T) {
+	am, gm, ctx, anteHandler := setupTest()
+	// keys and username
+	priv1, user1 := createTestAccount(ctx, am, "user1")
+	_, _ = createTestAccount(ctx, am, "user2")
+
+	// msg and signatures
+	var tx sdk.Tx
+	msg := newTestMsg(user1)
+
+	// test valid transaction
+	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkValidTx(t, anteHandler, ctx, tx)
+	seq, err := am.GetSequence(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(1))
+
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
+	gm.UpdateTPS(ctx, time.Now().Unix())
+	seqs = []int64{1}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
+	seqs = []int64{2}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
 }

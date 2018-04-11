@@ -226,7 +226,11 @@ func (gm *GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Err
 	if err != nil {
 		return err
 	}
-	tps.CurrentTPS = sdk.NewRat(Txs, ctx.BlockHeader().Time-lastBlockTime)
+	if ctx.BlockHeader().Time == lastBlockTime {
+		tps.CurrentTPS = tps.MaxTPS
+	} else {
+		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
+	}
 	if tps.CurrentTPS.GT(tps.MaxTPS) {
 		tps.MaxTPS = tps.CurrentTPS
 	}
@@ -259,5 +263,5 @@ func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Erro
 	if err != nil {
 		return sdk.ZeroRat, err
 	}
-	return tps.CurrentTPS.Quo(tps.MaxTPS)
+	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
 }

@@ -43,9 +43,9 @@ func TestCreatePost(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat,
 	}

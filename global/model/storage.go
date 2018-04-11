@@ -107,7 +107,7 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSt
 		CurrentTPS: sdk.ZeroRat,
 		MaxTPS:     sdk.NewRat(1000),
 	}
-	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+	if err := gs.SetTPS(ctx, tps); err != nil {
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
 	}
 	return nil
@@ -314,7 +314,7 @@ func (gs *GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *Co
 func (gs *GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	tpsBytes := store.Get(GetTPSKey())
-	if consumptionMetaBytes == nil {
+	if tpsBytes == nil {
 		return nil, ErrGlobalTPSNotFound()
 	}
 	tps := new(TPS)

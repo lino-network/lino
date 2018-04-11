@@ -2,11 +2,13 @@ package post
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/abci/types"
 )
 
 func TestHandlerCreatePost(t *testing.T) {
@@ -77,9 +79,9 @@ func TestHandlerCreateComment(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
@@ -90,8 +92,8 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.PostID = postID
 	postInfo.ParentAuthor = ""
 	postInfo.ParentPostID = ""
-	postMeta.Created = 1
-	postMeta.LastUpdate = 1
+	postMeta.Created = ctx.BlockHeader().Time
+	postMeta.LastUpdate = ctx.BlockHeader().Time
 	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
 
 	// test invalid parent
@@ -161,9 +163,9 @@ func TestHandlerRepost(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
@@ -175,7 +177,7 @@ func TestHandlerRepost(t *testing.T) {
 	postCreateParams.SourceAuthor = user
 	postCreateParams.SourcePostID = "repost"
 	msg = NewCreatePostMsg(postCreateParams)
-	ctx = ctx.WithBlockHeight(2)
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix()})
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -183,9 +185,9 @@ func TestHandlerRepost(t *testing.T) {
 	// check 2 depth repost
 	postInfo.PostID = "repost-repost"
 	postMeta = model.PostMeta{
-		Created:                 2,
-		LastUpdate:              2,
-		LastActivity:            2,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
@@ -217,9 +219,9 @@ func TestHandlerPostLike(t *testing.T) {
 		Links:        []types.IDToURLMapping{},
 	}
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		TotalLikeCount:          1,
 		TotalLikeWeight:         10000,
@@ -275,9 +277,9 @@ func TestHandlerPostDonate(t *testing.T) {
 		Links:        []types.IDToURLMapping{},
 	}
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		TotalDonateCount:        1,
 		TotalReward:             types.NewCoin(99 * types.Decimals),
@@ -356,9 +358,9 @@ func TestHandlerRePostDonate(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		Created:                 1,
-		LastUpdate:              1,
-		LastActivity:            1,
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		TotalDonateCount:        1,
 		TotalReward:             types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(99, 100))),
