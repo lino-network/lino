@@ -139,6 +139,7 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 		return getErr
 	}
 	validator.Deposit = validator.Deposit.Minus(penalty)
+	validator.ABCIValidator.Power = validator.Deposit.Amount
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
@@ -156,11 +157,9 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 		}
 		return nil
 	}
-
 	if err := vm.AdjustValidatorList(ctx); err != nil {
 		return err
 	}
-
 	return nil
 }
 func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineValidators []abci.Evidence, gm global.GlobalManager) sdk.Error {

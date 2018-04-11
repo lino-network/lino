@@ -24,6 +24,7 @@ var (
 	l1011 = types.LNO(sdk.NewRat(1011))
 	l1021 = types.LNO(sdk.NewRat(1021))
 	l1022 = types.LNO(sdk.NewRat(1022))
+	l1100 = types.LNO(sdk.NewRat(1100))
 	l1500 = types.LNO(sdk.NewRat(1500))
 	l1600 = types.LNO(sdk.NewRat(1600))
 	l1800 = types.LNO(sdk.NewRat(1800))
@@ -38,6 +39,8 @@ var (
 	c100  = types.Coin{100 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}
 	c400  = types.Coin{400 * types.Decimals}
+	c600  = types.Coin{600 * types.Decimals}
+	c900  = types.Coin{900 * types.Decimals}
 	c1000 = types.Coin{1000 * types.Decimals}
 	c1011 = types.Coin{1011 * types.Decimals}
 	c1021 = types.Coin{1021 * types.Decimals}
@@ -47,6 +50,7 @@ var (
 	c1800 = types.Coin{1800 * types.Decimals}
 	c1900 = types.Coin{1900 * types.Decimals}
 	c2000 = types.Coin{2000 * types.Decimals}
+	c8000 = types.Coin{8000 * types.Decimals}
 )
 
 func TestRegisterBasic(t *testing.T) {
@@ -308,30 +312,6 @@ func TestDepositBasic(t *testing.T) {
 	validator, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, true, validator.Deposit.IsEqual(c1800))
 }
-
-// func TestWithdrawAndSubstitution(t *testing.T) {
-// 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-// 	handler := NewHandler(*am, *valManager, *voteManager, *gm)
-// 	valManager.InitGenesis(ctx)
-//
-// 	// create 21 test users
-// 	users := make([]types.AccountKey, 24)
-// 	for i := 0; i < 24; i++ {
-// 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
-// 		am.AddCoin(ctx, users[i], c2000)
-// 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
-// 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1000)))
-// 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-// 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
-// 		result := handler(ctx, msg)
-// 		assert.Equal(t, sdk.Result{}, result)
-// 	}
-//
-// 	withdrawMsg := NewValidatorWithdrawMsg("user4", l20)
-// 	result := handler(ctx, withdrawMsg)
-// 	assert.Equal(t, sdk.Result{}, result)
-//
-// }
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)

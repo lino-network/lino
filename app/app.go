@@ -74,7 +74,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(*lb.voteManager, *lb.accountManager, *lb.globalManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.valManager, *lb.accountManager, *lb.voteManager, *lb.globalManager))
+		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.accountManager, *lb.valManager, *lb.voteManager, *lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -231,7 +231,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		}
 	}
 
-	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators()); err != nil {
+	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators(), *lb.globalManager); err != nil {
 		panic(err)
 	}
 	return abci.ResponseBeginBlock{}
@@ -319,8 +319,10 @@ func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
 
 func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
 	// punish these validators who didn't vote
-	if err := lb.valManager.PunishValidatorDidntVote(ctx, lb.voteManager.PenaltyValidators, *lb.globalManager); err != nil {
-		panic(err)
+	for _, validator := range lb.voteManager.PenaltyValidators {
+		if err := lb.valManager.PunishOncallValidator(ctx, validator, types.PenaltyMissVote, *lb.globalManager, false); err != nil {
+			panic(err)
+		}
 	}
 	lb.voteManager.PenaltyValidators = lb.voteManager.PenaltyValidators[:0]
 }
