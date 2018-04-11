@@ -83,7 +83,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := valManager.storage.GetValidator(ctx, user1)
-	assert.Equal(t, c1600.Amount, verifyAccount.ABCIValidator.GetPower())
+	assert.Equal(t, c1600, verifyAccount.Deposit)
 	assert.Equal(t, ownerKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
 }
 

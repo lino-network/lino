@@ -139,7 +139,6 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 		return getErr
 	}
 	validator.Deposit = validator.Deposit.Minus(penalty)
-	validator.ABCIValidator.Power = validator.Deposit.Amount
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
@@ -190,7 +189,7 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 
 func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
 	curValidator := &model.Validator{
-		ABCIValidator: abci.Validator{PubKey: pubKey, Power: coin.Amount},
+		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
 		Deposit:       coin,
 	}
@@ -223,7 +222,6 @@ func (vm ValidatorManager) Deposit(ctx sdk.Context, username types.AccountKey, c
 		return err
 	}
 	validator.Deposit = validator.Deposit.Plus(coin)
-	validator.ABCIValidator.Power = validator.Deposit.Amount
 	if setErr := vm.storage.SetValidator(ctx, username, validator); setErr != nil {
 		return setErr
 	}
@@ -298,7 +296,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	if len(lst.OncallValidators) < types.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
 		//vm.updateLowestValidator(ctx)
-	} else if curValidator.ABCIValidator.Power > lst.LowestPower.Amount {
+	} else if curValidator.Deposit.Amount > lst.LowestPower.Amount {
 		// replace the validator with lowest power
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, getErr := vm.storage.GetValidator(ctx, validatorKey)
@@ -372,18 +370,18 @@ func remove(me types.AccountKey, users []types.AccountKey) []types.AccountKey {
 
 func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) {
 	lst, _ := vm.storage.GetValidatorList(ctx)
-	newLowestPower := int64(math.MaxInt64)
+	newLowestPower := types.NewCoin(math.MaxInt64)
 	newLowestValidator := types.AccountKey("")
 
 	for _, validatorKey := range lst.OncallValidators {
 		validator, _ := vm.storage.GetValidator(ctx, validatorKey)
-		if validator.ABCIValidator.Power < newLowestPower {
-			newLowestPower = validator.ABCIValidator.Power
+		if validator.Deposit.Amount < newLowestPower.Amount {
+			newLowestPower = validator.Deposit
 			newLowestValidator = validator.Username
 		}
 	}
 	// set the new lowest power
-	lst.LowestPower = types.NewCoin(newLowestPower)
+	lst.LowestPower = newLowestPower
 	lst.LowestValidator = newLowestValidator
 
 	vm.storage.SetValidatorList(ctx, lst)
@@ -393,7 +391,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) {
 // but not in the oncall validator list
 func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, sdk.Error) {
 	bestCandidate := types.AccountKey("")
-	bestCandidatePower := int64(0)
+	bestCandidatePower := types.NewCoin(0)
 
 	lst, getErr := vm.storage.GetValidatorList(ctx)
 	if getErr != nil {
@@ -407,9 +405,9 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 		}
 		// not in the oncall list and has a larger power
 		if FindAccountInList(validatorName, lst.OncallValidators) == -1 &&
-			validator.ABCIValidator.Power > bestCandidatePower {
+			validator.Deposit.Amount > bestCandidatePower.Amount {
 			bestCandidate = validator.Username
-			bestCandidatePower = validator.ABCIValidator.Power
+			bestCandidatePower = validator.Deposit
 		}
 	}
 	return bestCandidate, nil
