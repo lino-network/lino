@@ -39,8 +39,6 @@ var (
 	coin50  = types.NewCoin(50)
 	coin100 = types.NewCoin(100)
 	coin200 = types.NewCoin(200)
-
-	TotalCoinDaysSec = CoinDays * 24 * 3600
 )
 
 func setupTest(t *testing.T, height int64) (sdk.Context, *AccountManager) {

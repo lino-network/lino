@@ -66,6 +66,9 @@ func TestAddCoinToAddress(t *testing.T) {
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
 	pendingStakeQueue := model.PendingStakeQueue{
+		LastUpdateTime:   ctx.BlockHeader().Time,
+		StakeCoinInQueue: sdk.ZeroRat,
+		TotalCoin:        coin1,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
 			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
@@ -88,6 +91,7 @@ func TestAddCoinToAddress(t *testing.T) {
 			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
 			Coin:      coin100,
 		})
+	pendingStakeQueue.TotalCoin = types.NewCoin(101)
 	checkPendingStake(t, ctx, sdk.Address("test"), pendingStakeQueue)
 
 	// add coin to exist bank after previous coin day
@@ -97,14 +101,16 @@ func TestAddCoinToAddress(t *testing.T) {
 	bank = model.AccountBank{
 		Address: sdk.Address("test"),
 		Balance: types.NewCoin(201),
+		Stake:   types.NewCoin(101),
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
-	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList,
-		model.PendingStake{
-			StartTime: ctx.BlockHeader().Time,
-			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
-			Coin:      coin100,
-		})
+	pendingStakeQueue.PendingStakeList = []model.PendingStake{model.PendingStake{
+		StartTime: ctx.BlockHeader().Time,
+		EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
+		Coin:      coin100,
+	}}
+	pendingStakeQueue.TotalCoin = coin100
+	pendingStakeQueue.LastUpdateTime = ctx.BlockHeader().Time
 	checkPendingStake(t, ctx, sdk.Address("test"), pendingStakeQueue)
 }
 
@@ -128,6 +134,9 @@ func TestCreateAccount(t *testing.T) {
 	}
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
 	pendingStakeQueue := model.PendingStakeQueue{
+		LastUpdateTime:   ctx.BlockHeader().Time,
+		StakeCoinInQueue: sdk.ZeroRat,
+		TotalCoin:        coin100,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
 			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
@@ -250,13 +259,13 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		{true, coin0, baseTime + TotalCoinDaysSec + 1, coin0, coin0, coin0},
 
 		{true, coin100, baseTime2, coin100, coin0, coin0},
-		{false, coin50, baseTime2 + TotalCoinDaysSec/2 + 1, coin50, coin50, coin50},
+		{false, coin50, baseTime2 + TotalCoinDaysSec/2 + 1, coin50, types.NewCoin(25), coin0},
 		{true, coin0, baseTime2 + TotalCoinDaysSec + 1, coin50, coin50, coin50},
 
 		{true, coin100, baseTime3, types.NewCoin(150), coin50, coin50},
 		{true, coin100, baseTime3 + TotalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
-		{false, coin50, baseTime3 + TotalCoinDaysSec*3/4 + 2, coin200, types.NewCoin(150), types.NewCoin(125)},
-		{true, coin0, baseTime3 + TotalCoinDaysSec + 2, coin200, types.NewCoin(175), types.NewCoin(125)},
+		{false, coin50, baseTime3 + TotalCoinDaysSec*3/4 + 2, coin200, types.NewCoin(138), types.NewCoin(50)},
+		{true, coin0, baseTime3 + TotalCoinDaysSec + 2, coin200, types.NewCoin(175), types.NewCoin(150)},
 		{true, coin0, baseTime3 + TotalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
 
 		{true, coin1, baseTime4, types.NewCoin(201), coin200, coin200},

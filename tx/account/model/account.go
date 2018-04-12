@@ -26,6 +26,9 @@ type AccountBank struct {
 }
 
 type PendingStakeQueue struct {
+	LastUpdateTime   int64          `json:"last_update_time"`
+	StakeCoinInQueue sdk.Rat        `json:"stake_coin_in_queue"`
+	TotalCoin        types.Coin     `json:"total_coin"`
 	PendingStakeList []PendingStake `json:"pending_stake_list"`
 }
 
