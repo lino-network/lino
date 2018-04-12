@@ -29,6 +29,7 @@ var _ = oldwire.RegisterInterface(
 type VoteManager struct {
 	storage           *model.VoteStorage `json:"vote_storage"`
 	OncallValidators  []types.AccountKey `json:"oncall_validators"`
+	AllValidators     []types.AccountKey `json:"all_validators"`
 	PenaltyValidators []types.AccountKey `json:"penalty_validators"`
 }
 
@@ -53,8 +54,8 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 	return voterByte != nil
 }
 
-func (vm VoteManager) IsOncallValidator(ctx sdk.Context, username types.AccountKey) bool {
-	for _, validator := range vm.OncallValidators {
+func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
+	for _, validator := range vm.AllValidators {
 		if validator == username {
 			return true
 		}
@@ -77,19 +78,19 @@ func (vm VoteManager) IsLegalVoterWithdraw(ctx sdk.Context, username types.Accou
 	if getErr != nil {
 		return false
 	}
-	// reject if withdraw is less than minimum voter withdraw
-	if !coin.IsGTE(types.VoterMinimumWithdraw) {
-		return false
-	}
-	//reject if the remaining coins are less than voter registeration fee
-	remaining := voter.Deposit.Minus(coin)
-	if !remaining.IsGTE(types.VoterRegisterFee) {
+
+	// reject if this is a validator
+	if vm.IsInValidatorList(ctx, username) {
 		return false
 	}
 
-	// reject if this is a validator and  remaining coins are less than
-	// the minimum voting deposit he/she should keep
-	if vm.IsOncallValidator(ctx, username) && !remaining.IsGTE(types.ValidatorMinimumVotingDeposit) {
+	// reject if withdraw is less than minimum voter withdraw
+	if !coin.IsGTE(types.VoterMinWithdraw) {
+		return false
+	}
+	//reject if the remaining coins are less than voter minimum deposit
+	remaining := voter.Deposit.Minus(coin)
+	if !remaining.IsGTE(types.VoterMinDeposit) {
 		return false
 	}
 	return true
@@ -101,12 +102,22 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(ctx sdk.Context, voterName types.
 		return false
 	}
 	// reject if withdraw is less than minimum delegator withdraw
-	if !coin.IsGTE(types.DelegatorMinimumWithdraw) {
+	if !coin.IsGTE(types.DelegatorMinWithdraw) {
 		return false
 	}
 	//reject if the remaining delegation are less than zero
 	res := delegation.Amount.Minus(coin)
 	return res.IsNotNegative()
+}
+
+func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
+	voter, getErr := vm.storage.GetVoter(ctx, username)
+	if getErr != nil {
+		return false
+	}
+
+	// check minimum voting deposit for validator
+	return voter.Deposit.IsGTE(types.ValidatorMinVotingDeposit)
 }
 
 // onle support change parameter proposal now
@@ -194,7 +205,7 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 		Deposit:  coin,
 	}
 	// check minimum requirements for registering as a voter
-	if !coin.IsGTE(types.VoterRegisterFee) {
+	if !coin.IsGTE(types.VoterMinDeposit) {
 		return ErrRegisterFeeNotEnough()
 	}
 

@@ -234,6 +234,29 @@ func (gs *GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *Global
 	return nil
 }
 
+func (gs *GlobalStorage) GetInfraInternalAllocation(ctx sdk.Context) (*InfraInternalAllocation, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	allocationBytes := store.Get(GetAllocationKey())
+	if allocationBytes == nil {
+		return nil, ErrInfraAllocationNotFound()
+	}
+	allocation := new(InfraInternalAllocation)
+	if err := gs.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return allocation, nil
+}
+
+func (gs *GlobalStorage) SetInfraInternalAllocation(ctx sdk.Context, allocation *InfraInternalAllocation) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	allocationBytes, err := gs.cdc.MarshalJSON(*allocation)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetAllocationKey(), allocationBytes)
+	return nil
+}
+
 func (gs *GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes := store.Get(GetInflationPoolKey())

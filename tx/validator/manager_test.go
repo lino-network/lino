@@ -21,6 +21,9 @@ func TestAbsentValidator(t *testing.T) {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
 		am.AddCoin(ctx, users[i], c2000)
 
+		// let user register as voter first
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
+
 		// they will deposit 10,20,30...200, 210
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
@@ -89,6 +92,8 @@ func TestGetOncallList(t *testing.T) {
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
 		am.AddCoin(ctx, users[i], c2000)
+		// let user register as voter first
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
 
 		// they will deposit 10,20,30...200, 210
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
@@ -115,6 +120,9 @@ func TestPunishmentBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 	user2 := createTestAccount(ctx, am, "user2")
 	am.AddCoin(ctx, user2, c2000)
+	// let user register as voter first
+	voteManager.AddVoter(ctx, types.AccountKey("user1"), c8000)
+	voteManager.AddVoter(ctx, types.AccountKey("user2"), c8000)
 
 	// let both users register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
@@ -155,6 +163,8 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
 		am.AddCoin(ctx, users[i], c8000)
+		// let user register as voter first
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		// they will deposit 1000 + 100,200,300...2000, 2100, 2200, 2300, 2400
 		deposit := types.LNO(sdk.NewRat(int64((i+1)*100) + int64(1000)))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])

@@ -117,9 +117,18 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 }
 
 func (dpe DecideProposalEvent) changeParameter(ctx sdk.Context, curID types.ProposalKey, voteManager VoteManager, gm global.GlobalManager) sdk.Error {
-	_, getErr := voteManager.storage.GetProposal(ctx, curID)
+	proposal, getErr := voteManager.storage.GetProposal(ctx, curID)
 	if getErr != nil {
 		return getErr
+	}
+	des := proposal.ChangeParameterDescription
+	if err := gm.ChangeInfraInternalInflation(ctx, des.StorageAllocation, des.CDNAllocation); err != nil {
+		return err
+	}
+
+	if err := gm.ChangeGlobalInflation(ctx, des.InfraAllocation, des.ContentCreatorAllocation,
+		des.DeveloperAllocation, des.ValidatorAllocation); err != nil {
+		return err
 	}
 	return nil
 }
