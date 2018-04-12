@@ -1,113 +1,73 @@
-// Copyright 2010 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package server
+package main
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"regexp"
+	"path/filepath"
 
-	client "github.com/cosmos/cosmos-sdk/client"
+	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/tx/validator/model"
+	"github.com/lino-network/lino/types"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-const (
-	flagListenAddr = "laddr"
-)
+func main() {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-func StartLocalServerCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "local-server",
-		Short: "Run the local server",
-		RunE:  startLocalServerFn(),
+	http.HandleFunc("/", serveTemplate)
+
+	log.Println("Listening...")
+	http.ListenAndServe(":3000", nil)
+}
+
+func serveTemplate(w http.ResponseWriter, r *http.Request) {
+	log.Println("serve...")
+	lp := filepath.Join("templates", "layout.html")
+	fp := filepath.Join("templates", "login.html")
+
+	node := rpcclient.NewHTTP("tcp://localhost:46657", "/websocket")
+
+	path := fmt.Sprintf("/%s/key", types.ValidatorKVStoreKey)
+	opts := rpcclient.ABCIQueryOptions{
+		Height:  0,
+		Trusted: true,
 	}
-
-	cmd.Flags().StringP(flagListenAddr, "a", "tcp://localhost:1317", "Address for server to listen on")
-	cmd.Flags().StringP(client.FlagChainID, "c", "", "ID of chain we connect to")
-	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:46657", "Node to connect to")
-	return cmd
-}
-
-func startLocalServerFn() func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-
-		http.HandleFunc("/view/", makeHandler(viewHandler))
-		http.HandleFunc("/edit/", makeHandler(editHandler))
-		http.HandleFunc("/save/", makeHandler(saveHandler))
-		log.Fatal(http.ListenAndServe(":8080", nil))
-		return nil
-	}
-}
-
-type Page struct {
-	Title string
-	Body  []byte
-}
-
-func (p *Page) save() error {
-	filename := p.Title + ".txt"
-	return ioutil.WriteFile(filename, p.Body, 0600)
-}
-
-func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
-	body, err := ioutil.ReadFile(filename)
+	result, err := node.ABCIQueryWithOptions(path, model.GetValidatorListKey(), opts)
 	if err != nil {
-		return nil, err
-	}
-	return &Page{Title: title, Body: body}, nil
-}
-
-func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title)
-	if err != nil {
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		log.Println("query failed")
 		return
 	}
-	renderTemplate(w, "view", p)
-}
-
-func editHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title)
-	if err != nil {
-		p = &Page{Title: title}
-	}
-	renderTemplate(w, "edit", p)
-}
-
-func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
-	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	resp := result.Response
+	if resp.Code != uint32(0) {
+		log.Println("response not good")
 		return
 	}
-	http.Redirect(w, r, "/view/"+title, http.StatusFound)
-}
-
-var templates = template.Must(template.ParseFiles("../../server/edit.html", "../../server/view.html"))
-
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	validatorList := new(model.ValidatorList)
+	cdc := app.MakeCodec()
+	if err := cdc.UnmarshalJSON(resp.Value, validatorList); err != nil {
+		log.Println("unmarshal failed")
+		return
 	}
-}
-
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
-
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		m := validPath.FindStringSubmatch(r.URL.Path)
-		if m == nil {
-			http.NotFound(w, r)
-			return
-		}
-		fn(w, r, m[2])
+	var oncallList = make([]string, len(validatorList.OncallValidators))
+	for i, val := range validatorList.OncallValidators {
+		oncallList[i] = string(val)
 	}
+	data := struct {
+		Title            string
+		OnCallValidators []string
+	}{
+		Title:            "title",
+		OnCallValidators: oncallList,
+	}
+
+	varmap := map[string]interface{}{
+		"var1":             "value",
+		"OnCallValidators": oncallList,
+	}
+	fmt.Println(data)
+	tmpl, _ := template.ParseFiles(lp, fp)
+	tmpl.ExecuteTemplate(w, "layout", varmap)
 }
