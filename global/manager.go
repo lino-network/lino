@@ -190,3 +190,33 @@ func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHours 
 	}
 	return resCoin, nil
 }
+
+func (gm *GlobalManager) ChangeInfraInternalInflation(ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
+	allocation, getErr := gm.globalStorage.GetInfraInternalAllocation(ctx)
+	if getErr != nil {
+		return getErr
+	}
+	allocation.CDNAllocation = CDNAllocation
+	allocation.StorageAllocation = StorageAllocation
+	if err := gm.globalStorage.SetInfraInternalAllocation(ctx, allocation); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gm *GlobalManager) ChangeGlobalInflation(ctx sdk.Context, InfraAllocation sdk.Rat,
+	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
+	allocation, getErr := gm.globalStorage.GetGlobalAllocation(ctx)
+	if getErr != nil {
+		return getErr
+	}
+	allocation.ContentCreatorAllocation = ContentCreatorAllocation
+	allocation.DeveloperAllocation = DeveloperAllocation
+	allocation.InfraAllocation = InfraAllocation
+	allocation.ValidatorAllocation = ValidatorAllocation
+
+	if err := gm.globalStorage.SetGlobalAllocation(ctx, allocation); err != nil {
+		return err
+	}
+	return nil
+}
