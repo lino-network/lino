@@ -46,7 +46,11 @@ func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager 
 
 	// Register the user if this name has not been registered
 	if !valManager.IsValidatorExist(ctx, msg.Username) {
-		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin, voteManager); err != nil {
+		// check validator minimum voting deposit requirement
+		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
+			return ErrVotingDepositNotEnough().Result()
+		}
+		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin); err != nil {
 			return err.Result()
 		}
 	} else {

@@ -194,14 +194,18 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		panic(err)
 	}
 
-	deposit := types.NewCoin(1000 * types.Decimals)
+	commitingDeposit := types.ValidatorMinCommitingDeposit
+	votingDeposit := types.ValidatorMinVotingDeposit
 	// withdraw money from validator's bank
-	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(ga.Name), deposit); err != nil {
+	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
 		panic(err)
 	}
 
-	if addErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), deposit, *lb.voteManager); addErr != nil {
+	if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
 		panic(addErr)
+	}
+	if registerErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
+		panic(registerErr)
 	}
 	if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
 		panic(joinErr)

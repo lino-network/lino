@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	"github.com/lino-network/lino/tx/validator/model"
-	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 )
@@ -196,12 +195,7 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 	return nil
 }
 
-func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin, voteManager vote.VoteManager) sdk.Error {
-	// check validator minimum voting deposit requirement
-	if !voteManager.CanBecomeValidator(ctx, username) {
-		return ErrVotingDepositNotEnough()
-	}
-
+func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
 	// check validator minimum commiting deposit requirement
 	if !coin.IsGTE(types.ValidatorMinCommitingDeposit) {
 		return ErrCommitingDepositNotEnough()
