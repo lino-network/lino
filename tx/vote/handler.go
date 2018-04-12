@@ -87,7 +87,7 @@ func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 // Handle VoterRevokeMsg
 func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
 	// reject if this is a validator
-	if vm.IsOncallValidator(ctx, msg.Username) {
+	if vm.IsInValidatorList(ctx, msg.Username) {
 		return ErrValidatorCannotRevoke().Result()
 	}
 	if err := vm.ReturnAllCoinsToDelegators(ctx, msg.Username, gm); err != nil {

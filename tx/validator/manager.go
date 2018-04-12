@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	"github.com/lino-network/lino/tx/validator/model"
+	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 )
@@ -83,7 +84,7 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 	}
 
 	// reject if withdraw is less than minimum withdraw
-	if !coin.IsGTE(types.ValidatorMinimumWithdraw) {
+	if !coin.IsGTE(types.ValidatorMinWithdraw) {
 		return false
 	}
 
@@ -96,9 +97,9 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 	if FindAccountInList(username, lst.OncallValidators) != -1 {
 		return false
 	}
-	//reject if the remaining coins are less than register fee
+	//reject if the remaining coins are less than min deposit requirement
 	res := validator.Deposit.Minus(coin)
-	return res.IsGTE(types.ValidatorRegisterFee)
+	return res.IsGTE(types.ValidatorMinCommitingDeposit)
 }
 
 func (vm ValidatorManager) GetOncallValidatorList(ctx sdk.Context) ([]types.AccountKey, sdk.Error) {
@@ -107,6 +108,14 @@ func (vm ValidatorManager) GetOncallValidatorList(ctx sdk.Context) ([]types.Acco
 		return nil, getListErr
 	}
 	return lst.OncallValidators, nil
+}
+
+func (vm ValidatorManager) GetAllValidatorList(ctx sdk.Context) ([]types.AccountKey, sdk.Error) {
+	lst, getListErr := vm.storage.GetValidatorList(ctx)
+	if getListErr != nil {
+		return nil, getListErr
+	}
+	return lst.AllValidators, nil
 }
 
 func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidators []int32) sdk.Error {
@@ -150,7 +159,7 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 	// remove this validator if its remaining deposit is not enough
 	// OR, we explicitly want to fire this validator
 	// it is user's responsibility to do future withdraw/deposit
-	if willFire || !validator.Deposit.IsGTE(types.ValidatorRegisterFee) {
+	if willFire || !validator.Deposit.IsGTE(types.ValidatorMinCommitingDeposit) {
 		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username); err != nil {
 			return err
 		}
@@ -187,28 +196,21 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 	return nil
 }
 
-func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin) sdk.Error {
-	// check minimum validator deposit requirements
-	if !coin.IsGTE(types.ValidatorRegisterFee) {
-		return ErrRegisterFeeNotEnough()
+func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin, voteManager vote.VoteManager) sdk.Error {
+	// check validator minimum voting deposit requirement
+	if !voteManager.CanBecomeValidator(ctx, username) {
+		return ErrVotingDepositNotEnough()
+	}
+
+	// check validator minimum commiting deposit requirement
+	if !coin.IsGTE(types.ValidatorMinCommitingDeposit) {
+		return ErrCommitingDepositNotEnough()
 	}
 
 	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
 		Deposit:       coin,
-	}
-
-	// TODO
-	// must be a voter and maintain a minimum voting deposit
-	lst, getListErr := vm.storage.GetValidatorList(ctx)
-	if getListErr != nil {
-		return getListErr
-	}
-
-	// has alreay in the validator list
-	if FindAccountInList(username, lst.AllValidators) != -1 {
-		return nil
 	}
 
 	if setErr := vm.storage.SetValidator(ctx, username, curValidator); setErr != nil {
@@ -268,14 +270,9 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 		return getErr
 	}
 
-	valRegisterFee, err := types.LinoToCoin(types.LNO(sdk.NewRat(1000)))
-	if err != nil {
-		return sdk.ErrInvalidCoins("invalid register fee")
-	}
-
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(valRegisterFee) {
-		return ErrRegisterFeeNotEnough()
+	if !curValidator.Deposit.IsGTE(types.ValidatorMinCommitingDeposit) {
+		return ErrCommitingDepositNotEnough()
 	}
 
 	lst, getListErr := vm.storage.GetValidatorList(ctx)

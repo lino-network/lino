@@ -48,8 +48,12 @@ func ErrIllegalWithdraw() sdk.Error {
 	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Illegal withdraw"))
 }
 
-func ErrRegisterFeeNotEnough() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Register fee not enough"))
+func ErrCommitingDepositNotEnough() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Commiting deposit not enough"))
+}
+
+func ErrVotingDepositNotEnough() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Voting Deposit fee not enough"))
 }
 
 func ErrInvalidUsername() sdk.Error {

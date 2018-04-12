@@ -15,7 +15,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
-			return handleDepositMsg(ctx, valManager, am, msg)
+			return handleDepositMsg(ctx, valManager, voteManager, am, msg)
 		case ValidatorWithdrawMsg:
 			return handleWithdrawMsg(ctx, valManager, am, gm, msg)
 		case ValidatorRevokeMsg:
@@ -28,7 +28,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 }
 
 // Handle DepositMsg
-func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
+func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
@@ -46,7 +46,7 @@ func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, am acc.Accou
 
 	// Register the user if this name has not been registered
 	if !valManager.IsValidatorExist(ctx, msg.Username) {
-		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin); err != nil {
+		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin, voteManager); err != nil {
 			return err.Result()
 		}
 	} else {

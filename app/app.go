@@ -200,7 +200,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		panic(err)
 	}
 
-	if addErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), deposit); addErr != nil {
+	if addErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), deposit, *lb.voteManager); addErr != nil {
 		panic(addErr)
 	}
 	if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
@@ -241,13 +241,13 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	lb.syncValidatorWithVoteManager(ctx)
 	lb.executeHeightEvents(ctx)
 	lb.executeTimeEvents(ctx)
+	lb.punishValidatorsDidntVote(ctx)
 
 	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	lb.punishValidatorsDidntVote(ctx)
 	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }
 
@@ -309,12 +309,18 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
-	// tell voting committe the newest oncall validators
-	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
+	// tell voting committe the newest validators
+	oncallValidators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
 		panic(getErr)
 	}
-	lb.voteManager.OncallValidators = validators
+	lb.voteManager.OncallValidators = oncallValidators
+
+	allValidators, getErr := lb.valManager.GetAllValidatorList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
+	lb.voteManager.AllValidators = allValidators
 }
 
 func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
