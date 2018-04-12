@@ -11,9 +11,9 @@ import (
 )
 
 func TestAbsentValidator(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
@@ -29,28 +29,28 @@ func TestAbsentValidator(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 	absentList := []int32{0, 1, 10, 20}
-	err := vm.UpdateAbsentValidator(ctx, absentList)
+	err := valManager.UpdateAbsentValidator(ctx, absentList)
 	assert.Nil(t, err)
 
-	validatorList, _ := vm.storage.GetValidatorList(ctx)
+	validatorList, _ := valManager.storage.GetValidatorList(ctx)
 	for _, idx := range absentList {
-		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
 		assert.Equal(t, validator.AbsentCommit, 1)
 	}
 
 	// absent exceeds limitation
 	for i := 0; i < types.AbsentCommitLimitation; i++ {
-		err := vm.UpdateAbsentValidator(ctx, absentList)
+		err := valManager.UpdateAbsentValidator(ctx, absentList)
 		assert.Nil(t, err)
 	}
 
 	for _, idx := range absentList {
-		validator, _ := vm.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
 		assert.Equal(t, validator.AbsentCommit, 101)
 	}
-	err = vm.FireIncompetentValidator(ctx, []abci.Evidence{})
+	err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{}, *gm)
 	assert.Nil(t, err)
-	validatorList2, _ := vm.storage.GetValidatorList(ctx)
+	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 17, len(validatorList2.OncallValidators))
 	assert.Equal(t, 17, len(validatorList2.AllValidators))
 
@@ -66,10 +66,10 @@ func TestAbsentValidator(t *testing.T) {
 		ownerKey, _ := am.GetOwnerKey(ctx, users[idx])
 		byzantines = append(byzantines, abci.Evidence{PubKey: ownerKey.Bytes()})
 	}
-	err = vm.FireIncompetentValidator(ctx, byzantines)
+	err = valManager.FireIncompetentValidator(ctx, byzantines, *gm)
 	assert.Nil(t, err)
 
-	validatorList3, _ := vm.storage.GetValidatorList(ctx)
+	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 14, len(validatorList3.OncallValidators))
 	assert.Equal(t, 14, len(validatorList3.AllValidators))
 
@@ -80,9 +80,9 @@ func TestAbsentValidator(t *testing.T) {
 }
 
 func TestGetOncallList(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
-	vm.InitGenesis(ctx)
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
@@ -98,9 +98,85 @@ func TestGetOncallList(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 
-	lst, _ := vm.GetOncallValList(ctx)
+	lst, _ := valManager.GetOncallValidatorList(ctx)
 	for idx, validator := range lst {
-		assert.Equal(t, users[idx], validator.Username)
+		assert.Equal(t, users[idx], validator)
 	}
+
+}
+
+func TestPunishmentBasic(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
+
+	// create test users
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c2000)
+	user2 := createTestAccount(ctx, am, "user2")
+	am.AddCoin(ctx, user2, c2000)
+
+	// let both users register as validator
+	ownerKey, _ := am.GetOwnerKey(ctx, user1)
+	msg := NewValidatorDepositMsg("user1", l1100, *ownerKey)
+	handler(ctx, msg)
+
+	ownerKey2, _ := am.GetOwnerKey(ctx, user1)
+	msg2 := NewValidatorDepositMsg("user2", l1600, *ownerKey2)
+	handler(ctx, msg2)
+
+	// punish user2 as byzantine (explicitly remove)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), types.PenaltyByzantine, *gm, true)
+	lst, _ := valManager.storage.GetValidatorList(ctx)
+	assert.Equal(t, 1, len(lst.OncallValidators))
+	assert.Equal(t, 1, len(lst.AllValidators))
+	assert.Equal(t, types.AccountKey("user1"), lst.OncallValidators[0])
+
+	validator, _ := valManager.storage.GetValidator(ctx, "user2")
+	assert.Equal(t, c600, validator.Deposit)
+
+	// punish user1 as missing vote (wont explicitly remove)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), types.PenaltyMissVote, *gm, false)
+	lst2, _ := valManager.storage.GetValidatorList(ctx)
+	assert.Equal(t, 0, len(lst2.OncallValidators))
+	assert.Equal(t, 0, len(lst2.AllValidators))
+
+	validator2, _ := valManager.storage.GetValidator(ctx, "user1")
+	assert.Equal(t, c900, validator2.Deposit)
+}
+
+func TestPunishmentAndSubstitutionExists(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	valManager.InitGenesis(ctx)
+
+	// create 21 test users
+	users := make([]types.AccountKey, 24)
+	for i := 0; i < 24; i++ {
+		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
+		am.AddCoin(ctx, users[i], c8000)
+		// they will deposit 1000 + 100,200,300...2000, 2100, 2200, 2300, 2400
+		deposit := types.LNO(sdk.NewRat(int64((i+1)*100) + int64(1000)))
+		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
+		result := handler(ctx, msg)
+		assert.Equal(t, sdk.Result{}, result)
+	}
+
+	// lowest is user4 with power 1400
+	lst, _ := valManager.storage.GetValidatorList(ctx)
+	assert.Equal(t, 21, len(lst.OncallValidators))
+	assert.Equal(t, 24, len(lst.AllValidators))
+	assert.Equal(t, types.Coin{1400 * types.Decimals}, lst.LowestPower)
+	assert.Equal(t, users[3], lst.LowestValidator)
+
+	// punish user4 as missing vote (wont explicitly remove)
+	// user3 will become the lowest one with power 1300
+	valManager.PunishOncallValidator(ctx, users[3], types.PenaltyMissVote, *gm, false)
+	lst2, _ := valManager.storage.GetValidatorList(ctx)
+	assert.Equal(t, 21, len(lst2.OncallValidators))
+	assert.Equal(t, 24, len(lst2.AllValidators))
+	assert.Equal(t, types.Coin{1300 * types.Decimals}, lst2.LowestPower)
+	assert.Equal(t, users[2], lst2.LowestValidator)
 
 }

@@ -53,7 +53,11 @@ func ErrRegisterFeeNotEnough() sdk.Error {
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalida Username"))
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid Username"))
+}
+
+func ErrValidatorCannotRevoke() sdk.Error {
+	return newError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid revoke"))
 }
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
