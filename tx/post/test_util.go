@@ -21,6 +21,8 @@ var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
 	TestPostKVStoreKey    = sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+
+	initCoin = types.NewCoin(100)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
@@ -69,17 +71,19 @@ func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, post
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
 }
 
-func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
+func createTestAccount(t *testing.T, ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
-	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
+	assert.Nil(t, err)
+	err = am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	assert.Nil(t, err)
 	return types.AccountKey(username)
 }
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
 	am *acc.AccountManager, pm *PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
-	user := createTestAccount(ctx, am, username)
+	user := createTestAccount(t, ctx, am, username)
 	postCreateParams := &PostCreateParams{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),

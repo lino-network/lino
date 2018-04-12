@@ -51,7 +51,7 @@ func TestVoterDepositBasic(t *testing.T) {
 
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, c400, acc1Balance)
+	assert.Equal(t, c400.Plus(initCoin), acc1Balance)
 	assert.Equal(t, true, vm.IsVoterExist(ctx, user1))
 
 	// make sure the voter's account info is correct
@@ -91,7 +91,7 @@ func TestDelegateBasic(t *testing.T) {
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(c3600))
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
-	assert.Equal(t, true, acc2Balance.IsEqual(c0))
+	assert.Equal(t, acc2Balance, initCoin)
 
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", l1000)
@@ -150,7 +150,7 @@ func TestRevokeBasic(t *testing.T) {
 	_, getErr := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, ErrGetDelegation(), getErr)
 	assert.Equal(t, c1000, voter.DelegatedPower)
-	assert.Equal(t, true, acc3Balance.IsEqual(c1000))
+	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
 	// let user1 revoke voter candidancy
 	msg5 := NewVoterRevokeMsg("user1")
@@ -164,8 +164,8 @@ func TestRevokeBasic(t *testing.T) {
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, ErrGetVoter(), err2)
-	assert.Equal(t, c400, acc1Balance)
-	assert.Equal(t, c1000, acc2Balance)
+	assert.Equal(t, c400.Plus(initCoin), acc1Balance)
+	assert.Equal(t, c1000.Plus(initCoin), acc2Balance)
 }
 
 func TestWithdrawBasic(t *testing.T) {
@@ -229,7 +229,7 @@ func TestProposalBasic(t *testing.T) {
 
 	// check use1's money has been reduced
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, true, acc1Balance.IsEqual(c600))
+	assert.Equal(t, acc1Balance, c600.Plus(initCoin))
 
 	// check proposal list is correct
 	lst, _ := vm.storage.GetProposalList(ctx)

@@ -7,12 +7,13 @@ import (
 )
 
 var (
-	AccountInfoSubstore      = []byte{0x00}
-	AccountBankSubstore      = []byte{0x01}
-	AccountMetaSubstore      = []byte{0x02}
-	AccountFollowerSubstore  = []byte{0x03}
-	AccountFollowingSubstore = []byte{0x04}
-	AccountRewardSubstore    = []byte{0x05}
+	AccountInfoSubstore              = []byte{0x00}
+	AccountBankSubstore              = []byte{0x01}
+	AccountMetaSubstore              = []byte{0x02}
+	AccountFollowerSubstore          = []byte{0x03}
+	AccountFollowingSubstore         = []byte{0x04}
+	AccountRewardSubstore            = []byte{0x05}
+	AccountPendingStakeQueueSubstore = []byte{0x06}
 )
 
 type AccountStorage struct {
@@ -203,6 +204,29 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 	return nil
 }
 
+func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Address) (*PendingStakeQueue, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	pendingStakeQueueByte := store.Get(GetPendingStakeQueueKey(address))
+	if pendingStakeQueueByte == nil {
+		return nil, ErrGetPendingStakeFailed()
+	}
+	queue := new(PendingStakeQueue)
+	if err := as.cdc.UnmarshalBinary(pendingStakeQueueByte, queue); err != nil {
+		return nil, ErrGetPendingStakeFailed().TraceCause(err, "")
+	}
+	return queue, nil
+}
+
+func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
+	store := ctx.KVStore(as.key)
+	pendingStakeQueueByte, err := as.cdc.MarshalBinary(*pendingStakeQueue)
+	if err != nil {
+		return ErrSetRewardFailed().TraceCause(err, "")
+	}
+	store.Set(GetPendingStakeQueueKey(address), pendingStakeQueueByte)
+	return nil
+}
+
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
@@ -235,4 +259,8 @@ func GetFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
 
 func GetRewardKey(accKey types.AccountKey) []byte {
 	return append(AccountRewardSubstore, accKey...)
+}
+
+func GetPendingStakeQueueKey(address sdk.Address) []byte {
+	return append(AccountPendingStakeQueueSubstore, address...)
 }

@@ -13,7 +13,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(*pm, *am, *gm)
 
-	user := createTestAccount(ctx, am, "user1")
+	user := createTestAccount(t, ctx, am, "user1")
 
 	// test valid post
 	postCreateParams := PostCreateParams{
@@ -231,7 +231,8 @@ func TestHandlerPostLike(t *testing.T) {
 	likeMsg = NewLikeMsg(user, -10000, user, postID)
 	result = handler(ctx, likeMsg)
 	assert.Equal(t, result, sdk.Result{})
-	postMeta.TotalLikeWeight = -10000
+	postMeta.TotalDislikeWeight = 10000
+	postMeta.TotalLikeWeight = 0
 	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
 
 	// test invalid like target post
@@ -253,7 +254,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	handler := NewHandler(*pm, *am, *gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
-	user2 := createTestAccount(ctx, am, "user2")
+	user2 := createTestAccount(t, ctx, am, "user2")
 	err := am.AddCoin(ctx, user2, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 
@@ -279,7 +280,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		LastActivity:            1,
 		AllowReplies:            true,
 		TotalDonateCount:        1,
-		TotalReward:             types.Coin{99 * types.Decimals},
+		TotalReward:             types.NewCoin(99 * types.Decimals),
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
@@ -288,8 +289,8 @@ func TestHandlerPostDonate(t *testing.T) {
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 
-	assert.Equal(t, true, acc1Balance.IsEqual(types.Coin{99 * types.Decimals}))
-	assert.Equal(t, true, acc2Balance.IsEqual(types.Coin{23 * types.Decimals}))
+	assert.Equal(t, acc1Balance, initCoin.Plus(types.NewCoin(99*types.Decimals)))
+	assert.Equal(t, acc2Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 	// test invalid donation target
 	donateMsg = NewDonateMsg(user1, types.LNO(sdk.NewRat(100)), user1, "invalid")
 	result = handler(ctx, donateMsg)
@@ -315,8 +316,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 	handler := NewHandler(*pm, *am, *gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
-	user2 := createTestAccount(ctx, am, "user2")
-	user3 := createTestAccount(ctx, am, "user3")
+	user2 := createTestAccount(t, ctx, am, "user2")
+	user3 := createTestAccount(t, ctx, am, "user3")
 	err := am.AddCoin(ctx, user3, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 	// repost
@@ -379,7 +380,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 	acc3Balance, _ := am.GetBankBalance(ctx, user3)
-	assert.Equal(t, true, acc1Balance.IsEqual(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(99, 100)))))
-	assert.Equal(t, true, acc2Balance.IsEqual(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(99, 100)))))
-	assert.Equal(t, true, acc3Balance.IsEqual(types.NewCoin(23*types.Decimals)))
+	assert.Equal(t, acc1Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(99, 100)))))
+	assert.Equal(t, acc2Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(99, 100)))))
+	assert.Equal(t, acc3Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 }

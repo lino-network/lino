@@ -55,8 +55,7 @@ type PostMeta struct {
 	TotalLikeCount          int64      `json:"total_like_count"`
 	TotalDonateCount        int64      `json:"total_donate_count"`
 	TotalLikeWeight         int64      `json:"total_like_weight"`
-	TotalDislikeStake       int64      `json:"total_dislike_stake"`
-	TotalReportStake        int64      `json:"total_report_stake"`
+	TotalDislikeWeight      int64      `json:"total_dislike_weight"`
 	TotalReward             types.Coin `json:"reward"`
 	PenaltyScore            sdk.Rat    `json:"penalty_score"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`

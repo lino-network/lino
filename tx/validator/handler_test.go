@@ -70,8 +70,8 @@ func TestRegisterBasic(t *testing.T) {
 
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, acc1Balance, c400)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, acc1Balance, c400.Plus(initCoin))
+	assert.Equal(t, true, vm.IsValidatorExist(ctx, user1))
 
 	// now user1 should be the only validator (WOW, dictator!)
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
@@ -297,8 +297,8 @@ func TestDepositBasic(t *testing.T) {
 
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, acc1Balance, c200)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, acc1Balance, c200.Plus(initCoin))
+	assert.Equal(t, true, vm.IsValidatorExist(ctx, user1))
 
 	// check the lowest power is 1800 now (1600 + 200)
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)

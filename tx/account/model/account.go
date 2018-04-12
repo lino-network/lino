@@ -19,11 +19,23 @@ type AccountInfo struct {
 
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
-	Address          sdk.Address      `json:"address"`
-	Balance          types.Coin       `json:"balance"`
-	Username         types.AccountKey `json:"username"`
-	StakeRatio       int64            `json:"stake_ratio"`
-	LastSRUpdateTime int64            `json:"last_stake_ratio_update_time"`
+	Address  sdk.Address      `json:"address"`
+	Balance  types.Coin       `json:"balance"`
+	Username types.AccountKey `json:"username"`
+	Stake    types.Coin       `json:"stake"`
+}
+
+type PendingStakeQueue struct {
+	LastUpdateTime   int64          `json:"last_update_time"`
+	StakeCoinInQueue sdk.Rat        `json:"stake_coin_in_queue"`
+	TotalCoin        types.Coin     `json:"total_coin"`
+	PendingStakeList []PendingStake `json:"pending_stake_list"`
+}
+
+type PendingStake struct {
+	StartTime int64      `json:"start_time"`
+	EndTime   int64      `json:"end_time"`
+	Coin      types.Coin `json:"coin"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
@@ -51,7 +63,7 @@ type FollowingMeta struct {
 	FollowingName types.AccountKey `json:"following_name"`
 }
 
-// reward get from the inflation pool
+// reward get from the inflation pool, only 1% of total income
 type Reward struct {
 	OriginalIncome types.Coin `json:"original_income"`
 	ActualReward   types.Coin `json:"actual_reward"`

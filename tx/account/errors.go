@@ -24,6 +24,11 @@ func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transfer from account %v failed", accKey))
 }
 
+func ErrOpenBankFeeInsufficient(provide types.Coin, expect types.Coin) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail,
+		fmt.Sprintf("open bank failed, fee insufficient, need %v, but only %v provided", expect, provide))
+}
+
 func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
 }

@@ -19,7 +19,7 @@ import (
 
 func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
 	return priv.Wrap(), types.AccountKey(username)
 }

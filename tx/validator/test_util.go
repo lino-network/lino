@@ -24,6 +24,8 @@ var (
 	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
 	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
 	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
+  
+	initCoin = types.NewCoin(100)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
@@ -66,7 +68,7 @@ func getContext(height int64) sdk.Context {
 // helper function to create an account for testing purpose
 func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(0))
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
 	return types.AccountKey(username)
 }
