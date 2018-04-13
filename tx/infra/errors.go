@@ -12,12 +12,10 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	switch code {
 	case types.CodeInvalidUsername:
 		return "Invalid username format"
-	case types.CodeAccRegisterFailed:
-		return "Validator register failed"
-	case types.CodeValidatorHandlerFailed:
-		return "Validator handler failed"
-	case types.CodeValidatorManagerFailed:
-		return "Validator manager failed"
+	case types.CodeInfraProviderHandlerFailed:
+		return "Infra provider handler failed"
+	case types.CodeInfraProviderManagerFailed:
+		return "Infra manager failed"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -28,24 +26,8 @@ func ErrProviderNotFound() sdk.Error {
 	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Provider not found"))
 }
 
-func ErrIllegalWithdraw() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Illegal withdraw"))
-}
-
-func ErrCommitingDepositNotEnough() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Commiting deposit not enough"))
-}
-
-func ErrVotingDepositNotEnough() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Voting Deposit fee not enough"))
-}
-
 func ErrInvalidUsername() sdk.Error {
 	return newError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
-}
-
-func ErrAccountCoinNotEnough() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account bank's coins are not enough"))
 }
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {

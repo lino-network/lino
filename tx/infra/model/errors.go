@@ -12,8 +12,6 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	switch code {
 	case types.CodeInvalidUsername:
 		return "Invalid username format"
-	case types.CodeAccRegisterFailed:
-		return "InfraProvider register failed"
 	case types.CodeInfraProviderHandlerFailed:
 		return "InfraProvider handler failed"
 	case types.CodeInfraProviderManagerFailed:
