@@ -386,3 +386,29 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Equal(t, acc2Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(99, 100)))))
 	assert.Equal(t, acc3Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 }
+
+func TestHandlerReportOrUpvote(t *testing.T) {
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(*pm, *am, *gm)
+
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
+	user2 := createTestAccount(t, ctx, am, "user2")
+	user3 := createTestAccount(t, ctx, am, "user3")
+
+	cases := []struct {
+		ReportOrUpvoteUser     types.AccountKey
+		IsReport               bool
+		UserStake              types.Coin
+		ExpectTotalReportStake types.Coin
+		ExpectTotalUpvoteStake types.Coin
+	}{
+		{user1, true, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
+		{user2, true, types.NewCoin(50), types.NewCoin(150), types.NewCoin(0)},
+		{user1, false, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
+		{user1, true, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
+	}
+
+	for _, cs := range cases {
+		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
+	}
+}

@@ -20,18 +20,18 @@ type PostInterface interface {
 var _ PostInterface = PostInfo{}
 var _ PostInterface = PostMeta{}
 var _ PostInterface = Like{}
-var _ PostInterface = Report{}
+var _ PostInterface = ReportOrUpvote{}
 var _ PostInterface = Comment{}
 var _ PostInterface = View{}
 var _ PostInterface = Donations{}
 
-func (_ PostInfo) AssertPostInterface()  {}
-func (_ PostMeta) AssertPostInterface()  {}
-func (_ Like) AssertPostInterface()      {}
-func (_ Report) AssertPostInterface()    {}
-func (_ Comment) AssertPostInterface()   {}
-func (_ View) AssertPostInterface()      {}
-func (_ Donations) AssertPostInterface() {}
+func (_ PostInfo) AssertPostInterface()       {}
+func (_ PostMeta) AssertPostInterface()       {}
+func (_ Like) AssertPostInterface()           {}
+func (_ ReportOrUpvote) AssertPostInterface() {}
+func (_ Comment) AssertPostInterface()        {}
+func (_ View) AssertPostInterface()           {}
+func (_ Donations) AssertPostInterface()      {}
 
 // PostInfo can also use to present comment(with parent) or repost(with source)
 type PostInfo struct {
@@ -56,6 +56,8 @@ type PostMeta struct {
 	TotalDonateCount        int64      `json:"total_donate_count"`
 	TotalLikeWeight         int64      `json:"total_like_weight"`
 	TotalDislikeWeight      int64      `json:"total_dislike_weight"`
+	TotalReportStake        types.Coin `json:"total_report_stake"`
+	TotalUpvoteStake        types.Coin `json:"total_upvote_stake"`
 	TotalReward             types.Coin `json:"reward"`
 	PenaltyScore            sdk.Rat    `json:"penalty_score"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
@@ -69,13 +71,14 @@ type Like struct {
 }
 type Likes []Like
 
-// Like struct, only used in PostLikes
-type Report struct {
+// ReportOrUpvote struct, only used in ReportOrUpvotes
+type ReportOrUpvote struct {
 	Username types.AccountKey `json:"username"`
-	Stake    int64            `json:"stake"`
+	Stake    types.Coin       `json:"stake"`
 	Created  int64            `json:"created"`
+	IsReport bool             `json:"is_report"`
 }
-type Reports []Report
+type ReportOrUpvotes []ReportOrUpvote
 
 // View struct, only used in View
 type Comment struct {

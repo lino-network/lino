@@ -31,6 +31,10 @@ func ErrAddOrUpdateLikeToPost(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update like to post %v failed", postKey))
 }
 
+func ErrAddOrUpdateReportOrUpvoteToPost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", postKey))
+}
+
 func ErrAddDonation(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", postKey))
 }
@@ -71,6 +75,34 @@ func ErrDonatePostDoesntExist(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post doesn't exist", postKey))
 }
 
+func ErrReportFailed(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed", postKey))
+}
+
+func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, user %v not found", user))
+}
+
+func ErrReportAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, post %v author %v not found", postKey, author))
+}
+
+func ErrReportPostDoesntExist(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed, post doesn't exist", postKey))
+}
+
+func ErrUpvoteUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote failed, user %v not found", user))
+}
+
+func ErrUpvoteAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote failed, post %v author %v not found", postKey, author))
+}
+
+func ErrUpvotePostDoesntExist(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote to post %v failed, post doesn't exist", postKey))
+}
+
 func ErrPostCreateNoPostID() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Create with empty post id"))
 }
@@ -97,6 +129,14 @@ func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
 
 func ErrPostLikeInvalidTarget() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like target post invalid"))
+}
+
+func ErrPostReportOrUpvoteNoUsername() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote needs have username"))
+}
+
+func ErrPostReportOrUpvoteInvalidTarget() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote target post invalid"))
 }
 
 func ErrPostTitleExceedMaxLength() sdk.Error {

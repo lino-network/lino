@@ -8,6 +8,11 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+var _ sdk.Msg = CreatePostMsg{}
+var _ sdk.Msg = LikeMsg{}
+var _ sdk.Msg = DonateMsg{}
+var _ sdk.Msg = ReportOrUpvoteMsg{}
+
 // PostCreateParams can also use to publish comment(with parent) or repost(with source)
 type PostCreateParams struct {
 	PostID                  string                 `json:"post_id"`
@@ -43,6 +48,14 @@ type DonateMsg struct {
 	PostID   string
 }
 
+// ReportOrUpvoteMsg sent from a user to a post
+type ReportOrUpvoteMsg struct {
+	Username types.AccountKey
+	Author   types.AccountKey
+	PostID   string
+	IsReport bool
+}
+
 // NewCreatePostMsg constructs a post msg
 func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
 	return CreatePostMsg{PostCreateParams: postCreateParams}
@@ -58,7 +71,7 @@ func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, po
 	}
 }
 
-// NewDonateMsg constructs a like msg
+// NewDonateMsg constructs a donate msg
 func NewDonateMsg(user types.AccountKey, amount types.LNO, author types.AccountKey, postID string) DonateMsg {
 	return DonateMsg{
 		Username: user,
@@ -68,10 +81,21 @@ func NewDonateMsg(user types.AccountKey, amount types.LNO, author types.AccountK
 	}
 }
 
+// NewReportOrUpvoteMsg constructs a report msg
+func NewReportOrUpvoteMsg(user types.AccountKey, author types.AccountKey, postID string, isReport bool) ReportOrUpvoteMsg {
+	return ReportOrUpvoteMsg{
+		Username: user,
+		Author:   author,
+		PostID:   postID,
+		IsReport: isReport,
+	}
+}
+
 // Type implements sdk.Msg
-func (msg CreatePostMsg) Type() string { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
-func (msg LikeMsg) Type() string       { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
-func (msg DonateMsg) Type() string     { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
+func (msg CreatePostMsg) Type() string     { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
+func (msg LikeMsg) Type() string           { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
+func (msg DonateMsg) Type() string         { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
+func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
 
 // ValidateBasic implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -126,6 +150,17 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// ValidateBasic implements sdk.Msg
+func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) == 0 {
+		return ErrPostReportOrUpvoteNoUsername()
+	}
+	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
+		return ErrPostReportOrUpvoteInvalidTarget()
+	}
+	return nil
+}
+
 // Get implements sdk.Msg; should not be called
 func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
 	return nil
@@ -134,6 +169,9 @@ func (msg LikeMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 func (msg DonateMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 
@@ -146,6 +184,10 @@ func (msg LikeMsg) GetSignBytes() []byte {
 }
 
 func (msg DonateMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+func (msg ReportOrUpvoteMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
@@ -167,6 +209,9 @@ func (msg LikeMsg) GetSigners() []sdk.Address {
 func (msg DonateMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
+func (msg ReportOrUpvoteMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
@@ -177,4 +222,7 @@ func (msg LikeMsg) String() string {
 }
 func (msg DonateMsg) String() string {
 	return fmt.Sprintf("Post.DonateMsg{donation from: %v, amount: %v, post auther:%v, post id: %v}", msg.Username, msg.Amount, msg.Author, msg.PostID)
+}
+func (msg ReportOrUpvoteMsg) String() string {
+	return fmt.Sprintf("Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}", msg.Username, msg.Author, msg.PostID)
 }

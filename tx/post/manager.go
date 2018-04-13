@@ -35,7 +35,8 @@ func (pm *PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool 
 }
 
 // return root source post
-func (pm *PostManager) GetSourcePost(ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
+func (pm *PostManager) GetSourcePost(
+	ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, postKey)
 	if err != nil {
 		return types.AccountKey(""), "", ErrGetRootSourcePost(postKey).TraceCause(err, "")
@@ -54,7 +55,8 @@ func (pm *PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostIn
 		return nil
 	}
 	postKey := types.GetPostKey(postInfo.Author, postInfo.PostID)
-	rootAuthor, rootPostID, err := pm.GetSourcePost(ctx, types.GetPostKey(postInfo.SourceAuthor, postInfo.SourcePostID))
+	rootAuthor, rootPostID, err :=
+		pm.GetSourcePost(ctx, types.GetPostKey(postInfo.SourceAuthor, postInfo.SourcePostID))
 	if err != nil {
 		return ErrSetRootSourcePost(postKey).TraceCause(err, "")
 	}
@@ -102,7 +104,8 @@ func (pm *PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateP
 }
 
 // add or update like from the user if like exists
-func (pm *PostManager) AddOrUpdateLikeToPost(ctx sdk.Context, postKey types.PostKey, user types.AccountKey, weight int64) sdk.Error {
+func (pm *PostManager) AddOrUpdateLikeToPost(
+	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, weight int64) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
 		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
@@ -136,8 +139,45 @@ func (pm *PostManager) AddOrUpdateLikeToPost(ctx sdk.Context, postKey types.Post
 	return nil
 }
 
+// add or update report or upvote from the user if exist
+func (pm *PostManager) AddOrUpdateReportOrUpvoteToPost(
+	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	if err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+	}
+	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, postKey, user)
+	// Revoke privous
+	if reportOrUpvote != nil {
+		if reportOrUpvote.IsReport {
+			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
+		} else {
+			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
+		}
+		reportOrUpvote.Stake = stake
+	} else {
+		reportOrUpvote =
+			&model.ReportOrUpvote{Username: user, Stake: stake, Created: ctx.BlockHeader().Time}
+	}
+	if isReport {
+		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
+		reportOrUpvote.IsReport = true
+	} else {
+		postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Plus(reportOrUpvote.Stake)
+		reportOrUpvote.IsReport = false
+	}
+	if err := pm.postStorage.SetPostReportOrUpvote(ctx, postKey, reportOrUpvote); err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+	}
+	return nil
+}
+
 // add comment to post comment list
-func (pm *PostManager) AddComment(ctx sdk.Context, postKey types.PostKey, commentUser types.AccountKey, commentPostID string) sdk.Error {
+func (pm *PostManager) AddComment(
+	ctx sdk.Context, postKey types.PostKey, commentUser types.AccountKey, commentPostID string) sdk.Error {
 	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeader().Time}
 	return pm.postStorage.SetPostComment(ctx, postKey, comment)
 }

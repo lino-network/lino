@@ -25,6 +25,10 @@ func ErrPostLikeNotFound(key []byte) sdk.Error {
 	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Post like not found for key: %s", key))
 }
 
+func ErrPostReportOrUpvoteNotFound(key []byte) sdk.Error {
+	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Post report or upvote not found for key: %s", key))
+}
+
 func ErrPostCommentNotFound(key []byte) sdk.Error {
 	return sdk.NewError(types.CodePostStorageError, fmt.Sprintf("Post comment not found for key: %s", key))
 }

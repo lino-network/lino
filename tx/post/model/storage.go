@@ -8,25 +8,26 @@ import (
 )
 
 var (
-	postInfoSubStore      = []byte{0x00} // SubStore for all post info
-	postMetaSubStore      = []byte{0x01} // SubStore for all post mata info
-	postLikeSubStore      = []byte{0x02} // SubStore for all like to post
-	postCommentSubStore   = []byte{0x03} // SubStore for all comments
-	postViewsSubStore     = []byte{0x04} // SubStore for all views
-	postDonationsSubStore = []byte{0x05} // SubStore for all donations
+	postInfoSubStore           = []byte{0x00} // SubStore for all post info
+	postMetaSubStore           = []byte{0x01} // SubStore for all post mata info
+	postLikeSubStore           = []byte{0x02} // SubStore for all like to post
+	postReportOrUpvoteSubStore = []byte{0x03} // SubStore for all like to post
+	postCommentSubStore        = []byte{0x04} // SubStore for all comments
+	postViewsSubStore          = []byte{0x05} // SubStore for all views
+	postDonationsSubStore      = []byte{0x06} // SubStore for all donations
 )
 
 // TODO(Lino) Register cdc here.
 // temporary use old wire.
 // this will help marshal and unmarshal interface type.
 const (
-	msgTypePost          = 0x1
-	msgTypePostMeta      = 0x2
-	msgTypePostLike      = 0x3
-	msgTypePostReport    = 0x4
-	msgTypePostView      = 0x5
-	msgTypePostComment   = 0x6
-	msgTypePostDonations = 0x7
+	msgTypePost               = 0x1
+	msgTypePostMeta           = 0x2
+	msgTypePostLike           = 0x3
+	msgTypePostReportOrUpvote = 0x4
+	msgTypePostView           = 0x5
+	msgTypePostComment        = 0x6
+	msgTypePostDonations      = 0x7
 )
 
 type PostStorage struct {
@@ -46,7 +47,7 @@ func NewPostStorage(key sdk.StoreKey) *PostStorage {
 		oldwire.ConcreteType{PostInfo{}, msgTypePost},
 		oldwire.ConcreteType{PostMeta{}, msgTypePostMeta},
 		oldwire.ConcreteType{Like{}, msgTypePostLike},
-		oldwire.ConcreteType{Report{}, msgTypePostReport},
+		oldwire.ConcreteType{ReportOrUpvote{}, msgTypePostReportOrUpvote},
 		oldwire.ConcreteType{View{}, msgTypePostView},
 		oldwire.ConcreteType{Comment{}, msgTypePostComment},
 		oldwire.ConcreteType{Donation{}, msgTypePostDonations},
@@ -124,6 +125,22 @@ func (pm *PostStorage) SetPostLike(ctx sdk.Context, postKey types.PostKey, postL
 	return pm.set(ctx, GetPostLikeKey(postKey, postLike.Username), postLike)
 }
 
+func (pm *PostStorage) GetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
+	val, err := pm.get(ctx, GetPostReportOrUpvoteKey(postKey, user), ErrPostReportOrUpvoteNotFound)
+	if err != nil {
+		return nil, err
+	}
+	reportOrUpvote := new(ReportOrUpvote)
+	if unmarshalErr := oldwire.UnmarshalJSON(val, reportOrUpvote); unmarshalErr != nil {
+		return nil, ErrPostUnmarshalError(unmarshalErr)
+	}
+	return reportOrUpvote, nil
+}
+
+func (pm *PostStorage) SetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, reportOrUpvote *ReportOrUpvote) sdk.Error {
+	return pm.set(ctx, GetPostReportOrUpvoteKey(postKey, reportOrUpvote.Username), reportOrUpvote)
+}
+
 func (pm *PostStorage) GetPostComment(ctx sdk.Context, postKey types.PostKey, commentPostKey types.PostKey) (*Comment, sdk.Error) {
 	val, err := pm.get(ctx, GetPostCommentKey(postKey, commentPostKey), ErrPostCommentNotFound)
 	if err != nil {
@@ -188,6 +205,16 @@ func GetPostLikePrefix(postKey types.PostKey) []byte {
 
 func GetPostLikeKey(postKey types.PostKey, likeUser types.AccountKey) []byte {
 	return append(GetPostLikePrefix(postKey), likeUser...)
+}
+
+// PostReportPrefix format is ReportSubStore / PostKey
+// which can be used to access all reports belong to this post
+func GetPostReportOrUpvotePrefix(postKey types.PostKey) []byte {
+	return append(append([]byte(postReportOrUpvoteSubStore), postKey...), types.KeySeparator...)
+}
+
+func GetPostReportOrUpvoteKey(postKey types.PostKey, user types.AccountKey) []byte {
+	return append(GetPostReportOrUpvotePrefix(postKey), user...)
 }
 
 // PostViewPrefix format is ViewSubStore / PostKey
