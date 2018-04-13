@@ -24,7 +24,7 @@ func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 	}
 }
 
-func (msg ProviderReportMsg) Type() string { return types.InfraProviderRouterName } // TODO: "account/register"
+func (msg ProviderReportMsg) Type() string { return types.InfraRouterName } // TODO: "account/register"
 
 func (msg ProviderReportMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
