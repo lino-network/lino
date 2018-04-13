@@ -78,6 +78,50 @@ func (im *InfraManager) ReportUsage(ctx sdk.Context, username types.AccountKey, 
 	return nil
 }
 
+func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
+	lst, getErr := im.storage.GetInfraProviderList(ctx)
+	if getErr != nil {
+		return sdk.NewRat(0), getErr
+	}
+
+	totalUsage := int64(0)
+	myUsage := int64(0)
+	for _, providerName := range lst.AllInfraProviders {
+		curProvider, getErr := im.storage.GetInfraProvider(ctx, providerName)
+		if getErr != nil {
+			return sdk.NewRat(0), getErr
+		}
+		totalUsage += curProvider.Usage
+		if curProvider.Username == username {
+			myUsage = curProvider.Usage
+		}
+	}
+	return sdk.NewRat(myUsage, totalUsage), nil
+}
+
+func (im *InfraManager) GetInfraProviderList(ctx sdk.Context) (*model.InfraProviderList, sdk.Error) {
+	return im.storage.GetInfraProviderList(ctx)
+}
+
+func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error { 
+	lst, getErr := im.storage.GetInfraProviderList(ctx)
+	if getErr != nil {
+		return  getErr
+	}
+
+	for _, providerName := range lst.AllInfraProviders {
+		curProvider, getErr := im.storage.GetInfraProvider(ctx, providerName)
+		if getErr != nil {
+			return getErr
+		}
+		curProvider.Usage = 0
+		if err := im.storage.SetInfraProvider(ctx, providerName, curProvider); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (im InfraManager) InitGenesis(ctx sdk.Context) error {
 	lst := &model.InfraProviderList{}
 
