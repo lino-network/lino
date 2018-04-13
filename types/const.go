@@ -16,6 +16,10 @@ const (
 	ValidatorKVStoreKey = "validator"
 	// EventKVStoreKey presents store which keeps event related value
 	GlobalKVStoreKey = "global"
+	// VoteKVStoreKey presents store which keeps vote related value
+	VoteKVStoreKey = "vote"
+	// InfraKVStoreKey presents store which keeps infra related value
+	InfraKVStoreKey = "infra"
 
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
@@ -26,7 +30,9 @@ const (
 	// ValidatorRouterName is used for routing in app
 	ValidatorRouterName = "validator"
 	// VoterRounterName is used for routing in app
-	VoteRouterName = "voter"
+	VoteRouterName = "vote"
+	// VoterRounterName is used for routing in app
+	InfraRouterName = "infra"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

@@ -17,6 +17,7 @@ import (
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
+	infra "github.com/lino-network/lino/tx/infra"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
@@ -37,6 +38,8 @@ type LinoBlockchain struct {
 	capKeyAccountStore *sdk.KVStoreKey
 	capKeyPostStore    *sdk.KVStoreKey
 	capKeyValStore     *sdk.KVStoreKey
+	capKeyVoteStore    *sdk.KVStoreKey
+	capKeyInfraStore   *sdk.KVStoreKey
 	capKeyIBCStore     *sdk.KVStoreKey
 	capKeyGlobalStore  *sdk.KVStoreKey
 
@@ -46,6 +49,7 @@ type LinoBlockchain struct {
 	valManager     *val.ValidatorManager
 	globalManager  *global.GlobalManager
 	voteManager    *vote.VoteManager
+	infraManager   *infra.InfraManager
 
 	lastBlockTime int64
 	// for recurring time based event
@@ -60,6 +64,8 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 		capKeyAccountStore: sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		capKeyPostStore:    sdk.NewKVStoreKey(types.PostKVStoreKey),
 		capKeyValStore:     sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		capKeyVoteStore:    sdk.NewKVStoreKey(types.VoteKVStoreKey),
+		capKeyInfraStore:   sdk.NewKVStoreKey(types.InfraKVStoreKey),
 		capKeyGlobalStore:  sdk.NewKVStoreKey(types.GlobalKVStoreKey),
 		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
 	}
@@ -67,13 +73,15 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
 	lb.valManager = val.NewValidatorManager(lb.capKeyValStore)
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
-	lb.voteManager = vote.NewVoteManager(lb.capKeyGlobalStore)
+	lb.voteManager = vote.NewVoteManager(lb.capKeyVoteStore)
+	lb.infraManager = infra.NewInfraManager(lb.capKeyInfraStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(*lb.voteManager, *lb.accountManager, *lb.globalManager)).
+		AddRoute(types.InfraRouterName, infra.NewHandler(*lb.infraManager)).
 		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.accountManager, *lb.valManager, *lb.voteManager, *lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
@@ -86,6 +94,8 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.capKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
 	lb.MountStoreWithDB(lb.capKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
 	lb.MountStoreWithDB(lb.capKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
+	lb.MountStoreWithDB(lb.capKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
+	lb.MountStoreWithDB(lb.capKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
 	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
 	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
@@ -294,6 +304,8 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToValidator(ctx)
+	lb.distributeInflationToInfraProvider(ctx)
+
 }
 
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
@@ -310,6 +322,15 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	for _, validator := range validators {
 		lb.accountManager.AddCoin(ctx, validator, types.RatToCoin(ratPerValidator))
 	}
+}
+
+func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
+	_, err := lb.globalManager.GetInfraHourlyInflation(ctx, lb.pastMinutes/60)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO give inflation to each infra provider according to their usage
 }
 
 func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
