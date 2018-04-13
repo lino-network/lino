@@ -11,6 +11,11 @@ type GlobalMeta struct {
 	GrowthRate            sdk.Rat    `json:"growth_rate"`
 }
 
+type TPS struct {
+	CurrentTPS sdk.Rat `json:"current_tps"`
+	MaxTPS     sdk.Rat `json:"max_tps"`
+}
+
 // GlobalStatistics
 type GlobalStatistics struct {
 	numOfAccount  int64 `json:"number_of_account"`

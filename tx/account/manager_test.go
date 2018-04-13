@@ -145,15 +145,14 @@ func TestCreateAccount(t *testing.T) {
 	checkPendingStake(t, ctx, priv.PubKey().Address(), pendingStakeQueue)
 	accInfo := model.AccountInfo{
 		Username: accKey,
-		Created:  1,
+		Created:  ctx.BlockHeader().Time,
 		PostKey:  priv.PubKey(),
 		OwnerKey: priv.PubKey(),
 		Address:  priv.PubKey().Address(),
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivity:   ctx.BlockHeight(),
-		ActivityBurden: types.DefaultActivityBurden,
+		LastActivity: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
@@ -331,4 +330,77 @@ func TestAccountReward(t *testing.T) {
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
 	reward = model.Reward{c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)
+}
+
+func TestCheckUserTPSCapacity(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	priv := crypto.GenPrivKeyEd25519()
+	accKey := types.AccountKey("accKey")
+
+	baseTime := ctx.BlockHeader().Time
+
+	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
+	assert.Nil(t, err)
+	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	assert.Nil(t, err)
+
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	err = accStorage.SetPendingStakeQueue(ctx, priv.PubKey().Address(), &model.PendingStakeQueue{})
+	assert.Nil(t, err)
+
+	cases := []struct {
+		TPSCapacityRatio     sdk.Rat
+		UserStake            types.Coin
+		LastActivity         int64
+		LastCapacity         types.Coin
+		CurrentTime          int64
+		ExpectResult         sdk.Error
+		ExpectRemainCapacity types.Coin
+	}{
+		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
+		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(990000)},
+		{sdk.NewRat(1, 2), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(950000)},
+		{sdk.NewRat(1), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(9 * types.Decimals)},
+		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(10 * types.Decimals),
+			baseTime, nil, types.NewCoin(0)},
+		{sdk.NewRat(1), types.NewCoin(10), baseTime, types.NewCoin(1 * types.Decimals),
+			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(1 * types.Decimals)},
+		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime + TransactionCapacityRecoverPeriod/2, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
+		{sdk.NewRat(1, 2), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
+			baseTime + TransactionCapacityRecoverPeriod/2, nil, types.NewCoin(0)},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.CurrentTime})
+		bank := &model.AccountBank{
+			Address: priv.PubKey().Address(),
+			Balance: cs.UserStake,
+			Stake:   cs.UserStake,
+		}
+		err = accStorage.SetBankFromAddress(ctx, priv.PubKey().Address(), bank)
+		assert.Nil(t, err)
+		meta := &model.AccountMeta{
+			LastActivity:        cs.LastActivity,
+			TransactionCapacity: cs.LastCapacity,
+		}
+		err = accStorage.SetMeta(ctx, accKey, meta)
+		assert.Nil(t, err)
+
+		err = am.CheckUserTPSCapacity(ctx, accKey, cs.TPSCapacityRatio)
+		assert.Equal(t, cs.ExpectResult, err)
+
+		accMeta := model.AccountMeta{
+			LastActivity:        ctx.BlockHeader().Time,
+			TransactionCapacity: cs.ExpectRemainCapacity,
+		}
+		if cs.ExpectResult != nil {
+			accMeta.LastActivity = cs.LastActivity
+		}
+		checkAccountMeta(t, ctx, accKey, accMeta)
+	}
 }

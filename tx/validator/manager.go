@@ -24,7 +24,7 @@ func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
 	}
 }
 
-func (vm *ValidatorManager) SetPreRoundValidators(ctx sdk.Context) sdk.Error {
+func (vm *ValidatorManager) SetPreBlockValidators(ctx sdk.Context) sdk.Error {
 	var err sdk.Error
 	vm.preRoundValidators, err = vm.GetOncallValidatorList(ctx)
 	if err != nil {

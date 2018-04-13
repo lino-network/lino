@@ -89,9 +89,9 @@ func (pm *PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateP
 		return ErrCreatePost(postKey).TraceCause(err, "")
 	}
 	postMeta := &model.PostMeta{
-		Created:                 ctx.BlockHeight(),
-		LastUpdate:              ctx.BlockHeight(),
-		LastActivity:            ctx.BlockHeight(),
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
 		RedistributionSplitRate: postCreateParams.RedistributionSplitRate,
 	}
@@ -119,7 +119,7 @@ func (pm *PostManager) AddOrUpdateLikeToPost(ctx sdk.Context, postKey types.Post
 		like.Weight = weight
 	} else {
 		postMeta.TotalLikeCount += 1
-		like = &model.Like{Username: user, Weight: weight, Created: ctx.BlockHeight()}
+		like = &model.Like{Username: user, Weight: weight, Created: ctx.BlockHeader().Time}
 	}
 	if like.Weight > 0 {
 		postMeta.TotalLikeWeight += like.Weight
@@ -138,7 +138,7 @@ func (pm *PostManager) AddOrUpdateLikeToPost(ctx sdk.Context, postKey types.Post
 
 // add comment to post comment list
 func (pm *PostManager) AddComment(ctx sdk.Context, postKey types.PostKey, commentUser types.AccountKey, commentPostID string) sdk.Error {
-	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeight()}
+	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeader().Time}
 	return pm.postStorage.SetPostComment(ctx, postKey, comment)
 }
 
@@ -151,7 +151,7 @@ func (pm *PostManager) AddDonation(
 	}
 	donation := model.Donation{
 		Amount:  amount,
-		Created: ctx.BlockHeight(),
+		Created: ctx.BlockHeader().Time,
 	}
 	donations, _ := pm.postStorage.GetPostDonations(ctx, postKey, donator)
 	if donations == nil {
@@ -175,7 +175,7 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 	if view != nil {
 		view.Times += 1
 	} else {
-		view = &model.View{Username: user, Created: ctx.BlockHeight(), Times: 1}
+		view = &model.View{Username: user, Created: ctx.BlockHeader().Time, Times: 1}
 	}
 
 	return pm.postStorage.SetPostView(ctx, postKey, view)
@@ -187,7 +187,7 @@ func (pm *PostManager) UpdateLastActivity(ctx sdk.Context, postKey types.PostKey
 	if err != nil {
 		return ErrUpdateLastActivity(postKey).TraceCause(err, "")
 	}
-	postMeta.LastActivity = ctx.BlockHeight()
+	postMeta.LastActivity = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
 		return ErrUpdateLastActivity(postKey).TraceCause(err, "")
 	}

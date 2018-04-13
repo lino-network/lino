@@ -47,9 +47,6 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
 		return err.Result()
 	}
-	if err := am.UpdateLastActivity(ctx, msg.Author); err != nil {
-		return err.Result()
-	}
 
 	return sdk.Result{}
 }
@@ -65,9 +62,6 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 	}
 	// TODO: check acitivity burden
 	if err := pm.AddOrUpdateLikeToPost(ctx, postKey, msg.Username, msg.Weight); err != nil {
-		return err.Result()
-	}
-	if err := am.UpdateLastActivity(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 
@@ -108,9 +102,6 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		}
 	}
 	if err := ProcessDonationFriction(ctx, msg.Username, coin, msg.Author, msg.PostID, am, pm, gm); err != nil {
-		return err.Result()
-	}
-	if err := am.UpdateLastActivity(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

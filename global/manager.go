@@ -220,6 +220,27 @@ func (gm *GlobalManager) ChangeInfraInternalInflation(ctx sdk.Context, StorageAl
 	return nil
 }
 
+// update current tps based on current block information
+func (gm *GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Error {
+	tps, err := gm.globalStorage.GetTPS(ctx)
+	if err != nil {
+		return err
+	}
+	if ctx.BlockHeader().Time == lastBlockTime {
+		tps.CurrentTPS = tps.MaxTPS
+	} else {
+		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
+	}
+	if tps.CurrentTPS.GT(tps.MaxTPS) {
+		tps.MaxTPS = tps.CurrentTPS
+	}
+
+	if err := gm.globalStorage.SetTPS(ctx, tps); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (gm *GlobalManager) ChangeGlobalInflation(ctx sdk.Context, InfraAllocation sdk.Rat,
 	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
 	allocation, getErr := gm.globalStorage.GetGlobalAllocation(ctx)
@@ -235,4 +256,12 @@ func (gm *GlobalManager) ChangeGlobalInflation(ctx sdk.Context, InfraAllocation 
 		return err
 	}
 	return nil
+}
+
+func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+	tps, err := gm.globalStorage.GetTPS(ctx)
+	if err != nil {
+		return sdk.ZeroRat, err
+	}
+	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
 }
