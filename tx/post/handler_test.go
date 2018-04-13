@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -391,24 +392,44 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(*pm, *am, *gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
 	cases := []struct {
 		ReportOrUpvoteUser     types.AccountKey
 		IsReport               bool
-		UserStake              types.Coin
+		IsRevoke               bool
 		ExpectTotalReportStake types.Coin
 		ExpectTotalUpvoteStake types.Coin
 	}{
-		{user1, true, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
-		{user2, true, types.NewCoin(50), types.NewCoin(150), types.NewCoin(0)},
-		{user1, false, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
-		{user1, true, types.NewCoin(100), types.NewCoin(100), types.NewCoin(0)},
+		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
+		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
+		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
+		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
+		{user2, false, true, types.NewCoin(0), types.NewCoin(100)},
+		{user3, false, true, types.NewCoin(0), types.NewCoin(0)},
+		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
+		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
+		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
+		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
 	}
 
 	for _, cs := range cases {
-		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + acc.TotalCoinDaysSec})
+		msg := NewReportOrUpvoteMsg(cs.ReportOrUpvoteUser, user1, postID, cs.IsReport, cs.IsRevoke)
+		result := handler(newCtx, msg)
+		assert.Equal(t, result, sdk.Result{})
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            newCtx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalReportStake:        cs.ExpectTotalReportStake,
+			TotalUpvoteStake:        cs.ExpectTotalUpvoteStake,
+		}
+		postKey := types.GetPostKey(user1, postID)
+		checkPostMeta(t, ctx, postKey, postMeta)
 	}
 }

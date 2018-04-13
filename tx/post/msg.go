@@ -54,6 +54,7 @@ type ReportOrUpvoteMsg struct {
 	Author   types.AccountKey
 	PostID   string
 	IsReport bool
+	IsRevoke bool
 }
 
 // NewCreatePostMsg constructs a post msg
@@ -82,12 +83,13 @@ func NewDonateMsg(user types.AccountKey, amount types.LNO, author types.AccountK
 }
 
 // NewReportOrUpvoteMsg constructs a report msg
-func NewReportOrUpvoteMsg(user types.AccountKey, author types.AccountKey, postID string, isReport bool) ReportOrUpvoteMsg {
+func NewReportOrUpvoteMsg(user types.AccountKey, author types.AccountKey, postID string, isReport bool, isRevoke bool) ReportOrUpvoteMsg {
 	return ReportOrUpvoteMsg{
 		Username: user,
 		Author:   author,
 		PostID:   postID,
 		IsReport: isReport,
+		IsRevoke: isRevoke,
 	}
 }
 

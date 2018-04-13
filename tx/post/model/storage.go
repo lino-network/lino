@@ -58,8 +58,8 @@ func NewPostStorage(key sdk.StoreKey) *PostStorage {
 	}
 }
 
-func (pm *PostStorage) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) ([]byte, sdk.Error) {
-	store := ctx.KVStore(pm.key)
+func (ps *PostStorage) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) ([]byte, sdk.Error) {
+	store := ctx.KVStore(ps.key)
 	val := store.Get(key)
 	if val == nil {
 		return nil, errFunc(key)
@@ -67,8 +67,8 @@ func (pm *PostStorage) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc)
 	return val, nil
 }
 
-func (pm *PostStorage) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
-	store := ctx.KVStore(pm.key)
+func (ps *PostStorage) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
+	store := ctx.KVStore(ps.key)
 	val, err := oldwire.MarshalJSON(postStruct)
 	if err != nil {
 		return ErrPostMarshalError(err)
@@ -77,8 +77,8 @@ func (pm *PostStorage) set(ctx sdk.Context, key []byte, postStruct PostInterface
 	return nil
 }
 
-func (pm *PostStorage) GetPostInfo(ctx sdk.Context, postKey types.PostKey) (*PostInfo, sdk.Error) {
-	val, err := pm.get(ctx, GetPostInfoKey(postKey), ErrPostNotFound)
+func (ps *PostStorage) GetPostInfo(ctx sdk.Context, postKey types.PostKey) (*PostInfo, sdk.Error) {
+	val, err := ps.get(ctx, GetPostInfoKey(postKey), ErrPostNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +89,12 @@ func (pm *PostStorage) GetPostInfo(ctx sdk.Context, postKey types.PostKey) (*Pos
 	return postInfo, nil
 }
 
-func (pm *PostStorage) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
-	return pm.set(ctx, GetPostInfoKey(types.GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
+func (ps *PostStorage) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
+	return ps.set(ctx, GetPostInfoKey(types.GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
 }
 
-func (pm *PostStorage) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*PostMeta, sdk.Error) {
-	val, err := pm.get(ctx, GetPostMetaKey(postKey), ErrPostMetaNotFound)
+func (ps *PostStorage) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*PostMeta, sdk.Error) {
+	val, err := ps.get(ctx, GetPostMetaKey(postKey), ErrPostMetaNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +105,12 @@ func (pm *PostStorage) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*Pos
 	return postMeta, nil
 }
 
-func (pm *PostStorage) SetPostMeta(ctx sdk.Context, postKey types.PostKey, postMeta *PostMeta) sdk.Error {
-	return pm.set(ctx, GetPostMetaKey(postKey), postMeta)
+func (ps *PostStorage) SetPostMeta(ctx sdk.Context, postKey types.PostKey, postMeta *PostMeta) sdk.Error {
+	return ps.set(ctx, GetPostMetaKey(postKey), postMeta)
 }
 
-func (pm *PostStorage) GetPostLike(ctx sdk.Context, postKey types.PostKey, likeUser types.AccountKey) (*Like, sdk.Error) {
-	val, err := pm.get(ctx, GetPostLikeKey(postKey, likeUser), ErrPostLikeNotFound)
+func (ps *PostStorage) GetPostLike(ctx sdk.Context, postKey types.PostKey, likeUser types.AccountKey) (*Like, sdk.Error) {
+	val, err := ps.get(ctx, GetPostLikeKey(postKey, likeUser), ErrPostLikeNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -121,12 +121,12 @@ func (pm *PostStorage) GetPostLike(ctx sdk.Context, postKey types.PostKey, likeU
 	return postLike, nil
 }
 
-func (pm *PostStorage) SetPostLike(ctx sdk.Context, postKey types.PostKey, postLike *Like) sdk.Error {
-	return pm.set(ctx, GetPostLikeKey(postKey, postLike.Username), postLike)
+func (ps *PostStorage) SetPostLike(ctx sdk.Context, postKey types.PostKey, postLike *Like) sdk.Error {
+	return ps.set(ctx, GetPostLikeKey(postKey, postLike.Username), postLike)
 }
 
-func (pm *PostStorage) GetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
-	val, err := pm.get(ctx, GetPostReportOrUpvoteKey(postKey, user), ErrPostReportOrUpvoteNotFound)
+func (ps *PostStorage) GetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
+	val, err := ps.get(ctx, GetPostReportOrUpvoteKey(postKey, user), ErrPostReportOrUpvoteNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -137,12 +137,18 @@ func (pm *PostStorage) GetPostReportOrUpvote(ctx sdk.Context, postKey types.Post
 	return reportOrUpvote, nil
 }
 
-func (pm *PostStorage) SetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, reportOrUpvote *ReportOrUpvote) sdk.Error {
-	return pm.set(ctx, GetPostReportOrUpvoteKey(postKey, reportOrUpvote.Username), reportOrUpvote)
+func (ps *PostStorage) SetPostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, reportOrUpvote *ReportOrUpvote) sdk.Error {
+	return ps.set(ctx, GetPostReportOrUpvoteKey(postKey, reportOrUpvote.Username), reportOrUpvote)
 }
 
-func (pm *PostStorage) GetPostComment(ctx sdk.Context, postKey types.PostKey, commentPostKey types.PostKey) (*Comment, sdk.Error) {
-	val, err := pm.get(ctx, GetPostCommentKey(postKey, commentPostKey), ErrPostCommentNotFound)
+func (ps *PostStorage) RemovePostReportOrUpvote(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	store.Delete(GetPostReportOrUpvoteKey(postKey, user))
+	return nil
+}
+
+func (ps *PostStorage) GetPostComment(ctx sdk.Context, postKey types.PostKey, commentPostKey types.PostKey) (*Comment, sdk.Error) {
+	val, err := ps.get(ctx, GetPostCommentKey(postKey, commentPostKey), ErrPostCommentNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -153,12 +159,12 @@ func (pm *PostStorage) GetPostComment(ctx sdk.Context, postKey types.PostKey, co
 	return postComment, nil
 }
 
-func (pm *PostStorage) SetPostComment(ctx sdk.Context, postKey types.PostKey, postComment *Comment) sdk.Error {
-	return pm.set(ctx, GetPostCommentKey(postKey, types.GetPostKey(postComment.Author, postComment.PostID)), postComment)
+func (ps *PostStorage) SetPostComment(ctx sdk.Context, postKey types.PostKey, postComment *Comment) sdk.Error {
+	return ps.set(ctx, GetPostCommentKey(postKey, types.GetPostKey(postComment.Author, postComment.PostID)), postComment)
 }
 
-func (pm *PostStorage) GetPostView(ctx sdk.Context, postKey types.PostKey, viewUser types.AccountKey) (*View, sdk.Error) {
-	val, err := pm.get(ctx, GetPostViewKey(postKey, viewUser), ErrPostViewNotFound)
+func (ps *PostStorage) GetPostView(ctx sdk.Context, postKey types.PostKey, viewUser types.AccountKey) (*View, sdk.Error) {
+	val, err := ps.get(ctx, GetPostViewKey(postKey, viewUser), ErrPostViewNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +175,12 @@ func (pm *PostStorage) GetPostView(ctx sdk.Context, postKey types.PostKey, viewU
 	return postView, nil
 }
 
-func (pm *PostStorage) SetPostView(ctx sdk.Context, postKey types.PostKey, postView *View) sdk.Error {
-	return pm.set(ctx, GetPostViewKey(postKey, postView.Username), postView)
+func (ps *PostStorage) SetPostView(ctx sdk.Context, postKey types.PostKey, postView *View) sdk.Error {
+	return ps.set(ctx, GetPostViewKey(postKey, postView.Username), postView)
 }
 
-func (pm *PostStorage) GetPostDonations(ctx sdk.Context, postKey types.PostKey, donateUser types.AccountKey) (*Donations, sdk.Error) {
-	val, err := pm.get(ctx, GetPostDonationKey(postKey, donateUser), ErrPostDonationNotFound)
+func (ps *PostStorage) GetPostDonations(ctx sdk.Context, postKey types.PostKey, donateUser types.AccountKey) (*Donations, sdk.Error) {
+	val, err := ps.get(ctx, GetPostDonationKey(postKey, donateUser), ErrPostDonationNotFound)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +191,8 @@ func (pm *PostStorage) GetPostDonations(ctx sdk.Context, postKey types.PostKey, 
 	return postDonations, nil
 }
 
-func (pm *PostStorage) SetPostDonations(ctx sdk.Context, postKey types.PostKey, postDonations *Donations) sdk.Error {
-	return pm.set(ctx, GetPostDonationKey(postKey, postDonations.Username), postDonations)
+func (ps *PostStorage) SetPostDonations(ctx sdk.Context, postKey types.PostKey, postDonations *Donations) sdk.Error {
+	return ps.set(ctx, GetPostDonationKey(postKey, postDonations.Username), postDonations)
 }
 
 func GetPostInfoKey(postKey types.PostKey) []byte {

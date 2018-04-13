@@ -156,12 +156,12 @@ func TestReportOrUpvoteMsg(t *testing.T) {
 		reportOrUpvoteMsg ReportOrUpvoteMsg
 		expectError       sdk.Error
 	}{
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", true), nil},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", false), nil},
-		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true), ErrPostReportOrUpvoteNoUsername()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true), ErrPostReportOrUpvoteInvalidTarget()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false), ErrPostReportOrUpvoteInvalidTarget()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", true, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", false, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true, false), ErrPostReportOrUpvoteNoUsername()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true, true), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false, true), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false, false), ErrPostReportOrUpvoteInvalidTarget()},
 	}
 
 	for _, cs := range cases {

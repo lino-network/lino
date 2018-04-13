@@ -2,6 +2,7 @@ package post
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,7 +58,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
+	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
 }
 
 func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
@@ -66,6 +67,12 @@ func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, post
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
 	assert.Nil(t, err)
 	assert.Equal(t, postInfo, *postPtr, "postInfo should be equal")
+	checkPostMeta(t, ctx, postKey, postMeta)
+}
+
+func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PostKey, postMeta model.PostMeta) {
+	// check post meta structs in KVStore
+	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
 	assert.Nil(t, err)
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")

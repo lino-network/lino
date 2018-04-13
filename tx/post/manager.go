@@ -130,6 +130,7 @@ func (pm *PostManager) AddOrUpdateLikeToPost(
 	if like.Weight < 0 {
 		postMeta.TotalDislikeWeight -= like.Weight
 	}
+	postMeta.LastActivity = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostLike(ctx, postKey, like); err != nil {
 		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
 	}
@@ -141,8 +142,9 @@ func (pm *PostManager) AddOrUpdateLikeToPost(
 
 // add or update report or upvote from the user if exist
 func (pm *PostManager) AddOrUpdateReportOrUpvoteToPost(
-	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
+	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	postMeta.LastActivity = ctx.BlockHeader().Time
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
 	}
@@ -155,7 +157,16 @@ func (pm *PostManager) AddOrUpdateReportOrUpvoteToPost(
 			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
 		}
 		reportOrUpvote.Stake = stake
+		if isRevoke {
+			if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+				return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+			}
+			return pm.postStorage.RemovePostReportOrUpvote(ctx, postKey, user)
+		}
 	} else {
+		if isRevoke {
+			return ErrRevokeReportOrUpvoteToPost(postKey)
+		}
 		reportOrUpvote =
 			&model.ReportOrUpvote{Username: user, Stake: stake, Created: ctx.BlockHeader().Time}
 	}

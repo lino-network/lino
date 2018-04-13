@@ -169,12 +169,12 @@ func handleReportOrUpvoteMsg(
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
 		if err := pm.AddOrUpdateReportOrUpvoteToPost(
-			ctx, sourcePostKey, msg.Username, stake, msg.IsReport); err != nil {
+			ctx, sourcePostKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
 			return err.Result()
 		}
 	}
 	if err := pm.AddOrUpdateReportOrUpvoteToPost(
-		ctx, postKey, msg.Username, stake, msg.IsReport); err != nil {
+		ctx, postKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

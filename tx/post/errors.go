@@ -35,6 +35,10 @@ func ErrAddOrUpdateReportOrUpvoteToPost(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", postKey))
 }
 
+func ErrRevokeReportOrUpvoteToPost(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("revoke report or upvote to post %v failed", postKey))
+}
+
 func ErrAddDonation(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", postKey))
 }
