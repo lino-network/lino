@@ -13,6 +13,11 @@ func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Err
 	assert.Equal(t, result, expectError)
 }
 
+func testReportOrUpvoteValidate(t *testing.T, reportOrUpvoteMsg ReportOrUpvoteMsg, expectError sdk.Error) {
+	result := reportOrUpvoteMsg.ValidateBasic()
+	assert.Equal(t, result, expectError)
+}
+
 func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 	result := likeMsg.ValidateBasic()
 	assert.Equal(t, result, expectError)
@@ -143,5 +148,23 @@ func TestDonationMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		testDonationValidate(t, cs.donateMsg, cs.expectError)
+	}
+}
+
+func TestReportOrUpvoteMsg(t *testing.T) {
+	cases := []struct {
+		reportOrUpvoteMsg ReportOrUpvoteMsg
+		expectError       sdk.Error
+	}{
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", true, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", false, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true, false), ErrPostReportOrUpvoteNoUsername()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true, true), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false, true), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false, false), ErrPostReportOrUpvoteInvalidTarget()},
+	}
+
+	for _, cs := range cases {
+		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
 	}
 }
