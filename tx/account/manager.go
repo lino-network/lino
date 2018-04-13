@@ -13,7 +13,7 @@ var CoinDays int64 = 8
 var TotalCoinDaysSec int64 = CoinDays * 24 * 3600
 
 // maximum transaction cpacity cost
-var TransactionCapacityUsage = types.NewCoin(1 * types.Decimals)
+var CapacityUsagePerTransaction = types.NewCoin(1 * types.Decimals)
 
 // transaction cpacity recover period
 var TransactionCapacityRecoverPeriod int64 = 24 * 3600 * 8
@@ -358,18 +358,18 @@ func (accManager *AccountManager) CheckUserTPSCapacity(
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake
 	} else {
-		accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Plus(
-			types.RatToCoin(
-				stake.Minus(accountMeta.TransactionCapacity).ToRat().
-					Mul(sdk.NewRat(
-						ctx.BlockHeader().Time-accountMeta.LastActivity,
-						TransactionCapacityRecoverPeriod))))
+		incrementRatio := sdk.NewRat(
+			ctx.BlockHeader().Time-accountMeta.LastActivity,
+			TransactionCapacityRecoverPeriod)
+		accountMeta.TransactionCapacity =
+			accountMeta.TransactionCapacity.Plus(types.RatToCoin(
+				stake.Minus(accountMeta.TransactionCapacity).ToRat().Mul(incrementRatio)))
 	}
-	currentUsage := types.RatToCoin(TransactionCapacityUsage.ToRat().Mul(tpsCapacityRatio))
-	if currentUsage.IsGT(accountMeta.TransactionCapacity) {
+	currentTxCost := types.RatToCoin(CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
+	if currentTxCost.IsGT(accountMeta.TransactionCapacity) {
 		return ErrAccountTPSCapacityNotEnough(me)
 	}
-	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentUsage)
+	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivity = ctx.BlockHeader().Time
 	if err := accManager.accountStorage.SetMeta(ctx, me, accountMeta); err != nil {
 		return ErrIncreaseSequenceByOne(me).TraceCause(err, "")
