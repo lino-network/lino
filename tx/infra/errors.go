@@ -1,4 +1,4 @@
-package model
+package infra
 
 import (
 	"fmt"
@@ -23,24 +23,29 @@ func codeToDefaultMsg(code sdk.CodeType) string {
 	}
 }
 
-func ErrGetValidator() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator failed"))
+// Error constructors
+func ErrProviderNotFound() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Provider not found"))
 }
 
-func ErrSetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator list failed"))
+func ErrIllegalWithdraw() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Illegal withdraw"))
 }
 
-func ErrGetValidatorList() sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get validator list failed"))
+func ErrCommitingDepositNotEnough() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Commiting deposit not enough"))
 }
 
-func ErrValidatorMarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
+func ErrVotingDepositNotEnough() sdk.Error {
+	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Voting Deposit fee not enough"))
 }
 
-func ErrValidatorUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Validator unmarshal error: %s", err.Error()))
+func ErrInvalidUsername() sdk.Error {
+	return newError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+}
+
+func ErrAccountCoinNotEnough() sdk.Error {
+	return newError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account bank's coins are not enough"))
 }
 
 func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
