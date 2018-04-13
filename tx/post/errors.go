@@ -43,6 +43,10 @@ func ErrAddDonation(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", postKey))
 }
 
+func ErrGetPenaltyScore(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("get post %v penalty score failed", postKey))
+}
+
 func ErrUpdateLastActivity(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("update post %v last activity failed", postKey))
 }

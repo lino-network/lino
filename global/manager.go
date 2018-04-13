@@ -125,8 +125,34 @@ func (gm *GlobalManager) AddConsumptionFrictionToRewardPool(ctx sdk.Context, coi
 	return nil
 }
 
+// put hourly inflation to reward pool
+func (gm *GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHoursThisYear int64) sdk.Error {
+	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
+	if getErr != nil {
+		return getErr
+	}
+	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
+	if err != nil {
+		return err
+	}
+	resRat := pool.ContentCreatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+	resCoin := types.RatToCoin(resRat)
+	pool.ContentCreatorInflationPool = pool.ContentCreatorInflationPool.Minus(resCoin)
+
+	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
+		return err
+	}
+
+	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(resCoin)
+
+	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return err
+	}
+	return nil
+}
+
 // after 7 days, one consumption needs to claim its reward from consumption reward pool
-func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, coin types.Coin) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, coin types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
 	if coin.IsZero() {
 		return types.NewCoin(0), nil
 	}
@@ -136,9 +162,9 @@ func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, coin types.C
 		return types.NewCoin(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
 	}
 
-	// reward = (consumption reward pool) * ((this consumption) / (total consumption in 7 days window))
+	// reward = (consumption reward pool) * ((this consumption * penalty score) / (total consumption in 7 days window))
 	reward := types.RatToCoin(consumptionMeta.ConsumptionRewardPool.ToRat().
-		Mul(coin.ToRat().Quo(consumptionMeta.ConsumptionWindow.ToRat())))
+		Mul(coin.ToRat().Mul(penaltyScore).Quo(consumptionMeta.ConsumptionWindow.ToRat())))
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(coin)
@@ -175,13 +201,13 @@ func (gm *GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types
 	return nil
 }
 
-func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHours int64) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {
 		return types.NewCoin(0), getErr
 	}
 
-	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHours+1))
+	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
 	resCoin := types.RatToCoin(resRat)
 	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Minus(resCoin)
 
@@ -191,13 +217,13 @@ func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context, pastHours 
 	return resCoin, nil
 }
 
-func (gm *GlobalManager) GetInfraHourlyInflation(ctx sdk.Context, pastHours int64) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetInfraHourlyInflation(ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {
 		return types.NewCoin(0), getErr
 	}
 
-	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHours+1))
+	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
 	resCoin := types.RatToCoin(resRat)
 	pool.InfraInflationPool = pool.InfraInflationPool.Minus(resCoin)
 

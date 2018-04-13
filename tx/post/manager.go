@@ -232,6 +232,21 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 	return pm.postStorage.SetPostView(ctx, postKey, view)
 }
 
+// get penalty score from report and upvote
+func (pm *PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	if err != nil {
+		return sdk.NewRat(0), ErrGetPenaltyScore(postKey).TraceCause(err, "")
+	}
+	if postMeta.TotalReportStake.IsZero() {
+		return sdk.ZeroRat, nil
+	}
+	if postMeta.TotalUpvoteStake.IsZero() {
+		return sdk.OneRat, nil
+	}
+	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
+}
+
 // update last activity
 func (pm *PostManager) UpdateLastActivity(ctx sdk.Context, postKey types.PostKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
