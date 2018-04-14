@@ -118,6 +118,9 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
+	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) || msg.RedistributionSplitRate.GT(sdk.OneRat) {
+		return ErrPostRedistributionSplitRate()
+	}
 	return nil
 }
 

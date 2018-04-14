@@ -164,7 +164,8 @@ func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, coin types.C
 
 	// reward = (consumption reward pool) * ((this consumption * penalty score) / (total consumption in 7 days window))
 	reward := types.RatToCoin(consumptionMeta.ConsumptionRewardPool.ToRat().
-		Mul(coin.ToRat().Mul(penaltyScore).Quo(consumptionMeta.ConsumptionWindow.ToRat())))
+		Mul(coin.ToRat().Mul(sdk.OneRat.Sub(penaltyScore)).
+			Quo(consumptionMeta.ConsumptionWindow.ToRat())))
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(coin)

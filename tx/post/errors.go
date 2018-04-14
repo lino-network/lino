@@ -23,6 +23,10 @@ func ErrCreatePost(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed", postKey))
 }
 
+func ErrCreatePostSourceInvalid(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed, source post is invalid", postKey))
+}
+
 func ErrPostExist(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post %v already exist", postKey))
 }
@@ -153,6 +157,10 @@ func ErrPostTitleExceedMaxLength() sdk.Error {
 
 func ErrPostContentExceedMaxLength() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post content exceeds max length limitation"))
+}
+
+func ErrPostRedistributionSplitRate() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post redistribution rate invalid"))
 }
 
 func ErrPostDonateNoUsername() sdk.Error {

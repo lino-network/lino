@@ -97,3 +97,16 @@ func TestAccountMeta(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *resultPtr, "Account meta should be equal")
 }
+
+func TestAccountReward(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	reward := Reward{}
+	err := as.SetReward(ctx, types.AccountKey("test"), &reward)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetReward(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, reward, *resultPtr, "Account reward should be equal")
+}
