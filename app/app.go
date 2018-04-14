@@ -174,6 +174,14 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
+
+	if err := lb.voteManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+
+	if err := lb.infraManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
