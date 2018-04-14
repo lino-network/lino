@@ -174,14 +174,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-
-	if err := lb.voteManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
-
-	if err := lb.infraManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
@@ -313,16 +305,10 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToValidator(ctx)
 	lb.distributeInflationToInfraProvider(ctx)
-<<<<<<< HEAD
 	lb.distributeInflationToConsumptionRewardPool(ctx)
 
-<<<<<<< HEAD
-=======
-=======
->>>>>>> distribute inflation to infra provider
 }
 
->>>>>>> distribute inflation to infra provider
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
@@ -340,11 +326,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-<<<<<<< HEAD
-	_, err := lb.globalManager.GetInfraHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
-=======
-	coin, err := lb.globalManager.GetInfraHourlyInflation(ctx, lb.pastMinutes/60)
->>>>>>> distribute inflation to infra provider
+	coin, err := lb.globalManager.GetInfraHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
 	if err != nil {
 		panic(err)
 	}
@@ -366,7 +348,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
-	
+
 }
 
 func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {

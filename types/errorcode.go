@@ -47,4 +47,8 @@ const (
 	// Infra errors reserve 800 ~ 899
 	CodeInfraProviderHandlerFailed sdk.CodeType = 800
 	CodeInfraProviderManagerFailed sdk.CodeType = 801
+
+	// Developer errors reserve 900 ~ 999
+	CodeDeveloperHandlerFailed sdk.CodeType = 900
+	CodeDeveloperManagerFailed sdk.CodeType = 901
 )

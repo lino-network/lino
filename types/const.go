@@ -29,10 +29,12 @@ const (
 	PostRouterName = "post"
 	// ValidatorRouterName is used for routing in app
 	ValidatorRouterName = "validator"
-	// VoterRounterName is used for routing in app
+	// VoteRounterName is used for routing in app
 	VoteRouterName = "vote"
-	// VoterRounterName is used for routing in app
+	// InfraRounterName is used for routing in app
 	InfraRouterName = "infra"
+	// DeveloperRounterName is used for routing in app
+	DeveloperRouterName = "developer"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
