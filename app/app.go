@@ -174,6 +174,14 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
+
+	if err := lb.voteManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+
+	if err := lb.infraManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
@@ -307,8 +315,6 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToInfraProvider(ctx)
 	lb.distributeInflationToConsumptionRewardPool(ctx)
 
-}
-
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
@@ -331,7 +337,24 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		panic(err)
 	}
 
-	// TODO give inflation to each infra provider according to their usage
+	lst, getErr := lb.infraManager.GetInfraProviderList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
+
+	for _, provider := range lst.AllInfraProviders {
+		percentage, getErr := lb.infraManager.GetUsageWeight(ctx, provider)
+		if getErr != nil {
+			panic(getErr)
+		}
+		myShare := coin.ToRat().Mul(percentage)
+		lb.accountManager.AddCoin(ctx, provider, types.RatToCoin(myShare))
+	}
+
+	if err := lb.infraManager.ClearUsage(ctx); err != nil {
+		panic(err)
+	}
+	
 }
 
 func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {
