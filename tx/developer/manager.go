@@ -156,15 +156,15 @@ func (dm DeveloperManager) Withdraw(ctx sdk.Context, username types.AccountKey, 
 	return nil
 }
 
-func (dm DeveloperManager) WithdrawAll(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (dm DeveloperManager) WithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
-		return getErr
+		return types.NewCoin(0), getErr
 	}
 	if err := dm.Withdraw(ctx, username, developer.Deposit); err != nil {
-		return err
+		return types.NewCoin(0), err
 	}
-	return nil
+	return developer.Deposit, nil
 }
 
 func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
