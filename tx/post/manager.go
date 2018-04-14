@@ -85,7 +85,7 @@ func (pm *PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateP
 		return ErrPostExist(postKey)
 	}
 	if err := pm.setRootSourcePost(ctx, postInfo); err != nil {
-		return ErrCreatePost(postKey).TraceCause(err, "")
+		return ErrCreatePostSourceInvalid(postKey)
 	}
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
 		return ErrCreatePost(postKey).TraceCause(err, "")
@@ -141,13 +141,14 @@ func (pm *PostManager) AddOrUpdateLikeToPost(
 }
 
 // add or update report or upvote from the user if exist
-func (pm *PostManager) AddOrUpdateReportOrUpvoteToPost(
+func (pm *PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
-	postMeta.LastActivity = ctx.BlockHeader().Time
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
 	}
+	postMeta.LastActivity = ctx.BlockHeader().Time
+
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, postKey, user)
 	// Revoke privous
 	if reportOrUpvote != nil {
@@ -230,6 +231,28 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 	}
 
 	return pm.postStorage.SetPostView(ctx, postKey, view)
+}
+
+// get penalty score from report and upvote
+func (pm *PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	if err != nil {
+		return sdk.NewRat(0), ErrGetPenaltyScore(postKey).TraceCause(err, "")
+	}
+	if postMeta.TotalReportStake.IsZero() {
+		return sdk.ZeroRat, nil
+	}
+	if postMeta.TotalUpvoteStake.IsZero() {
+		return sdk.OneRat, nil
+	}
+	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
+	if penaltyScore.LT(sdk.ZeroRat) {
+		return sdk.ZeroRat, nil
+	}
+	if penaltyScore.GT(sdk.OneRat) {
+		return sdk.OneRat, nil
+	}
+	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
 }
 
 // update last activity

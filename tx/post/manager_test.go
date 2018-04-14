@@ -11,43 +11,266 @@ import (
 
 // test create post
 func TestCreatePost(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user1 := createTestAccount(t, ctx, am, "user1")
+	user2 := createTestAccount(t, ctx, am, "user2")
+
+	cases := []struct {
+		postID       string
+		author       types.AccountKey
+		sourcePostID string
+		sourceAuthor types.AccountKey
+		expectResult sdk.Error
+	}{
+		{"postID", user1, "", "", nil},
+		{"postID", user2, "", "", nil},
+		{"postID", user1, "", "", ErrPostExist(types.GetPostKey(user1, "postID"))},
+		{"postID", user2, "postID", user1, ErrPostExist(types.GetPostKey(user2, "postID"))},
+		{"postID", user2, "postID", user2, ErrPostExist(types.GetPostKey(user2, "postID"))},
+		{"postID2", user2, "postID", user1, nil},
+		{"postID3", user2, "postID3", user1, ErrCreatePostSourceInvalid(types.GetPostKey(user2, "postID3"))},
+	}
+
+	for _, cs := range cases {
+		// test valid postInfo
+		postCreateParams := PostCreateParams{
+			PostID:       cs.postID,
+			Title:        string(make([]byte, 50)),
+			Content:      string(make([]byte, 1000)),
+			Author:       cs.author,
+			SourceAuthor: cs.sourceAuthor,
+			SourcePostID: cs.sourcePostID,
+			Links:        []types.IDToURLMapping{},
+			RedistributionSplitRate: sdk.ZeroRat,
+		}
+		err := pm.CreatePost(ctx, &postCreateParams)
+		assert.Equal(t, err, cs.expectResult)
+
+		if err != nil {
+			continue
+		}
+		postInfo := model.PostInfo{
+			PostID:       postCreateParams.PostID,
+			Title:        postCreateParams.Title,
+			Content:      postCreateParams.Content,
+			Author:       postCreateParams.Author,
+			SourceAuthor: postCreateParams.SourceAuthor,
+			SourcePostID: postCreateParams.SourcePostID,
+			Links:        postCreateParams.Links,
+		}
+
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+		}
+		checkPostKVStore(t, ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+	}
+}
+
+// test get source post
+func TestGetSourcePost(t *testing.T) {
 	ctx, _, pm, _ := setupTest(t, 1)
-	author := types.AccountKey("author")
-	postID := "TestPostID"
-	// test valid postInfo
-	postCreateParams := PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       author,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
-	}
-	err := pm.CreatePost(ctx, &postCreateParams)
-	assert.Nil(t, err)
-
-	postInfo := model.PostInfo{
-		PostID:       postCreateParams.PostID,
-		Title:        postCreateParams.Title,
-		Content:      postCreateParams.Content,
-		Author:       postCreateParams.Author,
-		ParentAuthor: postCreateParams.ParentAuthor,
-		ParentPostID: postCreateParams.ParentPostID,
-		SourceAuthor: postCreateParams.SourceAuthor,
-		SourcePostID: postCreateParams.SourcePostID,
-		Links:        postCreateParams.Links,
+	user1 := types.AccountKey("user1")
+	user2 := types.AccountKey("user2")
+	user3 := types.AccountKey("user3")
+	cases := []struct {
+		postID             string
+		author             types.AccountKey
+		sourcePostID       string
+		sourceAuthor       types.AccountKey
+		expectSourcePostID string
+		expectSourceAuthor types.AccountKey
+	}{
+		{"postID", user1, "", "", "", ""},
+		{"postID1", user1, "postID", user1, "postID", user1},
+		{"postID", user2, "postID1", user1, "postID", user1},
+		{"postID", user3, "postID", user2, "postID", user1},
 	}
 
-	postMeta := model.PostMeta{
-		Created:                 ctx.BlockHeader().Time,
-		LastUpdate:              ctx.BlockHeader().Time,
-		LastActivity:            ctx.BlockHeader().Time,
-		AllowReplies:            true,
-		RedistributionSplitRate: sdk.ZeroRat,
+	for _, cs := range cases {
+		postCreateParams := PostCreateParams{
+			PostID:       cs.postID,
+			Title:        string(make([]byte, 50)),
+			Content:      string(make([]byte, 1000)),
+			Author:       cs.author,
+			ParentAuthor: "",
+			ParentPostID: "",
+			SourceAuthor: cs.sourceAuthor,
+			SourcePostID: cs.sourcePostID,
+			Links:        []types.IDToURLMapping{},
+			RedistributionSplitRate: sdk.ZeroRat,
+		}
+		err := pm.CreatePost(ctx, &postCreateParams)
+		assert.Nil(t, err)
+		sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, types.GetPostKey(cs.author, cs.postID))
+		assert.Nil(t, err)
+		assert.Equal(t, sourceAuthor, cs.expectSourceAuthor)
+		assert.Equal(t, sourcePostID, cs.expectSourcePostID)
 	}
-	checkPostKVStore(t, ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+}
+
+func TestAddOrUpdateLikeToPost(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user3 := types.AccountKey("user3")
+
+	cases := []struct {
+		likeUser                 types.AccountKey
+		postID                   string
+		author                   types.AccountKey
+		weight                   int64
+		expectTotalLikeCount     int64
+		expectTotalLikeWeight    int64
+		expectTotalDislikeWeight int64
+	}{
+		{user3, postID1, user1, 10000, 1, 10000, 0},
+		{user3, postID2, user2, 10000, 1, 10000, 0},
+		{user1, postID2, user2, 10000, 2, 20000, 0},
+		{user2, postID1, user1, -10000, 2, 10000, 10000},
+		{user3, postID2, user2, 0, 2, 10000, 0},
+		{user3, postID1, user1, -10000, 2, 0, 20000},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPostKey(cs.author, cs.postID)
+		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
+		assert.Nil(t, err)
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalLikeCount:          cs.expectTotalLikeCount,
+			TotalLikeWeight:         cs.expectTotalLikeWeight,
+			TotalDislikeWeight:      cs.expectTotalDislikeWeight,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+	}
+}
+
+func TestReportOrUpvoteToPost(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user3 := types.AccountKey("user3")
+
+	cases := []struct {
+		user                   types.AccountKey
+		stake                  types.Coin
+		postID                 string
+		author                 types.AccountKey
+		isReport               bool
+		isRevoke               bool
+		expectTotalReportStake types.Coin
+		expectTotalUpvoteStake types.Coin
+	}{
+		{user3, types.NewCoin(1), postID1, user1, true, false, types.NewCoin(1), types.NewCoin(0)},
+		{user3, types.NewCoin(2), postID1, user1, true, false, types.NewCoin(2), types.NewCoin(0)},
+		{user2, types.NewCoin(100), postID1, user1, false, false, types.NewCoin(2), types.NewCoin(100)},
+		{user3, types.NewCoin(3), postID2, user2, false, false, types.NewCoin(0), types.NewCoin(3)},
+		{user3, types.NewCoin(4), postID1, user1, false, true, types.NewCoin(0), types.NewCoin(100)},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPostKey(cs.author, cs.postID)
+		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport, cs.isRevoke)
+		assert.Nil(t, err)
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalReportStake:        cs.expectTotalReportStake,
+			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+	}
+}
+
+func TestDonation(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user3 := types.AccountKey("user3")
+
+	baseTime := ctx.BlockHeader().Time
+	cases := []struct {
+		user                types.AccountKey
+		donateAt            int64
+		amount              types.Coin
+		postID              string
+		author              types.AccountKey
+		expectDonateCount   int64
+		expectTotalDonation types.Coin
+		expectDonationList  model.Donations
+	}{
+		{user3, baseTime, types.NewCoin(1), postID1, user1, 1, types.NewCoin(1),
+			model.Donations{user3, []model.Donation{model.Donation{types.NewCoin(1), baseTime}}}},
+		{user3, baseTime, types.NewCoin(1), postID2, user2, 1, types.NewCoin(1),
+			model.Donations{user3, []model.Donation{model.Donation{types.NewCoin(1), baseTime}}}},
+		{user3, baseTime, types.NewCoin(20), postID2, user2, 2, types.NewCoin(21),
+			model.Donations{user3,
+				[]model.Donation{model.Donation{types.NewCoin(1), baseTime},
+					model.Donation{types.NewCoin(20), baseTime}}}},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPostKey(cs.author, cs.postID)
+		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount)
+		assert.Nil(t, err)
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalDonateCount:        cs.expectDonateCount,
+			TotalReward:             cs.expectTotalDonation,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+		storage := model.NewPostStorage(TestPostKVStoreKey)
+		donations, _ := storage.GetPostDonations(ctx, postKey, cs.user)
+		assert.Equal(t, cs.expectDonationList, *donations)
+	}
+}
+
+func TestGetPenaltyScore(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	postKey := types.GetPostKey(user, postID)
+	cases := []struct {
+		totalReportStake types.Coin
+		totalUpvoteStake types.Coin
+		expectRat        sdk.Rat
+	}{
+		{types.NewCoin(1), types.NewCoin(0), sdk.OneRat},
+		{types.NewCoin(0), types.NewCoin(1), sdk.ZeroRat},
+		{types.NewCoin(0), types.NewCoin(0), sdk.ZeroRat},
+		{types.NewCoin(100), types.NewCoin(100), sdk.OneRat},
+		{types.NewCoin(1000), types.NewCoin(100), sdk.OneRat},
+		{types.NewCoin(50), types.NewCoin(100), sdk.NewRat(1, 2)},
+	}
+
+	for _, cs := range cases {
+		postMeta := &model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalReportStake:        cs.totalReportStake,
+			TotalUpvoteStake:        cs.totalUpvoteStake,
+		}
+		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
+		assert.Nil(t, err)
+		penaltyScore, err := pm.GetPenaltyScore(ctx, postKey)
+		assert.Nil(t, err)
+		assert.Equal(t, penaltyScore, cs.expectRat)
+	}
 }

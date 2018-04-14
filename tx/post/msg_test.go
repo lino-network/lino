@@ -31,60 +31,61 @@ func testCommentAndRepostValidate(t *testing.T, postCreateParams PostCreateParam
 
 func getCommentAndRepost(t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostCreateParams {
 	return PostCreateParams{
-		PostID:       "TestPostID",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       "author",
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
+		PostID:                  "TestPostID",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  "author",
+		ParentAuthor:            types.AccountKey(parentAuthor),
+		ParentPostID:            parentPostID,
+		SourceAuthor:            types.AccountKey(sourceAuthor),
+		SourcePostID:            sourcePostID,
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 }
 
 func TestCreatePostMsg(t *testing.T) {
+	sdk.ZeroRat.GT(sdk.ZeroRat)
 	author := types.AccountKey("TestAuthor")
-	// test valid post
-	postCreateParams := PostCreateParams{
-		PostID:       "TestPostID",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       author,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
+	cases := []struct {
+		postCreateParams PostCreateParams
+		expectResult     sdk.Error
+	}{
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat}, expectResult: nil},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(1)}, expectResult: nil},
+		{postCreateParams: PostCreateParams{
+			PostID: "", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostCreateNoPostID()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: "", Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostCreateNoAuthor()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 51)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostTitleExceedMaxLength()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1001)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostContentExceedMaxLength()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(-1)},
+			expectResult: ErrPostRedistributionSplitRate()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(101, 100)},
+			expectResult: ErrPostRedistributionSplitRate()},
 	}
-	createMsg := NewCreatePostMsg(postCreateParams)
-	result := createMsg.ValidateBasic()
-	assert.Nil(t, result)
-
-	// test missing post id
-	postCreateParams.PostID = ""
-
-	createMsg = NewCreatePostMsg(postCreateParams)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostCreateNoPostID())
-
-	postCreateParams.Author = ""
-	postCreateParams.PostID = "testPost"
-	createMsg = NewCreatePostMsg(postCreateParams)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostCreateNoAuthor())
-
-	// test exceeding max title length
-	postCreateParams.Author = author
-	postCreateParams.Title = string(make([]byte, 51))
-	createMsg = NewCreatePostMsg(postCreateParams)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostTitleExceedMaxLength())
-
-	// test exceeding max content length
-	postCreateParams.Title = string(make([]byte, 50))
-	postCreateParams.Content = string(make([]byte, 1001))
-	createMsg = NewCreatePostMsg(postCreateParams)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostContentExceedMaxLength())
+	for _, cs := range cases {
+		createMsg := NewCreatePostMsg(cs.postCreateParams)
+		result := createMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectResult)
+	}
 }
 
 func TestCommentAndRepost(t *testing.T) {
