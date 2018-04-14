@@ -16,8 +16,7 @@ import (
 )
 
 func QueryLocalStorage(key cmn.HexBytes, storeName string) (res []byte, err error) {
-	node := rpcclient.NewHTTP(viper.GetString(FlagNodeAddr), "/websocket")
-
+	node := rpcclient.NewHTTP(viper.GetString(FlagNode), "/websocket")
 	path := fmt.Sprintf("/%s/key", types.ValidatorKVStoreKey)
 	opts := rpcclient.ABCIQueryOptions{
 		Height:  0,
@@ -36,7 +35,7 @@ func QueryLocalStorage(key cmn.HexBytes, storeName string) (res []byte, err erro
 
 // Broadcast the transaction bytes to Tendermint
 func BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-	node := rpcclient.NewHTTP(viper.GetString(FlagNodeAddr), "/websocket")
+	node := rpcclient.NewHTTP(viper.GetString(FlagNode), "/websocket")
 
 	res, err := node.BroadcastTxCommit(tx)
 	if err != nil {

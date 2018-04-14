@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"html/template"
 	"log"
 	"net/http"
@@ -15,32 +16,31 @@ import (
 )
 
 const (
-	FlagNodeAddr = "addr"
-	FlagChainID  = "chain-id"
+	FlagNode    = "node"
+	FlagChainID = "chain-id"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
-func LocalServerCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "server",
-		Short: "lino server is local server used to interact with blockchain",
-		Run: func(cmd *cobra.Command, args []string) {
-			fs := http.FileServer(http.Dir("static"))
-			http.Handle("/static/", http.StripPrefix("/static/", fs))
+var rootCmd = &cobra.Command{
+	Use:   "server",
+	Short: "lino server is local server used to interact with blockchain",
+	Run: func(cmd *cobra.Command, args []string) {
+		fs := http.FileServer(http.Dir("static"))
+		http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-			http.HandleFunc("/", serveTemplate)
+		http.HandleFunc("/", serveTemplate)
 
-			log.Println("Listening...")
-			http.ListenAndServe(":3000", nil)
-		},
-	}
-	cmd.Flags().String(FlagNodeAddr, "tcp://localhost:46657", "local node address to interact with blockchain")
-	cmd.Flags().String(FlagChainID, "lino", "blockchain identity")
-	return cmd
+		log.Println("Listening...")
+		http.ListenAndServe(":3000", nil)
+	},
 }
 
 func main() {
-	if err := LocalServerCmd().Execute(); err != nil {
+	rootCmd.PersistentFlags().StringP(FlagNode, "n", "tcp://localhost:46657", "Node to connect to")
+	rootCmd.PersistentFlags().StringP(FlagChainID, "c", "", "ID of chain we connect to")
+	viper.BindPFlag(FlagNode, rootCmd.PersistentFlags().Lookup(FlagNode))
+	viper.BindPFlag(FlagChainID, rootCmd.PersistentFlags().Lookup(FlagChainID))
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -66,19 +66,10 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	for i, val := range validatorList.OncallValidators {
 		oncallList[i] = string(val)
 	}
-	data := struct {
-		Title            string
-		OnCallValidators []string
-	}{
-		Title:            "title",
-		OnCallValidators: oncallList,
-	}
-
 	varmap := map[string]interface{}{
 		"var1":             "value",
 		"OnCallValidators": oncallList,
 	}
-	fmt.Println(data)
 	tmpl, _ := template.ParseFiles(lp, fp)
 	tmpl.ExecuteTemplate(w, "layout", varmap)
 }
