@@ -397,11 +397,11 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	user3 := createTestAccount(t, ctx, am, "user3")
 
 	cases := []struct {
-		ReportOrUpvoteUser     types.AccountKey
-		IsReport               bool
-		IsRevoke               bool
-		ExpectTotalReportStake types.Coin
-		ExpectTotalUpvoteStake types.Coin
+		reportOrUpvoteUser     types.AccountKey
+		isReport               bool
+		isRevoke               bool
+		expectTotalReportStake types.Coin
+		expectTotalUpvoteStake types.Coin
 	}{
 		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
 		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
@@ -417,7 +417,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 
 	for _, cs := range cases {
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + acc.TotalCoinDaysSec})
-		msg := NewReportOrUpvoteMsg(cs.ReportOrUpvoteUser, user1, postID, cs.IsReport, cs.IsRevoke)
+		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user1, postID, cs.isReport, cs.isRevoke)
 		result := handler(newCtx, msg)
 		assert.Equal(t, result, sdk.Result{})
 		postMeta := model.PostMeta{
@@ -426,8 +426,8 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			LastActivity:            newCtx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
-			TotalReportStake:        cs.ExpectTotalReportStake,
-			TotalUpvoteStake:        cs.ExpectTotalUpvoteStake,
+			TotalReportStake:        cs.expectTotalReportStake,
+			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
 		}
 		postKey := types.GetPostKey(user1, postID)
 		checkPostMeta(t, ctx, postKey, postMeta)

@@ -98,9 +98,8 @@ type Views []View
 
 // Donation struct, only used in Donation
 type Donation struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.Coin       `json:"amount"`
-	Created  int64            `json:"created"`
+	Amount  types.Coin `json:"amount"`
+	Created int64      `json:"created"`
 }
 type Donations struct {
 	Username     types.AccountKey `json:"username"`

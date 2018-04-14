@@ -2,25 +2,48 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
+const (
+	FlagNodeAddr = "addr"
+	FlagChainID  = "chain-id"
+)
+
+// SendTxCommand will create a send tx and sign it with the given key
+func LocalServerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "server",
+		Short: "lino server is local server used to interact with blockchain",
+		Run: func(cmd *cobra.Command, args []string) {
+			fs := http.FileServer(http.Dir("static"))
+			http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+			http.HandleFunc("/", serveTemplate)
+
+			log.Println("Listening...")
+			http.ListenAndServe(":3000", nil)
+		},
+	}
+	cmd.Flags().String(FlagNodeAddr, "tcp://localhost:46657", "local node address to interact with blockchain")
+	cmd.Flags().String(FlagChainID, "lino", "blockchain identity")
+	return cmd
+}
+
 func main() {
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	http.HandleFunc("/", serveTemplate)
-
-	log.Println("Listening...")
-	http.ListenAndServe(":3000", nil)
+	if err := LocalServerCmd().Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
@@ -28,26 +51,14 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	lp := filepath.Join("templates", "layout.html")
 	fp := filepath.Join("templates", "login.html")
 
-	node := rpcclient.NewHTTP("tcp://localhost:46657", "/websocket")
-
-	path := fmt.Sprintf("/%s/key", types.ValidatorKVStoreKey)
-	opts := rpcclient.ABCIQueryOptions{
-		Height:  0,
-		Trusted: true,
-	}
-	result, err := node.ABCIQueryWithOptions(path, model.GetValidatorListKey(), opts)
+	res, err := QueryLocalStorage(model.GetValidatorListKey(), types.ValidatorKVStoreKey)
 	if err != nil {
 		log.Println("query failed")
 		return
 	}
-	resp := result.Response
-	if resp.Code != uint32(0) {
-		log.Println("response not good")
-		return
-	}
 	validatorList := new(model.ValidatorList)
 	cdc := app.MakeCodec()
-	if err := cdc.UnmarshalJSON(resp.Value, validatorList); err != nil {
+	if err := cdc.UnmarshalJSON(res, validatorList); err != nil {
 		log.Println("unmarshal failed")
 		return
 	}
