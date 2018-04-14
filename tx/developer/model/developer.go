@@ -6,6 +6,7 @@ import (
 
 type Developer struct {
 	Username       types.AccountKey `json:"username"`
+	Deposit        types.Coin       `json:"deposit"`
 	AppConsumption int64            `json:"app_consumption"`
 }
 

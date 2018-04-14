@@ -44,5 +44,13 @@ func handleDeveloperRevokeMsg(ctx sdk.Context, dm DeveloperManager, msg Develope
 		return ErrDeveloperNotFound().Result()
 	}
 
+	if err := dm.RemoveFromDeveloperList(ctx, msg.Username); err != nil {
+		return err.Result()
+	}
+
+	if err := dm.WithdrawAll(ctx, msg.Username); err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }

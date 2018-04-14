@@ -23,22 +23,22 @@ func NewDeveloperStorage(key sdk.StoreKey) *DeveloperStorage {
 	return &storage
 }
 
-func (vs DeveloperStorage) GetDeveloper(ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
-	store := ctx.KVStore(vs.key)
+func (ds DeveloperStorage) GetDeveloper(ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
+	store := ctx.KVStore(ds.key)
 	providerByte := store.Get(GetDeveloperKey(accKey))
 	if providerByte == nil {
 		return nil, ErrGetDeveloper()
 	}
 	provider := new(Developer)
-	if err := vs.cdc.UnmarshalJSON(providerByte, provider); err != nil {
+	if err := ds.cdc.UnmarshalJSON(providerByte, provider); err != nil {
 		return nil, ErrDeveloperUnmarshalError(err)
 	}
 	return provider, nil
 }
 
-func (vs DeveloperStorage) SetDeveloper(ctx sdk.Context, accKey types.AccountKey, Developer *Developer) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	DeveloperByte, err := vs.cdc.MarshalJSON(*Developer)
+func (ds DeveloperStorage) SetDeveloper(ctx sdk.Context, accKey types.AccountKey, Developer *Developer) sdk.Error {
+	store := ctx.KVStore(ds.key)
+	DeveloperByte, err := ds.cdc.MarshalJSON(*Developer)
 	if err != nil {
 		return ErrDeveloperMarshalError(err)
 	}
@@ -46,22 +46,28 @@ func (vs DeveloperStorage) SetDeveloper(ctx sdk.Context, accKey types.AccountKey
 	return nil
 }
 
-func (vs DeveloperStorage) GetDeveloperList(ctx sdk.Context) (*DeveloperList, sdk.Error) {
-	store := ctx.KVStore(vs.key)
+func (ds DeveloperStorage) DeleteDeveloper(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	store := ctx.KVStore(ds.key)
+	store.Delete(GetDeveloperKey(username))
+	return nil
+}
+
+func (ds DeveloperStorage) GetDeveloperList(ctx sdk.Context) (*DeveloperList, sdk.Error) {
+	store := ctx.KVStore(ds.key)
 	listByte := store.Get(GetDeveloperListKey())
 	if listByte == nil {
 		return nil, ErrGetDeveloperList()
 	}
 	lst := new(DeveloperList)
-	if err := vs.cdc.UnmarshalJSON(listByte, lst); err != nil {
+	if err := ds.cdc.UnmarshalJSON(listByte, lst); err != nil {
 		return nil, ErrDeveloperUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (vs DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	listByte, err := vs.cdc.MarshalJSON(*lst)
+func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList) sdk.Error {
+	store := ctx.KVStore(ds.key)
+	listByte, err := ds.cdc.MarshalJSON(*lst)
 	if err != nil {
 		return ErrSetDeveloperList()
 	}

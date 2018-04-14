@@ -135,6 +135,38 @@ func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// this method won't check if it is a legal withdraw, caller should check by itself
+func (dm DeveloperManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	developer, getErr := dm.storage.GetDeveloper(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	developer.Deposit = developer.Deposit.Minus(coin)
+
+	if developer.Deposit.IsZero() {
+		if err := dm.storage.DeleteDeveloper(ctx, username); err != nil {
+			return err
+		}
+	} else {
+		if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (dm DeveloperManager) WithdrawAll(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	developer, getErr := dm.storage.GetDeveloper(ctx, username)
+	if getErr != nil {
+		return getErr
+	}
+	if err := dm.Withdraw(ctx, username, developer.Deposit); err != nil {
+		return err
+	}
+	return nil
+}
+
 func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
 	for index, user := range lst {
 		if user == me {
