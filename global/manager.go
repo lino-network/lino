@@ -86,9 +86,9 @@ func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event types
 }
 
 // register coin return event with a time interval
-func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	for i := int64(1); i <= types.CoinReturnTimes; i++ {
-		if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
+func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Event, times int64, interval int64) sdk.Error {
+	for i := int64(1); i <= times; i++ {
+		if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(interval*3600*i), event); err != nil {
 			return err
 		}
 	}

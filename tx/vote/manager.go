@@ -3,6 +3,7 @@ package vote
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -16,13 +17,13 @@ var (
 	ProposalListSubStore = []byte("ProposalList/ProposalListKey")
 )
 
-const returnCoinEvent = 0x1
-const decideProposalEvent = 0x2
+const decideProposalEvent = 0x1
+const returnCoinEvent = 0x2
 
 var _ = oldwire.RegisterInterface(
 	struct{ types.Event }{},
-	oldwire.ConcreteType{ReturnCoinEvent{}, returnCoinEvent},
 	oldwire.ConcreteType{DecideProposalEvent{}, decideProposalEvent},
+	oldwire.ConcreteType{acc.ReturnCoinEvent{}, returnCoinEvent},
 )
 
 // vote manager is the proxy for all storage structs defined above
@@ -228,7 +229,7 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin t
 }
 
 // this method won't check if it is a legal withdraw, caller should check by itself
-func (vm VoteManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return getErr
@@ -245,24 +246,21 @@ func (vm VoteManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin 
 		}
 	}
 
-	if err := vm.CreateReturnCoinEvent(ctx, username, coin, gm); err != nil {
-		return nil
-	}
 	return nil
 }
 
-func (vm VoteManager) WithdrawAll(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
-		return getErr
+		return types.NewCoin(0), getErr
 	}
-	if err := vm.Withdraw(ctx, username, voter.Deposit, gm); err != nil {
-		return err
+	if err := vm.VoterWithdraw(ctx, username, voter.Deposit); err != nil {
+		return types.NewCoin(0), err
 	}
-	return nil
+	return voter.Deposit, nil
 }
 
-func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	// change voter's delegated power
 	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {
@@ -288,52 +286,22 @@ func (vm VoteManager) ReturnCoinToDelegator(ctx sdk.Context, voterName types.Acc
 		vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation)
 	}
 
-	// return coin to delegator
-	if err := vm.CreateReturnCoinEvent(ctx, delegatorName, coin, gm); err != nil {
-		return err
-	}
 	return nil
 }
 
-func (vm VoteManager) ReturnAllCoinsToDelegator(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey) (types.Coin, sdk.Error) {
 	delegation, getErr := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if getErr != nil {
-		return getErr
+		return types.NewCoin(0), getErr
 	}
-	if err := vm.ReturnCoinToDelegator(ctx, voterName, delegatorName, delegation.Amount, gm); err != nil {
-		return err
+	if err := vm.DelegatorWithdraw(ctx, voterName, delegatorName, delegation.Amount); err != nil {
+		return types.NewCoin(0), err
 	}
-	return nil
+	return delegation.Amount, nil
 }
 
-func (vm VoteManager) ReturnAllCoinsToDelegators(ctx sdk.Context, voterName types.AccountKey, gm global.GlobalManager) sdk.Error {
-	delegators, getErr := vm.storage.GetAllDelegators(ctx, voterName)
-	if getErr != nil {
-		return getErr
-	}
-
-	for _, delegator := range delegators {
-		if err := vm.ReturnAllCoinsToDelegator(ctx, voterName, delegator, gm); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// return coin to an user periodically
-func (vm VoteManager) CreateReturnCoinEvent(ctx sdk.Context, username types.AccountKey, amount types.Coin, gm global.GlobalManager) sdk.Error {
-	pieceRat := amount.ToRat().Quo(sdk.NewRat(types.CoinReturnTimes))
-	piece := types.RatToCoin(pieceRat)
-	event := ReturnCoinEvent{
-		Username: username,
-		Amount:   piece,
-	}
-
-	if err := gm.RegisterCoinReturnEvent(ctx, event); err != nil {
-		return err
-	}
-
-	return nil
+func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
+	return vm.storage.GetAllDelegators(ctx, voterName)
 }
 
 func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {

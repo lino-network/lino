@@ -226,7 +226,7 @@ func (vm ValidatorManager) Deposit(ctx sdk.Context, username types.AccountKey, c
 }
 
 // this method won't check if it is a legal withdraw, caller should check by itself
-func (vm ValidatorManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	validator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
 		return getErr
@@ -236,21 +236,18 @@ func (vm ValidatorManager) Withdraw(ctx sdk.Context, username types.AccountKey, 
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
-	if err := vm.CreateReturnCoinEvent(ctx, username, coin, gm); err != nil {
-		return nil
-	}
 	return nil
 }
 
-func (vm ValidatorManager) WithdrawAll(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
+func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	validator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
-		return getErr
+		return types.NewCoin(0), getErr
 	}
-	if err := vm.Withdraw(ctx, username, validator.Deposit, gm); err != nil {
-		return err
+	if err := vm.ValidatorWithdraw(ctx, username, validator.Deposit); err != nil {
+		return types.NewCoin(0), err
 	}
-	return nil
+	return validator.Deposit, nil
 }
 
 // try to join the oncall validator list, the action will success if either
@@ -404,21 +401,6 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 	}
 	return bestCandidate, nil
 
-}
-
-// return coin to an user periodically
-func (vm ValidatorManager) CreateReturnCoinEvent(ctx sdk.Context, username types.AccountKey, amount types.Coin, gm global.GlobalManager) sdk.Error {
-	pieceRat := amount.ToRat().Quo(sdk.NewRat(types.CoinReturnTimes))
-	piece := types.RatToCoin(pieceRat)
-	event := ReturnCoinEvent{
-		Username: username,
-		Amount:   piece,
-	}
-
-	if err := gm.RegisterCoinReturnEvent(ctx, event); err != nil {
-		return err
-	}
-	return nil
 }
 
 func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {

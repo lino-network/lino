@@ -1,9 +1,7 @@
-package validator
+package account
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global"
-	acc "github.com/lino-network/lino/tx/account"
 	types "github.com/lino-network/lino/types"
 )
 
@@ -12,9 +10,9 @@ type ReturnCoinEvent struct {
 	Amount   types.Coin       `json:"amount"`
 }
 
-func (event ReturnCoinEvent) Execute(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
 	if !am.IsAccountExist(ctx, event.Username) {
-		return acc.ErrUsernameNotFound()
+		return ErrUsernameNotFound()
 	}
 
 	if err := am.AddCoin(ctx, event.Username, event.Amount); err != nil {

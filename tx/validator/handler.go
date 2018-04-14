@@ -17,7 +17,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 		case ValidatorDepositMsg:
 			return handleDepositMsg(ctx, valManager, voteManager, am, msg)
 		case ValidatorWithdrawMsg:
-			return handleWithdrawMsg(ctx, valManager, am, gm, msg)
+			return handleWithdrawMsg(ctx, valManager, gm, msg)
 		case ValidatorRevokeMsg:
 			return handleRevokeMsg(ctx, valManager, gm, msg)
 		default:
@@ -68,7 +68,7 @@ func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager 
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManager, gm global.GlobalManager, msg ValidatorWithdrawMsg) sdk.Result {
+func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -78,7 +78,11 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 		return ErrIllegalWithdraw().Result()
 	}
 
-	if err := vm.Withdraw(ctx, msg.Username, coin, gm); err != nil {
+	if err := vm.ValidatorWithdraw(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -86,12 +90,31 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, am acc.AccountManag
 
 // Handle RevokeMsg
 func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorRevokeMsg) sdk.Result {
-	if err := vm.WithdrawAll(ctx, msg.Username, gm); err != nil {
-		return err.Result()
+	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
+	if withdrawErr != nil {
+		return withdrawErr.Result()
 	}
+
 	if err := vm.RemoveValidatorFromAllLists(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 
+	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
+}
+
+func returnCoinTo(ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, times int64, interval int64, coin types.Coin) sdk.Error {
+	pieceRat := coin.ToRat().Quo(sdk.NewRat(times))
+	piece := types.RatToCoin(pieceRat)
+	event := acc.ReturnCoinEvent{
+		Username: name,
+		Amount:   piece,
+	}
+
+	if err := gm.RegisterCoinReturnEvent(ctx, event, times, interval); err != nil {
+		return err
+	}
+	return nil
 }
