@@ -234,6 +234,22 @@ func (gm *GlobalManager) GetInfraHourlyInflation(ctx sdk.Context, pastHoursThisY
 	return resCoin, nil
 }
 
+func (gm *GlobalManager) GetDeveloperHourlyInflation(ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
+	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
+	if getErr != nil {
+		return types.NewCoin(0), getErr
+	}
+
+	resRat := pool.DeveloperInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+	resCoin := types.RatToCoin(resRat)
+	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Minus(resCoin)
+
+	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
+		return types.NewCoin(0), err
+	}
+	return resCoin, nil
+}
+
 func (gm *GlobalManager) ChangeInfraInternalInflation(ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
 	allocation, getErr := gm.globalStorage.GetInfraInternalAllocation(ctx)
 	if getErr != nil {

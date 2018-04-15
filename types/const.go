@@ -20,6 +20,8 @@ const (
 	VoteKVStoreKey = "vote"
 	// InfraKVStoreKey presents store which keeps infra related value
 	InfraKVStoreKey = "infra"
+	// DeveloperKVStoreKey presents store which keeps developer related value
+	DeveloperKVStoreKey = "developer"
 
 	// RegisterRouterName is used for routing in app
 	RegisterRouterName = "register"
