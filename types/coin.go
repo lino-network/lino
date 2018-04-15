@@ -43,6 +43,10 @@ func (coin Coin) ToRat() sdk.Rat {
 	return sdk.NewRat(coin.Amount)
 }
 
+func (coin Coin) ToInt64() int64 {
+	return coin.Amount
+}
+
 // String provides a human-readable representation of a coin
 func (coin Coin) String() string {
 	return fmt.Sprintf("coin:%v", coin.Amount)

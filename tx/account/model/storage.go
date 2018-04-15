@@ -14,6 +14,7 @@ var (
 	AccountFollowingSubstore         = []byte{0x04}
 	AccountRewardSubstore            = []byte{0x05}
 	AccountPendingStakeQueueSubstore = []byte{0x06}
+	AccountRelationshipSubstore      = []byte{0x07}
 )
 
 type AccountStorage struct {
@@ -227,6 +228,29 @@ func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 	return nil
 }
 
+func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey) (*Relationship, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	relationshipByte := store.Get(GetRelationshipKey(me, other))
+	if relationshipByte == nil {
+		return nil, nil
+	}
+	queue := new(Relationship)
+	if err := as.cdc.UnmarshalBinary(relationshipByte, queue); err != nil {
+		return nil, ErrGetRelationshipFailed().TraceCause(err, "")
+	}
+	return queue, nil
+}
+
+func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey, relationship *Relationship) sdk.Error {
+	store := ctx.KVStore(as.key)
+	relationshipByte, err := as.cdc.MarshalBinary(*relationship)
+	if err != nil {
+		return ErrSetRelationshipFailed().TraceCause(err, "")
+	}
+	store.Set(GetRelationshipKey(me, other), relationshipByte)
+	return nil
+}
+
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
@@ -259,6 +283,14 @@ func GetFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
 
 func GetRewardKey(accKey types.AccountKey) []byte {
 	return append(AccountRewardSubstore, accKey...)
+}
+
+func GetRelationshipPrefix(me types.AccountKey) []byte {
+	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
+}
+
+func GetRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
+	return append(GetRelationshipPrefix(me), other...)
 }
 
 func GetPendingStakeQueueKey(address sdk.Address) []byte {

@@ -404,3 +404,34 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		checkAccountMeta(t, ctx, accKey, accMeta)
 	}
 }
+
+func TestDonationRelationship(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	user2 := types.AccountKey("user2")
+	user3 := types.AccountKey("user3")
+
+	createTestAccount(ctx, am, string(user1))
+	createTestAccount(ctx, am, string(user2))
+	createTestAccount(ctx, am, string(user3))
+
+	cases := []struct {
+		user             types.AccountKey
+		donateTo         types.AccountKey
+		expectDonateTime int64
+	}{
+		{user1, user2, 1},
+		{user1, user2, 2},
+		{user1, user3, 1},
+		{user3, user1, 1},
+		{user2, user1, 1},
+	}
+
+	for _, cs := range cases {
+		err := am.UpdateDonationRelationship(ctx, cs.user, cs.donateTo)
+		assert.Nil(t, err)
+		donateTime, err := am.GetDonationRelationship(ctx, cs.user, cs.donateTo)
+		assert.Nil(t, err)
+		assert.Equal(t, donateTime, cs.expectDonateTime)
+	}
+}

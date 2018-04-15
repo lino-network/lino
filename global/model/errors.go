@@ -28,21 +28,25 @@ func ErrGlobalStatisticsNotFound() sdk.Error {
 }
 
 func ErrGlobalMetaNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global meta not found"))
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global meta not found"))
 }
 
 func ErrGlobalAllocationNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global allocation not found"))
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global allocation not found"))
 }
 
 func ErrInfraAllocationNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Infra internal allocation not found"))
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Infra internal allocation not found"))
 }
 
 func ErrGlobalConsumptionMetaNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global consumption meta not found"))
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global consumption meta not found"))
 }
 
 func ErrGlobalTPSNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Global tps not found"))
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global tps not found"))
+}
+
+func ErrEvluateOfContentValuePara() sdk.Error {
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Evaluate of content value para not found"))
 }

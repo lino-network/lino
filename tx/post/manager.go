@@ -26,6 +26,14 @@ func (pm *PostManager) GetRedistributionSplitRate(ctx sdk.Context, postKey types
 	return postMeta.RedistributionSplitRate, nil
 }
 
+func (pm *PostManager) GetCreatedTimeAndReward(ctx sdk.Context, postKey types.PostKey) (int64, types.Coin, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	if err != nil {
+		return 0, types.NewCoin(0), ErrGetCreatedTime(postKey).TraceCause(err, "")
+	}
+	return postMeta.Created, postMeta.TotalReward, nil
+}
+
 // check if post exist
 func (pm *PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool {
 	if postInfo, _ := pm.postStorage.GetPostInfo(ctx, postKey); postInfo == nil {
