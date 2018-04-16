@@ -96,9 +96,9 @@ func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 }
 
 // register coin return event with a time interval
-func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	for i := int64(1); i <= types.CoinReturnTimes; i++ {
-		if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(types.CoinReturnIntervalHr*3600*i), event); err != nil {
+func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Event, times int64, interval int64) sdk.Error {
+	for i := int64(1); i <= times; i++ {
+		if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(interval*3600*i), event); err != nil {
 			return err
 		}
 	}
@@ -214,6 +214,22 @@ func (gm *GlobalManager) GetInfraHourlyInflation(ctx sdk.Context, pastHoursThisY
 	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
 	resCoin := types.RatToCoin(resRat)
 	pool.InfraInflationPool = pool.InfraInflationPool.Minus(resCoin)
+
+	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
+		return types.NewCoin(0), err
+	}
+	return resCoin, nil
+}
+
+func (gm *GlobalManager) GetDeveloperHourlyInflation(ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
+	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
+	if getErr != nil {
+		return types.NewCoin(0), getErr
+	}
+
+	resRat := pool.DeveloperInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+	resCoin := types.RatToCoin(resRat)
+	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Minus(resCoin)
 
 	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
 		return types.NewCoin(0), err

@@ -24,7 +24,7 @@ var (
 	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
 	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
 	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
-  
+
 	initCoin = types.NewCoin(100)
 )
 

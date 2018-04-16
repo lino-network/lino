@@ -17,6 +17,7 @@ import (
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
+	developer "github.com/lino-network/lino/tx/developer"
 	infra "github.com/lino-network/lino/tx/infra"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
@@ -35,21 +36,23 @@ type LinoBlockchain struct {
 	cdc *wire.Codec
 
 	// keys to access the substores
-	capKeyAccountStore *sdk.KVStoreKey
-	capKeyPostStore    *sdk.KVStoreKey
-	capKeyValStore     *sdk.KVStoreKey
-	capKeyVoteStore    *sdk.KVStoreKey
-	capKeyInfraStore   *sdk.KVStoreKey
-	capKeyIBCStore     *sdk.KVStoreKey
-	capKeyGlobalStore  *sdk.KVStoreKey
+	capKeyAccountStore   *sdk.KVStoreKey
+	capKeyPostStore      *sdk.KVStoreKey
+	capKeyValStore       *sdk.KVStoreKey
+	capKeyVoteStore      *sdk.KVStoreKey
+	capKeyInfraStore     *sdk.KVStoreKey
+	capKeyDeveloperStore *sdk.KVStoreKey
+	capKeyIBCStore       *sdk.KVStoreKey
+	capKeyGlobalStore    *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountManager *acc.AccountManager
-	postManager    *post.PostManager
-	valManager     *val.ValidatorManager
-	globalManager  *global.GlobalManager
-	voteManager    *vote.VoteManager
-	infraManager   *infra.InfraManager
+	accountManager   *acc.AccountManager
+	postManager      *post.PostManager
+	valManager       *val.ValidatorManager
+	globalManager    *global.GlobalManager
+	voteManager      *vote.VoteManager
+	infraManager     *infra.InfraManager
+	developerManager *developer.DeveloperManager
 
 	lastBlockTime int64
 	// for recurring time based event
@@ -59,15 +62,16 @@ type LinoBlockchain struct {
 func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
 	// create your application object
 	var lb = &LinoBlockchain{
-		BaseApp:            bam.NewBaseApp(appName, logger, dbs["acc"]),
-		cdc:                MakeCodec(),
-		capKeyAccountStore: sdk.NewKVStoreKey(types.AccountKVStoreKey),
-		capKeyPostStore:    sdk.NewKVStoreKey(types.PostKVStoreKey),
-		capKeyValStore:     sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
-		capKeyVoteStore:    sdk.NewKVStoreKey(types.VoteKVStoreKey),
-		capKeyInfraStore:   sdk.NewKVStoreKey(types.InfraKVStoreKey),
-		capKeyGlobalStore:  sdk.NewKVStoreKey(types.GlobalKVStoreKey),
-		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
+		BaseApp:              bam.NewBaseApp(appName, logger, dbs["acc"]),
+		cdc:                  MakeCodec(),
+		capKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
+		capKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
+		capKeyValStore:       sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		capKeyVoteStore:      sdk.NewKVStoreKey(types.VoteKVStoreKey),
+		capKeyInfraStore:     sdk.NewKVStoreKey(types.InfraKVStoreKey),
+		capKeyDeveloperStore: sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
+		capKeyGlobalStore:    sdk.NewKVStoreKey(types.GlobalKVStoreKey),
+		capKeyIBCStore:       sdk.NewKVStoreKey("ibc"),
 	}
 	lb.accountManager = acc.NewAccountManager(lb.capKeyAccountStore)
 	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
@@ -75,12 +79,14 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
 	lb.voteManager = vote.NewVoteManager(lb.capKeyVoteStore)
 	lb.infraManager = infra.NewInfraManager(lb.capKeyInfraStore)
+	lb.developerManager = developer.NewDeveloperManager(lb.capKeyDeveloperStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(*lb.voteManager, *lb.accountManager, *lb.globalManager)).
+		AddRoute(types.DeveloperRouterName, developer.NewHandler(*lb.developerManager, *lb.accountManager, *lb.globalManager)).
 		AddRoute(types.InfraRouterName, infra.NewHandler(*lb.infraManager)).
 		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.accountManager, *lb.valManager, *lb.voteManager, *lb.globalManager))
 
@@ -96,6 +102,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.capKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
 	lb.MountStoreWithDB(lb.capKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
 	lb.MountStoreWithDB(lb.capKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
+	lb.MountStoreWithDB(lb.capKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
 	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
 	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager, *lb.globalManager))
 	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
@@ -172,14 +179,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	}
 
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
-
-	if err := lb.voteManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
-
-	if err := lb.infraManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
@@ -313,7 +312,10 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToValidator(ctx)
 	lb.distributeInflationToInfraProvider(ctx)
+	lb.distributeInflationToDeveloper(ctx)
 	lb.distributeInflationToConsumptionRewardPool(ctx)
+}
+
 }
 
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
@@ -333,7 +335,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	coin, err := lb.globalManager.GetInfraHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	inflation, err := lb.globalManager.GetInfraHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
 	if err != nil {
 		panic(err)
 	}
@@ -348,14 +350,38 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		if getErr != nil {
 			panic(getErr)
 		}
-		myShare := coin.ToRat().Mul(percentage)
+		myShare := inflation.ToRat().Mul(percentage)
 		lb.accountManager.AddCoin(ctx, provider, types.RatToCoin(myShare))
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
+}
 
+func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
+	inflation, err := lb.globalManager.GetDeveloperHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	if err != nil {
+		panic(err)
+	}
+
+	lst, getErr := lb.developerManager.GetDeveloperList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
+
+	for _, developer := range lst.AllDevelopers {
+		percentage, getErr := lb.developerManager.GetConsumptionWeight(ctx, developer)
+		if getErr != nil {
+			panic(getErr)
+		}
+		myShare := inflation.ToRat().Mul(percentage)
+		lb.accountManager.AddCoin(ctx, developer, types.RatToCoin(myShare))
+	}
+
+	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
+		panic(err)
+	}
 }
 
 func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {
