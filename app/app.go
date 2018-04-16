@@ -316,8 +316,6 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToConsumptionRewardPool(ctx)
 }
 
-}
-
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
