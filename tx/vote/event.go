@@ -4,28 +4,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
-	//val "github.com/lino-network/lino/tx/validator"
 	types "github.com/lino-network/lino/types"
 )
 
-type ReturnCoinEvent struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.Coin       `json:"amount"`
-}
-
 type DecideProposalEvent struct{}
-
-func (rce ReturnCoinEvent) Execute(ctx sdk.Context, voteManager VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
-	if !am.IsAccountExist(ctx, rce.Username) {
-		return acc.ErrUsernameNotFound()
-	}
-
-	if err := am.AddCoin(ctx, rce.Username, rce.Amount); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (dpe DecideProposalEvent) Execute(ctx sdk.Context, voteManager VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
 	// update the ongoing and past proposal list

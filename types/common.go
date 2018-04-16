@@ -46,3 +46,5 @@ var CoinReturnTimes = int64(7)
 var PenaltyMissVote = NewCoin(200 * Decimals)
 var PenaltyMissCommit = NewCoin(200 * Decimals)
 var PenaltyByzantine = NewCoin(1000 * Decimals)
+
+var DeveloperMinDeposit = NewCoin(100000 * Decimals)
