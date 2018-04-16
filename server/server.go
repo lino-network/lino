@@ -28,7 +28,8 @@ var rootCmd = &cobra.Command{
 		fs := http.FileServer(http.Dir("static"))
 		http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-		http.HandleFunc("/", serveTemplate)
+		http.HandleFunc("/", serveMainPanel)
+		http.HandleFunc("/login", serveLogin)
 
 		log.Println("Listening...")
 		http.ListenAndServe(":3000", nil)
@@ -46,9 +47,7 @@ func main() {
 	}
 }
 
-func serveTemplate(w http.ResponseWriter, r *http.Request) {
-	log.Println("serve...")
-	lp := filepath.Join("templates", "layout.html")
+func serveLogin(w http.ResponseWriter, r *http.Request) {
 	fp := filepath.Join("templates", "login.html")
 
 	res, err := QueryLocalStorage(model.GetValidatorListKey(), types.ValidatorKVStoreKey)
@@ -70,6 +69,33 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		"var1":             "value",
 		"OnCallValidators": oncallList,
 	}
-	tmpl, _ := template.ParseFiles(lp, fp)
-	tmpl.ExecuteTemplate(w, "layout", varmap)
+	tmpl, _ := template.ParseFiles(fp)
+	tmpl.ExecuteTemplate(w, "login", varmap)
+}
+
+func serveMainPanel(w http.ResponseWriter, r *http.Request) {
+	fp := filepath.Join("templates", "index.html")
+
+	log.Println("serve index")
+	res, err := QueryLocalStorage(model.GetValidatorListKey(), types.ValidatorKVStoreKey)
+	if err != nil {
+		log.Println("query failed")
+		return
+	}
+	validatorList := new(model.ValidatorList)
+	cdc := app.MakeCodec()
+	if err := cdc.UnmarshalJSON(res, validatorList); err != nil {
+		log.Println("unmarshal failed")
+		return
+	}
+	var oncallList = make([]string, len(validatorList.OncallValidators))
+	for i, val := range validatorList.OncallValidators {
+		oncallList[i] = string(val)
+	}
+	varmap := map[string]interface{}{
+		"var1":             "value",
+		"OnCallValidators": oncallList,
+	}
+	tmpl, _ := template.ParseFiles(fp)
+	tmpl.ExecuteTemplate(w, "mainDashboard", varmap)
 }
