@@ -122,8 +122,8 @@ func processDonationFriction(
 	if err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	redistribute := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
-	directDeposit := coin.Minus(redistribute)
+	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
+	directDeposit := coin.Minus(frictionCoin)
 	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
@@ -133,19 +133,38 @@ func processDonationFriction(
 	if err := gm.AddConsumption(ctx, coin); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := gm.AddConsumptionFrictionToRewardPool(ctx, redistribute); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+	// evaluate this consumption can get the result, the result is used to get inflation from pool
+	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
+	if err != nil {
+		return err
 	}
 	rewardEvent := RewardEvent{
 		PostAuthor: postAuthor,
 		PostID:     postID,
 		Consumer:   consumer,
-		Amount:     coin,
+		Amount:     evaluateResult,
 	}
-	if err := gm.RegisterContentRewardEvent(ctx, rewardEvent); err != nil {
+	if err :=
+		gm.AddFrictionAndRegisterContentRewardEvent(
+			ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	return nil
+}
+
+func evaluateConsumption(
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
+	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) (types.Coin, sdk.Error) {
+	numOfConsumptionOnAuthor, err := am.GetDonationRelationship(ctx, consumer, postAuthor)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPostKey(postAuthor, postID))
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
+
 }
 
 // Handle ReportMsgOrUpvoteMsg

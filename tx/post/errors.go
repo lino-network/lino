@@ -11,6 +11,10 @@ func ErrGetRedistributionSplitRate(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v redistribution split rate failed", postKey))
 }
 
+func ErrGetCreatedTime(postKey types.PostKey) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v created time failed", postKey))
+}
+
 func ErrGetRootSourcePost(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v root source post failed", postKey))
 }

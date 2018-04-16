@@ -67,6 +67,15 @@ type ConsumptionMeta struct {
 	ReportStakeWindow       sdk.Rat    `json:"report_stake_window"`
 	DislikeStakeWindow      sdk.Rat    `json:"dislike_stake_window"`
 	ConsumptionWindow       types.Coin `json:"consumption_window"`
-	ConsumptionRewardPool   types.Coin `json:"consumption_window"`
+	ConsumptionRewardPool   types.Coin `json:"consumption_reward_pool"`
 	FreezingPeriodHr        int64      `json:"freezing_period"`
+}
+
+type EvaluateOfContentValuePara struct {
+	ConsumptionTimeAdjustBase      int64   `consumption_time_adjust_base`
+	ConsumptionTimeAdjustOffset    int64   `consumption_time_adjust_offset`
+	NumOfConsumptionOnAuthorOffset int64   `num_of_consumption_on_author_offset`
+	TotalAmountOfConsumptionBase   int64   `total_amount_of_consumption_base`
+	TotalAmountOfConsumptionOffset int64   `total_amount_of_consumption_offset`
+	AmountOfConsumptionExponent    sdk.Rat `amount_of_consumption_exponent`
 }

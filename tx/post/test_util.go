@@ -34,7 +34,7 @@ func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
 		ContentCreatorAllocation: sdk.Rat{55, 100},
 		DeveloperAllocation:      sdk.Rat{20, 100},
 		ValidatorAllocation:      sdk.Rat{5, 100},
-		ConsumptionFrictionRate:  sdk.Rat{1, 100},
+		ConsumptionFrictionRate:  sdk.Rat{5, 100},
 		FreezingPeriodHr:         24 * 7,
 	}
 	return gm.InitGlobalManager(ctx, globalState)

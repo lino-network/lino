@@ -283,7 +283,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		TotalDonateCount:        1,
-		TotalReward:             types.NewCoin(99 * types.Decimals),
+		TotalReward:             types.NewCoin(95 * types.Decimals),
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
@@ -292,7 +292,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 
-	assert.Equal(t, acc1Balance, initCoin.Plus(types.NewCoin(99*types.Decimals)))
+	assert.Equal(t, acc1Balance, initCoin.Plus(types.NewCoin(95*types.Decimals)))
 	assert.Equal(t, acc2Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 	// test invalid donation target
 	donateMsg = NewDonateMsg(user1, types.LNO(sdk.NewRat(100)), user1, "invalid")
@@ -364,14 +364,14 @@ func TestHandlerRePostDonate(t *testing.T) {
 		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true,
 		TotalDonateCount:        1,
-		TotalReward:             types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(99, 100))),
+		TotalReward:             types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(95, 100))),
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
 	checkPostKVStore(t, ctx, types.GetPostKey(user2, "repost"), postInfo, postMeta)
 
 	// check source post
-	postMeta.TotalReward = types.Coin{sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(99, 100)).Evaluate()}
+	postMeta.TotalReward = types.Coin{sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(95, 100)).Evaluate()}
 	postInfo.Author = user1
 	postInfo.PostID = postID
 	postInfo.SourceAuthor = ""
@@ -383,8 +383,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
 	acc3Balance, _ := am.GetBankBalance(ctx, user3)
-	assert.Equal(t, acc1Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(99, 100)))))
-	assert.Equal(t, acc2Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(99, 100)))))
+	assert.Equal(t, acc1Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(95, 100)))))
+	assert.Equal(t, acc2Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(95, 100)))))
 	assert.Equal(t, acc3Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 }
 

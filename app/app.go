@@ -314,6 +314,7 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToInfraProvider(ctx)
 	lb.distributeInflationToDeveloper(ctx)
 	lb.distributeInflationToConsumptionRewardPool(ctx)
+}
 
 }
 
@@ -356,7 +357,6 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
-
 }
 
 func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
@@ -382,7 +382,6 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
 		panic(err)
 	}
-
 }
 
 func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {

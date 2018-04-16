@@ -1,6 +1,8 @@
 package global
 
 import (
+	"math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global/model"
@@ -74,12 +76,20 @@ func (gm *GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, s
 }
 
 // register reward calculation event at 7 days later
-func (gm *GlobalManager) RegisterContentRewardEvent(ctx sdk.Context, event types.Event) sdk.Error {
+func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
+	ctx sdk.Context, event types.Event, friction types.Coin, evaluate types.Coin) sdk.Error {
 	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
 	if err != nil {
 		return err
 	}
-	if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
+	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(friction)
+	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
+
+	if err := gm.registerEventAtTime(
+		ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
+		return err
+	}
+	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}
 	return nil
@@ -98,29 +108,6 @@ func (gm *GlobalManager) RegisterCoinReturnEvent(ctx sdk.Context, event types.Ev
 func (gm *GlobalManager) RegisterProposalDecideEvent(ctx sdk.Context, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time+(types.ProposalDecideHr*3600), event); err != nil {
 		return err
-	}
-	return nil
-}
-
-// put a friction of user consumption to reward pool
-func (gm *GlobalManager) AddConsumptionFrictionToRewardPool(ctx sdk.Context, coin types.Coin) sdk.Error {
-	// skip micro micro payment (etc: 0.0001 LNO)
-	if coin.IsZero() {
-		return nil
-	}
-
-	consumptionMeta, err := gm.globalStorage.GetConsumptionMeta(ctx)
-	if err != nil {
-		return ErrAddConsumptionFrictionToRewardPool().TraceCause(err, "")
-	}
-
-	// reward pool consists of a small friction of user consumption and hourly content creator reward
-	// consumption window will be used to calculate the percentage of reward to claim for this consumption
-	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(coin)
-	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(coin)
-
-	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
-		return ErrAddConsumptionFrictionToRewardPool().TraceCause(err, "")
 	}
 	return nil
 }
@@ -307,4 +294,44 @@ func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Erro
 		return sdk.ZeroRat, err
 	}
 	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
+}
+
+func (gm *GlobalManager) EvaluateConsumption(
+	ctx sdk.Context, coin types.Coin, numOfConsumptionOnAuthor int64, created int64,
+	totalReward types.Coin) (types.Coin, sdk.Error) {
+	paras, err := gm.globalStorage.GetEvaluateOfContentValuePara(ctx)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	// evaluate result coin^0.8 * total consumption adjustment *
+	// post time adjustment * consumption times adjustment
+	expPara, _ := paras.AmountOfConsumptionExponent.GetRat().Float64()
+	return types.NewCoin(
+		int64(math.Pow(float64(coin.ToInt64()), expPara) *
+			PostTotalConsumptionAdjustment(totalReward, paras) *
+			PostTimeAdjustment(ctx.BlockHeader().Time-created, paras) *
+			PostConsumptionTimesAdjustment(numOfConsumptionOnAuthor, paras))), nil
+}
+
+// total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
+func PostTotalConsumptionAdjustment(
+	totalReward types.Coin, paras *model.EvaluateOfContentValuePara) float64 {
+	return (1.0 / (1.0 + math.Exp(
+		(float64(totalReward.ToInt64())/float64(paras.TotalAmountOfConsumptionBase) -
+			float64(paras.TotalAmountOfConsumptionOffset))))) + 1.0
+}
+
+// post time adjustment = 1/(1+e^(t/base - offset))
+func PostTimeAdjustment(
+	elapseTime int64, paras *model.EvaluateOfContentValuePara) float64 {
+	return (1.0 / (1.0 + math.Exp(
+		(float64(elapseTime)/float64(paras.ConsumptionTimeAdjustBase) -
+			float64(paras.ConsumptionTimeAdjustOffset)))))
+}
+
+// consumption times adjustment = 1/(1+e^(n-offset))
+func PostConsumptionTimesAdjustment(
+	numOfConsumptionOnAuthor int64, paras *model.EvaluateOfContentValuePara) float64 {
+	return (1.0/(1.0+math.Exp(
+		(float64(numOfConsumptionOnAuthor)-float64(paras.NumOfConsumptionOnAuthorOffset)))) + 1.0)
 }

@@ -377,6 +377,34 @@ func (accManager *AccountManager) CheckUserTPSCapacity(
 	return nil
 }
 
+func (accManager *AccountManager) UpdateDonationRelationship(
+	ctx sdk.Context, me, other types.AccountKey) sdk.Error {
+	relationship, err := accManager.accountStorage.GetRelationship(ctx, me, other)
+	if err != nil {
+		return err
+	}
+	if relationship == nil {
+		relationship = &model.Relationship{0}
+	}
+	relationship.DonationTimes += 1
+	if err := accManager.accountStorage.SetRelationship(ctx, me, other, relationship); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (accManager *AccountManager) GetDonationRelationship(
+	ctx sdk.Context, me, other types.AccountKey) (int64, sdk.Error) {
+	relationship, err := accManager.accountStorage.GetRelationship(ctx, me, other)
+	if err != nil {
+		return 0, err
+	}
+	if relationship == nil {
+		return 0, nil
+	}
+	return relationship.DonationTimes, nil
+}
+
 func (accManager *AccountManager) addPendingStakeToQueue(
 	ctx sdk.Context, address sdk.Address, bank *model.AccountBank, pendingStake model.PendingStake) sdk.Error {
 	pendingStakeQueue, err := accManager.accountStorage.GetPendingStakeQueue(ctx, address)

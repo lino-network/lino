@@ -53,45 +53,53 @@ func ErrUsernameAddressMismatch() sdk.Error {
 }
 
 func ErrSetInfoFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set info failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set info failed"))
 }
 
 func ErrSetBankFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set bank failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set bank failed"))
 }
 
 func ErrGetMetaFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get meta failed"))
 }
 
 func ErrSetMetaFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set meta failed"))
 }
 
 func ErrGetRewardFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get reward failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get reward failed"))
 }
 
 func ErrSetRewardFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set reward failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set reward failed"))
+}
+
+func ErrGetRelationshipFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get relationship failed"))
+}
+
+func ErrSetRelationshipFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set relationship failed"))
 }
 
 func ErrGetPendingStakeFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager get pending stake failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get pending stake failed"))
 }
 
 func ErrSetPendingStakeFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountManager set reward failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set pending stake failed"))
 }
 
 func ErrAddMoneyFailed() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("Add money to bank failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage add money to bank failed"))
 }
 
 func ErrSetFollowerMeta() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("set follower meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set follower meta failed"))
 }
 
 func ErrSetFollowingMeta() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("set following meta failed"))
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set following meta failed"))
 }

@@ -10,15 +10,16 @@ import (
 )
 
 var (
-	heightEventListSubStore         = []byte{0x00} // SubStore for height event list
-	timeEventListSubStore           = []byte{0x01} // SubStore for time event list
-	statisticsSubStore              = []byte{0x02} // SubStore for statistics
-	globalMetaSubStore              = []byte{0x03} // SubStore for global meta
-	allocationSubStore              = []byte{0x04} // SubStore for allocation
-	inflationPoolSubStore           = []byte{0x05} // SubStore for allocation
-	infraInternalAllocationSubStore = []byte{0x06} // SubStore for infrat internal allocation
-	consumptionMetaSubStore         = []byte{0x07} // SubStore for consumption meta
-	TPSSubStore                     = []byte{0x08} // SubStore for consumption meta
+	heightEventListSubStore            = []byte{0x00} // SubStore for height event list
+	timeEventListSubStore              = []byte{0x01} // SubStore for time event list
+	statisticsSubStore                 = []byte{0x02} // SubStore for statistics
+	globalMetaSubStore                 = []byte{0x03} // SubStore for global meta
+	allocationSubStore                 = []byte{0x04} // SubStore for allocation
+	inflationPoolSubStore              = []byte{0x05} // SubStore for allocation
+	infraInternalAllocationSubStore    = []byte{0x06} // SubStore for infrat internal allocation
+	consumptionMetaSubStore            = []byte{0x07} // SubStore for consumption meta
+	TPSSubStore                        = []byte{0x08} // SubStore for tps
+	EvaluateOfContentValueParaSubStore = []byte{0x09} // Substore for evaluate of content value
 )
 
 type GlobalStorage struct {
@@ -108,6 +109,17 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSt
 		MaxTPS:     sdk.NewRat(1000),
 	}
 	if err := gs.SetTPS(ctx, tps); err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	paras := &EvaluateOfContentValuePara{
+		ConsumptionTimeAdjustBase:      3153600,
+		ConsumptionTimeAdjustOffset:    5,
+		NumOfConsumptionOnAuthorOffset: 7,
+		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
+		TotalAmountOfConsumptionOffset: 5,
+		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
+	}
+	if err := gs.SetEvaluateOfContentValuePara(ctx, paras); err != nil {
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
 	}
 	return nil
@@ -334,6 +346,31 @@ func (gs *GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	return nil
 }
 
+func (gs *GlobalStorage) GetEvaluateOfContentValuePara(
+	ctx sdk.Context) (*EvaluateOfContentValuePara, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	paraBytes := store.Get(GetEvaluateOfContentValueKey())
+	if paraBytes == nil {
+		return nil, ErrEvluateOfContentValuePara()
+	}
+	para := new(EvaluateOfContentValuePara)
+	if err := gs.cdc.UnmarshalJSON(paraBytes, para); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return para, nil
+}
+
+func (gs *GlobalStorage) SetEvaluateOfContentValuePara(
+	ctx sdk.Context, para *EvaluateOfContentValuePara) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	paraBytes, err := gs.cdc.MarshalJSON(*para)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetEvaluateOfContentValueKey(), paraBytes)
+	return nil
+}
+
 func GetHeightEventListKey(height int64) []byte {
 	return append(heightEventListSubStore, strconv.FormatInt(height, 10)...)
 }
@@ -368,4 +405,8 @@ func GetConsumptionMetaKey() []byte {
 
 func GetTPSKey() []byte {
 	return TPSSubStore
+}
+
+func GetEvaluateOfContentValueKey() []byte {
+	return EvaluateOfContentValueParaSubStore
 }

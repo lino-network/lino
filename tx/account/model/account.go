@@ -69,3 +69,8 @@ type Reward struct {
 	ActualReward   types.Coin `json:"actual_reward"`
 	UnclaimReward  types.Coin `json:"unclaim_reward"`
 }
+
+// relationship between accounts
+type Relationship struct {
+	DonationTimes int64 `json:"donation_times"`
+}
