@@ -71,7 +71,6 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 		capKeyInfraStore:     sdk.NewKVStoreKey(types.InfraKVStoreKey),
 		capKeyDeveloperStore: sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
 		capKeyGlobalStore:    sdk.NewKVStoreKey(types.GlobalKVStoreKey),
-		capKeyIBCStore:       sdk.NewKVStoreKey("ibc"),
 	}
 	lb.accountManager = acc.NewAccountManager(lb.capKeyAccountStore)
 	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
@@ -210,22 +209,25 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err := lb.accountManager.CreateAccount(ctx, types.AccountKey(ga.Name), ga.PubKey, types.NewCoin(0)); err != nil {
 		panic(err)
 	}
+	if ga.IsValidator {
+		commitingDeposit := types.ValidatorMinCommitingDeposit
+		votingDeposit := types.ValidatorMinVotingDeposit
+		// withdraw money from validator's bank
+		if err := lb.accountManager.MinusCoin(
+			ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
+			panic(err)
+		}
 
-	commitingDeposit := types.ValidatorMinCommitingDeposit
-	votingDeposit := types.ValidatorMinVotingDeposit
-	// withdraw money from validator's bank
-	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
-		panic(err)
-	}
-
-	if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
-		panic(addErr)
-	}
-	if registerErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
-		panic(registerErr)
-	}
-	if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
-		panic(joinErr)
+		if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
+			panic(addErr)
+		}
+		if registerErr := lb.valManager.RegisterValidator(
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
+			panic(registerErr)
+		}
+		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
+			panic(joinErr)
+		}
 	}
 	return nil
 }

@@ -14,10 +14,11 @@ type GenesisState struct {
 
 // GenesisAccount doesn't need pubkey or sequence
 type GenesisAccount struct {
-	Name      string        `json:"name"`
-	Lino      int64         `json:"lino"`
-	PubKey    crypto.PubKey `json:"pub_key"`
-	ValPubKey crypto.PubKey `json:"validator_pub_key"`
+	Name        string        `json:"name"`
+	Lino        int64         `json:"lino"`
+	PubKey      crypto.PubKey `json:"pub_key"`
+	IsValidator bool          `json:"is_validator"`
+	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
 }
 
 type GlobalState struct {

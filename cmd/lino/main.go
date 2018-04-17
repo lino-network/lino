@@ -61,10 +61,11 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 
 	totalLino := int64(10000000000)
 	genesisAcc := genesis.GenesisAccount{
-		Name:      "Lino",
-		Lino:      totalLino,
-		PubKey:    *pubKey,
-		ValPubKey: privValidator.PubKey,
+		Name:        "Lino",
+		Lino:        totalLino,
+		PubKey:      *pubKey,
+		IsValidator: true,
+		ValPubKey:   privValidator.PubKey,
 	}
 	globalState := genesis.GlobalState{
 		TotalLino:                totalLino,
@@ -103,15 +104,30 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbVote, err := dbm.NewGoLevelDB("LinoBlockchain-vote", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbInfra, err := dbm.NewGoLevelDB("LinoBlockchain-infra", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbDeveloper, err := dbm.NewGoLevelDB("LinoBlockchain-developer", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
 	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
 	dbs := map[string]dbm.DB{
-		"acc":    dbAcc,
-		"post":   dbPost,
-		"val":    dbVal,
-		"global": dbGlobal,
+		"acc":       dbAcc,
+		"post":      dbPost,
+		"val":       dbVal,
+		"vote":      dbVote,
+		"infra":     dbInfra,
+		"developer": dbDeveloper,
+		"global":    dbGlobal,
 	}
 	lb := app.NewLinoBlockchain(logger, dbs)
 	return lb, nil
