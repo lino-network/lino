@@ -7,12 +7,12 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func ErrGlobalManagerRegisterEventAtHeight(height int64) sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Register event at height %v", height))
+func ErrGlobalManagerRegisterEventAtTime(unixTime int64) sdk.Error {
+	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("tegister event at time %v failed", unixTime))
 }
 
-func ErrGlobalManagerRegisterEventAtTime(unixTime int64) sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("Register event at time %v", unixTime))
+func ErrGlobalManagerRegisterExpiredEvent(unixTime int64) sdk.Error {
+	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("tegister event at expired time %v", unixTime))
 }
 
 func ErrAddConsumptionFrictionToRewardPool() sdk.Error {

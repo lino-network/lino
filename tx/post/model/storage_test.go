@@ -11,9 +11,8 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-// Construct some global addrs and txs for tests.
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("account")
+	TestKVStoreKey = sdk.NewKVStoreKey("post")
 )
 
 func getContext() sdk.Context {

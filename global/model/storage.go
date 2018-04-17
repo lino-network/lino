@@ -18,8 +18,8 @@ var (
 	inflationPoolSubStore              = []byte{0x05} // SubStore for allocation
 	infraInternalAllocationSubStore    = []byte{0x06} // SubStore for infrat internal allocation
 	consumptionMetaSubStore            = []byte{0x07} // SubStore for consumption meta
-	TPSSubStore                        = []byte{0x08} // SubStore for tps
-	EvaluateOfContentValueParaSubStore = []byte{0x09} // Substore for evaluate of content value
+	tpsSubStore                        = []byte{0x08} // SubStore for tps
+	evaluateOfContentValueParaSubStore = []byte{0x09} // Substore for evaluate of content value
 )
 
 type GlobalStorage struct {
@@ -125,30 +125,6 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, state genesis.GlobalSt
 	return nil
 }
 
-func (gs *GlobalStorage) GetHeightEventList(ctx sdk.Context, height int64) (*types.HeightEventList, sdk.Error) {
-	store := ctx.KVStore(gs.key)
-	listByte := store.Get(GetHeightEventListKey(height))
-	if listByte == nil {
-		return nil, nil
-	}
-	lst := new(types.HeightEventList)
-	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (gs *GlobalStorage) SetHeightEventList(ctx sdk.Context, height int64, lst *types.HeightEventList) sdk.Error {
-	store := ctx.KVStore(gs.key)
-	// event doesn't exist
-	listByte, err := gs.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetHeightEventListKey(height), listByte)
-	return nil
-}
-
 func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetTimeEventListKey(unixTime))
@@ -170,12 +146,6 @@ func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *
 		return ErrEventMarshalError(err)
 	}
 	store.Set(GetTimeEventListKey(unixTime), listByte)
-	return nil
-}
-
-func (gs *GlobalStorage) RemoveHeightEventList(ctx sdk.Context, height int64) sdk.Error {
-	store := ctx.KVStore(gs.key)
-	store.Delete(GetHeightEventListKey(height))
 	return nil
 }
 
@@ -404,9 +374,9 @@ func GetConsumptionMetaKey() []byte {
 }
 
 func GetTPSKey() []byte {
-	return TPSSubStore
+	return tpsSubStore
 }
 
 func GetEvaluateOfContentValueKey() []byte {
-	return EvaluateOfContentValueParaSubStore
+	return evaluateOfContentValueParaSubStore
 }

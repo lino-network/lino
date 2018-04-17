@@ -274,3 +274,41 @@ func TestGetPenaltyScore(t *testing.T) {
 		assert.Equal(t, penaltyScore, cs.expectRat)
 	}
 }
+
+func TestGetRepostPenaltyScore(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
+
+	postKey := types.GetPostKey(user, postID)
+	repostKey := types.GetPostKey(user2, postID2)
+	cases := []struct {
+		totalReportStake types.Coin
+		totalUpvoteStake types.Coin
+		expectRat        sdk.Rat
+	}{
+		{types.NewCoin(1), types.NewCoin(0), sdk.OneRat},
+		{types.NewCoin(0), types.NewCoin(1), sdk.ZeroRat},
+		{types.NewCoin(0), types.NewCoin(0), sdk.ZeroRat},
+		{types.NewCoin(100), types.NewCoin(100), sdk.OneRat},
+		{types.NewCoin(1000), types.NewCoin(100), sdk.OneRat},
+		{types.NewCoin(50), types.NewCoin(100), sdk.NewRat(1, 2)},
+	}
+
+	for _, cs := range cases {
+		postMeta := &model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalReportStake:        cs.totalReportStake,
+			TotalUpvoteStake:        cs.totalUpvoteStake,
+		}
+		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
+		assert.Nil(t, err)
+		penaltyScore, err := pm.GetPenaltyScore(ctx, repostKey)
+		assert.Nil(t, err)
+		assert.Equal(t, penaltyScore, cs.expectRat)
+	}
+}

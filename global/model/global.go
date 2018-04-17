@@ -46,7 +46,8 @@ type InfraInternalAllocation struct {
 
 // InflationPool, determined by GlobalAllocation
 // InfraInflationPool inflation pool for infra
-// ContentCreatorInflationPool inflation pool for content creator
+// TotalContentCreatorInflationPool total inflation pool for content creator this year
+// DistributedContentCreatorInflationPool inflation alrady distributed
 // DeveloperInflationPool inflation pool for developer
 // ValidatorInflationPool inflation pool for validator
 type InflationPool struct {

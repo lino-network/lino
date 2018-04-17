@@ -260,7 +260,6 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	lb.syncValidatorWithVoteManager(ctx)
-	lb.executeHeightEvents(ctx)
 	lb.executeTimeEvents(ctx)
 	lb.punishValidatorsDidntVote(ctx)
 
@@ -270,13 +269,6 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	}
 
 	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
-}
-
-func (lb *LinoBlockchain) executeHeightEvents(ctx sdk.Context) {
-	if heightEvents := lb.globalManager.GetHeightEventListAtHeight(ctx, ctx.BlockHeight()); heightEvents != nil {
-		lb.executeEvents(ctx, heightEvents.Events)
-		lb.globalManager.RemoveHeightEventList(ctx, ctx.BlockHeight())
-	}
 }
 
 func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {

@@ -23,6 +23,17 @@ func NewValidatorStorage(key sdk.StoreKey) *ValidatorStorage {
 	return &vs
 }
 
+func (vs ValidatorStorage) InitGenesis(ctx sdk.Context) error {
+	lst := &ValidatorList{
+		LowestPower: types.Coin{0},
+	}
+
+	if err := vs.SetValidatorList(ctx, lst); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey types.AccountKey) (*Validator, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	validatorByte := store.Get(GetValidatorKey(accKey))

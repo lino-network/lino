@@ -13,7 +13,7 @@ var (
 	VoterSubstore        = []byte{0x01}
 	ProposalSubstore     = []byte{0x02}
 	VoteSubstore         = []byte{0x03}
-	ProposalListSubStore = []byte("ProposalList/ProposalListKey")
+	ProposalListSubStore = []byte{0x04}
 )
 
 type VoteStorage struct {
@@ -24,39 +24,39 @@ type VoteStorage struct {
 // NewValidatorManager returns a new ValidatorManager
 func NewVoteStorage(key sdk.StoreKey) *VoteStorage {
 	cdc := wire.NewCodec()
-	vm := &VoteStorage{
+	vs := &VoteStorage{
 		key: key,
 		cdc: cdc,
 	}
 
-	return vm
+	return vs
 }
 
-func (vm VoteStorage) InitGenesis(ctx sdk.Context) error {
+func (vs VoteStorage) InitGenesis(ctx sdk.Context) error {
 	lst := &ProposalList{}
 
-	if err := vm.SetProposalList(ctx, lst); err != nil {
+	if err := vs.SetProposalList(ctx, lst); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	voterByte := store.Get(GetVoterKey(accKey))
 	if voterByte == nil {
 		return nil, ErrGetVoter()
 	}
 	voter := new(Voter)
-	if err := vm.cdc.UnmarshalJSON(voterByte, voter); err != nil {
+	if err := vs.cdc.UnmarshalJSON(voterByte, voter); err != nil {
 		return nil, ErrVoterUnmarshalError(err)
 	}
 	return voter, nil
 }
 
-func (vm VoteStorage) SetVoter(ctx sdk.Context, accKey types.AccountKey, voter *Voter) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	voterByte, err := vm.cdc.MarshalJSON(*voter)
+func (vs VoteStorage) SetVoter(ctx sdk.Context, accKey types.AccountKey, voter *Voter) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	voterByte, err := vs.cdc.MarshalJSON(*voter)
 	if err != nil {
 		return ErrVoterMarshalError(err)
 	}
@@ -64,28 +64,28 @@ func (vm VoteStorage) SetVoter(ctx sdk.Context, accKey types.AccountKey, voter *
 	return nil
 }
 
-func (vm VoteStorage) DeleteVoter(ctx sdk.Context, username types.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) DeleteVoter(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	store := ctx.KVStore(vs.key)
 	store.Delete(GetVoterKey(username))
 	return nil
 }
 
-func (vm VoteStorage) GetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) (*Vote, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) (*Vote, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	voteByte := store.Get(GetVoteKey(proposalID, voter))
 	if voteByte == nil {
 		return nil, ErrGetVote()
 	}
 	vote := new(Vote)
-	if err := vm.cdc.UnmarshalJSON(voteByte, vote); err != nil {
+	if err := vs.cdc.UnmarshalJSON(voteByte, vote); err != nil {
 		return nil, ErrVoteUnmarshalError(err)
 	}
 	return vote, nil
 }
 
-func (vm VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, vote *Vote) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	voteByte, err := vm.cdc.MarshalJSON(*vote)
+func (vs VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, vote *Vote) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	voteByte, err := vs.cdc.MarshalJSON(*vote)
 	if err != nil {
 		return ErrVoteMarshalError(err)
 	}
@@ -93,28 +93,28 @@ func (vm VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 	return nil
 }
 
-func (vm VoteStorage) DeleteVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) DeleteVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) sdk.Error {
+	store := ctx.KVStore(vs.key)
 	store.Delete(GetVoteKey(proposalID, voter))
 	return nil
 }
 
-func (vm VoteStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	lstByte := store.Get(GetProposalListKey())
 	if lstByte == nil {
 		return nil, ErrGetProposal()
 	}
 	lst := new(ProposalList)
-	if err := vm.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
 		return nil, ErrProposalUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (vm VoteStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	lstByte, err := vm.cdc.MarshalJSON(*lst)
+func (vs VoteStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	lstByte, err := vs.cdc.MarshalJSON(*lst)
 	if err != nil {
 		return ErrProposalMarshalError(err)
 	}
@@ -123,23 +123,23 @@ func (vm VoteStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Er
 }
 
 // onle support change parameter proposal now
-func (vm VoteStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (*ChangeParameterProposal, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (*ChangeParameterProposal, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	proposalByte := store.Get(GetProposalKey(proposalID))
 	if proposalByte == nil {
 		return nil, ErrGetProposal()
 	}
 	proposal := new(ChangeParameterProposal)
-	if err := vm.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
+	if err := vs.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
 		return nil, ErrProposalUnmarshalError(err)
 	}
 	return proposal, nil
 }
 
 // onle support change parameter proposal now
-func (vm VoteStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	proposalByte, err := vm.cdc.MarshalJSON(*proposal)
+func (vs VoteStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	proposalByte, err := vs.cdc.MarshalJSON(*proposal)
 	if err != nil {
 		return ErrProposalMarshalError(err)
 	}
@@ -147,28 +147,28 @@ func (vm VoteStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey,
 	return nil
 }
 
-func (vm VoteStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
+	store := ctx.KVStore(vs.key)
 	store.Delete(GetProposalKey(proposalID))
 	return nil
 }
 
-func (vm VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) (*Delegation, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) (*Delegation, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	delegationByte := store.Get(GetDelegationKey(voter, delegator))
 	if delegationByte == nil {
 		return nil, ErrGetDelegation()
 	}
 	delegation := new(Delegation)
-	if err := vm.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
+	if err := vs.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
 		return nil, ErrDelegationUnmarshalError(err)
 	}
 	return delegation, nil
 }
 
-func (vm VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey, delegation *Delegation) sdk.Error {
-	store := ctx.KVStore(vm.key)
-	delegationByte, err := vm.cdc.MarshalJSON(*delegation)
+func (vs VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey, delegation *Delegation) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	delegationByte, err := vs.cdc.MarshalJSON(*delegation)
 	if err != nil {
 		return ErrDelegationMarshalError(err)
 	}
@@ -176,14 +176,14 @@ func (vm VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, del
 	return nil
 }
 
-func (vm VoteStorage) DeleteDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) sdk.Error {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) DeleteDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) sdk.Error {
+	store := ctx.KVStore(vs.key)
 	store.Delete(GetDelegationKey(voter, delegator))
 	return nil
 }
 
-func (vm VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	iterator := store.Iterator(subspace(GetDelegatorPrefix(voterName)))
 
 	var delegators []types.AccountKey
@@ -191,7 +191,7 @@ func (vm VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 	for ; iterator.Valid(); iterator.Next() {
 		delegationBytes := iterator.Value()
 		var delegation Delegation
-		err := vm.cdc.UnmarshalJSON(delegationBytes, &delegation)
+		err := vs.cdc.UnmarshalJSON(delegationBytes, &delegation)
 		if err != nil {
 			return nil, ErrDelegationUnmarshalError(err)
 		}
@@ -201,8 +201,8 @@ func (vm VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 	return delegators, nil
 }
 
-func (vm VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey) ([]Vote, sdk.Error) {
-	store := ctx.KVStore(vm.key)
+func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey) ([]Vote, sdk.Error) {
+	store := ctx.KVStore(vs.key)
 	iterator := store.Iterator(subspace(GetVotePrefix(proposalID)))
 
 	var votes []Vote
@@ -210,7 +210,7 @@ func (vm VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 	for ; iterator.Valid(); iterator.Next() {
 		voteBytes := iterator.Value()
 		var vote Vote
-		err := vm.cdc.UnmarshalJSON(voteBytes, &vote)
+		err := vs.cdc.UnmarshalJSON(voteBytes, &vote)
 		if err != nil {
 			return nil, ErrVoteUnmarshalError(err)
 		}
@@ -220,7 +220,7 @@ func (vm VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 	return votes, nil
 }
 
-func (vm VoteStorage) GetNextProposalID() (types.ProposalKey, sdk.Error) {
+func (vs VoteStorage) GetNextProposalID() (types.ProposalKey, sdk.Error) {
 	types.NextProposalID += 1
 	return types.ProposalKey(strconv.FormatInt(types.NextProposalID, 10)), nil
 }

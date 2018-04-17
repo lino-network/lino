@@ -107,3 +107,25 @@ func createTestPost(
 	assert.Nil(t, err)
 	return user, postID
 }
+
+func createTestRepost(
+	t *testing.T, ctx sdk.Context, username, postID string,
+	am *acc.AccountManager, pm *PostManager, sourceUser types.AccountKey,
+	sourcePostID string) (types.AccountKey, string) {
+	user := createTestAccount(t, ctx, am, username)
+	postCreateParams := &PostCreateParams{
+		PostID:       postID,
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: sourceUser,
+		SourcePostID: sourcePostID,
+		Links:        []types.IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
+	}
+	err := pm.CreatePost(ctx, postCreateParams)
+	assert.Nil(t, err)
+	return user, postID
+}

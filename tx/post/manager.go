@@ -243,9 +243,20 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 
 // get penalty score from report and upvote
 func (pm *PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+	author, postID, err := pm.GetSourcePost(ctx, postKey)
+	if err != nil {
+		return sdk.ZeroRat, ErrGetPenaltyScore(postKey).TraceCause(err, "")
+	}
+	if author != types.AccountKey("") && postID != "" {
+		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPostKey(author, postID))
+		if err != nil {
+			return sdk.ZeroRat, err
+		}
+		return paneltyScore, nil
+	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return sdk.NewRat(0), ErrGetPenaltyScore(postKey).TraceCause(err, "")
+		return sdk.ZeroRat, ErrGetPenaltyScore(postKey).TraceCause(err, "")
 	}
 	if postMeta.TotalReportStake.IsZero() {
 		return sdk.ZeroRat, nil
@@ -261,17 +272,4 @@ func (pm *PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (
 		return sdk.OneRat, nil
 	}
 	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
-}
-
-// update last activity
-func (pm *PostManager) UpdateLastActivity(ctx sdk.Context, postKey types.PostKey) sdk.Error {
-	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
-	if err != nil {
-		return ErrUpdateLastActivity(postKey).TraceCause(err, "")
-	}
-	postMeta.LastActivity = ctx.BlockHeader().Time
-	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
-		return ErrUpdateLastActivity(postKey).TraceCause(err, "")
-	}
-	return nil
 }

@@ -42,9 +42,7 @@ func NewVoteManager(key sdk.StoreKey) *VoteManager {
 }
 
 func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
-	lst := &model.ProposalList{}
-
-	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
+	if err := vm.storage.InitGenesis(ctx); err != nil {
 		return err
 	}
 	return nil
