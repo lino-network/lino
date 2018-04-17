@@ -61,11 +61,7 @@ func (vm *ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Vali
 }
 
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
-	lst := &model.ValidatorList{
-		LowestPower: types.Coin{0},
-	}
-
-	if err := vm.storage.SetValidatorList(ctx, lst); err != nil {
+	if err := vm.storage.InitGenesis(ctx); err != nil {
 		return err
 	}
 	return nil

@@ -329,6 +329,20 @@ func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
+
+	if !msg.InfraAllocation.
+		Add(msg.ContentCreatorAllocation).
+		Add(msg.DeveloperAllocation).
+		Add(msg.ValidatorAllocation).
+		GT(sdk.NewRat(1)) {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.StorageAllocation.
+		Add(msg.CDNAllocation).
+		GT(sdk.NewRat(1)) {
+		return ErrIllegalParameter()
+	}
 	return nil
 }
 

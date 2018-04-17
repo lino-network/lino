@@ -433,3 +433,67 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		checkPostMeta(t, ctx, postKey, postMeta)
 	}
 }
+
+func TestHandlerRepostReportOrUpvote(t *testing.T) {
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(*pm, *am, *gm)
+
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user2 := createTestAccount(t, ctx, am, "user2")
+	user3 := createTestAccount(t, ctx, am, "user3")
+
+	// repost
+	repostID := "repost"
+	postCreateParams := PostCreateParams{
+		PostID:       "repost",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user2,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: user1,
+		SourcePostID: postID,
+		Links:        []types.IDToURLMapping{},
+		RedistributionSplitRate: sdk.ZeroRat,
+	}
+	msg := NewCreatePostMsg(postCreateParams)
+	result := handler(ctx, msg)
+	assert.Equal(t, result, sdk.Result{})
+
+	cases := []struct {
+		reportOrUpvoteUser      types.AccountKey
+		isReport                bool
+		isRevoke                bool
+		expectSourceReportStake types.Coin
+		expectSourceUpvoteStake types.Coin
+	}{
+		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
+		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
+		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
+		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
+		{user2, false, true, types.NewCoin(0), types.NewCoin(100)},
+		{user3, false, true, types.NewCoin(0), types.NewCoin(0)},
+		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
+		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
+		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
+		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
+	}
+
+	for _, cs := range cases {
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + acc.TotalCoinDaysSec})
+		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user2, repostID, cs.isReport, cs.isRevoke)
+		result := handler(newCtx, msg)
+		assert.Equal(t, result, sdk.Result{})
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            newCtx.BlockHeader().Time,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalReportStake:        cs.expectSourceReportStake,
+			TotalUpvoteStake:        cs.expectSourceUpvoteStake,
+		}
+		postKey := types.GetPostKey(user1, postID)
+		checkPostMeta(t, ctx, postKey, postMeta)
+	}
+}

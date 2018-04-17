@@ -55,10 +55,6 @@ func ErrGetPenaltyScore(postKey types.PostKey) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("get post %v penalty score failed", postKey))
 }
 
-func ErrUpdateLastActivity(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("update post %v last activity failed", postKey))
-}
-
 func ErrCreatePostAuthorNotFound(author types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post author %v not found", author))
 }

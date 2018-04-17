@@ -191,10 +191,11 @@ func handleReportOrUpvoteMsg(
 			ctx, sourcePostKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
 			return err.Result()
 		}
-	}
-	if err := pm.ReportOrUpvoteToPost(
-		ctx, postKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
-		return err.Result()
+	} else {
+		if err := pm.ReportOrUpvoteToPost(
+			ctx, postKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
+			return err.Result()
+		}
 	}
 	return sdk.Result{}
 }
