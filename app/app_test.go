@@ -7,10 +7,14 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/genesis"
+	acc "github.com/lino-network/lino/tx/account"
+	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -18,6 +22,7 @@ import (
 )
 
 var (
+	user1 = "validator0"
 	priv1 = crypto.GenPrivKeyEd25519()
 	addr1 = priv1.PubKey().Address()
 	priv2 = crypto.GenPrivKeyEd25519()
@@ -36,6 +41,8 @@ var (
 	genesisAccount      string     = "Lino"
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
+
+	LNOPerValidator = int64(100000000)
 )
 
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
@@ -52,14 +59,58 @@ func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	return logger, dbs
 }
 
-func newLinoBlockchain(t *testing.T) *LinoBlockchain {
+func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	logger, dbs := loggerAndDBs()
 	lb := NewLinoBlockchain(logger, dbs)
-	result, err := genesis.GetDefaultGenesis(priv1.PubKey(), priv2.PubKey())
+	globalState := genesis.GlobalState{
+		TotalLino:                genesisTotalLino,
+		GrowthRate:               sdk.NewRat(98, 1000),
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(50, 100),
+		DeveloperAllocation:      sdk.NewRat(20, 100),
+		ValidatorAllocation:      sdk.NewRat(10, 100),
+		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
+		FreezingPeriodHr:         24 * 7,
+	}
+
+	genesisState := genesis.GenesisState{
+		Accounts:    []genesis.GenesisAccount{},
+		GlobalState: globalState,
+	}
+
+	// Generate 21 validators
+
+	genesisAcc := genesis.GenesisAccount{
+		Name:        user1,
+		Lino:        LNOPerValidator,
+		PubKey:      priv1.PubKey(),
+		IsValidator: true,
+		ValPubKey:   priv2.PubKey(),
+	}
+	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
+	for i := 1; i < numOfValidators; i++ {
+		privKey := crypto.GenPrivKeyEd25519()
+		valPrivKey := crypto.GenPrivKeyEd25519()
+		genesisAcc := genesis.GenesisAccount{
+			Name:        "validator" + strconv.Itoa(i),
+			Lino:        LNOPerValidator,
+			PubKey:      privKey.PubKey(),
+			IsValidator: true,
+			ValPubKey:   valPrivKey.PubKey(),
+		}
+		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
+	}
+
+	result, err := genesis.GetGenesisJson(genesisState)
 	assert.Nil(t, err)
 
 	vals := []abci.Validator{}
 	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
+	lb.Commit()
+
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{ChainID: "Lino"}})
+	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
 }
@@ -145,46 +196,8 @@ func TestGenesisAcc(t *testing.T) {
 }
 
 func TestDistributeInflationToValidators(t *testing.T) {
-	logger, dbs := loggerAndDBs()
-	lb := NewLinoBlockchain(logger, dbs)
+	lb := newLinoBlockchain(t, 21)
 
-	globalState := genesis.GlobalState{
-		TotalLino:                genesisTotalLino,
-		GrowthRate:               sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
-		FreezingPeriodHr:         24 * 7,
-	}
-
-	genesisState := genesis.GenesisState{
-		Accounts:    []genesis.GenesisAccount{},
-		GlobalState: globalState,
-	}
-
-	// Generate 21 validators
-	LNOPerValidator := int64(100000000)
-	for i := 0; i < 21; i++ {
-		privKey := crypto.GenPrivKeyEd25519()
-		valPrivKey := crypto.GenPrivKeyEd25519()
-		genesisAcc := genesis.GenesisAccount{
-			Name:        "validator" + strconv.Itoa(i),
-			Lino:        LNOPerValidator,
-			PubKey:      privKey.PubKey(),
-			IsValidator: true,
-			ValPubKey:   valPrivKey.PubKey(),
-		}
-		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
-	}
-
-	result, err := genesis.GetGenesisJson(genesisState)
-	assert.Nil(t, err)
-
-	vals := []abci.Validator{}
-	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
-	lb.Commit()
 	baseTime := time.Now().Unix()
 	remainValidatorPool := types.RatToCoin(genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
 	expectBalance := types.NewCoin(LNOPerValidator * types.Decimals).Minus(
@@ -219,4 +232,73 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestFireByzantineValidators(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			ChainID: "Lino", Time: time.Now().Unix()},
+		ByzantineValidators: []abci.Evidence{abci.Evidence{PubKey: priv2.PubKey().Bytes()}}})
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	onCallList, err := lb.valManager.GetOncallValidatorList(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 20, len(onCallList))
+}
+
+func TestTransferAndRegisterAccount(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	baseTime := time.Now().Unix()
+	transferMsg := acc.NewTransferMsg(
+		user1, types.LNO(sdk.NewRat(100)), []byte{}, acc.TransferToAddr(addr3))
+
+	SignCheckDeliver(t, lb, transferMsg, 0, true, priv1, baseTime)
+
+	registerMsg := reg.NewRegisterMsg("newUser", priv3.PubKey())
+	SignCheckDeliver(t, lb, registerMsg, 0, true, priv3, baseTime)
+
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	balance, err :=
+		lb.accountManager.GetBankBalance(ctx, types.AccountKey("newUser"))
+	assert.Nil(t, err)
+	assert.Equal(t, types.NewCoin(100*types.Decimals), balance)
+}
+
+func SignCheckDeliver(t *testing.T, lb *LinoBlockchain, msg sdk.Msg, seq int64,
+	expPass bool, priv crypto.PrivKeyEd25519, headTime int64) {
+	// Sign the tx
+	tx := genTx(msg, seq, priv)
+	// Run a Check
+	res := lb.Check(tx)
+	if expPass {
+		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
+	} else {
+		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
+	}
+
+	// Simulate a Block
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			ChainID: "Lino", Time: headTime}})
+	res = lb.Deliver(tx)
+	if expPass {
+		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
+	} else {
+		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
+	}
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+}
+
+func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeyEd25519) sdk.StdTx {
+	sigs := []sdk.StdSignature{{
+		PubKey:    priv.PubKey(),
+		Signature: priv.Sign(sdk.StdSignBytes("Lino", []int64{seq}, sdk.StdFee{}, msg)),
+		Sequence:  seq}}
+
+	return sdk.NewStdTx(msg, sdk.StdFee{}, sigs)
+
 }

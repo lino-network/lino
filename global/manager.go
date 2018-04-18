@@ -247,7 +247,7 @@ func (gm *GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Err
 		return err
 	}
 	if ctx.BlockHeader().Time == lastBlockTime {
-		tps.CurrentTPS = tps.MaxTPS
+		tps.CurrentTPS = sdk.ZeroRat
 	} else {
 		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
 	}

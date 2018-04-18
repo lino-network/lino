@@ -245,7 +245,9 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		lb.chainStartTime = ctx.BlockHeader().Time
 		lb.lastBlockTime = ctx.BlockHeader().Time
 	}
-
+	if err := lb.globalManager.UpdateTPS(ctx, lb.lastBlockTime); err != nil {
+		panic(err)
+	}
 	for (ctx.BlockHeader().Time-lb.chainStartTime)/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
