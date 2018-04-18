@@ -102,7 +102,7 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 	if err := vm.storage.SetValidatorPenaltyList(ctx, penaltyLst); err != nil {
 		return false, err
 	}
-	return true, nil
+	return proposal.AgreeVote.IsGT(proposal.DisagreeVote), nil
 }
 
 func (dpe DecideProposalEvent) changeParameter(ctx sdk.Context, curID types.ProposalKey, voteManager VoteManager, gm global.GlobalManager) sdk.Error {

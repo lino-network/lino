@@ -200,7 +200,7 @@ func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountMana
 		return err.Result()
 	}
 
-	if addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
+	if _, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
 		return addErr.Result()
 	}
 	//  set a time event to decide the proposal in 7 days

@@ -117,10 +117,11 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 }
 
 // onle support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey, des *model.ChangeParameterDescription) sdk.Error {
+func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
+	des *model.ChangeParameterDescription) (types.ProposalKey, sdk.Error) {
 	newID, getErr := vm.storage.GetNextProposalID()
 	if getErr != nil {
-		return getErr
+		return newID, getErr
 	}
 
 	proposal := model.Proposal{
@@ -135,19 +136,19 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey, des
 		ChangeParameterDescription: *des,
 	}
 	if err := vm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
-		return err
+		return newID, err
 	}
 
 	lst, getErr := vm.storage.GetProposalList(ctx)
 	if getErr != nil {
-		return getErr
+		return newID, getErr
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
 	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
-		return err
+		return newID, err
 	}
 
-	return nil
+	return newID, nil
 }
 
 // onle support change parameter proposal now

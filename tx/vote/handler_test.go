@@ -212,8 +212,8 @@ func TestProposalBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
-	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
+	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(4), 10))
+	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(5), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
 
@@ -262,7 +262,7 @@ func TestVoteBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID := int64(3)
+	proposalID := int64(6)
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, user1, c2000)
 
