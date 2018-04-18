@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
@@ -189,4 +190,79 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	assert.Equal(t, types.Coin{1300 * types.Decimals}, lst2.LowestPower)
 	assert.Equal(t, users[2], lst2.LowestValidator)
 
+}
+
+func TestGetUpdateValidatorList(t *testing.T) {
+	ctx, am, valManager, _, _ := setupTest(t, 0)
+	user1 := createTestAccount(ctx, am, "user1")
+	user2 := createTestAccount(ctx, am, "user2")
+
+	key1, _ := am.GetOwnerKey(ctx, user1)
+	key2, _ := am.GetOwnerKey(ctx, user2)
+	valManager.RegisterValidator(ctx, user1, key1.Bytes(), types.ValidatorMinCommitingDeposit)
+	valManager.RegisterValidator(ctx, user2, key2.Bytes(), types.ValidatorMinCommitingDeposit)
+
+	val1, _ := valManager.storage.GetValidator(ctx, user1)
+	val2, _ := valManager.storage.GetValidator(ctx, user2)
+
+	val1NoPower := abci.Validator{
+		Power:  0,
+		PubKey: val1.ABCIValidator.GetPubKey(),
+	}
+
+	val2NoPower := abci.Validator{
+		Power:  0,
+		PubKey: val2.ABCIValidator.GetPubKey(),
+	}
+
+	cases := []struct {
+		oncallValidators   []types.AccountKey
+		preBlockValidators []types.AccountKey
+		expectUpdateList   []abci.Validator
+	}{
+		{[]types.AccountKey{user1}, []types.AccountKey{}, []abci.Validator{val1.ABCIValidator}},
+		{[]types.AccountKey{user1, user2}, []types.AccountKey{user1}, []abci.Validator{val1.ABCIValidator, val2.ABCIValidator}},
+		{[]types.AccountKey{user1, user2}, []types.AccountKey{user1, user2}, []abci.Validator{val1.ABCIValidator, val2.ABCIValidator}},
+		{[]types.AccountKey{user2}, []types.AccountKey{user1, user2}, []abci.Validator{val1NoPower, val2.ABCIValidator}},
+		{[]types.AccountKey{}, []types.AccountKey{user2}, []abci.Validator{val2NoPower}},
+	}
+
+	for _, cs := range cases {
+		lst := &model.ValidatorList{
+			OncallValidators: cs.oncallValidators,
+		}
+		valManager.storage.SetValidatorList(ctx, lst)
+		ctx = WithPreBlockValidators(ctx, cs.preBlockValidators)
+		actualList, _ := valManager.GetUpdateValidatorList(ctx)
+		assert.Equal(t, cs.expectUpdateList, actualList)
+	}
+}
+
+func TestIsLegalWithdraw(t *testing.T) {
+	ctx, am, valManager, _, _ := setupTest(t, 0)
+	user1 := createTestAccount(ctx, am, "user1")
+	key1, _ := am.GetOwnerKey(ctx, user1)
+	valManager.RegisterValidator(ctx, user1, key1.Bytes(),
+		types.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)))
+
+	cases := []struct {
+		oncallValidators []types.AccountKey
+		username         types.AccountKey
+		withdraw         types.Coin
+		expectResult     bool
+	}{
+		{[]types.AccountKey{}, user1, types.ValidatorMinWithdraw.Minus(types.NewCoin(1)), false},
+		{[]types.AccountKey{}, user1, types.ValidatorMinCommitingDeposit, false},
+		{[]types.AccountKey{user1}, user1, types.ValidatorMinWithdraw, false},
+		{[]types.AccountKey{}, user1, types.ValidatorMinWithdraw, true},
+	}
+
+	for _, cs := range cases {
+		lst := &model.ValidatorList{
+			OncallValidators: cs.oncallValidators,
+		}
+		valManager.storage.SetValidatorList(ctx, lst)
+		res := valManager.IsLegalWithdraw(ctx, cs.username, cs.withdraw)
+		assert.Equal(t, cs.expectResult, res)
+	}
 }

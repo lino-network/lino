@@ -118,6 +118,22 @@ func TestProposalList(t *testing.T) {
 	assert.Equal(t, proposalList, proposalListPtr)
 }
 
+func TestPenaltyList(t *testing.T) {
+	ctx, vs := setup(t)
+	lst, err := vs.GetValidatorPenaltyList(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, ValidatorPenaltyList{[]types.AccountKey{}}, *lst)
+	lst.Validators =
+		append(lst.Validators, types.AccountKey("test1"))
+
+	err = vs.SetValidatorPenaltyList(ctx, lst)
+	assert.Nil(t, err)
+
+	lstPtr, err := vs.GetValidatorPenaltyList(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, lst, lstPtr)
+}
+
 func TestProposal(t *testing.T) {
 	ctx, vs := setup(t)
 	user := types.AccountKey("user")

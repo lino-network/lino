@@ -159,6 +159,11 @@ func TestRevokeBasic(t *testing.T) {
 	result2 := handler(ctx, msg5)
 	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
 
+	// invalid user cannot revoke
+	invalidMsg := NewVoterRevokeMsg("wqwdqwdasdsa")
+	resultInvalid := handler(ctx, invalidMsg)
+	assert.Equal(t, ErrGetVoter().Result(), resultInvalid)
+
 	//  user1  can revoke voter candidancy now
 	ctx = WithAllValidators(ctx, []types.AccountKey{})
 	result3 := handler(ctx, msg5)
@@ -175,7 +180,7 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, c1000.Plus(initCoin), acc2Balance)
 }
 
-func TestWithdrawBasic(t *testing.T) {
+func TestVoterWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(*vm, *am, *gm)
 
