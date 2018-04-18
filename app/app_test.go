@@ -3,7 +3,9 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/genesis"
@@ -28,6 +30,12 @@ var (
 	addr5 = priv3.PubKey().Address()
 	priv6 = crypto.GenPrivKeyEd25519()
 	addr6 = priv4.PubKey().Address()
+
+	genesisTotalLino    int64      = 10000000000
+	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
+	genesisAccount      string     = "Lino"
+	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
+	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
 
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
@@ -44,9 +52,16 @@ func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	return logger, dbs
 }
 
-func newLinoBlockchain() *LinoBlockchain {
+func newLinoBlockchain(t *testing.T) *LinoBlockchain {
 	logger, dbs := loggerAndDBs()
-	return NewLinoBlockchain(logger, dbs)
+	lb := NewLinoBlockchain(logger, dbs)
+	result, err := genesis.GetDefaultGenesis(priv1.PubKey(), priv2.PubKey())
+	assert.Nil(t, err)
+
+	vals := []abci.Validator{}
+	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
+	lb.Commit()
+	return lb
 }
 
 func TestGenesisAcc(t *testing.T) {
@@ -65,10 +80,8 @@ func TestGenesisAcc(t *testing.T) {
 		{"NonValidator", 500000000, priv5.PubKey(), false, priv6.PubKey()},
 	}
 
-	totalLino := int64(10000000000)
-
 	globalState := genesis.GlobalState{
-		TotalLino:                totalLino,
+		TotalLino:                genesisTotalLino,
 		GrowthRate:               sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(50, 100),
@@ -128,5 +141,82 @@ func TestGenesisAcc(t *testing.T) {
 			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
 		assert.Nil(t, err)
 		assert.Equal(t, expectBalance, balance)
+	}
+}
+
+func TestDistributeInflationToValidators(t *testing.T) {
+	logger, dbs := loggerAndDBs()
+	lb := NewLinoBlockchain(logger, dbs)
+
+	globalState := genesis.GlobalState{
+		TotalLino:                genesisTotalLino,
+		GrowthRate:               sdk.NewRat(98, 1000),
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(50, 100),
+		DeveloperAllocation:      sdk.NewRat(20, 100),
+		ValidatorAllocation:      sdk.NewRat(10, 100),
+		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
+		FreezingPeriodHr:         24 * 7,
+	}
+
+	genesisState := genesis.GenesisState{
+		Accounts:    []genesis.GenesisAccount{},
+		GlobalState: globalState,
+	}
+
+	// Generate 21 validators
+	LNOPerValidator := int64(100000000)
+	for i := 0; i < 21; i++ {
+		privKey := crypto.GenPrivKeyEd25519()
+		valPrivKey := crypto.GenPrivKeyEd25519()
+		genesisAcc := genesis.GenesisAccount{
+			Name:        "validator" + strconv.Itoa(i),
+			Lino:        LNOPerValidator,
+			PubKey:      privKey.PubKey(),
+			IsValidator: true,
+			ValPubKey:   valPrivKey.PubKey(),
+		}
+		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
+	}
+
+	result, err := genesis.GetGenesisJson(genesisState)
+	assert.Nil(t, err)
+
+	vals := []abci.Validator{}
+	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
+	lb.Commit()
+	baseTime := time.Now().Unix()
+	remainValidatorPool := types.RatToCoin(genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
+	expectBalance := types.NewCoin(LNOPerValidator * types.Decimals).Minus(
+		types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+
+	testPastMinutes := int64(0)
+	for i := baseTime; i < baseTime+3600*20; i += 50 {
+		lb.BeginBlock(abci.RequestBeginBlock{
+			Header: abci.Header{
+				ChainID: "Lino", Time: baseTime + i}})
+		lb.EndBlock(abci.RequestEndBlock{})
+		lb.Commit()
+		// simulate app
+		if (baseTime+int64(i)-lb.chainStartTime)/int64(60) > testPastMinutes {
+			testPastMinutes += 1
+			if testPastMinutes%60 == 0 {
+				// hourly inflation
+				inflationForValidator :=
+					types.RatToCoin(remainValidatorPool.ToRat().Mul(
+						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
+				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
+				// expectBalance for all validators
+				expectBalance = expectBalance.Plus(types.RatToCoin(inflationForValidator.ToRat().Quo(sdk.NewRat(21))))
+				ctx := lb.BaseApp.NewContext(true, abci.Header{})
+				for i := 0; i < 21; i++ {
+					balance, err :=
+						lb.accountManager.GetBankBalance(
+							ctx, types.AccountKey("validator"+strconv.Itoa(i)))
+					assert.Nil(t, err)
+					assert.Equal(t, expectBalance, balance)
+				}
+			}
+		}
 	}
 }

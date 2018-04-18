@@ -17,6 +17,13 @@ func NewDeveloperManager(key sdk.StoreKey) *DeveloperManager {
 	}
 }
 
+func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
+	if err := dm.storage.InitGenesis(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.AccountKey) bool {
 	infoByte, _ := dm.storage.GetDeveloper(ctx, username)
 	return infoByte != nil
@@ -122,15 +129,6 @@ func (dm *DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 		if err := dm.storage.SetDeveloper(ctx, developerName, curDeveloper); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
-	lst := &model.DeveloperList{}
-
-	if err := dm.storage.SetDeveloperList(ctx, lst); err != nil {
-		return err
 	}
 	return nil
 }

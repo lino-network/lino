@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -54,7 +55,8 @@ type LinoBlockchain struct {
 	infraManager     *infra.InfraManager
 	developerManager *developer.DeveloperManager
 
-	lastBlockTime int64
+	chainStartTime int64
+	lastBlockTime  int64
 	// for recurring time based event
 	pastMinutes int64
 }
@@ -183,6 +185,12 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
+	if err := lb.developerManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.infraManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
 	for _, gacc := range genesisState.Accounts {
 		if err := lb.toAppAccount(ctx, gacc); err != nil {
 			panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
@@ -233,15 +241,12 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if lb.lastBlockTime == 0 {
+	if lb.chainStartTime == 0 {
+		lb.chainStartTime = ctx.BlockHeader().Time
 		lb.lastBlockTime = ctx.BlockHeader().Time
 	}
 
-	if lb.pastMinutes == 0 {
-		lb.pastMinutes = ctx.BlockHeader().Time / 60
-	}
-
-	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
+	for (ctx.BlockHeader().Time-lb.chainStartTime)/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
 	if err := lb.valManager.SetPreBlockValidators(ctx); err != nil {
@@ -316,6 +321,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		panic(getErr)
 	}
 	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	fmt.Println("real inflation for validator:", coin)
 	if err != nil {
 		panic(err)
 	}
