@@ -32,6 +32,10 @@ func ErrGetProposal() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get proposal failed"))
 }
 
+func ErrGetPenaltyList() sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get penalty failed"))
+}
+
 func ErrGetDelegation() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
 }
@@ -62,6 +66,14 @@ func ErrProposalMarshalError(err error) sdk.Error {
 
 func ErrProposalUnmarshalError(err error) sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Proposal unmarshal error: %s", err.Error()))
+}
+
+func ErrPenaltyListMarshalError(err error) sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Penalty list marshal error: %s", err.Error()))
+}
+
+func ErrPenaltyListUnmarshalError(err error) sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Penalty list unmarshal error: %s", err.Error()))
 }
 
 func ErrDelegationMarshalError(err error) sdk.Error {

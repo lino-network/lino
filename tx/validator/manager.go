@@ -13,8 +13,7 @@ import (
 
 // validator manager is the proxy for all storage structs defined above
 type ValidatorManager struct {
-	storage            *model.ValidatorStorage `json:"validator_storage"`
-	preRoundValidators []types.AccountKey      `json:"pre_round_validators"`
+	storage *model.ValidatorStorage `json:"validator_storage"`
 }
 
 // create NewValidatorManager
@@ -24,22 +23,14 @@ func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
 	}
 }
 
-func (vm *ValidatorManager) SetPreBlockValidators(ctx sdk.Context) sdk.Error {
-	var err sdk.Error
-	vm.preRoundValidators, err = vm.GetOncallValidatorList(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (vm *ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
 	curOncallList, err := vm.GetOncallValidatorList(ctx)
 	if err != nil {
 		return nil, err
 	}
 	ABCIValList := []abci.Validator{}
-	for _, preValidator := range vm.preRoundValidators {
+	preBlockValidators := GetPreBlockValidators(ctx)
+	for _, preValidator := range preBlockValidators {
 		if FindAccountInList(preValidator, curOncallList) == -1 {
 			validator, getErr := vm.storage.GetValidator(ctx, preValidator)
 			if getErr != nil {

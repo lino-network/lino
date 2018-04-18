@@ -23,6 +23,14 @@ func NewDeveloperStorage(key sdk.StoreKey) *DeveloperStorage {
 	return &storage
 }
 
+func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
+	lst := &DeveloperList{}
+	if err := ds.SetDeveloperList(ctx, lst); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ds DeveloperStorage) GetDeveloper(ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
 	store := ctx.KVStore(ds.key)
 	providerByte := store.Get(GetDeveloperKey(accKey))

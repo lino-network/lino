@@ -242,9 +242,12 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
-	if err := lb.valManager.SetPreBlockValidators(ctx); err != nil {
-		panic(err)
+
+	preBlockValidators, getErr := lb.valManager.GetOncallValidatorList(ctx)
+	if getErr != nil {
+		panic(getErr)
 	}
+	ctx = val.WithPreBlockValidators(ctx, preBlockValidators)
 	absentValidators := req.GetAbsentValidators()
 	if absentValidators != nil {
 		if err := lb.valManager.UpdateAbsentValidator(ctx, absentValidators); err != nil {
@@ -259,7 +262,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 }
 
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	lb.syncValidatorWithVoteManager(ctx)
+	ctx = lb.syncValidatorWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
 	lb.punishValidatorsDidntVote(ctx)
 
@@ -382,27 +385,35 @@ func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Con
 	}
 }
 
-func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
+func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) sdk.Context {
 	// tell voting committe the newest validators
 	oncallValidators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
 		panic(getErr)
 	}
-	lb.voteManager.OncallValidators = oncallValidators
+	ctx = vote.WithOncallValidators(ctx, oncallValidators)
 
 	allValidators, getErr := lb.valManager.GetAllValidatorList(ctx)
 	if getErr != nil {
 		panic(getErr)
 	}
-	lb.voteManager.AllValidators = allValidators
+	ctx = vote.WithAllValidators(ctx, allValidators)
+	return ctx
 }
 
 func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
+	lst, getErr := lb.voteManager.GetValidatorPenaltyList(ctx)
+	if getErr != nil {
+		panic(getErr)
+	}
 	// punish these validators who didn't vote
-	for _, validator := range lb.voteManager.PenaltyValidators {
+	for _, validator := range lst.Validators {
 		if err := lb.valManager.PunishOncallValidator(ctx, validator, types.PenaltyMissVote, *lb.globalManager, false); err != nil {
 			panic(err)
 		}
 	}
-	lb.voteManager.PenaltyValidators = lb.voteManager.PenaltyValidators[:0]
+	lst.Validators = lst.Validators[:0]
+	if err := lb.voteManager.SetValidatorPenaltyList(ctx, lst); err != nil {
+		panic(err)
+	}
 }

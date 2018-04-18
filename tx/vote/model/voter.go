@@ -20,6 +20,6 @@ type Delegation struct {
 	Amount    types.Coin       `json:"amount"`
 }
 
-type PenaltyList struct {
-	Validators types.AccountKey `json:"validators"`
+type ValidatorPenaltyList struct {
+	Validators []types.AccountKey `json:"validators"`
 }

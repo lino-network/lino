@@ -103,10 +103,10 @@ func (im *InfraManager) GetInfraProviderList(ctx sdk.Context) (*model.InfraProvi
 	return im.storage.GetInfraProviderList(ctx)
 }
 
-func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error { 
+func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 	lst, getErr := im.storage.GetInfraProviderList(ctx)
 	if getErr != nil {
-		return  getErr
+		return getErr
 	}
 
 	for _, providerName := range lst.AllInfraProviders {
@@ -123,9 +123,7 @@ func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 }
 
 func (im InfraManager) InitGenesis(ctx sdk.Context) error {
-	lst := &model.InfraProviderList{}
-
-	if err := im.storage.SetInfraProviderList(ctx, lst); err != nil {
+	if err := im.storage.InitGenesis(ctx); err != nil {
 		return err
 	}
 	return nil

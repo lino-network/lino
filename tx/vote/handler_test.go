@@ -154,14 +154,15 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
 	// set user1 as validator (cannot revoke)
-	vm.AllValidators = append(vm.AllValidators, user1)
+	ctx = WithAllValidators(ctx, []types.AccountKey{user1})
 	msg5 := NewVoterRevokeMsg("user1")
-	//fmt.Println(vm.AllValidators)
-	//handler2 := NewHandler(*vm, *am, *gm)
 	result2 := handler(ctx, msg5)
-	assert.Equal(t, sdk.Result{}, result2)
+	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
 
 	//  user1  can revoke voter candidancy now
+	ctx = WithAllValidators(ctx, []types.AccountKey{})
+	result3 := handler(ctx, msg5)
+	assert.Equal(t, sdk.Result{}, result3)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user2")

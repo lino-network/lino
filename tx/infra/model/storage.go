@@ -23,6 +23,14 @@ func NewInfraProviderStorage(key sdk.StoreKey) *InfraProviderStorage {
 	return &storage
 }
 
+func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
+	lst := &InfraProviderList{}
+	if err := is.SetInfraProviderList(ctx, lst); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (is InfraProviderStorage) GetInfraProvider(ctx sdk.Context, accKey types.AccountKey) (*InfraProvider, sdk.Error) {
 	store := ctx.KVStore(is.key)
 	providerByte := store.Get(GetInfraProviderKey(accKey))
