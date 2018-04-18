@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -129,7 +130,7 @@ func TestRevokeBasic(t *testing.T) {
 	msg := NewVoterDepositMsg("user1", l1600)
 	handler(ctx, msg)
 
-	// let user2 delegate power to user1 twice
+	// let user2 delegate power to user1
 	msg2 := NewDelegateMsg("user2", "user1", l1000)
 	handler(ctx, msg2)
 
@@ -152,10 +153,15 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, c1000, voter.DelegatedPower)
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
-	// let user1 revoke voter candidancy
+	// set user1 as validator (cannot revoke)
+	vm.AllValidators = append(vm.AllValidators, user1)
 	msg5 := NewVoterRevokeMsg("user1")
+	//fmt.Println(vm.AllValidators)
+	//handler2 := NewHandler(*vm, *am, *gm)
 	result2 := handler(ctx, msg5)
 	assert.Equal(t, sdk.Result{}, result2)
+
+	//  user1  can revoke voter candidancy now
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user2")
@@ -209,12 +215,15 @@ func TestProposalBasic(t *testing.T) {
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c4600)
 
-	// let user1 create a proposal
+	// let user1 create a proposal (not enough coins)
 	msg := NewCreateProposalMsg("user1", para)
 	result := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, result)
+	assert.Equal(t, acc.ErrAccountCoinNotEnough().Result(), result)
+
+	am.AddCoin(ctx, user1, c4600)
+	resultPass := handler(ctx, msg)
+	assert.Equal(t, sdk.Result{}, resultPass)
 
 	// invalid create
 	invalidMsg := NewCreateProposalMsg("wqdkqwndkqwd", para)
@@ -305,4 +314,35 @@ func TestVoteBasic(t *testing.T) {
 	vote, getErr := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	assert.Equal(t, ErrGetVote(), getErr)
 
+}
+
+func TestDelegatorWithdraw(t *testing.T) {
+	ctx, am, vm, gm := setupTest(t, 0)
+	user1 := createTestAccount(ctx, am, "user1")
+	user2 := createTestAccount(ctx, am, "user2")
+	handler := NewHandler(*vm, *am, *gm)
+	vm.AddVoter(ctx, user1, types.VoterMinDeposit)
+
+	cases := []struct {
+		addDelegation bool
+		delegatedCoin types.Coin
+		delegator     types.AccountKey
+		voter         types.AccountKey
+		withdraw      types.LNO
+		expectResult  sdk.Result
+	}{
+		{false, types.NewCoin(0), user2, user1, types.DelegatorMinWithdraw.ToRat(), ErrIllegalWithdraw().Result()},
+		{true, types.NewCoin(100 * types.Decimals), user2, user1, sdk.NewRat(1, 10), ErrIllegalWithdraw().Result()},
+		{false, types.NewCoin(0), user2, user1, sdk.NewRat(101), ErrIllegalWithdraw().Result()},
+		{false, types.NewCoin(0), user2, user1, sdk.NewRat(10), sdk.Result{}},
+	}
+
+	for _, cs := range cases {
+		if cs.addDelegation {
+			vm.AddDelegation(ctx, cs.voter, cs.delegator, cs.delegatedCoin)
+		}
+		msg := NewDelegatorWithdrawMsg(string(cs.delegator), string(cs.voter), cs.withdraw)
+		res := handler(ctx, msg)
+		assert.Equal(t, cs.expectResult, res)
+	}
 }

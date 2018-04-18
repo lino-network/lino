@@ -77,7 +77,6 @@ func (vm VoteManager) IsLegalVoterWithdraw(ctx sdk.Context, username types.Accou
 	if getErr != nil {
 		return false
 	}
-
 	// reject if this is a validator
 	if vm.IsInValidatorList(ctx, username) {
 		return false
