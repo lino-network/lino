@@ -26,12 +26,10 @@ var _ = oldwire.RegisterInterface(
 	oldwire.ConcreteType{acc.ReturnCoinEvent{}, returnCoinEvent},
 )
 
-// vote manager is the proxy for all storage structs defined above
 type VoteManager struct {
 	storage *model.VoteStorage `json:"vote_storage"`
 }
 
-// create NewVoteManager
 func NewVoteManager(key sdk.StoreKey) *VoteManager {
 	return &VoteManager{
 		storage: model.NewVoteStorage(key),
@@ -116,7 +114,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 	return voter.Deposit.IsGTE(types.ValidatorMinVotingDeposit)
 }
 
-// onle support change parameter proposal now
+// only support change parameter proposal now
 func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
 	des *model.ChangeParameterDescription) (types.ProposalKey, sdk.Error) {
 	newID, getErr := vm.storage.GetNextProposalID()
@@ -151,7 +149,7 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
 	return newID, nil
 }
 
-// onle support change parameter proposal now
+// only support change parameter proposal now
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
 	vote := model.Vote{
 		Voter:  voter,

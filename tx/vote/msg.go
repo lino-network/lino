@@ -79,7 +79,7 @@ func (msg VoterDepositMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg VoterDepositMsg) String() string {
-	return fmt.Sprintf("ValidatorDepositMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
+	return fmt.Sprintf("VoterDepositMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
 func (msg VoterDepositMsg) Get(key interface{}) (value interface{}) {

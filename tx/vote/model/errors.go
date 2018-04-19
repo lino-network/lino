@@ -8,24 +8,12 @@ import (
 )
 
 // Error constructors
-func ErrSetVoter() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Set voter failed"))
-}
-
 func ErrGetVoter() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
-func ErrSetVote() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Set vote failed"))
-}
-
 func ErrGetVote() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get vote failed"))
-}
-
-func ErrSetProposal() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Set proposal failed"))
 }
 
 func ErrGetProposal() sdk.Error {
@@ -38,10 +26,6 @@ func ErrGetPenaltyList() sdk.Error {
 
 func ErrGetDelegation() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
-}
-
-func ErrSetDelegation() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Set delegation failed"))
 }
 
 func ErrVoterMarshalError(err error) sdk.Error {

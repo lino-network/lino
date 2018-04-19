@@ -27,7 +27,6 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 	}
 }
 
-// Handle DepositMsg
 func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
@@ -88,7 +87,6 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalMan
 	return sdk.Result{}
 }
 
-// Handle RevokeMsg
 func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorRevokeMsg) sdk.Result {
 	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {

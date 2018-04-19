@@ -12,25 +12,17 @@ import (
 )
 
 var (
-	l0    = types.LNO(sdk.NewRat(0))
-	l100  = types.LNO(sdk.NewRat(100))
-	l200  = types.LNO(sdk.NewRat(200))
 	l400  = types.LNO(sdk.NewRat(400))
 	l1000 = types.LNO(sdk.NewRat(1000))
 	l1600 = types.LNO(sdk.NewRat(1600))
 	l2000 = types.LNO(sdk.NewRat(2000))
 
-	c0    = types.Coin{0 * types.Decimals}
-	c100  = types.Coin{100 * types.Decimals}
-	c200  = types.Coin{200 * types.Decimals}
 	c400  = types.Coin{400 * types.Decimals}
 	c600  = types.Coin{600 * types.Decimals}
 	c1000 = types.Coin{1000 * types.Decimals}
 	c1200 = types.Coin{1200 * types.Decimals}
 	c1600 = types.Coin{1600 * types.Decimals}
-	c1900 = types.Coin{1900 * types.Decimals}
 	c2000 = types.Coin{2000 * types.Decimals}
-	c2600 = types.Coin{2600 * types.Decimals}
 	c3200 = types.Coin{3200 * types.Decimals}
 	c3600 = types.Coin{3600 * types.Decimals}
 	c4600 = types.Coin{4600 * types.Decimals}

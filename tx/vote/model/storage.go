@@ -22,7 +22,6 @@ type VoteStorage struct {
 	cdc *wire.Codec
 }
 
-// NewValidatorManager returns a new ValidatorManager
 func NewVoteStorage(key sdk.StoreKey) *VoteStorage {
 	cdc := wire.NewCodec()
 	vs := &VoteStorage{

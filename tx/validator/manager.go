@@ -11,12 +11,10 @@ import (
 	abci "github.com/tendermint/abci/types"
 )
 
-// validator manager is the proxy for all storage structs defined above
 type ValidatorManager struct {
 	storage *model.ValidatorStorage `json:"validator_storage"`
 }
 
-// create NewValidatorManager
 func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
 	return &ValidatorManager{
 		storage: model.NewValidatorStorage(key),
@@ -31,6 +29,7 @@ func (vm *ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Vali
 	ABCIValList := []abci.Validator{}
 	preBlockValidators := GetPreBlockValidators(ctx)
 	for _, preValidator := range preBlockValidators {
+		// set power to 0 if a previous validator not in oncall list anymore
 		if FindAccountInList(preValidator, curOncallList) == -1 {
 			validator, getErr := vm.storage.GetValidator(ctx, preValidator)
 			if getErr != nil {
@@ -83,7 +82,9 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 	if FindAccountInList(username, lst.OncallValidators) != -1 {
 		return false
 	}
-	//reject if the remaining coins are less than min deposit requirement
+
+	// pass if it's not in all validator list
+	// reject if the remaining coins are less than min deposit requirement
 	res := validator.Deposit.Minus(coin)
 	return res.IsGTE(types.ValidatorMinCommitingDeposit)
 }
@@ -134,22 +135,23 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 		return getErr
 	}
 	validator.Deposit = validator.Deposit.Minus(penalty)
-	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
-		return err
-	}
-
-	// add coins back to inflation pool
-	if err := gm.AddToValidatorInflationPool(ctx, penalty); err != nil {
-		return err
-	}
 	// remove this validator if its remaining deposit is not enough
 	// OR, we explicitly want to fire this validator
-	// it is user's responsibility to do future withdraw/deposit
+	// all deposit will be added back to inflation pool
 	if willFire || !validator.Deposit.IsGTE(types.ValidatorMinCommitingDeposit) {
 		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username); err != nil {
 			return err
 		}
-		return nil
+		penalty = penalty.Plus(validator.Deposit)
+		validator.Deposit = types.NewCoin(0)
+	}
+
+	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
+		return err
+	}
+	// add coins back to inflation pool
+	if err := gm.AddToValidatorInflationPool(ctx, penalty); err != nil {
+		return err
 	}
 	if err := vm.AdjustValidatorList(ctx); err != nil {
 		return err
@@ -242,8 +244,6 @@ func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.
 // try to join the oncall validator list, the action will success if either
 // 1. the validator list is not full
 // or 2. someone in the validator list has a lower power than current validator
-// return a boolean to indicate if the user has became an oncall validator
-// Also, set WithdrawAvailableAt to be infinite if become an oncall validator
 func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username types.AccountKey) sdk.Error {
 	curValidator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
@@ -273,7 +273,6 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	// add to list directly if validator list is not full
 	if len(lst.OncallValidators) < types.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
-		//vm.updateLowestValidator(ctx)
 	} else if curValidator.Deposit.Amount > lst.LowestPower.Amount {
 		// replace the validator with lowest power
 		for idx, validatorKey := range lst.OncallValidators {

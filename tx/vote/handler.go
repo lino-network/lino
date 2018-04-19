@@ -30,13 +30,12 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case CreateProposalMsg:
 			return handleCreateProposalMsg(ctx, vm, am, gm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized vote Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-// Handle DepositMsg
 func handleVoterDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
@@ -67,7 +66,6 @@ func handleVoterDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManage
 	return sdk.Result{}
 }
 
-// Handle Withdraw Msg
 func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -88,7 +86,6 @@ func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 	return sdk.Result{}
 }
 
-// Handle VoterRevokeMsg
 func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
 	// reject if this is a validator
 	if vm.IsInValidatorList(ctx, msg.Username) {
@@ -100,6 +97,7 @@ func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManag
 		return getErr.Result()
 	}
 
+	// return coins to all delegators
 	for _, delegator := range delegators {
 		coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Username, delegator)
 		if withdrawErr != nil {
@@ -121,7 +119,6 @@ func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManag
 	return sdk.Result{}
 }
 
-// Handle DelegateMsg
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -139,7 +136,6 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 	return sdk.Result{}
 }
 
-// Handle DelegatorWithdrawMsg
 func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg DelegatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -160,7 +156,6 @@ func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.Globa
 	return sdk.Result{}
 }
 
-// Handle RevokeDelegationMsg
 func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg RevokeDelegationMsg) sdk.Result {
 	coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Voter, msg.Delegator)
 	if withdrawErr != nil {
@@ -173,7 +168,6 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 	return sdk.Result{}
 }
 
-// Handle VoteMsg
 func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoteMsg) sdk.Result {
 	if !vm.IsVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
@@ -189,7 +183,6 @@ func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg
 	return sdk.Result{}
 }
 
-// Handle CreateProposalMsg
 func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager, msg CreateProposalMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Creator) {
 		return ErrUsernameNotFound().Result()
