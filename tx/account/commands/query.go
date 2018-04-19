@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
@@ -50,6 +50,7 @@ type commander struct {
 }
 
 func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide an address")
 	}
@@ -62,7 +63,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 	key := sdk.Address(bz)
 
-	res, err := builder.Query(model.GetAccountBankKey(key), c.storeName)
+	res, err := ctx.Query(model.GetAccountBankKey(key), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -83,6 +84,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide aa username")
 	}
@@ -90,7 +92,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	accKey := types.AccountKey(args[0])
 
-	res, err := builder.Query(model.GetAccountInfoKey(accKey), c.storeName)
+	res, err := ctx.Query(model.GetAccountInfoKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(model.GetAccountBankKey(info.Address), c.storeName)
+	res, err = ctx.Query(model.GetAccountBankKey(info.Address), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -108,7 +110,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(model.GetAccountMetaKey(accKey), c.storeName)
+	res, err = ctx.Query(model.GetAccountMetaKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}

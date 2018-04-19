@@ -10,7 +10,7 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -37,6 +37,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx := context.NewCoreContextFromViper()
 		username := viper.GetString(FlagDonator)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
@@ -48,7 +49,7 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID, "")
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := builder.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
 		if signErr != nil {
 			return signErr
 		}

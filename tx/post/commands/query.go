@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/post/model"
@@ -31,6 +31,7 @@ type commander struct {
 }
 
 func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.NewCoreContextFromViper()
 	if len(args) != 2 || len(args[0]) == 0 || len(args[1]) == 0 {
 		return errors.New("You must provide an valid author and post id")
 	}
@@ -40,7 +41,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	postID := args[1]
 	postKey := types.GetPostKey(types.AccountKey(author), postID)
 
-	res, err := builder.Query(model.GetPostInfoKey(postKey), c.storeName)
+	res, err := ctx.Query(model.GetPostInfoKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = builder.Query(model.GetPostMetaKey(postKey), c.storeName)
+	res, err = ctx.Query(model.GetPostMetaKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
