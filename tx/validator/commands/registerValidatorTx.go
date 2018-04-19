@@ -11,7 +11,7 @@ import (
 	"github.com/lino-network/lino/types"
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
@@ -37,6 +37,7 @@ func RegisterValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendRegisterValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx := context.NewCoreContextFromViper()
 		name := viper.GetString(sdkcli.FlagName)
 
 		config, err := tcmd.ParseConfig()
@@ -65,7 +66,7 @@ func sendRegisterValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := validator.NewValidatorDepositMsg(name, types.LNO(amount), privValidator.PubKey)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
 
 		if err != nil {
 			return err

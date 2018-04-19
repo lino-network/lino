@@ -9,7 +9,7 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/tx/account"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -37,6 +37,7 @@ func FollowTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx := context.NewCoreContextFromViper()
 		follower := viper.GetString(FlagFollower)
 		followee := viper.GetString(FlagFollowee)
 		var msg sdk.Msg
@@ -48,7 +49,7 @@ func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 		}
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(follower, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(follower, msg, cdc)
 
 		if err != nil {
 			return err

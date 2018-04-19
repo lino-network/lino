@@ -14,7 +14,7 @@ import (
 	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/version"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
 	"github.com/tendermint/go-crypto"
@@ -28,25 +28,27 @@ import (
 
 // linoCmd is the entry point for this binary
 var (
+	context = server.NewDefaultContext()
 	linoCmd = &cobra.Command{
-		Use:   "lino",
-		Short: "Lino Blockchain (server)",
+		Use:               "lino",
+		Short:             "Lino Blockchain (server)",
+		PersistentPreRunE: server.PersistentPreRunEFn(context),
 	}
 )
 
 // defaultOptions sets up the app_options for the
 // default genesis file
-func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error) {
+func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.RawMessage, error) {
 	pubKey, secret, err := generateCoinKey()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
 
 	config, err := tcmd.ParseConfig()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 	// private validator
 	privValFile := config.PrivValidatorFile()
@@ -60,10 +62,10 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 
 	result, err := genesis.GetDefaultGenesis(*pubKey, privValidator.PubKey)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
-	return json.RawMessage(result), secret, pubKey.Address(), nil
+	return json.RawMessage(result), nil
 }
 
 // generate Lino application
@@ -110,16 +112,7 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 }
 
 func main() {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).
-		With("module", "main")
-
-	linoCmd.AddCommand(
-		server.InitCmd(defaultOptions, logger),
-		server.StartCmd(generateApp, logger),
-		server.UnsafeResetAllCmd(logger),
-		version.VersionCmd,
-	)
-
+	server.AddCommands(linoCmd, defaultAppState, generateApp, context)
 	// prepare and add flags
 	rootDir := os.ExpandEnv("$HOME/.lino")
 	executor := cli.PrepareBaseCmd(linoCmd, "BC", rootDir)
