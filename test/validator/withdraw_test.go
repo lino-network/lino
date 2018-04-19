@@ -39,11 +39,20 @@ func TestValidatorRevoke(t *testing.T) {
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(500*types.Decimals))
 
-	test.SignCheckDeliver(t, lb, valRevokeMsg, 3, false, newAccountPriv, baseTime+test.CoinReturnIntervalHr*3600+1)
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 3, false, newAccountPriv,
+		baseTime+test.CoinReturnIntervalHr*3600+1)
+	// check the first coin return
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(71428571))
 	for i := int64(1); i < types.CoinReturnTimes; i++ {
-		test.SignCheckDeliver(t, lb, valRevokeMsg, 3+i, false, newAccountPriv, baseTime+test.CoinReturnIntervalHr*3600*(i+1)+2)
+		test.SignCheckDeliver(t, lb, valRevokeMsg, 3+i, false, newAccountPriv,
+			baseTime+test.CoinReturnIntervalHr*3600*(i+1)+2)
 	}
+	// will get all coins back after the freezing period
+	test.CheckBalance(t, newAccountName, lb, types.NewCoin(2000*types.Decimals))
+
+	// won't get extra coins in the future
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 3+test.CoinReturnTimes, false, newAccountPriv,
+		baseTime+test.CoinReturnIntervalHr*3600*(test.CoinReturnTimes+1)+3)
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(2000*types.Decimals))
 
 }
