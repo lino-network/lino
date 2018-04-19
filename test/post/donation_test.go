@@ -13,7 +13,7 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 )
 
-// test publish a normal post
+// test donate to a normal post
 func TestNormalDonation(t *testing.T) {
 	newPostUserPriv := crypto.GenPrivKeyEd25519()
 	newPostUser := "poster"
@@ -36,7 +36,7 @@ func TestNormalDonation(t *testing.T) {
 
 	donateMsg := post.NewDonateMsg(
 		types.AccountKey(newDonateUser), types.LNO(sdk.NewRat(50)),
-		types.AccountKey(newPostUser), postID)
+		types.AccountKey(newPostUser), postID, "")
 
 	test.SignCheckDeliver(t, lb, donateMsg, 0, true, newDonateUserPriv, baseTime)
 
@@ -47,9 +47,9 @@ func TestNormalDonation(t *testing.T) {
 	test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserPriv, baseTime)
 	test.CheckBalance(t, newPostUser, lb, types.NewCoin(10000000+4750000))
 	test.SignCheckDeliver(
-		t, lb, claimMsg, 2, true, newPostUserPriv, baseTime+test.FreezingPeriodHr*3600+1)
+		t, lb, claimMsg, 2, true, newPostUserPriv, baseTime+test.ConsumptionFreezingPeriodHr*3600+1)
 	test.CheckBalance(t, newPostUser, lb, types.NewCoin(10000000+4750000))
 	test.SignCheckDeliver(
-		t, lb, claimMsg, 3, true, newPostUserPriv, baseTime+test.FreezingPeriodHr*3600+2)
+		t, lb, claimMsg, 3, true, newPostUserPriv, baseTime+test.ConsumptionFreezingPeriodHr*3600+2)
 	test.CheckBalance(t, newPostUser, lb, types.NewCoin(944687598610))
 }

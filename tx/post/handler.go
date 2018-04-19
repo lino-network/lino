@@ -98,19 +98,22 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		}
 		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat.Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
-		if err := processDonationFriction(ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, am, pm, gm); err != nil {
+		if err := processDonationFriction(
+			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
 			return err.Result()
 		}
 	}
-	if err := processDonationFriction(ctx, msg.Username, coin, msg.Author, msg.PostID, am, pm, gm); err != nil {
+	if err := processDonationFriction(
+		ctx, msg.Username, coin, msg.Author, msg.PostID, msg.FromApp, am, pm, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func processDonationFriction(
-	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
-	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin,
+	postAuthor types.AccountKey, postID string, fromApp types.AccountKey,
+	am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
 	postKey := types.GetPostKey(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
@@ -145,6 +148,7 @@ func processDonationFriction(
 		Evaluate:   evaluateResult,
 		Original:   coin,
 		Friction:   frictionCoin,
+		FromApp:    fromApp,
 	}
 	if err :=
 		gm.AddFrictionAndRegisterContentRewardEvent(

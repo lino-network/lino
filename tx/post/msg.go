@@ -46,6 +46,7 @@ type DonateMsg struct {
 	Amount   types.LNO
 	Author   types.AccountKey
 	PostID   string
+	FromApp  types.AccountKey
 }
 
 // ReportOrUpvoteMsg sent from a user to a post
@@ -63,7 +64,10 @@ func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
 }
 
 // NewLikeMsg constructs a like msg
-func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, postID string) LikeMsg {
+func NewLikeMsg(
+	user types.AccountKey, weight int64,
+	author types.AccountKey, postID string) LikeMsg {
+
 	return LikeMsg{
 		Username: user,
 		Weight:   weight,
@@ -73,17 +77,24 @@ func NewLikeMsg(user types.AccountKey, weight int64, author types.AccountKey, po
 }
 
 // NewDonateMsg constructs a donate msg
-func NewDonateMsg(user types.AccountKey, amount types.LNO, author types.AccountKey, postID string) DonateMsg {
+func NewDonateMsg(
+	user types.AccountKey, amount types.LNO, author types.AccountKey,
+	postID string, fromApp types.AccountKey) DonateMsg {
+
 	return DonateMsg{
 		Username: user,
 		Amount:   amount,
 		Author:   author,
 		PostID:   postID,
+		FromApp:  fromApp,
 	}
 }
 
 // NewReportOrUpvoteMsg constructs a report msg
-func NewReportOrUpvoteMsg(user types.AccountKey, author types.AccountKey, postID string, isReport bool, isRevoke bool) ReportOrUpvoteMsg {
+func NewReportOrUpvoteMsg(
+	user types.AccountKey, author types.AccountKey, postID string,
+	isReport bool, isRevoke bool) ReportOrUpvoteMsg {
+
 	return ReportOrUpvoteMsg{
 		Username: user,
 		Author:   author,
@@ -94,10 +105,10 @@ func NewReportOrUpvoteMsg(user types.AccountKey, author types.AccountKey, postID
 }
 
 // Type implements sdk.Msg
-func (msg CreatePostMsg) Type() string     { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
-func (msg LikeMsg) Type() string           { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
-func (msg DonateMsg) Type() string         { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
-func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName } // TODO change to "post/create", wait for base app udpate
+func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
+func (msg LikeMsg) Type() string           { return types.PostRouterName }
+func (msg DonateMsg) Type() string         { return types.PostRouterName }
+func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
 
 // ValidateBasic implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -122,7 +133,8 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if msg.RedistributionSplitRate == sdk.NewRat(0, 0) {
 		return ErrPostRedistributionSplitRate()
 	}
-	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) || msg.RedistributionSplitRate.GT(sdk.OneRat) {
+	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) ||
+		msg.RedistributionSplitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -227,11 +239,17 @@ func (msg CreatePostMsg) String() string {
 	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostCreateParams)
 }
 func (msg LikeMsg) String() string {
-	return fmt.Sprintf("Post.LikeMsg{like from: %v, weight: %v, post auther:%v, post id: %v}", msg.Username, msg.Weight, msg.Author, msg.PostID)
+	return fmt.Sprintf(
+		"Post.LikeMsg{like from: %v, weight: %v, post auther:%v, post id: %v}",
+		msg.Username, msg.Weight, msg.Author, msg.PostID)
 }
 func (msg DonateMsg) String() string {
-	return fmt.Sprintf("Post.DonateMsg{donation from: %v, amount: %v, post auther:%v, post id: %v}", msg.Username, msg.Amount, msg.Author, msg.PostID)
+	return fmt.Sprintf(
+		"Post.DonateMsg{donation from: %v, amount: %v, post auther:%v, post id: %v}",
+		msg.Username, msg.Amount, msg.Author, msg.PostID)
 }
 func (msg ReportOrUpvoteMsg) String() string {
-	return fmt.Sprintf("Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}", msg.Username, msg.Author, msg.PostID)
+	return fmt.Sprintf(
+		"Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}",
+		msg.Username, msg.Author, msg.PostID)
 }

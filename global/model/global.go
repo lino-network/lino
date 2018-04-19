@@ -6,7 +6,7 @@ import (
 )
 
 type GlobalMeta struct {
-	TotalLino             types.LNO  `json:"total_lino"`
+	TotalLinoCoin         types.Coin `json:"total_lino_coin"`
 	CumulativeConsumption types.Coin `json:"cumulative_consumption"`
 	GrowthRate            sdk.Rat    `json:"growth_rate"`
 }
@@ -62,21 +62,21 @@ type InflationPool struct {
 // ReportStakeWindow used to evaluate the panelty of the post within the freezing period
 // DislikeStakeWindow used to evaluate the panelty of the post within the freezing period
 // ConsumptionWindow records all content related consumption within the freezing period
-// FreezingPeriodHr is the time content createor can get remain consumption after friction
+// ConsumptionFreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
-	ConsumptionFrictionRate sdk.Rat    `json:"consumption_friction_rate"`
-	ReportStakeWindow       sdk.Rat    `json:"report_stake_window"`
-	DislikeStakeWindow      sdk.Rat    `json:"dislike_stake_window"`
-	ConsumptionWindow       types.Coin `json:"consumption_window"`
-	ConsumptionRewardPool   types.Coin `json:"consumption_reward_pool"`
-	FreezingPeriodHr        int64      `json:"freezing_period"`
+	ConsumptionFrictionRate     sdk.Rat    `json:"consumption_friction_rate"`
+	ReportStakeWindow           sdk.Rat    `json:"report_stake_window"`
+	DislikeStakeWindow          sdk.Rat    `json:"dislike_stake_window"`
+	ConsumptionWindow           types.Coin `json:"consumption_window"`
+	ConsumptionRewardPool       types.Coin `json:"consumption_reward_pool"`
+	ConsumptionFreezingPeriodHr int64      `json:"consumption_freezing_period"`
 }
 
 type EvaluateOfContentValuePara struct {
-	ConsumptionTimeAdjustBase      int64   `consumption_time_adjust_base`
-	ConsumptionTimeAdjustOffset    int64   `consumption_time_adjust_offset`
-	NumOfConsumptionOnAuthorOffset int64   `num_of_consumption_on_author_offset`
-	TotalAmountOfConsumptionBase   int64   `total_amount_of_consumption_base`
-	TotalAmountOfConsumptionOffset int64   `total_amount_of_consumption_offset`
-	AmountOfConsumptionExponent    sdk.Rat `amount_of_consumption_exponent`
+	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
+	ConsumptionTimeAdjustOffset    int64   `json:"consumption_time_adjust_offset"`
+	NumOfConsumptionOnAuthorOffset int64   `json:"num_of_consumption_on_author_offset"`
+	TotalAmountOfConsumptionBase   int64   `json:"total_amount_of_consumption_base"`
+	TotalAmountOfConsumptionOffset int64   `json:"total_amount_of_consumption_offset"`
+	AmountOfConsumptionExponent    sdk.Rat `json:"amount_of_consumption_exponent"`
 }

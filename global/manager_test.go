@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -32,17 +31,7 @@ var (
 )
 
 func InitGlobalManager(ctx sdk.Context, gm *GlobalManager) error {
-	globalState := genesis.GlobalState{
-		TotalLino:                10000,
-		GrowthRate:               sdk.Rat{98, 1000},
-		InfraAllocation:          sdk.Rat{20, 100},
-		ContentCreatorAllocation: sdk.Rat{55, 100},
-		DeveloperAllocation:      sdk.Rat{20, 100},
-		ValidatorAllocation:      sdk.Rat{5, 100},
-		ConsumptionFrictionRate:  sdk.Rat{1, 100},
-		FreezingPeriodHr:         24 * 7,
-	}
-	return gm.InitGlobalManager(ctx, globalState)
+	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
 func getContext() sdk.Context {
@@ -337,7 +326,7 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 	assert.Equal(t, types.NewCoin(0), pool.ValidatorInflationPool)
 }
 
-func TestGetInfraHourlyInflation(t *testing.T) {
+func TestGetInfraMonthlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
 	totalInfraInflation := types.NewCoin(10000 * 100)
 	inflationPool := &model.InflationPool{
@@ -345,20 +334,22 @@ func TestGetInfraHourlyInflation(t *testing.T) {
 	}
 	err := gm.globalStorage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	for i := 0; i < types.HoursPerYear; i++ {
-		pool, err := gm.globalStorage.GetInflationPool(ctx)
-		assert.Nil(t, err)
-		coin, err := gm.GetInfraHourlyInflation(ctx, int64(i+1))
-		assert.Nil(t, err)
-		assert.Equal(t, coin, types.RatToCoin(pool.InfraInflationPool.ToRat().
-			Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))))
+	for i := 1; i <= types.HoursPerYear*60; i++ {
+		if i%types.MinutesPerMonth == 0 {
+			pool, err := gm.globalStorage.GetInflationPool(ctx)
+			assert.Nil(t, err)
+			coin, err := gm.GetInfraMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
+			assert.Nil(t, err)
+			assert.Equal(t, coin, types.RatToCoin(pool.InfraInflationPool.ToRat().
+				Mul(sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))))
+		}
 	}
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoin(0), pool.InfraInflationPool)
 }
 
-func TestGetDeveloperHourlyInflation(t *testing.T) {
+func TestGetDeveloperMonthlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
 	totalDeveloperInflation := types.NewCoin(10000 * 100)
 	inflationPool := &model.InflationPool{
@@ -366,13 +357,15 @@ func TestGetDeveloperHourlyInflation(t *testing.T) {
 	}
 	err := gm.globalStorage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	for i := 0; i < types.HoursPerYear; i++ {
-		pool, err := gm.globalStorage.GetInflationPool(ctx)
-		assert.Nil(t, err)
-		coin, err := gm.GetDeveloperHourlyInflation(ctx, int64(i+1))
-		assert.Nil(t, err)
-		assert.Equal(t, coin, types.RatToCoin(pool.DeveloperInflationPool.ToRat().
-			Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))))
+	for i := 1; i <= types.HoursPerYear*60; i++ {
+		if i%types.MinutesPerMonth == 0 {
+			pool, err := gm.globalStorage.GetInflationPool(ctx)
+			assert.Nil(t, err)
+			coin, err := gm.GetDeveloperMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
+			assert.Nil(t, err)
+			assert.Equal(t, coin, types.RatToCoin(pool.DeveloperInflationPool.ToRat().
+				Mul(sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))))
+		}
 	}
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)

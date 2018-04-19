@@ -41,6 +41,9 @@ func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username types.Acc
 	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
 		return err
 	}
+	if err := dm.AddToDeveloperList(ctx, username); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -77,12 +80,12 @@ func (dm DeveloperManager) RemoveFromDeveloperList(ctx sdk.Context, username typ
 	return nil
 }
 
-func (dm *DeveloperManager) ReportConsumption(ctx sdk.Context, username types.AccountKey, consumption int64) sdk.Error {
+func (dm *DeveloperManager) ReportConsumption(ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
-	developer.AppConsumption += consumption
+	developer.AppConsumption = developer.AppConsumption.Plus(consumption)
 	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
 		return err
 	}
@@ -95,19 +98,22 @@ func (dm *DeveloperManager) GetConsumptionWeight(ctx sdk.Context, username types
 		return sdk.NewRat(0), getErr
 	}
 
-	totalConsumption := int64(0)
-	myConsumption := int64(0)
+	totalConsumption := types.NewCoin(0)
+	myConsumption := types.NewCoin(0)
 	for _, developerName := range lst.AllDevelopers {
 		curDeveloper, getErr := dm.storage.GetDeveloper(ctx, developerName)
 		if getErr != nil {
 			return sdk.NewRat(0), getErr
 		}
-		totalConsumption += curDeveloper.AppConsumption
+		totalConsumption = totalConsumption.Plus(curDeveloper.AppConsumption)
 		if curDeveloper.Username == username {
 			myConsumption = curDeveloper.AppConsumption
 		}
 	}
-	return sdk.NewRat(myConsumption, totalConsumption), nil
+	if totalConsumption.ToRat().Equal(sdk.ZeroRat) {
+		return sdk.ZeroRat, nil
+	}
+	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
 }
 
 func (dm *DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {
@@ -125,7 +131,7 @@ func (dm *DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 		if getErr != nil {
 			return getErr
 		}
-		curDeveloper.AppConsumption = 0
+		curDeveloper.AppConsumption = types.NewCoin(0)
 		if err := dm.storage.SetDeveloper(ctx, developerName, curDeveloper); err != nil {
 			return err
 		}
