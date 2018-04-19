@@ -13,8 +13,8 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 )
 
-// test normal transfer to account name
-func TestValidatorDeposit(t *testing.T) {
+// test normal revoke
+func TestValidatorRevoke(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
@@ -28,13 +28,22 @@ func TestValidatorDeposit(t *testing.T) {
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO(sdk.NewRat(1000)), newValidatorPriv.PubKey())
+		newAccountName, types.LNO(sdk.NewRat(1500)), newValidatorPriv.PubKey())
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountPriv, baseTime)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
-
-	valDepositMsg = val.NewValidatorDepositMsg(
-		newAccountName, types.LNO(sdk.NewRat(1)), newValidatorPriv.PubKey())
-	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
-	test.CheckAllValidatorList(t, newAccountName, true, lb)
+
+	valRevokeMsg := val.NewValidatorRevokeMsg(newAccountName)
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 2, true, newAccountPriv, baseTime)
+	test.CheckAllValidatorList(t, newAccountName, false, lb)
+	test.CheckOncallValidatorList(t, newAccountName, false, lb)
+	test.CheckBalance(t, newAccountName, lb, types.NewCoin(500*types.Decimals))
+
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 3, false, newAccountPriv, baseTime+test.CoinReturnIntervalHr*3600+1)
+	test.CheckBalance(t, newAccountName, lb, types.NewCoin(71428571))
+	for i := int64(1); i < types.CoinReturnTimes; i++ {
+		test.SignCheckDeliver(t, lb, valRevokeMsg, 3+i, false, newAccountPriv, baseTime+test.CoinReturnIntervalHr*3600*(i+1)+2)
+	}
+	test.CheckBalance(t, newAccountName, lb, types.NewCoin(2000*types.Decimals))
+
 }

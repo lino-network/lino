@@ -226,6 +226,9 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin t
 
 // this method won't check if it is a legal withdraw, caller should check by itself
 func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	if coin.IsZero() {
+		return ErrNoCoinToWithdraw()
+	}
 	voter, getErr := vm.storage.GetVoter(ctx, username)
 	if getErr != nil {
 		return getErr
@@ -257,6 +260,9 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 }
 
 func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+	if coin.IsZero() {
+		return ErrNoCoinToWithdraw()
+	}
 	// change voter's delegated power
 	voter, getErr := vm.storage.GetVoter(ctx, voterName)
 	if getErr != nil {

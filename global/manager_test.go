@@ -280,7 +280,11 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.registerAtTime})
-		err := gm.RegisterCoinReturnEvent(ctx, testEvent{}, cs.times, cs.interval)
+		events := []types.Event{}
+		for i := int64(0); i < cs.times; i++ {
+			events = append(events, testEvent{})
+		}
+		err := gm.RegisterCoinReturnEvent(ctx, events, cs.times, cs.interval)
 		assert.Nil(t, err)
 		for _, time := range cs.expectTimeWithOneEvent {
 			eventList := gm.GetTimeEventListAtTime(ctx, time)

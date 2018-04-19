@@ -152,9 +152,12 @@ func MakeCodec() *wire.Codec {
 	)
 
 	const eventTypeReward = 0x1
+	const eventTypeReturnCoin = 0x2
+
 	var _ = oldwire.RegisterInterface(
 		struct{ types.Event }{},
 		oldwire.ConcreteType{post.RewardEvent{}, eventTypeReward},
+		oldwire.ConcreteType{acc.ReturnCoinEvent{}, eventTypeReturnCoin},
 	)
 	// TODO(Lino): Register msg type and model.
 	cdc := wire.NewCodec()
@@ -194,6 +197,9 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 	if err := lb.infraManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.voteManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
 	for _, gacc := range genesisState.Accounts {
@@ -303,9 +309,15 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
-			fmt.Println("execute event:", e)
+			fmt.Println("execute reward event:", e)
 			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager); err != nil {
-				fmt.Println("execute event err:", err)
+				fmt.Println("execute reward event err:", err)
+				continue
+			}
+		case acc.ReturnCoinEvent:
+			fmt.Println("execute coin return event:", e)
+			if err := e.Execute(ctx, *lb.accountManager); err != nil {
+				fmt.Println("execute coin return err:", err)
 				continue
 			}
 		}

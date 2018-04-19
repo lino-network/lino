@@ -68,14 +68,20 @@ func handleDeveloperRevokeMsg(ctx sdk.Context, dm DeveloperManager, gm global.Gl
 }
 
 func returnCoinTo(ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, times int64, interval int64, coin types.Coin) sdk.Error {
-	pieceRat := coin.ToRat().Quo(sdk.NewRat(times))
-	piece := types.RatToCoin(pieceRat)
-	event := acc.ReturnCoinEvent{
-		Username: name,
-		Amount:   piece,
+	events := []types.Event{}
+	for i := int64(0); i < times; i++ {
+		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
+		piece := types.RatToCoin(pieceRat)
+		coin = coin.Minus(piece)
+
+		event := acc.ReturnCoinEvent{
+			Username: name,
+			Amount:   piece,
+		}
+		events = append(events, event)
 	}
 
-	if err := gm.RegisterCoinReturnEvent(ctx, event, times, interval); err != nil {
+	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}
 	return nil

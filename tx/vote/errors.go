@@ -32,6 +32,10 @@ func ErrIllegalWithdraw() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Illegal withdraw"))
 }
 
+func ErrNoCoinToWithdraw() sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("No coin to withdraw"))
+}
+
 func ErrRegisterFeeNotEnough() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Register fee not enough"))
 }

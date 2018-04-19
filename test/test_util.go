@@ -12,6 +12,7 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 	reg "github.com/lino-network/lino/tx/register"
+	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,6 +36,8 @@ var (
 
 	ConsumptionFrictionRate sdk.Rat = sdk.NewRat(5, 100)
 	FreezingPeriodHr        int64   = 24 * 7
+	CoinReturnIntervalHr    int64   = 24 * 7
+	CoinReturnTimes         int64   = 7
 )
 
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
@@ -113,6 +116,41 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 		accManager.GetBankBalance(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
 	assert.Equal(t, expectBalance, balance)
+}
+
+func CheckOncallValidatorList(
+	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	valManager := val.NewValidatorManager(lb.CapKeyValStore)
+	var accList []types.AccountKey
+	var err sdk.Error
+	accList, err = valManager.GetOncallValidatorList(ctx)
+
+	assert.Nil(t, err)
+	index := val.FindAccountInList(types.AccountKey(accountName), accList)
+	if isInOnCallValidatorList {
+		assert.True(t, index > -1)
+	} else {
+		assert.True(t, index == -1)
+	}
+
+}
+
+func CheckAllValidatorList(
+	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	valManager := val.NewValidatorManager(lb.CapKeyValStore)
+	var accList []types.AccountKey
+	var err sdk.Error
+	accList, err = valManager.GetAllValidatorList(ctx)
+
+	assert.Nil(t, err)
+	index := val.FindAccountInList(types.AccountKey(accountName), accList)
+	if isInAllValidatorList {
+		assert.True(t, index > -1)
+	} else {
+		assert.True(t, index == -1)
+	}
 }
 
 func CreateAccount(
