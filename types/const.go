@@ -4,6 +4,8 @@ const (
 	// Total decimals in Lino Blockchain
 	Decimals = 100000
 
+	// MainKVStoreKey presents store which used by baseapp
+	MainKVStoreKey = "main"
 	// AccountKVStoreKey presents store which keeps account related value
 	AccountKVStoreKey = "account"
 	// PostKVStoreKey presents store which keeps post related value

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"

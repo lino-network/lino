@@ -34,8 +34,8 @@ var (
 	LNOPerValidator  int64      = 100000000
 	GenesisTotalCoin types.Coin = types.NewCoin(GenesisTotalLino * types.Decimals)
 
-	CoinReturnIntervalHr    int64   = 24 * 7
-	CoinReturnTimes         int64   = 7
+	CoinReturnIntervalHr        int64   = 24 * 7
+	CoinReturnTimes             int64   = 7
 	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
 	ConsumptionFreezingPeriodHr int64   = 24 * 7
 )
@@ -43,6 +43,7 @@ var (
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
 	dbs := map[string]dbm.DB{
+		"main":      dbm.NewMemDB(),
 		"acc":       dbm.NewMemDB(),
 		"post":      dbm.NewMemDB(),
 		"val":       dbm.NewMemDB(),

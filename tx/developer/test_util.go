@@ -5,15 +5,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	global "github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	global "github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-// Construct some global addrs and txs for tests.
 var (
 	TestInfraKVStoreKey   = sdk.NewKVStoreKey("infra")
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
