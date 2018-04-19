@@ -13,5 +13,9 @@ func ErrProviderNotFound() sdk.Error {
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
+}
+
+func ErrInvalidUsage() sdk.Error {
+	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Usage"))
 }

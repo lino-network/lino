@@ -330,7 +330,7 @@ func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if !msg.InfraAllocation.
+	if msg.InfraAllocation.
 		Add(msg.ContentCreatorAllocation).
 		Add(msg.DeveloperAllocation).
 		Add(msg.ValidatorAllocation).
@@ -338,7 +338,7 @@ func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if !msg.StorageAllocation.
+	if msg.StorageAllocation.
 		Add(msg.CDNAllocation).
 		GT(sdk.NewRat(1)) {
 		return ErrIllegalParameter()

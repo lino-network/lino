@@ -32,6 +32,10 @@ func (msg ProviderReportMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
+	if msg.Usage <= 0 {
+		return ErrInvalidUsage()
+	}
+
 	return nil
 }
 
