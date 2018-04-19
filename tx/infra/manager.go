@@ -36,6 +36,9 @@ func (im InfraManager) RegisterInfraProvider(ctx sdk.Context, username types.Acc
 	if err := im.storage.SetInfraProvider(ctx, username, provider); err != nil {
 		return err
 	}
+	if err := im.AddToInfraProviderList(ctx, username); err != nil {
+		return err
+	}
 	return nil
 }
 

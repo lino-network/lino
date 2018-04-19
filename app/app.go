@@ -190,7 +190,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
+	if err := lb.globalManager.InitGlobalManager(
+		ctx, types.NewCoin(genesisState.TotalLino*types.Decimals)); err != nil {
 		panic(err)
 	}
 	if err := lb.developerManager.InitGenesis(ctx); err != nil {
@@ -208,6 +209,18 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			//	return sdk.ErrGenesisParse("").TraceCause(err, "")
 		}
 		// lb.accountMapper.SetAccount(ctx, acc)
+	}
+
+	for _, developer := range genesisState.Developers {
+		if err := lb.toAppDeveloper(ctx, developer); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, infra := range genesisState.Infra {
+		if err := lb.toAppInfra(ctx, infra); err != nil {
+			panic(err)
+		}
 	}
 	return abci.ResponseInitChain{}
 }
@@ -247,6 +260,34 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
 			panic(joinErr)
 		}
+	}
+	return nil
+}
+
+// convert GenesisDeveloper to AppDeveloper
+func (lb *LinoBlockchain) toAppDeveloper(
+	ctx sdk.Context, developer genesis.GenesisAppDeveloper) sdk.Error {
+	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(developer.Name)) {
+		return sdk.ErrGenesisParse("genesis developer account doesn't exist")
+	}
+	coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(developer.Deposit)))
+	if err != nil {
+		return err
+	}
+	if err := lb.developerManager.RegisterDeveloper(ctx, types.AccountKey(developer.Name), coin); err != nil {
+		return err
+	}
+	return nil
+}
+
+// convert GenesisInfra to AppInfra
+func (lb *LinoBlockchain) toAppInfra(
+	ctx sdk.Context, infra genesis.GenesisInfraProvider) sdk.Error {
+	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(infra.Name)) {
+		return sdk.ErrGenesisParse("genesis infra account doesn't exist")
+	}
+	if err := lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey(infra.Name)); err != nil {
+		return err
 	}
 	return nil
 }
@@ -298,6 +339,7 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
+			fmt.Println("execute time event:", i)
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, i)
 		}
@@ -309,15 +351,11 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
-			fmt.Println("execute reward event:", e)
 			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager); err != nil {
-				fmt.Println("execute reward event err:", err)
 				continue
 			}
 		case acc.ReturnCoinEvent:
-			fmt.Println("execute coin return event:", e)
 			if err := e.Execute(ctx, *lb.accountManager); err != nil {
-				fmt.Println("execute coin return err:", err)
 				continue
 			}
 		}
@@ -330,13 +368,22 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if lb.pastMinutes%60 == 0 {
 		lb.executeHourlyEvent(ctx)
 	}
+	if lb.pastMinutes%types.MinutesPerMonth == 0 {
+		lb.executeMonthlyEvent(ctx)
+	}
 }
 
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
+	if err := lb.globalManager.AddHourlyInflationToRewardPool(
+		ctx, (lb.pastMinutes/60)%types.HoursPerYear); err != nil {
+		panic(err)
+	}
 	lb.distributeInflationToValidator(ctx)
+}
+
+func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToInfraProvider(ctx)
 	lb.distributeInflationToDeveloper(ctx)
-	lb.distributeInflationToConsumptionRewardPool(ctx)
 }
 
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
@@ -356,7 +403,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	inflation, err := lb.globalManager.GetInfraHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx, (lb.pastMinutes/types.MinutesPerMonth-1)%12)
 	if err != nil {
 		panic(err)
 	}
@@ -381,7 +428,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
-	inflation, err := lb.globalManager.GetDeveloperHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx, (lb.pastMinutes/types.MinutesPerMonth-1)%12)
 	if err != nil {
 		panic(err)
 	}
@@ -401,14 +448,6 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
-		panic(err)
-	}
-}
-
-func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {
-	if err :=
-		lb.globalManager.AddHourlyInflationToRewardPool(ctx,
-			(lb.pastMinutes/60)%types.HoursPerYear); err != nil {
 		panic(err)
 	}
 }

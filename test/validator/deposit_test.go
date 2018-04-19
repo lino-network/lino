@@ -19,7 +19,7 @@ func TestValidatorDeposit(t *testing.T) {
 	newAccountName := "newUser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
-	baseTime := time.Now().Unix()
+	baseTime := time.Now().Unix() + 100
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 5000)

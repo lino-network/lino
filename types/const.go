@@ -66,4 +66,7 @@ const (
 
 	// as defined by a julian year of 365.25 days
 	HoursPerYear = 8766
+
+	// as defined by a julian year of 365.25 days
+	MinutesPerMonth = 8766 * 60 / 12
 )

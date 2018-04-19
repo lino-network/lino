@@ -34,10 +34,10 @@ var (
 	LNOPerValidator  int64      = 100000000
 	GenesisTotalCoin types.Coin = types.NewCoin(GenesisTotalLino * types.Decimals)
 
-	ConsumptionFrictionRate sdk.Rat = sdk.NewRat(5, 100)
-	FreezingPeriodHr        int64   = 24 * 7
 	CoinReturnIntervalHr    int64   = 24 * 7
 	CoinReturnTimes         int64   = 7
+	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodHr int64   = 24 * 7
 )
 
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
@@ -57,20 +57,10 @@ func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchain {
 	logger, dbs := loggerAndDBs()
 	lb := app.NewLinoBlockchain(logger, dbs)
-	globalState := genesis.GlobalState{
-		TotalLino:                GenesisTotalLino,
-		GrowthRate:               sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-		ConsumptionFrictionRate:  ConsumptionFrictionRate,
-		FreezingPeriodHr:         FreezingPeriodHr,
-	}
 
 	genesisState := genesis.GenesisState{
-		Accounts:    []genesis.GenesisAccount{},
-		GlobalState: globalState,
+		Accounts:  []genesis.GenesisAccount{},
+		TotalLino: GenesisTotalLino,
 	}
 
 	// Generate 21 validators

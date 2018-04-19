@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,12 +23,12 @@ func TestReportConsumption(t *testing.T) {
 	msg2 := NewDeveloperRegisterMsg("developer2", l800000)
 	handler(ctx, msg2)
 
-	con1 := int64(100)
+	con1 := types.NewCoin(100)
 	dm.ReportConsumption(ctx, "developer1", con1)
 	p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
 	assert.Equal(t, int64(1), p1.Evaluate())
 
-	con2 := int64(100)
+	con2 := types.NewCoin(100)
 	dm.ReportConsumption(ctx, "developer2", con2)
 	p2, _ := dm.GetConsumptionWeight(ctx, "developer1")
 	assert.Equal(t, true, p2.Equal(sdk.NewRat(1, 2)))

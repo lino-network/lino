@@ -5,7 +5,6 @@ import (
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global/model"
 	"github.com/lino-network/lino/types"
 )
@@ -22,8 +21,8 @@ func NewGlobalManager(key sdk.StoreKey) *GlobalManager {
 	}
 }
 
-func (gm *GlobalManager) InitGlobalManager(ctx sdk.Context, state genesis.GlobalState) error {
-	return gm.globalStorage.InitGlobalState(ctx, state)
+func (gm *GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) error {
+	return gm.globalStorage.InitGlobalState(ctx, totalLino)
 }
 
 func (gm *GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
@@ -70,7 +69,8 @@ func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
 
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+(consumptionMeta.FreezingPeriodHr*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time+
+			(consumptionMeta.ConsumptionFreezingPeriodHr*3600), event); err != nil {
 		return err
 	}
 	if err := gm.globalStorage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
@@ -195,14 +195,14 @@ func (gm *GlobalManager) GetValidatorHourlyInflation(
 	return resCoin, nil
 }
 
-func (gm *GlobalManager) GetInfraHourlyInflation(
-	ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetInfraMonthlyInflation(
+	ctx sdk.Context, pastMonthMinusOneThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {
 		return types.NewCoin(0), getErr
 	}
 
-	resRat := pool.InfraInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+	resRat := pool.InfraInflationPool.ToRat().Mul(sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin := types.RatToCoin(resRat)
 	pool.InfraInflationPool = pool.InfraInflationPool.Minus(resCoin)
 
@@ -212,14 +212,14 @@ func (gm *GlobalManager) GetInfraHourlyInflation(
 	return resCoin, nil
 }
 
-func (gm *GlobalManager) GetDeveloperHourlyInflation(
-	ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetDeveloperMonthlyInflation(
+	ctx sdk.Context, pastMonthMinusOneThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {
 		return types.NewCoin(0), getErr
 	}
 
-	resRat := pool.DeveloperInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+	resRat := pool.DeveloperInflationPool.ToRat().Mul(sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin := types.RatToCoin(resRat)
 	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Minus(resCoin)
 
