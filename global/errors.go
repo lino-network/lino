@@ -8,11 +8,11 @@ import (
 )
 
 func ErrGlobalManagerRegisterEventAtTime(unixTime int64) sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("tegister event at time %v failed", unixTime))
+	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("register event at time %v failed", unixTime))
 }
 
 func ErrGlobalManagerRegisterExpiredEvent(unixTime int64) sdk.Error {
-	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("tegister event at expired time %v", unixTime))
+	return sdk.NewError(types.CodeGlobalManagerError, fmt.Sprintf("register event at expired time %v", unixTime))
 }
 
 func ErrAddConsumptionFrictionToRewardPool() sdk.Error {

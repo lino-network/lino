@@ -142,12 +142,14 @@ func processDonationFriction(
 		PostAuthor: postAuthor,
 		PostID:     postID,
 		Consumer:   consumer,
-		Amount:     evaluateResult,
+		Evaluate:   evaluateResult,
+		Original:   coin,
+		Friction:   frictionCoin,
 	}
 	if err :=
 		gm.AddFrictionAndRegisterContentRewardEvent(
 			ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return err
 	}
 	return nil
 }

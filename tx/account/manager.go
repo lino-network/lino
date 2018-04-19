@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
@@ -71,12 +72,13 @@ func (accManager *AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivity: ctx.BlockHeader().Time,
+		LastActivity:        ctx.BlockHeader().Time,
+		TransactionCapacity: types.NewCoin(0),
 	}
 	if err := accManager.accountStorage.SetMeta(ctx, accKey, accountMeta); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
-	reward := &model.Reward{types.NewCoin(0), types.NewCoin(0), types.NewCoin(0)}
+	reward := &model.Reward{types.NewCoin(0), types.NewCoin(0), types.NewCoin(0), types.NewCoin(0)}
 	if err := accManager.accountStorage.SetReward(ctx, accKey, reward); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
@@ -261,13 +263,13 @@ func (accManager *AccountManager) IncreaseSequenceByOne(ctx sdk.Context, accKey 
 }
 
 func (accManager *AccountManager) AddIncomeAndReward(
-	ctx sdk.Context, accKey types.AccountKey, originIncome, actualReward types.Coin) sdk.Error {
+	ctx sdk.Context, accKey types.AccountKey, originIncome, friction, actualReward types.Coin) sdk.Error {
 	reward, err := accManager.accountStorage.GetReward(ctx, accKey)
 	if err != nil {
 		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
 	}
-	// 1% of total income
 	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
+	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
 	reward.ActualReward = reward.ActualReward.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
 	if err := accManager.accountStorage.SetReward(ctx, accKey, reward); err != nil {
@@ -281,6 +283,7 @@ func (accManager *AccountManager) ClaimReward(ctx sdk.Context, accKey types.Acco
 	if err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
+	fmt.Println("claim reward:", reward)
 	if err := accManager.AddCoin(ctx, accKey, reward.UnclaimReward); err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
@@ -361,6 +364,9 @@ func (accManager *AccountManager) CheckUserTPSCapacity(
 		incrementRatio := sdk.NewRat(
 			ctx.BlockHeader().Time-accountMeta.LastActivity,
 			TransactionCapacityRecoverPeriod)
+		if incrementRatio.GT(sdk.OneRat) {
+			incrementRatio = sdk.OneRat
+		}
 		accountMeta.TransactionCapacity =
 			accountMeta.TransactionCapacity.Plus(types.RatToCoin(
 				stake.Minus(accountMeta.TransactionCapacity).ToRat().Mul(incrementRatio)))

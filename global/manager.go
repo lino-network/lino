@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +35,7 @@ func (gm *GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, ev
 		eventList = &types.TimeEventList{Events: []types.Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
+	fmt.Println(eventList.Events)
 	if err := gm.globalStorage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
 		return ErrGlobalManagerRegisterEventAtTime(unixTime).TraceCause(err, "")
 	}
