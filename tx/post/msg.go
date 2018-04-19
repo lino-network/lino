@@ -118,6 +118,10 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
+	fmt.Println(msg.RedistributionSplitRate)
+	if msg.RedistributionSplitRate == sdk.NewRat(0, 0) {
+		return ErrPostRedistributionSplitRate()
+	}
 	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) || msg.RedistributionSplitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}

@@ -24,8 +24,7 @@ func NewInfraProviderStorage(key sdk.StoreKey) *InfraProviderStorage {
 }
 
 func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
-	lst := &InfraProviderList{}
-	if err := is.SetInfraProviderList(ctx, lst); err != nil {
+	if err := is.SetInfraProviderList(ctx, &InfraProviderList{}); err != nil {
 		return err
 	}
 	return nil

@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +35,7 @@ func (gm *GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, ev
 		eventList = &types.TimeEventList{Events: []types.Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
+	fmt.Println(eventList.Events)
 	if err := gm.globalStorage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
 		return ErrGlobalManagerRegisterEventAtTime(unixTime).TraceCause(err, "")
 	}
@@ -247,7 +249,7 @@ func (gm *GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Err
 		return err
 	}
 	if ctx.BlockHeader().Time == lastBlockTime {
-		tps.CurrentTPS = tps.MaxTPS
+		tps.CurrentTPS = sdk.ZeroRat
 	} else {
 		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
 	}

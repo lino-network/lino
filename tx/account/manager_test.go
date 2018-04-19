@@ -156,7 +156,7 @@ func TestCreateAccount(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0}
+	reward := model.Reward{coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
 
 	// username already took
@@ -307,13 +307,13 @@ func TestAccountReward(t *testing.T) {
 	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
 	assert.Nil(t, err)
 
-	err = am.AddIncomeAndReward(ctx, accKey, c200, c300)
+	err = am.AddIncomeAndReward(ctx, accKey, c500, c200, c300)
 	assert.Nil(t, err)
-	reward := model.Reward{c200, c300, c300}
+	reward := model.Reward{c500, c200, c300, c300}
 	checkAccountReward(t, ctx, accKey, reward)
-	err = am.AddIncomeAndReward(ctx, accKey, c300, c200)
+	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200)
 	assert.Nil(t, err)
-	reward = model.Reward{c500, c500, c500}
+	reward = model.Reward{c1000, c500, c500, c500}
 	checkAccountReward(t, ctx, accKey, reward)
 
 	bank := model.AccountBank{
@@ -328,7 +328,7 @@ func TestAccountReward(t *testing.T) {
 	assert.Nil(t, err)
 	bank.Balance = c600
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
-	reward = model.Reward{c500, c500, c0}
+	reward = model.Reward{c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)
 }
 
@@ -373,6 +373,8 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			baseTime + TransactionCapacityRecoverPeriod/2, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
 		{sdk.NewRat(1, 2), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
 			baseTime + TransactionCapacityRecoverPeriod/2, nil, types.NewCoin(0)},
+		{sdk.OneRat, types.NewCoin(1 * types.Decimals), 0, types.NewCoin(0),
+			baseTime, nil, types.NewCoin(0)},
 	}
 
 	for _, cs := range cases {

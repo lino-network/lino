@@ -24,8 +24,7 @@ func NewDeveloperStorage(key sdk.StoreKey) *DeveloperStorage {
 }
 
 func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
-	lst := &DeveloperList{}
-	if err := ds.SetDeveloperList(ctx, lst); err != nil {
+	if err := ds.SetDeveloperList(ctx, &DeveloperList{}); err != nil {
 		return err
 	}
 	return nil

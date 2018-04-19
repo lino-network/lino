@@ -6,6 +6,8 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+const rewardEvent = 0x1
+
 // post is the proxy for all storage structs defined above
 type PostManager struct {
 	postStorage *model.PostStorage `json:"post_storage"`

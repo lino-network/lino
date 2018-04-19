@@ -79,12 +79,14 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				return ctx, sdk.ErrUnauthorized("signer mismatch").Result(), true
 			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
-				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
+				return ctx, sdk.ErrUnauthorized(
+					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
 			}
 			tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
+			fmt.Println(ctx.BlockHeader().Time, tpsCapacityRatio)
 			if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(signer), tpsCapacityRatio); err != nil {
 				return ctx, err.Result(), true
 			}

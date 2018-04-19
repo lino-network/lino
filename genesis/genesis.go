@@ -14,10 +14,11 @@ type GenesisState struct {
 
 // GenesisAccount doesn't need pubkey or sequence
 type GenesisAccount struct {
-	Name      string        `json:"name"`
-	Lino      int64         `json:"lino"`
-	PubKey    crypto.PubKey `json:"pub_key"`
-	ValPubKey crypto.PubKey `json:"validator_pub_key"`
+	Name        string        `json:"name"`
+	Lino        int64         `json:"lino"`
+	PubKey      crypto.PubKey `json:"pub_key"`
+	IsValidator bool          `json:"is_validator"`
+	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
 }
 
 type GlobalState struct {
@@ -37,4 +38,35 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 		return "", err
 	}
 	return string(output), nil
+}
+
+func GetDefaultGenesis(pubkey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
+	totalLino := int64(10000000000)
+	genesisAcc := GenesisAccount{
+		Name:        "Lino",
+		Lino:        totalLino,
+		PubKey:      pubkey,
+		IsValidator: true,
+		ValPubKey:   validatorPubKey,
+	}
+	globalState := GlobalState{
+		TotalLino:                totalLino,
+		GrowthRate:               sdk.NewRat(98, 1000),
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(50, 100),
+		DeveloperAllocation:      sdk.NewRat(20, 100),
+		ValidatorAllocation:      sdk.NewRat(10, 100),
+		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
+		FreezingPeriodHr:         24 * 7,
+	}
+	genesisState := GenesisState{
+		Accounts:    []GenesisAccount{genesisAcc},
+		GlobalState: globalState,
+	}
+
+	result, err := GetGenesisJson(genesisState)
+	if err != nil {
+		return "", err
+	}
+	return result, err
 }

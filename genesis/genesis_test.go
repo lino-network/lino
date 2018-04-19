@@ -14,10 +14,11 @@ func TestGetGenesisJson(t *testing.T) {
 	validatorPriv := crypto.GenPrivKeyEd25519()
 	totalLino := int64(10000000000)
 	genesisAcc := GenesisAccount{
-		Name:      "Lino",
-		Lino:      totalLino,
-		PubKey:    genesisAccPriv.PubKey(),
-		ValPubKey: validatorPriv.PubKey(),
+		Name:        "Lino",
+		Lino:        totalLino,
+		PubKey:      genesisAccPriv.PubKey(),
+		IsValidator: true,
+		ValPubKey:   validatorPriv.PubKey(),
 	}
 	globalState := GlobalState{
 		TotalLino:                totalLino,

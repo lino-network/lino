@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -36,14 +37,14 @@ type LinoBlockchain struct {
 	cdc *wire.Codec
 
 	// keys to access the substores
-	capKeyAccountStore   *sdk.KVStoreKey
-	capKeyPostStore      *sdk.KVStoreKey
-	capKeyValStore       *sdk.KVStoreKey
-	capKeyVoteStore      *sdk.KVStoreKey
-	capKeyInfraStore     *sdk.KVStoreKey
-	capKeyDeveloperStore *sdk.KVStoreKey
-	capKeyIBCStore       *sdk.KVStoreKey
-	capKeyGlobalStore    *sdk.KVStoreKey
+	CapKeyAccountStore   *sdk.KVStoreKey
+	CapKeyPostStore      *sdk.KVStoreKey
+	CapKeyValStore       *sdk.KVStoreKey
+	CapKeyVoteStore      *sdk.KVStoreKey
+	CapKeyInfraStore     *sdk.KVStoreKey
+	CapKeyDeveloperStore *sdk.KVStoreKey
+	CapKeyIBCStore       *sdk.KVStoreKey
+	CapKeyGlobalStore    *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountManager   *acc.AccountManager
@@ -54,7 +55,8 @@ type LinoBlockchain struct {
 	infraManager     *infra.InfraManager
 	developerManager *developer.DeveloperManager
 
-	lastBlockTime int64
+	chainStartTime int64
+	lastBlockTime  int64
 	// for recurring time based event
 	pastMinutes int64
 }
@@ -64,22 +66,21 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	var lb = &LinoBlockchain{
 		BaseApp:              bam.NewBaseApp(appName, logger, dbs["acc"]),
 		cdc:                  MakeCodec(),
-		capKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
-		capKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
-		capKeyValStore:       sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
-		capKeyVoteStore:      sdk.NewKVStoreKey(types.VoteKVStoreKey),
-		capKeyInfraStore:     sdk.NewKVStoreKey(types.InfraKVStoreKey),
-		capKeyDeveloperStore: sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
-		capKeyGlobalStore:    sdk.NewKVStoreKey(types.GlobalKVStoreKey),
-		capKeyIBCStore:       sdk.NewKVStoreKey("ibc"),
+		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
+		CapKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
+		CapKeyValStore:       sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		CapKeyVoteStore:      sdk.NewKVStoreKey(types.VoteKVStoreKey),
+		CapKeyInfraStore:     sdk.NewKVStoreKey(types.InfraKVStoreKey),
+		CapKeyDeveloperStore: sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
+		CapKeyGlobalStore:    sdk.NewKVStoreKey(types.GlobalKVStoreKey),
 	}
-	lb.accountManager = acc.NewAccountManager(lb.capKeyAccountStore)
-	lb.postManager = post.NewPostManager(lb.capKeyPostStore)
-	lb.valManager = val.NewValidatorManager(lb.capKeyValStore)
-	lb.globalManager = global.NewGlobalManager(lb.capKeyGlobalStore)
-	lb.voteManager = vote.NewVoteManager(lb.capKeyVoteStore)
-	lb.infraManager = infra.NewInfraManager(lb.capKeyInfraStore)
-	lb.developerManager = developer.NewDeveloperManager(lb.capKeyDeveloperStore)
+	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore)
+	lb.postManager = post.NewPostManager(lb.CapKeyPostStore)
+	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore)
+	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore)
+	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore)
+	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore)
+	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore)
 
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
@@ -97,24 +98,24 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
-	lb.MountStoreWithDB(lb.capKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
-	lb.MountStoreWithDB(lb.capKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
-	lb.MountStoreWithDB(lb.capKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
-	lb.MountStoreWithDB(lb.capKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
-	lb.MountStoreWithDB(lb.capKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
-	lb.MountStoreWithDB(lb.capKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
-	lb.MountStoreWithDB(lb.capKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
+	lb.MountStoreWithDB(lb.CapKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
+	lb.MountStoreWithDB(lb.CapKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
+	lb.MountStoreWithDB(lb.CapKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
+	lb.MountStoreWithDB(lb.CapKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
+	lb.MountStoreWithDB(lb.CapKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
+	lb.MountStoreWithDB(lb.CapKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
+	lb.MountStoreWithDB(lb.CapKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
 	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager, *lb.globalManager))
-	if err := lb.LoadLatestVersion(lb.capKeyAccountStore); err != nil {
+	if err := lb.LoadLatestVersion(lb.CapKeyAccountStore); err != nil {
 		cmn.Exit(err.Error())
 	}
-	if err := lb.LoadLatestVersion(lb.capKeyPostStore); err != nil {
+	if err := lb.LoadLatestVersion(lb.CapKeyPostStore); err != nil {
 		cmn.Exit(err.Error())
 	}
-	if err := lb.LoadLatestVersion(lb.capKeyValStore); err != nil {
+	if err := lb.LoadLatestVersion(lb.CapKeyValStore); err != nil {
 		cmn.Exit(err.Error())
 	}
-	if err := lb.LoadLatestVersion(lb.capKeyGlobalStore); err != nil {
+	if err := lb.LoadLatestVersion(lb.CapKeyGlobalStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	return lb
@@ -150,6 +151,11 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{acc.ClaimMsg{}, msgTypeClaim},
 	)
 
+	const eventTypeReward = 0x1
+	var _ = oldwire.RegisterInterface(
+		struct{ types.Event }{},
+		oldwire.ConcreteType{post.RewardEvent{}, eventTypeReward},
+	)
 	// TODO(Lino): Register msg type and model.
 	cdc := wire.NewCodec()
 
@@ -184,6 +190,12 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.globalManager.InitGlobalManager(ctx, genesisState.GlobalState); err != nil {
 		panic(err)
 	}
+	if err := lb.developerManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.infraManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
 	for _, gacc := range genesisState.Accounts {
 		if err := lb.toAppAccount(ctx, gacc); err != nil {
 			panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
@@ -210,36 +222,38 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err := lb.accountManager.CreateAccount(ctx, types.AccountKey(ga.Name), ga.PubKey, types.NewCoin(0)); err != nil {
 		panic(err)
 	}
+	if ga.IsValidator {
+		commitingDeposit := types.ValidatorMinCommitingDeposit
+		votingDeposit := types.ValidatorMinVotingDeposit
+		// withdraw money from validator's bank
+		if err := lb.accountManager.MinusCoin(
+			ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
+			panic(err)
+		}
 
-	commitingDeposit := types.ValidatorMinCommitingDeposit
-	votingDeposit := types.ValidatorMinVotingDeposit
-	// withdraw money from validator's bank
-	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
-		panic(err)
-	}
-
-	if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
-		panic(addErr)
-	}
-	if registerErr := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
-		panic(registerErr)
-	}
-	if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
-		panic(joinErr)
+		if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
+			panic(addErr)
+		}
+		if registerErr := lb.valManager.RegisterValidator(
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
+			panic(registerErr)
+		}
+		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
+			panic(joinErr)
+		}
 	}
 	return nil
 }
 
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if lb.lastBlockTime == 0 {
+	if lb.chainStartTime == 0 {
+		lb.chainStartTime = ctx.BlockHeader().Time
 		lb.lastBlockTime = ctx.BlockHeader().Time
 	}
-
-	if lb.pastMinutes == 0 {
-		lb.pastMinutes = ctx.BlockHeader().Time / 60
+	if err := lb.globalManager.UpdateTPS(ctx, lb.lastBlockTime); err != nil {
+		panic(err)
 	}
-
-	if ctx.BlockHeader().Time/60 > lb.pastMinutes {
+	for (ctx.BlockHeader().Time-lb.chainStartTime)/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
 
@@ -289,7 +303,9 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
+			fmt.Println("execute event:", e)
 			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager); err != nil {
+				fmt.Println("execute event err:", err)
 				continue
 			}
 		}

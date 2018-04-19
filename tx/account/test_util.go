@@ -28,6 +28,7 @@ var (
 	c300  = types.NewCoin(300 * types.Decimals)
 	c500  = types.NewCoin(500 * types.Decimals)
 	c600  = types.NewCoin(600 * types.Decimals)
+	c1000 = types.NewCoin(1000 * types.Decimals)
 	c1500 = types.NewCoin(1500 * types.Decimals)
 	c1600 = types.NewCoin(1600 * types.Decimals)
 	c1800 = types.NewCoin(1800 * types.Decimals)

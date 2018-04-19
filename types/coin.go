@@ -25,6 +25,9 @@ func NewCoin(amount int64) Coin {
 }
 
 func LinoToCoin(lino LNO) (Coin, sdk.Error) {
+	if lino == LNO(sdk.NewRat(0, 0)) {
+		return NewCoin(0), sdk.ErrInvalidCoins("Illegal LNO")
+	}
 	if lino.GT(UpperBoundLNO) {
 		return NewCoin(0), sdk.ErrInvalidCoins("LNO overflow")
 	}
