@@ -152,9 +152,12 @@ func MakeCodec() *wire.Codec {
 	)
 
 	const eventTypeReward = 0x1
+	const eventTypeReturnCoin = 0x2
+
 	var _ = oldwire.RegisterInterface(
 		struct{ types.Event }{},
 		oldwire.ConcreteType{post.RewardEvent{}, eventTypeReward},
+		oldwire.ConcreteType{acc.ReturnCoinEvent{}, eventTypeReturnCoin},
 	)
 	// TODO(Lino): Register msg type and model.
 	cdc := wire.NewCodec()
@@ -349,6 +352,10 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		switch e := event.(type) {
 		case post.RewardEvent:
 			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager, *lb.developerManager); err != nil {
+				continue
+			}
+		case acc.ReturnCoinEvent:
+			if err := e.Execute(ctx, *lb.accountManager); err != nil {
 				continue
 			}
 		}

@@ -1,9 +1,5 @@
 package types
 
-import (
-	"math"
-)
-
 const (
 	// Total decimals in Lino Blockchain
 	Decimals = 100000
@@ -67,12 +63,6 @@ const (
 
 	// KeySeparator used to separate different key component
 	KeySeparator = "/"
-
-	// Freezing period for validator withdraw deposit
-	ValidatorWithdrawFreezingPeriod = int64(1000)
-
-	// Infinite freezing period
-	InfiniteFreezingPeriod = int64(math.MaxInt32)
 
 	// as defined by a julian year of 365.25 days
 	HoursPerYear = 8766

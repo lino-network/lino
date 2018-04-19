@@ -17,5 +17,5 @@ func ErrInvalidUsername() sdk.Error {
 }
 
 func ErrInvalidUsage() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Usage"))
+	return sdk.NewError(types.CodeInfraInvalidMsg, fmt.Sprintf("Invalid Usage"))
 }

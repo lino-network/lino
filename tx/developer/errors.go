@@ -23,3 +23,7 @@ func ErrDeveloperDepositNotEnough() sdk.Error {
 func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }
+
+func ErrNoCoinToWithdraw() sdk.Error {
+	return sdk.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("No coin to withdraw"))
+}

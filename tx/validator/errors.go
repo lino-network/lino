@@ -32,6 +32,10 @@ func ErrIllegalWithdraw() sdk.Error {
 	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Illegal withdraw"))
 }
 
+func ErrNoCoinToWithdraw() sdk.Error {
+	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("No coin to withdraw"))
+}
+
 func ErrCommitingDepositNotEnough() sdk.Error {
 	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Commiting deposit not enough"))
 }

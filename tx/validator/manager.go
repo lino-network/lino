@@ -214,12 +214,14 @@ func (vm ValidatorManager) Deposit(ctx sdk.Context, username types.AccountKey, c
 
 // this method won't check if it is a legal withdraw, caller should check by itself
 func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+	if coin.IsZero() {
+		return ErrNoCoinToWithdraw()
+	}
 	validator, getErr := vm.storage.GetValidator(ctx, username)
 	if getErr != nil {
 		return getErr
 	}
 	validator.Deposit = validator.Deposit.Minus(coin)
-
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
