@@ -41,9 +41,6 @@ func handleDeveloperRegisterMsg(ctx sdk.Context, dm DeveloperManager, am acc.Acc
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
-	if err := dm.AddToDeveloperList(ctx, msg.Username); err != nil {
-		return err.Result()
-	}
 	return sdk.Result{}
 }
 

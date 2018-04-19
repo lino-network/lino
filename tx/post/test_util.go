@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/post/model"
@@ -27,17 +26,7 @@ var (
 )
 
 func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
-	globalState := genesis.GlobalState{
-		TotalLino:                10000,
-		GrowthRate:               sdk.Rat{98, 1000},
-		InfraAllocation:          sdk.Rat{20, 100},
-		ContentCreatorAllocation: sdk.Rat{55, 100},
-		DeveloperAllocation:      sdk.Rat{20, 100},
-		ValidatorAllocation:      sdk.Rat{5, 100},
-		ConsumptionFrictionRate:  sdk.Rat{5, 100},
-		FreezingPeriodHr:         24 * 7,
-	}
-	return gm.InitGlobalManager(ctx, globalState)
+	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context, *acc.AccountManager, *PostManager, *global.GlobalManager) {

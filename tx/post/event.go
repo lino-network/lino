@@ -1,11 +1,10 @@
 package post
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	dev "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/types"
 )
 
@@ -16,10 +15,12 @@ type RewardEvent struct {
 	Evaluate   types.Coin       `json:"evaluate"`
 	Original   types.Coin       `json:"original"`
 	Friction   types.Coin       `json:"friction"`
+	FromApp    types.AccountKey `json:"from_app"`
 }
 
 func (event RewardEvent) Execute(
-	ctx sdk.Context, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Error {
+	ctx sdk.Context, pm PostManager, am acc.AccountManager,
+	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
 
 	postKey := types.GetPostKey(event.PostAuthor, event.PostID)
 	paneltyScore, err := pm.GetPenaltyScore(ctx, postKey)
@@ -30,6 +31,9 @@ func (event RewardEvent) Execute(
 	if err != nil {
 		return err
 	}
+	if dm.IsDeveloperExist(ctx, event.FromApp) {
+		dm.ReportConsumption(ctx, event.FromApp, reward)
+	}
 	if !am.IsAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
@@ -39,7 +43,6 @@ func (event RewardEvent) Execute(
 	if err := pm.AddDonation(ctx, postKey, event.Consumer, reward); err != nil {
 		return err
 	}
-	fmt.Println("add reward:", reward, event.PostAuthor)
 	if err := am.AddIncomeAndReward(
 		ctx, event.PostAuthor, event.Original, event.Friction, reward); err != nil {
 		return err

@@ -62,20 +62,10 @@ func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	logger, dbs := loggerAndDBs()
 	lb := NewLinoBlockchain(logger, dbs)
-	globalState := genesis.GlobalState{
-		TotalLino:                genesisTotalLino,
-		GrowthRate:               sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
-		FreezingPeriodHr:         24 * 7,
-	}
 
 	genesisState := genesis.GenesisState{
-		Accounts:    []genesis.GenesisAccount{},
-		GlobalState: globalState,
+		Accounts:  []genesis.GenesisAccount{},
+		TotalLino: genesisTotalLino,
 	}
 
 	// Generate 21 validators
@@ -130,21 +120,9 @@ func TestGenesisAcc(t *testing.T) {
 		{"Genesis", 500000000, priv3.PubKey(), true, priv4.PubKey()},
 		{"NonValidator", 500000000, priv5.PubKey(), false, priv6.PubKey()},
 	}
-
-	globalState := genesis.GlobalState{
-		TotalLino:                genesisTotalLino,
-		GrowthRate:               sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
-		FreezingPeriodHr:         24 * 7,
-	}
-
 	genesisState := genesis.GenesisState{
-		Accounts:    []genesis.GenesisAccount{},
-		GlobalState: globalState,
+		Accounts:  []genesis.GenesisAccount{},
+		TotalLino: genesisTotalLino,
 	}
 	for _, acc := range accs {
 		genesisAcc := genesis.GenesisAccount{

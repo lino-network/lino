@@ -45,7 +45,7 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
-		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID)
+		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID, "")
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := builder.SignBuildBroadcast(username, msg, cdc)
