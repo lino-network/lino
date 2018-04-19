@@ -14,7 +14,6 @@ import (
 	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
@@ -59,29 +58,7 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 		privValidator.Save()
 	}
 
-	totalLino := int64(10000000000)
-	genesisAcc := genesis.GenesisAccount{
-		Name:      "Lino",
-		Lino:      totalLino,
-		PubKey:    *pubKey,
-		ValPubKey: privValidator.PubKey,
-	}
-	globalState := genesis.GlobalState{
-		TotalLino:                totalLino,
-		GrowthRate:               sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-		ConsumptionFrictionRate:  sdk.NewRat(1, 100),
-		FreezingPeriodHr:         24 * 7,
-	}
-	genesisState := genesis.GenesisState{
-		Accounts:    []genesis.GenesisAccount{genesisAcc},
-		GlobalState: globalState,
-	}
-
-	result, err := genesis.GetGenesisJson(genesisState)
+	result, err := genesis.GetDefaultGenesis(*pubKey, privValidator.PubKey)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -103,15 +80,30 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbVote, err := dbm.NewGoLevelDB("LinoBlockchain-vote", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbInfra, err := dbm.NewGoLevelDB("LinoBlockchain-infra", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbDeveloper, err := dbm.NewGoLevelDB("LinoBlockchain-developer", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
 	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
 	dbs := map[string]dbm.DB{
-		"acc":    dbAcc,
-		"post":   dbPost,
-		"val":    dbVal,
-		"global": dbGlobal,
+		"acc":       dbAcc,
+		"post":      dbPost,
+		"val":       dbVal,
+		"vote":      dbVote,
+		"infra":     dbInfra,
+		"developer": dbDeveloper,
+		"global":    dbGlobal,
 	}
 	lb := app.NewLinoBlockchain(logger, dbs)
 	return lb, nil

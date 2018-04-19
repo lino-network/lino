@@ -66,6 +66,7 @@ type FollowingMeta struct {
 // reward get from the inflation pool, only 1% of total income
 type Reward struct {
 	OriginalIncome types.Coin `json:"original_income"`
+	FrictionIncome types.Coin `json:"friction_income"`
 	ActualReward   types.Coin `json:"actual_reward"`
 	UnclaimReward  types.Coin `json:"unclaim_reward"`
 }

@@ -75,8 +75,8 @@ func TestTPS(t *testing.T) {
 		ExpectMaxTPS        sdk.Rat
 		ExpectCapacityRatio sdk.Rat
 	}{
-		{BaseTime: baseTime, NextTime: baseTime, NumOfTx: 0, ExpectCurrentTPS: initMaxTPS,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat},
+		{BaseTime: baseTime, NextTime: baseTime, NumOfTx: 0, ExpectCurrentTPS: sdk.ZeroRat,
+			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.ZeroRat},
 		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2, ExpectCurrentTPS: sdk.OneRat,
 			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.NewRat(1, 1000)},
 		{BaseTime: baseTime, NextTime: baseTime + 1, NumOfTx: 1000, ExpectCurrentTPS: initMaxTPS,

@@ -17,6 +17,13 @@ func NewInfraManager(key sdk.StoreKey) *InfraManager {
 	}
 }
 
+func (im InfraManager) InitGenesis(ctx sdk.Context) error {
+	if err := im.storage.InitGenesis(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (im InfraManager) IsInfraProviderExist(ctx sdk.Context, username types.AccountKey) bool {
 	infoByte, _ := im.storage.GetInfraProvider(ctx, username)
 	return infoByte != nil
@@ -103,10 +110,10 @@ func (im *InfraManager) GetInfraProviderList(ctx sdk.Context) (*model.InfraProvi
 	return im.storage.GetInfraProviderList(ctx)
 }
 
-func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error { 
+func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 	lst, getErr := im.storage.GetInfraProviderList(ctx)
 	if getErr != nil {
-		return  getErr
+		return getErr
 	}
 
 	for _, providerName := range lst.AllInfraProviders {
@@ -118,15 +125,6 @@ func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 		if err := im.storage.SetInfraProvider(ctx, providerName, curProvider); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (im InfraManager) InitGenesis(ctx sdk.Context) error {
-	lst := &model.InfraProviderList{}
-
-	if err := im.storage.SetInfraProviderList(ctx, lst); err != nil {
-		return err
 	}
 	return nil
 }

@@ -261,7 +261,7 @@ func TestTPSCapacity(t *testing.T) {
 	assert.Equal(t, seq, int64(1))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
-	gm.UpdateTPS(ctx, time.Now().Unix())
+	gm.UpdateTPS(ctx, time.Now().Unix()-1)
 	seqs = []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
