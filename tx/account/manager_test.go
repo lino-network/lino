@@ -271,6 +271,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		{true, coin0, baseTime4 + TotalCoinDaysSec/2 + 1, types.NewCoin(201), types.NewCoin(201), coin200},
 		{false, coin1, baseTime4 + TotalCoinDaysSec/2 + 1, coin200, coin200, coin200},
 		{true, coin0, baseTime4 + TotalCoinDaysSec + 1, coin200, coin200, coin200},
+		{true, coin0, baseTime4 + TotalCoinDaysSec*100 + 1, coin200, coin200, coin200},
 	}
 
 	for _, cs := range cases {

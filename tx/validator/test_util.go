@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/global"
 	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"

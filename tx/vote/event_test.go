@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gmodel "github.com/lino-network/lino/global/model"
+	gmodel "github.com/lino-network/lino/tx/global/model"
 	model "github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"

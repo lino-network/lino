@@ -27,7 +27,6 @@ func NewHandler(am AccountManager) sdk.Handler {
 	}
 }
 
-// Handle FollowMsg
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
@@ -46,7 +45,6 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 	return sdk.Result{}
 }
 
-// Handle UnfollowMsg
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
@@ -66,7 +64,6 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 	return sdk.Result{}
 }
 
-// Handle TransferMsg
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
 	// withdraw money from sender's bank
 	coin, err := types.LinoToCoin(msg.Amount)
@@ -100,7 +97,6 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	return sdk.Result{}
 }
 
-// handle ClaimMsg
 func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result {
 	// claim reward
 	if err := am.ClaimReward(ctx, msg.Username); err != nil {

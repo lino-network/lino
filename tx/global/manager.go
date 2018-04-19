@@ -5,7 +5,7 @@ import (
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global/model"
+	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
 )
 
@@ -229,7 +229,8 @@ func (gm *GlobalManager) GetDeveloperMonthlyInflation(
 	return resCoin, nil
 }
 
-func (gm *GlobalManager) ChangeInfraInternalInflation(ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
+func (gm *GlobalManager) ChangeInfraInternalInflation(
+	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
 	allocation, getErr := gm.globalStorage.GetInfraInternalAllocation(ctx)
 	if getErr != nil {
 		return getErr

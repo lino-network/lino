@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global/model"
+	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"

@@ -5,8 +5,8 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	global "github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
+	global "github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
 

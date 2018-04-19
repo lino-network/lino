@@ -48,6 +48,7 @@ var (
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
 	dbs := map[string]dbm.DB{
+		"main":      dbm.NewMemDB(),
 		"acc":       dbm.NewMemDB(),
 		"post":      dbm.NewMemDB(),
 		"val":       dbm.NewMemDB(),

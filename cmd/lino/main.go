@@ -70,6 +70,10 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 
 // generate Lino application
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
+	dbMain, err := dbm.NewGoLevelDB("LinoBlockchain-main", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
 	dbAcc, err := dbm.NewGoLevelDB("LinoBlockchain-acc", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
@@ -99,6 +103,7 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 		return nil, err
 	}
 	dbs := map[string]dbm.DB{
+		"main":      dbMain,
 		"acc":       dbAcc,
 		"post":      dbPost,
 		"val":       dbVal,

@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/global"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"

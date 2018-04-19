@@ -19,9 +19,19 @@ func TestGetGenesisJson(t *testing.T) {
 		IsValidator: true,
 		ValPubKey:   validatorPriv.PubKey(),
 	}
+
+	genesisAppDeveloper := GenesisAppDeveloper{
+		Name:    "Lino",
+		Deposit: 1000000,
+	}
+	genesisInfraProvider := GenesisInfraProvider{
+		Name: "Lino",
+	}
 	genesisState := GenesisState{
-		Accounts:  []GenesisAccount{genesisAcc},
-		TotalLino: totalLino,
+		Accounts:   []GenesisAccount{genesisAcc},
+		TotalLino:  totalLino,
+		Developers: []GenesisAppDeveloper{genesisAppDeveloper},
+		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 	}
 
 	result, err := GetGenesisJson(genesisState)

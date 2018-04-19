@@ -30,7 +30,7 @@ func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.Acco
 }
 
 func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
-	// check developer mindmum  deposit requirement
+	// check developer mindmum deposit requirement
 	if !deposit.IsGTE(types.DeveloperMinDeposit) {
 		return ErrDeveloperDepositNotEnough()
 	}

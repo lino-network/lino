@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -15,10 +14,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/lino-network/lino/genesis"
-	"github.com/lino-network/lino/global"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
 	developer "github.com/lino-network/lino/tx/developer"
+	"github.com/lino-network/lino/tx/global"
 	infra "github.com/lino-network/lino/tx/infra"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/register"
@@ -36,7 +35,8 @@ type LinoBlockchain struct {
 	*bam.BaseApp
 	cdc *wire.Codec
 
-	// keys to access the substores
+	// keys to access the KVStore
+	CapKeyMainStore      *sdk.KVStoreKey
 	CapKeyAccountStore   *sdk.KVStoreKey
 	CapKeyPostStore      *sdk.KVStoreKey
 	CapKeyValStore       *sdk.KVStoreKey
@@ -46,7 +46,7 @@ type LinoBlockchain struct {
 	CapKeyIBCStore       *sdk.KVStoreKey
 	CapKeyGlobalStore    *sdk.KVStoreKey
 
-	// Manage getting and setting accounts
+	// Manager for different KVStore
 	accountManager   *acc.AccountManager
 	postManager      *post.PostManager
 	valManager       *val.ValidatorManager
@@ -55,17 +55,18 @@ type LinoBlockchain struct {
 	infraManager     *infra.InfraManager
 	developerManager *developer.DeveloperManager
 
+	// time related
 	chainStartTime int64
 	lastBlockTime  int64
-	// for recurring time based event
-	pastMinutes int64
+	pastMinutes    int64
 }
 
 func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
 	// create your application object
 	var lb = &LinoBlockchain{
-		BaseApp:              bam.NewBaseApp(appName, logger, dbs["acc"]),
+		BaseApp:              bam.NewBaseApp(appName, logger, dbs["main"]),
 		cdc:                  MakeCodec(),
+		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		CapKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
 		CapKeyValStore:       sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
@@ -98,6 +99,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
+	lb.MountStoreWithDB(lb.CapKeyMainStore, sdk.StoreTypeIAVL, dbs["main"])
 	lb.MountStoreWithDB(lb.CapKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
 	lb.MountStoreWithDB(lb.CapKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
 	lb.MountStoreWithDB(lb.CapKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
@@ -106,16 +108,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.CapKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
 	lb.MountStoreWithDB(lb.CapKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
 	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager, *lb.globalManager))
-	if err := lb.LoadLatestVersion(lb.CapKeyAccountStore); err != nil {
-		cmn.Exit(err.Error())
-	}
-	if err := lb.LoadLatestVersion(lb.CapKeyPostStore); err != nil {
-		cmn.Exit(err.Error())
-	}
-	if err := lb.LoadLatestVersion(lb.CapKeyValStore); err != nil {
-		cmn.Exit(err.Error())
-	}
-	if err := lb.LoadLatestVersion(lb.CapKeyGlobalStore); err != nil {
+	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	return lb
@@ -134,8 +127,8 @@ func MakeCodec() *wire.Codec {
 	const msgTypeValidatorDeposit = 0x8
 	const msgTypeValidatorWithdraw = 0x9
 	const msgTypeValidatorRevoke = 0x10
-
 	const msgTypeClaim = 0x11
+
 	var _ = oldwire.RegisterInterface(
 		struct{ sdk.Msg }{},
 		oldwire.ConcreteType{register.RegisterMsg{}, msgTypeRegister},
@@ -159,7 +152,7 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{post.RewardEvent{}, eventTypeReward},
 		oldwire.ConcreteType{acc.ReturnCoinEvent{}, eventTypeReturnCoin},
 	)
-	// TODO(Lino): Register msg type and model.
+
 	cdc := wire.NewCodec()
 
 	return cdc
@@ -169,8 +162,7 @@ func MakeCodec() *wire.Codec {
 func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	var tx = sdk.StdTx{}
 
-	// StdTx.Msg is an interface. The concrete types
-	// are registered by MakeTxCodec in bank.RegisterWire.
+	// StdTx.Msg is an interface.
 	err := lb.cdc.UnmarshalBinary(txBytes, &tx)
 	if err != nil {
 		return nil, sdk.ErrTxDecode("").TraceCause(err, "")
@@ -182,9 +174,8 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 	genesisState := new(genesis.GenesisState)
-	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	if err := json.Unmarshal(stateJSON, genesisState); err != nil {
-		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
+		panic(err)
 	}
 
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
@@ -205,10 +196,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	}
 	for _, gacc := range genesisState.Accounts {
 		if err := lb.toAppAccount(ctx, gacc); err != nil {
-			panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
-			//	return sdk.ErrGenesisParse("").TraceCause(err, "")
+			panic(err)
 		}
-		// lb.accountMapper.SetAccount(ctx, acc)
 	}
 
 	for _, developer := range genesisState.Developers {
@@ -274,6 +263,11 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	if err != nil {
 		return err
 	}
+
+	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(developer.Name), coin); err != nil {
+		return err
+	}
+
 	if err := lb.developerManager.RegisterDeveloper(ctx, types.AccountKey(developer.Name), coin); err != nil {
 		return err
 	}
@@ -339,7 +333,6 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
-			fmt.Println("execute time event:", i)
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, i)
 		}
@@ -351,7 +344,8 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case post.RewardEvent:
-			if err := e.Execute(ctx, *lb.postManager, *lb.accountManager, *lb.globalManager, *lb.developerManager); err != nil {
+			if err := e.Execute(
+				ctx, *lb.postManager, *lb.accountManager, *lb.globalManager, *lb.developerManager); err != nil {
 				continue
 			}
 		case acc.ReturnCoinEvent:
