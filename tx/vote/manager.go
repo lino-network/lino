@@ -28,10 +28,7 @@ var _ = oldwire.RegisterInterface(
 
 // vote manager is the proxy for all storage structs defined above
 type VoteManager struct {
-	storage           *model.VoteStorage `json:"vote_storage"`
-	OncallValidators  []types.AccountKey `json:"oncall_validators"`
-	AllValidators     []types.AccountKey `json:"all_validators"`
-	PenaltyValidators []types.AccountKey `json:"penalty_validators"`
+	storage *model.VoteStorage `json:"vote_storage"`
 }
 
 // create NewVoteManager
@@ -54,7 +51,8 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 }
 
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
-	for _, validator := range vm.AllValidators {
+	allValidators := GetAllValidators(ctx)
+	for _, validator := range allValidators {
 		if validator == username {
 			return true
 		}
@@ -119,10 +117,11 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 }
 
 // onle support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey, des *model.ChangeParameterDescription) sdk.Error {
+func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
+	des *model.ChangeParameterDescription) (types.ProposalKey, sdk.Error) {
 	newID, getErr := vm.storage.GetNextProposalID()
 	if getErr != nil {
-		return getErr
+		return newID, getErr
 	}
 
 	proposal := model.Proposal{
@@ -137,19 +136,19 @@ func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey, des
 		ChangeParameterDescription: *des,
 	}
 	if err := vm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
-		return err
+		return newID, err
 	}
 
 	lst, getErr := vm.storage.GetProposalList(ctx)
 	if getErr != nil {
-		return getErr
+		return newID, getErr
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
 	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
-		return err
+		return newID, err
 	}
 
-	return nil
+	return newID, nil
 }
 
 // onle support change parameter proposal now
@@ -299,6 +298,14 @@ func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.Acco
 
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
+}
+
+func (vm VoteManager) GetValidatorPenaltyList(ctx sdk.Context) (*model.ValidatorPenaltyList, sdk.Error) {
+	return vm.storage.GetValidatorPenaltyList(ctx)
+}
+
+func (vm VoteManager) SetValidatorPenaltyList(ctx sdk.Context, lst *model.ValidatorPenaltyList) sdk.Error {
+	return vm.storage.SetValidatorPenaltyList(ctx, lst)
 }
 
 func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {

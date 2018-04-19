@@ -56,9 +56,9 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 	if getErr != nil {
 		return false, getErr
 	}
-
-	validators := make([]types.AccountKey, len(vm.OncallValidators))
-	copy(validators, vm.OncallValidators)
+	oncallValidators := GetOncallValidators(ctx)
+	validators := make([]types.AccountKey, len(oncallValidators))
+	copy(validators, oncallValidators)
 
 	// get the proposal we are going to decide
 	proposal, err := vm.storage.GetProposal(ctx, curID)
@@ -91,11 +91,18 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 		return false, err
 	}
 
+	penaltyLst, getErr := vm.storage.GetValidatorPenaltyList(ctx)
+	if getErr != nil {
+		return false, getErr
+	}
 	// put all validators who didn't vote into penalty list
 	for _, validator := range validators {
-		vm.PenaltyValidators = append(vm.PenaltyValidators, validator)
+		penaltyLst.Validators = append(penaltyLst.Validators, validator)
 	}
-	return true, nil
+	if err := vm.storage.SetValidatorPenaltyList(ctx, penaltyLst); err != nil {
+		return false, err
+	}
+	return proposal.AgreeVote.IsGT(proposal.DisagreeVote), nil
 }
 
 func (dpe DecideProposalEvent) changeParameter(ctx sdk.Context, curID types.ProposalKey, voteManager VoteManager, gm global.GlobalManager) sdk.Error {

@@ -68,7 +68,7 @@ func TestIsInValidatorList(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		vm.AllValidators = cs.allValidators
+		ctx = WithAllValidators(ctx, cs.allValidators)
 		res := vm.IsInValidatorList(ctx, cs.username)
 		assert.Equal(t, cs.expectResult, res)
 	}
@@ -93,7 +93,7 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		vm.AllValidators = cs.allValidators
+		ctx = WithAllValidators(ctx, cs.allValidators)
 		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw)
 		assert.Equal(t, cs.expectResult, res)
 	}

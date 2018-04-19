@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	DelegatorSubstore    = []byte{0x00}
-	VoterSubstore        = []byte{0x01}
-	ProposalSubstore     = []byte{0x02}
-	VoteSubstore         = []byte{0x03}
-	ProposalListSubStore = []byte{0x04}
+	DelegatorSubstore            = []byte{0x00}
+	VoterSubstore                = []byte{0x01}
+	ProposalSubstore             = []byte{0x02}
+	VoteSubstore                 = []byte{0x03}
+	ProposalListSubStore         = []byte{0x04}
+	ValidatorPenaltyListSubStore = []byte{0x05}
 )
 
 type VoteStorage struct {
@@ -33,9 +34,13 @@ func NewVoteStorage(key sdk.StoreKey) *VoteStorage {
 }
 
 func (vs VoteStorage) InitGenesis(ctx sdk.Context) error {
-	lst := &ProposalList{}
+	proposalLst := &ProposalList{}
+	if err := vs.SetProposalList(ctx, proposalLst); err != nil {
+		return err
+	}
 
-	if err := vs.SetProposalList(ctx, lst); err != nil {
+	penaltyLst := &ValidatorPenaltyList{}
+	if err := vs.SetValidatorPenaltyList(ctx, penaltyLst); err != nil {
 		return err
 	}
 	return nil
@@ -96,6 +101,29 @@ func (vs VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 func (vs VoteStorage) DeleteVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) sdk.Error {
 	store := ctx.KVStore(vs.key)
 	store.Delete(GetVoteKey(proposalID, voter))
+	return nil
+}
+
+func (vs VoteStorage) GetValidatorPenaltyList(ctx sdk.Context) (*ValidatorPenaltyList, sdk.Error) {
+	store := ctx.KVStore(vs.key)
+	lstByte := store.Get(GetValidatorPenaltyListKey())
+	if lstByte == nil {
+		return nil, ErrGetPenaltyList()
+	}
+	lst := new(ValidatorPenaltyList)
+	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+		return nil, ErrPenaltyListUnmarshalError(err)
+	}
+	return lst, nil
+}
+
+func (vs VoteStorage) SetValidatorPenaltyList(ctx sdk.Context, lst *ValidatorPenaltyList) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	lstByte, err := vs.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrPenaltyListMarshalError(err)
+	}
+	store.Set(GetValidatorPenaltyListKey(), lstByte)
 	return nil
 }
 
@@ -249,6 +277,10 @@ func GetProposalKey(proposalID types.ProposalKey) []byte {
 
 func GetProposalListKey() []byte {
 	return ProposalListSubStore
+}
+
+func GetValidatorPenaltyListKey() []byte {
+	return ValidatorPenaltyListSubStore
 }
 
 func GetVoterKey(me types.AccountKey) []byte {

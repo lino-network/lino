@@ -30,6 +30,7 @@ var (
 	l1800 = types.LNO(sdk.NewRat(1800))
 	l1900 = types.LNO(sdk.NewRat(1900))
 	l2000 = types.LNO(sdk.NewRat(2000))
+	l8000 = types.LNO(sdk.NewRat(8000))
 
 	c0    = types.Coin{0 * types.Decimals}
 	c10   = types.Coin{10 * types.Decimals}
@@ -296,6 +297,7 @@ func TestWithdrawBasic(t *testing.T) {
 	withdrawMsg := NewValidatorWithdrawMsg("user1", l1600)
 	result2 := handler(ctx, withdrawMsg)
 	assert.Equal(t, ErrIllegalWithdraw().Result(), result2)
+
 }
 
 func TestDepositBasic(t *testing.T) {

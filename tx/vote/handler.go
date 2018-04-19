@@ -90,7 +90,6 @@ func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 
 // Handle VoterRevokeMsg
 func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterRevokeMsg) sdk.Result {
-	fmt.Println(vm.AllValidators)
 	// reject if this is a validator
 	if vm.IsInValidatorList(ctx, msg.Username) {
 		return ErrValidatorCannotRevoke().Result()
@@ -201,7 +200,7 @@ func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountMana
 		return err.Result()
 	}
 
-	if addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
+	if _, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
 		return addErr.Result()
 	}
 	//  set a time event to decide the proposal in 7 days

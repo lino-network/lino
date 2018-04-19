@@ -154,14 +154,20 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
 	// set user1 as validator (cannot revoke)
-	vm.AllValidators = append(vm.AllValidators, user1)
+	ctx = WithAllValidators(ctx, []types.AccountKey{user1})
 	msg5 := NewVoterRevokeMsg("user1")
-	//fmt.Println(vm.AllValidators)
-	//handler2 := NewHandler(*vm, *am, *gm)
 	result2 := handler(ctx, msg5)
-	assert.Equal(t, sdk.Result{}, result2)
+	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
+
+	// invalid user cannot revoke
+	invalidMsg := NewVoterRevokeMsg("wqwdqwdasdsa")
+	resultInvalid := handler(ctx, invalidMsg)
+	assert.Equal(t, ErrGetVoter().Result(), resultInvalid)
 
 	//  user1  can revoke voter candidancy now
+	ctx = WithAllValidators(ctx, []types.AccountKey{})
+	result3 := handler(ctx, msg5)
+	assert.Equal(t, sdk.Result{}, result3)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user2")
@@ -174,7 +180,7 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, c1000.Plus(initCoin), acc2Balance)
 }
 
-func TestWithdrawBasic(t *testing.T) {
+func TestVoterWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(*vm, *am, *gm)
 
@@ -211,8 +217,8 @@ func TestProposalBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
-	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
+	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(4), 10))
+	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(5), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
 
@@ -261,7 +267,7 @@ func TestVoteBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID := int64(3)
+	proposalID := int64(6)
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, user1, c2000)
 
