@@ -15,9 +15,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	acccmd "github.com/lino-network/lino/tx/account/commands"
+	developercmd "github.com/lino-network/lino/tx/developer/commands"
+	infracmd "github.com/lino-network/lino/tx/infra/commands"
 	postcmd "github.com/lino-network/lino/tx/post/commands"
 	registercmd "github.com/lino-network/lino/tx/register/commands"
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
+	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
 	delegationcmd "github.com/lino-network/lino/tx/vote/commands/delegate"
 	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
 
@@ -99,6 +102,11 @@ func main() {
 			delegationcmd.WithdrawDelegateTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
+		client.GetCommands(
+			delegatecmd.GetDelegationCmd(types.VoteKVStoreKey, cdc),
+		)...)
+
+	linocliCmd.AddCommand(
 		client.PostCommands(
 			votecmd.DepositVoterTxCmd(cdc),
 		)...)
@@ -114,6 +122,37 @@ func main() {
 		client.PostCommands(
 			votecmd.WithdrawVoterTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			votecmd.GetVoterCmd(types.VoteKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			votecmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
+		)...)
+
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			votecmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
+		)...)
+
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			votecmd.GetVoteCmd(types.VoteKVStoreKey, cdc),
+		)...)
+
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			infracmd.ProviderReportTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.DeveloperRegisterTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.DeveloperRevokeTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
@@ -127,6 +166,25 @@ func main() {
 		client.GetCommands(
 			postcmd.GetPostCmd(types.PostKVStoreKey, cdc),
 		)...)
+
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			infracmd.GetInfraProviderCmd(types.InfraKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			infracmd.GetInfraProvidersCmd(types.InfraKVStoreKey, cdc),
+		)...)
+
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			developercmd.GetDeveloperCmd(types.DeveloperKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			developercmd.GetDevelopersCmd(types.DeveloperKVStoreKey, cdc),
+		)...)
+
 	linocliCmd.AddCommand(
 		client.GetCommands(
 			validatorcmd.GetValidatorsCmd(types.ValidatorKVStoreKey, cdc),

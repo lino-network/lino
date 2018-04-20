@@ -128,6 +128,17 @@ func MakeCodec() *wire.Codec {
 	const msgTypeValidatorWithdraw = 0x9
 	const msgTypeValidatorRevoke = 0x10
 	const msgTypeClaim = 0x11
+	const msgTypeVoterDeposit = 0x12
+	const msgTypeVoterRevoke = 0x13
+	const msgTypeVoterWithdraw = 0x14
+	const msgTypeDelegate = 0x15
+	const msgTypeDelegatorWithdraw = 0x16
+	const msgTypeRevokeDelegation = 0x17
+	const msgTypeVote = 0x18
+	const msgTypeCreateProposal = 0x19
+	const msgTypeDeveloperRegister = 0x20
+	const msgTypeDeveloperRevoke = 0x21
+	const msgTypeProviderReport = 0x22
 
 	var _ = oldwire.RegisterInterface(
 		struct{ sdk.Msg }{},
@@ -142,6 +153,17 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{val.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
 		oldwire.ConcreteType{val.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
 		oldwire.ConcreteType{acc.ClaimMsg{}, msgTypeClaim},
+		oldwire.ConcreteType{vote.VoterDepositMsg{}, msgTypeVoterDeposit},
+		oldwire.ConcreteType{vote.VoterRevokeMsg{}, msgTypeVoterRevoke},
+		oldwire.ConcreteType{vote.VoterWithdrawMsg{}, msgTypeVoterWithdraw},
+		oldwire.ConcreteType{vote.DelegateMsg{}, msgTypeDelegate},
+		oldwire.ConcreteType{vote.DelegatorWithdrawMsg{}, msgTypeDelegatorWithdraw},
+		oldwire.ConcreteType{vote.RevokeDelegationMsg{}, msgTypeRevokeDelegation},
+		oldwire.ConcreteType{vote.VoteMsg{}, msgTypeVote},
+		oldwire.ConcreteType{vote.CreateProposalMsg{}, msgTypeCreateProposal},
+		oldwire.ConcreteType{developer.DeveloperRegisterMsg{}, msgTypeDeveloperRegister},
+		oldwire.ConcreteType{developer.DeveloperRevokeMsg{}, msgTypeDeveloperRevoke},
+		oldwire.ConcreteType{infra.ProviderReportMsg{}, msgTypeProviderReport},
 	)
 
 	const eventTypeReward = 0x1

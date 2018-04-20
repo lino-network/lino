@@ -37,6 +37,7 @@ func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username types.Acc
 
 	developer := &model.Developer{
 		Username: username,
+		Deposit:  deposit,
 	}
 	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
 		return err
