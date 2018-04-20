@@ -56,7 +56,7 @@ var (
 
 func TestRegisterBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create two test users
@@ -93,7 +93,7 @@ func TestRegisterBasic(t *testing.T) {
 
 func TestRegisterFeeNotEnough(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create test user
@@ -119,7 +119,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create two test users
@@ -155,7 +155,7 @@ func TestRevokeBasic(t *testing.T) {
 
 func TestRevokeNonExistUser(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// let user1(not exists) revoke candidancy
@@ -167,7 +167,7 @@ func TestRevokeNonExistUser(t *testing.T) {
 // this is the same situation as we find Byzantine and replace the Byzantine
 func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create 21 test users
@@ -231,7 +231,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 
 func TestRevokeAndDepositAgain(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create user
@@ -272,7 +272,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 func TestWithdrawBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create test user
@@ -302,7 +302,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 func TestDepositBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create test user
@@ -342,7 +342,7 @@ func TestDepositBasic(t *testing.T) {
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// let user1 register as validator
@@ -355,7 +355,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 
 func TestValidatorReplacement(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create 21 test users
@@ -435,7 +435,7 @@ func TestValidatorReplacement(t *testing.T) {
 
 func TestRemoveBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create two test users

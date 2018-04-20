@@ -24,11 +24,11 @@ func getContext() sdk.Context {
 	return sdk.NewContext(ms, abci.Header{}, false, nil)
 }
 
-func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm *GlobalStorage) error {
+func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage) error {
 	return gm.InitGlobalState(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm *GlobalStorage, expectGlobalStatistic GlobalStatistics,
+func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
 	expectGlobalMeta GlobalMeta, expectGlobalAllocation GlobalAllocation, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
 	globalStatistic, err := gm.GetGlobalStatistics(ctx)

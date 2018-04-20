@@ -13,7 +13,7 @@ import (
 
 func TestAbsentValidator(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create 21 test users
@@ -52,7 +52,7 @@ func TestAbsentValidator(t *testing.T) {
 		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
 		assert.Equal(t, validator.AbsentCommit, 101)
 	}
-	err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{}, *gm)
+	err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{}, gm)
 	assert.Nil(t, err)
 	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 17, len(validatorList2.OncallValidators))
@@ -70,7 +70,7 @@ func TestAbsentValidator(t *testing.T) {
 		ownerKey, _ := am.GetOwnerKey(ctx, users[idx])
 		byzantines = append(byzantines, abci.Evidence{PubKey: ownerKey.Bytes()})
 	}
-	err = valManager.FireIncompetentValidator(ctx, byzantines, *gm)
+	err = valManager.FireIncompetentValidator(ctx, byzantines, gm)
 	assert.Nil(t, err)
 
 	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
@@ -85,7 +85,7 @@ func TestAbsentValidator(t *testing.T) {
 
 func TestGetOncallList(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create 21 test users
@@ -113,7 +113,7 @@ func TestGetOncallList(t *testing.T) {
 
 func TestPunishmentBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create test users
@@ -135,7 +135,7 @@ func TestPunishmentBasic(t *testing.T) {
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), types.PenaltyByzantine, *gm, true)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), types.PenaltyByzantine, gm, true)
 	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(lst.OncallValidators))
 	assert.Equal(t, 1, len(lst.AllValidators))
@@ -145,7 +145,7 @@ func TestPunishmentBasic(t *testing.T) {
 	assert.Equal(t, c0, validator.Deposit)
 
 	// punish user1 as missing vote (wont explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), types.PenaltyMissVote, *gm, false)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), types.PenaltyMissVote, gm, false)
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(lst2.OncallValidators))
 	assert.Equal(t, 0, len(lst2.AllValidators))
@@ -156,7 +156,7 @@ func TestPunishmentBasic(t *testing.T) {
 
 func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(*am, *valManager, *voteManager, *gm)
+	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
 	// create 21 test users
@@ -183,7 +183,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 	// punish user4 as missing vote (wont explicitly remove)
 	// user3 will become the lowest one with power 1300
-	valManager.PunishOncallValidator(ctx, users[3], types.PenaltyMissVote, *gm, false)
+	valManager.PunishOncallValidator(ctx, users[3], types.PenaltyMissVote, gm, false)
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst2.OncallValidators))
 	assert.Equal(t, 24, len(lst2.AllValidators))

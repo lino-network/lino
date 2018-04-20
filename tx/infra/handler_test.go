@@ -10,7 +10,7 @@ import (
 
 func TestReportBasic(t *testing.T) {
 	ctx, im := setupTest(t, 0)
-	handler := NewHandler(*im)
+	handler := NewHandler(im)
 	im.InitGenesis(ctx)
 
 	user1 := types.AccountKey("user1")

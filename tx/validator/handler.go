@@ -103,7 +103,9 @@ func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManag
 	return sdk.Result{}
 }
 
-func returnCoinTo(ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, times int64, interval int64, coin types.Coin) sdk.Error {
+func returnCoinTo(
+	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
+	times int64, interval int64, coin types.Coin) sdk.Error {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))

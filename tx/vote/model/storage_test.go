@@ -24,7 +24,7 @@ func setup(t *testing.T) (sdk.Context, VoteStorage) {
 	vs := NewVoteStorage(TestKVStoreKey)
 	err := vs.InitGenesis(ctx)
 	assert.Nil(t, err)
-	return ctx, *vs
+	return ctx, vs
 }
 
 func TestVoter(t *testing.T) {

@@ -47,13 +47,13 @@ type LinoBlockchain struct {
 	CapKeyGlobalStore    *sdk.KVStoreKey
 
 	// Manager for different KVStore
-	accountManager   *acc.AccountManager
-	postManager      *post.PostManager
-	valManager       *val.ValidatorManager
-	globalManager    *global.GlobalManager
-	voteManager      *vote.VoteManager
-	infraManager     *infra.InfraManager
-	developerManager *developer.DeveloperManager
+	accountManager   acc.AccountManager
+	postManager      post.PostManager
+	valManager       val.ValidatorManager
+	globalManager    global.GlobalManager
+	voteManager      vote.VoteManager
+	infraManager     infra.InfraManager
+	developerManager developer.DeveloperManager
 
 	// time related
 	chainStartTime int64
@@ -84,13 +84,13 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore)
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(*lb.accountManager)).
-		AddRoute(types.AccountRouterName, acc.NewHandler(*lb.accountManager)).
-		AddRoute(types.PostRouterName, post.NewHandler(*lb.postManager, *lb.accountManager, *lb.globalManager)).
-		AddRoute(types.VoteRouterName, vote.NewHandler(*lb.voteManager, *lb.accountManager, *lb.globalManager)).
-		AddRoute(types.DeveloperRouterName, developer.NewHandler(*lb.developerManager, *lb.accountManager, *lb.globalManager)).
-		AddRoute(types.InfraRouterName, infra.NewHandler(*lb.infraManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(*lb.accountManager, *lb.valManager, *lb.voteManager, *lb.globalManager))
+		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
+		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
+		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.VoteRouterName, vote.NewHandler(lb.voteManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.DeveloperRouterName, developer.NewHandler(lb.developerManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
+		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
@@ -107,7 +107,7 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.MountStoreWithDB(lb.CapKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
 	lb.MountStoreWithDB(lb.CapKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
 	lb.MountStoreWithDB(lb.CapKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
-	lb.SetAnteHandler(auth.NewAnteHandler(*lb.accountManager, *lb.globalManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager))
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -310,7 +310,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		}
 	}
 
-	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators(), *lb.globalManager); err != nil {
+	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators(), lb.globalManager); err != nil {
 		panic(err)
 	}
 	return abci.ResponseBeginBlock{}
@@ -345,11 +345,11 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		switch e := event.(type) {
 		case post.RewardEvent:
 			if err := e.Execute(
-				ctx, *lb.postManager, *lb.accountManager, *lb.globalManager, *lb.developerManager); err != nil {
+				ctx, lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager); err != nil {
 				continue
 			}
 		case acc.ReturnCoinEvent:
-			if err := e.Execute(ctx, *lb.accountManager); err != nil {
+			if err := e.Execute(ctx, lb.accountManager); err != nil {
 				continue
 			}
 		}
@@ -469,7 +469,7 @@ func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
 	}
 	// punish these validators who didn't vote
 	for _, validator := range lst.Validators {
-		if err := lb.valManager.PunishOncallValidator(ctx, validator, types.PenaltyMissVote, *lb.globalManager, false); err != nil {
+		if err := lb.valManager.PunishOncallValidator(ctx, validator, types.PenaltyMissVote, lb.globalManager, false); err != nil {
 			panic(err)
 		}
 	}

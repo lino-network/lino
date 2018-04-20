@@ -18,7 +18,7 @@ var (
 
 func TestRegistertBasic(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(*dm, *am, *gm)
+	handler := NewHandler(dm, am, gm)
 	dm.InitGenesis(ctx)
 
 	developer1 := createTestAccount(ctx, am, "developer1")
@@ -41,7 +41,7 @@ func TestRegistertBasic(t *testing.T) {
 
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(*dm, *am, *gm)
+	handler := NewHandler(dm, am, gm)
 	dm.InitGenesis(ctx)
 
 	developer1 := createTestAccount(ctx, am, "developer1")

@@ -86,7 +86,6 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			if err != nil {
 				return ctx, err.Result(), true
 			}
-			fmt.Println(ctx.BlockHeader().Time, tpsCapacityRatio)
 			if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(signer), tpsCapacityRatio); err != nil {
 				return ctx, err.Result(), true
 			}

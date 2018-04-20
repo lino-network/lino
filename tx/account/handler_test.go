@@ -10,7 +10,7 @@ import (
 
 func TestFollow(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -30,7 +30,7 @@ func TestFollow(t *testing.T) {
 
 func TestFollowUserNotExist(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -51,7 +51,7 @@ func TestFollowUserNotExist(t *testing.T) {
 
 func TestFollowAgain(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -75,7 +75,7 @@ func TestFollowAgain(t *testing.T) {
 
 func TestUnfollow(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -100,7 +100,7 @@ func TestUnfollow(t *testing.T) {
 
 func TestUnfollowUserNotExist(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
 
@@ -117,7 +117,7 @@ func TestUnfollowUserNotExist(t *testing.T) {
 
 func TestInvalidUnfollow(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
@@ -148,7 +148,7 @@ func TestInvalidUnfollow(t *testing.T) {
 
 func TestTransferNormal(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -202,7 +202,7 @@ func TestTransferNormal(t *testing.T) {
 
 func TestSenderCoinNotEnough(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -223,7 +223,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 
 func TestUsernameAddressMismatch(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -243,7 +243,7 @@ func TestUsernameAddressMismatch(t *testing.T) {
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")

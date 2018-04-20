@@ -30,7 +30,7 @@ var (
 	)
 )
 
-func InitGlobalManager(ctx sdk.Context, gm *GlobalManager) error {
+func InitGlobalManager(ctx sdk.Context, gm GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
@@ -43,7 +43,7 @@ func getContext() sdk.Context {
 	return sdk.NewContext(ms, abci.Header{}, false, nil)
 }
 
-func setupTest(t *testing.T) (sdk.Context, *GlobalManager) {
+func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 	ctx := getContext()
 	globalManager := NewGlobalManager(TestGlobalKVStoreKey)
 	err := InitGlobalManager(ctx, globalManager)
