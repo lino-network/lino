@@ -146,7 +146,10 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
 	// set user1 as validator (cannot revoke)
-	ctx = WithAllValidators(ctx, []types.AccountKey{user1})
+	referenceList := &model.ValidatorReferenceList{
+		AllValidators: []types.AccountKey{user1},
+	}
+	vm.storage.SetValidatorReferenceList(ctx, referenceList)
 	msg5 := NewVoterRevokeMsg("user1")
 	result2 := handler(ctx, msg5)
 	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
@@ -157,7 +160,10 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, ErrGetVoter().Result(), resultInvalid)
 
 	//  user1  can revoke voter candidancy now
-	ctx = WithAllValidators(ctx, []types.AccountKey{})
+	referenceList = &model.ValidatorReferenceList{
+		AllValidators: []types.AccountKey{},
+	}
+	vm.storage.SetValidatorReferenceList(ctx, referenceList)
 	result3 := handler(ctx, msg5)
 	assert.Equal(t, sdk.Result{}, result3)
 

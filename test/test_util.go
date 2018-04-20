@@ -113,12 +113,10 @@ func CheckOncallValidatorList(
 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	valManager := val.NewValidatorManager(lb.CapKeyValStore)
-	var accList []types.AccountKey
-	var err sdk.Error
-	accList, err = valManager.GetOncallValidatorList(ctx)
+	lst, err := valManager.GetValidatorList(ctx)
 
 	assert.Nil(t, err)
-	index := val.FindAccountInList(types.AccountKey(accountName), accList)
+	index := val.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
 	if isInOnCallValidatorList {
 		assert.True(t, index > -1)
 	} else {
@@ -131,12 +129,10 @@ func CheckAllValidatorList(
 	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	valManager := val.NewValidatorManager(lb.CapKeyValStore)
-	var accList []types.AccountKey
-	var err sdk.Error
-	accList, err = valManager.GetAllValidatorList(ctx)
+	lst, err := valManager.GetValidatorList(ctx)
 
 	assert.Nil(t, err)
-	index := val.FindAccountInList(types.AccountKey(accountName), accList)
+	index := val.FindAccountInList(types.AccountKey(accountName), lst.AllValidators)
 	if isInAllValidatorList {
 		assert.True(t, index > -1)
 	} else {

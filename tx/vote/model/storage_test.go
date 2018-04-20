@@ -119,16 +119,17 @@ func TestProposalList(t *testing.T) {
 
 func TestPenaltyList(t *testing.T) {
 	ctx, vs := setup(t)
-	lst, err := vs.GetValidatorPenaltyList(ctx)
+	lst, err := vs.GetValidatorReferenceList(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, ValidatorPenaltyList{[]types.AccountKey{}}, *lst)
-	lst.Validators =
-		append(lst.Validators, types.AccountKey("test1"))
+	assert.Equal(t, ValidatorReferenceList{[]types.AccountKey{},
+		[]types.AccountKey{}, []types.AccountKey{}}, *lst)
+	lst.PenaltyValidators =
+		append(lst.PenaltyValidators, types.AccountKey("test1"))
 
-	err = vs.SetValidatorPenaltyList(ctx, lst)
+	err = vs.SetValidatorReferenceList(ctx, lst)
 	assert.Nil(t, err)
 
-	lstPtr, err := vs.GetValidatorPenaltyList(ctx)
+	lstPtr, err := vs.GetValidatorReferenceList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, lst, lstPtr)
 }

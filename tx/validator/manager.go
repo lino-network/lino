@@ -21,35 +21,6 @@ func NewValidatorManager(key sdk.StoreKey) ValidatorManager {
 	}
 }
 
-func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
-	curOncallList, err := vm.GetOncallValidatorList(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ABCIValList := []abci.Validator{}
-	preBlockValidators := GetPreBlockValidators(ctx)
-	for _, preValidator := range preBlockValidators {
-		// set power to 0 if a previous validator not in oncall list anymore
-		if FindAccountInList(preValidator, curOncallList) == -1 {
-			validator, getErr := vm.storage.GetValidator(ctx, preValidator)
-			if getErr != nil {
-				return nil, err
-			}
-			validator.ABCIValidator.Power = 0
-			ABCIValList = append(ABCIValList, validator.ABCIValidator)
-		}
-	}
-
-	for _, curValidator := range curOncallList {
-		validator, getErr := vm.storage.GetValidator(ctx, curValidator)
-		if getErr != nil {
-			return nil, err
-		}
-		ABCIValList = append(ABCIValList, validator.ABCIValidator)
-	}
-	return ABCIValList, nil
-}
-
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
 	if err := vm.storage.InitGenesis(ctx); err != nil {
 		return err
@@ -89,20 +60,40 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 	return res.IsGTE(types.ValidatorMinCommitingDeposit)
 }
 
-func (vm ValidatorManager) GetOncallValidatorList(ctx sdk.Context) ([]types.AccountKey, sdk.Error) {
-	lst, getListErr := vm.storage.GetValidatorList(ctx)
-	if getListErr != nil {
-		return nil, getListErr
+func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
+	validatorList, err := vm.storage.GetValidatorList(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return lst.OncallValidators, nil
+	ABCIValList := []abci.Validator{}
+	for _, preValidator := range validatorList.PreBlockValidators {
+		// set power to 0 if a previous validator not in oncall list anymore
+		if FindAccountInList(preValidator, validatorList.OncallValidators) == -1 {
+			validator, err := vm.storage.GetValidator(ctx, preValidator)
+			if err != nil {
+				return nil, err
+			}
+			validator.ABCIValidator.Power = 0
+			ABCIValList = append(ABCIValList, validator.ABCIValidator)
+		}
+	}
+
+	for _, curValidator := range validatorList.OncallValidators {
+		validator, getErr := vm.storage.GetValidator(ctx, curValidator)
+		if getErr != nil {
+			return nil, err
+		}
+		ABCIValList = append(ABCIValList, validator.ABCIValidator)
+	}
+	return ABCIValList, nil
 }
 
-func (vm ValidatorManager) GetAllValidatorList(ctx sdk.Context) ([]types.AccountKey, sdk.Error) {
-	lst, getListErr := vm.storage.GetValidatorList(ctx)
-	if getListErr != nil {
-		return nil, getListErr
-	}
-	return lst.AllValidators, nil
+func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*model.ValidatorList, sdk.Error) {
+	return vm.storage.GetValidatorList(ctx)
+}
+
+func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) sdk.Error {
+	return vm.storage.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidators []int32) sdk.Error {

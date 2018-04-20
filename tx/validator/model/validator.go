@@ -15,8 +15,9 @@ type Validator struct {
 
 // Validator list
 type ValidatorList struct {
-	OncallValidators []types.AccountKey `json:"oncall_validators"`
-	AllValidators    []types.AccountKey `json:"all_validators"`
-	LowestPower      types.Coin         `json:"lowest_power"`
-	LowestValidator  types.AccountKey   `json:"lowest_validator"`
+	OncallValidators   []types.AccountKey `json:"oncall_validators"`
+	AllValidators      []types.AccountKey `json:"all_validators"`
+	PreBlockValidators []types.AccountKey `json:"pre_block_validators"`
+	LowestPower        types.Coin         `json:"lowest_power"`
+	LowestValidator    types.AccountKey   `json:"lowest_validator"`
 }

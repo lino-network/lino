@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	DelegatorSubstore            = []byte{0x00}
-	VoterSubstore                = []byte{0x01}
-	ProposalSubstore             = []byte{0x02}
-	VoteSubstore                 = []byte{0x03}
-	ProposalListSubStore         = []byte{0x04}
-	ValidatorPenaltyListSubStore = []byte{0x05}
+	DelegatorSubstore              = []byte{0x00}
+	VoterSubstore                  = []byte{0x01}
+	ProposalSubstore               = []byte{0x02}
+	VoteSubstore                   = []byte{0x03}
+	ProposalListSubStore           = []byte{0x04}
+	ValidatorReferenceListSubStore = []byte{0x05}
 )
 
 type VoteStorage struct {
@@ -38,8 +38,8 @@ func (vs VoteStorage) InitGenesis(ctx sdk.Context) error {
 		return err
 	}
 
-	penaltyLst := &ValidatorPenaltyList{}
-	if err := vs.SetValidatorPenaltyList(ctx, penaltyLst); err != nil {
+	penaltyLst := &ValidatorReferenceList{}
+	if err := vs.SetValidatorReferenceList(ctx, penaltyLst); err != nil {
 		return err
 	}
 	return nil
@@ -103,26 +103,26 @@ func (vs VoteStorage) DeleteVote(ctx sdk.Context, proposalID types.ProposalKey, 
 	return nil
 }
 
-func (vs VoteStorage) GetValidatorPenaltyList(ctx sdk.Context) (*ValidatorPenaltyList, sdk.Error) {
+func (vs VoteStorage) GetValidatorReferenceList(ctx sdk.Context) (*ValidatorReferenceList, sdk.Error) {
 	store := ctx.KVStore(vs.key)
-	lstByte := store.Get(GetValidatorPenaltyListKey())
+	lstByte := store.Get(GetValidatorReferenceListKey())
 	if lstByte == nil {
 		return nil, ErrGetPenaltyList()
 	}
-	lst := new(ValidatorPenaltyList)
+	lst := new(ValidatorReferenceList)
 	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
 		return nil, ErrPenaltyListUnmarshalError(err)
 	}
 	return lst, nil
 }
 
-func (vs VoteStorage) SetValidatorPenaltyList(ctx sdk.Context, lst *ValidatorPenaltyList) sdk.Error {
+func (vs VoteStorage) SetValidatorReferenceList(ctx sdk.Context, lst *ValidatorReferenceList) sdk.Error {
 	store := ctx.KVStore(vs.key)
 	lstByte, err := vs.cdc.MarshalJSON(*lst)
 	if err != nil {
 		return ErrPenaltyListMarshalError(err)
 	}
-	store.Set(GetValidatorPenaltyListKey(), lstByte)
+	store.Set(GetValidatorReferenceListKey(), lstByte)
 	return nil
 }
 
@@ -278,8 +278,8 @@ func GetProposalListKey() []byte {
 	return ProposalListSubStore
 }
 
-func GetValidatorPenaltyListKey() []byte {
-	return ValidatorPenaltyListSubStore
+func GetValidatorReferenceListKey() []byte {
+	return ValidatorReferenceListSubStore
 }
 
 func GetVoterKey(me types.AccountKey) []byte {

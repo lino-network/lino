@@ -27,7 +27,7 @@ var (
 
 	genesisTotalLino    int64      = 10000000000
 	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
-	LNOPerValidat       int64      = 100000000
+	LNOPerValidator     int64      = 100000000
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
@@ -217,7 +217,7 @@ func TestFireByzantineValidators(t *testing.T) {
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	onCallList, err := lb.valManager.GetOncallValidatorList(ctx)
+	lst, err := lb.valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, 20, len(onCallList))
+	assert.Equal(t, 20, len(lst.OncallValidators))
 }
