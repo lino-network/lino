@@ -25,7 +25,7 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 	vs := NewValidatorStorage(TestKVStoreKey)
 	err := vs.InitGenesis(ctx)
 	assert.Nil(t, err)
-	return ctx, *vs
+	return ctx, vs
 }
 
 func TestValidator(t *testing.T) {

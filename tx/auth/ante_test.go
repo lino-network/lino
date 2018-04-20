@@ -19,18 +19,18 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-func createTestAccount(ctx sdk.Context, am *acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
+func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
 	return priv.Wrap(), types.AccountKey(username)
 }
 
-func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
+func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest() (*acc.AccountManager, *global.GlobalManager, sdk.Context, sdk.AnteHandler) {
+func setupTest() (acc.AccountManager, global.GlobalManager, sdk.Context, sdk.AnteHandler) {
 	db := dbm.NewMemDB()
 	accountCapKey := sdk.NewKVStoreKey("account")
 	globalCapKey := sdk.NewKVStoreKey("global")
@@ -42,7 +42,7 @@ func setupTest() (*acc.AccountManager, *global.GlobalManager, sdk.Context, sdk.A
 	am := acc.NewAccountManager(accountCapKey)
 	gm := global.NewGlobalManager(globalCapKey)
 	InitGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(*am, *gm)
+	anteHandler := NewAnteHandler(am, gm)
 
 	return am, gm, ctx, anteHandler
 }

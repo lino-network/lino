@@ -30,7 +30,7 @@ var (
 
 func TestVoterDepositBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
@@ -54,7 +54,7 @@ func TestVoterDepositBasic(t *testing.T) {
 
 func TestDelegateBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1")
@@ -106,7 +106,7 @@ func TestDelegateBasic(t *testing.T) {
 
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1")
@@ -174,7 +174,7 @@ func TestRevokeBasic(t *testing.T) {
 
 func TestVoterWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, user1, c3600)
@@ -202,7 +202,7 @@ func TestVoterWithdraw(t *testing.T) {
 
 func TestProposalBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 	vm.InitGenesis(ctx)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
@@ -253,7 +253,7 @@ func TestProposalBasic(t *testing.T) {
 
 func TestVoteBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
 	para := model.ChangeParameterDescription{
@@ -318,7 +318,7 @@ func TestDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
-	handler := NewHandler(*vm, *am, *gm)
+	handler := NewHandler(vm, am, gm)
 	vm.AddVoter(ctx, user1, types.VoterMinDeposit)
 
 	cases := []struct {

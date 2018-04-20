@@ -12,16 +12,16 @@ import (
 )
 
 type ValidatorManager struct {
-	storage *model.ValidatorStorage `json:"validator_storage"`
+	storage model.ValidatorStorage `json:"validator_storage"`
 }
 
-func NewValidatorManager(key sdk.StoreKey) *ValidatorManager {
-	return &ValidatorManager{
+func NewValidatorManager(key sdk.StoreKey) ValidatorManager {
+	return ValidatorManager{
 		storage: model.NewValidatorStorage(key),
 	}
 }
 
-func (vm *ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
+func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
 	curOncallList, err := vm.GetOncallValidatorList(ctx)
 	if err != nil {
 		return nil, err

@@ -7,12 +7,12 @@ import (
 )
 
 type DeveloperManager struct {
-	storage *model.DeveloperStorage `json:"infra_developer_storage"`
+	storage model.DeveloperStorage `json:"infra_developer_storage"`
 }
 
 // create NewDeveloperManager
-func NewDeveloperManager(key sdk.StoreKey) *DeveloperManager {
-	return &DeveloperManager{
+func NewDeveloperManager(key sdk.StoreKey) DeveloperManager {
+	return DeveloperManager{
 		storage: model.NewDeveloperStorage(key),
 	}
 }

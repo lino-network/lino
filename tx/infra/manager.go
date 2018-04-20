@@ -7,12 +7,12 @@ import (
 )
 
 type InfraManager struct {
-	storage *model.InfraProviderStorage `json:"infra_provider_storage"`
+	storage model.InfraProviderStorage `json:"infra_provider_storage"`
 }
 
 // create NewInfraManager
-func NewInfraManager(key sdk.StoreKey) *InfraManager {
-	return &InfraManager{
+func NewInfraManager(key sdk.StoreKey) InfraManager {
+	return InfraManager{
 		storage: model.NewInfraProviderStorage(key),
 	}
 }

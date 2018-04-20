@@ -18,20 +18,20 @@ var (
 	TestKVStoreKey = sdk.NewKVStoreKey("account")
 )
 
-func setupTest(t *testing.T) (*acc.AccountManager, sdk.Context, sdk.Handler) {
+func setupTest(t *testing.T) (acc.AccountManager, sdk.Context, sdk.Handler) {
 	db := dbm.NewMemDB()
 	capKey := sdk.NewKVStoreKey("capkey")
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(capKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	am := acc.NewAccountManager(capKey)
-	handler := NewHandler(*am)
+	handler := NewHandler(am)
 	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
 
 	return am, ctx, handler
 }
 
-func createBank(t *testing.T, ctx sdk.Context, am *acc.AccountManager, coin types.Coin) crypto.PrivKey {
+func createBank(t *testing.T, ctx sdk.Context, am acc.AccountManager, coin types.Coin) crypto.PrivKey {
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin)
 	assert.Nil(t, err)

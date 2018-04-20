@@ -27,11 +27,11 @@ var _ = oldwire.RegisterInterface(
 )
 
 type VoteManager struct {
-	storage *model.VoteStorage `json:"vote_storage"`
+	storage model.VoteStorage `json:"vote_storage"`
 }
 
-func NewVoteManager(key sdk.StoreKey) *VoteManager {
-	return &VoteManager{
+func NewVoteManager(key sdk.StoreKey) VoteManager {
+	return VoteManager{
 		storage: model.NewVoteStorage(key),
 	}
 }

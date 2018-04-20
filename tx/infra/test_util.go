@@ -14,7 +14,7 @@ var (
 	TestInfraKVStoreKey = sdk.NewKVStoreKey("infra")
 )
 
-func setupTest(t *testing.T, height int64) (sdk.Context, *InfraManager) {
+func setupTest(t *testing.T, height int64) (sdk.Context, InfraManager) {
 	ctx := getContext(height)
 	im := NewInfraManager(TestInfraKVStoreKey)
 	return ctx, im

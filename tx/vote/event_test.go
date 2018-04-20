@@ -57,7 +57,7 @@ func TestDecideProposal(t *testing.T) {
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			e.Execute(ctx, *vm, *am, *gm)
+			e.Execute(ctx, vm, am, gm)
 		} else {
 			vm.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
 		}
@@ -100,7 +100,7 @@ func TestForceValidatorVote(t *testing.T) {
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			e.Execute(ctx, *vm, *am, *gm)
+			e.Execute(ctx, vm, am, gm)
 		} else {
 			vm.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
 		}

@@ -25,11 +25,11 @@ var (
 	initCoin = types.NewCoin(100)
 )
 
-func InitGlobalManager(ctx sdk.Context, gm *global.GlobalManager) error {
+func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest(t *testing.T, height int64) (sdk.Context, *acc.AccountManager, *PostManager, *global.GlobalManager) {
+func setupTest(t *testing.T, height int64) (sdk.Context, acc.AccountManager, PostManager, global.GlobalManager) {
 	ctx := getContext(height)
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
 	postManager := NewPostManager(TestPostKVStoreKey)
@@ -67,7 +67,7 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PostKey, postMet
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
 }
 
-func createTestAccount(t *testing.T, ctx sdk.Context, am *acc.AccountManager, username string) types.AccountKey {
+func createTestAccount(t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)
@@ -78,7 +78,7 @@ func createTestAccount(t *testing.T, ctx sdk.Context, am *acc.AccountManager, us
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
-	am *acc.AccountManager, pm *PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
+	am acc.AccountManager, pm PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 	postCreateParams := &PostCreateParams{
 		PostID:       postID,
@@ -99,7 +99,7 @@ func createTestPost(
 
 func createTestRepost(
 	t *testing.T, ctx sdk.Context, username, postID string,
-	am *acc.AccountManager, pm *PostManager, sourceUser types.AccountKey,
+	am acc.AccountManager, pm PostManager, sourceUser types.AccountKey,
 	sourcePostID string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 	postCreateParams := &PostCreateParams{

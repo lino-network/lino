@@ -14,13 +14,13 @@ type DeveloperStorage struct {
 	cdc *wire.Codec
 }
 
-func NewDeveloperStorage(key sdk.StoreKey) *DeveloperStorage {
+func NewDeveloperStorage(key sdk.StoreKey) DeveloperStorage {
 	cdc := wire.NewCodec()
 	storage := DeveloperStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return &storage
+	return storage
 }
 
 func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {

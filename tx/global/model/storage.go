@@ -27,9 +27,9 @@ type GlobalStorage struct {
 	cdc *wire.Codec
 }
 
-func NewGlobalStorage(key sdk.StoreKey) *GlobalStorage {
+func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.NewCodec()
-	return &GlobalStorage{
+	return GlobalStorage{
 		key: key,
 		cdc: cdc,
 	}

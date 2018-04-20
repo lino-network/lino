@@ -22,9 +22,9 @@ type VoteStorage struct {
 	cdc *wire.Codec
 }
 
-func NewVoteStorage(key sdk.StoreKey) *VoteStorage {
+func NewVoteStorage(key sdk.StoreKey) VoteStorage {
 	cdc := wire.NewCodec()
-	vs := &VoteStorage{
+	vs := VoteStorage{
 		key: key,
 		cdc: cdc,
 	}

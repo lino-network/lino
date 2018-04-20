@@ -14,13 +14,13 @@ type ValidatorStorage struct {
 	cdc *wire.Codec
 }
 
-func NewValidatorStorage(key sdk.StoreKey) *ValidatorStorage {
+func NewValidatorStorage(key sdk.StoreKey) ValidatorStorage {
 	cdc := wire.NewCodec()
 	vs := ValidatorStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return &vs
+	return vs
 }
 
 func (vs ValidatorStorage) InitGenesis(ctx sdk.Context) error {

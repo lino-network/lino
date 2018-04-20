@@ -14,13 +14,13 @@ type InfraProviderStorage struct {
 	cdc *wire.Codec
 }
 
-func NewInfraProviderStorage(key sdk.StoreKey) *InfraProviderStorage {
+func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
 	cdc := wire.NewCodec()
 	storage := InfraProviderStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return &storage
+	return storage
 }
 
 func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {

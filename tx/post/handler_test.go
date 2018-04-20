@@ -14,7 +14,7 @@ import (
 
 func TestHandlerCreatePost(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user := createTestAccount(t, ctx, am, "user1")
 
@@ -45,7 +45,7 @@ func TestHandlerCreatePost(t *testing.T) {
 
 func TestHandlerCreateComment(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
 
@@ -129,7 +129,7 @@ func TestHandlerCreateComment(t *testing.T) {
 
 func TestHandlerRepost(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
 
@@ -199,7 +199,7 @@ func TestHandlerRepost(t *testing.T) {
 
 func TestHandlerPostLike(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
 
@@ -254,7 +254,7 @@ func TestHandlerPostLike(t *testing.T) {
 
 func TestHandlerPostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
 	user2 := createTestAccount(t, ctx, am, "user2")
@@ -316,7 +316,7 @@ func TestHandlerPostDonate(t *testing.T) {
 
 func TestHandlerRePostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
 	user2 := createTestAccount(t, ctx, am, "user2")
@@ -390,7 +390,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 
 func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
 	user2 := createTestAccount(t, ctx, am, "user2")
@@ -436,7 +436,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 
 func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
-	handler := NewHandler(*pm, *am, *gm)
+	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
 	user2 := createTestAccount(t, ctx, am, "user2")

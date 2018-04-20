@@ -10,17 +10,17 @@ const rewardEvent = 0x1
 
 // post is the proxy for all storage structs defined above
 type PostManager struct {
-	postStorage *model.PostStorage `json:"post_storage"`
+	postStorage model.PostStorage `json:"post_storage"`
 }
 
 // create NewPostManager
-func NewPostManager(key sdk.StoreKey) *PostManager {
-	return &PostManager{
+func NewPostManager(key sdk.StoreKey) PostManager {
+	return PostManager{
 		postStorage: model.NewPostStorage(key),
 	}
 }
 
-func (pm *PostManager) GetRedistributionSplitRate(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
 		return sdk.ZeroRat, ErrGetRedistributionSplitRate(postKey).TraceCause(err, "")
@@ -28,7 +28,7 @@ func (pm *PostManager) GetRedistributionSplitRate(ctx sdk.Context, postKey types
 	return postMeta.RedistributionSplitRate, nil
 }
 
-func (pm *PostManager) GetCreatedTimeAndReward(ctx sdk.Context, postKey types.PostKey) (int64, types.Coin, sdk.Error) {
+func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, postKey types.PostKey) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
 		return 0, types.NewCoin(0), ErrGetCreatedTime(postKey).TraceCause(err, "")
@@ -37,7 +37,7 @@ func (pm *PostManager) GetCreatedTimeAndReward(ctx sdk.Context, postKey types.Po
 }
 
 // check if post exist
-func (pm *PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool {
+func (pm PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool {
 	if postInfo, _ := pm.postStorage.GetPostInfo(ctx, postKey); postInfo == nil {
 		return false
 	}
@@ -45,7 +45,7 @@ func (pm *PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool 
 }
 
 // return root source post
-func (pm *PostManager) GetSourcePost(
+func (pm PostManager) GetSourcePost(
 	ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, postKey)
 	if err != nil {
@@ -60,7 +60,7 @@ func (pm *PostManager) GetSourcePost(
 	}
 }
 
-func (pm *PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInfo) sdk.Error {
+func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInfo) sdk.Error {
 	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
 		return nil
 	}
@@ -78,7 +78,7 @@ func (pm *PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostIn
 }
 
 // create the post
-func (pm *PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateParams) sdk.Error {
+func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateParams) sdk.Error {
 	postInfo := &model.PostInfo{
 		PostID:       postCreateParams.PostID,
 		Title:        postCreateParams.Title,
@@ -114,7 +114,7 @@ func (pm *PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateP
 }
 
 // add or update like from the user if like exists
-func (pm *PostManager) AddOrUpdateLikeToPost(
+func (pm PostManager) AddOrUpdateLikeToPost(
 	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, weight int64) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
@@ -151,7 +151,7 @@ func (pm *PostManager) AddOrUpdateLikeToPost(
 }
 
 // add or update report or upvote from the user if exist
-func (pm *PostManager) ReportOrUpvoteToPost(
+func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
@@ -198,14 +198,14 @@ func (pm *PostManager) ReportOrUpvoteToPost(
 }
 
 // add comment to post comment list
-func (pm *PostManager) AddComment(
+func (pm PostManager) AddComment(
 	ctx sdk.Context, postKey types.PostKey, commentUser types.AccountKey, commentPostID string) sdk.Error {
 	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeader().Time}
 	return pm.postStorage.SetPostComment(ctx, postKey, comment)
 }
 
 // add donation to post donation list
-func (pm *PostManager) AddDonation(
+func (pm PostManager) AddDonation(
 	ctx sdk.Context, postKey types.PostKey, donator types.AccountKey, amount types.Coin) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
@@ -232,7 +232,7 @@ func (pm *PostManager) AddDonation(
 }
 
 // add view to post view list
-func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) sdk.Error {
+func (pm PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) sdk.Error {
 	view, _ := pm.postStorage.GetPostView(ctx, postKey, user)
 	if view != nil {
 		view.Times += 1
@@ -244,7 +244,7 @@ func (pm *PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user type
 }
 
 // get penalty score from report and upvote
-func (pm *PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
 	author, postID, err := pm.GetSourcePost(ctx, postKey)
 	if err != nil {
 		return sdk.ZeroRat, ErrGetPenaltyScore(postKey).TraceCause(err, "")
