@@ -26,7 +26,7 @@ const (
 // SendTxCommand will create a send tx and sign it with the given key
 func RegisterValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "regval",
+		Use:   "validator-register",
 		Short: "register a validator",
 		RunE:  sendRegisterValidatorTx(cdc),
 	}
