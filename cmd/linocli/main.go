@@ -18,6 +18,8 @@ import (
 	postcmd "github.com/lino-network/lino/tx/post/commands"
 	registercmd "github.com/lino-network/lino/tx/register/commands"
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
+	delegationcmd "github.com/lino-network/lino/tx/vote/commands/delegate"
+	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
 
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/types"
@@ -83,6 +85,34 @@ func main() {
 	linocliCmd.AddCommand(
 		client.PostCommands(
 			validatorcmd.RevokeTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			delegationcmd.RevokeDelegateTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			delegationcmd.DelegateTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			delegationcmd.WithdrawDelegateTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			votecmd.DepositVoterTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			votecmd.RevokeVoterTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			votecmd.VoteTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			votecmd.WithdrawVoterTxCmd(cdc),
 		)...)
 
 	linocliCmd.AddCommand(
