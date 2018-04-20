@@ -4,36 +4,23 @@ const (
 	// Total decimals in Lino Blockchain
 	Decimals = 100000
 
-	// MainKVStoreKey presents store which used by baseapp
-	MainKVStoreKey = "main"
-	// AccountKVStoreKey presents store which keeps account related value
-	AccountKVStoreKey = "account"
-	// PostKVStoreKey presents store which keeps post related value
-	PostKVStoreKey = "post"
-	// ValidatorKVStoreKey presents store which keeps validator related value
+	// KVStoreKey presents store which used by app
+	MainKVStoreKey      = "main"
+	AccountKVStoreKey   = "account"
+	PostKVStoreKey      = "post"
 	ValidatorKVStoreKey = "validator"
-	// EventKVStoreKey presents store which keeps event related value
-	GlobalKVStoreKey = "global"
-	// VoteKVStoreKey presents store which keeps vote related value
-	VoteKVStoreKey = "vote"
-	// InfraKVStoreKey presents store which keeps infra related value
-	InfraKVStoreKey = "infra"
-	// DeveloperKVStoreKey presents store which keeps developer related value
+	GlobalKVStoreKey    = "global"
+	VoteKVStoreKey      = "vote"
+	InfraKVStoreKey     = "infra"
 	DeveloperKVStoreKey = "developer"
 
-	// RegisterRouterName is used for routing in app
-	RegisterRouterName = "register"
-	// AccountRouterName is used for routing in app
-	AccountRouterName = "account"
-	// PostRouterName is used for routing in app
-	PostRouterName = "post"
-	// ValidatorRouterName is used for routing in app
+	// RouterName for msg routing in app
+	RegisterRouterName  = "register"
+	AccountRouterName   = "account"
+	PostRouterName      = "post"
 	ValidatorRouterName = "validator"
-	// VoteRounterName is used for routing in app
-	VoteRouterName = "vote"
-	// InfraRounterName is used for routing in app
-	InfraRouterName = "infra"
-	// DeveloperRounterName is used for routing in app
+	VoteRouterName      = "vote"
+	InfraRouterName     = "infra"
 	DeveloperRouterName = "developer"
 
 	// UsernameReCheck is used to check user registration
@@ -47,9 +34,6 @@ const (
 
 	// DefaultAcitivityBurden for user when account is registered
 	DefaultActivityBurden = 100
-
-	// MsgType is uesd to register App codec
-	msgTypeRegister = 0x1
 
 	// MinimumUsernameLength minimum username length
 	MaxPostTitleLength = 50

@@ -28,6 +28,32 @@ import (
 
 const (
 	appName = "LinoBlockchain"
+
+	msgTypeRegister          = 0x1
+	msgTypeFollow            = 0x2
+	msgTypeUnfollow          = 0x3
+	msgTypeTransfer          = 0x4
+	msgTypePost              = 0x5
+	msgTypeLike              = 0x6
+	msgTypeDonate            = 0x7
+	msgTypeValidatorDeposit  = 0x8
+	msgTypeValidatorWithdraw = 0x9
+	msgTypeValidatorRevoke   = 0x10
+	msgTypeClaim             = 0x11
+	msgTypeVoterDeposit      = 0x12
+	msgTypeVoterRevoke       = 0x13
+	msgTypeVoterWithdraw     = 0x14
+	msgTypeDelegate          = 0x15
+	msgTypeDelegatorWithdraw = 0x16
+	msgTypeRevokeDelegation  = 0x17
+	msgTypeVote              = 0x18
+	msgTypeCreateProposal    = 0x19
+	msgTypeDeveloperRegister = 0x20
+	msgTypeDeveloperRevoke   = 0x21
+	msgTypeProviderReport    = 0x22
+
+	eventTypeReward     = 0x1
+	eventTypeReturnCoin = 0x2
 )
 
 // Extended ABCI application
@@ -117,28 +143,6 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 // custom tx codec
 // TODO: use new go-wire
 func MakeCodec() *wire.Codec {
-	const msgTypeRegister = 0x1
-	const msgTypeFollow = 0x2
-	const msgTypeUnfollow = 0x3
-	const msgTypeTransfer = 0x4
-	const msgTypePost = 0x5
-	const msgTypeLike = 0x6
-	const msgTypeDonate = 0x7
-	const msgTypeValidatorDeposit = 0x8
-	const msgTypeValidatorWithdraw = 0x9
-	const msgTypeValidatorRevoke = 0x10
-	const msgTypeClaim = 0x11
-	const msgTypeVoterDeposit = 0x12
-	const msgTypeVoterRevoke = 0x13
-	const msgTypeVoterWithdraw = 0x14
-	const msgTypeDelegate = 0x15
-	const msgTypeDelegatorWithdraw = 0x16
-	const msgTypeRevokeDelegation = 0x17
-	const msgTypeVote = 0x18
-	const msgTypeCreateProposal = 0x19
-	const msgTypeDeveloperRegister = 0x20
-	const msgTypeDeveloperRevoke = 0x21
-	const msgTypeProviderReport = 0x22
 
 	var _ = oldwire.RegisterInterface(
 		struct{ sdk.Msg }{},
@@ -165,9 +169,6 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{developer.DeveloperRevokeMsg{}, msgTypeDeveloperRevoke},
 		oldwire.ConcreteType{infra.ProviderReportMsg{}, msgTypeProviderReport},
 	)
-
-	const eventTypeReward = 0x1
-	const eventTypeReturnCoin = 0x2
 
 	var _ = oldwire.RegisterInterface(
 		struct{ types.Event }{},
@@ -308,6 +309,7 @@ func (lb *LinoBlockchain) toAppInfra(
 	return nil
 }
 
+// init process for a block, execute time events and fire incompetent validators
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	if lb.chainStartTime == 0 {
 		lb.chainStartTime = ctx.BlockHeader().Time
@@ -335,22 +337,11 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	if err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators(), lb.globalManager); err != nil {
 		panic(err)
 	}
+	lb.executeTimeEvents(ctx)
 	return abci.ResponseBeginBlock{}
 }
 
-func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	ctx = lb.syncValidatorWithVoteManager(ctx)
-	lb.executeTimeEvents(ctx)
-	lb.punishValidatorsDidntVote(ctx)
-
-	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
-}
-
+// execute events between last block time and current block time
 func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time
 	for i := lb.lastBlockTime; i < currentTime; i += 1 {
@@ -362,6 +353,7 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	lb.lastBlockTime = ctx.BlockHeader().Time
 }
 
+// execute events in list based on their type
 func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
 	for _, event := range eventList {
 		switch e := event.(type) {
@@ -379,6 +371,19 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	return nil
 }
 
+// udpate validator set
+func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	ctx = lb.syncValidatorWithVoteManager(ctx)
+	lb.punishValidatorsDidntVote(ctx)
+
+	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
+}
+
 func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	lb.pastMinutes += 1
 	if lb.pastMinutes%60 == 0 {
@@ -389,6 +394,8 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	}
 }
 
+// execute hourly event, distribute inflation to validators and
+// add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	if err := lb.globalManager.AddHourlyInflationToRewardPool(
 		ctx, (lb.pastMinutes/60)%types.HoursPerYear); err != nil {
@@ -397,17 +404,21 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToValidator(ctx)
 }
 
+// execute monthly event, distribute inflation to infra and application
 func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToInfraProvider(ctx)
 	lb.distributeInflationToDeveloper(ctx)
 }
 
+// distribute inflation to validators
+// TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	validators, getErr := lb.valManager.GetOncallValidatorList(ctx)
 	if getErr != nil {
 		panic(getErr)
 	}
-	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, (lb.pastMinutes/60)%types.HoursPerYear)
+	pastHoursThisYear := (lb.pastMinutes / 60) % types.HoursPerYear
+	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, pastHoursThisYear)
 	if err != nil {
 		panic(err)
 	}
@@ -418,8 +429,11 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 }
 
+// distribute inflation to infra provider monthly
+// TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx, (lb.pastMinutes/types.MinutesPerMonth-1)%12)
+	pastMonthMinusOneThisYear := (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
+	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx, pastMonthMinusOneThisYear)
 	if err != nil {
 		panic(err)
 	}
@@ -443,8 +457,11 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	}
 }
 
+// distribute inflation to developer monthly
+// TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
-	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx, (lb.pastMinutes/types.MinutesPerMonth-1)%12)
+	pastMonthMinusOneThisYear := (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
+	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx, pastMonthMinusOneThisYear)
 	if err != nil {
 		panic(err)
 	}
@@ -468,6 +485,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 	}
 }
 
+// sync current validators with vote manager
 func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) sdk.Context {
 	// tell voting committe the newest validators
 	oncallValidators, getErr := lb.valManager.GetOncallValidatorList(ctx)
@@ -484,6 +502,7 @@ func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) sdk.Cont
 	return ctx
 }
 
+// validators are required to vote
 func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
 	lst, getErr := lb.voteManager.GetValidatorPenaltyList(ctx)
 	if getErr != nil {

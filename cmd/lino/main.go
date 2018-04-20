@@ -45,6 +45,8 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 	}
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
+	fmt.Println("Init address:")
+	fmt.Println(pubKey.Address())
 
 	config, err := tcmd.ParseConfig()
 	if err != nil {

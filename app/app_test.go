@@ -8,13 +8,10 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/genesis"
-	acc "github.com/lino-network/lino/tx/account"
-	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -27,22 +24,12 @@ var (
 	addr1 = priv1.PubKey().Address()
 	priv2 = crypto.GenPrivKeyEd25519()
 	addr2 = priv2.PubKey().Address()
-	priv3 = crypto.GenPrivKeyEd25519()
-	addr3 = priv3.PubKey().Address()
-	priv4 = crypto.GenPrivKeyEd25519()
-	addr4 = priv4.PubKey().Address()
-	priv5 = crypto.GenPrivKeyEd25519()
-	addr5 = priv3.PubKey().Address()
-	priv6 = crypto.GenPrivKeyEd25519()
-	addr6 = priv4.PubKey().Address()
 
 	genesisTotalLino    int64      = 10000000000
 	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
-	genesisAccount      string     = "Lino"
+	LNOPerValidat       int64      = 100000000
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
-
-	LNOPerValidator = int64(100000000)
 )
 
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
@@ -109,6 +96,11 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 func TestGenesisAcc(t *testing.T) {
 	logger, dbs := loggerAndDBs()
 	lb := NewLinoBlockchain(logger, dbs)
+
+	priv3 := crypto.GenPrivKeyEd25519()
+	priv4 := crypto.GenPrivKeyEd25519()
+	priv5 := crypto.GenPrivKeyEd25519()
+	priv6 := crypto.GenPrivKeyEd25519()
 
 	accs := []struct {
 		genesisAccountName string
@@ -178,7 +170,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 
 	baseTime := time.Now().Unix()
-	remainValidatorPool := types.RatToCoin(genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
+	remainValidatorPool := types.RatToCoin(
+		genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
 	expectBalance := types.NewCoin(LNOPerValidator * types.Decimals).Minus(
 		types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
 
@@ -199,7 +192,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
 				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
 				// expectBalance for all validators
-				expectBalance = expectBalance.Plus(types.RatToCoin(inflationForValidator.ToRat().Quo(sdk.NewRat(21))))
+				expectBalance = expectBalance.Plus(
+					types.RatToCoin(inflationForValidator.ToRat().Quo(sdk.NewRat(21))))
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
 					balance, err :=
@@ -226,58 +220,4 @@ func TestFireByzantineValidators(t *testing.T) {
 	onCallList, err := lb.valManager.GetOncallValidatorList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 20, len(onCallList))
-}
-
-func TestTransferAndRegisterAccount(t *testing.T) {
-	lb := newLinoBlockchain(t, 21)
-	baseTime := time.Now().Unix()
-	transferMsg := acc.NewTransferMsg(
-		user1, types.LNO(sdk.NewRat(100)), []byte{}, acc.TransferToAddr(addr3))
-
-	SignCheckDeliver(t, lb, transferMsg, 0, true, priv1, baseTime)
-
-	registerMsg := reg.NewRegisterMsg("newUser", priv3.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, 0, true, priv3, baseTime)
-
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	balance, err :=
-		lb.accountManager.GetBankBalance(ctx, types.AccountKey("newUser"))
-	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoin(100*types.Decimals), balance)
-}
-
-func SignCheckDeliver(t *testing.T, lb *LinoBlockchain, msg sdk.Msg, seq int64,
-	expPass bool, priv crypto.PrivKeyEd25519, headTime int64) {
-	// Sign the tx
-	tx := genTx(msg, seq, priv)
-	// Run a Check
-	res := lb.Check(tx)
-	if expPass {
-		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
-	} else {
-		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
-	}
-
-	// Simulate a Block
-	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{
-			ChainID: "Lino", Time: headTime}})
-	res = lb.Deliver(tx)
-	if expPass {
-		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
-	} else {
-		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
-	}
-	lb.EndBlock(abci.RequestEndBlock{})
-	lb.Commit()
-}
-
-func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeyEd25519) sdk.StdTx {
-	sigs := []sdk.StdSignature{{
-		PubKey:    priv.PubKey(),
-		Signature: priv.Sign(sdk.StdSignBytes("Lino", []int64{seq}, sdk.StdFee{}, msg)),
-		Sequence:  seq}}
-
-	return sdk.NewStdTx(msg, sdk.StdFee{}, sigs)
-
 }
