@@ -7,17 +7,8 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-// Error constructors
-func ErrSetValidator() sdk.Error {
-	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Set validator failed"))
-}
-
 func ErrAbsentValidatorNotCorrect() sdk.Error {
 	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("absent validator index out of range"))
-}
-
-func ErrAlreayInTheList() sdk.Error {
-	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account has alreay in the list"))
 }
 
 func ErrNotInTheList() sdk.Error {
@@ -46,8 +37,4 @@ func ErrVotingDepositNotEnough() sdk.Error {
 
 func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
-}
-
-func ErrAccountCoinNotEnough() sdk.Error {
-	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account bank's coins are not enough"))
 }

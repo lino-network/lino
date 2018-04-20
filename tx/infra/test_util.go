@@ -9,7 +9,6 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-// Construct some global addrs and txs for tests.
 var (
 	TestInfraKVStoreKey = sdk.NewKVStoreKey("infra")
 )
