@@ -29,14 +29,14 @@ type IDToURLMapping struct {
 
 // TODO need to store into KV
 var VoterMinDeposit = NewCoin(1000 * Decimals)
-var VoterMinWithdraw = NewCoin(50 * Decimals)
+var VoterMinWithdraw = NewCoin(1 * Decimals)
 var DelegatorMinWithdraw = NewCoin(1 * Decimals)
 
 var NextProposalID = int64(0)
 var ProposalDecideHr = int64(7 * 24)
 var ProposalRegisterFee = NewCoin(2000 * Decimals)
 
-var ValidatorMinWithdraw = NewCoin(50 * Decimals)
+var ValidatorMinWithdraw = NewCoin(1 * Decimals)
 var ValidatorMinVotingDeposit = NewCoin(3000 * Decimals)
 var ValidatorMinCommitingDeposit = NewCoin(1000 * Decimals)
 
