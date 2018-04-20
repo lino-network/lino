@@ -142,7 +142,7 @@ func TestPunishmentBasic(t *testing.T) {
 	assert.Equal(t, types.AccountKey("user1"), lst.OncallValidators[0])
 
 	validator, _ := valManager.storage.GetValidator(ctx, "user2")
-	assert.Equal(t, c600, validator.Deposit)
+	assert.Equal(t, c0, validator.Deposit)
 
 	// punish user1 as missing vote (wont explicitly remove)
 	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), types.PenaltyMissVote, *gm, false)
@@ -151,7 +151,7 @@ func TestPunishmentBasic(t *testing.T) {
 	assert.Equal(t, 0, len(lst2.AllValidators))
 
 	validator2, _ := valManager.storage.GetValidator(ctx, "user1")
-	assert.Equal(t, c900, validator2.Deposit)
+	assert.Equal(t, c0, validator2.Deposit)
 }
 
 func TestPunishmentAndSubstitutionExists(t *testing.T) {

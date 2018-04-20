@@ -1,5 +1,3 @@
-// TODO need to refactor
-
 package validator
 
 import (
@@ -17,7 +15,6 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-// Construct some global addrs and txs for tests.
 var (
 	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
 	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
