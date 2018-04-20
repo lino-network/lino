@@ -79,7 +79,11 @@ func TestForceValidatorVote(t *testing.T) {
 
 	vm.AddVoter(ctx, user1, types.VoterMinDeposit.Plus(types.NewCoin(20)))
 	vm.AddVoter(ctx, user2, types.VoterMinDeposit.Plus(types.NewCoin(30)))
-	ctx = WithOncallValidators(ctx, []types.AccountKey{user2, user1})
+
+	referenceList := &model.ValidatorReferenceList{
+		OncallValidators: []types.AccountKey{user2, user1},
+	}
+	vm.storage.SetValidatorReferenceList(ctx, referenceList)
 
 	e := DecideProposalEvent{}
 
@@ -104,7 +108,7 @@ func TestForceValidatorVote(t *testing.T) {
 		} else {
 			vm.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
 		}
-		lst, _ := vm.GetValidatorPenaltyList(ctx)
-		assert.Equal(t, cs.expectPenaltyList, lst.Validators)
+		lst, _ := vm.GetValidatorReferenceList(ctx)
+		assert.Equal(t, cs.expectPenaltyList, lst.PenaltyValidators)
 	}
 }

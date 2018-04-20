@@ -104,8 +104,8 @@ func TestGetOncallList(t *testing.T) {
 		assert.Equal(t, sdk.Result{}, result)
 	}
 
-	lst, _ := valManager.GetOncallValidatorList(ctx)
-	for idx, validator := range lst {
+	lst, _ := valManager.GetValidatorList(ctx)
+	for idx, validator := range lst.OncallValidators {
 		assert.Equal(t, users[idx], validator)
 	}
 
@@ -229,10 +229,10 @@ func TestGetUpdateValidatorList(t *testing.T) {
 
 	for _, cs := range cases {
 		lst := &model.ValidatorList{
-			OncallValidators: cs.oncallValidators,
+			OncallValidators:   cs.oncallValidators,
+			PreBlockValidators: cs.preBlockValidators,
 		}
 		valManager.storage.SetValidatorList(ctx, lst)
-		ctx = WithPreBlockValidators(ctx, cs.preBlockValidators)
 		actualList, _ := valManager.GetUpdateValidatorList(ctx)
 		assert.Equal(t, cs.expectUpdateList, actualList)
 	}

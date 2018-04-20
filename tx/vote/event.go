@@ -56,9 +56,12 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 	if getErr != nil {
 		return false, getErr
 	}
-	oncallValidators := GetOncallValidators(ctx)
-	validators := make([]types.AccountKey, len(oncallValidators))
-	copy(validators, oncallValidators)
+	referenceList, getErr := vm.storage.GetValidatorReferenceList(ctx)
+	if getErr != nil {
+		return false, getErr
+	}
+	validators := make([]types.AccountKey, len(referenceList.OncallValidators))
+	copy(validators, referenceList.OncallValidators)
 
 	// get the proposal we are going to decide
 	proposal, err := vm.storage.GetProposal(ctx, curID)
@@ -91,15 +94,11 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 		return false, err
 	}
 
-	penaltyLst, getErr := vm.storage.GetValidatorPenaltyList(ctx)
-	if getErr != nil {
-		return false, getErr
-	}
 	// put all validators who didn't vote into penalty list
 	for _, validator := range validators {
-		penaltyLst.Validators = append(penaltyLst.Validators, validator)
+		referenceList.PenaltyValidators = append(referenceList.PenaltyValidators, validator)
 	}
-	if err := vm.storage.SetValidatorPenaltyList(ctx, penaltyLst); err != nil {
+	if err := vm.storage.SetValidatorReferenceList(ctx, referenceList); err != nil {
 		return false, err
 	}
 	return proposal.AgreeVote.IsGT(proposal.DisagreeVote), nil

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -68,7 +69,10 @@ func TestIsInValidatorList(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		ctx = WithAllValidators(ctx, cs.allValidators)
+		referenceList := &model.ValidatorReferenceList{
+			AllValidators: cs.allValidators,
+		}
+		vm.storage.SetValidatorReferenceList(ctx, referenceList)
 		res := vm.IsInValidatorList(ctx, cs.username)
 		assert.Equal(t, cs.expectResult, res)
 	}
@@ -93,7 +97,10 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		ctx = WithAllValidators(ctx, cs.allValidators)
+		referenceList := &model.ValidatorReferenceList{
+			AllValidators: cs.allValidators,
+		}
+		vm.storage.SetValidatorReferenceList(ctx, referenceList)
 		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw)
 		assert.Equal(t, cs.expectResult, res)
 	}

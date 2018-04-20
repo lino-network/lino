@@ -49,8 +49,11 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 }
 
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
-	allValidators := GetAllValidators(ctx)
-	for _, validator := range allValidators {
+	lst, getErr := vm.storage.GetValidatorReferenceList(ctx)
+	if getErr != nil {
+		return false
+	}
+	for _, validator := range lst.AllValidators {
 		if validator == username {
 			return true
 		}
@@ -304,12 +307,12 @@ func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
 
-func (vm VoteManager) GetValidatorPenaltyList(ctx sdk.Context) (*model.ValidatorPenaltyList, sdk.Error) {
-	return vm.storage.GetValidatorPenaltyList(ctx)
+func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.ValidatorReferenceList, sdk.Error) {
+	return vm.storage.GetValidatorReferenceList(ctx)
 }
 
-func (vm VoteManager) SetValidatorPenaltyList(ctx sdk.Context, lst *model.ValidatorPenaltyList) sdk.Error {
-	return vm.storage.SetValidatorPenaltyList(ctx, lst)
+func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ValidatorReferenceList) sdk.Error {
+	return vm.storage.SetValidatorReferenceList(ctx, lst)
 }
 
 func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
