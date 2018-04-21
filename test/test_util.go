@@ -116,7 +116,6 @@ func CheckOncallValidatorList(
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	valManager := val.NewValidatorManager(lb.CapKeyValStore)
 	lst, err := valManager.GetValidatorList(ctx)
-
 	assert.Nil(t, err)
 	index := val.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
 	if isInOnCallValidatorList {
@@ -182,6 +181,14 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	} else {
 		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
 	}
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+}
+
+func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			ChainID: "Lino", Time: headTime}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 }
