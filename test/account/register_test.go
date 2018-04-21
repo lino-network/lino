@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/lino-network/lino/test"
 	acc "github.com/lino-network/lino/tx/account"
 	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -36,7 +37,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(100*types.Decimals)))
 }
 
-// register failed if account balance is Zero
+// register failed if account balance is zero
 func TestRegisterAccountFailed(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"

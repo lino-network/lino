@@ -13,7 +13,7 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 )
 
-// test normal transfer to account name
+// test validator deposit
 func TestValidatorDeposit(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
@@ -27,11 +27,14 @@ func TestValidatorDeposit(t *testing.T) {
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO(sdk.NewRat(3000)))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountPriv, baseTime)
 
+	// deposit the lowest requirement
 	valDepositMsg := val.NewValidatorDepositMsg(
 		newAccountName, types.LNO(sdk.NewRat(1000)), newValidatorPriv.PubKey())
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountPriv, baseTime)
+	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 
+	// deposit as the highest validator
 	valDepositMsg = val.NewValidatorDepositMsg(
 		newAccountName, types.LNO(sdk.NewRat(1)), newValidatorPriv.PubKey())
 	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountPriv, baseTime)

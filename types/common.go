@@ -27,7 +27,7 @@ type IDToURLMapping struct {
 	URL        string `json:"url"`
 }
 
-// TODO need to store into KV
+// TODO need to store into KVStore
 var VoterMinDeposit = NewCoin(1000 * Decimals)
 var VoterMinWithdraw = NewCoin(1 * Decimals)
 var DelegatorMinWithdraw = NewCoin(1 * Decimals)

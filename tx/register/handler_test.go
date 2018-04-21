@@ -62,7 +62,7 @@ func TestRegister(t *testing.T) {
 	assert.True(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 }
 
-func TestRegisterDuplicate(t *testing.T) {
+func TestDuplicateRegister(t *testing.T) {
 	am, ctx, handler := setupTest(t)
 	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 	register := "register"
@@ -74,7 +74,7 @@ func TestRegisterDuplicate(t *testing.T) {
 	assert.Equal(t, result.Code, acc.ErrAccountAlreadyExists(types.AccountKey(register)).Result().Code)
 }
 
-func TestReRegister(t *testing.T) {
+func TestBankReRegister(t *testing.T) {
 	am, ctx, handler := setupTest(t)
 	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 	register := "register"

@@ -29,7 +29,8 @@ func testCommentAndRepostValidate(t *testing.T, postCreateParams PostCreateParam
 	assert.Equal(t, expectError, result)
 }
 
-func getCommentAndRepost(t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostCreateParams {
+func getCommentAndRepost(
+	t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostCreateParams {
 	return PostCreateParams{
 		PostID:                  "TestPostID",
 		Title:                   string(make([]byte, 50)),
@@ -120,8 +121,10 @@ func TestLikeMsg(t *testing.T) {
 	}{
 		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"), nil},
 		{NewLikeMsg(types.AccountKey("test"), -10000, types.AccountKey("author"), "postID"), nil},
-		{NewLikeMsg(types.AccountKey("test"), 10001, types.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(10001)},
-		{NewLikeMsg(types.AccountKey("test"), -10001, types.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(-10001)},
+		{NewLikeMsg(types.AccountKey("test"), 10001, types.AccountKey("author"), "postID"),
+			ErrPostLikeWeightOverflow(10001)},
+		{NewLikeMsg(types.AccountKey("test"), -10001, types.AccountKey("author"), "postID"),
+			ErrPostLikeWeightOverflow(-10001)},
 		{NewLikeMsg(types.AccountKey(""), 10000, types.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
 		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
 		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
@@ -138,13 +141,20 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "postID", ""), nil},
-		{NewDonateMsg(types.AccountKey(""), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "postID", ""), ErrPostDonateNoUsername()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(0)), types.AccountKey("author"), "postID", ""), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(-1)), types.AccountKey("author"), "postID", ""), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "", ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "postID", ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "", ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)),
+			types.AccountKey("author"), "postID", ""), nil},
+		{NewDonateMsg(types.AccountKey(""), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "postID", ""),
+			ErrPostDonateNoUsername()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(0)), types.AccountKey("author"), "postID", ""),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(-1)), types.AccountKey("author"), "postID", ""),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "", ""),
+			ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "postID", ""),
+			ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "", ""),
+			ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {
@@ -159,10 +169,14 @@ func TestReportOrUpvoteMsg(t *testing.T) {
 	}{
 		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", true, false), nil},
 		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", false, false), nil},
-		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true, false), ErrPostReportOrUpvoteNoUsername()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true, true), ErrPostReportOrUpvoteInvalidTarget()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false, true), ErrPostReportOrUpvoteInvalidTarget()},
-		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false, false), ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true, false),
+			ErrPostReportOrUpvoteNoUsername()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true, true),
+			ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false, true),
+			ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false, false),
+			ErrPostReportOrUpvoteInvalidTarget()},
 	}
 
 	for _, cs := range cases {

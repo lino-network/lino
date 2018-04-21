@@ -4,43 +4,50 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 )
 
-func checkBankKVByAddress(t *testing.T, ctx sdk.Context, addr sdk.Address, bank model.AccountBank) {
+func checkBankKVByAddress(
+	t *testing.T, ctx sdk.Context, addr sdk.Address, bank model.AccountBank) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	bankPtr, err := accStorage.GetBankFromAddress(ctx, addr)
 	assert.Nil(t, err)
 	assert.Equal(t, bank, *bankPtr, "bank should be equal")
 }
 
-func checkPendingStake(t *testing.T, ctx sdk.Context, addr sdk.Address, pendingStakeQueue model.PendingStakeQueue) {
+func checkPendingStake(
+	t *testing.T, ctx sdk.Context, addr sdk.Address, pendingStakeQueue model.PendingStakeQueue) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, addr)
 	assert.Nil(t, err)
 	assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr, "pending stake should be equal")
 }
 
-func checkAccountInfo(t *testing.T, ctx sdk.Context, accKey types.AccountKey, accInfo model.AccountInfo) {
+func checkAccountInfo(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, accInfo model.AccountInfo) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	infoPtr, err := accStorage.GetInfo(ctx, accKey)
 	assert.Nil(t, err)
 	assert.Equal(t, accInfo, *infoPtr, "accout info should be equal")
 }
 
-func checkAccountMeta(t *testing.T, ctx sdk.Context, accKey types.AccountKey, accMeta model.AccountMeta) {
+func checkAccountMeta(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, accMeta model.AccountMeta) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	metaPtr, err := accStorage.GetMeta(ctx, accKey)
 	assert.Nil(t, err)
 	assert.Equal(t, accMeta, *metaPtr, "accout meta should be equal")
 }
 
-func checkAccountReward(t *testing.T, ctx sdk.Context, accKey types.AccountKey, reward model.Reward) {
+func checkAccountReward(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, reward model.Reward) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	rewardPtr, err := accStorage.GetReward(ctx, accKey)
 	assert.Nil(t, err)
@@ -49,6 +56,7 @@ func checkAccountReward(t *testing.T, ctx sdk.Context, accKey types.AccountKey, 
 
 func TestIsAccountExist(t *testing.T) {
 	ctx, am := setupTest(t, 1)
+	assert.False(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
 	createTestAccount(ctx, am, "user1")
 	assert.True(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
 }
@@ -95,7 +103,9 @@ func TestAddCoinToAddress(t *testing.T) {
 	checkPendingStake(t, ctx, sdk.Address("test"), pendingStakeQueue)
 
 	// add coin to exist bank after previous coin day
-	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 3, Time: (ctx.BlockHeader().Time + 3600*24*CoinDays + 1)})
+	ctx = ctx.WithBlockHeader(
+		abci.Header{ChainID: "Lino", Height: 3,
+			Time: (ctx.BlockHeader().Time + TotalCoinDaysSec + 1)})
 	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin100)
 	assert.Nil(t, err)
 	bank = model.AccountBank{
@@ -170,7 +180,9 @@ func TestCreateAccount(t *testing.T) {
 	// bank doesn't exist
 	priv2 := crypto.GenPrivKeyEd25519()
 	err = am.CreateAccount(ctx, types.AccountKey("newKey"), priv2.PubKey(), coin0)
-	assert.Equal(t, "Error{311:create account newKey failed,Error{310:account bank doesn't exist,<nil>,0},1}", err.Error())
+	assert.Equal(t,
+		"Error{311:create account newKey failed,Error{310:account bank doesn't exist,<nil>,0},1}",
+		err.Error())
 
 	// register fee doesn't enough
 	err = am.AddCoinToAddress(ctx, priv2.PubKey().Address(), coin100)
@@ -207,7 +219,8 @@ func TestCoinDayByAddress(t *testing.T) {
 		{coin0, baseTime1 + CoinDays*24*5400 + 1, coin200, coin200, coin200},
 		{coin1, baseTime2, types.NewCoin(201), coin200, coin200},
 		{coin0, baseTime2 + TotalCoinDaysSec/2, types.NewCoin(201), coin200, coin200},
-		{coin0, baseTime2 + TotalCoinDaysSec/2 + 1, types.NewCoin(201), types.NewCoin(201), coin200},
+		{coin0, baseTime2 + TotalCoinDaysSec/2 + 1,
+			types.NewCoin(201), types.NewCoin(201), coin200},
 	}
 
 	for _, cs := range cases {
@@ -263,12 +276,15 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 		{true, coin100, baseTime3, types.NewCoin(150), coin50, coin50},
 		{true, coin100, baseTime3 + TotalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
-		{false, coin50, baseTime3 + TotalCoinDaysSec*3/4 + 2, coin200, types.NewCoin(138), types.NewCoin(50)},
-		{true, coin0, baseTime3 + TotalCoinDaysSec + 2, coin200, types.NewCoin(175), types.NewCoin(150)},
+		{false, coin50, baseTime3 + TotalCoinDaysSec*3/4 + 2,
+			coin200, types.NewCoin(138), types.NewCoin(50)},
+		{true, coin0, baseTime3 + TotalCoinDaysSec + 2,
+			coin200, types.NewCoin(175), types.NewCoin(150)},
 		{true, coin0, baseTime3 + TotalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
 
 		{true, coin1, baseTime4, types.NewCoin(201), coin200, coin200},
-		{true, coin0, baseTime4 + TotalCoinDaysSec/2 + 1, types.NewCoin(201), types.NewCoin(201), coin200},
+		{true, coin0, baseTime4 + TotalCoinDaysSec/2 + 1,
+			types.NewCoin(201), types.NewCoin(201), coin200},
 		{false, coin1, baseTime4 + TotalCoinDaysSec/2 + 1, coin200, coin200, coin200},
 		{true, coin0, baseTime4 + TotalCoinDaysSec + 1, coin200, coin200, coin200},
 		{true, coin0, baseTime4 + TotalCoinDaysSec*100 + 1, coin200, coin200, coin200},
@@ -346,7 +362,8 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	assert.Nil(t, err)
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	err = accStorage.SetPendingStakeQueue(ctx, priv.PubKey().Address(), &model.PendingStakeQueue{})
+	err = accStorage.SetPendingStakeQueue(
+		ctx, priv.PubKey().Address(), &model.PendingStakeQueue{})
 	assert.Nil(t, err)
 
 	cases := []struct {
@@ -366,12 +383,13 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(950000)},
 		{sdk.NewRat(1), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
 			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(9 * types.Decimals)},
-		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(10 * types.Decimals),
-			baseTime, nil, types.NewCoin(0)},
+		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime,
+			types.NewCoin(10 * types.Decimals), baseTime, nil, types.NewCoin(0)},
 		{sdk.NewRat(1), types.NewCoin(10), baseTime, types.NewCoin(1 * types.Decimals),
 			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(1 * types.Decimals)},
 		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod/2, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
+			baseTime + TransactionCapacityRecoverPeriod/2,
+			ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
 		{sdk.NewRat(1, 2), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
 			baseTime + TransactionCapacityRecoverPeriod/2, nil, types.NewCoin(0)},
 		{sdk.OneRat, types.NewCoin(1 * types.Decimals), 0, types.NewCoin(0),

@@ -8,22 +8,22 @@ import (
 
 	"github.com/spf13/cobra"
 
-	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/tmlibs/cli"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/genesis"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/app"
-	"github.com/lino-network/lino/genesis"
+
+	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
-
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
+	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 // linoCmd is the entry point for this binary
@@ -31,7 +31,7 @@ var (
 	context = server.NewDefaultContext()
 	linoCmd = &cobra.Command{
 		Use:               "lino",
-		Short:             "Lino Blockchain (server)",
+		Short:             "Lino Blockchain (node)",
 		PersistentPreRunE: server.PersistentPreRunEFn(context),
 	}
 )

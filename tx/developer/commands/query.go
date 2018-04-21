@@ -7,10 +7,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/tx/developer/model"
 	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // GetDeveloperCmd returns target developer information

@@ -3,10 +3,12 @@ package model
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/lino-network/lino/types"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -109,4 +111,18 @@ func TestAccountReward(t *testing.T) {
 	resultPtr, err := as.GetReward(ctx, types.AccountKey("test"))
 	assert.Nil(t, err)
 	assert.Equal(t, reward, *resultPtr, "Account reward should be equal")
+}
+
+func TestAccountRelationShip(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	relationship := Relationship{}
+	err := as.SetRelationship(
+		ctx, types.AccountKey("me"), types.AccountKey("other"), &relationship)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetRelationship(ctx, types.AccountKey("me"), types.AccountKey("other"))
+	assert.Nil(t, err)
+	assert.Equal(t, relationship, *resultPtr, "Account relationship should be equal")
 }

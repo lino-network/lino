@@ -22,7 +22,7 @@ const (
 	FlagAuthor   = "author"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// LikeTxCmd will create a like tx and sign it with the given key
 func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "like",
@@ -36,7 +36,7 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send like transaction to the blockchain
 func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()

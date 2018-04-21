@@ -17,7 +17,7 @@ func TestReportBasic(t *testing.T) {
 	usage := int64(100)
 	im.RegisterInfraProvider(ctx, user1)
 
-	// infra provider not exist
+	// infra provider does not exist
 	msg1 := NewProviderReportMsg("qwdqwdqw", usage)
 	res := handler(ctx, msg1)
 	assert.Equal(t, ErrProviderNotFound().Result(), res)

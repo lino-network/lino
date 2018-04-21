@@ -25,7 +25,7 @@ const (
 	FlagMemo         = "memo"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// TransferTxCmd will create a transfer tx and sign it with the given key
 func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -40,7 +40,7 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send transfer transaction to the blockchain
 func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()

@@ -8,12 +8,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // GetBankCmd returns a query bank that will display the
@@ -30,8 +31,8 @@ func GetBankCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	}
 }
 
-// GetBankCmd returns a query bank that will display the
-// state of the bank at a given address
+// GetAccountCmd returns a query account that will display the
+// state of the account at a given username
 func GetAccountCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	cmdr := commander{
 		storeName,

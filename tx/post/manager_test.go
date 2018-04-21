@@ -28,7 +28,8 @@ func TestCreatePost(t *testing.T) {
 		{"postID", user2, "postID", user1, ErrPostExist(types.GetPostKey(user2, "postID"))},
 		{"postID", user2, "postID", user2, ErrPostExist(types.GetPostKey(user2, "postID"))},
 		{"postID2", user2, "postID", user1, nil},
-		{"postID3", user2, "postID3", user1, ErrCreatePostSourceInvalid(types.GetPostKey(user2, "postID3"))},
+		{"postID3", user2, "postID3", user1,
+			ErrCreatePostSourceInvalid(types.GetPostKey(user2, "postID3"))},
 	}
 
 	for _, cs := range cases {
@@ -66,7 +67,8 @@ func TestCreatePost(t *testing.T) {
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 		}
-		checkPostKVStore(t, ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+		checkPostKVStore(t, ctx,
+			types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
 	}
 }
 
@@ -105,7 +107,8 @@ func TestGetSourcePost(t *testing.T) {
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
 		assert.Nil(t, err)
-		sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, types.GetPostKey(cs.author, cs.postID))
+		sourceAuthor, sourcePostID, err :=
+			pm.GetSourcePost(ctx, types.GetPostKey(cs.author, cs.postID))
 		assert.Nil(t, err)
 		assert.Equal(t, sourceAuthor, cs.expectSourceAuthor)
 		assert.Equal(t, sourcePostID, cs.expectSourcePostID)

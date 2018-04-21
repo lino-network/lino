@@ -18,7 +18,7 @@ const (
 	FlagName = "name"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// WithdrawTxCmd will create a withdraw tx and sign it with the given key
 func WithdrawTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-withdraw",

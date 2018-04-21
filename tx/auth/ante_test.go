@@ -13,13 +13,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
+func createTestAccount(
+	ctx sdk.Context, am acc.AccountManager, username string) (crypto.PrivKey, types.AccountKey) {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
@@ -38,7 +38,8 @@ func setupTest() (acc.AccountManager, global.GlobalManager, sdk.Context, sdk.Ant
 	ms.MountStoreWithDB(accountCapKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(globalCapKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
+	ctx := sdk.NewContext(
+		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
 	am := acc.NewAccountManager(accountCapKey)
 	gm := global.NewGlobalManager(globalCapKey)
 	InitGlobalManager(ctx, gm)
@@ -79,7 +80,10 @@ type RegisterTestMsg struct {
 	Register sdk.Address
 }
 
-func (msg *RegisterTestMsg) Type() string                            { return types.RegisterRouterName }
+func (msg *RegisterTestMsg) Type() string {
+	return types.RegisterRouterName
+}
+
 func (msg *RegisterTestMsg) Get(key interface{}) (value interface{}) { return nil }
 func (msg *RegisterTestMsg) GetSignBytes() []byte {
 	bz, err := json.Marshal(msg.Register)
@@ -108,7 +112,8 @@ func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
-func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, result sdk.Result) {
+func checkInvalidTx(
+	t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, result sdk.Result) {
 	_, r, abort := anteHandler(ctx, tx)
 	assert.True(t, abort)
 	assert.Equal(t, result, r)
@@ -119,10 +124,12 @@ func newTestTx(ctx sdk.Context, msg sdk.Msg, privs []crypto.PrivKey, seqs []int6
 	return newTestTxWithSignBytes(msg, privs, seqs, signBytes)
 }
 
-func newTestTxWithSignBytes(msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, signBytes []byte) sdk.Tx {
+func newTestTxWithSignBytes(
+	msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, signBytes []byte) sdk.Tx {
 	sigs := make([]sdk.StdSignature, len(privs))
 	for i, priv := range privs {
-		sigs[i] = sdk.StdSignature{PubKey: priv.PubKey(), Signature: priv.Sign(signBytes), Sequence: seqs[i]}
+		sigs[i] = sdk.StdSignature{
+			PubKey: priv.PubKey(), Signature: priv.Sign(signBytes), Sequence: seqs[i]}
 	}
 	tx := sdk.NewStdTx(msg, sdk.StdFee{}, sigs)
 	return tx
@@ -148,7 +155,8 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	// test num sigs less than GetSigners
 	privs, seqs = []crypto.PrivKey{priv1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
+	checkInvalidTx(
+		t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
 
 	// test sig user mismatch
 	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{0, 0}
@@ -181,12 +189,14 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{priv2}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong public key for signer").Result())
+	checkInvalidTx(
+		t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong public key for signer").Result())
 
 	// test wrong sig number
 	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{0, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
+	checkInvalidTx(
+		t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
 }
 
 // Test various error cases in the AnteHandler control flow.
@@ -249,7 +259,8 @@ func TestTPSCapacity(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, seq, int64(1))
 
-	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
+	ctx = ctx.WithBlockHeader(
+		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
 	gm.UpdateTPS(ctx, time.Now().Unix()-1)
 	seqs = []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)

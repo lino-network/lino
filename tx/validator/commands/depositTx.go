@@ -23,19 +23,19 @@ const (
 	FlagAmount = "amount"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
-func RegisterValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
+// DepositValidatorTxCmd will create a send tx and sign it with the given key
+func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "validator-register",
+		Use:   "validator-deposit",
 		Short: "register a validator",
-		RunE:  sendRegisterValidatorTx(cdc),
+		RunE:  sendDepositValidatorTx(cdc),
 	}
 	cmd.Flags().String(FlagAmount, "", "amount of the donation")
 	return cmd
 }
 
 // send register transaction to the blockchain
-func sendRegisterValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
+func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
 		name := viper.GetString(sdkcli.FlagName)

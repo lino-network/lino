@@ -6,14 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/tendermint/tmlibs/cli"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/lino-network/lino/app"
 	acccmd "github.com/lino-network/lino/tx/account/commands"
 	developercmd "github.com/lino-network/lino/tx/developer/commands"
 	infracmd "github.com/lino-network/lino/tx/infra/commands"
@@ -23,9 +16,15 @@ import (
 	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
 	delegationcmd "github.com/lino-network/lino/tx/vote/commands/delegate"
 	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
-
-	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/lcd"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/tendermint/tmlibs/cli"
 )
 
 // linocliCmd is the entry point for this binary
@@ -79,7 +78,7 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			validatorcmd.RegisterValidatorTxCmd(cdc),
+			validatorcmd.DepositValidatorTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
