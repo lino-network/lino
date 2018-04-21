@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	global "github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
@@ -24,7 +25,8 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 	}
 }
 
-func handleDeveloperRegisterMsg(ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
+func handleDeveloperRegisterMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
@@ -44,7 +46,8 @@ func handleDeveloperRegisterMsg(ctx sdk.Context, dm DeveloperManager, am acc.Acc
 	return sdk.Result{}
 }
 
-func handleDeveloperRevokeMsg(ctx sdk.Context, dm DeveloperManager, gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
+func handleDeveloperRevokeMsg(
+	ctx sdk.Context, dm DeveloperManager, gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
 	if !dm.IsDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -58,13 +61,16 @@ func handleDeveloperRevokeMsg(ctx sdk.Context, dm DeveloperManager, gm global.Gl
 		return withdrawErr.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
-func returnCoinTo(ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, times int64, interval int64, coin types.Coin) sdk.Error {
+func returnCoinTo(
+	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
+	times int64, interval int64, coin types.Coin) sdk.Error {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))

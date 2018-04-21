@@ -1,8 +1,9 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-crypto"
 )
 
@@ -25,6 +26,7 @@ type AccountBank struct {
 	Stake    types.Coin       `json:"stake"`
 }
 
+// PendingStakeQueue stores a list of pending stake and total number of coin waiting in list
 type PendingStakeQueue struct {
 	LastUpdateTime   int64          `json:"last_update_time"`
 	StakeCoinInQueue sdk.Rat        `json:"stake_coin_in_queue"`
@@ -32,6 +34,7 @@ type PendingStakeQueue struct {
 	PendingStakeList []PendingStake `json:"pending_stake_list"`
 }
 
+// pending stake in the list
 type PendingStake struct {
 	StartTime int64      `json:"start_time"`
 	EndTime   int64      `json:"end_time"`
@@ -51,19 +54,19 @@ type AccountInfraConsumption struct {
 	Bandwidth int64 `json:"bandwidth"`
 }
 
-// record all meta info about this relation
+// FollowerMeta record all meta info about this relation
 type FollowerMeta struct {
 	CreatedAt    int64            `json:"created_at"`
 	FollowerName types.AccountKey `json:"follower_name"`
 }
 
-// record all meta info about this relation
+// FollowingMeta record all meta info about this relation
 type FollowingMeta struct {
 	CreatedAt     int64            `json:"created_at"`
 	FollowingName types.AccountKey `json:"following_name"`
 }
 
-// reward get from the inflation pool, only 1% of total income
+// Reward get from the inflation pool, only 1% of total income
 type Reward struct {
 	OriginalIncome types.Coin `json:"original_income"`
 	FrictionIncome types.Coin `json:"friction_income"`
@@ -71,7 +74,7 @@ type Reward struct {
 	UnclaimReward  types.Coin `json:"unclaim_reward"`
 }
 
-// relationship between accounts
+// Relationship between accounts
 type Relationship struct {
 	DonationTimes int64 `json:"donation_times"`
 }

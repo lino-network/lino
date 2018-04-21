@@ -46,6 +46,7 @@ func TestNormalRepost(t *testing.T) {
 
 }
 
+// test invalid repost if source post id doesn't exist
 func TestInvalidRepost(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"

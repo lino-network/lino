@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
@@ -23,7 +24,6 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				sdk.ErrUnauthorized("no signers").Result(),
 				true
 		}
-		// TODO: can tx just implement message?
 		msg := tx.GetMsg()
 
 		sequences := make([]int64, len(sigs))
@@ -35,7 +35,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		msgType := msg.Type()
 
 		if msgType == types.RegisterRouterName {
-			// TODO(Lino): here we get the address. So ugly :(
+			// TODO(Lino): here we get the address :(
 			var signerAddrs = msg.GetSigners()
 
 			// Only new user can sign their own register transaction

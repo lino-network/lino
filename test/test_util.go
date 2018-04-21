@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
 	acc "github.com/lino-network/lino/tx/account"
@@ -16,14 +19,13 @@ import (
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
 )
 
+// construct some global keys and addrs.
 var (
 	GenesisUser = "genesis"
 	GenesisPriv = crypto.GenPrivKeyEd25519()

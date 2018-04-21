@@ -3,16 +3,6 @@ package app
 import (
 	"encoding/json"
 
-	abci "github.com/tendermint/abci/types"
-	oldwire "github.com/tendermint/go-wire"
-	cmn "github.com/tendermint/tmlibs/common"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
-
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-
 	"github.com/lino-network/lino/genesis"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
@@ -24,6 +14,15 @@ import (
 	val "github.com/lino-network/lino/tx/validator"
 	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
+
+	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
+	abci "github.com/tendermint/abci/types"
+	oldwire "github.com/tendermint/go-wire"
+	cmn "github.com/tendermint/tmlibs/common"
+	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 const (

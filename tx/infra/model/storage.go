@@ -6,8 +6,10 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var InfraProviderSubstore = []byte("InfraProvider/")
-var InfraProviderListSubstore = []byte("InfraProvider/InfraProviderListKey")
+var (
+	InfraProviderSubstore     = []byte("InfraProvider/")
+	InfraProviderListSubstore = []byte("InfraProvider/InfraProviderListKey")
+)
 
 type InfraProviderStorage struct {
 	key sdk.StoreKey
@@ -30,7 +32,8 @@ func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (is InfraProviderStorage) GetInfraProvider(ctx sdk.Context, accKey types.AccountKey) (*InfraProvider, sdk.Error) {
+func (is InfraProviderStorage) GetInfraProvider(
+	ctx sdk.Context, accKey types.AccountKey) (*InfraProvider, sdk.Error) {
 	store := ctx.KVStore(is.key)
 	providerByte := store.Get(GetInfraProviderKey(accKey))
 	if providerByte == nil {
@@ -43,7 +46,8 @@ func (is InfraProviderStorage) GetInfraProvider(ctx sdk.Context, accKey types.Ac
 	return provider, nil
 }
 
-func (is InfraProviderStorage) SetInfraProvider(ctx sdk.Context, accKey types.AccountKey, InfraProvider *InfraProvider) sdk.Error {
+func (is InfraProviderStorage) SetInfraProvider(
+	ctx sdk.Context, accKey types.AccountKey, InfraProvider *InfraProvider) sdk.Error {
 	store := ctx.KVStore(is.key)
 	InfraProviderByte, err := is.cdc.MarshalJSON(*InfraProvider)
 	if err != nil {

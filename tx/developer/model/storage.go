@@ -6,8 +6,10 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var DeveloperSubstore = []byte("Developer/")
-var DeveloperListSubstore = []byte("Developer/DeveloperListKey")
+var (
+	DeveloperSubstore     = []byte("Developer/")
+	DeveloperListSubstore = []byte("Developer/DeveloperListKey")
+)
 
 type DeveloperStorage struct {
 	key sdk.StoreKey
@@ -30,7 +32,8 @@ func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (ds DeveloperStorage) GetDeveloper(ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
+func (ds DeveloperStorage) GetDeveloper(
+	ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
 	store := ctx.KVStore(ds.key)
 	providerByte := store.Get(GetDeveloperKey(accKey))
 	if providerByte == nil {
@@ -43,7 +46,8 @@ func (ds DeveloperStorage) GetDeveloper(ctx sdk.Context, accKey types.AccountKey
 	return provider, nil
 }
 
-func (ds DeveloperStorage) SetDeveloper(ctx sdk.Context, accKey types.AccountKey, Developer *Developer) sdk.Error {
+func (ds DeveloperStorage) SetDeveloper(
+	ctx sdk.Context, accKey types.AccountKey, Developer *Developer) sdk.Error {
 	store := ctx.KVStore(ds.key)
 	DeveloperByte, err := ds.cdc.MarshalJSON(*Developer)
 	if err != nil {

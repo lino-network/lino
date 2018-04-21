@@ -25,9 +25,7 @@ type ValidatorRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
-//----------------------------------------
 // ValidatorDepositMsg Msg Implementations
-
 func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey) ValidatorDepositMsg {
 	return ValidatorDepositMsg{
 		Username:  types.AccountKey(validator),
@@ -72,9 +70,7 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
-//----------------------------------------
 // ValidatorWithdrawMsg Msg Implementations
-
 func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
 		Username: types.AccountKey(validator),
@@ -116,9 +112,7 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
-//----------------------------------------
 // ValidatorRevokeMsg Msg Implementations
-
 func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
 		Username: types.AccountKey(validator),

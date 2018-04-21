@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -57,7 +58,6 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	}
 
 	// Generate 21 validators
-
 	genesisAcc := genesis.GenesisAccount{
 		Name:        user1,
 		Lino:        LNOPerValidator,

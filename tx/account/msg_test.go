@@ -3,9 +3,11 @@ package account
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestFollowMsg(t *testing.T) {

@@ -21,7 +21,8 @@ var (
 	initCoin = types.NewCoin(100)
 )
 
-func setupTest(t *testing.T, height int64) (sdk.Context, acc.AccountManager, DeveloperManager, global.GlobalManager) {
+func setupTest(t *testing.T, height int64) (
+	sdk.Context, acc.AccountManager, DeveloperManager, global.GlobalManager) {
 	ctx := getContext(height)
 	am := acc.NewAccountManager(TestAccountKVStoreKey)
 	dm := NewDeveloperManager(TestInfraKVStoreKey)

@@ -20,7 +20,7 @@ const (
 	FlagAmount  = "amount"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// DonateTxCmd will create a donate tx and sign it with the given key
 func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "donate",
@@ -34,7 +34,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send donate transaction to the blockchain
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()

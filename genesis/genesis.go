@@ -2,10 +2,11 @@ package genesis
 
 import (
 	"encoding/json"
+
 	crypto "github.com/tendermint/go-crypto"
 )
 
-// State to Unmarshal
+// genesis state for blockchain
 type GenesisState struct {
 	Accounts   []GenesisAccount       `json:"accounts"`
 	Developers []GenesisAppDeveloper  `json:"developers"`
@@ -13,7 +14,8 @@ type GenesisState struct {
 	TotalLino  int64                  `json:"total_lino"`
 }
 
-// GenesisAccount doesn't need pubkey or sequence
+// genesis account will get coin to the address and register user
+// if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
 	Name        string        `json:"name"`
 	Lino        int64         `json:"lino"`
@@ -22,15 +24,18 @@ type GenesisAccount struct {
 	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
 }
 
+// register developer in genesis phase
 type GenesisAppDeveloper struct {
 	Name    string `json:"name"`
 	Deposit int64  `json:"deposit"`
 }
 
+// register infra provider in genesis phase
 type GenesisInfraProvider struct {
 	Name string `json:"name"`
 }
 
+// generate json format config based on genesis state
 func GetGenesisJson(genesisState GenesisState) (string, error) {
 	output, err := json.MarshalIndent(genesisState, "", "\t")
 	if err != nil {
@@ -39,6 +44,7 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 	return string(output), nil
 }
 
+// default genesis file, only have one genesis account
 func GetDefaultGenesis(pubkey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
 	totalLino := int64(10000000000)
 	genesisAcc := GenesisAccount{

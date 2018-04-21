@@ -21,7 +21,7 @@ const (
 	FlagFollower = "follower"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// FollowTxCmd will create a follow tx and sign it with the given key
 func FollowTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "follow",
@@ -34,12 +34,13 @@ func FollowTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send follow transaction to the blockchain
 func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
 		follower := viper.GetString(FlagFollower)
 		followee := viper.GetString(FlagFollowee)
+
 		var msg sdk.Msg
 		isFollow := viper.GetBool(FlagIsFollow)
 		if isFollow {

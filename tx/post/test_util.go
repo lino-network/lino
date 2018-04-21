@@ -29,7 +29,8 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest(t *testing.T, height int64) (sdk.Context, acc.AccountManager, PostManager, global.GlobalManager) {
+func setupTest(
+	t *testing.T, height int64) (sdk.Context, acc.AccountManager, PostManager, global.GlobalManager) {
 	ctx := getContext(height)
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
 	postManager := NewPostManager(TestPostKVStoreKey)
@@ -47,10 +48,12 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
+	return sdk.NewContext(
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
 }
 
-func checkPostKVStore(t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
+func checkPostKVStore(
+	t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -67,7 +70,8 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PostKey, postMet
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")
 }
 
-func createTestAccount(t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
+func createTestAccount(
+	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)

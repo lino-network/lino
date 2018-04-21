@@ -18,9 +18,7 @@ type DeveloperRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
-//----------------------------------------
 // DeveloperRegisterMsg Msg Implementations
-
 func NewDeveloperRegisterMsg(developer string, deposit types.LNO) DeveloperRegisterMsg {
 	return DeveloperRegisterMsg{
 		Username: types.AccountKey(developer),
@@ -28,7 +26,7 @@ func NewDeveloperRegisterMsg(developer string, deposit types.LNO) DeveloperRegis
 	}
 }
 
-func (msg DeveloperRegisterMsg) Type() string { return types.DeveloperRouterName } // TODO: "account/register"
+func (msg DeveloperRegisterMsg) Type() string { return types.DeveloperRouterName }
 
 func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
@@ -63,16 +61,14 @@ func (msg DeveloperRegisterMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
-//----------------------------------------
 // DeveloperRevokeMsg Msg Implementations
-
 func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 	return DeveloperRevokeMsg{
 		Username: types.AccountKey(developer),
 	}
 }
 
-func (msg DeveloperRevokeMsg) Type() string { return types.DeveloperRouterName } // TODO: "account/register"
+func (msg DeveloperRevokeMsg) Type() string { return types.DeveloperRouterName }
 
 func (msg DeveloperRevokeMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||

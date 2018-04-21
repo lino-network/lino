@@ -26,7 +26,7 @@ func GetInfraProviderCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	}
 }
 
-// GetValidatorsCmd returns all validators relative information
+// GetInfraProvidersCmd returns all validators relative information
 func GetInfraProvidersCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	cmdr := commander{
 		storeName,

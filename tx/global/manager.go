@@ -164,6 +164,7 @@ func (gm GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Err
 	return nil
 }
 
+// add inflation to pool
 func (gm GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
 	if getErr != nil {
@@ -176,6 +177,7 @@ func (gm GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.
 	return nil
 }
 
+// get validator hourly inflation
 func (gm GlobalManager) GetValidatorHourlyInflation(
 	ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
@@ -193,6 +195,7 @@ func (gm GlobalManager) GetValidatorHourlyInflation(
 	return resCoin, nil
 }
 
+// get infra monthly inflation
 func (gm GlobalManager) GetInfraMonthlyInflation(
 	ctx sdk.Context, pastMonthMinusOneThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
@@ -210,6 +213,7 @@ func (gm GlobalManager) GetInfraMonthlyInflation(
 	return resCoin, nil
 }
 
+// get developer monthly inflation
 func (gm GlobalManager) GetDeveloperMonthlyInflation(
 	ctx sdk.Context, pastMonthMinusOneThisYear int64) (types.Coin, sdk.Error) {
 	pool, getErr := gm.globalStorage.GetInflationPool(ctx)
@@ -227,6 +231,7 @@ func (gm GlobalManager) GetDeveloperMonthlyInflation(
 	return resCoin, nil
 }
 
+// change infra internal inflation
 func (gm GlobalManager) ChangeInfraInternalInflation(
 	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
 	allocation, getErr := gm.globalStorage.GetInfraInternalAllocation(ctx)
@@ -262,6 +267,7 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Erro
 	return nil
 }
 
+// change global inflation allocation
 func (gm GlobalManager) ChangeGlobalInflation(ctx sdk.Context, InfraAllocation sdk.Rat,
 	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
 	allocation, getErr := gm.globalStorage.GetGlobalAllocation(ctx)

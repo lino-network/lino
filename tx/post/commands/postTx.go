@@ -24,7 +24,7 @@ const (
 	FlagParentPostID = "parent_post_ID"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// PostTxCmd will create a post tx and sign it with the given key
 func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "post",
@@ -40,7 +40,7 @@ func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send post transaction to the blockchain
 func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()

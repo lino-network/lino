@@ -29,7 +29,8 @@ func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.Acco
 	return infoByte != nil
 }
 
-func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
+func (dm DeveloperManager) RegisterDeveloper(
+	ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
 	// check developer mindmum deposit requirement
 	if !deposit.IsGTE(types.DeveloperMinDeposit) {
 		return ErrDeveloperDepositNotEnough()
@@ -48,7 +49,8 @@ func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username types.Acc
 	return nil
 }
 
-func (dm DeveloperManager) AddToDeveloperList(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (dm DeveloperManager) AddToDeveloperList(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	lst, getErr := dm.storage.GetDeveloperList(ctx)
 	if getErr != nil {
 		return getErr
@@ -64,7 +66,8 @@ func (dm DeveloperManager) AddToDeveloperList(ctx sdk.Context, username types.Ac
 	return nil
 }
 
-func (dm DeveloperManager) RemoveFromDeveloperList(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (dm DeveloperManager) RemoveFromDeveloperList(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	lst, getErr := dm.storage.GetDeveloperList(ctx)
 	if getErr != nil {
 		return getErr
@@ -81,7 +84,8 @@ func (dm DeveloperManager) RemoveFromDeveloperList(ctx sdk.Context, username typ
 	return nil
 }
 
-func (dm *DeveloperManager) ReportConsumption(ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
+func (dm *DeveloperManager) ReportConsumption(
+	ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
 		return getErr
@@ -93,7 +97,8 @@ func (dm *DeveloperManager) ReportConsumption(ctx sdk.Context, username types.Ac
 	return nil
 }
 
-func (dm *DeveloperManager) GetConsumptionWeight(ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
+func (dm *DeveloperManager) GetConsumptionWeight(
+	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
 	lst, getErr := dm.storage.GetDeveloperList(ctx)
 	if getErr != nil {
 		return sdk.NewRat(0), getErr
@@ -141,7 +146,8 @@ func (dm *DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 }
 
 // this method won't check if it is a legal withdraw, caller should check by itself
-func (dm DeveloperManager) Withdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (dm DeveloperManager) Withdraw(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
 		return getErr
@@ -161,7 +167,8 @@ func (dm DeveloperManager) Withdraw(ctx sdk.Context, username types.AccountKey, 
 	return nil
 }
 
-func (dm DeveloperManager) WithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+func (dm DeveloperManager) WithdrawAll(
+	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
 		return types.NewCoin(0), getErr

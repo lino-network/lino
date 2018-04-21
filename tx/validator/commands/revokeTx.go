@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// RevokeTxCmd will create a revoke tx and sign it with the given key
 func RevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-revoke",
@@ -24,7 +24,7 @@ func RevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send revoke transaction to the blockchain
 func sendRevokeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
