@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,73 +13,80 @@ func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Err
 	assert.Equal(t, result, expectError)
 }
 
+func testReportOrUpvoteValidate(t *testing.T, reportOrUpvoteMsg ReportOrUpvoteMsg, expectError sdk.Error) {
+	result := reportOrUpvoteMsg.ValidateBasic()
+	assert.Equal(t, result, expectError)
+}
+
 func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 	result := likeMsg.ValidateBasic()
 	assert.Equal(t, result, expectError)
 }
 
-func testCommentAndRepostValidate(t *testing.T, postInfo PostInfo, expectError sdk.Error) {
-	createMsg := NewCreatePostMsg(postInfo)
+func testCommentAndRepostValidate(t *testing.T, postCreateParams PostCreateParams, expectError sdk.Error) {
+	createMsg := NewCreatePostMsg(postCreateParams)
 	result := createMsg.ValidateBasic()
 	assert.Equal(t, expectError, result)
 }
 
-func getCommentAndRepost(t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostInfo {
-	return PostInfo{
-		PostID:       "TestPostID",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       "author",
-		ParentAuthor: acc.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: acc.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
+func getCommentAndRepost(
+	t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) PostCreateParams {
+	return PostCreateParams{
+		PostID:                  "TestPostID",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  "author",
+		ParentAuthor:            types.AccountKey(parentAuthor),
+		ParentPostID:            parentPostID,
+		SourceAuthor:            types.AccountKey(sourceAuthor),
+		SourcePostID:            sourcePostID,
+		RedistributionSplitRate: sdk.ZeroRat,
 	}
 }
 
 func TestCreatePostMsg(t *testing.T) {
-	author := acc.AccountKey("TestAuthor")
-	// test valid post
-	post := PostInfo{
-		PostID:       "TestPostID",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       author,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
+	sdk.ZeroRat.GT(sdk.ZeroRat)
+	author := types.AccountKey("TestAuthor")
+	cases := []struct {
+		postCreateParams PostCreateParams
+		expectResult     sdk.Error
+	}{
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat}, expectResult: nil},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(1)}, expectResult: nil},
+		{postCreateParams: PostCreateParams{
+			PostID: "", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostCreateNoPostID()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: "", Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostCreateNoAuthor()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 51)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostTitleExceedMaxLength()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1001)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			expectResult: ErrPostContentExceedMaxLength()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(-1)},
+			expectResult: ErrPostRedistributionSplitRate()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(101, 100)},
+			expectResult: ErrPostRedistributionSplitRate()},
 	}
-	createMsg := NewCreatePostMsg(post)
-	result := createMsg.ValidateBasic()
-	assert.Nil(t, result)
-
-	// test missing post id
-	post.PostID = ""
-
-	createMsg = NewCreatePostMsg(post)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostCreateNoPostID())
-
-	post.Author = ""
-	post.PostID = "testPost"
-	createMsg = NewCreatePostMsg(post)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostCreateNoAuthor())
-
-	// test exceeding max title length
-	post.Author = author
-	post.Title = string(make([]byte, 51))
-	createMsg = NewCreatePostMsg(post)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostTitleExceedMaxLength())
-
-	// test exceeding max content length
-	post.Title = string(make([]byte, 50))
-	post.Content = string(make([]byte, 1001))
-	createMsg = NewCreatePostMsg(post)
-	result = createMsg.ValidateBasic()
-	assert.Equal(t, result, ErrPostContentExceedMaxLength())
+	for _, cs := range cases {
+		createMsg := NewCreatePostMsg(cs.postCreateParams)
+		result := createMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectResult)
+	}
 }
 
 func TestCommentAndRepost(t *testing.T) {
@@ -90,8 +96,8 @@ func TestCommentAndRepost(t *testing.T) {
 	sourcePostID := "SourcePostID"
 
 	cases := []struct {
-		postInfo    PostInfo
-		expectError sdk.Error
+		postCreateParams PostCreateParams
+		expectError      sdk.Error
 	}{
 		{getCommentAndRepost(t, "", "", "", ""), nil},
 		{getCommentAndRepost(t, parentAuthor, parentPostID, "", ""), nil},
@@ -104,7 +110,7 @@ func TestCommentAndRepost(t *testing.T) {
 		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostError()},
 	}
 	for _, cs := range cases {
-		testCommentAndRepostValidate(t, cs.postInfo, cs.expectError)
+		testCommentAndRepostValidate(t, cs.postCreateParams, cs.expectError)
 	}
 }
 
@@ -113,14 +119,16 @@ func TestLikeMsg(t *testing.T) {
 		likeMsg     LikeMsg
 		expectError sdk.Error
 	}{
-		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey("author"), "postID"), nil},
-		{NewLikeMsg(acc.AccountKey("test"), -10000, acc.AccountKey("author"), "postID"), nil},
-		{NewLikeMsg(acc.AccountKey("test"), 10001, acc.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(10001)},
-		{NewLikeMsg(acc.AccountKey("test"), -10001, acc.AccountKey("author"), "postID"), ErrPostLikeWeightOverflow(-10001)},
-		{NewLikeMsg(acc.AccountKey(""), 10000, acc.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
-		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg(acc.AccountKey("test"), 10000, acc.AccountKey(""), ""), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"), nil},
+		{NewLikeMsg(types.AccountKey("test"), -10000, types.AccountKey("author"), "postID"), nil},
+		{NewLikeMsg(types.AccountKey("test"), 10001, types.AccountKey("author"), "postID"),
+			ErrPostLikeWeightOverflow(10001)},
+		{NewLikeMsg(types.AccountKey("test"), -10001, types.AccountKey("author"), "postID"),
+			ErrPostLikeWeightOverflow(-10001)},
+		{NewLikeMsg(types.AccountKey(""), 10000, types.AccountKey("author"), "postID"), ErrPostLikeNoUsername()},
+		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey(""), "postID"), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey("author"), ""), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg(types.AccountKey("test"), 10000, types.AccountKey(""), ""), ErrPostLikeInvalidTarget()},
 	}
 
 	for _, cs := range cases {
@@ -133,16 +141,45 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), nil},
-		{NewDonateMsg(acc.AccountKey(""), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), "postID"), ErrPostDonateNoUsername()},
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(0)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("TestLNO can't be less than lower bound")},
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(-1)), acc.AccountKey("author"), "postID"), sdk.ErrInvalidCoins("TestLNO can't be less than lower bound")},
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey("author"), ""), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey(""), "postID"), ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(acc.AccountKey("test"), types.TestLNO(sdk.NewRat(1)), acc.AccountKey(""), ""), ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)),
+			types.AccountKey("author"), "postID", ""), nil},
+		{NewDonateMsg(types.AccountKey(""), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "postID", ""),
+			ErrPostDonateNoUsername()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(0)), types.AccountKey("author"), "postID", ""),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(-1)), types.AccountKey("author"), "postID", ""),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "", ""),
+			ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "postID", ""),
+			ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "", ""),
+			ErrPostDonateInvalidTarget()},
 	}
 
 	for _, cs := range cases {
 		testDonationValidate(t, cs.donateMsg, cs.expectError)
+	}
+}
+
+func TestReportOrUpvoteMsg(t *testing.T) {
+	cases := []struct {
+		reportOrUpvoteMsg ReportOrUpvoteMsg
+		expectError       sdk.Error
+	}{
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", true, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "postID", false, false), nil},
+		{NewReportOrUpvoteMsg(types.AccountKey(""), types.AccountKey("author"), "postID", true, false),
+			ErrPostReportOrUpvoteNoUsername()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey("author"), "", true, true),
+			ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "postID", false, true),
+			ErrPostReportOrUpvoteInvalidTarget()},
+		{NewReportOrUpvoteMsg(types.AccountKey("test"), types.AccountKey(""), "", false, false),
+			ErrPostReportOrUpvoteInvalidTarget()},
+	}
+
+	for _, cs := range cases {
+		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
 	}
 }

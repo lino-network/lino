@@ -6,18 +6,21 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
-			return handleCreatePostMsg(ctx, pm, am, msg)
+			return handleCreatePostMsg(ctx, msg, pm, am, gm)
 		case DonateMsg:
-			return handleDonateMsg(ctx, pm, am, msg)
+			return handleDonateMsg(ctx, msg, pm, am, gm)
 		case LikeMsg:
-			return handleLikeMsg(ctx, pm, am, msg)
+			return handleLikeMsg(ctx, msg, pm, am, gm)
+		case ReportOrUpvoteMsg:
+			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -26,120 +29,179 @@ func NewHandler(pm PostManager, am acc.AccountManager) sdk.Handler {
 }
 
 // Handle RegisterMsg
-func handleCreatePostMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg CreatePostMsg) sdk.Result {
-	account := acc.NewAccountProxy(msg.Author, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Author) {
+		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if post.IsPostExist(ctx) {
-		return ErrPostExist().Result()
-	}
-	if err := post.CreatePost(ctx, &msg.PostInfo); err != nil {
-		return err.Result()
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	if pm.IsPostExist(ctx, postKey) {
+		return ErrCreateExistPost(postKey).Result()
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
-		parentPost := NewPostProxy(msg.ParentAuthor, msg.ParentPostID, &pm)
-		comment := Comment{Author: post.GetAuthor(), PostID: post.GetPostID(), Created: types.Height(ctx.BlockHeight())}
-		if err := parentPost.AddComment(ctx, comment); err != nil {
+		parentPostKey := types.GetPostKey(msg.ParentAuthor, msg.ParentPostID)
+		if !pm.IsPostExist(ctx, parentPostKey) {
+			return ErrCommentInvalidParent(parentPostKey).Result()
+		}
+		if err := pm.AddComment(ctx, parentPostKey, msg.Author, msg.PostID); err != nil {
 			return err.Result()
 		}
-		if err := parentPost.Apply(ctx); err != nil {
-			return err.Result()
-		}
 	}
-	if err := post.Apply(ctx); err != nil {
+	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
 		return err.Result()
 	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
-		return err.Result()
-	}
+
 	return sdk.Result{}
 }
 
 // Handle LikeMsg
-func handleLikeMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg LikeMsg) sdk.Result {
-	account := acc.NewAccountProxy(msg.Username, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if !post.IsPostExist(ctx) {
-		return ErrLikePostDoesntExist().Result()
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrLikeNonExistPost(postKey).Result()
 	}
-	// TODO: check acitivity burden
-	like := Like{Username: msg.Username, Weight: msg.Weight, Created: types.Height(ctx.BlockHeight())}
-	if err := post.AddOrUpdateLikeToPost(ctx, like); err != nil {
-		return err.Result()
-	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
+	if err := pm.AddOrUpdateLikeToPost(ctx, postKey, msg.Username, msg.Weight); err != nil {
 		return err.Result()
 	}
 
-	// apply change to storage
-	if err := post.Apply(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
-		return err.Result()
-	}
 	return sdk.Result{}
 }
 
 // Handle DonateMsg
-func handleDonateMsg(ctx sdk.Context, pm PostManager, am acc.AccountManager, msg DonateMsg) sdk.Result {
+func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
-		return err.Result()
+		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
-	account := acc.NewAccountProxy(msg.Username, &am)
-	if !account.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound().Result()
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrDonateUserNotFound(msg.Username).Result()
 	}
-	post := NewPostProxy(msg.Author, msg.PostID, &pm)
-	if !post.IsPostExist(ctx) {
-		return ErrDonatePostDoesntExist().Result()
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrDonatePostDoesntExist(postKey).Result()
 	}
 	// TODO: check acitivity burden
-	if err := account.MinusCoin(ctx, coin); err != nil {
-		return err.Result()
+	if err := am.MinusCoin(ctx, msg.Username, coin); err != nil {
+		return ErrDonateFailed(postKey).Result()
 	}
-	donation := Donation{
-		Amount:  coin,
-		Created: types.Height(ctx.BlockHeight()),
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
+	if err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
-	if err := post.AddDonation(ctx, msg.Username, donation); err != nil {
-		return err.Result()
+	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
+		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePostKey)
+		if err != nil {
+			return ErrDonateFailed(postKey).TraceCause(err, "").Result()
+		}
+		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat.Sub(redistributionSplitRate)))
+		coin = coin.Minus(sourceIncome)
+		if err := processDonationFriction(
+			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
+			return err.Result()
+		}
 	}
-	if err := ProcessPostFriction(ctx, donation.Amount, post, am); err != nil {
-		return err.Result()
-	}
-	if err := account.UpdateLastActivity(ctx); err != nil {
-		return err.Result()
-	}
-	// apply change to storage
-	if err := post.Apply(ctx); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
+	if err := processDonationFriction(
+		ctx, msg.Username, coin, msg.Author, msg.PostID, msg.FromApp, am, pm, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
-func ProcessPostFriction(ctx sdk.Context, amount types.Coin, post *PostProxy, am acc.AccountManager) sdk.Error {
-	authorAccount := acc.NewAccountProxy(post.GetAuthor(), &am)
-	if !authorAccount.IsAccountExist(ctx) {
-		return acc.ErrUsernameNotFound()
+func processDonationFriction(
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin,
+	postAuthor types.AccountKey, postID string, fromApp types.AccountKey,
+	am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
+	postKey := types.GetPostKey(postAuthor, postID)
+	if coin.IsZero() {
+		return nil
 	}
-	if err := authorAccount.AddCoin(ctx, amount); err != nil {
+	if !am.IsAccountExist(ctx, postAuthor) {
+		return ErrDonateAuthorNotFound(postKey, postAuthor)
+	}
+	consumptionFrictionRate, err := gm.GetConsumptionFrictionRate(ctx)
+	if err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
+	directDeposit := coin.Minus(frictionCoin)
+	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	if err := am.AddCoin(ctx, postAuthor, directDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	if err := gm.AddConsumption(ctx, coin); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	// evaluate this consumption can get the result, the result is used to get inflation from pool
+	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
+	if err != nil {
 		return err
 	}
-	if err := authorAccount.Apply(ctx); err != nil {
+	rewardEvent := RewardEvent{
+		PostAuthor: postAuthor,
+		PostID:     postID,
+		Consumer:   consumer,
+		Evaluate:   evaluateResult,
+		Original:   coin,
+		Friction:   frictionCoin,
+		FromApp:    fromApp,
+	}
+	if err :=
+		gm.AddFrictionAndRegisterContentRewardEvent(
+			ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
 		return err
 	}
 	return nil
+}
+
+func evaluateConsumption(
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
+	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) (types.Coin, sdk.Error) {
+	numOfConsumptionOnAuthor, err := am.GetDonationRelationship(ctx, consumer, postAuthor)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPostKey(postAuthor, postID))
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
+
+}
+
+// Handle ReportMsgOrUpvoteMsg
+func handleReportOrUpvoteMsg(
+	ctx sdk.Context, msg ReportOrUpvoteMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrReportUserNotFound(msg.Username).Result()
+	}
+	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	stake, err := am.GetStake(ctx, msg.Username)
+	if err != nil {
+		return ErrReportFailed(postKey).TraceCause(err, "").Result()
+	}
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrReportPostDoesntExist(postKey).Result()
+	}
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
+	if err != nil {
+		return ErrReportFailed(postKey).TraceCause(err, "").Result()
+	}
+	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
+		if err := pm.ReportOrUpvoteToPost(
+			ctx, sourcePostKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
+			return err.Result()
+		}
+	} else {
+		if err := pm.ReportOrUpvoteToPost(
+			ctx, postKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
+			return err.Result()
+		}
+	}
+	return sdk.Result{}
 }

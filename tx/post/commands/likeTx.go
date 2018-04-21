@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/types"
 )
 
 // nolint
@@ -22,7 +22,7 @@ const (
 	FlagAuthor   = "author"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// LikeTxCmd will create a like tx and sign it with the given key
 func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "like",
@@ -36,9 +36,10 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send like transaction to the blockchain
 func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx := context.NewCoreContextFromViper()
 		username := viper.GetString(FlagLikeUser)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
@@ -47,10 +48,10 @@ func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		msg := post.NewLikeMsg(acc.AccountKey(username), int64(weight), acc.AccountKey(author), postID)
+		msg := post.NewLikeMsg(types.AccountKey(username), int64(weight), types.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(username, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(username, msg, cdc)
 
 		if err != nil {
 			return err

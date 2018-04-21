@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -22,7 +24,6 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 				sdk.ErrUnauthorized("no signers").Result(),
 				true
 		}
-		// TODO: can tx just implement message?
 		msg := tx.GetMsg()
 
 		sequences := make([]int64, len(sigs))
@@ -34,7 +35,7 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 		msgType := msg.Type()
 
 		if msgType == types.RegisterRouterName {
-			// TODO(Lino): here we get the address. So ugly :(
+			// TODO(Lino): here we get the address :(
 			var signerAddrs = msg.GetSigners()
 
 			// Only new user can sign their own register transaction
@@ -54,10 +55,9 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 		if len(sigs) < len(signers) {
 			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
-		// signers get from msg should be verified first
+		// signers get from msg should be verify first
 		for i, signer := range signers {
-			account := acc.NewAccountProxy(acc.AccountKey(signer), &am)
-			seq, err := account.GetSequence(ctx)
+			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
 			if err != nil {
 				return ctx, err.Result(), true
 			}
@@ -66,11 +66,11 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, seq)).Result(),
 					true
 			}
-			if err := account.IncreaseSequenceByOne(ctx); err != nil {
+			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
 				return ctx, err.Result(), true
 			}
 
-			pubKey, err := account.GetOwnerKey(ctx)
+			pubKey, err := am.GetOwnerKey(ctx, types.AccountKey(signer))
 			if err != nil {
 				return ctx, err.Result(), true
 			}
@@ -79,9 +79,14 @@ func NewAnteHandler(am acc.AccountManager) sdk.AnteHandler {
 				return ctx, sdk.ErrUnauthorized("signer mismatch").Result(), true
 			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
-				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
+				return ctx, sdk.ErrUnauthorized(
+					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
 			}
-			if err := account.Apply(ctx); err != nil {
+			tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+			if err != nil {
+				return ctx, err.Result(), true
+			}
+			if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(signer), tpsCapacityRatio); err != nil {
 				return ctx, err.Result(), true
 			}
 		}

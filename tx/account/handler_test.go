@@ -3,79 +3,61 @@ package account
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-)
 
-var (
-	l0    = types.TestLNO(sdk.NewRat(0))
-	l100  = types.TestLNO(sdk.NewRat(100))
-	l200  = types.TestLNO(sdk.NewRat(200))
-	l1600 = types.TestLNO(sdk.NewRat(1600))
-	l1800 = types.TestLNO(sdk.NewRat(1800))
-	l1900 = types.TestLNO(sdk.NewRat(1900))
-	l2000 = types.TestLNO(sdk.NewRat(2000))
-	c0    = types.Coin{0}
-	c100  = types.Coin{100 * types.Decimals}
-	c200  = types.Coin{200 * types.Decimals}
-	c1600 = types.Coin{1600 * types.Decimals}
-	c1800 = types.Coin{1800 * types.Decimals}
-	c1900 = types.Coin{1900 * types.Decimals}
-	c2000 = types.Coin{2000 * types.Decimals}
+	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestFollow(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
 	// let user1 follows user2
 	msg := NewFollowMsg("user1", "user2")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+	assert.Equal(t, sdk.Result{}, result)
 
 	// check user1 in the user2's follower list
-	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
+	assert.True(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 	// check user2 in the user1's following list
-	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
+	assert.True(t, am.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 }
 
 func TestFollowUserNotExist(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create test user
-	acc1 := createTestAccount(ctx, lam, "user1")
+	createTestAccount(ctx, am, "user1")
 
 	// let user2(not exists) follows user1
 	msg := NewFollowMsg("user2", "user1")
 	result := handler(ctx, msg)
 
 	assert.Equal(t, result, ErrUsernameNotFound().Result())
-	assert.Equal(t, false, acc1.IsMyFollower(ctx, "user2"))
+	assert.False(t, am.IsMyFollower(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 	// let user1 follows user3(not exists)
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrUsernameNotFound().Result())
-	assert.Equal(t, false, acc1.IsMyFollowing(ctx, "user3"))
+	assert.False(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user3")))
 }
 
 func TestFollowAgain(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
 	// let user1 follows user2 twice
 	msg := NewFollowMsg("user1", "user2")
@@ -87,20 +69,19 @@ func TestFollowAgain(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is user2's only follower
-	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
+	assert.True(t, am.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 is the only one in the user1's following list
-	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
+	assert.True(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 }
 
 func TestUnfollow(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
 	// let user1 follows user2
 	msg := NewFollowMsg("user1", "user2")
@@ -113,18 +94,17 @@ func TestUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 is not in the user2's follower list
-	assert.Equal(t, false, acc2.IsMyFollower(ctx, "user1"))
+	assert.False(t, am.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 is not in the user1's following list
-	assert.Equal(t, false, acc1.IsMyFollowing(ctx, "user2"))
+	assert.False(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 	// create test user
-	createTestAccount(ctx, lam, "user1")
+	createTestAccount(ctx, am, "user1")
 
 	// let user2(not exists) unfollows user1
 	msg := NewUnfollowMsg("user2", "user1")
@@ -138,13 +118,12 @@ func TestUnfollowUserNotExist(t *testing.T) {
 }
 
 func TestInvalidUnfollow(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 	// create test user
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
-	createTestAccount(ctx, lam, "user3")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
+	createTestAccount(ctx, am, "user3")
 
 	// let user1 follows user2
 	msg := NewFollowMsg("user1", "user2")
@@ -162,26 +141,22 @@ func TestInvalidUnfollow(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	// check user1 in the user2's follower list
-	assert.Equal(t, true, acc2.IsMyFollower(ctx, "user1"))
+	assert.True(t, am.IsMyFollower(ctx, types.AccountKey("user2"), types.AccountKey("user1")))
 
 	// check user2 in the user1's following list
-	assert.Equal(t, true, acc1.IsMyFollowing(ctx, "user2"))
+	assert.True(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 }
 
 func TestTransferNormal(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
-	acc1.AddCoin(ctx, c2000)
-
-	acc1.Apply(ctx)
-	acc2.Apply(ctx)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
 	memo := []byte("This is a memo!")
 
@@ -190,71 +165,52 @@ func TestTransferNormal(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	acc2Balance, _ := acc2.GetBankBalance(ctx)
+	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
+	acc2Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user2"))
+	assert.Equal(t, c1800, acc1Balance)
+	assert.Equal(t, acc2Balance, c300)
 
-	assert.Equal(t, true, acc1Balance.IsEqual(c1800))
-	assert.Equal(t, true, acc2Balance.IsEqual(c200))
-
-	//let user1 transfers 1600 to user2 (by both username and address)
-	acc1.clear()
-	acc2.clear()
-
-	acc2Addr, _ := acc2.GetBankAddress(ctx)
+	acc2Addr, _ := am.GetBankAddress(ctx, types.AccountKey("user2"))
 	msg = NewTransferMsg("user1", l1600, memo, TransferToUser("user2"), TransferToAddr(acc2Addr))
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	acc1Balance, _ = acc1.GetBankBalance(ctx)
-	acc2Balance, _ = acc2.GetBankBalance(ctx)
+	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
+	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
 
-	assert.Equal(t, true, acc1Balance.IsEqual(c200))
-	assert.Equal(t, true, acc2Balance.IsEqual(c1800))
-
-	//let user1 transfers 100 to user2 (by  address)
-	acc1.clear()
-	acc2.clear()
+	assert.Equal(t, acc1Balance, c200)
+	assert.Equal(t, acc2Balance, c1900)
 
 	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(acc2Addr))
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	acc1Balance, _ = acc1.GetBankBalance(ctx)
-	acc2Balance, _ = acc2.GetBankBalance(ctx)
+	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
+	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
 
-	assert.Equal(t, true, acc1Balance.IsEqual(c100))
-	assert.Equal(t, true, acc2Balance.IsEqual(c1900))
-
-	//let user1 transfers 100 to a random address
-	acc1.clear()
-	acc2.clear()
+	assert.Equal(t, acc1Balance, c100)
+	assert.Equal(t, acc2Balance, c2000)
 
 	randomAddr := sdk.Address("sdajsdbiqwbdiub")
 	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(randomAddr))
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	acc1Balance, _ = acc1.GetBankBalance(ctx)
-	generatedBank, _ := lam.GetBankFromAddress(ctx, randomAddr)
+	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
 
-	assert.Equal(t, true, acc1Balance.IsEqual(c0))
-	assert.Equal(t, true, generatedBank.Balance.IsEqual(c100))
+	assert.Equal(t, acc1Balance, c0)
 
 }
 
 func TestSenderCoinNotEnough(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
-	acc1.AddCoin(ctx, c1600)
-
-	acc1.Apply(ctx)
-	acc2.Apply(ctx)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1500)
 
 	memo := []byte("This is a memo!")
 
@@ -263,57 +219,43 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
 
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(c1600))
+	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
+	assert.Equal(t, acc1Balance, c1600)
 }
 
 func TestUsernameAddressMismatch(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc2 := createTestAccount(ctx, lam, "user2")
+	createTestAccount(ctx, am, "user1")
+	createTestAccount(ctx, am, "user2")
 
-	acc1.AddCoin(ctx, c2000)
-	acc2.AddCoin(ctx, c2000)
-
-	acc1.Apply(ctx)
-	acc2.Apply(ctx)
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddCoin(ctx, types.AccountKey("user2"), c1900)
 
 	memo := []byte("This is a memo!")
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
 
-	// let user1 transfers 2000 to user2 (provide both name and address)
-	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
+	// let user1 transfers 2000 Lino to user2 (provide both name and address)
+	msg := NewTransferMsg(
+		"user1", l2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrUsernameAddressMismatch().Result(), result)
-
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	acc2Balance, _ := acc2.GetBankBalance(ctx)
-
-	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
-	assert.Equal(t, true, acc2Balance.IsEqual(c2000))
+	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
-	lam := newLinoAccountManager()
-	ctx := getContext()
-	handler := NewHandler(lam)
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
 
 	// create two test users
-	acc1 := createTestAccount(ctx, lam, "user1")
-	acc1.AddCoin(ctx, c2000)
-	acc1.Apply(ctx)
+	createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
 	memo := []byte("This is a memo!")
 
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAddMoneyFailed().Result(), result)
-
-	acc1Balance, _ := acc1.GetBankBalance(ctx)
-	assert.Equal(t, true, acc1Balance.IsEqual(c2000))
+	assert.Equal(t, ErrTransferHandler(msg.Sender).Result().Code, result.Code)
 }

@@ -38,7 +38,7 @@ func TestRegisterUsername(t *testing.T) {
 
 	// Illegel character
 	registerList := [...]string{"register#", "_register", "-register", "reg@ister",
-		"reg*ister", "register!", "register()", "reg$ister",
+		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register",
 		"reg=ister", "register^", "register.", "reg$ister,"}
 	for _, register := range registerList {
 		msg = NewRegisterMsg(register, priv.PubKey())

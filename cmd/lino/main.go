@@ -8,67 +8,74 @@ import (
 
 	"github.com/spf13/cobra"
 
-	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/tmlibs/cli"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
-
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
+
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
-
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
+	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 // linoCmd is the entry point for this binary
 var (
+	context = server.NewDefaultContext()
 	linoCmd = &cobra.Command{
-		Use:   "lino",
-		Short: "Lino Blockchain (server)",
+		Use:               "lino",
+		Short:             "Lino Blockchain (node)",
+		PersistentPreRunE: server.PersistentPreRunEFn(context),
 	}
 )
 
 // defaultOptions sets up the app_options for the
 // default genesis file
-func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error) {
+func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.RawMessage, error) {
 	pubKey, secret, err := generateCoinKey()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 	fmt.Println("Secret phrase to access coins:")
 	fmt.Println(secret)
+	fmt.Println("Init address:")
+	fmt.Println(pubKey.Address())
 
-	pubKeyBytes, err := json.Marshal(*pubKey)
+	config, err := tcmd.ParseConfig()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
+	}
+	// private validator
+	privValFile := config.PrivValidatorFile()
+	var privValidator *tmtypes.PrivValidatorFS
+	if cmn.FileExists(privValFile) {
+		privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
+	} else {
+		privValidator = tmtypes.GenPrivValidatorFS(privValFile)
+		privValidator.Save()
 	}
 
-	opts := fmt.Sprintf(`{
-	      "accounts": [{
-	        "name": "Lino",
-	        "lino": 10000000000,
-	        "pub_key": %s,
-	      }]
-	    }`, pubKeyBytes)
-	fmt.Println("default address:", pubKey.Address())
-
-	genesisState := new(genesis.GenesisState)
-
-	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
-	err = json.Unmarshal(json.RawMessage(opts), genesisState)
+	result, err := genesis.GetDefaultGenesis(*pubKey, privValidator.PubKey)
 	if err != nil {
-		panic(err) // TODO(Cosmos) https://github.com/cosmos/cosmos-sdk/issues/468
+		return nil, err
 	}
-	fmt.Println(genesisState)
-	return json.RawMessage(opts), secret, pubKey.Address(), nil
+
+	return json.RawMessage(result), nil
 }
 
 // generate Lino application
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
+	dbMain, err := dbm.NewGoLevelDB("LinoBlockchain-main", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
 	dbAcc, err := dbm.NewGoLevelDB("LinoBlockchain-acc", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
@@ -77,25 +84,42 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbVal, err := dbm.NewGoLevelDB("LinoBlockchain-val", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbVote, err := dbm.NewGoLevelDB("LinoBlockchain-vote", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbInfra, err := dbm.NewGoLevelDB("LinoBlockchain-infra", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbDeveloper, err := dbm.NewGoLevelDB("LinoBlockchain-developer", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
+	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
+	if err != nil {
+		return nil, err
+	}
 	dbs := map[string]dbm.DB{
-		"acc":  dbAcc,
-		"post": dbPost,
+		"main":      dbMain,
+		"acc":       dbAcc,
+		"post":      dbPost,
+		"val":       dbVal,
+		"vote":      dbVote,
+		"infra":     dbInfra,
+		"developer": dbDeveloper,
+		"global":    dbGlobal,
 	}
 	lb := app.NewLinoBlockchain(logger, dbs)
 	return lb, nil
 }
 
 func main() {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).
-		With("module", "main")
-
-	linoCmd.AddCommand(
-		server.InitCmd(defaultOptions, logger),
-		server.StartCmd(generateApp, logger),
-		server.UnsafeResetAllCmd(logger),
-		version.VersionCmd,
-	)
-
+	server.AddCommands(linoCmd, defaultAppState, generateApp, context)
 	// prepare and add flags
 	rootDir := os.ExpandEnv("$HOME/.lino")
 	executor := cli.PrepareBaseCmd(linoCmd, "BC", rootDir)

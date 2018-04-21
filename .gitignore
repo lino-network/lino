@@ -1,3 +1,4 @@
 vendor/
 cmd/lino/lino
 cmd/linocli/linocli
+server/server

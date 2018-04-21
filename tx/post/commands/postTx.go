@@ -7,10 +7,11 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
+	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/builder"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -23,7 +24,7 @@ const (
 	FlagParentPostID = "parent_post_ID"
 )
 
-// SendTxCommand will create a send tx and sign it with the given key
+// PostTxCmd will create a post tx and sign it with the given key
 func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "post",
@@ -39,23 +40,25 @@ func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-// send register transaction to the blockchain
+// send post transaction to the blockchain
 func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx := context.NewCoreContextFromViper()
 		author := viper.GetString(FlagAuthor)
-		postInfo := post.PostInfo{
-			Author:       acc.AccountKey(author),
-			PostID:       viper.GetString(FlagPostID),
-			Title:        viper.GetString(FlagTitle),
-			Content:      viper.GetString(FlagContent),
-			ParentAuthor: acc.AccountKey(viper.GetString(FlagParentAuthor)),
-			ParentPostID: viper.GetString(FlagParentPostID),
+		postCreateParams := post.PostCreateParams{
+			Author:                  types.AccountKey(author),
+			PostID:                  viper.GetString(FlagPostID),
+			Title:                   viper.GetString(FlagTitle),
+			Content:                 viper.GetString(FlagContent),
+			ParentAuthor:            types.AccountKey(viper.GetString(FlagParentAuthor)),
+			ParentPostID:            viper.GetString(FlagParentPostID),
+			RedistributionSplitRate: sdk.ZeroRat,
 		}
 
-		msg := post.NewCreatePostMsg(postInfo)
+		msg := post.NewCreatePostMsg(postCreateParams)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := builder.SignBuildBroadcast(author, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(author, msg, cdc)
 
 		if err != nil {
 			return err

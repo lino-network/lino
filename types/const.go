@@ -1,70 +1,27 @@
 package types
 
-import (
-	"math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
 const (
-	Denom    = "lino"
+	// Total decimals in Lino Blockchain
 	Decimals = 100000
-	// ABCI Response Codes
-	// Base SDK reserves 0 ~ 99.
-	// Coin errors reserve 100 ~ 199.
-	// Lino authentication errors reserve 200 ~ 299.
-	// Lino register handler errors reserve 300 ~ 309.
-	CodeInvalidUsername   sdk.CodeType = 301
-	CodeAccRegisterFailed sdk.CodeType = 302
-	CodeUsernameNotFound  sdk.CodeType = 303
 
-	// Lino account handler errors reserve 310 ~ 399
-	CodeAccountManagerFail sdk.CodeType = 310
-	CodeInvalidMsg         sdk.CodeType = 311
-
-	// Lino post handler errors reserve 400 ~ 499
-	// CodePostMarshalError indicates error occurs during marshal
-	CodePostMarshalError sdk.CodeType = 400
-	// CodePostUnmarshalError indicates error occurs during unmarshal
-	CodePostUnmarshalError sdk.CodeType = 401
-	// CodePostNotFound indicates the post is not in store.
-	CodePostNotFound sdk.CodeType = 402
-	// CodePostCreateError occurs when create msg fails some precondition
-	CodePostCreateError sdk.CodeType = 403
-	// CodePostLikeError occurs when like msg fails
-	CodePostLikeError sdk.CodeType = 404
-	// CodePostDonateError occurs when donate msg fails
-	CodePostDonateError sdk.CodeType = 405
-
-	// validator errors reserve 500 ~ 599
-	CodeValidatorHandlerFailed sdk.CodeType = 500
-	CodeValidatorManagerFailed sdk.CodeType = 501
-
-	// Event errors reserve 600 ~ 699
-	CodeEventExecuteError         sdk.CodeType = 600
-	CodeGlobalManagerError        sdk.CodeType = 601
-	CodeGlobalManagerGenesisError sdk.CodeType = 602
-
-	// AccountKVStoreKey presents store which keeps account related value
-	AccountKVStoreKey = "account"
-	// PostKVStoreKey presents store which keeps post related value
-	PostKVStoreKey = "post"
-	// ValidatorKVStoreKey presents store which keeps validator related value
+	// KVStoreKey presents store which used by app
+	MainKVStoreKey      = "main"
+	AccountKVStoreKey   = "account"
+	PostKVStoreKey      = "post"
 	ValidatorKVStoreKey = "validator"
-	// EventKVStoreKey presents store which keeps event related value
-	GlobalKVStoreKey = "global"
+	GlobalKVStoreKey    = "global"
+	VoteKVStoreKey      = "vote"
+	InfraKVStoreKey     = "infra"
+	DeveloperKVStoreKey = "developer"
 
-	// RegisterRouterName is used for routing in app
-	RegisterRouterName = "register"
-
-	// AccountRouterName is used for routing in app
-	AccountRouterName = "account"
-
-	// PostRouterName is used for routing in app
-	PostRouterName = "post"
-
-	// ValidatorRouterName is used for routing in app
+	// RouterName for msg routing in app
+	RegisterRouterName  = "register"
+	AccountRouterName   = "account"
+	PostRouterName      = "post"
 	ValidatorRouterName = "validator"
+	VoteRouterName      = "vote"
+	InfraRouterName     = "infra"
+	DeveloperRouterName = "developer"
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
@@ -77,9 +34,6 @@ const (
 
 	// DefaultAcitivityBurden for user when account is registered
 	DefaultActivityBurden = 100
-
-	// MsgType is uesd to register App codec
-	msgTypeRegister = 0x1
 
 	// MinimumUsernameLength minimum username length
 	MaxPostTitleLength = 50
@@ -96,9 +50,9 @@ const (
 	// KeySeparator used to separate different key component
 	KeySeparator = "/"
 
-	// Freezing period for validator withdraw deposit
-	ValidatorWithdrawFreezingPeriod = Height(int64(1000))
+	// as defined by a julian year of 365.25 days
+	HoursPerYear = 8766
 
-	// Infinite freezing period
-	InfiniteFreezingPeriod = Height(int64(math.MaxInt32))
+	// as defined by a julian year of 365.25 days
+	MinutesPerMonth = 8766 * 60 / 12
 )

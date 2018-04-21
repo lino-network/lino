@@ -3,93 +3,109 @@ package account
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
-)
 
-// NOTE: Don't stringer this, we'll put better messages in later.
-func codeToDefaultMsg(code sdk.CodeType) string {
-	switch code {
-	case types.CodeInvalidUsername:
-		return "Invalid username format"
-	case types.CodeAccountManagerFail:
-		return "Account manager internal error"
-	case types.CodeUsernameNotFound:
-		return "Username not found"
-	default:
-		return sdk.CodeToDefaultMsg(code)
-	}
-}
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // Error constructors
 func ErrInvalidLinoAmount() sdk.Error {
-	return newError(types.CodeInvalidMsg, fmt.Sprintf("Invalid Lino amount"))
+	return sdk.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid Lino amount"))
 }
 
 func ErrUsernameNotFound() sdk.Error {
-	return newError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
+	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("username not found"))
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return newError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalida Username"))
 }
 
-func ErrAccountCoinNotEnough() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's coins are not enough"))
+func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transfer from account %v failed", accKey))
 }
 
-func ErrAccountCreateFail(accKey AccountKey) sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account exist: %v", accKey))
+func ErrOpenBankFeeInsufficient(provide types.Coin, expect types.Coin) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail,
+		fmt.Sprintf("open bank failed, fee insufficient, need %v, but only %v provided", expect, provide))
+}
+
+func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
+}
+
+func ErrAddCoinToAccount(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to account %v failed", accKey))
+}
+
+func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("minus coin to account %v failed", accKey))
+}
+
+func ErrGetBankAddress(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank address failed", accKey))
+}
+
+func ErrGetOwnerKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v owner key failed", accKey))
+}
+
+func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
+}
+
+func ErrGetBankBalance(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank balance failed", accKey))
+}
+
+func ErrGetSequence(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
+}
+
+func ErrIncreaseSequenceByOne(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("increase account %v sequence failed", accKey))
+}
+
+func ErrAddIncomeAndReward(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add income and reward for user %v failed", accKey))
+}
+
+func ErrClaimReward(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("claim user %v reward failed", accKey))
+}
+
+func ErrGetStake(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get user %v stake failed", accKey))
+}
+
+func ErrCheckUserTPSCapacity(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v transaction capacity failed", accKey))
+}
+
+func ErrAccountTPSCapacityNotEnough(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v transaction capacity not enough, please wait", accKey))
+}
+
+func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account %v exists", accKey))
+}
+
+func ErrBankAlreadyRegistered() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("bank connection exists"))
+}
+
+func ErrRegisterFeeInsufficient() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("register fee insufficient"))
+}
+
+func ErrAccountCreateFailed(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("create account %v failed", accKey))
 }
 
 func ErrUsernameAddressMismatch() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Username and address mismatch"))
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("username and address mismatch"))
 }
 
-func ErrGetInfoFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get info failed"))
-}
-
-func ErrSetInfoFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set info failed"))
-}
-
-func ErrGetBankFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get bank failed"))
-}
-
-func ErrSetBankFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set bank failed"))
-}
-
-func ErrGetMetaFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager get meta failed"))
-}
-
-func ErrSetMetaFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("AccountManager set meta failed"))
-}
-
-func ErrAddMoneyFailed() sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Add money to bank failed"))
-}
-
-func ErrAccountMarshalError(err error) sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account marshal error: %s", err.Error()))
-}
-
-func ErrAccountUnmarshalError(err error) sdk.Error {
-	return newError(types.CodeAccountManagerFail, fmt.Sprintf("Account unmarshal error: %s", err.Error()))
-}
-
-func msgOrDefaultMsg(msg string, code sdk.CodeType) string {
-	if msg != "" {
-		return msg
-	}
-	return codeToDefaultMsg(code)
-}
-
-func newError(code sdk.CodeType, msg string) sdk.Error {
-	msg = msgOrDefaultMsg(msg, code)
-	return sdk.NewError(code, msg)
+func ErrAccountCoinNotEnough() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's coins are not enough"))
 }

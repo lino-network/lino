@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,24 +27,24 @@ func TestNewCoin(t *testing.T) {
 	}
 }
 
-func TestTestLNOToCoin(t *testing.T) {
+func TestLNOToCoin(t *testing.T) {
 	assert := assert.New(t)
 
 	cases := []struct {
 		inputString  string
 		expectedCoin Coin
 	}{
-		{"1", Coin{1 * Decimals}},
-		{"92233720368547", Coin{92233720368547 * Decimals}},
-		{"0.001", Coin{0.001 * Decimals}},
-		{"0.0001", Coin{0.0001 * Decimals}},
-		{"0.00001", Coin{0.00001 * Decimals}},
+		{"1", NewCoin(1 * Decimals)},
+		{"92233720368547", NewCoin(92233720368547 * Decimals)},
+		{"0.001", NewCoin(0.001 * Decimals)},
+		{"0.0001", NewCoin(0.0001 * Decimals)},
+		{"0.00001", NewCoin(0.00001 * Decimals)},
 	}
 
 	for _, tc := range cases {
 		rat, err := sdk.NewRatFromDecimal(tc.inputString)
 		assert.Nil(err)
-		coin, err := LinoToCoin(TestLNO(rat))
+		coin, err := LinoToCoin(LNO(rat))
 		assert.Nil(err)
 		assert.Equal(coin, tc.expectedCoin)
 	}
@@ -62,7 +63,7 @@ func TestTestLNOToCoin(t *testing.T) {
 	for _, tc := range invalidCases {
 		rat, err := sdk.NewRatFromDecimal(tc.inputString)
 		assert.Nil(err)
-		_, err = LinoToCoin(TestLNO(rat))
+		_, err = LinoToCoin(LNO(rat))
 		assert.NotNil(err)
 	}
 }
@@ -74,9 +75,9 @@ func TestIsPositiveCoin(t *testing.T) {
 		inputOne Coin
 		expected bool
 	}{
-		{Coin{1}, true},
-		{Coin{0}, false},
-		{Coin{-1}, false},
+		{NewCoin(1), true},
+		{NewCoin(0), false},
+		{NewCoin(-1), false},
 	}
 
 	for _, tc := range cases {
@@ -92,9 +93,9 @@ func TestIsNotNegativeCoin(t *testing.T) {
 		inputOne Coin
 		expected bool
 	}{
-		{Coin{1}, true},
-		{Coin{0}, true},
-		{Coin{-1}, false},
+		{NewCoin(1), true},
+		{NewCoin(0), true},
+		{NewCoin(-1), false},
 	}
 
 	for _, tc := range cases {
@@ -111,9 +112,9 @@ func TestIsGTECoin(t *testing.T) {
 		inputTwo Coin
 		expected bool
 	}{
-		{Coin{1}, Coin{1}, true},
-		{Coin{2}, Coin{1}, true},
-		{Coin{-1}, Coin{5}, false},
+		{NewCoin(1), NewCoin(1), true},
+		{NewCoin(2), NewCoin(1), true},
+		{NewCoin(-1), NewCoin(5), false},
 	}
 
 	for _, tc := range cases {
@@ -130,9 +131,9 @@ func TestIsEqualCoin(t *testing.T) {
 		inputTwo Coin
 		expected bool
 	}{
-		{Coin{1}, Coin{1}, true},
-		{Coin{1}, Coin{10}, false},
-		{Coin{-11}, Coin{10}, false},
+		{NewCoin(1), NewCoin(1), true},
+		{NewCoin(1), NewCoin(10), false},
+		{NewCoin(-11), NewCoin(10), false},
 	}
 
 	for _, tc := range cases {
@@ -149,14 +150,14 @@ func TestPlusCoin(t *testing.T) {
 		inputTwo Coin
 		expected Coin
 	}{
-		{Coin{1}, Coin{1}, Coin{2}},
-		{Coin{-4}, Coin{5}, Coin{1}},
-		{Coin{-1}, Coin{1}, Coin{0}},
+		{NewCoin(1), NewCoin(1), NewCoin(2)},
+		{NewCoin(-4), NewCoin(5), NewCoin(1)},
+		{NewCoin(-1), NewCoin(1), NewCoin(0)},
 	}
 
 	for _, tc := range cases {
 		res := tc.inputOne.Plus(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		assert.True(tc.expected.IsEqual(res))
 	}
 }
 
@@ -168,13 +169,34 @@ func TestMinusCoin(t *testing.T) {
 		inputTwo Coin
 		expected Coin
 	}{
-		{Coin{1}, Coin{1}, Coin{0}},
-		{Coin{-4}, Coin{5}, Coin{-9}},
-		{Coin{10}, Coin{1}, Coin{9}},
+		{NewCoin(1), NewCoin(1), NewCoin(0)},
+		{NewCoin(-4), NewCoin(5), NewCoin(-9)},
+		{NewCoin(10), NewCoin(1), NewCoin(9)},
 	}
 
 	for _, tc := range cases {
 		res := tc.inputOne.Minus(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		assert.True(tc.expected.IsEqual(res))
 	}
+}
+
+var cdc = wire.NewCodec() //var jsonCdc JSONCodec // TODO wire.Codec
+
+func TestSerializationGoWire(t *testing.T) {
+	r := NewCoin(100000)
+
+	//bz, err := json.Marshal(r)
+	bz, err := cdc.MarshalJSON(r)
+	assert.Nil(t, err)
+
+	//str, err := r.MarshalJSON()
+	//require.Nil(t, err)
+
+	r2 := NewCoin(0)
+	//err = json.Unmarshal([]byte(bz), &r2)
+	err = cdc.UnmarshalJSON([]byte(bz), &r2)
+	//panic(fmt.Sprintf("debug bz: %v\n", string(bz)))
+	assert.Nil(t, err)
+
+	assert.True(t, r.IsEqual(r2), "original: %v, unmarshalled: %v", r, r2)
 }

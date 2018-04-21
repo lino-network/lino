@@ -2,221 +2,276 @@ package post
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
-	oldwire "github.com/tendermint/go-wire"
 )
 
-var (
-	postInfoSubStore      = []byte{0x00} // SubStore for all post info
-	postMetaSubStore      = []byte{0x01} // SubStore for all post mata info
-	postLikeSubStore      = []byte{0x02} // SubStore for all like to post
-	postCommentSubStore   = []byte{0x03} // SubStore for all comments
-	postViewsSubStore     = []byte{0x04} // SubStore for all views
-	postDonationsSubStore = []byte{0x05} // SubStore for all donations
-)
+const rewardEvent = 0x1
 
-// TODO(Lino) Register cdc here.
-// temporary use old wire.
-// this will help marshal and unmarshal interface type.
-const msgTypePost = 0x1
-const msgTypePostMeta = 0x2
-const msgTypePostLike = 0x3
-const msgTypePostReport = 0x4
-const msgTypePostView = 0x5
-const msgTypePostComment = 0x6
-const msgTypePostDonations = 0x7
-
-var _ = oldwire.RegisterInterface(
-	struct{ PostInterface }{},
-	oldwire.ConcreteType{PostInfo{}, msgTypePost},
-	oldwire.ConcreteType{PostMeta{}, msgTypePostMeta},
-	oldwire.ConcreteType{Like{}, msgTypePostLike},
-	oldwire.ConcreteType{Report{}, msgTypePostReport},
-	oldwire.ConcreteType{View{}, msgTypePostView},
-	oldwire.ConcreteType{Comment{}, msgTypePostComment},
-	oldwire.ConcreteType{Donation{}, msgTypePostDonations},
-)
-
+// post is the proxy for all storage structs defined above
 type PostManager struct {
-	// The (unexposed) key used to access the store from the Context.
-	key sdk.StoreKey
-
-	// The wire codec for binary encoding/decoding of accounts.
-	cdc *wire.Codec
+	postStorage model.PostStorage `json:"post_storage"`
 }
 
-// NewPostManager returns a new PostManager that
-// uses go-wire to (binary) encode and decode concrete Post
-func NewPostMananger(key sdk.StoreKey) PostManager {
-	cdc := wire.NewCodec()
-
+// create NewPostManager
+func NewPostManager(key sdk.StoreKey) PostManager {
 	return PostManager{
-		key: key,
-		cdc: cdc,
+		postStorage: model.NewPostStorage(key),
 	}
 }
 
-func (pm PostManager) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) ([]byte, sdk.Error) {
-	store := ctx.KVStore(pm.key)
-	val := store.Get(key)
-	if val == nil {
-		return nil, errFunc(key)
-	}
-	return val, nil
-}
-
-func (pm PostManager) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
-	store := ctx.KVStore(pm.key)
-	val, err := oldwire.MarshalJSON(postStruct)
+func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return ErrPostMarshalError(err)
+		return sdk.ZeroRat, ErrGetRedistributionSplitRate(postKey).TraceCause(err, "")
 	}
-	store.Set(key, val)
+	return postMeta.RedistributionSplitRate, nil
+}
+
+func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, postKey types.PostKey) (int64, types.Coin, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
+	if err != nil {
+		return 0, types.NewCoin(0), ErrGetCreatedTime(postKey).TraceCause(err, "")
+	}
+	return postMeta.Created, postMeta.TotalReward, nil
+}
+
+// check if post exist
+func (pm PostManager) IsPostExist(ctx sdk.Context, postKey types.PostKey) bool {
+	if postInfo, _ := pm.postStorage.GetPostInfo(ctx, postKey); postInfo == nil {
+		return false
+	}
+	return true
+}
+
+// return root source post
+func (pm PostManager) GetSourcePost(
+	ctx sdk.Context, postKey types.PostKey) (types.AccountKey, string, sdk.Error) {
+	postInfo, err := pm.postStorage.GetPostInfo(ctx, postKey)
+	if err != nil {
+		return types.AccountKey(""), "", ErrGetRootSourcePost(postKey).TraceCause(err, "")
+	}
+
+	// check source post's source, that's the root
+	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
+		return types.AccountKey(""), "", nil
+	} else {
+		return postInfo.SourceAuthor, postInfo.SourcePostID, nil
+	}
+}
+
+func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInfo) sdk.Error {
+	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
+		return nil
+	}
+	postKey := types.GetPostKey(postInfo.Author, postInfo.PostID)
+	rootAuthor, rootPostID, err :=
+		pm.GetSourcePost(ctx, types.GetPostKey(postInfo.SourceAuthor, postInfo.SourcePostID))
+	if err != nil {
+		return ErrSetRootSourcePost(postKey).TraceCause(err, "")
+	}
+	if rootAuthor != types.AccountKey("") && rootPostID != "" {
+		postInfo.SourceAuthor = rootAuthor
+		postInfo.SourcePostID = rootPostID
+	}
 	return nil
 }
 
-func (pm PostManager) GetPostInfo(ctx sdk.Context, postKey PostKey) (*PostInfo, sdk.Error) {
-	val, err := pm.get(ctx, GetPostInfoKey(postKey), ErrPostNotFound)
+// create the post
+func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateParams) sdk.Error {
+	postInfo := &model.PostInfo{
+		PostID:       postCreateParams.PostID,
+		Title:        postCreateParams.Title,
+		Content:      postCreateParams.Content,
+		Author:       postCreateParams.Author,
+		ParentAuthor: postCreateParams.ParentAuthor,
+		ParentPostID: postCreateParams.ParentPostID,
+		SourceAuthor: postCreateParams.SourceAuthor,
+		SourcePostID: postCreateParams.SourcePostID,
+		Links:        postCreateParams.Links,
+	}
+	postKey := types.GetPostKey(postInfo.Author, postInfo.PostID)
+	if pm.IsPostExist(ctx, postKey) {
+		return ErrPostExist(postKey)
+	}
+	if err := pm.setRootSourcePost(ctx, postInfo); err != nil {
+		return ErrCreatePostSourceInvalid(postKey)
+	}
+	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
+		return ErrCreatePost(postKey).TraceCause(err, "")
+	}
+	postMeta := &model.PostMeta{
+		Created:                 ctx.BlockHeader().Time,
+		LastUpdate:              ctx.BlockHeader().Time,
+		LastActivity:            ctx.BlockHeader().Time,
+		AllowReplies:            true, // Default
+		RedistributionSplitRate: postCreateParams.RedistributionSplitRate,
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return ErrCreatePost(postKey).TraceCause(err, "")
+	}
+	return nil
+}
+
+// add or update like from the user if like exists
+func (pm PostManager) AddOrUpdateLikeToPost(
+	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, weight int64) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return nil, err
+		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
 	}
-	postInfo := new(PostInfo)
-	if err := oldwire.UnmarshalJSON(val, postInfo); err != nil {
-		return nil, ErrPostUnmarshalError(err)
+	like, _ := pm.postStorage.GetPostLike(ctx, postKey, user)
+	// Revoke privous
+	if like != nil {
+		if like.Weight > 0 {
+			postMeta.TotalLikeWeight -= like.Weight
+		}
+		if like.Weight < 0 {
+			postMeta.TotalDislikeWeight += like.Weight
+		}
+		like.Weight = weight
+	} else {
+		postMeta.TotalLikeCount += 1
+		like = &model.Like{Username: user, Weight: weight, Created: ctx.BlockHeader().Time}
 	}
-	return postInfo, nil
+	if like.Weight > 0 {
+		postMeta.TotalLikeWeight += like.Weight
+	}
+	if like.Weight < 0 {
+		postMeta.TotalDislikeWeight -= like.Weight
+	}
+	postMeta.LastActivity = ctx.BlockHeader().Time
+	if err := pm.postStorage.SetPostLike(ctx, postKey, like); err != nil {
+		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return ErrAddOrUpdateLikeToPost(postKey).TraceCause(err, "")
+	}
+	return nil
 }
 
-func (pm PostManager) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
-	return pm.set(ctx, GetPostInfoKey(GetPostKey(postInfo.Author, postInfo.PostID)), postInfo)
-}
-
-func (pm PostManager) GetPostMeta(ctx sdk.Context, postKey PostKey) (*PostMeta, sdk.Error) {
-	val, err := pm.get(ctx, GetPostMetaKey(postKey), ErrPostMetaNotFound)
+// add or update report or upvote from the user if exist
+func (pm PostManager) ReportOrUpvoteToPost(
+	ctx sdk.Context, postKey types.PostKey, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return nil, err
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
 	}
-	postMeta := new(PostMeta)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postMeta); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	postMeta.LastActivity = ctx.BlockHeader().Time
+
+	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, postKey, user)
+	// Revoke privous
+	if reportOrUpvote != nil {
+		if reportOrUpvote.IsReport {
+			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
+		} else {
+			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
+		}
+		reportOrUpvote.Stake = stake
+		if isRevoke {
+			if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+				return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+			}
+			return pm.postStorage.RemovePostReportOrUpvote(ctx, postKey, user)
+		}
+	} else {
+		if isRevoke {
+			return ErrRevokeReportOrUpvoteToPost(postKey)
+		}
+		reportOrUpvote =
+			&model.ReportOrUpvote{Username: user, Stake: stake, Created: ctx.BlockHeader().Time}
 	}
-	return postMeta, nil
+	if isReport {
+		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
+		reportOrUpvote.IsReport = true
+	} else {
+		postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Plus(reportOrUpvote.Stake)
+		reportOrUpvote.IsReport = false
+	}
+	if err := pm.postStorage.SetPostReportOrUpvote(ctx, postKey, reportOrUpvote); err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(postKey).TraceCause(err, "")
+	}
+	return nil
 }
 
-func (pm PostManager) SetPostMeta(ctx sdk.Context, postKey PostKey, postMeta *PostMeta) sdk.Error {
-	return pm.set(ctx, GetPostMetaKey(postKey), postMeta)
+// add comment to post comment list
+func (pm PostManager) AddComment(
+	ctx sdk.Context, postKey types.PostKey, commentUser types.AccountKey, commentPostID string) sdk.Error {
+	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeader().Time}
+	return pm.postStorage.SetPostComment(ctx, postKey, comment)
 }
 
-func (pm PostManager) GetPostLike(ctx sdk.Context, postKey PostKey, likeUser acc.AccountKey) (*Like, sdk.Error) {
-	val, err := pm.get(ctx, GetPostLikeKey(postKey, likeUser), ErrPostLikeNotFound)
+// add donation to post donation list
+func (pm PostManager) AddDonation(
+	ctx sdk.Context, postKey types.PostKey, donator types.AccountKey, amount types.Coin) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return nil, err
+		return ErrAddDonation(postKey).TraceCause(err, "")
 	}
-	postLike := new(Like)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postLike); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	donation := model.Donation{
+		Amount:  amount,
+		Created: ctx.BlockHeader().Time,
 	}
-	return postLike, nil
+	donations, _ := pm.postStorage.GetPostDonations(ctx, postKey, donator)
+	if donations == nil {
+		donations = &model.Donations{Username: donator, DonationList: []model.Donation{}}
+	}
+	donations.DonationList = append(donations.DonationList, donation)
+	if err := pm.postStorage.SetPostDonations(ctx, postKey, donations); err != nil {
+		return ErrAddDonation(postKey).TraceCause(err, "")
+	}
+	postMeta.TotalReward = postMeta.TotalReward.Plus(donation.Amount)
+	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
+	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
+		return ErrAddDonation(postKey).TraceCause(err, "")
+	}
+	return nil
 }
 
-func (pm PostManager) SetPostLike(ctx sdk.Context, postKey PostKey, postLike *Like) sdk.Error {
-	return pm.set(ctx, GetPostLikeKey(postKey, postLike.Username), postLike)
+// add view to post view list
+func (pm PostManager) AddView(ctx sdk.Context, postKey types.PostKey, user types.AccountKey) sdk.Error {
+	view, _ := pm.postStorage.GetPostView(ctx, postKey, user)
+	if view != nil {
+		view.Times += 1
+	} else {
+		view = &model.View{Username: user, Created: ctx.BlockHeader().Time, Times: 1}
+	}
+
+	return pm.postStorage.SetPostView(ctx, postKey, view)
 }
 
-func (pm PostManager) GetPostComment(ctx sdk.Context, postKey PostKey, commentPostKey PostKey) (*Comment, sdk.Error) {
-	val, err := pm.get(ctx, GetPostCommentKey(postKey, commentPostKey), ErrPostCommentNotFound)
+// get penalty score from report and upvote
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, postKey types.PostKey) (sdk.Rat, sdk.Error) {
+	author, postID, err := pm.GetSourcePost(ctx, postKey)
 	if err != nil {
-		return nil, err
+		return sdk.ZeroRat, ErrGetPenaltyScore(postKey).TraceCause(err, "")
 	}
-	postComment := new(Comment)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postComment); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	if author != types.AccountKey("") && postID != "" {
+		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPostKey(author, postID))
+		if err != nil {
+			return sdk.ZeroRat, err
+		}
+		return paneltyScore, nil
 	}
-	return postComment, nil
-}
-
-func (pm PostManager) SetPostComment(ctx sdk.Context, postKey PostKey, postComment *Comment) sdk.Error {
-	return pm.set(ctx, GetPostCommentKey(postKey, GetPostKey(postComment.Author, postComment.PostID)), postComment)
-}
-
-func (pm PostManager) GetPostView(ctx sdk.Context, postKey PostKey, viewUser acc.AccountKey) (*View, sdk.Error) {
-	val, err := pm.get(ctx, GetPostViewKey(postKey, viewUser), ErrPostViewNotFound)
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, postKey)
 	if err != nil {
-		return nil, err
+		return sdk.ZeroRat, ErrGetPenaltyScore(postKey).TraceCause(err, "")
 	}
-	postView := new(View)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postView); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	if postMeta.TotalReportStake.IsZero() {
+		return sdk.ZeroRat, nil
 	}
-	return postView, nil
-}
-
-func (pm PostManager) SetPostView(ctx sdk.Context, postKey PostKey, postView *View) sdk.Error {
-	return pm.set(ctx, GetPostViewKey(postKey, postView.Username), postView)
-}
-
-func (pm PostManager) GetPostDonations(ctx sdk.Context, postKey PostKey, donateUser acc.AccountKey) (*Donations, sdk.Error) {
-	val, err := pm.get(ctx, GetPostDonationKey(postKey, donateUser), ErrPostDonationNotFound)
-	if err != nil {
-		return nil, err
+	if postMeta.TotalUpvoteStake.IsZero() {
+		return sdk.OneRat, nil
 	}
-	postDonations := new(Donations)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
+	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
+	if penaltyScore.LT(sdk.ZeroRat) {
+		return sdk.ZeroRat, nil
 	}
-	return postDonations, nil
-}
-
-func (pm PostManager) SetPostDonations(ctx sdk.Context, postKey PostKey, postDonations *Donations) sdk.Error {
-	return pm.set(ctx, GetPostDonationKey(postKey, postDonations.Username), postDonations)
-}
-
-func GetPostInfoKey(postKey PostKey) []byte {
-	return append([]byte(postInfoSubStore), postKey...)
-}
-
-func GetPostMetaKey(postKey PostKey) []byte {
-	return append([]byte(postMetaSubStore), postKey...)
-}
-
-// PostLikePrefix format is LikeSubStore / PostKey
-// which can be used to access all likes belong to this post
-func GetPostLikePrefix(postKey PostKey) []byte {
-	return append(append([]byte(postLikeSubStore), postKey...), types.KeySeparator...)
-}
-
-func GetPostLikeKey(postKey PostKey, likeUser acc.AccountKey) []byte {
-	return append(GetPostLikePrefix(postKey), likeUser...)
-}
-
-// PostViewPrefix format is ViewSubStore / PostKey
-// which can be used to access all views belong to this post
-func GetPostViewPrefix(postKey PostKey) []byte {
-	return append(append([]byte(postViewsSubStore), postKey...), types.KeySeparator...)
-}
-
-func GetPostViewKey(postKey PostKey, viewUser acc.AccountKey) []byte {
-	return append(GetPostViewPrefix(postKey), viewUser...)
-}
-
-// PostCommentPrefix format is CommentSubStore / PostKey
-// which can be used to access all comments belong to this post
-func GetPostCommentPrefix(postKey PostKey) []byte {
-	return append(append([]byte(postCommentSubStore), postKey...), types.KeySeparator...)
-}
-
-func GetPostCommentKey(postKey PostKey, commentPostKey PostKey) []byte {
-	return append(GetPostCommentPrefix(postKey), commentPostKey...)
-}
-
-// PostDonationPrefix format is DonationSubStore / PostKey
-// which can be used to access all donations belong to this post
-func GetPostDonationPrefix(postKey PostKey) []byte {
-	return append(append([]byte(postDonationsSubStore), postKey...), types.KeySeparator...)
-}
-
-func GetPostDonationKey(postKey PostKey, donateUser acc.AccountKey) []byte {
-	return append(GetPostDonationPrefix(postKey), donateUser...)
+	if penaltyScore.GT(sdk.OneRat) {
+		return sdk.OneRat, nil
+	}
+	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
 }

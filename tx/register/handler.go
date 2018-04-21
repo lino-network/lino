@@ -23,31 +23,7 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
-	account := acc.NewAccountProxy(msg.NewUser, &am)
-	if account.IsAccountExist(ctx) {
-		return ErrAccRegisterFail("Username exist").Result()
-	}
-
-	bank, err := am.GetBankFromAddress(ctx, msg.NewPubKey.Address())
-	if err != nil {
-		return ErrAccRegisterFail("Get bank failed").Result()
-	}
-	if bank.Username != "" {
-		return ErrAccRegisterFail("Already registered").Result()
-	}
-
-	registerFee, err := types.LinoToCoin(types.TestLNO(sdk.NewRat(10)))
-	if err != nil {
-		return err.Result()
-	}
-	if registerFee.IsGTE(bank.Balance) {
-		return ErrAccRegisterFail("Register Fee Doesn't enough").Result()
-	}
-
-	if err := account.CreateAccount(ctx, msg.NewUser, msg.NewPubKey, bank); err != nil {
-		return err.Result()
-	}
-	if err := account.Apply(ctx); err != nil {
+	if err := am.CreateAccount(ctx, msg.NewUser, msg.NewPubKey, types.NewCoin(100*types.Decimals)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

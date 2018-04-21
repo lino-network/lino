@@ -5,34 +5,39 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type FollowMsg struct {
-	Follower AccountKey `json:"follower"`
-	Followee AccountKey `json:"followee"`
+	Follower types.AccountKey `json:"follower"`
+	Followee types.AccountKey `json:"followee"`
 }
 
 type UnfollowMsg struct {
-	Follower AccountKey `json:"follower"`
-	Followee AccountKey `json:"followee"`
+	Follower types.AccountKey `json:"follower"`
+	Followee types.AccountKey `json:"followee"`
+}
+
+type ClaimMsg struct {
+	Username types.AccountKey `json:"username"`
 }
 
 // we can support to transfer to an user or an address
 type TransferMsg struct {
-	Sender       AccountKey    `json:"sender"`
-	ReceiverName AccountKey    `json:"receiver_name"`
-	ReceiverAddr sdk.Address   `json:"receiver_addr"`
-	Amount       types.TestLNO `json:"amount"`
-	Memo         []byte        `json:"memo"`
+	Sender       types.AccountKey `json:"sender"`
+	ReceiverName types.AccountKey `json:"receiver_name"`
+	ReceiverAddr sdk.Address      `json:"receiver_addr"`
+	Amount       types.LNO        `json:"amount"`
+	Memo         []byte           `json:"memo"`
 }
 
 type TransferOption func(*TransferMsg)
 
 func TransferToUser(userName string) TransferOption {
 	return func(args *TransferMsg) {
-		args.ReceiverName = AccountKey(userName)
+		args.ReceiverName = types.AccountKey(userName)
 	}
 }
 
@@ -44,6 +49,7 @@ func TransferToAddr(addr sdk.Address) TransferOption {
 
 var _ sdk.Msg = FollowMsg{}
 var _ sdk.Msg = UnfollowMsg{}
+var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
 
 //----------------------------------------
@@ -51,12 +57,12 @@ var _ sdk.Msg = TransferMsg{}
 
 func NewFollowMsg(follower string, followee string) FollowMsg {
 	return FollowMsg{
-		Follower: AccountKey(follower),
-		Followee: AccountKey(followee),
+		Follower: types.AccountKey(follower),
+		Followee: types.AccountKey(followee),
 	}
 }
 
-func (msg FollowMsg) Type() string { return types.AccountRouterName }
+func (msg FollowMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 func (msg FollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
@@ -88,16 +94,17 @@ func (msg FollowMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Follower)}
 }
 
+//----------------------------------------
 // Unfollow Msg Implementations
 
 func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	return UnfollowMsg{
-		Follower: AccountKey(follower),
-		Followee: AccountKey(followee),
+		Follower: types.AccountKey(follower),
+		Followee: types.AccountKey(followee),
 	}
 }
 
-func (msg UnfollowMsg) Type() string { return types.AccountRouterName }
+func (msg UnfollowMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
@@ -129,11 +136,51 @@ func (msg UnfollowMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Follower)}
 }
 
+//----------------------------------------
+// Claim Msg Implementations
+
+func NewClaimMsg(username string) ClaimMsg {
+	return ClaimMsg{
+		Username: types.AccountKey(username),
+	}
+}
+
+func (msg ClaimMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+
+func (msg ClaimMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	return nil
+}
+
+func (msg ClaimMsg) String() string {
+	return fmt.Sprintf("ClaimMsg{Username:%v}", msg.Username)
+}
+
+func (msg ClaimMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg ClaimMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg ClaimMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
+
+//----------------------------------------
 // Transfer Msg Implementations
 
-func NewTransferMsg(sender string, amount types.TestLNO, memo []byte, setters ...TransferOption) TransferMsg {
+func NewTransferMsg(sender string, amount types.LNO, memo []byte, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
-		Sender: AccountKey(sender),
+		Sender: types.AccountKey(sender),
 		Amount: amount,
 		Memo:   memo,
 	}
@@ -143,7 +190,7 @@ func NewTransferMsg(sender string, amount types.TestLNO, memo []byte, setters ..
 	return *msg
 }
 
-func (msg TransferMsg) Type() string { return types.AccountRouterName }
+func (msg TransferMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) < types.MinimumUsernameLength ||
