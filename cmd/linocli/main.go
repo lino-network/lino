@@ -152,6 +152,10 @@ func main() {
 		client.PostCommands(
 			developercmd.DeveloperRevokeTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.GrantDeveloperTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(

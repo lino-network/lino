@@ -107,6 +107,7 @@ func newRegisterTestMsg(addr sdk.Address) *RegisterTestMsg {
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx) {
 	_, result, abort := anteHandler(ctx, tx)
 	assert.False(t, abort)
+	fmt.Println(result)
 	assert.Equal(t, sdk.CodeOK, result.Code)
 	assert.True(t, result.IsOK())
 }
@@ -161,7 +162,7 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	// test sig user mismatch
 	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{0, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.
@@ -227,17 +228,56 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs = []crypto.PrivKey{priv1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrInvalidSequence(
-		fmt.Sprintf("Invalid sequence. Got %d, expected %d", 0, 1)).Result())
+		fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d", user1, 0, 1)).Result())
 
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{priv2}, []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test wrong sig number
 	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{2, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("signer mismatch").Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+}
+
+// Test grant authentication.
+func TestGrantAuthenticationTx(t *testing.T) {
+	am, _, ctx, anteHandler := setupTest()
+	// keys and username
+	priv1, user1 := createTestAccount(ctx, am, "user1")
+	priv2, user2 := createTestAccount(ctx, am, "user2")
+
+	// msg and signatures
+	var tx sdk.Tx
+	msg := newTestMsg(user1)
+
+	// test valid transaction
+	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkValidTx(t, anteHandler, ctx, tx)
+	seq, err := am.GetSequence(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(1))
+
+	// test wrong priv key
+	privs, seqs = []crypto.PrivKey{priv2}, []int64{1}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, 1)
+	assert.Nil(t, err)
+
+	// should pass authentication check after grant
+	privs, seqs = []crypto.PrivKey{priv2}, []int64{0}
+	tx = newTestTx(ctx, msg, privs, seqs)
+	checkValidTx(t, anteHandler, ctx, tx)
+	seq, err = am.GetSequence(ctx, user2)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(1))
+
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.

@@ -54,6 +54,14 @@ func checkAccountReward(
 	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
 }
 
+func checkAccountGrantKeyList(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, grantList model.GrantKeyList) {
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	grantListPtr, err := accStorage.GetGrantKeyList(ctx, accKey)
+	assert.Nil(t, err)
+	assert.Equal(t, grantList, *grantListPtr, "accout grantList should be equal")
+}
+
 func TestIsAccountExist(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	assert.False(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
@@ -168,6 +176,9 @@ func TestCreateAccount(t *testing.T) {
 
 	reward := model.Reward{coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
+
+	grantList := model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}
+	checkAccountGrantKeyList(t, ctx, accKey, grantList)
 
 	// username already took
 	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
@@ -423,6 +434,50 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			accMeta.LastActivity = cs.LastActivity
 		}
 		checkAccountMeta(t, ctx, accKey, accMeta)
+	}
+}
+
+func TestGrantPubkey(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	user2 := types.AccountKey("user2")
+	user3 := types.AccountKey("user3")
+
+	createTestAccount(ctx, am, string(user1))
+	priv2 := createTestAccount(ctx, am, string(user2))
+	priv3 := createTestAccount(ctx, am, string(user3))
+
+	baseTime := ctx.BlockHeader().Time
+
+	cases := []struct {
+		user             types.AccountKey
+		grantTo          types.AccountKey
+		expireTime       int64
+		checkTime        int64
+		checkGrantUser   types.AccountKey
+		checkGrantPubKey crypto.PubKey
+		expectResult     sdk.Error
+	}{
+		{user1, user2, 100, baseTime + 99, user2, priv2.PubKey(), nil},
+		{user1, user3, 100, baseTime + 99, user3, priv3.PubKey(), nil},
+		{user1, user2, 100, baseTime + 101, user2, priv2.PubKey(),
+			ErrCheckAuthenticatePubKeyOwner(user1)},
+		{user1, user2, 100, baseTime + 99, user2, priv2.PubKey(), nil},
+		{user1, user2, 500, baseTime + 101, user2, priv2.PubKey(), nil},
+		{user1, user2, 300, baseTime + 301, user2, priv2.PubKey(),
+			ErrCheckAuthenticatePubKeyOwner(user1)},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
+		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.expireTime, 0)
+		assert.Nil(t, err)
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.checkTime})
+		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.user, cs.checkGrantPubKey)
+		assert.Equal(t, err, cs.expectResult)
+		if cs.expectResult == nil {
+			assert.Equal(t, grantUser, cs.checkGrantUser)
+		}
 	}
 }
 

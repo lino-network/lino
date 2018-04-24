@@ -41,6 +41,17 @@ type PendingStake struct {
 	Coin      types.Coin `json:"coin"`
 }
 
+// GrantKeyList stores a list of key authenticated by the use
+type GrantKeyList struct {
+	GrantPubKeyList []GrantPubKey `json:"grant_public_key_list"`
+}
+
+type GrantPubKey struct {
+	Username types.AccountKey `json:"username"`
+	PubKey   crypto.PubKey    `json:"public_key"`
+	Expire   int64            `json:"expire"`
+}
+
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
 	Sequence            int64      `json:"sequence"`

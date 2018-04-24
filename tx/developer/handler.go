@@ -16,6 +16,8 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
 			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
+		case GrantDeveloperMsg:
+			return handleGrantDeveloperMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
 			return handleDeveloperRevokeMsg(ctx, dm, gm, msg)
 		default:
@@ -63,6 +65,22 @@ func handleDeveloperRevokeMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleGrantDeveloperMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantDeveloperMsg) sdk.Result {
+	if !dm.IsDeveloperExist(ctx, msg.AuthenticateApp) {
+		return ErrDeveloperNotFound().Result()
+	}
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrUsernameNotFound().Result()
+	}
+
+	if err := am.AuthorizePermission(
+		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

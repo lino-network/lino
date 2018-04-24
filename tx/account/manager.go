@@ -1,6 +1,8 @@
 package account
 
 import (
+	"reflect"
+
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
@@ -86,6 +88,10 @@ func (accManager AccountManager) CreateAccount(
 		&model.Reward{types.NewCoin(0), types.NewCoin(0), types.NewCoin(0), types.NewCoin(0)}
 	if err := accManager.accountStorage.SetReward(ctx, accKey, reward); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	}
+
+	if err := accManager.accountStorage.SetGrantKeyList(ctx, accKey, &model.GrantKeyList{}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -415,6 +421,78 @@ func (accManager AccountManager) UpdateDonationRelationship(
 		return err
 	}
 	return nil
+}
+
+func (accManager AccountManager) AuthorizePermission(
+	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
+	validityPeriod int64, grantLevel int64) sdk.Error {
+	pubKey, err := accManager.GetPostKey(ctx, authorizedUser)
+	if err != nil {
+		return err
+	}
+
+	grantKeyList, err := accManager.accountStorage.GetGrantKeyList(ctx, me)
+	if err != nil {
+		return err
+	}
+
+	idx := 0
+	for idx < len(grantKeyList.GrantPubKeyList) {
+		if grantKeyList.GrantPubKeyList[idx].Expire < ctx.BlockHeader().Time ||
+			grantKeyList.GrantPubKeyList[idx].Username == authorizedUser {
+			grantKeyList.GrantPubKeyList = append(
+				grantKeyList.GrantPubKeyList[:idx], grantKeyList.GrantPubKeyList[idx+1:]...)
+			continue
+		}
+		idx += 1
+	}
+	newGrantPubKey := model.GrantPubKey{
+		Username: authorizedUser,
+		PubKey:   *pubKey,
+		Expire:   ctx.BlockHeader().Time + validityPeriod,
+	}
+	grantKeyList.GrantPubKeyList = append(grantKeyList.GrantPubKeyList, newGrantPubKey)
+	return accManager.accountStorage.SetGrantKeyList(ctx, me, grantKeyList)
+}
+
+func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
+	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey) (types.AccountKey, sdk.Error) {
+	pubKey, err := accManager.GetOwnerKey(ctx, me)
+	if err != nil {
+		return "", err
+	}
+	if reflect.DeepEqual(*pubKey, signKey) {
+		return me, nil
+	}
+	pubKey, err = accManager.GetPostKey(ctx, me)
+	if err != nil {
+		return "", err
+	}
+	if reflect.DeepEqual(*pubKey, signKey) {
+		return me, nil
+	}
+
+	grantKeyList, err := accManager.accountStorage.GetGrantKeyList(ctx, me)
+	if err != nil {
+		return "", err
+	}
+	idx := 0
+	for idx < len(grantKeyList.GrantPubKeyList) {
+		if grantKeyList.GrantPubKeyList[idx].Expire < ctx.BlockHeader().Time {
+			grantKeyList.GrantPubKeyList = append(
+				grantKeyList.GrantPubKeyList[:idx], grantKeyList.GrantPubKeyList[idx+1:]...)
+			continue
+		}
+
+		if reflect.DeepEqual(grantKeyList.GrantPubKeyList[idx].PubKey, signKey) {
+			return grantKeyList.GrantPubKeyList[idx].Username, nil
+		}
+		idx += 1
+	}
+	if err := accManager.accountStorage.SetGrantKeyList(ctx, me, grantKeyList); err != nil {
+		return "", err
+	}
+	return "", ErrCheckAuthenticatePubKeyOwner(me)
 }
 
 func (accManager AccountManager) GetDonationRelationship(
