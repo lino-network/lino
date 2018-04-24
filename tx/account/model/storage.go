@@ -16,6 +16,7 @@ var (
 	AccountRewardSubstore            = []byte{0x05}
 	AccountPendingStakeQueueSubstore = []byte{0x06}
 	AccountRelationshipSubstore      = []byte{0x07}
+	AccountGrantListSubstore         = []byte{0x08}
 )
 
 type AccountStorage struct {
@@ -219,6 +220,29 @@ func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 	return queue, nil
 }
 
+func (as AccountStorage) SetGrantKeyList(ctx sdk.Context, me types.AccountKey, grantKeyList *GrantKeyList) sdk.Error {
+	store := ctx.KVStore(as.key)
+	GrantKeyListByte, err := as.cdc.MarshalBinary(*grantKeyList)
+	if err != nil {
+		return ErrSetGrantListFailed().TraceCause(err, "")
+	}
+	store.Set(GetGrantKeyListKey(me), GrantKeyListByte)
+	return nil
+}
+
+func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (*GrantKeyList, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	grantKeyListByte := store.Get(GetGrantKeyListKey(me))
+	if grantKeyListByte == nil {
+		return nil, ErrGetGrantListFailed()
+	}
+	grantKeyList := new(GrantKeyList)
+	if err := as.cdc.UnmarshalBinary(grantKeyListByte, grantKeyList); err != nil {
+		return nil, ErrGetGrantListFailed().TraceCause(err, "")
+	}
+	return grantKeyList, nil
+}
+
 func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
 	store := ctx.KVStore(as.key)
 	pendingStakeQueueByte, err := as.cdc.MarshalBinary(*pendingStakeQueue)
@@ -296,4 +320,8 @@ func GetRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
 
 func GetPendingStakeQueueKey(address sdk.Address) []byte {
 	return append(AccountPendingStakeQueueSubstore, address...)
+}
+
+func GetGrantKeyListKey(me types.AccountKey) []byte {
+	return append(AccountGrantListSubstore, me...)
 }

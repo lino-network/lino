@@ -18,6 +18,13 @@ type DeveloperRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
+type GrantDeveloperMsg struct {
+	Username        types.AccountKey `json:"username"`
+	AuthenticateApp types.AccountKey `json:"authenticate_app"`
+	ValidityPeriod  int64            `json:"validity_period"`
+	GrantLevel      int64            `json:"grant_level"`
+}
+
 // DeveloperRegisterMsg Msg Implementations
 func NewDeveloperRegisterMsg(developer string, deposit types.LNO) DeveloperRegisterMsg {
 	return DeveloperRegisterMsg{
@@ -95,5 +102,56 @@ func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 }
 
 func (msg DeveloperRevokeMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
+
+// Grant Msg Implementations
+func NewGrantDeveloperMsg(user, app string, validityPeriod int64, grantLevel int64) GrantDeveloperMsg {
+	return GrantDeveloperMsg{
+		Username:        types.AccountKey(user),
+		AuthenticateApp: types.AccountKey(app),
+		ValidityPeriod:  validityPeriod,
+		GrantLevel:      grantLevel,
+	}
+}
+
+func (msg GrantDeveloperMsg) Type() string { return types.DeveloperRouterName }
+
+func (msg GrantDeveloperMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if len(msg.AuthenticateApp) < types.MinimumUsernameLength ||
+		len(msg.AuthenticateApp) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if msg.ValidityPeriod <= 0 {
+		return ErrInvalidValidityPeriod()
+	}
+
+	return nil
+}
+
+func (msg GrantDeveloperMsg) String() string {
+	return fmt.Sprintf("GrantDeveloperMsg{User:%v, Grant to App:%v, validity period:%v, grant level:%v}",
+		msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel)
+}
+
+func (msg GrantDeveloperMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg GrantDeveloperMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg GrantDeveloperMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }

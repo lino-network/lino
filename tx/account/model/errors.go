@@ -93,6 +93,14 @@ func ErrSetPendingStakeFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set pending stake failed"))
 }
 
+func ErrGetGrantListFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get grant key list failed"))
+}
+
+func ErrSetGrantListFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set grant key list failed"))
+}
+
 func ErrAddMoneyFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage add money to bank failed"))
 }

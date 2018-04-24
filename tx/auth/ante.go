@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
@@ -57,27 +56,24 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
+			accKey, err := am.CheckAuthenticatePubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey)
+			if err != nil {
+				return ctx, err.Result(), true
+			}
+
+			seq, err := am.GetSequence(ctx, accKey)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
 			if seq != sigs[i].Sequence {
 				return ctx, sdk.ErrInvalidSequence(
-						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, seq)).Result(),
-					true
+					fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
+						accKey, sigs[i].Sequence, seq)).Result(), true
 			}
-			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
+			if err := am.IncreaseSequenceByOne(ctx, accKey); err != nil {
 				return ctx, err.Result(), true
 			}
 
-			pubKey, err := am.GetOwnerKey(ctx, types.AccountKey(signer))
-			if err != nil {
-				return ctx, err.Result(), true
-			}
-			// TODO(Lino): match postkey and owner key.
-			if !reflect.DeepEqual(*pubKey, sigs[i].PubKey) {
-				return ctx, sdk.ErrUnauthorized("signer mismatch").Result(), true
-			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
 				return ctx, sdk.ErrUnauthorized(
 					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true

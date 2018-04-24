@@ -84,7 +84,7 @@ func (dm DeveloperManager) RemoveFromDeveloperList(
 	return nil
 }
 
-func (dm *DeveloperManager) ReportConsumption(
+func (dm DeveloperManager) ReportConsumption(
 	ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
 	developer, getErr := dm.storage.GetDeveloper(ctx, username)
 	if getErr != nil {
@@ -97,7 +97,7 @@ func (dm *DeveloperManager) ReportConsumption(
 	return nil
 }
 
-func (dm *DeveloperManager) GetConsumptionWeight(
+func (dm DeveloperManager) GetConsumptionWeight(
 	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
 	lst, getErr := dm.storage.GetDeveloperList(ctx)
 	if getErr != nil {
@@ -122,11 +122,11 @@ func (dm *DeveloperManager) GetConsumptionWeight(
 	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
 }
 
-func (dm *DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {
+func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {
 	return dm.storage.GetDeveloperList(ctx)
 }
 
-func (dm *DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
+func (dm DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 	lst, getErr := dm.storage.GetDeveloperList(ctx)
 	if getErr != nil {
 		return getErr

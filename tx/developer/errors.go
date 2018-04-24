@@ -27,3 +27,7 @@ func ErrInvalidUsername() sdk.Error {
 func ErrNoCoinToWithdraw() sdk.Error {
 	return sdk.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("No coin to withdraw"))
 }
+
+func ErrInvalidValidityPeriod() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant validity period"))
+}
