@@ -79,7 +79,7 @@ func handleGrantDeveloperMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
-	if err := am.GrantPubKeyToUser(
+	if err := am.AuthorizePermission(
 		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
 		return err.Result()
 	}

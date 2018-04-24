@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	developer "github.com/lino-network/lino/tx/developer"
+	dev "github.com/lino-network/lino/tx/developer"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -26,7 +26,7 @@ func GrantDeveloperTxCmd(cdc *wire.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(FlagUser, "", "user of this transaction")
 	cmd.Flags().String(FlagDeveloper, "", "developer name to grant")
-	cmd.Flags().Int64(FlagSeconds, "", "seconds till expire")
+	cmd.Flags().Int64(FlagSeconds, 3600, "seconds till expire")
 	return cmd
 }
 
@@ -37,7 +37,7 @@ func sendGrantDeveloperTx(cdc *wire.Codec) client.CommandTxCallback {
 		username := viper.GetString(FlagUser)
 		developer := viper.GetString(FlagDeveloper)
 		seconds := viper.GetInt64(FlagSeconds)
-		msg := developer.NewGrantDeveloperMsg(username, developer, seconds, 0)
+		msg := dev.NewGrantDeveloperMsg(username, developer, seconds, 0)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)

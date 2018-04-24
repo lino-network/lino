@@ -423,10 +423,10 @@ func (accManager AccountManager) UpdateDonationRelationship(
 	return nil
 }
 
-func (accManager AccountManager) GrantPubKeyToUser(
-	ctx sdk.Context, me types.AccountKey, grantUser types.AccountKey,
+func (accManager AccountManager) AuthorizePermission(
+	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
 	validityPeriod int64, grantLevel int64) sdk.Error {
-	pubKey, err := accManager.GetPostKey(ctx, grantUser)
+	pubKey, err := accManager.GetPostKey(ctx, authorizedUser)
 	if err != nil {
 		return err
 	}
@@ -439,14 +439,15 @@ func (accManager AccountManager) GrantPubKeyToUser(
 	idx := 0
 	for idx < len(grantKeyList.GrantPubKeyList) {
 		if grantKeyList.GrantPubKeyList[idx].Expire < ctx.BlockHeader().Time ||
-			grantKeyList.GrantPubKeyList[idx].Username == grantUser {
+			grantKeyList.GrantPubKeyList[idx].Username == authorizedUser {
 			grantKeyList.GrantPubKeyList = append(
 				grantKeyList.GrantPubKeyList[:idx], grantKeyList.GrantPubKeyList[idx+1:]...)
 			continue
 		}
+		idx += 1
 	}
 	newGrantPubKey := model.GrantPubKey{
-		Username: grantUser,
+		Username: authorizedUser,
 		PubKey:   *pubKey,
 		Expire:   ctx.BlockHeader().Time + validityPeriod,
 	}
