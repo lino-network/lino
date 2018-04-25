@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/tx/validator"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -32,13 +31,8 @@ func withDrawTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
 		name := viper.GetString(FlagName)
-
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
 		// // create the message
-		msg := validator.NewValidatorWithdrawMsg(name, amount)
+		msg := validator.NewValidatorWithdrawMsg(name, viper.GetString(FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(name, msg, cdc)

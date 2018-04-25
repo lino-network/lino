@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/tx/vote"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -30,13 +29,8 @@ func sendWithdrawVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
 		user := viper.GetString(FlagUsername)
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
-
 		// create the message
-		msg := vote.NewVoterWithdrawMsg(user, amount)
+		msg := vote.NewVoterWithdrawMsg(user, viper.GetString(FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(user, msg, cdc)

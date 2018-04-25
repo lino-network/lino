@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -41,12 +40,8 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		username := viper.GetString(FlagDonator)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
-
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
-		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID, "")
+		msg := post.NewDonateMsg(types.AccountKey(username),
+			types.LNO(viper.GetString(FlagAmount)), types.AccountKey(author), postID, "")
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)

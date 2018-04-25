@@ -27,8 +27,8 @@ func TestValidatorWithdrawMsg(t *testing.T) {
 		validatorWithdrawMsg ValidatorWithdrawMsg
 		expectError          sdk.Error
 	}{
-		{NewValidatorWithdrawMsg("user1", sdk.NewRat(1)), nil},
-		{NewValidatorWithdrawMsg("", sdk.NewRat(1)), ErrInvalidUsername()},
+		{NewValidatorWithdrawMsg("user1", "1"), nil},
+		{NewValidatorWithdrawMsg("", "1"), ErrInvalidUsername()},
 	}
 
 	for _, cs := range cases {

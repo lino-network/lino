@@ -12,7 +12,6 @@ import (
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -57,13 +56,8 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
-
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
 		// // create the message
-		msg := validator.NewValidatorDepositMsg(name, types.LNO(amount), privValidator.PubKey)
+		msg := validator.NewValidatorDepositMsg(name, types.LNO(viper.GetString(FlagAmount)), privValidator.PubKey)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(name, msg, cdc)

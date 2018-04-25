@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -36,12 +35,7 @@ func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.NewCoreContextFromViper()
 		username := viper.GetString(FlagDeveloper)
-
-		deposit, err := sdk.NewRatFromDecimal(viper.GetString(FlagDeposit))
-		if err != nil {
-			return err
-		}
-		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(deposit))
+		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(viper.GetString(FlagDeposit)))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)

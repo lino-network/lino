@@ -50,12 +50,8 @@ func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
-
-		msg := acc.NewTransferMsg(sender, types.LNO(amount), []byte(viper.GetString(FlagMemo)), acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
+		msg := acc.NewTransferMsg(sender, types.LNO(viper.GetString(FlagAmount)), []byte(viper.GetString(FlagMemo)),
+			acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(sender, msg, cdc)

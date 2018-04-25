@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	l400  = types.LNO(sdk.NewRat(400))
-	l1000 = types.LNO(sdk.NewRat(1000))
-	l1600 = types.LNO(sdk.NewRat(1600))
-	l2000 = types.LNO(sdk.NewRat(2000))
+	l400  = types.LNO("400")
+	l1000 = types.LNO("1000")
+	l1600 = types.LNO("1600")
+	l2000 = types.LNO("2000")
 
 	c400  = types.Coin{400 * types.Decimals}
 	c600  = types.Coin{600 * types.Decimals}
@@ -335,10 +335,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 		withdraw      types.LNO
 		expectResult  sdk.Result
 	}{
-		{false, types.NewCoin(0), user2, user1, types.DelegatorMinWithdraw.ToRat(), ErrIllegalWithdraw().Result()},
-		{true, types.NewCoin(100 * types.Decimals), user2, user1, sdk.NewRat(1, 10), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoin(0), user2, user1, sdk.NewRat(101), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoin(0), user2, user1, sdk.NewRat(10), sdk.Result{}},
+		{false, types.NewCoin(0), user2, user1, "1", ErrIllegalWithdraw().Result()},
+		{true, types.NewCoin(100 * types.Decimals), user2, user1, "0.1", ErrIllegalWithdraw().Result()},
+		{false, types.NewCoin(0), user2, user1, "101", ErrIllegalWithdraw().Result()},
+		{false, types.NewCoin(0), user2, user1, "10", sdk.Result{}},
 	}
 
 	for _, cs := range cases {

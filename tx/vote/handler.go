@@ -141,7 +141,6 @@ func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.Globa
 	if err != nil {
 		return err.Result()
 	}
-
 	if !vm.IsLegalDelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin) {
 		return ErrIllegalWithdraw().Result()
 	}

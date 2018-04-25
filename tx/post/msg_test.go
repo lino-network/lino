@@ -141,19 +141,19 @@ func TestDonationMsg(t *testing.T) {
 		donateMsg   DonateMsg
 		expectError sdk.Error
 	}{
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
 			types.AccountKey("author"), "postID", ""), nil},
-		{NewDonateMsg(types.AccountKey(""), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "postID", ""),
+		{NewDonateMsg(types.AccountKey(""), types.LNO("1"), types.AccountKey("author"), "postID", ""),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(0)), types.AccountKey("author"), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("0"), types.AccountKey("author"), "postID", ""),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(-1)), types.AccountKey("author"), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("-1"), types.AccountKey("author"), "postID", ""),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey("author"), "", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "", ""),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "postID", ""),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO(sdk.NewRat(1)), types.AccountKey(""), "", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "", ""),
 			ErrPostDonateInvalidTarget()},
 	}
 

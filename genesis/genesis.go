@@ -3,6 +3,7 @@ package genesis
 import (
 	"encoding/json"
 
+	types "github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
@@ -11,14 +12,14 @@ type GenesisState struct {
 	Accounts   []GenesisAccount       `json:"accounts"`
 	Developers []GenesisAppDeveloper  `json:"developers"`
 	Infra      []GenesisInfraProvider `json:"infra"`
-	TotalLino  int64                  `json:"total_lino"`
+	TotalLino  types.LNO              `json:"total_lino"`
 }
 
 // genesis account will get coin to the address and register user
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
 	Name        string        `json:"name"`
-	Lino        int64         `json:"lino"`
+	Lino        types.LNO     `json:"lino"`
 	PubKey      crypto.PubKey `json:"pub_key"`
 	IsValidator bool          `json:"is_validator"`
 	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
@@ -26,8 +27,8 @@ type GenesisAccount struct {
 
 // register developer in genesis phase
 type GenesisAppDeveloper struct {
-	Name    string `json:"name"`
-	Deposit int64  `json:"deposit"`
+	Name    string    `json:"name"`
+	Deposit types.LNO `json:"deposit"`
 }
 
 // register infra provider in genesis phase
@@ -46,7 +47,7 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 
 // default genesis file, only have one genesis account
 func GetDefaultGenesis(pubkey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
-	totalLino := int64(10000000000)
+	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
 		Name:        "Lino",
 		Lino:        totalLino,
@@ -56,7 +57,7 @@ func GetDefaultGenesis(pubkey crypto.PubKey, validatorPubKey crypto.PubKey) (str
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:    "Lino",
-		Deposit: 1000000,
+		Deposit: "1000000",
 	}
 	genesisInfraProvider := GenesisInfraProvider{
 		Name: "Lino",
