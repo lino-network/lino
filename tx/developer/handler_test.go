@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	l0      = types.LNO(sdk.NewRat(0))
-	l800000 = types.LNO(sdk.NewRat(800000))
+	l0      = types.LNO("0")
+	l800000 = types.LNO("800000")
 
 	c0      = types.Coin{0 * types.Decimals}
 	c800000 = types.Coin{800000 * types.Decimals}

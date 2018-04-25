@@ -21,7 +21,7 @@ func TestNormalPublish(t *testing.T) {
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)
@@ -36,7 +36,7 @@ func TestNormalRepost(t *testing.T) {
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)
@@ -55,7 +55,7 @@ func TestInvalidRepost(t *testing.T) {
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	postCreateParams := post.PostCreateParams{
 		PostID:                  postID,
@@ -84,7 +84,7 @@ func TestComment(t *testing.T) {
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)

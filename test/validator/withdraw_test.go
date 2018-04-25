@@ -9,7 +9,6 @@ import (
 	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
@@ -22,13 +21,13 @@ func TestValidatorRevoke(t *testing.T) {
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 5000)
+	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "5000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO(sdk.NewRat(3000)))
+	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("3000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO(sdk.NewRat(1500)), newValidatorPriv.PubKey())
+		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey())
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountPriv, baseTime)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)

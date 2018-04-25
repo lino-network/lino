@@ -12,7 +12,7 @@ import (
 func TestGetGenesisJson(t *testing.T) {
 	genesisAccPriv := crypto.GenPrivKeyEd25519()
 	validatorPriv := crypto.GenPrivKeyEd25519()
-	totalLino := int64(10000000000)
+	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
 		Name:        "Lino",
 		Lino:        totalLino,
@@ -23,7 +23,7 @@ func TestGetGenesisJson(t *testing.T) {
 
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:    "Lino",
-		Deposit: 1000000,
+		Deposit: "1000000",
 	}
 	genesisInfraProvider := GenesisInfraProvider{
 		Name: "Lino",

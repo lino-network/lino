@@ -28,9 +28,9 @@ func TestVoterDepositMsg(t *testing.T) {
 		voterDepositMsg VoterDepositMsg
 		expectError     sdk.Error
 	}{
-		{NewVoterDepositMsg("user1", sdk.NewRat(1)), nil},
-		{NewVoterDepositMsg("", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewVoterDepositMsg("user1", sdk.NewRat(-1)), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewVoterDepositMsg("user1", "1"), nil},
+		{NewVoterDepositMsg("", "1"), ErrInvalidUsername()},
+		{NewVoterDepositMsg("user1", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -44,9 +44,9 @@ func TestVoterWithdrawMsg(t *testing.T) {
 		voterWithdrawMsg VoterWithdrawMsg
 		expectError      sdk.Error
 	}{
-		{NewVoterWithdrawMsg("user1", sdk.NewRat(1)), nil},
-		{NewVoterWithdrawMsg("", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewVoterWithdrawMsg("user1", sdk.NewRat(-1)), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewVoterWithdrawMsg("user1", "1"), nil},
+		{NewVoterWithdrawMsg("", "1"), ErrInvalidUsername()},
+		{NewVoterWithdrawMsg("user1", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -75,11 +75,11 @@ func TestDelegateMsg(t *testing.T) {
 		delegateMsg DelegateMsg
 		expectError sdk.Error
 	}{
-		{NewDelegateMsg("user1", "user2", sdk.NewRat(1)), nil},
-		{NewDelegateMsg("", "user2", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewDelegateMsg("user1", "", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewDelegateMsg("", "", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewDelegateMsg("user1", "user2", sdk.NewRat(-1)), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDelegateMsg("user1", "user2", "1"), nil},
+		{NewDelegateMsg("", "user2", "1"), ErrInvalidUsername()},
+		{NewDelegateMsg("user1", "", "1"), ErrInvalidUsername()},
+		{NewDelegateMsg("", "", "1"), ErrInvalidUsername()},
+		{NewDelegateMsg("user1", "user2", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -110,9 +110,9 @@ func TestDelegatorWithdrawMsg(t *testing.T) {
 		delegatorWithdrawMsg DelegatorWithdrawMsg
 		expectError          sdk.Error
 	}{
-		{NewDelegatorWithdrawMsg("user1", "user2", sdk.NewRat(1)), nil},
-		{NewDelegatorWithdrawMsg("", "", sdk.NewRat(1)), ErrInvalidUsername()},
-		{NewDelegatorWithdrawMsg("user1", "user2", sdk.NewRat(-1)), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDelegatorWithdrawMsg("user1", "user2", "1"), nil},
+		{NewDelegatorWithdrawMsg("", "", "1"), ErrInvalidUsername()},
+		{NewDelegatorWithdrawMsg("user1", "user2", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {

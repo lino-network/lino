@@ -26,7 +26,8 @@ func TestAbsentValidator(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
 
 		// they will deposit 10,20,30...200, 210
-		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
+		num := (i+1)*10 + 1001
+		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -97,7 +98,8 @@ func TestGetOncallList(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
 
 		// they will deposit 10,20,30...200, 210
-		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
+		num := (i+1)*10 + 1001
+		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -166,8 +168,8 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		am.AddCoin(ctx, users[i], c8000)
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
-		// they will deposit 1000 + 100,200,300...2000, 2100, 2200, 2300, 2400
-		deposit := types.LNO(sdk.NewRat(int64((i+1)*100) + int64(1000)))
+		num := (i+1)*100 + 1000
+		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
 		result := handler(ctx, msg)

@@ -203,8 +203,12 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-	if err := lb.globalManager.InitGlobalManager(
-		ctx, types.NewCoin(genesisState.TotalLino*types.Decimals)); err != nil {
+
+	totalCoin, err := types.LinoToCoin(genesisState.TotalLino)
+	if err != nil {
+		panic(err)
+	}
+	if err := lb.globalManager.InitGlobalManager(ctx, totalCoin); err != nil {
 		panic(err)
 	}
 	if err := lb.developerManager.InitGenesis(ctx); err != nil {
@@ -239,7 +243,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 // convert GenesisAccount to AppAccount
 func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
-	coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(ga.Lino)))
+	coin, err := types.LinoToCoin(ga.Lino)
 	if err != nil {
 		panic(err)
 	}
@@ -281,7 +285,7 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(developer.Name)) {
 		return sdk.ErrGenesisParse("genesis developer account doesn't exist")
 	}
-	coin, err := types.LinoToCoin(types.LNO(sdk.NewRat(developer.Deposit)))
+	coin, err := types.LinoToCoin(types.LNO(developer.Deposit))
 	if err != nil {
 		return err
 	}

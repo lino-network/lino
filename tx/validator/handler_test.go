@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	l10   = types.LNO(sdk.NewRat(10))
-	l15   = types.LNO(sdk.NewRat(15))
-	l100  = types.LNO(sdk.NewRat(100))
-	l200  = types.LNO(sdk.NewRat(200))
-	l400  = types.LNO(sdk.NewRat(400))
-	l1000 = types.LNO(sdk.NewRat(1000))
-	l1100 = types.LNO(sdk.NewRat(1100))
-	l1600 = types.LNO(sdk.NewRat(1600))
+	l10   = types.LNO("10")
+	l15   = types.LNO("15")
+	l100  = types.LNO("100")
+	l200  = types.LNO("200")
+	l400  = types.LNO("400")
+	l1000 = types.LNO("1000")
+	l1100 = types.LNO("1100")
+	l1600 = types.LNO("1600")
 
 	c0    = types.Coin{0 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}
@@ -157,7 +157,8 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 
 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
-		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1000)))
+		num := (i+1)*10 + 1000
+		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -351,7 +352,8 @@ func TestValidatorReplacement(t *testing.T) {
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		// they will deposit 10,20,30...200, 210
-		deposit := types.LNO(sdk.NewRat(int64((i+1)*10) + int64(1001)))
+		num := (i+1)*10 + 1001
+		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
 		result := handler(ctx, msg)
@@ -372,7 +374,7 @@ func TestValidatorReplacement(t *testing.T) {
 	voteManager.AddVoter(ctx, "noPowerUser", c8000)
 
 	//check the user hasn't been added to oncall validators but in the pool
-	deposit := types.LNO(sdk.NewRat(1005))
+	deposit := types.LNO("1005")
 	ownerKey1, _ := am.GetOwnerKey(ctx, user1)
 	msg := NewValidatorDepositMsg("noPowerUser", deposit, *ownerKey1)
 	result := handler(ctx, msg)
@@ -391,7 +393,7 @@ func TestValidatorReplacement(t *testing.T) {
 	voteManager.AddVoter(ctx, "powerfulUser", c8000)
 
 	//check the user has been added to oncall validators and in the pool
-	deposit2 := types.LNO(sdk.NewRat(1088))
+	deposit2 := types.LNO("1088")
 	ownerKey2, _ := am.GetOwnerKey(ctx, powerfulUser)
 	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, *ownerKey2)
 	result2 := handler(ctx, msg2)
@@ -435,7 +437,7 @@ func TestRemoveBasic(t *testing.T) {
 	voteManager.AddVoter(ctx, "badUser", c8000)
 
 	// let both users register as validator
-	deposit := types.LNO(sdk.NewRat(1200))
+	deposit := types.LNO("1200")
 	msg1 := NewValidatorDepositMsg("goodUser", deposit, *ownerKey1)
 	msg2 := NewValidatorDepositMsg("badUser", deposit, *ownerKey2)
 	handler(ctx, msg1)

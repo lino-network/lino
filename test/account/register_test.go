@@ -11,7 +11,6 @@ import (
 	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -25,7 +24,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO(sdk.NewRat(100)), []byte{}, acc.TransferToAddr(newAccountAddr))
+		test.GenesisUser, types.LNO("100"), []byte{}, acc.TransferToAddr(newAccountAddr))
 
 	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisPriv, baseTime)
 

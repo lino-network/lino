@@ -12,10 +12,10 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 		developerRegisterMsg DeveloperRegisterMsg
 		expectError          sdk.Error
 	}{
-		{NewDeveloperRegisterMsg("user1", sdk.NewRat(10, 1)), nil},
-		{NewDeveloperRegisterMsg("", sdk.NewRat(10, 1)), ErrInvalidUsername()},
+		{NewDeveloperRegisterMsg("user1", "10"), nil},
+		{NewDeveloperRegisterMsg("", "10"), ErrInvalidUsername()},
 		{NewDeveloperRegisterMsg("user1",
-			sdk.NewRat(-1)), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			"-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {

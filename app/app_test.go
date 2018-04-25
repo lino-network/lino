@@ -26,9 +26,9 @@ var (
 	priv2 = crypto.GenPrivKeyEd25519()
 	addr2 = priv2.PubKey().Address()
 
-	genesisTotalLino    int64      = 10000000000
+	genesisTotalLino    types.LNO  = "10000000000"
 	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
-	LNOPerValidator     int64      = 100000000
+	LNOPerValidator     types.LNO  = "100000000"
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
@@ -104,14 +104,14 @@ func TestGenesisAcc(t *testing.T) {
 
 	accs := []struct {
 		genesisAccountName string
-		numOfLino          int64
+		numOfLino          types.LNO
 		pubKey             crypto.PubKey
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
-		{"Lino", 9000000000, priv1.PubKey(), true, priv2.PubKey()},
-		{"Genesis", 500000000, priv3.PubKey(), true, priv4.PubKey()},
-		{"NonValidator", 500000000, priv5.PubKey(), false, priv6.PubKey()},
+		{"Lino", "9000000000", priv1.PubKey(), true, priv2.PubKey()},
+		{"Genesis", "500000000", priv3.PubKey(), true, priv4.PubKey()},
+		{"NonValidator", "500000000", priv5.PubKey(), false, priv6.PubKey()},
 	}
 	genesisState := genesis.GenesisState{
 		Accounts:  []genesis.GenesisAccount{},
@@ -137,7 +137,7 @@ func TestGenesisAcc(t *testing.T) {
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(types.LNO(sdk.NewRat(acc.numOfLino)))
+		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
@@ -153,7 +153,7 @@ func TestGenesisAcc(t *testing.T) {
 	lb = NewLinoBlockchain(logger, dbs)
 	ctx = lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(types.LNO(sdk.NewRat(acc.numOfLino)))
+		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
@@ -172,7 +172,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	baseTime := time.Now().Unix()
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
-	expectBalance := types.NewCoin(LNOPerValidator * types.Decimals).Minus(
+	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
+	expectBalance := coinPerValidator.Minus(
 		types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
 
 	testPastMinutes := int64(0)

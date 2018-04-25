@@ -31,10 +31,9 @@ var (
 	GenesisPriv = crypto.GenPrivKeyEd25519()
 	GenesisAddr = GenesisPriv.PubKey().Address()
 
-	DefaultNumOfVal  int        = 21
-	GenesisTotalLino int64      = 10000000000
-	LNOPerValidator  int64      = 100000000
-	GenesisTotalCoin types.Coin = types.NewCoin(GenesisTotalLino * types.Decimals)
+	DefaultNumOfVal  int       = 21
+	GenesisTotalLino types.LNO = "10000000000"
+	LNOPerValidator  types.LNO = "100000000"
 
 	CoinReturnIntervalHr        int64   = 24 * 7
 	CoinReturnTimes             int64   = 7
@@ -80,9 +79,12 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
+	totalAmt, _ := strconv.ParseInt(GenesisTotalLino, 10, 64)
+	validatorAmt, _ := strconv.ParseInt(LNOPerValidator, 10, 64)
+	initLNO := strconv.FormatInt(totalAmt-validatorAmt, 10)
 	genesisAcc := genesis.GenesisAccount{
 		Name:        GenesisUser,
-		Lino:        GenesisTotalLino - int64(numOfValidators)*LNOPerValidator,
+		Lino:        initLNO,
 		PubKey:      GenesisPriv.PubKey(),
 		IsValidator: false,
 		ValPubKey:   GenesisPriv.PubKey(),
@@ -143,10 +145,10 @@ func CheckAllValidatorList(
 
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
-	priv crypto.PrivKeyEd25519, numOfLino int64) {
+	priv crypto.PrivKeyEd25519, numOfLino string) {
 
 	transferMsg := acc.NewTransferMsg(
-		GenesisUser, types.LNO(sdk.NewRat(numOfLino)),
+		GenesisUser, types.LNO(numOfLino),
 		[]byte{}, acc.TransferToAddr(priv.PubKey().Address()))
 
 	SignCheckDeliver(t, lb, transferMsg, seq, true, GenesisPriv, time.Now().Unix())
@@ -156,7 +158,11 @@ func CreateAccount(
 }
 
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
-	return types.NewCoin((GenesisTotalLino - LNOPerValidator*21) * types.Decimals)
+	totalAmt, _ := strconv.ParseInt(GenesisTotalLino, 10, 64)
+	validatorAmt, _ := strconv.ParseInt(LNOPerValidator, 10, 64)
+	initLNO := strconv.FormatInt(totalAmt-validatorAmt, 10)
+	initCoin, _ := types.LinoToCoin(initLNO)
+	return initCoin
 }
 
 func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int64,
