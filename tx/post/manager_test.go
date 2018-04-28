@@ -42,7 +42,7 @@ func TestCreatePost(t *testing.T) {
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
 			Links:        []types.IDToURLMapping{},
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
 		assert.Equal(t, err, cs.expectResult)
@@ -103,7 +103,7 @@ func TestGetSourcePost(t *testing.T) {
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
 			Links:        []types.IDToURLMapping{},
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
 		assert.Nil(t, err)
@@ -117,8 +117,8 @@ func TestGetSourcePost(t *testing.T) {
 
 func TestAddOrUpdateLikeToPost(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	cases := []struct {
@@ -158,8 +158,8 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 
 func TestReportOrUpvoteToPost(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	cases := []struct {
@@ -198,8 +198,8 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 
 func TestDonation(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	baseTime := ctx.BlockHeader().Time
@@ -245,7 +245,7 @@ func TestDonation(t *testing.T) {
 
 func TestGetPenaltyScore(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	postKey := types.GetPostKey(user, postID)
 	cases := []struct {
 		totalReportStake types.Coin
@@ -280,7 +280,7 @@ func TestGetPenaltyScore(t *testing.T) {
 
 func TestGetRepostPenaltyScore(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
 	postKey := types.GetPostKey(user, postID)

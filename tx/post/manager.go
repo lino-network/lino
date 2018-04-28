@@ -100,12 +100,16 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
 		return ErrCreatePost(postKey).TraceCause(err, "")
 	}
+	splitRate, err := sdk.NewRatFromDecimal(postCreateParams.RedistributionSplitRate)
+	if err != nil {
+		return ErrCreatePost(postKey).TraceCause(err, "")
+	}
 	postMeta := &model.PostMeta{
 		Created:                 ctx.BlockHeader().Time,
 		LastUpdate:              ctx.BlockHeader().Time,
 		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
-		RedistributionSplitRate: postCreateParams.RedistributionSplitRate,
+		RedistributionSplitRate: splitRate,
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta); err != nil {
 		return ErrCreatePost(postKey).TraceCause(err, "")
