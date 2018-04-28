@@ -9,7 +9,6 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
@@ -29,7 +28,7 @@ func TestNormalDonation(t *testing.T) {
 	test.CreateAccount(t, newDonateUser, lb, 1, newDonateUserPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newPostUser, postID, 0, newPostUserPriv, "", "", "", "", sdk.ZeroRat, baseTime)
+		t, lb, newPostUser, postID, 0, newPostUserPriv, "", "", "", "", "0", baseTime)
 
 	test.CheckBalance(t, newPostUser, lb, types.NewCoin(100*types.Decimals))
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoin(100*types.Decimals))

@@ -29,7 +29,7 @@ func TestHandlerCreatePost(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -47,7 +47,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test comment
 	postCreateParams := PostCreateParams{
@@ -60,7 +60,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -131,7 +131,7 @@ func TestHandlerRepost(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test repost
 	postCreateParams := PostCreateParams{
@@ -144,7 +144,7 @@ func TestHandlerRepost(t *testing.T) {
 		SourceAuthor: user,
 		SourcePostID: postID,
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -201,7 +201,7 @@ func TestHandlerPostLike(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	likeMsg := NewLikeMsg(types.AccountKey(user), 10000, user, postID)
 	result := handler(ctx, likeMsg)
@@ -256,7 +256,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	err := am.AddCoin(ctx, user2, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
@@ -318,7 +318,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 	err := am.AddCoin(ctx, user3, types.NewCoin(123*types.Decimals))
@@ -334,7 +334,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		SourceAuthor: user1,
 		SourcePostID: postID,
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -392,7 +392,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
@@ -438,7 +438,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
@@ -454,7 +454,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 		SourceAuthor: user1,
 		SourcePostID: postID,
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)

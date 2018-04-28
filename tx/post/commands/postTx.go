@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -52,7 +51,7 @@ func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 			Content:                 viper.GetString(FlagContent),
 			ParentAuthor:            types.AccountKey(viper.GetString(FlagParentAuthor)),
 			ParentPostID:            viper.GetString(FlagParentPostID),
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: "0",
 		}
 
 		msg := post.NewCreatePostMsg(postCreateParams)

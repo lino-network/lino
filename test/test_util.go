@@ -214,7 +214,7 @@ func CreateTestPost(
 	username, postID string, seq int64, priv crypto.PrivKeyEd25519,
 	sourceAuthor, sourcePostID string,
 	parentAuthor, parentPostID string,
-	redistributionSplitRate sdk.Rat, publishTime int64) {
+	redistributionSplitRate string, publishTime int64) {
 
 	postCreateParams := post.PostCreateParams{
 		PostID:       postID,
