@@ -40,7 +40,7 @@ func getCommentAndRepost(
 		ParentPostID:            parentPostID,
 		SourceAuthor:            types.AccountKey(sourceAuthor),
 		SourcePostID:            sourcePostID,
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 }
 
@@ -53,33 +53,33 @@ func TestCreatePostMsg(t *testing.T) {
 	}{
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat}, expectResult: nil},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"}, expectResult: nil},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(1)}, expectResult: nil},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1"}, expectResult: nil},
 		{postCreateParams: PostCreateParams{
 			PostID: "", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
 			expectResult: ErrPostCreateNoPostID()},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: "", Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			Author: "", Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
 			expectResult: ErrPostCreateNoAuthor()},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 51)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
 			expectResult: ErrPostTitleExceedMaxLength()},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1001)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.ZeroRat},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
 			expectResult: ErrPostContentExceedMaxLength()},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(-1)},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "-1"},
 			expectResult: ErrPostRedistributionSplitRate()},
 		{postCreateParams: PostCreateParams{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: sdk.NewRat(101, 100)},
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1.01"},
 			expectResult: ErrPostRedistributionSplitRate()},
 	}
 	for _, cs := range cases {

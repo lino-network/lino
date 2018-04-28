@@ -24,7 +24,7 @@ type PostCreateParams struct {
 	SourceAuthor            types.AccountKey       `json:"source_author"`
 	SourcePostID            string                 `json:"source_postID"`
 	Links                   []types.IDToURLMapping `json:"links"`
-	RedistributionSplitRate sdk.Rat                `json:"redistribution_split_rate"`
+	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
 }
 
 // CreatePostMsg contains information to create a post
@@ -129,11 +129,13 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if msg.RedistributionSplitRate == sdk.NewRat(0, 0) {
+
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) ||
-		msg.RedistributionSplitRate.GT(sdk.OneRat) {
+
+	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil

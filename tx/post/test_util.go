@@ -82,7 +82,7 @@ func createTestAccount(
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
-	am acc.AccountManager, pm PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
+	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 	postCreateParams := &PostCreateParams{
 		PostID:       postID,
@@ -116,7 +116,7 @@ func createTestRepost(
 		SourceAuthor: sourceUser,
 		SourcePostID: sourcePostID,
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	err := pm.CreatePost(ctx, postCreateParams)
 	assert.Nil(t, err)

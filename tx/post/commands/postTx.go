@@ -51,7 +51,7 @@ func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 			Content:                 viper.GetString(FlagContent),
 			ParentAuthor:            types.AccountKey(viper.GetString(FlagParentAuthor)),
 			ParentPostID:            viper.GetString(FlagParentPostID),
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: "0",
 		}
 
 		msg := post.NewCreatePostMsg(postCreateParams)

@@ -8,7 +8,6 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
@@ -24,7 +23,7 @@ func TestNormalPublish(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)
+		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", "0", baseTime)
 }
 
 // test publish a repost
@@ -39,10 +38,10 @@ func TestNormalRepost(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)
+		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", "0", baseTime)
 	test.CreateTestPost(
 		t, lb, newAccountName, repostID, 1, newAccountPriv,
-		newAccountName, postID, "", "", sdk.ZeroRat, baseTime)
+		newAccountName, postID, "", "", "0", baseTime)
 
 }
 
@@ -62,7 +61,7 @@ func TestInvalidRepost(t *testing.T) {
 		Title:                   string(make([]byte, 50)),
 		Content:                 string(make([]byte, 1000)),
 		Author:                  types.AccountKey(newAccountName),
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	msg := post.NewCreatePostMsg(postCreateParams)
 	// reject due to stake
@@ -87,8 +86,8 @@ func TestComment(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", sdk.ZeroRat, baseTime)
+		t, lb, newAccountName, postID, 0, newAccountPriv, "", "", "", "", "0", baseTime)
 	test.CreateTestPost(
 		t, lb, newAccountName, comment, 1, newAccountPriv,
-		"", "", newAccountName, postID, sdk.ZeroRat, baseTime)
+		"", "", newAccountName, postID, "0", baseTime)
 }
