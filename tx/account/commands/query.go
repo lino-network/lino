@@ -70,7 +70,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	info := new(model.AccountInfo)
-	if err := c.cdc.UnmarshalBinary(res, info); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, info); err != nil {
 		return err
 	}
 
@@ -107,7 +107,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
 		return err
 	}
 
@@ -116,7 +116,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	meta := new(model.AccountMeta)
-	if err := c.cdc.UnmarshalBinary(res, meta); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, meta); err != nil {
 		return err
 	}
 

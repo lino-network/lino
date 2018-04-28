@@ -185,7 +185,7 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	var tx = sdk.StdTx{}
 
 	// StdTx.Msg is an interface.
-	err := lb.cdc.UnmarshalBinary(txBytes, &tx)
+	err := lb.cdc.UnmarshalJSON(txBytes, &tx)
 	if err != nil {
 		return nil, sdk.ErrTxDecode("").TraceCause(err, "")
 	}

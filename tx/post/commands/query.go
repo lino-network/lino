@@ -46,7 +46,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	postInfo := new(model.PostInfo)
-	if err := c.cdc.UnmarshalBinary(res, postInfo); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, postInfo); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	postMeta := new(model.PostMeta)
-	if err := c.cdc.UnmarshalBinary(res, postMeta); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, postMeta); err != nil {
 		return err
 	}
 
