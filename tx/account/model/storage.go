@@ -51,7 +51,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 		return nil, ErrAccountInfoDoesntExist()
 	}
 	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
 		return nil, ErrGetAccountInfo().TraceCause(err, "")
 	}
 	return info, nil
@@ -59,7 +59,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 
 func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accInfo *AccountInfo) sdk.Error {
 	store := ctx.KVStore(as.key)
-	infoByte, err := as.cdc.MarshalBinary(*accInfo)
+	infoByte, err := as.cdc.MarshalJSON(*accInfo)
 	if err != nil {
 		return ErrSetInfoFailed()
 	}
@@ -74,7 +74,7 @@ func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 		return nil, ErrAccountBankDoesntExist()
 	}
 	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
 		return nil, ErrGetBankFromAccountKey().TraceCause(err, "")
 	}
 	return as.GetBankFromAddress(ctx, info.Address)
@@ -87,7 +87,7 @@ func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address
 		return nil, ErrAccountBankDoesntExist()
 	}
 	bank := new(AccountBank)
-	if err := as.cdc.UnmarshalBinary(bankByte, bank); err != nil {
+	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
 		return nil, ErrGetBankFromAddress().TraceCause(err, "")
 	}
 	return bank, nil
@@ -95,7 +95,7 @@ func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address
 
 func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
-	bankByte, err := as.cdc.MarshalBinary(*accBank)
+	bankByte, err := as.cdc.MarshalJSON(*accBank)
 	if err != nil {
 		return ErrSetBankFailed().TraceCause(err, "")
 	}
@@ -110,7 +110,7 @@ func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 		return ErrGetBankFromAccountKey()
 	}
 	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalBinary(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
 		return ErrGetBankFromAccountKey().TraceCause(err, "")
 	}
 
@@ -124,7 +124,7 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 		return nil, ErrGetMetaFailed()
 	}
 	meta := new(AccountMeta)
-	if err := as.cdc.UnmarshalBinary(metaByte, meta); err != nil {
+	if err := as.cdc.UnmarshalJSON(metaByte, meta); err != nil {
 		return nil, ErrGetMetaFailed().TraceCause(err, "")
 	}
 	return meta, nil
@@ -132,7 +132,7 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 
 func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMeta *AccountMeta) sdk.Error {
 	store := ctx.KVStore(as.key)
-	metaByte, err := as.cdc.MarshalBinary(*accMeta)
+	metaByte, err := as.cdc.MarshalJSON(*accMeta)
 	if err != nil {
 		return ErrSetMetaFailed().TraceCause(err, "")
 	}
@@ -191,7 +191,7 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 		return nil, ErrGetRewardFailed()
 	}
 	reward := new(Reward)
-	if err := as.cdc.UnmarshalBinary(rewardByte, reward); err != nil {
+	if err := as.cdc.UnmarshalJSON(rewardByte, reward); err != nil {
 		return nil, ErrGetRewardFailed().TraceCause(err, "")
 	}
 	return reward, nil
@@ -199,7 +199,7 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 
 func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
 	store := ctx.KVStore(as.key)
-	rewardByte, err := as.cdc.MarshalBinary(*reward)
+	rewardByte, err := as.cdc.MarshalJSON(*reward)
 	if err != nil {
 		return ErrSetRewardFailed().TraceCause(err, "")
 	}
@@ -214,7 +214,7 @@ func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 		return nil, ErrGetPendingStakeFailed()
 	}
 	queue := new(PendingStakeQueue)
-	if err := as.cdc.UnmarshalBinary(pendingStakeQueueByte, queue); err != nil {
+	if err := as.cdc.UnmarshalJSON(pendingStakeQueueByte, queue); err != nil {
 		return nil, ErrGetPendingStakeFailed().TraceCause(err, "")
 	}
 	return queue, nil
@@ -222,7 +222,7 @@ func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 
 func (as AccountStorage) SetGrantKeyList(ctx sdk.Context, me types.AccountKey, grantKeyList *GrantKeyList) sdk.Error {
 	store := ctx.KVStore(as.key)
-	GrantKeyListByte, err := as.cdc.MarshalBinary(*grantKeyList)
+	GrantKeyListByte, err := as.cdc.MarshalJSON(*grantKeyList)
 	if err != nil {
 		return ErrSetGrantListFailed().TraceCause(err, "")
 	}
@@ -237,7 +237,7 @@ func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (
 		return nil, ErrGetGrantListFailed()
 	}
 	grantKeyList := new(GrantKeyList)
-	if err := as.cdc.UnmarshalBinary(grantKeyListByte, grantKeyList); err != nil {
+	if err := as.cdc.UnmarshalJSON(grantKeyListByte, grantKeyList); err != nil {
 		return nil, ErrGetGrantListFailed().TraceCause(err, "")
 	}
 	return grantKeyList, nil
@@ -245,7 +245,7 @@ func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (
 
 func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
 	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte, err := as.cdc.MarshalBinary(*pendingStakeQueue)
+	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
 	if err != nil {
 		return ErrSetRewardFailed().TraceCause(err, "")
 	}
@@ -260,7 +260,7 @@ func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, o
 		return nil, nil
 	}
 	queue := new(Relationship)
-	if err := as.cdc.UnmarshalBinary(relationshipByte, queue); err != nil {
+	if err := as.cdc.UnmarshalJSON(relationshipByte, queue); err != nil {
 		return nil, ErrGetRelationshipFailed().TraceCause(err, "")
 	}
 	return queue, nil
@@ -268,7 +268,7 @@ func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, o
 
 func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey, relationship *Relationship) sdk.Error {
 	store := ctx.KVStore(as.key)
-	relationshipByte, err := as.cdc.MarshalBinary(*relationship)
+	relationshipByte, err := as.cdc.MarshalJSON(*relationship)
 	if err != nil {
 		return ErrSetRelationshipFailed().TraceCause(err, "")
 	}
