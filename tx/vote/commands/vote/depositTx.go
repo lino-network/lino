@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -32,7 +31,7 @@ func DepositVoterTxCmd(cdc *wire.Codec) *cobra.Command {
 
 func sendDepositVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		user := viper.GetString(FlagUsername)
 		// create the message
 		msg := vote.NewVoterDepositMsg(user, viper.GetString(FlagAmount))

@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/tx/post"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 )
@@ -39,7 +38,7 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 // send like transaction to the blockchain
 func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(FlagLikeUser)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)

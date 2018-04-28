@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/client"
 	infra "github.com/lino-network/lino/tx/infra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -33,7 +32,7 @@ func ProviderReportTxCmd(cdc *wire.Codec) *cobra.Command {
 // send provider report transaction to the blockchain
 func sendProviderReportTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(FlagProvider)
 		usage, err := strconv.ParseInt(viper.GetString(FlagUsage), 10, 64)
 		if err != nil {

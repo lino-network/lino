@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -35,7 +34,7 @@ func VoteTxCmd(cdc *wire.Codec) *cobra.Command {
 
 func sendVoteTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		voter := viper.GetString(FlagVoter)
 		id := viper.GetInt64(FlagProposalID)
 		result := viper.GetBool(FlagResult)
