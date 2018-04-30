@@ -10,7 +10,7 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -42,7 +42,7 @@ func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 // send post transaction to the blockchain
 func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		author := viper.GetString(FlagAuthor)
 		postCreateParams := post.PostCreateParams{
 			Author:                  types.AccountKey(author),

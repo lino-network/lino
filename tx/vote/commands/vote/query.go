@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 )
@@ -71,7 +71,7 @@ type commander struct {
 }
 
 func (c commander) getVoterCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide a voter name")
 	}
@@ -98,7 +98,7 @@ func (c commander) getVoterCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getVoteCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 2 {
 		return errors.New("You must provide proposal ID and voter name")
 	}
@@ -125,7 +125,7 @@ func (c commander) getVoteCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getProposalCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 {
 		return errors.New("You must provide proposal ID")
 	}
@@ -151,7 +151,7 @@ func (c commander) getProposalCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getProposalListCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	res, err := ctx.Query(model.GetProposalListKey(), c.storeName)
 	if err != nil {
 		return err

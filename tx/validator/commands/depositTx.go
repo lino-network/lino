@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/types"
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -36,7 +35,7 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(sdkcli.FlagName)
 
 		config, err := tcmd.ParseConfig()

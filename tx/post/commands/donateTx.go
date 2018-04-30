@@ -10,7 +10,6 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -36,7 +35,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 // send donate transaction to the blockchain
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(FlagDonator)
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)

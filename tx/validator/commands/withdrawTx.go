@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/validator"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -29,7 +28,7 @@ func WithdrawTxCmd(cdc *wire.Codec) *cobra.Command {
 
 func withDrawTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(FlagName)
 		// // create the message
 		msg := validator.NewValidatorWithdrawMsg(name, viper.GetString(FlagAmount))

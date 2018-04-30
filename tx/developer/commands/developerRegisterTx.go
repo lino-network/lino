@@ -10,7 +10,6 @@ import (
 	developer "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -33,7 +32,7 @@ func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(FlagDeveloper)
 		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(viper.GetString(FlagDeposit)))
 

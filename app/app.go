@@ -50,6 +50,7 @@ const (
 	msgTypeDeveloperRegister = 0x20
 	msgTypeDeveloperRevoke   = 0x21
 	msgTypeProviderReport    = 0x22
+	msgTypeGrantDeveloper    = 0x23
 
 	eventTypeReward     = 0x1
 	eventTypeReturnCoin = 0x2
@@ -167,6 +168,7 @@ func MakeCodec() *wire.Codec {
 		oldwire.ConcreteType{developer.DeveloperRegisterMsg{}, msgTypeDeveloperRegister},
 		oldwire.ConcreteType{developer.DeveloperRevokeMsg{}, msgTypeDeveloperRevoke},
 		oldwire.ConcreteType{infra.ProviderReportMsg{}, msgTypeProviderReport},
+		oldwire.ConcreteType{developer.GrantDeveloperMsg{}, msgTypeGrantDeveloper},
 	)
 
 	var _ = oldwire.RegisterInterface(

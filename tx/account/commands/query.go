@@ -12,7 +12,6 @@ import (
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -51,7 +50,7 @@ type commander struct {
 }
 
 func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide an address")
 	}
@@ -85,7 +84,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide aa username")
 	}

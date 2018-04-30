@@ -11,7 +11,6 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -43,7 +42,7 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 // send transfer transaction to the blockchain
 func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		sender := viper.GetString(FlagSender)
 		receiverName := viper.GetString(FlagReceiverName)
 		receiverAddr, err := hex.DecodeString(viper.GetString(FlagReceiverAddr))

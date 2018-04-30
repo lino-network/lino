@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	developer "github.com/lino-network/lino/tx/developer"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -26,7 +25,7 @@ func DeveloperRevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 // send developer revoke transaction to the blockchain
 func sendDeveloperRevokeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(FlagDeveloper)
 		msg := developer.NewDeveloperRevokeMsg(username)
 

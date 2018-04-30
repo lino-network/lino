@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/tx/register"
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
@@ -30,7 +29,7 @@ func RegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 // send register transaction to the blockchain
 func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
+		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(sdkcli.FlagName)
 		pubKey, err := GetPubKey()
 
