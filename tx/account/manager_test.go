@@ -177,7 +177,8 @@ func TestCreateAccount(t *testing.T) {
 	reward := model.Reward{coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
 
-	grantList := model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}
+	var grantPubKeyList []model.GrantPubKey
+	grantList := model.GrantKeyList{GrantPubKeyList: grantPubKeyList}
 	checkAccountGrantKeyList(t, ctx, accKey, grantList)
 
 	// username already took

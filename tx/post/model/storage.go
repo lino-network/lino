@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
-	oldwire "github.com/tendermint/go-wire"
 )
 
 var (
@@ -21,13 +20,13 @@ var (
 // temporary use old wire.
 // this will help marshal and unmarshal interface type.
 const (
-	msgTypePost               = 0x1
-	msgTypePostMeta           = 0x2
-	msgTypePostLike           = 0x3
-	msgTypePostReportOrUpvote = 0x4
-	msgTypePostView           = 0x5
-	msgTypePostComment        = 0x6
-	msgTypePostDonations      = 0x7
+	msgTypePost               = "1"
+	msgTypePostMeta           = "2"
+	msgTypePostLike           = "3"
+	msgTypePostReportOrUpvote = "4"
+	msgTypePostView           = "5"
+	msgTypePostComment        = "6"
+	msgTypePostDonations      = "7"
 )
 
 type PostStorage struct {
@@ -42,16 +41,17 @@ type PostStorage struct {
 // uses go-wire to (binary) encode and decode concrete Post
 func NewPostStorage(key sdk.StoreKey) PostStorage {
 	cdc := wire.NewCodec()
-	var _ = oldwire.RegisterInterface(
-		struct{ PostInterface }{},
-		oldwire.ConcreteType{PostInfo{}, msgTypePost},
-		oldwire.ConcreteType{PostMeta{}, msgTypePostMeta},
-		oldwire.ConcreteType{Like{}, msgTypePostLike},
-		oldwire.ConcreteType{ReportOrUpvote{}, msgTypePostReportOrUpvote},
-		oldwire.ConcreteType{View{}, msgTypePostView},
-		oldwire.ConcreteType{Comment{}, msgTypePostComment},
-		oldwire.ConcreteType{Donation{}, msgTypePostDonations},
-	)
+
+	cdc.RegisterInterface((*PostInterface)(nil), nil)
+	cdc.RegisterConcrete(PostInfo{}, msgTypePost, nil)
+	cdc.RegisterConcrete(PostMeta{}, msgTypePostMeta, nil)
+	cdc.RegisterConcrete(Like{}, msgTypePostLike, nil)
+	cdc.RegisterConcrete(ReportOrUpvote{}, msgTypePostReportOrUpvote, nil)
+	cdc.RegisterConcrete(View{}, msgTypePostView, nil)
+	cdc.RegisterConcrete(Comment{}, msgTypePostComment, nil)
+	cdc.RegisterConcrete(Donation{}, msgTypePostDonations, nil)
+	wire.RegisterCrypto(cdc)
+
 	return PostStorage{
 		key: key,
 		cdc: cdc,
@@ -69,7 +69,7 @@ func (ps PostStorage) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) 
 
 func (ps PostStorage) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	val, err := oldwire.MarshalJSON(postStruct)
+	val, err := ps.cdc.MarshalJSON(postStruct)
 	if err != nil {
 		return ErrPostMarshalError(err)
 	}
@@ -83,7 +83,7 @@ func (ps PostStorage) GetPostInfo(ctx sdk.Context, postKey types.PostKey) (*Post
 		return nil, err
 	}
 	postInfo := new(PostInfo)
-	if err := oldwire.UnmarshalJSON(val, postInfo); err != nil {
+	if err := ps.cdc.UnmarshalJSON(val, postInfo); err != nil {
 		return nil, ErrPostUnmarshalError(err)
 	}
 	return postInfo, nil
@@ -99,7 +99,7 @@ func (ps PostStorage) GetPostMeta(ctx sdk.Context, postKey types.PostKey) (*Post
 		return nil, err
 	}
 	postMeta := new(PostMeta)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postMeta); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, postMeta); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postMeta, nil
@@ -115,7 +115,7 @@ func (ps PostStorage) GetPostLike(ctx sdk.Context, postKey types.PostKey, likeUs
 		return nil, err
 	}
 	postLike := new(Like)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postLike); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, postLike); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postLike, nil
@@ -131,7 +131,7 @@ func (ps PostStorage) GetPostReportOrUpvote(ctx sdk.Context, postKey types.PostK
 		return nil, err
 	}
 	reportOrUpvote := new(ReportOrUpvote)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, reportOrUpvote); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, reportOrUpvote); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return reportOrUpvote, nil
@@ -153,7 +153,7 @@ func (ps PostStorage) GetPostComment(ctx sdk.Context, postKey types.PostKey, com
 		return nil, err
 	}
 	postComment := new(Comment)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postComment); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, postComment); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postComment, nil
@@ -169,7 +169,7 @@ func (ps PostStorage) GetPostView(ctx sdk.Context, postKey types.PostKey, viewUs
 		return nil, err
 	}
 	postView := new(View)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postView); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, postView); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postView, nil
@@ -185,7 +185,7 @@ func (ps PostStorage) GetPostDonations(ctx sdk.Context, postKey types.PostKey, d
 		return nil, err
 	}
 	postDonations := new(Donations)
-	if unmarshalErr := oldwire.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalJSON(val, postDonations); unmarshalErr != nil {
 		return nil, ErrPostUnmarshalError(unmarshalErr)
 	}
 	return postDonations, nil

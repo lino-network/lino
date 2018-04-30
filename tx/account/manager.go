@@ -90,7 +90,8 @@ func (accManager AccountManager) CreateAccount(
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
 
-	if err := accManager.accountStorage.SetGrantKeyList(ctx, accKey, &model.GrantKeyList{}); err != nil {
+	if err := accManager.accountStorage.SetGrantKeyList(
+		ctx, accKey, &model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}); err != nil {
 		return err
 	}
 	return nil
@@ -238,21 +239,21 @@ func (accManager AccountManager) GetBankAddress(
 }
 
 func (accManager AccountManager) GetOwnerKey(
-	ctx sdk.Context, accKey types.AccountKey) (*crypto.PubKey, sdk.Error) {
+	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
 		return nil, ErrGetOwnerKey(accKey).TraceCause(err, "")
 	}
-	return &accountInfo.OwnerKey, nil
+	return accountInfo.OwnerKey, nil
 }
 
 func (accManager AccountManager) GetPostKey(
-	ctx sdk.Context, accKey types.AccountKey) (*crypto.PubKey, sdk.Error) {
+	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
 		return nil, ErrGetPostKey(accKey).TraceCause(err, "")
 	}
-	return &accountInfo.PostKey, nil
+	return accountInfo.PostKey, nil
 }
 
 func (accManager AccountManager) GetBankBalance(
@@ -448,7 +449,7 @@ func (accManager AccountManager) AuthorizePermission(
 	}
 	newGrantPubKey := model.GrantPubKey{
 		Username: authorizedUser,
-		PubKey:   *pubKey,
+		PubKey:   pubKey,
 		Expire:   ctx.BlockHeader().Time + validityPeriod,
 	}
 	grantKeyList.GrantPubKeyList = append(grantKeyList.GrantPubKeyList, newGrantPubKey)
@@ -461,14 +462,14 @@ func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
 	if err != nil {
 		return "", err
 	}
-	if reflect.DeepEqual(*pubKey, signKey) {
+	if reflect.DeepEqual(pubKey, signKey) {
 		return me, nil
 	}
 	pubKey, err = accManager.GetPostKey(ctx, me)
 	if err != nil {
 		return "", err
 	}
-	if reflect.DeepEqual(*pubKey, signKey) {
+	if reflect.DeepEqual(pubKey, signKey) {
 		return me, nil
 	}
 

@@ -41,24 +41,15 @@ var (
 	ConsumptionFreezingPeriodHr int64   = 24 * 7
 )
 
-func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
+func loggerAndDB() (log.Logger, dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	dbs := map[string]dbm.DB{
-		"main":      dbm.NewMemDB(),
-		"acc":       dbm.NewMemDB(),
-		"post":      dbm.NewMemDB(),
-		"val":       dbm.NewMemDB(),
-		"vote":      dbm.NewMemDB(),
-		"infra":     dbm.NewMemDB(),
-		"developer": dbm.NewMemDB(),
-		"global":    dbm.NewMemDB(),
-	}
-	return logger, dbs
+	db := dbm.NewMemDB()
+	return logger, db
 }
 
 func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchain {
-	logger, dbs := loggerAndDBs()
-	lb := app.NewLinoBlockchain(logger, dbs)
+	logger, db := loggerAndDB()
+	lb := app.NewLinoBlockchain(logger, db)
 
 	genesisState := genesis.GenesisState{
 		Accounts:  []genesis.GenesisAccount{},

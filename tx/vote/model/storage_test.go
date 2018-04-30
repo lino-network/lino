@@ -102,7 +102,7 @@ func TestProposalList(t *testing.T) {
 
 	proposalList, err := vs.GetProposalList(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, ProposalList{[]types.ProposalKey{}, []types.ProposalKey{}}, *proposalList)
+	assert.Equal(t, ProposalList{}, *proposalList)
 	proposalList.OngoingProposal =
 		append(proposalList.OngoingProposal, types.ProposalKey("test1"))
 	proposalList.OngoingProposal =
@@ -121,8 +121,7 @@ func TestPenaltyList(t *testing.T) {
 	ctx, vs := setup(t)
 	lst, err := vs.GetValidatorReferenceList(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, ValidatorReferenceList{[]types.AccountKey{},
-		[]types.AccountKey{}, []types.AccountKey{}}, *lst)
+	assert.Equal(t, ValidatorReferenceList{}, *lst)
 	lst.PenaltyValidators =
 		append(lst.PenaltyValidators, types.AccountKey("test1"))
 

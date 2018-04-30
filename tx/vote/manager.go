@@ -1,12 +1,11 @@
 package vote
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
-	oldwire "github.com/tendermint/go-wire"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -19,12 +18,6 @@ var (
 
 const decideProposalEvent = 0x1
 const returnCoinEvent = 0x2
-
-var _ = oldwire.RegisterInterface(
-	struct{ types.Event }{},
-	oldwire.ConcreteType{DecideProposalEvent{}, decideProposalEvent},
-	oldwire.ConcreteType{acc.ReturnCoinEvent{}, returnCoinEvent},
-)
 
 type VoteManager struct {
 	storage model.VoteStorage `json:"vote_storage"`

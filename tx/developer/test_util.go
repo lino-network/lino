@@ -27,6 +27,9 @@ func setupTest(t *testing.T, height int64) (
 	am := acc.NewAccountManager(TestAccountKVStoreKey)
 	dm := NewDeveloperManager(TestInfraKVStoreKey)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey)
+	cdc := gm.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
 	return ctx, am, dm, gm
 }
 

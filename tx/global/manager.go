@@ -4,6 +4,7 @@ import (
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
 )
@@ -18,6 +19,10 @@ func NewGlobalManager(key sdk.StoreKey) GlobalManager {
 	return GlobalManager{
 		globalStorage: model.NewGlobalStorage(key),
 	}
+}
+
+func (gm GlobalManager) WireCodec() *wire.Codec {
+	return gm.globalStorage.WireCodec()
 }
 
 func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) error {

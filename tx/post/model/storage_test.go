@@ -37,7 +37,7 @@ func TestPost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	err := ps.SetPostInfo(ctx, &postInfo)
 	assert.Nil(t, err)

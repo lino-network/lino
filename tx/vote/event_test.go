@@ -45,14 +45,14 @@ func TestDecideProposal(t *testing.T) {
 		expectDecidedProposal []types.ProposalKey
 		expectInfraAllocation sdk.Rat
 	}{
-		{false, user1, id1, true, []types.ProposalKey{id1, id2}, []types.ProposalKey{}, prevAllocation.InfraAllocation},
-		{false, user2, id1, false, []types.ProposalKey{id1, id2}, []types.ProposalKey{}, prevAllocation.InfraAllocation},
+		{false, user1, id1, true, []types.ProposalKey{id1, id2}, nil, prevAllocation.InfraAllocation},
+		{false, user2, id1, false, []types.ProposalKey{id1, id2}, nil, prevAllocation.InfraAllocation},
 		{true, types.AccountKey(""), id1, false, []types.ProposalKey{id2}, []types.ProposalKey{id1}, prevAllocation.InfraAllocation},
 		{false, user1, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1}, prevAllocation.InfraAllocation},
 		{false, user2, id1, true, []types.ProposalKey{id2}, []types.ProposalKey{id1}, prevAllocation.InfraAllocation},
 		{false, user4, id1, true, []types.ProposalKey{id2}, []types.ProposalKey{id1}, prevAllocation.InfraAllocation},
 		{false, user3, id1, false, []types.ProposalKey{id2}, []types.ProposalKey{id1}, prevAllocation.InfraAllocation},
-		{true, types.AccountKey(""), id2, false, []types.ProposalKey{}, []types.ProposalKey{id1, id2}, des2.InfraAllocation},
+		{true, types.AccountKey(""), id2, false, nil, []types.ProposalKey{id1, id2}, des2.InfraAllocation},
 	}
 
 	for _, cs := range cases {
@@ -98,7 +98,7 @@ func TestForceValidatorVote(t *testing.T) {
 		voterRes          bool
 		expectPenaltyList []types.AccountKey
 	}{
-		{false, user1, id1, true, []types.AccountKey{}},
+		{false, user1, id1, true, nil},
 		{true, types.AccountKey(""), id1, true, []types.AccountKey{user2}},
 	}
 

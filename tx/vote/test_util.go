@@ -33,6 +33,12 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
 	voteManager := NewVoteManager(TestVoteKVStoreKey)
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey)
+
+	cdc := globalManager.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(DecideProposalEvent{}, "1", nil)
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "2", nil)
+
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, voteManager, globalManager

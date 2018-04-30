@@ -62,5 +62,5 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) cryp
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100*types.Decimals))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
-	return priv.Wrap()
+	return priv
 }

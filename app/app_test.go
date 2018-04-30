@@ -33,24 +33,15 @@ var (
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
 
-func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
+func loggerAndDB() (log.Logger, dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	dbs := map[string]dbm.DB{
-		"main":      dbm.NewMemDB(),
-		"acc":       dbm.NewMemDB(),
-		"post":      dbm.NewMemDB(),
-		"val":       dbm.NewMemDB(),
-		"vote":      dbm.NewMemDB(),
-		"infra":     dbm.NewMemDB(),
-		"developer": dbm.NewMemDB(),
-		"global":    dbm.NewMemDB(),
-	}
-	return logger, dbs
+	db := dbm.NewMemDB()
+	return logger, db
 }
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
-	logger, dbs := loggerAndDBs()
-	lb := NewLinoBlockchain(logger, dbs)
+	logger, db := loggerAndDB()
+	lb := NewLinoBlockchain(logger, db)
 
 	genesisState := genesis.GenesisState{
 		Accounts:  []genesis.GenesisAccount{},
@@ -94,8 +85,8 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 }
 
 func TestGenesisAcc(t *testing.T) {
-	logger, dbs := loggerAndDBs()
-	lb := NewLinoBlockchain(logger, dbs)
+	logger, db := loggerAndDB()
+	lb := NewLinoBlockchain(logger, db)
 
 	priv3 := crypto.GenPrivKeyEd25519()
 	priv4 := crypto.GenPrivKeyEd25519()
@@ -150,7 +141,7 @@ func TestGenesisAcc(t *testing.T) {
 	}
 
 	// reload app and ensure the account is still there
-	lb = NewLinoBlockchain(logger, dbs)
+	lb = NewLinoBlockchain(logger, db)
 	ctx = lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
 		expectBalance, err := types.LinoToCoin(acc.numOfLino)

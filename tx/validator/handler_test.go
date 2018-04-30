@@ -45,7 +45,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -79,7 +79,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l400, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l400, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrVotingDepositNotEnough().Result(), result)
 
@@ -108,7 +108,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -160,7 +160,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		num := (i+1)*10 + 1000
 		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -174,7 +174,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	// lowest validator depoist coins will change the ranks
 	ownerKey, _ := am.GetOwnerKey(ctx, users[3])
 	deposit := types.LNO(l15)
-	msg := NewValidatorDepositMsg("user4", deposit, *ownerKey)
+	msg := NewValidatorDepositMsg("user4", deposit, ownerKey)
 	result := handler(ctx, msg)
 
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
@@ -229,7 +229,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1000, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1000, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -247,7 +247,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	assert.Equal(t, 0, len(lstEmpty.OncallValidators))
 
 	// deposit again
-	msg3 := NewValidatorDepositMsg("user1", l1000, *ownerKey)
+	msg3 := NewValidatorDepositMsg("user1", l1000, ownerKey)
 	result3 := handler(ctx, msg3)
 
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
@@ -270,7 +270,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -300,11 +300,11 @@ func TestDepositBasic(t *testing.T) {
 
 	// let user1 register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1600, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
-	depositMsg := NewValidatorDepositMsg("user1", l200, *ownerKey)
+	depositMsg := NewValidatorDepositMsg("user1", l200, ownerKey)
 	result2 := handler(ctx, depositMsg)
 	assert.Equal(t, sdk.Result{}, result2)
 
@@ -334,7 +334,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 	// let user1 register as validator
 	user1 := createTestAccount(ctx, am, "user1")
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("qwqwndqwnd", l1600, *ownerKey)
+	msg := NewValidatorDepositMsg("qwqwndqwnd", l1600, ownerKey)
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrUsernameNotFound().Result(), result)
 }
@@ -355,7 +355,7 @@ func TestValidatorReplacement(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -376,7 +376,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user hasn't been added to oncall validators but in the pool
 	deposit := types.LNO("1005")
 	ownerKey1, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("noPowerUser", deposit, *ownerKey1)
+	msg := NewValidatorDepositMsg("noPowerUser", deposit, ownerKey1)
 	result := handler(ctx, msg)
 
 	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
@@ -395,7 +395,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user has been added to oncall validators and in the pool
 	deposit2 := types.LNO("1088")
 	ownerKey2, _ := am.GetOwnerKey(ctx, powerfulUser)
-	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, *ownerKey2)
+	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, ownerKey2)
 	result2 := handler(ctx, msg2)
 
 	verifyList3, _ := valManager.storage.GetValidatorList(ctx)
@@ -438,8 +438,8 @@ func TestRemoveBasic(t *testing.T) {
 
 	// let both users register as validator
 	deposit := types.LNO("1200")
-	msg1 := NewValidatorDepositMsg("goodUser", deposit, *ownerKey1)
-	msg2 := NewValidatorDepositMsg("badUser", deposit, *ownerKey2)
+	msg1 := NewValidatorDepositMsg("goodUser", deposit, ownerKey1)
+	msg2 := NewValidatorDepositMsg("badUser", deposit, ownerKey2)
 	handler(ctx, msg1)
 	handler(ctx, msg2)
 

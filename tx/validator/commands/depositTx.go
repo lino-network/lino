@@ -12,8 +12,8 @@ import (
 
 	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/wire"
-	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	tmtypes "github.com/tendermint/tendermint/types"
+	cfg "github.com/tendermint/tendermint/config"
+	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	cmn "github.com/tendermint/tmlibs/common"
 )
 
@@ -38,23 +38,17 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(sdkcli.FlagName)
 
-		config, err := tcmd.ParseConfig()
-		if err != nil {
-			return err
-		}
+		config := cfg.DefaultConfig()
 		// private validator
 		privValFile := config.PrivValidatorFile()
-		var privValidator *tmtypes.PrivValidatorFS
+		var privValidator *pvm.FilePV
 		if cmn.FileExists(privValFile) {
-			privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
+			privValidator = pvm.LoadFilePV(privValFile)
 		} else {
-			privValidator = tmtypes.GenPrivValidatorFS(privValFile)
+			privValidator = pvm.GenFilePV(privValFile)
 			privValidator.Save()
 		}
 
-		if err != nil {
-			return err
-		}
 		// // create the message
 		msg := validator.NewValidatorDepositMsg(name, types.LNO(viper.GetString(FlagAmount)), privValidator.PubKey)
 

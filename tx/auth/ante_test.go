@@ -23,7 +23,7 @@ func createTestAccount(
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100))
 	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
-	return priv.Wrap(), types.AccountKey(username)
+	return priv, types.AccountKey(username)
 }
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -168,8 +168,8 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerRegisterTx(t *testing.T) {
 	am, _, ctx, anteHandler := setupTest()
-	priv1 := crypto.GenPrivKeyEd25519().Wrap()
-	priv2 := crypto.GenPrivKeyEd25519().Wrap()
+	priv1 := crypto.GenPrivKeyEd25519()
+	priv2 := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv1.PubKey().Address(), types.NewCoin(0))
 	assert.Nil(t, err)
 

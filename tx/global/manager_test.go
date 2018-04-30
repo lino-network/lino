@@ -10,12 +10,11 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
-	oldwire "github.com/tendermint/go-wire"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
 const (
-	eventTypeTestEvent = 0x1
+	eventTypeTestEvent = "1"
 )
 
 type testEvent struct{}
@@ -23,11 +22,6 @@ type testEvent struct{}
 // Construct some global addrs and txs for tests.
 var (
 	TestGlobalKVStoreKey = sdk.NewKVStoreKey("global")
-
-	_ = oldwire.RegisterInterface(
-		struct{ types.Event }{},
-		oldwire.ConcreteType{testEvent{}, eventTypeTestEvent},
-	)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm GlobalManager) error {
@@ -46,6 +40,9 @@ func getContext() sdk.Context {
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 	ctx := getContext()
 	globalManager := NewGlobalManager(TestGlobalKVStoreKey)
+	cdc := globalManager.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(testEvent{}, "test", nil)
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, globalManager
