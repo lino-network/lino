@@ -10,7 +10,6 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 

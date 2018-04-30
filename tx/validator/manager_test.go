@@ -29,7 +29,7 @@ func TestAbsentValidator(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -101,7 +101,7 @@ func TestGetOncallList(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -129,11 +129,11 @@ func TestPunishmentBasic(t *testing.T) {
 
 	// let both users register as validator
 	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1100, *ownerKey)
+	msg := NewValidatorDepositMsg("user1", l1100, ownerKey)
 	handler(ctx, msg)
 
 	ownerKey2, _ := am.GetOwnerKey(ctx, user1)
-	msg2 := NewValidatorDepositMsg("user2", l1600, *ownerKey2)
+	msg2 := NewValidatorDepositMsg("user2", l1600, ownerKey2)
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
@@ -171,7 +171,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		num := (i+1)*100 + 1000
 		deposit := types.LNO(strconv.Itoa(num))
 		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, *ownerKey)
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, ownerKey)
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}

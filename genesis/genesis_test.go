@@ -1,11 +1,11 @@
 package genesis
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
 )
 
@@ -35,11 +35,13 @@ func TestGetGenesisJson(t *testing.T) {
 		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 	}
 
+	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
 	result, err := GetGenesisJson(genesisState)
 	assert.Nil(t, err)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	appGenesisState := new(GenesisState)
-	err = json.Unmarshal([]byte(result), appGenesisState)
+	err = cdc.UnmarshalJSON([]byte(result), appGenesisState)
 	assert.Nil(t, err)
 
 	assert.Equal(t, genesisState, *appGenesisState)

@@ -36,7 +36,7 @@ func createBank(t *testing.T, ctx sdk.Context, am acc.AccountManager, coin types
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin)
 	assert.Nil(t, err)
 
-	return priv.Wrap()
+	return priv
 }
 
 func TestRegisterBankDoesntExist(t *testing.T) {

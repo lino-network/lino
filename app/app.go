@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	"github.com/lino-network/lino/genesis"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
@@ -19,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	abci "github.com/tendermint/abci/types"
-	oldwire "github.com/tendermint/go-wire"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
@@ -27,33 +24,6 @@ import (
 
 const (
 	appName = "LinoBlockchain"
-
-	msgTypeRegister          = 0x1
-	msgTypeFollow            = 0x2
-	msgTypeUnfollow          = 0x3
-	msgTypeTransfer          = 0x4
-	msgTypePost              = 0x5
-	msgTypeLike              = 0x6
-	msgTypeDonate            = 0x7
-	msgTypeValidatorDeposit  = 0x8
-	msgTypeValidatorWithdraw = 0x9
-	msgTypeValidatorRevoke   = 0x10
-	msgTypeClaim             = 0x11
-	msgTypeVoterDeposit      = 0x12
-	msgTypeVoterRevoke       = 0x13
-	msgTypeVoterWithdraw     = 0x14
-	msgTypeDelegate          = 0x15
-	msgTypeDelegatorWithdraw = 0x16
-	msgTypeRevokeDelegation  = 0x17
-	msgTypeVote              = 0x18
-	msgTypeCreateProposal    = 0x19
-	msgTypeDeveloperRegister = 0x20
-	msgTypeDeveloperRevoke   = 0x21
-	msgTypeProviderReport    = 0x22
-	msgTypeGrantDeveloper    = 0x23
-
-	eventTypeReward     = 0x1
-	eventTypeReturnCoin = 0x2
 )
 
 // Extended ABCI application
@@ -87,10 +57,10 @@ type LinoBlockchain struct {
 	pastMinutes    int64
 }
 
-func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain {
+func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	// create your application object
 	var lb = &LinoBlockchain{
-		BaseApp:              bam.NewBaseApp(appName, logger, dbs["main"]),
+		BaseApp:              bam.NewBaseApp(appName, logger, db),
 		cdc:                  MakeCodec(),
 		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
@@ -109,6 +79,8 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore)
 
+	RegisterEvent(lb.globalManager.WireCodec())
+
 	lb.Router().
 		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
@@ -125,14 +97,9 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
-	lb.MountStoreWithDB(lb.CapKeyMainStore, sdk.StoreTypeIAVL, dbs["main"])
-	lb.MountStoreWithDB(lb.CapKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
-	lb.MountStoreWithDB(lb.CapKeyPostStore, sdk.StoreTypeIAVL, dbs["post"])
-	lb.MountStoreWithDB(lb.CapKeyValStore, sdk.StoreTypeIAVL, dbs["val"])
-	lb.MountStoreWithDB(lb.CapKeyVoteStore, sdk.StoreTypeIAVL, dbs["vote"])
-	lb.MountStoreWithDB(lb.CapKeyInfraStore, sdk.StoreTypeIAVL, dbs["infra"])
-	lb.MountStoreWithDB(lb.CapKeyDeveloperStore, sdk.StoreTypeIAVL, dbs["developer"])
-	lb.MountStoreWithDB(lb.CapKeyGlobalStore, sdk.StoreTypeIAVL, dbs["global"])
+	lb.MountStoresIAVL(
+		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
+		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore)
 	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager))
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
@@ -140,46 +107,42 @@ func NewLinoBlockchain(logger log.Logger, dbs map[string]dbm.DB) *LinoBlockchain
 	return lb
 }
 
-// custom tx codec
-// TODO: use new go-wire
 func MakeCodec() *wire.Codec {
-
-	var _ = oldwire.RegisterInterface(
-		struct{ sdk.Msg }{},
-		oldwire.ConcreteType{register.RegisterMsg{}, msgTypeRegister},
-		oldwire.ConcreteType{acc.FollowMsg{}, msgTypeFollow},
-		oldwire.ConcreteType{acc.UnfollowMsg{}, msgTypeUnfollow},
-		oldwire.ConcreteType{acc.TransferMsg{}, msgTypeTransfer},
-		oldwire.ConcreteType{post.CreatePostMsg{}, msgTypePost},
-		oldwire.ConcreteType{post.LikeMsg{}, msgTypeLike},
-		oldwire.ConcreteType{post.DonateMsg{}, msgTypeDonate},
-		oldwire.ConcreteType{val.ValidatorDepositMsg{}, msgTypeValidatorDeposit},
-		oldwire.ConcreteType{val.ValidatorWithdrawMsg{}, msgTypeValidatorWithdraw},
-		oldwire.ConcreteType{val.ValidatorRevokeMsg{}, msgTypeValidatorRevoke},
-		oldwire.ConcreteType{acc.ClaimMsg{}, msgTypeClaim},
-		oldwire.ConcreteType{vote.VoterDepositMsg{}, msgTypeVoterDeposit},
-		oldwire.ConcreteType{vote.VoterRevokeMsg{}, msgTypeVoterRevoke},
-		oldwire.ConcreteType{vote.VoterWithdrawMsg{}, msgTypeVoterWithdraw},
-		oldwire.ConcreteType{vote.DelegateMsg{}, msgTypeDelegate},
-		oldwire.ConcreteType{vote.DelegatorWithdrawMsg{}, msgTypeDelegatorWithdraw},
-		oldwire.ConcreteType{vote.RevokeDelegationMsg{}, msgTypeRevokeDelegation},
-		oldwire.ConcreteType{vote.VoteMsg{}, msgTypeVote},
-		oldwire.ConcreteType{vote.CreateProposalMsg{}, msgTypeCreateProposal},
-		oldwire.ConcreteType{developer.DeveloperRegisterMsg{}, msgTypeDeveloperRegister},
-		oldwire.ConcreteType{developer.DeveloperRevokeMsg{}, msgTypeDeveloperRevoke},
-		oldwire.ConcreteType{infra.ProviderReportMsg{}, msgTypeProviderReport},
-		oldwire.ConcreteType{developer.GrantDeveloperMsg{}, msgTypeGrantDeveloper},
-	)
-
-	var _ = oldwire.RegisterInterface(
-		struct{ types.Event }{},
-		oldwire.ConcreteType{post.RewardEvent{}, eventTypeReward},
-		oldwire.ConcreteType{acc.ReturnCoinEvent{}, eventTypeReturnCoin},
-	)
-
 	cdc := wire.NewCodec()
 
+	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
+	cdc.RegisterConcrete(register.RegisterMsg{}, "register/register", nil)
+	cdc.RegisterConcrete(acc.FollowMsg{}, "account/follow", nil)
+	cdc.RegisterConcrete(acc.UnfollowMsg{}, "account/unfollow", nil)
+	cdc.RegisterConcrete(acc.TransferMsg{}, "account/transfer", nil)
+	cdc.RegisterConcrete(post.CreatePostMsg{}, "post/post", nil)
+	cdc.RegisterConcrete(post.LikeMsg{}, "post/like", nil)
+	cdc.RegisterConcrete(post.DonateMsg{}, "post/donate", nil)
+	cdc.RegisterConcrete(val.ValidatorDepositMsg{}, "post/deposit", nil)
+	cdc.RegisterConcrete(val.ValidatorWithdrawMsg{}, "post/withdraw", nil)
+	cdc.RegisterConcrete(val.ValidatorRevokeMsg{}, "post/revoke", nil)
+	cdc.RegisterConcrete(acc.ClaimMsg{}, "account/claim", nil)
+	cdc.RegisterConcrete(vote.VoterDepositMsg{}, "vote/deposit", nil)
+	cdc.RegisterConcrete(vote.VoterRevokeMsg{}, "vote/revoke", nil)
+	cdc.RegisterConcrete(vote.VoterWithdrawMsg{}, "vote/withdraw", nil)
+	cdc.RegisterConcrete(vote.DelegateMsg{}, "vote/delegate", nil)
+	cdc.RegisterConcrete(vote.DelegatorWithdrawMsg{}, "vote/delegate/withdraw", nil)
+	cdc.RegisterConcrete(vote.RevokeDelegationMsg{}, "vote/delegate/revoke", nil)
+	cdc.RegisterConcrete(vote.VoteMsg{}, "vote/vote", nil)
+	cdc.RegisterConcrete(vote.CreateProposalMsg{}, "vote/create/proposal", nil)
+	cdc.RegisterConcrete(developer.DeveloperRegisterMsg{}, "developer/register", nil)
+	cdc.RegisterConcrete(developer.DeveloperRevokeMsg{}, "developer/revoke", nil)
+	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
+	cdc.RegisterConcrete(developer.GrantDeveloperMsg{}, "grant/developer", nil)
+
+	wire.RegisterCrypto(cdc)
 	return cdc
+}
+
+func RegisterEvent(cdc *wire.Codec) {
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(post.RewardEvent{}, "event/reward", nil)
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
 }
 
 // custom logic for transaction decoding
@@ -198,7 +161,7 @@ func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 	genesisState := new(genesis.GenesisState)
-	if err := json.Unmarshal(stateJSON, genesisState); err != nil {
+	if err := lb.cdc.UnmarshalJSON(stateJSON, genesisState); err != nil {
 		panic(err)
 	}
 

@@ -29,13 +29,18 @@ type GlobalStorage struct {
 
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
 	return GlobalStorage{
 		key: key,
 		cdc: cdc,
 	}
 }
 
-func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, totalLino types.Coin) error {
+func (gs GlobalStorage) WireCodec() *wire.Codec {
+	return gs.cdc
+}
+
+func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, totalLino types.Coin) error {
 	globalMeta := &GlobalMeta{
 		TotalLinoCoin:         totalLino,
 		CumulativeConsumption: types.NewCoin(0),
@@ -108,7 +113,7 @@ func (gs *GlobalStorage) InitGlobalState(ctx sdk.Context, totalLino types.Coin) 
 	return nil
 }
 
-func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {
+func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetTimeEventListKey(unixTime))
 	// event doesn't exist
@@ -122,7 +127,7 @@ func (gs *GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*typ
 	return lst, nil
 }
 
-func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *types.TimeEventList) sdk.Error {
+func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *types.TimeEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	listByte, err := gs.cdc.MarshalJSON(*lst)
 	if err != nil {
@@ -132,13 +137,13 @@ func (gs *GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *
 	return nil
 }
 
-func (gs *GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
+func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	store.Delete(GetTimeEventListKey(unixTime))
 	return nil
 }
 
-func (gs *GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
+func (gs GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	statisticsBytes := store.Get(GetGlobalStatisticsKey())
 	if statisticsBytes == nil {
@@ -151,7 +156,7 @@ func (gs *GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics
 	return statistics, nil
 }
 
-func (gs *GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
+func (gs GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	statisticsBytes, err := gs.cdc.MarshalJSON(*statistics)
 	if err != nil {
@@ -161,7 +166,7 @@ func (gs *GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *Global
 	return nil
 }
 
-func (gs *GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
+func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes := store.Get(GetGlobalMetaKey())
 	if globalMetaBytes == nil {
@@ -174,7 +179,7 @@ func (gs *GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error)
 	return globalMeta, nil
 }
 
-func (gs *GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
+func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
 	if err != nil {
@@ -184,7 +189,7 @@ func (gs *GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) 
 	return nil
 }
 
-func (gs *GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
+func (gs GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	allocationBytes := store.Get(GetAllocationKey())
 	if allocationBytes == nil {
@@ -197,7 +202,7 @@ func (gs *GlobalStorage) GetGlobalAllocation(ctx sdk.Context) (*GlobalAllocation
 	return allocation, nil
 }
 
-func (gs *GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
+func (gs GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *GlobalAllocation) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	allocationBytes, err := gs.cdc.MarshalJSON(*allocation)
 	if err != nil {
@@ -207,7 +212,7 @@ func (gs *GlobalStorage) SetGlobalAllocation(ctx sdk.Context, allocation *Global
 	return nil
 }
 
-func (gs *GlobalStorage) GetInfraInternalAllocation(ctx sdk.Context) (*InfraInternalAllocation, sdk.Error) {
+func (gs GlobalStorage) GetInfraInternalAllocation(ctx sdk.Context) (*InfraInternalAllocation, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	allocationBytes := store.Get(GetAllocationKey())
 	if allocationBytes == nil {
@@ -220,7 +225,7 @@ func (gs *GlobalStorage) GetInfraInternalAllocation(ctx sdk.Context) (*InfraInte
 	return allocation, nil
 }
 
-func (gs *GlobalStorage) SetInfraInternalAllocation(ctx sdk.Context, allocation *InfraInternalAllocation) sdk.Error {
+func (gs GlobalStorage) SetInfraInternalAllocation(ctx sdk.Context, allocation *InfraInternalAllocation) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	allocationBytes, err := gs.cdc.MarshalJSON(*allocation)
 	if err != nil {
@@ -230,7 +235,7 @@ func (gs *GlobalStorage) SetInfraInternalAllocation(ctx sdk.Context, allocation 
 	return nil
 }
 
-func (gs *GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
+func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes := store.Get(GetInflationPoolKey())
 	if inflationPoolBytes == nil {
@@ -243,7 +248,7 @@ func (gs *GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.
 	return inflationPool, nil
 }
 
-func (gs *GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
+func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
 	if err != nil {
@@ -253,7 +258,7 @@ func (gs *GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *Inflat
 	return nil
 }
 
-func (gs *GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
+func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
 	if consumptionMetaBytes == nil {
@@ -266,7 +271,7 @@ func (gs *GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, 
 	return consumptionMeta, nil
 }
 
-func (gs *GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
+func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
 	if err != nil {
@@ -276,7 +281,7 @@ func (gs *GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *Co
 	return nil
 }
 
-func (gs *GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
+func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	tpsBytes := store.Get(GetTPSKey())
 	if tpsBytes == nil {
@@ -289,7 +294,7 @@ func (gs *GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	return tps, nil
 }
 
-func (gs *GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
+func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	tpsBytes, err := gs.cdc.MarshalJSON(*tps)
 	if err != nil {
@@ -299,7 +304,7 @@ func (gs *GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	return nil
 }
 
-func (gs *GlobalStorage) GetEvaluateOfContentValuePara(
+func (gs GlobalStorage) GetEvaluateOfContentValuePara(
 	ctx sdk.Context) (*EvaluateOfContentValuePara, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	paraBytes := store.Get(GetEvaluateOfContentValueKey())
@@ -313,7 +318,7 @@ func (gs *GlobalStorage) GetEvaluateOfContentValuePara(
 	return para, nil
 }
 
-func (gs *GlobalStorage) SetEvaluateOfContentValuePara(
+func (gs GlobalStorage) SetEvaluateOfContentValuePara(
 	ctx sdk.Context, para *EvaluateOfContentValuePara) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	paraBytes, err := gs.cdc.MarshalJSON(*para)

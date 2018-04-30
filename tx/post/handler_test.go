@@ -28,7 +28,7 @@ func TestHandlerCreatePost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
@@ -59,7 +59,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		ParentPostID: postID,
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
@@ -143,7 +143,7 @@ func TestHandlerRepost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
@@ -217,7 +217,7 @@ func TestHandlerPostLike(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	postMeta := model.PostMeta{
 		Created:                 ctx.BlockHeader().Time,
@@ -275,7 +275,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	postMeta := model.PostMeta{
 		Created:                 ctx.BlockHeader().Time,
@@ -333,7 +333,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user1,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
@@ -453,7 +453,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user1,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)

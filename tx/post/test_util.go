@@ -35,6 +35,11 @@ func setupTest(
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
 	postManager := NewPostManager(TestPostKVStoreKey)
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey)
+
+	cdc := globalManager.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
+
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, postManager, globalManager

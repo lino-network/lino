@@ -1,8 +1,7 @@
 package genesis
 
 import (
-	"encoding/json"
-
+	"github.com/cosmos/cosmos-sdk/wire"
 	types "github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -38,7 +37,9 @@ type GenesisInfraProvider struct {
 
 // generate json format config based on genesis state
 func GetGenesisJson(genesisState GenesisState) (string, error) {
-	output, err := json.MarshalIndent(genesisState, "", "\t")
+	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
+	output, err := cdc.MarshalJSON(genesisState)
 	if err != nil {
 		return "", err
 	}

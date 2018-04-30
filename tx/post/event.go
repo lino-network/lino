@@ -2,11 +2,19 @@ package post
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
 	dev "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
+
+func init() {
+	cdc := wire.NewCodec()
+
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
+}
 
 type RewardEvent struct {
 	PostAuthor types.AccountKey `json:"post_author"`

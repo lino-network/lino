@@ -16,6 +16,7 @@ type ValidatorStorage struct {
 
 func NewValidatorStorage(key sdk.StoreKey) ValidatorStorage {
 	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
 	vs := ValidatorStorage{
 		key: key,
 		cdc: cdc,

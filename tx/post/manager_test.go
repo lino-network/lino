@@ -41,7 +41,7 @@ func TestCreatePost(t *testing.T) {
 			Author:       cs.author,
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
-			Links:        []types.IDToURLMapping{},
+			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
@@ -102,7 +102,7 @@ func TestGetSourcePost(t *testing.T) {
 			ParentPostID: "",
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
-			Links:        []types.IDToURLMapping{},
+			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
