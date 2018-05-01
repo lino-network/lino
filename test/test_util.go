@@ -140,7 +140,7 @@ func CreateAccount(
 
 	transferMsg := acc.NewTransferMsg(
 		GenesisUser, types.LNO(numOfLino),
-		[]byte{}, acc.TransferToAddr(priv.PubKey().Address()))
+		"", acc.TransferToAddr(priv.PubKey().Address()))
 
 	SignCheckDeliver(t, lb, transferMsg, seq, true, GenesisPriv, time.Now().Unix())
 

@@ -25,12 +25,17 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		msg := tx.GetMsg()
 
+		stdTx, ok := tx.(sdk.StdTx)
+		if !ok {
+			return ctx, sdk.ErrInternal("tx must be sdk.StdTx").Result(), true
+		}
+
 		sequences := make([]int64, len(sigs))
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, sdk.StdFee{}, msg)
-
+		fee := stdTx.Fee
+		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, fee, msg)
 		msgType := msg.Type()
 
 		if msgType == types.RegisterRouterName {

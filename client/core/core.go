@@ -105,7 +105,6 @@ func (ctx CoreContext) SignAndBuild(name, passphrase string, msg sdk.Msg, cdc *w
 
 	// sign and build
 	bz := signMsg.Bytes()
-
 	sig, pubkey, err := keybase.Sign(name, passphrase, bz)
 	if err != nil {
 		return nil, err
@@ -132,10 +131,7 @@ func (ctx CoreContext) SignBuildBroadcast(name string, msg sdk.Msg, cdc *wire.Co
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(txBytes, string(txBytes))
-	return nil, nil
-	//return ctx.BroadcastTx(txBytes)
+	return ctx.BroadcastTx(txBytes)
 }
 
 // get passphrase from std input

@@ -21,7 +21,7 @@ func TestTransferToAccount(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "100")
 
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO("100"), []byte{}, acc.TransferToUser(newAccountName))
+		test.GenesisUser, types.LNO("100"), "", acc.TransferToUser(newAccountName))
 
 	test.SignCheckDeliver(t, lb, transferMsg, 1, true, test.GenesisPriv, baseTime)
 
@@ -38,7 +38,7 @@ func TestTransferToAddress(t *testing.T) {
 	baseTime := time.Now().Unix()
 
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO("100"), []byte{},
+		test.GenesisUser, types.LNO("100"), "",
 		acc.TransferToAddr(newAccountPriv.PubKey().Address()))
 	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisPriv, baseTime)
 
