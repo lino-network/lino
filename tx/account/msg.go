@@ -30,7 +30,7 @@ type TransferMsg struct {
 	ReceiverName types.AccountKey `json:"receiver_name"`
 	ReceiverAddr sdk.Address      `json:"receiver_addr"`
 	Amount       types.LNO        `json:"amount"`
-	Memo         []byte           `json:"memo"`
+	Memo         string           `json:"memo"`
 }
 
 type TransferOption func(*TransferMsg)
@@ -170,7 +170,7 @@ func (msg ClaimMsg) GetSigners() []sdk.Address {
 }
 
 // Transfer Msg Implementations
-func NewTransferMsg(sender string, amount types.LNO, memo []byte, setters ...TransferOption) TransferMsg {
+func NewTransferMsg(sender string, amount types.LNO, memo string, setters ...TransferOption) TransferMsg {
 	msg := &TransferMsg{
 		Sender: types.AccountKey(sender),
 		Amount: amount,

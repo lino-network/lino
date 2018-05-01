@@ -24,7 +24,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO("100"), []byte{}, acc.TransferToAddr(newAccountAddr))
+		test.GenesisUser, types.LNO("100"), "", acc.TransferToAddr(newAccountAddr))
 
 	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisPriv, baseTime)
 

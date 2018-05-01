@@ -77,7 +77,7 @@ func TestTransferMsg(t *testing.T) {
 	sender := "userA"
 	receiverName := "userB"
 	amount := types.LNO("1900")
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	msg := NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result := msg.ValidateBasic()

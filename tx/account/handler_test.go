@@ -158,7 +158,7 @@ func TestTransferNormal(t *testing.T) {
 
 	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	// let user1 transfers 200 to user2 (by username)
 	msg := NewTransferMsg("user1", l200, memo, TransferToUser("user2"))
@@ -212,7 +212,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 
 	am.AddCoin(ctx, types.AccountKey("user1"), c1500)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to user2
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"))
@@ -234,7 +234,7 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 	am.AddCoin(ctx, types.AccountKey("user2"), c1900)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
 
 	// let user1 transfers 2000 Lino to user2 (provide both name and address)
@@ -252,7 +252,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
