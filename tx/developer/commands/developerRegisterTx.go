@@ -13,19 +13,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	FlagDeveloper = "developer"
-	FlagDeposit   = "deposit"
-)
-
 func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "developer-register",
 		Short: "developer register",
 		RunE:  sendDeveloperRegisterTx(cdc),
 	}
-	cmd.Flags().String(FlagDeveloper, "", "developer name of this transaction")
-	cmd.Flags().String(FlagDeposit, "", "deposit of the registration")
+	cmd.Flags().String(client.FlagDeveloper, "", "developer name of this transaction")
+	cmd.Flags().String(client.FlagDeposit, "", "deposit of the registration")
 	return cmd
 }
 
@@ -33,11 +28,11 @@ func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		username := viper.GetString(FlagDeveloper)
-		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(viper.GetString(FlagDeposit)))
+		username := viper.GetString(client.FlagDeveloper)
+		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(viper.GetString(client.FlagDeposit)))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 		if signErr != nil {
 			return signErr
 		}

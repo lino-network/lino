@@ -18,7 +18,7 @@ func DeveloperRevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "developer revoke",
 		RunE:  sendDeveloperRevokeTx(cdc),
 	}
-	cmd.Flags().String(FlagDeveloper, "", "developer name of this transaction")
+	cmd.Flags().String(client.FlagDeveloper, "", "developer name of this transaction")
 	return cmd
 }
 
@@ -26,11 +26,11 @@ func DeveloperRevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendDeveloperRevokeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		username := viper.GetString(FlagDeveloper)
+		username := viper.GetString(client.FlagDeveloper)
 		msg := developer.NewDeveloperRevokeMsg(username)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 		if signErr != nil {
 			return signErr
 		}

@@ -13,11 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	FlagDonator = "donator"
-	FlagAmount  = "amount"
-)
-
 // DonateTxCmd will create a donate tx and sign it with the given key
 func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,10 +20,10 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "donate to a post",
 		RunE:  sendDonateTx(cdc),
 	}
-	cmd.Flags().String(FlagDonator, "", "donator of this transaction")
-	cmd.Flags().String(FlagAuthor, "", "author of the target post")
-	cmd.Flags().String(FlagPostID, "", "post id of the target post")
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
+	cmd.Flags().String(client.FlagDonator, "", "donator of this transaction")
+	cmd.Flags().String(client.FlagAuthor, "", "author of the target post")
+	cmd.Flags().String(client.FlagPostID, "", "post id of the target post")
+	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
 	return cmd
 }
 
@@ -36,14 +31,14 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		username := viper.GetString(FlagDonator)
-		author := viper.GetString(FlagAuthor)
-		postID := viper.GetString(FlagPostID)
+		username := viper.GetString(client.FlagDonator)
+		author := viper.GetString(client.FlagAuthor)
+		postID := viper.GetString(client.FlagPostID)
 		msg := post.NewDonateMsg(types.AccountKey(username),
-			types.LNO(viper.GetString(FlagAmount)), types.AccountKey(author), postID, "")
+			types.LNO(viper.GetString(client.FlagAmount)), types.AccountKey(author), postID, "")
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 		if signErr != nil {
 			return signErr
 		}
