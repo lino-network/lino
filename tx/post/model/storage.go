@@ -41,15 +41,6 @@ type PostStorage struct {
 // uses go-wire to (binary) encode and decode concrete Post
 func NewPostStorage(key sdk.StoreKey) PostStorage {
 	cdc := wire.NewCodec()
-
-	cdc.RegisterInterface((*PostInterface)(nil), nil)
-	cdc.RegisterConcrete(PostInfo{}, msgTypePost, nil)
-	cdc.RegisterConcrete(PostMeta{}, msgTypePostMeta, nil)
-	cdc.RegisterConcrete(Like{}, msgTypePostLike, nil)
-	cdc.RegisterConcrete(ReportOrUpvote{}, msgTypePostReportOrUpvote, nil)
-	cdc.RegisterConcrete(View{}, msgTypePostView, nil)
-	cdc.RegisterConcrete(Comment{}, msgTypePostComment, nil)
-	cdc.RegisterConcrete(Donation{}, msgTypePostDonations, nil)
 	wire.RegisterCrypto(cdc)
 
 	return PostStorage{
