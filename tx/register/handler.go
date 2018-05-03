@@ -24,7 +24,7 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
 	if err := am.CreateAccount(
-		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewActivePubKey,
+		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey,
 		types.NewCoin(100*types.Decimals)); err != nil {
 		return err.Result()
 	}

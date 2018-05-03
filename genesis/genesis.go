@@ -56,7 +56,7 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 func GetDefaultGenesis(masterKey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
 	transactionPriv := crypto.GenPrivKeyEd25519()
 	postPriv := crypto.GenPrivKeyEd25519()
-	fmt.Println("active private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 	totalLino := "10000000000"
