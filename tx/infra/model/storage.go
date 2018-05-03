@@ -18,6 +18,7 @@ type InfraProviderStorage struct {
 
 func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
 	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
 	return InfraProviderStorage{
 		key: key,
 		cdc: cdc,
