@@ -83,6 +83,13 @@ func (msg VoterDepositMsg) String() string {
 }
 
 func (msg VoterDepositMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.Active
+	}
 	return nil
 }
 
@@ -213,6 +220,13 @@ func (msg DelegateMsg) String() string {
 }
 
 func (msg DelegateMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.Active
+	}
 	return nil
 }
 

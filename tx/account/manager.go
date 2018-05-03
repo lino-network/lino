@@ -43,12 +43,13 @@ func (accManager AccountManager) IsAccountExist(
 
 // Implements types.AccountManager.
 func (accManager AccountManager) CreateAccount(
-	ctx sdk.Context, accKey types.AccountKey, pubkey crypto.PubKey,
+	ctx sdk.Context, accKey types.AccountKey,
+	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey,
 	registerFee types.Coin) sdk.Error {
 	if accManager.IsAccountExist(ctx, accKey) {
 		return ErrAccountAlreadyExists(accKey)
 	}
-	bank, err := accManager.accountStorage.GetBankFromAddress(ctx, pubkey.Address())
+	bank, err := accManager.accountStorage.GetBankFromAddress(ctx, masterKey.Address())
 	if err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
@@ -61,11 +62,12 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountInfo := &model.AccountInfo{
-		Username: accKey,
-		Created:  ctx.BlockHeader().Time,
-		PostKey:  pubkey,
-		OwnerKey: pubkey,
-		Address:  pubkey.Address(),
+		Username:       accKey,
+		Created:        ctx.BlockHeader().Time,
+		MasterKey:      masterKey,
+		TransactionKey: transactionKey,
+		PostKey:        postKey,
+		Address:        masterKey.Address(),
 	}
 	if err := accManager.accountStorage.SetInfo(ctx, accKey, accountInfo); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
@@ -73,7 +75,7 @@ func (accManager AccountManager) CreateAccount(
 
 	bank.Username = accKey
 	if err := accManager.accountStorage.SetBankFromAddress(
-		ctx, pubkey.Address(), bank); err != nil {
+		ctx, masterKey.Address(), bank); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
 
@@ -238,13 +240,22 @@ func (accManager AccountManager) GetBankAddress(
 	return accountInfo.Address, nil
 }
 
-func (accManager AccountManager) GetOwnerKey(
+func (accManager AccountManager) GetTransactionKey(
 	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
 	if err != nil {
-		return nil, ErrGetOwnerKey(accKey).TraceCause(err, "")
+		return nil, ErrGetTransactionKey(accKey).TraceCause(err, "")
 	}
-	return accountInfo.OwnerKey, nil
+	return accountInfo.TransactionKey, nil
+}
+
+func (accManager AccountManager) GetMasterKey(
+	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.accountStorage.GetInfo(ctx, accKey)
+	if err != nil {
+		return nil, ErrGetMasterKey(accKey).TraceCause(err, "")
+	}
+	return accountInfo.MasterKey, nil
 }
 
 func (accManager AccountManager) GetPostKey(
@@ -457,13 +468,29 @@ func (accManager AccountManager) AuthorizePermission(
 }
 
 func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
-	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey) (types.AccountKey, sdk.Error) {
-	pubKey, err := accManager.GetOwnerKey(ctx, me)
+	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey, permission int) (types.AccountKey, sdk.Error) {
+	// if permission is master, only master key can sign for the msg
+	if permission == types.Master {
+		pubKey, err := accManager.GetMasterKey(ctx, me)
+		if err != nil {
+			return "", err
+		}
+		if reflect.DeepEqual(pubKey, signKey) {
+			return me, nil
+		}
+		return "", ErrCheckAuthenticatePubKeyOwner(me)
+	}
+
+	// otherwize active key has the highest permission
+	pubKey, err := accManager.GetTransactionKey(ctx, me)
 	if err != nil {
 		return "", err
 	}
 	if reflect.DeepEqual(pubKey, signKey) {
 		return me, nil
+	}
+	if permission == types.Active {
+		return "", ErrCheckAuthenticatePubKeyOwner(me)
 	}
 	pubKey, err = accManager.GetPostKey(ctx, me)
 	if err != nil {

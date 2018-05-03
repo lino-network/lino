@@ -183,3 +183,12 @@ func TestReportOrUpvoteMsg(t *testing.T) {
 		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
 	}
 }
+
+func TestDonationMsgPermission(t *testing.T) {
+	msg := NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
+		types.AccountKey("author"), "postID", "")
+	permissionLevel := msg.Get(types.PermissionLevel)
+	permission, ok := permissionLevel.(int)
+	assert.Equal(t, permission, types.Active)
+	assert.Equal(t, ok, true)
+}

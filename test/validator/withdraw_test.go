@@ -14,26 +14,29 @@ import (
 
 // test normal revoke
 func TestValidatorRevoke(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
+	newAccountMasterPriv := crypto.GenPrivKeyEd25519()
+	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
+	newAccountPostPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, "5000")
+	test.CreateAccount(t, newAccountName, lb, 0,
+		newAccountMasterPriv, newAccountTransactionPriv, newAccountPostPriv, "5000")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("3000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
 		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey())
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 
 	valRevokeMsg := val.NewValidatorRevokeMsg(newAccountName)
-	test.SignCheckDeliver(t, lb, valRevokeMsg, 2, true, newAccountPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckAllValidatorList(t, newAccountName, false, lb)
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(500*types.Decimals))

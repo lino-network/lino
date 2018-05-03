@@ -107,5 +107,12 @@ func TestTransferMsg(t *testing.T) {
 	msg = NewTransferMsg(sender, amount, memo, TransferToUser(receiverName))
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, sdk.ErrInvalidCoins("LNO can't be less than lower bound"))
+}
 
+func TestTransferMsgPermission(t *testing.T) {
+	msg := NewTransferMsg("userA", types.LNO("1900"), "This is a memo!", TransferToUser("userB"))
+	permissionLevel := msg.Get(types.PermissionLevel)
+	permission, ok := permissionLevel.(int)
+	assert.Equal(t, permission, types.Active)
+	assert.Equal(t, ok, true)
 }

@@ -208,6 +208,13 @@ func (msg TransferMsg) String() string {
 }
 
 func (msg TransferMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.Active
+	}
 	return nil
 }
 

@@ -30,8 +30,8 @@ func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
 
-	postKey := types.GetPostKey(event.PostAuthor, event.PostID)
-	paneltyScore, err := pm.GetPenaltyScore(ctx, postKey)
+	permLink := types.GetPermLink(event.PostAuthor, event.PostID)
+	paneltyScore, err := pm.GetPenaltyScore(ctx, permLink)
 	if err != nil {
 		return err
 	}
@@ -45,10 +45,10 @@ func (event RewardEvent) Execute(
 	if !am.IsAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrDonatePostDoesntExist(postKey)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrDonatePostDoesntExist(permLink)
 	}
-	if err := pm.AddDonation(ctx, postKey, event.Consumer, reward); err != nil {
+	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward); err != nil {
 		return err
 	}
 	if err := am.AddIncomeAndReward(

@@ -58,7 +58,7 @@ func getContext(height int64) sdk.Context {
 }
 
 func checkPostKVStore(
-	t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
+	t *testing.T, ctx sdk.Context, postKey types.PermLink, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -67,7 +67,7 @@ func checkPostKVStore(
 	checkPostMeta(t, ctx, postKey, postMeta)
 }
 
-func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PostKey, postMeta model.PostMeta) {
+func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMeta model.PostMeta) {
 	// check post meta structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
@@ -80,7 +80,8 @@ func createTestAccount(
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	err = am.CreateAccount(ctx, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }

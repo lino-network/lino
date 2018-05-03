@@ -47,11 +47,15 @@ func ErrGetBankAddress(accKey types.AccountKey) sdk.Error {
 }
 
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("not authenticate public key match key provied by %v", accKey))
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v authenticate public key match failed", accKey))
 }
 
-func ErrGetOwnerKey(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v owner key failed", accKey))
+func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+}
+
+func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v master key failed", accKey))
 }
 
 func ErrGetPostKey(accKey types.AccountKey) sdk.Error {

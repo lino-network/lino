@@ -58,9 +58,10 @@ func getContext(height int64) sdk.Context {
 	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
 }
 
-func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKey {
+func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100*types.Decimals))
-	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	am.CreateAccount(ctx, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
 	return priv
 }

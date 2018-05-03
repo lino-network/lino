@@ -6,6 +6,7 @@ import (
 
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,9 +37,8 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		fee := stdTx.Fee
 		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, fee, msg)
-		msgType := msg.Type()
-
-		if msgType == types.RegisterRouterName {
+		_, ok = msg.(reg.RegisterMsg)
+		if ok {
 			// TODO(Lino): here we get the address :(
 			var signerAddrs = msg.GetSigners()
 
@@ -55,13 +55,17 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			return ctx, sdk.Result{}, false
 		}
 
+		permission, err := getPermissionLevel(msg)
+		if err != nil {
+			return ctx, err.Result(), true
+		}
 		signers := msg.GetSigners()
 		if len(sigs) < len(signers) {
 			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			accKey, err := am.CheckAuthenticatePubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey)
+			accKey, err := am.CheckAuthenticatePubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
@@ -95,4 +99,20 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		// TODO(Lino): verify application signature.
 		return ctx, sdk.Result{}, false
 	}
+}
+
+func getPermissionLevel(msg sdk.Msg) (int, sdk.Error) {
+	var permission int
+	var ok bool
+	permissionLevel := msg.Get(types.PermissionLevel)
+	if permissionLevel == nil {
+		return types.Posting, nil
+	} else {
+		permission, ok = permissionLevel.(int)
+		if !ok {
+			return 0, sdk.ErrUnauthorized(
+				fmt.Sprintf("permissionLevel is not define"))
+		}
+	}
+	return permission, nil
 }

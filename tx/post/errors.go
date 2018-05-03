@@ -7,112 +7,112 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func ErrGetRedistributionSplitRate(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v redistribution split rate failed", postKey))
+func ErrGetRedistributionSplitRate(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v redistribution split rate failed", permLink))
 }
 
-func ErrGetCreatedTime(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v created time failed", postKey))
+func ErrGetCreatedTime(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v created time failed", permLink))
 }
 
-func ErrGetRootSourcePost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v root source post failed", postKey))
+func ErrGetRootSourcePost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager got %v root source post failed", permLink))
 }
 
-func ErrSetRootSourcePost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager set %v root source post failed", postKey))
+func ErrSetRootSourcePost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager set %v root source post failed", permLink))
 }
 
-func ErrCreatePost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed", postKey))
+func ErrCreatePost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed", permLink))
 }
 
-func ErrCreatePostSourceInvalid(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed, source post is invalid", postKey))
+func ErrCreatePostSourceInvalid(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post manager created post %v failed, source post is invalid", permLink))
 }
 
-func ErrPostExist(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post %v already exist", postKey))
+func ErrPostExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("post %v already exist", permLink))
 }
 
-func ErrAddOrUpdateLikeToPost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update like to post %v failed", postKey))
+func ErrAddOrUpdateLikeToPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update like to post %v failed", permLink))
 }
 
-func ErrAddOrUpdateReportOrUpvoteToPost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", postKey))
+func ErrAddOrUpdateReportOrUpvoteToPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", permLink))
 }
 
-func ErrRevokeReportOrUpvoteToPost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("revoke report or upvote to post %v failed", postKey))
+func ErrRevokeReportOrUpvoteToPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("revoke report or upvote to post %v failed", permLink))
 }
 
-func ErrAddDonation(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", postKey))
+func ErrAddDonation(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", permLink))
 }
 
-func ErrGetPenaltyScore(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("get post %v penalty score failed", postKey))
+func ErrGetPenaltyScore(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("get post %v penalty score failed", permLink))
 }
 
 func ErrCreatePostAuthorNotFound(author types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post author %v not found", author))
 }
 
-func ErrCreateExistPost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post failed, post %v already exist", postKey))
+func ErrCreateExistPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post failed, post %v already exist", permLink))
 }
 
 func ErrLikePostUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, user %v not found", user))
 }
 
-func ErrLikeNonExistPost(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, target post %v not found", postKey))
+func ErrLikeNonExistPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, target post %v not found", permLink))
 }
 
-func ErrDonateFailed(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed", postKey))
+func ErrDonateFailed(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed", permLink))
 }
 
 func ErrDonateUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, user %v not found", user))
 }
 
-func ErrDonateAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, post %v author %v not found", postKey, author))
+func ErrDonateAuthorNotFound(permLink types.PermLink, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, post %v author %v not found", permLink, author))
 }
 
-func ErrDonatePostDoesntExist(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post doesn't exist", postKey))
+func ErrDonatePostDoesntExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post doesn't exist", permLink))
 }
 
-func ErrReportFailed(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed", postKey))
+func ErrReportFailed(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed", permLink))
 }
 
 func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, user %v not found", user))
 }
 
-func ErrReportAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, post %v author %v not found", postKey, author))
+func ErrReportAuthorNotFound(permLink types.PermLink, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, post %v author %v not found", permLink, author))
 }
 
-func ErrReportPostDoesntExist(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed, post doesn't exist", postKey))
+func ErrReportPostDoesntExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed, post doesn't exist", permLink))
 }
 
 func ErrUpvoteUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote failed, user %v not found", user))
 }
 
-func ErrUpvoteAuthorNotFound(postKey types.PostKey, author types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote failed, post %v author %v not found", postKey, author))
+func ErrUpvoteAuthorNotFound(permLink types.PermLink, author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote failed, post %v author %v not found", permLink, author))
 }
 
-func ErrUpvotePostDoesntExist(postKey types.PostKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote to post %v failed, post doesn't exist", postKey))
+func ErrUpvotePostDoesntExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote to post %v failed, post doesn't exist", permLink))
 }
 
 func ErrPostCreateNoPostID() sdk.Error {
@@ -127,7 +127,7 @@ func ErrCommentAndRepostError() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Post can't be comment and repost at the same time"))
 }
 
-func ErrCommentInvalidParent(parentPostKey types.PostKey) sdk.Error {
+func ErrCommentInvalidParent(parentPostKey types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("comment post parent %v doesn't exist", parentPostKey))
 }
 

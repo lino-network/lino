@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/vote/model"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,6 +38,14 @@ func TestVoterDepositMsg(t *testing.T) {
 		result := cs.voterDepositMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
+}
+
+func TestVoterDepositMsgPermission(t *testing.T) {
+	msg := NewVoterDepositMsg("user1", "1")
+	permissionLevel := msg.Get(types.PermissionLevel)
+	permission, ok := permissionLevel.(int)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, permission, types.Active)
 }
 
 func TestVoterWithdrawMsg(t *testing.T) {
@@ -86,6 +95,14 @@ func TestDelegateMsg(t *testing.T) {
 		result := cs.delegateMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
+}
+
+func TestDelegateMsgPermission(t *testing.T) {
+	msg := NewDelegateMsg("user1", "user2", "1")
+	permissionLevel := msg.Get(types.PermissionLevel)
+	permission, ok := permissionLevel.(int)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, permission, types.Active)
 }
 
 func TestRevokeDelegationMsg(t *testing.T) {
