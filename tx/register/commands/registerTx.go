@@ -12,7 +12,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/register"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
@@ -25,6 +24,7 @@ func RegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "Create and sign a register tx",
 		RunE:  sendRegisterTx(cdc),
 	}
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	return cmd
 }
 
@@ -32,7 +32,7 @@ func RegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		name := viper.GetString(sdkcli.FlagName)
+		name := viper.GetString(client.FlagUser)
 		pubKey, err := GetPubKey()
 
 		if err != nil {
@@ -47,7 +47,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := register.NewRegisterMsg(name, pubKey, transactionPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err
@@ -65,7 +65,7 @@ func GetPubKey() (pubKey crypto.PubKey, err error) {
 		return nil, err
 	}
 
-	name := viper.GetString(sdkcli.FlagName)
+	name := viper.GetString(client.FlagUser)
 	if name == "" {
 		return nil, errors.Errorf("must provide a name using --name")
 	}

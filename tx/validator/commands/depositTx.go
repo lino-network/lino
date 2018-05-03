@@ -10,15 +10,10 @@ import (
 	"github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/wire"
 	cfg "github.com/tendermint/tendermint/config"
 	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	cmn "github.com/tendermint/tmlibs/common"
-)
-
-const (
-	FlagAmount = "amount"
 )
 
 // DepositValidatorTxCmd will create a send tx and sign it with the given key
@@ -28,7 +23,8 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "register a validator",
 		RunE:  sendDepositValidatorTx(cdc),
 	}
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
+	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
 	return cmd
 }
 
@@ -36,7 +32,7 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		name := viper.GetString(sdkcli.FlagName)
+		name := viper.GetString(client.FlagUser)
 
 		config := cfg.DefaultConfig()
 		// private validator
@@ -50,10 +46,11 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		}
 
 		// // create the message
-		msg := validator.NewValidatorDepositMsg(name, types.LNO(viper.GetString(FlagAmount)), privValidator.PubKey)
+		msg := validator.NewValidatorDepositMsg(
+			name, types.LNO(viper.GetString(client.FlagAmount)), privValidator.PubKey)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

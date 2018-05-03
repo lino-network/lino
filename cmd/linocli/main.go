@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/client"
 	acccmd "github.com/lino-network/lino/tx/account/commands"
 	developercmd "github.com/lino-network/lino/tx/developer/commands"
 	infracmd "github.com/lino-network/lino/tx/infra/commands"
@@ -18,7 +19,6 @@ import (
 	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"

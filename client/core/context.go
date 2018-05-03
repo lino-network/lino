@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/tendermint/go-crypto"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -12,6 +13,7 @@ type CoreContext struct {
 	FromAddressName string
 	Sequence        int64
 	Client          rpcclient.Client
+	PrivKey         crypto.PrivKey
 }
 
 func (c CoreContext) WithChainID(chainID string) CoreContext {
@@ -46,5 +48,10 @@ func (c CoreContext) WithSequence(sequence int64) CoreContext {
 
 func (c CoreContext) WithClient(client rpcclient.Client) CoreContext {
 	c.Client = client
+	return c
+}
+
+func (c CoreContext) WithPrivKey(privKey crypto.PrivKey) CoreContext {
+	c.PrivKey = privKey
 	return c
 }

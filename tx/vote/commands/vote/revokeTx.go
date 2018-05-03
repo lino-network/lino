@@ -19,20 +19,20 @@ func RevokeVoterTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "revoke voter",
 		RunE:  sendRevokeVoterTx(cdc),
 	}
-	cmd.Flags().String(FlagUsername, "", "revoke voter")
+	cmd.Flags().String(client.FlagUser, "", "revoke voter")
 	return cmd
 }
 
 func sendRevokeVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		user := viper.GetString(FlagUsername)
+		user := viper.GetString(client.FlagUser)
 
 		// create the message
 		msg := vote.NewVoterRevokeMsg(user)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(user, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 
 		if signErr != nil {
 			return signErr

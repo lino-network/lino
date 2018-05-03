@@ -87,7 +87,8 @@ func (ctx CoreContext) GetFromAddress() (from sdk.Address, err error) {
 }
 
 // sign and build the transaction from the msg
-func (ctx CoreContext) SignAndBuild(name, passphrase string, msg sdk.Msg, cdc *wire.Codec) ([]byte, error) {
+func (ctx CoreContext) SignAndBuildFromKeyBase(
+	name, passphrase string, msg sdk.Msg, cdc *wire.Codec) ([]byte, error) {
 
 	// build the Sign Messsage from the Standard Message
 	chainID := ctx.ChainID
@@ -121,13 +122,52 @@ func (ctx CoreContext) SignAndBuild(name, passphrase string, msg sdk.Msg, cdc *w
 }
 
 // sign and build the transaction from the msg
-func (ctx CoreContext) SignBuildBroadcast(name string, msg sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
+func (ctx CoreContext) SignAndBuild(msg sdk.Msg, cdc *wire.Codec) ([]byte, error) {
+	// build the Sign Messsage from the Standard Message
+	chainID := ctx.ChainID
+	sequence := ctx.Sequence
+	signMsg := sdk.StdSignMsg{
+		ChainID:   chainID,
+		Sequences: []int64{sequence},
+		Msg:       msg,
+	}
+
+	// sign and build
+	bz := signMsg.Bytes()
+	if ctx.PrivKey == nil {
+		return nil, errors.New("Must provide private key")
+	}
+	sig := ctx.PrivKey.Sign(bz)
+	sigs := []sdk.StdSignature{{
+		PubKey:    ctx.PrivKey.PubKey(),
+		Signature: sig,
+		Sequence:  sequence,
+	}}
+
+	// marshal bytes
+	tx := sdk.NewStdTx(signMsg.Msg, signMsg.Fee, sigs)
+	return cdc.MarshalJSON(tx)
+}
+
+// sign and build the transaction from the msg
+func (ctx CoreContext) SignBuildBroadcast(
+	msg sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
+	txBytes, err := ctx.SignAndBuild(msg, cdc)
+	if err != nil {
+		return nil, err
+	}
+	return ctx.BroadcastTx(txBytes)
+}
+
+// sign and build the transaction from the msg
+func (ctx CoreContext) SignBuildBroadcastBasedOnKeyBase(
+	name string, msg sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
 	passphrase, err := ctx.GetPassphraseFromStdin(name)
 	if err != nil {
 		return nil, err
 	}
 
-	txBytes, err := ctx.SignAndBuild(name, passphrase, msg, cdc)
+	txBytes, err := ctx.SignAndBuildFromKeyBase(name, passphrase, msg, cdc)
 	if err != nil {
 		return nil, err
 	}

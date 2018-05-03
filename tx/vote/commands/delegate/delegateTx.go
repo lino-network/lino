@@ -12,12 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	FlagUsername = "username"
-	FlagVoter    = "voter"
-	FlagAmount   = "amount"
-)
-
 // DelegateTxCmd will create a send tx and sign it with the given key
 func DelegateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,22 +19,22 @@ func DelegateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "delegate power to a voter",
 		RunE:  sendDelegateTx(cdc),
 	}
-	cmd.Flags().String(FlagUsername, "", "delegate user")
-	cmd.Flags().String(FlagVoter, "", "voter to accept delegate")
-	cmd.Flags().String(FlagAmount, "", "amount to delegate")
+	cmd.Flags().String(client.FlagUser, "", "delegate user")
+	cmd.Flags().String(client.FlagVoter, "", "voter to accept delegate")
+	cmd.Flags().String(client.FlagAmount, "", "amount to delegate")
 	return cmd
 }
 
 func sendDelegateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		user := viper.GetString(FlagUsername)
-		voter := viper.GetString(FlagVoter)
+		user := viper.GetString(client.FlagUser)
+		voter := viper.GetString(client.FlagVoter)
 		// create the message
-		msg := vote.NewDelegateMsg(user, voter, viper.GetString(FlagAmount))
+		msg := vote.NewDelegateMsg(user, voter, viper.GetString(client.FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(user, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 
 		if signErr != nil {
 			return signErr

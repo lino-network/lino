@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -8,24 +9,32 @@ import (
 
 	"github.com/lino-network/lino/client/core"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/tendermint/go-crypto"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 func NewCoreContextFromViper() core.CoreContext {
-	nodeURI := viper.GetString(client.FlagNode)
+	nodeURI := viper.GetString(FlagNode)
 	var rpc rpcclient.Client
 	if nodeURI != "" {
 		rpc = rpcclient.NewHTTP(nodeURI, "/websocket")
 	}
+	var privKey crypto.PrivKey
+	privKeyStr := viper.GetString(FlagPrivKey)
+	if privKeyStr != "" {
+		privKeyBytes, _ := hex.DecodeString(viper.GetString(FlagPrivKey))
+		privKey, _ = crypto.PrivKeyFromBytes(privKeyBytes)
+	}
+
 	return core.CoreContext{
-		ChainID:         viper.GetString(client.FlagChainID),
-		Height:          viper.GetInt64(client.FlagHeight),
-		TrustNode:       viper.GetBool(client.FlagTrustNode),
-		FromAddressName: viper.GetString(client.FlagName),
+		ChainID:         viper.GetString(FlagChainID),
+		Height:          viper.GetInt64(FlagHeight),
+		TrustNode:       viper.GetBool(FlagTrustNode),
+		FromAddressName: viper.GetString(FlagName),
 		NodeURI:         nodeURI,
-		Sequence:        viper.GetInt64(client.FlagSequence),
+		Sequence:        viper.GetInt64(FlagSequence),
 		Client:          rpc,
+		PrivKey:         privKey,
 	}
 }
 

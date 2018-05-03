@@ -15,15 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// nolint
-const (
-	FlagSender       = "sender"
-	FlagReceiverName = "receiver_name"
-	FlagReceiverAddr = "receiver_addr"
-	FlagAmount       = "amount"
-	FlagMemo         = "memo"
-)
-
 // TransferTxCmd will create a transfer tx and sign it with the given key
 func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -31,11 +22,11 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "Create and sign a transfer tx",
 		RunE:  sendTransferTx(cdc),
 	}
-	cmd.Flags().String(FlagSender, "", "money sender")
-	cmd.Flags().String(FlagReceiverName, "", "receiver username")
-	cmd.Flags().String(FlagReceiverAddr, "", "receiver address")
-	cmd.Flags().String(FlagAmount, "", "amount to transfer")
-	cmd.Flags().String(FlagMemo, "", "memo msg")
+	cmd.Flags().String(client.FlagSender, "", "money sender")
+	cmd.Flags().String(client.FlagReceiverName, "", "receiver username")
+	cmd.Flags().String(client.FlagReceiverAddr, "", "receiver address")
+	cmd.Flags().String(client.FlagAmount, "", "amount to transfer")
+	cmd.Flags().String(client.FlagMemo, "", "memo msg")
 	return cmd
 }
 
@@ -43,17 +34,18 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		sender := viper.GetString(FlagSender)
-		receiverName := viper.GetString(FlagReceiverName)
-		receiverAddr, err := hex.DecodeString(viper.GetString(FlagReceiverAddr))
+		sender := viper.GetString(client.FlagSender)
+		receiverName := viper.GetString(client.FlagReceiverName)
+		receiverAddr, err := hex.DecodeString(viper.GetString(client.FlagReceiverAddr))
 		if err != nil {
 			return err
 		}
-		msg := acc.NewTransferMsg(sender, types.LNO(viper.GetString(FlagAmount)), viper.GetString(FlagMemo),
+		msg := acc.NewTransferMsg(
+			sender, types.LNO(viper.GetString(client.FlagAmount)), viper.GetString(client.FlagMemo),
 			acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(sender, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

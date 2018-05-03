@@ -12,10 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	FlagName = "name"
-)
-
 // WithdrawTxCmd will create a withdraw tx and sign it with the given key
 func WithdrawTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -23,18 +19,19 @@ func WithdrawTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "withdraw a validator",
 		RunE:  withDrawTx(cdc),
 	}
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	return cmd
 }
 
 func withDrawTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		name := viper.GetString(FlagName)
+		name := viper.GetString(client.FlagName)
 		// // create the message
-		msg := validator.NewValidatorWithdrawMsg(name, viper.GetString(FlagAmount))
+		msg := validator.NewValidatorWithdrawMsg(name, viper.GetString(client.FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 
 		if signErr != nil {
 			return signErr
