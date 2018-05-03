@@ -40,7 +40,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		}
 		transactionPriv := crypto.GenPrivKeyEd25519()
 		postPriv := crypto.GenPrivKeyEd25519()
-		fmt.Println("active private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
