@@ -213,7 +213,7 @@ func (msg TransferMsg) Get(key interface{}) (value interface{}) {
 		return nil
 	}
 	if keyStr == types.PermissionLevel {
-		return types.Active
+		return types.TransactionPermission
 	}
 	return nil
 }

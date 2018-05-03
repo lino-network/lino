@@ -16,6 +16,9 @@ type PermLink string
 // ProposalKey key format in KVStore
 type ProposalKey string
 
+// user permission type to present different permission for different msg
+type Permission int
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPermLink(author AccountKey, postID string) PermLink {
 	return PermLink(string(author) + "#" + postID)

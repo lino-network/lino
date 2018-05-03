@@ -28,9 +28,9 @@ const (
 	PermissionLevel = "permission_level"
 
 	// Different permission level for msg
-	Posting = 0
-	Active  = 1
-	Master  = 2
+	PostPermission        = Permission(0)
+	TransactionPermission = Permission(1)
+	MasterPermission      = Permission(2)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

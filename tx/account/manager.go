@@ -468,9 +468,10 @@ func (accManager AccountManager) AuthorizePermission(
 }
 
 func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
-	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey, permission int) (types.AccountKey, sdk.Error) {
+	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
+	permission types.Permission) (types.AccountKey, sdk.Error) {
 	// if permission is master, only master key can sign for the msg
-	if permission == types.Master {
+	if permission == types.MasterPermission {
 		pubKey, err := accManager.GetMasterKey(ctx, me)
 		if err != nil {
 			return "", err
@@ -478,10 +479,10 @@ func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
 		if reflect.DeepEqual(pubKey, signKey) {
 			return me, nil
 		}
-		return "", ErrCheckAuthenticatePubKeyOwner(me)
+		return "", ErrCheckMasterKey()
 	}
 
-	// otherwize active key has the highest permission
+	// otherwise transaction key has the highest permission
 	pubKey, err := accManager.GetTransactionKey(ctx, me)
 	if err != nil {
 		return "", err
@@ -489,8 +490,8 @@ func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
 	if reflect.DeepEqual(pubKey, signKey) {
 		return me, nil
 	}
-	if permission == types.Active {
-		return "", ErrCheckAuthenticatePubKeyOwner(me)
+	if permission == types.TransactionPermission {
+		return "", ErrCheckTransactionKey()
 	}
 	pubKey, err = accManager.GetPostKey(ctx, me)
 	if err != nil {

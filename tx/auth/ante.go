@@ -101,14 +101,14 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 	}
 }
 
-func getPermissionLevel(msg sdk.Msg) (int, sdk.Error) {
-	var permission int
+func getPermissionLevel(msg sdk.Msg) (types.Permission, sdk.Error) {
+	var permission types.Permission
 	var ok bool
 	permissionLevel := msg.Get(types.PermissionLevel)
 	if permissionLevel == nil {
-		return types.Posting, nil
+		return types.PostPermission, nil
 	} else {
-		permission, ok = permissionLevel.(int)
+		permission, ok = permissionLevel.(types.Permission)
 		if !ok {
 			return 0, sdk.ErrUnauthorized(
 				fmt.Sprintf("permissionLevel is not define"))

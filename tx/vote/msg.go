@@ -88,7 +88,7 @@ func (msg VoterDepositMsg) Get(key interface{}) (value interface{}) {
 		return nil
 	}
 	if keyStr == types.PermissionLevel {
-		return types.Active
+		return types.TransactionPermission
 	}
 	return nil
 }
@@ -225,7 +225,7 @@ func (msg DelegateMsg) Get(key interface{}) (value interface{}) {
 		return nil
 	}
 	if keyStr == types.PermissionLevel {
-		return types.Active
+		return types.TransactionPermission
 	}
 	return nil
 }

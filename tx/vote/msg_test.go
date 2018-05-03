@@ -43,9 +43,9 @@ func TestVoterDepositMsg(t *testing.T) {
 func TestVoterDepositMsgPermission(t *testing.T) {
 	msg := NewVoterDepositMsg("user1", "1")
 	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(int)
+	permission, ok := permissionLevel.(types.Permission)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, permission, types.Active)
+	assert.Equal(t, permission, types.TransactionPermission)
 }
 
 func TestVoterWithdrawMsg(t *testing.T) {
@@ -100,9 +100,9 @@ func TestDelegateMsg(t *testing.T) {
 func TestDelegateMsgPermission(t *testing.T) {
 	msg := NewDelegateMsg("user1", "user2", "1")
 	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(int)
+	permission, ok := permissionLevel.(types.Permission)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, permission, types.Active)
+	assert.Equal(t, permission, types.TransactionPermission)
 }
 
 func TestRevokeDelegationMsg(t *testing.T) {

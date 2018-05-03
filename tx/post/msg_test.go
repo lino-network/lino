@@ -188,7 +188,7 @@ func TestDonationMsgPermission(t *testing.T) {
 	msg := NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
 		types.AccountKey("author"), "postID", "")
 	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(int)
-	assert.Equal(t, permission, types.Active)
+	permission, ok := permissionLevel.(types.Permission)
+	assert.Equal(t, permission, types.TransactionPermission)
 	assert.Equal(t, ok, true)
 }

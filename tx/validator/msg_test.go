@@ -43,7 +43,7 @@ func TestValidatorDepositPermission(t *testing.T) {
 	priv := crypto.GenPrivKeyEd25519()
 	msg := NewValidatorDepositMsg("user1", "1", priv.PubKey())
 	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(int)
+	permission, ok := permissionLevel.(types.Permission)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, permission, types.Active)
+	assert.Equal(t, permission, types.TransactionPermission)
 }

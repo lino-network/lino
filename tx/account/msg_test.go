@@ -112,7 +112,7 @@ func TestTransferMsg(t *testing.T) {
 func TestTransferMsgPermission(t *testing.T) {
 	msg := NewTransferMsg("userA", types.LNO("1900"), "This is a memo!", TransferToUser("userB"))
 	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(int)
-	assert.Equal(t, permission, types.Active)
+	permission, ok := permissionLevel.(types.Permission)
+	assert.Equal(t, permission, types.TransactionPermission)
 	assert.Equal(t, ok, true)
 }

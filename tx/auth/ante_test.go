@@ -153,8 +153,8 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 
 	// msg and signatures
 	var tx sdk.Tx
-	msg := reg.NewRegisterMsg(
-		"test", priv1.PubKey(), priv1.Generate(1).PubKey(), priv1.Generate(2).PubKey())
+	msg := reg.NewRegisterMsg("test",
+		priv1.PubKey(), crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey())
 
 	// test valid transaction
 	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
