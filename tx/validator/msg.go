@@ -55,6 +55,13 @@ func (msg ValidatorDepositMsg) String() string {
 }
 
 func (msg ValidatorDepositMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

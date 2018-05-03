@@ -33,11 +33,12 @@ func TestAccountInfo(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username: types.AccountKey("test"),
-		Created:  0,
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
+		Username:       types.AccountKey("test"),
+		Created:        0,
+		MasterKey:      priv.PubKey(),
+		TransactionKey: priv.Generate(1).PubKey(),
+		PostKey:        priv.Generate(2).PubKey(),
+		Address:        priv.PubKey().Address(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -62,11 +63,12 @@ func TestAccountBank(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username: types.AccountKey("test"),
-		Created:  0,
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
+		Username:       types.AccountKey("test"),
+		Created:        0,
+		MasterKey:      priv.PubKey(),
+		TransactionKey: priv.Generate(1).PubKey(),
+		PostKey:        priv.Generate(2).PubKey(),
+		Address:        priv.PubKey().Address(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)

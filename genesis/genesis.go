@@ -1,6 +1,10 @@
 package genesis
 
 import (
+	"encoding/hex"
+	"fmt"
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/wire"
 	types "github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -17,11 +21,13 @@ type GenesisState struct {
 // genesis account will get coin to the address and register user
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
-	Name        string        `json:"name"`
-	Lino        types.LNO     `json:"lino"`
-	PubKey      crypto.PubKey `json:"pub_key"`
-	IsValidator bool          `json:"is_validator"`
-	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
+	Name           string        `json:"name"`
+	Lino           types.LNO     `json:"lino"`
+	MasterKey      crypto.PubKey `json:"master_key"`
+	TransactionKey crypto.PubKey `json:"transaction_key"`
+	PostKey        crypto.PubKey `json:"post_key"`
+	IsValidator    bool          `json:"is_validator"`
+	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
 }
 
 // register developer in genesis phase
@@ -47,14 +53,21 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 }
 
 // default genesis file, only have one genesis account
-func GetDefaultGenesis(pubkey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
+func GetDefaultGenesis(masterKey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
+	transactionPriv := crypto.GenPrivKeyEd25519()
+	postPriv := crypto.GenPrivKeyEd25519()
+	fmt.Println("active private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
+
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
-		Name:        "Lino",
-		Lino:        totalLino,
-		PubKey:      pubkey,
-		IsValidator: true,
-		ValPubKey:   validatorPubKey,
+		Name:           "Lino",
+		Lino:           totalLino,
+		MasterKey:      masterKey,
+		TransactionKey: transactionPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
+		IsValidator:    true,
+		ValPubKey:      validatorPubKey,
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:    "Lino",

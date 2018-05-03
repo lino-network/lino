@@ -2,37 +2,38 @@ package register
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
 	"testing"
+
+	"github.com/tendermint/go-crypto"
 )
 
 func TestRegisterUsername(t *testing.T) {
 	register := "register"
 	priv := crypto.GenPrivKeyEd25519()
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result := msg.ValidateBasic()
 	assert.Nil(t, result)
 
 	// Register Username length invalid
 	register = "re"
-	msg = NewRegisterMsg(register, priv.PubKey())
+	msg = NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, ErrInvalidUsername("illeagle length"))
 
 	register = "registerregisterregis"
-	msg = NewRegisterMsg(register, priv.PubKey())
+	msg = NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result = msg.ValidateBasic()
 	assert.Equal(t, result, ErrInvalidUsername("illeagle length"))
 
 	// Minimum Length
 	register = "reg"
-	msg = NewRegisterMsg(register, priv.PubKey())
+	msg = NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result = msg.ValidateBasic()
 	assert.Nil(t, result)
 
 	// Maximum Length
 	register = "registerregisterregi"
-	msg = NewRegisterMsg(register, priv.PubKey())
+	msg = NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result = msg.ValidateBasic()
 	assert.Nil(t, result)
 
@@ -41,7 +42,7 @@ func TestRegisterUsername(t *testing.T) {
 		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register",
 		"reg=ister", "register^", "register.", "reg$ister,"}
 	for _, register := range registerList {
-		msg = NewRegisterMsg(register, priv.PubKey())
+		msg = NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 		result = msg.ValidateBasic()
 		assert.Equal(t, result, ErrInvalidUsername("illeagle input"))
 	}

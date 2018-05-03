@@ -26,9 +26,10 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 	transferMsg := acc.NewTransferMsg(
 		test.GenesisUser, types.LNO("100"), "", acc.TransferToAddr(newAccountAddr))
 
-	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisPriv, baseTime)
+	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
-	registerMsg := reg.NewRegisterMsg(newAccountName, newAccountPriv.PubKey())
+	registerMsg := reg.NewRegisterMsg(newAccountName,
+		newAccountPriv.PubKey(), newAccountPriv.Generate(1).PubKey(), newAccountPriv.Generate(2).PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, newAccountPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(100*types.Decimals))
@@ -43,7 +44,8 @@ func TestRegisterAccountFailed(t *testing.T) {
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
-	registerMsg := reg.NewRegisterMsg(newAccountName, newAccountPriv.PubKey())
+	registerMsg := reg.NewRegisterMsg(newAccountName,
+		newAccountPriv.PubKey(), newAccountPriv.Generate(1).PubKey(), newAccountPriv.Generate(2).PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, false, newAccountPriv, baseTime)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})

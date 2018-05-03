@@ -191,6 +191,13 @@ func (msg LikeMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 func (msg DonateMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {

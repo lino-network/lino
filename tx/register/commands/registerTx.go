@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -36,9 +38,13 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
+		transactionPriv := crypto.GenPrivKeyEd25519()
+		postPriv := crypto.GenPrivKeyEd25519()
+		fmt.Println("active private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
-		msg := register.NewRegisterMsg(name, *pubKey)
+		msg := register.NewRegisterMsg(name, pubKey, transactionPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
@@ -53,7 +59,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 }
 
 // Get the public key from the name flag
-func GetPubKey() (pubKey *crypto.PubKey, err error) {
+func GetPubKey() (pubKey crypto.PubKey, err error) {
 	keybase, err := keys.GetKeyBase()
 	if err != nil {
 		return nil, err
@@ -69,5 +75,5 @@ func GetPubKey() (pubKey *crypto.PubKey, err error) {
 		return nil, errors.Errorf("No key for: %s", name)
 	}
 
-	return &info.PubKey, nil
+	return info.PubKey, nil
 }

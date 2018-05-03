@@ -23,6 +23,15 @@ const (
 	InfraRouterName     = "infra"
 	DeveloperRouterName = "developer"
 
+	// Msg key
+	IsRegister      = "is_register"
+	PermissionLevel = "permission_level"
+
+	// Different permission level for msg
+	PostPermission        = Permission(0)
+	TransactionPermission = Permission(1)
+	MasterPermission      = Permission(2)
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 

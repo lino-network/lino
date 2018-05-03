@@ -10,15 +10,19 @@ import (
 )
 
 func TestGetGenesisJson(t *testing.T) {
-	genesisAccPriv := crypto.GenPrivKeyEd25519()
+	masterPriv := crypto.GenPrivKeyEd25519()
+	transactionPriv := crypto.GenPrivKeyEd25519()
+	postPriv := crypto.GenPrivKeyEd25519()
 	validatorPriv := crypto.GenPrivKeyEd25519()
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
-		Name:        "Lino",
-		Lino:        totalLino,
-		PubKey:      genesisAccPriv.PubKey(),
-		IsValidator: true,
-		ValPubKey:   validatorPriv.PubKey(),
+		Name:           "Lino",
+		Lino:           totalLino,
+		MasterKey:      masterPriv.PubKey(),
+		TransactionKey: transactionPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
+		IsValidator:    true,
+		ValPubKey:      validatorPriv.PubKey(),
 	}
 
 	genesisAppDeveloper := GenesisAppDeveloper{

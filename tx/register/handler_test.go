@@ -31,7 +31,7 @@ func setupTest(t *testing.T) (acc.AccountManager, sdk.Context, sdk.Handler) {
 	return am, ctx, handler
 }
 
-func createBank(t *testing.T, ctx sdk.Context, am acc.AccountManager, coin types.Coin) crypto.PrivKey {
+func createBank(t *testing.T, ctx sdk.Context, am acc.AccountManager, coin types.Coin) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin)
 	assert.Nil(t, err)
@@ -43,7 +43,7 @@ func TestRegisterBankDoesntExist(t *testing.T) {
 	_, ctx, handler := setupTest(t)
 	priv := crypto.GenPrivKeyEd25519()
 
-	msg := NewRegisterMsg("register", priv.PubKey())
+	msg := NewRegisterMsg("register", priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, acc.ErrAccountCreateFailed(types.AccountKey("register")).Result().Code, result.Code)
 }
@@ -55,7 +55,7 @@ func TestRegister(t *testing.T) {
 
 	assert.False(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -67,7 +67,7 @@ func TestDuplicateRegister(t *testing.T) {
 	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
 	register := "register"
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 	result = handler(ctx, msg)
@@ -80,10 +80,10 @@ func TestBankReRegister(t *testing.T) {
 	register := "register"
 	newRegister := "newRegister"
 
-	msg := NewRegisterMsg(register, priv.PubKey())
+	msg := NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	msg = NewRegisterMsg(newRegister, priv.PubKey())
+	msg = NewRegisterMsg(newRegister, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	result = handler(ctx, msg)
 	assert.Equal(t, result.Code, acc.ErrBankAlreadyRegistered().Result().Code)
 }

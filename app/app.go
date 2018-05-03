@@ -111,25 +111,26 @@ func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 
 	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(register.RegisterMsg{}, "register/register", nil)
-	cdc.RegisterConcrete(acc.FollowMsg{}, "account/follow", nil)
-	cdc.RegisterConcrete(acc.UnfollowMsg{}, "account/unfollow", nil)
-	cdc.RegisterConcrete(acc.TransferMsg{}, "account/transfer", nil)
-	cdc.RegisterConcrete(post.CreatePostMsg{}, "post/post", nil)
-	cdc.RegisterConcrete(post.LikeMsg{}, "post/like", nil)
-	cdc.RegisterConcrete(post.DonateMsg{}, "post/donate", nil)
-	cdc.RegisterConcrete(val.ValidatorDepositMsg{}, "post/deposit", nil)
-	cdc.RegisterConcrete(val.ValidatorWithdrawMsg{}, "post/withdraw", nil)
-	cdc.RegisterConcrete(val.ValidatorRevokeMsg{}, "post/revoke", nil)
-	cdc.RegisterConcrete(acc.ClaimMsg{}, "account/claim", nil)
+	cdc.RegisterConcrete(register.RegisterMsg{}, "register", nil)
+	cdc.RegisterConcrete(acc.FollowMsg{}, "follow", nil)
+	cdc.RegisterConcrete(acc.UnfollowMsg{}, "unfollow", nil)
+	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
+	cdc.RegisterConcrete(acc.ClaimMsg{}, "claim", nil)
+	cdc.RegisterConcrete(post.CreatePostMsg{}, "post", nil)
+	cdc.RegisterConcrete(post.LikeMsg{}, "like", nil)
+	cdc.RegisterConcrete(post.DonateMsg{}, "donate", nil)
+	cdc.RegisterConcrete(post.ReportOrUpvoteMsg{}, "reportOrUpvote", nil)
+	cdc.RegisterConcrete(val.ValidatorDepositMsg{}, "val/deposit", nil)
+	cdc.RegisterConcrete(val.ValidatorWithdrawMsg{}, "val/withdraw", nil)
+	cdc.RegisterConcrete(val.ValidatorRevokeMsg{}, "val/revoke", nil)
 	cdc.RegisterConcrete(vote.VoterDepositMsg{}, "vote/deposit", nil)
 	cdc.RegisterConcrete(vote.VoterRevokeMsg{}, "vote/revoke", nil)
 	cdc.RegisterConcrete(vote.VoterWithdrawMsg{}, "vote/withdraw", nil)
-	cdc.RegisterConcrete(vote.DelegateMsg{}, "vote/delegate", nil)
-	cdc.RegisterConcrete(vote.DelegatorWithdrawMsg{}, "vote/delegate/withdraw", nil)
-	cdc.RegisterConcrete(vote.RevokeDelegationMsg{}, "vote/delegate/revoke", nil)
-	cdc.RegisterConcrete(vote.VoteMsg{}, "vote/vote", nil)
-	cdc.RegisterConcrete(vote.CreateProposalMsg{}, "vote/create/proposal", nil)
+	cdc.RegisterConcrete(vote.DelegateMsg{}, "delegate", nil)
+	cdc.RegisterConcrete(vote.DelegatorWithdrawMsg{}, "delegate/withdraw", nil)
+	cdc.RegisterConcrete(vote.RevokeDelegationMsg{}, "delegate/revoke", nil)
+	cdc.RegisterConcrete(vote.VoteMsg{}, "vote", nil)
+	cdc.RegisterConcrete(vote.CreateProposalMsg{}, "create/proposal", nil)
 	cdc.RegisterConcrete(developer.DeveloperRegisterMsg{}, "developer/register", nil)
 	cdc.RegisterConcrete(developer.DeveloperRevokeMsg{}, "developer/revoke", nil)
 	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
@@ -212,13 +213,15 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if setErr := lb.accountManager.AddCoinToAddress(ctx, ga.PubKey.Address(), coin); setErr != nil {
+	if setErr := lb.accountManager.AddCoinToAddress(ctx, ga.MasterKey.Address(), coin); setErr != nil {
 		panic(sdk.ErrGenesisParse("set genesis bank failed"))
 	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
 		panic(sdk.ErrGenesisParse("genesis account already exist"))
 	}
-	if err := lb.accountManager.CreateAccount(ctx, types.AccountKey(ga.Name), ga.PubKey, types.NewCoin(0)); err != nil {
+	if err := lb.accountManager.CreateAccount(
+		ctx, types.AccountKey(ga.Name),
+		ga.MasterKey, ga.TransactionKey, ga.PostKey, types.NewCoin(0)); err != nil {
 		panic(err)
 	}
 	if ga.IsValidator {

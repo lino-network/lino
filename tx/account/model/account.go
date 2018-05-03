@@ -11,11 +11,12 @@ type Memo uint64
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Username types.AccountKey `json:"username"`
-	Created  int64            `json:"created"`
-	PostKey  crypto.PubKey    `json:"post_key"`
-	OwnerKey crypto.PubKey    `json:"owner_key"`
-	Address  sdk.Address      `json:"address"`
+	Username       types.AccountKey `json:"username"`
+	Created        int64            `json:"created"`
+	MasterKey      crypto.PubKey    `json:"master_key"`
+	TransactionKey crypto.PubKey    `json:"transaction_key"`
+	PostKey        crypto.PubKey    `json:"post_key"`
+	Address        sdk.Address      `json:"address"`
 }
 
 // AccountBank uses Address as the key instead of Username

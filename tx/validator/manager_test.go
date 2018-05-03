@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
+	"github.com/tendermint/go-crypto"
 )
 
 func TestAbsentValidator(t *testing.T) {
@@ -18,6 +19,7 @@ func TestAbsentValidator(t *testing.T) {
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
+	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
 		am.AddCoin(ctx, users[i], c2000)
@@ -28,8 +30,8 @@ func TestAbsentValidator(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
-		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, ownerKey)
+		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i])
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -68,8 +70,7 @@ func TestAbsentValidator(t *testing.T) {
 	byzantineList := []int32{3, 8, 14}
 	byzantines := []abci.Evidence{}
 	for _, idx := range byzantineList {
-		ownerKey, _ := am.GetOwnerKey(ctx, users[idx])
-		byzantines = append(byzantines, abci.Evidence{PubKey: ownerKey.Bytes()})
+		byzantines = append(byzantines, abci.Evidence{PubKey: valKeys[idx].Bytes()})
 	}
 	err = valManager.FireIncompetentValidator(ctx, byzantines, gm)
 	assert.Nil(t, err)
@@ -91,6 +92,7 @@ func TestGetOncallList(t *testing.T) {
 
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
+	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
 		am.AddCoin(ctx, users[i], c2000)
@@ -100,8 +102,8 @@ func TestGetOncallList(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
-		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, ownerKey)
+		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i])
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -128,12 +130,12 @@ func TestPunishmentBasic(t *testing.T) {
 	voteManager.AddVoter(ctx, types.AccountKey("user2"), c8000)
 
 	// let both users register as validator
-	ownerKey, _ := am.GetOwnerKey(ctx, user1)
-	msg := NewValidatorDepositMsg("user1", l1100, ownerKey)
+	valKey := crypto.GenPrivKeyEd25519().PubKey()
+	msg := NewValidatorDepositMsg("user1", l1100, valKey)
 	handler(ctx, msg)
 
-	ownerKey2, _ := am.GetOwnerKey(ctx, user1)
-	msg2 := NewValidatorDepositMsg("user2", l1600, ownerKey2)
+	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
+	msg2 := NewValidatorDepositMsg("user2", l1600, valKey2)
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
@@ -163,6 +165,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 	// create 21 test users
 	users := make([]types.AccountKey, 24)
+	valKeys := make([]crypto.PubKey, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
 		am.AddCoin(ctx, users[i], c8000)
@@ -170,8 +173,8 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		num := (i+1)*100 + 1000
 		deposit := types.LNO(strconv.Itoa(num))
-		ownerKey, _ := am.GetOwnerKey(ctx, users[i])
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, ownerKey)
+		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i])
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -199,10 +202,10 @@ func TestGetUpdateValidatorList(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
 
-	key1, _ := am.GetOwnerKey(ctx, user1)
-	key2, _ := am.GetOwnerKey(ctx, user2)
-	valManager.RegisterValidator(ctx, user1, key1.Bytes(), types.ValidatorMinCommitingDeposit)
-	valManager.RegisterValidator(ctx, user2, key2.Bytes(), types.ValidatorMinCommitingDeposit)
+	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
+	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
+	valManager.RegisterValidator(ctx, user1, valKey1.Bytes(), types.ValidatorMinCommitingDeposit)
+	valManager.RegisterValidator(ctx, user2, valKey2.Bytes(), types.ValidatorMinCommitingDeposit)
 
 	val1, _ := valManager.storage.GetValidator(ctx, user1)
 	val2, _ := valManager.storage.GetValidator(ctx, user2)
@@ -243,8 +246,7 @@ func TestGetUpdateValidatorList(t *testing.T) {
 func TestIsLegalWithdraw(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	key1, _ := am.GetOwnerKey(ctx, user1)
-	valManager.RegisterValidator(ctx, user1, key1.Bytes(),
+	valManager.RegisterValidator(ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
 		types.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)))
 
 	cases := []struct {

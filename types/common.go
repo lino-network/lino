@@ -11,14 +11,17 @@ var AbsentVoteLimitation = 100
 type AccountKey string
 
 // PostKey key format in KVStore
-type PostKey string
+type PermLink string
 
 // ProposalKey key format in KVStore
 type ProposalKey string
 
+// user permission type to present different permission for different msg
+type Permission int
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
-func GetPostKey(author AccountKey, postID string) PostKey {
-	return PostKey(string(author) + "#" + postID)
+func GetPermLink(author AccountKey, postID string) PermLink {
+	return PermLink(string(author) + "#" + postID)
 }
 
 // Donation struct, only used in Donation
