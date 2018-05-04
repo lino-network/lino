@@ -43,9 +43,9 @@ func (im InfraManager) RegisterInfraProvider(ctx sdk.Context, username types.Acc
 }
 
 func (im InfraManager) AddToInfraProviderList(ctx sdk.Context, username types.AccountKey) sdk.Error {
-	lst, getErr := im.storage.GetInfraProviderList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := im.storage.GetInfraProviderList(ctx)
+	if err != nil {
+		return err
 	}
 
 	// already in the list
@@ -60,9 +60,9 @@ func (im InfraManager) AddToInfraProviderList(ctx sdk.Context, username types.Ac
 }
 
 func (im InfraManager) RemoveFromProviderList(ctx sdk.Context, username types.AccountKey) sdk.Error {
-	lst, getErr := im.storage.GetInfraProviderList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := im.storage.GetInfraProviderList(ctx)
+	if err != nil {
+		return err
 	}
 	// not in the list
 	idx := FindAccountInList(username, lst.AllInfraProviders)
@@ -77,9 +77,9 @@ func (im InfraManager) RemoveFromProviderList(ctx sdk.Context, username types.Ac
 }
 
 func (im *InfraManager) ReportUsage(ctx sdk.Context, username types.AccountKey, usage int64) sdk.Error {
-	provider, getErr := im.storage.GetInfraProvider(ctx, username)
-	if getErr != nil {
-		return getErr
+	provider, err := im.storage.GetInfraProvider(ctx, username)
+	if err != nil {
+		return err
 	}
 	provider.Usage += usage
 	if err := im.storage.SetInfraProvider(ctx, username, provider); err != nil {
@@ -89,17 +89,17 @@ func (im *InfraManager) ReportUsage(ctx sdk.Context, username types.AccountKey, 
 }
 
 func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
-	lst, getErr := im.storage.GetInfraProviderList(ctx)
-	if getErr != nil {
-		return sdk.NewRat(0), getErr
+	lst, err := im.storage.GetInfraProviderList(ctx)
+	if err != nil {
+		return sdk.NewRat(0), err
 	}
 
 	totalUsage := int64(0)
 	myUsage := int64(0)
 	for _, providerName := range lst.AllInfraProviders {
-		curProvider, getErr := im.storage.GetInfraProvider(ctx, providerName)
-		if getErr != nil {
-			return sdk.NewRat(0), getErr
+		curProvider, err := im.storage.GetInfraProvider(ctx, providerName)
+		if err != nil {
+			return sdk.NewRat(0), err
 		}
 		totalUsage += curProvider.Usage
 		if curProvider.Username == username {
@@ -117,15 +117,15 @@ func (im *InfraManager) GetInfraProviderList(ctx sdk.Context) (*model.InfraProvi
 }
 
 func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
-	lst, getErr := im.storage.GetInfraProviderList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := im.storage.GetInfraProviderList(ctx)
+	if err != nil {
+		return err
 	}
 
 	for _, providerName := range lst.AllInfraProviders {
-		curProvider, getErr := im.storage.GetInfraProvider(ctx, providerName)
-		if getErr != nil {
-			return getErr
+		curProvider, err := im.storage.GetInfraProvider(ctx, providerName)
+		if err != nil {
+			return err
 		}
 		curProvider.Usage = 0
 		if err := im.storage.SetInfraProvider(ctx, providerName, curProvider); err != nil {

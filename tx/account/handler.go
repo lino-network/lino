@@ -92,8 +92,8 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		return sdk.Result{}
 	}
 
-	if setErr := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); setErr != nil {
-		return ErrTransferHandler(msg.Sender).TraceCause(setErr, "").Result()
+	if err := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); err != nil {
+		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 	}
 	return sdk.Result{}
 }

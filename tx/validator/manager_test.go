@@ -31,7 +31,7 @@ func TestAbsentValidator(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -103,7 +103,7 @@ func TestGetOncallList(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -131,11 +131,11 @@ func TestPunishmentBasic(t *testing.T) {
 
 	// let both users register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1100, valKey)
+	msg := NewValidatorDepositMsg("user1", l1100, valKey, "")
 	handler(ctx, msg)
 
 	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
-	msg2 := NewValidatorDepositMsg("user2", l1600, valKey2)
+	msg2 := NewValidatorDepositMsg("user2", l1600, valKey2, "")
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
@@ -174,7 +174,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		num := (i+1)*100 + 1000
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -204,8 +204,8 @@ func TestGetUpdateValidatorList(t *testing.T) {
 
 	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
 	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
-	valManager.RegisterValidator(ctx, user1, valKey1.Bytes(), types.ValidatorMinCommitingDeposit)
-	valManager.RegisterValidator(ctx, user2, valKey2.Bytes(), types.ValidatorMinCommitingDeposit)
+	valManager.RegisterValidator(ctx, user1, valKey1.Bytes(), types.ValidatorMinCommitingDeposit, "")
+	valManager.RegisterValidator(ctx, user2, valKey2.Bytes(), types.ValidatorMinCommitingDeposit, "")
 
 	val1, _ := valManager.storage.GetValidator(ctx, user1)
 	val2, _ := valManager.storage.GetValidator(ctx, user2)
@@ -246,8 +246,9 @@ func TestGetUpdateValidatorList(t *testing.T) {
 func TestIsLegalWithdraw(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	valManager.RegisterValidator(ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
-		types.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)))
+	valManager.RegisterValidator(
+		ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
+		types.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)), "")
 
 	cases := []struct {
 		oncallValidators []types.AccountKey

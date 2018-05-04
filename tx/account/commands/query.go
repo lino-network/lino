@@ -55,7 +55,6 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide an address")
 	}
 
-	// find the key to look up the account
 	addr := args[0]
 	bz, err := hex.DecodeString(addr)
 	if err != nil {
@@ -73,7 +72,6 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// print out whole bank
 	output, err := json.MarshalIndent(bank, "", "  ")
 	if err != nil {
 		return err

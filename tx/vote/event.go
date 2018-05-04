@@ -35,30 +35,30 @@ func (dpe DecideProposalEvent) Execute(ctx sdk.Context, voteManager VoteManager,
 }
 
 func (dpe DecideProposalEvent) updateProposalList(ctx sdk.Context, voteManager VoteManager) (types.ProposalKey, sdk.Error) {
-	lst, getErr := voteManager.storage.GetProposalList(ctx)
-	if getErr != nil {
-		return types.ProposalKey(""), getErr
+	lst, err := voteManager.storage.GetProposalList(ctx)
+	if err != nil {
+		return types.ProposalKey(""), err
 	}
 
 	curID := lst.OngoingProposal[0]
 	lst.OngoingProposal = lst.OngoingProposal[1:]
 	lst.PastProposal = append(lst.PastProposal, curID)
 
-	if setErr := voteManager.storage.SetProposalList(ctx, lst); setErr != nil {
-		return curID, setErr
+	if err := voteManager.storage.SetProposalList(ctx, lst); err != nil {
+		return curID, err
 	}
 	return curID, nil
 }
 
 func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID types.ProposalKey, vm VoteManager) (bool, sdk.Error) {
 	// get all votes to calculate the voting result
-	votes, getErr := vm.storage.GetAllVotes(ctx, curID)
-	if getErr != nil {
-		return false, getErr
+	votes, err := vm.storage.GetAllVotes(ctx, curID)
+	if err != nil {
+		return false, err
 	}
-	referenceList, getErr := vm.storage.GetValidatorReferenceList(ctx)
-	if getErr != nil {
-		return false, getErr
+	referenceList, err := vm.storage.GetValidatorReferenceList(ctx)
+	if err != nil {
+		return false, err
 	}
 	validators := make([]types.AccountKey, len(referenceList.OncallValidators))
 	copy(validators, referenceList.OncallValidators)
@@ -105,9 +105,9 @@ func (dpe DecideProposalEvent) calculateVotingResult(ctx sdk.Context, curID type
 }
 
 func (dpe DecideProposalEvent) changeParameter(ctx sdk.Context, curID types.ProposalKey, voteManager VoteManager, gm global.GlobalManager) sdk.Error {
-	proposal, getErr := voteManager.storage.GetProposal(ctx, curID)
-	if getErr != nil {
-		return getErr
+	proposal, err := voteManager.storage.GetProposal(ctx, curID)
+	if err != nil {
+		return err
 	}
 	des := proposal.ChangeParameterDescription
 	if err := gm.ChangeInfraInternalInflation(ctx, des.StorageAllocation, des.CDNAllocation); err != nil {

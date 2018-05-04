@@ -36,7 +36,7 @@ func TestVoterRevoke(t *testing.T) {
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey())
+		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// let delegator delegate coins to voter

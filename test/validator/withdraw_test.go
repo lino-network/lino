@@ -30,7 +30,7 @@ func TestValidatorRevoke(t *testing.T) {
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey())
+		newAccountName, types.LNO("1500"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)

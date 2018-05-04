@@ -213,7 +213,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if setErr := lb.accountManager.AddCoinToAddress(ctx, ga.MasterKey.Address(), coin); setErr != nil {
+	if err := lb.accountManager.AddCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
 		panic(sdk.ErrGenesisParse("set genesis bank failed"))
 	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
@@ -237,7 +237,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 			panic(addErr)
 		}
 		if registerErr := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit); registerErr != nil {
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit, ""); registerErr != nil {
 			panic(registerErr)
 		}
 		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
@@ -293,9 +293,9 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		lb.increaseMinute(ctx)
 	}
 
-	validatorList, getErr := lb.valManager.GetValidatorList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	validatorList, err := lb.valManager.GetValidatorList(ctx)
+	if err != nil {
+		panic(err)
 	}
 	validatorList.PreBlockValidators = validatorList.OncallValidators
 	if err := lb.valManager.SetValidatorList(ctx, validatorList); err != nil {
@@ -396,9 +396,9 @@ func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
 // distribute inflation to validators
 // TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
-	lst, getErr := lb.valManager.GetValidatorList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	lst, err := lb.valManager.GetValidatorList(ctx)
+	if err != nil {
+		panic(err)
 	}
 	pastHoursThisYear := (lb.pastMinutes / 60) % types.HoursPerYear
 	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, pastHoursThisYear)
@@ -421,9 +421,9 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		panic(err)
 	}
 
-	lst, getErr := lb.infraManager.GetInfraProviderList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	lst, err := lb.infraManager.GetInfraProviderList(ctx)
+	if err != nil {
+		panic(err)
 	}
 
 	for _, provider := range lst.AllInfraProviders {
@@ -449,15 +449,15 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		panic(err)
 	}
 
-	lst, getErr := lb.developerManager.GetDeveloperList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	lst, err := lb.developerManager.GetDeveloperList(ctx)
+	if err != nil {
+		panic(err)
 	}
 
 	for _, developer := range lst.AllDevelopers {
-		percentage, getErr := lb.developerManager.GetConsumptionWeight(ctx, developer)
-		if getErr != nil {
-			panic(getErr)
+		percentage, err := lb.developerManager.GetConsumptionWeight(ctx, developer)
+		if err != nil {
+			panic(err)
 		}
 		myShare := inflation.ToRat().Mul(percentage)
 		lb.accountManager.AddCoin(ctx, developer, types.RatToCoin(myShare))
@@ -470,14 +470,14 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 
 func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
 	// tell voting committe the newest validators
-	validatorList, getErr := lb.valManager.GetValidatorList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	validatorList, err := lb.valManager.GetValidatorList(ctx)
+	if err != nil {
+		panic(err)
 	}
 
-	referenceList, getErr := lb.voteManager.GetValidatorReferenceList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	referenceList, err := lb.voteManager.GetValidatorReferenceList(ctx)
+	if err != nil {
+		panic(err)
 	}
 	referenceList.OncallValidators = validatorList.OncallValidators
 	referenceList.AllValidators = validatorList.AllValidators
@@ -488,9 +488,9 @@ func (lb *LinoBlockchain) syncValidatorWithVoteManager(ctx sdk.Context) {
 
 // validators are required to vote
 func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
-	lst, getErr := lb.voteManager.GetValidatorReferenceList(ctx)
-	if getErr != nil {
-		panic(getErr)
+	lst, err := lb.voteManager.GetValidatorReferenceList(ctx)
+	if err != nil {
+		panic(err)
 	}
 	// punish these validators who didn't vote
 	for _, validator := range lst.PenaltyValidators {

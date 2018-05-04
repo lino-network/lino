@@ -92,9 +92,9 @@ func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManag
 		return ErrValidatorCannotRevoke().Result()
 	}
 
-	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
-	if getErr != nil {
-		return getErr.Result()
+	delegators, err := vm.GetAllDelegators(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
 	}
 
 	// return coins to all delegators

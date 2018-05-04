@@ -28,7 +28,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 }
 
 func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
-	// Must have an normal acount
+	// Must have a normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
@@ -49,12 +49,13 @@ func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager 
 		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
 			return ErrVotingDepositNotEnough().Result()
 		}
-		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin); err != nil {
+		if err := valManager.RegisterValidator(
+			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	} else {
 		// Deposit coins
-		if err := valManager.Deposit(ctx, msg.Username, coin); err != nil {
+		if err := valManager.Deposit(ctx, msg.Username, coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	}

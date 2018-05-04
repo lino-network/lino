@@ -51,9 +51,7 @@ func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a developer name")
 	}
 
-	// find the key to look up the account
 	accKey := types.AccountKey(args[0])
-
 	res, err := ctx.Query(model.GetDeveloperKey(accKey), c.storeName)
 	if err != nil {
 		return err
@@ -63,7 +61,6 @@ func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// print out whole developer
 	output, err := json.MarshalIndent(developer, "", "  ")
 	if err != nil {
 		return err

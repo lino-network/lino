@@ -140,8 +140,8 @@ func TestRevokeBasic(t *testing.T) {
 	// make sure user3 won't get coins immediately, but user1 power down immediately
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
 	acc3Balance, _ := am.GetBankBalance(ctx, user3)
-	_, getErr := vm.storage.GetDelegation(ctx, "user1", "user3")
-	assert.Equal(t, ErrGetDelegation(), getErr)
+	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
+	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, c1000, voter.DelegatedPower)
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
@@ -168,7 +168,6 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
-	_, err := vm.storage.GetDelegation(ctx, "user1", "user2")
 	_, err2 := vm.storage.GetVoter(ctx, "user1")
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
@@ -252,8 +251,8 @@ func TestProposalBasic(t *testing.T) {
 
 	// test delete proposal
 	vm.storage.DeleteProposal(ctx, proposalID2)
-	_, getErr := vm.storage.GetProposal(ctx, proposalID2)
-	assert.Equal(t, ErrGetProposal(), getErr)
+	_, err := vm.storage.GetProposal(ctx, proposalID2)
+	assert.Equal(t, ErrGetProposal(), err)
 
 }
 
@@ -315,8 +314,8 @@ func TestVoteBasic(t *testing.T) {
 
 	// test delete vote
 	vm.storage.DeleteVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	vote, getErr := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	assert.Equal(t, ErrGetVote(), getErr)
+	vote, err := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+	assert.Equal(t, ErrGetVote(), err)
 
 }
 
