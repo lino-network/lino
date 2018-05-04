@@ -97,34 +97,42 @@ func TestEvaluateConsumption(t *testing.T) {
 		createdTime                        int64
 		evaluateTime                       int64
 		expectedTimeAdjustment             float64
-		totalReward                        types.Coin
+		totalConsumption                   types.Coin
 		expectedTotalConsumptionAdjustment float64
 		numOfConsumptionOnAuthor           int64
 		expectedConumptionTimesAdjustment  float64
 		Consumption                        types.Coin
 		ExpectEvaluateResult               types.Coin
 	}{
-		{baseTime, baseTime + 3153600*5, 0.5, types.NewCoin(5000 * types.Decimals), 1.5, 7, 1.5,
-			types.NewCoin(1000), types.NewCoin(282)},
-		{baseTime, baseTime, 0.9933071490757153, types.NewCoin(0), 1.9933071490757153, 7, 1.5,
-			types.NewCoin(1000), types.NewCoin(746)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 1.5,
-			types.NewCoin(1000), types.NewCoin(745)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 1.5,
-			types.NewCoin(5 * types.Decimals), types.NewCoin(107607)},
+		{baseTime, baseTime + 3153600*5, 0.5, types.NewCoin(5000 * types.Decimals), 1.5, 7, 2.5,
+			types.NewCoin(1000), types.NewCoin(470)},
+		{baseTime, baseTime, 0.9933071490757153, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoin(1000), types.NewCoin(1243)},
+		{baseTime, baseTime + 360*24*3600, 0.007667910249215412, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoin(1000), types.NewCoin(9)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoin(5 * types.Decimals), types.NewCoin(179346)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoin(1 * types.Decimals), types.NewCoin(49489)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(1000 * types.Decimals), 1.9820137900379085, 7, 2.5,
+			types.NewCoin(1 * types.Decimals), types.NewCoin(49209)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(5000 * types.Decimals), 1.5, 7, 2.5,
+			types.NewCoin(1 * types.Decimals), types.NewCoin(37242)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(5000 * types.Decimals), 1.5, 100, 2,
+			types.NewCoin(1 * types.Decimals), types.NewCoin(29793)},
 	}
 
 	for _, cs := range cases {
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.evaluateTime})
 		assert.Equal(t, cs.expectedTotalConsumptionAdjustment,
-			PostTotalConsumptionAdjustment(cs.totalReward, paras))
+			PostTotalConsumptionAdjustment(cs.totalConsumption, paras))
 		assert.Equal(t, cs.expectedTimeAdjustment,
 			PostTimeAdjustment(cs.evaluateTime-cs.createdTime, paras))
 		assert.Equal(t, cs.expectedConumptionTimesAdjustment,
 			PostConsumptionTimesAdjustment(cs.numOfConsumptionOnAuthor, paras))
 		evaluateResult, err := gm.EvaluateConsumption(
 			newCtx, cs.Consumption, cs.numOfConsumptionOnAuthor,
-			cs.createdTime, cs.totalReward)
+			cs.createdTime, cs.totalConsumption)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.ExpectEvaluateResult, evaluateResult)
 	}

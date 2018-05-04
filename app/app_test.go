@@ -176,9 +176,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 
 	testPastMinutes := int64(0)
 	for i := baseTime; i < baseTime+3600*20; i += 50 {
-		lb.BeginBlock(abci.RequestBeginBlock{
-			Header: abci.Header{
-				ChainID: "Lino", Time: baseTime + i}})
+		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: baseTime + i}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
 		// simulate app

@@ -417,9 +417,9 @@ func PostTimeAdjustment(
 			float64(paras.ConsumptionTimeAdjustOffset)))))
 }
 
-// consumption times adjustment = 1/(1+e^(n-offset))
+// consumption times adjustment = 1/(1+e^(n-offset)) + 1
 func PostConsumptionTimesAdjustment(
 	numOfConsumptionOnAuthor int64, paras *model.EvaluateOfContentValuePara) float64 {
 	return (1.0/(1.0+math.Exp(
-		(float64(numOfConsumptionOnAuthor)-float64(paras.NumOfConsumptionOnAuthorOffset)))) + 1.0)
+		(float64(numOfConsumptionOnAuthor)-float64(paras.NumOfConsumptionOnAuthorOffset)))) + 1.0) + 1.0
 }
