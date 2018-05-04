@@ -55,9 +55,12 @@ func TestGlobalStorageGenesis(t *testing.T) {
 	err := InitGlobalStorage(t, ctx, gm)
 	assert.Nil(t, err)
 	globalMeta := GlobalMeta{
-		TotalLinoCoin:         types.NewCoin(10000 * types.Decimals),
-		GrowthRate:            sdk.Rat{98, 1000},
-		CumulativeConsumption: types.NewCoin(0),
+		TotalLinoCoin:                 types.NewCoin(10000 * types.Decimals),
+		GrowthRate:                    sdk.NewRat(98, 1000),
+		CumulativeConsumption:         types.NewCoin(0),
+		LastYearCumulativeConsumption: types.NewCoin(0),
+		Ceiling: sdk.NewRat(98, 1000),
+		Floor:   sdk.NewRat(30, 1000),
 	}
 
 	globalStatistics := GlobalStatistics{}

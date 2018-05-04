@@ -63,5 +63,8 @@ const (
 	HoursPerYear = 8766
 
 	// as defined by a julian year of 365.25 days
-	MinutesPerMonth = 8766 * 60 / 12
+	MinutesPerYear = HoursPerYear * 60
+
+	// as defined by a julian year of 365.25 days
+	MinutesPerMonth = MinutesPerYear / 12
 )

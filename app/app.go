@@ -366,6 +366,9 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if lb.pastMinutes%types.MinutesPerMonth == 0 {
 		lb.executeMonthlyEvent(ctx)
 	}
+	if lb.pastMinutes%types.MinutesPerYear == 0 {
+		lb.executeAnnuallyEvent(ctx)
+	}
 }
 
 // execute hourly event, distribute inflation to validators and
@@ -382,6 +385,12 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 	lb.distributeInflationToInfraProvider(ctx)
 	lb.distributeInflationToDeveloper(ctx)
+}
+
+func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
+	if err := lb.globalManager.RecalculateAnnuallyInflation(ctx); err != nil {
+		panic(err)
+	}
 }
 
 // distribute inflation to validators
@@ -418,9 +427,9 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	}
 
 	for _, provider := range lst.AllInfraProviders {
-		percentage, getErr := lb.infraManager.GetUsageWeight(ctx, provider)
-		if getErr != nil {
-			panic(getErr)
+		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
+		if err != nil {
+			panic(err)
 		}
 		myShare := inflation.ToRat().Mul(percentage)
 		lb.accountManager.AddCoin(ctx, provider, types.RatToCoin(myShare))

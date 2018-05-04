@@ -129,6 +129,71 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHour
 	return nil
 }
 
+// recalculate annually inflation based on consumption growth rate
+func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error {
+	growthRate, err := gm.getGrowthRate(ctx)
+	if err != nil {
+		return err
+	}
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	if err != nil {
+		return err
+	}
+	allocation, err := gm.globalStorage.GetGlobalAllocation(ctx)
+	if err != nil {
+		return err
+	}
+
+	infraInflationCoin :=
+		globalMeta.TotalLinoCoin.ToRat().Mul(growthRate).Mul(allocation.InfraAllocation)
+	contentCreatorCoin :=
+		globalMeta.TotalLinoCoin.ToRat().Mul(growthRate).Mul(allocation.ContentCreatorAllocation)
+	developerCoin := globalMeta.TotalLinoCoin.ToRat().Mul(growthRate).Mul(allocation.DeveloperAllocation)
+	validatorCoin := globalMeta.TotalLinoCoin.ToRat().Mul(growthRate).Mul(allocation.ValidatorAllocation)
+
+	inflationPool := &model.InflationPool{
+		InfraInflationPool:          types.RatToCoin(infraInflationCoin),
+		ContentCreatorInflationPool: types.RatToCoin(contentCreatorCoin),
+		DeveloperInflationPool:      types.RatToCoin(developerCoin),
+		ValidatorInflationPool:      types.RatToCoin(validatorCoin),
+	}
+	if err := gm.globalStorage.SetInflationPool(ctx, inflationPool); err != nil {
+		return err
+	}
+	return nil
+}
+
+// get growth rate based on consumption growth rate
+func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+	var growthRate sdk.Rat
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	if err != nil {
+		return sdk.ZeroRat, err
+	}
+	// if last year cumulative consumption is zero, we use the same growth rate as the last year
+	if globalMeta.LastYearCumulativeConsumption.IsZero() {
+		growthRate = globalMeta.GrowthRate
+	} else {
+		// growthRate = (consumption this year - consumption last year) / consumption last year
+		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
+		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
+		growthRate =
+			(thisYearConsumptionRat.Sub(lastYearConsumptionRat)).Quo(lastYearConsumptionRat)
+		if growthRate.GT(globalMeta.Ceiling) {
+			growthRate = globalMeta.Ceiling
+		} else if growthRate.LT(globalMeta.Floor) {
+			growthRate = globalMeta.Floor
+		}
+	}
+	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
+	globalMeta.CumulativeConsumption = types.NewCoin(0)
+	globalMeta.GrowthRate = growthRate
+	if err := gm.globalStorage.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return sdk.ZeroRat, err
+	}
+	return growthRate, nil
+}
+
 // after 7 days, one consumption needs to claim its reward from consumption reward pool
 func (gm GlobalManager) GetRewardAndPopFromWindow(
 	ctx sdk.Context, coin types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
