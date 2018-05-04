@@ -225,23 +225,31 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		panic(err)
 	}
 	if ga.IsValidator {
-		commitingDeposit := types.ValidatorMinCommitingDeposit
-		votingDeposit := types.ValidatorMinVotingDeposit
+		commitingDeposit, err := lb.globalManager.GetValidatorMinCommitingDeposit(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		votingDeposit, err := lb.globalManager.GetValidatorMinVotingDeposit(ctx)
+		if err != nil {
+			panic(err)
+		}
 		// withdraw money from validator's bank
 		if err := lb.accountManager.MinusCoin(
 			ctx, types.AccountKey(ga.Name), commitingDeposit.Plus(votingDeposit)); err != nil {
 			panic(err)
 		}
 
-		if addErr := lb.voteManager.AddVoter(ctx, types.AccountKey(ga.Name), votingDeposit); addErr != nil {
-			panic(addErr)
+		if err := lb.voteManager.AddVoter(
+			ctx, types.AccountKey(ga.Name), votingDeposit, lb.globalManager); err != nil {
+			panic(err)
 		}
-		if registerErr := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit, ""); registerErr != nil {
-			panic(registerErr)
+		if err := lb.valManager.RegisterValidator(
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), commitingDeposit, "", lb.globalManager); err != nil {
+			panic(err)
 		}
-		if joinErr := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); joinErr != nil {
-			panic(joinErr)
+		if err := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name), lb.globalManager); err != nil {
+			panic(err)
 		}
 	}
 	return nil
@@ -262,7 +270,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return err
 	}
 
-	if err := lb.developerManager.RegisterDeveloper(ctx, types.AccountKey(developer.Name), coin); err != nil {
+	if err := lb.developerManager.RegisterDeveloper(
+		ctx, types.AccountKey(developer.Name), coin, lb.globalManager); err != nil {
 		return err
 	}
 	return nil
@@ -492,9 +501,14 @@ func (lb *LinoBlockchain) punishValidatorsDidntVote(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
+	penaltyMissVote, err := lb.globalManager.GetValidatorMissVotePenalty(ctx)
+	if err != nil {
+		panic(err)
+	}
 	// punish these validators who didn't vote
 	for _, validator := range lst.PenaltyValidators {
-		if err := lb.valManager.PunishOncallValidator(ctx, validator, types.PenaltyMissVote, lb.globalManager, false); err != nil {
+		if err := lb.valManager.PunishOncallValidator(
+			ctx, validator, penaltyMissVote, lb.globalManager, false); err != nil {
 			panic(err)
 		}
 	}

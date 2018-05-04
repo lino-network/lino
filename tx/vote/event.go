@@ -110,11 +110,11 @@ func (dpe DecideProposalEvent) changeParameter(ctx sdk.Context, curID types.Prop
 		return err
 	}
 	des := proposal.ChangeParameterDescription
-	if err := gm.ChangeInfraInternalInflation(ctx, des.StorageAllocation, des.CDNAllocation); err != nil {
+	if err := gm.ChangeInfraInternalInflationParam(ctx, des.StorageAllocation, des.CDNAllocation); err != nil {
 		return err
 	}
 
-	if err := gm.ChangeGlobalInflation(ctx, des.InfraAllocation, des.ContentCreatorAllocation,
+	if err := gm.ChangeGlobalInflationParam(ctx, des.InfraAllocation, des.ContentCreatorAllocation,
 		des.DeveloperAllocation, des.ValidatorAllocation); err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ func InitGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage) error {
 }
 
 func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
-	expectGlobalMeta GlobalMeta, expectGlobalAllocation GlobalAllocation, expectConsumptionMeta ConsumptionMeta,
+	expectGlobalMeta GlobalMeta, expectGlobalAllocation GlobalAllocationParam, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
 	globalStatistic, err := gm.GetGlobalStatistics(ctx)
 	assert.Nil(t, err)
@@ -37,7 +37,7 @@ func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectG
 	globalMeta, err := gm.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalMeta, *globalMeta)
-	globalAllocation, err := gm.GetGlobalAllocation(ctx)
+	globalAllocation, err := gm.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalAllocation, *globalAllocation)
 	consumptionMeta, err := gm.GetConsumptionMeta(ctx)
@@ -65,7 +65,7 @@ func TestGlobalStorageGenesis(t *testing.T) {
 
 	globalStatistics := GlobalStatistics{}
 
-	globalAllocation := GlobalAllocation{
+	globalAllocation := GlobalAllocationParam{
 		InfraAllocation:          sdk.Rat{20, 100},
 		ContentCreatorAllocation: sdk.Rat{50, 100},
 		DeveloperAllocation:      sdk.Rat{20, 100},

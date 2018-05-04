@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -214,17 +213,14 @@ func TestProposalBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(4), 10))
-	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(5), 10))
+	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
+	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
-
-	// let user1 create a proposal (not enough coins)
-	msg := NewCreateProposalMsg("user1", para)
-	result := handler(ctx, msg)
-	assert.Equal(t, acc.ErrAccountCoinNotEnough().Result(), result)
-
 	am.AddCoin(ctx, user1, c4600)
+
+	// let user1 create a proposal
+	msg := NewCreateProposalMsg("user1", para)
 	resultPass := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, resultPass)
 
@@ -238,10 +234,6 @@ func TestProposalBasic(t *testing.T) {
 
 	proposal, _ := vm.storage.GetProposal(ctx, proposalID1)
 	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
-
-	// check use1's money has been reduced
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, acc1Balance, c600.Plus(initCoin))
 
 	// check proposal list is correct
 	lst, _ := vm.storage.GetProposalList(ctx)
@@ -264,7 +256,7 @@ func TestVoteBasic(t *testing.T) {
 	para := model.ChangeParameterDescription{
 		CDNAllocation: rat,
 	}
-	proposalID := int64(6)
+	proposalID := int64(1)
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, user1, c2000)
 
@@ -324,7 +316,9 @@ func TestDelegatorWithdraw(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
 	handler := NewHandler(vm, am, gm)
-	vm.AddVoter(ctx, user1, types.VoterMinDeposit)
+
+	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
+	vm.AddVoter(ctx, user1, voterMinDeposit, gm)
 
 	cases := []struct {
 		addDelegation bool

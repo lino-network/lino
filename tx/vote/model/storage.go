@@ -1,8 +1,6 @@
 package model
 
 import (
-	"strconv"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
@@ -246,11 +244,6 @@ func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 	}
 	iterator.Close()
 	return votes, nil
-}
-
-func (vs VoteStorage) GetNextProposalID() (types.ProposalKey, sdk.Error) {
-	types.NextProposalID += 1
-	return types.ProposalKey(strconv.FormatInt(types.NextProposalID, 10)), nil
 }
 
 func GetDelegatorPrefix(me types.AccountKey) []byte {

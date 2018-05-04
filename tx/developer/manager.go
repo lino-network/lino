@@ -3,6 +3,7 @@ package developer
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/developer/model"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
 
@@ -30,9 +31,13 @@ func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.Acco
 }
 
 func (dm DeveloperManager) RegisterDeveloper(
-	ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
+	ctx sdk.Context, username types.AccountKey, deposit types.Coin, gm global.GlobalManager) sdk.Error {
+	developerMinDeposit, err := gm.GetDeveloperMinDeposit(ctx)
+	if err != nil {
+		return err
+	}
 	// check developer mindmum deposit requirement
-	if !deposit.IsGTE(types.DeveloperMinDeposit) {
+	if !deposit.IsGTE(developerMinDeposit) {
 		return ErrDeveloperDepositNotEnough()
 	}
 

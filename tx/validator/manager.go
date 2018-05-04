@@ -33,14 +33,20 @@ func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey types.Accoun
 	return infoByte != nil
 }
 
-func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+func (vm ValidatorManager) IsLegalWithdraw(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) bool {
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
 		return false
 	}
 
+	validatorMinWithdraw, err := gm.GetValidatorMinWithdraw(ctx)
+	if err != nil {
+		return false
+	}
+
 	// reject if withdraw is less than minimum withdraw
-	if !coin.IsGTE(types.ValidatorMinWithdraw) {
+	if !coin.IsGTE(validatorMinWithdraw) {
 		return false
 	}
 
@@ -54,10 +60,14 @@ func (vm ValidatorManager) IsLegalWithdraw(ctx sdk.Context, username types.Accou
 		return false
 	}
 
+	validatorMinCommitingDeposit, err := gm.GetValidatorMinCommitingDeposit(ctx)
+	if err != nil {
+		return false
+	}
 	// pass if it's not in all validator list
 	// reject if the remaining coins are less than min deposit requirement
 	res := validator.Deposit.Minus(coin)
-	return res.IsGTE(types.ValidatorMinCommitingDeposit)
+	return res.IsGTE(validatorMinCommitingDeposit)
 }
 
 func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
@@ -133,17 +143,23 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 	return nil
 }
 
-func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types.AccountKey, penalty types.Coin, gm global.GlobalManager, willFire bool) sdk.Error {
+func (vm ValidatorManager) PunishOncallValidator(
+	ctx sdk.Context, username types.AccountKey, penalty types.Coin, gm global.GlobalManager, willFire bool) sdk.Error {
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
 		return err
 	}
 	validator.Deposit = validator.Deposit.Minus(penalty)
+
+	validatorMinCommitingDeposit, err := gm.GetValidatorMinCommitingDeposit(ctx)
+	if err != nil {
+		return err
+	}
 	// remove this validator if its remaining deposit is not enough
 	// OR, we explicitly want to fire this validator
 	// all deposit will be added back to inflation pool
-	if willFire || !validator.Deposit.IsGTE(types.ValidatorMinCommitingDeposit) {
-		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username); err != nil {
+	if willFire || !validator.Deposit.IsGTE(validatorMinCommitingDeposit) {
+		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username, gm); err != nil {
 			return err
 		}
 		penalty = penalty.Plus(validator.Deposit)
@@ -157,7 +173,7 @@ func (vm ValidatorManager) PunishOncallValidator(ctx sdk.Context, username types
 	if err := gm.AddToValidatorInflationPool(ctx, penalty); err != nil {
 		return err
 	}
-	if err := vm.AdjustValidatorList(ctx); err != nil {
+	if err := vm.AdjustValidatorList(ctx, gm); err != nil {
 		return err
 	}
 	return nil
@@ -168,19 +184,29 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 		return getListErr
 	}
 
+	penaltyMissCommit, err := gm.GetValidatorMissCommitPenalty(ctx)
+	if err != nil {
+		return err
+	}
+
+	penaltyByzantine, err := gm.GetValidatorByzantinePenalty(ctx)
+	if err != nil {
+		return err
+	}
+
 	for _, validatorName := range lst.OncallValidators {
 		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
 			return err
 		}
 		if validator.AbsentCommit > types.AbsentCommitLimitation {
-			vm.PunishOncallValidator(ctx, validator.Username, types.PenaltyMissVote, gm, true)
+			vm.PunishOncallValidator(ctx, validator.Username, penaltyMissCommit, gm, true)
 			continue
 		}
 
 		for _, evidence := range ByzantineValidators {
 			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.PubKey) {
-				vm.PunishOncallValidator(ctx, validator.Username, types.PenaltyByzantine, gm, true)
+				vm.PunishOncallValidator(ctx, validator.Username, penaltyByzantine, gm, true)
 			}
 		}
 	}
@@ -189,9 +215,13 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context, ByzantineVa
 }
 
 func (vm ValidatorManager) RegisterValidator(
-	ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin, link string) sdk.Error {
+	ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin, link string, gm global.GlobalManager) sdk.Error {
 	// check validator minimum commiting deposit requirement
-	if !coin.IsGTE(types.ValidatorMinCommitingDeposit) {
+	validatorMinCommitingDeposit, err := gm.GetValidatorMinCommitingDeposit(ctx)
+	if err != nil {
+		return err
+	}
+	if !coin.IsGTE(validatorMinCommitingDeposit) {
 		return ErrCommitingDepositNotEnough()
 	}
 
@@ -254,14 +284,19 @@ func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.
 // try to join the oncall validator list, the action will success if either
 // 1. the validator list is not full
 // or 2. someone in the validator list has a lower power than current validator
-func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (vm ValidatorManager) TryBecomeOncallValidator(
+	ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
 	curValidator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
 		return err
 	}
 
+	validatorMinCommitingDeposit, err := gm.GetValidatorMinCommitingDeposit(ctx)
+	if err != nil {
+		return err
+	}
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(types.ValidatorMinCommitingDeposit) {
+	if !curValidator.Deposit.IsGTE(validatorMinCommitingDeposit) {
 		return ErrCommitingDepositNotEnough()
 	}
 
@@ -307,7 +342,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 }
 
 // remove the user from both oncall and allValidators lists
-func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) sdk.Error {
 	lst, getListErr := vm.storage.GetValidatorList(ctx)
 	if getListErr != nil {
 		return getListErr
@@ -322,7 +357,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 	if err := vm.storage.SetValidatorList(ctx, lst); err != nil {
 		return err
 	}
-	if err := vm.AdjustValidatorList(ctx); err != nil {
+	if err := vm.AdjustValidatorList(ctx, gm); err != nil {
 		return err
 	}
 
@@ -331,7 +366,7 @@ func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username
 
 // if any change happens in oncall validator(remove, punish),
 // we should call this function to adjust validator list
-func (vm ValidatorManager) AdjustValidatorList(ctx sdk.Context) sdk.Error {
+func (vm ValidatorManager) AdjustValidatorList(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
 	vm.updateLowestValidator(ctx)
 	bestCandidate, findErr := vm.getBestCandidate(ctx)
 	if findErr != nil {
@@ -339,7 +374,7 @@ func (vm ValidatorManager) AdjustValidatorList(ctx sdk.Context) sdk.Error {
 	}
 
 	if bestCandidate != types.AccountKey("") {
-		if joinErr := vm.TryBecomeOncallValidator(ctx, bestCandidate); joinErr != nil {
+		if joinErr := vm.TryBecomeOncallValidator(ctx, bestCandidate, gm); joinErr != nil {
 			return joinErr
 		}
 	}

@@ -15,7 +15,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
-			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
+			return handleDeveloperRegisterMsg(ctx, dm, am, gm, msg)
 		case GrantDeveloperMsg:
 			return handleGrantDeveloperMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
@@ -28,7 +28,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 }
 
 func handleDeveloperRegisterMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager, msg DeveloperRegisterMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
@@ -42,7 +42,7 @@ func handleDeveloperRegisterMsg(
 	if err = am.MinusCoin(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
-	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
+	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -63,8 +63,12 @@ func handleDeveloperRevokeMsg(
 		return withdrawErr.Result()
 	}
 
-	if err := returnCoinTo(
-		ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	interval, times, err := gm.GetDeveloperCoinReturnParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(ctx, msg.Username, gm, times, interval, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
