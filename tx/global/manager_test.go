@@ -304,6 +304,10 @@ func TestAddHourlyInflationToRewardPool(t *testing.T) {
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoin(0), pool.ContentCreatorInflationPool)
+
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalConsumption))
 }
 
 func TestRecalculateAnnuallyInflation(t *testing.T) {
@@ -341,6 +345,9 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(1099000000 * types.Decimals),
 			types.NewCoin(196000000 * types.Decimals), types.NewCoin(490000000 * types.Decimals),
 			types.NewCoin(196000000 * types.Decimals), types.NewCoin(98000000 * types.Decimals)},
+		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(90000000 * types.Decimals),
+			types.NewCoin(60000000 * types.Decimals), types.NewCoin(150000000 * types.Decimals),
+			types.NewCoin(60000000 * types.Decimals), types.NewCoin(30000000 * types.Decimals)},
 	}
 
 	for _, cs := range cases {
@@ -381,6 +388,10 @@ func TestGetGrowthRate(t *testing.T) {
 		lastYearGrowthRate sdk.Rat
 		expectGrowthRate   sdk.Rat
 	}{
+		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(0 * types.Decimals),
+			sdk.NewRat(98, 1000), floor},
+		{types.NewCoin(0 * types.Decimals), types.NewCoin(100000000 * types.Decimals),
+			sdk.NewRat(98, 1000), sdk.NewRat(98, 1000)},
 		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(100000000 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
 		{types.NewCoin(0), types.NewCoin(100000000 * types.Decimals),
@@ -444,6 +455,9 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoin(0), pool.ValidatorInflationPool)
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalValidatorInflation))
 }
 
 func TestGetInfraMonthlyInflation(t *testing.T) {
@@ -467,6 +481,9 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoin(0), pool.InfraInflationPool)
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalInfraInflation))
 }
 
 func TestGetDeveloperMonthlyInflation(t *testing.T) {
@@ -490,6 +507,9 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 	pool, err := gm.globalStorage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoin(0), pool.DeveloperInflationPool)
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalDeveloperInflation))
 }
 
 func TestAddToValidatorInflationPool(t *testing.T) {

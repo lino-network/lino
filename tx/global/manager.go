@@ -116,7 +116,9 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHour
 		Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
 	resCoin := types.RatToCoin(resRat)
 	pool.ContentCreatorInflationPool = pool.ContentCreatorInflationPool.Minus(resCoin)
-
+	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
+		return err
+	}
 	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
 		return err
 	}
@@ -258,7 +260,9 @@ func (gm GlobalManager) GetValidatorHourlyInflation(
 	resRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
 	resCoin := types.RatToCoin(resRat)
 	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Minus(resCoin)
-
+	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
+		return types.NewCoin(0), err
+	}
 	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
 		return types.NewCoin(0), err
 	}
@@ -276,7 +280,9 @@ func (gm GlobalManager) GetInfraMonthlyInflation(
 	resRat := pool.InfraInflationPool.ToRat().Mul(sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin := types.RatToCoin(resRat)
 	pool.InfraInflationPool = pool.InfraInflationPool.Minus(resCoin)
-
+	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
+		return types.NewCoin(0), err
+	}
 	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
 		return types.NewCoin(0), err
 	}
@@ -294,11 +300,26 @@ func (gm GlobalManager) GetDeveloperMonthlyInflation(
 	resRat := pool.DeveloperInflationPool.ToRat().Mul(sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin := types.RatToCoin(resRat)
 	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Minus(resCoin)
-
+	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
+		return types.NewCoin(0), err
+	}
 	if err := gm.globalStorage.SetInflationPool(ctx, pool); err != nil {
 		return types.NewCoin(0), err
 	}
 	return resCoin, nil
+}
+
+func (gm GlobalManager) addTotalLinoCoin(ctx sdk.Context, newCoin types.Coin) sdk.Error {
+	globalMeta, err := gm.globalStorage.GetGlobalMeta(ctx)
+	if err != nil {
+		return err
+	}
+	globalMeta.TotalLinoCoin = globalMeta.TotalLinoCoin.Plus(newCoin)
+
+	if err := gm.globalStorage.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
+	}
+	return nil
 }
 
 // change infra internal inflation
