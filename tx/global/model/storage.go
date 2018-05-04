@@ -42,9 +42,12 @@ func (gs GlobalStorage) WireCodec() *wire.Codec {
 
 func (gs GlobalStorage) InitGlobalState(ctx sdk.Context, totalLino types.Coin) error {
 	globalMeta := &GlobalMeta{
-		TotalLinoCoin:         totalLino,
-		CumulativeConsumption: types.NewCoin(0),
-		GrowthRate:            sdk.NewRat(98, 1000),
+		TotalLinoCoin:                 totalLino,
+		LastYearCumulativeConsumption: types.NewCoin(0),
+		CumulativeConsumption:         types.NewCoin(0),
+		GrowthRate:                    sdk.NewRat(98, 1000),
+		Ceiling:                       sdk.NewRat(98, 1000),
+		Floor:                         sdk.NewRat(30, 1000),
 	}
 
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {

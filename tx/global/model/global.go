@@ -6,9 +6,12 @@ import (
 )
 
 type GlobalMeta struct {
-	TotalLinoCoin         types.Coin `json:"total_lino_coin"`
-	CumulativeConsumption types.Coin `json:"cumulative_consumption"`
-	GrowthRate            sdk.Rat    `json:"growth_rate"`
+	TotalLinoCoin                 types.Coin `json:"total_lino_coin"`
+	LastYearCumulativeConsumption types.Coin `json:"last_year_cumulative_consumption"`
+	CumulativeConsumption         types.Coin `json:"cumulative_consumption"`
+	GrowthRate                    sdk.Rat    `json:"growth_rate"`
+	Ceiling                       sdk.Rat    `json:"ceiling"`
+	Floor                         sdk.Rat    `json:"floor"`
 }
 
 type TPS struct {

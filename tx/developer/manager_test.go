@@ -35,6 +35,6 @@ func TestReportConsumption(t *testing.T) {
 
 	dm.ClearConsumption(ctx)
 	p3, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.Equal(t, true, p3.IsZero())
+	assert.Equal(t, true, p3.Equal(sdk.NewRat(1, 2)))
 
 }

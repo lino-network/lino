@@ -63,5 +63,5 @@ func TestReportUsage(t *testing.T) {
 
 	im.ClearUsage(ctx)
 	w2, _ := im.GetUsageWeight(ctx, "user1")
-	assert.Equal(t, true, w2.IsZero())
+	assert.Equal(t, true, sdk.NewRat(1, 2).Equal(w2))
 }

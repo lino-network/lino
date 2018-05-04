@@ -116,8 +116,9 @@ func (dm DeveloperManager) GetConsumptionWeight(
 			myConsumption = curDeveloper.AppConsumption
 		}
 	}
+	// if not any consumption here, we evenly distribute all inflation
 	if totalConsumption.ToRat().Equal(sdk.ZeroRat) {
-		return sdk.ZeroRat, nil
+		return sdk.NewRat(1, int64(len(lst.AllDevelopers))), nil
 	}
 	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
 }
