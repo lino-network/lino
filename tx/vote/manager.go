@@ -1,7 +1,7 @@
 package vote
 
 import (
-	"github.com/lino-network/lino/tx/global"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 
@@ -20,12 +20,14 @@ const decideProposalEvent = 0x1
 const returnCoinEvent = 0x2
 
 type VoteManager struct {
-	storage model.VoteStorage `json:"vote_storage"`
+	storage     model.VoteStorage `json:"vote_storage"`
+	paramHolder param.ParamHolder `json:"param_holder"`
 }
 
-func NewVoteManager(key sdk.StoreKey) VoteManager {
+func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder) VoteManager {
 	return VoteManager{
-		storage: model.NewVoteStorage(key),
+		storage:     model.NewVoteStorage(key),
+		paramHolder: holder,
 	}
 }
 
@@ -42,7 +44,7 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 }
 
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
-	lst, err := vm.storage.GetValidatorReferenceList(ctx)
+	lst, err := vm.storage.GetReferenceList(ctx)
 	if err != nil {
 		return false
 	}
@@ -54,18 +56,13 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 	return false
 }
 
-func (vm VoteManager) IsProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
-	proposalByte, _ := vm.storage.GetProposal(ctx, proposalID)
-	return proposalByte != nil
-}
-
 func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
 	delegationByte, _ := vm.storage.GetDelegation(ctx, voter, delegator)
 	return delegationByte != nil
 }
 
 func (vm VoteManager) IsLegalVoterWithdraw(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) bool {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return false
@@ -75,40 +72,36 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 		return false
 	}
 
-	voterMinWithdraw, err := gm.GetVoterMinWithdraw(ctx)
+	param, err := vm.paramHolder.GetVoteParam(ctx)
 	if err != nil {
 		return false
 	}
 	// reject if withdraw is less than minimum voter withdraw
-	if !coin.IsGTE(voterMinWithdraw) {
-		return false
-	}
-
-	voterMinDeposit, err := gm.GetVoterMinDeposit(ctx)
-	if err != nil {
+	if !coin.IsGTE(param.VoterMinWithdraw) {
 		return false
 	}
 	//reject if the remaining coins are less than voter minimum deposit
 	remaining := voter.Deposit.Minus(coin)
-	if !remaining.IsGTE(voterMinDeposit) {
+	if !remaining.IsGTE(param.VoterMinDeposit) {
 		return false
 	}
 	return true
 }
 
 func (vm VoteManager) IsLegalDelegatorWithdraw(
-	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin, gm global.GlobalManager) bool {
+	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) bool {
 	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if err != nil {
 		return false
 	}
 
-	delegatorMinWithdraw, err := gm.GetDelegatorMinWithdraw(ctx)
+	param, err := vm.paramHolder.GetVoteParam(ctx)
 	if err != nil {
 		return false
 	}
+
 	// reject if withdraw is less than minimum delegator withdraw
-	if !coin.IsGTE(delegatorMinWithdraw) {
+	if !coin.IsGTE(param.DelegatorMinWithdraw) {
 		return false
 	}
 	//reject if the remaining delegation are less than zero
@@ -116,53 +109,30 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 	return res.IsNotNegative()
 }
 
-func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey, gm global.GlobalManager) bool {
+func (vm VoteManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	lst, err := vm.storage.GetReferenceList(ctx)
+	if err != nil {
+		return false
+	}
+	for _, id := range lst.OngoingProposal {
+		if id == proposalID {
+			return true
+		}
+	}
+	return false
+}
+
+func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return false
 	}
-
-	validatorMinVotingDeposit, err := gm.GetValidatorMinVotingDeposit(ctx)
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return false
 	}
 	// check minimum voting deposit for validator
-	return voter.Deposit.IsGTE(validatorMinVotingDeposit)
-}
-
-// only support change parameter proposal now
-func (vm VoteManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
-	des *model.ChangeParameterDescription, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
-	newID, err := gm.GetNextProposalID(ctx)
-	if err != nil {
-		return newID, err
-	}
-
-	proposal := model.Proposal{
-		Creator:      creator,
-		ProposalID:   newID,
-		AgreeVote:    types.Coin{Amount: 0},
-		DisagreeVote: types.Coin{Amount: 0},
-	}
-
-	changeParameterProposal := &model.ChangeParameterProposal{
-		Proposal:                   proposal,
-		ChangeParameterDescription: *des,
-	}
-	if err := vm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
-		return newID, err
-	}
-
-	lst, err := vm.storage.GetProposalList(ctx)
-	if err != nil {
-		return newID, err
-	}
-	lst.OngoingProposal = append(lst.OngoingProposal, newID)
-	if err := vm.storage.SetProposalList(ctx, lst); err != nil {
-		return newID, err
-	}
-
-	return newID, nil
+	return voter.Deposit.IsGTE(param.ValidatorMinVotingDeposit)
 }
 
 // only support change parameter proposal now
@@ -210,20 +180,19 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	return nil
 }
 
-func (vm VoteManager) AddVoter(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, gm global.GlobalManager) sdk.Error {
+func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter := &model.Voter{
 		Username: username,
 		Deposit:  coin,
 	}
 
-	voterMinDeposit, err := gm.GetVoterMinDeposit(ctx)
+	param, err := vm.paramHolder.GetVoteParam(ctx)
 	if err != nil {
 		return err
 	}
 
 	// check minimum requirements for registering as a voter
-	if !coin.IsGTE(voterMinDeposit) {
+	if !coin.IsGTE(param.VoterMinDeposit) {
 		return ErrRegisterFeeNotEnough()
 	}
 
@@ -327,18 +296,12 @@ func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
 
-func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.ValidatorReferenceList, sdk.Error) {
-	return vm.storage.GetValidatorReferenceList(ctx)
+func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.ReferenceList, sdk.Error) {
+	return vm.storage.GetReferenceList(ctx)
 }
 
-func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ValidatorReferenceList) sdk.Error {
-	return vm.storage.SetValidatorReferenceList(ctx, lst)
-}
-
-func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
-	event := DecideProposalEvent{}
-	gm.RegisterProposalDecideEvent(ctx, event)
-	return nil
+func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ReferenceList) sdk.Error {
+	return vm.storage.SetReferenceList(ctx, lst)
 }
 
 func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {

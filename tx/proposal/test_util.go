@@ -1,4 +1,4 @@
-package developer
+package proposal
 
 import (
 	"testing"
@@ -7,19 +7,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
-	global "github.com/lino-network/lino/tx/global"
+	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
+	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
+// Construct some global addrs and txs for tests.
 var (
-	TestInfraKVStoreKey   = sdk.NewKVStoreKey("infra")
-	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
-	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
-	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
+	TestAccountKVStoreKey  = sdk.NewKVStoreKey("account")
+	TestGlobalKVStoreKey   = sdk.NewKVStoreKey("global")
+	TestProposalKVStoreKey = sdk.NewKVStoreKey("proposal")
+	TestParamKVStoreKey    = sdk.NewKVStoreKey("param")
 
 	initCoin = types.NewCoin(100)
 )
@@ -28,29 +29,32 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest(t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, DeveloperManager, global.GlobalManager) {
+func setupTest(t *testing.T, height int64) (sdk.Context,
+	acc.AccountManager, ProposalManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
-	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	dm := NewDeveloperManager(TestInfraKVStoreKey, ph)
-	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
-	cdc := gm.WireCodec()
-	err := InitGlobalManager(ctx, gm)
-	assert.Nil(t, err)
+	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
+	proposalManager := NewProposalManager(TestProposalKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+
+	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
-	return ctx, am, dm, gm
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+
+	err := InitGlobalManager(ctx, globalManager)
+	assert.Nil(t, err)
+	return ctx, accManager, proposalManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestInfraKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestProposalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)

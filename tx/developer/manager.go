@@ -2,19 +2,21 @@ package developer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/developer/model"
-	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
 
 type DeveloperManager struct {
-	storage model.DeveloperStorage `json:"infra_developer_storage"`
+	storage     model.DeveloperStorage `json:"infra_developer_storage"`
+	paramHolder param.ParamHolder      `json:"param_holder"`
 }
 
 // create NewDeveloperManager
-func NewDeveloperManager(key sdk.StoreKey) DeveloperManager {
+func NewDeveloperManager(key sdk.StoreKey, holder param.ParamHolder) DeveloperManager {
 	return DeveloperManager{
-		storage: model.NewDeveloperStorage(key),
+		storage:     model.NewDeveloperStorage(key),
+		paramHolder: holder,
 	}
 }
 
@@ -31,13 +33,13 @@ func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.Acco
 }
 
 func (dm DeveloperManager) RegisterDeveloper(
-	ctx sdk.Context, username types.AccountKey, deposit types.Coin, gm global.GlobalManager) sdk.Error {
-	developerMinDeposit, err := gm.GetDeveloperMinDeposit(ctx)
+	ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	if err != nil {
 		return err
 	}
 	// check developer mindmum deposit requirement
-	if !deposit.IsGTE(developerMinDeposit) {
+	if !deposit.IsGTE(param.DeveloperMinDeposit) {
 		return ErrDeveloperDepositNotEnough()
 	}
 

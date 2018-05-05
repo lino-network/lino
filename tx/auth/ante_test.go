@@ -3,10 +3,12 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	reg "github.com/lino-network/lino/tx/register"
@@ -17,6 +19,12 @@ import (
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
+)
+
+var (
+	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 )
 
 func createTestAccount(
@@ -37,16 +45,18 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 
 func setupTest() (acc.AccountManager, global.GlobalManager, sdk.Context, sdk.AnteHandler) {
 	db := dbm.NewMemDB()
-	accountCapKey := sdk.NewKVStoreKey("account")
-	globalCapKey := sdk.NewKVStoreKey("global")
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(accountCapKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(globalCapKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
-	am := acc.NewAccountManager(accountCapKey)
-	gm := global.NewGlobalManager(globalCapKey)
+
+	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph.InitParam(ctx)
+	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
+	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 	InitGlobalManager(ctx, gm)
 	anteHandler := NewAnteHandler(am, gm)
 
@@ -85,7 +95,6 @@ func newTestMsg(accKeys ...types.AccountKey) *TestMsg {
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx) {
 	_, result, abort := anteHandler(ctx, tx)
 	assert.False(t, abort)
-	fmt.Println(result)
 	assert.Equal(t, sdk.CodeOK, result.Code)
 	assert.True(t, result.IsOK())
 }

@@ -145,10 +145,10 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, acc3Balance, c1000.Plus(initCoin))
 
 	// set user1 as validator (cannot revoke)
-	referenceList := &model.ValidatorReferenceList{
+	referenceList := &model.ReferenceList{
 		AllValidators: []types.AccountKey{user1},
 	}
-	vm.storage.SetValidatorReferenceList(ctx, referenceList)
+	vm.storage.SetReferenceList(ctx, referenceList)
 	msg5 := NewVoterRevokeMsg("user1")
 	result2 := handler(ctx, msg5)
 	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
@@ -159,10 +159,10 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, ErrGetVoter().Result(), resultInvalid)
 
 	//  user1  can revoke voter candidancy now
-	referenceList = &model.ValidatorReferenceList{
+	referenceList = &model.ReferenceList{
 		AllValidators: []types.AccountKey{},
 	}
-	vm.storage.SetValidatorReferenceList(ctx, referenceList)
+	vm.storage.SetReferenceList(ctx, referenceList)
 	result3 := handler(ctx, msg5)
 	assert.Equal(t, sdk.Result{}, result3)
 
@@ -204,58 +204,10 @@ func TestVoterWithdraw(t *testing.T) {
 	assert.Equal(t, c1200, voter.Deposit)
 }
 
-func TestProposalBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
-	vm.InitGenesis(ctx)
-
-	rat := sdk.Rat{Denom: 10, Num: 5}
-	para := model.ChangeParameterDescription{
-		CDNAllocation: rat,
-	}
-	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
-	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
-
-	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c4600)
-
-	// let user1 create a proposal
-	msg := NewCreateProposalMsg("user1", para)
-	resultPass := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, resultPass)
-
-	// invalid create
-	invalidMsg := NewCreateProposalMsg("wqdkqwndkqwd", para)
-	resultInvalid := handler(ctx, invalidMsg)
-	assert.Equal(t, ErrUsernameNotFound().Result(), resultInvalid)
-
-	result2 := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, result2)
-
-	proposal, _ := vm.storage.GetProposal(ctx, proposalID1)
-	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
-
-	// check proposal list is correct
-	lst, _ := vm.storage.GetProposalList(ctx)
-	assert.Equal(t, 2, len(lst.OngoingProposal))
-	assert.Equal(t, proposalID1, lst.OngoingProposal[0])
-	assert.Equal(t, proposalID2, lst.OngoingProposal[1])
-
-	// test delete proposal
-	vm.storage.DeleteProposal(ctx, proposalID2)
-	_, err := vm.storage.GetProposal(ctx, proposalID2)
-	assert.Equal(t, ErrGetProposal(), err)
-
-}
-
 func TestVoteBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(vm, am, gm)
 
-	rat := sdk.Rat{Denom: 10, Num: 5}
-	para := model.ChangeParameterDescription{
-		CDNAllocation: rat,
-	}
 	proposalID := int64(1)
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddCoin(ctx, user1, c2000)
@@ -267,8 +219,10 @@ func TestVoteBasic(t *testing.T) {
 	am.AddCoin(ctx, user3, c2000)
 
 	// let user1 create a proposal
-	msg := NewCreateProposalMsg("user1", para)
-	handler(ctx, msg)
+	referenceList := &model.ReferenceList{
+		OngoingProposal: []types.ProposalKey{types.ProposalKey("1")},
+	}
+	vm.storage.SetReferenceList(ctx, referenceList)
 
 	// must become a voter before voting
 	voteMsg := NewVoteMsg("user2", proposalID, true)
@@ -288,7 +242,7 @@ func TestVoteBasic(t *testing.T) {
 	// Now user2 can vote, vote on a non exist proposal
 	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
 	voteRes := handler(ctx, invalidaVoteMsg)
-	assert.Equal(t, ErrGetProposal().Result(), voteRes)
+	assert.Equal(t, ErrNotOngoingProposal().Result(), voteRes)
 
 	// successfully vote
 	voteMsg2 := NewVoteMsg("user2", proposalID, true)
@@ -317,8 +271,8 @@ func TestDelegatorWithdraw(t *testing.T) {
 	user2 := createTestAccount(ctx, am, "user2")
 	handler := NewHandler(vm, am, gm)
 
-	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
-	vm.AddVoter(ctx, user1, voterMinDeposit, gm)
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
 	cases := []struct {
 		addDelegation bool

@@ -12,6 +12,7 @@ import (
 
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
+	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
 	reg "github.com/lino-network/lino/tx/register"
@@ -101,7 +102,8 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	accManager := acc.NewAccountManager(lb.CapKeyAccountStore)
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
 	balance, err :=
 		accManager.GetBankBalance(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
@@ -111,7 +113,8 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 func CheckOncallValidatorList(
 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	valManager := val.NewValidatorManager(lb.CapKeyValStore)
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	lst, err := valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
 	index := val.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
@@ -126,7 +129,8 @@ func CheckOncallValidatorList(
 func CheckAllValidatorList(
 	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	valManager := val.NewValidatorManager(lb.CapKeyValStore)
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	lst, err := valManager.GetValidatorList(ctx)
 
 	assert.Nil(t, err)

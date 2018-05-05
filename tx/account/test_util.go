@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -15,6 +16,7 @@ import (
 
 var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
 	l0    = types.LNO("0")
 	l100  = types.LNO("100")
@@ -45,7 +47,9 @@ var (
 
 func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager) {
 	ctx := getContext(height)
-	accManager := NewAccountManager(TestAccountKVStoreKey)
+	hp := param.NewParamHolder(TestParamKVStoreKey)
+	hp.InitParam(ctx)
+	accManager := NewAccountManager(TestAccountKVStoreKey, hp)
 	return ctx, accManager
 }
 
@@ -53,6 +57,7 @@ func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)

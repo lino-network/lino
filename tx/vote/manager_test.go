@@ -10,10 +10,10 @@ import (
 )
 
 func TestCanBecomeValidator(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
-	validatorMinVotingDeposit, _ := gm.GetValidatorMinVotingDeposit(ctx)
+	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
 	cases := []struct {
 		addVoter     bool
 		username     types.AccountKey
@@ -21,23 +21,23 @@ func TestCanBecomeValidator(t *testing.T) {
 		expectResult bool
 	}{
 		{false, user1, types.NewCoin(0), false},
-		{true, user1, voterMinDeposit, false},
-		{true, user1, validatorMinVotingDeposit, true},
+		{true, user1, voteParam.VoterMinDeposit, false},
+		{true, user1, valParam.ValidatorMinVotingDeposit, true},
 	}
 
 	for _, cs := range cases {
 		if cs.addVoter {
-			vm.AddVoter(ctx, cs.username, cs.coin, gm)
+			vm.AddVoter(ctx, cs.username, cs.coin)
 		}
-		actualRes := vm.CanBecomeValidator(ctx, cs.username, gm)
+		actualRes := vm.CanBecomeValidator(ctx, cs.username)
 		assert.Equal(t, cs.expectResult, actualRes)
 	}
 }
 
 func TestAddVoter(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	cases := []struct {
 		username     types.AccountKey
@@ -45,11 +45,11 @@ func TestAddVoter(t *testing.T) {
 		expectResult sdk.Error
 	}{
 		{user1, types.NewCoin(100 * types.Decimals), ErrRegisterFeeNotEnough()},
-		{user1, voterMinDeposit, nil},
+		{user1, param.VoterMinDeposit, nil},
 	}
 
 	for _, cs := range cases {
-		res := vm.AddVoter(ctx, cs.username, cs.coin, gm)
+		res := vm.AddVoter(ctx, cs.username, cs.coin)
 		assert.Equal(t, cs.expectResult, res)
 	}
 }
@@ -71,21 +71,21 @@ func TestIsInValidatorList(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		referenceList := &model.ValidatorReferenceList{
+		referenceList := &model.ReferenceList{
 			AllValidators: cs.allValidators,
 		}
-		vm.storage.SetValidatorReferenceList(ctx, referenceList)
+		vm.storage.SetReferenceList(ctx, referenceList)
 		res := vm.IsInValidatorList(ctx, cs.username)
 		assert.Equal(t, cs.expectResult, res)
 	}
 }
 
 func TestIsLegalVoterWithdraw(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
-	voterMinWithdraw, _ := gm.GetVoterMinWithdraw(ctx)
-	vm.AddVoter(ctx, user1, voterMinDeposit.Plus(types.NewCoin(100*types.Decimals)), gm)
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
+
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoin(100*types.Decimals)))
 
 	cases := []struct {
 		allValidators []types.AccountKey
@@ -93,29 +93,29 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{[]types.AccountKey{}, user1, voterMinWithdraw.Minus(types.NewCoin(1 * types.Decimals)), false},
-		{[]types.AccountKey{}, user1, voterMinWithdraw, true},
-		{[]types.AccountKey{user1}, user1, voterMinWithdraw, false},
+		{[]types.AccountKey{}, user1, param.VoterMinWithdraw.Minus(types.NewCoin(1 * types.Decimals)), false},
+		{[]types.AccountKey{}, user1, param.VoterMinWithdraw, true},
+		{[]types.AccountKey{user1}, user1, param.VoterMinWithdraw, false},
 		{[]types.AccountKey{}, user1, types.NewCoin(100), false},
 	}
 
 	for _, cs := range cases {
-		referenceList := &model.ValidatorReferenceList{
+		referenceList := &model.ReferenceList{
 			AllValidators: cs.allValidators,
 		}
-		vm.storage.SetValidatorReferenceList(ctx, referenceList)
-		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw, gm)
+		vm.storage.SetReferenceList(ctx, referenceList)
+		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw)
 		assert.Equal(t, cs.expectResult, res)
 	}
 }
 
 func TestIsLegalDelegatorWithdraw(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
-	delegatorMinWithdraw, _ := gm.GetDelegatorMinWithdraw(ctx)
-	voterMinDeposit, _ := gm.GetVoterMinDeposit(ctx)
-	vm.AddVoter(ctx, user1, voterMinDeposit, gm)
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
+
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
 	cases := []struct {
 		addDelegation bool
@@ -125,8 +125,8 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{false, types.NewCoin(0), user2, user1, delegatorMinWithdraw, false},
-		{true, types.NewCoin(100 * types.Decimals), user2, user1, delegatorMinWithdraw, true},
+		{false, types.NewCoin(0), user2, user1, param.DelegatorMinWithdraw, false},
+		{true, types.NewCoin(100 * types.Decimals), user2, user1, param.DelegatorMinWithdraw, true},
 		{false, types.NewCoin(0), user2, user1, types.NewCoin(0), false},
 		{false, types.NewCoin(0), user2, user1, types.NewCoin(101 * types.Decimals), false},
 	}
@@ -135,7 +135,7 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 		if cs.addDelegation {
 			vm.AddDelegation(ctx, cs.voter, cs.delegator, cs.delegatedCoin)
 		}
-		res := vm.IsLegalDelegatorWithdraw(ctx, cs.voter, cs.delegator, cs.withdraw, gm)
+		res := vm.IsLegalDelegatorWithdraw(ctx, cs.voter, cs.delegator, cs.withdraw)
 		assert.Equal(t, cs.expectResult, res)
 	}
 }

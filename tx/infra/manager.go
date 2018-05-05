@@ -2,18 +2,21 @@ package infra
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/infra/model"
 	"github.com/lino-network/lino/types"
 )
 
 type InfraManager struct {
-	storage model.InfraProviderStorage `json:"infra_provider_storage"`
+	storage     model.InfraProviderStorage `json:"infra_provider_storage"`
+	paramHolder param.ParamHolder          `json:"param_holder"`
 }
 
 // create NewInfraManager
-func NewInfraManager(key sdk.StoreKey) InfraManager {
+func NewInfraManager(key sdk.StoreKey, holder param.ParamHolder) InfraManager {
 	return InfraManager{
-		storage: model.NewInfraProviderStorage(key),
+		storage:     model.NewInfraProviderStorage(key),
+		paramHolder: holder,
 	}
 }
 

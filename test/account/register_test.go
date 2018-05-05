@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
 	acc "github.com/lino-network/lino/tx/account"
 	reg "github.com/lino-network/lino/tx/register"
@@ -49,7 +50,8 @@ func TestRegisterAccountFailed(t *testing.T) {
 	test.SignCheckDeliver(t, lb, registerMsg, 0, false, newAccountPriv, baseTime)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	accManager := acc.NewAccountManager(lb.CapKeyAccountStore)
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
 	assert.False(t, accManager.IsAccountExist(ctx, types.AccountKey(newAccountName)))
 	test.CheckBalance(t, test.GenesisUser, lb, test.GetGenesisAccountCoin(test.DefaultNumOfVal))
 }

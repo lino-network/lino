@@ -42,7 +42,7 @@ func handleDeveloperRegisterMsg(
 	if err = am.MinusCoin(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
-	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit, gm); err != nil {
+	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -63,12 +63,13 @@ func handleDeveloperRevokeMsg(
 		return withdrawErr.Result()
 	}
 
-	interval, times, err := gm.GetDeveloperCoinReturnParam(ctx)
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, times, interval, coin); err != nil {
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

@@ -2,6 +2,7 @@ package post
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 )
@@ -11,12 +12,14 @@ const rewardEvent = 0x1
 // post is the proxy for all storage structs defined above
 type PostManager struct {
 	postStorage model.PostStorage `json:"post_storage"`
+	paramHolder param.ParamHolder `json:"param_holder"`
 }
 
 // create NewPostManager
-func NewPostManager(key sdk.StoreKey) PostManager {
+func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 	return PostManager{
 		postStorage: model.NewPostStorage(key),
+		paramHolder: holder,
 	}
 }
 

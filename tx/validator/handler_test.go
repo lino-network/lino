@@ -42,7 +42,7 @@ func TestRegisterBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -85,7 +85,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 	assert.Equal(t, ErrVotingDepositNotEnough().Result(), result)
 
 	// let user register as voter
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	result2 := handler(ctx, msg)
 	assert.Equal(t, ErrCommitingDepositNotEnough().Result(), result2)
@@ -105,7 +105,7 @@ func TestRevokeBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -156,7 +156,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		am.AddCoin(ctx, users[i], c2000)
 
 		// let user register as voter first
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000, gm)
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 
 		// they will deposit 1000 + 10,20,30...200, 210, 220, 230, 240
 		num := (i+1)*10 + 1000
@@ -226,7 +226,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -267,7 +267,7 @@ func TestWithdrawBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -297,7 +297,7 @@ func TestDepositBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c2000)
 
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "user1", c8000, gm)
+	voteManager.AddVoter(ctx, "user1", c8000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -351,7 +351,7 @@ func TestValidatorReplacement(t *testing.T) {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
 		am.AddCoin(ctx, users[i], c2000)
 		// let user register as voter first
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000, gm)
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		// they will deposit 10,20,30...200, 210
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
@@ -372,7 +372,7 @@ func TestValidatorReplacement(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "noPowerUser")
 	am.AddCoin(ctx, user1, c2000)
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "noPowerUser", c8000, gm)
+	voteManager.AddVoter(ctx, "noPowerUser", c8000)
 
 	//check the user hasn't been added to oncall validators but in the pool
 	deposit := types.LNO("1005")
@@ -391,7 +391,7 @@ func TestValidatorReplacement(t *testing.T) {
 	powerfulUser := createTestAccount(ctx, am, "powerfulUser")
 	am.AddCoin(ctx, powerfulUser, c2000)
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "powerfulUser", c8000, gm)
+	voteManager.AddVoter(ctx, "powerfulUser", c8000)
 
 	//check the user has been added to oncall validators and in the pool
 	deposit2 := types.LNO("1088")
@@ -434,8 +434,8 @@ func TestRemoveBasic(t *testing.T) {
 	am.AddCoin(ctx, goodUser, c2000)
 	am.AddCoin(ctx, badUser, c2000)
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "goodUser", c8000, gm)
-	voteManager.AddVoter(ctx, "badUser", c8000, gm)
+	voteManager.AddVoter(ctx, "goodUser", c8000)
+	voteManager.AddVoter(ctx, "badUser", c8000)
 
 	// let both users register as validator
 	deposit := types.LNO("1200")
@@ -448,7 +448,7 @@ func TestRemoveBasic(t *testing.T) {
 	assert.Equal(t, 2, len(verifyList.OncallValidators))
 	assert.Equal(t, 2, len(verifyList.AllValidators))
 
-	valManager.RemoveValidatorFromAllLists(ctx, "badUser", gm)
+	valManager.RemoveValidatorFromAllLists(ctx, "badUser")
 	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(verifyList2.OncallValidators))
 	assert.Equal(t, 1, len(verifyList2.AllValidators))

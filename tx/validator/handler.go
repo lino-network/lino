@@ -48,11 +48,11 @@ func handleDepositMsg(
 	// Register the user if this name has not been registered
 	if !valManager.IsValidatorExist(ctx, msg.Username) {
 		// check validator minimum voting deposit requirement
-		if !voteManager.CanBecomeValidator(ctx, msg.Username, gm) {
+		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
 			return ErrVotingDepositNotEnough().Result()
 		}
 		if err := valManager.RegisterValidator(
-			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link, gm); err != nil {
+			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	} else {
@@ -63,7 +63,7 @@ func handleDepositMsg(
 	}
 
 	// Try to become oncall validator
-	if err := valManager.TryBecomeOncallValidator(ctx, msg.Username, gm); err != nil {
+	if err := valManager.TryBecomeOncallValidator(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -76,7 +76,7 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalMan
 		return err.Result()
 	}
 
-	if !vm.IsLegalWithdraw(ctx, msg.Username, coin, gm) {
+	if !vm.IsLegalWithdraw(ctx, msg.Username, coin) {
 		return ErrIllegalWithdraw().Result()
 	}
 
@@ -84,12 +84,13 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalMan
 		return err.Result()
 	}
 
-	interval, times, err := gm.GetValidatorCoinReturnParam(ctx)
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, times, interval, coin); err != nil {
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -101,16 +102,17 @@ func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManag
 		return withdrawErr.Result()
 	}
 
-	if err := vm.RemoveValidatorFromAllLists(ctx, msg.Username, gm); err != nil {
+	if err := vm.RemoveValidatorFromAllLists(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 
-	interval, times, err := gm.GetValidatorCoinReturnParam(ctx)
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, times, interval, coin); err != nil {
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
