@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ type testEvent struct{}
 // Construct some global addrs and txs for tests.
 var (
 	TestGlobalKVStoreKey = sdk.NewKVStoreKey("global")
+	TestParamKVStoreKey  = sdk.NewKVStoreKey("param")
 )
 
 func InitGlobalManager(ctx sdk.Context, gm GlobalManager) error {
@@ -32,6 +34,7 @@ func getContext() sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{}, false, nil)
@@ -39,7 +42,9 @@ func getContext() sdk.Context {
 
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 	ctx := getContext()
-	globalManager := NewGlobalManager(TestGlobalKVStoreKey)
+	holder := param.NewParamHolder(TestParamKVStoreKey)
+	holder.InitParam(ctx)
+	globalManager := NewGlobalManager(TestGlobalKVStoreKey, holder)
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(testEvent{}, "test", nil)
@@ -91,7 +96,7 @@ func TestTPS(t *testing.T) {
 func TestEvaluateConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time
-	paras, err := gm.storage.GetEvaluateOfContentValueParam(ctx)
+	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
 	assert.Nil(t, err)
 	cases := []struct {
 		createdTime                        int64
@@ -324,15 +329,6 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 	ceiling := sdk.NewRat(98, 1000)
 	floor := sdk.NewRat(30, 1000)
 
-	globalAllocation := &model.GlobalAllocationParam{
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
-	}
-	err := gm.storage.SetGlobalAllocationParam(ctx, globalAllocation)
-	assert.Nil(t, err)
-
 	cases := []struct {
 		lastYearConsumtion            types.Coin
 		thisYearConsumtion            types.Coin
@@ -546,27 +542,6 @@ func TestAddToValidatorInflationPool(t *testing.T) {
 	}
 }
 
-func TestChangeInfraInternalInflation(t *testing.T) {
-	ctx, gm := setupTest(t)
-
-	cases := []struct {
-		storageAllocation sdk.Rat
-		CDNAllocation     sdk.Rat
-	}{
-		{sdk.NewRat(1, 100), sdk.NewRat(99, 100)},
-		{sdk.ZeroRat, sdk.OneRat},
-	}
-
-	for _, cs := range cases {
-		err := gm.ChangeInfraInternalInflationParam(ctx, cs.storageAllocation, cs.CDNAllocation)
-		assert.Nil(t, err)
-		allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.storageAllocation, allocation.StorageAllocation)
-		assert.Equal(t, cs.CDNAllocation, allocation.CDNAllocation)
-	}
-}
-
 func TestAddConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
 
@@ -584,31 +559,5 @@ func TestAddConsumption(t *testing.T) {
 		globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expect, globalMeta.CumulativeConsumption)
-	}
-}
-
-func TestChangeGlobalInflation(t *testing.T) {
-	ctx, gm := setupTest(t)
-
-	cases := []struct {
-		contentCreatorAllocation sdk.Rat
-		developerAllocation      sdk.Rat
-		infraAllocation          sdk.Rat
-		validatorAllocation      sdk.Rat
-	}{
-		{sdk.NewRat(1, 100), sdk.NewRat(50, 100), sdk.NewRat(20, 100), sdk.NewRat(29, 100)},
-	}
-
-	for _, cs := range cases {
-		err := gm.ChangeGlobalInflationParam(
-			ctx, cs.infraAllocation, cs.contentCreatorAllocation,
-			cs.developerAllocation, cs.validatorAllocation)
-		assert.Nil(t, err)
-		allocation, err := gm.storage.GetGlobalAllocationParam(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.contentCreatorAllocation, allocation.ContentCreatorAllocation)
-		assert.Equal(t, cs.developerAllocation, allocation.DeveloperAllocation)
-		assert.Equal(t, cs.validatorAllocation, allocation.ValidatorAllocation)
-		assert.Equal(t, cs.infraAllocation, allocation.InfraAllocation)
 	}
 }

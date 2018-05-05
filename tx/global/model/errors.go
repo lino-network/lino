@@ -31,12 +31,8 @@ func ErrGlobalMetaNotFound() sdk.Error {
 	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global meta not found"))
 }
 
-func ErrGlobalAllocationParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global allocation not found"))
-}
-
-func ErrInfraAllocationParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Infra internal allocation not found"))
+func ErrInflationPoolNotFound() sdk.Error {
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Inflation pool not found"))
 }
 
 func ErrGlobalConsumptionMetaNotFound() sdk.Error {
@@ -45,24 +41,4 @@ func ErrGlobalConsumptionMetaNotFound() sdk.Error {
 
 func ErrGlobalTPSNotFound() sdk.Error {
 	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global tps not found"))
-}
-
-func ErrEvluateOfContentValueParam() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Evaluate of content value param not found"))
-}
-
-func ErrDeveloperParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Developer param not found"))
-}
-
-func ErrVoteParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Vote param not found"))
-}
-
-func ErrValidatorParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Validator param not found"))
-}
-
-func ErrProposalParamNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Proposal param not found"))
 }

@@ -2,23 +2,25 @@ package global
 
 import (
 	"math"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
 )
 
 // GlobalManager encapsulates all basic struct
 type GlobalManager struct {
-	storage model.GlobalStorage `json:"global_manager"`
+	storage     model.GlobalStorage `json:"global_manager"`
+	paramHolder param.ParamHolder   `json:"param_holder"`
 }
 
 // NewGlobalManager return the global proxy pointer
-func NewGlobalManager(key sdk.StoreKey) GlobalManager {
+func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager {
 	return GlobalManager{
-		storage: model.NewGlobalStorage(key),
+		storage:     model.NewGlobalStorage(key),
+		paramHolder: holder,
 	}
 }
 
@@ -26,8 +28,12 @@ func (gm GlobalManager) WireCodec() *wire.Codec {
 	return gm.storage.WireCodec()
 }
 
-func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) error {
-	return gm.storage.InitGlobalState(ctx, totalLino)
+func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) sdk.Error {
+	allocationParam, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+	if err != nil {
+		return err
+	}
+	return gm.storage.InitGlobalState(ctx, totalLino, allocationParam)
 }
 
 func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
@@ -96,7 +102,7 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 }
 
 func (gm GlobalManager) RegisterProposalDecideEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	proposalParam, err := gm.storage.GetProposalParam(ctx)
+	proposalParam, err := gm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err
 	}
@@ -148,7 +154,7 @@ func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error 
 	if err != nil {
 		return err
 	}
-	allocation, err := gm.storage.GetGlobalAllocationParam(ctx)
+	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	if err != nil {
 		return err
 	}
@@ -361,7 +367,7 @@ func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error
 func (gm GlobalManager) EvaluateConsumption(
 	ctx sdk.Context, coin types.Coin, numOfConsumptionOnAuthor int64, created int64,
 	totalReward types.Coin) (types.Coin, sdk.Error) {
-	paras, err := gm.storage.GetEvaluateOfContentValueParam(ctx)
+	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
 	if err != nil {
 		return types.NewCoin(0), err
 	}
@@ -377,164 +383,40 @@ func (gm GlobalManager) EvaluateConsumption(
 
 // get and set params
 // TODO add more change methods
-func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Rat,
-	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
-	allocation, err := gm.storage.GetGlobalAllocationParam(ctx)
-	if err != nil {
-		return err
-	}
-	allocation.ContentCreatorAllocation = ContentCreatorAllocation
-	allocation.DeveloperAllocation = DeveloperAllocation
-	allocation.InfraAllocation = InfraAllocation
-	allocation.ValidatorAllocation = ValidatorAllocation
-
-	if err := gm.storage.SetGlobalAllocationParam(ctx, allocation); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (gm GlobalManager) ChangeInfraInternalInflationParam(
-	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
-	allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
-	if err != nil {
-		return err
-	}
-	allocation.CDNAllocation = CDNAllocation
-	allocation.StorageAllocation = StorageAllocation
-	if err := gm.storage.SetInfraInternalAllocationParam(ctx, allocation); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (gm GlobalManager) GetVoterCoinReturnParam(ctx sdk.Context) (interval, times int64, err sdk.Error) {
-	param, err := gm.storage.GetVoteParam(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
-	return param.VoterCoinReturnIntervalHr, param.VoterCoinReturnTimes, nil
-}
-
-func (gm GlobalManager) GetValidatorCoinReturnParam(ctx sdk.Context) (interval, times int64, err sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
-	return param.ValidatorCoinReturnIntervalHr, param.ValidatorCoinReturnTimes, nil
-}
-
-func (gm GlobalManager) GetDelegatorCoinReturnParam(ctx sdk.Context) (interval, times int64, err sdk.Error) {
-	param, err := gm.storage.GetVoteParam(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
-	return param.DelegatorCoinReturnIntervalHr, param.DelegatorCoinReturnTimes, nil
-}
-
-func (gm GlobalManager) GetDeveloperCoinReturnParam(ctx sdk.Context) (interval, times int64, err sdk.Error) {
-	param, err := gm.storage.GetDeveloperParam(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
-	return param.DeveloperCoinReturnIntervalHr, param.DeveloperCoinReturnTimes, nil
-}
-
-func (gm GlobalManager) GetVoterMinDeposit(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetVoteParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.VoterMinDeposit, nil
-}
-
-func (gm GlobalManager) GetVoterMinWithdraw(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetVoteParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.VoterMinWithdraw, nil
-}
-
-func (gm GlobalManager) GetDelegatorMinWithdraw(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetVoteParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.DelegatorMinWithdraw, nil
-}
-
-func (gm GlobalManager) GetDeveloperMinDeposit(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetDeveloperParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.DeveloperMinDeposit, nil
-}
-
-func (gm GlobalManager) GetValidatorMinWithdraw(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.ValidatorMinWithdraw, nil
-}
-
-func (gm GlobalManager) GetValidatorMinVotingDeposit(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.ValidatorMinVotingDeposit, nil
-}
-
-func (gm GlobalManager) GetValidatorMinCommitingDeposit(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.ValidatorMinCommitingDeposit, nil
-}
-
-func (gm GlobalManager) GetValidatorMissCommitPenalty(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.PenaltyMissCommit, nil
-}
-
-func (gm GlobalManager) GetValidatorMissVotePenalty(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.PenaltyMissVote, nil
-}
-
-func (gm GlobalManager) GetValidatorByzantinePenalty(ctx sdk.Context) (types.Coin, sdk.Error) {
-	param, err := gm.storage.GetValidatorParam(ctx)
-	if err != nil {
-		return types.NewCoin(0), err
-	}
-	return param.PenaltyByzantine, nil
-}
-
-func (gm GlobalManager) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
-	param, err := gm.storage.GetProposalParam(ctx)
-	if err != nil {
-		return types.ProposalKey(""), err
-	}
-	param.NextProposalID += 1
-	if err := gm.storage.SetProposalParam(ctx, param); err != nil {
-		return types.ProposalKey(""), err
-	}
-	return types.ProposalKey(strconv.FormatInt(param.NextProposalID, 10)), nil
-}
+// func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Rat,
+// 	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
+// 	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	allocation.ContentCreatorAllocation = ContentCreatorAllocation
+// 	allocation.DeveloperAllocation = DeveloperAllocation
+// 	allocation.InfraAllocation = InfraAllocation
+// 	allocation.ValidatorAllocation = ValidatorAllocation
+//
+// 	if err := gm.paramHolder.SetGlobalAllocationParam(ctx, allocation); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+//
+// func (gm GlobalManager) ChangeInfraInternalInflationParam(
+// 	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
+// 	allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	allocation.CDNAllocation = CDNAllocation
+// 	allocation.StorageAllocation = StorageAllocation
+// 	if err := gm.storage.SetInfraInternalAllocationParam(ctx, allocation); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 // total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
 func PostTotalConsumptionAdjustment(
-	totalReward types.Coin, paras *model.EvaluateOfContentValueParam) float64 {
+	totalReward types.Coin, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0 / (1.0 + math.Exp(
 		(float64(totalReward.ToInt64())/float64(paras.TotalAmountOfConsumptionBase) -
 			float64(paras.TotalAmountOfConsumptionOffset))))) + 1.0
@@ -542,7 +424,7 @@ func PostTotalConsumptionAdjustment(
 
 // post time adjustment = 1/(1+e^(t/base - offset))
 func PostTimeAdjustment(
-	elapseTime int64, paras *model.EvaluateOfContentValueParam) float64 {
+	elapseTime int64, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0 / (1.0 + math.Exp(
 		(float64(elapseTime)/float64(paras.ConsumptionTimeAdjustBase) -
 			float64(paras.ConsumptionTimeAdjustOffset)))))
@@ -550,7 +432,7 @@ func PostTimeAdjustment(
 
 // consumption times adjustment = 1/(1+e^(n-offset)) + 1
 func PostConsumptionTimesAdjustment(
-	numOfConsumptionOnAuthor int64, paras *model.EvaluateOfContentValueParam) float64 {
+	numOfConsumptionOnAuthor int64, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0/(1.0+math.Exp(
 		(float64(numOfConsumptionOnAuthor)-float64(paras.NumOfConsumptionOnAuthorOffset)))) + 1.0) + 1.0
 }
