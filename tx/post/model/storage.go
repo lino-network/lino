@@ -16,19 +16,6 @@ var (
 	postDonationsSubStore      = []byte{0x06} // SubStore for all donations
 )
 
-// TODO(Lino) Register cdc here.
-// temporary use old wire.
-// this will help marshal and unmarshal interface type.
-const (
-	msgTypePost               = "1"
-	msgTypePostMeta           = "2"
-	msgTypePostLike           = "3"
-	msgTypePostReportOrUpvote = "4"
-	msgTypePostView           = "5"
-	msgTypePostComment        = "6"
-	msgTypePostDonations      = "7"
-)
-
 type PostStorage struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
@@ -47,25 +34,6 @@ func NewPostStorage(key sdk.StoreKey) PostStorage {
 		key: key,
 		cdc: cdc,
 	}
-}
-
-func (ps PostStorage) get(ctx sdk.Context, key []byte, errFunc NotFoundErrFunc) ([]byte, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	val := store.Get(key)
-	if val == nil {
-		return nil, errFunc(key)
-	}
-	return val, nil
-}
-
-func (ps PostStorage) set(ctx sdk.Context, key []byte, postStruct PostInterface) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	val, err := ps.cdc.MarshalJSON(postStruct)
-	if err != nil {
-		return ErrPostMarshalError(err)
-	}
-	store.Set(key, val)
-	return nil
 }
 
 func (ps PostStorage) GetPostInfo(ctx sdk.Context, permLink types.PermLink) (*PostInfo, sdk.Error) {

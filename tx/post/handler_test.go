@@ -434,6 +434,51 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	}
 }
 
+func TestHandlerView(t *testing.T) {
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
+
+	createTime := ctx.BlockHeader().Time
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
+	user2 := createTestAccount(t, ctx, am, "user2")
+	user3 := createTestAccount(t, ctx, am, "user3")
+	cases := []struct {
+		viewUser             types.AccountKey
+		postID               string
+		author               types.AccountKey
+		viewTime             int64
+		expectTotalViewCount int64
+		expectUserViewCount  int64
+	}{
+		{user3, postID, user1, 1, 1, 1},
+		{user3, postID, user1, 2, 2, 2},
+		{user2, postID, user1, 3, 3, 1},
+		{user2, postID, user1, 4, 4, 2},
+		{user1, postID, user1, 5, 5, 1},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPermLink(cs.author, cs.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
+		msg := NewViewMsg(cs.viewUser, cs.author, cs.postID)
+		result := handler(ctx, msg)
+		assert.Equal(t, result, sdk.Result{})
+		postMeta := model.PostMeta{
+			Created:                 createTime,
+			LastUpdate:              createTime,
+			LastActivity:            createTime,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalViewCount:          cs.expectTotalViewCount,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectUserViewCount, view.Times)
+		assert.Equal(t, cs.viewTime, view.LastView)
+	}
+}
+
 func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)

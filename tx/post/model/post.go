@@ -11,28 +11,6 @@ type Identifier string
 // URL used to link resources like vedio, text or photo
 type URL string
 
-// PostIntreface needs to be implemented by all post related struct
-// this is needed in post manager
-type PostInterface interface {
-	AssertPostInterface()
-}
-
-var _ PostInterface = PostInfo{}
-var _ PostInterface = PostMeta{}
-var _ PostInterface = Like{}
-var _ PostInterface = ReportOrUpvote{}
-var _ PostInterface = Comment{}
-var _ PostInterface = View{}
-var _ PostInterface = Donations{}
-
-func (_ PostInfo) AssertPostInterface()       {}
-func (_ PostMeta) AssertPostInterface()       {}
-func (_ Like) AssertPostInterface()           {}
-func (_ ReportOrUpvote) AssertPostInterface() {}
-func (_ Comment) AssertPostInterface()        {}
-func (_ View) AssertPostInterface()           {}
-func (_ Donations) AssertPostInterface()      {}
-
 // PostInfo can also use to present comment(with parent) or repost(with source)
 type PostInfo struct {
 	PostID       string                 `json:"post_id"`
@@ -58,12 +36,13 @@ type PostMeta struct {
 	TotalDislikeWeight      int64      `json:"total_dislike_weight"`
 	TotalReportStake        types.Coin `json:"total_report_stake"`
 	TotalUpvoteStake        types.Coin `json:"total_upvote_stake"`
+	TotalViewCount          int64      `json:"total_view_count"`
 	TotalReward             types.Coin `json:"reward"`
 	PenaltyScore            sdk.Rat    `json:"penalty_score"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
 }
 
-// Like struct, only used in PostLikes
+// Like struct, only used in Likes
 type Like struct {
 	Username types.AccountKey `json:"username"`
 	Weight   int64            `json:"weight"`
@@ -80,7 +59,6 @@ type ReportOrUpvote struct {
 }
 type ReportOrUpvotes []ReportOrUpvote
 
-// View struct, only used in View
 type Comment struct {
 	Author  types.AccountKey `json:"author"`
 	PostID  string           `json:"post_key"`
@@ -88,13 +66,12 @@ type Comment struct {
 }
 type Comments []Comment
 
-// View struct, only used in View
+// View struct
 type View struct {
 	Username types.AccountKey `json:"username"`
-	Created  int64            `json:"created"`
+	LastView int64            `json:"last_view"`
 	Times    int64            `jons:"times"`
 }
-type Views []View
 
 // Donation struct, only used in Donation
 type Donation struct {

@@ -157,6 +157,30 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	return nil
 }
 
+// add or update like from the user if like exists
+func (pm PostManager) AddOrUpdateViewToPost(
+	ctx sdk.Context, permLink types.PermLink, user types.AccountKey) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	if err != nil {
+		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+	}
+	view, _ := pm.postStorage.GetPostView(ctx, permLink, user)
+	// Revoke privous
+	if view == nil {
+		view = &model.View{Username: user}
+	}
+	postMeta.TotalViewCount += 1
+	view.Times += 1
+	view.LastView = ctx.BlockHeader().Time
+	if err := pm.postStorage.SetPostView(ctx, permLink, view); err != nil {
+		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
+		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+	}
+	return nil
+}
+
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
@@ -236,18 +260,6 @@ func (pm PostManager) AddDonation(
 		return ErrAddDonation(permLink).TraceCause(err, "")
 	}
 	return nil
-}
-
-// add view to post view list
-func (pm PostManager) AddView(ctx sdk.Context, permLink types.PermLink, user types.AccountKey) sdk.Error {
-	view, _ := pm.postStorage.GetPostView(ctx, permLink, user)
-	if view != nil {
-		view.Times += 1
-	} else {
-		view = &model.View{Username: user, Created: ctx.BlockHeader().Time, Times: 1}
-	}
-
-	return pm.postStorage.SetPostView(ctx, permLink, view)
 }
 
 // get penalty score from report and upvote

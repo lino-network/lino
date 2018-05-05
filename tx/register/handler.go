@@ -15,7 +15,7 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 		case RegisterMsg:
 			return handleRegisterMsg(ctx, am, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized register msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

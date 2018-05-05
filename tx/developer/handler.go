@@ -21,7 +21,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 		case DeveloperRevokeMsg:
 			return handleDeveloperRevokeMsg(ctx, dm, gm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized developer Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

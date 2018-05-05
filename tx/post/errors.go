@@ -43,6 +43,10 @@ func ErrAddOrUpdateReportOrUpvoteToPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", permLink))
 }
 
+func ErrAddOrUpdateViewToPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update view to post %v failed", permLink))
+}
+
 func ErrRevokeReportOrUpvoteToPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("revoke report or upvote to post %v failed", permLink))
 }
@@ -67,8 +71,16 @@ func ErrLikePostUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, user %v not found", user))
 }
 
+func ErrViewPostUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("view post failed, user %v not found", user))
+}
+
 func ErrLikeNonExistPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, target post %v not found", permLink))
+}
+
+func ErrViewNonExistPost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("view post failed, target post %v not found", permLink))
 }
 
 func ErrDonateFailed(permLink types.PermLink) sdk.Error {
@@ -132,7 +144,7 @@ func ErrCommentInvalidParent(parentPostKey types.PermLink) sdk.Error {
 }
 
 func ErrPostLikeNoUsername() sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like needs have username"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Like needs username"))
 }
 
 func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
@@ -144,11 +156,23 @@ func ErrPostLikeInvalidTarget() sdk.Error {
 }
 
 func ErrPostReportOrUpvoteNoUsername() sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote needs have username"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote needs username"))
 }
 
 func ErrPostReportOrUpvoteInvalidTarget() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote target post invalid"))
+}
+
+func ErrPostViewNoUsername() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("view msg needs username"))
+}
+
+func ErrPostViewTimeInvalid(time int64) sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("view msg time invalid: %v", time))
+}
+
+func ErrPostViewInvalidTarget() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("view msg target post invalid"))
 }
 
 func ErrPostTitleExceedMaxLength() sdk.Error {
@@ -164,7 +188,7 @@ func ErrPostRedistributionSplitRate() sdk.Error {
 }
 
 func ErrPostDonateNoUsername() sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate needs have username"))
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate needs username"))
 }
 
 func ErrPostDonateInvalidTarget() sdk.Error {

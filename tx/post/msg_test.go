@@ -18,6 +18,11 @@ func testReportOrUpvoteValidate(t *testing.T, reportOrUpvoteMsg ReportOrUpvoteMs
 	assert.Equal(t, result, expectError)
 }
 
+func testViewValidate(t *testing.T, viewMsg ViewMsg, expectError sdk.Error) {
+	result := viewMsg.ValidateBasic()
+	assert.Equal(t, result, expectError)
+}
+
 func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
 	result := likeMsg.ValidateBasic()
 	assert.Equal(t, result, expectError)
@@ -181,6 +186,25 @@ func TestReportOrUpvoteMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
+	}
+}
+
+func TestViewMsg(t *testing.T) {
+	cases := []struct {
+		viewMsg     ViewMsg
+		expectError sdk.Error
+	}{
+		{NewViewMsg(types.AccountKey("test"), types.AccountKey("author"), "postID"), nil},
+		{NewViewMsg(types.AccountKey(""), types.AccountKey("author"), "postID"),
+			ErrPostViewNoUsername()},
+		{NewViewMsg(types.AccountKey("test"), types.AccountKey(""), "postID"),
+			ErrPostViewInvalidTarget()},
+		{NewViewMsg(types.AccountKey("test"), types.AccountKey("author"), ""),
+			ErrPostViewInvalidTarget()},
+	}
+
+	for _, cs := range cases {
+		testViewValidate(t, cs.viewMsg, cs.expectError)
 	}
 }
 

@@ -12,6 +12,7 @@ var _ sdk.Msg = CreatePostMsg{}
 var _ sdk.Msg = LikeMsg{}
 var _ sdk.Msg = DonateMsg{}
 var _ sdk.Msg = ReportOrUpvoteMsg{}
+var _ sdk.Msg = ViewMsg{}
 
 // PostCreateParams can also use to publish comment(with parent) or repost(with source)
 type PostCreateParams struct {
@@ -49,6 +50,13 @@ type DonateMsg struct {
 	FromApp  types.AccountKey
 }
 
+// ViewMsg sent from a user to a post
+type ViewMsg struct {
+	Username types.AccountKey
+	Author   types.AccountKey
+	PostID   string
+}
+
 // ReportOrUpvoteMsg sent from a user to a post
 type ReportOrUpvoteMsg struct {
 	Username types.AccountKey
@@ -71,6 +79,17 @@ func NewLikeMsg(
 	return LikeMsg{
 		Username: user,
 		Weight:   weight,
+		Author:   author,
+		PostID:   postID,
+	}
+}
+
+// NewLikeMsg constructs a like msg
+func NewViewMsg(
+	user types.AccountKey, author types.AccountKey, postID string) ViewMsg {
+
+	return ViewMsg{
+		Username: user,
 		Author:   author,
 		PostID:   postID,
 	}
@@ -109,6 +128,7 @@ func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
 func (msg LikeMsg) Type() string           { return types.PostRouterName }
 func (msg DonateMsg) Type() string         { return types.PostRouterName }
 func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
+func (msg ViewMsg) Type() string           { return types.PostRouterName }
 
 // ValidateBasic implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -183,6 +203,17 @@ func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// ValidateBasic implements sdk.Msg
+func (msg ViewMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) == 0 {
+		return ErrPostViewNoUsername()
+	}
+	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
+		return ErrPostViewInvalidTarget()
+	}
+	return nil
+}
+
 // Get implements sdk.Msg; should not be called
 func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
 	return nil
@@ -203,11 +234,15 @@ func (msg DonateMsg) Get(key interface{}) (value interface{}) {
 func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
+func (msg ViewMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
 
 // GetSignBytes implements sdk.Msg
 func (msg CreatePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
+
 func (msg LikeMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
@@ -217,6 +252,10 @@ func (msg DonateMsg) GetSignBytes() []byte {
 }
 
 func (msg ReportOrUpvoteMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+func (msg ViewMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
@@ -241,6 +280,9 @@ func (msg DonateMsg) GetSigners() []sdk.Address {
 func (msg ReportOrUpvoteMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
+func (msg ViewMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
@@ -259,5 +301,10 @@ func (msg DonateMsg) String() string {
 func (msg ReportOrUpvoteMsg) String() string {
 	return fmt.Sprintf(
 		"Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}",
+		msg.Username, msg.Author, msg.PostID)
+}
+func (msg ViewMsg) String() string {
+	return fmt.Sprintf(
+		"Post.ViewMsg{from: %v, post auther:%v, post id: %v}",
 		msg.Username, msg.Author, msg.PostID)
 }
