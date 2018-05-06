@@ -12,6 +12,7 @@ import (
 	developercmd "github.com/lino-network/lino/tx/developer/commands"
 	infracmd "github.com/lino-network/lino/tx/infra/commands"
 	postcmd "github.com/lino-network/lino/tx/post/commands"
+	proposalcmd "github.com/lino-network/lino/tx/proposal/commands"
 	registercmd "github.com/lino-network/lino/tx/register/commands"
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
 	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
@@ -127,12 +128,12 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			votecmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
 		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			votecmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
 		)...)
 
 	linocliCmd.AddCommand(

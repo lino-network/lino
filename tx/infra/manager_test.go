@@ -15,8 +15,8 @@ func TestRegister(t *testing.T) {
 	user1 := types.AccountKey("user1")
 	im.RegisterInfraProvider(ctx, user1)
 
-	_, getErr := im.storage.GetInfraProvider(ctx, user1)
-	assert.Nil(t, getErr)
+	_, err := im.storage.GetInfraProvider(ctx, user1)
+	assert.Nil(t, err)
 
 }
 

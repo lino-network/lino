@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -15,18 +16,21 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("account")
+	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestParamKVStoreKey   = sdk.NewKVStoreKey("account")
 )
 
 func setupTest(t *testing.T) (acc.AccountManager, sdk.Context, sdk.Handler) {
 	db := dbm.NewMemDB()
-	capKey := sdk.NewKVStoreKey("capkey")
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(capKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	am := acc.NewAccountManager(capKey)
-	handler := NewHandler(am)
 	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
+	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph.InitParam(ctx)
+	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
+	handler := NewHandler(am)
 
 	return am, ctx, handler
 }

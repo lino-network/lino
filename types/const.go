@@ -13,6 +13,8 @@ const (
 	VoteKVStoreKey      = "vote"
 	InfraKVStoreKey     = "infra"
 	DeveloperKVStoreKey = "developer"
+	ParamKVStoreKey     = "param"
+	ProposalKVStoreKey  = "proposal"
 
 	// RouterName for msg routing in app
 	RegisterRouterName  = "register"
@@ -22,6 +24,7 @@ const (
 	VoteRouterName      = "vote"
 	InfraRouterName     = "infra"
 	DeveloperRouterName = "developer"
+	ProposalRouterName  = "proposal"
 
 	// Msg key
 	IsRegister      = "is_register"

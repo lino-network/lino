@@ -84,7 +84,6 @@ func (c commander) getInfraProvidersCmd(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	// print out whole bank
 	output, err := json.MarshalIndent(providerList, "", "  ")
 	if err != nil {
 		return err

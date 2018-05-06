@@ -134,12 +134,13 @@ func TestGenesisAcc(t *testing.T) {
 	lb.Commit()
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 	for _, acc := range accs {
 		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
-				types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
 		balance, err :=
 			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
@@ -155,7 +156,7 @@ func TestGenesisAcc(t *testing.T) {
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
-				types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
 		balance, err :=
 			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
@@ -166,13 +167,15 @@ func TestGenesisAcc(t *testing.T) {
 
 func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
-
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
 	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
+	param, _ := lb.paramHolder.GetValidatorParam(ctx)
+
 	expectBalance := coinPerValidator.Minus(
-		types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 
 	testPastMinutes := int64(0)
 	for i := baseTime; i < baseTime+3600*20; i += 50 {

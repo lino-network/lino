@@ -29,24 +29,6 @@ type GlobalStatistics struct {
 	numOfDonation int64 `json:"number_of_donation"`
 }
 
-// GlobalAllocation
-// TotalLinoInflationPool: total Lino inflation for all community roles
-// InfraAllocation percentage for all infra related allocation
-// ContentCreatorAllocation percentage for all content creator related allocation
-// DeveloperAllocation percentage of inflation for developers
-// ValidatorAllocation percentage of inflation for validators
-type GlobalAllocation struct {
-	InfraAllocation          sdk.Rat `json:"infra_allocation"`
-	ContentCreatorAllocation sdk.Rat `json:"content_creator_allocation"`
-	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`
-	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
-}
-
-type InfraInternalAllocation struct {
-	StorageAllocation sdk.Rat `json:"storage_allocation"`
-	CDNAllocation     sdk.Rat `json:"CDN_allocation"`
-}
-
 // InflationPool, determined by GlobalAllocation
 // InfraInflationPool inflation pool for infra
 // TotalContentCreatorInflationPool total inflation pool for content creator this year
@@ -73,13 +55,4 @@ type ConsumptionMeta struct {
 	ConsumptionWindow           types.Coin `json:"consumption_window"`
 	ConsumptionRewardPool       types.Coin `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodHr int64      `json:"consumption_freezing_period"`
-}
-
-type EvaluateOfContentValuePara struct {
-	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
-	ConsumptionTimeAdjustOffset    int64   `json:"consumption_time_adjust_offset"`
-	NumOfConsumptionOnAuthorOffset int64   `json:"num_of_consumption_on_author_offset"`
-	TotalAmountOfConsumptionBase   int64   `json:"total_amount_of_consumption_base"`
-	TotalAmountOfConsumptionOffset int64   `json:"total_amount_of_consumption_offset"`
-	AmountOfConsumptionExponent    sdk.Rat `json:"amount_of_consumption_exponent"`
 }

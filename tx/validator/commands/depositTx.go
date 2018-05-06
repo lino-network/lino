@@ -47,7 +47,7 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		// // create the message
 		msg := validator.NewValidatorDepositMsg(
-			name, types.LNO(viper.GetString(client.FlagAmount)), privValidator.PubKey)
+			name, types.LNO(viper.GetString(client.FlagAmount)), privValidator.PubKey, viper.GetString(client.FlagLink))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

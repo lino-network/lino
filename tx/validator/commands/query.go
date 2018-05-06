@@ -72,7 +72,6 @@ func (c commander) getValidatorCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a username")
 	}
 
-	// find the key to look up the account
 	accKey := types.AccountKey(args[0])
 
 	res, err := ctx.Query(model.GetValidatorKey(accKey), c.storeName)
@@ -84,7 +83,6 @@ func (c commander) getValidatorCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// print out whole bank
 	output, err := json.MarshalIndent(validator, "", "  ")
 	if err != nil {
 		return err

@@ -31,12 +31,8 @@ func ErrGlobalMetaNotFound() sdk.Error {
 	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global meta not found"))
 }
 
-func ErrGlobalAllocationNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global allocation not found"))
-}
-
-func ErrInfraAllocationNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Infra internal allocation not found"))
+func ErrInflationPoolNotFound() sdk.Error {
+	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Inflation pool not found"))
 }
 
 func ErrGlobalConsumptionMetaNotFound() sdk.Error {
@@ -45,8 +41,4 @@ func ErrGlobalConsumptionMetaNotFound() sdk.Error {
 
 func ErrGlobalTPSNotFound() sdk.Error {
 	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global tps not found"))
-}
-
-func ErrEvluateOfContentValuePara() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Evaluate of content value para not found"))
 }

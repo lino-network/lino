@@ -1,20 +1,16 @@
 package model
 
 import (
-	"strconv"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 )
 
 var (
-	DelegatorSubstore              = []byte{0x00}
-	VoterSubstore                  = []byte{0x01}
-	ProposalSubstore               = []byte{0x02}
-	VoteSubstore                   = []byte{0x03}
-	ProposalListSubStore           = []byte{0x04}
-	ValidatorReferenceListSubStore = []byte{0x05}
+	DelegatorSubstore     = []byte{0x00}
+	VoterSubstore         = []byte{0x01}
+	VoteSubstore          = []byte{0x02}
+	ReferenceListSubStore = []byte{0x03}
 )
 
 type VoteStorage struct {
@@ -33,14 +29,9 @@ func NewVoteStorage(key sdk.StoreKey) VoteStorage {
 	return vs
 }
 
-func (vs VoteStorage) InitGenesis(ctx sdk.Context) error {
-	proposalLst := &ProposalList{}
-	if err := vs.SetProposalList(ctx, proposalLst); err != nil {
-		return err
-	}
-
-	penaltyLst := &ValidatorReferenceList{}
-	if err := vs.SetValidatorReferenceList(ctx, penaltyLst); err != nil {
+func (vs VoteStorage) InitGenesis(ctx sdk.Context) sdk.Error {
+	lst := &ReferenceList{}
+	if err := vs.SetReferenceList(ctx, lst); err != nil {
 		return err
 	}
 	return nil
@@ -54,7 +45,7 @@ func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter
 	}
 	voter := new(Voter)
 	if err := vs.cdc.UnmarshalJSON(voterByte, voter); err != nil {
-		return nil, ErrVoterUnmarshalError(err)
+		return nil, ErrUnmarshalError(err)
 	}
 	return voter, nil
 }
@@ -63,7 +54,7 @@ func (vs VoteStorage) SetVoter(ctx sdk.Context, accKey types.AccountKey, voter *
 	store := ctx.KVStore(vs.key)
 	voterByte, err := vs.cdc.MarshalJSON(*voter)
 	if err != nil {
-		return ErrVoterMarshalError(err)
+		return ErrMarshalError(err)
 	}
 	store.Set(GetVoterKey(accKey), voterByte)
 	return nil
@@ -83,7 +74,7 @@ func (vs VoteStorage) GetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 	}
 	vote := new(Vote)
 	if err := vs.cdc.UnmarshalJSON(voteByte, vote); err != nil {
-		return nil, ErrVoteUnmarshalError(err)
+		return nil, ErrUnmarshalError(err)
 	}
 	return vote, nil
 }
@@ -92,7 +83,7 @@ func (vs VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 	store := ctx.KVStore(vs.key)
 	voteByte, err := vs.cdc.MarshalJSON(*vote)
 	if err != nil {
-		return ErrVoteMarshalError(err)
+		return ErrMarshalError(err)
 	}
 	store.Set(GetVoteKey(proposalID, voter), voteByte)
 	return nil
@@ -104,83 +95,6 @@ func (vs VoteStorage) DeleteVote(ctx sdk.Context, proposalID types.ProposalKey, 
 	return nil
 }
 
-func (vs VoteStorage) GetValidatorReferenceList(ctx sdk.Context) (*ValidatorReferenceList, sdk.Error) {
-	store := ctx.KVStore(vs.key)
-	lstByte := store.Get(GetValidatorReferenceListKey())
-	if lstByte == nil {
-		return nil, ErrGetPenaltyList()
-	}
-	lst := new(ValidatorReferenceList)
-	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrPenaltyListUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (vs VoteStorage) SetValidatorReferenceList(ctx sdk.Context, lst *ValidatorReferenceList) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	lstByte, err := vs.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrPenaltyListMarshalError(err)
-	}
-	store.Set(GetValidatorReferenceListKey(), lstByte)
-	return nil
-}
-
-func (vs VoteStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
-	store := ctx.KVStore(vs.key)
-	lstByte := store.Get(GetProposalListKey())
-	if lstByte == nil {
-		return nil, ErrGetProposal()
-	}
-	lst := new(ProposalList)
-	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (vs VoteStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	lstByte, err := vs.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrProposalMarshalError(err)
-	}
-	store.Set(GetProposalListKey(), lstByte)
-	return nil
-}
-
-// onle support change parameter proposal now
-func (vs VoteStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (*ChangeParameterProposal, sdk.Error) {
-	store := ctx.KVStore(vs.key)
-	proposalByte := store.Get(GetProposalKey(proposalID))
-	if proposalByte == nil {
-		return nil, ErrGetProposal()
-	}
-	proposal := new(ChangeParameterProposal)
-	if err := vs.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
-	}
-	return proposal, nil
-}
-
-// onle support change parameter proposal now
-func (vs VoteStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	proposalByte, err := vs.cdc.MarshalJSON(*proposal)
-	if err != nil {
-		return ErrProposalMarshalError(err)
-	}
-	store.Set(GetProposalKey(proposalID), proposalByte)
-	return nil
-}
-
-func (vs VoteStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	store.Delete(GetProposalKey(proposalID))
-	return nil
-}
-
 func (vs VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) (*Delegation, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	delegationByte := store.Get(GetDelegationKey(voter, delegator))
@@ -189,7 +103,7 @@ func (vs VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, del
 	}
 	delegation := new(Delegation)
 	if err := vs.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
-		return nil, ErrDelegationUnmarshalError(err)
+		return nil, ErrUnmarshalError(err)
 	}
 	return delegation, nil
 }
@@ -198,7 +112,7 @@ func (vs VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, del
 	store := ctx.KVStore(vs.key)
 	delegationByte, err := vs.cdc.MarshalJSON(*delegation)
 	if err != nil {
-		return ErrDelegationMarshalError(err)
+		return ErrMarshalError(err)
 	}
 	store.Set(GetDelegationKey(voter, delegator), delegationByte)
 	return nil
@@ -221,7 +135,7 @@ func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 		var delegation Delegation
 		err := vs.cdc.UnmarshalJSON(delegationBytes, &delegation)
 		if err != nil {
-			return nil, ErrDelegationUnmarshalError(err)
+			return nil, ErrUnmarshalError(err)
 		}
 		delegators = append(delegators, delegation.Delegator)
 	}
@@ -240,7 +154,7 @@ func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 		var vote Vote
 		err := vs.cdc.UnmarshalJSON(voteBytes, &vote)
 		if err != nil {
-			return nil, ErrVoteUnmarshalError(err)
+			return nil, ErrUnmarshalError(err)
 		}
 		votes = append(votes, vote)
 	}
@@ -248,9 +162,27 @@ func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 	return votes, nil
 }
 
-func (vs VoteStorage) GetNextProposalID() (types.ProposalKey, sdk.Error) {
-	types.NextProposalID += 1
-	return types.ProposalKey(strconv.FormatInt(types.NextProposalID, 10)), nil
+func (vs VoteStorage) GetReferenceList(ctx sdk.Context) (*ReferenceList, sdk.Error) {
+	store := ctx.KVStore(vs.key)
+	lstByte := store.Get(GetReferenceListKey())
+	if lstByte == nil {
+		return nil, ErrGetReferenceList()
+	}
+	lst := new(ReferenceList)
+	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+		return nil, ErrUnmarshalError(err)
+	}
+	return lst, nil
+}
+
+func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	lstByte, err := vs.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrMarshalError(err)
+	}
+	store.Set(GetReferenceListKey(), lstByte)
+	return nil
 }
 
 func GetDelegatorPrefix(me types.AccountKey) []byte {
@@ -271,20 +203,11 @@ func GetVoteKey(proposalID types.ProposalKey, voter types.AccountKey) []byte {
 	return append(GetVotePrefix(proposalID), voter...)
 }
 
-func GetProposalKey(proposalID types.ProposalKey) []byte {
-	return append(ProposalSubstore, proposalID...)
-}
-
-func GetProposalListKey() []byte {
-	return ProposalListSubStore
-}
-
-func GetValidatorReferenceListKey() []byte {
-	return ValidatorReferenceListSubStore
-}
-
 func GetVoterKey(me types.AccountKey) []byte {
 	return append(VoterSubstore, me...)
+}
+func GetReferenceListKey() []byte {
+	return ReferenceListSubStore
 }
 
 func subspace(prefix []byte) (start, end []byte) {

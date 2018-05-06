@@ -2,18 +2,21 @@ package developer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/developer/model"
 	"github.com/lino-network/lino/types"
 )
 
 type DeveloperManager struct {
-	storage model.DeveloperStorage `json:"infra_developer_storage"`
+	storage     model.DeveloperStorage `json:"infra_developer_storage"`
+	paramHolder param.ParamHolder      `json:"param_holder"`
 }
 
 // create NewDeveloperManager
-func NewDeveloperManager(key sdk.StoreKey) DeveloperManager {
+func NewDeveloperManager(key sdk.StoreKey, holder param.ParamHolder) DeveloperManager {
 	return DeveloperManager{
-		storage: model.NewDeveloperStorage(key),
+		storage:     model.NewDeveloperStorage(key),
+		paramHolder: holder,
 	}
 }
 
@@ -31,8 +34,12 @@ func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.Acco
 
 func (dm DeveloperManager) RegisterDeveloper(
 	ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
+	if err != nil {
+		return err
+	}
 	// check developer mindmum deposit requirement
-	if !deposit.IsGTE(types.DeveloperMinDeposit) {
+	if !deposit.IsGTE(param.DeveloperMinDeposit) {
 		return ErrDeveloperDepositNotEnough()
 	}
 
@@ -51,9 +58,9 @@ func (dm DeveloperManager) RegisterDeveloper(
 
 func (dm DeveloperManager) AddToDeveloperList(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	lst, getErr := dm.storage.GetDeveloperList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := dm.storage.GetDeveloperList(ctx)
+	if err != nil {
+		return err
 	}
 	// already in the list
 	if FindAccountInList(username, lst.AllDevelopers) != -1 {
@@ -68,9 +75,9 @@ func (dm DeveloperManager) AddToDeveloperList(
 
 func (dm DeveloperManager) RemoveFromDeveloperList(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	lst, getErr := dm.storage.GetDeveloperList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := dm.storage.GetDeveloperList(ctx)
+	if err != nil {
+		return err
 	}
 	// not in the list
 	idx := FindAccountInList(username, lst.AllDevelopers)
@@ -86,9 +93,9 @@ func (dm DeveloperManager) RemoveFromDeveloperList(
 
 func (dm DeveloperManager) ReportConsumption(
 	ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
-	developer, getErr := dm.storage.GetDeveloper(ctx, username)
-	if getErr != nil {
-		return getErr
+	developer, err := dm.storage.GetDeveloper(ctx, username)
+	if err != nil {
+		return err
 	}
 	developer.AppConsumption = developer.AppConsumption.Plus(consumption)
 	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
@@ -99,17 +106,17 @@ func (dm DeveloperManager) ReportConsumption(
 
 func (dm DeveloperManager) GetConsumptionWeight(
 	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
-	lst, getErr := dm.storage.GetDeveloperList(ctx)
-	if getErr != nil {
-		return sdk.NewRat(0), getErr
+	lst, err := dm.storage.GetDeveloperList(ctx)
+	if err != nil {
+		return sdk.NewRat(0), err
 	}
 
 	totalConsumption := types.NewCoin(0)
 	myConsumption := types.NewCoin(0)
 	for _, developerName := range lst.AllDevelopers {
-		curDeveloper, getErr := dm.storage.GetDeveloper(ctx, developerName)
-		if getErr != nil {
-			return sdk.NewRat(0), getErr
+		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
+		if err != nil {
+			return sdk.NewRat(0), err
 		}
 		totalConsumption = totalConsumption.Plus(curDeveloper.AppConsumption)
 		if curDeveloper.Username == username {
@@ -128,15 +135,15 @@ func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperLi
 }
 
 func (dm DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
-	lst, getErr := dm.storage.GetDeveloperList(ctx)
-	if getErr != nil {
-		return getErr
+	lst, err := dm.storage.GetDeveloperList(ctx)
+	if err != nil {
+		return err
 	}
 
 	for _, developerName := range lst.AllDevelopers {
-		curDeveloper, getErr := dm.storage.GetDeveloper(ctx, developerName)
-		if getErr != nil {
-			return getErr
+		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
+		if err != nil {
+			return err
 		}
 		curDeveloper.AppConsumption = types.NewCoin(0)
 		if err := dm.storage.SetDeveloper(ctx, developerName, curDeveloper); err != nil {
@@ -149,9 +156,9 @@ func (dm DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 // this method won't check if it is a legal withdraw, caller should check by itself
 func (dm DeveloperManager) Withdraw(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
-	developer, getErr := dm.storage.GetDeveloper(ctx, username)
-	if getErr != nil {
-		return getErr
+	developer, err := dm.storage.GetDeveloper(ctx, username)
+	if err != nil {
+		return err
 	}
 	developer.Deposit = developer.Deposit.Minus(coin)
 
@@ -170,9 +177,9 @@ func (dm DeveloperManager) Withdraw(
 
 func (dm DeveloperManager) WithdrawAll(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
-	developer, getErr := dm.storage.GetDeveloper(ctx, username)
-	if getErr != nil {
-		return types.NewCoin(0), getErr
+	developer, err := dm.storage.GetDeveloper(ctx, username)
+	if err != nil {
+		return types.NewCoin(0), err
 	}
 	if err := dm.Withdraw(ctx, username, developer.Deposit); err != nil {
 		return types.NewCoin(0), err

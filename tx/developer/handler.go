@@ -63,8 +63,13 @@ func handleDeveloperRevokeMsg(
 		return withdrawErr.Result()
 	}
 
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

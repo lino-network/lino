@@ -27,8 +27,10 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 	}
 }
 
-func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager, am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
-	// Must have an normal acount
+func handleDepositMsg(
+	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
+	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
+	// Must have a normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
@@ -49,19 +51,20 @@ func handleDepositMsg(ctx sdk.Context, valManager ValidatorManager, voteManager 
 		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
 			return ErrVotingDepositNotEnough().Result()
 		}
-		if err := valManager.RegisterValidator(ctx, msg.Username, msg.ValPubKey.Bytes(), coin); err != nil {
+		if err := valManager.RegisterValidator(
+			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	} else {
 		// Deposit coins
-		if err := valManager.Deposit(ctx, msg.Username, coin); err != nil {
+		if err := valManager.Deposit(ctx, msg.Username, coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	}
 
 	// Try to become oncall validator
-	if joinErr := valManager.TryBecomeOncallValidator(ctx, msg.Username); joinErr != nil {
-		return joinErr.Result()
+	if err := valManager.TryBecomeOncallValidator(ctx, msg.Username); err != nil {
+		return err.Result()
 	}
 	return sdk.Result{}
 }
@@ -81,7 +84,13 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalMan
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -97,7 +106,13 @@ func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManag
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

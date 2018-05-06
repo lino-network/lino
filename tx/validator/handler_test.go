@@ -46,7 +46,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1600, valKey)
+	msg := NewValidatorDepositMsg("user1", l1600, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -80,7 +80,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l400, valKey)
+	msg := NewValidatorDepositMsg("user1", l400, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrVotingDepositNotEnough().Result(), result)
 
@@ -109,7 +109,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1600, valKey)
+	msg := NewValidatorDepositMsg("user1", l1600, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -162,7 +162,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		num := (i+1)*10 + 1000
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -175,7 +175,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 
 	// lowest validator depoist coins will change the ranks
 	deposit := types.LNO(l15)
-	msg := NewValidatorDepositMsg("user4", deposit, valKeys[3])
+	msg := NewValidatorDepositMsg("user4", deposit, valKeys[3], "")
 	result := handler(ctx, msg)
 
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
@@ -230,7 +230,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1000, valKey)
+	msg := NewValidatorDepositMsg("user1", l1000, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -248,7 +248,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	assert.Equal(t, 0, len(lstEmpty.OncallValidators))
 
 	// deposit again
-	msg3 := NewValidatorDepositMsg("user1", l1000, valKey)
+	msg3 := NewValidatorDepositMsg("user1", l1000, valKey, "")
 	result3 := handler(ctx, msg3)
 
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
@@ -271,7 +271,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1600, valKey)
+	msg := NewValidatorDepositMsg("user1", l1600, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -301,11 +301,11 @@ func TestDepositBasic(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("user1", l1600, valKey)
+	msg := NewValidatorDepositMsg("user1", l1600, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
 
-	depositMsg := NewValidatorDepositMsg("user1", l200, valKey)
+	depositMsg := NewValidatorDepositMsg("user1", l200, valKey, "")
 	result2 := handler(ctx, depositMsg)
 	assert.Equal(t, sdk.Result{}, result2)
 
@@ -334,7 +334,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("qwqwndqwnd", l1600, valKey)
+	msg := NewValidatorDepositMsg("qwqwndqwnd", l1600, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrUsernameNotFound().Result(), result)
 }
@@ -356,7 +356,7 @@ func TestValidatorReplacement(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i])
+		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
@@ -377,7 +377,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user hasn't been added to oncall validators but in the pool
 	deposit := types.LNO("1005")
 	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
-	msg := NewValidatorDepositMsg("noPowerUser", deposit, valKey1)
+	msg := NewValidatorDepositMsg("noPowerUser", deposit, valKey1, "")
 	result := handler(ctx, msg)
 
 	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
@@ -396,7 +396,7 @@ func TestValidatorReplacement(t *testing.T) {
 	//check the user has been added to oncall validators and in the pool
 	deposit2 := types.LNO("1088")
 	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
-	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, valKey2)
+	msg2 := NewValidatorDepositMsg("powerfulUser", deposit2, valKey2, "")
 	result2 := handler(ctx, msg2)
 
 	verifyList3, _ := valManager.storage.GetValidatorList(ctx)
@@ -439,8 +439,8 @@ func TestRemoveBasic(t *testing.T) {
 
 	// let both users register as validator
 	deposit := types.LNO("1200")
-	msg1 := NewValidatorDepositMsg("goodUser", deposit, valKey1)
-	msg2 := NewValidatorDepositMsg("badUser", deposit, valKey2)
+	msg1 := NewValidatorDepositMsg("goodUser", deposit, valKey1, "")
+	msg2 := NewValidatorDepositMsg("badUser", deposit, valKey2, "")
 	handler(ctx, msg1)
 	handler(ctx, msg2)
 

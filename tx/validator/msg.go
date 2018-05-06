@@ -14,6 +14,7 @@ type ValidatorDepositMsg struct {
 	Username  types.AccountKey `json:"username"`
 	Deposit   types.LNO        `json:"deposit"`
 	ValPubKey crypto.PubKey    `json:"validator_public_key"`
+	Link      string           `json:"link"`
 }
 
 type ValidatorWithdrawMsg struct {
@@ -26,11 +27,12 @@ type ValidatorRevokeMsg struct {
 }
 
 // ValidatorDepositMsg Msg Implementations
-func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey) ValidatorDepositMsg {
+func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.PubKey, link string) ValidatorDepositMsg {
 	return ValidatorDepositMsg{
 		Username:  types.AccountKey(validator),
 		Deposit:   deposit,
 		ValPubKey: pubKey,
+		Link:      link,
 	}
 }
 

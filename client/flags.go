@@ -48,6 +48,7 @@ const (
 	FlagVoter      = "voter"
 	FlagProposalID = "proposal_id"
 	FlagResult     = "result"
+	FlagLink       = "link"
 )
 
 // LineBreak can be included in a command list to provide a blank line

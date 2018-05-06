@@ -30,14 +30,14 @@ func TestValidatorDeposit(t *testing.T) {
 
 	// deposit the lowest requirement
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("1000"), newValidatorPriv.PubKey())
+		newAccountName, types.LNO("1000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 
 	// deposit as the highest validator
 	valDepositMsg = val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("1"), newValidatorPriv.PubKey())
+		newAccountName, types.LNO("1"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)

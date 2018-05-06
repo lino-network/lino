@@ -20,8 +20,7 @@ type Delegation struct {
 	Amount    types.Coin       `json:"amount"`
 }
 
-type ValidatorReferenceList struct {
-	PenaltyValidators []types.AccountKey `json:"penalty_validators"`
-	AllValidators     []types.AccountKey `json:"all_validators"`
-	OncallValidators  []types.AccountKey `json:"oncall_validators"`
+type ReferenceList struct {
+	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
+	AllValidators   []types.AccountKey  `json:"all_validators"`
 }
