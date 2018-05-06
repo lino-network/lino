@@ -34,7 +34,7 @@ func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.Prop
 
 // only support change parameter proposal now
 func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
-	des *model.ChangeParameterDescription, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
+	des model.ChangeParameterDescription, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.paramHolder.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
@@ -49,7 +49,7 @@ func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
 
 	changeParameterProposal := &model.ChangeParameterProposal{
 		Proposal:                   proposal,
-		ChangeParameterDescription: *des,
+		ChangeParameterDescription: des,
 	}
 	if err := pm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
 		return newID, err

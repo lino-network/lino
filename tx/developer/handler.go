@@ -15,7 +15,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
-			return handleDeveloperRegisterMsg(ctx, dm, am, gm, msg)
+			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
 		case GrantDeveloperMsg:
 			return handleGrantDeveloperMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
@@ -28,7 +28,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 }
 
 func handleDeveloperRegisterMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager, msg DeveloperRegisterMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}

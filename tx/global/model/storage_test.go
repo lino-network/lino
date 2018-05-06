@@ -32,8 +32,8 @@ func InitGlobalStorage(
 	return gm.InitGlobalState(ctx, types.NewCoin(10000*types.Decimals), param)
 }
 
-func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, ph param.ParamHolder, expectGlobalStatistic GlobalStatistics,
-	expectGlobalMeta GlobalMeta, expectGlobalAllocation param.GlobalAllocationParam, expectConsumptionMeta ConsumptionMeta,
+func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
+	expectGlobalMeta GlobalMeta, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
 	globalStatistic, err := gm.GetGlobalStatistics(ctx)
 	assert.Nil(t, err)
@@ -41,9 +41,6 @@ func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, ph para
 	globalMeta, err := gm.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalMeta, *globalMeta)
-	globalAllocation, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectGlobalAllocation, *globalAllocation)
 	consumptionMeta, err := gm.GetConsumptionMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectConsumptionMeta, *consumptionMeta)
@@ -73,13 +70,6 @@ func TestGlobalStorageGenesis(t *testing.T) {
 	}
 
 	globalStatistics := GlobalStatistics{}
-
-	globalAllocation := param.GlobalAllocationParam{
-		InfraAllocation:          sdk.Rat{20, 100},
-		ContentCreatorAllocation: sdk.Rat{50, 100},
-		DeveloperAllocation:      sdk.Rat{20, 100},
-		ValidatorAllocation:      sdk.Rat{10, 100},
-	}
 	consumptionMeta := ConsumptionMeta{
 		ConsumptionFrictionRate:     sdk.Rat{5, 100},
 		ReportStakeWindow:           sdk.ZeroRat,
@@ -94,5 +84,5 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		DeveloperInflationPool:      types.NewCoin(196 * types.Decimals),
 		ValidatorInflationPool:      types.NewCoin(98 * types.Decimals),
 	}
-	checkGlobalStorage(t, ctx, gm, ph, globalStatistics, globalMeta, globalAllocation, consumptionMeta, inflationPool)
+	checkGlobalStorage(t, ctx, gm, globalStatistics, globalMeta, consumptionMeta, inflationPool)
 }

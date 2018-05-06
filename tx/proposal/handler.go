@@ -29,7 +29,7 @@ func handleCreateProposalMsg(
 
 	// TODO add deposit logic
 
-	if _, addErr := pm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription, gm); addErr != nil {
+	if _, addErr := pm.AddProposal(ctx, msg.Creator, msg.ChangeParameterDescription, gm); addErr != nil {
 		return addErr.Result()
 	}
 	//  set a time event to decide the proposal in 7 days

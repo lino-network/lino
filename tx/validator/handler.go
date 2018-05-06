@@ -15,7 +15,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
-			return handleDepositMsg(ctx, valManager, voteManager, am, gm, msg)
+			return handleDepositMsg(ctx, valManager, voteManager, am, msg)
 		case ValidatorWithdrawMsg:
 			return handleWithdrawMsg(ctx, valManager, gm, msg)
 		case ValidatorRevokeMsg:
@@ -29,7 +29,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 
 func handleDepositMsg(
 	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
-	am acc.AccountManager, gm global.GlobalManager, msg ValidatorDepositMsg) sdk.Result {
+	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()

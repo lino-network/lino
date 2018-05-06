@@ -26,7 +26,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
 		case VoteMsg:
-			return handleVoteMsg(ctx, vm, gm, msg)
+			return handleVoteMsg(ctx, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -191,7 +191,7 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 	return sdk.Result{}
 }
 
-func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoteMsg) sdk.Result {
+func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
 	if !vm.IsVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
 	}
