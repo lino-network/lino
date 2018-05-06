@@ -28,7 +28,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case VoteMsg:
 			return handleVoteMsg(ctx, vm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized vote Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

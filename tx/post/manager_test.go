@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/abci/types"
 )
 
 // test create post
@@ -153,6 +154,49 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 			TotalDislikeWeight:      cs.expectTotalDislikeWeight,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
+	}
+}
+
+func TestAddOrUpdateViewToPost(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	createTime := ctx.BlockHeader().Time
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
+	user3 := types.AccountKey("user3")
+
+	cases := []struct {
+		viewUser             types.AccountKey
+		postID               string
+		author               types.AccountKey
+		viewTime             int64
+		expectTotalViewCount int64
+		expectUserViewCount  int64
+	}{
+		{user3, postID1, user1, 1, 1, 1},
+		{user3, postID1, user1, 2, 2, 2},
+		{user2, postID1, user1, 3, 3, 1},
+		{user2, postID1, user1, 4, 4, 2},
+		{user1, postID1, user1, 5, 5, 1},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPermLink(cs.author, cs.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
+		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		postMeta := model.PostMeta{
+			Created:                 createTime,
+			LastUpdate:              createTime,
+			LastActivity:            createTime,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalViewCount:          cs.expectTotalViewCount,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectUserViewCount, view.Times)
+		assert.Equal(t, cs.viewTime, view.LastView)
 	}
 }
 

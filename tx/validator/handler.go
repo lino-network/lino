@@ -21,7 +21,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 		case ValidatorRevokeMsg:
 			return handleRevokeMsg(ctx, valManager, gm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized validator msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

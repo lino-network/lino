@@ -22,7 +22,7 @@ func NewHandler(am AccountManager) sdk.Handler {
 		case ClaimMsg:
 			return handleClaimMsg(ctx, am, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized account msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

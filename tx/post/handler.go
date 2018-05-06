@@ -21,8 +21,10 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleLikeMsg(ctx, msg, pm, am, gm)
 		case ReportOrUpvoteMsg:
 			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
+		case ViewMsg:
+			return handleViewMsg(ctx, msg, pm, am, gm)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized post msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -33,9 +35,9 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if !am.IsAccountExist(ctx, msg.Author) {
 		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
-	postKey := types.GetPermLink(msg.Author, msg.PostID)
-	if pm.IsPostExist(ctx, postKey) {
-		return ErrCreateExistPost(postKey).Result()
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if pm.IsPostExist(ctx, permLink) {
+		return ErrCreateExistPost(permLink).Result()
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
 		parentPostKey := types.GetPermLink(msg.ParentAuthor, msg.ParentPostID)
@@ -58,11 +60,27 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
-	postKey := types.GetPermLink(msg.Author, msg.PostID)
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrLikeNonExistPost(postKey).Result()
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrLikeNonExistPost(permLink).Result()
 	}
-	if err := pm.AddOrUpdateLikeToPost(ctx, postKey, msg.Username, msg.Weight); err != nil {
+	if err := pm.AddOrUpdateLikeToPost(ctx, permLink, msg.Username, msg.Weight); err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{}
+}
+
+// Handle ViewMsg
+func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrViewPostUserNotFound(msg.Username).Result()
+	}
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrViewNonExistPost(permLink).Result()
+	}
+	if err := pm.AddOrUpdateViewToPost(ctx, permLink, msg.Username); err != nil {
 		return err.Result()
 	}
 

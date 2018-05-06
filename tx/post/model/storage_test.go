@@ -95,7 +95,7 @@ func TestPostView(t *testing.T) {
 	ctx := getContext()
 	user := types.AccountKey("test")
 
-	postView := View{Username: user, Created: 100}
+	postView := View{Username: user, LastView: 100, Times: 1}
 	err := ps.SetPostView(ctx, types.PermLink("test"), &postView)
 	assert.Nil(t, err)
 
