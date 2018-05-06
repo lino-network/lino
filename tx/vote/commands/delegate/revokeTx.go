@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -20,22 +19,22 @@ func RevokeDelegateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "revoke delegation",
 		RunE:  sendRevokeDelegateTx(cdc),
 	}
-	cmd.Flags().String(FlagUsername, "", "revoke user")
-	cmd.Flags().String(FlagVoter, "", "revoke from voter")
+	cmd.Flags().String(client.FlagUser, "", "revoke user")
+	cmd.Flags().String(client.FlagVoter, "", "revoke from voter")
 	return cmd
 }
 
 func sendRevokeDelegateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		user := viper.GetString(FlagUsername)
-		voter := viper.GetString(FlagVoter)
+		ctx := client.NewCoreContextFromViper()
+		user := viper.GetString(client.FlagUser)
+		voter := viper.GetString(client.FlagVoter)
 
 		// create the message
 		msg := vote.NewRevokeDelegationMsg(user, voter)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(user, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 
 		if signErr != nil {
 			return signErr

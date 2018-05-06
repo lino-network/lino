@@ -26,31 +26,22 @@ var (
 	priv2 = crypto.GenPrivKeyEd25519()
 	addr2 = priv2.PubKey().Address()
 
-	genesisTotalLino    int64      = 10000000000
+	genesisTotalLino    types.LNO  = "10000000000"
 	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
-	LNOPerValidator     int64      = 100000000
+	LNOPerValidator     types.LNO  = "100000000"
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
 
-func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
+func loggerAndDB() (log.Logger, dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	dbs := map[string]dbm.DB{
-		"main":      dbm.NewMemDB(),
-		"acc":       dbm.NewMemDB(),
-		"post":      dbm.NewMemDB(),
-		"val":       dbm.NewMemDB(),
-		"vote":      dbm.NewMemDB(),
-		"infra":     dbm.NewMemDB(),
-		"developer": dbm.NewMemDB(),
-		"global":    dbm.NewMemDB(),
-	}
-	return logger, dbs
+	db := dbm.NewMemDB()
+	return logger, db
 }
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
-	logger, dbs := loggerAndDBs()
-	lb := NewLinoBlockchain(logger, dbs)
+	logger, db := loggerAndDB()
+	lb := NewLinoBlockchain(logger, db)
 
 	genesisState := genesis.GenesisState{
 		Accounts:  []genesis.GenesisAccount{},
@@ -59,22 +50,24 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 
 	// Generate 21 validators
 	genesisAcc := genesis.GenesisAccount{
-		Name:        user1,
-		Lino:        LNOPerValidator,
-		PubKey:      priv1.PubKey(),
-		IsValidator: true,
-		ValPubKey:   priv2.PubKey(),
+		Name:           user1,
+		Lino:           LNOPerValidator,
+		MasterKey:      priv1.PubKey(),
+		TransactionKey: crypto.GenPrivKeyEd25519().PubKey(),
+		PostKey:        crypto.GenPrivKeyEd25519().PubKey(),
+		IsValidator:    true,
+		ValPubKey:      priv2.PubKey(),
 	}
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	for i := 1; i < numOfValidators; i++ {
-		privKey := crypto.GenPrivKeyEd25519()
-		valPrivKey := crypto.GenPrivKeyEd25519()
 		genesisAcc := genesis.GenesisAccount{
-			Name:        "validator" + strconv.Itoa(i),
-			Lino:        LNOPerValidator,
-			PubKey:      privKey.PubKey(),
-			IsValidator: true,
-			ValPubKey:   valPrivKey.PubKey(),
+			Name:           "validator" + strconv.Itoa(i),
+			Lino:           LNOPerValidator,
+			MasterKey:      crypto.GenPrivKeyEd25519().PubKey(),
+			TransactionKey: crypto.GenPrivKeyEd25519().PubKey(),
+			PostKey:        crypto.GenPrivKeyEd25519().PubKey(),
+			IsValidator:    true,
+			ValPubKey:      crypto.GenPrivKeyEd25519().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -94,24 +87,27 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 }
 
 func TestGenesisAcc(t *testing.T) {
-	logger, dbs := loggerAndDBs()
-	lb := NewLinoBlockchain(logger, dbs)
-
-	priv3 := crypto.GenPrivKeyEd25519()
-	priv4 := crypto.GenPrivKeyEd25519()
-	priv5 := crypto.GenPrivKeyEd25519()
-	priv6 := crypto.GenPrivKeyEd25519()
+	logger, db := loggerAndDB()
+	lb := NewLinoBlockchain(logger, db)
 
 	accs := []struct {
 		genesisAccountName string
-		numOfLino          int64
-		pubKey             crypto.PubKey
+		numOfLino          types.LNO
+		masterKey          crypto.PubKey
+		transactionKey     crypto.PubKey
+		postKey            crypto.PubKey
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
-		{"Lino", 9000000000, priv1.PubKey(), true, priv2.PubKey()},
-		{"Genesis", 500000000, priv3.PubKey(), true, priv4.PubKey()},
-		{"NonValidator", 500000000, priv5.PubKey(), false, priv6.PubKey()},
+		{"Lino", "9000000000", crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			true, crypto.GenPrivKeyEd25519().PubKey()},
+		{"Genesis", "500000000", crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			true, crypto.GenPrivKeyEd25519().PubKey()},
+		{"NonValidator", "500000000", crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			false, crypto.GenPrivKeyEd25519().PubKey()},
 	}
 	genesisState := genesis.GenesisState{
 		Accounts:  []genesis.GenesisAccount{},
@@ -119,11 +115,13 @@ func TestGenesisAcc(t *testing.T) {
 	}
 	for _, acc := range accs {
 		genesisAcc := genesis.GenesisAccount{
-			Name:        acc.genesisAccountName,
-			Lino:        acc.numOfLino,
-			PubKey:      acc.pubKey,
-			IsValidator: acc.isValidator,
-			ValPubKey:   acc.valPubKey,
+			Name:           acc.genesisAccountName,
+			Lino:           acc.numOfLino,
+			MasterKey:      acc.masterKey,
+			TransactionKey: acc.transactionKey,
+			PostKey:        acc.postKey,
+			IsValidator:    acc.isValidator,
+			ValPubKey:      acc.valPubKey,
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -136,12 +134,13 @@ func TestGenesisAcc(t *testing.T) {
 	lb.Commit()
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(types.LNO(sdk.NewRat(acc.numOfLino)))
+		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
-				types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
 		balance, err :=
 			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
@@ -150,14 +149,14 @@ func TestGenesisAcc(t *testing.T) {
 	}
 
 	// reload app and ensure the account is still there
-	lb = NewLinoBlockchain(logger, dbs)
+	lb = NewLinoBlockchain(logger, db)
 	ctx = lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(types.LNO(sdk.NewRat(acc.numOfLino)))
+		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
 			expectBalance = expectBalance.Minus(
-				types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
 		balance, err :=
 			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
@@ -168,18 +167,19 @@ func TestGenesisAcc(t *testing.T) {
 
 func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
-
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
-	expectBalance := types.NewCoin(LNOPerValidator * types.Decimals).Minus(
-		types.ValidatorMinCommitingDeposit.Plus(types.ValidatorMinVotingDeposit))
+	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
+	param, _ := lb.paramHolder.GetValidatorParam(ctx)
+
+	expectBalance := coinPerValidator.Minus(
+		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 
 	testPastMinutes := int64(0)
 	for i := baseTime; i < baseTime+3600*20; i += 50 {
-		lb.BeginBlock(abci.RequestBeginBlock{
-			Header: abci.Header{
-				ChainID: "Lino", Time: baseTime + i}})
+		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: baseTime + i}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
 		// simulate app

@@ -12,7 +12,8 @@ import (
 func TestCanBecomeValidator(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-
+	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
 	cases := []struct {
 		addVoter     bool
 		username     types.AccountKey
@@ -20,8 +21,8 @@ func TestCanBecomeValidator(t *testing.T) {
 		expectResult bool
 	}{
 		{false, user1, types.NewCoin(0), false},
-		{true, user1, types.VoterMinDeposit, false},
-		{true, user1, types.ValidatorMinVotingDeposit, true},
+		{true, user1, voteParam.VoterMinDeposit, false},
+		{true, user1, valParam.ValidatorMinVotingDeposit, true},
 	}
 
 	for _, cs := range cases {
@@ -36,6 +37,7 @@ func TestCanBecomeValidator(t *testing.T) {
 func TestAddVoter(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	cases := []struct {
 		username     types.AccountKey
@@ -43,7 +45,7 @@ func TestAddVoter(t *testing.T) {
 		expectResult sdk.Error
 	}{
 		{user1, types.NewCoin(100 * types.Decimals), ErrRegisterFeeNotEnough()},
-		{user1, types.VoterMinDeposit, nil},
+		{user1, param.VoterMinDeposit, nil},
 	}
 
 	for _, cs := range cases {
@@ -69,10 +71,10 @@ func TestIsInValidatorList(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		referenceList := &model.ValidatorReferenceList{
+		referenceList := &model.ReferenceList{
 			AllValidators: cs.allValidators,
 		}
-		vm.storage.SetValidatorReferenceList(ctx, referenceList)
+		vm.storage.SetReferenceList(ctx, referenceList)
 		res := vm.IsInValidatorList(ctx, cs.username)
 		assert.Equal(t, cs.expectResult, res)
 	}
@@ -81,8 +83,9 @@ func TestIsInValidatorList(t *testing.T) {
 func TestIsLegalVoterWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
-	vm.AddVoter(ctx, user1,
-		types.VoterMinDeposit.Plus(types.NewCoin(100*types.Decimals)))
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
+
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoin(100*types.Decimals)))
 
 	cases := []struct {
 		allValidators []types.AccountKey
@@ -90,17 +93,17 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{[]types.AccountKey{}, user1, types.VoterMinWithdraw.Minus(types.NewCoin(1 * types.Decimals)), false},
-		{[]types.AccountKey{}, user1, types.VoterMinWithdraw, true},
-		{[]types.AccountKey{user1}, user1, types.VoterMinWithdraw, false},
+		{[]types.AccountKey{}, user1, param.VoterMinWithdraw.Minus(types.NewCoin(1 * types.Decimals)), false},
+		{[]types.AccountKey{}, user1, param.VoterMinWithdraw, true},
+		{[]types.AccountKey{user1}, user1, param.VoterMinWithdraw, false},
 		{[]types.AccountKey{}, user1, types.NewCoin(100), false},
 	}
 
 	for _, cs := range cases {
-		referenceList := &model.ValidatorReferenceList{
+		referenceList := &model.ReferenceList{
 			AllValidators: cs.allValidators,
 		}
-		vm.storage.SetValidatorReferenceList(ctx, referenceList)
+		vm.storage.SetReferenceList(ctx, referenceList)
 		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw)
 		assert.Equal(t, cs.expectResult, res)
 	}
@@ -110,7 +113,9 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
-	vm.AddVoter(ctx, user1, types.VoterMinDeposit)
+	param, _ := vm.paramHolder.GetVoteParam(ctx)
+
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
 	cases := []struct {
 		addDelegation bool
@@ -120,8 +125,8 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{false, types.NewCoin(0), user2, user1, types.DelegatorMinWithdraw, false},
-		{true, types.NewCoin(100 * types.Decimals), user2, user1, types.DelegatorMinWithdraw, true},
+		{false, types.NewCoin(0), user2, user1, param.DelegatorMinWithdraw, false},
+		{true, types.NewCoin(100 * types.Decimals), user2, user1, param.DelegatorMinWithdraw, true},
 		{false, types.NewCoin(0), user2, user1, types.NewCoin(0), false},
 		{false, types.NewCoin(0), user2, user1, types.NewCoin(101 * types.Decimals), false},
 	}

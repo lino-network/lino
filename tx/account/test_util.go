@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -15,14 +16,15 @@ import (
 
 var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
-	l0    = types.LNO(sdk.NewRat(0))
-	l100  = types.LNO(sdk.NewRat(100))
-	l200  = types.LNO(sdk.NewRat(200))
-	l1600 = types.LNO(sdk.NewRat(1600))
-	l1800 = types.LNO(sdk.NewRat(1800))
-	l1900 = types.LNO(sdk.NewRat(1900))
-	l2000 = types.LNO(sdk.NewRat(2000))
+	l0    = types.LNO("0")
+	l100  = types.LNO("100")
+	l200  = types.LNO("200")
+	l1600 = types.LNO("1600")
+	l1800 = types.LNO("1800")
+	l1900 = types.LNO("1900")
+	l2000 = types.LNO("2000")
 	c0    = types.NewCoin(0)
 	c100  = types.NewCoin(100 * types.Decimals)
 	c200  = types.NewCoin(200 * types.Decimals)
@@ -45,7 +47,9 @@ var (
 
 func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager) {
 	ctx := getContext(height)
-	accManager := NewAccountManager(TestAccountKVStoreKey)
+	hp := param.NewParamHolder(TestParamKVStoreKey)
+	hp.InitParam(ctx)
+	accManager := NewAccountManager(TestAccountKVStoreKey, hp)
 	return ctx, accManager
 }
 
@@ -53,14 +57,16 @@ func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
 }
 
-func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKey {
+func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100*types.Decimals))
-	am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
-	return priv.Wrap()
+	am.CreateAccount(ctx, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
+	return priv
 }

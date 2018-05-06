@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/post/model"
@@ -21,6 +22,7 @@ var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
 	TestPostKVStoreKey    = sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
 	initCoin = types.NewCoin(100)
 )
@@ -32,9 +34,16 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 func setupTest(
 	t *testing.T, height int64) (sdk.Context, acc.AccountManager, PostManager, global.GlobalManager) {
 	ctx := getContext(height)
-	accManager := acc.NewAccountManager(TestAccountKVStoreKey)
-	postManager := NewPostManager(TestPostKVStoreKey)
-	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey)
+	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph.InitParam(ctx)
+	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
+	postManager := NewPostManager(TestPostKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+
+	cdc := globalManager.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
+
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, postManager, globalManager
@@ -46,6 +55,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
@@ -53,7 +63,7 @@ func getContext(height int64) sdk.Context {
 }
 
 func checkPostKVStore(
-	t *testing.T, ctx sdk.Context, postKey types.PostKey, postInfo model.PostInfo, postMeta model.PostMeta) {
+	t *testing.T, ctx sdk.Context, postKey types.PermLink, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -62,7 +72,7 @@ func checkPostKVStore(
 	checkPostMeta(t, ctx, postKey, postMeta)
 }
 
-func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PostKey, postMeta model.PostMeta) {
+func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMeta model.PostMeta) {
 	// check post meta structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
@@ -75,14 +85,15 @@ func createTestAccount(
 	priv := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, types.AccountKey(username), priv.PubKey(), types.NewCoin(0))
+	err = am.CreateAccount(ctx, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
-	am acc.AccountManager, pm PostManager, redistributionRate sdk.Rat) (types.AccountKey, string) {
+	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 	postCreateParams := &PostCreateParams{
 		PostID:       postID,
@@ -116,7 +127,7 @@ func createTestRepost(
 		SourceAuthor: sourceUser,
 		SourcePostID: sourcePostID,
 		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		RedistributionSplitRate: "0",
 	}
 	err := pm.CreatePost(ctx, postCreateParams)
 	assert.Nil(t, err)

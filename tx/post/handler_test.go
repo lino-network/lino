@@ -28,13 +28,13 @@ func TestHandlerCreatePost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		Links:        nil,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	assert.True(t, pm.IsPostExist(ctx, types.GetPostKey(postCreateParams.Author, postCreateParams.PostID)))
+	assert.True(t, pm.IsPostExist(ctx, types.GetPermLink(postCreateParams.Author, postCreateParams.PostID)))
 
 	// test invlaid author
 	postCreateParams.Author = types.AccountKey("invalid")
@@ -47,7 +47,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test comment
 	postCreateParams := PostCreateParams{
@@ -59,8 +59,8 @@ func TestHandlerCreateComment(t *testing.T) {
 		ParentPostID: postID,
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		Links:        nil,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -87,7 +87,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
-	checkPostKVStore(t, ctx, types.GetPostKey(user, "comment"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, "comment"), postInfo, postMeta)
 
 	// check parent
 	postInfo.PostID = postID
@@ -95,7 +95,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.ParentPostID = ""
 	postMeta.Created = ctx.BlockHeader().Time
 	postMeta.LastUpdate = ctx.BlockHeader().Time
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 
 	// test invalid parent
 	postCreateParams.PostID = "invalid post"
@@ -104,7 +104,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postCreateParams)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPostKey(user, postCreateParams.ParentPostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, postCreateParams.ParentPostID)).Result())
 
 	// test duplicate comment
 	postCreateParams.Author = user
@@ -114,7 +114,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postCreateParams)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreateExistPost(types.GetPostKey(postCreateParams.Author, postCreateParams.PostID)).Result())
+	assert.Equal(t, result, ErrCreateExistPost(types.GetPermLink(postCreateParams.Author, postCreateParams.PostID)).Result())
 
 	// test cycle comment
 	postCreateParams.Author = user
@@ -124,14 +124,14 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg = NewCreatePostMsg(postCreateParams)
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPostKey(user, postCreateParams.PostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, postCreateParams.PostID)).Result())
 }
 
 func TestHandlerRepost(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test repost
 	postCreateParams := PostCreateParams{
@@ -143,8 +143,8 @@ func TestHandlerRepost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		Links:        nil,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -171,7 +171,7 @@ func TestHandlerRepost(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
-	checkPostKVStore(t, ctx, types.GetPostKey(user, "repost"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, "repost"), postInfo, postMeta)
 
 	// test 2 depth repost
 	postCreateParams.PostID = "repost-repost"
@@ -194,14 +194,14 @@ func TestHandlerRepost(t *testing.T) {
 	}
 	postInfo.SourceAuthor = user
 	postInfo.SourcePostID = postID
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postInfo.PostID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postInfo.PostID), postInfo, postMeta)
 }
 
 func TestHandlerPostLike(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	likeMsg := NewLikeMsg(types.AccountKey(user), 10000, user, postID)
 	result := handler(ctx, likeMsg)
@@ -217,7 +217,7 @@ func TestHandlerPostLike(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	postMeta := model.PostMeta{
 		Created:                 ctx.BlockHeader().Time,
@@ -228,7 +228,7 @@ func TestHandlerPostLike(t *testing.T) {
 		TotalLikeWeight:         10000,
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 
 	// test update like
 	likeMsg = NewLikeMsg(user, -10000, user, postID)
@@ -236,32 +236,32 @@ func TestHandlerPostLike(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 	postMeta.TotalDislikeWeight = 10000
 	postMeta.TotalLikeWeight = 0
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 
 	// test invalid like target post
 	likeMsg = NewLikeMsg(user, -10000, user, "invalid")
 	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, ErrLikeNonExistPost(types.GetPostKey(user, "invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
+	assert.Equal(t, result, ErrLikeNonExistPost(types.GetPermLink(user, "invalid")).Result())
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 
 	// test invalid like username
 	likeMsg = NewLikeMsg(types.AccountKey("invalid"), 10000, user, postID)
 	result = handler(ctx, likeMsg)
 
 	assert.Equal(t, result, ErrLikePostUserNotFound(likeMsg.Username).Result())
-	checkPostKVStore(t, ctx, types.GetPostKey(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 }
 
 func TestHandlerPostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	err := am.AddCoin(ctx, user2, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 
-	donateMsg := NewDonateMsg(user2, types.LNO(sdk.NewRat(100)), user1, postID, "")
+	donateMsg := NewDonateMsg(user2, types.LNO("100"), user1, postID, "")
 	result := handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -275,7 +275,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	postMeta := model.PostMeta{
 		Created:                 ctx.BlockHeader().Time,
@@ -287,7 +287,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
-	checkPostKVStore(t, ctx, types.GetPostKey(user1, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
@@ -295,30 +295,30 @@ func TestHandlerPostDonate(t *testing.T) {
 	assert.Equal(t, acc1Balance, initCoin.Plus(types.NewCoin(95*types.Decimals)))
 	assert.Equal(t, acc2Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 	// test invalid donation target
-	donateMsg = NewDonateMsg(user1, types.LNO(sdk.NewRat(100)), user1, "invalid", "")
+	donateMsg = NewDonateMsg(user1, types.LNO("100"), user1, "invalid", "")
 	result = handler(ctx, donateMsg)
-	assert.Equal(t, result, ErrDonatePostDoesntExist(types.GetPostKey(user1, "invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPostKey(user1, postID), postInfo, postMeta)
+	assert.Equal(t, result, ErrDonatePostDoesntExist(types.GetPermLink(user1, "invalid")).Result())
+	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	// test invalid user1name
-	donateMsg = NewDonateMsg(types.AccountKey("invalid"), types.LNO(sdk.NewRat(100)), user1, postID, "")
+	donateMsg = NewDonateMsg(types.AccountKey("invalid"), types.LNO("100"), user1, postID, "")
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, ErrDonateUserNotFound(types.AccountKey("invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPostKey(user1, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	// test insufficient deposit
-	donateMsg = NewDonateMsg(user2, types.LNO(sdk.NewRat(100)), user1, postID, "")
+	donateMsg = NewDonateMsg(user2, types.LNO("100"), user1, postID, "")
 	result = handler(ctx, donateMsg)
 
-	assert.Equal(t, result, ErrDonateFailed(types.GetPostKey(user1, postID)).Result())
+	assert.Equal(t, result, ErrDonateFailed(types.GetPermLink(user1, postID)).Result())
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.NewRat(15, 100))
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 	err := am.AddCoin(ctx, user3, types.NewCoin(123*types.Decimals))
@@ -333,14 +333,14 @@ func TestHandlerRePostDonate(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user1,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		Links:        nil,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO(sdk.NewRat(100)), user2, "repost", "")
+	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO("100"), user2, "repost", "")
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -368,7 +368,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat,
 	}
 
-	checkPostKVStore(t, ctx, types.GetPostKey(user2, "repost"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user2, "repost"), postInfo, postMeta)
 
 	// check source post
 	postMeta.TotalReward = types.Coin{sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(95, 100)).Evaluate()}
@@ -378,7 +378,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	postInfo.SourcePostID = ""
 	postMeta.RedistributionSplitRate = sdk.NewRat(15, 100)
 
-	checkPostKVStore(t, ctx, types.GetPostKey(user1, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	acc1Balance, _ := am.GetBankBalance(ctx, user1)
 	acc2Balance, _ := am.GetBankBalance(ctx, user2)
@@ -392,7 +392,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
@@ -429,8 +429,53 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			TotalReportStake:        cs.expectTotalReportStake,
 			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
 		}
-		postKey := types.GetPostKey(user1, postID)
+		postKey := types.GetPermLink(user1, postID)
 		checkPostMeta(t, ctx, postKey, postMeta)
+	}
+}
+
+func TestHandlerView(t *testing.T) {
+	ctx, am, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
+
+	createTime := ctx.BlockHeader().Time
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
+	user2 := createTestAccount(t, ctx, am, "user2")
+	user3 := createTestAccount(t, ctx, am, "user3")
+	cases := []struct {
+		viewUser             types.AccountKey
+		postID               string
+		author               types.AccountKey
+		viewTime             int64
+		expectTotalViewCount int64
+		expectUserViewCount  int64
+	}{
+		{user3, postID, user1, 1, 1, 1},
+		{user3, postID, user1, 2, 2, 2},
+		{user2, postID, user1, 3, 3, 1},
+		{user2, postID, user1, 4, 4, 2},
+		{user1, postID, user1, 5, 5, 1},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPermLink(cs.author, cs.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
+		msg := NewViewMsg(cs.viewUser, cs.author, cs.postID)
+		result := handler(ctx, msg)
+		assert.Equal(t, result, sdk.Result{})
+		postMeta := model.PostMeta{
+			Created:                 createTime,
+			LastUpdate:              createTime,
+			LastActivity:            createTime,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalViewCount:          cs.expectTotalViewCount,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectUserViewCount, view.Times)
+		assert.Equal(t, cs.viewTime, view.LastView)
 	}
 }
 
@@ -438,7 +483,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	ctx, am, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, sdk.ZeroRat)
+	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
@@ -453,8 +498,8 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: user1,
 		SourcePostID: postID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: sdk.ZeroRat,
+		Links:        nil,
+		RedistributionSplitRate: "0",
 	}
 	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
@@ -493,7 +538,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 			TotalReportStake:        cs.expectSourceReportStake,
 			TotalUpvoteStake:        cs.expectSourceUpvoteStake,
 		}
-		postKey := types.GetPostKey(user1, postID)
+		postKey := types.GetPermLink(user1, postID)
 		checkPostMeta(t, ctx, postKey, postMeta)
 	}
 }

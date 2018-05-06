@@ -12,17 +12,25 @@ import (
 
 // RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
 type RegisterMsg struct {
-	NewUser   types.AccountKey `json:"new_user"`
-	NewPubKey crypto.PubKey    `json:"new_public_key"`
+	NewUser              types.AccountKey `json:"new_user"`
+	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
+	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
 var _ sdk.Msg = RegisterMsg{}
 
 // NewSendMsg - construct arbitrary multi-in, multi-out send msg.
-func NewRegisterMsg(newUser string, pubkey crypto.PubKey) RegisterMsg {
+func NewRegisterMsg(
+	newUser string,
+	masterPubkey crypto.PubKey,
+	postPubkey crypto.PubKey,
+	transactionPubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
-		NewUser:   types.AccountKey(newUser),
-		NewPubKey: pubkey,
+		NewUser:              types.AccountKey(newUser),
+		NewMasterPubKey:      masterPubkey,
+		NewPostPubKey:        postPubkey,
+		NewTransactionPubKey: transactionPubkey,
 	}
 }
 
@@ -47,7 +55,8 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{Newuser:%v, PubKey:%v}", msg.NewUser, msg.NewPubKey)
+	return fmt.Sprintf("RegisterMsg{Newuser:%v, Master Key:%v, Post Key:%v, Transaction Key:%v}",
+		msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
 // Implements Msg.
@@ -66,5 +75,5 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 
 // Implements Msg.
 func (msg RegisterMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.NewPubKey.Address()}
+	return []sdk.Address{msg.NewMasterPubKey.Address()}
 }

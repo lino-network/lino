@@ -7,10 +7,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/developer/model"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -46,14 +46,12 @@ type commander struct {
 }
 
 func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide a developer name")
 	}
 
-	// find the key to look up the account
 	accKey := types.AccountKey(args[0])
-
 	res, err := ctx.Query(model.GetDeveloperKey(accKey), c.storeName)
 	if err != nil {
 		return err
@@ -63,7 +61,6 @@ func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// print out whole developer
 	output, err := json.MarshalIndent(developer, "", "  ")
 	if err != nil {
 		return err
@@ -73,7 +70,7 @@ func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getDevelopersCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	res, err := ctx.Query(model.GetDeveloperListKey(), c.storeName)
 	if err != nil {
 		return err

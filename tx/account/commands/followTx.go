@@ -9,16 +9,8 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/tx/account"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-)
-
-// nolint
-const (
-	FlagIsFollow = "is_follow"
-	FlagFollowee = "followee"
-	FlagFollower = "follower"
 )
 
 // FollowTxCmd will create a follow tx and sign it with the given key
@@ -28,21 +20,21 @@ func FollowTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "Create and sign a follow/unfollow tx",
 		RunE:  sendFollowTx(cdc),
 	}
-	cmd.Flags().String(FlagFollower, "", "signer of this transaction")
-	cmd.Flags().Bool(FlagIsFollow, true, "false if this is unfollow")
-	cmd.Flags().String(FlagFollowee, "", "target to follow or unfollow")
+	cmd.Flags().String(client.FlagFollower, "", "signer of this transaction")
+	cmd.Flags().Bool(client.FlagIsFollow, true, "false if this is unfollow")
+	cmd.Flags().String(client.FlagFollowee, "", "target to follow or unfollow")
 	return cmd
 }
 
 // send follow transaction to the blockchain
 func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		follower := viper.GetString(FlagFollower)
-		followee := viper.GetString(FlagFollowee)
+		ctx := client.NewCoreContextFromViper()
+		follower := viper.GetString(client.FlagFollower)
+		followee := viper.GetString(client.FlagFollowee)
 
 		var msg sdk.Msg
-		isFollow := viper.GetBool(FlagIsFollow)
+		isFollow := viper.GetBool(client.FlagIsFollow)
 		if isFollow {
 			msg = acc.NewFollowMsg(follower, followee)
 		} else {
@@ -50,7 +42,7 @@ func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 		}
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(follower, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

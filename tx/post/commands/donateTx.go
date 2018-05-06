@@ -10,14 +10,7 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-)
-
-const (
-	FlagDonator = "donator"
-	FlagAmount  = "amount"
 )
 
 // DonateTxCmd will create a donate tx and sign it with the given key
@@ -27,29 +20,25 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "donate to a post",
 		RunE:  sendDonateTx(cdc),
 	}
-	cmd.Flags().String(FlagDonator, "", "donator of this transaction")
-	cmd.Flags().String(FlagAuthor, "", "author of the target post")
-	cmd.Flags().String(FlagPostID, "", "post id of the target post")
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
+	cmd.Flags().String(client.FlagDonator, "", "donator of this transaction")
+	cmd.Flags().String(client.FlagAuthor, "", "author of the target post")
+	cmd.Flags().String(client.FlagPostID, "", "post id of the target post")
+	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
 	return cmd
 }
 
 // send donate transaction to the blockchain
 func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		username := viper.GetString(FlagDonator)
-		author := viper.GetString(FlagAuthor)
-		postID := viper.GetString(FlagPostID)
-
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
-		msg := post.NewDonateMsg(types.AccountKey(username), types.LNO(amount), types.AccountKey(author), postID, "")
+		ctx := client.NewCoreContextFromViper()
+		username := viper.GetString(client.FlagDonator)
+		author := viper.GetString(client.FlagAuthor)
+		postID := viper.GetString(client.FlagPostID)
+		msg := post.NewDonateMsg(types.AccountKey(username),
+			types.LNO(viper.GetString(client.FlagAmount)), types.AccountKey(author), postID, "")
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 		if signErr != nil {
 			return signErr
 		}

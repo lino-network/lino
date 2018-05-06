@@ -3,10 +3,10 @@ package auth
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,15 +26,19 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		msg := tx.GetMsg()
 
+		stdTx, ok := tx.(sdk.StdTx)
+		if !ok {
+			return ctx, sdk.ErrInternal("tx must be sdk.StdTx").Result(), true
+		}
+
 		sequences := make([]int64, len(sigs))
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, sdk.StdFee{}, msg)
-
-		msgType := msg.Type()
-
-		if msgType == types.RegisterRouterName {
+		fee := stdTx.Fee
+		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, fee, msg)
+		_, ok = msg.(reg.RegisterMsg)
+		if ok {
 			// TODO(Lino): here we get the address :(
 			var signerAddrs = msg.GetSigners()
 
@@ -51,33 +55,34 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			return ctx, sdk.Result{}, false
 		}
 
+		permission, err := getPermissionLevel(msg)
+		if err != nil {
+			return ctx, err.Result(), true
+		}
 		signers := msg.GetSigners()
 		if len(sigs) < len(signers) {
 			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
+			accKey, err := am.CheckAuthenticatePubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
+			if err != nil {
+				return ctx, err.Result(), true
+			}
+
+			seq, err := am.GetSequence(ctx, accKey)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
 			if seq != sigs[i].Sequence {
 				return ctx, sdk.ErrInvalidSequence(
-						fmt.Sprintf("Invalid sequence. Got %d, expected %d", sigs[i].Sequence, seq)).Result(),
-					true
+					fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
+						accKey, sigs[i].Sequence, seq)).Result(), true
 			}
-			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
+			if err := am.IncreaseSequenceByOne(ctx, accKey); err != nil {
 				return ctx, err.Result(), true
 			}
 
-			pubKey, err := am.GetOwnerKey(ctx, types.AccountKey(signer))
-			if err != nil {
-				return ctx, err.Result(), true
-			}
-			// TODO(Lino): match postkey and owner key.
-			if !reflect.DeepEqual(*pubKey, sigs[i].PubKey) {
-				return ctx, sdk.ErrUnauthorized("signer mismatch").Result(), true
-			}
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
 				return ctx, sdk.ErrUnauthorized(
 					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
@@ -94,4 +99,20 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		// TODO(Lino): verify application signature.
 		return ctx, sdk.Result{}, false
 	}
+}
+
+func getPermissionLevel(msg sdk.Msg) (types.Permission, sdk.Error) {
+	var permission types.Permission
+	var ok bool
+	permissionLevel := msg.Get(types.PermissionLevel)
+	if permissionLevel == nil {
+		return types.PostPermission, nil
+	} else {
+		permission, ok = permissionLevel.(types.Permission)
+		if !ok {
+			return 0, sdk.ErrUnauthorized(
+				fmt.Sprintf("permissionLevel is not define"))
+		}
+	}
+	return permission, nil
 }

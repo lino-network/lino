@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/abci/types"
 )
 
 // test create post
@@ -24,12 +25,12 @@ func TestCreatePost(t *testing.T) {
 	}{
 		{"postID", user1, "", "", nil},
 		{"postID", user2, "", "", nil},
-		{"postID", user1, "", "", ErrPostExist(types.GetPostKey(user1, "postID"))},
-		{"postID", user2, "postID", user1, ErrPostExist(types.GetPostKey(user2, "postID"))},
-		{"postID", user2, "postID", user2, ErrPostExist(types.GetPostKey(user2, "postID"))},
+		{"postID", user1, "", "", ErrPostExist(types.GetPermLink(user1, "postID"))},
+		{"postID", user2, "postID", user1, ErrPostExist(types.GetPermLink(user2, "postID"))},
+		{"postID", user2, "postID", user2, ErrPostExist(types.GetPermLink(user2, "postID"))},
 		{"postID2", user2, "postID", user1, nil},
 		{"postID3", user2, "postID3", user1,
-			ErrCreatePostSourceInvalid(types.GetPostKey(user2, "postID3"))},
+			ErrCreatePostSourceInvalid(types.GetPermLink(user2, "postID3"))},
 	}
 
 	for _, cs := range cases {
@@ -41,8 +42,8 @@ func TestCreatePost(t *testing.T) {
 			Author:       cs.author,
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
-			Links:        []types.IDToURLMapping{},
-			RedistributionSplitRate: sdk.ZeroRat,
+			Links:        nil,
+			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
 		assert.Equal(t, err, cs.expectResult)
@@ -68,7 +69,7 @@ func TestCreatePost(t *testing.T) {
 			RedistributionSplitRate: sdk.ZeroRat,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPostKey(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+			types.GetPermLink(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
 	}
 }
 
@@ -102,13 +103,13 @@ func TestGetSourcePost(t *testing.T) {
 			ParentPostID: "",
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
-			Links:        []types.IDToURLMapping{},
-			RedistributionSplitRate: sdk.ZeroRat,
+			Links:        nil,
+			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(ctx, &postCreateParams)
 		assert.Nil(t, err)
 		sourceAuthor, sourcePostID, err :=
-			pm.GetSourcePost(ctx, types.GetPostKey(cs.author, cs.postID))
+			pm.GetSourcePost(ctx, types.GetPermLink(cs.author, cs.postID))
 		assert.Nil(t, err)
 		assert.Equal(t, sourceAuthor, cs.expectSourceAuthor)
 		assert.Equal(t, sourcePostID, cs.expectSourcePostID)
@@ -117,8 +118,8 @@ func TestGetSourcePost(t *testing.T) {
 
 func TestAddOrUpdateLikeToPost(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	cases := []struct {
@@ -139,7 +140,7 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPostKey(cs.author, cs.postID)
+		postKey := types.GetPermLink(cs.author, cs.postID)
 		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -156,10 +157,53 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateViewToPost(t *testing.T) {
+	ctx, am, pm, _ := setupTest(t, 1)
+	createTime := ctx.BlockHeader().Time
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
+	user3 := types.AccountKey("user3")
+
+	cases := []struct {
+		viewUser             types.AccountKey
+		postID               string
+		author               types.AccountKey
+		viewTime             int64
+		expectTotalViewCount int64
+		expectUserViewCount  int64
+	}{
+		{user3, postID1, user1, 1, 1, 1},
+		{user3, postID1, user1, 2, 2, 2},
+		{user2, postID1, user1, 3, 3, 1},
+		{user2, postID1, user1, 4, 4, 2},
+		{user1, postID1, user1, 5, 5, 1},
+	}
+
+	for _, cs := range cases {
+		postKey := types.GetPermLink(cs.author, cs.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
+		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		postMeta := model.PostMeta{
+			Created:                 createTime,
+			LastUpdate:              createTime,
+			LastActivity:            createTime,
+			AllowReplies:            true,
+			RedistributionSplitRate: sdk.ZeroRat,
+			TotalViewCount:          cs.expectTotalViewCount,
+		}
+		checkPostMeta(t, ctx, postKey, postMeta)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectUserViewCount, view.Times)
+		assert.Equal(t, cs.viewTime, view.LastView)
+	}
+}
+
 func TestReportOrUpvoteToPost(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	cases := []struct {
@@ -180,7 +224,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPostKey(cs.author, cs.postID)
+		postKey := types.GetPermLink(cs.author, cs.postID)
 		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport, cs.isRevoke)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -198,8 +242,8 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 
 func TestDonation(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, sdk.ZeroRat)
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, sdk.ZeroRat)
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	baseTime := ctx.BlockHeader().Time
@@ -224,7 +268,7 @@ func TestDonation(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPostKey(cs.author, cs.postID)
+		postKey := types.GetPermLink(cs.author, cs.postID)
 		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -245,8 +289,8 @@ func TestDonation(t *testing.T) {
 
 func TestGetPenaltyScore(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
-	postKey := types.GetPostKey(user, postID)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
+	postKey := types.GetPermLink(user, postID)
 	cases := []struct {
 		totalReportStake types.Coin
 		totalUpvoteStake types.Coin
@@ -280,11 +324,11 @@ func TestGetPenaltyScore(t *testing.T) {
 
 func TestGetRepostPenaltyScore(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, sdk.ZeroRat)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
-	postKey := types.GetPostKey(user, postID)
-	repostKey := types.GetPostKey(user2, postID2)
+	postKey := types.GetPermLink(user, postID)
+	repostKey := types.GetPermLink(user2, postID2)
 	cases := []struct {
 		totalReportStake types.Coin
 		totalUpvoteStake types.Coin

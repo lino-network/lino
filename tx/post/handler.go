@@ -21,8 +21,10 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleLikeMsg(ctx, msg, pm, am, gm)
 		case ReportOrUpvoteMsg:
 			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
+		case ViewMsg:
+			return handleViewMsg(ctx, msg, pm, am, gm)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized account Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized post msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -33,12 +35,12 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if !am.IsAccountExist(ctx, msg.Author) {
 		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
-	if pm.IsPostExist(ctx, postKey) {
-		return ErrCreateExistPost(postKey).Result()
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if pm.IsPostExist(ctx, permLink) {
+		return ErrCreateExistPost(permLink).Result()
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
-		parentPostKey := types.GetPostKey(msg.ParentAuthor, msg.ParentPostID)
+		parentPostKey := types.GetPermLink(msg.ParentAuthor, msg.ParentPostID)
 		if !pm.IsPostExist(ctx, parentPostKey) {
 			return ErrCommentInvalidParent(parentPostKey).Result()
 		}
@@ -58,11 +60,27 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrLikeNonExistPost(postKey).Result()
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrLikeNonExistPost(permLink).Result()
 	}
-	if err := pm.AddOrUpdateLikeToPost(ctx, postKey, msg.Username, msg.Weight); err != nil {
+	if err := pm.AddOrUpdateLikeToPost(ctx, permLink, msg.Username, msg.Weight); err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{}
+}
+
+// Handle ViewMsg
+func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrViewPostUserNotFound(msg.Username).Result()
+	}
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrViewNonExistPost(permLink).Result()
+	}
+	if err := pm.AddOrUpdateViewToPost(ctx, permLink, msg.Username); err != nil {
 		return err.Result()
 	}
 
@@ -71,7 +89,7 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 
 // Handle DonateMsg
 func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	postKey := types.GetPermLink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
@@ -91,7 +109,7 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
+		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
 		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePostKey)
 		if err != nil {
 			return ErrDonateFailed(postKey).TraceCause(err, "").Result()
@@ -114,7 +132,7 @@ func processDonationFriction(
 	ctx sdk.Context, consumer types.AccountKey, coin types.Coin,
 	postAuthor types.AccountKey, postID string, fromApp types.AccountKey,
 	am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
-	postKey := types.GetPostKey(postAuthor, postID)
+	postKey := types.GetPermLink(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
 	}
@@ -165,7 +183,7 @@ func evaluateConsumption(
 	if err != nil {
 		return types.NewCoin(0), err
 	}
-	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPostKey(postAuthor, postID))
+	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermLink(postAuthor, postID))
 	if err != nil {
 		return types.NewCoin(0), err
 	}
@@ -179,7 +197,7 @@ func handleReportOrUpvoteMsg(
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrReportUserNotFound(msg.Username).Result()
 	}
-	postKey := types.GetPostKey(msg.Author, msg.PostID)
+	postKey := types.GetPermLink(msg.Author, msg.PostID)
 	stake, err := am.GetStake(ctx, msg.Username)
 	if err != nil {
 		return ErrReportFailed(postKey).TraceCause(err, "").Result()
@@ -192,7 +210,7 @@ func handleReportOrUpvoteMsg(
 		return ErrReportFailed(postKey).TraceCause(err, "").Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePostKey := types.GetPostKey(sourceAuthor, sourcePostID)
+		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
 		if err := pm.ReportOrUpvoteToPost(
 			ctx, sourcePostKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
 			return err.Result()

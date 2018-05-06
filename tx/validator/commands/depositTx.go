@@ -10,17 +10,10 @@ import (
 	"github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	tmtypes "github.com/tendermint/tendermint/types"
+	cfg "github.com/tendermint/tendermint/config"
+	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	cmn "github.com/tendermint/tmlibs/common"
-)
-
-const (
-	FlagAmount = "amount"
 )
 
 // DepositValidatorTxCmd will create a send tx and sign it with the given key
@@ -30,43 +23,34 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "register a validator",
 		RunE:  sendDepositValidatorTx(cdc),
 	}
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
+	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
 	return cmd
 }
 
 // send register transaction to the blockchain
 func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		name := viper.GetString(sdkcli.FlagName)
+		ctx := client.NewCoreContextFromViper()
+		name := viper.GetString(client.FlagUser)
 
-		config, err := tcmd.ParseConfig()
-		if err != nil {
-			return err
-		}
+		config := cfg.DefaultConfig()
 		// private validator
 		privValFile := config.PrivValidatorFile()
-		var privValidator *tmtypes.PrivValidatorFS
+		var privValidator *pvm.FilePV
 		if cmn.FileExists(privValFile) {
-			privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
+			privValidator = pvm.LoadFilePV(privValFile)
 		} else {
-			privValidator = tmtypes.GenPrivValidatorFS(privValFile)
+			privValidator = pvm.GenFilePV(privValFile)
 			privValidator.Save()
 		}
 
-		if err != nil {
-			return err
-		}
-
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
 		// // create the message
-		msg := validator.NewValidatorDepositMsg(name, types.LNO(amount), privValidator.PubKey)
+		msg := validator.NewValidatorDepositMsg(
+			name, types.LNO(viper.GetString(client.FlagAmount)), privValidator.PubKey, viper.GetString(client.FlagLink))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

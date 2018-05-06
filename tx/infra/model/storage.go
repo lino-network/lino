@@ -18,11 +18,11 @@ type InfraProviderStorage struct {
 
 func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
 	cdc := wire.NewCodec()
-	storage := InfraProviderStorage{
+	wire.RegisterCrypto(cdc)
+	return InfraProviderStorage{
 		key: key,
 		cdc: cdc,
 	}
-	return storage
 }
 
 func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {

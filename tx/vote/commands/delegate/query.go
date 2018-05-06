@@ -7,10 +7,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // GetDelegationCmd returns the delegator's delegation
@@ -32,7 +33,7 @@ type commander struct {
 }
 
 func (c commander) getDelegationCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 2 {
 		return errors.New("You must provide voter and delegator name")
 	}

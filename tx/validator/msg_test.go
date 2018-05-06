@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 func TestValidatorRevokeMsg(t *testing.T) {
@@ -27,12 +29,21 @@ func TestValidatorWithdrawMsg(t *testing.T) {
 		validatorWithdrawMsg ValidatorWithdrawMsg
 		expectError          sdk.Error
 	}{
-		{NewValidatorWithdrawMsg("user1", sdk.NewRat(1)), nil},
-		{NewValidatorWithdrawMsg("", sdk.NewRat(1)), ErrInvalidUsername()},
+		{NewValidatorWithdrawMsg("user1", "1"), nil},
+		{NewValidatorWithdrawMsg("", "1"), ErrInvalidUsername()},
 	}
 
 	for _, cs := range cases {
 		result := cs.validatorWithdrawMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
+}
+
+func TestValidatorDepositPermission(t *testing.T) {
+	priv := crypto.GenPrivKeyEd25519()
+	msg := NewValidatorDepositMsg("user1", "1", priv.PubKey(), "")
+	permissionLevel := msg.Get(types.PermissionLevel)
+	permission, ok := permissionLevel.(types.Permission)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, permission, types.TransactionPermission)
 }

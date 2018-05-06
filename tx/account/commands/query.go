@@ -12,7 +12,6 @@ import (
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -51,12 +50,11 @@ type commander struct {
 }
 
 func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide an address")
 	}
 
-	// find the key to look up the account
 	addr := args[0]
 	bz, err := hex.DecodeString(addr)
 	if err != nil {
@@ -70,11 +68,10 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
 		return err
 	}
 
-	// print out whole bank
 	output, err := json.MarshalIndent(bank, "", "  ")
 	if err != nil {
 		return err
@@ -85,7 +82,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 }
 
 func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide aa username")
 	}
@@ -98,7 +95,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	info := new(model.AccountInfo)
-	if err := c.cdc.UnmarshalBinary(res, info); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, info); err != nil {
 		return err
 	}
 
@@ -107,7 +104,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalBinary(res, bank); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
 		return err
 	}
 
@@ -116,7 +113,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	meta := new(model.AccountMeta)
-	if err := c.cdc.UnmarshalBinary(res, meta); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, meta); err != nil {
 		return err
 	}
 

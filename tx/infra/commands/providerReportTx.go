@@ -10,14 +10,10 @@ import (
 	"github.com/lino-network/lino/client"
 	infra "github.com/lino-network/lino/tx/infra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	FlagProvider = "provider"
-	FlagUsage    = "usage"
-)
+const ()
 
 func ProviderReportTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,24 +21,24 @@ func ProviderReportTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "provider report usage",
 		RunE:  sendProviderReportTx(cdc),
 	}
-	cmd.Flags().String(FlagProvider, "", "reporter of this transaction")
-	cmd.Flags().String(FlagUsage, "", "usage of the report")
+	cmd.Flags().String(client.FlagProvider, "", "reporter of this transaction")
+	cmd.Flags().String(client.FlagUsage, "", "usage of the report")
 	return cmd
 }
 
 // send provider report transaction to the blockchain
 func sendProviderReportTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		username := viper.GetString(FlagProvider)
-		usage, err := strconv.ParseInt(viper.GetString(FlagUsage), 10, 64)
+		ctx := client.NewCoreContextFromViper()
+		username := viper.GetString(client.FlagProvider)
+		usage, err := strconv.ParseInt(viper.GetString(client.FlagUsage), 10, 64)
 		if err != nil {
 			return err
 		}
 		msg := infra.NewProviderReportMsg(username, usage)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 		if signErr != nil {
 			return signErr
 		}

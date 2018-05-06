@@ -18,8 +18,7 @@ import (
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
-	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	tmtypes "github.com/tendermint/tendermint/types"
+	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -48,21 +47,17 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 	fmt.Println("Init address:")
 	fmt.Println(pubKey.Address())
 
-	config, err := tcmd.ParseConfig()
-	if err != nil {
-		return nil, err
-	}
 	// private validator
-	privValFile := config.PrivValidatorFile()
-	var privValidator *tmtypes.PrivValidatorFS
+	privValFile := context.Config.PrivValidatorFile()
+	var privValidator *pvm.FilePV
 	if cmn.FileExists(privValFile) {
-		privValidator = tmtypes.LoadPrivValidatorFS(privValFile)
+		privValidator = pvm.LoadFilePV(privValFile)
 	} else {
-		privValidator = tmtypes.GenPrivValidatorFS(privValFile)
+		privValidator = pvm.GenFilePV(privValFile)
 		privValidator.Save()
 	}
 
-	result, err := genesis.GetDefaultGenesis(*pubKey, privValidator.PubKey)
+	result, err := genesis.GetDefaultGenesis(pubKey, privValidator.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -72,49 +67,12 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 
 // generate Lino application
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
-	dbMain, err := dbm.NewGoLevelDB("LinoBlockchain-main", filepath.Join(rootDir, "data"))
+	dataDir := filepath.Join(rootDir, "data")
+	db, err := dbm.NewGoLevelDB("linoblockchain", dataDir)
 	if err != nil {
 		return nil, err
 	}
-	dbAcc, err := dbm.NewGoLevelDB("LinoBlockchain-acc", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbPost, err := dbm.NewGoLevelDB("LinoBlockchain-post", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbVal, err := dbm.NewGoLevelDB("LinoBlockchain-val", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbVote, err := dbm.NewGoLevelDB("LinoBlockchain-vote", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbInfra, err := dbm.NewGoLevelDB("LinoBlockchain-infra", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbDeveloper, err := dbm.NewGoLevelDB("LinoBlockchain-developer", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbGlobal, err := dbm.NewGoLevelDB("LinoBlockchain-global", filepath.Join(rootDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	dbs := map[string]dbm.DB{
-		"main":      dbMain,
-		"acc":       dbAcc,
-		"post":      dbPost,
-		"val":       dbVal,
-		"vote":      dbVote,
-		"infra":     dbInfra,
-		"developer": dbDeveloper,
-		"global":    dbGlobal,
-	}
-	lb := app.NewLinoBlockchain(logger, dbs)
+	lb := app.NewLinoBlockchain(logger, db)
 	return lb, nil
 }
 
@@ -126,7 +84,7 @@ func main() {
 	executor.Execute()
 }
 
-func generateCoinKey() (*crypto.PubKey, string, error) {
+func generateCoinKey() (crypto.PubKey, string, error) {
 	// construct an in-memory key store
 	codec, err := words.LoadCodec("english")
 	if err != nil {
@@ -143,5 +101,5 @@ func generateCoinKey() (*crypto.PubKey, string, error) {
 		return nil, "", err
 	}
 
-	return &info.PubKey, secret, nil
+	return info.PubKey, secret, nil
 }

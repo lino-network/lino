@@ -26,17 +26,16 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, msg)
 		case VoteMsg:
-			return handleVoteMsg(ctx, vm, gm, msg)
-		case CreateProposalMsg:
-			return handleCreateProposalMsg(ctx, vm, am, gm, msg)
+			return handleVoteMsg(ctx, vm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized vote Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-func handleVoterDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
+func handleVoterDepositMsg(
+	ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
@@ -66,7 +65,8 @@ func handleVoterDepositMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManage
 	return sdk.Result{}
 }
 
-func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
+func handleVoterWithdrawMsg(
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoterWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -80,7 +80,12 @@ func handleVoterWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.VoterCoinReturnTimes, param.VoterCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -92,28 +97,35 @@ func handleVoterRevokeMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManag
 		return ErrValidatorCannotRevoke().Result()
 	}
 
-	delegators, getErr := vm.GetAllDelegators(ctx, msg.Username)
-	if getErr != nil {
-		return getErr.Result()
+	delegators, err := vm.GetAllDelegators(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
 	// return coins to all delegators
 	for _, delegator := range delegators {
 		coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Username, delegator)
 		if withdrawErr != nil {
 			return withdrawErr.Result()
 		}
-		if err := returnCoinTo(ctx, delegator, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+		if err := returnCoinTo(
+			ctx, delegator, gm, param.DelegatorCoinReturnTimes, param.DelegatorCoinReturnIntervalHr, coin); err != nil {
 			return err.Result()
 		}
 	}
 
+	// return coins to voter
 	coin, withdrawErr := vm.VoterWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
 		return withdrawErr.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	if err := returnCoinTo(
+		ctx, msg.Username, gm, param.VoterCoinReturnTimes, param.VoterCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -136,12 +148,12 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 	return sdk.Result{}
 }
 
-func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg DelegatorWithdrawMsg) sdk.Result {
+func handleDelegatorWithdrawMsg(
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg DelegatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
-
 	if !vm.IsLegalDelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin) {
 		return ErrIllegalWithdraw().Result()
 	}
@@ -150,7 +162,13 @@ func handleDelegatorWithdrawMsg(ctx sdk.Context, vm VoteManager, gm global.Globa
 		return err.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Delegator, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(
+		ctx, msg.Delegator, gm, param.DelegatorCoinReturnTimes, param.DelegatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -162,42 +180,27 @@ func handleRevokeDelegationMsg(ctx sdk.Context, vm VoteManager, gm global.Global
 		return withdrawErr.Result()
 	}
 
-	if err := returnCoinTo(ctx, msg.Delegator, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := returnCoinTo(ctx, msg.Delegator, gm, param.DelegatorCoinReturnTimes, param.DelegatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
-func handleVoteMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, msg VoteMsg) sdk.Result {
+func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
 	if !vm.IsVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
 	}
 
-	if !vm.IsProposalExist(ctx, msg.ProposalID) {
-		return ErrGetProposal().Result()
+	if !vm.IsOngoingProposal(ctx, msg.ProposalID) {
+		return ErrNotOngoingProposal().Result()
 	}
 
 	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleCreateProposalMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, gm global.GlobalManager, msg CreateProposalMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Creator) {
-		return ErrUsernameNotFound().Result()
-	}
-
-	// withdraw money from creator's bank
-	if err := am.MinusCoin(ctx, msg.Creator, types.ProposalRegisterFee); err != nil {
-		return err.Result()
-	}
-
-	if _, addErr := vm.AddProposal(ctx, msg.Creator, &msg.ChangeParameterDescription); addErr != nil {
-		return addErr.Result()
-	}
-	//  set a time event to decide the proposal in 7 days
-	if err := vm.CreateDecideProposalEvent(ctx, gm); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

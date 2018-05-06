@@ -54,6 +54,14 @@ func checkAccountReward(
 	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
 }
 
+func checkAccountGrantKeyList(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, grantList model.GrantKeyList) {
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	grantListPtr, err := accStorage.GetGrantKeyList(ctx, accKey)
+	assert.Nil(t, err)
+	assert.Equal(t, grantList, *grantListPtr, "accout grantList should be equal")
+}
+
 func TestIsAccountExist(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	assert.False(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
@@ -133,7 +141,8 @@ func TestCreateAccount(t *testing.T) {
 	assert.False(t, am.IsAccountExist(ctx, accKey))
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, accKey,
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
 	assert.True(t, am.IsAccountExist(ctx, accKey))
@@ -154,11 +163,12 @@ func TestCreateAccount(t *testing.T) {
 		}}}
 	checkPendingStake(t, ctx, priv.PubKey().Address(), pendingStakeQueue)
 	accInfo := model.AccountInfo{
-		Username: accKey,
-		Created:  ctx.BlockHeader().Time,
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
+		Username:       accKey,
+		Created:        ctx.BlockHeader().Time,
+		MasterKey:      priv.PubKey(),
+		TransactionKey: priv.Generate(1).PubKey(),
+		PostKey:        priv.Generate(2).PubKey(),
+		Address:        priv.PubKey().Address(),
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
@@ -169,17 +179,24 @@ func TestCreateAccount(t *testing.T) {
 	reward := model.Reward{coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
 
+	var grantPubKeyList []model.GrantPubKey
+	grantList := model.GrantKeyList{GrantPubKeyList: grantPubKeyList}
+	checkAccountGrantKeyList(t, ctx, accKey, grantList)
+
 	// username already took
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, accKey,
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Equal(t, ErrAccountAlreadyExists(accKey), err)
 
 	// bank already registered
-	err = am.CreateAccount(ctx, types.AccountKey("newKey"), priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Equal(t, ErrBankAlreadyRegistered(), err)
 
 	// bank doesn't exist
 	priv2 := crypto.GenPrivKeyEd25519()
-	err = am.CreateAccount(ctx, types.AccountKey("newKey"), priv2.PubKey(), coin0)
+	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
+		priv2.PubKey(), priv2.Generate(1).PubKey(), priv2.Generate(2).PubKey(), coin0)
 	assert.Equal(t,
 		"Error{311:create account newKey failed,Error{310:account bank doesn't exist,<nil>,0},1}",
 		err.Error())
@@ -187,19 +204,21 @@ func TestCreateAccount(t *testing.T) {
 	// register fee doesn't enough
 	err = am.AddCoinToAddress(ctx, priv2.PubKey().Address(), coin100)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, types.AccountKey("newKey"), priv2.PubKey(), types.NewCoin(101))
+	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
+		priv2.PubKey(), priv2.Generate(1).PubKey(), priv2.Generate(2).PubKey(), types.NewCoin(101))
 	assert.Equal(t, ErrRegisterFeeInsufficient(), err)
 }
 
 func TestCoinDayByAddress(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
-
+	priv := crypto.GenPrivKeyEd25519()
 	// create bank and account
+
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, accKey,
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
 	baseTime1 := ctx.BlockHeader().Time
@@ -243,13 +262,13 @@ func TestCoinDayByAddress(t *testing.T) {
 
 func TestCoinDayByAccountKey(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
-
+	priv := crypto.GenPrivKeyEd25519()
 	// create bank and account
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, accKey,
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
 	baseTime := ctx.BlockHeader().Time
@@ -315,13 +334,13 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 func TestAccountReward(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
+	priv := crypto.GenPrivKeyEd25519()
 
-	// create bank and account
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
 	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
+	err = am.CreateAccount(ctx, accKey,
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
 	err = am.AddIncomeAndReward(ctx, accKey, c500, c200, c300)
@@ -351,14 +370,12 @@ func TestAccountReward(t *testing.T) {
 
 func TestCheckUserTPSCapacity(t *testing.T) {
 	ctx, am := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
 
 	baseTime := ctx.BlockHeader().Time
 
+	priv := createTestAccount(ctx, am, string(accKey))
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
-	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, accKey, priv.PubKey(), coin0)
 	assert.Nil(t, err)
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
@@ -423,6 +440,50 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			accMeta.LastActivity = cs.LastActivity
 		}
 		checkAccountMeta(t, ctx, accKey, accMeta)
+	}
+}
+
+func TestGrantPubkey(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	user2 := types.AccountKey("user2")
+	user3 := types.AccountKey("user3")
+
+	createTestAccount(ctx, am, string(user1))
+	priv2 := createTestAccount(ctx, am, string(user2))
+	priv3 := createTestAccount(ctx, am, string(user3))
+
+	baseTime := ctx.BlockHeader().Time
+
+	cases := []struct {
+		user             types.AccountKey
+		grantTo          types.AccountKey
+		expireTime       int64
+		checkTime        int64
+		checkGrantUser   types.AccountKey
+		checkGrantPubKey crypto.PubKey
+		expectResult     sdk.Error
+	}{
+		{user1, user2, 100, baseTime + 99, user2, priv2.Generate(2).PubKey(), nil},
+		{user1, user3, 100, baseTime + 99, user3, priv3.Generate(2).PubKey(), nil},
+		{user1, user2, 100, baseTime + 101, user2, priv2.Generate(2).PubKey(),
+			ErrCheckAuthenticatePubKeyOwner(user1)},
+		{user1, user2, 100, baseTime + 99, user2, priv2.Generate(2).PubKey(), nil},
+		{user1, user2, 500, baseTime + 101, user2, priv2.Generate(2).PubKey(), nil},
+		{user1, user2, 300, baseTime + 301, user2, priv2.Generate(2).PubKey(),
+			ErrCheckAuthenticatePubKeyOwner(user1)},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
+		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.expireTime, 0)
+		assert.Nil(t, err)
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.checkTime})
+		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.user, cs.checkGrantPubKey, 0)
+		assert.Equal(t, err, cs.expectResult)
+		if cs.expectResult == nil {
+			assert.Equal(t, grantUser, cs.checkGrantUser)
+		}
 	}
 }
 

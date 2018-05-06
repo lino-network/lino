@@ -9,35 +9,36 @@ import (
 	vote "github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
 // test validator deposit
 func TestValidatorDeposit(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
+	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
+	newAccountPostPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 100
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 5000)
+	test.CreateAccount(t, newAccountName, lb, 0,
+		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, newAccountPostPriv, "5000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO(sdk.NewRat(3000)))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountPriv, baseTime)
+	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("3000"))
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	// deposit the lowest requirement
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO(sdk.NewRat(1000)), newValidatorPriv.PubKey())
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountPriv, baseTime)
+		newAccountName, types.LNO("1000"), newValidatorPriv.PubKey(), "")
+	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 
 	// deposit as the highest validator
 	valDepositMsg = val.NewValidatorDepositMsg(
-		newAccountName, types.LNO(sdk.NewRat(1)), newValidatorPriv.PubKey())
-	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountPriv, baseTime)
+		newAccountName, types.LNO("1"), newValidatorPriv.PubKey(), "")
+	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 }

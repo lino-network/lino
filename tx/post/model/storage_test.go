@@ -37,12 +37,12 @@ func TestPost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		Links:        nil,
 	}
 	err := ps.SetPostInfo(ctx, &postInfo)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostInfo(ctx, types.GetPostKey(postInfo.Author, postInfo.PostID))
+	resultPtr, err := ps.GetPostInfo(ctx, types.GetPermLink(postInfo.Author, postInfo.PostID))
 	assert.Nil(t, err)
 	assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
 }
@@ -54,10 +54,10 @@ func TestPostMeta(t *testing.T) {
 	postMeta := PostMeta{
 		AllowReplies: true,
 	}
-	err := ps.SetPostMeta(ctx, types.PostKey("test"), &postMeta)
+	err := ps.SetPostMeta(ctx, types.PermLink("test"), &postMeta)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostMeta(ctx, types.PostKey("test"))
+	resultPtr, err := ps.GetPostMeta(ctx, types.PermLink("test"))
 	assert.Nil(t, err)
 	assert.Equal(t, postMeta, *resultPtr, "Post meta should be equal")
 }
@@ -68,10 +68,10 @@ func TestPostLike(t *testing.T) {
 	user := types.AccountKey("test")
 
 	postLike := Like{Username: user, Weight: 10000, Created: 100}
-	err := ps.SetPostLike(ctx, types.PostKey("test"), &postLike)
+	err := ps.SetPostLike(ctx, types.PermLink("test"), &postLike)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostLike(ctx, types.PostKey("test"), user)
+	resultPtr, err := ps.GetPostLike(ctx, types.PermLink("test"), user)
 	assert.Nil(t, err)
 	assert.Equal(t, postLike, *resultPtr, "Post like should be equal")
 }
@@ -82,10 +82,10 @@ func TestPostComment(t *testing.T) {
 	user := types.AccountKey("test")
 
 	postComment := Comment{Author: user, PostID: "test", Created: 100}
-	err := ps.SetPostComment(ctx, types.PostKey("test"), &postComment)
+	err := ps.SetPostComment(ctx, types.PermLink("test"), &postComment)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostComment(ctx, types.PostKey("test"), types.GetPostKey(user, "test"))
+	resultPtr, err := ps.GetPostComment(ctx, types.PermLink("test"), types.GetPermLink(user, "test"))
 	assert.Nil(t, err)
 	assert.Equal(t, postComment, *resultPtr, "Post comment should be equal")
 }
@@ -95,11 +95,11 @@ func TestPostView(t *testing.T) {
 	ctx := getContext()
 	user := types.AccountKey("test")
 
-	postView := View{Username: user, Created: 100}
-	err := ps.SetPostView(ctx, types.PostKey("test"), &postView)
+	postView := View{Username: user, LastView: 100, Times: 1}
+	err := ps.SetPostView(ctx, types.PermLink("test"), &postView)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostView(ctx, types.PostKey("test"), user)
+	resultPtr, err := ps.GetPostView(ctx, types.PermLink("test"), user)
 	assert.Nil(t, err)
 	assert.Equal(t, postView, *resultPtr, "Post view should be equal")
 }
@@ -110,10 +110,10 @@ func TestPostDonate(t *testing.T) {
 	user := types.AccountKey("test")
 
 	postDonations := Donations{Username: user, DonationList: []Donation{Donation{Created: 100}}}
-	err := ps.SetPostDonations(ctx, types.PostKey("test"), &postDonations)
+	err := ps.SetPostDonations(ctx, types.PermLink("test"), &postDonations)
 	assert.Nil(t, err)
 
-	resultPtr, err := ps.GetPostDonations(ctx, types.PostKey("test"), user)
+	resultPtr, err := ps.GetPostDonations(ctx, types.PermLink("test"), user)
 	assert.Nil(t, err)
 	assert.Equal(t, postDonations, *resultPtr, "Post donation should be equal")
 }

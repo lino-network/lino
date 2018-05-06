@@ -9,8 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/vote"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -21,27 +19,22 @@ func WithdrawDelegateTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "withdraw money from a voter",
 		RunE:  sendWithdrawDelegateTx(cdc),
 	}
-	cmd.Flags().String(FlagUsername, "", "withdraw user")
-	cmd.Flags().String(FlagVoter, "", "withdraw from")
-	cmd.Flags().String(FlagAmount, "", "amount to withdraw")
+	cmd.Flags().String(client.FlagUser, "", "withdraw user")
+	cmd.Flags().String(client.FlagVoter, "", "withdraw from")
+	cmd.Flags().String(client.FlagAmount, "", "amount to withdraw")
 	return cmd
 }
 
 func sendWithdrawDelegateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		user := viper.GetString(FlagUsername)
-		voter := viper.GetString(FlagVoter)
-		amount, err := sdk.NewRatFromDecimal(viper.GetString(FlagAmount))
-		if err != nil {
-			return err
-		}
-
+		ctx := client.NewCoreContextFromViper()
+		user := viper.GetString(client.FlagUser)
+		voter := viper.GetString(client.FlagVoter)
 		// create the message
-		msg := vote.NewDelegatorWithdrawMsg(user, voter, amount)
+		msg := vote.NewDelegatorWithdrawMsg(user, voter, viper.GetString(client.FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(user, msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
 
 		if signErr != nil {
 			return signErr
