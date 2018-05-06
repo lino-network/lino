@@ -3,9 +3,9 @@ package account
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/lino-network/lino/types"
+
+	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

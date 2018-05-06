@@ -9,9 +9,11 @@ import (
 
 type LNO = string
 
-var ZeroLNO = sdk.NewRat(0)
-var LowerBoundLNO = sdk.NewRat(1, Decimals)
-var UpperBoundLNO = sdk.NewRat(math.MaxInt64 / Decimals)
+var (
+	ZeroRat       = sdk.NewRat(0)
+	LowerBoundRat = sdk.NewRat(1, Decimals)
+	UpperBoundRat = sdk.NewRat(math.MaxInt64 / Decimals)
+)
 
 // Coin hold some amount of one currency
 type Coin struct {
@@ -29,10 +31,10 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if err != nil {
 		return NewCoin(0), sdk.ErrInvalidCoins("Illegal LNO")
 	}
-	if num.GT(UpperBoundLNO) {
+	if num.GT(UpperBoundRat) {
 		return NewCoin(0), sdk.ErrInvalidCoins("LNO overflow")
 	}
-	if num.LT(LowerBoundLNO) {
+	if num.LT(LowerBoundRat) {
 		return NewCoin(0), sdk.ErrInvalidCoins("LNO can't be less than lower bound")
 	}
 	return RatToCoin(num.Mul(sdk.NewRat(Decimals))), nil
@@ -134,7 +136,7 @@ func (coin Coin) Minus(coinB Coin) Coin {
 // 	return Coin{new(big.Int).Sub(coin.Amount, coinB.Amount)}
 // }
 
-// func (coin *Coin) UnmarshalJSON(coinBytes []byte) error {
+// func (coin Coin) UnmarshalJSON(coinBytes []byte) error {
 // 	fmt.Println(string(coinBytes))
 // 	bigint, ok := new(big.Int).SetString(string(coinBytes), 10)
 // 	if !ok {
