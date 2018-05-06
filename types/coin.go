@@ -10,7 +10,6 @@ import (
 type LNO = string
 
 var (
-	ZeroRat       = sdk.NewRat(0)
 	LowerBoundRat = sdk.NewRat(1, Decimals)
 	UpperBoundRat = sdk.NewRat(math.MaxInt64 / Decimals)
 )
