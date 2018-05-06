@@ -165,7 +165,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
 	}
 	view, _ := pm.postStorage.GetPostView(ctx, permLink, user)
-	// Revoke privous
+	// Revoke previous
 	if view == nil {
 		view = &model.View{Username: user}
 	}
