@@ -198,7 +198,7 @@ func TestCreateAccount(t *testing.T) {
 	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
 		priv2.PubKey(), priv2.Generate(1).PubKey(), priv2.Generate(2).PubKey(), coin0)
 	assert.Equal(t,
-		"Error{311:create account newKey failed,Error{310:account bank doesn't exist,<nil>,0},1}",
+		"Error{311:create account newKey failed,Error{310:account bank is not found,<nil>,0},1}",
 		err.Error())
 
 	// register fee doesn't enough

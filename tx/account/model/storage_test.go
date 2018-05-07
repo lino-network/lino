@@ -54,7 +54,7 @@ func TestInvalidAccountInfo(t *testing.T) {
 
 	resultPtr, err := as.GetInfo(ctx, types.AccountKey("test"))
 	assert.Nil(t, resultPtr)
-	assert.Equal(t, err, ErrAccountInfoDoesntExist())
+	assert.Equal(t, err, ErrAccountInfoNotFound())
 }
 
 func TestAccountBank(t *testing.T) {

@@ -14,7 +14,7 @@ var (
 	UpperBoundRat = sdk.NewRat(math.MaxInt64 / Decimals)
 )
 
-// Coin hold some amount of one currency
+// Coin holds some amount of one currency
 type Coin struct {
 	// Amount *big.Int `json:"amount"`
 	Amount int64 `json:"amount"`

@@ -37,19 +37,18 @@ func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 	}
 }
 
+// AccountExist returns true when a specific account exist in the KVStore.
 func (as AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
-	if infoByte := store.Get(GetAccountInfoKey(accKey)); infoByte == nil {
-		return false
-	}
-	return true
+	return store.Has(getAccountInfoKey(accKey))
 }
 
+// GetInfo returns general account info of a specific account, returns error otherwise.
 func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*AccountInfo, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
+	infoByte := store.Get(getAccountInfoKey(accKey))
 	if infoByte == nil {
-		return nil, ErrAccountInfoDoesntExist()
+		return nil, ErrAccountInfoNotFound()
 	}
 	info := new(AccountInfo)
 	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
@@ -58,21 +57,24 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	return info, nil
 }
 
+// SetInfo sets general account info to a specific account, returns error if any.
 func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accInfo *AccountInfo) sdk.Error {
 	store := ctx.KVStore(as.key)
 	infoByte, err := as.cdc.MarshalJSON(*accInfo)
 	if err != nil {
 		return ErrSetInfoFailed()
 	}
-	store.Set(GetAccountInfoKey(accKey), infoByte)
+	store.Set(getAccountInfoKey(accKey), infoByte)
 	return nil
 }
 
+// GetBankFromAccountKey returns bank info of a specific account, returns error
+// if any.
 func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
+	infoByte := store.Get(getAccountInfoKey(accKey))
 	if infoByte == nil {
-		return nil, ErrAccountBankDoesntExist()
+		return nil, ErrAccountBankNotFound()
 	}
 	info := new(AccountInfo)
 	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
@@ -81,11 +83,13 @@ func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 	return as.GetBankFromAddress(ctx, info.Address)
 }
 
+// GetBankFromAddress returns bank info for a given address, returns error
+// if any.
 func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	bankByte := store.Get(GetAccountBankKey(address))
+	bankByte := store.Get(getAccountBankKey(address))
 	if bankByte == nil {
-		return nil, ErrAccountBankDoesntExist()
+		return nil, ErrAccountBankNotFound()
 	}
 	bank := new(AccountBank)
 	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
@@ -94,19 +98,23 @@ func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address
 	return bank, nil
 }
 
+// SetBankFromAddress sets bank info for a given address,
+// returns error if any.
 func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
 	bankByte, err := as.cdc.MarshalJSON(*accBank)
 	if err != nil {
 		return ErrSetBankFailed().TraceCause(err, "")
 	}
-	store.Set(GetAccountBankKey(address), bankByte)
+	store.Set(getAccountBankKey(address), bankByte)
 	return nil
 }
 
+// SetBankFromAccountKey sets bank info for a given account,
+// returns error if any.
 func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
+	infoByte := store.Get(getAccountInfoKey(accKey))
 	if infoByte == nil {
 		return ErrGetBankFromAccountKey()
 	}
@@ -118,9 +126,11 @@ func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 	return as.SetBankFromAddress(ctx, info.Address, accBank)
 }
 
+// GetMeta returns meta of a given account that are tiny
+// and frequently updated fields.
 func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*AccountMeta, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	metaByte := store.Get(GetAccountMetaKey(accKey))
+	metaByte := store.Get(getAccountMetaKey(accKey))
 	if metaByte == nil {
 		return nil, ErrGetMetaFailed()
 	}
@@ -131,63 +141,73 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	return meta, nil
 }
 
+// SetMeta sets meta for a given account, returns error if any.
 func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMeta *AccountMeta) sdk.Error {
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(*accMeta)
 	if err != nil {
 		return ErrSetMetaFailed().TraceCause(err, "")
 	}
-	store.Set(GetAccountMetaKey(accKey), metaByte)
+	store.Set(getAccountMetaKey(accKey), metaByte)
 	return nil
 }
 
+// IsMyfollower returns true if `follower` follows `me`.
 func (as AccountStorage) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
-	key := GetFollowerKey(me, follower)
+	key := getFollowerKey(me, follower)
 	return store.Has(key)
 }
 
+// SetFollowerMeta sets follower meta info for a given account which includes
+// time and follower name.
 func (as AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, meta FollowerMeta) sdk.Error {
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrSetFollowerMeta().TraceCause(err, "")
 	}
-	store.Set(GetFollowerKey(me, meta.FollowerName), metaByte)
+	store.Set(getFollowerKey(me, meta.FollowerName), metaByte)
 	return nil
 }
 
-func (as AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
+// RemoveFollowerMeta removes follower meta info of a relationship.
+func (as AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) {
 	store := ctx.KVStore(as.key)
-	store.Delete(GetFollowerKey(me, follower))
-	return nil
+	store.Delete(getFollowerKey(me, follower))
+	return
 }
 
+// IsMyFollowing returns true if `me` follows `following`
 func (as AccountStorage) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
-	key := GetFollowingKey(me, following)
+	key := getFollowingKey(me, following)
 	return store.Has(key)
 }
 
+// SetFollowerMeta sets following meta info for a given account which includes
+// time and following name.
 func (as AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
 		return ErrSetFollowingMeta().TraceCause(err, "")
 	}
-	store.Set(GetFollowingKey(me, meta.FollowingName), metaByte)
+	store.Set(getFollowingKey(me, meta.FollowingName), metaByte)
 	return nil
 }
 
-func (as AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
+// RemoveFollowingMeta removes following meta info of a relationship.
+func (as AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) {
 	store := ctx.KVStore(as.key)
-	store.Delete(GetFollowingKey(me, following))
-	return nil
+	store.Delete(getFollowingKey(me, following))
+	return
 }
 
+// GetReward returns reward info of a given account, returns error if any.
 func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*Reward, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	rewardByte := store.Get(GetRewardKey(accKey))
+	rewardByte := store.Get(getRewardKey(accKey))
 	if rewardByte == nil {
 		return nil, ErrGetRewardFailed()
 	}
@@ -198,19 +218,21 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 	return reward, nil
 }
 
+// SetReward sets the rewards info of a given account, returns error if any.
 func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
 	store := ctx.KVStore(as.key)
 	rewardByte, err := as.cdc.MarshalJSON(*reward)
 	if err != nil {
 		return ErrSetRewardFailed().TraceCause(err, "")
 	}
-	store.Set(GetRewardKey(accKey), rewardByte)
+	store.Set(getRewardKey(accKey), rewardByte)
 	return nil
 }
 
+// GetPendingStakeQueue returns a pending stake queue for a given address.
 func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Address) (*PendingStakeQueue, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte := store.Get(GetPendingStakeQueueKey(address))
+	pendingStakeQueueByte := store.Get(getPendingStakeQueueKey(address))
 	if pendingStakeQueueByte == nil {
 		return nil, ErrGetPendingStakeFailed()
 	}
@@ -221,19 +243,32 @@ func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 	return queue, nil
 }
 
+// SetPendingStakeQueue sets a pending stake queue for a given address.
+func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
+	store := ctx.KVStore(as.key)
+	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
+	if err != nil {
+		return ErrSetRewardFailed().TraceCause(err, "")
+	}
+	store.Set(getPendingStakeQueueKey(address), pendingStakeQueueByte)
+	return nil
+}
+
+// SetGrantKeyList sets a list of grant public keys for a given account.
 func (as AccountStorage) SetGrantKeyList(ctx sdk.Context, me types.AccountKey, grantKeyList *GrantKeyList) sdk.Error {
 	store := ctx.KVStore(as.key)
 	GrantKeyListByte, err := as.cdc.MarshalJSON(*grantKeyList)
 	if err != nil {
 		return ErrSetGrantListFailed().TraceCause(err, "")
 	}
-	store.Set(GetGrantKeyListKey(me), GrantKeyListByte)
+	store.Set(getGrantKeyListKey(me), GrantKeyListByte)
 	return nil
 }
 
+// GetGrantKeyList returns a list of grant public keys for a given account.
 func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (*GrantKeyList, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	grantKeyListByte := store.Get(GetGrantKeyListKey(me))
+	grantKeyListByte := store.Get(getGrantKeyListKey(me))
 	if grantKeyListByte == nil {
 		return nil, ErrGetGrantListFailed()
 	}
@@ -244,19 +279,10 @@ func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (
 	return grantKeyList, nil
 }
 
-func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
-	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
-	if err != nil {
-		return ErrSetRewardFailed().TraceCause(err, "")
-	}
-	store.Set(GetPendingStakeQueueKey(address), pendingStakeQueueByte)
-	return nil
-}
-
+// GetRelationship returns the relationship between two accounts.
 func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey) (*Relationship, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	relationshipByte := store.Get(GetRelationshipKey(me, other))
+	relationshipByte := store.Get(getRelationshipKey(me, other))
 	if relationshipByte == nil {
 		return nil, nil
 	}
@@ -267,62 +293,63 @@ func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, o
 	return queue, nil
 }
 
+// SetRelationship sets relationship for two accounts.
 func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey, relationship *Relationship) sdk.Error {
 	store := ctx.KVStore(as.key)
 	relationshipByte, err := as.cdc.MarshalJSON(*relationship)
 	if err != nil {
 		return ErrSetRelationshipFailed().TraceCause(err, "")
 	}
-	store.Set(GetRelationshipKey(me, other), relationshipByte)
+	store.Set(getRelationshipKey(me, other), relationshipByte)
 	return nil
 }
 
-func GetAccountInfoKey(accKey types.AccountKey) []byte {
+func getAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
 
-func GetAccountBankKey(address sdk.Address) []byte {
+func getAccountBankKey(address sdk.Address) []byte {
 	return append(AccountBankSubstore, address...)
 }
 
-func GetAccountMetaKey(accKey types.AccountKey) []byte {
+func getAccountMetaKey(accKey types.AccountKey) []byte {
 	return append(AccountMetaSubstore, accKey...)
 }
 
-func GetFollowerPrefix(me types.AccountKey) []byte {
+func getFollowerPrefix(me types.AccountKey) []byte {
 	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
 }
 
-func GetFollowingPrefix(me types.AccountKey) []byte {
+func getFollowingPrefix(me types.AccountKey) []byte {
 	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
 }
 
 // "follower substore" + "me" + "my follower"
-func GetFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
-	return append(GetFollowerPrefix(me), myFollower...)
+func getFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
+	return append(getFollowerPrefix(me), myFollower...)
 }
 
 // "following substore" + "me" + "my following"
-func GetFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
-	return append(GetFollowingPrefix(me), myFollowing...)
+func getFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
+	return append(getFollowingPrefix(me), myFollowing...)
 }
 
-func GetRewardKey(accKey types.AccountKey) []byte {
+func getRewardKey(accKey types.AccountKey) []byte {
 	return append(AccountRewardSubstore, accKey...)
 }
 
-func GetRelationshipPrefix(me types.AccountKey) []byte {
+func getRelationshipPrefix(me types.AccountKey) []byte {
 	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
-func GetRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
-	return append(GetRelationshipPrefix(me), other...)
+func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
+	return append(getRelationshipPrefix(me), other...)
 }
 
-func GetPendingStakeQueueKey(address sdk.Address) []byte {
+func getPendingStakeQueueKey(address sdk.Address) []byte {
 	return append(AccountPendingStakeQueueSubstore, address...)
 }
 
-func GetGrantKeyListKey(me types.AccountKey) []byte {
+func getGrantKeyListKey(me types.AccountKey) []byte {
 	return append(AccountGrantListSubstore, me...)
 }

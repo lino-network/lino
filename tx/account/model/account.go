@@ -8,8 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Memo uint64
-
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`

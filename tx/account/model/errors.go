@@ -9,16 +9,16 @@ import (
 )
 
 // Error constructors
-func ErrAccountInfoDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info doesn't exist"))
+func ErrAccountInfoNotFound() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info is not found"))
 }
 
 func ErrGetAccountInfo() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get account info failed"))
 }
 
-func ErrAccountBankDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank doesn't exist"))
+func ErrAccountBankNotFound() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank is not found"))
 }
 
 func ErrGetBankFromAccountKey() sdk.Error {

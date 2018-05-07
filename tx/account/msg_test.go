@@ -11,34 +11,58 @@ import (
 )
 
 func TestFollowMsg(t *testing.T) {
-	follower := "userA"
-	followee := "userB"
-	msg := NewFollowMsg(follower, followee)
-	result := msg.ValidateBasic()
-	assert.Nil(t, result)
+	testCases := map[string]struct {
+		msg      FollowMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: FollowMsg{
+				Follower: "userA",
+				Followee: "userB",
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"invalid follower - Username is too short": {
+			msg: FollowMsg{
+				Follower: "re",
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid follower - Username is too long": {
+			msg: FollowMsg{
+				Follower: "registerregisterregis",
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid followee - Username is too short": {
+			msg: FollowMsg{
+				Follower: "userA",
+				Followee: "re",
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid followee - Username is too long": {
+			msg: FollowMsg{
+				Follower: "userA",
+				Followee: "registerregisterregis",
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+	}
 
-	// Follower Username length invalid
-	follower = "re"
-	msg = NewFollowMsg(follower, followee)
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername())
+	for testName, tc := range testCases {
+		result := tc.msg.ValidateBasic()
 
-	follower = "registerregisterregis"
-	msg = NewFollowMsg(follower, followee)
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername())
-
-	// Followee Username length invalid
-	follower = "userA"
-	followee = "re"
-	msg = NewFollowMsg(follower, followee)
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername())
-
-	followee = "registerregisterregis"
-	msg = NewFollowMsg(follower, followee)
-	result = msg.ValidateBasic()
-	assert.Equal(t, result, ErrInvalidUsername())
+		if result == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+			}
+			return
+		}
+		if result.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, result.ABCICode(), tc.wantCode)
+		}
+	}
 }
 
 func TestUnfollowMsg(t *testing.T) {
