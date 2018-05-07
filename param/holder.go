@@ -16,6 +16,8 @@ var (
 	voteParamSubStore                    = []byte{0x04} // Substore for vote param
 	proposalParamSubStore                = []byte{0x05} // Substore for proposal param
 	validatorParamSubStore               = []byte{0x06} // Substore for validator param
+	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
+	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidtj param
 )
 
 type ParamHolder struct {
@@ -109,6 +111,22 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		NextProposalID: int64(0),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
+		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+	}
+
+	coinDayParam := &CoinDayParam{
+		DaysToRecoverCoinDayStake:    int64(7),
+		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+	}
+	if err := ph.setCoinDayParam(ctx, coinDayParam); err != nil {
+		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+	}
+
+	bandwidthParam := &BandwidthParam{
+		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
+		CapacityUsagePerTransaction: types.NewCoin(1 * types.Decimals),
+	}
+	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")
 	}
 	return nil
@@ -208,6 +226,32 @@ func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.E
 	return param, nil
 }
 
+func (ph ParamHolder) GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetCoinDayParamKey())
+	if paramBytes == nil {
+		return nil, ErrCoinDayParamNotFound()
+	}
+	param := new(CoinDayParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return param, nil
+}
+
+func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetBandwidthParamKey())
+	if paramBytes == nil {
+		return nil, ErrBandwidthParamNotFound()
+	}
+	param := new(BandwidthParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return param, nil
+}
+
 func (ph ParamHolder) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
 	param, err := ph.GetProposalParam(ctx)
 	if err != nil {
@@ -293,6 +337,26 @@ func (ph ParamHolder) setProposalParam(ctx sdk.Context, param *ProposalParam) sd
 	return nil
 }
 
+func (ph ParamHolder) setCoinDayParam(ctx sdk.Context, param *CoinDayParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetCoinDayParamKey(), paramBytes)
+	return nil
+}
+
+func (ph ParamHolder) setBandwidthParam(ctx sdk.Context, param *BandwidthParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	bandwidthBytes, err := ph.cdc.MarshalJSON(*param)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetBandwidthParamKey(), bandwidthBytes)
+	return nil
+}
+
 func GetEvaluateOfContentValueParamKey() []byte {
 	return evaluateOfContentValueParamSubStore
 }
@@ -319,4 +383,12 @@ func GetValidatorParamKey() []byte {
 
 func GetProposalParamKey() []byte {
 	return proposalParamSubStore
+}
+
+func GetCoinDayParamKey() []byte {
+	return coinDayParamSubStore
+}
+
+func GetBandwidthParamKey() []byte {
+	return bandwidthParamSubStore
 }
