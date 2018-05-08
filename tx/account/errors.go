@@ -42,6 +42,10 @@ func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("minus coin to account %v failed", accKey))
 }
 
+func ErrUpdateFrozenMoney(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v frozen money failed", accKey))
+}
+
 func ErrGetBankAddress(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank address failed", accKey))
 }
