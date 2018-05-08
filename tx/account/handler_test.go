@@ -3,11 +3,13 @@ package account
 import (
 	"testing"
 
+	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 func TestFollow(t *testing.T) {
@@ -258,4 +260,35 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrTransferHandler(msg.Sender).Result().Code, result.Code)
+}
+
+func TestHandleAccountRecover(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	handler := NewHandler(am)
+	user1 := types.AccountKey("user1")
+
+	priv := createTestAccount(ctx, am, string(user1))
+
+	cases := []struct {
+		user              types.AccountKey
+		newPostKey        crypto.PubKey
+		newTransactionKey crypto.PubKey
+	}{
+		{user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()},
+	}
+
+	for _, cs := range cases {
+		msg := RecoverMsg{user1, cs.newPostKey, cs.newTransactionKey}
+		result := handler(ctx, msg)
+		assert.Equal(t, sdk.Result{}, result)
+		accInfo := model.AccountInfo{
+			Username:       cs.user,
+			CreatedAt:      ctx.BlockHeader().Time,
+			MasterKey:      priv.PubKey(),
+			TransactionKey: cs.newTransactionKey,
+			PostKey:        cs.newPostKey,
+			Address:        priv.PubKey().Address(),
+		}
+		checkAccountInfo(t, ctx, cs.user, accInfo)
+	}
 }
