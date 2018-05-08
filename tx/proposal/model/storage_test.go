@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
@@ -51,26 +52,27 @@ func TestProposal(t *testing.T) {
 	ctx, vs := setup(t)
 	user := types.AccountKey("user")
 	proposalID := types.ProposalKey("123")
+	res := types.ProposalPass
 
 	cases := []struct {
-		ChangeParameterProposal
+		ChangeGlobalAllocationParamProposal
 	}{
-		{ChangeParameterProposal{
-			Proposal{user, proposalID, types.NewCoin(0), types.NewCoin(0)},
-			ChangeParameterDescription{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
-				sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0)}}},
+		{ChangeGlobalAllocationParamProposal{
+			ProposalInfo{user, proposalID, types.NewCoin(0), types.NewCoin(0), res},
+			param.GlobalAllocationParam{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
+				sdk.NewRat(0)}}},
 	}
 
-	for _, proposal := range cases {
-		err := vs.SetProposal(ctx, proposalID, &proposal.ChangeParameterProposal)
+	for _, cs := range cases {
+		err := vs.SetProposal(ctx, proposalID, cs.ChangeGlobalAllocationParamProposal)
 		assert.Nil(t, err)
-		proposlPtr, err := vs.GetProposal(ctx, proposalID)
+		proposal, err := vs.GetProposal(ctx, proposalID)
 		assert.Nil(t, err)
-		assert.Equal(t, proposal.ChangeParameterProposal, *proposlPtr)
+		assert.Equal(t, cs.ChangeGlobalAllocationParamProposal, proposal.(ChangeGlobalAllocationParamProposal))
 		err = vs.DeleteProposal(ctx, proposalID)
 		assert.Nil(t, err)
-		proposlPtr, err = vs.GetProposal(ctx, proposalID)
-		assert.Nil(t, proposlPtr)
+		proposal, err = vs.GetProposal(ctx, proposalID)
+		assert.Nil(t, proposal)
 		assert.Equal(t, ErrGetProposal(), err)
 	}
 }

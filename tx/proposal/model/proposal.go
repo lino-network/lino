@@ -1,29 +1,31 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	types "github.com/lino-network/lino/types"
 )
 
-type Proposal struct {
-	Creator      types.AccountKey  `json:"creator"`
-	ProposalID   types.ProposalKey `json:"proposal_id"`
-	AgreeVote    types.Coin        `json:"agree_vote"`
-	DisagreeVote types.Coin        `json:"disagree_vote"`
+type Proposal interface {
+	GetProposalInfo() *ProposalInfo
 }
 
-type ChangeParameterDescription struct {
-	InfraAllocation          sdk.Rat `json:"infra_allocation"`
-	ContentCreatorAllocation sdk.Rat `json:"content_creator_allocation"`
-	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`
-	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
-	StorageAllocation        sdk.Rat `json:"storage_allocation"`
-	CDNAllocation            sdk.Rat `json:"CDN_allocation"`
+type Description interface{}
+
+type ProposalInfo struct {
+	Creator       types.AccountKey     `json:"creator"`
+	ProposalID    types.ProposalKey    `json:"proposal_id"`
+	AgreeVotes    types.Coin           `json:"agree_vote"`
+	DisagreeVotes types.Coin           `json:"disagree_vote"`
+	Result        types.ProposalResult `json:"result"`
 }
 
-type ChangeParameterProposal struct {
-	Proposal
-	ChangeParameterDescription
+type ChangeGlobalAllocationParamProposal struct {
+	ProposalInfo
+	Description param.GlobalAllocationParam `json:"description"`
+}
+
+func (p ChangeGlobalAllocationParamProposal) GetProposalInfo() *ProposalInfo {
+	return &p.ProposalInfo
 }
 
 type ProposalList struct {

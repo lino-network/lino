@@ -115,6 +115,15 @@ func (gm GlobalManager) RegisterProposalDecideEvent(ctx sdk.Context, event types
 	return nil
 }
 
+func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
+	// param will be changed in one day
+	if err := gm.registerEventAtTime(
+		ctx, ctx.BlockHeader().Time+(24*3600), event); err != nil {
+		return err
+	}
+	return nil
+}
+
 // put hourly inflation to reward pool
 func (gm GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHoursThisYear int64) sdk.Error {
 	pool, err := gm.storage.GetInflationPool(ctx)

@@ -35,6 +35,11 @@ const (
 	TransactionPermission = Permission(1)
 	MasterPermission      = Permission(2)
 
+	// Different proposal result
+	ProposalPass    = ProposalResult(0)
+	ProposalNotPass = ProposalResult(1)
+	ProposalRevoked = ProposalResult(2)
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 
