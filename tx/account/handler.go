@@ -21,6 +21,8 @@ func NewHandler(am AccountManager) sdk.Handler {
 			return handleTransferMsg(ctx, am, msg)
 		case ClaimMsg:
 			return handleClaimMsg(ctx, am, msg)
+		case RecoverMsg:
+			return handleRecoverMsg(ctx, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -101,6 +103,15 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result {
 	// claim reward
 	if err := am.ClaimReward(ctx, msg.Username); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Result {
+	// recover
+	if err := am.RecoverAccount(
+		ctx, msg.Username, msg.NewPostPubKey, msg.NewTransactionPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

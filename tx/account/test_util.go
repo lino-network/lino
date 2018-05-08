@@ -8,9 +8,10 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/tendermint/go-crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 

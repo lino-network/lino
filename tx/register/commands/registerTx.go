@@ -44,7 +44,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
-		msg := register.NewRegisterMsg(name, pubKey, transactionPriv.PubKey(), postPriv.PubKey())
+		msg := register.NewRegisterMsg(name, pubKey, postPriv.PubKey(), transactionPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)
