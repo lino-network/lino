@@ -6,7 +6,8 @@ import (
 )
 
 type Proposal interface {
-	GetProposalInfo() *ProposalInfo
+	GetProposalInfo() ProposalInfo
+	SetProposalInfo(ProposalInfo)
 }
 
 type Description interface{}
@@ -24,8 +25,12 @@ type ChangeGlobalAllocationParamProposal struct {
 	Description param.GlobalAllocationParam `json:"description"`
 }
 
-func (p ChangeGlobalAllocationParamProposal) GetProposalInfo() *ProposalInfo {
-	return &p.ProposalInfo
+func (p *ChangeGlobalAllocationParamProposal) GetProposalInfo() ProposalInfo {
+	return p.ProposalInfo
+}
+
+func (p *ChangeGlobalAllocationParamProposal) SetProposalInfo(info ProposalInfo) {
+	p.ProposalInfo = info
 }
 
 type ProposalList struct {

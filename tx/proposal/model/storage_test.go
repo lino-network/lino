@@ -64,11 +64,11 @@ func TestProposal(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		err := vs.SetProposal(ctx, proposalID, cs.ChangeGlobalAllocationParamProposal)
+		err := vs.SetProposal(ctx, proposalID, &cs.ChangeGlobalAllocationParamProposal)
 		assert.Nil(t, err)
 		proposal, err := vs.GetProposal(ctx, proposalID)
 		assert.Nil(t, err)
-		assert.Equal(t, cs.ChangeGlobalAllocationParamProposal, proposal.(ChangeGlobalAllocationParamProposal))
+		assert.Equal(t, &cs.ChangeGlobalAllocationParamProposal, proposal.(*ChangeGlobalAllocationParamProposal))
 		err = vs.DeleteProposal(ctx, proposalID)
 		assert.Nil(t, err)
 		proposal, err = vs.GetProposal(ctx, proposalID)

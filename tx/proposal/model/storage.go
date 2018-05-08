@@ -20,7 +20,7 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc := wire.NewCodec()
 
 	cdc.RegisterInterface((*Proposal)(nil), nil)
-	cdc.RegisterConcrete(ChangeGlobalAllocationParamProposal{}, "cga", nil)
+	cdc.RegisterConcrete(&ChangeGlobalAllocationParamProposal{}, "cga", nil)
 
 	wire.RegisterCrypto(cdc)
 	vs := ProposalStorage{

@@ -48,6 +48,8 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(param.ChangeGlobalAllocationParamEvent{}, "2", nil)
+	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)

@@ -33,9 +33,9 @@ func checkPendingStake(
 func checkAccountInfo(
 	t *testing.T, ctx sdk.Context, accKey types.AccountKey, accInfo model.AccountInfo) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	infoPtr, err := accStorage.GetInfo(ctx, accKey)
+	info, err := accStorage.GetInfo(ctx, accKey)
 	assert.Nil(t, err)
-	assert.Equal(t, accInfo, *infoPtr, "accout info should be equal")
+	assert.Equal(t, accInfo, *info, "accout info should be equal")
 }
 
 func checkAccountMeta(

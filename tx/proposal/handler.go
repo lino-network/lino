@@ -32,8 +32,8 @@ func handleChangeGlobalAllocationMsg(
 		return err.Result()
 	}
 	//  set a time event to decide the proposal in 7 days
-	// if err := pm.CreateDecideProposalEvent(ctx, gm); err != nil {
-	// 	return err.Result()
-	// }
+	if err := pm.CreateDecideProposalEvent(ctx, gm); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }

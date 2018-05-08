@@ -51,7 +51,7 @@ func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
 
 	switch des := des.(type) {
 	case param.GlobalAllocationParam:
-		proposal = model.ChangeGlobalAllocationParamProposal{proposalInfo, des}
+		proposal = &model.ChangeGlobalAllocationParamProposal{proposalInfo, des}
 	default:
 		panic(des)
 	}
@@ -97,19 +97,17 @@ func (pm ProposalManager) UpdateProposalStatus(
 		return types.ProposalNotPass, err
 	}
 
-	proposalInfoPtr := proposal.GetProposalInfo()
-	if proposalInfoPtr == nil {
-		return types.ProposalNotPass, ErrProposalInfoNotFound()
-	}
+	proposalInfo := proposal.GetProposalInfo()
 
-	proposalInfoPtr.AgreeVotes = res.AgreeVotes
-	proposalInfoPtr.DisagreeVotes = res.DisagreeVotes
+	proposalInfo.AgreeVotes = res.AgreeVotes
+	proposalInfo.DisagreeVotes = res.DisagreeVotes
 
 	// TODO consider different types of propsal
-	if proposalInfoPtr.AgreeVotes.IsGT(proposalInfoPtr.DisagreeVotes) {
-		proposalInfoPtr.Result = types.ProposalPass
+	if proposalInfo.AgreeVotes.IsGT(proposalInfo.DisagreeVotes) {
+		proposalInfo.Result = types.ProposalPass
 	}
 
+	proposal.SetProposalInfo(proposalInfo)
 	if err := pm.storage.SetProposal(ctx, curID, proposal); err != nil {
 		return types.ProposalNotPass, err
 	}
@@ -120,7 +118,7 @@ func (pm ProposalManager) UpdateProposalStatus(
 	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
 		return types.ProposalNotPass, err
 	}
-	return proposalInfoPtr.Result, nil
+	return proposalInfo.Result, nil
 }
 
 func (pm ProposalManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
@@ -140,7 +138,7 @@ func (pm ProposalManager) CreateParamChangeEvent(
 
 	var event types.Event
 	switch proposal := proposal.(type) {
-	case model.ChangeGlobalAllocationParamProposal:
+	case *model.ChangeGlobalAllocationParamProposal:
 		event = param.ChangeGlobalAllocationParamEvent{proposal.Description}
 	default:
 		panic("err")

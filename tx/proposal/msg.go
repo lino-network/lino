@@ -24,7 +24,7 @@ func NewChangeGlobalAllocationMsg(voter string, desc param.GlobalAllocationParam
 	}
 }
 
-func (msg ChangeGlobalAllocationMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg ChangeGlobalAllocationMsg) Type() string { return types.ProposalRouterName } // TODO: "account/register"
 
 func (msg ChangeGlobalAllocationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
@@ -32,11 +32,10 @@ func (msg ChangeGlobalAllocationMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.Description.InfraAllocation.
+	if !msg.Description.InfraAllocation.
 		Add(msg.Description.ContentCreatorAllocation).
 		Add(msg.Description.DeveloperAllocation).
-		Add(msg.Description.ValidatorAllocation).
-		GT(sdk.NewRat(1)) {
+		Add(msg.Description.ValidatorAllocation).Equal(sdk.NewRat(1)) {
 		return ErrIllegalParameter()
 	}
 

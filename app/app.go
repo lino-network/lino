@@ -156,6 +156,8 @@ func RegisterEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(post.RewardEvent{}, "event/reward", nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
+	cdc.RegisterConcrete(param.ChangeGlobalAllocationParamEvent{}, "event/cgape", nil)
+	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "event/dpe", nil)
 }
 
 // custom logic for transaction decoding

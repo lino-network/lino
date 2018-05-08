@@ -4,15 +4,7 @@ import (
 	types "github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 )
-
-func init() {
-	cdc := wire.NewCodec()
-
-	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(ReturnCoinEvent{}, "event/return", nil)
-}
 
 // ReturnCoin Event return a certain amount of coin to an account
 type ReturnCoinEvent struct {
