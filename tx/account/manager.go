@@ -558,6 +558,17 @@ func (accManager AccountManager) addPendingStakeToQueue(
 	return accManager.storage.SetPendingStakeQueue(ctx, address, pendingStakeQueue)
 }
 
+func (accManager AccountManager) RecoverAccount(
+	ctx sdk.Context, username types.AccountKey, newPostKey, newTransactionKey crypto.PubKey) sdk.Error {
+	accInfo, err := accManager.storage.GetInfo(ctx, username)
+	if err != nil {
+		return err
+	}
+	accInfo.PostKey = newPostKey
+	accInfo.TransactionKey = newTransactionKey
+	return accManager.storage.SetInfo(ctx, username, accInfo)
+}
+
 func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	ctx sdk.Context, bank *model.AccountBank, pendingStakeQueue *model.PendingStakeQueue) sdk.Error {
 	// remove expired transaction

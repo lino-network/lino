@@ -533,3 +533,32 @@ func TestDonationRelationship(t *testing.T) {
 		assert.Equal(t, donateTime, cs.expectDonateTime)
 	}
 }
+
+func TestAccountRecover(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+
+	priv := createTestAccount(ctx, am, string(user1))
+
+	cases := []struct {
+		user              types.AccountKey
+		newPostKey        crypto.PubKey
+		newTransactionKey crypto.PubKey
+	}{
+		{user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()},
+	}
+
+	for _, cs := range cases {
+		err := am.RecoverAccount(ctx, cs.user, cs.newPostKey, cs.newTransactionKey)
+		assert.Nil(t, err)
+		accInfo := model.AccountInfo{
+			Username:       cs.user,
+			CreatedAt:      ctx.BlockHeader().Time,
+			MasterKey:      priv.PubKey(),
+			TransactionKey: cs.newTransactionKey,
+			PostKey:        cs.newPostKey,
+			Address:        priv.PubKey().Address(),
+		}
+		checkAccountInfo(t, ctx, cs.user, accInfo)
+	}
+}

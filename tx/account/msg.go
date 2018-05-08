@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/lino-network/lino/types"
+	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -22,6 +23,12 @@ type UnfollowMsg struct {
 
 type ClaimMsg struct {
 	Username types.AccountKey `json:"username"`
+}
+
+type RecoverMsg struct {
+	Username             types.AccountKey `json:"username"`
+	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
 // we can support to transfer to an user or an address
@@ -51,6 +58,7 @@ var _ sdk.Msg = FollowMsg{}
 var _ sdk.Msg = UnfollowMsg{}
 var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
+var _ sdk.Msg = RecoverMsg{}
 
 // Follow Msg Implementations
 func NewFollowMsg(follower string, followee string) FollowMsg {
@@ -228,4 +236,55 @@ func (msg TransferMsg) GetSignBytes() []byte {
 
 func (msg TransferMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Sender)}
+}
+
+// Recover Msg Implementations
+func NewRecoverMsg(
+	username string,
+	postPubkey crypto.PubKey,
+	transactionPubkey crypto.PubKey) RecoverMsg {
+	return RecoverMsg{
+		Username:             types.AccountKey(username),
+		NewPostPubKey:        postPubkey,
+		NewTransactionPubKey: transactionPubkey,
+	}
+}
+
+func (msg RecoverMsg) Type() string { return types.AccountRouterName }
+
+func (msg RecoverMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	return nil
+}
+
+func (msg RecoverMsg) String() string {
+	return fmt.Sprintf("RecoverMsg{user:%v, new post Key:%v, new transaction key:%v}",
+		msg.Username, msg.NewPostPubKey, msg.NewTransactionPubKey)
+}
+
+func (msg RecoverMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.MasterPermission
+	}
+	return nil
+}
+
+func (msg RecoverMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg RecoverMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
 }
