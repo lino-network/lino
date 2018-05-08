@@ -7,8 +7,9 @@ import (
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-crypto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // linoaccount encapsulates all basic struct
@@ -54,7 +55,7 @@ func (accManager AccountManager) CreateAccount(
 
 	accountInfo := &model.AccountInfo{
 		Username:       accKey,
-		Created:        ctx.BlockHeader().Time,
+		CreatedAt:      ctx.BlockHeader().Time,
 		MasterKey:      masterKey,
 		TransactionKey: transactionKey,
 		PostKey:        postKey,
@@ -71,7 +72,7 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivity:        ctx.BlockHeader().Time,
+		LastActivityAt:      ctx.BlockHeader().Time,
 		TransactionCapacity: types.NewCoin(0),
 	}
 	if err := accManager.storage.SetMeta(ctx, accKey, accountMeta); err != nil {
@@ -199,7 +200,7 @@ func (accManager AccountManager) MinusCoin(
 			coin = coin.Minus(pendingStake.Coin)
 			pendingStakeQueue.StakeCoinInQueue =
 				pendingStakeQueue.StakeCoinInQueue.Sub(sdk.NewRat(
-					pendingStakeQueue.LastUpdateTime-pendingStake.StartTime,
+					pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 					coinDayParams.SecondsToRecoverCoinDayStake).Mul(pendingStake.Coin.ToRat()))
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
 			pendingStakeQueue.PendingStakeList =
@@ -208,7 +209,7 @@ func (accManager AccountManager) MinusCoin(
 			// otherwise try to cut last pending transaction
 			pendingStakeQueue.StakeCoinInQueue =
 				pendingStakeQueue.StakeCoinInQueue.Sub(sdk.NewRat(
-					pendingStakeQueue.LastUpdateTime-pendingStake.StartTime,
+					pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 					coinDayParams.SecondsToRecoverCoinDayStake).Mul(coin.ToRat()))
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
 			pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin =
@@ -405,7 +406,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		accountMeta.TransactionCapacity = stake
 	} else {
 		incrementRatio := sdk.NewRat(
-			ctx.BlockHeader().Time-accountMeta.LastActivity,
+			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
 		if incrementRatio.GT(sdk.OneRat) {
 			incrementRatio = sdk.OneRat
@@ -420,7 +421,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		return ErrAccountTPSCapacityNotEnough(me)
 	}
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
-	accountMeta.LastActivity = ctx.BlockHeader().Time
+	accountMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
 		return ErrIncreaseSequenceByOne(me).TraceCause(err, "")
 	}
@@ -458,7 +459,7 @@ func (accManager AccountManager) AuthorizePermission(
 
 	idx := 0
 	for idx < len(grantKeyList.GrantPubKeyList) {
-		if grantKeyList.GrantPubKeyList[idx].Expire < ctx.BlockHeader().Time ||
+		if grantKeyList.GrantPubKeyList[idx].ExpiresAt < ctx.BlockHeader().Time ||
 			grantKeyList.GrantPubKeyList[idx].Username == authorizedUser {
 			grantKeyList.GrantPubKeyList = append(
 				grantKeyList.GrantPubKeyList[:idx], grantKeyList.GrantPubKeyList[idx+1:]...)
@@ -467,9 +468,9 @@ func (accManager AccountManager) AuthorizePermission(
 		idx += 1
 	}
 	newGrantPubKey := model.GrantPubKey{
-		Username: authorizedUser,
-		PubKey:   pubKey,
-		Expire:   ctx.BlockHeader().Time + validityPeriod,
+		Username:  authorizedUser,
+		PubKey:    pubKey,
+		ExpiresAt: ctx.BlockHeader().Time + validityPeriod,
 	}
 	grantKeyList.GrantPubKeyList = append(grantKeyList.GrantPubKeyList, newGrantPubKey)
 	return accManager.storage.SetGrantKeyList(ctx, me, grantKeyList)
@@ -515,7 +516,7 @@ func (accManager AccountManager) CheckAuthenticatePubKeyOwner(
 	}
 	idx := 0
 	for idx < len(grantKeyList.GrantPubKeyList) {
-		if grantKeyList.GrantPubKeyList[idx].Expire < ctx.BlockHeader().Time {
+		if grantKeyList.GrantPubKeyList[idx].ExpiresAt < ctx.BlockHeader().Time {
 			grantKeyList.GrantPubKeyList = append(
 				grantKeyList.GrantPubKeyList[:idx], grantKeyList.GrantPubKeyList[idx+1:]...)
 			continue
@@ -571,7 +572,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
 			stakeRatioOfThisTransaction := sdk.NewRat(
-				pendingStakeQueue.LastUpdateTime-pendingStake.StartTime,
+				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 				coinDayParams.SecondsToRecoverCoinDayStake)
 			// remote the stake in the queue of this transaction
 			pendingStakeQueue.StakeCoinInQueue =
@@ -591,14 +592,14 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
 		recoverRatio := sdk.NewRat(
-			ctx.BlockHeader().Time-pendingStakeQueue.LastUpdateTime,
+			ctx.BlockHeader().Time-pendingStakeQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 		pendingStakeQueue.StakeCoinInQueue =
 			pendingStakeQueue.StakeCoinInQueue.Add(
 				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
 	}
 
-	pendingStakeQueue.LastUpdateTime = ctx.BlockHeader().Time
+	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
 	return nil
 }
 

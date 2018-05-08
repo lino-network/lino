@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetBankCmd returns a query bank that will display the

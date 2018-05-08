@@ -4,15 +4,15 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/lino-network/lino/client"
+	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
-	"github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
 // TransferTxCmd will create a transfer tx and sign it with the given key

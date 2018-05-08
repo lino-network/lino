@@ -18,7 +18,7 @@ func ErrUsernameNotFound() sdk.Error {
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalida Username"))
+	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid Username"))
 }
 
 func ErrTransferHandler(accKey types.AccountKey) sdk.Error {

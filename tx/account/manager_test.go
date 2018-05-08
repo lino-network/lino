@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/lino-network/lino/tx/account/model"
 	"github.com/lino-network/lino/types"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/go-crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/go-crypto"
 )
 
 func checkBankKVByAddress(
@@ -84,7 +84,7 @@ func TestAddCoinToAddress(t *testing.T) {
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
 	pendingStakeQueue := model.PendingStakeQueue{
-		LastUpdateTime:   ctx.BlockHeader().Time,
+		LastUpdatedAt:    ctx.BlockHeader().Time,
 		StakeCoinInQueue: sdk.ZeroRat,
 		TotalCoin:        coin1,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
@@ -130,7 +130,7 @@ func TestAddCoinToAddress(t *testing.T) {
 		Coin:      coin100,
 	}}
 	pendingStakeQueue.TotalCoin = coin100
-	pendingStakeQueue.LastUpdateTime = ctx.BlockHeader().Time
+	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
 	checkPendingStake(t, ctx, sdk.Address("test"), pendingStakeQueue)
 }
 
@@ -157,7 +157,7 @@ func TestCreateAccount(t *testing.T) {
 	}
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
 	pendingStakeQueue := model.PendingStakeQueue{
-		LastUpdateTime:   ctx.BlockHeader().Time,
+		LastUpdatedAt:    ctx.BlockHeader().Time,
 		StakeCoinInQueue: sdk.ZeroRat,
 		TotalCoin:        coin100,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
@@ -168,7 +168,7 @@ func TestCreateAccount(t *testing.T) {
 	checkPendingStake(t, ctx, priv.PubKey().Address(), pendingStakeQueue)
 	accInfo := model.AccountInfo{
 		Username:       accKey,
-		Created:        ctx.BlockHeader().Time,
+		CreatedAt:      ctx.BlockHeader().Time,
 		MasterKey:      priv.PubKey(),
 		TransactionKey: priv.Generate(1).PubKey(),
 		PostKey:        priv.Generate(2).PubKey(),
@@ -176,7 +176,7 @@ func TestCreateAccount(t *testing.T) {
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivity: ctx.BlockHeader().Time,
+		LastActivityAt: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
@@ -202,7 +202,7 @@ func TestCreateAccount(t *testing.T) {
 	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
 		priv2.PubKey(), priv2.Generate(1).PubKey(), priv2.Generate(2).PubKey(), coin0)
 	assert.Equal(t,
-		"Error{311:create account newKey failed,Error{310:account bank doesn't exist,<nil>,0},1}",
+		"Error{311:create account newKey failed,Error{310:account bank is not found,<nil>,0},1}",
 		err.Error())
 
 	// register fee doesn't enough
@@ -439,7 +439,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		err = accStorage.SetBankFromAddress(ctx, priv.PubKey().Address(), bank)
 		assert.Nil(t, err)
 		meta := &model.AccountMeta{
-			LastActivity:        cs.LastActivity,
+			LastActivityAt:      cs.LastActivity,
 			TransactionCapacity: cs.LastCapacity,
 		}
 		err = accStorage.SetMeta(ctx, accKey, meta)
@@ -449,11 +449,11 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		assert.Equal(t, cs.ExpectResult, err)
 
 		accMeta := model.AccountMeta{
-			LastActivity:        ctx.BlockHeader().Time,
+			LastActivityAt:      ctx.BlockHeader().Time,
 			TransactionCapacity: cs.ExpectRemainCapacity,
 		}
 		if cs.ExpectResult != nil {
-			accMeta.LastActivity = cs.LastActivity
+			accMeta.LastActivityAt = cs.LastActivity
 		}
 		checkAccountMeta(t, ctx, accKey, accMeta)
 	}

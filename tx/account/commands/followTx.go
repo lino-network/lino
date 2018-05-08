@@ -3,14 +3,14 @@ package commands
 import (
 	"fmt"
 
+	"github.com/lino-network/lino/client"
+
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/tx/account"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
 // FollowTxCmd will create a follow tx and sign it with the given key

@@ -3,8 +3,9 @@ package types
 import (
 	"testing"
 
-	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/stretchr/testify/assert"
+
+	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 func TestNewCoin(t *testing.T) {
