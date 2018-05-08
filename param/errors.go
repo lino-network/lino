@@ -19,6 +19,14 @@ func ErrValidatorParamNotFound() sdk.Error {
 	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Validator param not found"))
 }
 
+func ErrCoinDayParamNotFound() sdk.Error {
+	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Coin day param not found"))
+}
+
+func ErrBandwidthParamNotFound() sdk.Error {
+	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Bandwidth param not found"))
+}
+
 func ErrVoteParamNotFound() sdk.Error {
 	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Vote param not found"))
 }

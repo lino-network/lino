@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -416,7 +415,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + acc.TotalCoinDaysSec})
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + 7*3600*24})
 		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user1, postID, cs.isReport, cs.isRevoke)
 		result := handler(newCtx, msg)
 		assert.Equal(t, result, sdk.Result{})
@@ -525,7 +524,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + acc.TotalCoinDaysSec})
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + +7*3600*24})
 		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user2, repostID, cs.isReport, cs.isRevoke)
 		result := handler(newCtx, msg)
 		assert.Equal(t, result, sdk.Result{})
