@@ -68,6 +68,15 @@ func (vm ValidatorManager) IsLegalWithdraw(
 	return res.IsGTE(param.ValidatorMinCommitingDeposit)
 }
 
+func (vm ValidatorManager) IsBalancedAccount(
+	ctx sdk.Context, accKey types.AccountKey, votingDeposit types.Coin) bool {
+	commitingDeposit, err := vm.GetValidatorDeposit(ctx, accKey)
+	if err != nil {
+		return false
+	}
+	return votingDeposit.IsGTE(commitingDeposit)
+}
+
 func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
 	validatorList, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {

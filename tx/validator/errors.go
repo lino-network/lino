@@ -35,6 +35,10 @@ func ErrVotingDepositNotEnough() sdk.Error {
 	return sdk.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Voting Deposit fee not enough"))
 }
 
+func ErrCommitingDepositExceedVotingDeposit() sdk.Error {
+	return sdk.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Commiting deposit exceed voting deposit"))
+}
+
 func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }

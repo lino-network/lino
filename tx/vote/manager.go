@@ -356,6 +356,14 @@ func (vm VoteManager) CalculateVotingResult(
 	return res, nil
 }
 
+func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return voter.Deposit, nil
+}
+
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
