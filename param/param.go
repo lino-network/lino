@@ -73,3 +73,13 @@ type ValidatorParam struct {
 	PenaltyMissCommit             types.Coin `json:"penalty_miss_commit"`
 	PenaltyByzantine              types.Coin `json:"penalty_byzantine"`
 }
+
+type CoinDayParam struct {
+	DaysToRecoverCoinDayStake    int64 `json:"days_to_recover_coin_day_stake"`
+	SecondsToRecoverCoinDayStake int64 `json:"seconds_to_recover_coin_day_stake"`
+}
+
+type BandwidthParam struct {
+	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
+	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
+}

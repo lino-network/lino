@@ -71,9 +71,11 @@ func TestIsAccountExist(t *testing.T) {
 
 func TestAddCoinToAddress(t *testing.T) {
 	ctx, am := setupTest(t, 1)
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
 
 	// add coin to non-exist account
-	err := am.AddCoinToAddress(ctx, sdk.Address("test"), coin1)
+	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin1)
 	assert.Nil(t, err)
 
 	bank := model.AccountBank{
@@ -87,7 +89,7 @@ func TestAddCoinToAddress(t *testing.T) {
 		TotalCoin:        coin1,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
-			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
+			EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
 			Coin:      coin1,
 		}}}
 	checkPendingStake(t, ctx, sdk.Address("test"), pendingStakeQueue)
@@ -104,7 +106,7 @@ func TestAddCoinToAddress(t *testing.T) {
 	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList,
 		model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
-			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
+			EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
 			Coin:      coin100,
 		})
 	pendingStakeQueue.TotalCoin = types.NewCoin(101)
@@ -113,7 +115,7 @@ func TestAddCoinToAddress(t *testing.T) {
 	// add coin to exist bank after previous coin day
 	ctx = ctx.WithBlockHeader(
 		abci.Header{ChainID: "Lino", Height: 3,
-			Time: (ctx.BlockHeader().Time + TotalCoinDaysSec + 1)})
+			Time: (ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake + 1)})
 	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin100)
 	assert.Nil(t, err)
 	bank = model.AccountBank{
@@ -124,7 +126,7 @@ func TestAddCoinToAddress(t *testing.T) {
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
 	pendingStakeQueue.PendingStakeList = []model.PendingStake{model.PendingStake{
 		StartTime: ctx.BlockHeader().Time,
-		EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
+		EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
 		Coin:      coin100,
 	}}
 	pendingStakeQueue.TotalCoin = coin100
@@ -136,10 +138,12 @@ func TestCreateAccount(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
 
 	// normal test
 	assert.False(t, am.IsAccountExist(ctx, accKey))
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
+	err = am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
@@ -158,7 +162,7 @@ func TestCreateAccount(t *testing.T) {
 		TotalCoin:        coin100,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
-			EndTime:   ctx.BlockHeader().Time + TotalCoinDaysSec,
+			EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
 			Coin:      coin100,
 		}}}
 	checkPendingStake(t, ctx, priv.PubKey().Address(), pendingStakeQueue)
@@ -213,16 +217,20 @@ func TestCoinDayByAddress(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
 	priv := crypto.GenPrivKeyEd25519()
-	// create bank and account
 
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
+	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
+
+	// create bank and account
+	err = am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
 	baseTime1 := ctx.BlockHeader().Time
-	baseTime2 := baseTime1 + CoinDays*24*5400 + 1000
+	baseTime2 := baseTime1 + totalCoinDaysSec*2
 	cases := []struct {
 		AddCoin           types.Coin
 		AtWhen            int64
@@ -230,15 +238,15 @@ func TestCoinDayByAddress(t *testing.T) {
 		ExpectStake       types.Coin
 		ExpectStakeInBank types.Coin
 	}{
-		{coin0, baseTime1 + 3456, coin100, coin0, coin0},
-		{coin0, baseTime1 + 3457, coin100, coin1, coin0},
-		{coin0, baseTime1 + TotalCoinDaysSec/2, coin100, coin50, coin0},
-		{coin100, baseTime1 + TotalCoinDaysSec/2, coin200, coin50, coin0},
-		{coin0, baseTime1 + TotalCoinDaysSec + 1, coin200, types.NewCoin(150), coin100},
-		{coin0, baseTime1 + CoinDays*24*5400 + 1, coin200, coin200, coin200},
+		{coin0, baseTime1 + 3024, coin100, coin0, coin0},
+		{coin0, baseTime1 + 3025, coin100, coin1, coin0},
+		{coin0, baseTime1 + totalCoinDaysSec/2, coin100, coin50, coin0},
+		{coin100, baseTime1 + totalCoinDaysSec/2, coin200, coin50, coin0},
+		{coin0, baseTime1 + totalCoinDaysSec + 1, coin200, types.NewCoin(150), coin100},
+		{coin0, baseTime1 + totalCoinDaysSec*2 + 1, coin200, coin200, coin200},
 		{coin1, baseTime2, types.NewCoin(201), coin200, coin200},
-		{coin0, baseTime2 + TotalCoinDaysSec/2, types.NewCoin(201), coin200, coin200},
-		{coin0, baseTime2 + TotalCoinDaysSec/2 + 1,
+		{coin0, baseTime2 + totalCoinDaysSec/2, types.NewCoin(201), coin200, coin200},
+		{coin0, baseTime2 + totalCoinDaysSec/2 + 1,
 			types.NewCoin(201), types.NewCoin(201), coin200},
 	}
 
@@ -271,10 +279,14 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
 	assert.Nil(t, err)
 
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
+	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
+
 	baseTime := ctx.BlockHeader().Time
-	baseTime2 := baseTime + TotalCoinDaysSec + 1000
-	baseTime3 := baseTime2 + TotalCoinDaysSec + 1000
-	baseTime4 := baseTime3 + TotalCoinDaysSec*3/2 + 3
+	baseTime2 := baseTime + totalCoinDaysSec + 1000
+	baseTime3 := baseTime2 + totalCoinDaysSec + 1000
+	baseTime4 := baseTime3 + totalCoinDaysSec*3/2 + 3
 
 	cases := []struct {
 		IsAdd             bool
@@ -284,29 +296,29 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		ExpectStake       types.Coin
 		ExpectStakeInBank types.Coin
 	}{
-		{true, coin0, baseTime + 3456, coin100, coin0, coin0},
-		{true, coin0, baseTime + 3457, coin100, coin1, coin0},
+		{true, coin0, baseTime + 3024, coin100, coin0, coin0},
+		{true, coin0, baseTime + 3025, coin100, coin1, coin0},
 		{false, coin100, baseTime + 3457, coin0, coin0, coin0},
-		{true, coin0, baseTime + TotalCoinDaysSec + 1, coin0, coin0, coin0},
+		{true, coin0, baseTime + totalCoinDaysSec + 1, coin0, coin0, coin0},
 
 		{true, coin100, baseTime2, coin100, coin0, coin0},
-		{false, coin50, baseTime2 + TotalCoinDaysSec/2 + 1, coin50, types.NewCoin(25), coin0},
-		{true, coin0, baseTime2 + TotalCoinDaysSec + 1, coin50, coin50, coin50},
+		{false, coin50, baseTime2 + totalCoinDaysSec/2 + 1, coin50, types.NewCoin(25), coin0},
+		{true, coin0, baseTime2 + totalCoinDaysSec + 1, coin50, coin50, coin50},
 
 		{true, coin100, baseTime3, types.NewCoin(150), coin50, coin50},
-		{true, coin100, baseTime3 + TotalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
-		{false, coin50, baseTime3 + TotalCoinDaysSec*3/4 + 2,
+		{true, coin100, baseTime3 + totalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
+		{false, coin50, baseTime3 + totalCoinDaysSec*3/4 + 2,
 			coin200, types.NewCoin(138), types.NewCoin(50)},
-		{true, coin0, baseTime3 + TotalCoinDaysSec + 2,
+		{true, coin0, baseTime3 + totalCoinDaysSec + 2,
 			coin200, types.NewCoin(175), types.NewCoin(150)},
-		{true, coin0, baseTime3 + TotalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
+		{true, coin0, baseTime3 + totalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
 
 		{true, coin1, baseTime4, types.NewCoin(201), coin200, coin200},
-		{true, coin0, baseTime4 + TotalCoinDaysSec/2 + 1,
+		{true, coin0, baseTime4 + totalCoinDaysSec/2 + 1,
 			types.NewCoin(201), types.NewCoin(201), coin200},
-		{false, coin1, baseTime4 + TotalCoinDaysSec/2 + 1, coin200, coin200, coin200},
-		{true, coin0, baseTime4 + TotalCoinDaysSec + 1, coin200, coin200, coin200},
-		{true, coin0, baseTime4 + TotalCoinDaysSec*100 + 1, coin200, coin200, coin200},
+		{false, coin1, baseTime4 + totalCoinDaysSec/2 + 1, coin200, coin200, coin200},
+		{true, coin0, baseTime4 + totalCoinDaysSec + 1, coin200, coin200, coin200},
+		{true, coin0, baseTime4 + totalCoinDaysSec*100 + 1, coin200, coin200, coin200},
 	}
 
 	for _, cs := range cases {
@@ -372,10 +384,14 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	ctx, am := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
 
+	bandwidthParams, err := am.paramHolder.GetBandwidthParam(ctx)
+	assert.Nil(t, err)
+	secondsToRecoverBandwidth := bandwidthParams.SecondsToRecoverBandwidth
+
 	baseTime := ctx.BlockHeader().Time
 
 	priv := createTestAccount(ctx, am, string(accKey))
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
+	err = am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
 	assert.Nil(t, err)
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
@@ -395,20 +411,20 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
 			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
 		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(990000)},
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(990000)},
 		{sdk.NewRat(1, 2), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(950000)},
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(950000)},
 		{sdk.NewRat(1), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod, nil, types.NewCoin(9 * types.Decimals)},
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(9 * types.Decimals)},
 		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime,
 			types.NewCoin(10 * types.Decimals), baseTime, nil, types.NewCoin(0)},
 		{sdk.NewRat(1), types.NewCoin(10), baseTime, types.NewCoin(1 * types.Decimals),
 			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(1 * types.Decimals)},
 		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod/2,
+			baseTime + secondsToRecoverBandwidth/2,
 			ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
 		{sdk.NewRat(1, 2), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + TransactionCapacityRecoverPeriod/2, nil, types.NewCoin(0)},
+			baseTime + secondsToRecoverBandwidth/2, nil, types.NewCoin(0)},
 		{sdk.OneRat, types.NewCoin(1 * types.Decimals), 0, types.NewCoin(0),
 			baseTime, nil, types.NewCoin(0)},
 	}
