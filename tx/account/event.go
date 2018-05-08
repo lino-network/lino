@@ -1,8 +1,6 @@
 package account
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
 )
