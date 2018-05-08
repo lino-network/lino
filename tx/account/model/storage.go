@@ -40,13 +40,13 @@ func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 // AccountExist returns true when a specific account exist in the KVStore.
 func (as AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
-	return store.Has(getAccountInfoKey(accKey))
+	return store.Has(GetAccountInfoKey(accKey))
 }
 
 // GetInfo returns general account info of a specific account, returns error otherwise.
 func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*AccountInfo, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(getAccountInfoKey(accKey))
+	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountInfoNotFound()
 	}
@@ -64,7 +64,7 @@ func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accIn
 	if err != nil {
 		return ErrSetInfoFailed()
 	}
-	store.Set(getAccountInfoKey(accKey), infoByte)
+	store.Set(GetAccountInfoKey(accKey), infoByte)
 	return nil
 }
 
@@ -72,7 +72,7 @@ func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accIn
 // if any.
 func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(getAccountInfoKey(accKey))
+	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return nil, ErrAccountBankNotFound()
 	}
@@ -87,7 +87,7 @@ func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 // if any.
 func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	bankByte := store.Get(getAccountBankKey(address))
+	bankByte := store.Get(GetAccountBankKey(address))
 	if bankByte == nil {
 		return nil, ErrAccountBankNotFound()
 	}
@@ -106,7 +106,7 @@ func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address
 	if err != nil {
 		return ErrSetBankFailed().TraceCause(err, "")
 	}
-	store.Set(getAccountBankKey(address), bankByte)
+	store.Set(GetAccountBankKey(address), bankByte)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address
 // returns error if any.
 func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(getAccountInfoKey(accKey))
+	infoByte := store.Get(GetAccountInfoKey(accKey))
 	if infoByte == nil {
 		return ErrGetBankFromAccountKey()
 	}
@@ -130,7 +130,7 @@ func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.Acc
 // and frequently updated fields.
 func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*AccountMeta, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	metaByte := store.Get(getAccountMetaKey(accKey))
+	metaByte := store.Get(GetAccountMetaKey(accKey))
 	if metaByte == nil {
 		return nil, ErrGetMetaFailed()
 	}
@@ -148,7 +148,7 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMe
 	if err != nil {
 		return ErrSetMetaFailed().TraceCause(err, "")
 	}
-	store.Set(getAccountMetaKey(accKey), metaByte)
+	store.Set(GetAccountMetaKey(accKey), metaByte)
 	return nil
 }
 
@@ -304,24 +304,16 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 	return nil
 }
 
-func getAccountInfoKey(accKey types.AccountKey) []byte {
+func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
 
-func getAccountBankKey(address sdk.Address) []byte {
+func GetAccountBankKey(address sdk.Address) []byte {
 	return append(AccountBankSubstore, address...)
 }
 
-func getAccountMetaKey(accKey types.AccountKey) []byte {
+func GetAccountMetaKey(accKey types.AccountKey) []byte {
 	return append(AccountMetaSubstore, accKey...)
-}
-
-func getFollowerPrefix(me types.AccountKey) []byte {
-	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
-}
-
-func getFollowingPrefix(me types.AccountKey) []byte {
-	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
 }
 
 // "follower substore" + "me" + "my follower"
@@ -329,21 +321,29 @@ func getFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
 	return append(getFollowerPrefix(me), myFollower...)
 }
 
+func getFollowerPrefix(me types.AccountKey) []byte {
+	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
+}
+
 // "following substore" + "me" + "my following"
 func getFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
 	return append(getFollowingPrefix(me), myFollowing...)
+}
+
+func getFollowingPrefix(me types.AccountKey) []byte {
+	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
 }
 
 func getRewardKey(accKey types.AccountKey) []byte {
 	return append(AccountRewardSubstore, accKey...)
 }
 
-func getRelationshipPrefix(me types.AccountKey) []byte {
-	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
-}
-
 func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
 	return append(getRelationshipPrefix(me), other...)
+}
+
+func getRelationshipPrefix(me types.AccountKey) []byte {
+	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
 func getPendingStakeQueueKey(address sdk.Address) []byte {
