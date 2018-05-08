@@ -11,8 +11,9 @@ type Voter struct {
 }
 
 type Vote struct {
-	Voter  types.AccountKey `json:"voter"`
-	Result bool             `json:"result"`
+	Voter       types.AccountKey `json:"voter"`
+	VotingPower types.Coin       `json:"voting_power"`
+	Result      bool             `json:"result"`
 }
 
 type Delegation struct {
