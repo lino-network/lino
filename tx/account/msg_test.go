@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/lino-network/lino/types"
+	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -220,6 +221,52 @@ func TestTransferMsgPermission(t *testing.T) {
 		}
 		if gotPermission != types.TransactionPermission {
 			t.Errorf("%s: Get(%v): got %v, want %v", testName, tc.msg, gotPermission, types.TransactionPermission)
+		}
+	}
+}
+
+func TestRecoverMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      RecoverMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: RecoverMsg{
+				Username:             "test",
+				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
+				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"invalid recover - Username is too short": {
+			msg: RecoverMsg{
+				Username:             "te",
+				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
+				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid recover - Username is too long": {
+			msg: RecoverMsg{
+				Username:             "testtesttesttesttesttest",
+				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
+				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+			}
+			return
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
 		}
 	}
 }
