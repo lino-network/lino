@@ -47,3 +47,7 @@ func ErrValidatorCannotRevoke() sdk.Error {
 func ErrNotOngoingProposal() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Not ongoing proposal"))
 }
+
+func ErrVoteExist() sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote exist"))
+}

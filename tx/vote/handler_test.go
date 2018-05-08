@@ -250,6 +250,11 @@ func TestVoteBasic(t *testing.T) {
 	handler(ctx, voteMsg2)
 	handler(ctx, voteMsg3)
 
+	// user cannot vote again
+	voteAgainMsg := NewVoteMsg("user3", proposalID, false)
+	res = handler(ctx, voteAgainMsg)
+	assert.Equal(t, ErrVoteExist().Result(), res)
+
 	// Check vote is correct
 	vote, _ := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	assert.Equal(t, true, vote.Result)

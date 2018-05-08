@@ -62,6 +62,15 @@ func handleDepositMsg(
 		}
 	}
 
+	// Deposit must be balanced
+	votingDeposit, err := voteManager.GetVoterDeposit(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
+	}
+
+	if !valManager.IsBalancedAccount(ctx, msg.Username, votingDeposit) {
+		return ErrCommitingDepositExceedVotingDeposit().Result()
+	}
 	// Try to become oncall validator
 	if err := valManager.TryBecomeOncallValidator(ctx, msg.Username); err != nil {
 		return err.Result()

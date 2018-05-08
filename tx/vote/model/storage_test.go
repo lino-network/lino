@@ -53,22 +53,23 @@ func TestVote(t *testing.T) {
 	user1, user2, user3 :=
 		types.AccountKey("user1"), types.AccountKey("user2"), types.AccountKey("user3")
 	proposalID1, proposalID2 := types.ProposalKey("1"), types.ProposalKey("2")
-
+	votingPower := types.NewCoin(1000)
 	cases := []struct {
 		isDelete    bool
 		voter       types.AccountKey
 		result      bool
+		votingPower types.Coin
 		proposalID  types.ProposalKey
 		expectVotes []Vote
 	}{
-		{false, user1, true, proposalID1, []Vote{Vote{user1, true}}},
-		{false, user2, true, proposalID2, []Vote{Vote{user2, true}}},
-		{false, user2, false, proposalID2, []Vote{Vote{user2, false}}},
-		{false, user3, true, proposalID2, []Vote{Vote{user2, false}, Vote{user3, true}}},
-		{true, user1, true, proposalID1, nil},
-		{true, user2, true, proposalID2, []Vote{Vote{user3, true}}},
-		{false, user3, false, proposalID2, []Vote{Vote{user3, false}}},
-		{false, user2, true, proposalID2, []Vote{Vote{user2, true}, Vote{user3, false}}},
+		{false, user1, true, votingPower, proposalID1, []Vote{Vote{user1, votingPower, true}}},
+		{false, user2, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, true}}},
+		{false, user2, false, votingPower, proposalID2, []Vote{Vote{user2, votingPower, false}}},
+		{false, user3, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, false}, Vote{user3, votingPower, true}}},
+		{true, user1, true, votingPower, proposalID1, nil},
+		{true, user2, true, votingPower, proposalID2, []Vote{Vote{user3, votingPower, true}}},
+		{false, user3, false, votingPower, proposalID2, []Vote{Vote{user3, votingPower, false}}},
+		{false, user2, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, true}, Vote{user3, votingPower, false}}},
 	}
 
 	for _, cs := range cases {
@@ -79,8 +80,9 @@ func TestVote(t *testing.T) {
 			assert.Equal(t, ErrGetVote(), err)
 		} else {
 			vote := Vote{
-				Voter:  cs.voter,
-				Result: cs.result,
+				Voter:       cs.voter,
+				Result:      cs.result,
+				VotingPower: cs.votingPower,
 			}
 			err := vs.SetVote(ctx, cs.proposalID, cs.voter, &vote)
 			assert.Nil(t, err)
