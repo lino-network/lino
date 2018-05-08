@@ -562,3 +562,29 @@ func TestAccountRecover(t *testing.T) {
 		checkAccountInfo(t, ctx, cs.user, accInfo)
 	}
 }
+
+func TestIncreaseSequenceByOne(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+
+	createTestAccount(ctx, am, string(user1))
+
+	cases := []struct {
+		user           types.AccountKey
+		increaseTimes  int
+		expectSequence int64
+	}{
+		{user1, 1, 1},
+		{user1, 100, 101},
+	}
+
+	for _, cs := range cases {
+
+		for i := 0; i < cs.increaseTimes; i++ {
+			am.IncreaseSequenceByOne(ctx, user1)
+		}
+		seq, err := am.GetSequence(ctx, user1)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectSequence, seq)
+	}
+}
