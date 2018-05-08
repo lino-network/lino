@@ -109,7 +109,7 @@ func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result
 }
 
 func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Result {
-	// claim reward
+	// recover
 	if err := am.RecoverAccount(
 		ctx, msg.Username, msg.NewPostPubKey, msg.NewTransactionPubKey); err != nil {
 		return err.Result()
