@@ -17,9 +17,9 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 		case ValidatorDepositMsg:
 			return handleDepositMsg(ctx, valManager, voteManager, am, msg)
 		case ValidatorWithdrawMsg:
-			return handleWithdrawMsg(ctx, valManager, gm, msg)
+			return handleWithdrawMsg(ctx, valManager, gm, am, msg)
 		case ValidatorRevokeMsg:
-			return handleRevokeMsg(ctx, valManager, gm, msg)
+			return handleRevokeMsg(ctx, valManager, gm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -70,7 +70,9 @@ func handleDepositMsg(
 }
 
 // Handle Withdraw Msg
-func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorWithdrawMsg) sdk.Result {
+func handleWithdrawMsg(
+	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager,
+	am acc.AccountManager, msg ValidatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -90,13 +92,15 @@ func handleWithdrawMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalMan
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
-func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, msg ValidatorRevokeMsg) sdk.Result {
+func handleRevokeMsg(
+	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager,
+	am acc.AccountManager, msg ValidatorRevokeMsg) sdk.Result {
 	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
 		return withdrawErr.Result()
@@ -112,7 +116,8 @@ func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManag
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes,
+		param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -120,7 +125,7 @@ func handleRevokeMsg(ctx sdk.Context, vm ValidatorManager, gm global.GlobalManag
 
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
-	times int64, interval int64, coin types.Coin) sdk.Error {
+	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
@@ -134,6 +139,10 @@ func returnCoinTo(
 		events = append(events, event)
 	}
 
+	if err := am.AddFrozenMoney(
+		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		return err
+	}
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}

@@ -588,3 +588,33 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 		assert.Equal(t, cs.expectSequence, seq)
 	}
 }
+
+func TestAddFrozenMoney(t *testing.T) {
+	ctx, am := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+
+	createTestAccount(ctx, am, string(user1))
+
+	cases := []struct {
+		frozenAmount            types.Coin
+		startAt                 int64
+		interval                int64
+		times                   int64
+		expectNumOfFrozenAmount int
+	}{
+		{types.NewCoin(100), 10000, 10, 5, 1},
+		{types.NewCoin(100), 10100, 10, 5, 1},
+		{types.NewCoin(100), 10110, 10, 5, 2},
+		{types.NewCoin(100), 10151, 10, 5, 2},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.startAt})
+		err := am.AddFrozenMoney(ctx, user1, cs.frozenAmount, cs.startAt, cs.interval, cs.times)
+		assert.Nil(t, err)
+
+		accountBank, err := am.storage.GetBankFromAccountKey(ctx, user1)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectNumOfFrozenAmount, len(accountBank.FrozenMoneyList))
+	}
+}

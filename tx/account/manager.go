@@ -614,6 +614,36 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	return nil
 }
 
+func (accManager AccountManager) AddFrozenMoney(
+	ctx sdk.Context, username types.AccountKey,
+	amount types.Coin, start, interval, times int64) sdk.Error {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return ErrUpdateFrozenMoney(username).TraceCause(err, "")
+	}
+	accManager.cleanExpiredFrozenMoney(ctx, accountBank)
+	frozenMoney := model.FrozenMoney{
+		Amount:   amount,
+		StartAt:  start,
+		Interval: interval,
+		Times:    times,
+	}
+	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
+
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, accountBank); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *model.AccountBank) {
+	for i, frozenMoney := range bank.FrozenMoneyList {
+		if ctx.BlockHeader().Time > frozenMoney.StartAt+frozenMoney.Interval*frozenMoney.Times {
+			bank.FrozenMoneyList = append(bank.FrozenMoneyList[:i], bank.FrozenMoneyList[i+1:]...)
+		}
+	}
+}
+
 func min(a, b int64) int64 {
 	if a < b {
 		return a
