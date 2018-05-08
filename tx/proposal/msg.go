@@ -5,58 +5,52 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/tx/proposal/model"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 )
 
-type CreateProposalMsg struct {
-	Creator types.AccountKey `json:"creator"`
-	model.ChangeParameterDescription
+type ChangeGlobalAllocationMsg struct {
+	Creator     types.AccountKey            `json:"creator"`
+	Description param.GlobalAllocationParam `json:"description"`
 }
 
 //----------------------------------------
-// CreateProposalMsg Msg Implementations
+// ChangeGlobalAllocationMsg Msg Implementations
 
-func NewCreateProposalMsg(voter string, para model.ChangeParameterDescription) CreateProposalMsg {
-	return CreateProposalMsg{
-		Creator:                    types.AccountKey(voter),
-		ChangeParameterDescription: para,
+func NewChangeGlobalAllocationMsg(creator string, desc param.GlobalAllocationParam) ChangeGlobalAllocationMsg {
+	return ChangeGlobalAllocationMsg{
+		Creator:     types.AccountKey(creator),
+		Description: desc,
 	}
 }
 
-func (msg CreateProposalMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg ChangeGlobalAllocationMsg) Type() string { return types.ProposalRouterName } // TODO: "account/register"
 
-func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
+func (msg ChangeGlobalAllocationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
 
-	if msg.InfraAllocation.
-		Add(msg.ContentCreatorAllocation).
-		Add(msg.DeveloperAllocation).
-		Add(msg.ValidatorAllocation).
-		GT(sdk.NewRat(1)) {
+	if !msg.Description.InfraAllocation.
+		Add(msg.Description.ContentCreatorAllocation).
+		Add(msg.Description.DeveloperAllocation).
+		Add(msg.Description.ValidatorAllocation).Equal(sdk.NewRat(1)) {
 		return ErrIllegalParameter()
 	}
 
-	if msg.StorageAllocation.
-		Add(msg.CDNAllocation).
-		GT(sdk.NewRat(1)) {
-		return ErrIllegalParameter()
-	}
 	return nil
 }
 
-func (msg CreateProposalMsg) String() string {
-	return fmt.Sprintf("CreateProposalMsg{Creator:%v}", msg.Creator)
+func (msg ChangeGlobalAllocationMsg) String() string {
+	return fmt.Sprintf("ChangeGlobalAllocationMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg CreateProposalMsg) Get(key interface{}) (value interface{}) {
+func (msg ChangeGlobalAllocationMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 
-func (msg CreateProposalMsg) GetSignBytes() []byte {
+func (msg ChangeGlobalAllocationMsg) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -64,6 +58,6 @@ func (msg CreateProposalMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg CreateProposalMsg) GetSigners() []sdk.Address {
+func (msg ChangeGlobalAllocationMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }

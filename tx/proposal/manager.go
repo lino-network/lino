@@ -34,24 +34,29 @@ func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.Prop
 
 // only support change parameter proposal now
 func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
-	des model.ChangeParameterDescription, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
+	des model.Description, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.paramHolder.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
 	}
 
-	proposal := model.Proposal{
-		Creator:      creator,
-		ProposalID:   newID,
-		AgreeVote:    types.Coin{Amount: 0},
-		DisagreeVote: types.Coin{Amount: 0},
+	var proposal model.Proposal
+	proposalInfo := model.ProposalInfo{
+		Creator:       creator,
+		ProposalID:    newID,
+		AgreeVotes:    types.Coin{Amount: 0},
+		DisagreeVotes: types.Coin{Amount: 0},
+		Result:        types.ProposalNotPass,
 	}
 
-	changeParameterProposal := &model.ChangeParameterProposal{
-		Proposal:                   proposal,
-		ChangeParameterDescription: des,
+	switch des := des.(type) {
+	case param.GlobalAllocationParam:
+		proposal = &model.ChangeGlobalAllocationParamProposal{proposalInfo, des}
+	default:
+		panic(des)
 	}
-	if err := pm.storage.SetProposal(ctx, newID, changeParameterProposal); err != nil {
+
+	if err := pm.storage.SetProposal(ctx, newID, proposal); err != nil {
 		return newID, err
 	}
 
@@ -67,12 +72,84 @@ func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
 	return newID, nil
 }
 
+func (pm ProposalManager) GetCurrentProposal(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
+	lst, err := pm.storage.GetProposalList(ctx)
+	if err != nil {
+		return types.ProposalKey(""), err
+	}
+
+	if len(lst.OngoingProposal) == 0 {
+		return types.ProposalKey(""), ErrOngoingProposalNotFound()
+	}
+	return lst.OngoingProposal[0], nil
+}
+
+func (pm ProposalManager) UpdateProposalStatus(
+	ctx sdk.Context, res types.VotingResult) (types.ProposalResult, sdk.Error) {
+	lst, err := pm.storage.GetProposalList(ctx)
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	curID := lst.OngoingProposal[0]
+	proposal, err := pm.storage.GetProposal(ctx, curID)
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	proposalInfo := proposal.GetProposalInfo()
+
+	proposalInfo.AgreeVotes = res.AgreeVotes
+	proposalInfo.DisagreeVotes = res.DisagreeVotes
+
+	// TODO consider different types of propsal
+	if proposalInfo.AgreeVotes.IsGT(proposalInfo.DisagreeVotes) {
+		proposalInfo.Result = types.ProposalPass
+	}
+
+	proposal.SetProposalInfo(proposalInfo)
+	if err := pm.storage.SetProposal(ctx, curID, proposal); err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	lst.OngoingProposal = lst.OngoingProposal[1:]
+	lst.PastProposal = append(lst.PastProposal, curID)
+
+	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
+		return types.ProposalNotPass, err
+	}
+	return proposalInfo.Result, nil
+}
+
+func (pm ProposalManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
+	event := DecideProposalEvent{}
+	if err := gm.RegisterProposalDecideEvent(ctx, event); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pm ProposalManager) CreateParamChangeEvent(
+	ctx sdk.Context, proposalID types.ProposalKey, gm global.GlobalManager) sdk.Error {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return err
+	}
+
+	var event types.Event
+	switch proposal := proposal.(type) {
+	case *model.ChangeGlobalAllocationParamProposal:
+		event = param.ChangeGlobalAllocationParamEvent{proposal.Description}
+	default:
+		panic("err")
+	}
+
+	if err := gm.RegisterParamChangeEvent(ctx, event); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (pm ProposalManager) GetProposalList(ctx sdk.Context) (*model.ProposalList, sdk.Error) {
 	return pm.storage.GetProposalList(ctx)
 }
-
-// func (vm VoteManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
-// 	event := DecideProposalEvent{}
-// 	gm.RegisterProposalDecideEvent(ctx, event)
-// 	return nil
-// }

@@ -292,6 +292,58 @@ func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.Acco
 	return delegation.Amount, nil
 }
 
+func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, voterName)
+	if err != nil {
+		return types.Coin{}, err
+	}
+	res := voter.Deposit.Plus(voter.DelegatedPower)
+	return res, nil
+}
+
+func (vm VoteManager) CalculateVotingResult(
+	ctx sdk.Context, proposalID types.ProposalKey,
+	oncallValidators []types.AccountKey) (types.VotingResult, sdk.Error) {
+	res := types.VotingResult{
+		AgreeVotes:    types.NewCoin(0),
+		DisagreeVotes: types.NewCoin(0),
+		PenaltyList:   []types.AccountKey{},
+	}
+
+	// get all votes to calculate the voting result
+	votes, err := vm.storage.GetAllVotes(ctx, proposalID)
+	if err != nil {
+		return res, err
+	}
+
+	for _, vote := range votes {
+		voterPower, err := vm.GetVotingPower(ctx, vote.Voter)
+		if err != nil {
+			continue
+		}
+		if vote.Result == true {
+			res.AgreeVotes = res.AgreeVotes.Plus(voterPower)
+		} else {
+			res.DisagreeVotes = res.DisagreeVotes.Plus(voterPower)
+		}
+
+		// remove from list if the validator voted
+		for idx, validator := range oncallValidators {
+			if validator == vote.Voter {
+				oncallValidators = append(oncallValidators[:idx], oncallValidators[idx+1:]...)
+				break
+			}
+		}
+		vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
+	}
+
+	// put all validators who didn't vote into penalty list
+	for _, validator := range oncallValidators {
+		res.PenaltyList = append(res.PenaltyList, validator)
+	}
+	return res, nil
+}
+
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
@@ -302,13 +354,4 @@ func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.Referen
 
 func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ReferenceList) sdk.Error {
 	return vm.storage.SetReferenceList(ctx, lst)
-}
-
-func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
-	voter, err := vm.storage.GetVoter(ctx, voterName)
-	if err != nil {
-		return types.Coin{}, err
-	}
-	res := voter.Deposit.Plus(voter.DelegatedPower)
-	return res, nil
 }

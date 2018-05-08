@@ -38,10 +38,13 @@ var (
 	GenesisTotalLino types.LNO = "10000000000"
 	LNOPerValidator  types.LNO = "100000000"
 
-	CoinReturnIntervalHr        int64   = 24 * 7
-	CoinReturnTimes             int64   = 7
-	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
-	ConsumptionFreezingPeriodHr int64   = 24 * 7
+	PenaltyMissVote             types.Coin = types.NewCoin(200 * types.Decimals)
+	ProposalDecideHr            int64      = 24 * 7
+	ParamChangeHr               int64      = 24
+	CoinReturnIntervalHr        int64      = 24 * 7
+	CoinReturnTimes             int64      = 7
+	ConsumptionFrictionRate     sdk.Rat    = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodHr int64      = 24 * 7
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
@@ -100,6 +103,14 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	return lb
 }
 
+func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocation param.GlobalAllocationParam) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	allocation, err := ph.GetGlobalAllocationParam(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, expectAllocation, *allocation)
+}
+
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
@@ -108,6 +119,15 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 		accManager.GetBankBalance(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
 	assert.Equal(t, expectBalance, balance)
+}
+
+func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
+	deposit, err := valManager.GetValidatorDeposit(ctx, types.AccountKey(accountName))
+	assert.Nil(t, err)
+	assert.Equal(t, expectDeposit, deposit)
 }
 
 func CheckOncallValidatorList(

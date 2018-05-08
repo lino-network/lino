@@ -8,6 +8,8 @@ import (
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	val "github.com/lino-network/lino/tx/validator"
+	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
@@ -17,10 +19,12 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestAccountKVStoreKey  = sdk.NewKVStoreKey("account")
-	TestGlobalKVStoreKey   = sdk.NewKVStoreKey("global")
-	TestProposalKVStoreKey = sdk.NewKVStoreKey("proposal")
-	TestParamKVStoreKey    = sdk.NewKVStoreKey("param")
+	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
+	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
+	TestProposalKVStoreKey  = sdk.NewKVStoreKey("proposal")
+	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
+	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
+	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
 
 	initCoin = types.NewCoin(100)
 )
@@ -30,21 +34,26 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, ProposalManager, global.GlobalManager) {
+	acc.AccountManager, ProposalManager, vote.VoteManager, val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
+
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
 	proposalManager := NewProposalManager(TestProposalKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	voteManager := vote.NewVoteManager(TestGlobalKVStoreKey, ph)
+	valManager := val.NewValidatorManager(TestValidatorKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(param.ChangeGlobalAllocationParamEvent{}, "2", nil)
+	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, proposalManager, globalManager
+	return ctx, accManager, proposalManager, voteManager, valManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -54,6 +63,8 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestProposalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 

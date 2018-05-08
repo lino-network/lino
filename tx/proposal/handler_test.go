@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/proposal/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -15,13 +16,13 @@ var (
 )
 
 func TestProposalBasic(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 0)
+	ctx, am, pm, _, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, pm, gm)
 	pm.InitGenesis(ctx)
 
 	rat := sdk.Rat{Denom: 10, Num: 5}
-	para := model.ChangeParameterDescription{
-		CDNAllocation: rat,
+	para := param.GlobalAllocationParam{
+		ContentCreatorAllocation: rat,
 	}
 	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
@@ -30,12 +31,12 @@ func TestProposalBasic(t *testing.T) {
 	am.AddCoin(ctx, user1, c4600)
 
 	// let user1 create a proposal
-	msg := NewCreateProposalMsg("user1", para)
+	msg := NewChangeGlobalAllocationMsg("user1", para)
 	resultPass := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, resultPass)
 
 	// invalid create
-	invalidMsg := NewCreateProposalMsg("wqdkqwndkqwd", para)
+	invalidMsg := NewChangeGlobalAllocationMsg("wqdkqwndkqwd", para)
 	resultInvalid := handler(ctx, invalidMsg)
 	assert.Equal(t, ErrUsernameNotFound().Result(), resultInvalid)
 
@@ -43,7 +44,8 @@ func TestProposalBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	proposal, _ := pm.storage.GetProposal(ctx, proposalID1)
-	assert.Equal(t, true, proposal.CDNAllocation.Equal(rat))
+	p := proposal.(*model.ChangeGlobalAllocationParamProposal)
+	assert.Equal(t, true, p.Description.ContentCreatorAllocation.Equal(rat))
 
 	// check proposal list is correct
 	lst, _ := pm.storage.GetProposalList(ctx)

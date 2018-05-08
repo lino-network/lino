@@ -19,6 +19,9 @@ type ProposalKey string
 // user permission type to present different permission for different msg
 type Permission int
 
+// indicates the current proposal status
+type ProposalResult int
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPermLink(author AccountKey, postID string) PermLink {
 	return PermLink(string(author) + "#" + postID)
@@ -28,4 +31,10 @@ func GetPermLink(author AccountKey, postID string) PermLink {
 type IDToURLMapping struct {
 	Identifier string `json:"identifier"`
 	URL        string `json:"url"`
+}
+
+type VotingResult struct {
+	AgreeVotes    Coin         `json:"agree_votes"`
+	DisagreeVotes Coin         `json:"disagree_votes"`
+	PenaltyList   []AccountKey `json:"penalty_list"`
 }

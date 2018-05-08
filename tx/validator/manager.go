@@ -100,6 +100,14 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*model.ValidatorLi
 	return vm.storage.GetValidatorList(ctx)
 }
 
+func (vm ValidatorManager) GetValidatorDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	validator, err := vm.storage.GetValidator(ctx, accKey)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return validator.Deposit, nil
+}
+
 func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) sdk.Error {
 	return vm.storage.SetValidatorList(ctx, lst)
 }
@@ -181,6 +189,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 	}
 	return actualPenalty, nil
 }
+
 func (vm ValidatorManager) FireIncompetentValidator(
 	ctx sdk.Context, ByzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoin(0)
@@ -218,6 +227,25 @@ func (vm ValidatorManager) FireIncompetentValidator(
 				totalPenalty = totalPenalty.Plus(actualPenalty)
 			}
 		}
+	}
+
+	return totalPenalty, nil
+}
+
+func (vm ValidatorManager) PunishValidatorsDidntVote(
+	ctx sdk.Context, penaltyList []types.AccountKey) (types.Coin, sdk.Error) {
+	totalPenalty := types.NewCoin(0)
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
+	if err != nil {
+		return totalPenalty, err
+	}
+	// punish these validators who didn't vote
+	for _, validator := range penaltyList {
+		actualPenalty, err := vm.PunishOncallValidator(ctx, validator, param.PenaltyMissVote, false)
+		if err != nil {
+			return totalPenalty, err
+		}
+		totalPenalty = totalPenalty.Plus(actualPenalty)
 	}
 
 	return totalPenalty, nil

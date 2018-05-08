@@ -18,6 +18,10 @@ type ProposalStorage struct {
 
 func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc := wire.NewCodec()
+
+	cdc.RegisterInterface((*Proposal)(nil), nil)
+	cdc.RegisterConcrete(&ChangeGlobalAllocationParamProposal{}, "cga", nil)
+
 	wire.RegisterCrypto(cdc)
 	vs := ProposalStorage{
 		key: key,
@@ -58,23 +62,23 @@ func (ps ProposalStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sd
 }
 
 // onle support change parameter proposal now
-func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (*ChangeParameterProposal, sdk.Error) {
+func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	proposalByte := store.Get(GetProposalKey(proposalID))
 	if proposalByte == nil {
 		return nil, ErrGetProposal()
 	}
-	proposal := new(ChangeParameterProposal)
+	proposal := new(Proposal)
 	if err := ps.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
 		return nil, ErrProposalUnmarshalError(err)
 	}
-	return proposal, nil
+	return *proposal, nil
 }
 
 // onle support change parameter proposal now
-func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal *ChangeParameterProposal) sdk.Error {
+func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	proposalByte, err := ps.cdc.MarshalJSON(*proposal)
+	proposalByte, err := ps.cdc.MarshalJSON(proposal)
 	if err != nil {
 		return ErrProposalMarshalError(err)
 	}

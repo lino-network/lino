@@ -12,8 +12,8 @@ import (
 func NewHandler(am acc.AccountManager, pm ProposalManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case CreateProposalMsg:
-			return handleCreateProposalMsg(ctx, am, pm, gm, msg)
+		case ChangeGlobalAllocationMsg:
+			return handleChangeGlobalAllocationMsg(ctx, am, pm, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -21,20 +21,19 @@ func NewHandler(am acc.AccountManager, pm ProposalManager, gm global.GlobalManag
 	}
 }
 
-func handleCreateProposalMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager, msg CreateProposalMsg) sdk.Result {
+func handleChangeGlobalAllocationMsg(
+	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager, msg ChangeGlobalAllocationMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Creator) {
 		return ErrUsernameNotFound().Result()
 	}
 
 	// TODO add deposit logic
-
-	if _, addErr := pm.AddProposal(ctx, msg.Creator, msg.ChangeParameterDescription, gm); addErr != nil {
-		return addErr.Result()
+	if _, err := pm.AddProposal(ctx, msg.Creator, msg.Description, gm); err != nil {
+		return err.Result()
 	}
 	//  set a time event to decide the proposal in 7 days
-	// if err := pm.CreateDecideProposalEvent(ctx, gm); err != nil {
-	// 	return err.Result()
-	// }
+	if err := pm.CreateDecideProposalEvent(ctx, gm); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
