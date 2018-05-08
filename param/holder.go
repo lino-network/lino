@@ -108,7 +108,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	// TODO need to init other proposal params
 	proposalParam := &ProposalParam{
-		NextProposalID: int64(0),
+		TypeAProposalDecideHr: int64(24 * 7),
+		NextProposalID:        int64(0),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")

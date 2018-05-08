@@ -100,6 +100,14 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*model.ValidatorLi
 	return vm.storage.GetValidatorList(ctx)
 }
 
+func (vm ValidatorManager) GetValidatorDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	validator, err := vm.storage.GetValidator(ctx, accKey)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return validator.Deposit, nil
+}
+
 func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) sdk.Error {
 	return vm.storage.SetValidatorList(ctx, lst)
 }

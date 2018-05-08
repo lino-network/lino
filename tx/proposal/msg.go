@@ -17,9 +17,9 @@ type ChangeGlobalAllocationMsg struct {
 //----------------------------------------
 // ChangeGlobalAllocationMsg Msg Implementations
 
-func NewChangeGlobalAllocationMsg(voter string, desc param.GlobalAllocationParam) ChangeGlobalAllocationMsg {
+func NewChangeGlobalAllocationMsg(creator string, desc param.GlobalAllocationParam) ChangeGlobalAllocationMsg {
 	return ChangeGlobalAllocationMsg{
-		Creator:     types.AccountKey(voter),
+		Creator:     types.AccountKey(creator),
 		Description: desc,
 	}
 }
