@@ -39,6 +39,10 @@ func ErrAddOrUpdateLikeToPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update like to post %v failed", permLink))
 }
 
+func ErrReportOrUpvoteToPostExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("report or upvote to post %v already exists", permLink))
+}
+
 func ErrAddOrUpdateReportOrUpvoteToPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add or update report or upvote to post %v failed", permLink))
 }

@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/tx/account/model"
@@ -269,26 +270,29 @@ func TestHandleAccountRecover(t *testing.T) {
 
 	priv := createTestAccount(ctx, am, string(user1))
 
-	cases := []struct {
+	testCases := map[string]struct {
 		user              types.AccountKey
 		newPostKey        crypto.PubKey
 		newTransactionKey crypto.PubKey
 	}{
-		{user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()},
+		"normal case": {
+			user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+		},
 	}
 
-	for _, cs := range cases {
-		msg := RecoverMsg{user1, cs.newPostKey, cs.newTransactionKey}
+	for testName, tc := range testCases {
+		msg := RecoverMsg{user1, tc.newPostKey, tc.newTransactionKey}
 		result := handler(ctx, msg)
-		assert.Equal(t, sdk.Result{}, result)
+		assert.Equal(
+			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
 		accInfo := model.AccountInfo{
-			Username:       cs.user,
+			Username:       tc.user,
 			CreatedAt:      ctx.BlockHeader().Time,
 			MasterKey:      priv.PubKey(),
-			TransactionKey: cs.newTransactionKey,
-			PostKey:        cs.newPostKey,
+			TransactionKey: tc.newTransactionKey,
+			PostKey:        tc.newPostKey,
 			Address:        priv.PubKey().Address(),
 		}
-		checkAccountInfo(t, ctx, cs.user, accInfo)
+		checkAccountInfo(t, ctx, tc.user, accInfo)
 	}
 }
