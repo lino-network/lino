@@ -28,14 +28,15 @@ var (
 )
 
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, username string) (crypto.PrivKeyEd25519,
+	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeyEd25519,
 	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, masterKey.PubKey().Address(), types.NewCoin(100))
+	accParams, _ := ph.GetAccountParam(ctx)
+	am.AddCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), types.NewCoin(0))
+		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
 }
 
@@ -43,7 +44,8 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest() (acc.AccountManager, global.GlobalManager, sdk.Context, sdk.AnteHandler) {
+func setupTest() (
+	acc.AccountManager, global.GlobalManager, param.ParamHolder, sdk.Context, sdk.AnteHandler) {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
@@ -60,7 +62,7 @@ func setupTest() (acc.AccountManager, global.GlobalManager, sdk.Context, sdk.Ant
 	InitGlobalManager(ctx, gm)
 	anteHandler := NewAnteHandler(am, gm)
 
-	return am, gm, ctx, anteHandler
+	return am, gm, ph, ctx, anteHandler
 }
 
 type TestMsg struct {
@@ -126,10 +128,10 @@ func newTestTxWithSignBytes(
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerSigErrors(t *testing.T) {
 	// setup
-	am, _, ctx, anteHandler := setupTest()
+	am, _, ph, ctx, anteHandler := setupTest()
 	// get private key and username
-	_, transaction1, _, user1 := createTestAccount(ctx, am, "user1")
-	_, transaction2, _, user2 := createTestAccount(ctx, am, "user2")
+	_, transaction1, _, user1 := createTestAccount(ctx, am, ph, "user1")
+	_, transaction2, _, user2 := createTestAccount(ctx, am, ph, "user2")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -154,7 +156,7 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerRegisterTx(t *testing.T) {
-	am, _, ctx, anteHandler := setupTest()
+	am, _, _, ctx, anteHandler := setupTest()
 	priv1 := crypto.GenPrivKeyEd25519()
 	priv2 := crypto.GenPrivKeyEd25519()
 	err := am.AddCoinToAddress(ctx, priv1.PubKey().Address(), types.NewCoin(0))
@@ -190,10 +192,10 @@ func TestAnteHandlerRegisterTx(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerNormalTx(t *testing.T) {
-	am, _, ctx, anteHandler := setupTest()
+	am, _, ph, ctx, anteHandler := setupTest()
 	// keys and username
-	_, transaction1, _, user1 := createTestAccount(ctx, am, "user1")
-	_, transaction2, _, _ := createTestAccount(ctx, am, "user2")
+	_, transaction1, _, user1 := createTestAccount(ctx, am, ph, "user1")
+	_, transaction2, _, _ := createTestAccount(ctx, am, ph, "user2")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -231,10 +233,10 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 
 // Test grant authentication.
 func TestGrantAuthenticationTx(t *testing.T) {
-	am, _, ctx, anteHandler := setupTest()
+	am, _, ph, ctx, anteHandler := setupTest()
 	// keys and username
-	_, transaction1, _, user1 := createTestAccount(ctx, am, "user1")
-	_, transaction2, post2, user2 := createTestAccount(ctx, am, "user2")
+	_, transaction1, _, user1 := createTestAccount(ctx, am, ph, "user1")
+	_, transaction2, post2, user2 := createTestAccount(ctx, am, ph, "user2")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -270,9 +272,9 @@ func TestGrantAuthenticationTx(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestTPSCapacity(t *testing.T) {
-	am, gm, ctx, anteHandler := setupTest()
+	am, gm, ph, ctx, anteHandler := setupTest()
 	// keys and username
-	_, transaction1, _, user1 := createTestAccount(ctx, am, "user1")
+	_, transaction1, _, user1 := createTestAccount(ctx, am, ph, "user1")
 
 	// msg and signatures
 	var tx sdk.Tx

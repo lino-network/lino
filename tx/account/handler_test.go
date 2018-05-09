@@ -13,8 +13,15 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 )
 
+var (
+	user1 = types.AccountKey("user1")
+	user2 = types.AccountKey("user2")
+
+	memo = "This is a memo!"
+)
+
 func TestFollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -34,7 +41,7 @@ func TestFollow(t *testing.T) {
 }
 
 func TestFollowUserNotExist(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create test user
@@ -55,7 +62,7 @@ func TestFollowUserNotExist(t *testing.T) {
 }
 
 func TestFollowAgain(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -79,7 +86,7 @@ func TestFollowAgain(t *testing.T) {
 }
 
 func TestUnfollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -104,7 +111,7 @@ func TestUnfollow(t *testing.T) {
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -121,7 +128,7 @@ func TestUnfollowUserNotExist(t *testing.T) {
 }
 
 func TestInvalidUnfollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -152,68 +159,104 @@ func TestInvalidUnfollow(t *testing.T) {
 }
 
 func TestTransferNormal(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, accParam := setupTest(t, 1)
 	handler := NewHandler(am)
 
-	// create two test users
+	// create two test users with initial deposit of 100 LNO.
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
 
-	memo := "This is a memo!"
+	receiverAddr, _ := am.GetBankAddress(ctx, user2)
 
-	// let user1 transfers 200 to user2 (by username)
-	msg := NewTransferMsg("user1", l200, memo, TransferToUser("user2"))
-	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+	testCases := []struct {
+		testName            string
+		msg                 TransferMsg
+		wantOK              bool
+		wantSenderBalance   types.Coin
+		wantReceiverBalance types.Coin
+	}{
+		{testName: "user1 transfers 200 LNO to user2 (by username)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverName: user2,
+				Amount:       l200,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c200.Plus(accParam.RegisterFee),
+		},
+		{testName: "user1 transfers 1600 LNO to user2 (by both username and address)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverName: user2,
+				ReceiverAddr: receiverAddr,
+				Amount:       l1600,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c200.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c1800.Plus(accParam.RegisterFee),
+		},
+		{testName: "user1 transfers 100 LNO to user2 (by address)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverAddr: receiverAddr,
+				Amount:       l100,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c100.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c1900.Plus(accParam.RegisterFee),
+		},
+		{testName: "user2 transfers 100 LNO to a random address",
+			msg: TransferMsg{
+				Sender:       user2,
+				ReceiverAddr: sdk.Address("sdajsdbiqwbdiub"),
+				Amount:       l100,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c100,
+		},
+	}
 
-	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user2"))
-	assert.Equal(t, c1800, acc1Balance)
-	assert.Equal(t, acc2Balance, c300)
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
 
-	acc2Addr, _ := am.GetBankAddress(ctx, types.AccountKey("user2"))
-	msg = NewTransferMsg("user1", l1600, memo, TransferToUser("user2"), TransferToAddr(acc2Addr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+		if result.IsOK() != tc.wantOK {
+			t.Errorf("%s handler(%v): got %v, want %v, err:%v", tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
+		}
 
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
+		senderBalance, _ := am.GetBankBalance(ctx, tc.msg.Sender)
+		var receiverBalance types.Coin
+		if tc.msg.ReceiverName != "" {
+			receiverBalance, _ = am.GetBankBalance(ctx, tc.msg.ReceiverName)
+		} else {
+			bank, _ := am.storage.GetBankFromAddress(ctx, tc.msg.ReceiverAddr)
+			fmt.Println(bank)
+			receiverBalance = bank.Balance
+		}
 
-	assert.Equal(t, acc1Balance, c200)
-	assert.Equal(t, acc2Balance, c1900)
-
-	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(acc2Addr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
-
-	assert.Equal(t, acc1Balance, c100)
-	assert.Equal(t, acc2Balance, c2000)
-
-	randomAddr := sdk.Address("sdajsdbiqwbdiub")
-	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(randomAddr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-
-	assert.Equal(t, acc1Balance, c0)
-
+		if !senderBalance.IsEqual(tc.wantSenderBalance) {
+			t.Errorf("%s get sender bank balance(%v): got %v, want %v", tc.testName, tc.msg.Sender, senderBalance, tc.wantSenderBalance)
+		}
+		if !receiverBalance.IsEqual(tc.wantReceiverBalance) {
+			t.Errorf("%s: get receiver bank balance(%v): got %v, want %v", tc.testName, tc.msg.ReceiverName, receiverBalance, tc.wantReceiverBalance)
+		}
+	}
 }
 
 func TestSenderCoinNotEnough(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, accParam := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
-
-	am.AddCoin(ctx, types.AccountKey("user1"), c1500)
 
 	memo := "This is a memo!"
 
@@ -223,37 +266,37 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
 
 	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
-	assert.Equal(t, acc1Balance, c1600)
+	assert.Equal(t, acc1Balance, accParam.RegisterFee)
 }
 
 func TestUsernameAddressMismatch(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
-	am.AddCoin(ctx, types.AccountKey("user2"), c1900)
+	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddCoin(ctx, types.AccountKey("user2"), c2000)
 
 	memo := "This is a memo!"
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
 
 	// let user1 transfers 2000 Lino to user2 (provide both name and address)
 	msg := NewTransferMsg(
-		"user1", l2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
+		"user1", l1999, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
 
 	memo := "This is a memo!"
 
@@ -264,7 +307,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 }
 
 func TestHandleAccountRecover(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 	user1 := types.AccountKey("user1")
 

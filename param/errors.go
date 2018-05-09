@@ -27,6 +27,10 @@ func ErrBandwidthParamNotFound() sdk.Error {
 	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Bandwidth param not found"))
 }
 
+func ErrAccountParamNotFound() sdk.Error {
+	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Account param not found"))
+}
+
 func ErrVoteParamNotFound() sdk.Error {
 	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Vote param not found"))
 }

@@ -82,3 +82,9 @@ type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
 	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
 }
+
+// AccountParam includes params related to account
+type AccountParam struct {
+	MinimumBalance types.Coin `json:"minimum_balance"`
+	RegisterFee    types.Coin `json:"register_fee"`
+}

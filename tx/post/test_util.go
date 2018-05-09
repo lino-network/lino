@@ -24,7 +24,7 @@ var (
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
-	initCoin = types.NewCoin(100)
+	initCoin = types.NewCoin(1 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -32,7 +32,8 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(
-	t *testing.T, height int64) (sdk.Context, acc.AccountManager, PostManager, global.GlobalManager) {
+	t *testing.T, height int64) (
+	sdk.Context, acc.AccountManager, param.ParamHolder, PostManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
@@ -46,7 +47,7 @@ func setupTest(
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, postManager, globalManager
+	return ctx, accManager, ph, postManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -86,7 +87,7 @@ func createTestAccount(
 	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }

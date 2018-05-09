@@ -3,9 +3,10 @@ package param
 import (
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -17,7 +18,8 @@ var (
 	proposalParamSubStore                = []byte{0x05} // Substore for proposal param
 	validatorParamSubStore               = []byte{0x06} // Substore for validator param
 	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
-	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidtj param
+	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
+	accountParamSubstore                 = []byte{0x09} // Substore for account param
 )
 
 type ParamHolder struct {
@@ -130,6 +132,15 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")
 	}
+
+	accountParam := &AccountParam{
+		MinimumBalance: types.NewCoin(1 * types.Decimals),
+		RegisterFee:    types.NewCoin(1 * types.Decimals),
+	}
+	if err := ph.setAccountParam(ctx, accountParam); err != nil {
+		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+	}
+
 	return nil
 }
 
@@ -253,6 +264,19 @@ func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.E
 	return param, nil
 }
 
+func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetAccountParamKey())
+	if paramBytes == nil {
+		return nil, ErrAccountParamNotFound()
+	}
+	param := new(AccountParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrEventMarshalError(err)
+	}
+	return param, nil
+}
+
 func (ph ParamHolder) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
 	param, err := ph.GetProposalParam(ctx)
 	if err != nil {
@@ -358,6 +382,16 @@ func (ph ParamHolder) setBandwidthParam(ctx sdk.Context, param *BandwidthParam) 
 	return nil
 }
 
+func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	accountBytes, err := ph.cdc.MarshalJSON(*param)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetAccountParamKey(), accountBytes)
+	return nil
+}
+
 func GetEvaluateOfContentValueParamKey() []byte {
 	return evaluateOfContentValueParamSubStore
 }
@@ -392,4 +426,8 @@ func GetCoinDayParamKey() []byte {
 
 func GetBandwidthParamKey() []byte {
 	return bandwidthParamSubStore
+}
+
+func GetAccountParamKey() []byte {
+	return accountParamSubstore
 }

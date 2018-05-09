@@ -13,7 +13,7 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user := createTestAccount(t, ctx, am, "user1")
@@ -44,7 +44,7 @@ func TestHandlerCreatePost(t *testing.T) {
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -128,7 +128,7 @@ func TestHandlerCreateComment(t *testing.T) {
 }
 
 func TestHandlerRepost(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -198,7 +198,7 @@ func TestHandlerRepost(t *testing.T) {
 }
 
 func TestHandlerPostLike(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -253,7 +253,7 @@ func TestHandlerPostLike(t *testing.T) {
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
@@ -315,7 +315,7 @@ func TestHandlerPostDonate(t *testing.T) {
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
@@ -389,29 +389,35 @@ func TestHandlerRePostDonate(t *testing.T) {
 }
 
 func TestHandlerReportOrUpvote(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, ph, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
+	coinDayParam, _ := ph.GetCoinDayParam(ctx)
+	accParam, _ := ph.GetAccountParam(ctx)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
-	testCases := map[string]struct {
+	testCases := []struct {
+		testName               string
 		reportOrUpvoteUser     types.AccountKey
 		isReport               bool
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		"user1 report": {user1, true, types.NewCoin(100), types.NewCoin(0)},
-		"user2 report": {user2, true, types.NewCoin(200), types.NewCoin(0)},
-		"user3 upvote": {user3, false, types.NewCoin(200), types.NewCoin(100)},
+		{"user1 report", user1, true, accParam.RegisterFee, types.NewCoin(0)},
+		{"user2 report", user2, true,
+			accParam.RegisterFee.Plus(accParam.RegisterFee), types.NewCoin(0)},
+		{"user3 upvote", user3, false,
+			accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
 	}
 
-	for testName, tc := range testCases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + 7*3600*24})
+	for _, tc := range testCases {
+		newCtx := ctx.WithBlockHeader(
+			abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake})
 		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, user1, postID, tc.isReport)
 		result := handler(newCtx, msg)
-		assert.Equal(t, result, sdk.Result{}, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
+		assert.Equal(t, result, sdk.Result{}, fmt.Sprintf("%s: got %v, want %v", tc.testName, result, sdk.Result{}))
 		postMeta := model.PostMeta{
 			Created:                 ctx.BlockHeader().Time,
 			LastUpdate:              ctx.BlockHeader().Time,
@@ -427,7 +433,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 }
 
 func TestHandlerView(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, _, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	createTime := ctx.BlockHeader().Time
@@ -472,12 +478,14 @@ func TestHandlerView(t *testing.T) {
 }
 
 func TestHandlerRepostReportOrUpvote(t *testing.T) {
-	ctx, am, pm, gm := setupTest(t, 1)
+	ctx, am, ph, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
+
+	accParam, _ := ph.GetAccountParam(ctx)
 
 	// repost
 	repostID := "repost"
@@ -503,8 +511,8 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 		expectSourceReportStake types.Coin
 		expectSourceUpvoteStake types.Coin
 	}{
-		{user2, true, types.NewCoin(100), types.NewCoin(0)},
-		{user3, false, types.NewCoin(100), types.NewCoin(100)},
+		{user2, true, accParam.RegisterFee, types.NewCoin(0)},
+		{user3, false, accParam.RegisterFee, accParam.RegisterFee},
 	}
 
 	for _, cs := range cases {

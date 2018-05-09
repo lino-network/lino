@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
-	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(am acc.AccountManager) sdk.Handler {
@@ -24,8 +23,7 @@ func NewHandler(am acc.AccountManager) sdk.Handler {
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am acc.AccountManager, msg RegisterMsg) sdk.Result {
 	if err := am.CreateAccount(
-		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey,
-		types.NewCoin(100*types.Decimals)); err != nil {
+		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
