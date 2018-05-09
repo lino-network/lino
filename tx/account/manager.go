@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -36,8 +37,7 @@ func (accManager AccountManager) IsAccountExist(
 // Implements types.AccountManager.
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, accKey types.AccountKey,
-	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey,
-	registerFee types.Coin) sdk.Error {
+	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey) sdk.Error {
 	if accManager.IsAccountExist(ctx, accKey) {
 		return ErrAccountAlreadyExists(accKey)
 	}
@@ -48,8 +48,11 @@ func (accManager AccountManager) CreateAccount(
 	if bank.Username != "" {
 		return ErrBankAlreadyRegistered()
 	}
-
-	if !bank.Balance.IsGTE(registerFee) {
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	if !bank.Balance.IsGTE(accParams.RegisterFee) {
 		return ErrRegisterFeeInsufficient()
 	}
 
@@ -114,8 +117,8 @@ func (accManager AccountManager) GetStake(
 	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
 		return types.NewCoin(0), err
 	}
+	fmt.Println(stake, pendingStakeQueue.StakeCoinInQueue, pendingStakeQueue, ctx.BlockHeader().Time)
 	return stake.Plus(types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)), nil
-
 }
 
 func (accManager AccountManager) AddCoinToAddress(

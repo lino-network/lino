@@ -86,4 +86,5 @@ type BandwidthParam struct {
 // AccountParam includes params related to account
 type AccountParam struct {
 	MinimumBalance types.Coin `json:"minimum_balance"`
+	RegisterFee    types.Coin `json:"register_fee"`
 }

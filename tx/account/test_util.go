@@ -49,13 +49,13 @@ var (
 	coin400 = types.NewCoin(400)
 )
 
-func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager) {
+func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, param.AccountParam) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
-	ph.InjectParam(ctx, types.NewCoin(1))
-
+	ph.InitParam(ctx)
 	accManager := NewAccountManager(TestAccountKVStoreKey, ph)
-	return ctx, accManager
+	accParam, _ := accManager.paramHolder.GetAccountParam(ctx)
+	return ctx, accManager, *accParam
 }
 
 func getContext(height int64) sdk.Context {
@@ -70,8 +70,9 @@ func getContext(height int64) sdk.Context {
 
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), types.NewCoin(100*types.Decimals))
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+	am.AddCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return priv
 }
