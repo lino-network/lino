@@ -243,7 +243,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name),
-		ga.MasterKey, ga.TransactionKey, ga.PostKey, types.NewCoin(0)); err != nil {
+		ga.MasterKey, ga.TransactionKey, ga.PostKey); err != nil {
 		panic(err)
 	}
 

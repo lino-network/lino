@@ -28,9 +28,9 @@ func TestVoterRevoke(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), "5000")
 	test.CreateAccount(t, delegator1Name, lb, 1,
-		crypto.GenPrivKeyEd25519(), delegator1TransactionPriv, crypto.GenPrivKeyEd25519(), "2100")
+		crypto.GenPrivKeyEd25519(), delegator1TransactionPriv, crypto.GenPrivKeyEd25519(), "2101")
 	test.CreateAccount(t, delegator2Name, lb, 2,
-		crypto.GenPrivKeyEd25519(), delegator2TransactionPriv, crypto.GenPrivKeyEd25519(), "700")
+		crypto.GenPrivKeyEd25519(), delegator2TransactionPriv, crypto.GenPrivKeyEd25519(), "701")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("3000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
@@ -64,15 +64,14 @@ func TestVoterRevoke(t *testing.T) {
 	// check delegator withdraw first coin return
 	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600+1)
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(114285714))
-	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(300*types.Decimals))
-	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(100*types.Decimals))
+	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(301*types.Decimals))
+	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(101*types.Decimals))
 
 	// check balance after freezing period
 	for i := int64(1); i < test.CoinReturnTimes; i++ {
 		test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600*(i+1)+1)
 	}
 	test.CheckBalance(t, newAccountName, lb, types.NewCoin(5000*types.Decimals))
-	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(2100*types.Decimals))
-	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(700*types.Decimals))
-
+	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(2101*types.Decimals))
+	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(701*types.Decimals))
 }

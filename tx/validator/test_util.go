@@ -23,7 +23,7 @@ var (
 	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
 	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
 
-	initCoin = types.NewCoin(100)
+	initCoin = types.NewCoin(1 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -67,6 +67,6 @@ func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string) 
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return types.AccountKey(username)
 }

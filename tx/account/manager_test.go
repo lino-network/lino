@@ -636,7 +636,7 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 }
 
 func TestAddFrozenMoney(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 
 	createTestAccount(ctx, am, string(user1))
