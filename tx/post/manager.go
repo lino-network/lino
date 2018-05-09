@@ -183,7 +183,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, stake types.Coin, isReport bool, isRevoke bool) sdk.Error {
+	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
@@ -193,22 +193,8 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permLink, user)
 	// Revoke privous
 	if reportOrUpvote != nil {
-		if reportOrUpvote.IsReport {
-			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
-		} else {
-			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
-		}
-		reportOrUpvote.Stake = stake
-		if isRevoke {
-			if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-				return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
-			}
-			return pm.postStorage.RemovePostReportOrUpvote(ctx, permLink, user)
-		}
+		return ErrReportOrUpvoteToPostExist(permLink)
 	} else {
-		if isRevoke {
-			return ErrRevokeReportOrUpvoteToPost(permLink)
-		}
 		reportOrUpvote =
 			&model.ReportOrUpvote{Username: user, Stake: stake, Created: ctx.BlockHeader().Time}
 	}

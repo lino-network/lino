@@ -1,6 +1,7 @@
 package post
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -395,38 +396,30 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
 
-	cases := []struct {
+	testCases := map[string]struct {
 		reportOrUpvoteUser     types.AccountKey
 		isReport               bool
-		isRevoke               bool
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
-		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
-		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
-		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
-		{user2, false, true, types.NewCoin(0), types.NewCoin(100)},
-		{user3, false, true, types.NewCoin(0), types.NewCoin(0)},
-		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
-		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
-		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
-		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
+		"user1 report": {user1, true, types.NewCoin(100), types.NewCoin(0)},
+		"user2 report": {user2, true, types.NewCoin(200), types.NewCoin(0)},
+		"user3 upvote": {user3, false, types.NewCoin(200), types.NewCoin(100)},
 	}
 
-	for _, cs := range cases {
+	for testName, tc := range testCases {
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + 7*3600*24})
-		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user1, postID, cs.isReport, cs.isRevoke)
+		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, user1, postID, tc.isReport)
 		result := handler(newCtx, msg)
-		assert.Equal(t, result, sdk.Result{})
+		assert.Equal(t, result, sdk.Result{}, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
 		postMeta := model.PostMeta{
 			Created:                 ctx.BlockHeader().Time,
 			LastUpdate:              ctx.BlockHeader().Time,
 			LastActivity:            newCtx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
-			TotalReportStake:        cs.expectTotalReportStake,
-			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
+			TotalReportStake:        tc.expectTotalReportStake,
+			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
 		}
 		postKey := types.GetPermLink(user1, postID)
 		checkPostMeta(t, ctx, postKey, postMeta)
@@ -507,25 +500,16 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 	cases := []struct {
 		reportOrUpvoteUser      types.AccountKey
 		isReport                bool
-		isRevoke                bool
 		expectSourceReportStake types.Coin
 		expectSourceUpvoteStake types.Coin
 	}{
-		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
-		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
-		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
-		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
-		{user2, false, true, types.NewCoin(0), types.NewCoin(100)},
-		{user3, false, true, types.NewCoin(0), types.NewCoin(0)},
-		{user2, true, false, types.NewCoin(100), types.NewCoin(0)},
-		{user3, true, false, types.NewCoin(200), types.NewCoin(0)},
-		{user2, false, false, types.NewCoin(100), types.NewCoin(100)},
-		{user3, false, false, types.NewCoin(0), types.NewCoin(200)},
+		{user2, true, types.NewCoin(100), types.NewCoin(0)},
+		{user3, false, types.NewCoin(100), types.NewCoin(100)},
 	}
 
 	for _, cs := range cases {
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + +7*3600*24})
-		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user2, repostID, cs.isReport, cs.isRevoke)
+		msg := NewReportOrUpvoteMsg(cs.reportOrUpvoteUser, user2, repostID, cs.isReport)
 		result := handler(newCtx, msg)
 		assert.Equal(t, result, sdk.Result{})
 		postMeta := model.PostMeta{
