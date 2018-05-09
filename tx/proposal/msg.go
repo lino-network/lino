@@ -6,8 +6,23 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/tx/proposal/model"
 	"github.com/lino-network/lino/types"
 )
+
+type ChangeParamMsg interface {
+	GetDescription() model.Description
+	GetCreator() types.AccountKey
+}
+
+type ContentCensorshipMsg interface {
+	GetCreator() types.AccountKey
+	GetPermLink() types.PermLink
+}
+
+type ProtocolUpgradeMsg interface {
+	GetCreator() types.AccountKey
+}
 
 type ChangeGlobalAllocationMsg struct {
 	Creator     types.AccountKey            `json:"creator"`
@@ -24,7 +39,9 @@ func NewChangeGlobalAllocationMsg(creator string, desc param.GlobalAllocationPar
 	}
 }
 
-func (msg ChangeGlobalAllocationMsg) Type() string { return types.ProposalRouterName } // TODO: "account/register"
+func (msg ChangeGlobalAllocationMsg) GetDescription() model.Description { return msg.Description }
+func (msg ChangeGlobalAllocationMsg) GetCreator() types.AccountKey      { return msg.Creator }
+func (msg ChangeGlobalAllocationMsg) Type() string                      { return types.ProposalRouterName }
 
 func (msg ChangeGlobalAllocationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
