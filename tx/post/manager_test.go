@@ -203,7 +203,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 func TestReportOrUpvoteToPost(t *testing.T) {
 	ctx, am, pm, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
-	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
+	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
 	cases := []struct {
@@ -212,20 +212,16 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		postID                 string
 		author                 types.AccountKey
 		isReport               bool
-		isRevoke               bool
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{user3, types.NewCoin(1), postID1, user1, true, false, types.NewCoin(1), types.NewCoin(0)},
-		{user3, types.NewCoin(2), postID1, user1, true, false, types.NewCoin(2), types.NewCoin(0)},
-		{user2, types.NewCoin(100), postID1, user1, false, false, types.NewCoin(2), types.NewCoin(100)},
-		{user3, types.NewCoin(3), postID2, user2, false, false, types.NewCoin(0), types.NewCoin(3)},
-		{user3, types.NewCoin(4), postID1, user1, false, true, types.NewCoin(0), types.NewCoin(100)},
+		{user3, types.NewCoin(1), postID1, user1, true, types.NewCoin(1), types.NewCoin(0)},
+		{user2, types.NewCoin(100), postID1, user1, false, types.NewCoin(1), types.NewCoin(100)},
 	}
 
 	for _, cs := range cases {
 		postKey := types.GetPermLink(cs.author, cs.postID)
-		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport, cs.isRevoke)
+		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
 			Created:                 ctx.BlockHeader().Time,

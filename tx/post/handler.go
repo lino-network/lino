@@ -212,12 +212,12 @@ func handleReportOrUpvoteMsg(
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
 		if err := pm.ReportOrUpvoteToPost(
-			ctx, sourcePostKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
+			ctx, sourcePostKey, msg.Username, stake, msg.IsReport); err != nil {
 			return err.Result()
 		}
 	} else {
 		if err := pm.ReportOrUpvoteToPost(
-			ctx, postKey, msg.Username, stake, msg.IsReport, msg.IsRevoke); err != nil {
+			ctx, postKey, msg.Username, stake, msg.IsReport); err != nil {
 			return err.Result()
 		}
 	}

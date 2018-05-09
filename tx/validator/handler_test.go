@@ -20,6 +20,7 @@ var (
 	l1000 = types.LNO("1000")
 	l1100 = types.LNO("1100")
 	l1600 = types.LNO("1600")
+	l8000 = types.LNO("8000")
 
 	c0    = types.Coin{0 * types.Decimals}
 	c200  = types.Coin{200 * types.Decimals}
@@ -29,6 +30,7 @@ var (
 	c1600 = types.Coin{1600 * types.Decimals}
 	c1800 = types.Coin{1800 * types.Decimals}
 	c2000 = types.Coin{2000 * types.Decimals}
+	c4000 = types.Coin{4000 * types.Decimals}
 	c8000 = types.Coin{8000 * types.Decimals}
 )
 
@@ -325,6 +327,25 @@ func TestDepositBasic(t *testing.T) {
 	// check deposit and power is correct
 	validator, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, true, validator.Deposit.IsEqual(c1800))
+}
+
+func TestCommitingDepositExceedVotingDeposit(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(am, valManager, voteManager, gm)
+	valManager.InitGenesis(ctx)
+
+	// create test user
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddCoin(ctx, user1, c8000)
+
+	// let user register as voter first
+	voteManager.AddVoter(ctx, "user1", c4000)
+
+	// let user1 register as validator
+	valKey := crypto.GenPrivKeyEd25519().PubKey()
+	msg := NewValidatorDepositMsg("user1", l8000, valKey, "")
+	result := handler(ctx, msg)
+	assert.Equal(t, ErrCommitingDepositExceedVotingDeposit().Result(), result)
 }
 
 func TestDepositWithoutLinoAccount(t *testing.T) {

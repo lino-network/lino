@@ -43,6 +43,11 @@ func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) boo
 	return voterByte != nil
 }
 
+func (vm VoteManager) IsVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
+	voteByte, _ := vm.storage.GetVote(ctx, proposalID, accKey)
+	return voteByte != nil
+}
+
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
 	lst, err := vm.storage.GetReferenceList(ctx)
 	if err != nil {
@@ -137,11 +142,22 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 
 // only support change parameter proposal now
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
-	vote := model.Vote{
-		Voter:  voter,
-		Result: res,
+	// check if the vote exist
+	if vm.IsVoteExist(ctx, proposalID, voter) {
+		return ErrVoteExist()
 	}
-	// will overwrite the old vote
+
+	votingPower, err := vm.GetVotingPower(ctx, voter)
+	if err != nil {
+		return err
+	}
+
+	vote := model.Vote{
+		Voter:       voter,
+		Result:      res,
+		VotingPower: votingPower,
+	}
+
 	if err := vm.storage.SetVote(ctx, proposalID, voter, &vote); err != nil {
 		return err
 	}
@@ -317,14 +333,10 @@ func (vm VoteManager) CalculateVotingResult(
 	}
 
 	for _, vote := range votes {
-		voterPower, err := vm.GetVotingPower(ctx, vote.Voter)
-		if err != nil {
-			continue
-		}
 		if vote.Result == true {
-			res.AgreeVotes = res.AgreeVotes.Plus(voterPower)
+			res.AgreeVotes = res.AgreeVotes.Plus(vote.VotingPower)
 		} else {
-			res.DisagreeVotes = res.DisagreeVotes.Plus(voterPower)
+			res.DisagreeVotes = res.DisagreeVotes.Plus(vote.VotingPower)
 		}
 
 		// remove from list if the validator voted
@@ -342,6 +354,14 @@ func (vm VoteManager) CalculateVotingResult(
 		res.PenaltyList = append(res.PenaltyList, validator)
 	}
 	return res, nil
+}
+
+func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		return types.NewCoin(0), err
+	}
+	return voter.Deposit, nil
 }
 
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
