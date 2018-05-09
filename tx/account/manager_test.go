@@ -273,7 +273,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 	priv := crypto.GenPrivKeyEd25519()
 	// create bank and account
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin100)
+	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin400)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), coin0)
@@ -284,9 +284,9 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
 
 	baseTime := ctx.BlockHeader().Time
-	baseTime2 := baseTime + totalCoinDaysSec + 1000
-	baseTime3 := baseTime2 + totalCoinDaysSec + 1000
-	baseTime4 := baseTime3 + totalCoinDaysSec*3/2 + 3
+	// baseTime2 := baseTime + totalCoinDaysSec + 1000
+	// baseTime3 := baseTime2 + totalCoinDaysSec + 1000
+	// baseTime4 := baseTime3 + totalCoinDaysSec*3/2 + 3
 
 	cases := []struct {
 		IsAdd             bool
@@ -296,29 +296,33 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		ExpectStake       types.Coin
 		ExpectStakeInBank types.Coin
 	}{
-		{true, coin0, baseTime + 3024, coin100, coin0, coin0},
-		{true, coin0, baseTime + 3025, coin100, coin1, coin0},
-		{false, coin100, baseTime + 3457, coin0, coin0, coin0},
-		{true, coin0, baseTime + totalCoinDaysSec + 1, coin0, coin0, coin0},
+		// {true, coin0, baseTime + 3024, coin100, coin0, coin0},
+		{true, coin0, baseTime + 756, coin400, coin0, coin0},
+		// {true, coin0, baseTime + 3025, coin100, coin1, coin0},
+		{true, coin0, baseTime + 757, coin400, coin1, coin0},
+		// {false, coin100, baseTime + 3457, coin0, coin0, coin0},
+		{false, coin100, baseTime + 757, coin300, coin0, coin0},
+		// {true, coin0, baseTime + totalCoinDaysSec + 1, coin0, coin0, coin0},
+		{true, coin0, baseTime + totalCoinDaysSec + 1, coin300, coin0, coin0},
 
-		{true, coin100, baseTime2, coin100, coin0, coin0},
-		{false, coin50, baseTime2 + totalCoinDaysSec/2 + 1, coin50, types.NewCoin(25), coin0},
-		{true, coin0, baseTime2 + totalCoinDaysSec + 1, coin50, coin50, coin50},
-
-		{true, coin100, baseTime3, types.NewCoin(150), coin50, coin50},
-		{true, coin100, baseTime3 + totalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
-		{false, coin50, baseTime3 + totalCoinDaysSec*3/4 + 2,
-			coin200, types.NewCoin(138), types.NewCoin(50)},
-		{true, coin0, baseTime3 + totalCoinDaysSec + 2,
-			coin200, types.NewCoin(175), types.NewCoin(150)},
-		{true, coin0, baseTime3 + totalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
-
-		{true, coin1, baseTime4, types.NewCoin(201), coin200, coin200},
-		{true, coin0, baseTime4 + totalCoinDaysSec/2 + 1,
-			types.NewCoin(201), types.NewCoin(201), coin200},
-		{false, coin1, baseTime4 + totalCoinDaysSec/2 + 1, coin200, coin200, coin200},
-		{true, coin0, baseTime4 + totalCoinDaysSec + 1, coin200, coin200, coin200},
-		{true, coin0, baseTime4 + totalCoinDaysSec*100 + 1, coin200, coin200, coin200},
+		// {true, coin100, baseTime2, coin100, coin0, coin0},
+		// {false, coin50, baseTime2 + totalCoinDaysSec/2 + 1, coin50, types.NewCoin(25), coin0},
+		// {true, coin0, baseTime2 + totalCoinDaysSec + 1, coin50, coin50, coin50},
+		//
+		// {true, coin100, baseTime3, types.NewCoin(150), coin50, coin50},
+		// {true, coin100, baseTime3 + totalCoinDaysSec/2 + 1, types.NewCoin(250), coin100, coin50},
+		// {false, coin50, baseTime3 + totalCoinDaysSec*3/4 + 2,
+		// 	coin200, types.NewCoin(138), types.NewCoin(50)},
+		// {true, coin0, baseTime3 + totalCoinDaysSec + 2,
+		// 	coin200, types.NewCoin(175), types.NewCoin(150)},
+		// {true, coin0, baseTime3 + totalCoinDaysSec*3/2 + 2, coin200, coin200, coin200},
+		//
+		// {true, coin1, baseTime4, types.NewCoin(201), coin200, coin200},
+		// {true, coin0, baseTime4 + totalCoinDaysSec/2 + 1,
+		// 	types.NewCoin(201), types.NewCoin(201), coin200},
+		// {false, coin1, baseTime4 + totalCoinDaysSec/2 + 1, coin200, coin200, coin200},
+		// {true, coin0, baseTime4 + totalCoinDaysSec + 1, coin200, coin200, coin200},
+		// {true, coin0, baseTime4 + totalCoinDaysSec*100 + 1, coin200, coin200, coin200},
 	}
 
 	for _, cs := range cases {

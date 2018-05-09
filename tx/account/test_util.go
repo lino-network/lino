@@ -25,6 +25,7 @@ var (
 	l1600 = types.LNO("1600")
 	l1800 = types.LNO("1800")
 	l1900 = types.LNO("1900")
+	l1999 = types.LNO("1999")
 	l2000 = types.LNO("2000")
 	c0    = types.NewCoin(0)
 	c100  = types.NewCoin(100 * types.Decimals)
@@ -44,13 +45,16 @@ var (
 	coin50  = types.NewCoin(50)
 	coin100 = types.NewCoin(100)
 	coin200 = types.NewCoin(200)
+	coin300 = types.NewCoin(300)
+	coin400 = types.NewCoin(400)
 )
 
 func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager) {
 	ctx := getContext(height)
-	hp := param.NewParamHolder(TestParamKVStoreKey)
-	hp.InitParam(ctx)
-	accManager := NewAccountManager(TestAccountKVStoreKey, hp)
+	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph.InjectParam(ctx, types.NewCoin(1))
+
+	accManager := NewAccountManager(TestAccountKVStoreKey, ph)
 	return ctx, accManager
 }
 
