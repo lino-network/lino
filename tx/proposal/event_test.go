@@ -10,7 +10,7 @@ import (
 )
 
 func TestDecideProposal(t *testing.T) {
-	ctx, am, pm, voteManager, valManager, gm := setupTest(t, 0)
+	ctx, am, pm, postManager, voteManager, valManager, gm := setupTest(t, 0)
 	voteManager.InitGenesis(ctx)
 	valManager.InitGenesis(ctx)
 	pm.InitGenesis(ctx)
@@ -29,14 +29,16 @@ func TestDecideProposal(t *testing.T) {
 	voteManager.AddVoter(ctx, user3, c3)
 	voteManager.AddVoter(ctx, user4, c4)
 	e := DecideProposalEvent{}
-	des1 := param.GlobalAllocationParam{
+	param1 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(50, 100),
 	}
-	des2 := param.GlobalAllocationParam{
+	param2 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(80, 100),
 	}
-	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), des1, gm)
-	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), des2, gm)
+	p1 := pm.CreateChangeParamProposal(ctx, param1)
+	p2 := pm.CreateChangeParamProposal(ctx, param2)
+	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1)
+	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2)
 
 	cases := []struct {
 		decideProposal        bool
@@ -69,7 +71,7 @@ func TestDecideProposal(t *testing.T) {
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			e.Execute(ctx, voteManager, valManager, am, pm, gm)
+			e.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
 			proposal, _ := pm.storage.GetProposal(ctx, cs.proposalID)
 			proposalInfo := proposal.GetProposalInfo()
 

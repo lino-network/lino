@@ -54,3 +54,7 @@ func ErrEventUnmarshalError(err error) sdk.Error {
 func ErrEventMarshalError(err error) sdk.Error {
 	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Event marshal error: %s", err.Error()))
 }
+
+func ErrInvalidaParameter() sdk.Error {
+	return sdk.NewError(types.CodeParamStoreError, fmt.Sprintf("Invalida parameter"))
+}

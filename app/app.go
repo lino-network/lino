@@ -156,7 +156,7 @@ func RegisterEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(post.RewardEvent{}, "event/reward", nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
-	cdc.RegisterConcrete(param.ChangeGlobalAllocationParamEvent{}, "event/cgape", nil)
+	cdc.RegisterConcrete(param.ChangeParamEvent{}, "event/cpe", nil)
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "event/dpe", nil)
 }
 
@@ -380,10 +380,11 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			}
 		case proposal.DecideProposalEvent:
 			if err := e.Execute(
-				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager, lb.globalManager); err != nil {
+				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager,
+				lb.postManager, lb.globalManager); err != nil {
 				panic(err)
 			}
-		case param.ChangeGlobalAllocationParamEvent:
+		case param.ChangeParamEvent:
 			if err := e.Execute(ctx, lb.paramHolder); err != nil {
 				panic(err)
 			}

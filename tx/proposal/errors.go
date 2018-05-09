@@ -26,3 +26,7 @@ func ErrIllegalParameter() sdk.Error {
 func ErrProposalInfoNotFound() sdk.Error {
 	return sdk.NewError(types.CodeProposalManagerError, fmt.Sprintf("Proposal info not found"))
 }
+
+func ErrWrongProposalType() sdk.Error {
+	return sdk.NewError(types.CodeProposalManagerError, fmt.Sprintf("Wrong proposal type"))
+}

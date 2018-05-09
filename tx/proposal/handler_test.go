@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	c4600 = types.Coin{4600 * types.Decimals}
+	c460000 = types.Coin{460000 * types.Decimals}
 )
 
 func TestProposalBasic(t *testing.T) {
-	ctx, am, pm, _, _, gm := setupTest(t, 0)
+	ctx, am, pm, _, _, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, pm, gm)
 	pm.InitGenesis(ctx)
 
@@ -28,15 +28,15 @@ func TestProposalBasic(t *testing.T) {
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c4600)
+	am.AddCoin(ctx, user1, c460000)
 
 	// let user1 create a proposal
-	msg := NewChangeGlobalAllocationMsg("user1", para)
+	msg := NewChangeGlobalAllocationParamMsg("user1", para)
 	resultPass := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, resultPass)
 
 	// invalid create
-	invalidMsg := NewChangeGlobalAllocationMsg("wqdkqwndkqwd", para)
+	invalidMsg := NewChangeGlobalAllocationParamMsg("wqdkqwndkqwd", para)
 	resultInvalid := handler(ctx, invalidMsg)
 	assert.Equal(t, ErrUsernameNotFound().Result(), resultInvalid)
 
@@ -44,8 +44,9 @@ func TestProposalBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	proposal, _ := pm.storage.GetProposal(ctx, proposalID1)
-	p := proposal.(*model.ChangeGlobalAllocationParamProposal)
-	assert.Equal(t, true, p.Description.ContentCreatorAllocation.Equal(rat))
+	p := proposal.(*model.ChangeParamProposal)
+	parameter := p.Param.(param.GlobalAllocationParam)
+	assert.Equal(t, true, parameter.ContentCreatorAllocation.Equal(rat))
 
 	// check proposal list is correct
 	lst, _ := pm.storage.GetProposalList(ctx)

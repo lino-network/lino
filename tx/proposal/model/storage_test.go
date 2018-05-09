@@ -55,20 +55,20 @@ func TestProposal(t *testing.T) {
 	res := types.ProposalPass
 
 	cases := []struct {
-		ChangeGlobalAllocationParamProposal
+		ChangeParamProposal
 	}{
-		{ChangeGlobalAllocationParamProposal{
+		{ChangeParamProposal{
 			ProposalInfo{user, proposalID, types.NewCoin(0), types.NewCoin(0), res},
 			param.GlobalAllocationParam{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
 				sdk.NewRat(0)}}},
 	}
 
 	for _, cs := range cases {
-		err := vs.SetProposal(ctx, proposalID, &cs.ChangeGlobalAllocationParamProposal)
+		err := vs.SetProposal(ctx, proposalID, &cs.ChangeParamProposal)
 		assert.Nil(t, err)
 		proposal, err := vs.GetProposal(ctx, proposalID)
 		assert.Nil(t, err)
-		assert.Equal(t, &cs.ChangeGlobalAllocationParamProposal, proposal.(*ChangeGlobalAllocationParamProposal))
+		assert.Equal(t, &cs.ChangeParamProposal, proposal.(*ChangeParamProposal))
 		err = vs.DeleteProposal(ctx, proposalID)
 		assert.Nil(t, err)
 		proposal, err = vs.GetProposal(ctx, proposalID)
