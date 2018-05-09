@@ -174,7 +174,12 @@ func (accManager AccountManager) MinusCoin(
 	if err != nil {
 		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
 	}
-	if !accountBank.Balance.IsGTE(coin) {
+
+	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	if !accountBank.Balance.Minus(coin).IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountCoinNotEnough()
 	}
 	pendingStakeQueue, err :=
