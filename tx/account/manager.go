@@ -52,7 +52,7 @@ func (accManager AccountManager) CreateAccount(
 	if err != nil {
 		return err
 	}
-	if !bank.Balance.IsGTE(accParams.RegisterFee) {
+	if !bank.Saving.IsGTE(accParams.RegisterFee) {
 		return ErrRegisterFeeInsufficient()
 	}
 
@@ -121,7 +121,7 @@ func (accManager AccountManager) GetStake(
 	return stake.Plus(types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)), nil
 }
 
-func (accManager AccountManager) AddCoinToAddress(
+func (accManager AccountManager) AddSavingCoinToAddress(
 	ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
 	if coin.IsZero() {
 		return nil
@@ -130,14 +130,14 @@ func (accManager AccountManager) AddCoinToAddress(
 	if bank == nil {
 		bank = &model.AccountBank{
 			Address: address,
-			Balance: coin,
+			Saving:  coin,
 		}
 		if err := accManager.storage.SetPendingStakeQueue(
 			ctx, address, &model.PendingStakeQueue{}); err != nil {
 			return err
 		}
 	} else {
-		bank.Balance = bank.Balance.Plus(coin)
+		bank.Saving = bank.Saving.Plus(coin)
 	}
 
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
@@ -159,19 +159,19 @@ func (accManager AccountManager) AddCoinToAddress(
 	return nil
 }
 
-func (accManager AccountManager) AddCoin(
+func (accManager AccountManager) AddSavingCoin(
 	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
 	address, err := accManager.GetBankAddress(ctx, accKey)
 	if err != nil {
 		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
 	}
-	if err := accManager.AddCoinToAddress(ctx, address, coin); err != nil {
+	if err := accManager.AddSavingCoinToAddress(ctx, address, coin); err != nil {
 		return ErrAddCoinToAccount(accKey).TraceCause(err, "")
 	}
 	return nil
 }
 
-func (accManager AccountManager) MinusCoin(
+func (accManager AccountManager) MinusSavingCoin(
 	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
@@ -182,7 +182,7 @@ func (accManager AccountManager) MinusCoin(
 	if err != nil {
 		return err
 	}
-	if !accountBank.Balance.Minus(coin).IsGTE(accountParams.MinimumBalance) {
+	if !accountBank.Saving.Minus(coin).IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountCoinNotEnough()
 	}
 	pendingStakeQueue, err :=
@@ -190,7 +190,7 @@ func (accManager AccountManager) MinusCoin(
 	if err != nil {
 		return err
 	}
-	accountBank.Balance = accountBank.Balance.Minus(coin)
+	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	// update pending stake queue, remove expired transaction
 	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
@@ -227,7 +227,7 @@ func (accManager AccountManager) MinusCoin(
 		}
 	}
 	if coin.IsPositive() {
-		accountBank.Stake = accountBank.Balance
+		accountBank.Stake = accountBank.Saving
 	}
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, accountBank.Address, pendingStakeQueue); err != nil {
@@ -277,13 +277,13 @@ func (accManager AccountManager) GetPostKey(
 	return accountInfo.PostKey, nil
 }
 
-func (accManager AccountManager) GetBankBalance(
+func (accManager AccountManager) GetBankSaving(
 	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
-		return types.Coin{}, ErrGetBankBalance(accKey).TraceCause(err, "")
+		return types.Coin{}, ErrGetBankSaving(accKey).TraceCause(err, "")
 	}
-	return accountBank.Balance, nil
+	return accountBank.Saving, nil
 }
 
 func (accManager AccountManager) GetSequence(
@@ -330,7 +330,7 @@ func (accManager AccountManager) ClaimReward(ctx sdk.Context, accKey types.Accou
 	if err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
-	if err := accManager.AddCoin(ctx, accKey, reward.UnclaimReward); err != nil {
+	if err := accManager.AddSavingCoin(ctx, accKey, reward.UnclaimReward); err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
 	reward.UnclaimReward = types.NewCoin(0)

@@ -74,8 +74,8 @@ func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
 }
 
-func ErrGetBankBalance(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank balance failed", accKey))
+func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank saving failed", accKey))
 }
 
 func ErrGetSequence(accKey types.AccountKey) sdk.Error {

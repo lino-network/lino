@@ -73,7 +73,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusCoin(ctx, msg.Sender, coin); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Sender, coin); err != nil {
 		return err.Result()
 	}
 
@@ -88,13 +88,13 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
-		if err := am.AddCoin(ctx, msg.ReceiverName, coin); err != nil {
+		if err := am.AddSavingCoin(ctx, msg.ReceiverName, coin); err != nil {
 			return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 		}
 		return sdk.Result{}
 	}
 
-	if err := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); err != nil {
+	if err := am.AddSavingCoinToAddress(ctx, msg.ReceiverAddr, coin); err != nil {
 		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 	}
 	return sdk.Result{}

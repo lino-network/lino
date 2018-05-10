@@ -71,7 +71,7 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return priv

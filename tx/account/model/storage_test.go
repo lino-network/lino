@@ -75,7 +75,7 @@ func TestAccountBank(t *testing.T) {
 
 	accBank := AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.NewCoin(int64(123)),
+		Saving:  types.NewCoin(int64(123)),
 	}
 	err = as.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

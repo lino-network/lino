@@ -75,12 +75,12 @@ func TestAddCoinToAddress(t *testing.T) {
 	assert.Nil(t, err)
 
 	// add coin to non-exist account
-	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin1)
+	err = am.AddSavingCoinToAddress(ctx, sdk.Address("test"), coin1)
 	assert.Nil(t, err)
 
 	bank := model.AccountBank{
 		Address: sdk.Address("test"),
-		Balance: coin1,
+		Saving:  coin1,
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
 	pendingStakeQueue := model.PendingStakeQueue{
@@ -96,11 +96,11 @@ func TestAddCoinToAddress(t *testing.T) {
 
 	// add coin to exist bank
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix()})
-	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin100)
+	err = am.AddSavingCoinToAddress(ctx, sdk.Address("test"), coin100)
 	assert.Nil(t, err)
 	bank = model.AccountBank{
 		Address: sdk.Address("test"),
-		Balance: types.NewCoin(101),
+		Saving:  types.NewCoin(101),
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
 	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList,
@@ -116,11 +116,11 @@ func TestAddCoinToAddress(t *testing.T) {
 	ctx = ctx.WithBlockHeader(
 		abci.Header{ChainID: "Lino", Height: 3,
 			Time: (ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake + 1)})
-	err = am.AddCoinToAddress(ctx, sdk.Address("test"), coin100)
+	err = am.AddSavingCoinToAddress(ctx, sdk.Address("test"), coin100)
 	assert.Nil(t, err)
 	bank = model.AccountBank{
 		Address: sdk.Address("test"),
-		Balance: types.NewCoin(201),
+		Saving:  types.NewCoin(201),
 		Stake:   types.NewCoin(101),
 	}
 	checkBankKVByAddress(t, ctx, sdk.Address("test"), bank)
@@ -143,7 +143,7 @@ func TestCreateAccount(t *testing.T) {
 
 	// normal test
 	assert.False(t, am.IsAccountExist(ctx, accKey))
-	err = am.AddCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
@@ -152,7 +152,7 @@ func TestCreateAccount(t *testing.T) {
 	assert.True(t, am.IsAccountExist(ctx, accKey))
 	bank := model.AccountBank{
 		Address:  priv.PubKey().Address(),
-		Balance:  accParam.RegisterFee,
+		Saving:   accParam.RegisterFee,
 		Username: accKey,
 	}
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
@@ -206,7 +206,7 @@ func TestCreateAccount(t *testing.T) {
 		err.Error())
 
 	// register fee doesn't enough
-	err = am.AddCoinToAddress(ctx, priv2.PubKey().Address(), accParam.RegisterFee.Minus(types.NewCoin(1)))
+	err = am.AddSavingCoinToAddress(ctx, priv2.PubKey().Address(), accParam.RegisterFee.Minus(types.NewCoin(1)))
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, types.AccountKey("newKey"),
 		priv2.PubKey(), priv2.Generate(1).PubKey(), priv2.Generate(2).PubKey())
@@ -269,7 +269,7 @@ func TestCoinDayByAddress(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.AtWhen})
-		err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), tc.AddCoin)
+		err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), tc.AddCoin)
 		if err != nil {
 			t.Errorf("%s: add coin failed, expect %v, got %v", tc.testName, "nil", err)
 			return
@@ -285,7 +285,7 @@ func TestCoinDayByAddress(t *testing.T) {
 		}
 		bank := model.AccountBank{
 			Address:  priv.PubKey().Address(),
-			Balance:  tc.ExpectBalance,
+			Saving:   tc.ExpectBalance,
 			Stake:    tc.ExpectStakeInBank,
 			Username: accKey,
 		}
@@ -367,10 +367,10 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
 		if cs.IsAdd {
-			err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
+			err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
 			assert.Nil(t, err)
 		} else {
-			err := am.MinusCoin(ctx, accKey, cs.Coin)
+			err := am.MinusSavingCoin(ctx, accKey, cs.Coin)
 			assert.Nil(t, err)
 		}
 		coin, err := am.GetStake(ctx, accKey)
@@ -382,7 +382,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 		bank := model.AccountBank{
 			Address:  priv.PubKey().Address(),
-			Balance:  cs.ExpectBalance,
+			Saving:   cs.ExpectBalance,
 			Stake:    cs.ExpectStakeInBank,
 			Username: accKey,
 		}
@@ -395,7 +395,7 @@ func TestAccountReward(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 	priv := crypto.GenPrivKeyEd25519()
 
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
@@ -412,7 +412,7 @@ func TestAccountReward(t *testing.T) {
 
 	bank := model.AccountBank{
 		Address:  priv.PubKey().Address(),
-		Balance:  accParam.RegisterFee,
+		Saving:   accParam.RegisterFee,
 		Stake:    c0,
 		Username: accKey,
 	}
@@ -420,7 +420,7 @@ func TestAccountReward(t *testing.T) {
 
 	err = am.ClaimReward(ctx, accKey)
 	assert.Nil(t, err)
-	bank.Balance = accParam.RegisterFee.Plus(c500)
+	bank.Saving = accParam.RegisterFee.Plus(c500)
 	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), bank)
 	reward = model.Reward{c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)
@@ -437,7 +437,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	priv := createTestAccount(ctx, am, string(accKey))
-	err = am.AddCoinToAddress(ctx, priv.PubKey().Address(), c100)
+	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), c100)
 	assert.Nil(t, err)
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
@@ -479,7 +479,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.CurrentTime})
 		bank := &model.AccountBank{
 			Address: priv.PubKey().Address(),
-			Balance: cs.UserStake,
+			Saving:  cs.UserStake,
 			Stake:   cs.UserStake,
 		}
 		err = accStorage.SetBankFromAddress(ctx, priv.PubKey().Address(), bank)

@@ -17,7 +17,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 		return ErrUsernameNotFound()
 	}
 
-	if err := am.AddCoin(ctx, event.Username, event.Amount); err != nil {
+	if err := am.AddSavingCoin(ctx, event.Username, event.Amount); err != nil {
 		return err
 	}
 	return nil

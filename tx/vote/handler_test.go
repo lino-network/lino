@@ -33,7 +33,7 @@ func TestVoterDepositBasic(t *testing.T) {
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c3600)
+	am.AddSavingCoin(ctx, user1, c3600)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -42,8 +42,8 @@ func TestVoterDepositBasic(t *testing.T) {
 	handler(ctx, msg)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	assert.Equal(t, c400.Plus(initCoin), acc1Balance)
+	acc1saving, _ := am.GetBankSaving(ctx, user1)
+	assert.Equal(t, c400.Plus(initCoin), acc1saving)
 	assert.Equal(t, true, vm.IsVoterExist(ctx, user1))
 
 	// make sure the voter's account info is correct
@@ -57,13 +57,13 @@ func TestDelegateBasic(t *testing.T) {
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	user2 := createTestAccount(ctx, am, "user2")
-	am.AddCoin(ctx, user2, c2000)
+	am.AddSavingCoin(ctx, user2, c2000)
 
 	user3 := createTestAccount(ctx, am, "user3")
-	am.AddCoin(ctx, user3, c2000)
+	am.AddSavingCoin(ctx, user3, c2000)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -82,7 +82,7 @@ func TestDelegateBasic(t *testing.T) {
 
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(c3600))
-	acc2Balance, _ := am.GetBankBalance(ctx, user2)
+	acc2Balance, _ := am.GetBankSaving(ctx, user2)
 	assert.Equal(t, acc2Balance, initCoin)
 
 	// let user3 delegate power to user1
@@ -109,13 +109,13 @@ func TestRevokeBasic(t *testing.T) {
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	user2 := createTestAccount(ctx, am, "user2")
-	am.AddCoin(ctx, user2, c2000)
+	am.AddSavingCoin(ctx, user2, c2000)
 
 	user3 := createTestAccount(ctx, am, "user3")
-	am.AddCoin(ctx, user3, c2000)
+	am.AddSavingCoin(ctx, user3, c2000)
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", l1600)
@@ -138,7 +138,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// make sure user3 won't get coins immediately, but user1 power down immediately
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
-	acc3Balance, _ := am.GetBankBalance(ctx, user3)
+	acc3Balance, _ := am.GetBankSaving(ctx, user3)
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, c1000, voter.DelegatedPower)
@@ -168,8 +168,8 @@ func TestRevokeBasic(t *testing.T) {
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
 	_, err2 := vm.storage.GetVoter(ctx, "user1")
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	acc2Balance, _ := am.GetBankBalance(ctx, user2)
+	acc1Balance, _ := am.GetBankSaving(ctx, user1)
+	acc2Balance, _ := am.GetBankSaving(ctx, user2)
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, ErrGetVoter(), err2)
 	assert.Equal(t, c400.Plus(initCoin), acc1Balance)
@@ -181,7 +181,7 @@ func TestVoterWithdraw(t *testing.T) {
 	handler := NewHandler(vm, am, gm)
 
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c3600)
+	am.AddSavingCoin(ctx, user1, c3600)
 
 	// withdraw will fail if hasn't registed as voter
 	illegalWithdrawMsg := NewVoterWithdrawMsg("user1", l1600)
@@ -210,13 +210,13 @@ func TestVoteBasic(t *testing.T) {
 
 	proposalID := int64(1)
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	user2 := createTestAccount(ctx, am, "user2")
-	am.AddCoin(ctx, user2, c2000)
+	am.AddSavingCoin(ctx, user2, c2000)
 
 	user3 := createTestAccount(ctx, am, "user3")
-	am.AddCoin(ctx, user3, c2000)
+	am.AddSavingCoin(ctx, user3, c2000)
 
 	// let user1 create a proposal
 	referenceList := &model.ReferenceList{

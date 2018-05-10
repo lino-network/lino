@@ -258,7 +258,7 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
-	err := am.AddCoin(ctx, user2, types.NewCoin(123*types.Decimals))
+	err := am.AddSavingCoin(ctx, user2, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 
 	donateMsg := NewDonateMsg(user2, types.LNO("100"), user1, postID, "")
@@ -289,11 +289,11 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	acc2Balance, _ := am.GetBankBalance(ctx, user2)
+	acc1Saving, _ := am.GetBankSaving(ctx, user1)
+	acc2Saving, _ := am.GetBankSaving(ctx, user2)
 
-	assert.Equal(t, acc1Balance, initCoin.Plus(types.NewCoin(95*types.Decimals)))
-	assert.Equal(t, acc2Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
+	assert.Equal(t, acc1Saving, initCoin.Plus(types.NewCoin(95*types.Decimals)))
+	assert.Equal(t, acc2Saving, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 	// test invalid donation target
 	donateMsg = NewDonateMsg(user1, types.LNO("100"), user1, "invalid", "")
 	result = handler(ctx, donateMsg)
@@ -321,7 +321,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
-	err := am.AddCoin(ctx, user3, types.NewCoin(123*types.Decimals))
+	err := am.AddSavingCoin(ctx, user3, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 	// repost
 	postCreateParams := PostCreateParams{
@@ -380,12 +380,12 @@ func TestHandlerRePostDonate(t *testing.T) {
 
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
-	acc2Balance, _ := am.GetBankBalance(ctx, user2)
-	acc3Balance, _ := am.GetBankBalance(ctx, user3)
-	assert.Equal(t, acc1Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(95, 100)))))
-	assert.Equal(t, acc2Balance, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(95, 100)))))
-	assert.Equal(t, acc3Balance, initCoin.Plus(types.NewCoin(23*types.Decimals)))
+	acc1Saving, _ := am.GetBankSaving(ctx, user1)
+	acc2Saving, _ := am.GetBankSaving(ctx, user2)
+	acc3Saving, _ := am.GetBankSaving(ctx, user3)
+	assert.Equal(t, acc1Saving, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(95, 100)))))
+	assert.Equal(t, acc2Saving, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(95, 100)))))
+	assert.Equal(t, acc3Saving, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 }
 
 func TestHandlerReportOrUpvote(t *testing.T) {

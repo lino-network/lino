@@ -166,7 +166,7 @@ func TestTransferNormal(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
 
 	receiverAddr, _ := am.GetBankAddress(ctx, user2)
 
@@ -231,21 +231,21 @@ func TestTransferNormal(t *testing.T) {
 			t.Errorf("%s handler(%v): got %v, want %v, err:%v", tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
 		}
 
-		senderBalance, _ := am.GetBankBalance(ctx, tc.msg.Sender)
-		var receiverBalance types.Coin
+		senderSaving, _ := am.GetBankSaving(ctx, tc.msg.Sender)
+		var receiverSaving types.Coin
 		if tc.msg.ReceiverName != "" {
-			receiverBalance, _ = am.GetBankBalance(ctx, tc.msg.ReceiverName)
+			receiverSaving, _ = am.GetBankSaving(ctx, tc.msg.ReceiverName)
 		} else {
 			bank, _ := am.storage.GetBankFromAddress(ctx, tc.msg.ReceiverAddr)
 			fmt.Println(bank)
-			receiverBalance = bank.Balance
+			receiverSaving = bank.Saving
 		}
 
-		if !senderBalance.IsEqual(tc.wantSenderBalance) {
-			t.Errorf("%s get sender bank balance(%v): got %v, want %v", tc.testName, tc.msg.Sender, senderBalance, tc.wantSenderBalance)
+		if !senderSaving.IsEqual(tc.wantSenderBalance) {
+			t.Errorf("%s get sender bank Saving(%v): got %v, want %v", tc.testName, tc.msg.Sender, senderSaving, tc.wantSenderBalance)
 		}
-		if !receiverBalance.IsEqual(tc.wantReceiverBalance) {
-			t.Errorf("%s: get receiver bank balance(%v): got %v, want %v", tc.testName, tc.msg.ReceiverName, receiverBalance, tc.wantReceiverBalance)
+		if !receiverSaving.IsEqual(tc.wantReceiverBalance) {
+			t.Errorf("%s: get receiver bank Saving(%v): got %v, want %v", tc.testName, tc.msg.ReceiverName, receiverSaving, tc.wantReceiverBalance)
 		}
 	}
 }
@@ -265,7 +265,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
 
-	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
+	acc1Balance, _ := am.GetBankSaving(ctx, types.AccountKey("user1"))
 	assert.Equal(t, acc1Balance, accParam.RegisterFee)
 }
 
@@ -277,8 +277,8 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
-	am.AddCoin(ctx, types.AccountKey("user2"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user2"), c2000)
 
 	memo := "This is a memo!"
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
@@ -296,7 +296,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
 
 	memo := "This is a memo!"
 

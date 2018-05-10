@@ -41,7 +41,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
 	voteManager.AddVoter(ctx, "user1", c8000)
@@ -53,7 +53,7 @@ func TestRegisterBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
+	acc1Balance, _ := am.GetBankSaving(ctx, user1)
 	assert.Equal(t, acc1Balance, c400.Plus(initCoin))
 	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 
@@ -78,7 +78,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user1 register as validator
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
@@ -104,7 +104,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
 	voteManager.AddVoter(ctx, "user1", c8000)
@@ -155,7 +155,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
-		am.AddCoin(ctx, users[i], c2000)
+		am.AddSavingCoin(ctx, users[i], c2000)
 
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
@@ -225,7 +225,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 	// create user
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "user1", c8000)
@@ -266,7 +266,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user1 register as voter first
 	voteManager.AddVoter(ctx, "user1", c8000)
@@ -296,7 +296,7 @@ func TestDepositBasic(t *testing.T) {
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "user1", c8000)
@@ -312,7 +312,7 @@ func TestDepositBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankBalance(ctx, user1)
+	acc1Balance, _ := am.GetBankSaving(ctx, user1)
 	assert.Equal(t, acc1Balance, c200.Plus(initCoin))
 	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 
@@ -336,7 +336,7 @@ func TestCommitingDepositExceedVotingDeposit(t *testing.T) {
 
 	// create test user
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c8000)
+	am.AddSavingCoin(ctx, user1, c8000)
 
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "user1", c4000)
@@ -370,7 +370,7 @@ func TestValidatorReplacement(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
-		am.AddCoin(ctx, users[i], c2000)
+		am.AddSavingCoin(ctx, users[i], c2000)
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		// they will deposit 10,20,30...200, 210
@@ -391,7 +391,7 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// create a user failed to join oncall validator list (not enough power)
 	user1 := createTestAccount(ctx, am, "noPowerUser")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "noPowerUser", c8000)
 
@@ -410,7 +410,7 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// create a user success to join oncall validator list
 	powerfulUser := createTestAccount(ctx, am, "powerfulUser")
-	am.AddCoin(ctx, powerfulUser, c2000)
+	am.AddSavingCoin(ctx, powerfulUser, c2000)
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "powerfulUser", c8000)
 
@@ -452,8 +452,8 @@ func TestRemoveBasic(t *testing.T) {
 	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
 	badUser := createTestAccount(ctx, am, "badUser")
 	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
-	am.AddCoin(ctx, goodUser, c2000)
-	am.AddCoin(ctx, badUser, c2000)
+	am.AddSavingCoin(ctx, goodUser, c2000)
+	am.AddSavingCoin(ctx, badUser, c2000)
 	// let user register as voter first
 	voteManager.AddVoter(ctx, "goodUser", c8000)
 	voteManager.AddVoter(ctx, "badUser", c8000)

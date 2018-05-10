@@ -117,10 +117,10 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
-	balance, err :=
-		accManager.GetBankBalance(ctx, types.AccountKey(accountName))
+	saving, err :=
+		accManager.GetBankSaving(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
-	assert.Equal(t, expectBalance, balance)
+	assert.Equal(t, expectBalance, saving)
 }
 
 func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {

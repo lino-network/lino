@@ -37,7 +37,7 @@ func setupTest(t *testing.T) (acc.AccountManager, sdk.Context, sdk.Handler) {
 
 func createBank(t *testing.T, ctx sdk.Context, am acc.AccountManager, coin types.Coin) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), coin)
+	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), coin)
 	assert.Nil(t, err)
 
 	return priv

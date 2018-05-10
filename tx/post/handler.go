@@ -101,7 +101,7 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		return ErrDonatePostDoesntExist(postKey).Result()
 	}
 	// TODO: check acitivity burden
-	if err := am.MinusCoin(ctx, msg.Username, coin); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
 		return ErrDonateFailed(postKey).Result()
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
@@ -148,7 +148,7 @@ func processDonationFriction(
 	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := am.AddCoin(ctx, postAuthor, directDeposit); err != nil {
+	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	if err := gm.AddConsumption(ctx, coin); err != nil {
