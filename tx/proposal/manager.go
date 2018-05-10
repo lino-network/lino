@@ -31,6 +31,20 @@ func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.Prop
 	return proposalByte != nil
 }
 
+func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	lst, err := pm.storage.GetProposalList(ctx)
+	if err != nil {
+		return false
+	}
+
+	for _, id := range lst.OngoingProposal {
+		if id == proposalID {
+			return true
+		}
+	}
+	return false
+}
+
 func (pm ProposalManager) CreateContentCensorshipProposal(
 	ctx sdk.Context, permLink types.PermLink) model.Proposal {
 	return &model.ContentCensorshipProposal{
@@ -83,27 +97,33 @@ func (pm ProposalManager) AddProposal(
 	return newID, nil
 }
 
-func (pm ProposalManager) GetCurrentProposal(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
-	lst, err := pm.storage.GetProposalList(ctx)
+func (pm ProposalManager) GetProposalPassParam(
+	ctx sdk.Context, proposalType types.ProposalType) (sdk.Rat, types.Coin, sdk.Error) {
+	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
-		return types.ProposalKey(""), err
+		return sdk.NewRat(1, 1), types.NewCoin(0), err
 	}
-
-	if len(lst.OngoingProposal) == 0 {
-		return types.ProposalKey(""), ErrOngoingProposalNotFound()
+	switch proposalType {
+	case types.ChangeParam:
+		return param.ChangeParamPassRatio, param.ChangeParamPassVotes, nil
+	case types.ContentCensorship:
+		return param.ContentCensorshipPassRatio, param.ContentCensorshipPassVotes, nil
+	case types.ProtocolUpgrade:
+		return param.ProtocolUpgradePassRatio, param.ProtocolUpgradePassVotes, nil
+	default:
+		return sdk.NewRat(1, 1), types.NewCoin(0), ErrWrongProposalType()
 	}
-	return lst.OngoingProposal[0], nil
 }
 
 func (pm ProposalManager) UpdateProposalStatus(
-	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType) (types.ProposalResult, sdk.Error) {
+	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType,
+	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
 	lst, err := pm.storage.GetProposalList(ctx)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
 
-	curID := lst.OngoingProposal[0]
-	proposal, err := pm.storage.GetProposal(ctx, curID)
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
@@ -113,18 +133,34 @@ func (pm ProposalManager) UpdateProposalStatus(
 	proposalInfo.AgreeVotes = res.AgreeVotes
 	proposalInfo.DisagreeVotes = res.DisagreeVotes
 
-	// TODO consider different types of propsal
-	if proposalInfo.AgreeVotes.IsGT(proposalInfo.DisagreeVotes) {
+	// calculate if agree votes meet minimum pass requirement
+	ratio, minVotes, err := pm.GetProposalPassParam(ctx, proposalType)
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	totalVotes := res.AgreeVotes.Plus(res.DisagreeVotes)
+	if !totalVotes.IsGT(minVotes) {
+		return types.ProposalNotPass, nil
+	}
+	actualRatio := res.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
+	if !actualRatio.LT(ratio) {
 		proposalInfo.Result = types.ProposalPass
 	}
 
 	proposal.SetProposalInfo(proposalInfo)
-	if err := pm.storage.SetProposal(ctx, curID, proposal); err != nil {
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
 		return types.ProposalNotPass, err
 	}
 
-	lst.OngoingProposal = lst.OngoingProposal[1:]
-	lst.PastProposal = append(lst.PastProposal, curID)
+	// update ongoing and past proposal list
+	for index, id := range lst.OngoingProposal {
+		if id == proposalID {
+			lst.OngoingProposal = append(lst.OngoingProposal[:index], lst.OngoingProposal[index+1:]...)
+			break
+		}
+	}
+	lst.PastProposal = append(lst.PastProposal, proposalID)
 
 	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
 		return types.ProposalNotPass, err
@@ -133,9 +169,10 @@ func (pm ProposalManager) UpdateProposalStatus(
 }
 
 func (pm ProposalManager) CreateDecideProposalEvent(
-	ctx sdk.Context, proposalType types.ProposalType) (types.Event, sdk.Error) {
+	ctx sdk.Context, proposalType types.ProposalType, proposalID types.ProposalKey) (types.Event, sdk.Error) {
 	event := DecideProposalEvent{
 		ProposalType: proposalType,
+		ProposalID:   proposalID,
 	}
 	return event, nil
 }

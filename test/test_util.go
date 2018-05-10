@@ -38,13 +38,15 @@ var (
 	GenesisTotalLino types.LNO = "10000000000"
 	LNOPerValidator  types.LNO = "100000000"
 
-	PenaltyMissVote             types.Coin = types.NewCoin(200 * types.Decimals)
-	ProposalDecideHr            int64      = 24 * 7
-	ParamChangeHr               int64      = 24
-	CoinReturnIntervalHr        int64      = 24 * 7
-	CoinReturnTimes             int64      = 7
-	ConsumptionFrictionRate     sdk.Rat    = sdk.NewRat(5, 100)
-	ConsumptionFreezingPeriodHr int64      = 24 * 7
+	PenaltyMissVote       types.Coin = types.NewCoin(200 * types.Decimals)
+	ChangeParamMinDeposit types.Coin = types.NewCoin(100000 * types.Decimals)
+
+	ProposalDecideHr            int64   = 24 * 7
+	ParamChangeHr               int64   = 24
+	CoinReturnIntervalHr        int64   = 24 * 7
+	CoinReturnTimes             int64   = 7
+	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodHr int64   = 24 * 7
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {

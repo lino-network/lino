@@ -108,18 +108,20 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")
 	}
 
-	// TODO need to init other proposal params
 	proposalParam := &ProposalParam{
 		ContentCensorshipDecideHr:   int64(24 * 7),
 		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
 
 		ChangeParamDecideHr:   int64(24 * 7),
 		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
 		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideHr:   int64(24 * 7),
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
 
 		NextProposalID: int64(0),
