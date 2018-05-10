@@ -20,14 +20,15 @@ func TestDecideProposal(t *testing.T) {
 	user3 := createTestAccount(ctx, am, "user3")
 	user4 := createTestAccount(ctx, am, "user4")
 
-	voteParam, _ := pm.paramHolder.GetVoteParam(ctx)
+	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 
-	c1, c2, c3, c4 := voteParam.VoterMinDeposit.Plus(types.NewCoin(20)), voteParam.VoterMinDeposit.Plus(types.NewCoin(30)),
-		voteParam.VoterMinDeposit.Plus(types.NewCoin(50)), voteParam.VoterMinDeposit.Plus(types.NewCoin(10))
+	c1, c2, c3, c4 := proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(20)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(30)),
+		proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(50)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(10))
 	voteManager.AddVoter(ctx, user1, c1)
 	voteManager.AddVoter(ctx, user2, c2)
 	voteManager.AddVoter(ctx, user3, c3)
 	voteManager.AddVoter(ctx, user4, c4)
+
 	param1 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(50, 100),
 	}

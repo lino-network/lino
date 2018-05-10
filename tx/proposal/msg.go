@@ -69,6 +69,11 @@ type ChangeBandwidthParamMsg struct {
 	Parameter param.BandwidthParam `json:"parameter"`
 }
 
+type ChangeAccountParamMsg struct {
+	Creator   types.AccountKey   `json:"creator"`
+	Parameter param.AccountParam `json:"parameter"`
+}
+
 //----------------------------------------
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
@@ -183,7 +188,10 @@ func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if !msg.Parameter.CDNAllocation.
+		Add(msg.Parameter.StorageAllocation).Equal(sdk.NewRat(1)) {
+		return ErrIllegalParameter()
+	}
 
 	return nil
 }
@@ -228,7 +236,18 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if msg.Parameter.DelegatorCoinReturnIntervalHr <= 0 ||
+		msg.Parameter.VoterCoinReturnIntervalHr <= 0 ||
+		msg.Parameter.DelegatorCoinReturnTimes <= 0 ||
+		msg.Parameter.VoterCoinReturnTimes <= 0 {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.Parameter.DelegatorMinWithdraw.IsPositive() ||
+		!msg.Parameter.VoterMinDeposit.IsPositive() ||
+		!msg.Parameter.VoterMinWithdraw.IsPositive() {
+		return ErrIllegalParameter()
+	}
 	return nil
 }
 
@@ -272,7 +291,26 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if msg.Parameter.ContentCensorshipDecideHr <= 0 ||
+		msg.Parameter.ChangeParamDecideHr <= 0 ||
+		msg.Parameter.ProtocolUpgradeDecideHr <= 0 {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.Parameter.ContentCensorshipMinDeposit.IsPositive() ||
+		!msg.Parameter.ContentCensorshipPassVotes.IsPositive() ||
+		!msg.Parameter.ChangeParamMinDeposit.IsPositive() ||
+		!msg.Parameter.ChangeParamPassVotes.IsPositive() ||
+		!msg.Parameter.ProtocolUpgradePassVotes.IsPositive() ||
+		!msg.Parameter.ProtocolUpgradeMinDeposit.IsPositive() {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat) ||
+		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat) ||
+		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat) {
+		return ErrIllegalParameter()
+	}
 
 	return nil
 }
@@ -317,7 +355,15 @@ func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if msg.Parameter.DeveloperCoinReturnIntervalHr <= 0 ||
+		msg.Parameter.DeveloperCoinReturnTimes <= 0 {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.Parameter.DeveloperMinDeposit.IsPositive() {
+		return ErrIllegalParameter()
+	}
+
 	return nil
 }
 
@@ -361,7 +407,20 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if msg.Parameter.ValidatorCoinReturnIntervalHr <= 0 ||
+		msg.Parameter.ValidatorCoinReturnTimes <= 0 {
+		return ErrIllegalParameter()
+	}
+
+	if !msg.Parameter.ValidatorMinWithdraw.IsPositive() ||
+		!msg.Parameter.ValidatorMinVotingDeposit.IsPositive() ||
+		!msg.Parameter.ValidatorMinCommitingDeposit.IsPositive() ||
+		!msg.Parameter.PenaltyMissVote.IsPositive() ||
+		!msg.Parameter.PenaltyMissCommit.IsPositive() ||
+		!msg.Parameter.PenaltyByzantine.IsPositive() {
+		return ErrIllegalParameter()
+	}
+
 	return nil
 }
 
@@ -405,8 +464,7 @@ func (msg ChangeCoinDayParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
-
+	// TODO
 	return nil
 }
 
@@ -431,20 +489,20 @@ func (msg ChangeCoinDayParamMsg) GetSigners() []sdk.Address {
 }
 
 //----------------------------------------
-// ChangeBandwidthParamMsg Msg Implementations
+// ChangeAccountParamMsg Msg Implementations
 
-func NewChangeBandwidthParamMsg(creator string, parameter param.BandwidthParam) ChangeBandwidthParamMsg {
-	return ChangeBandwidthParamMsg{
+func NewChangeAccountParamMsg(creator string, parameter param.AccountParam) ChangeAccountParamMsg {
+	return ChangeAccountParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
 	}
 }
 
-func (msg ChangeBandwidthParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeBandwidthParamMsg) Type() string                  { return types.ProposalRouterName }
+func (msg ChangeAccountParamMsg) GetParameter() param.Parameter { return msg.Parameter }
+func (msg ChangeAccountParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeAccountParamMsg) Type() string                  { return types.ProposalRouterName }
 
-func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
+func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
@@ -454,15 +512,15 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg ChangeBandwidthParamMsg) String() string {
-	return fmt.Sprintf("ChangeBandwidthParamMsg{Creator:%v}", msg.Creator)
+func (msg ChangeAccountParamMsg) String() string {
+	return fmt.Sprintf("ChangeAccountParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeBandwidthParamMsg) Get(key interface{}) (value interface{}) {
+func (msg ChangeAccountParamMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 
-func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
+func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -470,6 +528,6 @@ func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.Address {
+func (msg ChangeAccountParamMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }

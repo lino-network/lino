@@ -34,11 +34,12 @@ func handleChangeParamMsg(
 	}
 
 	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter())
-	if _, err := pm.AddProposal(ctx, msg.GetCreator(), proposal); err != nil {
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ChangeParam)
+	event, err := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
 	if err != nil {
 		return err.Result()
 	}
@@ -73,11 +74,12 @@ func handleProtocolUpgradeMsg(
 	}
 
 	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink())
-	if _, err := pm.AddProposal(ctx, msg.GetCreator(), proposal); err != nil {
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade)
+	event, err := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
 	if err != nil {
 		return err.Result()
 	}
@@ -112,11 +114,12 @@ func handleContentCensorshipMsg(
 	}
 
 	proposal := pm.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
-	if _, err := pm.AddProposal(ctx, msg.GetCreator(), proposal); err != nil {
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ContentCensorship)
+	event, err := pm.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
 	if err != nil {
 		return err.Result()
 	}

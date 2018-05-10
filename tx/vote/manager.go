@@ -318,7 +318,7 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 }
 
 func (vm VoteManager) CalculateVotingResult(
-	ctx sdk.Context, proposalID types.ProposalKey,
+	ctx sdk.Context, proposalID types.ProposalKey, proposalType types.ProposalType,
 	oncallValidators []types.AccountKey) (types.VotingResult, sdk.Error) {
 	res := types.VotingResult{
 		AgreeVotes:    types.NewCoin(0),
@@ -349,9 +349,11 @@ func (vm VoteManager) CalculateVotingResult(
 		vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
 	}
 
-	// put all validators who didn't vote into penalty list
-	for _, validator := range oncallValidators {
-		res.PenaltyList = append(res.PenaltyList, validator)
+	// put all validators who didn't vote on these two types proposal into penalty list
+	if proposalType == types.ChangeParam || proposalType == types.ProtocolUpgrade {
+		for _, validator := range oncallValidators {
+			res.PenaltyList = append(res.PenaltyList, validator)
+		}
 	}
 	return res, nil
 }

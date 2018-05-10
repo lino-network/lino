@@ -50,12 +50,15 @@ type ProposalParam struct {
 	ContentCensorshipDecideHr   int64      `json:"content_censorship_decide_hr"`
 	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`
 	ContentCensorshipPassRatio  sdk.Rat    `json:"content_censorship_pass_ratio"`
+	ContentCensorshipPassVotes  types.Coin `json:"content_censorship_pass_votes"`
 	ChangeParamDecideHr         int64      `json:"change_param_decide_hr"`
 	ChangeParamMinDeposit       types.Coin `json:"change_param_min_deposit"`
 	ChangeParamPassRatio        sdk.Rat    `json:"change_param_pass_ratio"`
+	ChangeParamPassVotes        types.Coin `json:"change_param_pass_votes"`
 	ProtocolUpgradeDecideHr     int64      `json:"protocol_upgrade_decide_hr"`
 	ProtocolUpgradeMinDeposit   types.Coin `json:"protocol_upgrade_min_deposit"`
 	ProtocolUpgradePassRatio    sdk.Rat    `json:"protocol_upgrade_pass_ratio"`
+	ProtocolUpgradePassVotes    types.Coin `json:"protocol_upgrade_pass_votes"`
 }
 
 type DeveloperParam struct {

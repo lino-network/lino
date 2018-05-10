@@ -17,11 +17,11 @@ type DecideProposalEvent struct {
 
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
-	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager, gm global.GlobalManager) sdk.Error {
-	// get the proposal ID we are going to decide
-	curID, err := proposalManager.GetCurrentProposal(ctx)
-	if err != nil {
-		return err
+	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager,
+	gm global.GlobalManager) sdk.Error {
+	// check it is ongoing proposal
+	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {
+		return ErrOngoingProposalNotFound()
 	}
 
 	// get all oncall validators (make sure they voted on certain type of proposal)
@@ -31,7 +31,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// calculate voting result
-	votingRes, err := voteManager.CalculateVotingResult(ctx, curID, lst.OncallValidators)
+	votingRes, err := voteManager.CalculateVotingResult(
+		ctx, dpe.ProposalID, dpe.ProposalType, lst.OncallValidators)
 	if err != nil {
 		return err
 	}
@@ -62,15 +63,15 @@ func (dpe DecideProposalEvent) Execute(
 	// execute proposal
 	switch dpe.ProposalType {
 	case types.ChangeParam:
-		if err := dpe.ExecuteChangeParam(ctx, curID, proposalManager, gm); err != nil {
+		if err := dpe.ExecuteChangeParam(ctx, dpe.ProposalID, proposalManager, gm); err != nil {
 			return err
 		}
 	case types.ContentCensorship:
-		if err := dpe.ExecuteContentCensorship(ctx, curID, proposalManager, postManager); err != nil {
+		if err := dpe.ExecuteContentCensorship(ctx, dpe.ProposalID, proposalManager, postManager); err != nil {
 			return err
 		}
 	case types.ProtocolUpgrade:
-		if err := dpe.ExecuteProtocolUpgrade(ctx, curID, proposalManager); err != nil {
+		if err := dpe.ExecuteProtocolUpgrade(ctx, dpe.ProposalID, proposalManager); err != nil {
 			return err
 		}
 	}
@@ -78,7 +79,8 @@ func (dpe DecideProposalEvent) Execute(
 }
 
 func (dpe DecideProposalEvent) ExecuteChangeParam(
-	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager, gm global.GlobalManager) sdk.Error {
+	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
+	gm global.GlobalManager) sdk.Error {
 	event, err := proposalManager.CreateParamChangeEvent(ctx, curID)
 	if err != nil {
 		return err
@@ -90,7 +92,8 @@ func (dpe DecideProposalEvent) ExecuteChangeParam(
 }
 
 func (dpe DecideProposalEvent) ExecuteContentCensorship(
-	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager, postManager post.PostManager) sdk.Error {
+	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
+	postManager post.PostManager) sdk.Error {
 	_, err := proposalManager.GetPermLink(ctx, curID)
 	if err != nil {
 		return err
