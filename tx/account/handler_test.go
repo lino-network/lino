@@ -263,7 +263,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	// let user1 transfers 2000 to user2
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
+	assert.Equal(t, ErrAccountSavingCoinNotEnough().Result(), result)
 
 	acc1Balance, _ := am.GetBankSaving(ctx, types.AccountKey("user1"))
 	assert.Equal(t, acc1Balance, accParam.RegisterFee)

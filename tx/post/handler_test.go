@@ -261,7 +261,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	err := am.AddSavingCoin(ctx, user2, types.NewCoin(123*types.Decimals))
 	assert.Nil(t, err)
 
-	donateMsg := NewDonateMsg(user2, types.LNO("100"), user1, postID, "")
+	donateMsg := NewDonateMsg(user2, types.LNO("100"), user1, postID, "", false)
 	result := handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -295,23 +295,23 @@ func TestHandlerPostDonate(t *testing.T) {
 	assert.Equal(t, acc1Saving, initCoin.Plus(types.NewCoin(95*types.Decimals)))
 	assert.Equal(t, acc2Saving, initCoin.Plus(types.NewCoin(23*types.Decimals)))
 	// test invalid donation target
-	donateMsg = NewDonateMsg(user1, types.LNO("100"), user1, "invalid", "")
+	donateMsg = NewDonateMsg(user1, types.LNO("100"), user1, "invalid", "", false)
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, ErrDonatePostDoesntExist(types.GetPermLink(user1, "invalid")).Result())
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	// test invalid user1name
-	donateMsg = NewDonateMsg(types.AccountKey("invalid"), types.LNO("100"), user1, postID, "")
+	donateMsg = NewDonateMsg(types.AccountKey("invalid"), types.LNO("100"), user1, postID, "", false)
 	result = handler(ctx, donateMsg)
 
 	assert.Equal(t, result, ErrDonateUserNotFound(types.AccountKey("invalid")).Result())
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
 	// test insufficient deposit
-	donateMsg = NewDonateMsg(user2, types.LNO("100"), user1, postID, "")
+	donateMsg = NewDonateMsg(user2, types.LNO("100"), user1, postID, "", false)
 	result = handler(ctx, donateMsg)
 
-	assert.Equal(t, result, ErrDonateFailed(types.GetPermLink(user1, postID)).Result())
+	assert.Equal(t, result, ErrAccountSavingCoinNotEnough(types.GetPermLink(user1, postID)).Result())
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
@@ -340,7 +340,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO("100"), user2, "repost", "")
+	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO("100"), user2, "repost", "", false)
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 

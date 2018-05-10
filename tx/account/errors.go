@@ -34,8 +34,12 @@ func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
 }
 
-func ErrAddCoinToAccount(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to account %v failed", accKey))
+func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed", accKey))
+}
+
+func ErrAddCoinToAccountChecking(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add checking coin to account %v failed", accKey))
 }
 
 func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
@@ -126,6 +130,10 @@ func ErrUsernameAddressMismatch() sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("username and address mismatch"))
 }
 
-func ErrAccountCoinNotEnough() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's coins are not enough"))
+func ErrAccountSavingCoinNotEnough() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
+}
+
+func ErrAccountCheckingCoinNotEnough() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
 }

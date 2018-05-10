@@ -89,30 +89,36 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 
 // Handle DonateMsg
 func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	postKey := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
+		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrDonateUserNotFound(msg.Username).Result()
 	}
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrDonatePostDoesntExist(postKey).Result()
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrDonatePostDoesntExist(permLink).Result()
 	}
 	// TODO: check acitivity burden
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
-		return ErrDonateFailed(postKey).Result()
+	if msg.FromChecking {
+		if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
+			return ErrAccountCheckingCoinNotEnough(permLink).Result()
+		}
+	} else {
+		if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+			return ErrAccountSavingCoinNotEnough(permLink).Result()
+		}
 	}
-	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "").Result()
+		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
 		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePostKey)
 		if err != nil {
-			return ErrDonateFailed(postKey).TraceCause(err, "").Result()
+			return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 		}
 		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat.Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)

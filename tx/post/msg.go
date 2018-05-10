@@ -43,11 +43,12 @@ type LikeMsg struct {
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username types.AccountKey
-	Amount   types.LNO
-	Author   types.AccountKey
-	PostID   string
-	FromApp  types.AccountKey
+	Username     types.AccountKey
+	Amount       types.LNO
+	Author       types.AccountKey
+	PostID       string
+	FromApp      types.AccountKey
+	FromChecking bool
 }
 
 // ViewMsg sent from a user to a post
@@ -97,14 +98,15 @@ func NewViewMsg(
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user types.AccountKey, amount types.LNO, author types.AccountKey,
-	postID string, fromApp types.AccountKey) DonateMsg {
+	postID string, fromApp types.AccountKey, fromChecking bool) DonateMsg {
 
 	return DonateMsg{
-		Username: user,
-		Amount:   amount,
-		Author:   author,
-		PostID:   postID,
-		FromApp:  fromApp,
+		Username:     user,
+		Amount:       amount,
+		Author:       author,
+		PostID:       postID,
+		FromApp:      fromApp,
+		FromChecking: fromChecking,
 	}
 }
 
@@ -225,6 +227,9 @@ func (msg DonateMsg) Get(key interface{}) (value interface{}) {
 		return nil
 	}
 	if keyStr == types.PermissionLevel {
+		if msg.FromChecking {
+			return types.PostPermission
+		}
 		return types.TransactionPermission
 	}
 	return nil

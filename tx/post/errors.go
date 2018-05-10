@@ -91,6 +91,14 @@ func ErrDonateFailed(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed", permLink))
 }
 
+func ErrAccountCheckingCoinNotEnough(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, user checking coin not enough", permLink))
+}
+
+func ErrAccountSavingCoinNotEnough(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, user checking coin not enough", permLink))
+}
+
 func ErrDonateUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, user %v not found", user))
 }

@@ -42,6 +42,7 @@ var (
 
 	coin0   = types.NewCoin(0)
 	coin1   = types.NewCoin(1)
+	coin2   = types.NewCoin(2)
 	coin50  = types.NewCoin(50)
 	coin100 = types.NewCoin(100)
 	coin200 = types.NewCoin(200)
