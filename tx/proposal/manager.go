@@ -96,14 +96,14 @@ func (pm ProposalManager) GetCurrentProposal(ctx sdk.Context) (types.ProposalKey
 }
 
 func (pm ProposalManager) UpdateProposalStatus(
-	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType) (types.ProposalResult, sdk.Error) {
+	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType,
+	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
 	lst, err := pm.storage.GetProposalList(ctx)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
 
-	curID := lst.OngoingProposal[0]
-	proposal, err := pm.storage.GetProposal(ctx, curID)
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
@@ -119,12 +119,18 @@ func (pm ProposalManager) UpdateProposalStatus(
 	}
 
 	proposal.SetProposalInfo(proposalInfo)
-	if err := pm.storage.SetProposal(ctx, curID, proposal); err != nil {
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
 		return types.ProposalNotPass, err
 	}
 
-	lst.OngoingProposal = lst.OngoingProposal[1:]
-	lst.PastProposal = append(lst.PastProposal, curID)
+	// update ongoing and past proposal list
+	for index, id := range lst.OngoingProposal {
+		if id == proposalID {
+			lst.OngoingProposal = append(lst.OngoingProposal[:index], lst.OngoingProposal[index+1:]...)
+			break
+		}
+	}
+	lst.PastProposal = append(lst.PastProposal, proposalID)
 
 	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
 		return types.ProposalNotPass, err

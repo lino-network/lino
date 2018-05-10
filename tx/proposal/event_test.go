@@ -28,7 +28,6 @@ func TestDecideProposal(t *testing.T) {
 	voteManager.AddVoter(ctx, user2, c2)
 	voteManager.AddVoter(ctx, user3, c3)
 	voteManager.AddVoter(ctx, user4, c4)
-	e := DecideProposalEvent{}
 	param1 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(50, 100),
 	}
@@ -40,7 +39,18 @@ func TestDecideProposal(t *testing.T) {
 	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1)
 	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2)
 
+	e1 := DecideProposalEvent{
+		ProposalType: types.ChangeParam,
+		ProposalID:   id1,
+	}
+
+	e2 := DecideProposalEvent{
+		ProposalType: types.ChangeParam,
+		ProposalID:   id2,
+	}
+
 	cases := []struct {
+		event                 DecideProposalEvent
 		decideProposal        bool
 		voter                 types.AccountKey
 		proposalID            types.ProposalKey
@@ -51,27 +61,27 @@ func TestDecideProposal(t *testing.T) {
 		expectAgreeVotes      types.Coin
 		expectDisagreeVotes   types.Coin
 	}{
-		{false, user1, id1, true, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
+		{e1, false, user1, id1, true, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
 			c1, c2},
-		{false, user2, id1, false, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
+		{e1, false, user2, id1, false, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
 			c1, c2},
-		{true, types.AccountKey(""), id1, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
+		{e1, true, types.AccountKey(""), id1, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
 			types.ProposalNotPass, c1, c2},
-		{false, user1, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
+		{e2, false, user1, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
 			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{false, user2, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
+		{e2, false, user2, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
 			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{false, user4, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
+		{e2, false, user4, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
 			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{false, user3, id2, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
+		{e2, false, user3, id2, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
 			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{true, types.AccountKey(""), id2, false, nil, []types.ProposalKey{id1, id2},
+		{e2, true, types.AccountKey(""), id2, false, nil, []types.ProposalKey{id1, id2},
 			types.ProposalPass, c1.Plus(c2).Plus(c4), c3},
 	}
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			e.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
+			cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
 			proposal, _ := pm.storage.GetProposal(ctx, cs.proposalID)
 			proposalInfo := proposal.GetProposalInfo()
 

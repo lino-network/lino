@@ -12,6 +12,7 @@ import (
 
 type DecideProposalEvent struct {
 	ProposalType types.ProposalType `json:"proposal_type"`
+	ProposalID   types.ProposalKey  `json:"proposal_id"`
 }
 
 func (dpe DecideProposalEvent) Execute(
@@ -47,7 +48,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// update the ongoing and past proposal list
-	proposalRes, err := proposalManager.UpdateProposalStatus(ctx, votingRes, dpe.ProposalType)
+	proposalRes, err := proposalManager.UpdateProposalStatus(
+		ctx, votingRes, dpe.ProposalType, dpe.ProposalID)
 	if err != nil {
 		return err
 	}
