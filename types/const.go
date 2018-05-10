@@ -40,6 +40,11 @@ const (
 	ProposalNotPass = ProposalResult(1)
 	ProposalRevoked = ProposalResult(2)
 
+	// Different proposal types
+	ChangeParam       = ProposalType(0)
+	ContentCensorship = ProposalType(1)
+	ProtocolUpgrade   = ProposalType(2)
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 

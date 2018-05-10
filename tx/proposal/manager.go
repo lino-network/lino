@@ -3,7 +3,6 @@ package proposal
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/proposal/model"
 	"github.com/lino-network/lino/types"
 )
@@ -32,29 +31,41 @@ func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.Prop
 	return proposalByte != nil
 }
 
-// only support change parameter proposal now
-func (pm ProposalManager) AddProposal(ctx sdk.Context, creator types.AccountKey,
-	des model.Description, gm global.GlobalManager) (types.ProposalKey, sdk.Error) {
+func (pm ProposalManager) CreateContentCensorshipProposal(
+	ctx sdk.Context, permLink types.PermLink) model.Proposal {
+	return &model.ContentCensorshipProposal{
+		PermLink: permLink,
+	}
+}
+
+func (pm ProposalManager) CreateProtocolUpgradeProposal(ctx sdk.Context, link string) model.Proposal {
+	return &model.ProtocolUpgradeProposal{
+		Link: link,
+	}
+}
+
+func (pm ProposalManager) CreateChangeParamProposal(
+	ctx sdk.Context, parameter param.Parameter) model.Proposal {
+	return &model.ChangeParamProposal{
+		Param: parameter,
+	}
+}
+
+func (pm ProposalManager) AddProposal(
+	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.paramHolder.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
 	}
 
-	var proposal model.Proposal
-	proposalInfo := model.ProposalInfo{
+	info := model.ProposalInfo{
 		Creator:       creator,
 		ProposalID:    newID,
 		AgreeVotes:    types.Coin{Amount: 0},
 		DisagreeVotes: types.Coin{Amount: 0},
 		Result:        types.ProposalNotPass,
 	}
-
-	switch des := des.(type) {
-	case param.GlobalAllocationParam:
-		proposal = &model.ChangeGlobalAllocationParamProposal{proposalInfo, des}
-	default:
-		panic(des)
-	}
+	proposal.SetProposalInfo(info)
 
 	if err := pm.storage.SetProposal(ctx, newID, proposal); err != nil {
 		return newID, err
@@ -85,7 +96,7 @@ func (pm ProposalManager) GetCurrentProposal(ctx sdk.Context) (types.ProposalKey
 }
 
 func (pm ProposalManager) UpdateProposalStatus(
-	ctx sdk.Context, res types.VotingResult) (types.ProposalResult, sdk.Error) {
+	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType) (types.ProposalResult, sdk.Error) {
 	lst, err := pm.storage.GetProposalList(ctx)
 	if err != nil {
 		return types.ProposalNotPass, err
@@ -121,33 +132,43 @@ func (pm ProposalManager) UpdateProposalStatus(
 	return proposalInfo.Result, nil
 }
 
-func (pm ProposalManager) CreateDecideProposalEvent(ctx sdk.Context, gm global.GlobalManager) sdk.Error {
-	event := DecideProposalEvent{}
-	if err := gm.RegisterProposalDecideEvent(ctx, event); err != nil {
-		return err
+func (pm ProposalManager) CreateDecideProposalEvent(
+	ctx sdk.Context, proposalType types.ProposalType) (types.Event, sdk.Error) {
+	event := DecideProposalEvent{
+		ProposalType: proposalType,
 	}
-	return nil
+	return event, nil
 }
 
 func (pm ProposalManager) CreateParamChangeEvent(
-	ctx sdk.Context, proposalID types.ProposalKey, gm global.GlobalManager) sdk.Error {
+	ctx sdk.Context, proposalID types.ProposalKey) (types.Event, sdk.Error) {
 	proposal, err := pm.storage.GetProposal(ctx, proposalID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var event types.Event
-	switch proposal := proposal.(type) {
-	case *model.ChangeGlobalAllocationParamProposal:
-		event = param.ChangeGlobalAllocationParamEvent{proposal.Description}
-	default:
-		panic("err")
+	p, ok := proposal.(*model.ChangeParamProposal)
+	if !ok {
+		return nil, ErrWrongProposalType()
 	}
 
-	if err := gm.RegisterParamChangeEvent(ctx, event); err != nil {
-		return err
+	event := param.ChangeParamEvent{
+		Param: p.Param,
 	}
-	return nil
+	return event, nil
+}
+
+func (pm ProposalManager) GetPermLink(ctx sdk.Context, proposalID types.ProposalKey) (types.PermLink, sdk.Error) {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return types.PermLink(""), err
+	}
+
+	p, ok := proposal.(*model.ContentCensorshipProposal)
+	if !ok {
+		return types.PermLink(""), ErrWrongProposalType()
+	}
+	return p.PermLink, nil
 }
 
 func (pm ProposalManager) GetProposalList(ctx sdk.Context) (*model.ProposalList, sdk.Error) {

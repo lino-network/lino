@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestChangeGlobalAllocationMsg(t *testing.T) {
+func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	des1 := param.GlobalAllocationParam{
 		InfraAllocation:          sdk.Rat{20, 100},
 		ContentCreatorAllocation: sdk.Rat{55, 100},
@@ -24,16 +24,16 @@ func TestChangeGlobalAllocationMsg(t *testing.T) {
 	}
 
 	cases := []struct {
-		changeGlobalAllocationMsg ChangeGlobalAllocationMsg
-		expectError               sdk.Error
+		ChangeGlobalAllocationParamMsg ChangeGlobalAllocationParamMsg
+		expectError                    sdk.Error
 	}{
-		{NewChangeGlobalAllocationMsg("user1", des1), nil},
-		{NewChangeGlobalAllocationMsg("user1", des2), ErrIllegalParameter()},
-		{NewChangeGlobalAllocationMsg("", des1), ErrInvalidUsername()},
+		{NewChangeGlobalAllocationParamMsg("user1", des1), nil},
+		{NewChangeGlobalAllocationParamMsg("user1", des2), ErrIllegalParameter()},
+		{NewChangeGlobalAllocationParamMsg("", des1), ErrInvalidUsername()},
 	}
 
 	for _, cs := range cases {
-		result := cs.changeGlobalAllocationMsg.ValidateBasic()
+		result := cs.ChangeGlobalAllocationParamMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
 }

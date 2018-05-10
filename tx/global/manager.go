@@ -101,15 +101,10 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 	return nil
 }
 
-func (gm GlobalManager) RegisterProposalDecideEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	proposalParam, err := gm.paramHolder.GetProposalParam(ctx)
-	if err != nil {
-		return err
-	}
-
-	// user type A proposal for now, will update in next pr
+func (gm GlobalManager) RegisterProposalDecideEvent(
+	ctx sdk.Context, decideHr int64, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+(proposalParam.TypeAProposalDecideHr*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time+(decideHr*3600), event); err != nil {
 		return err
 	}
 	return nil

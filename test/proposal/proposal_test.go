@@ -29,10 +29,10 @@ func TestForceValidatorVote(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, accountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), accountTransactionPriv, accountPostPriv, "10000")
+		crypto.GenPrivKeyEd25519(), accountTransactionPriv, accountPostPriv, "1000000")
 
 	test.CreateAccount(t, accountName2, lb, 1,
-		crypto.GenPrivKeyEd25519(), accountTransactionPriv2, accountPostPriv2, "10000")
+		crypto.GenPrivKeyEd25519(), accountTransactionPriv2, accountPostPriv2, "1000000")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(accountName, types.LNO("3000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, accountTransactionPriv, baseTime)
@@ -56,11 +56,11 @@ func TestForceValidatorVote(t *testing.T) {
 		ValidatorAllocation:      sdk.NewRat(97, 100),
 	}
 
-	changeAllocationMsg := proposal.NewChangeGlobalAllocationMsg(accountName, desc)
+	changeAllocationMsg := proposal.NewChangeGlobalAllocationParamMsg(accountName, desc)
 	test.SignCheckDeliver(t, lb, changeAllocationMsg, 2, true, accountTransactionPriv, baseTime)
 
-	test.CheckBalance(t, accountName, lb, types.NewCoin(4000*types.Decimals))
-	test.CheckBalance(t, accountName2, lb, types.NewCoin(4000*types.Decimals))
+	test.CheckBalance(t, accountName, lb, types.NewCoin(894000*types.Decimals))
+	test.CheckBalance(t, accountName2, lb, types.NewCoin(994000*types.Decimals))
 
 	test.SimulateOneBlock(lb, baseTime)
 	// let validator 1 vote and validator 2 not vote.
@@ -74,5 +74,4 @@ func TestForceValidatorVote(t *testing.T) {
 	// check validator 2 has been punished for not voting
 	test.CheckValidatorDeposit(t, accountName, lb, types.NewCoin(3000*types.Decimals))
 	test.CheckValidatorDeposit(t, accountName2, lb, types.NewCoin(3000*types.Decimals).Minus(test.PenaltyMissVote))
-
 }
