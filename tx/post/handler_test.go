@@ -253,65 +253,176 @@ func TestHandlerPostLike(t *testing.T) {
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	ctx, am, _, pm, gm := setupTest(t, 1)
+	ctx, am, ph, pm, gm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm)
 
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
-	user2 := createTestAccount(t, ctx, am, "user2")
-	err := am.AddSavingCoin(ctx, user2, types.NewCoin(123*types.Decimals))
+	accParam, err := ph.GetAccountParam(ctx)
 	assert.Nil(t, err)
 
-	donateMsg := NewDonateMsg(user2, types.LNO("100"), user1, postID, "", false)
-	result := handler(ctx, donateMsg)
-	assert.Equal(t, result, sdk.Result{})
+	author, postID := createTestPost(t, ctx, "author", "postID", am, pm, "0")
 
-	// after handler check KVStore
 	postInfo := model.PostInfo{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
-		Author:       user1,
+		Author:       author,
 		ParentAuthor: "",
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
 		Links:        nil,
 	}
-	postMeta := model.PostMeta{
-		Created:                 ctx.BlockHeader().Time,
-		LastUpdate:              ctx.BlockHeader().Time,
-		LastActivity:            ctx.BlockHeader().Time,
-		AllowReplies:            true,
-		TotalDonateCount:        1,
-		TotalReward:             types.NewCoin(95 * types.Decimals),
-		RedistributionSplitRate: sdk.ZeroRat,
+
+	userWithSufficientSaving := createTestAccount(t, ctx, am, "userWithSufficientSaving")
+	userWithSufficientChecking := createTestAccount(t, ctx, am, "userWithSufficientChecking")
+	err = am.AddSavingCoin(ctx, userWithSufficientSaving, types.NewCoin(100*types.Decimals))
+	assert.Nil(t, err)
+	err = am.AddCheckingCoin(ctx, userWithSufficientChecking, types.NewCoin(100*types.Decimals))
+	assert.Nil(t, err)
+
+	cases := []struct {
+		TestName              string
+		DonateUesr            types.AccountKey
+		Amount                types.LNO
+		ToAuthor              types.AccountKey
+		ToPostID              string
+		FromChecking          bool
+		ExpectErr             sdk.Result
+		ExpectPostMeta        model.PostMeta
+		ExpectDonatorSaving   types.Coin
+		ExpectDonatorChecking types.Coin
+		ExpectAuthorSaving    types.Coin
+		ExpectAuthorChecking  types.Coin
+	}{
+		{"donate from sufficient saving",
+			userWithSufficientSaving, types.LNO("100"), author, postID, false, sdk.Result{},
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        1,
+				TotalReward:             types.NewCoin(95 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(95 * types.Decimals)), types.NewCoin(0),
+		},
+		{"donate from sufficient checking",
+			userWithSufficientChecking, types.LNO("100"), author, postID, true, sdk.Result{},
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoin(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(190 * types.Decimals)), types.NewCoin(0),
+		},
+		{"donate from insufficient saving",
+			userWithSufficientSaving, types.LNO("100"), author, postID, false,
+			ErrAccountSavingCoinNotEnough(types.GetPermLink(author, postID)).Result(),
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoin(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(190 * types.Decimals)), types.NewCoin(0),
+		},
+		{"donate from insufficient checking",
+			userWithSufficientChecking, types.LNO("100"), author, postID, true,
+			ErrAccountCheckingCoinNotEnough(types.GetPermLink(author, postID)).Result(),
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoin(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(190 * types.Decimals)), types.NewCoin(0),
+		},
+		{"invalid target postID",
+			userWithSufficientChecking, types.LNO("100"), author, "invalid", true,
+			ErrDonatePostDoesntExist(types.GetPermLink(author, "invalid")).Result(),
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoin(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(190 * types.Decimals)), types.NewCoin(0),
+		},
+		{"invalid target author",
+			userWithSufficientChecking, types.LNO("100"), types.AccountKey("invalid"), postID, true,
+			ErrDonatePostDoesntExist(types.GetPermLink(types.AccountKey("invalid"), postID)).Result(),
+			model.PostMeta{
+				Created:                 ctx.BlockHeader().Time,
+				LastUpdate:              ctx.BlockHeader().Time,
+				LastActivity:            ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoin(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee, types.NewCoin(0),
+			accParam.RegisterFee.Plus(types.NewCoin(190 * types.Decimals)), types.NewCoin(0),
+		},
 	}
 
-	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
-
-	acc1Saving, _ := am.GetBankSaving(ctx, user1)
-	acc2Saving, _ := am.GetBankSaving(ctx, user2)
-
-	assert.Equal(t, acc1Saving, initCoin.Plus(types.NewCoin(95*types.Decimals)))
-	assert.Equal(t, acc2Saving, initCoin.Plus(types.NewCoin(23*types.Decimals)))
-	// test invalid donation target
-	donateMsg = NewDonateMsg(user1, types.LNO("100"), user1, "invalid", "", false)
-	result = handler(ctx, donateMsg)
-	assert.Equal(t, result, ErrDonatePostDoesntExist(types.GetPermLink(user1, "invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
-
-	// test invalid user1name
-	donateMsg = NewDonateMsg(types.AccountKey("invalid"), types.LNO("100"), user1, postID, "", false)
-	result = handler(ctx, donateMsg)
-
-	assert.Equal(t, result, ErrDonateUserNotFound(types.AccountKey("invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
-
-	// test insufficient deposit
-	donateMsg = NewDonateMsg(user2, types.LNO("100"), user1, postID, "", false)
-	result = handler(ctx, donateMsg)
-
-	assert.Equal(t, result, ErrAccountSavingCoinNotEnough(types.GetPermLink(user1, postID)).Result())
+	for _, cs := range cases {
+		donateMsg := NewDonateMsg(
+			cs.DonateUesr, cs.Amount, cs.ToAuthor, cs.ToPostID, "", cs.FromChecking)
+		result := handler(ctx, donateMsg)
+		assert.Equal(t, cs.ExpectErr, result)
+		checkPostKVStore(t, ctx, types.GetPermLink(author, postID), postInfo, cs.ExpectPostMeta)
+		authorSaving, err := am.GetBankSaving(ctx, author)
+		assert.Nil(t, err)
+		if !authorSaving.IsEqual(cs.ExpectAuthorSaving) {
+			t.Errorf(
+				"%s: expect author saving %v, got %v",
+				cs.TestName, cs.ExpectAuthorSaving, authorSaving)
+			return
+		}
+		donatorSaving, err := am.GetBankSaving(ctx, cs.DonateUesr)
+		assert.Nil(t, err)
+		if !donatorSaving.IsEqual(cs.ExpectDonatorSaving) {
+			t.Errorf(
+				"%s: expect donator saving %v, got %v",
+				cs.TestName, cs.ExpectDonatorSaving, donatorSaving)
+			return
+		}
+		authorChecking, err := am.GetBankChecking(ctx, author)
+		assert.Nil(t, err)
+		if !authorChecking.IsEqual(cs.ExpectAuthorChecking) {
+			t.Errorf(
+				"%s: expect author checking %v, got %v",
+				cs.TestName, cs.ExpectAuthorChecking, authorChecking)
+			return
+		}
+		donatorChecking, err := am.GetBankChecking(ctx, cs.DonateUesr)
+		assert.Nil(t, err)
+		if !donatorChecking.IsEqual(cs.ExpectDonatorChecking) {
+			t.Errorf(
+				"%s: expect donator checking %v, got %v",
+				cs.TestName, cs.ExpectDonatorChecking, donatorChecking)
+			return
+		}
+	}
 }
 
 func TestHandlerRePostDonate(t *testing.T) {

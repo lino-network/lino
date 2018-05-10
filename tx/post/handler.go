@@ -94,13 +94,13 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if err != nil {
 		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
+	fmt.Println(msg.Username, am.IsAccountExist(ctx, msg.Username))
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrDonateUserNotFound(msg.Username).Result()
 	}
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrDonatePostDoesntExist(permLink).Result()
 	}
-	// TODO: check acitivity burden
 	if msg.FromChecking {
 		if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
 			return ErrAccountCheckingCoinNotEnough(permLink).Result()

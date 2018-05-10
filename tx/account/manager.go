@@ -340,6 +340,15 @@ func (accManager AccountManager) GetBankSaving(
 	return accountBank.Saving, nil
 }
 
+func (accManager AccountManager) GetBankChecking(
+	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	if err != nil {
+		return types.Coin{}, ErrGetBankSaving(accKey).TraceCause(err, "")
+	}
+	return accountBank.Checking, nil
+}
+
 func (accManager AccountManager) GetSequence(
 	ctx sdk.Context, accKey types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, accKey)

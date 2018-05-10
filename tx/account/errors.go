@@ -82,6 +82,10 @@ func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank saving failed", accKey))
 }
 
+func ErrGetBankChecking(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank checking failed", accKey))
+}
+
 func ErrGetSequence(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
 }

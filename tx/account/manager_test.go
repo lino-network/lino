@@ -589,49 +589,71 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 	baseTime2 := baseTime + totalCoinDaysSec + (totalCoinDaysSec/registerFee)/2 + 1
+	baseTime3 := baseTime2 + totalCoinDaysSec/2 + 1
 
 	priv := createTestAccount(ctx, am, string(accKey))
 
 	cases := []struct {
-		testName          string
-		IsAdd             bool
-		Coin              types.Coin
-		AtWhen            int64
-		ExpectBalance     types.Coin
-		ExpectStake       types.Coin
-		ExpectStakeInBank types.Coin
+		testName              string
+		IsAdd                 bool
+		IsSaving              bool
+		Coin                  types.Coin
+		AtWhen                int64
+		ExpectSavingBalance   types.Coin
+		ExpectCheckingBalance types.Coin
+		ExpectStake           types.Coin
+		ExpectStakeInBank     types.Coin
 	}{
 		{"add coin before charging first coin",
-			true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
-			doubleRegisterFee, coin0, coin0},
+			true, true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
+			doubleRegisterFee, coin0, coin0, coin0},
 		{"check first coin",
-			true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
-			doubleRegisterFee, coin1, coin0},
+			true, true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
+			doubleRegisterFee, coin0, coin1, coin0},
 		{"check both transactions fully charged",
-			true, coin0, baseTime2, doubleRegisterFee, doubleRegisterFee, doubleRegisterFee},
+			true, true, coin0, baseTime2, doubleRegisterFee, coin0, doubleRegisterFee, doubleRegisterFee},
 		{"withdraw half deposit",
-			false, accParam.RegisterFee, baseTime2,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
+			false, true, accParam.RegisterFee, baseTime2,
+			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 		{"charge again",
-			true, accParam.RegisterFee, baseTime2,
-			doubleRegisterFee, accParam.RegisterFee, accParam.RegisterFee},
+			true, true, accParam.RegisterFee, baseTime2,
+			doubleRegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 		{"withdraw half deposit while the last transaction is still charging",
-			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee.Plus(halfRegisterFee),
+			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
+			accParam.RegisterFee.Plus(halfRegisterFee), coin0,
 			accParam.RegisterFee.Plus(types.NewCoin(registerFee / 4)), accParam.RegisterFee},
 		{"withdraw last transaction which is still charging",
-			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
+			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
+			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
+		{"add checking coin",
+			true, false, accParam.RegisterFee, baseTime3,
+			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
+		{"checking coin should not affect stake",
+			true, true, coin0, baseTime3 + totalCoinDaysSec + 1,
+			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
+		{"withdraw checking coin should not affect stake",
+			false, false, accParam.RegisterFee, baseTime3 + totalCoinDaysSec + 1,
+			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
 		if cs.IsAdd {
-			err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
-			assert.Nil(t, err)
+			if cs.IsSaving {
+				err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
+				assert.Nil(t, err)
+			} else {
+				err := am.AddCheckingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
+				assert.Nil(t, err)
+			}
 		} else {
-			err := am.MinusSavingCoin(ctx, accKey, cs.Coin)
-			assert.Nil(t, err)
+			if cs.IsSaving {
+				err := am.MinusSavingCoin(ctx, accKey, cs.Coin)
+				assert.Nil(t, err)
+			} else {
+				err := am.MinusCheckingCoin(ctx, accKey, cs.Coin)
+				assert.Nil(t, err)
+			}
 		}
 		coin, err := am.GetStake(ctx, accKey)
 		assert.Nil(t, err)
@@ -642,7 +664,8 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 		bank := model.AccountBank{
 			Address:  priv.PubKey().Address(),
-			Saving:   cs.ExpectBalance,
+			Saving:   cs.ExpectSavingBalance,
+			Checking: cs.ExpectCheckingBalance,
 			Stake:    cs.ExpectStakeInBank,
 			Username: accKey,
 		}
