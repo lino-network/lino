@@ -201,27 +201,21 @@ func TestRecoverMsg(t *testing.T) {
 		wantCode sdk.CodeType
 	}{
 		"normal case": {
-			msg: RecoverMsg{
-				Username:             "test",
-				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
-				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
-			},
+			msg: NewRecoverMsg("test", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
 			wantCode: sdk.CodeOK,
 		},
 		"invalid recover - Username is too short": {
-			msg: RecoverMsg{
-				Username:             "te",
-				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
-				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
-			},
+			msg: NewRecoverMsg("te", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"invalid recover - Username is too long": {
-			msg: RecoverMsg{
-				Username:             "testtesttesttesttesttest",
-				NewPostPubKey:        crypto.GenPrivKeyEd25519().PubKey(),
-				NewTransactionPubKey: crypto.GenPrivKeyEd25519().PubKey(),
-			},
+			msg: NewRecoverMsg("testtesttesttesttesttest", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
 			wantCode: types.CodeInvalidUsername,
 		},
 	}
@@ -357,7 +351,7 @@ func TestMsgPermission(t *testing.T) {
 			NewSavingToCheckingMsg("test", types.LNO("1")),
 			types.TransactionPermission},
 		"checking to saving": {
-			NewSavingToCheckingMsg("test", types.LNO("1")),
+			NewCheckingToSavingMsg("test", types.LNO("1")),
 			types.TransactionPermission},
 		"transfer to user": {
 			NewTransferMsg("test", types.LNO("1"), "memo", TransferToUser("test_user")),
@@ -373,7 +367,8 @@ func TestMsgPermission(t *testing.T) {
 			types.PostPermission},
 		"recover": {
 			NewRecoverMsg(
-				"userA", crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
+				"userA", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
 			types.MasterPermission},
 		"claim": {
 			NewClaimMsg("test"), types.PostPermission},

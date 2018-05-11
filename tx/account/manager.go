@@ -627,14 +627,54 @@ func (accManager AccountManager) addPendingStakeToQueue(
 }
 
 func (accManager AccountManager) RecoverAccount(
-	ctx sdk.Context, username types.AccountKey, newPostKey, newTransactionKey crypto.PubKey) sdk.Error {
+	ctx sdk.Context, username types.AccountKey,
+	newMasterPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
-	accInfo.PostKey = newPostKey
-	accInfo.TransactionKey = newTransactionKey
-	return accManager.storage.SetInfo(ctx, username, accInfo)
+	// check new bank address is clean
+	newBank, _ := accManager.storage.GetBankFromAddress(ctx, newMasterPubKey.Address())
+	if newBank != nil {
+		return ErrRecoverMasterKeyAlreadyOccupied()
+	}
+
+	// get and clean old address bank
+	bank, err := accManager.storage.GetBankFromAddress(ctx, accInfo.Address)
+	if err != nil {
+		return err
+	}
+	if err := accManager.storage.SetBankFromAddress(
+		ctx, accInfo.Address, &model.AccountBank{Address: accInfo.Address}); err != nil {
+		return err
+	}
+	pendingQueue, err := accManager.storage.GetPendingStakeQueue(ctx, accInfo.Address)
+	if err != nil {
+		return err
+	}
+	if err := accManager.storage.SetPendingStakeQueue(
+		ctx, accInfo.Address, &model.PendingStakeQueue{}); err != nil {
+		return err
+	}
+
+	bank.Address = newMasterPubKey.Address()
+
+	accInfo.Address = newMasterPubKey.Address()
+	accInfo.MasterKey = newMasterPubKey
+	accInfo.PostKey = newPostPubKey
+	accInfo.TransactionKey = newTransactionPubKey
+	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {
+		return err
+	}
+
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
+		return err
+	}
+	if err := accManager.storage.SetPendingStakeQueue(ctx, accInfo.Address, pendingQueue); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (accManager AccountManager) updateTXFromPendingStakeQueue(
