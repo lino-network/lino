@@ -59,6 +59,10 @@ func ErrAddDonation(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("add donation to post %v failed", permLink))
 }
 
+func ErrDeletePost(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("delete post %v failed", permLink))
+}
+
 func ErrGetPenaltyScore(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostManagerError, fmt.Sprintf("get post %v penalty score failed", permLink))
 }

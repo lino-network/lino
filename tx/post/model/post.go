@@ -30,6 +30,7 @@ type PostMeta struct {
 	LastUpdate              int64      `json:"last_update"`
 	LastActivity            int64      `json:"last_activity"`
 	AllowReplies            bool       `json:"allow_replies"`
+	IsDeleted               bool       `json:"is_deleted"`
 	TotalLikeCount          int64      `json:"total_like_count"`
 	TotalDonateCount        int64      `json:"total_donate_count"`
 	TotalLikeWeight         int64      `json:"total_like_weight"`
