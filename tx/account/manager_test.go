@@ -501,7 +501,6 @@ func TestCoinDayByAddress(t *testing.T) {
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
-	assert.Nil(t, err)
 	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
 	registerFee := accParam.RegisterFee.ToInt64()
 	doubleRegisterFee := types.NewCoin(registerFee * 2)
@@ -930,33 +929,70 @@ func TestDonationRelationship(t *testing.T) {
 	}
 }
 
-func TestAccountRecover(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+func TestAccountRecoverNormalCase(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
+
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
 
 	priv := createTestAccount(ctx, am, string(user1))
 
-	cases := []struct {
-		user              types.AccountKey
-		newPostKey        crypto.PubKey
-		newTransactionKey crypto.PubKey
-	}{
-		{user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()},
+	newMasterPrivKey := crypto.GenPrivKeyEd25519()
+	newTransactionPrivKey := newMasterPrivKey.Generate(1)
+	newPostPrivKey := newMasterPrivKey.Generate(2)
+
+	err = am.RecoverAccount(ctx, user1,
+		newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(), newPostPrivKey.PubKey())
+	assert.Nil(t, err)
+	accInfo := model.AccountInfo{
+		Username:       user1,
+		CreatedAt:      ctx.BlockHeader().Time,
+		MasterKey:      newMasterPrivKey.PubKey(),
+		TransactionKey: newTransactionPrivKey.PubKey(),
+		PostKey:        newPostPrivKey.PubKey(),
+		Address:        newMasterPrivKey.PubKey().Address(),
+	}
+	newBank := model.AccountBank{
+		Address:  newMasterPrivKey.PubKey().Address(),
+		Saving:   accParam.RegisterFee,
+		Stake:    coin0,
+		Username: user1,
 	}
 
-	for _, cs := range cases {
-		err := am.RecoverAccount(ctx, cs.user, cs.newPostKey, cs.newTransactionKey)
-		assert.Nil(t, err)
-		accInfo := model.AccountInfo{
-			Username:       cs.user,
-			CreatedAt:      ctx.BlockHeader().Time,
-			MasterKey:      priv.PubKey(),
-			TransactionKey: cs.newTransactionKey,
-			PostKey:        cs.newPostKey,
-			Address:        priv.PubKey().Address(),
-		}
-		checkAccountInfo(t, ctx, cs.user, accInfo)
+	oldBank := model.AccountBank{
+		Address:  priv.PubKey().Address(),
+		Saving:   coin0,
+		Stake:    coin0,
+		Username: "",
 	}
+	checkAccountInfo(t, ctx, user1, accInfo)
+	checkBankKVByAddress(t, ctx, priv.PubKey().Address(), oldBank)
+	checkBankKVByAddress(t, ctx, newMasterPrivKey.PubKey().Address(), newBank)
+
+	pendingStakeQueue := model.PendingStakeQueue{
+		LastUpdatedAt:    ctx.BlockHeader().Time,
+		StakeCoinInQueue: sdk.ZeroRat,
+		TotalCoin:        accParam.RegisterFee,
+		PendingStakeList: []model.PendingStake{
+			model.PendingStake{
+				StartTime: ctx.BlockHeader().Time,
+				EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
+				Coin:      accParam.RegisterFee,
+			}},
+	}
+	checkPendingStake(t, ctx, newMasterPrivKey.PubKey().Address(), pendingStakeQueue)
+	checkPendingStake(t, ctx, priv.PubKey().Address(), model.PendingStakeQueue{})
+	stake, err := am.GetStake(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, coin0, stake)
+	ctx = ctx.WithBlockHeader(
+		abci.Header{
+			ChainID: "Lino", Height: 1,
+			Time: ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake})
+	stake, err = am.GetStake(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, accParam.RegisterFee, stake)
 }
 
 func TestIncreaseSequenceByOne(t *testing.T) {

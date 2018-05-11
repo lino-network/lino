@@ -118,6 +118,10 @@ func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account %v exists", accKey))
 }
 
+func ErrRecoverMasterKeyAlreadyOccupied() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, "recover account failed: master key occupied")
+}
+
 func ErrBankAlreadyRegistered() sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("bank connection exists"))
 }

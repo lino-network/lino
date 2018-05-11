@@ -27,6 +27,7 @@ type ClaimMsg struct {
 
 type RecoverMsg struct {
 	Username             types.AccountKey `json:"username"`
+	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
 	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
@@ -252,13 +253,12 @@ func (msg TransferMsg) GetSigners() []sdk.Address {
 
 // Recover Msg Implementations
 func NewRecoverMsg(
-	username string,
-	postPubkey crypto.PubKey,
-	transactionPubkey crypto.PubKey) RecoverMsg {
+	username string, masterPubkey, transactionPubkey, postPubkey crypto.PubKey) RecoverMsg {
 	return RecoverMsg{
 		Username:             types.AccountKey(username),
-		NewPostPubKey:        postPubkey,
+		NewMasterPubKey:      masterPubkey,
 		NewTransactionPubKey: transactionPubkey,
+		NewPostPubKey:        postPubkey,
 	}
 }
 
@@ -274,8 +274,8 @@ func (msg RecoverMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RecoverMsg) String() string {
-	return fmt.Sprintf("RecoverMsg{user:%v, new post Key:%v, new transaction key:%v}",
-		msg.Username, msg.NewPostPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf("RecoverMsg{user:%v, new master key:%v, new post Key:%v, new transaction key:%v}",
+		msg.Username, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
 func (msg RecoverMsg) Get(key interface{}) (value interface{}) {

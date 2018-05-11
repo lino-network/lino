@@ -306,36 +306,45 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 }
 
 func TestHandleAccountRecover(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am, accParam := setupTest(t, 1)
 	handler := NewHandler(am)
-	user1 := types.AccountKey("user1")
+	user1 := "user1"
 
-	priv := createTestAccount(ctx, am, string(user1))
+	createTestAccount(ctx, am, user1)
 
 	testCases := map[string]struct {
-		user              types.AccountKey
+		user              string
+		newMasterKey      crypto.PubKey
 		newPostKey        crypto.PubKey
 		newTransactionKey crypto.PubKey
 	}{
 		"normal case": {
-			user1, crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			user1, crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := RecoverMsg{user1, tc.newPostKey, tc.newTransactionKey}
+		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		assert.Equal(
 			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
 		accInfo := model.AccountInfo{
-			Username:       tc.user,
+			Username:       types.AccountKey(tc.user),
 			CreatedAt:      ctx.BlockHeader().Time,
-			MasterKey:      priv.PubKey(),
+			MasterKey:      tc.newMasterKey,
 			TransactionKey: tc.newTransactionKey,
 			PostKey:        tc.newPostKey,
-			Address:        priv.PubKey().Address(),
+			Address:        tc.newMasterKey.Address(),
 		}
-		checkAccountInfo(t, ctx, tc.user, accInfo)
+		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
+		newBank := model.AccountBank{
+			Address:  tc.newMasterKey.Address(),
+			Saving:   accParam.RegisterFee,
+			Stake:    coin0,
+			Username: types.AccountKey(user1),
+		}
+		checkBankKVByAddress(t, ctx, tc.newMasterKey.Address(), newBank)
 	}
 }
 
