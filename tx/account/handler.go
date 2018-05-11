@@ -116,3 +116,31 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 	}
 	return sdk.Result{}
 }
+
+func handleSavingToCheckingMsg(ctx sdk.Context, am AccountManager, msg SavingToCheckingMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	if err := am.AddCheckingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleCheckingToSavingMsg(ctx sdk.Context, am AccountManager, msg SavingToCheckingMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	if err := am.AddSavingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}

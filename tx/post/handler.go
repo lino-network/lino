@@ -94,7 +94,6 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if err != nil {
 		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
-	fmt.Println(msg.Username, am.IsAccountExist(ctx, msg.Username))
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrDonateUserNotFound(msg.Username).Result()
 	}
@@ -174,9 +173,8 @@ func processDonationFriction(
 		Friction:   frictionCoin,
 		FromApp:    fromApp,
 	}
-	if err :=
-		gm.AddFrictionAndRegisterContentRewardEvent(
-			ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
+	if err := gm.AddFrictionAndRegisterContentRewardEvent(
+		ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
 		return err
 	}
 	return nil

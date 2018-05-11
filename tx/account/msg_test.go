@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/lino-network/lino/types"
+	"github.com/stretchr/testify/assert"
 	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -194,37 +195,6 @@ func TestTransferMsg(t *testing.T) {
 	}
 }
 
-func TestTransferMsgPermission(t *testing.T) {
-	testCases := map[string]struct {
-		msg            TransferMsg
-		wantOK         bool
-		wantPermission types.Permission
-	}{
-		"normal case": {
-			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverName: userB,
-				Amount:       types.LNO("1900"),
-				Memo:         memo1,
-			},
-			wantOK: true,
-		},
-	}
-
-	for testName, tc := range testCases {
-		gotPermissionLevel := tc.msg.Get(types.PermissionLevel)
-		gotPermission, ok := gotPermissionLevel.(types.Permission)
-
-		if ok != tc.wantOK {
-			t.Errorf("%s: Get(%v): got %v, want %v", testName, tc.msg, ok, tc.wantOK)
-			return
-		}
-		if gotPermission != types.TransactionPermission {
-			t.Errorf("%s: Get(%v): got %v, want %v", testName, tc.msg, gotPermission, types.TransactionPermission)
-		}
-	}
-}
-
 func TestRecoverMsg(t *testing.T) {
 	testCases := map[string]struct {
 		msg      RecoverMsg
@@ -267,6 +237,167 @@ func TestRecoverMsg(t *testing.T) {
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestCheckingToSavingMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      CheckingToSavingMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: CheckingToSavingMsg{
+				Username: "test",
+				Amount:   types.LNO("100"),
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"username is too short": {
+			msg: CheckingToSavingMsg{
+				Username: "",
+				Amount:   types.LNO("100"),
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid amount - zero": {
+			msg: CheckingToSavingMsg{
+				Username: "test",
+				Amount:   types.LNO("0"),
+			},
+			wantCode: sdk.CodeInvalidCoins,
+		},
+		"invalid amount - negative": {
+			msg: CheckingToSavingMsg{
+				Username: "test",
+				Amount:   types.LNO("-1"),
+			},
+			wantCode: sdk.CodeInvalidCoins,
+		},
+		"invalid amount - overflow": {
+			msg: CheckingToSavingMsg{
+				Username: "test",
+				Amount:   types.LNO("1000000000000000"),
+			},
+			wantCode: sdk.CodeInvalidCoins,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+			}
+			return
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestSavingToCheckingMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      SavingToCheckingMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: SavingToCheckingMsg{
+				Username: "test",
+				Amount:   types.LNO("100"),
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"username is too short": {
+			msg: SavingToCheckingMsg{
+				Username: "",
+				Amount:   types.LNO("100"),
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid amount - zero": {
+			msg: SavingToCheckingMsg{
+				Username: "test",
+				Amount:   types.LNO("0"),
+			},
+			wantCode: sdk.CodeInvalidCoins,
+		},
+		"invalid amount - overflow": {
+			msg: SavingToCheckingMsg{
+				Username: "test",
+				Amount:   types.LNO("1000000000000000"),
+			},
+			wantCode: sdk.CodeInvalidCoins,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+			}
+			return
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              sdk.Msg
+		expectPermission types.Permission
+	}{
+		"saving to checking": {
+			NewSavingToCheckingMsg("test", types.LNO("1")),
+			types.TransactionPermission},
+		"checking to saving": {
+			NewSavingToCheckingMsg("test", types.LNO("1")),
+			types.TransactionPermission},
+		"transfer to user": {
+			NewTransferMsg("test", types.LNO("1"), "memo", TransferToUser("test_user")),
+			types.TransactionPermission},
+		"transfer to address": {
+			NewTransferMsg("test", types.LNO("1"), "memo", TransferToAddr(sdk.Address("test_address"))),
+			types.TransactionPermission},
+		"follow": {
+			NewFollowMsg("userA", "userB"),
+			types.PostPermission},
+		"unfollow": {
+			NewUnfollowMsg("userA", "userB"),
+			types.PostPermission},
+		"recover": {
+			NewRecoverMsg(
+				"userA", crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
+			types.MasterPermission},
+		"claim": {
+			NewClaimMsg("test"), types.PostPermission},
+	}
+
+	for testName, cs := range cases {
+		permissionLevel := cs.msg.Get(types.PermissionLevel)
+		if permissionLevel == nil {
+			if cs.expectPermission != types.PostPermission {
+				t.Errorf(
+					"%s: expect permission incorrect, expect %v, got %v",
+					testName, cs.expectPermission, types.PostPermission)
+				return
+			} else {
+				continue
+			}
+		}
+		permission, ok := permissionLevel.(types.Permission)
+		assert.Equal(t, ok, true)
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
 		}
 	}
 }
