@@ -352,7 +352,7 @@ func (msg SavingToCheckingMsg) GetSigners() []sdk.Address {
 }
 
 // CheckingToSaving Msg Implementations
-func NewCheckingToSaving(username string, amount types.LNO) CheckingToSavingMsg {
+func NewCheckingToSavingMsg(username string, amount types.LNO) CheckingToSavingMsg {
 	return CheckingToSavingMsg{
 		Username: types.AccountKey(username),
 		Amount:   amount,

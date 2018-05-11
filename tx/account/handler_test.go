@@ -381,7 +381,7 @@ func TestSavingAndChecking(t *testing.T) {
 		if tc.fromSavingToChecking {
 			msg = NewSavingToCheckingMsg(tc.user, tc.amount)
 		} else {
-			msg = NewCheckingToSaving(tc.user, tc.amount)
+			msg = NewCheckingToSavingMsg(tc.user, tc.amount)
 		}
 		result := handler(ctx, msg)
 		assert.Equal(t, tc.expectResult, result,

@@ -357,7 +357,7 @@ func TestMsgPermission(t *testing.T) {
 			NewSavingToCheckingMsg("test", types.LNO("1")),
 			types.TransactionPermission},
 		"checking to saving": {
-			NewSavingToCheckingMsg("test", types.LNO("1")),
+			NewCheckingToSavingMsg("test", types.LNO("1")),
 			types.TransactionPermission},
 		"transfer to user": {
 			NewTransferMsg("test", types.LNO("1"), "memo", TransferToUser("test_user")),
