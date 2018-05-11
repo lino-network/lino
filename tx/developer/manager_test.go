@@ -14,12 +14,12 @@ func TestReportConsumption(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	developer1 := createTestAccount(ctx, am, "developer1")
-	am.AddCoin(ctx, developer1, c800000)
+	am.AddSavingCoin(ctx, developer1, c800000)
 	msg := NewDeveloperRegisterMsg("developer1", l800000)
 	handler(ctx, msg)
 
 	developer2 := createTestAccount(ctx, am, "developer2")
-	am.AddCoin(ctx, developer2, c800000)
+	am.AddSavingCoin(ctx, developer2, c800000)
 	msg2 := NewDeveloperRegisterMsg("developer2", l800000)
 	handler(ctx, msg2)
 

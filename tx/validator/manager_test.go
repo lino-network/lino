@@ -22,7 +22,7 @@ func TestAbsentValidator(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
-		am.AddCoin(ctx, users[i], c2000)
+		am.AddSavingCoin(ctx, users[i], c2000)
 
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
@@ -96,7 +96,7 @@ func TestGetOncallList(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
-		am.AddCoin(ctx, users[i], c2000)
+		am.AddSavingCoin(ctx, users[i], c2000)
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
 
@@ -123,9 +123,9 @@ func TestPunishmentBasic(t *testing.T) {
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c2000)
+	am.AddSavingCoin(ctx, user1, c2000)
 	user2 := createTestAccount(ctx, am, "user2")
-	am.AddCoin(ctx, user2, c2000)
+	am.AddSavingCoin(ctx, user2, c2000)
 	// let user register as voter first
 	voteManager.AddVoter(ctx, types.AccountKey("user1"), c8000)
 	voteManager.AddVoter(ctx, types.AccountKey("user2"), c8000)
@@ -170,7 +170,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1))
-		am.AddCoin(ctx, users[i], c8000)
+		am.AddSavingCoin(ctx, users[i], c8000)
 		// let user register as voter first
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), c8000)
 		num := (i+1)*100 + 1000

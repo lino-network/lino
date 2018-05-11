@@ -34,7 +34,7 @@ func createTestAccount(
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
-	am.AddCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee)
+	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
 		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
@@ -156,11 +156,9 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 
 // Test various error cases in the AnteHandler control flow.
 func TestAnteHandlerRegisterTx(t *testing.T) {
-	am, _, _, ctx, anteHandler := setupTest()
+	_, _, _, ctx, anteHandler := setupTest()
 	priv1 := crypto.GenPrivKeyEd25519()
 	priv2 := crypto.GenPrivKeyEd25519()
-	err := am.AddCoinToAddress(ctx, priv1.PubKey().Address(), types.NewCoin(0))
-	assert.Nil(t, err)
 
 	// msg and signatures
 	var tx sdk.Tx

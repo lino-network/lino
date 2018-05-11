@@ -136,3 +136,54 @@ func TestDelegatorWithdrawMsg(t *testing.T) {
 		assert.Equal(t, result, cs.expectError)
 	}
 }
+
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              sdk.Msg
+		expectPermission types.Permission
+	}{
+		"vote msg": {
+			NewVoteMsg("test", 1, true),
+			types.TransactionPermission},
+		"vote deposit": {
+			NewVoterDepositMsg("test", types.LNO("1")),
+			types.TransactionPermission},
+		"vote withdraw": {
+			NewVoterWithdrawMsg("test", types.LNO("1")),
+			types.TransactionPermission},
+		"vote revoke": {
+			NewVoterRevokeMsg("test"),
+			types.TransactionPermission},
+		"delegate to voter": {
+			NewDelegateMsg("delegator", "voter", types.LNO("1")),
+			types.TransactionPermission},
+		"delegate withdraw": {
+			NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
+			types.TransactionPermission},
+		"revoke delegation": {
+			NewRevokeDelegationMsg("delegator", "voter"),
+			types.TransactionPermission},
+	}
+
+	for testName, cs := range cases {
+		permissionLevel := cs.msg.Get(types.PermissionLevel)
+		if permissionLevel == nil {
+			if cs.expectPermission != types.PostPermission {
+				t.Errorf(
+					"%s: expect permission incorrect, expect %v, got %v",
+					testName, cs.expectPermission, types.PostPermission)
+				return
+			} else {
+				continue
+			}
+		}
+		permission, ok := permissionLevel.(types.Permission)
+		assert.Equal(t, ok, true)
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
+		}
+	}
+}

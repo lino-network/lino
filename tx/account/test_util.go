@@ -42,6 +42,7 @@ var (
 
 	coin0   = types.NewCoin(0)
 	coin1   = types.NewCoin(1)
+	coin2   = types.NewCoin(2)
 	coin50  = types.NewCoin(50)
 	coin100 = types.NewCoin(100)
 	coin200 = types.NewCoin(200)
@@ -71,7 +72,7 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return priv

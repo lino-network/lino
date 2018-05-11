@@ -22,14 +22,14 @@ func TestRegistertBasic(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	developer1 := createTestAccount(ctx, am, "developer1")
-	am.AddCoin(ctx, developer1, c800000)
+	am.AddSavingCoin(ctx, developer1, c800000)
 	msg := NewDeveloperRegisterMsg("developer1", l800000)
 	res := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, res)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankBalance(ctx, developer1)
-	assert.Equal(t, acc1Balance, c0.Plus(initCoin))
+	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
+	assert.Equal(t, acc1Saving, c0.Plus(initCoin))
 	assert.Equal(t, true, dm.IsDeveloperExist(ctx, developer1))
 
 	// check acc1 is in the developer list
@@ -45,7 +45,7 @@ func TestRevokeBasic(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	developer1 := createTestAccount(ctx, am, "developer1")
-	am.AddCoin(ctx, developer1, c800000)
+	am.AddSavingCoin(ctx, developer1, c800000)
 	msg := NewDeveloperRegisterMsg("developer1", l800000)
 	handler(ctx, msg)
 
@@ -53,8 +53,8 @@ func TestRevokeBasic(t *testing.T) {
 	res2 := handler(ctx, msg2)
 	assert.Equal(t, sdk.Result{}, res2)
 	// check acc1's depoist has not been added back
-	acc1Balance, _ := am.GetBankBalance(ctx, developer1)
-	assert.Equal(t, acc1Balance, c0.Plus(initCoin))
+	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
+	assert.Equal(t, acc1Saving, c0.Plus(initCoin))
 	assert.Equal(t, false, dm.IsDeveloperExist(ctx, developer1))
 
 	// check acc1 is not in the developer list

@@ -84,7 +84,7 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMe
 func createTestAccount(
 	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	err := am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
+	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())

@@ -47,3 +47,43 @@ func TestValidatorDepositPermission(t *testing.T) {
 	assert.Equal(t, ok, true)
 	assert.Equal(t, permission, types.TransactionPermission)
 }
+
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              sdk.Msg
+		expectPermission types.Permission
+	}{
+		"validator deposit msg": {
+			NewValidatorDepositMsg(
+				"test", types.LNO("1"), crypto.GenPrivKeyEd25519().PubKey(), "https://lino.network"),
+			types.TransactionPermission},
+		"validator withdraw msg": {
+			NewValidatorWithdrawMsg("test", types.LNO("1")),
+			types.TransactionPermission},
+		"validator revoke msg": {
+			NewValidatorRevokeMsg("test"),
+			types.TransactionPermission},
+	}
+
+	for testName, cs := range cases {
+		permissionLevel := cs.msg.Get(types.PermissionLevel)
+		if permissionLevel == nil {
+			if cs.expectPermission != types.PostPermission {
+				t.Errorf(
+					"%s: expect permission incorrect, expect %v, got %v",
+					testName, cs.expectPermission, types.PostPermission)
+				return
+			} else {
+				continue
+			}
+		}
+		permission, ok := permissionLevel.(types.Permission)
+		assert.Equal(t, ok, true)
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
+		}
+	}
+}

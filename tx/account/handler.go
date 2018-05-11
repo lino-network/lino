@@ -23,6 +23,10 @@ func NewHandler(am AccountManager) sdk.Handler {
 			return handleClaimMsg(ctx, am, msg)
 		case RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
+		case SavingToCheckingMsg:
+			return handleSavingToCheckingMsg(ctx, am, msg)
+		case CheckingToSavingMsg:
+			return handleCheckingToSavingMsg(ctx, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -73,7 +77,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusCoin(ctx, msg.Sender, coin); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Sender, coin); err != nil {
 		return err.Result()
 	}
 
@@ -88,13 +92,13 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 	// send coins using username
 	if len(msg.ReceiverName) != 0 {
-		if err := am.AddCoin(ctx, msg.ReceiverName, coin); err != nil {
+		if err := am.AddSavingCoin(ctx, msg.ReceiverName, coin); err != nil {
 			return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 		}
 		return sdk.Result{}
 	}
 
-	if err := am.AddCoinToAddress(ctx, msg.ReceiverAddr, coin); err != nil {
+	if err := am.AddSavingCoinToAddress(ctx, msg.ReceiverAddr, coin); err != nil {
 		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 	}
 	return sdk.Result{}
@@ -112,6 +116,34 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 	// recover
 	if err := am.RecoverAccount(
 		ctx, msg.Username, msg.NewPostPubKey, msg.NewTransactionPubKey); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleSavingToCheckingMsg(ctx sdk.Context, am AccountManager, msg SavingToCheckingMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	if err := am.AddCheckingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleCheckingToSavingMsg(ctx sdk.Context, am AccountManager, msg CheckingToSavingMsg) sdk.Result {
+	coin, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	if err := am.AddSavingCoin(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

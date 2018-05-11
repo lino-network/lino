@@ -24,6 +24,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagAuthor, "", "author of the target post")
 	cmd.Flags().String(client.FlagPostID, "", "post id of the target post")
 	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
+	cmd.Flags().Bool(client.FlagFromChecking, false, "the donation come from checking or saving")
 	return cmd
 }
 
@@ -34,8 +35,9 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		username := viper.GetString(client.FlagDonator)
 		author := viper.GetString(client.FlagAuthor)
 		postID := viper.GetString(client.FlagPostID)
-		msg := post.NewDonateMsg(types.AccountKey(username),
-			types.LNO(viper.GetString(client.FlagAmount)), types.AccountKey(author), postID, "")
+		msg := post.NewDonateMsg(
+			types.AccountKey(username), types.LNO(viper.GetString(client.FlagAmount)),
+			types.AccountKey(author), postID, "", viper.GetBool(client.FlagFromChecking))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(msg, cdc)

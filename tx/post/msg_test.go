@@ -147,18 +147,18 @@ func TestDonationMsg(t *testing.T) {
 		expectError sdk.Error
 	}{
 		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
-			types.AccountKey("author"), "postID", ""), nil},
-		{NewDonateMsg(types.AccountKey(""), types.LNO("1"), types.AccountKey("author"), "postID", ""),
+			types.AccountKey("author"), "postID", "", false), nil},
+		{NewDonateMsg(types.AccountKey(""), types.LNO("1"), types.AccountKey("author"), "postID", "", false),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("0"), types.AccountKey("author"), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("0"), types.AccountKey("author"), "postID", "", false),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("-1"), types.AccountKey("author"), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("-1"), types.AccountKey("author"), "postID", "", false),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "", "", false),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "postID", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "postID", "", false),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "", ""),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "", "", false),
 			ErrPostDonateInvalidTarget()},
 	}
 
@@ -208,11 +208,78 @@ func TestViewMsg(t *testing.T) {
 	}
 }
 
-func TestDonationMsgPermission(t *testing.T) {
-	msg := NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
-		types.AccountKey("author"), "postID", "")
-	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(types.Permission)
-	assert.Equal(t, permission, types.TransactionPermission)
-	assert.Equal(t, ok, true)
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              sdk.Msg
+		expectPermission types.Permission
+	}{
+		"donateMsg from saving": {
+			NewDonateMsg(
+				types.AccountKey("test"), types.LNO("1"),
+				types.AccountKey("author"), "postID", "", false),
+			types.TransactionPermission},
+		"donateMsg from checking": {
+			NewDonateMsg(
+				types.AccountKey("test"), types.LNO("1"),
+				types.AccountKey("author"), "postID", "", true),
+			types.PostPermission},
+		"create post": {
+			NewCreatePostMsg(PostCreateParams{
+				PostID:       "test",
+				Title:        "title",
+				Content:      "content",
+				Author:       types.AccountKey("author"),
+				ParentAuthor: types.AccountKey("parentAuthor"),
+				ParentPostID: "parentPostID",
+				SourceAuthor: types.AccountKey("sourceAuthor"),
+				SourcePostID: "sourcePostID",
+				Links: []types.IDToURLMapping{
+					types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				RedistributionSplitRate: "0.5",
+			}),
+			types.PostPermission,
+		},
+		"like post": {
+			NewLikeMsg(
+				types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"),
+			types.PostPermission,
+		},
+		"view post": {
+			NewViewMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID"),
+			types.PostPermission,
+		},
+		"report  post": {
+			NewReportOrUpvoteMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID", true),
+			types.PostPermission,
+		},
+		"upvote post": {
+			NewReportOrUpvoteMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID", false),
+			types.PostPermission,
+		},
+	}
+
+	for testName, cs := range cases {
+		permissionLevel := cs.msg.Get(types.PermissionLevel)
+		if permissionLevel == nil {
+			if cs.expectPermission != types.PostPermission {
+				t.Errorf(
+					"%s: expect permission incorrect, expect %v, got %v",
+					testName, cs.expectPermission, types.PostPermission)
+				return
+			} else {
+				continue
+			}
+		}
+		permission, ok := permissionLevel.(types.Permission)
+		assert.Equal(t, ok, true)
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
+		}
+	}
 }

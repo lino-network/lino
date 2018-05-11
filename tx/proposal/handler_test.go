@@ -28,7 +28,7 @@ func TestProposalBasic(t *testing.T) {
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
 	user1 := createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, user1, c460000)
+	am.AddSavingCoin(ctx, user1, c460000)
 
 	// let user1 create a proposal
 	msg := NewChangeGlobalAllocationParamMsg("user1", para)

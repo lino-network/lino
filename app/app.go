@@ -235,7 +235,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if err := lb.accountManager.AddCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
+	if err := lb.accountManager.AddSavingCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
 		panic(sdk.ErrGenesisParse("set genesis bank failed"))
 	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
@@ -254,7 +254,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 
 	if ga.IsValidator {
 		// withdraw money from validator's bank
-		if err := lb.accountManager.MinusCoin(
+		if err := lb.accountManager.MinusSavingCoin(
 			ctx, types.AccountKey(ga.Name),
 			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
 			panic(err)
@@ -286,7 +286,7 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return err
 	}
 
-	if err := lb.accountManager.MinusCoin(ctx, types.AccountKey(developer.Name), coin); err != nil {
+	if err := lb.accountManager.MinusSavingCoin(ctx, types.AccountKey(developer.Name), coin); err != nil {
 		return err
 	}
 
@@ -453,7 +453,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	// give inflation to each validator evenly
 	ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators))))
 	for _, validator := range lst.OncallValidators {
-		lb.accountManager.AddCoin(ctx, validator, types.RatToCoin(ratPerValidator))
+		lb.accountManager.AddSavingCoin(ctx, validator, types.RatToCoin(ratPerValidator))
 	}
 }
 
@@ -477,7 +477,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 			panic(err)
 		}
 		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddCoin(ctx, provider, types.RatToCoin(myShare))
+		lb.accountManager.AddSavingCoin(ctx, provider, types.RatToCoin(myShare))
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -505,7 +505,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 			panic(err)
 		}
 		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddCoin(ctx, developer, types.RatToCoin(myShare))
+		lb.accountManager.AddSavingCoin(ctx, developer, types.RatToCoin(myShare))
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
