@@ -27,6 +27,15 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
 	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "allocation", nil)
+	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "infraAllocation", nil)
+	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "contentValue", nil)
+	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
+	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
+	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)
+	cdc.RegisterConcrete(param.ValidatorParam{}, "validatorParam", nil)
+	cdc.RegisterConcrete(param.CoinDayParam{}, "coinDayParam", nil)
+	cdc.RegisterConcrete(param.BandwidthParam{}, "bandwidthParam", nil)
+	cdc.RegisterConcrete(param.AccountParam{}, "accountParam", nil)
 
 	wire.RegisterCrypto(cdc)
 	vs := ProposalStorage{
