@@ -118,7 +118,7 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
 	saving, err :=
-		accManager.GetBankSaving(ctx, types.AccountKey(accountName))
+		accManager.GetSavingFromBank(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
 	assert.Equal(t, expectBalance, saving)
 }

@@ -42,7 +42,7 @@ func TestVoterDepositBasic(t *testing.T) {
 	handler(ctx, msg)
 
 	// check acc1's money has been withdrawn
-	acc1saving, _ := am.GetBankSaving(ctx, user1)
+	acc1saving, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, c400.Plus(initCoin), acc1saving)
 	assert.Equal(t, true, vm.IsVoterExist(ctx, user1))
 
@@ -82,7 +82,7 @@ func TestDelegateBasic(t *testing.T) {
 
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(c3600))
-	acc2Balance, _ := am.GetBankSaving(ctx, user2)
+	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
 	assert.Equal(t, acc2Balance, initCoin)
 
 	// let user3 delegate power to user1
@@ -138,7 +138,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// make sure user3 won't get coins immediately, but user1 power down immediately
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
-	acc3Balance, _ := am.GetBankSaving(ctx, user3)
+	acc3Balance, _ := am.GetSavingFromBank(ctx, user3)
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, c1000, voter.DelegatedPower)
@@ -168,8 +168,8 @@ func TestRevokeBasic(t *testing.T) {
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
 	_, err2 := vm.storage.GetVoter(ctx, "user1")
-	acc1Balance, _ := am.GetBankSaving(ctx, user1)
-	acc2Balance, _ := am.GetBankSaving(ctx, user2)
+	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
+	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
 	assert.Equal(t, ErrGetDelegation(), err)
 	assert.Equal(t, ErrGetVoter(), err2)
 	assert.Equal(t, c400.Plus(initCoin), acc1Balance)

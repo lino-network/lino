@@ -22,7 +22,7 @@ type GrantDeveloperMsg struct {
 	Username        types.AccountKey `json:"username"`
 	AuthenticateApp types.AccountKey `json:"authenticate_app"`
 	ValidityPeriod  int64            `json:"validity_period"`
-	GrantLevel      int64            `json:"grant_level"`
+	GrantLevel      types.Permission `json:"grant_level"`
 }
 
 // DeveloperRegisterMsg Msg Implementations
@@ -53,6 +53,13 @@ func (msg DeveloperRegisterMsg) String() string {
 }
 
 func (msg DeveloperRegisterMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -90,6 +97,13 @@ func (msg DeveloperRevokeMsg) String() string {
 }
 
 func (msg DeveloperRevokeMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -106,7 +120,7 @@ func (msg DeveloperRevokeMsg) GetSigners() []sdk.Address {
 }
 
 // Grant Msg Implementations
-func NewGrantDeveloperMsg(user, app string, validityPeriod int64, grantLevel int64) GrantDeveloperMsg {
+func NewGrantDeveloperMsg(user, app string, validityPeriod int64, grantLevel types.Permission) GrantDeveloperMsg {
 	return GrantDeveloperMsg{
 		Username:        types.AccountKey(user),
 		AuthenticateApp: types.AccountKey(app),
@@ -141,6 +155,13 @@ func (msg GrantDeveloperMsg) String() string {
 }
 
 func (msg GrantDeveloperMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

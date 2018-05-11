@@ -109,6 +109,13 @@ func (msg ChangeGlobalAllocationParamMsg) String() string {
 }
 
 func (msg ChangeGlobalAllocationParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -153,6 +160,13 @@ func (msg ChangeEvaluateOfContentValueParamMsg) String() string {
 }
 
 func (msg ChangeEvaluateOfContentValueParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -201,6 +215,13 @@ func (msg ChangeInfraInternalAllocationParamMsg) String() string {
 }
 
 func (msg ChangeInfraInternalAllocationParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -256,6 +277,13 @@ func (msg ChangeVoteParamMsg) String() string {
 }
 
 func (msg ChangeVoteParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -320,6 +348,13 @@ func (msg ChangeProposalParamMsg) String() string {
 }
 
 func (msg ChangeProposalParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -372,6 +407,13 @@ func (msg ChangeDeveloperParamMsg) String() string {
 }
 
 func (msg ChangeDeveloperParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -429,6 +471,13 @@ func (msg ChangeValidatorParamMsg) String() string {
 }
 
 func (msg ChangeValidatorParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -473,6 +522,13 @@ func (msg ChangeCoinDayParamMsg) String() string {
 }
 
 func (msg ChangeCoinDayParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -517,6 +573,13 @@ func (msg ChangeAccountParamMsg) String() string {
 }
 
 func (msg ChangeAccountParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

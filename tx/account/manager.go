@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -117,7 +116,6 @@ func (accManager AccountManager) GetStake(
 	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
 		return types.NewCoin(0), err
 	}
-	fmt.Println(stake, pendingStakeQueue.StakeCoinInQueue, pendingStakeQueue, ctx.BlockHeader().Time)
 	return stake.Plus(types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)), nil
 }
 
@@ -218,7 +216,6 @@ func (accManager AccountManager) MinusSavingCoin(
 	if err != nil {
 		return err
 	}
-	fmt.Println(accountBank, coin, accountParams.MinimumBalance)
 	if !accountBank.Saving.Minus(coin).IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountSavingCoinNotEnough()
 	}
@@ -331,7 +328,7 @@ func (accManager AccountManager) GetPostKey(
 	return accountInfo.PostKey, nil
 }
 
-func (accManager AccountManager) GetBankSaving(
+func (accManager AccountManager) GetSavingFromBank(
 	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
@@ -340,7 +337,7 @@ func (accManager AccountManager) GetBankSaving(
 	return accountBank.Saving, nil
 }
 
-func (accManager AccountManager) GetBankChecking(
+func (accManager AccountManager) GetCheckingFromBank(
 	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
@@ -517,7 +514,7 @@ func (accManager AccountManager) UpdateDonationRelationship(
 
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
-	validityPeriod int64, grantLevel int64) sdk.Error {
+	validityPeriod int64, grantLevel types.Permission) sdk.Error {
 	pubKey, err := accManager.GetPostKey(ctx, authorizedUser)
 	if err != nil {
 		return err

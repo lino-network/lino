@@ -44,6 +44,13 @@ func (msg ProviderReportMsg) String() string {
 }
 
 func (msg ProviderReportMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

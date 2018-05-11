@@ -23,6 +23,10 @@ func NewHandler(am AccountManager) sdk.Handler {
 			return handleClaimMsg(ctx, am, msg)
 		case RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
+		case SavingToCheckingMsg:
+			return handleSavingToCheckingMsg(ctx, am, msg)
+		case CheckingToSavingMsg:
+			return handleCheckingToSavingMsg(ctx, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -131,7 +135,7 @@ func handleSavingToCheckingMsg(ctx sdk.Context, am AccountManager, msg SavingToC
 	return sdk.Result{}
 }
 
-func handleCheckingToSavingMsg(ctx sdk.Context, am AccountManager, msg SavingToCheckingMsg) sdk.Result {
+func handleCheckingToSavingMsg(ctx sdk.Context, am AccountManager, msg CheckingToSavingMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()

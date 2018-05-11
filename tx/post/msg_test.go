@@ -208,9 +208,9 @@ func TestViewMsg(t *testing.T) {
 	}
 }
 
-func TestDonationMsgPermission(t *testing.T) {
+func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
-		donateMsg        DonateMsg
+		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
 		"donateMsg from saving": {
@@ -223,10 +223,56 @@ func TestDonationMsgPermission(t *testing.T) {
 				types.AccountKey("test"), types.LNO("1"),
 				types.AccountKey("author"), "postID", "", true),
 			types.PostPermission},
+		"create post": {
+			NewCreatePostMsg(PostCreateParams{
+				PostID:       "test",
+				Title:        "title",
+				Content:      "content",
+				Author:       types.AccountKey("author"),
+				ParentAuthor: types.AccountKey("parentAuthor"),
+				ParentPostID: "parentPostID",
+				SourceAuthor: types.AccountKey("sourceAuthor"),
+				SourcePostID: "sourcePostID",
+				Links: []types.IDToURLMapping{
+					types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				RedistributionSplitRate: "0.5",
+			}),
+			types.PostPermission,
+		},
+		"like post": {
+			NewLikeMsg(
+				types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"),
+			types.PostPermission,
+		},
+		"view post": {
+			NewViewMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID"),
+			types.PostPermission,
+		},
+		"report  post": {
+			NewReportOrUpvoteMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID", true),
+			types.PostPermission,
+		},
+		"upvote post": {
+			NewReportOrUpvoteMsg(
+				types.AccountKey("test"), types.AccountKey("author"), "postID", false),
+			types.PostPermission,
+		},
 	}
 
 	for testName, cs := range cases {
-		permissionLevel := cs.donateMsg.Get(types.PermissionLevel)
+		permissionLevel := cs.msg.Get(types.PermissionLevel)
+		if permissionLevel == nil {
+			if cs.expectPermission != types.PostPermission {
+				t.Errorf(
+					"%s: expect permission incorrect, expect %v, got %v",
+					testName, cs.expectPermission, types.PostPermission)
+				return
+			} else {
+				continue
+			}
+		}
 		permission, ok := permissionLevel.(types.Permission)
 		assert.Equal(t, ok, true)
 		if cs.expectPermission != permission {

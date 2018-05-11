@@ -28,7 +28,7 @@ func TestRegistertBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, res)
 
 	// check acc1's money has been withdrawn
-	acc1Saving, _ := am.GetBankSaving(ctx, developer1)
+	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
 	assert.Equal(t, acc1Saving, c0.Plus(initCoin))
 	assert.Equal(t, true, dm.IsDeveloperExist(ctx, developer1))
 
@@ -53,7 +53,7 @@ func TestRevokeBasic(t *testing.T) {
 	res2 := handler(ctx, msg2)
 	assert.Equal(t, sdk.Result{}, res2)
 	// check acc1's depoist has not been added back
-	acc1Saving, _ := am.GetBankSaving(ctx, developer1)
+	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
 	assert.Equal(t, acc1Saving, c0.Plus(initCoin))
 	assert.Equal(t, false, dm.IsDeveloperExist(ctx, developer1))
 

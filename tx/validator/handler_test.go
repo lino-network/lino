@@ -53,7 +53,7 @@ func TestRegisterBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankSaving(ctx, user1)
+	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, c400.Plus(initCoin))
 	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 
@@ -312,7 +312,7 @@ func TestDepositBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetBankSaving(ctx, user1)
+	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, c200.Plus(initCoin))
 	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
 

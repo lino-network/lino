@@ -390,7 +390,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
 		checkPostKVStore(t, ctx, types.GetPermLink(author, postID), postInfo, cs.ExpectPostMeta)
-		authorSaving, err := am.GetBankSaving(ctx, author)
+		authorSaving, err := am.GetSavingFromBank(ctx, author)
 		assert.Nil(t, err)
 		if !authorSaving.IsEqual(cs.ExpectAuthorSaving) {
 			t.Errorf(
@@ -398,7 +398,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				cs.TestName, cs.ExpectAuthorSaving, authorSaving)
 			return
 		}
-		donatorSaving, err := am.GetBankSaving(ctx, cs.DonateUesr)
+		donatorSaving, err := am.GetSavingFromBank(ctx, cs.DonateUesr)
 		assert.Nil(t, err)
 		if !donatorSaving.IsEqual(cs.ExpectDonatorSaving) {
 			t.Errorf(
@@ -406,7 +406,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				cs.TestName, cs.ExpectDonatorSaving, donatorSaving)
 			return
 		}
-		authorChecking, err := am.GetBankChecking(ctx, author)
+		authorChecking, err := am.GetCheckingFromBank(ctx, author)
 		assert.Nil(t, err)
 		if !authorChecking.IsEqual(cs.ExpectAuthorChecking) {
 			t.Errorf(
@@ -414,7 +414,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				cs.TestName, cs.ExpectAuthorChecking, authorChecking)
 			return
 		}
-		donatorChecking, err := am.GetBankChecking(ctx, cs.DonateUesr)
+		donatorChecking, err := am.GetCheckingFromBank(ctx, cs.DonateUesr)
 		assert.Nil(t, err)
 		if !donatorChecking.IsEqual(cs.ExpectDonatorChecking) {
 			t.Errorf(
@@ -491,9 +491,9 @@ func TestHandlerRePostDonate(t *testing.T) {
 
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
-	acc1Saving, _ := am.GetBankSaving(ctx, user1)
-	acc2Saving, _ := am.GetBankSaving(ctx, user2)
-	acc3Saving, _ := am.GetBankSaving(ctx, user3)
+	acc1Saving, _ := am.GetSavingFromBank(ctx, user1)
+	acc2Saving, _ := am.GetSavingFromBank(ctx, user2)
+	acc3Saving, _ := am.GetSavingFromBank(ctx, user3)
 	assert.Equal(t, acc1Saving, initCoin.Plus(types.RatToCoin(sdk.NewRat(85*types.Decimals).Mul(sdk.NewRat(95, 100)))))
 	assert.Equal(t, acc2Saving, initCoin.Plus(types.RatToCoin(sdk.NewRat(15*types.Decimals).Mul(sdk.NewRat(95, 100)))))
 	assert.Equal(t, acc3Saving, initCoin.Plus(types.NewCoin(23*types.Decimals)))

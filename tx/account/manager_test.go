@@ -227,7 +227,6 @@ func TestAddCoinFromAddress(t *testing.T) {
 			t.Errorf("%s: add coin failed, err: %v", cs.testName, err)
 			return
 		}
-		fmt.Println(cs.testName, cs.ExpectBank)
 		checkBankKVByAddress(t, ctx, cs.ToAddress, cs.ExpectBank)
 		checkPendingStake(t, ctx, cs.ToAddress, cs.ExpectPendingStakeQueue)
 	}
@@ -788,6 +787,74 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	}
 }
 
+func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	user2 := types.AccountKey("user2")
+	user3 := types.AccountKey("user3")
+
+	masterKey := crypto.GenPrivKeyEd25519()
+	transactionKey := crypto.GenPrivKeyEd25519()
+	postKey := crypto.GenPrivKeyEd25519()
+	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParam.RegisterFee)
+	am.CreateAccount(ctx, user1,
+		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
+
+	priv2 := createTestAccount(ctx, am, string(user2))
+	priv3 := createTestAccount(ctx, am, string(user3))
+	err := am.AuthorizePermission(ctx, user1, user2, 100, types.PostPermission)
+	assert.Nil(t, err)
+
+	baseTime := ctx.BlockHeader().Time
+
+	cases := []struct {
+		testName     string
+		checkUser    types.AccountKey
+		checkPubKey  crypto.PubKey
+		atWhen       int64
+		grantLevel   types.Permission
+		expectUser   types.AccountKey
+		expectResult sdk.Error
+	}{
+		{"check user's master key",
+			user1, masterKey.PubKey(), baseTime, types.MasterPermission, user1, nil},
+		{"check user's transaction key",
+			user1, transactionKey.PubKey(), baseTime, types.TransactionPermission, user1, nil},
+		{"check user's post key",
+			user1, postKey.PubKey(), baseTime, types.PostPermission, user1, nil},
+		{"user's transaction key can authorize post permission",
+			user1, transactionKey.PubKey(), baseTime, types.PostPermission, user1, nil},
+		{"check user's transaction key can't authorize master permission",
+			user1, transactionKey.PubKey(), baseTime, types.MasterPermission, user1,
+			ErrCheckMasterKey()},
+		{"check user's post key can't authorize master permission",
+			user1, postKey.PubKey(), baseTime, types.MasterPermission, user1,
+			ErrCheckMasterKey()},
+		{"check user's post key can't authorize transaction permission",
+			user1, postKey.PubKey(), baseTime, types.TransactionPermission, user1,
+			ErrCheckTransactionKey()},
+		{"check user2's pubkey",
+			user1, priv2.Generate(2).PubKey(), baseTime, types.PostPermission, user2, nil},
+		{"check unauthorized user pubkey",
+			user1, priv3.Generate(2).PubKey(), baseTime, types.PostPermission, "",
+			ErrCheckAuthenticatePubKeyOwner(user1)},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
+		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.grantLevel)
+		assert.Equal(t, cs.expectResult, err)
+		if cs.expectResult == nil {
+			if cs.expectUser != grantUser {
+				t.Errorf(
+					"%s: expect key owner incorrect, expect %v, got %v",
+					cs.testName, cs.expectUser, grantUser)
+				return
+			}
+		}
+	}
+}
+
 func TestGrantPubkey(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
@@ -821,7 +888,7 @@ func TestGrantPubkey(t *testing.T) {
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
-		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.expireTime, 0)
+		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.expireTime, types.PostPermission)
 		assert.Nil(t, err)
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.checkTime})
 		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.user, cs.checkGrantPubKey, 0)
