@@ -387,3 +387,277 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 
 	}
 }
+
+func TestChangeProposalParamMsg(t *testing.T) {
+	p1 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p2 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(-24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p3 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(150, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p4 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(100, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(-10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p5 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(80, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(-100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p6 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(80, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(-24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p7 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(10, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(0, 8),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p8 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(0 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p9 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(15, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(-100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p10 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(20, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(0),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p11 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p12 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(-10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	p13 := param.ProposalParam{
+		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipPassRatio:  sdk.NewRat(20, 100),
+		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+
+		ChangeParamDecideHr:   int64(24 * 7),
+		ChangeParamPassRatio:  sdk.NewRat(70, 100),
+		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
+		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
+		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoin(-1000000 * types.Decimals),
+
+		NextProposalID: int64(0),
+	}
+
+	cases := []struct {
+		ChangeProposalParamMsg ChangeProposalParamMsg
+		expectError            sdk.Error
+	}{
+		{NewChangeProposalParamMsg("user1", p1), nil},
+		{NewChangeProposalParamMsg("", p1), ErrInvalidUsername()},
+		{NewChangeProposalParamMsg("user1", p2), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p3), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p4), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p5), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p6), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p7), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p8), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p9), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p10), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p11), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p12), ErrIllegalParameter()},
+		{NewChangeProposalParamMsg("user1", p13), ErrIllegalParameter()},
+	}
+
+	for _, cs := range cases {
+		result := cs.ChangeProposalParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
