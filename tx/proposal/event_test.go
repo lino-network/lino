@@ -14,16 +14,16 @@ func TestDecideProposal(t *testing.T) {
 	voteManager.InitGenesis(ctx)
 	valManager.InitGenesis(ctx)
 	pm.InitGenesis(ctx)
-
-	user1 := createTestAccount(ctx, am, "user1")
-	user2 := createTestAccount(ctx, am, "user2")
-	user3 := createTestAccount(ctx, am, "user3")
-	user4 := createTestAccount(ctx, am, "user4")
-
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 
 	c1, c2, c3, c4 := proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(20)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(30)),
 		proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(50)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(10))
+
+	user1 := createTestAccount(ctx, am, "user1", c1)
+	user2 := createTestAccount(ctx, am, "user2", c2)
+	user3 := createTestAccount(ctx, am, "user3", c3)
+	user4 := createTestAccount(ctx, am, "user4", c4)
+
 	voteManager.AddVoter(ctx, user1, c1)
 	voteManager.AddVoter(ctx, user2, c2)
 	voteManager.AddVoter(ctx, user3, c3)

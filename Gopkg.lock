@@ -211,7 +211,7 @@
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
-  revision = "d932a24a8ccb8fcadc993e5c6c58f93dac168294"
+  revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -278,7 +278,7 @@
     "leveldb/table",
     "leveldb/util"
   ]
-  revision = "714f901b98fdb3aa954b4193d8cbd64a28d80cad"
+  revision = "ae970a0732be3a1f5311da86118d37b9f4bd2a5a"
 
 [[projects]]
   name = "github.com/tendermint/abci"
@@ -305,8 +305,8 @@
 [[projects]]
   name = "github.com/tendermint/go-amino"
   packages = ["."]
-  revision = "3668c02a8feace009f80754a5e5a8541e5d7b996"
-  version = "0.9.8"
+  revision = "ed62928576cfcaf887209dc96142cd79cdfff389"
+  version = "0.9.9"
 
 [[projects]]
   name = "github.com/tendermint/go-crypto"
@@ -351,7 +351,6 @@
     "p2p",
     "p2p/conn",
     "p2p/pex",
-    "p2p/trust",
     "p2p/upnp",
     "proxy",
     "rpc/client",
@@ -370,8 +369,8 @@
     "types/priv_validator",
     "version"
   ]
-  revision = "26f633ed48441f72895b710f0e87b7b6c6791066"
-  version = "v0.19.1"
+  revision = "64408a40419a5fa6f156dd96a2ab2fffa3c8ab96"
+  version = "v0.19.2"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -405,7 +404,7 @@
     "ripemd160",
     "salsa20/salsa"
   ]
-  revision = "ae8bce0030810cf999bb2b9868ae5c7c58e6343b"
+  revision = "2d027ae1dddd4694d54f7a8b6cbe78dca8720226"
 
 [[projects]]
   branch = "master"
@@ -417,16 +416,15 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "lex/httplex",
     "trace"
   ]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "4adea008a5e5f820b6028611ae0b6b3fbcec534b"
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
 
 [[projects]]
   name = "golang.org/x/text"

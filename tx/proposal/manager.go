@@ -146,6 +146,8 @@ func (pm ProposalManager) UpdateProposalStatus(
 	actualRatio := res.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
 	if !actualRatio.LT(ratio) {
 		proposalInfo.Result = types.ProposalPass
+	} else {
+		proposalInfo.Result = types.ProposalNotPass
 	}
 
 	proposal.SetProposalInfo(proposalInfo)

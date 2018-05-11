@@ -24,6 +24,11 @@ type ProtocolUpgradeMsg interface {
 	GetLink() string
 }
 
+type DeletePostContentMsg struct {
+	Creator  types.AccountKey `json:"creator"`
+	PermLink types.PermLink   `json:"permLink"`
+}
+
 type ChangeGlobalAllocationParamMsg struct {
 	Creator   types.AccountKey            `json:"creator"`
 	Parameter param.GlobalAllocationParam `json:"parameter"`
@@ -72,6 +77,49 @@ type ChangeBandwidthParamMsg struct {
 type ChangeAccountParamMsg struct {
 	Creator   types.AccountKey   `json:"creator"`
 	Parameter param.AccountParam `json:"parameter"`
+}
+
+//----------------------------------------
+// ChangeGlobalAllocationParamMsg Msg Implementations
+
+func NewDeletePostContentMsg(creator string, permLink types.PermLink) DeletePostContentMsg {
+	return DeletePostContentMsg{
+		Creator:  types.AccountKey(creator),
+		PermLink: permLink,
+	}
+}
+
+func (msg DeletePostContentMsg) GetPermLink() types.PermLink  { return msg.PermLink }
+func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creator }
+func (msg DeletePostContentMsg) Type() string                 { return types.ProposalRouterName }
+
+func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
+	if len(msg.Creator) < types.MinimumUsernameLength ||
+		len(msg.Creator) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	// TODO
+	return nil
+}
+
+func (msg DeletePostContentMsg) String() string {
+	return fmt.Sprintf("DeletePostContentMsg{Creator:%v}", msg.Creator)
+}
+
+func (msg DeletePostContentMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg DeletePostContentMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg DeletePostContentMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Creator)}
 }
 
 //----------------------------------------
@@ -336,7 +384,10 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 
 	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat) ||
 		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat) ||
-		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat) {
+		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat) ||
+		msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.NewRat(1, 1)) ||
+		msg.Parameter.ChangeParamPassRatio.GT(sdk.NewRat(1, 1)) ||
+		msg.Parameter.ContentCensorshipPassRatio.GT(sdk.NewRat(1, 1)) {
 		return ErrIllegalParameter()
 	}
 

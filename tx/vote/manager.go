@@ -351,9 +351,7 @@ func (vm VoteManager) CalculateVotingResult(
 
 	// put all validators who didn't vote on these two types proposal into penalty list
 	if proposalType == types.ChangeParam || proposalType == types.ProtocolUpgrade {
-		for _, validator := range oncallValidators {
-			res.PenaltyList = append(res.PenaltyList, validator)
-		}
+		res.PenaltyList = oncallValidators
 	}
 	return res, nil
 }
