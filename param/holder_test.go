@@ -38,7 +38,22 @@ func TestGlobalAllocationParam(t *testing.T) {
 
 	resultPtr, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Global allocation param should be equal")
+}
+
+func TestInfraInternalAllocationParam(t *testing.T) {
+	ph := NewParamHolder(TestKVStoreKey)
+	ctx := getContext()
+	parameter := InfraInternalAllocationParam{
+		StorageAllocation: sdk.NewRat(50, 100),
+		CDNAllocation:     sdk.NewRat(50, 100),
+	}
+	err := ph.setInfraInternalAllocationParam(ctx, &parameter)
+	assert.Nil(t, err)
+
+	resultPtr, err := ph.GetInfraInternalAllocationParam(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, parameter, *resultPtr, "Infra internal allocation param should be equal")
 }
 
 func TestEvaluateOfContenValueParam(t *testing.T) {
@@ -57,7 +72,7 @@ func TestEvaluateOfContenValueParam(t *testing.T) {
 
 	resultPtr, err := ph.GetEvaluateOfContentValueParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Evaluate of content value param should be equal")
 }
 
 func TestDeveloperParam(t *testing.T) {
@@ -73,7 +88,7 @@ func TestDeveloperParam(t *testing.T) {
 
 	resultPtr, err := ph.GetDeveloperParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Developer param should be equal")
 }
 
 func TestValidatorParam(t *testing.T) {
@@ -94,7 +109,7 @@ func TestValidatorParam(t *testing.T) {
 
 	resultPtr, err := ph.GetValidatorParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Validator param should be equal")
 }
 
 func TestVoteParam(t *testing.T) {
@@ -114,7 +129,7 @@ func TestVoteParam(t *testing.T) {
 
 	resultPtr, err := ph.GetVoteParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Voter param should be equal")
 }
 
 func TestProposalParam(t *testing.T) {
@@ -143,7 +158,7 @@ func TestProposalParam(t *testing.T) {
 
 	resultPtr, err := ph.GetProposalParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Proposal param should be equal")
 }
 
 func TestCoinDayParam(t *testing.T) {
@@ -158,7 +173,7 @@ func TestCoinDayParam(t *testing.T) {
 
 	resultPtr, err := ph.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Coin day param should be equal")
 }
 
 func TestBandwidthParam(t *testing.T) {
@@ -173,7 +188,7 @@ func TestBandwidthParam(t *testing.T) {
 
 	resultPtr, err := ph.GetBandwidthParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Bandwidth param should be equal")
 }
 
 func TestAccountParam(t *testing.T) {
@@ -188,7 +203,7 @@ func TestAccountParam(t *testing.T) {
 
 	resultPtr, err := ph.GetAccountParam(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Global allocation should be equal")
+	assert.Equal(t, parameter, *resultPtr, "Account param should be equal")
 }
 
 func TestInitParam(t *testing.T) {

@@ -11,18 +11,13 @@ import (
 
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
-		InfraAllocation:          sdk.Rat{20, 100},
-		ContentCreatorAllocation: sdk.Rat{55, 100},
-		DeveloperAllocation:      sdk.Rat{20, 100},
-		ValidatorAllocation:      sdk.Rat{5, 100},
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(55, 100),
+		DeveloperAllocation:      sdk.NewRat(20, 100),
+		ValidatorAllocation:      sdk.NewRat(5, 100),
 	}
-
-	p2 := param.GlobalAllocationParam{
-		InfraAllocation:          sdk.Rat{20, 100},
-		ContentCreatorAllocation: sdk.Rat{55, 100},
-		DeveloperAllocation:      sdk.Rat{25, 100},
-		ValidatorAllocation:      sdk.Rat{5, 100},
-	}
+	p2 := p1
+	p2.DeveloperAllocation = sdk.NewRat(25, 100)
 
 	cases := []struct {
 		ChangeGlobalAllocationParamMsg ChangeGlobalAllocationParamMsg
@@ -101,15 +96,12 @@ func TestMsgPermission(t *testing.T) {
 
 func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 	p1 := param.InfraInternalAllocationParam{
-		CDNAllocation:     sdk.Rat{20, 100},
-		StorageAllocation: sdk.Rat{80, 100},
+		CDNAllocation:     sdk.NewRat(20, 100),
+		StorageAllocation: sdk.NewRat(80, 100),
 	}
 
-	p2 := param.InfraInternalAllocationParam{
-		CDNAllocation:     sdk.ZeroRat,
-		StorageAllocation: sdk.Rat{101, 100},
-	}
-
+	p2 := p1
+	p2.StorageAllocation = sdk.NewRat(101, 100)
 	cases := []struct {
 		ChangeInfraInternalAllocationParamMsg ChangeInfraInternalAllocationParamMsg
 		expectError                           sdk.Error
@@ -136,71 +128,26 @@ func TestChangeVoteParamMsg(t *testing.T) {
 		DelegatorCoinReturnTimes:      int64(7),
 	}
 
-	p2 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(0 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
+	p2 := p1
+	p2.VoterMinDeposit = types.NewCoin(-1 * types.Decimals)
 
-	p3 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(-1 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
+	p3 := p1
+	p3.VoterMinWithdraw = types.NewCoin(0 * types.Decimals)
 
-	p4 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(0 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
-	p5 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(0),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
-	p6 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(0),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
-	p7 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(-1),
-		DelegatorCoinReturnTimes:      int64(7),
-	}
-	p8 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(0),
-	}
+	p4 := p1
+	p4.DelegatorMinWithdraw = types.NewCoin(0 * types.Decimals)
+
+	p5 := p1
+	p5.VoterCoinReturnIntervalHr = int64(0)
+
+	p6 := p1
+	p6.VoterCoinReturnTimes = int64(0)
+
+	p7 := p1
+	p7.DelegatorCoinReturnIntervalHr = int64(-1)
+
+	p8 := p1
+	p8.DelegatorCoinReturnTimes = int64(0)
 
 	cases := []struct {
 		ChangeVoteParamMsg ChangeVoteParamMsg
@@ -230,23 +177,14 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 		DeveloperMinDeposit:           types.NewCoin(1 * types.Decimals),
 	}
 
-	p2 := param.DeveloperParam{
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(-7),
-		DeveloperMinDeposit:           types.NewCoin(1 * types.Decimals),
-	}
+	p2 := p1
+	p2.DeveloperCoinReturnTimes = int64(-7)
 
-	p3 := param.DeveloperParam{
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(0),
-		DeveloperMinDeposit:           types.NewCoin(1 * types.Decimals),
-	}
+	p3 := p1
+	p3.DeveloperCoinReturnIntervalHr = int64(0)
 
-	p4 := param.DeveloperParam{
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(7),
-		DeveloperMinDeposit:           types.NewCoin(-1 * types.Decimals),
-	}
+	p4 := p1
+	p4.DeveloperMinDeposit = types.NewCoin(-1 * types.Decimals)
 
 	cases := []struct {
 		ChangeDeveloperParamMsg ChangeDeveloperParamMsg
@@ -277,93 +215,29 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
 	}
 
-	p2 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(-1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p2 := p1
+	p2.ValidatorMinWithdraw = types.NewCoin(-1 * types.Decimals)
 
-	p3 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(0 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p3 := p1
+	p3.ValidatorMinVotingDeposit = types.NewCoin(0 * types.Decimals)
 
-	p4 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(-1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p4 := p1
+	p4.ValidatorMinCommitingDeposit = types.NewCoin(-1000 * types.Decimals)
 
-	p5 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(-7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p5 := p1
+	p5.ValidatorCoinReturnIntervalHr = int64(-7 * 24)
 
-	p6 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(23),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(-200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p6 := p1
+	p6.ValidatorCoinReturnTimes = int64(0)
 
-	p7 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(0),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p7 := p1
+	p7.PenaltyMissVote = types.NewCoin(-200 * types.Decimals)
 
-	p8 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(-200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
-	}
+	p8 := p1
+	p8.PenaltyByzantine = types.NewCoin(-10233232300 * types.Decimals)
 
-	p9 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(-10233232300 * types.Decimals),
-	}
+	p9 := p1
+	p9.PenaltyMissCommit = types.NewCoin(0 * types.Decimals)
 
 	cases := []struct {
 		ChangeValidatorParamMsg ChangeValidatorParamMsg
@@ -408,233 +282,41 @@ func TestChangeProposalParamMsg(t *testing.T) {
 		NextProposalID: int64(0),
 	}
 
-	p2 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(-24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+	p2 := p1
+	p2.ContentCensorshipDecideHr = int64(-24 * 7)
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+	p3 := p1
+	p3.ContentCensorshipPassRatio = sdk.NewRat(150, 100)
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+	p4 := p1
+	p4.ContentCensorshipPassVotes = types.NewCoin(-10000 * types.Decimals)
 
-		NextProposalID: int64(0),
-	}
+	p5 := p1
+	p5.ContentCensorshipMinDeposit = types.NewCoin(-100 * types.Decimals)
 
-	p3 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(150, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+	p6 := p1
+	p6.ChangeParamDecideHr = int64(-24 * 7)
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+	p7 := p1
+	p7.ChangeParamPassRatio = sdk.NewRat(0, 8)
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+	p8 := p1
+	p8.ChangeParamPassVotes = types.NewCoin(0 * types.Decimals)
 
-		NextProposalID: int64(0),
-	}
+	p9 := p1
+	p9.ChangeParamMinDeposit = types.NewCoin(-100000 * types.Decimals)
 
-	p4 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(100, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(-10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
+	p10 := p1
+	p10.ProtocolUpgradeDecideHr = int64(0)
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
+	p11 := p1
+	p11.ProtocolUpgradePassRatio = sdk.NewRat(0, 100)
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
+	p12 := p1
+	p12.ProtocolUpgradePassVotes = types.NewCoin(-10000000 * types.Decimals)
 
-		NextProposalID: int64(0),
-	}
-
-	p5 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(80, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(-100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p6 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(80, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(-24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p7 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(10, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(0, 8),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p8 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(0 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p9 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(15, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(-100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p10 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(20, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(0),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p11 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p12 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(-10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
-
-	p13 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
-		ContentCensorshipPassRatio:  sdk.NewRat(20, 100),
-		ContentCensorshipPassVotes:  types.NewCoin(10000 * types.Decimals),
-		ContentCensorshipMinDeposit: types.NewCoin(100 * types.Decimals),
-
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoin(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoin(100000 * types.Decimals),
-
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
-		ProtocolUpgradePassRatio:  sdk.NewRat(0, 100),
-		ProtocolUpgradePassVotes:  types.NewCoin(10000000 * types.Decimals),
-		ProtocolUpgradeMinDeposit: types.NewCoin(-1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
-	}
+	p13 := p1
+	p13.ProtocolUpgradeMinDeposit = types.NewCoin(-1000000 * types.Decimals)
 
 	cases := []struct {
 		ChangeProposalParamMsg ChangeProposalParamMsg
