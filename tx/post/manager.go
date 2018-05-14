@@ -7,9 +7,6 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-const rewardEvent = 0x1
-
-// post is the proxy for all storage structs defined above
 type PostManager struct {
 	postStorage model.PostStorage `json:"post_storage"`
 	paramHolder param.ParamHolder `json:"param_holder"`
@@ -271,6 +268,14 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.E
 		return ErrDeletePost(permLink).TraceCause(err, "")
 	}
 	return nil
+}
+
+func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	if err != nil {
+		return false, ErrDeletePost(permLink).TraceCause(err, "")
+	}
+	return postMeta.IsDeleted, nil
 }
 
 // get penalty score from report and upvote

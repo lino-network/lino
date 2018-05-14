@@ -97,10 +97,13 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(lb.voteManager, lb.accountManager, lb.globalManager)).
-		AddRoute(types.DeveloperRouterName, developer.NewHandler(lb.developerManager, lb.accountManager, lb.globalManager)).
-		AddRoute(types.ProposalRouterName, proposal.NewHandler(lb.accountManager, lb.proposalManager, lb.globalManager)).
+		AddRoute(types.DeveloperRouterName, developer.NewHandler(
+			lb.developerManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.ProposalRouterName, proposal.NewHandler(
+			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager)).
 		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
+		AddRoute(types.ValidatorRouterName, val.NewHandler(
+			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
 
 	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)

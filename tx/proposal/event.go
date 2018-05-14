@@ -100,6 +100,9 @@ func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	}
 
 	// TODO add content censorship logic
+	if exist := postManager.IsPostExist(ctx, permLink); !exist {
+		return ErrCensorshipPostNotFound()
+	}
 	if err := postManager.DeletePost(ctx, permLink); err != nil {
 		return err
 	}

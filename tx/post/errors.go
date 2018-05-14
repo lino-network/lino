@@ -111,8 +111,12 @@ func ErrDonateAuthorNotFound(permLink types.PermLink, author types.AccountKey) s
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donation failed, post %v author %v not found", permLink, author))
 }
 
-func ErrDonatePostDoesntExist(permLink types.PermLink) sdk.Error {
+func ErrDonatePostNotFound(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post doesn't exist", permLink))
+}
+
+func ErrDonatePostIsDeleted(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post is deleted", permLink))
 }
 
 func ErrReportFailed(permLink types.PermLink) sdk.Error {

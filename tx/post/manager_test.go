@@ -358,9 +358,9 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 }
 
 func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permLink types.PermLink) {
-	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	isDeleted, err := pm.IsDeleted(ctx, permLink)
 	assert.Nil(t, err)
-	assert.Equal(t, true, postMeta.IsDeleted)
+	assert.Equal(t, true, isDeleted)
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
 	assert.Nil(t, err)
 	assert.Equal(t, "", postInfo.Title)
