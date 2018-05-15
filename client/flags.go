@@ -43,6 +43,7 @@ const (
 	FlagContent      = "content"
 	FlagParentAuthor = "parent_author"
 	FlagParentPostID = "parent_post_ID"
+	FlagFromChecking = "from_checking"
 
 	// Vote
 	FlagVoter      = "voter"

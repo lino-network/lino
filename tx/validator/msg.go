@@ -106,6 +106,13 @@ func (msg ValidatorWithdrawMsg) String() string {
 }
 
 func (msg ValidatorWithdrawMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -143,6 +150,13 @@ func (msg ValidatorRevokeMsg) String() string {
 }
 
 func (msg ValidatorRevokeMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

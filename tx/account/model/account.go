@@ -21,7 +21,8 @@ type AccountInfo struct {
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
 	Address         sdk.Address      `json:"address"`
-	Balance         types.Coin       `json:"balance"`
+	Saving          types.Coin       `json:"saving"`
+	Checking        types.Coin       `json:"checking"`
 	Username        types.AccountKey `json:"username"`
 	Stake           types.Coin       `json:"stake"`
 	FrozenMoneyList []FrozenMoney    `json:"frozen_money_list"`

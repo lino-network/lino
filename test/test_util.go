@@ -38,13 +38,15 @@ var (
 	GenesisTotalLino types.LNO = "10000000000"
 	LNOPerValidator  types.LNO = "100000000"
 
-	PenaltyMissVote             types.Coin = types.NewCoin(200 * types.Decimals)
-	ProposalDecideHr            int64      = 24 * 7
-	ParamChangeHr               int64      = 24
-	CoinReturnIntervalHr        int64      = 24 * 7
-	CoinReturnTimes             int64      = 7
-	ConsumptionFrictionRate     sdk.Rat    = sdk.NewRat(5, 100)
-	ConsumptionFreezingPeriodHr int64      = 24 * 7
+	PenaltyMissVote       types.Coin = types.NewCoin(200 * types.Decimals)
+	ChangeParamMinDeposit types.Coin = types.NewCoin(100000 * types.Decimals)
+
+	ProposalDecideHr            int64   = 24 * 7
+	ParamChangeHr               int64   = 24
+	CoinReturnIntervalHr        int64   = 24 * 7
+	CoinReturnTimes             int64   = 7
+	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodHr int64   = 24 * 7
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
@@ -115,10 +117,10 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
-	balance, err :=
-		accManager.GetBankBalance(ctx, types.AccountKey(accountName))
+	saving, err :=
+		accManager.GetSavingFromBank(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
-	assert.Equal(t, expectBalance, balance)
+	assert.Equal(t, expectBalance, saving)
 }
 
 func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {

@@ -39,7 +39,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusCoin(ctx, msg.Username, deposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {

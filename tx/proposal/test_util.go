@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	"github.com/lino-network/lino/tx/post"
 	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/tx/vote"
 	"github.com/lino-network/lino/types"
@@ -25,16 +26,16 @@ var (
 	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
 	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
 	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
-
-	initCoin = types.NewCoin(100)
+	TestPostKVStoreKey      = sdk.NewKVStoreKey("post")
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
 }
 
-func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, ProposalManager, vote.VoteManager, val.ValidatorManager, global.GlobalManager) {
+func setupTest(t *testing.T, height int64) (
+	sdk.Context, acc.AccountManager, ProposalManager, post.PostManager, vote.VoteManager,
+	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
@@ -44,16 +45,17 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 	voteManager := vote.NewVoteManager(TestGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(TestValidatorKVStoreKey, ph)
+	postManager := post.NewPostManager(TestPostKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
-	cdc.RegisterConcrete(param.ChangeGlobalAllocationParamEvent{}, "2", nil)
+	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, proposalManager, voteManager, valManager, globalManager
+	return ctx, accManager, proposalManager, postManager, voteManager, valManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -65,6 +67,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 
@@ -72,10 +75,11 @@ func getContext(height int64) sdk.Context {
 }
 
 // helper function to create an account for testing purpose
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
+func createTestAccount(
+	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
+	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), types.NewCoin(0))
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return types.AccountKey(username)
 }

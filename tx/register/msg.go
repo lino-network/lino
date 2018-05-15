@@ -61,6 +61,14 @@ func (msg RegisterMsg) String() string {
 
 // Implements Msg.
 func (msg RegisterMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	// the permission will not be checked at auth
+	if keyStr == types.PermissionLevel {
+		return types.MasterPermission
+	}
 	return nil
 }
 

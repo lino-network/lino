@@ -127,6 +127,13 @@ func (msg VoterWithdrawMsg) String() string {
 }
 
 func (msg VoterWithdrawMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -166,6 +173,13 @@ func (msg VoterRevokeMsg) String() string {
 }
 
 func (msg VoterRevokeMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -264,6 +278,13 @@ func (msg RevokeDelegationMsg) String() string {
 }
 
 func (msg RevokeDelegationMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -305,6 +326,13 @@ func (msg VoteMsg) String() string {
 }
 
 func (msg VoteMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 
@@ -351,6 +379,13 @@ func (msg DelegatorWithdrawMsg) String() string {
 }
 
 func (msg DelegatorWithdrawMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
 	return nil
 }
 

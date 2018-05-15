@@ -142,10 +142,10 @@ func TestGenesisAcc(t *testing.T) {
 			expectBalance = expectBalance.Minus(
 				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
-		balance, err :=
-			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
+		saving, err :=
+			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
 		assert.Nil(t, err)
-		assert.Equal(t, expectBalance, balance)
+		assert.Equal(t, expectBalance, saving)
 	}
 
 	// reload app and ensure the account is still there
@@ -158,10 +158,10 @@ func TestGenesisAcc(t *testing.T) {
 			expectBalance = expectBalance.Minus(
 				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
-		balance, err :=
-			lb.accountManager.GetBankBalance(ctx, types.AccountKey(acc.genesisAccountName))
+		saving, err :=
+			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
 		assert.Nil(t, err)
-		assert.Equal(t, expectBalance, balance)
+		assert.Equal(t, expectBalance, saving)
 	}
 }
 
@@ -196,11 +196,11 @@ func TestDistributeInflationToValidators(t *testing.T) {
 					types.RatToCoin(inflationForValidator.ToRat().Quo(sdk.NewRat(21))))
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
-					balance, err :=
-						lb.accountManager.GetBankBalance(
+					saving, err :=
+						lb.accountManager.GetSavingFromBank(
 							ctx, types.AccountKey("validator"+strconv.Itoa(i)))
 					assert.Nil(t, err)
-					assert.Equal(t, expectBalance, balance)
+					assert.Equal(t, expectBalance, saving)
 				}
 			}
 		}

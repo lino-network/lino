@@ -10,8 +10,6 @@ type Proposal interface {
 	SetProposalInfo(ProposalInfo)
 }
 
-type Description interface{}
-
 type ProposalInfo struct {
 	Creator       types.AccountKey     `json:"creator"`
 	ProposalID    types.ProposalKey    `json:"proposal_id"`
@@ -20,18 +18,29 @@ type ProposalInfo struct {
 	Result        types.ProposalResult `json:"result"`
 }
 
-type ChangeGlobalAllocationParamProposal struct {
+type ChangeParamProposal struct {
 	ProposalInfo
-	Description param.GlobalAllocationParam `json:"description"`
+	Param param.Parameter `json:"param"`
 }
 
-func (p *ChangeGlobalAllocationParamProposal) GetProposalInfo() ProposalInfo {
-	return p.ProposalInfo
+func (p *ChangeParamProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }
+func (p *ChangeParamProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInfo = info }
+
+type ContentCensorshipProposal struct {
+	ProposalInfo
+	PermLink types.PermLink `json:"perm_link"`
 }
 
-func (p *ChangeGlobalAllocationParamProposal) SetProposalInfo(info ProposalInfo) {
-	p.ProposalInfo = info
+func (p *ContentCensorshipProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }
+func (p *ContentCensorshipProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInfo = info }
+
+type ProtocolUpgradeProposal struct {
+	ProposalInfo
+	Link string `json:"link"`
 }
+
+func (p *ProtocolUpgradeProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }
+func (p *ProtocolUpgradeProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInfo = info }
 
 type ProposalList struct {
 	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`

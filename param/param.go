@@ -5,6 +5,8 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+type Parameter interface{}
+
 // parameters can be changed by proposal
 type EvaluateOfContentValueParam struct {
 	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
@@ -44,16 +46,19 @@ type VoteParam struct {
 }
 
 type ProposalParam struct {
-	NextProposalID          int64      `json:"next_proposal_id"`
-	TypeAProposalDecideHr   int64      `json:"type_a_proposal_decide_hr"`
-	TypeAProposalMinDeposit types.Coin `json:"type_a_proposal_min_deposit"`
-	TypeAProposalPassRatio  sdk.Rat    `json:"type_a_proposal_pass_ratio"`
-	TypeBProposalDecideHr   int64      `json:"type_b_proposal_decide_hr"`
-	TypeBProposalMinDeposit types.Coin `json:"type_b_proposal_min_deposit"`
-	TypeBProposalPassRatio  sdk.Rat    `json:"type_b_proposal_pass_ratio"`
-	TypeCProposalDecideHr   int64      `json:"type_c_proposal_decide_hr"`
-	TypeCProposalMinDeposit types.Coin `json:"type_c_proposal_min_deposit"`
-	TypeCProposalPassRatio  sdk.Rat    `json:"type_c_proposal_pass_ratio"`
+	NextProposalID              int64      `json:"next_proposal_id"`
+	ContentCensorshipDecideHr   int64      `json:"content_censorship_decide_hr"`
+	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`
+	ContentCensorshipPassRatio  sdk.Rat    `json:"content_censorship_pass_ratio"`
+	ContentCensorshipPassVotes  types.Coin `json:"content_censorship_pass_votes"`
+	ChangeParamDecideHr         int64      `json:"change_param_decide_hr"`
+	ChangeParamMinDeposit       types.Coin `json:"change_param_min_deposit"`
+	ChangeParamPassRatio        sdk.Rat    `json:"change_param_pass_ratio"`
+	ChangeParamPassVotes        types.Coin `json:"change_param_pass_votes"`
+	ProtocolUpgradeDecideHr     int64      `json:"protocol_upgrade_decide_hr"`
+	ProtocolUpgradeMinDeposit   types.Coin `json:"protocol_upgrade_min_deposit"`
+	ProtocolUpgradePassRatio    sdk.Rat    `json:"protocol_upgrade_pass_ratio"`
+	ProtocolUpgradePassVotes    types.Coin `json:"protocol_upgrade_pass_votes"`
 }
 
 type DeveloperParam struct {
@@ -86,4 +91,5 @@ type BandwidthParam struct {
 // AccountParam includes params related to account
 type AccountParam struct {
 	MinimumBalance types.Coin `json:"minimum_balance"`
+	RegisterFee    types.Coin `json:"register_fee"`
 }

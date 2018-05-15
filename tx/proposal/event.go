@@ -4,20 +4,24 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	"github.com/lino-network/lino/tx/post"
 	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/tx/vote"
 	types "github.com/lino-network/lino/types"
 )
 
-type DecideProposalEvent struct{}
+type DecideProposalEvent struct {
+	ProposalType types.ProposalType `json:"proposal_type"`
+	ProposalID   types.ProposalKey  `json:"proposal_id"`
+}
 
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
-	am acc.AccountManager, pm ProposalManager, gm global.GlobalManager) sdk.Error {
-	// get the proposal ID we are going to decide
-	curID, err := pm.GetCurrentProposal(ctx)
-	if err != nil {
-		return err
+	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager,
+	gm global.GlobalManager) sdk.Error {
+	// check it is ongoing proposal
+	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {
+		return ErrOngoingProposalNotFound()
 	}
 
 	// get all oncall validators (make sure they voted on certain type of proposal)
@@ -27,7 +31,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// calculate voting result
-	votingRes, err := voteManager.CalculateVotingResult(ctx, curID, lst.OncallValidators)
+	votingRes, err := voteManager.CalculateVotingResult(
+		ctx, dpe.ProposalID, dpe.ProposalType, lst.OncallValidators)
 	if err != nil {
 		return err
 	}
@@ -44,7 +49,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// update the ongoing and past proposal list
-	proposalRes, err := pm.UpdateProposalStatus(ctx, votingRes)
+	proposalRes, err := proposalManager.UpdateProposalStatus(
+		ctx, votingRes, dpe.ProposalType, dpe.ProposalID)
 	if err != nil {
 		return err
 	}
@@ -54,9 +60,50 @@ func (dpe DecideProposalEvent) Execute(
 		return nil
 	}
 
-	// create parameter change event
-	if err := pm.CreateParamChangeEvent(ctx, curID, gm); err != nil {
+	// execute proposal
+	switch dpe.ProposalType {
+	case types.ChangeParam:
+		if err := dpe.ExecuteChangeParam(ctx, dpe.ProposalID, proposalManager, gm); err != nil {
+			return err
+		}
+	case types.ContentCensorship:
+		if err := dpe.ExecuteContentCensorship(ctx, dpe.ProposalID, proposalManager, postManager); err != nil {
+			return err
+		}
+	case types.ProtocolUpgrade:
+		if err := dpe.ExecuteProtocolUpgrade(ctx, dpe.ProposalID, proposalManager); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (dpe DecideProposalEvent) ExecuteChangeParam(
+	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
+	gm global.GlobalManager) sdk.Error {
+	event, err := proposalManager.CreateParamChangeEvent(ctx, curID)
+	if err != nil {
 		return err
 	}
+	if err := gm.RegisterParamChangeEvent(ctx, event); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dpe DecideProposalEvent) ExecuteContentCensorship(
+	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
+	postManager post.PostManager) sdk.Error {
+	_, err := proposalManager.GetPermLink(ctx, curID)
+	if err != nil {
+		return err
+	}
+
+	// TODO add content censorship logic
+	return nil
+}
+
+func (dpe DecideProposalEvent) ExecuteProtocolUpgrade(
+	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager) sdk.Error {
 	return nil
 }

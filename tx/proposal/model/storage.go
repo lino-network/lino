@@ -3,6 +3,7 @@ package model
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 )
 
@@ -20,7 +21,21 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc := wire.NewCodec()
 
 	cdc.RegisterInterface((*Proposal)(nil), nil)
-	cdc.RegisterConcrete(&ChangeGlobalAllocationParamProposal{}, "cga", nil)
+	cdc.RegisterConcrete(&ChangeParamProposal{}, "changeParam", nil)
+	cdc.RegisterConcrete(&ProtocolUpgradeProposal{}, "upgrade", nil)
+	cdc.RegisterConcrete(&ContentCensorshipProposal{}, "censorship", nil)
+
+	cdc.RegisterInterface((*param.Parameter)(nil), nil)
+	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "allocation", nil)
+	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "infraAllocation", nil)
+	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "contentValue", nil)
+	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
+	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
+	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)
+	cdc.RegisterConcrete(param.ValidatorParam{}, "validatorParam", nil)
+	cdc.RegisterConcrete(param.CoinDayParam{}, "coinDayParam", nil)
+	cdc.RegisterConcrete(param.BandwidthParam{}, "bandwidthParam", nil)
+	cdc.RegisterConcrete(param.AccountParam{}, "accountParam", nil)
 
 	wire.RegisterCrypto(cdc)
 	vs := ProposalStorage{

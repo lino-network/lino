@@ -41,7 +41,7 @@ func handleDepositMsg(
 	}
 
 	// withdraw money from validator's bank
-	if err = am.MinusCoin(ctx, msg.Username, coin); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 
@@ -71,6 +71,7 @@ func handleDepositMsg(
 	if !valManager.IsBalancedAccount(ctx, msg.Username, votingDeposit) {
 		return ErrCommitingDepositExceedVotingDeposit().Result()
 	}
+
 	// Try to become oncall validator
 	if err := valManager.TryBecomeOncallValidator(ctx, msg.Username); err != nil {
 		return err.Result()
@@ -80,8 +81,8 @@ func handleDepositMsg(
 
 // Handle Withdraw Msg
 func handleWithdrawMsg(
-	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager,
-	am acc.AccountManager, msg ValidatorWithdrawMsg) sdk.Result {
+	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, am acc.AccountManager,
+	msg ValidatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -101,15 +102,16 @@ func handleWithdrawMsg(
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes,
+		param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func handleRevokeMsg(
-	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager,
-	am acc.AccountManager, msg ValidatorRevokeMsg) sdk.Result {
+	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, am acc.AccountManager,
+	msg ValidatorRevokeMsg) sdk.Result {
 	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
 		return withdrawErr.Result()
@@ -125,16 +127,15 @@ func handleRevokeMsg(
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes,
-		param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
-	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
+	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
+	times int64, interval int64, coin types.Coin) sdk.Error {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
@@ -152,6 +153,7 @@ func returnCoinTo(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
 		return err
 	}
+
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}

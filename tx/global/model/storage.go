@@ -27,6 +27,18 @@ type GlobalStorage struct {
 
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.NewCodec()
+	cdc.RegisterInterface((*param.Parameter)(nil), nil)
+	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "param/contentValue", nil)
+	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
+	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
+	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
+	cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
+	cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
+	cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
+	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
+	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
+	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
+
 	wire.RegisterCrypto(cdc)
 	return GlobalStorage{
 		key: key,
