@@ -12,6 +12,7 @@ var _ sdk.Msg = CreatePostMsg{}
 var _ sdk.Msg = LikeMsg{}
 var _ sdk.Msg = DonateMsg{}
 var _ sdk.Msg = ReportOrUpvoteMsg{}
+var _ sdk.Msg = ViewMsg{}
 
 // PostCreateParams can also use to publish comment(with parent) or repost(with source)
 type PostCreateParams struct {
@@ -24,7 +25,7 @@ type PostCreateParams struct {
 	SourceAuthor            types.AccountKey       `json:"source_author"`
 	SourcePostID            string                 `json:"source_postID"`
 	Links                   []types.IDToURLMapping `json:"links"`
-	RedistributionSplitRate sdk.Rat                `json:"redistribution_split_rate"`
+	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
 }
 
 // CreatePostMsg contains information to create a post
@@ -42,11 +43,19 @@ type LikeMsg struct {
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
+	Username     types.AccountKey
+	Amount       types.LNO
+	Author       types.AccountKey
+	PostID       string
+	FromApp      types.AccountKey
+	FromChecking bool
+}
+
+// ViewMsg sent from a user to a post
+type ViewMsg struct {
 	Username types.AccountKey
-	Amount   types.LNO
 	Author   types.AccountKey
 	PostID   string
-	FromApp  types.AccountKey
 }
 
 // ReportOrUpvoteMsg sent from a user to a post
@@ -55,7 +64,6 @@ type ReportOrUpvoteMsg struct {
 	Author   types.AccountKey
 	PostID   string
 	IsReport bool
-	IsRevoke bool
 }
 
 // NewCreatePostMsg constructs a post msg
@@ -76,31 +84,42 @@ func NewLikeMsg(
 	}
 }
 
+// NewLikeMsg constructs a like msg
+func NewViewMsg(
+	user types.AccountKey, author types.AccountKey, postID string) ViewMsg {
+
+	return ViewMsg{
+		Username: user,
+		Author:   author,
+		PostID:   postID,
+	}
+}
+
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user types.AccountKey, amount types.LNO, author types.AccountKey,
-	postID string, fromApp types.AccountKey) DonateMsg {
+	postID string, fromApp types.AccountKey, fromChecking bool) DonateMsg {
 
 	return DonateMsg{
-		Username: user,
-		Amount:   amount,
-		Author:   author,
-		PostID:   postID,
-		FromApp:  fromApp,
+		Username:     user,
+		Amount:       amount,
+		Author:       author,
+		PostID:       postID,
+		FromApp:      fromApp,
+		FromChecking: fromChecking,
 	}
 }
 
 // NewReportOrUpvoteMsg constructs a report msg
 func NewReportOrUpvoteMsg(
 	user types.AccountKey, author types.AccountKey, postID string,
-	isReport bool, isRevoke bool) ReportOrUpvoteMsg {
+	isReport bool) ReportOrUpvoteMsg {
 
 	return ReportOrUpvoteMsg{
 		Username: user,
 		Author:   author,
 		PostID:   postID,
 		IsReport: isReport,
-		IsRevoke: isRevoke,
 	}
 }
 
@@ -109,6 +128,7 @@ func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
 func (msg LikeMsg) Type() string           { return types.PostRouterName }
 func (msg DonateMsg) Type() string         { return types.PostRouterName }
 func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
+func (msg ViewMsg) Type() string           { return types.PostRouterName }
 
 // ValidateBasic implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -129,11 +149,13 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if msg.RedistributionSplitRate == sdk.NewRat(0, 0) {
+
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-	if msg.RedistributionSplitRate.LT(sdk.ZeroRat) ||
-		msg.RedistributionSplitRate.GT(sdk.OneRat) {
+
+	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -181,6 +203,17 @@ func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// ValidateBasic implements sdk.Msg
+func (msg ViewMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) == 0 {
+		return ErrPostViewNoUsername()
+	}
+	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
+		return ErrPostViewInvalidTarget()
+	}
+	return nil
+}
+
 // Get implements sdk.Msg; should not be called
 func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
 	return nil
@@ -189,9 +222,22 @@ func (msg LikeMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 func (msg DonateMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		if msg.FromChecking {
+			return types.PostPermission
+		}
+		return types.TransactionPermission
+	}
 	return nil
 }
 func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+func (msg ViewMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
 
@@ -199,6 +245,7 @@ func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
 func (msg CreatePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
+
 func (msg LikeMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
@@ -208,6 +255,10 @@ func (msg DonateMsg) GetSignBytes() []byte {
 }
 
 func (msg ReportOrUpvoteMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+func (msg ViewMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
@@ -232,6 +283,9 @@ func (msg DonateMsg) GetSigners() []sdk.Address {
 func (msg ReportOrUpvoteMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
+func (msg ViewMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
@@ -250,5 +304,10 @@ func (msg DonateMsg) String() string {
 func (msg ReportOrUpvoteMsg) String() string {
 	return fmt.Sprintf(
 		"Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}",
+		msg.Username, msg.Author, msg.PostID)
+}
+func (msg ViewMsg) String() string {
+	return fmt.Sprintf(
+		"Post.ViewMsg{from: %v, post auther:%v, post id: %v}",
 		msg.Username, msg.Author, msg.PostID)
 }

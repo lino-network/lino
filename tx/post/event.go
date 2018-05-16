@@ -2,11 +2,19 @@ package post
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 	acc "github.com/lino-network/lino/tx/account"
 	dev "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 )
+
+func init() {
+	cdc := wire.NewCodec()
+
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
+}
 
 type RewardEvent struct {
 	PostAuthor types.AccountKey `json:"post_author"`
@@ -22,8 +30,8 @@ func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
 
-	postKey := types.GetPostKey(event.PostAuthor, event.PostID)
-	paneltyScore, err := pm.GetPenaltyScore(ctx, postKey)
+	permLink := types.GetPermLink(event.PostAuthor, event.PostID)
+	paneltyScore, err := pm.GetPenaltyScore(ctx, permLink)
 	if err != nil {
 		return err
 	}
@@ -37,10 +45,10 @@ func (event RewardEvent) Execute(
 	if !am.IsAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrDonatePostDoesntExist(postKey)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrDonatePostNotFound(permLink)
 	}
-	if err := pm.AddDonation(ctx, postKey, event.Consumer, reward); err != nil {
+	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward); err != nil {
 		return err
 	}
 	if err := am.AddIncomeAndReward(

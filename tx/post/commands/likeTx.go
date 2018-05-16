@@ -10,16 +10,8 @@ import (
 	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/tx/post"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
-)
-
-// nolint
-const (
-	FlagLikeUser = "likeUser"
-	FlagWeight   = "weight"
-	FlagAuthor   = "author"
 )
 
 // LikeTxCmd will create a like tx and sign it with the given key
@@ -29,21 +21,21 @@ func LikeTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "like a post or dislike a post",
 		RunE:  sendLikeTx(cdc),
 	}
-	cmd.Flags().String(FlagLikeUser, "", "like user of this transaction")
-	cmd.Flags().String(FlagPostID, "", "post id to identify this post for the author")
-	cmd.Flags().String(FlagAuthor, "", "title for the post")
-	cmd.Flags().String(FlagWeight, "", "content for the post")
+	cmd.Flags().String(client.FlagLikeUser, "", "like user of this transaction")
+	cmd.Flags().String(client.FlagPostID, "", "post id to identify this post for the author")
+	cmd.Flags().String(client.FlagAuthor, "", "title for the post")
+	cmd.Flags().String(client.FlagWeight, "", "content for the post")
 	return cmd
 }
 
 // send like transaction to the blockchain
 func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		username := viper.GetString(FlagLikeUser)
-		author := viper.GetString(FlagAuthor)
-		postID := viper.GetString(FlagPostID)
-		weight, err := strconv.Atoi(viper.GetString(FlagWeight))
+		ctx := client.NewCoreContextFromViper()
+		username := viper.GetString(client.FlagLikeUser)
+		author := viper.GetString(client.FlagAuthor)
+		postID := viper.GetString(client.FlagPostID)
+		weight, err := strconv.Atoi(viper.GetString(client.FlagWeight))
 		if err != nil {
 			return err
 		}
@@ -51,7 +43,7 @@ func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := post.NewLikeMsg(types.AccountKey(username), int64(weight), types.AccountKey(author), postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(username, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

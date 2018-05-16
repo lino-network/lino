@@ -4,7 +4,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/post/model"
@@ -31,7 +30,7 @@ type commander struct {
 }
 
 func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.NewCoreContextFromViper()
+	ctx := client.NewCoreContextFromViper()
 	if len(args) != 2 || len(args[0]) == 0 || len(args[1]) == 0 {
 		return errors.New("You must provide an valid author and post id")
 	}
@@ -39,14 +38,14 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	author := args[0]
 	postID := args[1]
-	postKey := types.GetPostKey(types.AccountKey(author), postID)
+	postKey := types.GetPermLink(types.AccountKey(author), postID)
 
 	res, err := ctx.Query(model.GetPostInfoKey(postKey), c.storeName)
 	if err != nil {
 		return err
 	}
 	postInfo := new(model.PostInfo)
-	if err := c.cdc.UnmarshalBinary(res, postInfo); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, postInfo); err != nil {
 		return err
 	}
 
@@ -55,7 +54,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	postMeta := new(model.PostMeta)
-	if err := c.cdc.UnmarshalBinary(res, postMeta); err != nil {
+	if err := c.cdc.UnmarshalJSON(res, postMeta); err != nil {
 		return err
 	}
 

@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -10,8 +12,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/register"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
@@ -24,25 +24,30 @@ func RegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "Create and sign a register tx",
 		RunE:  sendRegisterTx(cdc),
 	}
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	return cmd
 }
 
 // send register transaction to the blockchain
 func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		name := viper.GetString(sdkcli.FlagName)
+		ctx := client.NewCoreContextFromViper()
+		name := viper.GetString(client.FlagUser)
 		pubKey, err := GetPubKey()
 
 		if err != nil {
 			return err
 		}
+		transactionPriv := crypto.GenPrivKeyEd25519()
+		postPriv := crypto.GenPrivKeyEd25519()
+		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
-		msg := register.NewRegisterMsg(name, *pubKey)
+		msg := register.NewRegisterMsg(name, pubKey, postPriv.PubKey(), transactionPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err
@@ -54,13 +59,13 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 }
 
 // Get the public key from the name flag
-func GetPubKey() (pubKey *crypto.PubKey, err error) {
+func GetPubKey() (pubKey crypto.PubKey, err error) {
 	keybase, err := keys.GetKeyBase()
 	if err != nil {
 		return nil, err
 	}
 
-	name := viper.GetString(sdkcli.FlagName)
+	name := viper.GetString(client.FlagUser)
 	if name == "" {
 		return nil, errors.Errorf("must provide a name using --name")
 	}
@@ -70,5 +75,5 @@ func GetPubKey() (pubKey *crypto.PubKey, err error) {
 		return nil, errors.Errorf("No key for: %s", name)
 	}
 
-	return &info.PubKey, nil
+	return info.PubKey, nil
 }

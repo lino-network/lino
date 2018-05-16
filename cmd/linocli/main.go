@@ -7,10 +7,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/client"
 	acccmd "github.com/lino-network/lino/tx/account/commands"
 	developercmd "github.com/lino-network/lino/tx/developer/commands"
 	infracmd "github.com/lino-network/lino/tx/infra/commands"
 	postcmd "github.com/lino-network/lino/tx/post/commands"
+	proposalcmd "github.com/lino-network/lino/tx/proposal/commands"
 	registercmd "github.com/lino-network/lino/tx/register/commands"
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
 	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
@@ -18,7 +20,6 @@ import (
 	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
 	"github.com/lino-network/lino/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -71,6 +72,10 @@ func main() {
 	linocliCmd.AddCommand(
 		client.PostCommands(
 			postcmd.LikeTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			postcmd.ViewTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
@@ -127,12 +132,12 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			votecmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
 		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			votecmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
 		)...)
 
 	linocliCmd.AddCommand(
@@ -151,6 +156,10 @@ func main() {
 	linocliCmd.AddCommand(
 		client.PostCommands(
 			developercmd.DeveloperRevokeTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.GrantDeveloperTxCmd(cdc),
 		)...)
 
 	linocliCmd.AddCommand(

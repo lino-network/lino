@@ -16,10 +16,12 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
 			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
+		case GrantDeveloperMsg:
+			return handleGrantDeveloperMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
-			return handleDeveloperRevokeMsg(ctx, dm, gm, msg)
+			return handleDeveloperRevokeMsg(ctx, dm, am, gm, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized developer Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -37,7 +39,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusCoin(ctx, msg.Username, deposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
@@ -47,7 +49,7 @@ func handleDeveloperRegisterMsg(
 }
 
 func handleDeveloperRevokeMsg(
-	ctx sdk.Context, dm DeveloperManager, gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
 	if !dm.IsDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -61,8 +63,29 @@ func handleDeveloperRevokeMsg(
 		return withdrawErr.Result()
 	}
 
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, types.CoinReturnTimes, types.CoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalHr, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleGrantDeveloperMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantDeveloperMsg) sdk.Result {
+	if !dm.IsDeveloperExist(ctx, msg.AuthenticateApp) {
+		return ErrDeveloperNotFound().Result()
+	}
+	if !am.IsAccountExist(ctx, msg.Username) {
+		return ErrUsernameNotFound().Result()
+	}
+
+	if err := am.AuthorizePermission(
+		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -70,7 +93,7 @@ func handleDeveloperRevokeMsg(
 
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
-	times int64, interval int64, coin types.Coin) sdk.Error {
+	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
@@ -83,7 +106,10 @@ func returnCoinTo(
 		}
 		events = append(events, event)
 	}
-
+	if err := am.AddFrozenMoney(
+		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		return err
+	}
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}

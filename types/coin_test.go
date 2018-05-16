@@ -3,9 +3,9 @@ package types
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 	"github.com/stretchr/testify/assert"
+
+	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 func TestNewCoin(t *testing.T) {
@@ -42,9 +42,7 @@ func TestLNOToCoin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		rat, err := sdk.NewRatFromDecimal(tc.inputString)
-		assert.Nil(err)
-		coin, err := LinoToCoin(LNO(rat))
+		coin, err := LinoToCoin(LNO(tc.inputString))
 		assert.Nil(err)
 		assert.Equal(coin, tc.expectedCoin)
 	}
@@ -61,9 +59,7 @@ func TestLNOToCoin(t *testing.T) {
 	}
 
 	for _, tc := range invalidCases {
-		rat, err := sdk.NewRatFromDecimal(tc.inputString)
-		assert.Nil(err)
-		_, err = LinoToCoin(LNO(rat))
+		_, err := LinoToCoin(LNO(tc.inputString))
 		assert.NotNil(err)
 	}
 }

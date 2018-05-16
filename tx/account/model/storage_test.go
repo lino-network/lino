@@ -3,14 +3,14 @@ package model
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/go-crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
@@ -33,11 +33,12 @@ func TestAccountInfo(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username: types.AccountKey("test"),
-		Created:  0,
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
+		Username:       types.AccountKey("test"),
+		CreatedAt:      0,
+		MasterKey:      priv.PubKey(),
+		TransactionKey: priv.Generate(1).PubKey(),
+		PostKey:        priv.Generate(2).PubKey(),
+		Address:        priv.PubKey().Address(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -53,7 +54,7 @@ func TestInvalidAccountInfo(t *testing.T) {
 
 	resultPtr, err := as.GetInfo(ctx, types.AccountKey("test"))
 	assert.Nil(t, resultPtr)
-	assert.Equal(t, err, ErrAccountInfoDoesntExist())
+	assert.Equal(t, err, ErrAccountInfoNotFound())
 }
 
 func TestAccountBank(t *testing.T) {
@@ -62,18 +63,19 @@ func TestAccountBank(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username: types.AccountKey("test"),
-		Created:  0,
-		PostKey:  priv.PubKey(),
-		OwnerKey: priv.PubKey(),
-		Address:  priv.PubKey().Address(),
+		Username:       types.AccountKey("test"),
+		CreatedAt:      0,
+		MasterKey:      priv.PubKey(),
+		TransactionKey: priv.Generate(1).PubKey(),
+		PostKey:        priv.Generate(2).PubKey(),
+		Address:        priv.PubKey().Address(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
 
 	accBank := AccountBank{
 		Address: priv.PubKey().Address(),
-		Balance: types.NewCoin(int64(123)),
+		Saving:  types.NewCoin(int64(123)),
 	}
 	err = as.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
 	assert.Nil(t, err)

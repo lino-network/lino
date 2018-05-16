@@ -1,9 +1,8 @@
 package account
 
 import (
-	types "github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/lino-network/lino/types"
 )
 
 // ReturnCoin Event return a certain amount of coin to an account
@@ -18,7 +17,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 		return ErrUsernameNotFound()
 	}
 
-	if err := am.AddCoin(ctx, event.Username, event.Amount); err != nil {
+	if err := am.AddSavingCoin(ctx, event.Username, event.Amount); err != nil {
 		return err
 	}
 	return nil

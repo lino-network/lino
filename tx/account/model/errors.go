@@ -9,16 +9,16 @@ import (
 )
 
 // Error constructors
-func ErrAccountInfoDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info doesn't exist"))
+func ErrAccountInfoNotFound() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info is not found"))
 }
 
 func ErrGetAccountInfo() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get account info failed"))
 }
 
-func ErrAccountBankDoesntExist() sdk.Error {
-	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank doesn't exist"))
+func ErrAccountBankNotFound() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank is not found"))
 }
 
 func ErrGetBankFromAccountKey() sdk.Error {
@@ -91,6 +91,14 @@ func ErrGetPendingStakeFailed() sdk.Error {
 
 func ErrSetPendingStakeFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set pending stake failed"))
+}
+
+func ErrGetGrantListFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get grant key list failed"))
+}
+
+func ErrSetGrantListFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set grant key list failed"))
 }
 
 func ErrAddMoneyFailed() sdk.Error {

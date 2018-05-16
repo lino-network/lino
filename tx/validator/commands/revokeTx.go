@@ -9,8 +9,6 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/validator"
 
-	sdkcli "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -21,20 +19,21 @@ func RevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "revoke a validator",
 		RunE:  sendRevokeTx(cdc),
 	}
+	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	return cmd
 }
 
 // send revoke transaction to the blockchain
 func sendRevokeTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := context.NewCoreContextFromViper()
-		name := viper.GetString(sdkcli.FlagName)
+		ctx := client.NewCoreContextFromViper()
+		name := viper.GetString(client.FlagUser)
 
 		// // create the message
 		msg := validator.NewValidatorRevokeMsg(name)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

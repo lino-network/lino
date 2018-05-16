@@ -18,7 +18,7 @@ func ErrUsernameNotFound() sdk.Error {
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalida Username"))
+	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid Username"))
 }
 
 func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
@@ -34,28 +34,56 @@ func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
 }
 
-func ErrAddCoinToAccount(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to account %v failed", accKey))
+func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed", accKey))
+}
+
+func ErrAddCoinToAccountChecking(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add checking coin to account %v failed", accKey))
 }
 
 func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("minus coin to account %v failed", accKey))
 }
 
+func ErrUpdateFrozenMoney(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v frozen money failed", accKey))
+}
+
 func ErrGetBankAddress(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank address failed", accKey))
 }
 
-func ErrGetOwnerKey(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v owner key failed", accKey))
+func ErrCheckMasterKey() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transaction needs master key"))
+}
+
+func ErrCheckTransactionKey() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transaction needs transaction key"))
+}
+
+func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v authenticate public key match failed", accKey))
+}
+
+func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+}
+
+func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v master key failed", accKey))
 }
 
 func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
 }
 
-func ErrGetBankBalance(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank balance failed", accKey))
+func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank saving failed", accKey))
+}
+
+func ErrGetBankChecking(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank checking failed", accKey))
 }
 
 func ErrGetSequence(accKey types.AccountKey) sdk.Error {
@@ -90,6 +118,10 @@ func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account %v exists", accKey))
 }
 
+func ErrRecoverMasterKeyAlreadyOccupied() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, "recover account failed: master key occupied")
+}
+
 func ErrBankAlreadyRegistered() sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("bank connection exists"))
 }
@@ -106,6 +138,10 @@ func ErrUsernameAddressMismatch() sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("username and address mismatch"))
 }
 
-func ErrAccountCoinNotEnough() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's coins are not enough"))
+func ErrAccountSavingCoinNotEnough() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
+}
+
+func ErrAccountCheckingCoinNotEnough() sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
 }

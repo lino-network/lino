@@ -1,17 +1,27 @@
 package account
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/lino-network/lino/tx/account/model"
+	"github.com/lino-network/lino/types"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	crypto "github.com/tendermint/go-crypto"
+)
+
+var (
+	user1 = types.AccountKey("user1")
+	user2 = types.AccountKey("user2")
+
+	memo = "This is a memo!"
 )
 
 func TestFollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -31,7 +41,7 @@ func TestFollow(t *testing.T) {
 }
 
 func TestFollowUserNotExist(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create test user
@@ -52,7 +62,7 @@ func TestFollowUserNotExist(t *testing.T) {
 }
 
 func TestFollowAgain(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -76,7 +86,7 @@ func TestFollowAgain(t *testing.T) {
 }
 
 func TestUnfollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
@@ -101,7 +111,7 @@ func TestUnfollow(t *testing.T) {
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -118,7 +128,7 @@ func TestUnfollowUserNotExist(t *testing.T) {
 }
 
 func TestInvalidUnfollow(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -149,113 +159,249 @@ func TestInvalidUnfollow(t *testing.T) {
 }
 
 func TestTransferNormal(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, accParam := setupTest(t, 1)
 	handler := NewHandler(am)
 
-	// create two test users
+	// create two test users with initial deposit of 100 LNO.
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
 
-	memo := []byte("This is a memo!")
+	receiverAddr, _ := am.GetBankAddress(ctx, user2)
 
-	// let user1 transfers 200 to user2 (by username)
-	msg := NewTransferMsg("user1", l200, memo, TransferToUser("user2"))
-	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+	testCases := []struct {
+		testName            string
+		msg                 TransferMsg
+		wantOK              bool
+		wantSenderBalance   types.Coin
+		wantReceiverBalance types.Coin
+	}{
+		{testName: "user1 transfers 200 LNO to user2 (by username)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverName: user2,
+				Amount:       l200,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c200.Plus(accParam.RegisterFee),
+		},
+		{testName: "user1 transfers 1600 LNO to user2 (by both username and address)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverName: user2,
+				ReceiverAddr: receiverAddr,
+				Amount:       l1600,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c200.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c1800.Plus(accParam.RegisterFee),
+		},
+		{testName: "user1 transfers 100 LNO to user2 (by address)",
+			msg: TransferMsg{
+				Sender:       user1,
+				ReceiverAddr: receiverAddr,
+				Amount:       l100,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c100.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c1900.Plus(accParam.RegisterFee),
+		},
+		{testName: "user2 transfers 100 LNO to a random address",
+			msg: TransferMsg{
+				Sender:       user2,
+				ReceiverAddr: sdk.Address("sdajsdbiqwbdiub"),
+				Amount:       l100,
+				Memo:         memo,
+			},
+			wantOK:              true,
+			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
+			wantReceiverBalance: c100,
+		},
+	}
 
-	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user2"))
-	assert.Equal(t, c1800, acc1Balance)
-	assert.Equal(t, acc2Balance, c300)
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
 
-	acc2Addr, _ := am.GetBankAddress(ctx, types.AccountKey("user2"))
-	msg = NewTransferMsg("user1", l1600, memo, TransferToUser("user2"), TransferToAddr(acc2Addr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+		if result.IsOK() != tc.wantOK {
+			t.Errorf("%s handler(%v): got %v, want %v, err:%v", tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
+		}
 
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
+		senderSaving, _ := am.GetSavingFromBank(ctx, tc.msg.Sender)
+		var receiverSaving types.Coin
+		if tc.msg.ReceiverName != "" {
+			receiverSaving, _ = am.GetSavingFromBank(ctx, tc.msg.ReceiverName)
+		} else {
+			bank, _ := am.storage.GetBankFromAddress(ctx, tc.msg.ReceiverAddr)
+			receiverSaving = bank.Saving
+		}
 
-	assert.Equal(t, acc1Balance, c200)
-	assert.Equal(t, acc2Balance, c1900)
-
-	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(acc2Addr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-	acc2Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user2"))
-
-	assert.Equal(t, acc1Balance, c100)
-	assert.Equal(t, acc2Balance, c2000)
-
-	randomAddr := sdk.Address("sdajsdbiqwbdiub")
-	msg = NewTransferMsg("user1", l100, memo, TransferToAddr(randomAddr))
-	result = handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
-	acc1Balance, _ = am.GetBankBalance(ctx, types.AccountKey("user1"))
-
-	assert.Equal(t, acc1Balance, c0)
-
+		if !senderSaving.IsEqual(tc.wantSenderBalance) {
+			t.Errorf("%s get sender bank Saving(%v): got %v, want %v", tc.testName, tc.msg.Sender, senderSaving, tc.wantSenderBalance)
+		}
+		if !receiverSaving.IsEqual(tc.wantReceiverBalance) {
+			t.Errorf("%s: get receiver bank Saving(%v): got %v, want %v", tc.testName, tc.msg.ReceiverName, receiverSaving, tc.wantReceiverBalance)
+		}
+	}
 }
 
 func TestSenderCoinNotEnough(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, accParam := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1500)
-
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to user2
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"))
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrAccountCoinNotEnough().Result(), result)
+	assert.Equal(t, ErrAccountSavingCoinNotEnough().Result(), result)
 
-	acc1Balance, _ := am.GetBankBalance(ctx, types.AccountKey("user1"))
-	assert.Equal(t, acc1Balance, c1600)
+	acc1Balance, _ := am.GetSavingFromBank(ctx, types.AccountKey("user1"))
+	assert.Equal(t, acc1Balance, accParam.RegisterFee)
 }
 
 func TestUsernameAddressMismatch(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
-	am.AddCoin(ctx, types.AccountKey("user2"), c1900)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user2"), c2000)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
 
 	// let user1 transfers 2000 Lino to user2 (provide both name and address)
 	msg := NewTransferMsg(
-		"user1", l2000, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
+		"user1", l1999, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
-	ctx, am := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddCoin(ctx, types.AccountKey("user1"), c1900)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
 
-	memo := []byte("This is a memo!")
+	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrTransferHandler(msg.Sender).Result().Code, result.Code)
+}
+
+func TestHandleAccountRecover(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
+	handler := NewHandler(am)
+	user1 := "user1"
+
+	createTestAccount(ctx, am, user1)
+
+	testCases := map[string]struct {
+		user              string
+		newMasterKey      crypto.PubKey
+		newPostKey        crypto.PubKey
+		newTransactionKey crypto.PubKey
+	}{
+		"normal case": {
+			user1, crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+		},
+	}
+
+	for testName, tc := range testCases {
+		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newPostKey)
+		result := handler(ctx, msg)
+		assert.Equal(
+			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
+		accInfo := model.AccountInfo{
+			Username:       types.AccountKey(tc.user),
+			CreatedAt:      ctx.BlockHeader().Time,
+			MasterKey:      tc.newMasterKey,
+			TransactionKey: tc.newTransactionKey,
+			PostKey:        tc.newPostKey,
+			Address:        tc.newMasterKey.Address(),
+		}
+		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
+		newBank := model.AccountBank{
+			Address:  tc.newMasterKey.Address(),
+			Saving:   accParam.RegisterFee,
+			Stake:    coin0,
+			Username: types.AccountKey(user1),
+		}
+		checkBankKVByAddress(t, ctx, tc.newMasterKey.Address(), newBank)
+	}
+}
+
+func TestSavingAndChecking(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
+	handler := NewHandler(am)
+	user1 := types.AccountKey("user1")
+
+	createTestAccount(ctx, am, string(user1))
+	am.AddSavingCoin(ctx, user1, c2000)
+
+	testCases := []struct {
+		testName             string
+		user                 string
+		fromSavingToChecking bool
+		amount               types.LNO
+		expectResult         sdk.Result
+		expectChecking       types.Coin
+		expectSaving         types.Coin
+	}{
+		{"transfer from saving to checking",
+			string(user1), true, types.LNO("200"), sdk.Result{},
+			c200, accParam.RegisterFee.Plus(c1800),
+		},
+		{"transfer from checking to saving",
+			string(user1), false, types.LNO("200"), sdk.Result{},
+			c0, accParam.RegisterFee.Plus(c2000),
+		},
+		{"transfer from checking to saving if checking is insufficient",
+			string(user1), false, types.LNO("200"),
+			ErrAccountCheckingCoinNotEnough().Result(),
+			c0, accParam.RegisterFee.Plus(c2000),
+		},
+		{"transfer from saving to checking if saving is insufficient",
+			string(user1), false, types.LNO("2001"),
+			ErrAccountSavingCoinNotEnough().Result(),
+			c0, accParam.RegisterFee.Plus(c2000),
+		},
+	}
+
+	for _, tc := range testCases {
+		var msg sdk.Msg
+		if tc.fromSavingToChecking {
+			msg = NewSavingToCheckingMsg(tc.user, tc.amount)
+		} else {
+			msg = NewCheckingToSavingMsg(tc.user, tc.amount)
+		}
+		result := handler(ctx, msg)
+		assert.Equal(t, tc.expectResult, result,
+			fmt.Sprintf("%s: got %v, want %v", tc.testName, tc.expectResult, result))
+		accSaving, err := am.GetSavingFromBank(ctx, user1)
+		assert.Nil(t, err, fmt.Sprintf("%s: got err %v", tc.testName, err))
+		assert.Equal(t, tc.expectSaving, accSaving,
+			fmt.Sprintf("%s: expect saving %v, got %v", tc.testName, tc.expectSaving, accSaving))
+		accChecking, err := am.GetCheckingFromBank(ctx, user1)
+		assert.Nil(t, err, fmt.Sprintf("%s: got err %v", tc.testName, err))
+		assert.Equal(t, tc.expectChecking, accChecking,
+			fmt.Sprintf("%s: expect saving %v, got %v", tc.testName, tc.expectChecking, accChecking))
+	}
 }

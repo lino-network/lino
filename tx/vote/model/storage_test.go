@@ -22,8 +22,6 @@ func setup(t *testing.T) (sdk.Context, VoteStorage) {
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
 	vs := NewVoteStorage(TestKVStoreKey)
-	err := vs.InitGenesis(ctx)
-	assert.Nil(t, err)
 	return ctx, vs
 }
 
@@ -55,22 +53,23 @@ func TestVote(t *testing.T) {
 	user1, user2, user3 :=
 		types.AccountKey("user1"), types.AccountKey("user2"), types.AccountKey("user3")
 	proposalID1, proposalID2 := types.ProposalKey("1"), types.ProposalKey("2")
-
+	votingPower := types.NewCoin(1000)
 	cases := []struct {
 		isDelete    bool
 		voter       types.AccountKey
 		result      bool
+		votingPower types.Coin
 		proposalID  types.ProposalKey
 		expectVotes []Vote
 	}{
-		{false, user1, true, proposalID1, []Vote{Vote{user1, true}}},
-		{false, user2, true, proposalID2, []Vote{Vote{user2, true}}},
-		{false, user2, false, proposalID2, []Vote{Vote{user2, false}}},
-		{false, user3, true, proposalID2, []Vote{Vote{user2, false}, Vote{user3, true}}},
-		{true, user1, true, proposalID1, nil},
-		{true, user2, true, proposalID2, []Vote{Vote{user3, true}}},
-		{false, user3, false, proposalID2, []Vote{Vote{user3, false}}},
-		{false, user2, true, proposalID2, []Vote{Vote{user2, true}, Vote{user3, false}}},
+		{false, user1, true, votingPower, proposalID1, []Vote{Vote{user1, votingPower, true}}},
+		{false, user2, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, true}}},
+		{false, user2, false, votingPower, proposalID2, []Vote{Vote{user2, votingPower, false}}},
+		{false, user3, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, false}, Vote{user3, votingPower, true}}},
+		{true, user1, true, votingPower, proposalID1, nil},
+		{true, user2, true, votingPower, proposalID2, []Vote{Vote{user3, votingPower, true}}},
+		{false, user3, false, votingPower, proposalID2, []Vote{Vote{user3, votingPower, false}}},
+		{false, user2, true, votingPower, proposalID2, []Vote{Vote{user2, votingPower, true}, Vote{user3, votingPower, false}}},
 	}
 
 	for _, cs := range cases {
@@ -81,8 +80,9 @@ func TestVote(t *testing.T) {
 			assert.Equal(t, ErrGetVote(), err)
 		} else {
 			vote := Vote{
-				Voter:  cs.voter,
-				Result: cs.result,
+				Voter:       cs.voter,
+				Result:      cs.result,
+				VotingPower: cs.votingPower,
 			}
 			err := vs.SetVote(ctx, cs.proposalID, cs.voter, &vote)
 			assert.Nil(t, err)
@@ -94,71 +94,6 @@ func TestVote(t *testing.T) {
 		allVotes, err := vs.GetAllVotes(ctx, cs.proposalID)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectVotes, allVotes)
-	}
-}
-
-func TestProposalList(t *testing.T) {
-	ctx, vs := setup(t)
-
-	proposalList, err := vs.GetProposalList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, ProposalList{[]types.ProposalKey{}, []types.ProposalKey{}}, *proposalList)
-	proposalList.OngoingProposal =
-		append(proposalList.OngoingProposal, types.ProposalKey("test1"))
-	proposalList.OngoingProposal =
-		append(proposalList.OngoingProposal, types.ProposalKey("test2"))
-	proposalList.PastProposal = append(proposalList.PastProposal, types.ProposalKey("test3"))
-
-	err = vs.SetProposalList(ctx, proposalList)
-	assert.Nil(t, err)
-
-	proposalListPtr, err := vs.GetProposalList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, proposalList, proposalListPtr)
-}
-
-func TestPenaltyList(t *testing.T) {
-	ctx, vs := setup(t)
-	lst, err := vs.GetValidatorReferenceList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, ValidatorReferenceList{[]types.AccountKey{},
-		[]types.AccountKey{}, []types.AccountKey{}}, *lst)
-	lst.PenaltyValidators =
-		append(lst.PenaltyValidators, types.AccountKey("test1"))
-
-	err = vs.SetValidatorReferenceList(ctx, lst)
-	assert.Nil(t, err)
-
-	lstPtr, err := vs.GetValidatorReferenceList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, lst, lstPtr)
-}
-
-func TestProposal(t *testing.T) {
-	ctx, vs := setup(t)
-	user := types.AccountKey("user")
-	proposalID := types.ProposalKey("123")
-
-	cases := []struct {
-		ChangeParameterProposal
-	}{
-		{ChangeParameterProposal{
-			Proposal{user, proposalID, types.NewCoin(0), types.NewCoin(0)},
-			ChangeParameterDescription{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
-				sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0)}}},
-	}
-
-	for _, proposal := range cases {
-		err := vs.SetProposal(ctx, proposalID, &proposal.ChangeParameterProposal)
-		assert.Nil(t, err)
-		proposlPtr, err := vs.GetProposal(ctx, proposalID)
-		assert.Nil(t, err)
-		assert.Equal(t, proposal.ChangeParameterProposal, *proposlPtr)
-		err = vs.DeleteProposal(ctx, proposalID)
-		assert.Nil(t, err)
-		proposlPtr, err = vs.GetProposal(ctx, proposalID)
-		assert.Nil(t, proposlPtr)
-		assert.Equal(t, ErrGetProposal(), err)
 	}
 }
 

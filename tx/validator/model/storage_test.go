@@ -64,7 +64,7 @@ func TestValidatorList(t *testing.T) {
 	}{
 		{ValidatorList{[]types.AccountKey{types.AccountKey("user1")},
 			[]types.AccountKey{types.AccountKey("user2")},
-			[]types.AccountKey{},
+			nil,
 			types.NewCoin(100), types.AccountKey("user2")}},
 	}
 

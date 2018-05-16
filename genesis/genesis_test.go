@@ -1,29 +1,33 @@
 package genesis
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto"
 )
 
 func TestGetGenesisJson(t *testing.T) {
-	genesisAccPriv := crypto.GenPrivKeyEd25519()
+	masterPriv := crypto.GenPrivKeyEd25519()
+	transactionPriv := crypto.GenPrivKeyEd25519()
+	postPriv := crypto.GenPrivKeyEd25519()
 	validatorPriv := crypto.GenPrivKeyEd25519()
-	totalLino := int64(10000000000)
+	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
-		Name:        "Lino",
-		Lino:        totalLino,
-		PubKey:      genesisAccPriv.PubKey(),
-		IsValidator: true,
-		ValPubKey:   validatorPriv.PubKey(),
+		Name:           "Lino",
+		Lino:           totalLino,
+		MasterKey:      masterPriv.PubKey(),
+		TransactionKey: transactionPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
+		IsValidator:    true,
+		ValPubKey:      validatorPriv.PubKey(),
 	}
 
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:    "Lino",
-		Deposit: 1000000,
+		Deposit: "1000000",
 	}
 	genesisInfraProvider := GenesisInfraProvider{
 		Name: "Lino",
@@ -35,11 +39,13 @@ func TestGetGenesisJson(t *testing.T) {
 		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 	}
 
+	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
 	result, err := GetGenesisJson(genesisState)
 	assert.Nil(t, err)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	appGenesisState := new(GenesisState)
-	err = json.Unmarshal([]byte(result), appGenesisState)
+	err = cdc.UnmarshalJSON([]byte(result), appGenesisState)
 	assert.Nil(t, err)
 
 	assert.Equal(t, genesisState, *appGenesisState)

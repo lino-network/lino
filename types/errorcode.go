@@ -52,4 +52,15 @@ const (
 	// Developer errors reserve 900 ~ 999
 	CodeDeveloperHandlerFailed sdk.CodeType = 900
 	CodeDeveloperManagerFailed sdk.CodeType = 901
+
+	// Param errors reserve 1000 ~ 1099
+	CodeParamStoreError         sdk.CodeType = 1000
+	CodeParamHolderGenesisError sdk.CodeType = 1001
+
+	// Proposal errors reserve 1100 ~ 1199
+	CodeProposalStoreError   sdk.CodeType = 1100
+	CodeProposalManagerError sdk.CodeType = 1101
+	CodeProposalEventError   sdk.CodeType = 1102
+	CodeProposalHandlerError sdk.CodeType = 1103
+	CodeProposalMsgError     sdk.CodeType = 1104
 )

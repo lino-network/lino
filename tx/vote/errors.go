@@ -16,10 +16,6 @@ func ErrGetVote() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get vote failed"))
 }
 
-func ErrGetProposal() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get proposal failed"))
-}
-
 func ErrGetDelegation() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
 }
@@ -48,6 +44,10 @@ func ErrValidatorCannotRevoke() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid revoke"))
 }
 
-func ErrIllegalParameter() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid parameter"))
+func ErrNotOngoingProposal() sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Not ongoing proposal"))
+}
+
+func ErrVoteExist() sdk.Error {
+	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote exist"))
 }

@@ -13,7 +13,7 @@ func NewHandler(im InfraManager) sdk.Handler {
 		case ProviderReportMsg:
 			return handleProviderReportMsg(ctx, im, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized infra Msg type: %v", reflect.TypeOf(msg).Name())
+			errMsg := fmt.Sprintf("Unrecognized infra msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

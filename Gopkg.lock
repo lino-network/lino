@@ -14,7 +14,6 @@
   revision = "675abc5df3c5531bc741b56a765e35623459da6d"
 
 [[projects]]
-  branch = "master"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -31,7 +30,6 @@
     "types",
     "version",
     "wire",
-    "x/auth",
     "x/auth/commands",
     "x/auth/rest",
     "x/bank",
@@ -40,7 +38,8 @@
     "x/ibc",
     "x/ibc/rest"
   ]
-  revision = "396b85b303e5c071040469f3e230a9d052d9cb80"
+  revision = "0fb189777c2d573a8504582343fb7d39c2cd26e3"
+  version = "v0.15.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -212,7 +211,7 @@
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
-  revision = "d932a24a8ccb8fcadc993e5c6c58f93dac168294"
+  revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -279,7 +278,7 @@
     "leveldb/table",
     "leveldb/util"
   ]
-  revision = "714f901b98fdb3aa954b4193d8cbd64a28d80cad"
+  revision = "ae970a0732be3a1f5311da86118d37b9f4bd2a5a"
 
 [[projects]]
   name = "github.com/tendermint/abci"
@@ -304,6 +303,12 @@
   revision = "d8387025d2b9d158cf4efb07e7ebf814bcce2057"
 
 [[projects]]
+  name = "github.com/tendermint/go-amino"
+  packages = ["."]
+  revision = "ed62928576cfcaf887209dc96142cd79cdfff389"
+  version = "0.9.9"
+
+[[projects]]
   name = "github.com/tendermint/go-crypto"
   packages = [
     ".",
@@ -312,17 +317,13 @@
     "keys/words",
     "keys/words/wordlist"
   ]
-  revision = "c3e19f3ea26f5c3357e0bcbb799b0761ef923755"
-  version = "v0.5.0"
+  revision = "915416979bf70efa4bcbf1c6cd5d64c5fff9fc19"
+  version = "v0.6.2"
 
 [[projects]]
   name = "github.com/tendermint/go-wire"
-  packages = [
-    ".",
-    "data"
-  ]
+  packages = ["."]
   revision = "fa721242b042ecd4c6ed1a934ee740db4f74e45c"
-  source = "github.com/tendermint/go-amino"
   version = "v0.7.3"
 
 [[projects]]
@@ -350,7 +351,6 @@
     "p2p",
     "p2p/conn",
     "p2p/pex",
-    "p2p/trust",
     "p2p/upnp",
     "proxy",
     "rpc/client",
@@ -367,11 +367,10 @@
     "state/txindex/null",
     "types",
     "types/priv_validator",
-    "version",
-    "wire"
+    "version"
   ]
-  revision = "4930b61a381b9fb9bc530eb5deb56ea6429a1c3a"
-  version = "v0.18.0"
+  revision = "64408a40419a5fa6f156dd96a2ab2fffa3c8ab96"
+  version = "v0.19.2"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -388,8 +387,8 @@
     "pubsub",
     "pubsub/query"
   ]
-  revision = "2e24b64fc121dcdf1cabceab8dc2f7257675483c"
-  version = "v0.8.1"
+  revision = "d94e312673e16a11ea55d742cefb3e331228f898"
+  version = "v0.8.2"
 
 [[projects]]
   branch = "master"
@@ -405,7 +404,7 @@
     "ripemd160",
     "salsa20/salsa"
   ]
-  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
+  revision = "2d027ae1dddd4694d54f7a8b6cbe78dca8720226"
 
 [[projects]]
   branch = "master"
@@ -417,16 +416,15 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "lex/httplex",
     "trace"
   ]
-  revision = "d41e8174641f662c5a2d1c7a5f9e828788eb8706"
+  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "3ccc7e5779793fd54564baf60c51bf017955e0ba"
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -453,7 +451,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
+  revision = "86e600f69ee4704c6efbf6a2a40a5c10700e76c2"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -488,6 +486,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a811a4e39a72ee7b91fd2f0ccdf810a2f71f321c3ea50128899bdd54298f4fb8"
+  inputs-digest = "bfec1ca67a23df311b03d31e632a0de416a7263ede390777f480b296cc5cd444"
   solver-name = "gps-cdcl"
   solver-version = 1

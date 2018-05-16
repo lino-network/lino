@@ -13,6 +13,8 @@ const (
 	VoteKVStoreKey      = "vote"
 	InfraKVStoreKey     = "infra"
 	DeveloperKVStoreKey = "developer"
+	ParamKVStoreKey     = "param"
+	ProposalKVStoreKey  = "proposal"
 
 	// RouterName for msg routing in app
 	RegisterRouterName  = "register"
@@ -22,6 +24,26 @@ const (
 	VoteRouterName      = "vote"
 	InfraRouterName     = "infra"
 	DeveloperRouterName = "developer"
+	ProposalRouterName  = "proposal"
+
+	// Msg key
+	IsRegister      = "is_register"
+	PermissionLevel = "permission_level"
+
+	// Different permission level for msg
+	PostPermission        = Permission(0)
+	TransactionPermission = Permission(1)
+	MasterPermission      = Permission(2)
+
+	// Different proposal result
+	ProposalPass    = ProposalResult(0)
+	ProposalNotPass = ProposalResult(1)
+	ProposalRevoked = ProposalResult(2)
+
+	// Different proposal types
+	ChangeParam       = ProposalType(0)
+	ContentCensorship = ProposalType(1)
+	ProtocolUpgrade   = ProposalType(2)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
@@ -54,5 +76,8 @@ const (
 	HoursPerYear = 8766
 
 	// as defined by a julian year of 365.25 days
-	MinutesPerMonth = 8766 * 60 / 12
+	MinutesPerYear = HoursPerYear * 60
+
+	// as defined by a julian year of 365.25 days
+	MinutesPerMonth = MinutesPerYear / 12
 )

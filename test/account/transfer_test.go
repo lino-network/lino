@@ -8,23 +8,22 @@ import (
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
 // test normal transfer to account name
 func TestTransferToAccount(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
 	baseTime := time.Now().Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
-	test.CreateAccount(t, newAccountName, lb, 0, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 0,
+		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
 
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO(sdk.NewRat(100)), []byte{}, acc.TransferToUser(newAccountName))
+		test.GenesisUser, types.LNO("100"), "", acc.TransferToUser(newAccountName))
 
-	test.SignCheckDeliver(t, lb, transferMsg, 1, true, test.GenesisPriv, baseTime)
+	test.SignCheckDeliver(t, lb, transferMsg, 1, true, test.GenesisTransactionPriv, baseTime)
 
 	test.CheckBalance(t, test.GenesisUser, lb,
 		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(200*types.Decimals)))
@@ -33,17 +32,18 @@ func TestTransferToAccount(t *testing.T) {
 
 // test normal transfer to address
 func TestTransferToAddress(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
 	newAccountName := "newUser"
+	newAccountPriv := crypto.GenPrivKeyEd25519()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 
 	transferMsg := acc.NewTransferMsg(
-		test.GenesisUser, types.LNO(sdk.NewRat(100)), []byte{},
+		test.GenesisUser, types.LNO("100"), "",
 		acc.TransferToAddr(newAccountPriv.PubKey().Address()))
-	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisPriv, baseTime)
+	test.SignCheckDeliver(t, lb, transferMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
-	test.CreateAccount(t, newAccountName, lb, 1, newAccountPriv, 100)
+	test.CreateAccount(t, newAccountName, lb, 1,
+		newAccountPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
 
 	test.CheckBalance(t, test.GenesisUser, lb,
 		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(200*types.Decimals)))

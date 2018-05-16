@@ -11,8 +11,9 @@ type Voter struct {
 }
 
 type Vote struct {
-	Voter  types.AccountKey `json:"voter"`
-	Result bool             `json:"result"`
+	Voter       types.AccountKey `json:"voter"`
+	VotingPower types.Coin       `json:"voting_power"`
+	Result      bool             `json:"result"`
 }
 
 type Delegation struct {
@@ -20,8 +21,7 @@ type Delegation struct {
 	Amount    types.Coin       `json:"amount"`
 }
 
-type ValidatorReferenceList struct {
-	PenaltyValidators []types.AccountKey `json:"penalty_validators"`
-	AllValidators     []types.AccountKey `json:"all_validators"`
-	OncallValidators  []types.AccountKey `json:"oncall_validators"`
+type ReferenceList struct {
+	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
+	AllValidators   []types.AccountKey  `json:"all_validators"`
 }
