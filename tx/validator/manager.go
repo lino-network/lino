@@ -290,7 +290,6 @@ func (vm ValidatorManager) RegisterValidator(
 			return ErrPubKeyHasBeenRegistered()
 		}
 	}
-	//if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.PubKey) {
 	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
