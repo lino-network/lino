@@ -42,3 +42,7 @@ func ErrCommitingDepositExceedVotingDeposit() sdk.Error {
 func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }
+
+func ErrPubKeyHasBeenRegistered() sdk.Error {
+	return sdk.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Public key has been registered"))
+}

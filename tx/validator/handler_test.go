@@ -39,7 +39,6 @@ func TestRegisterBasic(t *testing.T) {
 	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
-	// create two test users
 	user1 := createTestAccount(ctx, am, "user1")
 	am.AddSavingCoin(ctx, user1, c2000)
 
@@ -126,10 +125,8 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	verifyList2, _ := valManager.storage.GetValidatorList(ctx)
-	validator, _ := valManager.storage.GetValidator(ctx, "user1")
 	assert.Equal(t, 0, len(verifyList2.OncallValidators))
 	assert.Equal(t, 0, len(verifyList2.AllValidators))
-	assert.Equal(t, c0, validator.Deposit)
 
 }
 
@@ -257,6 +254,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 	assert.Equal(t, 1, len(lst2.AllValidators))
 	assert.Equal(t, 1, len(lst2.OncallValidators))
+
 }
 
 func TestWithdrawBasic(t *testing.T) {
@@ -475,4 +473,30 @@ func TestRemoveBasic(t *testing.T) {
 	assert.Equal(t, 1, len(verifyList2.AllValidators))
 	assert.Equal(t, goodUser, verifyList2.OncallValidators[0])
 	assert.Equal(t, goodUser, verifyList2.AllValidators[0])
+}
+
+func TestRegisterWithDupKey(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(am, valManager, voteManager, gm)
+	valManager.InitGenesis(ctx)
+
+	user1 := createTestAccount(ctx, am, "user1")
+	am.AddSavingCoin(ctx, user1, c2000)
+
+	user2 := createTestAccount(ctx, am, "user2")
+	am.AddSavingCoin(ctx, user2, c2000)
+
+	voteManager.AddVoter(ctx, "user1", c8000)
+	voteManager.AddVoter(ctx, "user2", c8000)
+
+	// let user1 register as validator
+	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
+	msg1 := NewValidatorDepositMsg("user1", l1600, valKey1, "")
+	result1 := handler(ctx, msg1)
+	assert.Equal(t, sdk.Result{}, result1)
+
+	msg2 := NewValidatorDepositMsg("user2", l1600, valKey1, "")
+	result2 := handler(ctx, msg2)
+	assert.Equal(t, ErrPubKeyHasBeenRegistered().Result(), result2)
+
 }
