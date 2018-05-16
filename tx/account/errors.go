@@ -21,6 +21,10 @@ func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid Username"))
 }
 
+func ErrInvalidMemo() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo"))
+}
+
 func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transfer from account %v failed", accKey))
 }

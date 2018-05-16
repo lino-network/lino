@@ -27,10 +27,8 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManage
 }
 
 // check if account exist
-func (accManager AccountManager) IsAccountExist(
-	ctx sdk.Context, accKey types.AccountKey) bool {
-	accountInfo, _ := accManager.storage.GetInfo(ctx, accKey)
-	return accountInfo != nil
+func (accManager AccountManager) IsAccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	return accManager.storage.AccountExist(ctx, accKey)
 }
 
 // Implements types.AccountManager.
@@ -107,7 +105,6 @@ func (accManager AccountManager) GetStake(
 
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
 
-	stake := bank.Stake
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, bank.Address, pendingStakeQueue); err != nil {
 		return types.NewCoin(0), err
@@ -116,6 +113,8 @@ func (accManager AccountManager) GetStake(
 	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
 		return types.NewCoin(0), err
 	}
+
+	stake := bank.Stake
 	return stake.Plus(types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)), nil
 }
 
@@ -515,11 +514,6 @@ func (accManager AccountManager) UpdateDonationRelationship(
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
 	validityPeriod int64, grantLevel types.Permission) sdk.Error {
-	pubKey, err := accManager.GetPostKey(ctx, authorizedUser)
-	if err != nil {
-		return err
-	}
-
 	grantKeyList, err := accManager.storage.GetGrantKeyList(ctx, me)
 	if err != nil {
 		return err
@@ -535,6 +529,12 @@ func (accManager AccountManager) AuthorizePermission(
 		}
 		idx += 1
 	}
+
+	pubKey, err := accManager.GetPostKey(ctx, authorizedUser)
+	if err != nil {
+		return err
+	}
+
 	newGrantPubKey := model.GrantPubKey{
 		Username:  authorizedUser,
 		PubKey:    pubKey,
@@ -629,14 +629,15 @@ func (accManager AccountManager) addPendingStakeToQueue(
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
 	newMasterPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
-	accInfo, err := accManager.storage.GetInfo(ctx, username)
-	if err != nil {
-		return err
-	}
 	// check new bank address is clean
 	newBank, _ := accManager.storage.GetBankFromAddress(ctx, newMasterPubKey.Address())
 	if newBank != nil {
 		return ErrRecoverMasterKeyAlreadyOccupied()
+	}
+
+	accInfo, err := accManager.storage.GetInfo(ctx, username)
+	if err != nil {
+		return err
 	}
 
 	// get and clean old address bank

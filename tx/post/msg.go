@@ -49,6 +49,7 @@ type DonateMsg struct {
 	PostID       string
 	FromApp      types.AccountKey
 	FromChecking bool
+	Memo         string
 }
 
 // ViewMsg sent from a user to a post
@@ -98,7 +99,7 @@ func NewViewMsg(
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user types.AccountKey, amount types.LNO, author types.AccountKey,
-	postID string, fromApp types.AccountKey, fromChecking bool) DonateMsg {
+	postID string, fromApp types.AccountKey, fromChecking bool, memo string) DonateMsg {
 
 	return DonateMsg{
 		Username:     user,
@@ -107,6 +108,7 @@ func NewDonateMsg(
 		PostID:       postID,
 		FromApp:      fromApp,
 		FromChecking: fromChecking,
+		Memo:         memo,
 	}
 }
 
@@ -188,6 +190,10 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 	_, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err
+	}
+
+	if len(msg.Memo) > types.MaximumMemoLength {
+		return ErrInvalidMemo()
 	}
 	return nil
 }

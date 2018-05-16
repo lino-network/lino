@@ -8,6 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	memo1       = "memo1"
+	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
+)
+
 func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Error) {
 	result := donateMsg.ValidateBasic()
 	assert.Equal(t, result, expectError)
@@ -147,19 +152,21 @@ func TestDonationMsg(t *testing.T) {
 		expectError sdk.Error
 	}{
 		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"),
-			types.AccountKey("author"), "postID", "", false), nil},
-		{NewDonateMsg(types.AccountKey(""), types.LNO("1"), types.AccountKey("author"), "postID", "", false),
+			types.AccountKey("author"), "postID", "", false, memo1), nil},
+		{NewDonateMsg(types.AccountKey(""), types.LNO("1"), types.AccountKey("author"), "postID", "", false, memo1),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("0"), types.AccountKey("author"), "postID", "", false),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("0"), types.AccountKey("author"), "postID", "", false, memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("-1"), types.AccountKey("author"), "postID", "", false),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("-1"), types.AccountKey("author"), "postID", "", false, memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "", "", false),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "", "", false, memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "postID", "", false),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "postID", "", false, memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "", "", false),
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey(""), "", "", false, memo1),
 			ErrPostDonateInvalidTarget()},
+		{NewDonateMsg(types.AccountKey("test"), types.LNO("1"), types.AccountKey("author"), "postID", "", false, invalidMemo),
+			ErrInvalidMemo()},
 	}
 
 	for _, cs := range cases {
@@ -216,12 +223,12 @@ func TestMsgPermission(t *testing.T) {
 		"donateMsg from saving": {
 			NewDonateMsg(
 				types.AccountKey("test"), types.LNO("1"),
-				types.AccountKey("author"), "postID", "", false),
+				types.AccountKey("author"), "postID", "", false, memo1),
 			types.TransactionPermission},
 		"donateMsg from checking": {
 			NewDonateMsg(
 				types.AccountKey("test"), types.LNO("1"),
-				types.AccountKey("author"), "postID", "", true),
+				types.AccountKey("author"), "postID", "", true, memo1),
 			types.PostPermission},
 		"create post": {
 			NewCreatePostMsg(PostCreateParams{

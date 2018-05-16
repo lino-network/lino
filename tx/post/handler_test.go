@@ -386,7 +386,7 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	for _, cs := range cases {
 		donateMsg := NewDonateMsg(
-			cs.DonateUesr, cs.Amount, cs.ToAuthor, cs.ToPostID, "", cs.FromChecking)
+			cs.DonateUesr, cs.Amount, cs.ToAuthor, cs.ToPostID, "", cs.FromChecking, memo1)
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
 		checkPostKVStore(t, ctx, types.GetPermLink(author, postID), postInfo, cs.ExpectPostMeta)
@@ -451,7 +451,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
-	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO("100"), user2, "repost", "", false)
+	donateMsg := NewDonateMsg(types.AccountKey(user3), types.LNO("100"), user2, "repost", "", false, memo1)
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 

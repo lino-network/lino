@@ -14,7 +14,8 @@ var (
 	userA = types.AccountKey("userA")
 	userB = types.AccountKey("userB")
 
-	memo1 = "This is a memo!"
+	memo1       = "This is a memo!"
+	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
 )
 
 func TestFollowMsg(t *testing.T) {
@@ -177,6 +178,16 @@ func TestTransferMsg(t *testing.T) {
 				Memo:         memo1,
 			},
 			wantCode: sdk.CodeInvalidCoins,
+		},
+		"invalid transfer -  memo is invalid": {
+			msg: TransferMsg{
+				Sender:       userA,
+				ReceiverName: userB,
+				ReceiverAddr: sdk.Address(""),
+				Amount:       types.LNO("1900"),
+				Memo:         invalidMemo,
+			},
+			wantCode: types.CodeInvalidMemo,
 		},
 	}
 

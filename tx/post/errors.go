@@ -206,3 +206,7 @@ func ErrPostDonateNoUsername() sdk.Error {
 func ErrPostDonateInvalidTarget() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate target post invalid"))
 }
+
+func ErrInvalidMemo() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo in Donate"))
+}

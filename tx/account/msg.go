@@ -220,6 +220,9 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 		return err
 	}
 
+	if len(msg.Memo) > types.MaximumMemoLength {
+		return ErrInvalidMemo()
+	}
 	return nil
 }
 
