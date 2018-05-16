@@ -54,6 +54,9 @@ const (
 	// MaximumUsernameLength maximum username length
 	MaximumUsernameLength = 20
 
+	// MaximumMemoLength denotes the maximum length of memo
+	MaximumMemoLength = 100
+
 	// DefaultAcitivityBurden for user when account is registered
 	DefaultActivityBurden = 100
 
