@@ -7,9 +7,6 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-const rewardEvent = 0x1
-
-// post is the proxy for all storage structs defined above
 type PostManager struct {
 	postStorage model.PostStorage `json:"post_storage"`
 	paramHolder param.ParamHolder `json:"param_holder"`
@@ -112,6 +109,7 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 		LastUpdate:              ctx.BlockHeader().Time,
 		LastActivity:            ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
+		IsDeleted:               false,
 		RedistributionSplitRate: splitRate,
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
@@ -246,6 +244,38 @@ func (pm PostManager) AddDonation(
 		return ErrAddDonation(permLink).TraceCause(err, "")
 	}
 	return nil
+}
+
+// DeletePost triggered by censorship proposal
+func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.Error {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	if err != nil {
+		return ErrDeletePost(permLink).TraceCause(err, "")
+	}
+	postMeta.IsDeleted = true
+	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
+		return ErrAddDonation(permLink).TraceCause(err, "")
+	}
+	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
+	if err != nil {
+		return ErrDeletePost(permLink).TraceCause(err, "")
+	}
+	postInfo.Title = ""
+	postInfo.Content = ""
+	postInfo.Links = nil
+
+	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
+		return ErrDeletePost(permLink).TraceCause(err, "")
+	}
+	return nil
+}
+
+func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool, sdk.Error) {
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	if err != nil {
+		return false, ErrDeletePost(permLink).TraceCause(err, "")
+	}
+	return postMeta.IsDeleted, nil
 }
 
 // get penalty score from report and upvote

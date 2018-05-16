@@ -94,12 +94,18 @@ func (dpe DecideProposalEvent) ExecuteChangeParam(
 func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
 	postManager post.PostManager) sdk.Error {
-	_, err := proposalManager.GetPermLink(ctx, curID)
+	permLink, err := proposalManager.GetPermLink(ctx, curID)
 	if err != nil {
 		return err
 	}
 
 	// TODO add content censorship logic
+	if exist := postManager.IsPostExist(ctx, permLink); !exist {
+		return ErrCensorshipPostNotFound()
+	}
+	if err := postManager.DeletePost(ctx, permLink); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -258,7 +258,6 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	for _, cs := range cases {
 		result := cs.ChangeValidatorParamMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
-
 	}
 }
 
@@ -340,6 +339,127 @@ func TestChangeProposalParamMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		result := cs.ChangeProposalParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestChangeAccountParamMsg(t *testing.T) {
+	p1 := param.AccountParam{
+		MinimumBalance: types.NewCoin(1 * types.Decimals),
+		RegisterFee:    types.NewCoin(1 * types.Decimals),
+	}
+
+	p2 := p1
+	p2.MinimumBalance = types.NewCoin(0)
+
+	p3 := p1
+	p3.RegisterFee = types.NewCoin(0)
+
+	p4 := p1
+	p4.RegisterFee = types.NewCoin(-1)
+
+	p5 := p1
+	p5.RegisterFee = types.NewCoin(-1)
+
+	cases := []struct {
+		changeAccountParamMsg ChangeAccountParamMsg
+		expectError           sdk.Error
+	}{
+		{NewChangeAccountParamMsg("user1", p1), nil},
+		{NewChangeAccountParamMsg("us", p1), ErrInvalidUsername()},
+		{NewChangeAccountParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
+		{NewChangeAccountParamMsg("user1", p2), nil},
+		{NewChangeAccountParamMsg("user1", p3), nil},
+		{NewChangeAccountParamMsg("user1", p4), ErrIllegalParameter()},
+		{NewChangeAccountParamMsg("user1", p5), ErrIllegalParameter()},
+	}
+
+	for _, cs := range cases {
+		result := cs.changeAccountParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
+	p1 := param.EvaluateOfContentValueParam{
+		ConsumptionTimeAdjustBase:      3153600,
+		ConsumptionTimeAdjustOffset:    5,
+		NumOfConsumptionOnAuthorOffset: 7,
+		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
+		TotalAmountOfConsumptionOffset: 5,
+		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
+	}
+
+	p2 := p1
+	p2.ConsumptionTimeAdjustBase = 0
+
+	p3 := p1
+	p3.TotalAmountOfConsumptionBase = 0
+
+	cases := []struct {
+		changeAccountParamMsg ChangeEvaluateOfContentValueParamMsg
+		expectError           sdk.Error
+	}{
+		{NewChangeEvaluateOfContentValueParamMsg("user1", p1), nil},
+		{NewChangeEvaluateOfContentValueParamMsg("user1", p2), ErrIllegalParameter()},
+		{NewChangeEvaluateOfContentValueParamMsg("user1", p3), ErrIllegalParameter()},
+		{NewChangeEvaluateOfContentValueParamMsg("us", p1), ErrInvalidUsername()},
+		{NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.changeAccountParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestChangeCoinDayParamMsg(t *testing.T) {
+	p1 := param.CoinDayParam{
+		DaysToRecoverCoinDayStake:    7,
+		SecondsToRecoverCoinDayStake: 7 * 24 * 3600,
+	}
+
+	p2 := p1
+	p2.DaysToRecoverCoinDayStake = 0
+
+	p3 := p1
+	p3.SecondsToRecoverCoinDayStake = 0
+
+	p4 := p1
+	p2.DaysToRecoverCoinDayStake = 1
+	p4.SecondsToRecoverCoinDayStake = 3600
+
+	cases := []struct {
+		changeCoinDayParamMsg ChangeCoinDayParamMsg
+		expectError           sdk.Error
+	}{
+		{NewChangeCoinDayParamMsg("user1", p1), nil},
+		{NewChangeCoinDayParamMsg("us", p1), ErrInvalidUsername()},
+		{NewChangeCoinDayParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
+		{NewChangeCoinDayParamMsg("user1", p2), ErrIllegalParameter()},
+		{NewChangeCoinDayParamMsg("user1", p3), ErrIllegalParameter()},
+		{NewChangeCoinDayParamMsg("user1", p4), ErrIllegalParameter()},
+	}
+
+	for _, cs := range cases {
+		result := cs.changeCoinDayParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestDeletePostContentMsg(t *testing.T) {
+	cases := []struct {
+		deletePostContentMsg DeletePostContentMsg
+		expectError          sdk.Error
+	}{
+		{NewDeletePostContentMsg("user1", "permLink"), nil},
+		{NewDeletePostContentMsg("us", "permLink"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permLink"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1", ""), ErrInvalidPermLink()},
+	}
+
+	for _, cs := range cases {
+		result := cs.deletePostContentMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
 }

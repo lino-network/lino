@@ -98,12 +98,14 @@ func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-	// TODO
+	if len(msg.GetPermLink()) == 0 {
+		return ErrInvalidPermLink()
+	}
 	return nil
 }
 
 func (msg DeletePostContentMsg) String() string {
-	return fmt.Sprintf("DeletePostContentMsg{Creator:%v}", msg.Creator)
+	return fmt.Sprintf("DeletePostContentMsg{Creator:%v, post:%v}", msg.Creator, msg.GetPermLink())
 }
 
 func (msg DeletePostContentMsg) Get(key interface{}) (value interface{}) {
@@ -198,7 +200,10 @@ func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-	//TODO
+	if msg.Parameter.ConsumptionTimeAdjustBase <= 0 ||
+		msg.Parameter.TotalAmountOfConsumptionBase <= 0 {
+		return ErrIllegalParameter()
+	}
 
 	return nil
 }
@@ -564,7 +569,12 @@ func (msg ChangeCoinDayParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	// TODO
+	if msg.Parameter.DaysToRecoverCoinDayStake <= 0 ||
+		msg.Parameter.SecondsToRecoverCoinDayStake <= 0 ||
+		msg.Parameter.DaysToRecoverCoinDayStake*24*3600 !=
+			msg.Parameter.SecondsToRecoverCoinDayStake {
+		return ErrIllegalParameter()
+	}
 	return nil
 }
 
@@ -615,7 +625,10 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	//TODO
+	if types.NewCoin(0).IsGT(msg.Parameter.MinimumBalance) ||
+		types.NewCoin(0).IsGT(msg.Parameter.RegisterFee) {
+		return ErrIllegalParameter()
+	}
 	return nil
 }
 
