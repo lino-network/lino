@@ -66,6 +66,7 @@ func TestCreatePost(t *testing.T) {
 			LastUpdate:              ctx.BlockHeader().Time,
 			LastActivity:            ctx.BlockHeader().Time,
 			AllowReplies:            true,
+			IsDeleted:               false,
 			RedistributionSplitRate: sdk.ZeroRat,
 		}
 		checkPostKVStore(t, ctx,
@@ -354,4 +355,30 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, penaltyScore, cs.expectRat)
 	}
+}
+
+func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permLink types.PermLink) {
+	isDeleted, err := pm.IsDeleted(ctx, permLink)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isDeleted)
+	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
+	assert.Nil(t, err)
+	assert.Equal(t, "", postInfo.Title)
+	assert.Equal(t, "", postInfo.Content)
+}
+
+func TestDeletePost(t *testing.T) {
+	ctx, am, _, pm, _ := setupTest(t, 1)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
+	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
+
+	err := pm.DeletePost(ctx, types.GetPermLink(user2, postID2))
+	assert.Nil(t, err)
+	checkIsDelete(t, ctx, pm, types.GetPermLink(user2, postID2))
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, types.GetPermLink(user, postID))
+	assert.Nil(t, err)
+	assert.Equal(t, false, postMeta.IsDeleted)
+	err = pm.DeletePost(ctx, types.GetPermLink(user, postID))
+	assert.Nil(t, err)
+	checkIsDelete(t, ctx, pm, types.GetPermLink(user, postID))
 }

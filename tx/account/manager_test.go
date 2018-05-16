@@ -995,6 +995,29 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	assert.Equal(t, accParam.RegisterFee, stake)
 }
 
+func TestRecoverAccountErrCase(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	priv := createTestAccount(ctx, am, string(user1))
+
+	cases := []struct {
+		userToRecover          types.AccountKey
+		masterPrivKeyToRecover crypto.PrivKeyEd25519
+		expectErr              sdk.Error
+	}{
+		{user1, priv, ErrRecoverMasterKeyAlreadyOccupied()},
+		{"test", crypto.GenPrivKeyEd25519(), model.ErrAccountInfoNotFound()},
+	}
+
+	for _, cs := range cases {
+		err := am.RecoverAccount(ctx, cs.userToRecover,
+			cs.masterPrivKeyToRecover.PubKey(),
+			cs.masterPrivKeyToRecover.Generate(1).PubKey(),
+			cs.masterPrivKeyToRecover.Generate(2).PubKey())
+		assert.Equal(t, cs.expectErr, err)
+	}
+}
+
 func TestIncreaseSequenceByOne(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")

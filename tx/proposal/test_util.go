@@ -83,3 +83,24 @@ func createTestAccount(
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
 	return types.AccountKey(username)
 }
+
+func createTestPost(
+	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
+	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
+	user := createTestAccount(ctx, am, username, initCoin)
+	postCreateParams := &post.PostCreateParams{
+		PostID:       postID,
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
+		Links:        []types.IDToURLMapping{},
+		RedistributionSplitRate: redistributionRate,
+	}
+	err := pm.CreatePost(ctx, postCreateParams)
+	assert.Nil(t, err)
+	return user, postID
+}

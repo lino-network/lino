@@ -46,7 +46,7 @@ func (event RewardEvent) Execute(
 		return acc.ErrUsernameNotFound()
 	}
 	if !pm.IsPostExist(ctx, permLink) {
-		return ErrDonatePostDoesntExist(permLink)
+		return ErrDonatePostNotFound(permLink)
 	}
 	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward); err != nil {
 		return err

@@ -7,18 +7,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
+	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
 )
 
-func NewHandler(am acc.AccountManager, pm ProposalManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(
+	am acc.AccountManager, proposalManager ProposalManager,
+	postManager post.PostManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
-			return handleChangeParamMsg(ctx, am, pm, gm, msg)
+			return handleChangeParamMsg(ctx, am, proposalManager, gm, msg)
 		case ContentCensorshipMsg:
-			return handleContentCensorshipMsg(ctx, am, pm, gm, msg)
+			return handleContentCensorshipMsg(ctx, am, proposalManager, postManager, gm, msg)
 		case ProtocolUpgradeMsg:
-			return handleProtocolUpgradeMsg(ctx, am, pm, gm, msg)
+			return handleProtocolUpgradeMsg(ctx, am, proposalManager, gm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized proposal Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -107,34 +110,42 @@ func handleProtocolUpgradeMsg(
 }
 
 func handleContentCensorshipMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
-	msg ContentCensorshipMsg) sdk.Result {
+	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
+	postManager post.PostManager, gm global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
-	proposal := pm.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	if !postManager.IsPostExist(ctx, msg.GetPermLink()) {
+		return ErrPostNotFound().Result()
+	}
+
+	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermLink()); err != nil || isDeleted {
+		return ErrCensorshipPostIsDeleted(msg.GetPermLink()).Result()
+	}
+
+	proposal := proposalManager.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
+	proposalID, err := proposalManager.AddProposal(ctx, msg.GetCreator(), proposal)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
+	event, err := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
 	if err != nil {
 		return err.Result()
 	}
 
-	param, err := pm.paramHolder.GetProposalParam(ctx)
+	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
 	if err != nil {
-		return err.Result()
-	}
-
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ContentCensorshipDecideHr, event); err != nil {
 		return err.Result()
 	}
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit); err != nil {
+		return err.Result()
+	}
+
+	if err := gm.RegisterProposalDecideEvent(ctx, param.ContentCensorshipDecideHr, event); err != nil {
 		return err.Result()
 	}
 

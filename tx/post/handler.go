@@ -98,7 +98,7 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		return ErrDonateUserNotFound(msg.Username).Result()
 	}
 	if !pm.IsPostExist(ctx, permLink) {
-		return ErrDonatePostDoesntExist(permLink).Result()
+		return ErrDonatePostNotFound(permLink).Result()
 	}
 	if msg.FromChecking {
 		if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
@@ -114,8 +114,9 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
-		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePostKey)
+		sourcePermLink := types.GetPermLink(sourceAuthor, sourcePostID)
+
+		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermLink)
 		if err != nil {
 			return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 		}
@@ -214,9 +215,9 @@ func handleReportOrUpvoteMsg(
 		return ErrReportFailed(postKey).TraceCause(err, "").Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePostKey := types.GetPermLink(sourceAuthor, sourcePostID)
+		sourcePermLink := types.GetPermLink(sourceAuthor, sourcePostID)
 		if err := pm.ReportOrUpvoteToPost(
-			ctx, sourcePostKey, msg.Username, stake, msg.IsReport); err != nil {
+			ctx, sourcePermLink, msg.Username, stake, msg.IsReport); err != nil {
 			return err.Result()
 		}
 	} else {

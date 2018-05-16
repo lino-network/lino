@@ -90,6 +90,10 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 			if err != nil {
 				return nil, err
 			}
+			if validator.Deposit.IsZero() {
+				vm.storage.DeleteValidator(ctx, validator.Username)
+			}
+
 			validator.ABCIValidator.Power = 0
 			ABCIValList = append(ABCIValList, validator.ABCIValidator)
 		}
@@ -271,6 +275,21 @@ func (vm ValidatorManager) RegisterValidator(
 		return ErrCommitingDepositNotEnough()
 	}
 
+	// make sure the pub key has not been registered
+	lst, err := vm.GetValidatorList(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, validatorName := range lst.AllValidators {
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
+		if err != nil {
+			return err
+		}
+		if reflect.DeepEqual(validator.ABCIValidator.PubKey, pubKey) {
+			return ErrPubKeyHasBeenRegistered()
+		}
+	}
 	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
@@ -313,6 +332,7 @@ func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.Acc
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
+
 	return nil
 }
 

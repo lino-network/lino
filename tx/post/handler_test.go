@@ -354,7 +354,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target postID",
 			userWithSufficientChecking, types.LNO("100"), author, "invalid", true,
-			ErrDonatePostDoesntExist(types.GetPermLink(author, "invalid")).Result(),
+			ErrDonatePostNotFound(types.GetPermLink(author, "invalid")).Result(),
 			model.PostMeta{
 				Created:                 ctx.BlockHeader().Time,
 				LastUpdate:              ctx.BlockHeader().Time,
@@ -369,7 +369,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target author",
 			userWithSufficientChecking, types.LNO("100"), types.AccountKey("invalid"), postID, true,
-			ErrDonatePostDoesntExist(types.GetPermLink(types.AccountKey("invalid"), postID)).Result(),
+			ErrDonatePostNotFound(types.GetPermLink(types.AccountKey("invalid"), postID)).Result(),
 			model.PostMeta{
 				Created:                 ctx.BlockHeader().Time,
 				LastUpdate:              ctx.BlockHeader().Time,
@@ -389,7 +389,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			cs.DonateUesr, cs.Amount, cs.ToAuthor, cs.ToPostID, "", cs.FromChecking, memo1)
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
-		checkPostKVStore(t, ctx, types.GetPermLink(author, postID), postInfo, cs.ExpectPostMeta)
+		if cs.ExpectErr.Code == sdk.CodeOK {
+			checkPostKVStore(t, ctx, types.GetPermLink(cs.ToAuthor, cs.ToPostID), postInfo, cs.ExpectPostMeta)
+		}
 		authorSaving, err := am.GetSavingFromBank(ctx, author)
 		assert.Nil(t, err)
 		if !authorSaving.IsEqual(cs.ExpectAuthorSaving) {
