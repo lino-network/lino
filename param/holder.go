@@ -41,21 +41,6 @@ func (ph ParamHolder) WireCodec() *wire.Codec {
 	return ph.cdc
 }
 
-func (ph ParamHolder) InjectParam(ctx sdk.Context, minimum types.Coin) error {
-	err := ph.InitParam(ctx)
-	if err != nil {
-		return err
-	}
-
-	accountParam := &AccountParam{
-		MinimumBalance: minimum,
-	}
-	if err := ph.setAccountParam(ctx, accountParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
-	}
-	return nil
-}
-
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
 		InfraAllocation:          sdk.NewRat(20, 100),
