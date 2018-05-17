@@ -9,6 +9,8 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+var _ sdk.Msg = ProviderReportMsg{}
+
 type ProviderReportMsg struct {
 	Username types.AccountKey `json:"username"`
 	Usage    int64            `json:"usage"`

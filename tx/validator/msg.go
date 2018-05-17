@@ -10,6 +10,10 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
+var _ sdk.Msg = ValidatorDepositMsg{}
+var _ sdk.Msg = ValidatorWithdrawMsg{}
+var _ sdk.Msg = ValidatorRevokeMsg{}
+
 type ValidatorDepositMsg struct {
 	Username  types.AccountKey `json:"username"`
 	Deposit   types.LNO        `json:"deposit"`
