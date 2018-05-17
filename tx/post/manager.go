@@ -118,6 +118,33 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 	return nil
 }
 
+func (pm PostManager) UpdatePost(
+	ctx sdk.Context, author types.AccountKey, postID, title, content string,
+	links []types.IDToURLMapping, redistributionSplitRate sdk.Rat) sdk.Error {
+	permLink := types.GetPermLink(author, postID)
+	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
+	if err != nil {
+		return err
+	}
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
+	if err != nil {
+		return err
+	}
+
+	postInfo.Title = title
+	postInfo.Content = content
+	postInfo.Links = links
+	postMeta.RedistributionSplitRate = redistributionSplitRate
+
+	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
+		return err
+	}
+	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
+		return err
+	}
+	return nil
+}
+
 // add or update like from the user if like exists
 func (pm PostManager) AddOrUpdateLikeToPost(
 	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, weight int64) sdk.Error {

@@ -1,6 +1,7 @@
 package post
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,6 +72,63 @@ func TestCreatePost(t *testing.T) {
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermLink(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+	}
+}
+
+func TestUpdatePost(t *testing.T) {
+	ctx, am, _, pm, _ := setupTest(t, 1)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
+
+	cases := map[string]struct {
+		msg       UpdatePostMsg
+		expectErr sdk.Error
+	}{
+		"normal update": {
+			NewUpdatePostMsg(
+				string(user), postID, "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"0"), nil},
+		"update with invalid post id": {
+			NewUpdatePostMsg(
+				"invalid", postID, "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink("invalid", postID)))},
+		"update with invalid author": {
+			NewUpdatePostMsg(
+				string(user), "invalid", "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink(user, "invalid")))},
+	}
+
+	for testname, cs := range cases {
+		splitRate, err := sdk.NewRatFromDecimal(cs.msg.RedistributionSplitRate)
+		assert.Nil(t, err)
+		err = pm.UpdatePost(
+			ctx, cs.msg.Author, cs.msg.PostID, cs.msg.Title, cs.msg.Content, cs.msg.Links, splitRate)
+		assert.Equal(t, cs.expectErr, err, fmt.Sprintf("%s: expect %v, got %v", testname, cs.expectErr, err))
+		if cs.expectErr != nil {
+			continue
+		}
+		postInfo := model.PostInfo{
+			PostID:       cs.msg.PostID,
+			Title:        cs.msg.Title,
+			Content:      cs.msg.Content,
+			Author:       cs.msg.Author,
+			SourceAuthor: "",
+			SourcePostID: "",
+			Links:        cs.msg.Links,
+		}
+
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			IsDeleted:               false,
+			RedistributionSplitRate: splitRate,
+		}
+		checkPostKVStore(t, ctx,
+			types.GetPermLink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
 	}
 }
 
