@@ -66,6 +66,9 @@ func TestMsgPermission(t *testing.T) {
 		"change coinday param": {
 			NewChangeCoinDayParamMsg("creator", param.CoinDayParam{}),
 			types.TransactionPermission},
+		"change bandwidth param": {
+			NewChangeBandwidthParamMsg("creator", param.BandwidthParam{}),
+			types.TransactionPermission},
 		"change account param": {
 			NewChangeAccountParamMsg("creator", param.AccountParam{}),
 			types.TransactionPermission},
@@ -376,6 +379,35 @@ func TestChangeAccountParamMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		result := cs.changeAccountParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestChangeBandwidthParamMsg(t *testing.T) {
+	p1 := param.BandwidthParam{
+		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
+		CapacityUsagePerTransaction: types.NewCoin(1 * types.Decimals),
+	}
+
+	p2 := p1
+	p2.SecondsToRecoverBandwidth = int64(-1)
+
+	p3 := p1
+	p3.CapacityUsagePerTransaction = types.NewCoin(-1)
+
+	cases := []struct {
+		changeBandwidthParamMsg ChangeBandwidthParamMsg
+		expectError             sdk.Error
+	}{
+		{NewChangeBandwidthParamMsg("user1", p1), nil},
+		{NewChangeBandwidthParamMsg("us", p1), ErrInvalidUsername()},
+		{NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
+		{NewChangeBandwidthParamMsg("user1", p2), ErrIllegalParameter()},
+		{NewChangeBandwidthParamMsg("user1", p3), ErrIllegalParameter()},
+	}
+
+	for _, cs := range cases {
+		result := cs.changeBandwidthParamMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
 }

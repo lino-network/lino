@@ -9,6 +9,31 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+var _ sdk.Msg = DeletePostContentMsg{}
+var _ sdk.Msg = ChangeGlobalAllocationParamMsg{}
+var _ sdk.Msg = ChangeEvaluateOfContentValueParamMsg{}
+var _ sdk.Msg = ChangeInfraInternalAllocationParamMsg{}
+var _ sdk.Msg = ChangeVoteParamMsg{}
+var _ sdk.Msg = ChangeProposalParamMsg{}
+var _ sdk.Msg = ChangeDeveloperParamMsg{}
+var _ sdk.Msg = ChangeValidatorParamMsg{}
+var _ sdk.Msg = ChangeCoinDayParamMsg{}
+var _ sdk.Msg = ChangeBandwidthParamMsg{}
+var _ sdk.Msg = ChangeAccountParamMsg{}
+
+var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
+var _ ChangeParamMsg = ChangeEvaluateOfContentValueParamMsg{}
+var _ ChangeParamMsg = ChangeInfraInternalAllocationParamMsg{}
+var _ ChangeParamMsg = ChangeVoteParamMsg{}
+var _ ChangeParamMsg = ChangeProposalParamMsg{}
+var _ ChangeParamMsg = ChangeDeveloperParamMsg{}
+var _ ChangeParamMsg = ChangeValidatorParamMsg{}
+var _ ChangeParamMsg = ChangeCoinDayParamMsg{}
+var _ ChangeParamMsg = ChangeBandwidthParamMsg{}
+var _ ChangeParamMsg = ChangeAccountParamMsg{}
+
+var _ ContentCensorshipMsg = DeletePostContentMsg{}
+
 type ChangeParamMsg interface {
 	GetParameter() param.Parameter
 	GetCreator() types.AccountKey
@@ -656,5 +681,62 @@ func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 }
 
 func (msg ChangeAccountParamMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Creator)}
+}
+
+//----------------------------------------
+// ChangeBandwidthParamMsg Msg Implementations
+
+func NewChangeBandwidthParamMsg(creator string, parameter param.BandwidthParam) ChangeBandwidthParamMsg {
+	return ChangeBandwidthParamMsg{
+		Creator:   types.AccountKey(creator),
+		Parameter: parameter,
+	}
+}
+
+func (msg ChangeBandwidthParamMsg) GetParameter() param.Parameter { return msg.Parameter }
+func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeBandwidthParamMsg) Type() string                  { return types.ProposalRouterName }
+
+func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
+	if len(msg.Creator) < types.MinimumUsernameLength ||
+		len(msg.Creator) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if types.NewCoin(0).IsGT(msg.Parameter.CapacityUsagePerTransaction) {
+		return ErrIllegalParameter()
+	}
+
+	if msg.Parameter.SecondsToRecoverBandwidth <= 0 {
+		return ErrIllegalParameter()
+	}
+	return nil
+}
+
+func (msg ChangeBandwidthParamMsg) String() string {
+	return fmt.Sprintf("ChangeBandwidthParamMsg{Creator:%v}", msg.Creator)
+}
+
+func (msg ChangeBandwidthParamMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
+	return nil
+}
+
+func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }

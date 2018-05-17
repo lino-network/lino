@@ -10,6 +10,14 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+var _ sdk.Msg = VoteMsg{}
+var _ sdk.Msg = VoterDepositMsg{}
+var _ sdk.Msg = VoterWithdrawMsg{}
+var _ sdk.Msg = VoterRevokeMsg{}
+var _ sdk.Msg = DelegateMsg{}
+var _ sdk.Msg = DelegatorWithdrawMsg{}
+var _ sdk.Msg = RevokeDelegationMsg{}
+
 type VoteMsg struct {
 	Voter      types.AccountKey  `json:"voter"`
 	ProposalID types.ProposalKey `json:"proposal_id"`
