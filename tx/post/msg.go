@@ -10,11 +10,12 @@ import (
 )
 
 var _ sdk.Msg = CreatePostMsg{}
+var _ sdk.Msg = UpdatePostMsg{}
+var _ sdk.Msg = DeletePostMsg{}
 var _ sdk.Msg = LikeMsg{}
 var _ sdk.Msg = DonateMsg{}
 var _ sdk.Msg = ReportOrUpvoteMsg{}
 var _ sdk.Msg = ViewMsg{}
-var _ sdk.Msg = UpdatePostMsg{}
 
 // PostCreateParams can also use to publish comment(with parent) or repost(with source)
 type PostCreateParams struct {
@@ -47,7 +48,6 @@ type UpdatePostMsg struct {
 type DeletePostMsg struct {
 	Author types.AccountKey `json:"author"`
 	PostID string           `json:"post_id"`
-	Titile string           `json:"title"`
 }
 
 // LikeMsg sent from a user to a post
@@ -89,7 +89,7 @@ func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
 	return CreatePostMsg{PostCreateParams: postCreateParams}
 }
 
-// NewUpdatePostMsg constructs a like msg
+// NewUpdatePostMsg constructs a UpdatePost msg
 func NewUpdatePostMsg(
 	author, postID, title, content string,
 	links []types.IDToURLMapping, redistributionSplitRate string) UpdatePostMsg {
@@ -103,10 +103,16 @@ func NewUpdatePostMsg(
 	}
 }
 
+func NewDeletePostMsg(author, postID string) DeletePostMsg {
+	return DeletePostMsg{
+		Author: types.AccountKey(author),
+		PostID: postID,
+	}
+}
+
 // NewLikeMsg constructs a like msg
 func NewLikeMsg(
 	user string, weight int64, author, postID string) LikeMsg {
-
 	return LikeMsg{
 		Username: types.AccountKey(user),
 		Weight:   weight,
@@ -115,9 +121,8 @@ func NewLikeMsg(
 	}
 }
 
-// NewLikeMsg constructs a like msg
+// NewLikeMsg constructs a view msg
 func NewViewMsg(user, author string, postID string) ViewMsg {
-
 	return ViewMsg{
 		Username: types.AccountKey(user),
 		Author:   types.AccountKey(author),
@@ -129,7 +134,6 @@ func NewViewMsg(user, author string, postID string) ViewMsg {
 func NewDonateMsg(
 	user string, amount types.LNO, author string,
 	postID string, fromApp string, fromChecking bool, memo string) DonateMsg {
-
 	return DonateMsg{
 		Username:     types.AccountKey(user),
 		Amount:       amount,
@@ -141,7 +145,7 @@ func NewDonateMsg(
 	}
 }
 
-// NewReportOrUpvoteMsg constructs a report msg
+// NewReportOrUpvoteMsg constructs a ReportOrUpvote msg
 func NewReportOrUpvoteMsg(
 	user, author, postID string, isReport bool) ReportOrUpvoteMsg {
 
@@ -155,11 +159,12 @@ func NewReportOrUpvoteMsg(
 
 // Type implements sdk.Msg
 func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
+func (msg UpdatePostMsg) Type() string     { return types.PostRouterName }
+func (msg DeletePostMsg) Type() string     { return types.PostRouterName }
 func (msg LikeMsg) Type() string           { return types.PostRouterName }
 func (msg DonateMsg) Type() string         { return types.PostRouterName }
 func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
 func (msg ViewMsg) Type() string           { return types.PostRouterName }
-func (msg UpdatePostMsg) Type() string     { return types.PostRouterName }
 
 // ValidateBasic implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -216,6 +221,17 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
+	return nil
+}
+
+func (msg DeletePostMsg) ValidateBasic() sdk.Error {
+	if len(msg.PostID) == 0 {
+		return ErrNoPostID()
+	}
+	if len(msg.Author) == 0 {
+		return ErrNoAuthor()
+	}
+
 	return nil
 }
 
@@ -283,6 +299,9 @@ func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
 func (msg UpdatePostMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
+func (msg DeletePostMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
 func (msg LikeMsg) Get(key interface{}) (value interface{}) {
 	return nil
 }
@@ -312,6 +331,10 @@ func (msg CreatePostMsg) GetSignBytes() []byte {
 }
 
 func (msg UpdatePostMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+func (msg DeletePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
@@ -346,6 +369,9 @@ func (msg CreatePostMsg) GetSigners() []sdk.Address {
 func (msg UpdatePostMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Author)}
 }
+func (msg DeletePostMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Author)}
+}
 func (msg LikeMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
@@ -368,6 +394,10 @@ func (msg UpdatePostMsg) String() string {
 	return fmt.Sprintf("Post.UpdatePostMsg{author:%v, postID:%v, title:%v, content:%v, links:%v, redistribution split rate:%v}",
 		msg.Author, msg.PostID, msg.Title, msg.Content,
 		msg.Links, msg.RedistributionSplitRate)
+}
+
+func (msg DeletePostMsg) String() string {
+	return fmt.Sprintf("Post.DeletePostMsg{author:%v, postID:%v}", msg.Author, msg.PostID)
 }
 
 func (msg LikeMsg) String() string {

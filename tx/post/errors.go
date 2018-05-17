@@ -80,6 +80,10 @@ func ErrUpdatePostNotFound(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, post %v not found", permLink))
 }
 
+func ErrDeletePostNotFound(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("delete post failed, post %v not found", permLink))
+}
+
 func ErrLikePostUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, user %v not found", user))
 }
@@ -134,6 +138,10 @@ func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
 
 func ErrUpdatePostAuthorNotFound(author types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, author %v not found", author))
+}
+
+func ErrDeletePostAuthorNotFound(author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("delete post failed, author %v not found", author))
 }
 
 func ErrReportAuthorNotFound(permLink types.PermLink, author types.AccountKey) sdk.Error {
