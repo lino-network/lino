@@ -9,6 +9,10 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+var _ sdk.Msg = DeveloperRegisterMsg{}
+var _ sdk.Msg = DeveloperRevokeMsg{}
+var _ sdk.Msg = GrantDeveloperMsg{}
+
 type DeveloperRegisterMsg struct {
 	Username types.AccountKey `json:"username"`
 	Deposit  types.LNO        `json:"deposit"`
