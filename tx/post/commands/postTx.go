@@ -24,8 +24,11 @@ func PostTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagPostID, "", "post id to identify this post for the author")
 	cmd.Flags().String(client.FlagTitle, "", "title for the post")
 	cmd.Flags().String(client.FlagContent, "", "content for the post")
-	cmd.Flags().String(client.FlagParentAuthor, "", "parent author name")
+	cmd.Flags().String(client.FlagParentAuthor, "", "parent post author name")
 	cmd.Flags().String(client.FlagParentPostID, "", "parent post id")
+	cmd.Flags().String(client.FlagSourceAuthor, "", "source post author name")
+	cmd.Flags().String(client.FlagSourcePostID, "", "source post id")
+	cmd.Flags().String(client.FlagRedistributionSplitRate, "0", "redistribution split rate")
 	return cmd
 }
 
@@ -41,7 +44,9 @@ func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 			Content:                 viper.GetString(client.FlagContent),
 			ParentAuthor:            types.AccountKey(viper.GetString(client.FlagParentAuthor)),
 			ParentPostID:            viper.GetString(client.FlagParentPostID),
-			RedistributionSplitRate: "0",
+			SourceAuthor:            types.AccountKey(viper.GetString(client.FlagSourceAuthor)),
+			SourcePostID:            viper.GetString(client.FlagSourcePostID),
+			RedistributionSplitRate: viper.GetString(client.FlagRedistributionSplitRate),
 		}
 
 		msg := post.NewCreatePostMsg(postCreateParams)
