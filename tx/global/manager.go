@@ -3,11 +3,12 @@ package global
 import (
 	"math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/global/model"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GlobalManager encapsulates all basic struct

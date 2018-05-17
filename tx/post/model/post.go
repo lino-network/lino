@@ -1,8 +1,9 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Identifier is used to map the url in post
@@ -26,9 +27,9 @@ type PostInfo struct {
 
 // PostMeta stores tiny and frequently updated fields.
 type PostMeta struct {
-	Created                 int64      `json:"created"`
-	LastUpdate              int64      `json:"last_update"`
-	LastActivity            int64      `json:"last_activity"`
+	CreatedAt               int64      `json:"created_at"`
+	LastUpdatedAt           int64      `json:"last_updated_at"`
+	LastActivityAt          int64      `json:"last_activity_at"`
 	AllowReplies            bool       `json:"allow_replies"`
 	IsDeleted               bool       `json:"is_deleted"`
 	TotalLikeCount          int64      `json:"total_like_count"`
@@ -45,39 +46,39 @@ type PostMeta struct {
 
 // Like struct, only used in Likes
 type Like struct {
-	Username types.AccountKey `json:"username"`
-	Weight   int64            `json:"weight"`
-	Created  int64            `json:"created"`
+	Username  types.AccountKey `json:"username"`
+	Weight    int64            `json:"weight"`
+	CreatedAt int64            `json:"created_at"`
 }
 type Likes []Like
 
 // ReportOrUpvote struct, only used in ReportOrUpvotes
 type ReportOrUpvote struct {
-	Username types.AccountKey `json:"username"`
-	Stake    types.Coin       `json:"stake"`
-	Created  int64            `json:"created"`
-	IsReport bool             `json:"is_report"`
+	Username  types.AccountKey `json:"username"`
+	Stake     types.Coin       `json:"stake"`
+	CreatedAt int64            `json:"created_at"`
+	IsReport  bool             `json:"is_report"`
 }
 type ReportOrUpvotes []ReportOrUpvote
 
 type Comment struct {
-	Author  types.AccountKey `json:"author"`
-	PostID  string           `json:"post_key"`
-	Created int64            `json:"created"`
+	Author    types.AccountKey `json:"author"`
+	PostID    string           `json:"post_key"`
+	CreatedAt int64            `json:"created_at"`
 }
 type Comments []Comment
 
 // View struct
 type View struct {
-	Username types.AccountKey `json:"username"`
-	LastView int64            `json:"last_view"`
-	Times    int64            `jons:"times"`
+	Username   types.AccountKey `json:"username"`
+	LastViewAt int64            `json:"last_view_at"`
+	Times      int64            `jons:"times"`
 }
 
 // Donation struct, only used in Donation
 type Donation struct {
-	Amount  types.Coin `json:"amount"`
-	Created int64      `json:"created"`
+	Amount    types.Coin `json:"amount"`
+	CreatedAt int64      `json:"created_at"`
 }
 type Donations struct {
 	Username     types.AccountKey `json:"username"`

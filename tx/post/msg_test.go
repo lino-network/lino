@@ -252,17 +252,19 @@ func TestMsgPermission(t *testing.T) {
 		expectPermission types.Permission
 	}{
 		"donateMsg from saving": {
-			NewDonateMsg(
+      msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", false, memo1),
-			types.TransactionPermission},
-		"donateMsg from checking": {
-			NewDonateMsg(
+      expectPermission: types.TransactionPermission,
+    },
+    "donateMsg from checking": {
+      msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", true, memo1),
-			types.PostPermission},
+      expectPermission: types.PostPermission,
+    },
 		"create post": {
-			NewCreatePostMsg(PostCreateParams{
+			msg: NewCreatePostMsg(PostCreateParams{
 				PostID:       "test",
 				Title:        "title",
 				Content:      "content",
@@ -272,34 +274,39 @@ func TestMsgPermission(t *testing.T) {
 				SourceAuthor: types.AccountKey("sourceAuthor"),
 				SourcePostID: "sourcePostID",
 				Links: []types.IDToURLMapping{
-					types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+					types.IDToURLMapping{
+						Identifier: "#1",
+						URL:        "https://lino.network",
+					},
+				},
 				RedistributionSplitRate: "0.5",
 			}),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"like post": {
-			NewLikeMsg(
+      msg: NewLikeMsg(
 				"test", 10000, "author", "postID"),
-			types.PostPermission,
+      expectPermission: types.PostPermission,
 		},
 		"view post": {
-			NewViewMsg(
+      msg: NewViewMsg(
 				"test", "author", "postID"),
-			types.PostPermission,
+      expectPermission: types.PostPermission,
 		},
-		"report  post": {
-			NewReportOrUpvoteMsg(
+		"report post": {
+      msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", true),
-			types.PostPermission,
+      expectPermission: types.PostPermission,
 		},
 		"upvote post": {
-			NewReportOrUpvoteMsg(
+      msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", false),
-			types.PostPermission,
+      expectPermission: types.PostPermission,
 		},
 		"update post": {
-			NewUpdatePostMsg("author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
-			types.PostPermission,
+      msg: NewUpdatePostMsg(
+        "author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+      expectPermission: types.PostPermission,
 		},
 	}
 

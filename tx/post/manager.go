@@ -1,10 +1,11 @@
 package post
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type PostManager struct {
@@ -33,7 +34,7 @@ func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.Pe
 	if err != nil {
 		return 0, types.NewCoin(0), ErrGetCreatedTime(permLink).TraceCause(err, "")
 	}
-	return postMeta.Created, postMeta.TotalReward, nil
+	return postMeta.CreatedAt, postMeta.TotalReward, nil
 }
 
 // check if post exist
@@ -55,9 +56,9 @@ func (pm PostManager) GetSourcePost(
 	// check source post's source, that's the root
 	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
 		return types.AccountKey(""), "", nil
-	} else {
-		return postInfo.SourceAuthor, postInfo.SourcePostID, nil
 	}
+
+	return postInfo.SourceAuthor, postInfo.SourcePostID, nil
 }
 
 func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInfo) sdk.Error {
@@ -105,9 +106,9 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 		return ErrCreatePost(permLink).TraceCause(err, "")
 	}
 	postMeta := &model.PostMeta{
-		Created:                 ctx.BlockHeader().Time,
-		LastUpdate:              ctx.BlockHeader().Time,
-		LastActivity:            ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time,
+		LastUpdatedAt:           ctx.BlockHeader().Time,
+		LastActivityAt:          ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
 		RedistributionSplitRate: splitRate,
@@ -164,7 +165,7 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 		like.Weight = weight
 	} else {
 		postMeta.TotalLikeCount += 1
-		like = &model.Like{Username: user, Weight: weight, Created: ctx.BlockHeader().Time}
+		like = &model.Like{Username: user, Weight: weight, CreatedAt: ctx.BlockHeader().Time}
 	}
 	if like.Weight > 0 {
 		postMeta.TotalLikeWeight += like.Weight
@@ -172,7 +173,7 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	if like.Weight < 0 {
 		postMeta.TotalDislikeWeight -= like.Weight
 	}
-	postMeta.LastActivity = ctx.BlockHeader().Time
+	postMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostLike(ctx, permLink, like); err != nil {
 		return ErrAddOrUpdateLikeToPost(permLink).TraceCause(err, "")
 	}
@@ -196,7 +197,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	}
 	postMeta.TotalViewCount += 1
 	view.Times += 1
-	view.LastView = ctx.BlockHeader().Time
+	view.LastViewAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostView(ctx, permLink, view); err != nil {
 		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
 	}
@@ -213,7 +214,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
 	}
-	postMeta.LastActivity = ctx.BlockHeader().Time
+	postMeta.LastActivityAt = ctx.BlockHeader().Time
 
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permLink, user)
 	// Revoke privous
@@ -221,7 +222,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 		return ErrReportOrUpvoteToPostExist(permLink)
 	} else {
 		reportOrUpvote =
-			&model.ReportOrUpvote{Username: user, Stake: stake, Created: ctx.BlockHeader().Time}
+			&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
 	}
 	if isReport {
 		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
@@ -242,7 +243,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 // add comment to post comment list
 func (pm PostManager) AddComment(
 	ctx sdk.Context, permLink types.PermLink, commentUser types.AccountKey, commentPostID string) sdk.Error {
-	comment := &model.Comment{Author: commentUser, PostID: commentPostID, Created: ctx.BlockHeader().Time}
+	comment := &model.Comment{Author: commentUser, PostID: commentPostID, CreatedAt: ctx.BlockHeader().Time}
 	return pm.postStorage.SetPostComment(ctx, permLink, comment)
 }
 
@@ -254,8 +255,8 @@ func (pm PostManager) AddDonation(
 		return ErrAddDonation(permLink).TraceCause(err, "")
 	}
 	donation := model.Donation{
-		Amount:  amount,
-		Created: ctx.BlockHeader().Time,
+		Amount:    amount,
+		CreatedAt: ctx.BlockHeader().Time,
 	}
 	donations, _ := pm.postStorage.GetPostDonations(ctx, permLink, donator)
 	if donations == nil {

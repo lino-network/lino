@@ -1,9 +1,10 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -224,50 +225,50 @@ func GetPostMetaKey(permLink types.PermLink) []byte {
 
 // PostLikePrefix format is LikeSubStore / PostKey
 // which can be used to access all likes belong to this post
-func GetPostLikePrefix(permLink types.PermLink) []byte {
+func getPostLikePrefix(permLink types.PermLink) []byte {
 	return append(append([]byte(postLikeSubStore), permLink...), types.KeySeparator...)
 }
 
 func GetPostLikeKey(permLink types.PermLink, likeUser types.AccountKey) []byte {
-	return append(GetPostLikePrefix(permLink), likeUser...)
+	return append(getPostLikePrefix(permLink), likeUser...)
 }
 
 // PostReportPrefix format is ReportSubStore / PostKey
 // which can be used to access all reports belong to this post
-func GetPostReportOrUpvotePrefix(permLink types.PermLink) []byte {
+func getPostReportOrUpvotePrefix(permLink types.PermLink) []byte {
 	return append(append([]byte(postReportOrUpvoteSubStore), permLink...), types.KeySeparator...)
 }
 
 func GetPostReportOrUpvoteKey(permLink types.PermLink, user types.AccountKey) []byte {
-	return append(GetPostReportOrUpvotePrefix(permLink), user...)
+	return append(getPostReportOrUpvotePrefix(permLink), user...)
 }
 
 // PostViewPrefix format is ViewSubStore / PostKey
 // which can be used to access all views belong to this post
-func GetPostViewPrefix(permLink types.PermLink) []byte {
+func getPostViewPrefix(permLink types.PermLink) []byte {
 	return append(append([]byte(postViewsSubStore), permLink...), types.KeySeparator...)
 }
 
 func GetPostViewKey(permLink types.PermLink, viewUser types.AccountKey) []byte {
-	return append(GetPostViewPrefix(permLink), viewUser...)
+	return append(getPostViewPrefix(permLink), viewUser...)
 }
 
 // PostCommentPrefix format is CommentSubStore / PostKey
 // which can be used to access all comments belong to this post
-func GetPostCommentPrefix(permLink types.PermLink) []byte {
+func getPostCommentPrefix(permLink types.PermLink) []byte {
 	return append(append([]byte(postCommentSubStore), permLink...), types.KeySeparator...)
 }
 
 func GetPostCommentKey(permLink types.PermLink, commentPostKey types.PermLink) []byte {
-	return append(GetPostCommentPrefix(permLink), commentPostKey...)
+	return append(getPostCommentPrefix(permLink), commentPostKey...)
 }
 
 // PostDonationPrefix format is DonationSubStore / PostKey
 // which can be used to access all donations belong to this post
-func GetPostDonationPrefix(permLink types.PermLink) []byte {
+func getPostDonationPrefix(permLink types.PermLink) []byte {
 	return append(append([]byte(postDonationsSubStore), permLink...), types.KeySeparator...)
 }
 
 func GetPostDonationKey(permLink types.PermLink, donateUser types.AccountKey) []byte {
-	return append(GetPostDonationPrefix(permLink), donateUser...)
+	return append(getPostDonationPrefix(permLink), donateUser...)
 }

@@ -3,8 +3,9 @@ package post
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func ErrGetRedistributionSplitRate(permLink types.PermLink) sdk.Error {
