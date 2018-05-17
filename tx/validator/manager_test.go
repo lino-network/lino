@@ -202,6 +202,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 func TestGetUpdateValidatorList(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
+	valManager.InitGenesis(ctx)
 	user1 := createTestAccount(ctx, am, "user1")
 	user2 := createTestAccount(ctx, am, "user2")
 
@@ -253,7 +254,7 @@ func TestIsLegalWithdraw(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	user1 := createTestAccount(ctx, am, "user1")
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
-
+	valManager.InitGenesis(ctx)
 	valManager.RegisterValidator(
 		ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
 		param.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)), "")

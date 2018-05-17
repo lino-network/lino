@@ -10,7 +10,6 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/types"
 )
 
 // ViewTxCmd will create a view tx and sign it with the given key
@@ -34,7 +33,7 @@ func sendViewTx(cdc *wire.Codec) client.CommandTxCallback {
 		author := viper.GetString(client.FlagAuthor)
 		postID := viper.GetString(client.FlagPostID)
 
-		msg := post.NewViewMsg(types.AccountKey(username), types.AccountKey(author), postID)
+		msg := post.NewViewMsg(username, author, postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

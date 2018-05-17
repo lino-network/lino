@@ -1,12 +1,14 @@
 package post
 
 import (
+	"fmt"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -62,15 +64,72 @@ func TestCreatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: sdk.ZeroRat,
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermLink(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+	}
+}
+
+func TestUpdatePost(t *testing.T) {
+	ctx, am, _, pm, _ := setupTest(t, 1)
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
+
+	cases := map[string]struct {
+		msg       UpdatePostMsg
+		expectErr sdk.Error
+	}{
+		"normal update": {
+			NewUpdatePostMsg(
+				string(user), postID, "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"0"), nil},
+		"update with invalid post id": {
+			NewUpdatePostMsg(
+				"invalid", postID, "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink("invalid", postID)))},
+		"update with invalid author": {
+			NewUpdatePostMsg(
+				string(user), "invalid", "update to this title", "update to this content",
+				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink(user, "invalid")))},
+	}
+
+	for testname, cs := range cases {
+		splitRate, err := sdk.NewRatFromDecimal(cs.msg.RedistributionSplitRate)
+		assert.Nil(t, err)
+		err = pm.UpdatePost(
+			ctx, cs.msg.Author, cs.msg.PostID, cs.msg.Title, cs.msg.Content, cs.msg.Links, splitRate)
+		assert.Equal(t, cs.expectErr, err, fmt.Sprintf("%s: expect %v, got %v", testname, cs.expectErr, err))
+		if cs.expectErr != nil {
+			continue
+		}
+		postInfo := model.PostInfo{
+			PostID:       cs.msg.PostID,
+			Title:        cs.msg.Title,
+			Content:      cs.msg.Content,
+			Author:       cs.msg.Author,
+			SourceAuthor: "",
+			SourcePostID: "",
+			Links:        cs.msg.Links,
+		}
+
+		postMeta := model.PostMeta{
+			Created:                 ctx.BlockHeader().Time,
+			LastUpdate:              ctx.BlockHeader().Time,
+			LastActivity:            ctx.BlockHeader().Time,
+			AllowReplies:            true,
+			IsDeleted:               false,
+			RedistributionSplitRate: splitRate,
+		}
+		checkPostKVStore(t, ctx,
+			types.GetPermLink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -145,9 +204,9 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalLikeCount:          cs.expectTotalLikeCount,
@@ -186,9 +245,9 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 createTime,
-			LastUpdate:              createTime,
-			LastActivity:            createTime,
+			CreatedAt:               createTime,
+			LastUpdatedAt:           createTime,
+			LastActivityAt:          createTime,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalViewCount:          cs.expectTotalViewCount,
@@ -197,7 +256,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectUserViewCount, view.Times)
-		assert.Equal(t, cs.viewTime, view.LastView)
+		assert.Equal(t, cs.viewTime, view.LastViewAt)
 	}
 }
 
@@ -225,9 +284,9 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.expectTotalReportStake,
@@ -269,9 +328,9 @@ func TestDonation(t *testing.T) {
 		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalDonateCount:        cs.expectDonateCount,
@@ -303,9 +362,9 @@ func TestGetPenaltyScore(t *testing.T) {
 
 	for _, cs := range cases {
 		postMeta := &model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.totalReportStake,
@@ -341,9 +400,9 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 
 	for _, cs := range cases {
 		postMeta := &model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.totalReportStake,

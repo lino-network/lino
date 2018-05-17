@@ -3,8 +3,9 @@ package post
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func ErrGetRedistributionSplitRate(permLink types.PermLink) sdk.Error {
@@ -75,6 +76,10 @@ func ErrCreateExistPost(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("create post failed, post %v already exist", permLink))
 }
 
+func ErrUpdatePostNotFound(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, post %v not found", permLink))
+}
+
 func ErrLikePostUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("like post failed, user %v not found", user))
 }
@@ -127,6 +132,10 @@ func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, user %v not found", user))
 }
 
+func ErrUpdatePostAuthorNotFound(author types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, author %v not found", author))
+}
+
 func ErrReportAuthorNotFound(permLink types.PermLink, author types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, post %v author %v not found", permLink, author))
 }
@@ -147,12 +156,12 @@ func ErrUpvotePostDoesntExist(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("upvote to post %v failed, post doesn't exist", permLink))
 }
 
-func ErrPostCreateNoPostID() sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Create with empty post id"))
+func ErrNoPostID() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("No Post ID"))
 }
 
-func ErrPostCreateNoAuthor() sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Create with empty author"))
+func ErrNoAuthor() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("No Author"))
 }
 
 func ErrCommentAndRepostError() sdk.Error {
@@ -213,4 +222,8 @@ func ErrPostDonateNoUsername() sdk.Error {
 
 func ErrPostDonateInvalidTarget() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("Donate target post invalid"))
+}
+
+func ErrInvalidMemo() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo in Donate"))
 }

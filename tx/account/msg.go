@@ -11,6 +11,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var _ sdk.Msg = FollowMsg{}
+var _ sdk.Msg = UnfollowMsg{}
+var _ sdk.Msg = ClaimMsg{}
+var _ sdk.Msg = TransferMsg{}
+var _ sdk.Msg = RecoverMsg{}
+var _ sdk.Msg = SavingToCheckingMsg{}
+var _ sdk.Msg = CheckingToSavingMsg{}
+
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
 	Followee types.AccountKey `json:"followee"`
@@ -64,14 +72,6 @@ func TransferToAddr(addr sdk.Address) TransferOption {
 		args.ReceiverAddr = addr
 	}
 }
-
-var _ sdk.Msg = FollowMsg{}
-var _ sdk.Msg = UnfollowMsg{}
-var _ sdk.Msg = ClaimMsg{}
-var _ sdk.Msg = TransferMsg{}
-var _ sdk.Msg = RecoverMsg{}
-var _ sdk.Msg = SavingToCheckingMsg{}
-var _ sdk.Msg = CheckingToSavingMsg{}
 
 // Follow Msg Implementations
 func NewFollowMsg(follower string, followee string) FollowMsg {
@@ -220,6 +220,9 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 		return err
 	}
 
+	if len(msg.Memo) > types.MaximumMemoLength {
+		return ErrInvalidMemo()
+	}
 	return nil
 }
 

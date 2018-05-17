@@ -12,6 +12,7 @@ const (
 	FlagSequence  = "sequence"
 	FlagFee       = "fee"
 	FlagPrivKey   = "priv_key"
+	FlagPubKey    = "pub_key"
 
 	// Account
 	FlagIsFollow     = "is_follow"

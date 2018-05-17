@@ -23,6 +23,8 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
 		case ViewMsg:
 			return handleViewMsg(ctx, msg, pm, am, gm)
+		case UpdatePostMsg:
+			return handleUpdatePostMsg(ctx, msg, pm, am)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized post msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -225,6 +227,27 @@ func handleReportOrUpvoteMsg(
 			ctx, postKey, msg.Username, stake, msg.IsReport); err != nil {
 			return err.Result()
 		}
+	}
+	return sdk.Result{}
+}
+
+func handleUpdatePostMsg(
+	ctx sdk.Context, msg UpdatePostMsg, pm PostManager, am acc.AccountManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Author) {
+		return ErrUpdatePostAuthorNotFound(msg.Author).Result()
+	}
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrUpdatePostNotFound(permLink).Result()
+	}
+
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	if err != nil {
+		return err.Result()
+	}
+	if err := pm.UpdatePost(
+		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links, splitRate); err != nil {
+		return err.Result()
 	}
 	return sdk.Result{}
 }

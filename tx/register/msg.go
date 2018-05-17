@@ -10,6 +10,8 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
+var _ sdk.Msg = RegisterMsg{}
+
 // RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
 type RegisterMsg struct {
 	NewUser              types.AccountKey `json:"new_user"`
@@ -17,8 +19,6 @@ type RegisterMsg struct {
 	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
-
-var _ sdk.Msg = RegisterMsg{}
 
 // NewSendMsg - construct arbitrary multi-in, multi-out send msg.
 func NewRegisterMsg(
