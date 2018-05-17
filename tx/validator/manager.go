@@ -1,14 +1,17 @@
 package validator
 
 import (
+	"encoding/hex"
 	"math"
 	"reflect"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 type ValidatorManager struct {
@@ -143,18 +146,42 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 		}
 
 	}
+
+	// sort the oncall validator list according to their address
+	var addrs []string
+	addrToName := make(map[string]types.AccountKey)
+
+	for _, validatorName := range lst.OncallValidators {
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
+		if err != nil {
+			return err
+		}
+
+		keyBytes := validator.ABCIValidator.GetPubKey()
+		pubKey, cerr := crypto.PubKeyFromBytes(keyBytes)
+		if cerr != nil {
+			return ErrAbsentValidatorNotCorrect()
+		}
+		addr := hex.EncodeToString(pubKey.Address())
+		addrs = append(addrs, addr)
+		addrToName[addr] = validatorName
+	}
+
+	sort.Strings(addrs)
+
 	for _, idx := range absentValidators {
 		if idx > int32(len(lst.OncallValidators)) {
 			return ErrAbsentValidatorNotCorrect()
 		}
-		validator, err := vm.storage.GetValidator(ctx, lst.OncallValidators[idx])
+		validatorName := addrToName[addrs[idx]]
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
 			return err
 		}
 		validator.AbsentCommit += 1
 		validator.ProducedBlocks -= 1
 
-		if err := vm.storage.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
+		if err := vm.storage.SetValidator(ctx, validatorName, validator); err != nil {
 			return err
 		}
 	}

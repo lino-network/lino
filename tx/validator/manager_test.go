@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"encoding/hex"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -12,7 +14,7 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
-func TestAbsentValidator(t *testing.T) {
+func TestByzantines(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
@@ -31,17 +33,72 @@ func TestAbsentValidator(t *testing.T) {
 		num := (i+1)*10 + 1001
 		deposit := types.LNO(strconv.Itoa(num))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i), deposit, valKeys[i], "")
+		name := "user" + strconv.Itoa(i)
+		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 	}
-	absentList := []int32{0, 1, 10, 20}
+
+	// byzantine
+	byzantineList := []int32{3, 8, 14}
+	byzantines := []abci.Evidence{}
+	for _, idx := range byzantineList {
+		byzantines = append(byzantines, abci.Evidence{PubKey: valKeys[idx].Bytes()})
+	}
+	_, err := valManager.FireIncompetentValidator(ctx, byzantines)
+	assert.Nil(t, err)
+
+	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
+	assert.Equal(t, 18, len(validatorList3.OncallValidators))
+	assert.Equal(t, 18, len(validatorList3.AllValidators))
+
+	for _, idx := range byzantineList {
+		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.OncallValidators))
+		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.AllValidators))
+	}
+
+}
+
+func TestAbsentValidator(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(am, valManager, voteManager, gm)
+	valManager.InitGenesis(ctx)
+
+	var addrs []string
+	addrToName := make(map[string]types.AccountKey)
+
+	// create 21 test users
+	users := make([]types.AccountKey, 21)
+	valKeys := make([]crypto.PubKey, 21)
+	for i := 0; i < 21; i++ {
+		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i))
+		am.AddSavingCoin(ctx, users[i], c2000)
+
+		// let user register as voter first
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), c8000)
+
+		// they will deposit 10,20,30...200, 210
+		num := (i+1)*10 + 1001
+		deposit := types.LNO(strconv.Itoa(num))
+		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		addrStr := hex.EncodeToString(valKeys[i].Address())
+		name := "user" + strconv.Itoa(i)
+		addrs = append(addrs, addrStr)
+		addrToName[addrStr] = types.AccountKey(name)
+		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
+		result := handler(ctx, msg)
+		assert.Equal(t, sdk.Result{}, result)
+
+	}
+
+	// absent list
+	absentList := []int32{0, 1, 10}
 	err := valManager.UpdateAbsentValidator(ctx, absentList)
 	assert.Nil(t, err)
 
-	validatorList, _ := valManager.storage.GetValidatorList(ctx)
+	sort.Strings(addrs)
 	for _, idx := range absentList {
-		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
 		assert.Equal(t, validator.AbsentCommit, 1)
 	}
 
@@ -52,38 +109,21 @@ func TestAbsentValidator(t *testing.T) {
 	}
 
 	for _, idx := range absentList {
-		validator, _ := valManager.storage.GetValidator(ctx, validatorList.OncallValidators[idx])
+		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
 		assert.Equal(t, validator.AbsentCommit, 101)
 	}
 
 	_, err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{})
 	assert.Nil(t, err)
 	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
-	assert.Equal(t, 17, len(validatorList2.OncallValidators))
-	assert.Equal(t, 17, len(validatorList2.AllValidators))
+	assert.Equal(t, 18, len(validatorList2.OncallValidators))
+	assert.Equal(t, 18, len(validatorList2.AllValidators))
 
 	for _, idx := range absentList {
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList2.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList2.AllValidators))
+		assert.Equal(t, -1, FindAccountInList(addrToName[addrs[idx]], validatorList2.OncallValidators))
+		assert.Equal(t, -1, FindAccountInList(addrToName[addrs[idx]], validatorList2.AllValidators))
 	}
 
-	// byzantine
-	byzantineList := []int32{3, 8, 14}
-	byzantines := []abci.Evidence{}
-	for _, idx := range byzantineList {
-		byzantines = append(byzantines, abci.Evidence{PubKey: valKeys[idx].Bytes()})
-	}
-	_, err = valManager.FireIncompetentValidator(ctx, byzantines)
-	assert.Nil(t, err)
-
-	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
-	assert.Equal(t, 14, len(validatorList3.OncallValidators))
-	assert.Equal(t, 14, len(validatorList3.AllValidators))
-
-	for _, idx := range byzantineList {
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.AllValidators))
-	}
 }
 
 func TestGetOncallList(t *testing.T) {
