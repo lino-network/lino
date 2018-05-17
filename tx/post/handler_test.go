@@ -92,9 +92,9 @@ func TestHandlerUpdatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: splitRate,

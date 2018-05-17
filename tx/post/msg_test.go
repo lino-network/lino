@@ -3,9 +3,10 @@ package post
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -252,17 +253,17 @@ func TestMsgPermission(t *testing.T) {
 		expectPermission types.Permission
 	}{
 		"donateMsg from saving": {
-      msg: NewDonateMsg(
+			msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", false, memo1),
-      expectPermission: types.TransactionPermission,
-    },
-    "donateMsg from checking": {
-      msg: NewDonateMsg(
+			expectPermission: types.TransactionPermission,
+		},
+		"donateMsg from checking": {
+			msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", true, memo1),
-      expectPermission: types.PostPermission,
-    },
+			expectPermission: types.PostPermission,
+		},
 		"create post": {
 			msg: NewCreatePostMsg(PostCreateParams{
 				PostID:       "test",
@@ -284,29 +285,29 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.PostPermission,
 		},
 		"like post": {
-      msg: NewLikeMsg(
+			msg: NewLikeMsg(
 				"test", 10000, "author", "postID"),
-      expectPermission: types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"view post": {
-      msg: NewViewMsg(
+			msg: NewViewMsg(
 				"test", "author", "postID"),
-      expectPermission: types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"report post": {
-      msg: NewReportOrUpvoteMsg(
+			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", true),
-      expectPermission: types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"upvote post": {
-      msg: NewReportOrUpvoteMsg(
+			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", false),
-      expectPermission: types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"update post": {
-      msg: NewUpdatePostMsg(
-        "author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
-      expectPermission: types.PostPermission,
+			msg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectPermission: types.PostPermission,
 		},
 	}
 

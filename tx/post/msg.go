@@ -44,6 +44,12 @@ type UpdatePostMsg struct {
 	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
 }
 
+type DeletePostMsg struct {
+	Author types.AccountKey `json:"author"`
+	PostID string           `json:"post_id"`
+	Titile string           `json:"title"`
+}
+
 // LikeMsg sent from a user to a post
 type LikeMsg struct {
 	Username types.AccountKey `json:"username"`
