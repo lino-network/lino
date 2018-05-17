@@ -221,17 +221,19 @@ func TestMsgPermission(t *testing.T) {
 		expectPermission types.Permission
 	}{
 		"donateMsg from saving": {
-			NewDonateMsg(
+			msg: NewDonateMsg(
 				types.AccountKey("test"), types.LNO("1"),
 				types.AccountKey("author"), "postID", "", false, memo1),
-			types.TransactionPermission},
+			expectPermission: types.TransactionPermission,
+		},
 		"donateMsg from checking": {
-			NewDonateMsg(
+			msg: NewDonateMsg(
 				types.AccountKey("test"), types.LNO("1"),
 				types.AccountKey("author"), "postID", "", true, memo1),
-			types.PostPermission},
+			expectPermission: types.PostPermission,
+		},
 		"create post": {
-			NewCreatePostMsg(PostCreateParams{
+			msg: NewCreatePostMsg(PostCreateParams{
 				PostID:       "test",
 				Title:        "title",
 				Content:      "content",
@@ -241,30 +243,34 @@ func TestMsgPermission(t *testing.T) {
 				SourceAuthor: types.AccountKey("sourceAuthor"),
 				SourcePostID: "sourcePostID",
 				Links: []types.IDToURLMapping{
-					types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
+					types.IDToURLMapping{
+						Identifier: "#1",
+						URL:        "https://lino.network",
+					},
+				},
 				RedistributionSplitRate: "0.5",
 			}),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"like post": {
-			NewLikeMsg(
+			msg: NewLikeMsg(
 				types.AccountKey("test"), 10000, types.AccountKey("author"), "postID"),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"view post": {
-			NewViewMsg(
+			msg: NewViewMsg(
 				types.AccountKey("test"), types.AccountKey("author"), "postID"),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"report  post": {
-			NewReportOrUpvoteMsg(
+			msg: NewReportOrUpvoteMsg(
 				types.AccountKey("test"), types.AccountKey("author"), "postID", true),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 		"upvote post": {
-			NewReportOrUpvoteMsg(
+			msg: NewReportOrUpvoteMsg(
 				types.AccountKey("test"), types.AccountKey("author"), "postID", false),
-			types.PostPermission,
+			expectPermission: types.PostPermission,
 		},
 	}
 

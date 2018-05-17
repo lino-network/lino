@@ -3,10 +3,11 @@ package post
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -62,9 +63,9 @@ func TestCreatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: sdk.ZeroRat,
@@ -145,9 +146,9 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalLikeCount:          cs.expectTotalLikeCount,
@@ -186,9 +187,9 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 createTime,
-			LastUpdate:              createTime,
-			LastActivity:            createTime,
+			CreatedAt:               createTime,
+			LastUpdatedAt:           createTime,
+			LastActivityAt:          createTime,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalViewCount:          cs.expectTotalViewCount,
@@ -197,7 +198,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectUserViewCount, view.Times)
-		assert.Equal(t, cs.viewTime, view.LastView)
+		assert.Equal(t, cs.viewTime, view.LastViewAt)
 	}
 }
 
@@ -225,9 +226,9 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.expectTotalReportStake,
@@ -269,9 +270,9 @@ func TestDonation(t *testing.T) {
 		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalDonateCount:        cs.expectDonateCount,
@@ -303,9 +304,9 @@ func TestGetPenaltyScore(t *testing.T) {
 
 	for _, cs := range cases {
 		postMeta := &model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.totalReportStake,
@@ -341,9 +342,9 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 
 	for _, cs := range cases {
 		postMeta := &model.PostMeta{
-			Created:                 ctx.BlockHeader().Time,
-			LastUpdate:              ctx.BlockHeader().Time,
-			LastActivity:            ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time,
+			LastUpdatedAt:           ctx.BlockHeader().Time,
+			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat,
 			TotalReportStake:        cs.totalReportStake,
