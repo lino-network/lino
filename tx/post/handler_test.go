@@ -51,44 +51,43 @@ func TestHandlerUpdatePost(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1 := createTestAccount(t, ctx, am, "user1")
 
-	cases := []struct {
-		TestName     string
-		msg          UpdatePostMsg
-		expectResult sdk.Result
+	testCases := map[string]struct {
+		msg        UpdatePostMsg
+		wantResult sdk.Result
 	}{
-		{"normal update",
-			NewUpdatePostMsg(string(user), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			sdk.Result{},
+		"normal update": {
+			msg:        NewUpdatePostMsg(string(user), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: sdk.Result{},
 		},
-		{"update user doesn't exist",
-			NewUpdatePostMsg("invalid", postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			ErrUpdatePostAuthorNotFound("invalid").Result(),
+		"update author doesn't exist": {
+			msg:        NewUpdatePostMsg("invalid", postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: ErrUpdatePostAuthorNotFound("invalid").Result(),
 		},
-		{"update post doesn't exist, post ID invalid",
-			NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			ErrUpdatePostNotFound(types.GetPermLink(user, "invalid")).Result(),
+		"update post doesn't exist - invalid post ID": {
+			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user, "invalid")).Result(),
 		},
-		{"update post doesn't exist, author invalid",
-			NewUpdatePostMsg(string(user1), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			ErrUpdatePostNotFound(types.GetPermLink(user1, postID)).Result(),
+		"update post doesn't exist - invalid author": {
+			msg:        NewUpdatePostMsg(string(user1), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user1, postID)).Result(),
 		},
 	}
-	for _, cs := range cases {
-		splitRate, err := sdk.NewRatFromDecimal(cs.msg.RedistributionSplitRate)
+	for _, tc := range testCases {
+		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate)
 		assert.Nil(t, err)
-		result := handler(ctx, cs.msg)
-		assert.Equal(t, cs.expectResult, result)
-		if cs.expectResult.Code != sdk.CodeOK {
+		result := handler(ctx, tc.msg)
+		assert.Equal(t, tc.wantResult, result)
+		if tc.wantResult.Code != sdk.CodeOK {
 			continue
 		}
 		postInfo := model.PostInfo{
-			PostID:       cs.msg.PostID,
-			Title:        cs.msg.Title,
-			Content:      cs.msg.Content,
-			Author:       cs.msg.Author,
+			PostID:       tc.msg.PostID,
+			Title:        tc.msg.Title,
+			Content:      tc.msg.Content,
+			Author:       tc.msg.Author,
 			SourceAuthor: "",
 			SourcePostID: "",
-			Links:        cs.msg.Links,
+			Links:        tc.msg.Links,
 		}
 
 		postMeta := model.PostMeta{
@@ -100,7 +99,53 @@ func TestHandlerUpdatePost(t *testing.T) {
 			RedistributionSplitRate: splitRate,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermLink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
+			types.GetPermLink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
+	}
+}
+
+func TestHandlerDeletePost(t *testing.T) {
+	ctx, am, _, pm, gm := setupTest(t, 1)
+	handler := NewHandler(pm, am, gm)
+
+	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
+	user1 := createTestAccount(t, ctx, am, "user1")
+
+	testCases := map[string]struct {
+		msg        DeletePostMsg
+		wantResult sdk.Result
+	}{
+		"normal delete": {
+			msg: DeletePostMsg{
+				Author: user,
+				PostID: postID,
+			},
+			wantResult: sdk.Result{},
+		},
+		"author doesn't exist": {
+			msg: DeletePostMsg{
+				Author: types.AccountKey("invalid"),
+				PostID: postID,
+			},
+			wantResult: ErrDeletePostAuthorNotFound("invalid").Result(),
+		},
+		"post doesn't exist - invalid author": {
+			msg: DeletePostMsg{
+				Author: user1,
+				PostID: "postID",
+			},
+			wantResult: ErrDeletePostNotFound(types.GetPermLink(user1, postID)).Result(),
+		},
+		"post doesn't exist - invalid postID": {
+			msg: DeletePostMsg{
+				Author: user,
+				PostID: "invalid",
+			},
+			wantResult: ErrDeletePostNotFound(types.GetPermLink(user, "invalid")).Result(),
+		},
+	}
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
+		assert.Equal(t, tc.wantResult, result)
 	}
 }
 
