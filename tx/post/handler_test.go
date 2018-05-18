@@ -70,9 +70,9 @@ func TestHandlerUpdatePost(t *testing.T) {
 			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
 			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user, "invalid")).Result(),
 		},
-		"update post doesn't exist, author invalid": {
+		"update post doesn't exist - invalid author": {
 			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user2, postID)).Result(),
+			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user1, postID)).Result(),
 		},
 		"update deleted post": {
 			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil), "1"),
