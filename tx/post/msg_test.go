@@ -131,6 +131,46 @@ func TestUpdatePostMsg(t *testing.T) {
 	}
 }
 
+func TestDeletePostMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg         DeletePostMsg
+		wantErrCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: DeletePostMsg{
+				Author: "author",
+				PostID: "postID",
+			},
+			wantErrCode: sdk.CodeOK,
+		},
+		"empty author": {
+			msg: DeletePostMsg{
+				Author: "",
+				PostID: "postID",
+			},
+			wantErrCode: types.CodePostMsgError,
+		},
+		"empty postID": {
+			msg: DeletePostMsg{
+				Author: "author",
+				PostID: "",
+			},
+			wantErrCode: types.CodePostMsgError,
+		},
+	}
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+		if got == nil && tc.wantErrCode != sdk.CodeOK {
+			t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
+		}
+		if got != nil {
+			if got.ABCICode() != tc.wantErrCode {
+				t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
+			}
+		}
+	}
+}
+
 func TestCommentAndRepost(t *testing.T) {
 	parentAuthor := "Parent"
 	parentPostID := "ParentPostID"
