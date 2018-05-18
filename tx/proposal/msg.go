@@ -531,7 +531,9 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 	}
 
 	if msg.Parameter.ValidatorCoinReturnIntervalHr <= 0 ||
-		msg.Parameter.ValidatorCoinReturnTimes <= 0 {
+		msg.Parameter.ValidatorCoinReturnTimes <= 0 ||
+		msg.Parameter.AbsentCommitLimitation <= 0 ||
+		msg.Parameter.ValidatorListSize <= 0 {
 		return ErrIllegalParameter()
 	}
 

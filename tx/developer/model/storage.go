@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	DeveloperSubstore     = []byte("Developer/")
-	DeveloperListSubstore = []byte("Developer/DeveloperListKey")
+	developerSubstore     = []byte{0x00}
+	developerListSubstore = []byte{0x01}
 )
 
 type DeveloperStorage struct {
@@ -87,9 +87,9 @@ func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList)
 }
 
 func GetDeveloperKey(accKey types.AccountKey) []byte {
-	return append(DeveloperSubstore, accKey...)
+	return append(developerSubstore, accKey...)
 }
 
 func GetDeveloperListKey() []byte {
-	return DeveloperListSubstore
+	return developerListSubstore
 }

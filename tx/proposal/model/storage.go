@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ProposalSubstore     = []byte{0x00}
-	ProposalListSubStore = []byte{0x01}
+	proposalSubstore     = []byte{0x00}
+	proposalListSubStore = []byte{0x01}
 )
 
 type ProposalStorage struct {
@@ -108,9 +108,9 @@ func (ps ProposalStorage) DeleteProposal(ctx sdk.Context, proposalID types.Propo
 }
 
 func GetProposalKey(proposalID types.ProposalKey) []byte {
-	return append(ProposalSubstore, proposalID...)
+	return append(proposalSubstore, proposalID...)
 }
 
 func GetProposalListKey() []byte {
-	return ProposalListSubStore
+	return proposalListSubStore
 }

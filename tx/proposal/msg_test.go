@@ -216,6 +216,8 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
 		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		ValidatorListSize:             int64(21),
+		AbsentCommitLimitation:        int64(100),
 	}
 
 	p2 := p1
@@ -242,6 +244,12 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p9 := p1
 	p9.PenaltyMissCommit = types.NewCoin(0 * types.Decimals)
 
+	p10 := p1
+	p10.AbsentCommitLimitation = int64(0)
+
+	p11 := p1
+	p11.ValidatorListSize = int64(-1)
+
 	cases := []struct {
 		ChangeValidatorParamMsg ChangeValidatorParamMsg
 		expectError             sdk.Error
@@ -255,6 +263,8 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		{NewChangeValidatorParamMsg("user1", p7), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("user1", p8), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("user1", p9), ErrIllegalParameter()},
+		{NewChangeValidatorParamMsg("user1", p10), ErrIllegalParameter()},
+		{NewChangeValidatorParamMsg("user1", p11), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("", p1), ErrInvalidUsername()},
 	}
 
