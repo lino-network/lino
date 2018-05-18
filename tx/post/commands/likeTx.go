@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/tx/post"
-
-	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/types"
 )
 
 // LikeTxCmd will create a like tx and sign it with the given key
@@ -40,7 +38,7 @@ func sendLikeTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		msg := post.NewLikeMsg(types.AccountKey(username), int64(weight), types.AccountKey(author), postID)
+		msg := post.NewLikeMsg(username, int64(weight), author, postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

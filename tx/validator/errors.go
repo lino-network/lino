@@ -8,7 +8,11 @@ import (
 )
 
 func ErrAbsentValidatorNotCorrect() sdk.Error {
-	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("absent validator index out of range"))
+	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Absent validator index out of range"))
+}
+
+func ErrGetPubKeyFailed() sdk.Error {
+	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get ABCI public key failed"))
 }
 
 func ErrNotInTheList() sdk.Error {
@@ -41,4 +45,8 @@ func ErrCommitingDepositExceedVotingDeposit() sdk.Error {
 
 func ErrInvalidUsername() sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+}
+
+func ErrPubKeyHasBeenRegistered() sdk.Error {
+	return sdk.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Public key has been registered"))
 }

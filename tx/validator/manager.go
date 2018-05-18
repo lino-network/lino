@@ -1,14 +1,17 @@
 package validator
 
 import (
+	"encoding/hex"
 	"math"
 	"reflect"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/validator/model"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/abci/types"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 type ValidatorManager struct {
@@ -90,6 +93,10 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 			if err != nil {
 				return nil, err
 			}
+			if validator.Deposit.IsZero() {
+				vm.storage.DeleteValidator(ctx, validator.Username)
+			}
+
 			validator.ABCIValidator.Power = 0
 			ABCIValList = append(ABCIValList, validator.ABCIValidator)
 		}
@@ -139,18 +146,42 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 		}
 
 	}
+
+	// sort the oncall validator list according to their address
+	var addrs []string
+	addrToName := make(map[string]types.AccountKey)
+
+	for _, validatorName := range lst.OncallValidators {
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
+		if err != nil {
+			return err
+		}
+
+		keyBytes := validator.ABCIValidator.GetPubKey()
+		pubKey, cerr := crypto.PubKeyFromBytes(keyBytes)
+		if cerr != nil {
+			return ErrGetPubKeyFailed()
+		}
+		addr := hex.EncodeToString(pubKey.Address())
+		addrs = append(addrs, addr)
+		addrToName[addr] = validatorName
+	}
+
+	sort.Strings(addrs)
+
 	for _, idx := range absentValidators {
-		if idx > int32(len(lst.OncallValidators)) {
+		if idx >= int32(len(addrs)) {
 			return ErrAbsentValidatorNotCorrect()
 		}
-		validator, err := vm.storage.GetValidator(ctx, lst.OncallValidators[idx])
+		validatorName := addrToName[addrs[idx]]
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
 			return err
 		}
 		validator.AbsentCommit += 1
 		validator.ProducedBlocks -= 1
 
-		if err := vm.storage.SetValidator(ctx, lst.OncallValidators[idx], validator); err != nil {
+		if err := vm.storage.SetValidator(ctx, validatorName, validator); err != nil {
 			return err
 		}
 	}
@@ -217,7 +248,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 		if err != nil {
 			return totalPenalty, err
 		}
-		if validator.AbsentCommit > types.AbsentCommitLimitation {
+		if validator.AbsentCommit > param.AbsentCommitLimitation {
 			actualPenalty, err := vm.PunishOncallValidator(
 				ctx, validator.Username, param.PenaltyMissCommit, true)
 			if err != nil {
@@ -271,6 +302,21 @@ func (vm ValidatorManager) RegisterValidator(
 		return ErrCommitingDepositNotEnough()
 	}
 
+	// make sure the pub key has not been registered
+	lst, err := vm.GetValidatorList(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, validatorName := range lst.AllValidators {
+		validator, err := vm.storage.GetValidator(ctx, validatorName)
+		if err != nil {
+			return err
+		}
+		if reflect.DeepEqual(validator.ABCIValidator.PubKey, pubKey) {
+			return ErrPubKeyHasBeenRegistered()
+		}
+	}
 	curValidator := &model.Validator{
 		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
 		Username:      username,
@@ -313,6 +359,7 @@ func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.Acc
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -361,7 +408,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	}
 
 	// add to list directly if validator list is not full
-	if len(lst.OncallValidators) < types.ValidatorListSize {
+	if int64(len(lst.OncallValidators)) < param.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
 	} else if curValidator.Deposit.Amount > lst.LowestPower.Amount {
 		// replace the validator with lowest power

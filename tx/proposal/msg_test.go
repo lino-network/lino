@@ -66,6 +66,9 @@ func TestMsgPermission(t *testing.T) {
 		"change coinday param": {
 			NewChangeCoinDayParamMsg("creator", param.CoinDayParam{}),
 			types.TransactionPermission},
+		"change bandwidth param": {
+			NewChangeBandwidthParamMsg("creator", param.BandwidthParam{}),
+			types.TransactionPermission},
 		"change account param": {
 			NewChangeAccountParamMsg("creator", param.AccountParam{}),
 			types.TransactionPermission},
@@ -213,6 +216,8 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
 		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		ValidatorListSize:             int64(21),
+		AbsentCommitLimitation:        int64(100),
 	}
 
 	p2 := p1
@@ -239,6 +244,12 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p9 := p1
 	p9.PenaltyMissCommit = types.NewCoin(0 * types.Decimals)
 
+	p10 := p1
+	p10.AbsentCommitLimitation = int64(0)
+
+	p11 := p1
+	p11.ValidatorListSize = int64(-1)
+
 	cases := []struct {
 		ChangeValidatorParamMsg ChangeValidatorParamMsg
 		expectError             sdk.Error
@@ -252,6 +263,8 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		{NewChangeValidatorParamMsg("user1", p7), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("user1", p8), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("user1", p9), ErrIllegalParameter()},
+		{NewChangeValidatorParamMsg("user1", p10), ErrIllegalParameter()},
+		{NewChangeValidatorParamMsg("user1", p11), ErrIllegalParameter()},
 		{NewChangeValidatorParamMsg("", p1), ErrInvalidUsername()},
 	}
 
@@ -376,6 +389,35 @@ func TestChangeAccountParamMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		result := cs.changeAccountParamMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestChangeBandwidthParamMsg(t *testing.T) {
+	p1 := param.BandwidthParam{
+		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
+		CapacityUsagePerTransaction: types.NewCoin(1 * types.Decimals),
+	}
+
+	p2 := p1
+	p2.SecondsToRecoverBandwidth = int64(-1)
+
+	p3 := p1
+	p3.CapacityUsagePerTransaction = types.NewCoin(-1)
+
+	cases := []struct {
+		changeBandwidthParamMsg ChangeBandwidthParamMsg
+		expectError             sdk.Error
+	}{
+		{NewChangeBandwidthParamMsg("user1", p1), nil},
+		{NewChangeBandwidthParamMsg("us", p1), ErrInvalidUsername()},
+		{NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
+		{NewChangeBandwidthParamMsg("user1", p2), ErrIllegalParameter()},
+		{NewChangeBandwidthParamMsg("user1", p3), ErrIllegalParameter()},
+	}
+
+	for _, cs := range cases {
+		result := cs.changeBandwidthParamMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
 }

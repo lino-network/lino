@@ -1,12 +1,5 @@
 package types
 
-// Validator List Size
-var ValidatorListSize = 21
-
-var AbsentCommitLimitation = 100
-
-var AbsentVoteLimitation = 100
-
 // AccountKey key format in KVStore
 type AccountKey string
 

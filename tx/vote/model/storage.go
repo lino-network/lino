@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	DelegatorSubstore     = []byte{0x00}
-	VoterSubstore         = []byte{0x01}
-	VoteSubstore          = []byte{0x02}
-	ReferenceListSubStore = []byte{0x03}
+	delegatorSubstore     = []byte{0x00}
+	voterSubstore         = []byte{0x01}
+	voteSubstore          = []byte{0x02}
+	referenceListSubStore = []byte{0x03}
 )
 
 type VoteStorage struct {
@@ -186,7 +186,7 @@ func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.
 }
 
 func GetDelegatorPrefix(me types.AccountKey) []byte {
-	return append(append(DelegatorSubstore, me...), types.KeySeparator...)
+	return append(append(delegatorSubstore, me...), types.KeySeparator...)
 }
 
 // "delegator substore" + "me(voter)" + "my delegator"
@@ -195,7 +195,7 @@ func GetDelegationKey(me types.AccountKey, myDelegator types.AccountKey) []byte 
 }
 
 func GetVotePrefix(id types.ProposalKey) []byte {
-	return append(append(VoteSubstore, id...), types.KeySeparator...)
+	return append(append(voteSubstore, id...), types.KeySeparator...)
 }
 
 // "vote substore" + "proposalID" + "voter"
@@ -204,10 +204,10 @@ func GetVoteKey(proposalID types.ProposalKey, voter types.AccountKey) []byte {
 }
 
 func GetVoterKey(me types.AccountKey) []byte {
-	return append(VoterSubstore, me...)
+	return append(voterSubstore, me...)
 }
 func GetReferenceListKey() []byte {
-	return ReferenceListSubStore
+	return referenceListSubStore
 }
 
 func subspace(prefix []byte) (start, end []byte) {

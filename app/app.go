@@ -3,25 +3,27 @@ package app
 import (
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/auth"
-	developer "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/tx/global"
-	infra "github.com/lino-network/lino/tx/infra"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/proposal"
 	"github.com/lino-network/lino/tx/register"
+	"github.com/lino-network/lino/types"
+
+	acc "github.com/lino-network/lino/tx/account"
+	developer "github.com/lino-network/lino/tx/developer"
+	infra "github.com/lino-network/lino/tx/infra"
 	val "github.com/lino-network/lino/tx/validator"
 	vote "github.com/lino-network/lino/tx/vote"
-	"github.com/lino-network/lino/types"
+
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/tendermint/tmlibs/log"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 )
 
 const (
@@ -133,8 +135,11 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
 	cdc.RegisterConcrete(acc.ClaimMsg{}, "claim", nil)
 	cdc.RegisterConcrete(post.CreatePostMsg{}, "post", nil)
+	cdc.RegisterConcrete(post.UpdatePostMsg{}, "update/post", nil)
+	cdc.RegisterConcrete(post.DeletePostMsg{}, "delete/post", nil)
 	cdc.RegisterConcrete(post.LikeMsg{}, "like", nil)
 	cdc.RegisterConcrete(post.DonateMsg{}, "donate", nil)
+	cdc.RegisterConcrete(post.ViewMsg{}, "view", nil)
 	cdc.RegisterConcrete(post.ReportOrUpvoteMsg{}, "reportOrUpvote", nil)
 	cdc.RegisterConcrete(val.ValidatorDepositMsg{}, "val/deposit", nil)
 	cdc.RegisterConcrete(val.ValidatorWithdrawMsg{}, "val/withdraw", nil)

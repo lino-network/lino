@@ -10,7 +10,7 @@ type Validator struct {
 	ABCIValidator  abci.Validator
 	Username       types.AccountKey `json:"username"`
 	Deposit        types.Coin       `json:"deposit"`
-	AbsentCommit   int              `json:"absent_commit"`
+	AbsentCommit   int64            `json:"absent_commit"`
 	ProducedBlocks int64            `json:"produced_blocks"`
 	Link           string           `json:"link"`
 }

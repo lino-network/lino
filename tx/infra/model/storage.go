@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	InfraProviderSubstore     = []byte("InfraProvider/")
-	InfraProviderListSubstore = []byte("InfraProvider/InfraProviderListKey")
+	infraProviderSubstore     = []byte{0x00}
+	infraProviderListSubstore = []byte{0x01}
 )
 
 type InfraProviderStorage struct {
@@ -81,9 +81,9 @@ func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraP
 }
 
 func GetInfraProviderKey(accKey types.AccountKey) []byte {
-	return append(InfraProviderSubstore, accKey...)
+	return append(infraProviderSubstore, accKey...)
 }
 
 func GetInfraProviderListKey() []byte {
-	return InfraProviderListSubstore
+	return infraProviderListSubstore
 }

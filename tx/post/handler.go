@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
 func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
@@ -23,6 +24,10 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
 		case ViewMsg:
 			return handleViewMsg(ctx, msg, pm, am, gm)
+		case UpdatePostMsg:
+			return handleUpdatePostMsg(ctx, msg, pm, am)
+		case DeletePostMsg:
+			return handleDeletePostMsg(ctx, msg, pm, am)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized post msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -202,14 +207,17 @@ func handleReportOrUpvoteMsg(
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrReportUserNotFound(msg.Username).Result()
 	}
+
 	postKey := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, postKey) {
+		return ErrReportPostDoesntExist(postKey).Result()
+	}
+
 	stake, err := am.GetStake(ctx, msg.Username)
 	if err != nil {
 		return ErrReportFailed(postKey).TraceCause(err, "").Result()
 	}
-	if !pm.IsPostExist(ctx, postKey) {
-		return ErrReportPostDoesntExist(postKey).Result()
-	}
+
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, postKey)
 	if err != nil {
 		return ErrReportFailed(postKey).TraceCause(err, "").Result()
@@ -225,6 +233,46 @@ func handleReportOrUpvoteMsg(
 			ctx, postKey, msg.Username, stake, msg.IsReport); err != nil {
 			return err.Result()
 		}
+	}
+	return sdk.Result{}
+}
+
+func handleUpdatePostMsg(
+	ctx sdk.Context, msg UpdatePostMsg, pm PostManager, am acc.AccountManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Author) {
+		return ErrUpdatePostAuthorNotFound(msg.Author).Result()
+	}
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrUpdatePostNotFound(permLink).Result()
+	}
+	if isDeleted, err := pm.IsDeleted(ctx, permLink); isDeleted || err != nil {
+		return ErrUpdatePostIsDeleted(permLink).Result()
+	}
+
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	if err != nil {
+		return err.Result()
+	}
+	if err := pm.UpdatePost(
+		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links, splitRate); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleDeletePostMsg(
+	ctx sdk.Context, msg DeletePostMsg, pm PostManager, am acc.AccountManager) sdk.Result {
+	if !am.IsAccountExist(ctx, msg.Author) {
+		return ErrDeletePostAuthorNotFound(msg.Author).Result()
+	}
+	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	if !pm.IsPostExist(ctx, permLink) {
+		return ErrDeletePostNotFound(permLink).Result()
+	}
+
+	if err := pm.DeletePost(ctx, permLink); err != nil {
+		return err.Result()
 	}
 	return sdk.Result{}
 }

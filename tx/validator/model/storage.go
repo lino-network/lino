@@ -6,8 +6,10 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var ValidatorSubstore = []byte("Validator/")
-var ValidatorListSubstore = []byte("ValidatorList/ValidatorListKey")
+var (
+	validatorSubstore     = []byte{0x00}
+	validatorListSubstore = []byte{0x01}
+)
 
 type ValidatorStorage struct {
 	key sdk.StoreKey
@@ -58,6 +60,12 @@ func (vs ValidatorStorage) SetValidator(ctx sdk.Context, accKey types.AccountKey
 	return nil
 }
 
+func (vs ValidatorStorage) DeleteValidator(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	store := ctx.KVStore(vs.key)
+	store.Delete(GetValidatorKey(username))
+	return nil
+}
+
 func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) (*ValidatorList, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	listByte := store.Get(GetValidatorListKey())
@@ -82,9 +90,9 @@ func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList)
 }
 
 func GetValidatorKey(accKey types.AccountKey) []byte {
-	return append(ValidatorSubstore, accKey...)
+	return append(validatorSubstore, accKey...)
 }
 
 func GetValidatorListKey() []byte {
-	return ValidatorListSubstore
+	return validatorListSubstore
 }

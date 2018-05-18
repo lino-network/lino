@@ -1,19 +1,18 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	crypto "github.com/tendermint/go-crypto"
 
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/wire"
-	cfg "github.com/tendermint/tendermint/config"
-	pvm "github.com/tendermint/tendermint/types/priv_validator"
-	cmn "github.com/tendermint/tmlibs/common"
 )
 
 // DepositValidatorTxCmd will create a send tx and sign it with the given key
@@ -25,6 +24,7 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
+	cmd.Flags().String(client.FlagPubKey, "", "validator pub key")
 	return cmd
 }
 
@@ -33,21 +33,20 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(client.FlagUser)
+		pubKeyHex := viper.GetString(client.FlagPubKey)
+		keyBytes, err := hex.DecodeString(pubKeyHex)
+		if err != nil {
+			return err
+		}
 
-		config := cfg.DefaultConfig()
-		// private validator
-		privValFile := config.PrivValidatorFile()
-		var privValidator *pvm.FilePV
-		if cmn.FileExists(privValFile) {
-			privValidator = pvm.LoadFilePV(privValFile)
-		} else {
-			privValidator = pvm.GenFilePV(privValFile)
-			privValidator.Save()
+		pubKey, err := crypto.PubKeyFromBytes(keyBytes)
+		if err != nil {
+			return err
 		}
 
 		// // create the message
 		msg := validator.NewValidatorDepositMsg(
-			name, types.LNO(viper.GetString(client.FlagAmount)), privValidator.PubKey, viper.GetString(client.FlagLink))
+			name, types.LNO(viper.GetString(client.FlagAmount)), pubKey, viper.GetString(client.FlagLink))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

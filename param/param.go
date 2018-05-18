@@ -76,6 +76,8 @@ type ValidatorParam struct {
 	PenaltyMissVote               types.Coin `json:"penalty_miss_vote"`
 	PenaltyMissCommit             types.Coin `json:"penalty_miss_commit"`
 	PenaltyByzantine              types.Coin `json:"penalty_byzantine"`
+	ValidatorListSize             int64      `json:"validator_list_size"`
+	AbsentCommitLimitation        int64      `json:"absent_commit_limitation"`
 }
 
 type CoinDayParam struct {

@@ -3,14 +3,13 @@ package commands
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
+	"github.com/lino-network/lino/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/tx/post"
-	"github.com/lino-network/lino/types"
-
-	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // DonateTxCmd will create a donate tx and sign it with the given key
@@ -25,6 +24,7 @@ func DonateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagPostID, "", "post id of the target post")
 	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
 	cmd.Flags().Bool(client.FlagFromChecking, false, "the donation come from checking or saving")
+	cmd.Flags().String(client.FlagMemo, "", "memo of this donation")
 	return cmd
 }
 
@@ -36,8 +36,8 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		author := viper.GetString(client.FlagAuthor)
 		postID := viper.GetString(client.FlagPostID)
 		msg := post.NewDonateMsg(
-			types.AccountKey(username), types.LNO(viper.GetString(client.FlagAmount)),
-			types.AccountKey(author), postID, "", viper.GetBool(client.FlagFromChecking))
+			username, types.LNO(viper.GetString(client.FlagAmount)),
+			author, postID, "", viper.GetBool(client.FlagFromChecking), viper.GetString(client.FlagMemo))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(msg, cdc)

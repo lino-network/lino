@@ -1,28 +1,27 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
-
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
-
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	abci "github.com/tendermint/abci/types"
+	"github.com/spf13/cobra"
 	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/go-crypto/keys/words"
-	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	"github.com/tendermint/tmlibs/cli"
+	"github.com/tendermint/tmlibs/log"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/abci/types"
+	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 )
 
 // linoCmd is the entry point for this binary
@@ -57,6 +56,7 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 		privValidator.Save()
 	}
 
+	fmt.Println(hex.EncodeToString(privValidator.PrivKey.Bytes()))
 	result, err := genesis.GetDefaultGenesis(pubKey, privValidator.PubKey)
 	if err != nil {
 		return nil, err

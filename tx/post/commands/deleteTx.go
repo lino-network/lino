@@ -11,28 +11,26 @@ import (
 	post "github.com/lino-network/lino/tx/post"
 )
 
-// ViewTxCmd will create a view tx and sign it with the given key
-func ViewTxCmd(cdc *wire.Codec) *cobra.Command {
+// DeletePostTxCmd deletes a post tx and sign it with the given key
+func DeletePostTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "view",
-		Short: "view a post",
-		RunE:  sendViewTx(cdc),
+		Use:   "post-delete",
+		Short: "delete a post to blockchain",
+		RunE:  sendDeletePostTx(cdc),
 	}
-	cmd.Flags().String(client.FlagUser, "", "view user of this transaction")
+	cmd.Flags().String(client.FlagAuthor, "", "author of this post")
 	cmd.Flags().String(client.FlagPostID, "", "post id to identify this post for the author")
-	cmd.Flags().String(client.FlagAuthor, "", "title for the post")
 	return cmd
 }
 
-// send view transaction to the blockchain
-func sendViewTx(cdc *wire.Codec) client.CommandTxCallback {
+// send delete post transaction to the blockchain
+func sendDeletePostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		username := viper.GetString(client.FlagUser)
 		author := viper.GetString(client.FlagAuthor)
 		postID := viper.GetString(client.FlagPostID)
 
-		msg := post.NewViewMsg(username, author, postID)
+		msg := post.NewDeletePostMsg(author, postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)
