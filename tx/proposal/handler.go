@@ -120,7 +120,7 @@ func handleContentCensorshipMsg(
 		return ErrPostNotFound().Result()
 	}
 
-	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermLink()); err != nil || isDeleted {
+	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermLink()); isDeleted || err != nil {
 		return ErrCensorshipPostIsDeleted(msg.GetPermLink()).Result()
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -57,6 +58,7 @@ func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.Ra
 		privValidator.Save()
 	}
 
+	fmt.Println(hex.EncodeToString(privValidator.PrivKey.Bytes()))
 	result, err := genesis.GetDefaultGenesis(pubKey, privValidator.PubKey)
 	if err != nil {
 		return nil, err
