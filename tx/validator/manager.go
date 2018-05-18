@@ -160,7 +160,7 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 		keyBytes := validator.ABCIValidator.GetPubKey()
 		pubKey, cerr := crypto.PubKeyFromBytes(keyBytes)
 		if cerr != nil {
-			return ErrAbsentValidatorNotCorrect()
+			return ErrGetPubKeyFailed()
 		}
 		addr := hex.EncodeToString(pubKey.Address())
 		addrs = append(addrs, addr)
@@ -170,7 +170,7 @@ func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidato
 	sort.Strings(addrs)
 
 	for _, idx := range absentValidators {
-		if idx > int32(len(lst.OncallValidators)) {
+		if idx >= int32(len(addrs)) {
 			return ErrAbsentValidatorNotCorrect()
 		}
 		validatorName := addrToName[addrs[idx]]
@@ -248,7 +248,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 		if err != nil {
 			return totalPenalty, err
 		}
-		if validator.AbsentCommit > types.AbsentCommitLimitation {
+		if validator.AbsentCommit > param.AbsentCommitLimitation {
 			actualPenalty, err := vm.PunishOncallValidator(
 				ctx, validator.Username, param.PenaltyMissCommit, true)
 			if err != nil {
@@ -408,7 +408,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	}
 
 	// add to list directly if validator list is not full
-	if len(lst.OncallValidators) < types.ValidatorListSize {
+	if int64(len(lst.OncallValidators)) < param.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
 	} else if curValidator.Deposit.Amount > lst.LowestPower.Amount {
 		// replace the validator with lowest power

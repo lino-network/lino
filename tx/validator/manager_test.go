@@ -99,18 +99,19 @@ func TestAbsentValidator(t *testing.T) {
 	sort.Strings(addrs)
 	for _, idx := range absentList {
 		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
-		assert.Equal(t, validator.AbsentCommit, 1)
+		assert.Equal(t, validator.AbsentCommit, int64(1))
 	}
 
+	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	// absent exceeds limitation
-	for i := 0; i < types.AbsentCommitLimitation; i++ {
+	for i := int64(0); i < param.AbsentCommitLimitation; i++ {
 		err := valManager.UpdateAbsentValidator(ctx, absentList)
 		assert.Nil(t, err)
 	}
 
 	for _, idx := range absentList {
 		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
-		assert.Equal(t, validator.AbsentCommit, 101)
+		assert.Equal(t, validator.AbsentCommit, int64(101))
 	}
 
 	_, err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{})

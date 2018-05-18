@@ -8,7 +8,11 @@ import (
 )
 
 func ErrAbsentValidatorNotCorrect() sdk.Error {
-	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("absent validator index out of range"))
+	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Absent validator index out of range"))
+}
+
+func ErrGetPubKeyFailed() sdk.Error {
+	return sdk.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get ABCI public key failed"))
 }
 
 func ErrNotInTheList() sdk.Error {

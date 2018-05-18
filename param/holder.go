@@ -90,6 +90,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
 		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		ValidatorListSize:             int64(21),
+		AbsentCommitLimitation:        int64(100),
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")
