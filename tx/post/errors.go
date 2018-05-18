@@ -128,6 +128,10 @@ func ErrDonatePostIsDeleted(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate to post %v failed, post is deleted", permLink))
 }
 
+func ErrUpdatePostIsDeleted(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post %v failed, post is deleted", permLink))
+}
+
 func ErrReportFailed(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed", permLink))
 }

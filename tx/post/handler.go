@@ -246,6 +246,9 @@ func handleUpdatePostMsg(
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrUpdatePostNotFound(permLink).Result()
 	}
+	if isDeleted, err := pm.IsDeleted(ctx, permLink); isDeleted || err != nil {
+		return ErrUpdatePostIsDeleted(permLink).Result()
+	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {

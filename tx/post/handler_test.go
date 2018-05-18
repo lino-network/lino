@@ -49,7 +49,10 @@ func TestHandlerUpdatePost(t *testing.T) {
 	handler := NewHandler(pm, am, gm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
-	user1 := createTestAccount(t, ctx, am, "user1")
+	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
+	user2 := createTestAccount(t, ctx, am, "user2")
+	err := pm.DeletePost(ctx, types.GetPermLink(user1, postID1))
+	assert.Nil(t, err)
 
 	testCases := map[string]struct {
 		msg        UpdatePostMsg
@@ -67,9 +70,13 @@ func TestHandlerUpdatePost(t *testing.T) {
 			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
 			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user, "invalid")).Result(),
 		},
-		"update post doesn't exist - invalid author": {
-			msg:        NewUpdatePostMsg(string(user1), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user1, postID)).Result(),
+		"update post doesn't exist, author invalid": {
+			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user2, postID)).Result(),
+		},
+		"update deleted post": {
+			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			wantResult: ErrUpdatePostIsDeleted(types.GetPermLink(user1, postID1)).Result(),
 		},
 	}
 	for _, tc := range testCases {
