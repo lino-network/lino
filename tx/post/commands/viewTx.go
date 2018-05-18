@@ -3,13 +3,12 @@ package commands
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/tx/post"
-
-	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // ViewTxCmd will create a view tx and sign it with the given key
