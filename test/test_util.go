@@ -38,7 +38,7 @@ var (
 	GenesisTotalLino types.LNO = "10000000000"
 	LNOPerValidator  types.LNO = "100000000"
 
-	PenaltyMissVote       types.Coin = types.NewCoin(200 * types.Decimals)
+	PenaltyMissVote       types.Coin = types.NewCoin(20000 * types.Decimals)
 	ChangeParamMinDeposit types.Coin = types.NewCoin(100000 * types.Decimals)
 
 	ProposalDecideHr            int64   = 24 * 7
@@ -252,4 +252,8 @@ func CreateTestPost(
 	}
 	msg := post.NewCreatePostMsg(postCreateParams)
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
+}
+
+func CoinToString(coin types.Coin) string {
+	return strconv.FormatInt(coin.ToInt64()/types.Decimals, 10)
 }
