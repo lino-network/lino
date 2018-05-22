@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/tendermint/go-crypto"
+
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 

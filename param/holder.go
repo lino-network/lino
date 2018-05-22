@@ -11,7 +11,7 @@ import (
 
 var (
 	allocationParamSubStore              = []byte{0x00} // SubStore for allocation
-	infraInternalAllocationParamSubStore = []byte{0x01} // SubStore for infrat internal allocation
+	infraInternalAllocationParamSubStore = []byte{0x01} // SubStore for infra internal allocation
 	evaluateOfContentValueParamSubStore  = []byte{0x02} // Substore for evaluate of content value
 	developerParamSubStore               = []byte{0x03} // Substore for developer param
 	voteParamSubStore                    = []byte{0x04} // Substore for vote param
@@ -73,7 +73,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	developerParam := &DeveloperParam{
-		DeveloperMinDeposit:           types.NewCoin(100000 * types.Decimals),
+		DeveloperMinDeposit:           types.NewCoin(1000000 * types.Decimals),
 		DeveloperCoinReturnIntervalHr: int64(7 * 24),
 		DeveloperCoinReturnTimes:      int64(7),
 	}
@@ -83,13 +83,13 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	validatorParam := &ValidatorParam{
 		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
+		ValidatorMinVotingDeposit:     types.NewCoin(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:  types.NewCoin(100000 * types.Decimals),
 		ValidatorCoinReturnIntervalHr: int64(7 * 24),
 		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
+		PenaltyMissVote:               types.NewCoin(20000 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		PenaltyByzantine:              types.NewCoin(1000000 * types.Decimals),
 		ValidatorListSize:             int64(21),
 		AbsentCommitLimitation:        int64(100),
 	}
@@ -98,9 +98,9 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	voteParam := &VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
+		VoterMinDeposit:               types.NewCoin(2000 * types.Decimals),
+		VoterMinWithdraw:              types.NewCoin(2 * types.Decimals),
+		DelegatorMinWithdraw:          types.NewCoin(2 * types.Decimals),
 		VoterCoinReturnIntervalHr:     int64(7 * 24),
 		VoterCoinReturnTimes:          int64(7),
 		DelegatorCoinReturnIntervalHr: int64(7 * 24),

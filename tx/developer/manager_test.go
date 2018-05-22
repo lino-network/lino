@@ -3,25 +3,19 @@ package developer
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestReportConsumption(t *testing.T) {
-	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(dm, am, gm)
+	ctx, _, dm, _ := setupTest(t, 0)
 	dm.InitGenesis(ctx)
 
-	developer1 := createTestAccount(ctx, am, "developer1")
-	am.AddSavingCoin(ctx, developer1, c800000)
-	msg := NewDeveloperRegisterMsg("developer1", l800000)
-	handler(ctx, msg)
-
-	developer2 := createTestAccount(ctx, am, "developer2")
-	am.AddSavingCoin(ctx, developer2, c800000)
-	msg2 := NewDeveloperRegisterMsg("developer2", l800000)
-	handler(ctx, msg2)
+	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
+	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit)
+	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit)
 
 	con1 := types.NewCoin(100)
 	dm.ReportConsumption(ctx, "developer1", con1)

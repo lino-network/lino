@@ -8,17 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	DelegatorSubstore    = []byte{0x00}
-	VoterSubstore        = []byte{0x01}
-	ProposalSubstore     = []byte{0x02}
-	VoteSubstore         = []byte{0x03}
-	ProposalListSubStore = []byte("ProposalList/ProposalListKey")
-)
-
-const decideProposalEvent = 0x1
-const returnCoinEvent = 0x2
-
 type VoteManager struct {
 	storage     model.VoteStorage `json:"vote_storage"`
 	paramHolder param.ParamHolder `json:"param_holder"`

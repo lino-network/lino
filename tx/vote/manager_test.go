@@ -3,15 +3,17 @@ package vote
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestCanBecomeValidator(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoin(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
 	cases := []struct {
@@ -36,7 +38,8 @@ func TestCanBecomeValidator(t *testing.T) {
 
 func TestAddVoter(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoin(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	cases := []struct {
@@ -56,9 +59,10 @@ func TestAddVoter(t *testing.T) {
 
 func TestIsInValidatorList(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
-	user2 := createTestAccount(ctx, am, "user2")
-	user3 := createTestAccount(ctx, am, "user3")
+	minBalance := types.NewCoin(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	user2 := createTestAccount(ctx, am, "user2", minBalance)
+	user3 := createTestAccount(ctx, am, "user3", minBalance)
 
 	cases := []struct {
 		username      types.AccountKey
@@ -82,7 +86,8 @@ func TestIsInValidatorList(t *testing.T) {
 
 func TestIsLegalVoterWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoin(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoin(100*types.Decimals)))
@@ -111,8 +116,9 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 
 func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
-	user2 := createTestAccount(ctx, am, "user2")
+	minBalance := types.NewCoin(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
