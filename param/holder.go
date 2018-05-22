@@ -11,7 +11,7 @@ import (
 
 var (
 	allocationParamSubStore              = []byte{0x00} // SubStore for allocation
-	infraInternalAllocationParamSubStore = []byte{0x01} // SubStore for infrat internal allocation
+	infraInternalAllocationParamSubStore = []byte{0x01} // SubStore for infra internal allocation
 	evaluateOfContentValueParamSubStore  = []byte{0x02} // Substore for evaluate of content value
 	developerParamSubStore               = []byte{0x03} // Substore for developer param
 	voteParamSubStore                    = []byte{0x04} // Substore for vote param
