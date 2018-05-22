@@ -96,13 +96,15 @@ func TestValidatorParam(t *testing.T) {
 	ctx := getContext()
 	parameter := ValidatorParam{
 		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
+		ValidatorMinVotingDeposit:     types.NewCoin(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:  types.NewCoin(100000 * types.Decimals),
 		ValidatorCoinReturnIntervalHr: int64(7 * 24),
 		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
+		PenaltyMissVote:               types.NewCoin(20000 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		PenaltyByzantine:              types.NewCoin(1000000 * types.Decimals),
+		ValidatorListSize:             int64(21),
+		AbsentCommitLimitation:        int64(100),
 	}
 	err := ph.setValidatorParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -234,28 +236,28 @@ func TestInitParam(t *testing.T) {
 	}
 
 	developerParam := DeveloperParam{
-		DeveloperMinDeposit:           types.NewCoin(100000 * types.Decimals),
+		DeveloperMinDeposit:           types.NewCoin(1000000 * types.Decimals),
 		DeveloperCoinReturnIntervalHr: int64(7 * 24),
 		DeveloperCoinReturnTimes:      int64(7),
 	}
 
 	validatorParam := ValidatorParam{
 		ValidatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoin(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoin(1000 * types.Decimals),
+		ValidatorMinVotingDeposit:     types.NewCoin(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:  types.NewCoin(100000 * types.Decimals),
 		ValidatorCoinReturnIntervalHr: int64(7 * 24),
 		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoin(200 * types.Decimals),
+		PenaltyMissVote:               types.NewCoin(20000 * types.Decimals),
 		PenaltyMissCommit:             types.NewCoin(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoin(1000 * types.Decimals),
+		PenaltyByzantine:              types.NewCoin(1000000 * types.Decimals),
 		ValidatorListSize:             int64(21),
 		AbsentCommitLimitation:        int64(100),
 	}
 
 	voteParam := VoteParam{
-		VoterMinDeposit:               types.NewCoin(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoin(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoin(1 * types.Decimals),
+		VoterMinDeposit:               types.NewCoin(2000 * types.Decimals),
+		VoterMinWithdraw:              types.NewCoin(2 * types.Decimals),
+		DelegatorMinWithdraw:          types.NewCoin(2 * types.Decimals),
 		VoterCoinReturnIntervalHr:     int64(7 * 24),
 		VoterCoinReturnTimes:          int64(7),
 		DelegatorCoinReturnIntervalHr: int64(7 * 24),

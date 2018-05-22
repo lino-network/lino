@@ -1,7 +1,7 @@
 package model
 
 import (
-	types "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/types"
 )
 
 type InfraProvider struct {
