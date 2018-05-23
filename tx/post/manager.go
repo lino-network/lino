@@ -111,7 +111,7 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 		LastActivityAt:          ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
-		RedistributionSplitRate: splitRate,
+		RedistributionSplitRate: splitRate.Round(types.PrecisionFactor),
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
 		return ErrCreatePost(permLink).TraceCause(err, "")
@@ -308,12 +308,12 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool,
 
 // get penalty score from report and upvote
 func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
-	author, postID, err := pm.GetSourcePost(ctx, permLink)
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
 		return sdk.ZeroRat, ErrGetPenaltyScore(permLink).TraceCause(err, "")
 	}
-	if author != types.AccountKey("") && postID != "" {
-		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(author, postID))
+	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(sourceAuthor, sourcePostID))
 		if err != nil {
 			return sdk.ZeroRat, err
 		}
@@ -336,5 +336,5 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) 
 	if penaltyScore.GT(sdk.OneRat) {
 		return sdk.OneRat, nil
 	}
-	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
+	return penaltyScore.Round(types.PrecisionFactor), nil
 }

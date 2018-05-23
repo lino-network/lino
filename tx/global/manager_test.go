@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -175,7 +176,7 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 func TestGetRewardAndPopFromWindow(t *testing.T) {
 	ctx, gm := setupTest(t)
 	cases := []struct {
-		coin                        types.Coin
+		evaluate                    types.Coin
 		penaltyScore                sdk.Rat
 		expectReward                types.Coin
 		initConsumptionRewardPool   types.Coin
@@ -199,6 +200,10 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 			types.NewCoin(10), types.NewCoin(1000), types.NewCoin(10)},
 		{types.NewCoin(0), sdk.OneRat, types.NewCoin(0), types.NewCoin(1000),
 			types.NewCoin(10), types.NewCoin(1000), types.NewCoin(10)},
+		// issue https://github.com/lino-network/lino/issues/150
+		{types.NewCoin(77777777777777), sdk.ZeroRat, types.NewCoin(23300000),
+			types.NewCoin(100000000), types.NewCoin(333333333333333),
+			types.NewCoin(76700000), types.NewCoin(255555555555556)},
 	}
 
 	for _, cs := range cases {
@@ -208,7 +213,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		consumptionMeta.ConsumptionWindow = cs.initConsumptionWindow
 		err = gm.storage.SetConsumptionMeta(ctx, consumptionMeta)
 		assert.Nil(t, err)
-		reward, err := gm.GetRewardAndPopFromWindow(ctx, cs.coin, cs.penaltyScore)
+		reward, err := gm.GetRewardAndPopFromWindow(ctx, cs.evaluate, cs.penaltyScore)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectReward, reward)
 		consumptionMeta, err = gm.storage.GetConsumptionMeta(ctx)
@@ -416,6 +421,9 @@ func TestGetGrowthRate(t *testing.T) {
 			sdk.NewRat(98, 1000), sdk.NewRat(97, 1000)},
 		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(104700000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(47, 1000)},
+		// issue https://github.com/lino-network/lino/issues/150
+		{types.NewCoin(77777777), types.NewCoin(77777777 + 5555555),
+			sdk.NewRat(98, 1000), sdk.NewRat(71, 1000)},
 	}
 
 	for _, cs := range cases {
@@ -431,6 +439,7 @@ func TestGetGrowthRate(t *testing.T) {
 		assert.Nil(t, err)
 		growthRate, err := gm.getGrowthRate(ctx)
 		assert.Nil(t, err)
+		fmt.Println(cs.expectGrowthRate, growthRate)
 		assert.True(t, cs.expectGrowthRate.Equal(growthRate))
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)

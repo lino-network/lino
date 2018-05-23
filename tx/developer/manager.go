@@ -127,7 +127,7 @@ func (dm DeveloperManager) GetConsumptionWeight(
 	if totalConsumption.ToRat().Equal(sdk.ZeroRat) {
 		return sdk.NewRat(1, int64(len(lst.AllDevelopers))), nil
 	}
-	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
+	return myConsumption.ToRat().Quo(totalConsumption.ToRat()).Round(types.PrecisionFactor), nil
 }
 
 func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {
