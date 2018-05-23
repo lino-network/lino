@@ -603,7 +603,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	postInfo.PostID = postID
 	postInfo.SourceAuthor = ""
 	postInfo.SourcePostID = ""
-	postMeta.RedistributionSplitRate = sdk.NewRat(15, 100)
+	postMeta.RedistributionSplitRate = sdk.NewRat(3, 20)
 
 	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
 
