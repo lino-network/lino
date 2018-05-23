@@ -358,6 +358,8 @@ func TestGetPenaltyScore(t *testing.T) {
 		{types.NewCoin(100), types.NewCoin(100), sdk.OneRat},
 		{types.NewCoin(1000), types.NewCoin(100), sdk.OneRat},
 		{types.NewCoin(50), types.NewCoin(100), sdk.NewRat(1, 2)},
+		// issue https://github.com/lino-network/lino/issues/150
+		{types.NewCoin(3333), types.NewCoin(7777), sdk.NewRat(429, 1000)},
 	}
 
 	for _, cs := range cases {

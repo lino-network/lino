@@ -198,7 +198,7 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
 		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
 		growthRate =
-			(thisYearConsumptionRat.Sub(lastYearConsumptionRat)).Quo(lastYearConsumptionRat)
+			(thisYearConsumptionRat.Sub(lastYearConsumptionRat)).Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
 		if growthRate.GT(globalMeta.Ceiling) {
 			growthRate = globalMeta.Ceiling
 		} else if growthRate.LT(globalMeta.Floor) {
@@ -207,7 +207,7 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoin(0)
-	globalMeta.GrowthRate = growthRate
+	globalMeta.GrowthRate = growthRate.Round(types.PrecisionFactor)
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return sdk.ZeroRat, err
 	}
@@ -216,8 +216,8 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 
 // after 7 days, one consumption needs to claim its reward from consumption reward pool
 func (gm GlobalManager) GetRewardAndPopFromWindow(
-	ctx sdk.Context, coin types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
-	if coin.IsZero() {
+	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
+	if evaluate.IsZero() {
 		return types.NewCoin(0), nil
 	}
 
@@ -226,13 +226,15 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 		return types.NewCoin(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
 	}
 
-	// reward = (consumption reward pool) * ((this consumption * penalty score) / (total consumption in 7 days window))
-	reward := types.RatToCoin(consumptionMeta.ConsumptionRewardPool.ToRat().
-		Mul(coin.ToRat().Mul(sdk.OneRat.Sub(penaltyScore)).
-			Quo(consumptionMeta.ConsumptionWindow.ToRat())))
+	// consumptionRatio = this consumption * penalty score) / (total consumption in 7 days window)
+	consumptionRatio := evaluate.ToRat().Mul(sdk.OneRat.Sub(penaltyScore)).
+		Quo(consumptionMeta.ConsumptionWindow.ToRat()).Round(types.PrecisionFactor)
+	// reward = (consumption reward pool) * (consumptionRatio)
+	reward := types.RatToCoin(
+		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
-	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(coin)
+	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return types.NewCoin(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")

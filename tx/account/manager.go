@@ -236,22 +236,21 @@ func (accManager AccountManager) MinusSavingCoin(
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		lengthOfQueue := len(pendingStakeQueue.PendingStakeList)
 		pendingStake := pendingStakeQueue.PendingStakeList[lengthOfQueue-1]
+		recoverRatio := sdk.NewRat(
+			pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
+			coinDayParams.SecondsToRecoverCoinDayStake).Round(types.PrecisionFactor)
 		if coin.IsGTE(pendingStake.Coin) {
 			// if withdraw money more than last pending transaction, remove last transaction
 			coin = coin.Minus(pendingStake.Coin)
 			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(sdk.NewRat(
-					pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
-					coinDayParams.SecondsToRecoverCoinDayStake).Mul(pendingStake.Coin.ToRat()))
+				pendingStakeQueue.StakeCoinInQueue.Sub(recoverRatio.Mul(pendingStake.Coin.ToRat()))
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
 			pendingStakeQueue.PendingStakeList =
 				pendingStakeQueue.PendingStakeList[:lengthOfQueue-1]
 		} else {
 			// otherwise try to cut last pending transaction
 			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(sdk.NewRat(
-					pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
-					coinDayParams.SecondsToRecoverCoinDayStake).Mul(coin.ToRat()))
+				pendingStakeQueue.StakeCoinInQueue.Sub(recoverRatio.Mul(coin.ToRat()))
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
 			pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin =
 				pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin.Minus(coin)
