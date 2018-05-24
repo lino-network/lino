@@ -1,6 +1,8 @@
 package app
 
 import (
+	"math/big"
+
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/auth"
@@ -459,9 +461,14 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		panic(err)
 	}
 	// give inflation to each validator evenly
-	ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators))))
-	for _, validator := range lst.OncallValidators {
-		lb.accountManager.AddSavingCoin(ctx, validator, types.RatToCoin(ratPerValidator))
+	for i, validator := range lst.OncallValidators {
+		ratPerValidator := new(big.Rat).Quo(coin.ToRat(), big.NewRat(int64(len(lst.OncallValidators)-i), 1))
+		coinPerValidator, err := types.RatToCoin(ratPerValidator)
+		if err != nil {
+			panic(err)
+		}
+		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator)
+		coin = coin.Minus(coinPerValidator)
 	}
 }
 
@@ -484,8 +491,9 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddSavingCoin(ctx, provider, types.RatToCoin(myShare))
+		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage.GetRat())
+		myShareCoin, err := types.RatToCoin(myShareRat)
+		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin)
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -512,8 +520,9 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddSavingCoin(ctx, developer, types.RatToCoin(myShare))
+		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage)
+		myShareCoin, _ := types.RatToCoin(myShareRat)
+		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {

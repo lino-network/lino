@@ -22,7 +22,8 @@ func TestVoterRevoke(t *testing.T) {
 	delegator1Name := "delegator1"
 	delegator2Name := "delegator2"
 
-	baseTime := time.Now().Unix() + 3600
+	// to recover the stake
+	baseTime := time.Now().Unix() + 7200
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
@@ -63,15 +64,15 @@ func TestVoterRevoke(t *testing.T) {
 
 	// check delegator withdraw first coin return
 	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600+1)
-	test.CheckBalance(t, newAccountName, lb, types.NewCoin(11428571429))
-	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(30100*types.Decimals))
-	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(10100*types.Decimals))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(11428571429))
+	test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(30100*types.Decimals))
+	test.CheckBalance(t, delegator2Name, lb, types.NewCoinFromInt64(10100*types.Decimals))
 
 	// check balance after freezing period
 	for i := int64(1); i < test.CoinReturnTimes; i++ {
 		test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600*(i+1)+1)
 	}
-	test.CheckBalance(t, newAccountName, lb, types.NewCoin(500000*types.Decimals))
-	test.CheckBalance(t, delegator1Name, lb, types.NewCoin(210100*types.Decimals))
-	test.CheckBalance(t, delegator2Name, lb, types.NewCoin(70100*types.Decimals))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(500000*types.Decimals))
+	test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(210100*types.Decimals))
+	test.CheckBalance(t, delegator2Name, lb, types.NewCoinFromInt64(70100*types.Decimals))
 }

@@ -451,11 +451,11 @@ func TestInvalidCreateAccount(t *testing.T) {
 	err := am.AddSavingCoinToAddress(
 		ctx, enoughSavingCoinPriv.PubKey().Address(), accParam.RegisterFee)
 	err = am.AddSavingCoinToAddress(
-		ctx, insufficientSavingCoinPriv.PubKey().Address(), types.NewCoin(1))
+		ctx, insufficientSavingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1))
 	err = am.AddCheckingCoinToAddress(
 		ctx, enoughCheckingCoinPriv.PubKey().Address(), accParam.RegisterFee)
 	err = am.AddSavingCoinToAddress(
-		ctx, insufficientCheckingCoinPriv.PubKey().Address(), types.NewCoin(1))
+		ctx, insufficientCheckingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1))
 
 	cases := []struct {
 		testName  string
@@ -503,8 +503,8 @@ func TestCoinDayByAddress(t *testing.T) {
 	assert.Nil(t, err)
 	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
 	registerFee := accParam.RegisterFee.ToInt64()
-	doubleRegisterFee := types.NewCoin(registerFee * 2)
-	halfRegisterFee := types.NewCoin(registerFee / 2)
+	doubleRegisterFee := types.NewCoinFromInt64(registerFee * 2)
+	halfRegisterFee := types.NewCoinFromInt64(registerFee / 2)
 
 	// create bank and account
 	priv := createTestAccount(ctx, am, string(accKey))
@@ -538,14 +538,14 @@ func TestCoinDayByAddress(t *testing.T) {
 			coin0, baseTime1 + totalCoinDaysSec*2 + 1,
 			doubleRegisterFee, doubleRegisterFee, doubleRegisterFee},
 		{"transaction with only one coin",
-			coin1, baseTime2, types.NewCoin(registerFee*2 + 1), doubleRegisterFee,
+			coin1, baseTime2, types.NewCoinFromInt64(registerFee*2 + 1), doubleRegisterFee,
 			doubleRegisterFee},
 		{"transaction with one coin charge ongoing",
-			coin0, baseTime2 + totalCoinDaysSec/2, types.NewCoin(registerFee*2 + 1),
+			coin0, baseTime2 + totalCoinDaysSec/2, types.NewCoinFromInt64(registerFee*2 + 1),
 			doubleRegisterFee, doubleRegisterFee},
 		{"transaction with one coin charge finished",
 			coin0, baseTime2 + totalCoinDaysSec/2 + 1,
-			types.NewCoin(registerFee*2 + 1), types.NewCoin(registerFee*2 + 1), doubleRegisterFee},
+			types.NewCoinFromInt64(registerFee*2 + 1), types.NewCoinFromInt64(registerFee*2 + 1), doubleRegisterFee},
 	}
 
 	for _, tc := range testCases {
@@ -582,8 +582,8 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	assert.Nil(t, err)
 	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
 	registerFee := accParam.RegisterFee.ToInt64()
-	doubleRegisterFee := types.NewCoin(registerFee * 2)
-	halfRegisterFee := types.NewCoin(registerFee / 2)
+	doubleRegisterFee := types.NewCoinFromInt64(registerFee * 2)
+	halfRegisterFee := types.NewCoinFromInt64(registerFee / 2)
 
 	baseTime := ctx.BlockHeader().Time
 	baseTime2 := baseTime + totalCoinDaysSec + (totalCoinDaysSec/registerFee)/2 + 1
@@ -619,7 +619,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		{"withdraw half deposit while the last transaction is still charging",
 			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
 			accParam.RegisterFee.Plus(halfRegisterFee), coin0,
-			accParam.RegisterFee.Plus(types.NewCoin(registerFee / 4)), accParam.RegisterFee},
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)), accParam.RegisterFee},
 		{"withdraw last transaction which is still charging",
 			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
 			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
@@ -735,25 +735,25 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		ExpectResult         sdk.Error
 		ExpectRemainCapacity types.Coin
 	}{
-		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
-		{sdk.NewRat(1, 10), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(990000)},
-		{sdk.NewRat(1, 2), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(950000)},
-		{sdk.NewRat(1), types.NewCoin(10 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoin(9 * types.Decimals)},
-		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime,
-			types.NewCoin(10 * types.Decimals), baseTime, nil, types.NewCoin(0)},
-		{sdk.NewRat(1), types.NewCoin(10), baseTime, types.NewCoin(1 * types.Decimals),
-			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(1 * types.Decimals)},
-		{sdk.NewRat(1), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
+		{sdk.NewRat(1, 10), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
+			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(0)},
+		{sdk.NewRat(1, 10), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(990000)},
+		{sdk.NewRat(1, 2), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(950000)},
+		{sdk.NewRat(1, 1), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
+			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(9 * types.Decimals)},
+		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), baseTime,
+			types.NewCoinFromInt64(10 * types.Decimals), baseTime, nil, types.NewCoinFromInt64(0)},
+		{sdk.NewRat(1, 1), types.NewCoinFromInt64(10), baseTime, types.NewCoinFromInt64(1 * types.Decimals),
+			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(1 * types.Decimals)},
+		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
 			baseTime + secondsToRecoverBandwidth/2,
-			ErrAccountTPSCapacityNotEnough(accKey), types.NewCoin(0)},
-		{sdk.NewRat(1, 2), types.NewCoin(1 * types.Decimals), baseTime, types.NewCoin(0),
-			baseTime + secondsToRecoverBandwidth/2, nil, types.NewCoin(0)},
-		{sdk.OneRat, types.NewCoin(1 * types.Decimals), 0, types.NewCoin(0),
-			baseTime, nil, types.NewCoin(0)},
+			ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(0)},
+		{sdk.NewRat(1, 2), types.NewCoinFromInt64(1 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
+			baseTime + secondsToRecoverBandwidth/2, nil, types.NewCoinFromInt64(0)},
+		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), 0, types.NewCoinFromInt64(0),
+			baseTime, nil, types.NewCoinFromInt64(0)},
 	}
 
 	for _, cs := range cases {
@@ -1057,10 +1057,10 @@ func TestAddFrozenMoney(t *testing.T) {
 		times                   int64
 		expectNumOfFrozenAmount int
 	}{
-		{types.NewCoin(100), 10000, 10, 5, 1},
-		{types.NewCoin(100), 10100, 10, 5, 1},
-		{types.NewCoin(100), 10110, 10, 5, 2},
-		{types.NewCoin(100), 10151, 10, 5, 2},
+		{types.NewCoinFromInt64(100), 10000, 10, 5, 1},
+		{types.NewCoinFromInt64(100), 10100, 10, 5, 1},
+		{types.NewCoinFromInt64(100), 10110, 10, 5, 2},
+		{types.NewCoinFromInt64(100), 10151, 10, 5, 2},
 	}
 
 	for _, cs := range cases {

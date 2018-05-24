@@ -16,7 +16,7 @@ func TestVoterDepositBasic(t *testing.T) {
 	handler := NewHandler(vm, am, gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoin(1 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
 
 	deposit := coinToString(voteParam.VoterMinDeposit)
@@ -41,7 +41,7 @@ func TestDelegateBasic(t *testing.T) {
 	handler := NewHandler(vm, am, gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoin(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
@@ -51,7 +51,7 @@ func TestDelegateBasic(t *testing.T) {
 	msg := NewVoterDepositMsg("user1", coinToString(voteParam.VoterMinDeposit))
 	handler(ctx, msg)
 
-	delegatedCoin := types.NewCoin(100 * types.Decimals)
+	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
 	// let user2 delegate power to user1 twice
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
 	handler(ctx, msg2)
@@ -90,7 +90,7 @@ func TestRevokeBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(vm, am, gm)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoin(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
@@ -101,7 +101,7 @@ func TestRevokeBasic(t *testing.T) {
 	msg := NewVoterDepositMsg("user1", coinToString(voteParam.VoterMinDeposit))
 	handler(ctx, msg)
 
-	delegatedCoin := types.NewCoin(100 * types.Decimals)
+	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
 	// let user2 delegate power to user1
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
 	handler(ctx, msg2)
@@ -162,7 +162,7 @@ func TestVoterWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(vm, am, gm)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoin(30 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(30 * types.Decimals)
 
 	// create test users
 	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
@@ -194,7 +194,7 @@ func TestVoteBasic(t *testing.T) {
 
 	proposalID := int64(1)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoin(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 
 	// create test users
 	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
@@ -255,14 +255,14 @@ func TestVoteBasic(t *testing.T) {
 
 func TestDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	minBalance := types.NewCoin(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	handler := NewHandler(vm, am, gm)
 
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
-	delegatedCoin := types.NewCoin(100 * types.Decimals)
-	delta := types.NewCoin(1 * types.Decimals)
+	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
+	delta := types.NewCoinFromInt64(1 * types.Decimals)
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
 	cases := []struct {
@@ -273,10 +273,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  sdk.Result
 	}{
-		{false, types.NewCoin(0), user2, user1, param.DelegatorMinWithdraw, ErrIllegalWithdraw().Result()},
+		{false, types.NewCoinFromInt64(0), user2, user1, param.DelegatorMinWithdraw, ErrIllegalWithdraw().Result()},
 		{true, delegatedCoin, user2, user1, param.DelegatorMinWithdraw.Minus(delta), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoin(0), user2, user1, delegatedCoin.Plus(delta), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoin(0), user2, user1, delegatedCoin.Minus(delta), sdk.Result{}},
+		{false, types.NewCoinFromInt64(0), user2, user1, delegatedCoin.Plus(delta), ErrIllegalWithdraw().Result()},
+		{false, types.NewCoinFromInt64(0), user2, user1, delegatedCoin.Minus(delta), sdk.Result{}},
 	}
 
 	for _, cs := range cases {

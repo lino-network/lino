@@ -25,11 +25,11 @@ var (
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
-	initCoin = types.NewCoin(1 * types.Decimals)
+	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest(

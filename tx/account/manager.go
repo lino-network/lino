@@ -1,6 +1,7 @@
 package account
 
 import (
+	"math/big"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -73,13 +74,13 @@ func (accManager AccountManager) CreateAccount(
 
 	accountMeta := &model.AccountMeta{
 		LastActivityAt:      ctx.BlockHeader().Time,
-		TransactionCapacity: types.NewCoin(0),
+		TransactionCapacity: types.NewCoinFromInt64(0),
 	}
 	if err := accManager.storage.SetMeta(ctx, accKey, accountMeta); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
 	reward :=
-		&model.Reward{types.NewCoin(0), types.NewCoin(0), types.NewCoin(0), types.NewCoin(0)}
+		&model.Reward{types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), types.NewCoinFromInt64(0)}
 	if err := accManager.storage.SetReward(ctx, accKey, reward); err != nil {
 		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
 	}
@@ -96,26 +97,28 @@ func (accManager AccountManager) GetStake(
 	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
 	if err != nil {
-		return types.NewCoin(0), ErrGetStake(accKey).TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetStake(accKey).TraceCause(err, "")
 	}
 	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, bank.Address)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
 
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, bank.Address, pendingStakeQueue); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 
 	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 
 	stake := bank.Stake
-	return stake.Plus(types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)), nil
+	stakeInQueue, err := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue.GetRat())
+	totalStake := stake.Plus(stakeInQueue)
+	return totalStake, nil
 }
 
 func (accManager AccountManager) AddSavingCoin(
@@ -215,7 +218,8 @@ func (accManager AccountManager) MinusSavingCoin(
 	if err != nil {
 		return err
 	}
-	if !accountBank.Saving.Minus(coin).IsGTE(accountParams.MinimumBalance) {
+	remain := accountBank.Saving.Minus(coin)
+	if !remain.IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountSavingCoinNotEnough()
 	}
 	pendingStakeQueue, err :=
@@ -236,25 +240,33 @@ func (accManager AccountManager) MinusSavingCoin(
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		lengthOfQueue := len(pendingStakeQueue.PendingStakeList)
 		pendingStake := pendingStakeQueue.PendingStakeList[lengthOfQueue-1]
-		recoverRatio := sdk.NewRat(
+		recoverRatio := big.NewRat(
 			pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
-			coinDayParams.SecondsToRecoverCoinDayStake).Round(types.PrecisionFactor)
+			coinDayParams.SecondsToRecoverCoinDayStake)
 		if coin.IsGTE(pendingStake.Coin) {
 			// if withdraw money more than last pending transaction, remove last transaction
 			coin = coin.Minus(pendingStake.Coin)
-			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(recoverRatio.Mul(pendingStake.Coin.ToRat()))
+
+			pendingStakeCoinWithoutLastTx :=
+				new(big.Rat).Sub(
+					pendingStakeQueue.StakeCoinInQueue.GetRat(),
+					(new(big.Rat).Mul(recoverRatio, pendingStake.Coin.ToRat())))
+			pendingStakeQueue.StakeCoinInQueue = sdk.ToRat(pendingStakeCoinWithoutLastTx)
+
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
-			pendingStakeQueue.PendingStakeList =
-				pendingStakeQueue.PendingStakeList[:lengthOfQueue-1]
+			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[:lengthOfQueue-1]
 		} else {
 			// otherwise try to cut last pending transaction
-			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(recoverRatio.Mul(coin.ToRat()))
+			pendingStakeCoinWithoutSpentCoin :=
+				new(big.Rat).Sub(
+					pendingStakeQueue.StakeCoinInQueue.GetRat(),
+					(new(big.Rat).Mul(recoverRatio, coin.ToRat())))
+			pendingStakeQueue.StakeCoinInQueue = sdk.ToRat(pendingStakeCoinWithoutSpentCoin)
+
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
 			pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin =
 				pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin.Minus(coin)
-			coin = types.NewCoin(0)
+			coin = types.NewCoinFromInt64(0)
 			break
 		}
 	}
@@ -391,7 +403,7 @@ func (accManager AccountManager) ClaimReward(ctx sdk.Context, accKey types.Accou
 	if err := accManager.AddSavingCoin(ctx, accKey, reward.UnclaimReward); err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
-	reward.UnclaimReward = types.NewCoin(0)
+	reward.UnclaimReward = types.NewCoinFromInt64(0)
 	if err := accManager.storage.SetReward(ctx, accKey, reward); err != nil {
 		return ErrClaimReward(accKey).TraceCause(err, "")
 	}
@@ -471,18 +483,26 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake
 	} else {
-		incrementRatio := sdk.NewRat(
+		incrementRatio := big.NewRat(
 			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
-		if incrementRatio.GT(sdk.OneRat) {
-			incrementRatio = sdk.OneRat
+		if incrementRatio.Cmp(types.OneRat) > 0 {
+			incrementRatio = types.OneRat
+		}
+		capacityTillStake := stake.Minus(accountMeta.TransactionCapacity)
+		increateCapacity, err := types.RatToCoin(
+			new(big.Rat).Mul(capacityTillStake.ToRat(), incrementRatio))
+		if err != nil {
+			return err
 		}
 		accountMeta.TransactionCapacity =
-			accountMeta.TransactionCapacity.Plus(types.RatToCoin(
-				stake.Minus(accountMeta.TransactionCapacity).ToRat().Mul(incrementRatio)))
+			accountMeta.TransactionCapacity.Plus(increateCapacity)
 	}
-	currentTxCost := types.RatToCoin(
-		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
+	currentTxCost, err := types.RatToCoin(
+		new(big.Rat).Mul(bandwidthParams.CapacityUsagePerTransaction.ToRat(), tpsCapacityRatio.GetRat()))
+	if err != nil {
+		return err
+	}
 	if currentTxCost.IsGT(accountMeta.TransactionCapacity) {
 		return ErrAccountTPSCapacityNotEnough(me)
 	}
@@ -690,32 +710,39 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		if pendingStake.EndTime < ctx.BlockHeader().Time {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
-			stakeRatioOfThisTransaction := sdk.NewRat(
+			stakeRatioOfThisTransaction := big.NewRat(
 				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 				coinDayParams.SecondsToRecoverCoinDayStake)
 			// remote the stake in the queue of this transaction
 			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(stakeRatioOfThisTransaction.Mul(pendingStake.Coin.ToRat()))
+				pendingStakeQueue.StakeCoinInQueue.Sub(
+					sdk.ToRat(new(big.Rat).Mul(stakeRatioOfThisTransaction, pendingStake.Coin.ToRat())))
 			// update bank stake
 			bank.Stake = bank.Stake.Plus(pendingStake.Coin)
+
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
+
 			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
 		} else {
 			break
 		}
 	}
 	if len(pendingStakeQueue.PendingStakeList) == 0 {
-		pendingStakeQueue.TotalCoin = types.NewCoin(0)
+		pendingStakeQueue.TotalCoin = types.NewCoinFromInt64(0)
 		pendingStakeQueue.StakeCoinInQueue = sdk.ZeroRat
 	} else {
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
-		recoverRatio := sdk.NewRat(
+		recoverRatio := big.NewRat(
 			ctx.BlockHeader().Time-pendingStakeQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDayStake)
+
+		if err != nil {
+			return err
+		}
 		pendingStakeQueue.StakeCoinInQueue =
 			pendingStakeQueue.StakeCoinInQueue.Add(
-				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
+				sdk.ToRat(new(big.Rat).Mul(recoverRatio, pendingStakeQueue.TotalCoin.ToRat())))
 	}
 
 	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time

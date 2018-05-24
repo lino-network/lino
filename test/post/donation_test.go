@@ -33,21 +33,21 @@ func TestNormalDonation(t *testing.T) {
 	test.CreateTestPost(
 		t, lb, newPostUser, postID, 0, newPostUserPostPriv, "", "", "", "", "0", baseTime)
 
-	test.CheckBalance(t, newPostUser, lb, types.NewCoin(100*types.Decimals))
-	test.CheckBalance(t, newDonateUser, lb, types.NewCoin(100*types.Decimals))
+	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(100*types.Decimals))
+	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(100*types.Decimals))
 
 	donateMsg := post.NewDonateMsg(
 		newDonateUser, types.LNO("50"), newPostUser, postID, "", false, "")
 
 	test.SignCheckDeliver(t, lb, donateMsg, 0, true, newDonateUserTransactionPriv, baseTime)
 
-	test.CheckBalance(t, newDonateUser, lb, types.NewCoin(50*types.Decimals))
-	test.CheckBalance(t, newPostUser, lb, types.NewCoin(10000000+4750000))
+	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(50*types.Decimals))
+	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(10000000+4750000))
 
 	claimMsg := acc.NewClaimMsg(newPostUser)
 	test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserTransactionPriv, baseTime)
-	test.CheckBalance(t, newPostUser, lb, types.NewCoin(10000000+4750000))
+	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(10000000+4750000))
 	test.SignCheckDeliver(
 		t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodHr*3600+1)
-	test.CheckBalance(t, newPostUser, lb, types.NewCoin(944687598610))
+	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(944687598610))
 }

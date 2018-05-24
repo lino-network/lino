@@ -2,6 +2,7 @@ package post
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 
 	"github.com/lino-network/lino/tx/global"
@@ -125,7 +126,10 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 		if err != nil {
 			return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 		}
-		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat.Sub(redistributionSplitRate)))
+		sourceIncome, err := types.RatToCoin(new(big.Rat).Mul(coin.ToRat(), sdk.OneRat.Sub(redistributionSplitRate).GetRat()))
+		if err != nil {
+			return err.Result()
+		}
 		coin = coin.Minus(sourceIncome)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
@@ -154,7 +158,10 @@ func processDonationFriction(
 	if err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
+	frictionCoin, err := types.RatToCoin(new(big.Rat).Mul(coin.ToRat(), consumptionFrictionRate.GetRat()))
+	if err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
 	directDeposit := coin.Minus(frictionCoin)
 	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
@@ -191,11 +198,11 @@ func evaluateConsumption(
 	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) (types.Coin, sdk.Error) {
 	numOfConsumptionOnAuthor, err := am.GetDonationRelationship(ctx, consumer, postAuthor)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermLink(postAuthor, postID))
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
 

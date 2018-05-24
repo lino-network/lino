@@ -19,8 +19,8 @@ var (
 func TestDeveloper(t *testing.T) {
 	developer := Developer{
 		Username:       "user1",
-		Deposit:        types.NewCoin(100),
-		AppConsumption: types.NewCoin(1000),
+		Deposit:        types.NewCoinFromInt64(100),
+		AppConsumption: types.NewCoinFromInt64(1000),
 	}
 
 	runTest(t, func(env TestEnv) {

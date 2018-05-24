@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"strconv"
 	"testing"
@@ -27,7 +28,7 @@ var (
 	addr2 = priv2.PubKey().Address()
 
 	genesisTotalLino    types.LNO  = "10000000000"
-	genesisTotalCoin    types.Coin = types.NewCoin(10000000000 * types.Decimals)
+	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
 	LNOPerValidator     types.LNO  = "100000000"
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
@@ -169,16 +170,21 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
-	remainValidatorPool := types.RatToCoin(
-		genesisTotalCoin.ToRat().Mul(growthRate).Mul(validatorAllocation))
+	remainValidatorPool, _ := types.RatToCoin(
+		new(big.Rat).Mul(genesisTotalCoin.ToRat(),
+			new(big.Rat).Mul(growthRate.GetRat(), validatorAllocation.GetRat())))
 	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
-	expectBalance := coinPerValidator.Minus(
+	expectBaseBalance := coinPerValidator.Minus(
 		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
+	expectBalanceList := make([]types.Coin, 21)
+	for i := 0; i < len(expectBalanceList); i++ {
+		expectBalanceList[i] = expectBaseBalance
+	}
 
 	testPastMinutes := int64(0)
-	for i := baseTime; i < baseTime+3600*20; i += 50 {
+	for i := baseTime; i < baseTime+3600*1; i += 50 {
 		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: baseTime + i}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
@@ -187,20 +193,21 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			testPastMinutes += 1
 			if testPastMinutes%60 == 0 {
 				// hourly inflation
-				inflationForValidator :=
-					types.RatToCoin(remainValidatorPool.ToRat().Mul(
-						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
+				inflationForValidator, _ :=
+					types.RatToCoin(new(big.Rat).Mul(remainValidatorPool.ToRat(),
+						big.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
 				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
 				// expectBalance for all validators
-				expectBalance = expectBalance.Plus(
-					types.RatToCoin(inflationForValidator.ToRat().Quo(sdk.NewRat(21))))
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
+					inflation, _ := types.RatToCoin(new(big.Rat).
+						Quo(inflationForValidator.ToRat(), big.NewRat(int64(21-i), 1)))
+					expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 					saving, err :=
 						lb.accountManager.GetSavingFromBank(
 							ctx, types.AccountKey("validator"+strconv.Itoa(i)))
 					assert.Nil(t, err)
-					assert.Equal(t, expectBalance, saving)
+					assert.Equal(t, expectBalanceList[i], saving)
 				}
 			}
 		}

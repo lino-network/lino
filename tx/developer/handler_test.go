@@ -16,7 +16,7 @@ func TestRegistertBasic(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
-	minBalance := types.NewCoin(1 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	developer1 := createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
 	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
 	msg := NewDeveloperRegisterMsg("developer1", deposit)
@@ -41,7 +41,7 @@ func TestRevokeBasic(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
-	minBalance := types.NewCoin(1 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	developer1 := createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
 	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
 	msg := NewDeveloperRegisterMsg("developer1", deposit)

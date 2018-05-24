@@ -21,7 +21,7 @@ func TestByzantines(t *testing.T) {
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
-	minBalance := types.NewCoin(100000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
 	valKeys := make([]crypto.PubKey, 21)
@@ -68,7 +68,7 @@ func TestAbsentValidator(t *testing.T) {
 	addrToName := make(map[string]types.AccountKey)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
-	minBalance := types.NewCoin(100000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
 	valKeys := make([]crypto.PubKey, 21)
@@ -132,7 +132,7 @@ func TestGetOncallList(t *testing.T) {
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
-	minBalance := types.NewCoin(100000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
 	// create 21 test users
 	users := make([]types.AccountKey, 21)
 	valKeys := make([]crypto.PubKey, 21)
@@ -164,7 +164,7 @@ func TestPunishmentBasic(t *testing.T) {
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	minBalance := types.NewCoin(1 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "user1", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 	createTestAccount(ctx, am, "user2", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 
@@ -206,7 +206,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
-	minBalance := types.NewCoin(100000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
 
 	// create 24 test users
 	users := make([]types.AccountKey, 24)
@@ -228,16 +228,16 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst.OncallValidators))
 	assert.Equal(t, 24, len(lst.AllValidators))
-	assert.Equal(t, valParam.ValidatorMinCommitingDeposit.Plus(types.NewCoin(4000*types.Decimals)), lst.LowestPower)
+	assert.Equal(t, valParam.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(4000*types.Decimals)), lst.LowestPower)
 	assert.Equal(t, users[3], lst.LowestValidator)
 
 	// punish user4 as missing vote (wont explicitly remove)
 	// user3 will become the lowest one with power (min + 3000)
-	valManager.PunishOncallValidator(ctx, users[3], types.NewCoin(2000*types.Decimals), false)
+	valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), false)
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst2.OncallValidators))
 	assert.Equal(t, 24, len(lst2.AllValidators))
-	assert.Equal(t, valParam.ValidatorMinCommitingDeposit.Plus(types.NewCoin(3000*types.Decimals)), lst2.LowestPower)
+	assert.Equal(t, valParam.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(3000*types.Decimals)), lst2.LowestPower)
 	assert.Equal(t, users[2], lst2.LowestValidator)
 
 }
@@ -246,7 +246,7 @@ func TestGetUpdateValidatorList(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	valManager.InitGenesis(ctx)
 
-	minBalance := types.NewCoin(100 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100 * types.Decimals)
 
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
@@ -297,14 +297,14 @@ func TestGetUpdateValidatorList(t *testing.T) {
 
 func TestIsLegalWithdraw(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
-	minBalance := types.NewCoin(100 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(100 * types.Decimals)
 
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	valManager.InitGenesis(ctx)
 	valManager.RegisterValidator(
 		ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
-		param.ValidatorMinCommitingDeposit.Plus(types.NewCoin(100*types.Decimals)), "")
+		param.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
 
 	cases := []struct {
 		oncallValidators []types.AccountKey
@@ -312,7 +312,7 @@ func TestIsLegalWithdraw(t *testing.T) {
 		withdraw         types.Coin
 		expectResult     bool
 	}{
-		{[]types.AccountKey{}, user1, param.ValidatorMinWithdraw.Minus(types.NewCoin(1)), false},
+		{[]types.AccountKey{}, user1, param.ValidatorMinWithdraw.Minus(types.NewCoinFromInt64(1)), false},
 		{[]types.AccountKey{}, user1, param.ValidatorMinCommitingDeposit, false},
 		{[]types.AccountKey{user1}, user1, param.ValidatorMinWithdraw, false},
 		{[]types.AccountKey{}, user1, param.ValidatorMinWithdraw, true},
