@@ -83,4 +83,6 @@ const (
 
 	// as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
+
+	PrecisionFactor = 1000
 )

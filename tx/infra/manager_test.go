@@ -55,13 +55,41 @@ func TestReportUsage(t *testing.T) {
 	im.AddToInfraProviderList(ctx, "user1")
 	im.AddToInfraProviderList(ctx, "user2")
 
-	im.ReportUsage(ctx, "user1", int64(25))
-	im.ReportUsage(ctx, "user2", int64(75))
+	cases := map[string]struct {
+		User1Usage             int64
+		User2Usage             int64
+		ExpectUser1UsageWeight sdk.Rat
+		ExpectUser2UsageWeight sdk.Rat
+	}{
+		"test normal report": {
+			25, 75, sdk.NewRat(1, 4), sdk.NewRat(3, 4),
+		},
+		"test empty report": {
+			0, 0, sdk.NewRat(1, 2), sdk.NewRat(1, 2),
+		},
+		"issue https://github.com/lino-network/lino/issues/150": {
+			3333333, 4444444, sdk.NewRat(429, 1000), sdk.NewRat(571, 1000),
+		},
+	}
+	for testName, cs := range cases {
+		im.ReportUsage(ctx, "user1", cs.User1Usage)
+		im.ReportUsage(ctx, "user2", cs.User2Usage)
 
-	w1, _ := im.GetUsageWeight(ctx, "user1")
-	assert.Equal(t, true, sdk.NewRat(1, 4).Equal(w1))
+		w1, _ := im.GetUsageWeight(ctx, "user1")
+		if !cs.ExpectUser1UsageWeight.Equal(w1) {
+			t.Errorf(
+				"%s: expect user1 usage weight %v, got %v",
+				testName, cs.ExpectUser1UsageWeight, w1)
+			return
+		}
 
-	im.ClearUsage(ctx)
-	w2, _ := im.GetUsageWeight(ctx, "user1")
-	assert.Equal(t, true, sdk.NewRat(1, 2).Equal(w2))
+		w2, _ := im.GetUsageWeight(ctx, "user2")
+		if !cs.ExpectUser2UsageWeight.Equal(w2) {
+			t.Errorf(
+				"%s: expect user2 usage weight %v, got %v",
+				testName, cs.ExpectUser2UsageWeight, w2)
+			return
+		}
+		im.ClearUsage(ctx)
+	}
 }

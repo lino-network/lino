@@ -652,8 +652,8 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if types.NewCoin(0).IsGT(msg.Parameter.MinimumBalance) ||
-		types.NewCoin(0).IsGT(msg.Parameter.RegisterFee) {
+	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.MinimumBalance) ||
+		types.NewCoinFromInt64(0).IsGT(msg.Parameter.RegisterFee) {
 		return ErrIllegalParameter()
 	}
 	return nil
@@ -706,7 +706,7 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if types.NewCoin(0).IsGT(msg.Parameter.CapacityUsagePerTransaction) {
+	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.CapacityUsagePerTransaction) {
 		return ErrIllegalParameter()
 	}
 

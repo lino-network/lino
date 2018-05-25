@@ -26,8 +26,8 @@ func TestTransferToAccount(t *testing.T) {
 	test.SignCheckDeliver(t, lb, transferMsg, 1, true, test.GenesisTransactionPriv, baseTime)
 
 	test.CheckBalance(t, test.GenesisUser, lb,
-		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(200*types.Decimals)))
-	test.CheckBalance(t, newAccountName, lb, types.NewCoin(200*types.Decimals))
+		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoinFromInt64(200*types.Decimals)))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(200*types.Decimals))
 }
 
 // test normal transfer to address
@@ -46,6 +46,6 @@ func TestTransferToAddress(t *testing.T) {
 		newAccountPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
 
 	test.CheckBalance(t, test.GenesisUser, lb,
-		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(200*types.Decimals)))
-	test.CheckBalance(t, newAccountName, lb, types.NewCoin(200*types.Decimals))
+		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoinFromInt64(200*types.Decimals)))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(200*types.Decimals))
 }

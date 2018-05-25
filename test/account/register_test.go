@@ -33,9 +33,9 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 		newAccountPriv.PubKey(), newAccountPriv.Generate(1).PubKey(), newAccountPriv.Generate(2).PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, newAccountPriv, baseTime)
 
-	test.CheckBalance(t, newAccountName, lb, types.NewCoin(100*types.Decimals))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(100*types.Decimals))
 	test.CheckBalance(t, test.GenesisUser, lb,
-		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoin(100*types.Decimals)))
+		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoinFromInt64(100*types.Decimals)))
 }
 
 // register failed if account balance is zero

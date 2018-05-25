@@ -1,6 +1,8 @@
 package global
 
 import (
+	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
@@ -27,7 +29,7 @@ var (
 )
 
 func InitGlobalManager(ctx sdk.Context, gm GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func getContext() sdk.Context {
@@ -109,22 +111,22 @@ func TestEvaluateConsumption(t *testing.T) {
 		Consumption                        types.Coin
 		ExpectEvaluateResult               types.Coin
 	}{
-		{baseTime, baseTime + 3153600*5, 0.5, types.NewCoin(5000 * types.Decimals), 1.5, 7, 2.5,
-			types.NewCoin(1000), types.NewCoin(470)},
-		{baseTime, baseTime, 0.9933071490757153, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoin(1000), types.NewCoin(1243)},
-		{baseTime, baseTime + 360*24*3600, 0.007667910249215412, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoin(1000), types.NewCoin(9)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoin(5 * types.Decimals), types.NewCoin(179346)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoin(1 * types.Decimals), types.NewCoin(49489)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(1000 * types.Decimals), 1.9820137900379085, 7, 2.5,
-			types.NewCoin(1 * types.Decimals), types.NewCoin(49209)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(5000 * types.Decimals), 1.5, 7, 2.5,
-			types.NewCoin(1 * types.Decimals), types.NewCoin(37242)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoin(5000 * types.Decimals), 1.5, 100, 2,
-			types.NewCoin(1 * types.Decimals), types.NewCoin(29793)},
+		{baseTime, baseTime + 3153600*5, 0.5, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 7, 2.5,
+			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(470)},
+		{baseTime, baseTime, 0.9933071490757153, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(1243)},
+		{baseTime, baseTime + 360*24*3600, 0.007667910249215412, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(9)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoinFromInt64(5 * types.Decimals), types.NewCoinFromInt64(179346)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
+			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(49489)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(1000 * types.Decimals), 1.9820137900379085, 7, 2.5,
+			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(49209)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 7, 2.5,
+			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(37242)},
+		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 100, 2,
+			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(29793)},
 	}
 
 	for _, cs := range cases {
@@ -153,9 +155,9 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 		expectCoinInRewardPool types.Coin
 		expectCoinInWindow     types.Coin
 	}{
-		{types.NewCoin(1), types.NewCoin(1), baseTime, types.NewCoin(1), types.NewCoin(1)},
-		{types.NewCoin(100), types.NewCoin(1), baseTime + 100, types.NewCoin(101), types.NewCoin(2)},
-		{types.NewCoin(1), types.NewCoin(100), baseTime + 1001, types.NewCoin(102), types.NewCoin(102)},
+		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(1), baseTime, types.NewCoinFromInt64(1), types.NewCoinFromInt64(1)},
+		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(1), baseTime + 100, types.NewCoinFromInt64(101), types.NewCoinFromInt64(2)},
+		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(100), baseTime + 1001, types.NewCoinFromInt64(102), types.NewCoinFromInt64(102)},
 	}
 
 	for _, cs := range cases {
@@ -175,30 +177,34 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 func TestGetRewardAndPopFromWindow(t *testing.T) {
 	ctx, gm := setupTest(t)
 	cases := []struct {
-		coin                        types.Coin
-		penaltyScore                sdk.Rat
+		evaluate                    types.Coin
+		penaltyScore                *big.Rat
 		expectReward                types.Coin
 		initConsumptionRewardPool   types.Coin
 		initConsumptionWindow       types.Coin
 		expectConsumptionRewardPool types.Coin
 		expectConsumptionWindow     types.Coin
 	}{
-		{types.NewCoin(1), sdk.ZeroRat, types.NewCoin(100), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(900), types.NewCoin(9)},
-		{types.NewCoin(1), sdk.NewRat(1, 1000), types.NewCoin(100), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(900), types.NewCoin(9)},
-		{types.NewCoin(1), sdk.NewRat(6, 1000), types.NewCoin(99), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(901), types.NewCoin(9)},
-		{types.NewCoin(1), sdk.NewRat(1, 10), types.NewCoin(90), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(910), types.NewCoin(9)},
-		{types.NewCoin(1), sdk.NewRat(5, 10), types.NewCoin(50), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(950), types.NewCoin(9)},
-		{types.NewCoin(1), sdk.OneRat, types.NewCoin(0), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(1000), types.NewCoin(9)},
-		{types.NewCoin(0), sdk.ZeroRat, types.NewCoin(0), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(1000), types.NewCoin(10)},
-		{types.NewCoin(0), sdk.OneRat, types.NewCoin(0), types.NewCoin(1000),
-			types.NewCoin(10), types.NewCoin(1000), types.NewCoin(10)},
+		{types.NewCoinFromInt64(1), big.NewRat(0, 1), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(1), big.NewRat(1, 1000), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(1), big.NewRat(6, 1000), types.NewCoinFromInt64(99), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(901), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(1), big.NewRat(1, 10), types.NewCoinFromInt64(90), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(910), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(1), big.NewRat(5, 10), types.NewCoinFromInt64(50), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(950), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(1), big.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(9)},
+		{types.NewCoinFromInt64(0), big.NewRat(0, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
+		{types.NewCoinFromInt64(0), big.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
+		// issue https://github.com/lino-network/lino/issues/150
+		{types.NewCoinFromInt64(77777777777777), big.NewRat(0, 1), types.NewCoinFromInt64(23333333),
+			types.NewCoinFromInt64(100000000), types.NewCoinFromInt64(333333333333333),
+			types.NewCoinFromInt64(76666667), types.NewCoinFromInt64(255555555555556)},
 	}
 
 	for _, cs := range cases {
@@ -208,7 +214,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		consumptionMeta.ConsumptionWindow = cs.initConsumptionWindow
 		err = gm.storage.SetConsumptionMeta(ctx, consumptionMeta)
 		assert.Nil(t, err)
-		reward, err := gm.GetRewardAndPopFromWindow(ctx, cs.coin, cs.penaltyScore)
+		reward, err := gm.GetRewardAndPopFromWindow(ctx, cs.evaluate, cs.penaltyScore)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectReward, reward)
 		consumptionMeta, err = gm.storage.GetConsumptionMeta(ctx)
@@ -298,7 +304,7 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 
 func TestAddHourlyInflationToRewardPool(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalConsumption := types.NewCoin(10000 * 100)
+	totalConsumption := types.NewCoinFromInt64(10000 * 100)
 	inflationPool := &model.InflationPool{
 		ContentCreatorInflationPool: totalConsumption,
 	}
@@ -316,16 +322,16 @@ func TestAddHourlyInflationToRewardPool(t *testing.T) {
 	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoin(0), pool.ContentCreatorInflationPool)
+	assert.Equal(t, types.NewCoinFromInt64(0), pool.ContentCreatorInflationPool)
 
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalConsumption))
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalConsumption))
 }
 
 func TestRecalculateAnnuallyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalLino := types.NewCoin(10000000000 * types.Decimals)
+	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	ceiling := sdk.NewRat(98, 1000)
 	floor := sdk.NewRat(30, 1000)
 
@@ -337,21 +343,21 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		expectDeveloperInflation      types.Coin
 		expectValidatorInflation      types.Coin
 	}{
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(100000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(150000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(30000000 * types.Decimals)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(103000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(150000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(30000000 * types.Decimals)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(1098000000 * types.Decimals),
-			types.NewCoin(196000000 * types.Decimals), types.NewCoin(490000000 * types.Decimals),
-			types.NewCoin(196000000 * types.Decimals), types.NewCoin(98000000 * types.Decimals)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(1099000000 * types.Decimals),
-			types.NewCoin(196000000 * types.Decimals), types.NewCoin(490000000 * types.Decimals),
-			types.NewCoin(196000000 * types.Decimals), types.NewCoin(98000000 * types.Decimals)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(90000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(150000000 * types.Decimals),
-			types.NewCoin(60000000 * types.Decimals), types.NewCoin(30000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(1098000000 * types.Decimals),
+			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(490000000 * types.Decimals),
+			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(98000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(1099000000 * types.Decimals),
+			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(490000000 * types.Decimals),
+			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(98000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(90000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
+			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
 	}
 
 	for _, cs := range cases {
@@ -376,46 +382,52 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.thisYearConsumtion, globalMeta.LastYearCumulativeConsumption)
-		assert.Equal(t, types.NewCoin(0), globalMeta.CumulativeConsumption)
+		assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.CumulativeConsumption)
 	}
 }
 
 func TestGetGrowthRate(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalLino := types.NewCoin(1000000)
+	totalLino := types.NewCoinFromInt64(1000000)
 	ceiling := sdk.NewRat(98, 1000)
 	floor := sdk.NewRat(30, 1000)
-
+	bigLastYearConsumption, _ := new(big.Int).SetString("77777777777777777777", 10)
+	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
+	bigLastYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigLastYearConsumption)
+	bigThisYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigThisYearConsumption)
 	cases := []struct {
 		lastYearConsumtion types.Coin
 		thisYearConsumtion types.Coin
 		lastYearGrowthRate sdk.Rat
 		expectGrowthRate   sdk.Rat
 	}{
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(0 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(0 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
-		{types.NewCoin(0 * types.Decimals), types.NewCoin(100000000 * types.Decimals),
+		{types.NewCoinFromInt64(0 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(98, 1000)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(100000000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
-		{types.NewCoin(0), types.NewCoin(100000000 * types.Decimals),
+		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(100000000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(98, 1000)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(100010000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100010000 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(102900000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(102900000 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(103000000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103000000 * types.Decimals),
 			sdk.NewRat(98, 1000), floor},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(103100000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103100000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(31, 1000)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(109800000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109800000 * types.Decimals),
 			sdk.NewRat(98, 1000), ceiling},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(109900000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109900000 * types.Decimals),
 			sdk.NewRat(98, 1000), ceiling},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(109700000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109700000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(97, 1000)},
-		{types.NewCoin(100000000 * types.Decimals), types.NewCoin(104700000 * types.Decimals),
+		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(104700000 * types.Decimals),
 			sdk.NewRat(98, 1000), sdk.NewRat(47, 1000)},
+		// issue https://github.com/lino-network/lino/issues/150
+		{bigLastYearConsumptionCoin, bigThisYearConsumptionCoin,
+			sdk.NewRat(98, 1000), sdk.NewRat(71, 1000)},
 	}
 
 	for _, cs := range cases {
@@ -431,18 +443,19 @@ func TestGetGrowthRate(t *testing.T) {
 		assert.Nil(t, err)
 		growthRate, err := gm.getGrowthRate(ctx)
 		assert.Nil(t, err)
+		fmt.Println(growthRate, cs.expectGrowthRate)
 		assert.True(t, cs.expectGrowthRate.Equal(growthRate))
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.thisYearConsumtion, globalMeta.LastYearCumulativeConsumption)
-		assert.Equal(t, types.NewCoin(0), globalMeta.CumulativeConsumption)
+		assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.CumulativeConsumption)
 		assert.True(t, cs.expectGrowthRate.Equal(globalMeta.GrowthRate))
 	}
 }
 
 func TestGetValidatorHourlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalValidatorInflation := types.NewCoin(10000 * 100)
+	totalValidatorInflation := types.NewCoinFromInt64(10000 * 100)
 	inflationPool := &model.InflationPool{
 		ValidatorInflationPool: totalValidatorInflation,
 	}
@@ -453,20 +466,23 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 		assert.Nil(t, err)
 		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i+1))
 		assert.Nil(t, err)
-		assert.Equal(t, coin, types.RatToCoin(pool.ValidatorInflationPool.ToRat().
-			Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))))
+		hourlyCoinRat := new(big.Rat).Mul(pool.ValidatorInflationPool.ToRat(), big.NewRat(1, int64(types.HoursPerYear-i)))
+		hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
+		assert.Nil(t, err)
+
+		assert.Equal(t, coin, hourlyCoin)
 	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoin(0), pool.ValidatorInflationPool)
+	assert.Equal(t, types.NewCoinFromInt64(0), pool.ValidatorInflationPool)
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalValidatorInflation))
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalValidatorInflation))
 }
 
 func TestGetInfraMonthlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalInfraInflation := types.NewCoin(10000 * 100)
+	totalInfraInflation := types.NewCoinFromInt64(10000 * 100)
 	inflationPool := &model.InflationPool{
 		InfraInflationPool: totalInfraInflation,
 	}
@@ -478,21 +494,25 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 			assert.Nil(t, err)
 			coin, err := gm.GetInfraMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
 			assert.Nil(t, err)
-			assert.Equal(t, coin, types.RatToCoin(pool.InfraInflationPool.ToRat().
-				Mul(sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))))
+			hourlyCoinRat := new(big.Rat).Mul(
+				pool.InfraInflationPool.ToRat(),
+				big.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
+			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
+			assert.Nil(t, err)
+			assert.Equal(t, coin, hourlyCoin)
 		}
 	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoin(0), pool.InfraInflationPool)
+	assert.Equal(t, types.NewCoinFromInt64(0), pool.InfraInflationPool)
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalInfraInflation))
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalInfraInflation))
 }
 
 func TestGetDeveloperMonthlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalDeveloperInflation := types.NewCoin(10000 * 100)
+	totalDeveloperInflation := types.NewCoinFromInt64(10000 * 100)
 	inflationPool := &model.InflationPool{
 		DeveloperInflationPool: totalDeveloperInflation,
 	}
@@ -504,21 +524,24 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 			assert.Nil(t, err)
 			coin, err := gm.GetDeveloperMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
 			assert.Nil(t, err)
-			assert.Equal(t, coin, types.RatToCoin(pool.DeveloperInflationPool.ToRat().
-				Mul(sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))))
+			hourlyCoinRat := new(big.Rat).Mul(
+				pool.DeveloperInflationPool.ToRat(),
+				big.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
+			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
+			assert.Equal(t, coin, hourlyCoin)
 		}
 	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoin(0), pool.DeveloperInflationPool)
+	assert.Equal(t, types.NewCoinFromInt64(0), pool.DeveloperInflationPool)
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoin(10000*types.Decimals).Plus(totalDeveloperInflation))
+	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalDeveloperInflation))
 }
 
 func TestAddToValidatorInflationPool(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalValidatorInflation := types.NewCoin(0)
+	totalValidatorInflation := types.NewCoinFromInt64(0)
 	inflationPool := &model.InflationPool{
 		ValidatorInflationPool: totalValidatorInflation,
 	}
@@ -529,8 +552,8 @@ func TestAddToValidatorInflationPool(t *testing.T) {
 		coin   types.Coin
 		expect types.Coin
 	}{
-		{types.NewCoin(100), types.NewCoin(100)},
-		{types.NewCoin(1), types.NewCoin(101)},
+		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100)},
+		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(101)},
 	}
 
 	for _, cs := range cases {
@@ -549,8 +572,8 @@ func TestAddConsumption(t *testing.T) {
 		coin   types.Coin
 		expect types.Coin
 	}{
-		{types.NewCoin(100), types.NewCoin(100)},
-		{types.NewCoin(1), types.NewCoin(101)},
+		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100)},
+		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(101)},
 	}
 
 	for _, cs := range cases {

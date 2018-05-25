@@ -55,7 +55,7 @@ func TestRegisterBankDoesntExist(t *testing.T) {
 func TestRegister(t *testing.T) {
 	register := "register"
 	am, ctx, handler := setupTest(t)
-	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
+	priv := createBank(t, ctx, am, types.NewCoinFromInt64(123*types.Decimals))
 
 	assert.False(t, am.IsAccountExist(ctx, types.AccountKey(register)))
 
@@ -68,7 +68,7 @@ func TestRegister(t *testing.T) {
 
 func TestDuplicateRegister(t *testing.T) {
 	am, ctx, handler := setupTest(t)
-	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
+	priv := createBank(t, ctx, am, types.NewCoinFromInt64(123*types.Decimals))
 	register := "register"
 
 	msg := NewRegisterMsg(register, priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
@@ -80,7 +80,7 @@ func TestDuplicateRegister(t *testing.T) {
 
 func TestBankReRegister(t *testing.T) {
 	am, ctx, handler := setupTest(t)
-	priv := createBank(t, ctx, am, types.NewCoin(123*types.Decimals))
+	priv := createBank(t, ctx, am, types.NewCoinFromInt64(123*types.Decimals))
 	register := "register"
 	newRegister := "newRegister"
 

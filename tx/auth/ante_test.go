@@ -41,7 +41,7 @@ func createTestAccount(
 }
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest() (

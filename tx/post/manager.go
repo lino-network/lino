@@ -1,6 +1,8 @@
 package post
 
 import (
+	"math/big"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
@@ -32,7 +34,7 @@ func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types
 func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.PermLink) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return 0, types.NewCoin(0), ErrGetCreatedTime(permLink).TraceCause(err, "")
+		return 0, types.NewCoinFromInt64(0), ErrGetCreatedTime(permLink).TraceCause(err, "")
 	}
 	return postMeta.CreatedAt, postMeta.TotalReward, nil
 }
@@ -111,7 +113,7 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 		LastActivityAt:          ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
-		RedistributionSplitRate: splitRate,
+		RedistributionSplitRate: splitRate.Round(types.PrecisionFactor),
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
 		return ErrCreatePost(permLink).TraceCause(err, "")
@@ -307,34 +309,35 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool,
 }
 
 // get penalty score from report and upvote
-func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
-	author, postID, err := pm.GetSourcePost(ctx, permLink)
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (*big.Rat, sdk.Error) {
+	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
-		return sdk.ZeroRat, ErrGetPenaltyScore(permLink).TraceCause(err, "")
+		return nil, ErrGetPenaltyScore(permLink).TraceCause(err, "")
 	}
-	if author != types.AccountKey("") && postID != "" {
-		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(author, postID))
+	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(sourceAuthor, sourcePostID))
 		if err != nil {
-			return sdk.ZeroRat, err
+			return nil, err
 		}
 		return paneltyScore, nil
 	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return sdk.ZeroRat, ErrGetPenaltyScore(permLink).TraceCause(err, "")
+		return nil, ErrGetPenaltyScore(permLink).TraceCause(err, "")
 	}
 	if postMeta.TotalReportStake.IsZero() {
-		return sdk.ZeroRat, nil
+		return big.NewRat(0, 1), nil
 	}
 	if postMeta.TotalUpvoteStake.IsZero() {
-		return sdk.OneRat, nil
+		return big.NewRat(1, 1), nil
 	}
-	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
-	if penaltyScore.LT(sdk.ZeroRat) {
-		return sdk.ZeroRat, nil
+	penaltyScore := new(big.Rat)
+	penaltyScore.Quo(postMeta.TotalReportStake.ToRat(), postMeta.TotalUpvoteStake.ToRat())
+	if penaltyScore.Sign() < 0 {
+		return nil, nil
 	}
-	if penaltyScore.GT(sdk.OneRat) {
-		return sdk.OneRat, nil
+	if penaltyScore.Cmp(big.NewRat(1, 1)) > 0 {
+		return big.NewRat(1, 1), nil
 	}
-	return postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()), nil
+	return penaltyScore, nil
 }

@@ -1,6 +1,8 @@
 package developer
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/developer/model"
@@ -105,18 +107,18 @@ func (dm DeveloperManager) ReportConsumption(
 }
 
 func (dm DeveloperManager) GetConsumptionWeight(
-	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
+	ctx sdk.Context, username types.AccountKey) (*big.Rat, sdk.Error) {
 	lst, err := dm.storage.GetDeveloperList(ctx)
 	if err != nil {
-		return sdk.NewRat(0), err
+		return nil, err
 	}
 
-	totalConsumption := types.NewCoin(0)
-	myConsumption := types.NewCoin(0)
+	totalConsumption := types.NewCoinFromInt64(0)
+	myConsumption := types.NewCoinFromInt64(0)
 	for _, developerName := range lst.AllDevelopers {
 		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
 		if err != nil {
-			return sdk.NewRat(0), err
+			return nil, err
 		}
 		totalConsumption = totalConsumption.Plus(curDeveloper.AppConsumption)
 		if curDeveloper.Username == username {
@@ -124,10 +126,10 @@ func (dm DeveloperManager) GetConsumptionWeight(
 		}
 	}
 	// if not any consumption here, we evenly distribute all inflation
-	if totalConsumption.ToRat().Equal(sdk.ZeroRat) {
-		return sdk.NewRat(1, int64(len(lst.AllDevelopers))), nil
+	if totalConsumption.ToRat().Sign() == 0 {
+		return big.NewRat(1, int64(len(lst.AllDevelopers))), nil
 	}
-	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
+	return new(big.Rat).Quo(myConsumption.ToRat(), totalConsumption.ToRat()), nil
 }
 
 func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {
@@ -145,7 +147,7 @@ func (dm DeveloperManager) ClearConsumption(ctx sdk.Context) sdk.Error {
 		if err != nil {
 			return err
 		}
-		curDeveloper.AppConsumption = types.NewCoin(0)
+		curDeveloper.AppConsumption = types.NewCoinFromInt64(0)
 		if err := dm.storage.SetDeveloper(ctx, developerName, curDeveloper); err != nil {
 			return err
 		}
@@ -179,10 +181,10 @@ func (dm DeveloperManager) WithdrawAll(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	developer, err := dm.storage.GetDeveloper(ctx, username)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	if err := dm.Withdraw(ctx, username, developer.Deposit); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return developer.Deposit, nil
 }
