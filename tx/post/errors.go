@@ -208,6 +208,10 @@ func ErrPostReportOrUpvoteInvalidTarget() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("report or upvote target post invalid"))
 }
 
+func ErrRedistributionSplitRateLengthTooLong() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("redistribution rate string is too long"))
+}
+
 func ErrPostViewNoUsername() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("view msg needs username"))
 }

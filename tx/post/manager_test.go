@@ -15,7 +15,7 @@ import (
 
 // test create post
 func TestCreatePost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1 := createTestAccount(t, ctx, am, "user1")
 	user2 := createTestAccount(t, ctx, am, "user2")
 
@@ -78,7 +78,7 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	cases := map[string]struct {
@@ -136,7 +136,7 @@ func TestUpdatePost(t *testing.T) {
 
 // test get source post
 func TestGetSourcePost(t *testing.T) {
-	ctx, _, _, pm, _ := setupTest(t, 1)
+	ctx, _, _, pm, _, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user3")
@@ -178,7 +178,7 @@ func TestGetSourcePost(t *testing.T) {
 }
 
 func TestAddOrUpdateLikeToPost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -219,7 +219,7 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 }
 
 func TestAddOrUpdateViewToPost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	createTime := ctx.BlockHeader().Time
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
@@ -262,7 +262,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 }
 
 func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -298,7 +298,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 }
 
 func TestDonation(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -308,25 +308,26 @@ func TestDonation(t *testing.T) {
 		user                types.AccountKey
 		donateAt            int64
 		amount              types.Coin
+		donationType        types.DonationType
 		postID              string
 		author              types.AccountKey
 		expectDonateCount   int64
 		expectTotalDonation types.Coin
 		expectDonationList  model.Donations
 	}{
-		{user3, baseTime, types.NewCoinFromInt64(1), postID1, user1, 1, types.NewCoinFromInt64(1),
-			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime}}}},
-		{user3, baseTime, types.NewCoinFromInt64(1), postID2, user2, 1, types.NewCoinFromInt64(1),
-			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime}}}},
-		{user3, baseTime, types.NewCoinFromInt64(20), postID2, user2, 2, types.NewCoinFromInt64(21),
+		{user3, baseTime, types.NewCoinFromInt64(1), types.Donation, postID1, user1, 1, types.NewCoinFromInt64(1),
+			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Donation}}}},
+		{user3, baseTime, types.NewCoinFromInt64(1), types.Inflation, postID2, user2, 1, types.NewCoinFromInt64(1),
+			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation}}}},
+		{user3, baseTime, types.NewCoinFromInt64(20), types.Donation, postID2, user2, 2, types.NewCoinFromInt64(21),
 			model.Donations{user3,
-				[]model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime},
-					model.Donation{types.NewCoinFromInt64(20), baseTime}}}},
+				[]model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation},
+					model.Donation{types.NewCoinFromInt64(20), baseTime, types.Donation}}}},
 	}
 
 	for _, cs := range cases {
 		postKey := types.GetPermLink(cs.author, cs.postID)
-		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount)
+		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount, cs.donationType)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
@@ -345,7 +346,7 @@ func TestDonation(t *testing.T) {
 }
 
 func TestGetPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	postKey := types.GetPermLink(user, postID)
 	cases := []struct {
@@ -382,7 +383,7 @@ func TestGetPenaltyScore(t *testing.T) {
 }
 
 func TestGetRepostPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
@@ -430,7 +431,7 @@ func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permLink types
 }
 
 func TestDeletePost(t *testing.T) {
-	ctx, am, _, pm, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 

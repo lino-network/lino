@@ -251,14 +251,16 @@ func (pm PostManager) AddComment(
 
 // add donation to post donation list
 func (pm PostManager) AddDonation(
-	ctx sdk.Context, permLink types.PermLink, donator types.AccountKey, amount types.Coin) sdk.Error {
+	ctx sdk.Context, permLink types.PermLink, donator types.AccountKey,
+	amount types.Coin, donationType types.DonationType) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrAddDonation(permLink).TraceCause(err, "")
 	}
 	donation := model.Donation{
-		Amount:    amount,
-		CreatedAt: ctx.BlockHeader().Time,
+		Amount:       amount,
+		CreatedAt:    ctx.BlockHeader().Time,
+		DonationType: donationType,
 	}
 	donations, _ := pm.postStorage.GetPostDonations(ctx, permLink, donator)
 	if donations == nil {
@@ -333,9 +335,6 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) 
 	}
 	penaltyScore := new(big.Rat)
 	penaltyScore.Quo(postMeta.TotalReportStake.ToRat(), postMeta.TotalUpvoteStake.ToRat())
-	if penaltyScore.Sign() < 0 {
-		return nil, nil
-	}
 	if penaltyScore.Cmp(big.NewRat(1, 1)) > 0 {
 		return big.NewRat(1, 1), nil
 	}
