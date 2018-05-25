@@ -140,6 +140,10 @@ func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, user %v not found", user))
 }
 
+func ErrDonateToSelf(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("donate failed, user %v donate to self", user))
+}
+
 func ErrUpdatePostAuthorNotFound(author types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, author %v not found", author))
 }

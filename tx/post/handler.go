@@ -106,6 +106,9 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink).Result()
 	}
+	if msg.Username == msg.Author {
+		return ErrDonateToSelf(msg.Username).Result()
+	}
 	if msg.FromChecking {
 		if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
 			return ErrAccountCheckingCoinNotEnough(permLink).Result()
