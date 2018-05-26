@@ -495,6 +495,20 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee, types.NewCoinFromInt64(0),
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)), types.NewCoinFromInt64(0),
 		},
+		{"donate to self",
+			author, types.LNO("100"), author, postID, true, ErrDonateToSelf(author).Result(),
+			model.PostMeta{
+				CreatedAt:               ctx.BlockHeader().Time,
+				LastUpdatedAt:           ctx.BlockHeader().Time,
+				LastActivityAt:          ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        2,
+				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
+				RedistributionSplitRate: sdk.ZeroRat,
+			},
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)), types.NewCoinFromInt64(0),
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)), types.NewCoinFromInt64(0),
+		},
 	}
 
 	for _, cs := range cases {
