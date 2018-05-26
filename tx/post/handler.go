@@ -194,7 +194,7 @@ func processDonationFriction(
 	}
 
 	directDeposit := coin.Minus(frictionCoin)
-	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit, types.Donation); err != nil {
+	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit, types.DirectDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit); err != nil {

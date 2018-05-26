@@ -46,8 +46,8 @@ const (
 	ProtocolUpgrade   = ProposalType(2)
 
 	// Different donation types
-	Donation  = DonationType(0)
-	Inflation = DonationType(1)
+	DirectDeposit = DonationType(0)
+	Inflation     = DonationType(1)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

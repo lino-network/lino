@@ -315,14 +315,14 @@ func TestDonation(t *testing.T) {
 		expectTotalDonation types.Coin
 		expectDonationList  model.Donations
 	}{
-		{user3, baseTime, types.NewCoinFromInt64(1), types.Donation, postID1, user1, 1, types.NewCoinFromInt64(1),
-			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Donation}}}},
+		{user3, baseTime, types.NewCoinFromInt64(1), types.DirectDeposit, postID1, user1, 1, types.NewCoinFromInt64(1),
+			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.DirectDeposit}}}},
 		{user3, baseTime, types.NewCoinFromInt64(1), types.Inflation, postID2, user2, 1, types.NewCoinFromInt64(1),
 			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation}}}},
-		{user3, baseTime, types.NewCoinFromInt64(20), types.Donation, postID2, user2, 2, types.NewCoinFromInt64(21),
+		{user3, baseTime, types.NewCoinFromInt64(20), types.DirectDeposit, postID2, user2, 2, types.NewCoinFromInt64(21),
 			model.Donations{user3,
 				[]model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation},
-					model.Donation{types.NewCoinFromInt64(20), baseTime, types.Donation}}}},
+					model.Donation{types.NewCoinFromInt64(20), baseTime, types.DirectDeposit}}}},
 	}
 
 	for _, cs := range cases {
