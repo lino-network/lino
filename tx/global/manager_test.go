@@ -315,7 +315,7 @@ func TestAddHourlyInflationToRewardPool(t *testing.T) {
 		assert.Nil(t, err)
 		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 		assert.Nil(t, err)
-		err = gm.AddHourlyInflationToRewardPool(ctx, int64(i+1))
+		err = gm.AddHourlyInflationToRewardPool(ctx, int64(i))
 		assert.Nil(t, err)
 		assert.Equal(t, totalConsumption,
 			consumptionMeta.ConsumptionRewardPool.Plus(pool.ContentCreatorInflationPool))
@@ -464,7 +464,7 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 	for i := 0; i < types.HoursPerYear; i++ {
 		pool, err := gm.storage.GetInflationPool(ctx)
 		assert.Nil(t, err)
-		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i+1))
+		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i))
 		assert.Nil(t, err)
 		hourlyCoinRat := new(big.Rat).Mul(pool.ValidatorInflationPool.ToRat(), big.NewRat(1, int64(types.HoursPerYear-i)))
 		hourlyCoin, err := types.RatToCoin(hourlyCoinRat)

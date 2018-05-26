@@ -122,7 +122,8 @@ func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Ev
 }
 
 // put hourly inflation to reward pool
-func (gm GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHoursThisYear int64) sdk.Error {
+func (gm GlobalManager) AddHourlyInflationToRewardPool(
+	ctx sdk.Context, pastHoursMinusOneThisYear int64) sdk.Error {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
 		return err
@@ -132,7 +133,7 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(ctx sdk.Context, pastHour
 		return err
 	}
 	resRat := new(big.Rat).Mul(pool.ContentCreatorInflationPool.ToRat(),
-		big.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+		big.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return err
@@ -313,7 +314,7 @@ func (gm GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.
 
 // get validator hourly inflation
 func (gm GlobalManager) GetValidatorHourlyInflation(
-	ctx sdk.Context, pastHoursThisYear int64) (types.Coin, sdk.Error) {
+	ctx sdk.Context, pastHoursMinusOneThisYear int64) (types.Coin, sdk.Error) {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -321,7 +322,7 @@ func (gm GlobalManager) GetValidatorHourlyInflation(
 
 	resRat := new(big.Rat).Mul(
 		pool.ValidatorInflationPool.ToRat(),
-		big.NewRat(1, types.HoursPerYear-pastHoursThisYear+1))
+		big.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
