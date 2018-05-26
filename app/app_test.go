@@ -18,6 +18,8 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
+
+	globalModel "github.com/lino-network/lino/tx/global/model"
 )
 
 var (
@@ -227,4 +229,221 @@ func TestFireByzantineValidators(t *testing.T) {
 	lst, err := lb.valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 20, len(lst.OncallValidators))
+}
+
+func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	cases := map[string]struct {
+		beforeDistributionRewardPool    types.Coin
+		beforeDistributionInflationPool types.Coin
+		pastMinutes                     int64
+	}{
+		"first distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
+			pastMinutes:                     60,
+		},
+		"end of year distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
+			pastMinutes:                     60 * types.HoursPerYear,
+		},
+		"next year first hour": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
+			pastMinutes:                     60*types.HoursPerYear + 60,
+		},
+		"end of next year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
+			pastMinutes:                     60 * types.HoursPerYear * 2,
+		},
+	}
+	for testName, cs := range cases {
+		lb.pastMinutes = cs.pastMinutes
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+		err := globalStore.SetConsumptionMeta(
+			ctx, &globalModel.ConsumptionMeta{
+				ConsumptionRewardPool: cs.beforeDistributionRewardPool,
+			},
+		)
+		assert.Nil(t, err)
+		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+			ContentCreatorInflationPool: cs.beforeDistributionInflationPool,
+		})
+		assert.Nil(t, err)
+		lb.distributeInflationToConsumptionRewardPool(ctx)
+		inflationPool, err := globalStore.GetInflationPool(ctx)
+		assert.Nil(t, err)
+		consumption, err := globalStore.GetConsumptionMeta(ctx)
+		assert.Nil(t, err)
+		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
+			cs.beforeDistributionInflationPool.ToRat(),
+			new(big.Rat).SetInt64(types.HoursPerYear-lb.getPastHoursMinusOneThisYear())))
+		if !cs.beforeDistributionRewardPool.Plus(expectInflation).
+			IsEqual(consumption.ConsumptionRewardPool) {
+			t.Errorf(
+				"%s: expect inflation pool %v, got %v",
+				testName, cs.beforeDistributionRewardPool.Plus(expectInflation),
+				inflationPool.ContentCreatorInflationPool)
+			return
+		}
+		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
+			IsEqual(inflationPool.ContentCreatorInflationPool) {
+			t.Errorf(
+				"%s: expect inflation pool %v, got %v",
+				testName, cs.beforeDistributionRewardPool.Plus(expectInflation),
+				inflationPool.ContentCreatorInflationPool)
+			return
+		}
+	}
+}
+
+func TestDistributeInflationToValidator(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	cases := map[string]struct {
+		beforeDistributionInflationPool types.Coin
+		pastMinutes                     int64
+	}{
+		"first distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     60,
+		},
+		"end of year distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     60 * types.HoursPerYear,
+		},
+		"next year first hour": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     60*types.HoursPerYear + 60,
+		},
+		"end of next year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     60 * types.HoursPerYear * 2,
+		},
+	}
+	for testName, cs := range cases {
+		lb.pastMinutes = cs.pastMinutes
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+			ValidatorInflationPool: cs.beforeDistributionInflationPool,
+		})
+		assert.Nil(t, err)
+		lb.distributeInflationToValidator(ctx)
+		inflationPool, err := globalStore.GetInflationPool(ctx)
+		assert.Nil(t, err)
+		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
+			cs.beforeDistributionInflationPool.ToRat(),
+			new(big.Rat).SetInt64(types.HoursPerYear-lb.getPastHoursMinusOneThisYear())))
+		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
+			IsEqual(inflationPool.ValidatorInflationPool) {
+			t.Errorf(
+				"%s: expect inflation pool %v, got %v",
+				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
+				inflationPool.ValidatorInflationPool)
+			return
+		}
+	}
+}
+
+func TestDistributeInflationToInfraProvider(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	cases := map[string]struct {
+		beforeDistributionInflationPool types.Coin
+		pastMinutes                     int64
+	}{
+		"first distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth,
+		},
+		"last distribution of first year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 12,
+		},
+		"first distribution of second year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 13,
+		},
+		"last distribution of second year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 24,
+		},
+	}
+	for testName, cs := range cases {
+		lb.pastMinutes = cs.pastMinutes
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		err := lb.infraManager.RegisterInfraProvider(ctx, "Lino")
+		assert.Nil(t, err)
+		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+			InfraInflationPool: cs.beforeDistributionInflationPool,
+		})
+		assert.Nil(t, err)
+		lb.distributeInflationToInfraProvider(ctx)
+		inflationPool, err := globalStore.GetInflationPool(ctx)
+		assert.Nil(t, err)
+		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
+			cs.beforeDistributionInflationPool.ToRat(),
+			new(big.Rat).SetInt64(12-lb.getPastMonthMinusOneThisYear())))
+		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
+			IsEqual(inflationPool.InfraInflationPool) {
+			t.Errorf(
+				"%s: expect inflation pool %v, got %v",
+				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
+				inflationPool.InfraInflationPool)
+			return
+		}
+	}
+}
+
+func TestDistributeInflationToDeveloper(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	cases := map[string]struct {
+		beforeDistributionInflationPool types.Coin
+		pastMinutes                     int64
+	}{
+		"first distribution": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth,
+		},
+		"last distribution of first year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 12,
+		},
+		"first distribution of second year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 13,
+		},
+		"last distribution of second year": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			pastMinutes:                     types.MinutesPerMonth * 24,
+		},
+	}
+	for testName, cs := range cases {
+		lb.pastMinutes = cs.pastMinutes
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		err := lb.developerManager.RegisterDeveloper(ctx, "Lino", types.NewCoinFromInt64(1000000*types.Decimals))
+		assert.Nil(t, err)
+		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+			DeveloperInflationPool: cs.beforeDistributionInflationPool,
+		})
+		assert.Nil(t, err)
+		lb.distributeInflationToDeveloper(ctx)
+		inflationPool, err := globalStore.GetInflationPool(ctx)
+		assert.Nil(t, err)
+		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
+			cs.beforeDistributionInflationPool.ToRat(),
+			new(big.Rat).SetInt64(12-lb.getPastMonthMinusOneThisYear())))
+		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
+			IsEqual(inflationPool.DeveloperInflationPool) {
+			t.Errorf(
+				"%s: expect inflation pool %v, got %v",
+				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
+				inflationPool.DeveloperInflationPool)
+			return
+		}
+	}
 }
