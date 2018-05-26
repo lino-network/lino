@@ -10,15 +10,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
+	dev "github.com/lino-network/lino/tx/developer"
 )
 
-func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
 			return handleCreatePostMsg(ctx, msg, pm, am, gm)
 		case DonateMsg:
-			return handleDonateMsg(ctx, msg, pm, am, gm)
+			return handleDonateMsg(ctx, msg, pm, am, gm, dm)
 		case LikeMsg:
 			return handleLikeMsg(ctx, msg, pm, am, gm)
 		case ReportOrUpvoteMsg:
@@ -94,7 +95,9 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 }
 
 // Handle DonateMsg
-func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+func handleDonateMsg(
+	ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager,
+	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Result {
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -106,8 +109,14 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.Acco
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink).Result()
 	}
+
 	if msg.Username == msg.Author {
 		return ErrDonateToSelf(msg.Username).Result()
+	}
+	if msg.FromApp != "" {
+		if !dm.IsDeveloperExist(ctx, msg.FromApp) {
+			return ErrDonateFailed(permLink).Result()
+		}
 	}
 	if msg.FromChecking {
 		if err := am.MinusCheckingCoin(ctx, msg.Username, coin); err != nil {
@@ -165,16 +174,6 @@ func processDonationFriction(
 	if err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	directDeposit := coin.Minus(frictionCoin)
-	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
-	}
-	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
-	}
-	if err := gm.AddConsumption(ctx, coin); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
-	}
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
 	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
 	if err != nil {
@@ -193,6 +192,20 @@ func processDonationFriction(
 		ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
 		return err
 	}
+
+	directDeposit := coin.Minus(frictionCoin)
+	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit, types.DirectDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	if err := gm.AddConsumption(ctx, coin); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
+	if err := am.UpdateDonationRelationship(ctx, postAuthor, consumer); err != nil {
+		return ErrDonateFailed(postKey).TraceCause(err, "")
+	}
 	return nil
 }
 
@@ -208,7 +221,6 @@ func evaluateConsumption(
 		return types.NewCoinFromInt64(0), err
 	}
 	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
-
 }
 
 // Handle ReportMsgOrUpvoteMsg

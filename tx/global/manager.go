@@ -70,6 +70,14 @@ func (gm GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sd
 	return consumptionMeta.ConsumptionFrictionRate, nil
 }
 
+func (gm GlobalManager) GetConsumption(ctx sdk.Context) (types.Coin, sdk.Error) {
+	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	return globalMeta.CumulativeConsumption, nil
+}
+
 // register reward calculation event at 7 days later
 func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	ctx sdk.Context, event types.Event, friction types.Coin, evaluate types.Coin) sdk.Error {

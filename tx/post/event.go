@@ -50,7 +50,7 @@ func (event RewardEvent) Execute(
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink)
 	}
-	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward); err != nil {
+	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward, types.Inflation); err != nil {
 		return err
 	}
 	if err := am.AddIncomeAndReward(

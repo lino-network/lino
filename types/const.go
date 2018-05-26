@@ -45,6 +45,10 @@ const (
 	ContentCensorship = ProposalType(1)
 	ProtocolUpgrade   = ProposalType(2)
 
+	// Different donation types
+	DirectDeposit = DonationType(0)
+	Inflation     = DonationType(1)
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
 
