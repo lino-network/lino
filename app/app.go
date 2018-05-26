@@ -430,6 +430,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
+	lb.distributeInflationToConsumptionRewardPool(ctx)
 	lb.distributeInflationToValidator(ctx)
 }
 
