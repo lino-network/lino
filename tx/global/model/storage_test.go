@@ -1,6 +1,7 @@
 package model
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -78,11 +79,25 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
+	infraInflationPool, _ := types.RatToCoin(new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
+		new(big.Rat).Mul(globalMeta.TotalLinoCoin.ToRat(), allocationParam.InfraAllocation.GetRat())))
+	contentCreatorInflationPool, _ := types.RatToCoin(
+		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
+			new(big.Rat).Mul(
+				globalMeta.TotalLinoCoin.ToRat(), allocationParam.ContentCreatorAllocation.GetRat())))
+	developerInflaionPool, _ := types.RatToCoin(
+		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
+			new(big.Rat).Mul(
+				globalMeta.TotalLinoCoin.ToRat(), allocationParam.DeveloperAllocation.GetRat())))
+	validatorInflaionPool, _ := types.RatToCoin(
+		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
+			new(big.Rat).Mul(
+				globalMeta.TotalLinoCoin.ToRat(), allocationParam.ValidatorAllocation.GetRat())))
 	inflationPool := InflationPool{
-		InfraInflationPool:          types.NewCoinFromInt64(196 * types.Decimals),
-		ContentCreatorInflationPool: types.NewCoinFromInt64(490 * types.Decimals),
-		DeveloperInflationPool:      types.NewCoinFromInt64(196 * types.Decimals),
-		ValidatorInflationPool:      types.NewCoinFromInt64(98 * types.Decimals),
+		InfraInflationPool:          infraInflationPool,
+		ContentCreatorInflationPool: contentCreatorInflationPool,
+		DeveloperInflationPool:      developerInflaionPool,
+		ValidatorInflationPool:      validatorInflaionPool,
 	}
 	checkGlobalStorage(t, ctx, gm, globalStatistics, globalMeta, consumptionMeta, inflationPool)
 }
