@@ -2,7 +2,6 @@ package proposal
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -166,20 +165,9 @@ func returnCoinTo(
 		return err
 	}
 
-	events := []types.Event{}
-	for i := int64(0); i < times; i++ {
-		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
-		piece, err := types.RatToCoin(pieceRat)
-		if err != nil {
-			return err
-		}
-		coin = coin.Minus(piece)
-
-		event := acc.ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
-		}
-		events = append(events, event)
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin)
+	if err != nil {
+		return err
 	}
 
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
