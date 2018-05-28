@@ -79,7 +79,7 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectedFrozenInterval int64
 	}{
 		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
-		{"return coin to user", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
 	}
 
 	for _, tc := range testCases {
