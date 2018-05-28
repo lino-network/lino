@@ -216,9 +216,9 @@ func TestInitParam(t *testing.T) {
 
 	globalAllocationParam := GlobalAllocationParam{
 		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(50, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(10, 100),
+		ContentCreatorAllocation: sdk.NewRat(65, 100),
+		DeveloperAllocation:      sdk.NewRat(10, 100),
+		ValidatorAllocation:      sdk.NewRat(5, 100),
 	}
 
 	infraInternalAllocationParam := InfraInternalAllocationParam{

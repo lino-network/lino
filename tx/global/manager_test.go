@@ -336,28 +336,20 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 	floor := sdk.NewRat(30, 1000)
 
 	cases := []struct {
-		lastYearConsumtion            types.Coin
-		thisYearConsumtion            types.Coin
-		expectInfraInflation          types.Coin
-		expectContentCreatorInflation types.Coin
-		expectDeveloperInflation      types.Coin
-		expectValidatorInflation      types.Coin
+		lastYearConsumtion types.Coin
+		thisYearConsumtion types.Coin
+		expectGrowthRate   sdk.Rat
 	}{
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(1098000000 * types.Decimals),
-			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(490000000 * types.Decimals),
-			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(98000000 * types.Decimals)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(1099000000 * types.Decimals),
-			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(490000000 * types.Decimals),
-			types.NewCoinFromInt64(196000000 * types.Decimals), types.NewCoinFromInt64(98000000 * types.Decimals)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(90000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(150000000 * types.Decimals),
-			types.NewCoinFromInt64(60000000 * types.Decimals), types.NewCoinFromInt64(30000000 * types.Decimals)},
+		{types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(100000000 * types.Decimals), floor},
+		{types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(103000000 * types.Decimals), floor},
+		{types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(1098000000 * types.Decimals), ceiling},
+		{types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(1099000000 * types.Decimals), ceiling},
+		{types.NewCoinFromInt64(100000000 * types.Decimals),
+			types.NewCoinFromInt64(90000000 * types.Decimals), floor},
 	}
 
 	for _, cs := range cases {
@@ -365,7 +357,7 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 			TotalLinoCoin:                 totalLino,
 			LastYearCumulativeConsumption: cs.lastYearConsumtion,
 			CumulativeConsumption:         cs.thisYearConsumtion,
-			GrowthRate:                    sdk.NewRat(98, 1000),
+			GrowthRate:                    ceiling,
 			Ceiling:                       ceiling,
 			Floor:                         floor,
 		}
@@ -375,10 +367,27 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		assert.Nil(t, err)
 		pool, err := gm.storage.GetInflationPool(ctx)
 		assert.Nil(t, err)
-		assert.Equal(t, cs.expectDeveloperInflation, pool.DeveloperInflationPool)
-		assert.Equal(t, cs.expectContentCreatorInflation, pool.ContentCreatorInflationPool)
-		assert.Equal(t, cs.expectInfraInflation, pool.InfraInflationPool)
-		assert.Equal(t, cs.expectValidatorInflation, pool.ValidatorInflationPool)
+		allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+		assert.Nil(t, err)
+		expectDeveloperInflation, _ := types.RatToCoin(
+			new(big.Rat).Mul(allocation.DeveloperAllocation.GetRat(),
+				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+		assert.Equal(t, expectDeveloperInflation, pool.DeveloperInflationPool)
+		expectContentCreatorInflation, _ := types.RatToCoin(
+			new(big.Rat).Mul(allocation.ContentCreatorAllocation.GetRat(),
+				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
+		expectInfraInflation, _ := types.RatToCoin(
+			new(big.Rat).Mul(allocation.InfraAllocation.GetRat(),
+				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
+		expectValidatorInflation, _ := types.RatToCoin(
+			new(big.Rat).Mul(allocation.ValidatorAllocation.GetRat(),
+				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+		assert.Equal(t, expectValidatorInflation, pool.ValidatorInflationPool)
+		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
+		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
+		assert.Equal(t, expectValidatorInflation, pool.ValidatorInflationPool)
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.thisYearConsumtion, globalMeta.LastYearCumulativeConsumption)
