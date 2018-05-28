@@ -365,6 +365,15 @@ func (accManager AccountManager) GetSequence(
 	return accountMeta.Sequence, nil
 }
 
+func (accManager AccountManager) GetFrozenMoneyList(
+	ctx sdk.Context, accKey types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	if err != nil {
+		return nil, ErrGetFrozenMoneyList(accKey).TraceCause(err, "")
+	}
+	return accountBank.FrozenMoneyList, nil
+}
+
 func (accManager AccountManager) IncreaseSequenceByOne(
 	ctx sdk.Context, accKey types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, accKey)

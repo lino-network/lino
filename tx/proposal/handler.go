@@ -161,6 +161,11 @@ func handleContentCensorshipMsg(
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin) sdk.Error {
+	if err := am.AddFrozenMoney(
+		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		return err
+	}
+
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
@@ -175,11 +180,6 @@ func returnCoinTo(
 			Amount:   piece,
 		}
 		events = append(events, event)
-	}
-
-	if err := am.AddFrozenMoney(
-		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
-		return err
 	}
 
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
