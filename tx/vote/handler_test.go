@@ -288,3 +288,37 @@ func TestDelegatorWithdraw(t *testing.T) {
 		assert.Equal(t, cs.expectResult, res)
 	}
 }
+
+func TestAddFrozenMoney(t *testing.T) {
+	ctx, am, vm, gm := setupTest(t, 0)
+	vm.InitGenesis(ctx)
+
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user := createTestAccount(ctx, am, "user", minBalance)
+
+	testCases := []struct {
+		testName               string
+		times                  int64
+		interval               int64
+		returnedCoin           types.Coin
+		expectedFrozenListLen  int
+		expectedFrozenMoney    types.Coin
+		expectedFrozenTimes    int64
+		expectedFrozenInterval int64
+	}{
+		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
+		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+	}
+
+	for _, tc := range testCases {
+		err := returnCoinTo(
+			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+		assert.Equal(t, nil, err)
+		lst, err := am.GetFrozenMoneyList(ctx, user)
+		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
+		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
+		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
+		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
+
+	}
+}

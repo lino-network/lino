@@ -2,7 +2,6 @@ package developer
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 
 	acc "github.com/lino-network/lino/tx/account"
@@ -95,25 +94,16 @@ func handleGrantDeveloperMsg(
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
 	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
-	events := []types.Event{}
-	for i := int64(0); i < times; i++ {
-		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
-		piece, err := types.RatToCoin(pieceRat)
-		if err != nil {
-			return err
-		}
-		coin = coin.Minus(piece)
-
-		event := acc.ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
-		}
-		events = append(events, event)
-	}
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
 		return err
 	}
+
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin)
+	if err != nil {
+		return err
+	}
+
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}

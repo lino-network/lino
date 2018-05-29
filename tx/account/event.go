@@ -1,6 +1,8 @@
 package account
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
 )
@@ -21,4 +23,25 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 		return err
 	}
 	return nil
+}
+
+// create coin return events
+func CreateCoinReturnEvents(
+	name types.AccountKey, times int64, interval int64, coin types.Coin) ([]types.Event, sdk.Error) {
+	events := []types.Event{}
+	for i := int64(0); i < times; i++ {
+		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
+		piece, err := types.RatToCoin(pieceRat)
+		if err != nil {
+			return nil, err
+		}
+		coin = coin.Minus(piece)
+
+		event := ReturnCoinEvent{
+			Username: name,
+			Amount:   piece,
+		}
+		events = append(events, event)
+	}
+	return events, nil
 }
