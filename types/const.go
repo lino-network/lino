@@ -67,7 +67,7 @@ const (
 	TransferOut      = BalanceHistoryDetailType(13)
 	DonationOut      = BalanceHistoryDetailType(14)
 	Delegate         = BalanceHistoryDetailType(15)
-	VoteDeposit      = BalanceHistoryDetailType(16)
+	VoterDeposit     = BalanceHistoryDetailType(16)
 	ValidatorDeposit = BalanceHistoryDetailType(17)
 	DeveloperDeposit = BalanceHistoryDetailType(18)
 	InfraDeposit     = BalanceHistoryDetailType(19)

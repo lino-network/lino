@@ -47,7 +47,7 @@ func handleVoterDepositMsg(
 	}
 
 	// withdraw money from voter's bank
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.VoteDeposit); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.VoterDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -86,7 +86,7 @@ func handleVoterWithdrawMsg(
 	}
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
-		param.VoterCoinReturnIntervalHr, coin); err != nil {
+		param.VoterCoinReturnIntervalHr, coin, types.VoteReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -117,7 +117,7 @@ func handleVoterRevokeMsg(
 		}
 		if err := returnCoinTo(
 			ctx, delegator, gm, am, param.DelegatorCoinReturnTimes,
-			param.DelegatorCoinReturnIntervalHr, coin); err != nil {
+			param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
 			return err.Result()
 		}
 	}
@@ -130,7 +130,7 @@ func handleVoterRevokeMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
-		param.VoterCoinReturnIntervalHr, coin); err != nil {
+		param.VoterCoinReturnIntervalHr, coin, types.VoteReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -175,7 +175,7 @@ func handleDelegatorWithdrawMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalHr, coin); err != nil {
+		param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -196,7 +196,7 @@ func handleRevokeDelegationMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalHr, coin); err != nil {
+		param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -219,14 +219,14 @@ func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
 
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
-	times int64, interval int64, coin types.Coin) sdk.Error {
+	times int64, interval int64, coin types.Coin, returnType types.BalanceHistoryDetailType) sdk.Error {
 
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.VoteReturnCoin)
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, returnType)
 	if err != nil {
 		return err
 	}
