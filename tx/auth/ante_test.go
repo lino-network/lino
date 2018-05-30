@@ -34,7 +34,7 @@ func createTestAccount(
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
-	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee)
+	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee, types.TransferIn)
 	am.CreateAccount(ctx, types.AccountKey(username),
 		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
 	return masterKey, transactionKey, postKey, types.AccountKey(username)

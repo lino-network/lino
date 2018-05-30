@@ -47,7 +47,6 @@ const (
 	FlagSourceAuthor            = "source-author"
 	FlagSourcePostID            = "source-post-ID"
 	FlagRedistributionSplitRate = "redistribution-split-rate"
-	FlagFromChecking            = "from-checking"
 
 	// Vote
 	FlagVoter      = "voter"

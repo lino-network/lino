@@ -23,6 +23,15 @@ func checkBankKVByAddress(
 	assert.Equal(t, bank, *bankPtr, "bank should be equal")
 }
 
+func checkBalanceHistory(
+	t *testing.T, ctx sdk.Context, addr sdk.Address,
+	timeSlot int64, balanceHistory model.BalanceHistory) {
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, addr, timeSlot)
+	assert.Nil(t, err)
+	assert.Equal(t, balanceHistory, *balanceHistoryPtr, "balance history should be equal")
+}
+
 func checkPendingStake(
 	t *testing.T, ctx sdk.Context, addr sdk.Address, pendingStakeQueue model.PendingStakeQueue) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
@@ -74,22 +83,28 @@ func TestAddCoinFromAddress(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
+	accParam, err := am.paramHolder.GetAccountParam(ctx)
+	assert.Nil(t, err)
 
 	baseTime := time.Now().Unix()
+	// Get the minimum time of this history slot
+	baseTime = baseTime / accParam.BalanceHistoryIntervalTime * accParam.BalanceHistoryIntervalTime
 	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
 	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
+	baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 
 	cases := []struct {
-		testName                string
-		AddToSaving             bool
-		ToAddress               sdk.Address
-		Amount                  types.Coin
-		AtWhen                  int64
-		ExpectBank              model.AccountBank
-		ExpectPendingStakeQueue model.PendingStakeQueue
+		testName                 string
+		ToAddress                sdk.Address
+		Amount                   types.Coin
+		CoinType                 types.BalanceHistoryDetailType
+		AtWhen                   int64
+		ExpectBank               model.AccountBank
+		ExpectPendingStakeQueue  model.PendingStakeQueue
+		ExpectBalanceHistorySlot model.BalanceHistory
 	}{
-		{"add coin to non-exist account's saving",
-			true, sdk.Address("test"), coin1, baseTime,
+		{"add coin to non-exist address saving",
+			sdk.Address("test"), coin1, types.TransferIn, baseTime,
 			model.AccountBank{
 				Address: sdk.Address("test"),
 				Saving:  coin1,
@@ -104,57 +119,21 @@ func TestAddCoinFromAddress(t *testing.T) {
 					Coin:      coin1,
 				}},
 			},
-		},
-		{"add coin to non-exist account's checking",
-			false, sdk.Address("test1"), coin1, baseTime,
-			model.AccountBank{
-				Address:  sdk.Address("test1"),
-				Checking: coin1,
-			},
-			model.PendingStakeQueue{},
-		},
-		{"add coin to exist account's saving",
-			true, sdk.Address("test1"), coin1, baseTime,
-			model.AccountBank{
-				Address:  sdk.Address("test1"),
-				Saving:   coin1,
-				Checking: coin1,
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        coin1,
-				PendingStakeList: []model.PendingStake{model.PendingStake{
-					StartTime: baseTime,
-					EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-					Coin:      coin1,
-				}},
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime,
+						DetailType: types.TransferIn,
+					},
+				},
 			},
 		},
-		{"add coin to exist account's checking",
-			false, sdk.Address("test"), coin1, baseTime,
+		{"add coin to exist address saving while previous tx is still in pending queue",
+			sdk.Address("test"), coin1, types.DonationIn, baseTime1,
 			model.AccountBank{
-				Address:  sdk.Address("test"),
-				Saving:   coin1,
-				Checking: coin1,
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        coin1,
-				PendingStakeList: []model.PendingStake{model.PendingStake{
-					StartTime: baseTime,
-					EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-					Coin:      coin1,
-				}},
-			},
-		},
-		{"add coin to exist account's saving while previous tx is still in pending queue",
-			true, sdk.Address("test"), coin1, baseTime1,
-			model.AccountBank{
-				Address:  sdk.Address("test"),
-				Saving:   coin2,
-				Checking: coin1,
+				Address: sdk.Address("test"),
+				Saving:  coin2,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime1,
@@ -170,46 +149,93 @@ func TestAddCoinFromAddress(t *testing.T) {
 						StartTime: baseTime1,
 						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      coin1,
-					}},
+					},
+				},
 			},
-		},
-		{"add coin to exist account's checking while previous tx is still in pending queue",
-			false, sdk.Address("test1"), coin1, baseTime1,
-			model.AccountBank{
-				Address:  sdk.Address("test1"),
-				Saving:   coin1,
-				Checking: coin2,
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        coin1,
-				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      coin1,
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime,
+						DetailType: types.TransferIn,
+					},
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime1,
+						DetailType: types.DonationIn,
 					},
 				},
 			},
 		},
-		{"add coin to exist account's saving while previous tx just finished pending",
-			true, sdk.Address("test1"), coin1, baseTime2,
+		{"add coin to exist address saving while previous tx just finished pending",
+			sdk.Address("test"), coin1, types.ClaimReward, baseTime2,
 			model.AccountBank{
-				Address:  sdk.Address("test1"),
-				Saving:   coin2,
-				Checking: coin2,
-				Stake:    coin1,
+				Address: sdk.Address("test"),
+				Saving:  coin3,
+				Stake:   coin1,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2,
-				TotalCoin:        coin1,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.NewRat(302401, 604800),
+				TotalCoin:        coin2,
 				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime1,
+						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      coin1,
+					},
 					model.PendingStake{
 						StartTime: baseTime2,
 						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      coin1,
+					},
+				},
+			},
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime,
+						DetailType: types.TransferIn,
+					},
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime1,
+						DetailType: types.DonationIn,
+					},
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime2,
+						DetailType: types.ClaimReward,
+					},
+				},
+			},
+		},
+		{"add coin at next balance history slot",
+			sdk.Address("test"), coin1, types.TransferIn, baseTime3,
+			model.AccountBank{
+				Address: sdk.Address("test"),
+				Saving:  coin4,
+				Stake:   coin3,
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime3,
+				StakeCoinInQueue: sdk.ZeroRat,
+				TotalCoin:        coin1,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime3,
+						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      coin1,
+					},
+				},
+			},
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     coin1,
+						CreatedAt:  baseTime3,
+						DetailType: types.TransferIn,
 					},
 				},
 			},
@@ -218,17 +244,136 @@ func TestAddCoinFromAddress(t *testing.T) {
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
-		if cs.AddToSaving {
-			err = am.AddSavingCoinToAddress(ctx, cs.ToAddress, cs.Amount)
-		} else {
-			err = am.AddCheckingCoinToAddress(ctx, cs.ToAddress, cs.Amount)
-		}
+		err = am.AddSavingCoinToAddress(ctx, cs.ToAddress, cs.Amount, cs.CoinType)
+
 		if err != nil {
 			t.Errorf("%s: add coin failed, err: %v", cs.testName, err)
 			return
 		}
 		checkBankKVByAddress(t, ctx, cs.ToAddress, cs.ExpectBank)
 		checkPendingStake(t, ctx, cs.ToAddress, cs.ExpectPendingStakeQueue)
+		checkBalanceHistory(
+			t, ctx, cs.ToAddress, cs.AtWhen/accParam.BalanceHistoryIntervalTime, cs.ExpectBalanceHistorySlot)
+	}
+}
+
+func TestAddCoin(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	assert.Nil(t, err)
+	accParam, err := am.paramHolder.GetAccountParam(ctx)
+	assert.Nil(t, err)
+
+	baseTime := time.Now().Unix()
+	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
+	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
+
+	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
+	priv1 := createTestAccount(ctx, am, "user1")
+	cases := []struct {
+		testName                string
+		ToUser                  types.AccountKey
+		UserAddress             sdk.Address
+		Amount                  types.Coin
+		CoinType                types.BalanceHistoryDetailType
+		AtWhen                  int64
+		ExpectBank              model.AccountBank
+		ExpectPendingStakeQueue model.PendingStakeQueue
+	}{
+		{"add coin to non-exist account's saving",
+			types.AccountKey("user1"), priv1.PubKey().Address(),
+			c100, types.TransferIn, baseTime,
+			model.AccountBank{
+				Username: types.AccountKey("user1"),
+				Address:  priv1.PubKey().Address(),
+				Saving:   accParam.RegisterFee.Plus(c100),
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime,
+				StakeCoinInQueue: sdk.ZeroRat,
+				TotalCoin:        accParam.RegisterFee.Plus(c100),
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime,
+						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      accParam.RegisterFee,
+					},
+					model.PendingStake{
+						StartTime: baseTime,
+						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+				},
+			},
+		},
+		{"add coin to exist account's saving while previous tx is still in pending queue",
+			types.AccountKey("user1"), priv1.PubKey().Address(), c100, types.DonationIn, baseTime1,
+			model.AccountBank{
+				Username: types.AccountKey("user1"),
+				Address:  priv1.PubKey().Address(),
+				Saving:   accParam.RegisterFee.Plus(c100).Plus(c100),
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime1,
+				StakeCoinInQueue: sdk.NewRat(5050000, 1),
+				TotalCoin:        accParam.RegisterFee.Plus(c100).Plus(c100),
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime,
+						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      accParam.RegisterFee,
+					},
+					model.PendingStake{
+						StartTime: baseTime,
+						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+					model.PendingStake{
+						StartTime: baseTime1,
+						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+				},
+			},
+		},
+		{"add coin to exist account's saving while previous tx just finished pending",
+			types.AccountKey("user1"), priv1.PubKey().Address(), c100, types.ClaimReward, baseTime2,
+			model.AccountBank{
+				Username: types.AccountKey("user1"),
+				Address:  priv1.PubKey().Address(),
+				Saving:   accParam.RegisterFee.Plus(c100).Plus(c100).Plus(c100),
+				Stake:    accParam.RegisterFee.Plus(c100),
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime2,
+				StakeCoinInQueue: sdk.NewRat(945003125, 189),
+				TotalCoin:        c100.Plus(c100),
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime1,
+						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+					model.PendingStake{
+						StartTime: baseTime2,
+						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+				},
+			},
+		},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
+		err = am.AddSavingCoin(ctx, cs.ToUser, cs.Amount, cs.CoinType)
+
+		if err != nil {
+			t.Errorf("%s: add coin failed, err: %v", cs.testName, err)
+			return
+		}
+		checkBankKVByAddress(t, ctx, cs.UserAddress, cs.ExpectBank)
+		checkPendingStake(t, ctx, cs.UserAddress, cs.ExpectPendingStakeQueue)
 	}
 }
 
@@ -239,22 +384,17 @@ func TestMinusCoin(t *testing.T) {
 	assert.Nil(t, err)
 
 	userWithSufficientSaving := types.AccountKey("user1")
-	userWithSufficientChecking := types.AccountKey("user2")
 	userWithLimitSaving := types.AccountKey("user3")
 
 	priv1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
-	priv2 := createTestAccount(ctx, am, string(userWithSufficientChecking))
 	priv3 := createTestAccount(ctx, am, string(userWithLimitSaving))
-	err = am.AddSavingCoin(ctx, userWithSufficientSaving, accParam.RegisterFee)
-	assert.Nil(t, err)
-	err = am.AddCheckingCoin(ctx, userWithSufficientChecking, accParam.RegisterFee)
+	err = am.AddSavingCoin(ctx, userWithSufficientSaving, accParam.RegisterFee, types.TransferIn)
 	assert.Nil(t, err)
 
 	baseTime := ctx.BlockHeader().Time
 
 	cases := []struct {
 		TestName                string
-		MinusFromSaving         bool
 		FromUser                types.AccountKey
 		UserPriv                crypto.PrivKey
 		ExpectErr               sdk.Error
@@ -264,7 +404,7 @@ func TestMinusCoin(t *testing.T) {
 		ExpectPendingStakeQueue model.PendingStakeQueue
 	}{
 		{"minus saving coin from user with sufficient saving",
-			true, userWithSufficientSaving, priv1, nil, coin1, baseTime,
+			userWithSufficientSaving, priv1, nil, coin1, baseTime,
 			model.AccountBank{
 				Username: userWithSufficientSaving,
 				Address:  priv1.PubKey().Address(),
@@ -287,69 +427,8 @@ func TestMinusCoin(t *testing.T) {
 					}},
 			},
 		},
-		{"minus checking coin from user with sufficient checking",
-			false, userWithSufficientChecking, priv2, nil, coin1, baseTime,
-			model.AccountBank{
-				Username: userWithSufficientChecking,
-				Address:  priv2.PubKey().Address(),
-				Saving:   accParam.RegisterFee,
-				Checking: accParam.RegisterFee.Minus(coin1),
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      accParam.RegisterFee,
-					}},
-			},
-		},
-		{"minus too much checking coin from user with sufficient checking",
-			false, userWithSufficientChecking, priv2, ErrAccountCheckingCoinNotEnough(),
-			accParam.RegisterFee, baseTime,
-			model.AccountBank{
-				Username: userWithSufficientChecking,
-				Address:  priv2.PubKey().Address(),
-				Saving:   accParam.RegisterFee,
-				Checking: accParam.RegisterFee.Minus(coin1),
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      accParam.RegisterFee,
-					}},
-			},
-		},
-		{"minus too much checking coin from user without checking",
-			false, userWithLimitSaving, priv3, ErrAccountCheckingCoinNotEnough(),
-			accParam.RegisterFee, baseTime,
-			model.AccountBank{
-				Username: userWithLimitSaving,
-				Address:  priv3.PubKey().Address(),
-				Saving:   accParam.RegisterFee,
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      accParam.RegisterFee,
-					}},
-			},
-		},
 		{"minus saving coin from user with limit saving",
-			true, userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
+			userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
 			coin1, baseTime,
 			model.AccountBank{
 				Username: userWithLimitSaving,
@@ -371,11 +450,7 @@ func TestMinusCoin(t *testing.T) {
 	}
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
-		if cs.MinusFromSaving {
-			err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount)
-		} else {
-			err = am.MinusCheckingCoin(ctx, cs.FromUser, cs.Amount)
-		}
+		err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount)
 
 		assert.Equal(t, cs.ExpectErr, err, fmt.Sprintf("%s: minus coin failed, err: %v", cs.TestName, err))
 		checkBankKVByAddress(t, ctx, cs.UserPriv.PubKey().Address(), cs.ExpectBank)
@@ -392,7 +467,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	// normal test
 	assert.False(t, am.IsAccountExist(ctx, accKey))
-	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee, types.TransferIn)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
@@ -440,7 +515,6 @@ func TestCreateAccountNormalCase(t *testing.T) {
 func TestInvalidCreateAccount(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 	enoughSavingCoinPriv := crypto.GenPrivKeyEd25519()
-	enoughCheckingCoinPriv := crypto.GenPrivKeyEd25519()
 	insufficientSavingCoinPriv := crypto.GenPrivKeyEd25519()
 	insufficientCheckingCoinPriv := crypto.GenPrivKeyEd25519()
 	newPrivWithoutBank := crypto.GenPrivKeyEd25519()
@@ -449,13 +523,11 @@ func TestInvalidCreateAccount(t *testing.T) {
 	accKey2 := types.AccountKey("accKey2")
 
 	err := am.AddSavingCoinToAddress(
-		ctx, enoughSavingCoinPriv.PubKey().Address(), accParam.RegisterFee)
+		ctx, enoughSavingCoinPriv.PubKey().Address(), accParam.RegisterFee, types.TransferIn)
 	err = am.AddSavingCoinToAddress(
-		ctx, insufficientSavingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1))
-	err = am.AddCheckingCoinToAddress(
-		ctx, enoughCheckingCoinPriv.PubKey().Address(), accParam.RegisterFee)
+		ctx, insufficientSavingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1), types.TransferIn)
 	err = am.AddSavingCoinToAddress(
-		ctx, insufficientCheckingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1))
+		ctx, insufficientCheckingCoinPriv.PubKey().Address(), types.NewCoinFromInt64(1), types.TransferIn)
 
 	cases := []struct {
 		testName  string
@@ -550,7 +622,7 @@ func TestCoinDayByAddress(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.AtWhen})
-		err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), tc.AddCoin)
+		err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), tc.AddCoin, types.TransferIn)
 		if err != nil {
 			t.Errorf("%s: add coin failed, expect %v, got %v", tc.testName, "nil", err)
 			return
@@ -587,14 +659,12 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 	baseTime2 := baseTime + totalCoinDaysSec + (totalCoinDaysSec/registerFee)/2 + 1
-	baseTime3 := baseTime2 + totalCoinDaysSec/2 + 1
 
 	priv := createTestAccount(ctx, am, string(accKey))
 
 	cases := []struct {
 		testName              string
 		IsAdd                 bool
-		IsSaving              bool
 		Coin                  types.Coin
 		AtWhen                int64
 		ExpectSavingBalance   types.Coin
@@ -603,55 +673,36 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		ExpectStakeInBank     types.Coin
 	}{
 		{"add coin before charging first coin",
-			true, true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
+			true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
 			doubleRegisterFee, coin0, coin0, coin0},
 		{"check first coin",
-			true, true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
+			true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
 			doubleRegisterFee, coin0, coin1, coin0},
 		{"check both transactions fully charged",
-			true, true, coin0, baseTime2, doubleRegisterFee, coin0, doubleRegisterFee, doubleRegisterFee},
+			true, coin0, baseTime2, doubleRegisterFee, coin0, doubleRegisterFee, doubleRegisterFee},
 		{"withdraw half deposit",
-			false, true, accParam.RegisterFee, baseTime2,
+			false, accParam.RegisterFee, baseTime2,
 			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 		{"charge again",
-			true, true, accParam.RegisterFee, baseTime2,
+			true, accParam.RegisterFee, baseTime2,
 			doubleRegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 		{"withdraw half deposit while the last transaction is still charging",
-			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
+			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
 			accParam.RegisterFee.Plus(halfRegisterFee), coin0,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)), accParam.RegisterFee},
 		{"withdraw last transaction which is still charging",
-			false, true, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
-		{"add checking coin",
-			true, false, accParam.RegisterFee, baseTime3,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
-		{"checking coin should not affect stake",
-			true, true, coin0, baseTime3 + totalCoinDaysSec + 1,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
-		{"withdraw checking coin should not affect stake",
-			false, false, accParam.RegisterFee, baseTime3 + totalCoinDaysSec + 1,
+			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
 			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
 		if cs.IsAdd {
-			if cs.IsSaving {
-				err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
-				assert.Nil(t, err)
-			} else {
-				err := am.AddCheckingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin)
-				assert.Nil(t, err)
-			}
+			err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), cs.Coin, types.TransferIn)
+			assert.Nil(t, err)
 		} else {
-			if cs.IsSaving {
-				err := am.MinusSavingCoin(ctx, accKey, cs.Coin)
-				assert.Nil(t, err)
-			} else {
-				err := am.MinusCheckingCoin(ctx, accKey, cs.Coin)
-				assert.Nil(t, err)
-			}
+			err := am.MinusSavingCoin(ctx, accKey, cs.Coin)
+			assert.Nil(t, err)
 		}
 		coin, err := am.GetStake(ctx, accKey)
 		assert.Nil(t, err)
@@ -663,7 +714,6 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		bank := model.AccountBank{
 			Address:  priv.PubKey().Address(),
 			Saving:   cs.ExpectSavingBalance,
-			Checking: cs.ExpectCheckingBalance,
 			Stake:    cs.ExpectStakeInBank,
 			Username: accKey,
 		}
@@ -676,7 +726,7 @@ func TestAccountReward(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 	priv := crypto.GenPrivKeyEd25519()
 
-	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee)
+	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee, types.TransferIn)
 	assert.Nil(t, err)
 	err = am.CreateAccount(ctx, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
@@ -718,7 +768,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	priv := createTestAccount(ctx, am, string(accKey))
-	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), c100)
+	err = am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), c100, types.TransferIn)
 	assert.Nil(t, err)
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
@@ -795,7 +845,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
-	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParam.RegisterFee)
+	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParam.RegisterFee, types.TransferIn)
 	am.CreateAccount(ctx, user1,
 		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
 

@@ -78,8 +78,9 @@ type View struct {
 type Donation struct {
 	Amount       types.Coin         `json:"amount"`
 	CreatedAt    int64              `json:"created_at"`
-	DonationType types.DonationType `json:""`
+	DonationType types.DonationType `json:"donation_type"`
 }
+
 type Donations struct {
 	Username     types.AccountKey `json:"username"`
 	DonationList []Donation       `json:"donation_list"`

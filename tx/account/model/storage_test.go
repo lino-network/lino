@@ -128,3 +128,17 @@ func TestAccountRelationShip(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, relationship, *resultPtr, "Account relationship should be equal")
 }
+
+func TestAccountBalanceHistory(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	addr := crypto.GenPrivKeyEd25519().PubKey().Address()
+	balanceHistory := BalanceHistory{[]Detail{Detail{}}}
+	err := as.SetBalanceHistory(ctx, addr, 0, &balanceHistory)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetBalanceHistory(ctx, addr, 0)
+	assert.Nil(t, err)
+	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
+}

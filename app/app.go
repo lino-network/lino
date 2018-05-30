@@ -247,7 +247,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if err := lb.accountManager.AddSavingCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
+	if err := lb.accountManager.AddSavingCoinToAddress(ctx, ga.MasterKey.Address(), coin, types.GenesisCoin); err != nil {
 		panic(sdk.ErrGenesisParse("set genesis bank failed"))
 	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
@@ -476,7 +476,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator)
+		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator, types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -501,7 +501,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		}
 		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage.GetRat())
 		myShareCoin, err := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin)
+		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin, types.InfraInflation)
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -530,7 +530,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		}
 		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage)
 		myShareCoin, _ := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin)
+		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin, types.DeveloperInflation)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {

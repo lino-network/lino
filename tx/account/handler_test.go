@@ -166,7 +166,7 @@ func TestTransferNormal(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
 
 	receiverAddr, _ := am.GetBankAddress(ctx, user2)
 
@@ -276,8 +276,8 @@ func TestUsernameAddressMismatch(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
-	am.AddSavingCoin(ctx, types.AccountKey("user2"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
+	am.AddSavingCoin(ctx, types.AccountKey("user2"), c2000, types.TransferIn)
 
 	memo := "This is a memo!"
 	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
@@ -295,7 +295,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000)
+	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
 
 	memo := "This is a memo!"
 
@@ -345,63 +345,5 @@ func TestHandleAccountRecover(t *testing.T) {
 			Username: types.AccountKey(user1),
 		}
 		checkBankKVByAddress(t, ctx, tc.newMasterKey.Address(), newBank)
-	}
-}
-
-func TestSavingAndChecking(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
-	handler := NewHandler(am)
-	user1 := types.AccountKey("user1")
-
-	createTestAccount(ctx, am, string(user1))
-	am.AddSavingCoin(ctx, user1, c2000)
-
-	testCases := []struct {
-		testName             string
-		user                 string
-		fromSavingToChecking bool
-		amount               types.LNO
-		expectResult         sdk.Result
-		expectChecking       types.Coin
-		expectSaving         types.Coin
-	}{
-		{"transfer from saving to checking",
-			string(user1), true, types.LNO("200"), sdk.Result{},
-			c200, accParam.RegisterFee.Plus(c1800),
-		},
-		{"transfer from checking to saving",
-			string(user1), false, types.LNO("200"), sdk.Result{},
-			c0, accParam.RegisterFee.Plus(c2000),
-		},
-		{"transfer from checking to saving if checking is insufficient",
-			string(user1), false, types.LNO("200"),
-			ErrAccountCheckingCoinNotEnough().Result(),
-			c0, accParam.RegisterFee.Plus(c2000),
-		},
-		{"transfer from saving to checking if saving is insufficient",
-			string(user1), false, types.LNO("2001"),
-			ErrAccountSavingCoinNotEnough().Result(),
-			c0, accParam.RegisterFee.Plus(c2000),
-		},
-	}
-
-	for _, tc := range testCases {
-		var msg sdk.Msg
-		if tc.fromSavingToChecking {
-			msg = NewSavingToCheckingMsg(tc.user, tc.amount)
-		} else {
-			msg = NewCheckingToSavingMsg(tc.user, tc.amount)
-		}
-		result := handler(ctx, msg)
-		assert.Equal(t, tc.expectResult, result,
-			fmt.Sprintf("%s: got %v, want %v", tc.testName, tc.expectResult, result))
-		accSaving, err := am.GetSavingFromBank(ctx, user1)
-		assert.Nil(t, err, fmt.Sprintf("%s: got err %v", tc.testName, err))
-		assert.Equal(t, tc.expectSaving, accSaving,
-			fmt.Sprintf("%s: expect saving %v, got %v", tc.testName, tc.expectSaving, accSaving))
-		accChecking, err := am.GetCheckingFromBank(ctx, user1)
-		assert.Nil(t, err, fmt.Sprintf("%s: got err %v", tc.testName, err))
-		assert.Equal(t, tc.expectChecking, accChecking,
-			fmt.Sprintf("%s: expect saving %v, got %v", tc.testName, tc.expectChecking, accChecking))
 	}
 }

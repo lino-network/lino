@@ -1,6 +1,8 @@
 package model
 
 import (
+	"strconv"
+
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +19,7 @@ var (
 	accountPendingStakeQueueSubstore = []byte{0x06}
 	accountRelationshipSubstore      = []byte{0x07}
 	accountGrantListSubstore         = []byte{0x08}
+	accountBalanceHistorySubstore    = []byte{0x09}
 )
 
 type AccountStorage struct {
@@ -304,6 +307,33 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 	return nil
 }
 
+// GetRelationship returns the relationship between two accounts.
+func (as AccountStorage) GetBalanceHistory(
+	ctx sdk.Context, address sdk.Address, timeSlot int64) (*BalanceHistory, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	balanceHistoryBytes := store.Get(getBalanceHistoryKey(address, timeSlot))
+	if balanceHistoryBytes == nil {
+		return nil, nil
+	}
+	history := new(BalanceHistory)
+	if err := as.cdc.UnmarshalJSON(balanceHistoryBytes, history); err != nil {
+		return nil, ErrGetBalanceHistoryFailed().TraceCause(err, "")
+	}
+	return history, nil
+}
+
+// SetBalanceHistory sets balance history.
+func (as AccountStorage) SetBalanceHistory(
+	ctx sdk.Context, address sdk.Address, timeSlot int64, history *BalanceHistory) sdk.Error {
+	store := ctx.KVStore(as.key)
+	historyBytes, err := as.cdc.MarshalJSON(*history)
+	if err != nil {
+		return ErrSetBalanceHistoryFailed().TraceCause(err, "")
+	}
+	store.Set(getBalanceHistoryKey(address, timeSlot), historyBytes)
+	return nil
+}
+
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(accountInfoSubstore, accKey...)
 }
@@ -352,4 +382,12 @@ func getPendingStakeQueueKey(address sdk.Address) []byte {
 
 func getGrantKeyListKey(me types.AccountKey) []byte {
 	return append(accountGrantListSubstore, me...)
+}
+
+func getBalanceHistoryPrefix(address sdk.Address) []byte {
+	return append(append(accountBalanceHistorySubstore, address...), types.KeySeparator...)
+}
+
+func getBalanceHistoryKey(address sdk.Address, atWhen int64) []byte {
+	return strconv.AppendInt(getBalanceHistoryPrefix(address), atWhen, 10)
 }
