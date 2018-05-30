@@ -3,13 +3,12 @@ package commands
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/lino-network/lino/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lino-network/lino/client"
 	dev "github.com/lino-network/lino/tx/developer"
-
-	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 func GrantDeveloperTxCmd(cdc *wire.Codec) *cobra.Command {
