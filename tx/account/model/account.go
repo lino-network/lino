@@ -15,16 +15,13 @@ type AccountInfo struct {
 	MasterKey      crypto.PubKey    `json:"master_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
 	PostKey        crypto.PubKey    `json:"post_key"`
-	Address        sdk.Address      `json:"address"`
 }
 
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
-	Address         sdk.Address      `json:"address"`
-	Saving          types.Coin       `json:"saving"`
-	Username        types.AccountKey `json:"username"`
-	Stake           types.Coin       `json:"stake"`
-	FrozenMoneyList []FrozenMoney    `json:"frozen_money_list"`
+	Saving          types.Coin    `json:"saving"`
+	Stake           types.Coin    `json:"stake"`
+	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
 }
 
 type FrozenMoney struct {

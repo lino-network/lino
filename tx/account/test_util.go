@@ -31,6 +31,7 @@ var (
 	c100  = types.NewCoinFromInt64(100 * types.Decimals)
 	c200  = types.NewCoinFromInt64(200 * types.Decimals)
 	c300  = types.NewCoinFromInt64(300 * types.Decimals)
+	c400  = types.NewCoinFromInt64(400 * types.Decimals)
 	c500  = types.NewCoinFromInt64(500 * types.Decimals)
 	c600  = types.NewCoinFromInt64(600 * types.Decimals)
 	c1000 = types.NewCoinFromInt64(1000 * types.Decimals)
@@ -74,8 +75,7 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), accParam.RegisterFee, types.TransferIn)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
 	return priv
 }

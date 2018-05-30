@@ -118,7 +118,7 @@ func handleDonateMsg(
 			return ErrDonateFailed(permLink).Result()
 		}
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.DonationOut); err != nil {
 		return ErrAccountSavingCoinNotEnough(permLink).Result()
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)

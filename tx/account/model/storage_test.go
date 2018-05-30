@@ -38,7 +38,6 @@ func TestAccountInfo(t *testing.T) {
 		MasterKey:      priv.PubKey(),
 		TransactionKey: priv.Generate(1).PubKey(),
 		PostKey:        priv.Generate(2).PubKey(),
-		Address:        priv.PubKey().Address(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -61,30 +60,13 @@ func TestAccountBank(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	priv := crypto.GenPrivKeyEd25519()
-	accInfo := AccountInfo{
-		Username:       types.AccountKey("test"),
-		CreatedAt:      0,
-		MasterKey:      priv.PubKey(),
-		TransactionKey: priv.Generate(1).PubKey(),
-		PostKey:        priv.Generate(2).PubKey(),
-		Address:        priv.PubKey().Address(),
-	}
-	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
-	assert.Nil(t, err)
-
 	accBank := AccountBank{
-		Address: priv.PubKey().Address(),
-		Saving:  types.NewCoinFromInt64(int64(123)),
+		Saving: types.NewCoinFromInt64(int64(123)),
 	}
-	err = as.SetBankFromAddress(ctx, priv.PubKey().Address(), &accBank)
+	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
 	assert.Nil(t, err)
 
 	resultPtr, err := as.GetBankFromAccountKey(ctx, types.AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
-
-	resultPtr, err = as.GetBankFromAddress(ctx, priv.PubKey().Address())
 	assert.Nil(t, err)
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
 }
@@ -133,12 +115,11 @@ func TestAccountBalanceHistory(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	addr := crypto.GenPrivKeyEd25519().PubKey().Address()
 	balanceHistory := BalanceHistory{[]Detail{Detail{}}}
-	err := as.SetBalanceHistory(ctx, addr, 0, &balanceHistory)
+	err := as.SetBalanceHistory(ctx, types.AccountKey("test"), 0, &balanceHistory)
 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetBalanceHistory(ctx, addr, 0)
+	resultPtr, err := as.GetBalanceHistory(ctx, types.AccountKey("test"), 0)
 	assert.Nil(t, err)
 	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
 }

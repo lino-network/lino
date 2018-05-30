@@ -168,8 +168,6 @@ func TestTransferNormal(t *testing.T) {
 
 	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
 
-	receiverAddr, _ := am.GetBankAddress(ctx, user2)
-
 	testCases := []struct {
 		testName            string
 		msg                 TransferMsg
@@ -178,49 +176,10 @@ func TestTransferNormal(t *testing.T) {
 		wantReceiverBalance types.Coin
 	}{
 		{testName: "user1 transfers 200 LNO to user2 (by username)",
-			msg: TransferMsg{
-				Sender:       user1,
-				ReceiverName: user2,
-				Amount:       l200,
-				Memo:         memo,
-			},
+			msg:                 NewTransferMsg("user1", "user2", l200, memo),
 			wantOK:              true,
 			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
 			wantReceiverBalance: c200.Plus(accParam.RegisterFee),
-		},
-		{testName: "user1 transfers 1600 LNO to user2 (by both username and address)",
-			msg: TransferMsg{
-				Sender:       user1,
-				ReceiverName: user2,
-				ReceiverAddr: receiverAddr,
-				Amount:       l1600,
-				Memo:         memo,
-			},
-			wantOK:              true,
-			wantSenderBalance:   c200.Plus(accParam.RegisterFee),
-			wantReceiverBalance: c1800.Plus(accParam.RegisterFee),
-		},
-		{testName: "user1 transfers 100 LNO to user2 (by address)",
-			msg: TransferMsg{
-				Sender:       user1,
-				ReceiverAddr: receiverAddr,
-				Amount:       l100,
-				Memo:         memo,
-			},
-			wantOK:              true,
-			wantSenderBalance:   c100.Plus(accParam.RegisterFee),
-			wantReceiverBalance: c1900.Plus(accParam.RegisterFee),
-		},
-		{testName: "user2 transfers 100 LNO to a random address",
-			msg: TransferMsg{
-				Sender:       user2,
-				ReceiverAddr: sdk.Address("sdajsdbiqwbdiub"),
-				Amount:       l100,
-				Memo:         memo,
-			},
-			wantOK:              true,
-			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
-			wantReceiverBalance: c100,
 		},
 	}
 
@@ -228,23 +187,23 @@ func TestTransferNormal(t *testing.T) {
 		result := handler(ctx, tc.msg)
 
 		if result.IsOK() != tc.wantOK {
-			t.Errorf("%s handler(%v): got %v, want %v, err:%v", tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
+			t.Errorf(
+				"%s handler(%v): got %v, want %v, err:%v",
+				tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
 		}
 
 		senderSaving, _ := am.GetSavingFromBank(ctx, tc.msg.Sender)
-		var receiverSaving types.Coin
-		if tc.msg.ReceiverName != "" {
-			receiverSaving, _ = am.GetSavingFromBank(ctx, tc.msg.ReceiverName)
-		} else {
-			bank, _ := am.storage.GetBankFromAddress(ctx, tc.msg.ReceiverAddr)
-			receiverSaving = bank.Saving
-		}
+		receiverSaving, _ := am.GetSavingFromBank(ctx, tc.msg.Receiver)
 
 		if !senderSaving.IsEqual(tc.wantSenderBalance) {
-			t.Errorf("%s get sender bank Saving(%v): got %v, want %v", tc.testName, tc.msg.Sender, senderSaving, tc.wantSenderBalance)
+			t.Errorf(
+				"%s get sender bank Saving(%v): got %v, want %v",
+				tc.testName, tc.msg.Sender, senderSaving, tc.wantSenderBalance)
 		}
 		if !receiverSaving.IsEqual(tc.wantReceiverBalance) {
-			t.Errorf("%s: get receiver bank Saving(%v): got %v, want %v", tc.testName, tc.msg.ReceiverName, receiverSaving, tc.wantReceiverBalance)
+			t.Errorf(
+				"%s: get receiver bank Saving(%v): got %v, want %v",
+				tc.testName, tc.msg.Receiver, receiverSaving, tc.wantReceiverBalance)
 		}
 	}
 }
@@ -260,33 +219,12 @@ func TestSenderCoinNotEnough(t *testing.T) {
 	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to user2
-	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("user2"))
+	msg := NewTransferMsg("user1", "user2", l2000, memo)
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrAccountSavingCoinNotEnough().Result(), result)
 
 	acc1Balance, _ := am.GetSavingFromBank(ctx, types.AccountKey("user1"))
 	assert.Equal(t, acc1Balance, accParam.RegisterFee)
-}
-
-func TestUsernameAddressMismatch(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
-
-	// create two test users
-	createTestAccount(ctx, am, "user1")
-	createTestAccount(ctx, am, "user2")
-
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
-	am.AddSavingCoin(ctx, types.AccountKey("user2"), c2000, types.TransferIn)
-
-	memo := "This is a memo!"
-	randomAddr := sdk.Address("dqwdnqwdbnqwkjd")
-
-	// let user1 transfers 2000 Lino to user2 (provide both name and address)
-	msg := NewTransferMsg(
-		"user1", l1999, memo, TransferToUser("user2"), TransferToAddr(randomAddr))
-	result := handler(ctx, msg)
-	assert.Equal(t, ErrTransferHandler(msg.Sender).Result(), result)
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
@@ -295,14 +233,13 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
 
 	memo := "This is a memo!"
 
 	// let user1 transfers 2000 to a random user
-	msg := NewTransferMsg("user1", l2000, memo, TransferToUser("dnqwondqowindow"))
+	msg := NewTransferMsg("user1", "dnqwondqowindow", l2000, memo)
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrTransferHandler(msg.Sender).Result().Code, result.Code)
+	assert.Equal(t, ErrUsernameNotFound().Result().Code, result.Code)
 }
 
 func TestHandleAccountRecover(t *testing.T) {
@@ -335,15 +272,79 @@ func TestHandleAccountRecover(t *testing.T) {
 			MasterKey:      tc.newMasterKey,
 			TransactionKey: tc.newTransactionKey,
 			PostKey:        tc.newPostKey,
-			Address:        tc.newMasterKey.Address(),
 		}
 		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
 		newBank := model.AccountBank{
-			Address:  tc.newMasterKey.Address(),
-			Saving:   accParam.RegisterFee,
-			Stake:    coin0,
-			Username: types.AccountKey(user1),
+			Saving: accParam.RegisterFee,
 		}
-		checkBankKVByAddress(t, ctx, tc.newMasterKey.Address(), newBank)
+		checkBankKVByUsername(t, ctx, types.AccountKey(tc.user), newBank)
+	}
+}
+
+func TestHandleRegister(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	handler := NewHandler(am)
+	referrer := "referrer"
+
+	createTestAccount(ctx, am, referrer)
+	am.AddSavingCoin(
+		ctx, types.AccountKey(referrer), types.NewCoinFromInt64(100*types.Decimals), types.TransferIn)
+
+	testCases := []struct {
+		testName             string
+		registerMsg          RegisterMsg
+		expectResult         sdk.Result
+		expectReferrerSaving types.Coin
+	}{
+		{"normal case",
+			NewRegisterMsg(
+				"referrer", "user1", "1",
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+			),
+			sdk.Result{}, c100,
+		},
+		{"account already exist",
+			NewRegisterMsg(
+				"referrer", "user1", "1",
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+			),
+			ErrAccountAlreadyExists("user1").Result(),
+			types.NewCoinFromInt64(99 * types.Decimals),
+		},
+		{"account register fee insufficient",
+			NewRegisterMsg(
+				"referrer", "user2", "0.1",
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+			),
+			ErrRegisterFeeInsufficient().Result(),
+			types.NewCoinFromInt64(9890000),
+		},
+		{"referrer deposit insufficient",
+			NewRegisterMsg(
+				"referrer", "user2", "1000",
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
+			),
+			ErrAccountSavingCoinNotEnough().Result(),
+			types.NewCoinFromInt64(9890000),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := handler(ctx, tc.registerMsg)
+		assert.Equal(t, tc.expectResult, result)
+		if result.Code == sdk.CodeOK {
+			assert.True(t, am.IsAccountExist(ctx, tc.registerMsg.NewUser))
+		}
+		saving, err := am.GetSavingFromBank(ctx, tc.registerMsg.Referrer)
+		assert.Nil(t, err)
+		assert.Equal(t, tc.expectReferrerSaving, saving)
 	}
 }

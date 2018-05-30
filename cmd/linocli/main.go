@@ -19,7 +19,6 @@ import (
 	infracmd "github.com/lino-network/lino/tx/infra/commands"
 	postcmd "github.com/lino-network/lino/tx/post/commands"
 	proposalcmd "github.com/lino-network/lino/tx/proposal/commands"
-	registercmd "github.com/lino-network/lino/tx/register/commands"
 	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
 	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
 	delegationcmd "github.com/lino-network/lino/tx/vote/commands/delegate"
@@ -49,7 +48,7 @@ func main() {
 
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			registercmd.RegisterTxCmd(cdc),
+			acccmd.RegisterTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(

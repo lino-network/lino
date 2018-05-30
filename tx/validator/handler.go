@@ -41,7 +41,7 @@ func handleDepositMsg(
 	}
 
 	// withdraw money from validator's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, coin, types.ValidatorDeposit); err != nil {
 		return err.Result()
 	}
 

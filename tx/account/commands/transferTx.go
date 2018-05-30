@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/lino-network/lino/client"
@@ -11,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/tx/account"
 )
 
@@ -23,8 +21,7 @@ func TransferTxCmd(cdc *wire.Codec) *cobra.Command {
 		RunE:  sendTransferTx(cdc),
 	}
 	cmd.Flags().String(client.FlagSender, "", "money sender")
-	cmd.Flags().String(client.FlagReceiverName, "", "receiver username")
-	cmd.Flags().String(client.FlagReceiverAddr, "", "receiver address")
+	cmd.Flags().String(client.FlagReceiver, "", "receiver username")
 	cmd.Flags().String(client.FlagAmount, "", "amount to transfer")
 	cmd.Flags().String(client.FlagMemo, "", "memo msg")
 	return cmd
@@ -35,14 +32,9 @@ func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		sender := viper.GetString(client.FlagSender)
-		receiverName := viper.GetString(client.FlagReceiverName)
-		receiverAddr, err := hex.DecodeString(viper.GetString(client.FlagReceiverAddr))
-		if err != nil {
-			return err
-		}
+		receiver := viper.GetString(client.FlagReceiver)
 		msg := acc.NewTransferMsg(
-			sender, types.LNO(viper.GetString(client.FlagAmount)), viper.GetString(client.FlagMemo),
-			acc.TransferToUser(receiverName), acc.TransferToAddr(sdk.Address(receiverAddr)))
+			sender, receiver, types.LNO(viper.GetString(client.FlagAmount)), viper.GetString(client.FlagMemo))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

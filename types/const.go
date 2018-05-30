@@ -17,7 +17,6 @@ const (
 	ProposalKVStoreKey  = "proposal"
 
 	// RouterName for msg routing in app
-	RegisterRouterName  = "register"
 	AccountRouterName   = "account"
 	PostRouterName      = "post"
 	ValidatorRouterName = "validator"
@@ -72,6 +71,7 @@ const (
 	ValidatorDeposit = BalanceHistoryDetailType(17)
 	DeveloperDeposit = BalanceHistoryDetailType(18)
 	InfraDeposit     = BalanceHistoryDetailType(19)
+	ProposalDeposit  = BalanceHistoryDetailType(20)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"

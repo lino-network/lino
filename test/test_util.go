@@ -15,7 +15,6 @@ import (
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
-	reg "github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
@@ -169,14 +168,10 @@ func CreateAccount(
 	masterPriv crypto.PrivKeyEd25519, transactionPriv crypto.PrivKeyEd25519, postPriv crypto.PrivKeyEd25519,
 	numOfLino string) {
 
-	transferMsg := acc.NewTransferMsg(
-		GenesisUser, types.LNO(numOfLino),
-		"", acc.TransferToAddr(masterPriv.PubKey().Address()))
-
-	SignCheckDeliver(t, lb, transferMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
-
-	registerMsg := reg.NewRegisterMsg(accountName, masterPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, 0, true, masterPriv, time.Now().Unix())
+	registerMsg := acc.NewRegisterMsg(
+		GenesisUser, accountName, types.LNO(numOfLino),
+		masterPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
+	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
