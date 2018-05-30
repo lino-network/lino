@@ -1,9 +1,10 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -47,13 +48,13 @@ func (ds DeveloperStorage) GetDeveloper(
 }
 
 func (ds DeveloperStorage) SetDeveloper(
-	ctx sdk.Context, accKey types.AccountKey, Developer *Developer) sdk.Error {
+	ctx sdk.Context, accKey types.AccountKey, developer *Developer) sdk.Error {
 	store := ctx.KVStore(ds.key)
-	DeveloperByte, err := ds.cdc.MarshalJSON(*Developer)
+	developerByte, err := ds.cdc.MarshalJSON(*developer)
 	if err != nil {
 		return ErrDeveloperMarshalError(err)
 	}
-	store.Set(GetDeveloperKey(accKey), DeveloperByte)
+	store.Set(GetDeveloperKey(accKey), developerByte)
 	return nil
 }
 

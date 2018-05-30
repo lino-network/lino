@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
-	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
+	reg "github.com/lino-network/lino/tx/register"
 )
 
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {

@@ -3,10 +3,11 @@ package model
 import (
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -68,10 +69,11 @@ func (gs GlobalStorage) InitGlobalState(
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
 	}
 
-	infraInflationCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.InfraAllocation)
-	contentCreatorCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.ContentCreatorAllocation)
-	developerCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.DeveloperAllocation)
-	validatorCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.ValidatorAllocation)
+	inflationCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate)
+	infraInflationCoin := inflationCoin.Mul(param.InfraAllocation)
+	contentCreatorCoin := inflationCoin.Mul(param.ContentCreatorAllocation)
+	developerCoin := inflationCoin.Mul(param.DeveloperAllocation)
+	validatorCoin := inflationCoin.Mul(param.ValidatorAllocation)
 
 	inflationPool := &InflationPool{
 		InfraInflationPool:          types.RatToCoin(infraInflationCoin),

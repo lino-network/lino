@@ -1,8 +1,9 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type GlobalMeta struct {

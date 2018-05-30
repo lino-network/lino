@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	acc "github.com/lino-network/lino/tx/account"
-	global "github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
+	global "github.com/lino-network/lino/tx/global"
 )
 
 func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
