@@ -96,7 +96,7 @@ func generateCoinKey() (crypto.PubKey, string, error) {
 	)
 
 	// generate a private key, with recovery phrase
-	info, secret, err := keybase.Create("name", "pass", keys.AlgoEd25519)
+	info, secret, err := keybase.Create("name", "pass", keys.AlgoSecp256k1)
 	if err != nil {
 		return nil, "", err
 	}

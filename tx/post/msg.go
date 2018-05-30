@@ -60,13 +60,12 @@ type LikeMsg struct {
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username     types.AccountKey `json:"username"`
-	Amount       types.LNO        `json:"amount"`
-	Author       types.AccountKey `json:"author"`
-	PostID       string           `json:"post_id"`
-	FromApp      types.AccountKey `json:"from_app"`
-	FromChecking bool             `json:"from_checking"`
-	Memo         string           `json:"memo"`
+	Username types.AccountKey `json:"username"`
+	Amount   types.LNO        `json:"amount"`
+	Author   types.AccountKey `json:"author"`
+	PostID   string           `json:"post_id"`
+	FromApp  types.AccountKey `json:"from_app"`
+	Memo     string           `json:"memo"`
 }
 
 // ViewMsg sent from a user to a post
@@ -133,15 +132,14 @@ func NewViewMsg(user, author string, postID string) ViewMsg {
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user string, amount types.LNO, author string,
-	postID string, fromApp string, fromChecking bool, memo string) DonateMsg {
+	postID string, fromApp string, memo string) DonateMsg {
 	return DonateMsg{
-		Username:     types.AccountKey(user),
-		Amount:       amount,
-		Author:       types.AccountKey(author),
-		PostID:       postID,
-		FromApp:      types.AccountKey(fromApp),
-		FromChecking: fromChecking,
-		Memo:         memo,
+		Username: types.AccountKey(user),
+		Amount:   amount,
+		Author:   types.AccountKey(author),
+		PostID:   postID,
+		FromApp:  types.AccountKey(fromApp),
+		Memo:     memo,
 	}
 }
 
@@ -186,11 +184,14 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 		return ErrPostContentExceedMaxLength()
 	}
 
+	if len(msg.RedistributionSplitRate) > 10 {
+		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-
 	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
@@ -211,6 +212,9 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
+	}
+	if len(msg.RedistributionSplitRate) > 10 {
+		return ErrRedistributionSplitRateLengthTooLong()
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
@@ -311,9 +315,6 @@ func (msg DonateMsg) Get(key interface{}) (value interface{}) {
 		return nil
 	}
 	if keyStr == types.PermissionLevel {
-		if msg.FromChecking {
-			return types.PostPermission
-		}
 		return types.TransactionPermission
 	}
 	return nil

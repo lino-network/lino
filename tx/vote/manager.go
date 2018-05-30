@@ -8,17 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	DelegatorSubstore    = []byte{0x00}
-	VoterSubstore        = []byte{0x01}
-	ProposalSubstore     = []byte{0x02}
-	VoteSubstore         = []byte{0x03}
-	ProposalListSubStore = []byte("ProposalList/ProposalListKey")
-)
-
-const decideProposalEvent = 0x1
-const returnCoinEvent = 0x2
-
 type VoteManager struct {
 	storage     model.VoteStorage `json:"vote_storage"`
 	paramHolder param.ParamHolder `json:"param_holder"`
@@ -257,10 +246,10 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	if err := vm.VoterWithdraw(ctx, username, voter.Deposit); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return voter.Deposit, nil
 }
@@ -300,10 +289,10 @@ func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.Account
 func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey) (types.Coin, sdk.Error) {
 	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	if err := vm.DelegatorWithdraw(ctx, voterName, delegatorName, delegation.Amount); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return delegation.Amount, nil
 }
@@ -321,8 +310,8 @@ func (vm VoteManager) CalculateVotingResult(
 	ctx sdk.Context, proposalID types.ProposalKey, proposalType types.ProposalType,
 	oncallValidators []types.AccountKey) (types.VotingResult, sdk.Error) {
 	res := types.VotingResult{
-		AgreeVotes:    types.NewCoin(0),
-		DisagreeVotes: types.NewCoin(0),
+		AgreeVotes:    types.NewCoinFromInt64(0),
+		DisagreeVotes: types.NewCoinFromInt64(0),
 		PenaltyList:   []types.AccountKey{},
 	}
 
@@ -359,7 +348,7 @@ func (vm VoteManager) CalculateVotingResult(
 func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return voter.Deposit, nil
 }

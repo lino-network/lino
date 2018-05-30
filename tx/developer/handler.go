@@ -39,7 +39,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, deposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, deposit, types.DeveloperDeposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
@@ -94,22 +94,16 @@ func handleGrantDeveloperMsg(
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
 	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
-	events := []types.Event{}
-	for i := int64(0); i < times; i++ {
-		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
-		piece := types.RatToCoin(pieceRat)
-		coin = coin.Minus(piece)
-
-		event := acc.ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
-		}
-		events = append(events, event)
-	}
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
 		return err
 	}
+
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.DeveloperReturnCoin)
+	if err != nil {
+		return err
+	}
+
 	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
 		return err
 	}

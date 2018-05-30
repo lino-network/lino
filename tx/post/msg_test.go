@@ -91,11 +91,15 @@ func TestCreatePostMsg(t *testing.T) {
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
 			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1.01"},
 			expectResult: ErrPostRedistributionSplitRate()},
+		{postCreateParams: PostCreateParams{
+			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
+			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0.00000000001"},
+			expectResult: ErrRedistributionSplitRateLengthTooLong()},
 	}
 	for _, cs := range cases {
 		createMsg := NewCreatePostMsg(cs.postCreateParams)
 		result := createMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectResult)
+		assert.Equal(t, cs.expectResult, result)
 	}
 }
 
@@ -124,6 +128,9 @@ func TestUpdatePostMsg(t *testing.T) {
 		{updatePostMsg: NewUpdatePostMsg(
 			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
 			[]types.IDToURLMapping{}, "-1"), expectResult: ErrPostRedistributionSplitRate()},
+		{updatePostMsg: NewUpdatePostMsg(
+			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
+			[]types.IDToURLMapping{}, "0.000000000001"), expectResult: ErrRedistributionSplitRateLengthTooLong()},
 	}
 	for _, cs := range cases {
 		result := cs.updatePostMsg.ValidateBasic()
@@ -224,20 +231,20 @@ func TestDonationMsg(t *testing.T) {
 		expectError sdk.Error
 	}{
 		{NewDonateMsg("test", types.LNO("1"),
-			"author", "postID", "", false, memo1), nil},
-		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", false, memo1),
+			"author", "postID", "", memo1), nil},
+		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("1"), "author", "", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", false, invalidMemo),
+		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
 			ErrInvalidMemo()},
 	}
 
@@ -292,17 +299,11 @@ func TestMsgPermission(t *testing.T) {
 		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
-		"donateMsg from saving": {
+		"donateMsg": {
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", false, memo1),
+				"author", "postID", "", memo1),
 			expectPermission: types.TransactionPermission,
-		},
-		"donateMsg from checking": {
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", true, memo1),
-			expectPermission: types.PostPermission,
 		},
 		"create post": {
 			msg: NewCreatePostMsg(PostCreateParams{

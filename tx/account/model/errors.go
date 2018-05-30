@@ -85,6 +85,14 @@ func ErrSetRelationshipFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set relationship failed"))
 }
 
+func ErrSetBalanceHistoryFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set balance history failed"))
+}
+
+func ErrGetBalanceHistoryFailed() sdk.Error {
+	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get balance history failed"))
+}
+
 func ErrGetPendingStakeFailed() sdk.Error {
 	return sdk.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get pending stake failed"))
 }

@@ -30,7 +30,7 @@ var (
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest(t *testing.T, height int64) (
@@ -78,9 +78,8 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	return types.AccountKey(username)
 }
 

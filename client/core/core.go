@@ -3,21 +3,19 @@ package core
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/pkg/errors"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	cmn "github.com/tendermint/tmlibs/common"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Broadcast the transaction bytes to Tendermint
 func (ctx CoreContext) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-
 	node, err := ctx.GetNode()
 	if err != nil {
 		return nil, err
@@ -43,7 +41,6 @@ func (ctx CoreContext) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, 
 
 // Query from Tendermint with the provided key and storename
 func (ctx CoreContext) Query(key cmn.HexBytes, storeName string) (res []byte, err error) {
-
 	path := fmt.Sprintf("/%s/key", storeName)
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -67,7 +64,6 @@ func (ctx CoreContext) Query(key cmn.HexBytes, storeName string) (res []byte, er
 
 // Get the from address from the name flag
 func (ctx CoreContext) GetFromAddress() (from sdk.Address, err error) {
-
 	keybase, err := keys.GetKeyBase()
 	if err != nil {
 		return nil, err

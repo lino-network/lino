@@ -17,8 +17,9 @@ const (
 	// Lino account handler errors reserve 310 ~ 399
 	CodeAccountStorageFail sdk.CodeType = 310
 	CodeAccountManagerFail sdk.CodeType = 311
-	CodeInvalidMsg         sdk.CodeType = 312
-	CodeInvalidMemo        sdk.CodeType = 313
+	CodeAccountHandlerFail sdk.CodeType = 312
+	CodeInvalidMsg         sdk.CodeType = 313
+	CodeInvalidMemo        sdk.CodeType = 314
 
 	// Lino post handler errors reserve 400 ~ 499
 	CodePostMarshalError   sdk.CodeType = 400

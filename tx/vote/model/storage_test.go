@@ -31,8 +31,8 @@ func TestVoter(t *testing.T) {
 	user := types.AccountKey("user")
 	voter := Voter{
 		Username:       user,
-		Deposit:        types.NewCoin(1000),
-		DelegatedPower: types.NewCoin(10000),
+		Deposit:        types.NewCoinFromInt64(1000),
+		DelegatedPower: types.NewCoinFromInt64(10000),
 	}
 	err := vs.SetVoter(ctx, user, &voter)
 	assert.Nil(t, err)
@@ -53,7 +53,7 @@ func TestVote(t *testing.T) {
 	user1, user2, user3 :=
 		types.AccountKey("user1"), types.AccountKey("user2"), types.AccountKey("user3")
 	proposalID1, proposalID2 := types.ProposalKey("1"), types.ProposalKey("2")
-	votingPower := types.NewCoin(1000)
+	votingPower := types.NewCoinFromInt64(1000)
 	cases := []struct {
 		isDelete    bool
 		voter       types.AccountKey
@@ -107,11 +107,11 @@ func TestDelegation(t *testing.T) {
 		amount     types.Coin
 		delegateTo types.AccountKey
 	}{
-		{user1, types.NewCoin(1), user2},
-		{user1, types.NewCoin(100), user2},
-		{user1, types.NewCoin(100), user1},
-		{user3, types.NewCoin(100), user1},
-		{user3, types.NewCoin(100), user2},
+		{user1, types.NewCoinFromInt64(1), user2},
+		{user1, types.NewCoinFromInt64(100), user2},
+		{user1, types.NewCoinFromInt64(100), user1},
+		{user3, types.NewCoinFromInt64(100), user1},
+		{user3, types.NewCoinFromInt64(100), user2},
 	}
 
 	for _, cs := range cases {
@@ -134,11 +134,11 @@ func TestDelegation(t *testing.T) {
 		delegateTo       types.AccountKey
 		expectDelegators []types.AccountKey
 	}{
-		{user1, types.NewCoin(1), user2, []types.AccountKey{user1}},
-		{user1, types.NewCoin(100), user2, []types.AccountKey{user1}},
-		{user1, types.NewCoin(1), user3, []types.AccountKey{user1}},
-		{user2, types.NewCoin(1), user1, []types.AccountKey{user2}},
-		{user3, types.NewCoin(1), user1, []types.AccountKey{user2, user3}},
+		{user1, types.NewCoinFromInt64(1), user2, []types.AccountKey{user1}},
+		{user1, types.NewCoinFromInt64(100), user2, []types.AccountKey{user1}},
+		{user1, types.NewCoinFromInt64(1), user3, []types.AccountKey{user1}},
+		{user2, types.NewCoinFromInt64(1), user1, []types.AccountKey{user2}},
+		{user3, types.NewCoinFromInt64(1), user1, []types.AccountKey{user2, user3}},
 	}
 
 	for _, cs := range getAllDelegatorsCases {

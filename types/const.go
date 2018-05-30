@@ -17,7 +17,6 @@ const (
 	ProposalKVStoreKey  = "proposal"
 
 	// RouterName for msg routing in app
-	RegisterRouterName  = "register"
 	AccountRouterName   = "account"
 	PostRouterName      = "post"
 	ValidatorRouterName = "validator"
@@ -44,6 +43,35 @@ const (
 	ChangeParam       = ProposalType(0)
 	ContentCensorship = ProposalType(1)
 	ProtocolUpgrade   = ProposalType(2)
+
+	// Different donation types
+	DirectDeposit = DonationType(0)
+	Inflation     = DonationType(1)
+
+	// Different possible incomes
+	TransferIn           = BalanceHistoryDetailType(0)
+	DonationIn           = BalanceHistoryDetailType(1)
+	ClaimReward          = BalanceHistoryDetailType(2)
+	ValidatorInflation   = BalanceHistoryDetailType(3)
+	DeveloperInflation   = BalanceHistoryDetailType(4)
+	InfraInflation       = BalanceHistoryDetailType(5)
+	VoteReturnCoin       = BalanceHistoryDetailType(6)
+	DelegationReturnCoin = BalanceHistoryDetailType(7)
+	ValidatorReturnCoin  = BalanceHistoryDetailType(8)
+	DeveloperReturnCoin  = BalanceHistoryDetailType(9)
+	InfraReturnCoin      = BalanceHistoryDetailType(10)
+	ProposalReturnCoin   = BalanceHistoryDetailType(11)
+	GenesisCoin          = BalanceHistoryDetailType(12)
+
+	// Different possible outcomes
+	TransferOut      = BalanceHistoryDetailType(13)
+	DonationOut      = BalanceHistoryDetailType(14)
+	Delegate         = BalanceHistoryDetailType(15)
+	VoteDeposit      = BalanceHistoryDetailType(16)
+	ValidatorDeposit = BalanceHistoryDetailType(17)
+	DeveloperDeposit = BalanceHistoryDetailType(18)
+	InfraDeposit     = BalanceHistoryDetailType(19)
+	ProposalDeposit  = BalanceHistoryDetailType(20)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
@@ -83,4 +111,6 @@ const (
 
 	// as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
+
+	PrecisionFactor = 1000
 )

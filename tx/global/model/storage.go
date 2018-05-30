@@ -1,6 +1,7 @@
 package model
 
 import (
+	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,8 +55,8 @@ func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin, param *param.GlobalAllocationParam) sdk.Error {
 	globalMeta := &GlobalMeta{
 		TotalLinoCoin:                 totalLino,
-		LastYearCumulativeConsumption: types.NewCoin(0),
-		CumulativeConsumption:         types.NewCoin(0),
+		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
+		CumulativeConsumption:         types.NewCoinFromInt64(0),
 		GrowthRate:                    sdk.NewRat(98, 1000),
 		Ceiling:                       sdk.NewRat(98, 1000),
 		Floor:                         sdk.NewRat(30, 1000),
@@ -68,16 +69,45 @@ func (gs GlobalStorage) InitGlobalState(
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
 	}
 
-	infraInflationCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.InfraAllocation)
-	contentCreatorCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.ContentCreatorAllocation)
-	developerCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.DeveloperAllocation)
-	validatorCoin := totalLino.ToRat().Mul(globalMeta.GrowthRate).Mul(param.ValidatorAllocation)
+	infraInflationCoin, err := types.RatToCoin(new(big.Rat).Mul(
+		totalLino.ToRat(),
+		(new(big.Rat).Mul(
+			globalMeta.GrowthRate.GetRat(),
+			param.InfraAllocation.GetRat()))))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	contentCreatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
+		totalLino.ToRat(),
+		(new(big.Rat).Mul(
+			globalMeta.GrowthRate.GetRat(),
+			param.ContentCreatorAllocation.GetRat()))))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	developerCoin, err := types.RatToCoin(new(big.Rat).Mul(
+		totalLino.ToRat(),
+		(new(big.Rat).Mul(
+			globalMeta.GrowthRate.GetRat(),
+			param.DeveloperAllocation.GetRat()))))
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
+	validatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
+		totalLino.ToRat(),
+		(new(big.Rat).Mul(
+			globalMeta.GrowthRate.GetRat(),
+			param.ValidatorAllocation.GetRat()))))
+
+	if err != nil {
+		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+	}
 
 	inflationPool := &InflationPool{
-		InfraInflationPool:          types.RatToCoin(infraInflationCoin),
-		ContentCreatorInflationPool: types.RatToCoin(contentCreatorCoin),
-		DeveloperInflationPool:      types.RatToCoin(developerCoin),
-		ValidatorInflationPool:      types.RatToCoin(validatorCoin),
+		InfraInflationPool:          infraInflationCoin,
+		ContentCreatorInflationPool: contentCreatorCoin,
+		DeveloperInflationPool:      developerCoin,
+		ValidatorInflationPool:      validatorCoin,
 	}
 	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
 		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
@@ -87,8 +117,8 @@ func (gs GlobalStorage) InitGlobalState(
 		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
 		ReportStakeWindow:           sdk.ZeroRat,
 		DislikeStakeWindow:          sdk.ZeroRat,
-		ConsumptionWindow:           types.NewCoin(0),
-		ConsumptionRewardPool:       types.NewCoin(0),
+		ConsumptionWindow:           types.NewCoinFromInt64(0),
+		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {

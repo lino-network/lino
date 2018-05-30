@@ -28,7 +28,7 @@ func NewValidatorStorage(key sdk.StoreKey) ValidatorStorage {
 
 func (vs ValidatorStorage) InitGenesis(ctx sdk.Context) error {
 	lst := &ValidatorList{
-		LowestPower: types.Coin{0},
+		LowestPower: types.NewCoinFromInt64(0),
 	}
 
 	if err := vs.SetValidatorList(ctx, lst); err != nil {

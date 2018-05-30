@@ -58,7 +58,7 @@ func TestProposal(t *testing.T) {
 		ChangeParamProposal
 	}{
 		{ChangeParamProposal{
-			ProposalInfo{user, proposalID, types.NewCoin(0), types.NewCoin(0), res},
+			ProposalInfo{user, proposalID, types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), res},
 			param.GlobalAllocationParam{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
 				sdk.NewRat(0)}}},
 	}

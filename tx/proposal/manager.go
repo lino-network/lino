@@ -1,6 +1,8 @@
 package proposal
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/proposal/model"
@@ -75,8 +77,8 @@ func (pm ProposalManager) AddProposal(
 	info := model.ProposalInfo{
 		Creator:       creator,
 		ProposalID:    newID,
-		AgreeVotes:    types.Coin{Amount: 0},
-		DisagreeVotes: types.Coin{Amount: 0},
+		AgreeVotes:    types.NewCoinFromInt64(0),
+		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 	}
 	proposal.SetProposalInfo(info)
@@ -101,7 +103,7 @@ func (pm ProposalManager) GetProposalPassParam(
 	ctx sdk.Context, proposalType types.ProposalType) (sdk.Rat, types.Coin, sdk.Error) {
 	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
-		return sdk.NewRat(1, 1), types.NewCoin(0), err
+		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), err
 	}
 	switch proposalType {
 	case types.ChangeParam:
@@ -111,7 +113,7 @@ func (pm ProposalManager) GetProposalPassParam(
 	case types.ProtocolUpgrade:
 		return param.ProtocolUpgradePassRatio, param.ProtocolUpgradePassVotes, nil
 	default:
-		return sdk.NewRat(1, 1), types.NewCoin(0), ErrWrongProposalType()
+		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), ErrWrongProposalType()
 	}
 }
 
@@ -138,13 +140,12 @@ func (pm ProposalManager) UpdateProposalStatus(
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
-
 	totalVotes := res.AgreeVotes.Plus(res.DisagreeVotes)
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := res.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
-	if !actualRatio.LT(ratio) {
+	actualRatio := new(big.Rat).Quo(res.AgreeVotes.ToRat(), totalVotes.ToRat())
+	if actualRatio.Cmp(ratio.GetRat()) >= 0 {
 		proposalInfo.Result = types.ProposalPass
 	} else {
 		proposalInfo.Result = types.ProposalNotPass

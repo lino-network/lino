@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	c460000 = types.Coin{460000 * types.Decimals}
-	c4600   = types.Coin{4600 * types.Decimals}
-	c46     = types.Coin{46 * types.Decimals}
+	c460000 = types.NewCoinFromInt64(460000 * types.Decimals)
+	c4600   = types.NewCoinFromInt64(4600 * types.Decimals)
+	c46     = types.NewCoinFromInt64(46 * types.Decimals)
 )
 
 func TestChangeParamProposal(t *testing.T) {
@@ -35,8 +35,8 @@ func TestChangeParamProposal(t *testing.T) {
 	proposal1 := &model.ChangeParamProposal{model.ProposalInfo{
 		Creator:       user1,
 		ProposalID:    proposalID1,
-		AgreeVotes:    types.Coin{Amount: 0},
-		DisagreeVotes: types.Coin{Amount: 0},
+		AgreeVotes:    types.NewCoinFromInt64(0),
+		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 	}, allocation}
 
@@ -108,13 +108,14 @@ func TestContentCensorshipProposal(t *testing.T) {
 
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID", c460000, am, postManager, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID", c4600, am, postManager, "0")
-	user3 := createTestAccount(ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoin(1)))
+	user3 := createTestAccount(
+		ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoinFromInt64((1))))
 	postManager.DeletePost(ctx, types.GetPermLink(user2, postID2))
 	proposal1 := &model.ContentCensorshipProposal{model.ProposalInfo{
 		Creator:       user2,
 		ProposalID:    proposalID1,
-		AgreeVotes:    types.Coin{Amount: 0},
-		DisagreeVotes: types.Coin{Amount: 0},
+		AgreeVotes:    types.NewCoinFromInt64(0),
+		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 	}, types.GetPermLink(user1, postID1)}
 
@@ -202,5 +203,39 @@ func TestContentCensorshipProposal(t *testing.T) {
 		permLink, err := proposalManager.GetPermLink(ctx, tc.proposalID)
 		assert.Nil(t, err)
 		assert.Equal(t, tc.permLink, permLink)
+	}
+}
+
+func TestAddFrozenMoney(t *testing.T) {
+	ctx, am, proposalManager, _, _, _, gm := setupTest(t, 0)
+	proposalManager.InitGenesis(ctx)
+
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user := createTestAccount(ctx, am, "user", minBalance)
+
+	testCases := []struct {
+		testName               string
+		times                  int64
+		interval               int64
+		returnedCoin           types.Coin
+		expectedFrozenListLen  int
+		expectedFrozenMoney    types.Coin
+		expectedFrozenTimes    int64
+		expectedFrozenInterval int64
+	}{
+		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
+		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+	}
+
+	for _, tc := range testCases {
+		err := returnCoinTo(
+			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+		assert.Equal(t, nil, err)
+		lst, err := am.GetFrozenMoneyList(ctx, user)
+		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
+		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
+		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
+		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
+
 	}
 }
