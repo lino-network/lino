@@ -119,7 +119,7 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*model.ValidatorLi
 func (vm ValidatorManager) GetValidatorDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	validator, err := vm.storage.GetValidator(ctx, accKey)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return validator.Deposit, nil
 }
@@ -199,7 +199,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 
 	if penalty.IsGT(validator.Deposit) {
 		actualPenalty = validator.Deposit
-		validator.Deposit = types.NewCoin(0)
+		validator.Deposit = types.NewCoinFromInt64(0)
 	} else {
 		validator.Deposit = validator.Deposit.Minus(penalty)
 	}
@@ -217,7 +217,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 			return actualPenalty, err
 		}
 		actualPenalty = actualPenalty.Plus(validator.Deposit)
-		validator.Deposit = types.NewCoin(0)
+		validator.Deposit = types.NewCoinFromInt64(0)
 	}
 
 	if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
@@ -232,7 +232,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 
 func (vm ValidatorManager) FireIncompetentValidator(
 	ctx sdk.Context, ByzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
-	totalPenalty := types.NewCoin(0)
+	totalPenalty := types.NewCoinFromInt64(0)
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
 		return totalPenalty, err
@@ -274,7 +274,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 
 func (vm ValidatorManager) PunishValidatorsDidntVote(
 	ctx sdk.Context, penaltyList []types.AccountKey) (types.Coin, sdk.Error) {
-	totalPenalty := types.NewCoin(0)
+	totalPenalty := types.NewCoinFromInt64(0)
 	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return totalPenalty, err
@@ -366,10 +366,10 @@ func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.Acc
 func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	if err := vm.ValidatorWithdraw(ctx, username, validator.Deposit); err != nil {
-		return types.NewCoin(0), err
+		return types.NewCoinFromInt64(0), err
 	}
 	return validator.Deposit, nil
 }
@@ -410,7 +410,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	// add to list directly if validator list is not full
 	if int64(len(lst.OncallValidators)) < param.ValidatorListSize {
 		lst.OncallValidators = append(lst.OncallValidators, curValidator.Username)
-	} else if curValidator.Deposit.Amount > lst.LowestPower.Amount {
+	} else if curValidator.Deposit.IsGT(lst.LowestPower) {
 		// replace the validator with lowest power
 		for idx, validatorKey := range lst.OncallValidators {
 			validator, err := vm.storage.GetValidator(ctx, validatorKey)
@@ -490,7 +490,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
-	newLowestPower := types.NewCoin(math.MaxInt64)
+	newLowestPower := types.NewCoinFromInt64(math.MaxInt64)
 	newLowestValidator := types.AccountKey("")
 
 	for _, validatorKey := range lst.OncallValidators {
@@ -499,7 +499,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) sdk.Error {
 			return err
 		}
 
-		if validator.Deposit.Amount < newLowestPower.Amount {
+		if newLowestPower.IsGT(validator.Deposit) {
 			newLowestPower = validator.Deposit
 			newLowestValidator = validator.Username
 		}
@@ -518,7 +518,7 @@ func (vm ValidatorManager) updateLowestValidator(ctx sdk.Context) sdk.Error {
 // but not in the oncall validator list
 func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, sdk.Error) {
 	bestCandidate := types.AccountKey("")
-	bestCandidatePower := types.NewCoin(0)
+	bestCandidatePower := types.NewCoinFromInt64(0)
 
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
@@ -532,7 +532,7 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 		}
 		// not in the oncall list and has a larger power
 		if FindAccountInList(validatorName, lst.OncallValidators) == -1 &&
-			validator.Deposit.Amount > bestCandidatePower.Amount {
+			validator.Deposit.IsGT(bestCandidatePower) {
 			bestCandidate = validator.Username
 			bestCandidatePower = validator.Deposit
 		}

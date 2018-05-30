@@ -186,11 +186,14 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 		return ErrPostContentExceedMaxLength()
 	}
 
+	if len(msg.RedistributionSplitRate) > 10 {
+		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-
 	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
 		return ErrPostRedistributionSplitRate()
 	}
@@ -211,6 +214,9 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
+	}
+	if len(msg.RedistributionSplitRate) > 10 {
+		return ErrRedistributionSplitRateLengthTooLong()
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)

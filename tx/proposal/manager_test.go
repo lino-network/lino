@@ -56,8 +56,8 @@ func TestUpdateProposalStatus(t *testing.T) {
 
 		{testName: "test votes don't meet min requirement ",
 			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoin(10)),
-				DisagreeVotes: types.NewCoin(0),
+				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
+				DisagreeVotes: types.NewCoinFromInt64(0),
 			},
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID2,
@@ -65,16 +65,16 @@ func TestUpdateProposalStatus(t *testing.T) {
 			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
 				Creator:       user1,
 				ProposalID:    proposalID2,
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoin(10)),
-				DisagreeVotes: types.NewCoin(0),
+				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
+				DisagreeVotes: types.NewCoinFromInt64(0),
 				Result:        types.ProposalNotPass,
 			}, permLink},
 		},
 
 		{testName: "test votes ratio doesn't meet requirement ",
 			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoin(10)),
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoin(11)),
+				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
+				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 			},
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID3,
@@ -82,8 +82,8 @@ func TestUpdateProposalStatus(t *testing.T) {
 			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
 				Creator:       user1,
 				ProposalID:    proposalID3,
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoin(10)),
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoin(11)),
+				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
+				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 				Result:        types.ProposalPass,
 			}, permLink},
 		},

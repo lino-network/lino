@@ -16,8 +16,11 @@ func TestDecideProposal(t *testing.T) {
 	pm.InitGenesis(ctx)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 
-	c1, c2, c3, c4 := proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(20)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(30)),
-		proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(50)), proposalParam.ChangeParamPassVotes.Plus(types.NewCoin(10))
+	c1, c2, c3, c4 :=
+		proposalParam.ChangeParamPassVotes.Plus(types.NewCoinFromInt64(20)),
+		proposalParam.ChangeParamPassVotes.Plus(types.NewCoinFromInt64(30)),
+		proposalParam.ChangeParamPassVotes.Plus(types.NewCoinFromInt64(50)),
+		proposalParam.ChangeParamPassVotes.Plus(types.NewCoinFromInt64(10))
 
 	user1 := createTestAccount(ctx, am, "user1", c1)
 	user2 := createTestAccount(ctx, am, "user2", c2)

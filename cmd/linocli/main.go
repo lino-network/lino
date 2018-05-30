@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -34,10 +33,6 @@ var (
 		Short: "Lino Blockchain light-client",
 	}
 )
-
-func todoNotImplemented(_ *cobra.Command, _ []string) error {
-	return errors.New("TODO: Command not yet implemented")
-}
 
 func main() {
 	// disable sorting

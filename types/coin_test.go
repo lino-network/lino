@@ -1,29 +1,66 @@
 package types
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cznic/mathutil"
 )
 
-func TestNewCoin(t *testing.T) {
+var (
+	bigString    = "1000000000000000000000000"
+	bigInt, _    = new(big.Int).SetString(bigString, 10)
+	bigInt128, _ = new(mathutil.Int128).SetBigInt(bigInt)
+
+	doubleBigString    = "2000000000000000000000000"
+	doubleBigInt, _    = new(big.Int).SetString(doubleBigString, 10)
+	doubleBigInt128, _ = new(mathutil.Int128).SetBigInt(doubleBigInt)
+)
+
+func TestNewCoinFromInt64(t *testing.T) {
 	assert := assert.New(t)
 
 	cases := []struct {
-		inputInt64   int64
-		expectedCoin Coin
+		inputInt64     int64
+		expectedAmount mathutil.Int128
 	}{
-		{1, Coin{1}},
-		{0, Coin{0}},
-		{-1, Coin{-1}},
-		{9223372036854775807, Coin{9223372036854775807}},
-		{-9223372036854775808, Coin{-9223372036854775808}},
+		{1, new(mathutil.Int128).SetInt64(1)},
+		{0, new(mathutil.Int128).SetInt64(0)},
+		{-1, new(mathutil.Int128).SetInt64(-1)},
+		{9223372036854775807, new(mathutil.Int128).SetInt64(9223372036854775807)},
+		{-9223372036854775808, new(mathutil.Int128).SetInt64(-9223372036854775808)},
 	}
 
 	for _, tc := range cases {
-		assert.Equal(NewCoin(tc.inputInt64), tc.expectedCoin)
+		assert.Equal(NewCoinFromInt64(tc.inputInt64).Amount, tc.expectedAmount)
+	}
+}
+func TestNewCoinFromBigInt(t *testing.T) {
+	assert := assert.New(t)
+
+	cases := []struct {
+		inputBigInt    *big.Int
+		expectedAmount mathutil.Int128
+	}{
+		{new(big.Int).SetInt64(1), new(mathutil.Int128).SetInt64(1)},
+		{new(big.Int).SetInt64(0), new(mathutil.Int128).SetInt64(0)},
+		{new(big.Int).SetInt64(-1), new(mathutil.Int128).SetInt64(-1)},
+		{new(big.Int).SetInt64(100), new(mathutil.Int128).SetInt64(100)},
+		{new(big.Int).SetInt64(9223372036854775807),
+			new(mathutil.Int128).SetInt64(9223372036854775807)},
+		{new(big.Int).SetInt64(-9223372036854775808),
+			new(mathutil.Int128).SetInt64(-9223372036854775808)},
+		{bigInt, bigInt128},
+	}
+
+	for _, tc := range cases {
+		coin, err := NewCoinFromBigInt(tc.inputBigInt)
+		assert.Nil(err)
+		assert.Equal(coin.Amount, tc.expectedAmount)
 	}
 }
 
@@ -32,35 +69,60 @@ func TestLNOToCoin(t *testing.T) {
 
 	cases := []struct {
 		inputString  string
-		expectedCoin Coin
+		expectCoin   Coin
+		expectResult sdk.Error
 	}{
-		{"1", NewCoin(1 * Decimals)},
-		{"92233720368547", NewCoin(92233720368547 * Decimals)},
-		{"0.001", NewCoin(0.001 * Decimals)},
-		{"0.0001", NewCoin(0.0001 * Decimals)},
-		{"0.00001", NewCoin(0.00001 * Decimals)},
+		{"1", NewCoinFromInt64(1 * Decimals), nil},
+		{"92233720368547", NewCoinFromInt64(92233720368547 * Decimals), nil},
+		{"0.001", NewCoinFromInt64(0.001 * Decimals), nil},
+		{"0.0001", NewCoinFromInt64(0.0001 * Decimals), nil},
+		{"0.00001", NewCoinFromInt64(0.00001 * Decimals), nil},
+		{"0.000001", NewCoinFromInt64(0),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{"0", NewCoinFromInt64(0),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{"-1", NewCoinFromInt64(0),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{"-0.1", NewCoinFromInt64(0),
+			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{"92233720368548", NewCoinFromInt64(0),
+			sdk.ErrInvalidCoins("LNO overflow")},
+		{"1$", NewCoinFromInt64(0), sdk.ErrInvalidCoins("Illegal LNO")},
 	}
 
 	for _, tc := range cases {
 		coin, err := LinoToCoin(LNO(tc.inputString))
-		assert.Nil(err)
-		assert.Equal(coin, tc.expectedCoin)
+		assert.Equal(tc.expectResult, err)
+		assert.Equal(coin, tc.expectCoin)
 	}
+}
 
-	invalidCases := []struct {
+func TestRatToCoin(t *testing.T) {
+	assert := assert.New(t)
+
+	cases := []struct {
 		inputString string
+		expectCoin  Coin
 	}{
-		{"92233720368548"},
-		{"-1"},
-		{"-0.1"},
-		{"922337203685470"},
-		{"0.000001"},
-		{"0"},
+		{"1", NewCoinFromInt64(1)},
+		{"0", NewCoinFromInt64(0)},
+		{"-1", NewCoinFromInt64(-1)},
+		{"100000", NewCoinFromInt64(100000)},
+		{"0.5", NewCoinFromInt64(0)},
+		{"0.6", NewCoinFromInt64(1)},
+		{"1.4", NewCoinFromInt64(1)},
+		{"1.5", NewCoinFromInt64(2)},
+		{"9223372036854775807", NewCoinFromInt64(9223372036854775807)},
+		{"-9223372036854775807", NewCoinFromInt64(-9223372036854775807)},
+		{bigString, NewCoin(bigInt128)},
 	}
 
-	for _, tc := range invalidCases {
-		_, err := LinoToCoin(LNO(tc.inputString))
-		assert.NotNil(err)
+	for _, tc := range cases {
+		rat, success := new(big.Rat).SetString(tc.inputString)
+		assert.True(success)
+		coin, err := RatToCoin(rat)
+		assert.Nil(err)
+		assert.Equal(tc.expectCoin, coin)
 	}
 }
 
@@ -71,9 +133,11 @@ func TestIsPositiveCoin(t *testing.T) {
 		inputOne Coin
 		expected bool
 	}{
-		{NewCoin(1), true},
-		{NewCoin(0), false},
-		{NewCoin(-1), false},
+		{NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(0), false},
+		{NewCoinFromInt64(-1), false},
+		{NewCoin(bigInt128), true},
+		{NewCoin(doubleBigInt128), true},
 	}
 
 	for _, tc := range cases {
@@ -89,9 +153,11 @@ func TestIsNotNegativeCoin(t *testing.T) {
 		inputOne Coin
 		expected bool
 	}{
-		{NewCoin(1), true},
-		{NewCoin(0), true},
-		{NewCoin(-1), false},
+		{NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(0), true},
+		{NewCoinFromInt64(-1), false},
+		{NewCoin(bigInt128), true},
+		{NewCoin(doubleBigInt128), true},
 	}
 
 	for _, tc := range cases {
@@ -108,9 +174,12 @@ func TestIsGTECoin(t *testing.T) {
 		inputTwo Coin
 		expected bool
 	}{
-		{NewCoin(1), NewCoin(1), true},
-		{NewCoin(2), NewCoin(1), true},
-		{NewCoin(-1), NewCoin(5), false},
+		{NewCoinFromInt64(1), NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(2), NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(-1), NewCoinFromInt64(5), false},
+		{NewCoin(bigInt128), NewCoinFromInt64(5), true},
+		{NewCoin(bigInt128), NewCoin(bigInt128), true},
+		{NewCoin(doubleBigInt128), NewCoin(bigInt128), true},
 	}
 
 	for _, tc := range cases {
@@ -119,7 +188,7 @@ func TestIsGTECoin(t *testing.T) {
 	}
 }
 
-func TestIsEqualCoin(t *testing.T) {
+func TestIsGTCoin(t *testing.T) {
 	assert := assert.New(t)
 
 	cases := []struct {
@@ -127,9 +196,37 @@ func TestIsEqualCoin(t *testing.T) {
 		inputTwo Coin
 		expected bool
 	}{
-		{NewCoin(1), NewCoin(1), true},
-		{NewCoin(1), NewCoin(10), false},
-		{NewCoin(-11), NewCoin(10), false},
+		{NewCoinFromInt64(1), NewCoinFromInt64(1), false},
+		{NewCoinFromInt64(2), NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(-1), NewCoinFromInt64(5), false},
+		{NewCoin(bigInt128), NewCoinFromInt64(5), true},
+		{NewCoin(bigInt128), NewCoin(bigInt128), false},
+		{NewCoin(doubleBigInt128), NewCoin(bigInt128), true},
+	}
+
+	for _, tc := range cases {
+		res := tc.inputOne.IsGT(tc.inputTwo)
+		assert.Equal(tc.expected, res)
+	}
+}
+
+func TestIsEqualCoin(t *testing.T) {
+	assert := assert.New(t)
+
+	coin1, err := NewCoinFromBigInt(new(big.Int).SetInt64(1))
+	assert.Nil(err)
+
+	cases := []struct {
+		inputOne Coin
+		inputTwo Coin
+		expected bool
+	}{
+		{NewCoin(bigInt128), NewCoin(bigInt128), true},
+		{NewCoinFromInt64(1), NewCoinFromInt64(1), true},
+		{NewCoinFromInt64(1), NewCoinFromInt64(10), false},
+		{NewCoinFromInt64(-11), NewCoinFromInt64(10), false},
+		{NewCoinFromInt64(1), NewCoin(new(mathutil.Int128).SetInt64(1)), true},
+		{NewCoinFromInt64(1), coin1, true},
 	}
 
 	for _, tc := range cases {
@@ -146,14 +243,17 @@ func TestPlusCoin(t *testing.T) {
 		inputTwo Coin
 		expected Coin
 	}{
-		{NewCoin(1), NewCoin(1), NewCoin(2)},
-		{NewCoin(-4), NewCoin(5), NewCoin(1)},
-		{NewCoin(-1), NewCoin(1), NewCoin(0)},
+		{NewCoinFromInt64(0), NewCoinFromInt64(1), NewCoinFromInt64(1)},
+		{NewCoinFromInt64(1), NewCoinFromInt64(0), NewCoinFromInt64(1)},
+		{NewCoinFromInt64(1), NewCoinFromInt64(1), NewCoinFromInt64(2)},
+		{NewCoinFromInt64(-4), NewCoinFromInt64(5), NewCoinFromInt64(1)},
+		{NewCoinFromInt64(-1), NewCoinFromInt64(1), NewCoinFromInt64(0)},
+		{NewCoin(bigInt128), NewCoin(bigInt128), NewCoin(doubleBigInt128)},
 	}
 
 	for _, tc := range cases {
 		res := tc.inputOne.Plus(tc.inputTwo)
-		assert.True(tc.expected.IsEqual(res))
+		assert.Equal(tc.expected, res)
 	}
 }
 
@@ -165,9 +265,14 @@ func TestMinusCoin(t *testing.T) {
 		inputTwo Coin
 		expected Coin
 	}{
-		{NewCoin(1), NewCoin(1), NewCoin(0)},
-		{NewCoin(-4), NewCoin(5), NewCoin(-9)},
-		{NewCoin(10), NewCoin(1), NewCoin(9)},
+		{NewCoinFromInt64(0), NewCoinFromInt64(0), NewCoinFromInt64(0)},
+		{NewCoinFromInt64(1), NewCoinFromInt64(0), NewCoinFromInt64(1)},
+		{NewCoinFromInt64(1), NewCoinFromInt64(1), NewCoinFromInt64(0)},
+		{NewCoinFromInt64(1), NewCoinFromInt64(-1), NewCoinFromInt64(2)},
+		{NewCoinFromInt64(-1), NewCoinFromInt64(-1), NewCoinFromInt64(0)},
+		{NewCoinFromInt64(-4), NewCoinFromInt64(5), NewCoinFromInt64(-9)},
+		{NewCoinFromInt64(10), NewCoinFromInt64(1), NewCoinFromInt64(9)},
+		{NewCoin(bigInt128), NewCoin(bigInt128), NewCoinFromInt64(0)},
 	}
 
 	for _, tc := range cases {
@@ -179,7 +284,7 @@ func TestMinusCoin(t *testing.T) {
 var cdc = wire.NewCodec() //var jsonCdc JSONCodec // TODO wire.Codec
 
 func TestSerializationGoWire(t *testing.T) {
-	r := NewCoin(100000)
+	r := NewCoin(bigInt128)
 
 	//bz, err := json.Marshal(r)
 	bz, err := cdc.MarshalJSON(r)
@@ -188,7 +293,7 @@ func TestSerializationGoWire(t *testing.T) {
 	//str, err := r.MarshalJSON()
 	//require.Nil(t, err)
 
-	r2 := NewCoin(0)
+	r2 := NewCoinFromInt64(0)
 	//err = json.Unmarshal([]byte(bz), &r2)
 	err = cdc.UnmarshalJSON([]byte(bz), &r2)
 	//panic(fmt.Sprintf("debug bz: %v\n", string(bz)))

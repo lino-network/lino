@@ -94,6 +94,10 @@ func ErrGetSequence(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
 }
 
+func ErrGetFrozenMoneyList(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v frozen money list failed", accKey))
+}
+
 func ErrIncreaseSequenceByOne(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("increase account %v sequence failed", accKey))
 }

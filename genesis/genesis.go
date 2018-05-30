@@ -54,8 +54,9 @@ func GetGenesisJson(genesisState GenesisState) (string, error) {
 
 // default genesis file, only have one genesis account
 func GetDefaultGenesis(masterKey crypto.PubKey, validatorPubKey crypto.PubKey) (string, error) {
-	transactionPriv := crypto.GenPrivKeyEd25519()
-	postPriv := crypto.GenPrivKeyEd25519()
+	transactionPriv := crypto.GenPrivKeySecp256k1()
+	postPriv := crypto.GenPrivKeySecp256k1()
+
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 

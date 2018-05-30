@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	acc "github.com/lino-network/lino/tx/account"
-	global "github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
+	global "github.com/lino-network/lino/tx/global"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -20,12 +21,10 @@ var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
 	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
-
-	initCoin = types.NewCoin(1 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest(t *testing.T, height int64) (
@@ -57,7 +56,7 @@ func getContext(height int64) sdk.Context {
 }
 
 // helper function to create an account for testing purpose
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
+func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
 	am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
 	am.CreateAccount(ctx, types.AccountKey(username),

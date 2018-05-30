@@ -18,6 +18,9 @@ type ProposalResult int
 // indicates proposal type
 type ProposalType int
 
+// indicates donation type
+type DonationType int
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPermLink(author AccountKey, postID string) PermLink {
 	return PermLink(string(author) + "#" + postID)
