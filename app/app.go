@@ -160,6 +160,18 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
 	cdc.RegisterConcrete(developer.GrantDeveloperMsg{}, "grant/developer", nil)
 
+	cdc.RegisterConcrete(proposal.DeletePostContentMsg{}, "deletePostContent", nil)
+	cdc.RegisterConcrete(proposal.ChangeGlobalAllocationParamMsg{}, "changeGlobalAllocation", nil)
+	cdc.RegisterConcrete(proposal.ChangeEvaluateOfContentValueParamMsg{}, "changeEvaluation", nil)
+	cdc.RegisterConcrete(proposal.ChangeInfraInternalAllocationParamMsg{}, "changeInfraAllocation", nil)
+	cdc.RegisterConcrete(proposal.ChangeVoteParamMsg{}, "changeVoteParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeProposalParamMsg{}, "changeProposalParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeDeveloperParamMsg{}, "changeDeveloperParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeValidatorParamMsg{}, "changeValidatorParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeCoinDayParamMsg{}, "changeCoinDayParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeBandwidthParamMsg{}, "changeBandwidthParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeAccountParamMsg{}, "changeAccountParam", nil)
+
 	wire.RegisterCrypto(cdc)
 	return cdc
 }
