@@ -149,8 +149,9 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryIntervalTime: types.MinutesPerMonth * 60,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return ErrParamHolderGenesisFailed().TraceCause(err, "")

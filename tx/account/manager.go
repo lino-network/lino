@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"math/big"
 	"reflect"
 
@@ -28,65 +29,60 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManage
 }
 
 // check if account exist
-func (accManager AccountManager) IsAccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
-	return accManager.storage.AccountExist(ctx, accKey)
+func (accManager AccountManager) IsAccountExist(ctx sdk.Context, username types.AccountKey) bool {
+	return accManager.storage.AccountExist(ctx, username)
 }
 
-// Implements types.AccountManager.
+// create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
-	ctx sdk.Context, accKey types.AccountKey,
-	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey) sdk.Error {
-	if accManager.IsAccountExist(ctx, accKey) {
-		return ErrAccountAlreadyExists(accKey)
-	}
-	bank, err := accManager.storage.GetBankFromAddress(ctx, masterKey.Address())
-	if err != nil {
-		return ErrAccountCreateFailed(accKey)
-	}
-	if bank.Username != "" {
-		return ErrBankAlreadyRegistered()
+	ctx sdk.Context, username types.AccountKey,
+	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey,
+	registerFee types.Coin) sdk.Error {
+	if accManager.IsAccountExist(ctx, username) {
+		return ErrAccountAlreadyExists(username)
 	}
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
 		return err
 	}
-	if !bank.Saving.IsGTE(accParams.RegisterFee) {
+	if accParams.RegisterFee.IsGT(registerFee) {
 		return ErrRegisterFeeInsufficient()
+	}
+	if err := accManager.storage.SetPendingStakeQueue(
+		ctx, username, &model.PendingStakeQueue{}); err != nil {
+		return err
+	}
+
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, &model.AccountBank{}); err != nil {
+		return ErrAccountCreateFailed(username).TraceCause(err, "")
 	}
 
 	accountInfo := &model.AccountInfo{
-		Username:       accKey,
+		Username:       username,
 		CreatedAt:      ctx.BlockHeader().Time,
 		MasterKey:      masterKey,
 		TransactionKey: transactionKey,
 		PostKey:        postKey,
-		Address:        masterKey.Address(),
 	}
-	if err := accManager.storage.SetInfo(ctx, accKey, accountInfo); err != nil {
-		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
-	}
-
-	bank.Username = accKey
-	if err := accManager.storage.SetBankFromAddress(
-		ctx, masterKey.Address(), bank); err != nil {
-		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
+		return ErrAccountCreateFailed(username).TraceCause(err, "")
 	}
 
 	accountMeta := &model.AccountMeta{
 		LastActivityAt:      ctx.BlockHeader().Time,
 		TransactionCapacity: types.NewCoinFromInt64(0),
 	}
-	if err := accManager.storage.SetMeta(ctx, accKey, accountMeta); err != nil {
-		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
+		return ErrAccountCreateFailed(username).TraceCause(err, "")
 	}
-	reward :=
-		&model.Reward{types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), types.NewCoinFromInt64(0)}
-	if err := accManager.storage.SetReward(ctx, accKey, reward); err != nil {
-		return ErrAccountCreateFailed(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
+		return ErrAccountCreateFailed(username).TraceCause(err, "")
 	}
-
 	if err := accManager.storage.SetGrantKeyList(
-		ctx, accKey, &model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}); err != nil {
+		ctx, username, &model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}); err != nil {
+		return err
+	}
+	if err := accManager.AddSavingCoin(ctx, username, registerFee, types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -94,12 +90,12 @@ func (accManager AccountManager) CreateAccount(
 
 // use coin to present stake to prevent overflow
 func (accManager AccountManager) GetStake(
-	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
-	bank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetStake(accKey).TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetStake(username).TraceCause(err, "")
 	}
-	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, bank.Address)
+	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
@@ -107,11 +103,11 @@ func (accManager AccountManager) GetStake(
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
 
 	if err := accManager.storage.SetPendingStakeQueue(
-		ctx, bank.Address, pendingStakeQueue); err != nil {
+		ctx, username, pendingStakeQueue); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
 
-	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
 
@@ -122,34 +118,19 @@ func (accManager AccountManager) GetStake(
 }
 
 func (accManager AccountManager) AddSavingCoin(
-	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
-	address, err := accManager.GetBankAddress(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey, coin types.Coin,
+	coinFrom types.BalanceHistoryDetailType) (err sdk.Error) {
+	if !accManager.IsAccountExist(ctx, username) {
+		return ErrAddCoinAccountNotFound(username)
+	}
+	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrAddCoinToAccountSaving(accKey).TraceCause(err, "")
+		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
-	if err := accManager.AddSavingCoinToAddress(ctx, address, coin); err != nil {
-		return ErrAddCoinToAccountSaving(accKey).TraceCause(err, "")
-	}
-	return nil
-}
+	bank.Saving = bank.Saving.Plus(coin)
 
-func (accManager AccountManager) AddSavingCoinToAddress(
-	ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
-	if coin.IsZero() {
-		return nil
-	}
-	bank, _ := accManager.storage.GetBankFromAddress(ctx, address)
-	if bank == nil {
-		bank = &model.AccountBank{
-			Address: address,
-			Saving:  coin,
-		}
-		if err := accManager.storage.SetPendingStakeQueue(
-			ctx, address, &model.PendingStakeQueue{}); err != nil {
-			return err
-		}
-	} else {
-		bank.Saving = bank.Saving.Plus(coin)
+	if err := accManager.AddBalanceHistory(ctx, username, coin, coinFrom); err != nil {
+		return err
 	}
 
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
@@ -162,56 +143,52 @@ func (accManager AccountManager) AddSavingCoinToAddress(
 		EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
 		Coin:      coin,
 	}
-	if err := accManager.addPendingStakeToQueue(ctx, address, bank, pendingStake); err != nil {
-		return ErrAddCoinToAddress(address).TraceCause(err, "")
+	if err := accManager.addPendingStakeToQueue(ctx, username, bank, pendingStake); err != nil {
+		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
-	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
-		return ErrAddCoinToAddress(address).TraceCause(err, "")
+
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
+		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
 	return nil
 }
 
-func (accManager AccountManager) AddCheckingCoin(
-	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
-	address, err := accManager.GetBankAddress(ctx, accKey)
+func (accManager AccountManager) AddBalanceHistory(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin,
+	detailType types.BalanceHistoryDetailType) sdk.Error {
+	// set balance history
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
-		return ErrAddCoinToAccountChecking(accKey).TraceCause(err, "")
+		return err
 	}
-	if err := accManager.AddCheckingCoinToAddress(ctx, address, coin); err != nil {
-		return ErrAddCoinToAccountChecking(accKey).TraceCause(err, "")
+	balanceHistory, err :=
+		accManager.storage.GetBalanceHistory(
+			ctx, username, ctx.BlockHeader().Time/accParams.BalanceHistoryIntervalTime)
+	if err != nil {
+		return err
 	}
-	return nil
-}
-
-func (accManager AccountManager) AddCheckingCoinToAddress(
-	ctx sdk.Context, address sdk.Address, coin types.Coin) (err sdk.Error) {
-	if coin.IsZero() {
-		return nil
+	if balanceHistory == nil {
+		balanceHistory = &model.BalanceHistory{Details: []model.Detail{}}
 	}
-	bank, _ := accManager.storage.GetBankFromAddress(ctx, address)
-	if bank == nil {
-		bank = &model.AccountBank{
-			Address:  address,
-			Checking: coin,
-		}
-		if err := accManager.storage.SetPendingStakeQueue(
-			ctx, address, &model.PendingStakeQueue{}); err != nil {
-			return err
-		}
-	} else {
-		bank.Checking = bank.Checking.Plus(coin)
-	}
-	if err := accManager.storage.SetBankFromAddress(ctx, bank.Address, bank); err != nil {
-		return ErrAddCoinToAddress(address).TraceCause(err, "")
+	balanceHistory.Details = append(balanceHistory.Details,
+		model.Detail{
+			Amount:     coin,
+			CreatedAt:  ctx.BlockHeader().Time,
+			DetailType: detailType,
+		})
+	if err := accManager.storage.SetBalanceHistory(
+		ctx, username, ctx.BlockHeader().Time/accParams.BalanceHistoryIntervalTime, balanceHistory); err != nil {
+		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
 	return nil
 }
 
 func (accManager AccountManager) MinusSavingCoin(
-	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
-	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey, coin types.Coin,
+	coinFor types.BalanceHistoryDetailType) (err sdk.Error) {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
+		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
 
 	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
@@ -222,15 +199,22 @@ func (accManager AccountManager) MinusSavingCoin(
 	if !remain.IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountSavingCoinNotEnough()
 	}
+
+	if err := accManager.AddBalanceHistory(ctx, username, coin, coinFor); err != nil {
+		return err
+	}
+
 	pendingStakeQueue, err :=
-		accManager.storage.GetPendingStakeQueue(ctx, accountBank.Address)
+		accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
 		return err
 	}
 	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	// update pending stake queue, remove expired transaction
+	fmt.Println("minus before update", pendingStakeQueue)
 	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
+	fmt.Println("minus after update", pendingStakeQueue)
 
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
@@ -274,147 +258,112 @@ func (accManager AccountManager) MinusSavingCoin(
 		accountBank.Stake = accountBank.Saving
 	}
 	if err := accManager.storage.SetPendingStakeQueue(
-		ctx, accountBank.Address, pendingStakeQueue); err != nil {
+		ctx, username, pendingStakeQueue); err != nil {
 		return err
 	}
 
-	if err := accManager.storage.SetBankFromAddress(
-		ctx, accountBank.Address, accountBank); err != nil {
-		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetBankFromAccountKey(
+		ctx, username, accountBank); err != nil {
+		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
 	return nil
-}
-
-func (accManager AccountManager) MinusCheckingCoin(
-	ctx sdk.Context, accKey types.AccountKey, coin types.Coin) (err sdk.Error) {
-	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
-	if err != nil {
-		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
-	}
-	if !accountBank.Checking.IsGTE(coin) {
-		return ErrAccountCheckingCoinNotEnough()
-	}
-	accountBank.Checking = accountBank.Checking.Minus(coin)
-	if err := accManager.storage.SetBankFromAddress(
-		ctx, accountBank.Address, accountBank); err != nil {
-		return ErrMinusCoinToAccount(accKey).TraceCause(err, "")
-	}
-	return nil
-}
-
-func (accManager AccountManager) GetBankAddress(
-	ctx sdk.Context, accKey types.AccountKey) (sdk.Address, sdk.Error) {
-	accountInfo, err := accManager.storage.GetInfo(ctx, accKey)
-	if err != nil {
-		return nil, ErrGetBankAddress(accKey).TraceCause(err, "")
-	}
-	return accountInfo.Address, nil
 }
 
 func (accManager AccountManager) GetTransactionKey(
-	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
-	accountInfo, err := accManager.storage.GetInfo(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetTransactionKey(accKey).TraceCause(err, "")
+		return nil, ErrGetTransactionKey(username).TraceCause(err, "")
 	}
 	return accountInfo.TransactionKey, nil
 }
 
 func (accManager AccountManager) GetMasterKey(
-	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
-	accountInfo, err := accManager.storage.GetInfo(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetMasterKey(accKey).TraceCause(err, "")
+		return nil, ErrGetMasterKey(username).TraceCause(err, "")
 	}
 	return accountInfo.MasterKey, nil
 }
 
 func (accManager AccountManager) GetPostKey(
-	ctx sdk.Context, accKey types.AccountKey) (crypto.PubKey, sdk.Error) {
-	accountInfo, err := accManager.storage.GetInfo(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
+	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetPostKey(accKey).TraceCause(err, "")
+		return nil, ErrGetPostKey(username).TraceCause(err, "")
 	}
 	return accountInfo.PostKey, nil
 }
 
 func (accManager AccountManager) GetSavingFromBank(
-	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
-	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.Coin{}, ErrGetBankSaving(accKey).TraceCause(err, "")
+		return types.Coin{}, ErrGetBankSaving(username).TraceCause(err, "")
 	}
 	return accountBank.Saving, nil
 }
 
-func (accManager AccountManager) GetCheckingFromBank(
-	ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
-	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
-	if err != nil {
-		return types.Coin{}, ErrGetBankSaving(accKey).TraceCause(err, "")
-	}
-	return accountBank.Checking, nil
-}
-
 func (accManager AccountManager) GetSequence(
-	ctx sdk.Context, accKey types.AccountKey) (int64, sdk.Error) {
-	accountMeta, err := accManager.storage.GetMeta(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, ErrGetSequence(accKey).TraceCause(err, "")
+		return 0, ErrGetSequence(username).TraceCause(err, "")
 	}
 	return accountMeta.Sequence, nil
 }
 
 func (accManager AccountManager) GetFrozenMoneyList(
-	ctx sdk.Context, accKey types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
-	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return nil, ErrGetFrozenMoneyList(accKey).TraceCause(err, "")
+		return nil, ErrGetFrozenMoneyList(username).TraceCause(err, "")
 	}
 	return accountBank.FrozenMoneyList, nil
 }
 
 func (accManager AccountManager) IncreaseSequenceByOne(
-	ctx sdk.Context, accKey types.AccountKey) sdk.Error {
-	accountMeta, err := accManager.storage.GetMeta(ctx, accKey)
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrGetSequence(accKey).TraceCause(err, "")
+		return ErrGetSequence(username).TraceCause(err, "")
 	}
 	accountMeta.Sequence += 1
-	if err := accManager.storage.SetMeta(ctx, accKey, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
+		return ErrIncreaseSequenceByOne(username).TraceCause(err, "")
 	}
 	return nil
 }
 
 func (accManager AccountManager) AddIncomeAndReward(
-	ctx sdk.Context, accKey types.AccountKey,
+	ctx sdk.Context, username types.AccountKey,
 	originIncome, friction, actualReward types.Coin) sdk.Error {
-	reward, err := accManager.storage.GetReward(ctx, accKey)
+	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
+		return ErrAddIncomeAndReward(username).TraceCause(err, "")
 	}
 	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
 	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
 	reward.ActualReward = reward.ActualReward.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
-	if err := accManager.storage.SetReward(ctx, accKey, reward); err != nil {
-		return ErrAddIncomeAndReward(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
+		return ErrAddIncomeAndReward(username).TraceCause(err, "")
 	}
 	return nil
 }
 
-func (accManager AccountManager) ClaimReward(ctx sdk.Context, accKey types.AccountKey) sdk.Error {
-	reward, err := accManager.storage.GetReward(ctx, accKey)
+func (accManager AccountManager) ClaimReward(ctx sdk.Context, username types.AccountKey) sdk.Error {
+	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrClaimReward(accKey).TraceCause(err, "")
+		return ErrClaimReward(username).TraceCause(err, "")
 	}
-	if err := accManager.AddSavingCoin(ctx, accKey, reward.UnclaimReward); err != nil {
-		return ErrClaimReward(accKey).TraceCause(err, "")
+	if err := accManager.AddSavingCoin(ctx, username, reward.UnclaimReward, types.ClaimReward); err != nil {
+		return ErrClaimReward(username).TraceCause(err, "")
 	}
 	reward.UnclaimReward = types.NewCoinFromInt64(0)
-	if err := accManager.storage.SetReward(ctx, accKey, reward); err != nil {
-		return ErrClaimReward(accKey).TraceCause(err, "")
+	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
+		return ErrClaimReward(username).TraceCause(err, "")
 	}
 	return nil
 }
@@ -642,64 +591,30 @@ func (accManager AccountManager) GetDonationRelationship(
 }
 
 func (accManager AccountManager) addPendingStakeToQueue(
-	ctx sdk.Context, address sdk.Address, bank *model.AccountBank,
+	ctx sdk.Context, username types.AccountKey, bank *model.AccountBank,
 	pendingStake model.PendingStake) sdk.Error {
-	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, address)
+	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
 		return err
 	}
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
 	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList, pendingStake)
 	pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Plus(pendingStake.Coin)
-	return accManager.storage.SetPendingStakeQueue(ctx, address, pendingStakeQueue)
+	return accManager.storage.SetPendingStakeQueue(ctx, username, pendingStakeQueue)
 }
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
 	newMasterPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
-	// check new bank address is clean
-	newBank, _ := accManager.storage.GetBankFromAddress(ctx, newMasterPubKey.Address())
-	if newBank != nil {
-		return ErrRecoverMasterKeyAlreadyOccupied()
-	}
-
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	// get and clean old address bank
-	bank, err := accManager.storage.GetBankFromAddress(ctx, accInfo.Address)
-	if err != nil {
-		return err
-	}
-	if err := accManager.storage.SetBankFromAddress(
-		ctx, accInfo.Address, &model.AccountBank{Address: accInfo.Address}); err != nil {
-		return err
-	}
-	pendingQueue, err := accManager.storage.GetPendingStakeQueue(ctx, accInfo.Address)
-	if err != nil {
-		return err
-	}
-	if err := accManager.storage.SetPendingStakeQueue(
-		ctx, accInfo.Address, &model.PendingStakeQueue{}); err != nil {
-		return err
-	}
-
-	bank.Address = newMasterPubKey.Address()
-
-	accInfo.Address = newMasterPubKey.Address()
 	accInfo.MasterKey = newMasterPubKey
 	accInfo.PostKey = newPostPubKey
 	accInfo.TransactionKey = newTransactionPubKey
 	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {
-		return err
-	}
-
-	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return err
-	}
-	if err := accManager.storage.SetPendingStakeQueue(ctx, accInfo.Address, pendingQueue); err != nil {
 		return err
 	}
 

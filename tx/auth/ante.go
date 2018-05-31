@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/lino-network/lino/tx/global"
@@ -37,23 +36,6 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		fee := stdTx.Fee
 		signBytes := sdk.StdSignBytes(ctx.ChainID(), sequences, fee, msg)
-		_, ok = msg.(reg.RegisterMsg)
-		if ok {
-			// TODO(Lino): here we get the address :(
-			var signerAddrs = msg.GetSigners()
-
-			// Only new user can sign their own register transaction
-			if len(sigs) != len(signerAddrs) || len(sigs) != 1 {
-				return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
-			}
-			if !bytes.Equal(sigs[0].PubKey.Address(), signerAddrs[0]) {
-				return ctx, sdk.ErrUnauthorized("wrong public key for signer").Result(), true
-			}
-			if !sigs[0].PubKey.VerifyBytes(signBytes, sigs[0].Signature) {
-				return ctx, sdk.ErrUnauthorized("signature verification failed").Result(), true
-			}
-			return ctx, sdk.Result{}, false
-		}
 
 		permission, err := getPermissionLevel(msg)
 		if err != nil {

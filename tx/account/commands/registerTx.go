@@ -10,7 +10,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/tx/register"
+	acc "github.com/lino-network/lino/tx/account"
+	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -33,6 +34,8 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(client.FlagUser)
+		referrer := viper.GetString(client.FlagReferrer)
+		amount := viper.GetString(client.FlagAmount)
 		pubKey, err := GetPubKey()
 
 		if err != nil {
@@ -44,7 +47,9 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
-		msg := register.NewRegisterMsg(name, pubKey, postPriv.PubKey(), transactionPriv.PubKey())
+		msg := acc.NewRegisterMsg(
+			referrer, name, types.LNO(amount),
+			pubKey, postPriv.PubKey(), transactionPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcastBasedOnKeyBase(name, msg, cdc)

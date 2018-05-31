@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/proposal"
-	"github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	acc "github.com/lino-network/lino/tx/account"
@@ -97,7 +96,6 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	RegisterEvent(lb.globalManager.WireCodec())
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(
 			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager)).
@@ -132,7 +130,7 @@ func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 
 	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(register.RegisterMsg{}, "register", nil)
+	cdc.RegisterConcrete(acc.RegisterMsg{}, "register", nil)
 	cdc.RegisterConcrete(acc.FollowMsg{}, "follow", nil)
 	cdc.RegisterConcrete(acc.UnfollowMsg{}, "unfollow", nil)
 	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
@@ -259,15 +257,12 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if err := lb.accountManager.AddSavingCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
-		panic(sdk.ErrGenesisParse("set genesis bank failed"))
-	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
 		panic(sdk.ErrGenesisParse("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name),
-		ga.MasterKey, ga.TransactionKey, ga.PostKey); err != nil {
+		ga.MasterKey, ga.TransactionKey, ga.PostKey, coin); err != nil {
 		panic(err)
 	}
 
@@ -280,7 +275,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		// withdraw money from validator's bank
 		if err := lb.accountManager.MinusSavingCoin(
 			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
+			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
+			types.ValidatorDeposit); err != nil {
 			panic(err)
 		}
 
@@ -289,7 +285,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 			panic(err)
 		}
 		if err := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), valParam.ValidatorMinCommitingDeposit, ""); err != nil {
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(),
+			valParam.ValidatorMinCommitingDeposit, ""); err != nil {
 			panic(err)
 		}
 		if err := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); err != nil {
@@ -310,7 +307,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return err
 	}
 
-	if err := lb.accountManager.MinusSavingCoin(ctx, types.AccountKey(developer.Name), coin); err != nil {
+	if err := lb.accountManager.MinusSavingCoin(
+		ctx, types.AccountKey(developer.Name), coin, types.DeveloperDeposit); err != nil {
 		return err
 	}
 
@@ -488,7 +486,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator)
+		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator, types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -513,7 +511,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		}
 		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage.GetRat())
 		myShareCoin, err := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin)
+		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin, types.InfraInflation)
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -542,7 +540,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		}
 		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage)
 		myShareCoin, _ := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin)
+		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin, types.DeveloperInflation)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {

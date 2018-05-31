@@ -58,7 +58,8 @@ func handleChangeParamMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ChangeParamMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -98,7 +99,8 @@ func handleProtocolUpgradeMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -142,7 +144,8 @@ func handleContentCensorshipMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -166,7 +169,7 @@ func returnCoinTo(
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin)
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.ProposalReturnCoin)
 	if err != nil {
 		return err
 	}

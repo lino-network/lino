@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
-	reg "github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -34,9 +33,8 @@ func createTestAccount(
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
-	am.AddSavingCoinToAddress(ctx, masterKey.PubKey().Address(), accParams.RegisterFee)
 	am.CreateAccount(ctx, types.AccountKey(username),
-		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey())
+		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
 }
 
@@ -152,40 +150,6 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []int64{0, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
-}
-
-// Test various error cases in the AnteHandler control flow.
-func TestAnteHandlerRegisterTx(t *testing.T) {
-	_, _, _, ctx, anteHandler := setupTest()
-	priv1 := crypto.GenPrivKeyEd25519()
-	priv2 := crypto.GenPrivKeyEd25519()
-
-	// msg and signatures
-	var tx sdk.Tx
-	msg := reg.NewRegisterMsg("test",
-		priv1.PubKey(), crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey())
-
-	// test valid transaction
-	privs, seqs := []crypto.PrivKey{priv1}, []int64{0}
-	tx = newTestTx(ctx, msg, privs, seqs)
-	checkValidTx(t, anteHandler, ctx, tx)
-
-	// test no signatures
-	privs, seqs = []crypto.PrivKey{}, []int64{}
-	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("no signers").Result())
-
-	// test wrong priv key
-	privs, seqs = []crypto.PrivKey{priv2}, []int64{0}
-	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(
-		t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong public key for signer").Result())
-
-	// test wrong sig number
-	privs, seqs = []crypto.PrivKey{priv2, priv1}, []int64{0, 0}
-	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(
-		t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
 }
 
 // Test various error cases in the AnteHandler control flow.

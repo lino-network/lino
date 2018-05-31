@@ -1,6 +1,8 @@
 package model
 
 import (
+	"strconv"
+
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +19,7 @@ var (
 	accountPendingStakeQueueSubstore = []byte{0x06}
 	accountRelationshipSubstore      = []byte{0x07}
 	accountGrantListSubstore         = []byte{0x08}
+	accountBalanceHistorySubstore    = []byte{0x09}
 )
 
 type AccountStorage struct {
@@ -70,60 +73,30 @@ func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accIn
 
 // GetBankFromAccountKey returns bank info of a specific account, returns error
 // if any.
-func (as AccountStorage) GetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey) (*AccountBank, sdk.Error) {
+func (as AccountStorage) GetBankFromAccountKey(
+	ctx sdk.Context, me types.AccountKey) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
-	if infoByte == nil {
-		return nil, ErrAccountBankNotFound()
-	}
-	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
-		return nil, ErrGetBankFromAccountKey().TraceCause(err, "")
-	}
-	return as.GetBankFromAddress(ctx, info.Address)
-}
-
-// GetBankFromAddress returns bank info for a given address, returns error
-// if any.
-func (as AccountStorage) GetBankFromAddress(ctx sdk.Context, address sdk.Address) (*AccountBank, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	bankByte := store.Get(GetAccountBankKey(address))
+	bankByte := store.Get(GetAccountBankKey(me))
 	if bankByte == nil {
 		return nil, ErrAccountBankNotFound()
 	}
 	bank := new(AccountBank)
 	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
-		return nil, ErrGetBankFromAddress().TraceCause(err, "")
+		return nil, ErrGetBankFromAccountKey().TraceCause(err, "")
 	}
 	return bank, nil
 }
 
 // SetBankFromAddress sets bank info for a given address,
 // returns error if any.
-func (as AccountStorage) SetBankFromAddress(ctx sdk.Context, address sdk.Address, accBank *AccountBank) sdk.Error {
+func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, username types.AccountKey, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
 	bankByte, err := as.cdc.MarshalJSON(*accBank)
 	if err != nil {
 		return ErrSetBankFailed().TraceCause(err, "")
 	}
-	store.Set(GetAccountBankKey(address), bankByte)
+	store.Set(GetAccountBankKey(username), bankByte)
 	return nil
-}
-
-// SetBankFromAccountKey sets bank info for a given account,
-// returns error if any.
-func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, accKey types.AccountKey, accBank *AccountBank) sdk.Error {
-	store := ctx.KVStore(as.key)
-	infoByte := store.Get(GetAccountInfoKey(accKey))
-	if infoByte == nil {
-		return ErrGetBankFromAccountKey()
-	}
-	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
-		return ErrGetBankFromAccountKey().TraceCause(err, "")
-	}
-
-	return as.SetBankFromAddress(ctx, info.Address, accBank)
 }
 
 // GetMeta returns meta of a given account that are tiny
@@ -230,9 +203,10 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 }
 
 // GetPendingStakeQueue returns a pending stake queue for a given address.
-func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Address) (*PendingStakeQueue, sdk.Error) {
+func (as AccountStorage) GetPendingStakeQueue(
+	ctx sdk.Context, me types.AccountKey) (*PendingStakeQueue, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte := store.Get(getPendingStakeQueueKey(address))
+	pendingStakeQueueByte := store.Get(getPendingStakeQueueKey(me))
 	if pendingStakeQueueByte == nil {
 		return nil, ErrGetPendingStakeFailed()
 	}
@@ -243,14 +217,14 @@ func (as AccountStorage) GetPendingStakeQueue(ctx sdk.Context, address sdk.Addre
 	return queue, nil
 }
 
-// SetPendingStakeQueue sets a pending stake queue for a given address.
-func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, address sdk.Address, pendingStakeQueue *PendingStakeQueue) sdk.Error {
+// SetPendingStakeQueue sets a pending stake queue for a given username.
+func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, me types.AccountKey, pendingStakeQueue *PendingStakeQueue) sdk.Error {
 	store := ctx.KVStore(as.key)
 	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
 	if err != nil {
 		return ErrSetRewardFailed().TraceCause(err, "")
 	}
-	store.Set(getPendingStakeQueueKey(address), pendingStakeQueueByte)
+	store.Set(getPendingStakeQueueKey(me), pendingStakeQueueByte)
 	return nil
 }
 
@@ -304,12 +278,39 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 	return nil
 }
 
+// GetRelationship returns the relationship between two accounts.
+func (as AccountStorage) GetBalanceHistory(
+	ctx sdk.Context, me types.AccountKey, timeSlot int64) (*BalanceHistory, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, timeSlot))
+	if balanceHistoryBytes == nil {
+		return nil, nil
+	}
+	history := new(BalanceHistory)
+	if err := as.cdc.UnmarshalJSON(balanceHistoryBytes, history); err != nil {
+		return nil, ErrGetBalanceHistoryFailed().TraceCause(err, "")
+	}
+	return history, nil
+}
+
+// SetBalanceHistory sets balance history.
+func (as AccountStorage) SetBalanceHistory(
+	ctx sdk.Context, me types.AccountKey, timeSlot int64, history *BalanceHistory) sdk.Error {
+	store := ctx.KVStore(as.key)
+	historyBytes, err := as.cdc.MarshalJSON(*history)
+	if err != nil {
+		return ErrSetBalanceHistoryFailed().TraceCause(err, "")
+	}
+	store.Set(getBalanceHistoryKey(me, timeSlot), historyBytes)
+	return nil
+}
+
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(accountInfoSubstore, accKey...)
 }
 
-func GetAccountBankKey(address sdk.Address) []byte {
-	return append(accountBankSubstore, address...)
+func GetAccountBankKey(accKey types.AccountKey) []byte {
+	return append(accountBankSubstore, accKey...)
 }
 
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
@@ -346,10 +347,18 @@ func getRelationshipPrefix(me types.AccountKey) []byte {
 	return append(append(accountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
-func getPendingStakeQueueKey(address sdk.Address) []byte {
-	return append(accountPendingStakeQueueSubstore, address...)
+func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
+	return append(accountPendingStakeQueueSubstore, accKey...)
 }
 
 func getGrantKeyListKey(me types.AccountKey) []byte {
 	return append(accountGrantListSubstore, me...)
+}
+
+func getBalanceHistoryPrefix(me types.AccountKey) []byte {
+	return append(append(accountBalanceHistorySubstore, me...), types.KeySeparator...)
+}
+
+func getBalanceHistoryKey(me types.AccountKey, atWhen int64) []byte {
+	return strconv.AppendInt(getBalanceHistoryPrefix(me), atWhen, 10)
 }

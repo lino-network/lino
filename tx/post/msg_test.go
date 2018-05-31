@@ -231,20 +231,20 @@ func TestDonationMsg(t *testing.T) {
 		expectError sdk.Error
 	}{
 		{NewDonateMsg("test", types.LNO("1"),
-			"author", "postID", "", false, memo1), nil},
-		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", false, memo1),
+			"author", "postID", "", memo1), nil},
+		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("1"), "author", "", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "", "", false, memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", false, invalidMemo),
+		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
 			ErrInvalidMemo()},
 	}
 
@@ -299,17 +299,11 @@ func TestMsgPermission(t *testing.T) {
 		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
-		"donateMsg from saving": {
+		"donateMsg": {
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", false, memo1),
+				"author", "postID", "", memo1),
 			expectPermission: types.TransactionPermission,
-		},
-		"donateMsg from checking": {
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", true, memo1),
-			expectPermission: types.PostPermission,
 		},
 		"create post": {
 			msg: NewCreatePostMsg(PostCreateParams{

@@ -312,7 +312,7 @@ func TestAddFrozenMoney(t *testing.T) {
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
-			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin, types.VoteReturnCoin)
 		assert.Equal(t, nil, err)
 		lst, err := am.GetFrozenMoneyList(ctx, user)
 		assert.Equal(t, tc.expectedFrozenListLen, len(lst))

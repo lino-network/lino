@@ -9,8 +9,9 @@ import (
 
 // ReturnCoin Event return a certain amount of coin to an account
 type ReturnCoinEvent struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.Coin       `json:"amount"`
+	Username   types.AccountKey               `json:"username"`
+	Amount     types.Coin                     `json:"amount"`
+	ReturnType types.BalanceHistoryDetailType `json:"return_type"`
 }
 
 // execute return coin event
@@ -19,7 +20,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 		return ErrUsernameNotFound()
 	}
 
-	if err := am.AddSavingCoin(ctx, event.Username, event.Amount); err != nil {
+	if err := am.AddSavingCoin(ctx, event.Username, event.Amount, event.ReturnType); err != nil {
 		return err
 	}
 	return nil
@@ -27,7 +28,8 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 
 // create coin return events
 func CreateCoinReturnEvents(
-	name types.AccountKey, times int64, interval int64, coin types.Coin) ([]types.Event, sdk.Error) {
+	name types.AccountKey, times int64, interval int64, coin types.Coin,
+	returnType types.BalanceHistoryDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
@@ -38,8 +40,9 @@ func CreateCoinReturnEvents(
 		coin = coin.Minus(piece)
 
 		event := ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
+			Username:   name,
+			Amount:     piece,
+			ReturnType: returnType,
 		}
 		events = append(events, event)
 	}

@@ -39,7 +39,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, deposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, deposit, types.DeveloperDeposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
@@ -99,7 +99,7 @@ func returnCoinTo(
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin)
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.DeveloperReturnCoin)
 	if err != nil {
 		return err
 	}

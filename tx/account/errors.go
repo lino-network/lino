@@ -17,8 +17,8 @@ func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("username not found"))
 }
 
-func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid Username"))
+func ErrInvalidUsername(msg string) sdk.Error {
+	return sdk.NewError(types.CodeInvalidUsername, msg)
 }
 
 func ErrInvalidMemo() sdk.Error {
@@ -34,8 +34,8 @@ func ErrOpenBankFeeInsufficient(provide types.Coin, expect types.Coin) sdk.Error
 		fmt.Sprintf("open bank failed, fee insufficient, need %v, but only %v provided", expect, provide))
 }
 
-func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
+func ErrAddCoinAccountNotFound(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed, account not found", accKey))
 }
 
 func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
