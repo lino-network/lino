@@ -194,7 +194,6 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 		len(msg.Receiver) > types.MaximumUsernameLength {
 		return ErrInvalidUsername("illeagle length")
 	}
-	fmt.Println(msg.Amount)
 	_, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err
