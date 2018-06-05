@@ -24,8 +24,8 @@ func NewHandler(am AccountManager) sdk.Handler {
 			return handleRecoverMsg(ctx, am, msg)
 		case RegisterMsg:
 			return handleRegisterMsg(ctx, am, msg)
-		case UpdateMsg:
-			return handleUpdateMsg(ctx, am, msg)
+		case UpdateAccountMsg:
+			return handleUpdateAccountMsg(ctx, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized account msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -132,7 +132,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 }
 
 // Handle RegisterMsg
-func handleUpdateMsg(ctx sdk.Context, am AccountManager, msg UpdateMsg) sdk.Result {
+func handleUpdateAccountMsg(ctx sdk.Context, am AccountManager, msg UpdateAccountMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}

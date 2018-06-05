@@ -358,28 +358,28 @@ func TestHandleRegister(t *testing.T) {
 	}
 }
 
-func TesthandleUpdateMsg(t *testing.T) {
+func TesthandleUpdateAccountMsg(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	handler := NewHandler(am)
 
 	createTestAccount(ctx, am, "accKey")
 
 	cases := []struct {
-		testName     string
-		updateMsg    UpdateMsg
-		expectResult sdk.Result
+		testName         string
+		updateAccountMsg UpdateAccountMsg
+		expectResult     sdk.Result
 	}{
 		{"normal update",
-			NewUpdateMsg("accKey", "{'link':'https://lino.network'}"),
+			NewUpdateAccountMsg("accKey", "{'link':'https://lino.network'}"),
 			sdk.Result{},
 		},
 		{"invalid username",
-			NewUpdateMsg("invalid", "{'link':'https://lino.network'}"),
+			NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
 			ErrUsernameNotFound().Result(),
 		},
 	}
 	for _, cs := range cases {
-		result := handler(ctx, cs.updateMsg)
+		result := handler(ctx, cs.updateAccountMsg)
 		assert.Equal(t, result, cs.expectResult)
 	}
 }

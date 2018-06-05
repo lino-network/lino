@@ -234,29 +234,22 @@ func TestRecoverMsg(t *testing.T) {
 	}
 }
 
-func TestUpdateMsg(t *testing.T) {
+func TestUpdateAccountMsg(t *testing.T) {
 	testCases := map[string]struct {
-		msg      UpdateMsg
+		msg      UpdateAccountMsg
 		wantCode sdk.CodeType
 	}{
 		"normal case - update JSON Meta": {
-			msg: UpdateMsg{
+			msg: UpdateAccountMsg{
 				Username: userA,
 				JSONMeta: "{'test':'test'}",
 			},
 			wantCode: sdk.CodeOK,
 		},
 		"normal case - update JSON Meta too long": {
-			msg: UpdateMsg{
+			msg: UpdateAccountMsg{
 				Username: userA,
 				JSONMeta: string(make([]byte, 501)),
-			},
-			wantCode: types.CodeInvalidMsg,
-		},
-		"normal case - wrong JSON format": {
-			msg: UpdateMsg{
-				Username: userA,
-				JSONMeta: string(make([]byte, 50)),
 			},
 			wantCode: types.CodeInvalidMsg,
 		},
@@ -278,7 +271,6 @@ func TestUpdateMsg(t *testing.T) {
 }
 
 func TestRegisterUsername(t *testing.T) {
-
 	testCases := map[string]struct {
 		msg      RegisterMsg
 		wantCode sdk.CodeType
@@ -296,13 +288,13 @@ func TestRegisterUsername(t *testing.T) {
 			wantCode: sdk.CodeOK,
 		},
 		"register username maximum length": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnewne", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username length exceeds requirement": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnewnew", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
@@ -380,7 +372,7 @@ func TestMsgPermission(t *testing.T) {
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
 			types.TransactionPermission},
 		"update msg": {
-			NewUpdateMsg("user", "{'test':'test'}"), types.PostPermission},
+			NewUpdateAccountMsg("user", "{'test':'test'}"), types.PostPermission},
 	}
 
 	for testName, cs := range cases {

@@ -18,7 +18,7 @@ var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
 var _ sdk.Msg = RecoverMsg{}
 var _ sdk.Msg = RegisterMsg{}
-var _ sdk.Msg = UpdateMsg{}
+var _ sdk.Msg = UpdateAccountMsg{}
 
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
@@ -59,8 +59,8 @@ type RegisterMsg struct {
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
-// UpdateMsg - update account JSON meta info.
-type UpdateMsg struct {
+// UpdateAccountMsg - update account JSON meta info.
+type UpdateAccountMsg struct {
 	Username types.AccountKey `json:"username"`
 	JSONMeta string           `json:"json_meta"`
 }
@@ -367,19 +367,19 @@ func (msg RegisterMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Referrer)}
 }
 
-// NewUpdateMsg - construct user update msg to update user JSON meta info.
-func NewUpdateMsg(username string, JSONMeta string) UpdateMsg {
-	return UpdateMsg{
+// NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
+func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
+	return UpdateAccountMsg{
 		Username: types.AccountKey(username),
 		JSONMeta: JSONMeta,
 	}
 }
 
 // Implements Msg.
-func (msg UpdateMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
 // Implements Msg.
-func (msg UpdateMsg) ValidateBasic() sdk.Error {
+func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername("illeagle length")
@@ -392,12 +392,12 @@ func (msg UpdateMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg UpdateMsg) String() string {
-	return fmt.Sprintf("UpdateMsg{User:%v, JSON meta:%v}", msg.Username, msg.JSONMeta)
+func (msg UpdateAccountMsg) String() string {
+	return fmt.Sprintf("UpdateAccountMsg{User:%v, JSON meta:%v}", msg.Username, msg.JSONMeta)
 }
 
 // Implements Msg.
-func (msg UpdateMsg) Get(key interface{}) (value interface{}) {
+func (msg UpdateAccountMsg) Get(key interface{}) (value interface{}) {
 	keyStr, ok := key.(string)
 	if !ok {
 		return nil
@@ -410,7 +410,7 @@ func (msg UpdateMsg) Get(key interface{}) (value interface{}) {
 }
 
 // Implements Msg.
-func (msg UpdateMsg) GetSignBytes() []byte {
+func (msg UpdateAccountMsg) GetSignBytes() []byte {
 	b, err := json.Marshal(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
@@ -419,6 +419,6 @@ func (msg UpdateMsg) GetSignBytes() []byte {
 }
 
 // Implements Msg.
-func (msg UpdateMsg) GetSigners() []sdk.Address {
+func (msg UpdateAccountMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
