@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -65,7 +66,7 @@ func TestFollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -120,7 +121,7 @@ func TestUnfollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -186,7 +187,7 @@ func TestTransferMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -224,9 +225,53 @@ func TestRecoverMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
 			}
-			return
+			continue
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestUpdateMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      UpdateMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case - update JSON Meta": {
+			msg: UpdateMsg{
+				Username: userA,
+				JSONMeta: "{'test':'test'}",
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"normal case - update JSON Meta too long": {
+			msg: UpdateMsg{
+				Username: userA,
+				JSONMeta: string(make([]byte, 501)),
+			},
+			wantCode: types.CodeInvalidMsg,
+		},
+		"normal case - wrong JSON format": {
+			msg: UpdateMsg{
+				Username: userA,
+				JSONMeta: string(make([]byte, 50)),
+			},
+			wantCode: types.CodeInvalidMsg,
+		},
+	}
+
+	for testName, tc := range testCases {
+		fmt.Println(testName)
+		got := tc.msg.ValidateBasic()
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				return
+			}
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -291,7 +336,7 @@ func TestRegisterUsername(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -336,6 +381,8 @@ func TestMsgPermission(t *testing.T) {
 			NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
 			types.TransactionPermission},
+		"update msg": {
+			NewUpdateMsg("user", "{'test':'test'}"), types.PostPermission},
 	}
 
 	for testName, cs := range cases {

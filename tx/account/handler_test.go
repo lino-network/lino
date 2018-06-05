@@ -348,3 +348,29 @@ func TestHandleRegister(t *testing.T) {
 		assert.Equal(t, tc.expectReferrerSaving, saving)
 	}
 }
+
+func TesthandleUpdateMsg(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	handler := NewHandler(am)
+
+	createTestAccount(ctx, am, "accKey")
+
+	cases := []struct {
+		testName     string
+		updateMsg    UpdateMsg
+		expectResult sdk.Result
+	}{
+		{"normal update",
+			NewUpdateMsg("accKey", "{'link':'https://lino.network'}"),
+			sdk.Result{},
+		},
+		{"invalid username",
+			NewUpdateMsg("invalid", "{'link':'https://lino.network'}"),
+			ErrUsernameNotFound().Result(),
+		},
+	}
+	for _, cs := range cases {
+		result := handler(ctx, cs.updateMsg)
+		assert.Equal(t, result, cs.expectResult)
+	}
+}

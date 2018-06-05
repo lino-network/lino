@@ -25,6 +25,10 @@ func ErrInvalidMemo() sdk.Error {
 	return sdk.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo"))
 }
 
+func ErrInvalidJSONMeta() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid account JSON meta"))
+}
+
 func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transfer from account %v failed", accKey))
 }
@@ -72,6 +76,10 @@ func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
 
 func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+}
+
+func ErrUpdateJSONMeta(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v JSON meta failed", accKey))
 }
 
 func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
