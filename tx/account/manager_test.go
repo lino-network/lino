@@ -264,6 +264,39 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
+		{"add coin is zero",
+			types.AccountKey("user1"), priv1.PubKey().Address(), c0, types.DelegationReturnCoin, baseTime3,
+			model.AccountBank{
+				Saving: accParam.RegisterFee.Plus(c400),
+				Stake:  accParam.RegisterFee.Plus(c300),
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime3,
+				StakeCoinInQueue: sdk.ZeroRat,
+				TotalCoin:        c100,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime3,
+						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+				},
+			},
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     c100,
+						CreatedAt:  baseTime3,
+						DetailType: types.ClaimReward,
+					},
+					model.Detail{
+						Amount:     c0,
+						CreatedAt:  baseTime3,
+						DetailType: types.DelegationReturnCoin,
+					},
+				},
+			},
+		},
 	}
 
 	for _, cs := range cases {

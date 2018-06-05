@@ -28,7 +28,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 
 // create coin return events
 func CreateCoinReturnEvents(
-	name types.AccountKey, times int64, interval int64, coin types.Coin,
+	username types.AccountKey, times int64, interval int64, coin types.Coin,
 	returnType types.BalanceHistoryDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
@@ -40,7 +40,7 @@ func CreateCoinReturnEvents(
 		coin = coin.Minus(piece)
 
 		event := ReturnCoinEvent{
-			Username:   name,
+			Username:   username,
 			Amount:     piece,
 			ReturnType: returnType,
 		}
