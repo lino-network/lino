@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -264,7 +263,6 @@ func TestUpdateMsg(t *testing.T) {
 	}
 
 	for testName, tc := range testCases {
-		fmt.Println(testName)
 		got := tc.msg.ValidateBasic()
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {

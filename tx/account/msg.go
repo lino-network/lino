@@ -296,15 +296,15 @@ func NewRegisterMsg(
 	newUser string,
 	registerFee types.LNO,
 	masterPubkey crypto.PubKey,
-	postPubkey crypto.PubKey,
-	transactionPubkey crypto.PubKey) RegisterMsg {
+	transactionPubkey crypto.PubKey,
+	postPubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
 		Referrer:             types.AccountKey(referrer),
 		NewUser:              types.AccountKey(newUser),
 		RegisterFee:          registerFee,
 		NewMasterPubKey:      masterPubkey,
-		NewPostPubKey:        postPubkey,
 		NewTransactionPubKey: transactionPubkey,
+		NewPostPubKey:        postPubkey,
 	}
 }
 

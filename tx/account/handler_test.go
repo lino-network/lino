@@ -342,6 +342,15 @@ func TestHandleRegister(t *testing.T) {
 		assert.Equal(t, tc.expectResult, result)
 		if result.Code == sdk.CodeOK {
 			assert.True(t, am.IsAccountExist(ctx, tc.registerMsg.NewUser))
+			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, txKey, tc.registerMsg.NewTransactionPubKey)
+			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, postKey, tc.registerMsg.NewPostPubKey)
+			masterKey, err := am.GetMasterKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, masterKey, tc.registerMsg.NewMasterPubKey)
 		}
 		saving, err := am.GetSavingFromBank(ctx, tc.registerMsg.Referrer)
 		assert.Nil(t, err)

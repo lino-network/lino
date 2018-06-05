@@ -124,8 +124,8 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 		return err.Result()
 	}
 	if err := am.CreateAccount(
-		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey,
-		msg.NewTransactionPubKey, coin); err != nil {
+		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewTransactionPubKey,
+		msg.NewPostPubKey, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
