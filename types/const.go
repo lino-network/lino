@@ -85,6 +85,9 @@ const (
 	// MaximumMemoLength denotes the maximum length of memo
 	MaximumMemoLength = 100
 
+	// MaximumJSONMeta denotes the maximum length of account JSON meta
+	MaximumJSONMetaLength = 500
+
 	// DefaultAcitivityBurden for user when account is registered
 	DefaultActivityBurden = 100
 

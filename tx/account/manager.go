@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"math/big"
 	"reflect"
 
@@ -212,9 +211,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	// update pending stake queue, remove expired transaction
-	fmt.Println("minus before update", pendingStakeQueue)
 	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
-	fmt.Println("minus after update", pendingStakeQueue)
 
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
@@ -276,6 +273,17 @@ func (accManager AccountManager) GetTransactionKey(
 		return nil, ErrGetTransactionKey(username).TraceCause(err, "")
 	}
 	return accountInfo.TransactionKey, nil
+}
+
+func (accManager AccountManager) UpdateJSONMeta(
+	ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return ErrUpdateJSONMeta(username).TraceCause(err, "")
+	}
+	accountMeta.JSONMeta = JSONMeta
+
+	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
 func (accManager AccountManager) GetMasterKey(

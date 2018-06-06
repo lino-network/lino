@@ -18,6 +18,7 @@ var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
 var _ sdk.Msg = RecoverMsg{}
 var _ sdk.Msg = RegisterMsg{}
+var _ sdk.Msg = UpdateAccountMsg{}
 
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
@@ -48,7 +49,7 @@ type TransferMsg struct {
 	Memo     string           `json:"memo"`
 }
 
-// RegisterMsg - bind username with address(public key), need to be referred by others (pay for it).
+// RegisterMsg - bind username with public key, need to be referred by others (pay for it).
 type RegisterMsg struct {
 	Referrer             types.AccountKey `json:"referrer"`
 	RegisterFee          types.LNO        `json:"register_fee"`
@@ -56,6 +57,12 @@ type RegisterMsg struct {
 	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
 	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
+}
+
+// UpdateAccountMsg - update account JSON meta info.
+type UpdateAccountMsg struct {
+	Username types.AccountKey `json:"username"`
+	JSONMeta string           `json:"json_meta"`
 }
 
 // Follow Msg Implementations
@@ -283,21 +290,21 @@ func (msg RecoverMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
-// NewSendMsg - construct arbitrary multi-in, multi-out send msg.
+// NewRegisterMsg - construct register msg.
 func NewRegisterMsg(
 	referrer string,
 	newUser string,
 	registerFee types.LNO,
 	masterPubkey crypto.PubKey,
-	postPubkey crypto.PubKey,
-	transactionPubkey crypto.PubKey) RegisterMsg {
+	transactionPubkey crypto.PubKey,
+	postPubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
 		Referrer:             types.AccountKey(referrer),
 		NewUser:              types.AccountKey(newUser),
 		RegisterFee:          registerFee,
 		NewMasterPubKey:      masterPubkey,
-		NewPostPubKey:        postPubkey,
 		NewTransactionPubKey: transactionPubkey,
+		NewPostPubKey:        postPubkey,
 	}
 }
 
@@ -358,4 +365,60 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 // Implements Msg.
 func (msg RegisterMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Referrer)}
+}
+
+// NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
+func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
+	return UpdateAccountMsg{
+		Username: types.AccountKey(username),
+		JSONMeta: JSONMeta,
+	}
+}
+
+// Implements Msg.
+func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+
+// Implements Msg.
+func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername("illeagle length")
+	}
+
+	if len(msg.JSONMeta) > types.MaximumJSONMetaLength {
+		return ErrInvalidJSONMeta()
+	}
+
+	return nil
+}
+
+func (msg UpdateAccountMsg) String() string {
+	return fmt.Sprintf("UpdateAccountMsg{User:%v, JSON meta:%v}", msg.Username, msg.JSONMeta)
+}
+
+// Implements Msg.
+func (msg UpdateAccountMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	// the permission will not be checked at auth
+	if keyStr == types.PermissionLevel {
+		return types.PostPermission
+	}
+	return nil
+}
+
+// Implements Msg.
+func (msg UpdateAccountMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// Implements Msg.
+func (msg UpdateAccountMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
 }

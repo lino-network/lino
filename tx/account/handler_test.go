@@ -342,9 +342,44 @@ func TestHandleRegister(t *testing.T) {
 		assert.Equal(t, tc.expectResult, result)
 		if result.Code == sdk.CodeOK {
 			assert.True(t, am.IsAccountExist(ctx, tc.registerMsg.NewUser))
+			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, txKey, tc.registerMsg.NewTransactionPubKey)
+			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, postKey, tc.registerMsg.NewPostPubKey)
+			masterKey, err := am.GetMasterKey(ctx, tc.registerMsg.NewUser)
+			assert.Nil(t, err)
+			assert.Equal(t, masterKey, tc.registerMsg.NewMasterPubKey)
 		}
 		saving, err := am.GetSavingFromBank(ctx, tc.registerMsg.Referrer)
 		assert.Nil(t, err)
 		assert.Equal(t, tc.expectReferrerSaving, saving)
+	}
+}
+
+func TesthandleUpdateAccountMsg(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	handler := NewHandler(am)
+
+	createTestAccount(ctx, am, "accKey")
+
+	cases := []struct {
+		testName         string
+		updateAccountMsg UpdateAccountMsg
+		expectResult     sdk.Result
+	}{
+		{"normal update",
+			NewUpdateAccountMsg("accKey", "{'link':'https://lino.network'}"),
+			sdk.Result{},
+		},
+		{"invalid username",
+			NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
+			ErrUsernameNotFound().Result(),
+		},
+	}
+	for _, cs := range cases {
+		result := handler(ctx, cs.updateAccountMsg)
+		assert.Equal(t, result, cs.expectResult)
 	}
 }
