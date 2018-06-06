@@ -65,7 +65,7 @@ func TestFollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -120,7 +120,7 @@ func TestUnfollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -186,7 +186,7 @@ func TestTransferMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -224,9 +224,45 @@ func TestRecoverMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
 			}
-			return
+			continue
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestUpdateAccountMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      UpdateAccountMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case - update JSON Meta": {
+			msg: UpdateAccountMsg{
+				Username: userA,
+				JSONMeta: "{'test':'test'}",
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"normal case - update JSON Meta too long": {
+			msg: UpdateAccountMsg{
+				Username: userA,
+				JSONMeta: string(make([]byte, 501)),
+			},
+			wantCode: types.CodeInvalidMsg,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				return
+			}
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -235,7 +271,6 @@ func TestRecoverMsg(t *testing.T) {
 }
 
 func TestRegisterUsername(t *testing.T) {
-
 	testCases := map[string]struct {
 		msg      RegisterMsg
 		wantCode sdk.CodeType
@@ -253,13 +288,13 @@ func TestRegisterUsername(t *testing.T) {
 			wantCode: sdk.CodeOK,
 		},
 		"register username maximum length": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnewne", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username length exceeds requirement": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnewnew", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
@@ -291,7 +326,7 @@ func TestRegisterUsername(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -336,6 +371,8 @@ func TestMsgPermission(t *testing.T) {
 			NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
 			types.TransactionPermission},
+		"update msg": {
+			NewUpdateAccountMsg("user", "{'test':'test'}"), types.PostPermission},
 	}
 
 	for testName, cs := range cases {

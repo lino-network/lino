@@ -264,6 +264,44 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
+		{"add coin is zero",
+			types.AccountKey("user1"), priv1.PubKey().Address(), c0, types.DelegationReturnCoin, baseTime3,
+			model.AccountBank{
+				Saving: accParam.RegisterFee.Plus(c400),
+				Stake:  accParam.RegisterFee.Plus(c300),
+			},
+			model.PendingStakeQueue{
+				LastUpdatedAt:    baseTime3,
+				StakeCoinInQueue: sdk.ZeroRat,
+				TotalCoin:        c100,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTime3,
+						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c100,
+					},
+					model.PendingStake{
+						StartTime: baseTime3,
+						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
+						Coin:      c0,
+					},
+				},
+			},
+			model.BalanceHistory{
+				[]model.Detail{
+					model.Detail{
+						Amount:     c100,
+						CreatedAt:  baseTime3,
+						DetailType: types.ClaimReward,
+					},
+					model.Detail{
+						Amount:     c0,
+						CreatedAt:  baseTime3,
+						DetailType: types.DelegationReturnCoin,
+					},
+				},
+			},
+		},
 	}
 
 	for _, cs := range cases {
@@ -538,6 +576,30 @@ func TestInvalidCreateAccount(t *testing.T) {
 	}
 }
 
+func TestUpdateJSONMeta(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+
+	accKey := types.AccountKey("accKey")
+	createTestAccount(ctx, am, string(accKey))
+
+	cases := []struct {
+		testName string
+		username types.AccountKey
+		JSONMeta string
+	}{
+		{"normal update",
+			accKey, "{'link':'https://lino.network'}",
+		},
+	}
+	for _, cs := range cases {
+		err := am.UpdateJSONMeta(ctx, cs.username, cs.JSONMeta)
+		assert.Nil(t, err)
+		accMeta, err := am.storage.GetMeta(ctx, cs.username)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.JSONMeta, accMeta.JSONMeta)
+	}
+}
+
 func TestCoinDayByAccountKey(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
@@ -555,36 +617,35 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	createTestAccount(ctx, am, string(accKey))
 
 	cases := []struct {
-		testName              string
-		IsAdd                 bool
-		Coin                  types.Coin
-		AtWhen                int64
-		ExpectSavingBalance   types.Coin
-		ExpectCheckingBalance types.Coin
-		ExpectStake           types.Coin
-		ExpectStakeInBank     types.Coin
+		testName            string
+		IsAdd               bool
+		Coin                types.Coin
+		AtWhen              int64
+		ExpectSavingBalance types.Coin
+		ExpectStake         types.Coin
+		ExpectStakeInBank   types.Coin
 	}{
 		{"add coin before charging first coin",
 			true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
-			doubleRegisterFee, coin0, coin0, coin0},
+			doubleRegisterFee, coin0, coin0},
 		{"check first coin",
 			true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
-			doubleRegisterFee, coin0, coin1, coin0},
+			doubleRegisterFee, coin1, coin0},
 		{"check both transactions fully charged",
-			true, coin0, baseTime2, doubleRegisterFee, coin0, doubleRegisterFee, doubleRegisterFee},
+			true, coin0, baseTime2, doubleRegisterFee, doubleRegisterFee, doubleRegisterFee},
 		{"withdraw half deposit",
 			false, accParam.RegisterFee, baseTime2,
-			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
+			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
 		{"charge again",
 			true, accParam.RegisterFee, baseTime2,
-			doubleRegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
+			doubleRegisterFee, accParam.RegisterFee, accParam.RegisterFee},
 		{"withdraw half deposit while the last transaction is still charging",
 			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee.Plus(halfRegisterFee), coin0,
+			accParam.RegisterFee.Plus(halfRegisterFee),
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)), accParam.RegisterFee},
 		{"withdraw last transaction which is still charging",
 			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee, coin0, accParam.RegisterFee, accParam.RegisterFee},
+			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee},
 	}
 
 	for _, cs := range cases {
