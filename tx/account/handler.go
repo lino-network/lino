@@ -56,14 +56,14 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 		return ErrUsernameNotFound().Result()
 	}
 
-	// add the "msg.Follower" to the "msg.Followee" 's follower list.
-	// add "msg.Followee/msg.Follower" key under "follower" prefix.
+	// remove the "msg.Follower" from the "msg.Followee" 's follower list.
+	// remove "msg.Followee/msg.Follower" key under "follower" prefix.
 	if err := am.RemoveFollower(ctx, msg.Followee, msg.Follower); err != nil {
 		return err.Result()
 	}
 
-	// add the "msg.Followee" to the "msg.Follower" 's following list.
-	// add "msg.Follower/msg.Followee" key under "following" prefix
+	// remove the "msg.Followee" from the "msg.Follower" 's following list.
+	// remove "msg.Follower/msg.Followee" key under "following" prefix
 	if err := am.RemoveFollowing(ctx, msg.Follower, msg.Followee); err != nil {
 		return err.Result()
 	}
