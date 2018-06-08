@@ -13,9 +13,9 @@ import (
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
-	acc "github.com/lino-network/lino/tx/account"
-	post "github.com/lino-network/lino/tx/post"
-	val "github.com/lino-network/lino/tx/validator"
+	acc "github.com/lino-network/lino/x/account"
+	post "github.com/lino-network/lino/x/post"
+	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

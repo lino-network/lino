@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
-	acc "github.com/lino-network/lino/tx/account"
-	post "github.com/lino-network/lino/tx/post"
+	acc "github.com/lino-network/lino/x/account"
+	post "github.com/lino-network/lino/x/post"
 	"github.com/lino-network/lino/types"
 
 	crypto "github.com/tendermint/go-crypto"
