@@ -19,7 +19,7 @@ import (
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
 
-	globalModel "github.com/lino-network/lino/tx/global/model"
+	globalModel "github.com/lino-network/lino/x/global/model"
 )
 
 var (

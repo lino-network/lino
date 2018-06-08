@@ -11,9 +11,38 @@ Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous conte
 
 Lino Blockchain follow the design in [Design Doc](https://docs.google.com/document/d/1Ytd57axPfJ13TSGVU_Yykv8ijW_VuWtx1s79ny6i5M8).
 
-# install
 
-```
-dep ensure
-```
+Get Source Code
+^^^^^^^^^^^^^^^
+
+::
+
+    mkdir -p $GOPATH/src/github.com/lino-network
+    cd $GOPATH/src/github.com/lino-network
+    git clone https://github.com/lino-network/lino.git
+    cd lino
+
+Get Tools & Dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    dep ensure
+
+Compile Lino Blockchain Node
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    cd cmd/lino
+    go build
+
+
+Compile Lino Blockchain Client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    cd cmd/linocli
+    go build
 

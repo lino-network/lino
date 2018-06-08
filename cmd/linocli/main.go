@@ -14,15 +14,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tmlibs/cli"
 
-	acccmd "github.com/lino-network/lino/tx/account/commands"
-	developercmd "github.com/lino-network/lino/tx/developer/commands"
-	infracmd "github.com/lino-network/lino/tx/infra/commands"
-	postcmd "github.com/lino-network/lino/tx/post/commands"
-	proposalcmd "github.com/lino-network/lino/tx/proposal/commands"
-	validatorcmd "github.com/lino-network/lino/tx/validator/commands"
-	delegatecmd "github.com/lino-network/lino/tx/vote/commands/delegate"
-	delegationcmd "github.com/lino-network/lino/tx/vote/commands/delegate"
-	votecmd "github.com/lino-network/lino/tx/vote/commands/vote"
+	acccmd "github.com/lino-network/lino/x/account/commands"
+	developercmd "github.com/lino-network/lino/x/developer/commands"
+	infracmd "github.com/lino-network/lino/x/infra/commands"
+	postcmd "github.com/lino-network/lino/x/post/commands"
+	proposalcmd "github.com/lino-network/lino/x/proposal/commands"
+	validatorcmd "github.com/lino-network/lino/x/validator/commands"
+	delegatecmd "github.com/lino-network/lino/x/vote/commands/delegate"
+	delegationcmd "github.com/lino-network/lino/x/vote/commands/delegate"
+	votecmd "github.com/lino-network/lino/x/vote/commands/vote"
 )
 
 // linocliCmd is the entry point for this binary
