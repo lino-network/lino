@@ -1,40 +1,72 @@
 package developer
 
 import (
+	"math/big"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReportConsumption(t *testing.T) {
-	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(dm, am, gm)
+	ctx, _, dm, _ := setupTest(t, 0)
 	dm.InitGenesis(ctx)
 
-	developer1 := createTestAccount(ctx, am, "developer1")
-	am.AddSavingCoin(ctx, developer1, c800000)
-	msg := NewDeveloperRegisterMsg("developer1", l800000)
-	handler(ctx, msg)
+	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
+	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit)
+	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit)
 
-	developer2 := createTestAccount(ctx, am, "developer2")
-	am.AddSavingCoin(ctx, developer2, c800000)
-	msg2 := NewDeveloperRegisterMsg("developer2", l800000)
-	handler(ctx, msg2)
-
-	con1 := types.NewCoin(100)
+	con1 := types.NewCoinFromInt64(100)
 	dm.ReportConsumption(ctx, "developer1", con1)
 	p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.Equal(t, int64(1), p1.Evaluate())
+	assert.True(t, p1.Cmp(big.NewRat(1, 1)) == 0)
 
-	con2 := types.NewCoin(100)
+	con2 := types.NewCoinFromInt64(100)
 	dm.ReportConsumption(ctx, "developer2", con2)
 	p2, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.Equal(t, true, p2.Equal(sdk.NewRat(1, 2)))
+	assert.True(t, p2.Cmp(big.NewRat(1, 2)) == 0)
 
 	dm.ClearConsumption(ctx)
 	p3, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.Equal(t, true, p3.Equal(sdk.NewRat(1, 2)))
+	assert.True(t, p3.Cmp(big.NewRat(1, 2)) == 0)
 
+	cases := map[string]struct {
+		Developer1Consumption             types.Coin
+		Developer2Consumption             types.Coin
+		ExpectDeveloper1ConsumptionWeight *big.Rat
+		ExpectDeveloper2ConsumptionWeight *big.Rat
+	}{
+		"test normal consumption": {
+			types.NewCoinFromInt64(2500 * types.Decimals), types.NewCoinFromInt64(7500 * types.Decimals),
+			big.NewRat(1, 4), big.NewRat(3, 4),
+		},
+		"test empty consumption": {
+			types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), big.NewRat(1, 2), big.NewRat(1, 2),
+		},
+		"issue https://github.com/lino-network/lino/issues/150": {
+			types.NewCoinFromInt64(3333333), types.NewCoinFromInt64(4444444),
+			big.NewRat(3, 7), big.NewRat(4, 7),
+		},
+	}
+	for testName, cs := range cases {
+		dm.ReportConsumption(ctx, "developer1", cs.Developer1Consumption)
+		dm.ReportConsumption(ctx, "developer2", cs.Developer2Consumption)
+
+		p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
+		if cs.ExpectDeveloper1ConsumptionWeight.Cmp(p1) != 0 {
+			t.Errorf(
+				"%s: expect developer1 usage weight %v, got %v",
+				testName, cs.ExpectDeveloper1ConsumptionWeight, p1)
+			return
+		}
+
+		p2, _ := dm.GetConsumptionWeight(ctx, "developer2")
+		if cs.ExpectDeveloper2ConsumptionWeight.Cmp(p2) != 0 {
+			t.Errorf(
+				"%s: expect developer2 usage weight %v, got %v",
+				testName, cs.ExpectDeveloper2ConsumptionWeight, p2)
+			return
+		}
+		dm.ClearConsumption(ctx)
+	}
 }

@@ -1,13 +1,14 @@
 package app
 
 import (
+	"math/big"
+
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/tx/auth"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/tx/proposal"
-	"github.com/lino-network/lino/tx/register"
 	"github.com/lino-network/lino/types"
 
 	acc "github.com/lino-network/lino/tx/account"
@@ -95,9 +96,9 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	RegisterEvent(lb.globalManager.WireCodec())
 
 	lb.Router().
-		AddRoute(types.RegisterRouterName, register.NewHandler(lb.accountManager)).
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
-		AddRoute(types.PostRouterName, post.NewHandler(lb.postManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.PostRouterName, post.NewHandler(
+			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(lb.voteManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
 			lb.developerManager, lb.accountManager, lb.globalManager)).
@@ -129,11 +130,12 @@ func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 
 	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(register.RegisterMsg{}, "register", nil)
+	cdc.RegisterConcrete(acc.RegisterMsg{}, "register", nil)
 	cdc.RegisterConcrete(acc.FollowMsg{}, "follow", nil)
 	cdc.RegisterConcrete(acc.UnfollowMsg{}, "unfollow", nil)
 	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
 	cdc.RegisterConcrete(acc.ClaimMsg{}, "claim", nil)
+	cdc.RegisterConcrete(acc.RecoverMsg{}, "recover", nil)
 	cdc.RegisterConcrete(post.CreatePostMsg{}, "post", nil)
 	cdc.RegisterConcrete(post.UpdatePostMsg{}, "update/post", nil)
 	cdc.RegisterConcrete(post.DeletePostMsg{}, "delete/post", nil)
@@ -155,6 +157,18 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(developer.DeveloperRevokeMsg{}, "developer/revoke", nil)
 	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
 	cdc.RegisterConcrete(developer.GrantDeveloperMsg{}, "grant/developer", nil)
+
+	cdc.RegisterConcrete(proposal.DeletePostContentMsg{}, "deletePostContent", nil)
+	cdc.RegisterConcrete(proposal.ChangeGlobalAllocationParamMsg{}, "changeGlobalAllocation", nil)
+	cdc.RegisterConcrete(proposal.ChangeEvaluateOfContentValueParamMsg{}, "changeEvaluation", nil)
+	cdc.RegisterConcrete(proposal.ChangeInfraInternalAllocationParamMsg{}, "changeInfraAllocation", nil)
+	cdc.RegisterConcrete(proposal.ChangeVoteParamMsg{}, "changeVoteParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeProposalParamMsg{}, "changeProposalParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeDeveloperParamMsg{}, "changeDeveloperParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeValidatorParamMsg{}, "changeValidatorParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeCoinDayParamMsg{}, "changeCoinDayParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeBandwidthParamMsg{}, "changeBandwidthParam", nil)
+	cdc.RegisterConcrete(proposal.ChangeAccountParamMsg{}, "changeAccountParam", nil)
 
 	wire.RegisterCrypto(cdc)
 	return cdc
@@ -243,15 +257,12 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if err := lb.accountManager.AddSavingCoinToAddress(ctx, ga.MasterKey.Address(), coin); err != nil {
-		panic(sdk.ErrGenesisParse("set genesis bank failed"))
-	}
 	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
 		panic(sdk.ErrGenesisParse("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name),
-		ga.MasterKey, ga.TransactionKey, ga.PostKey); err != nil {
+		ga.MasterKey, ga.TransactionKey, ga.PostKey, coin); err != nil {
 		panic(err)
 	}
 
@@ -264,7 +275,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		// withdraw money from validator's bank
 		if err := lb.accountManager.MinusSavingCoin(
 			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
+			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
+			types.ValidatorDeposit); err != nil {
 			panic(err)
 		}
 
@@ -273,7 +285,8 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 			panic(err)
 		}
 		if err := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(), valParam.ValidatorMinCommitingDeposit, ""); err != nil {
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(),
+			valParam.ValidatorMinCommitingDeposit, ""); err != nil {
 			panic(err)
 		}
 		if err := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); err != nil {
@@ -294,7 +307,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return err
 	}
 
-	if err := lb.accountManager.MinusSavingCoin(ctx, types.AccountKey(developer.Name), coin); err != nil {
+	if err := lb.accountManager.MinusSavingCoin(
+		ctx, types.AccountKey(developer.Name), coin, types.DeveloperDeposit); err != nil {
 		return err
 	}
 
@@ -427,10 +441,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	if err := lb.globalManager.AddHourlyInflationToRewardPool(
-		ctx, (lb.pastMinutes/60)%types.HoursPerYear); err != nil {
-		panic(err)
-	}
+	lb.distributeInflationToConsumptionRewardPool(ctx)
 	lb.distributeInflationToValidator(ctx)
 }
 
@@ -448,27 +459,42 @@ func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
 
 // distribute inflation to validators
 // TODO: encaptulate module event inside module
+func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {
+	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
+	if err := lb.globalManager.AddHourlyInflationToRewardPool(
+		ctx, pastHoursMinusOneThisYear); err != nil {
+		panic(err)
+	}
+}
+
+// distribute inflation to validators
+// TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
+	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
 	lst, err := lb.valManager.GetValidatorList(ctx)
 	if err != nil {
 		panic(err)
 	}
-	pastHoursThisYear := (lb.pastMinutes / 60) % types.HoursPerYear
-	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, pastHoursThisYear)
+	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, pastHoursMinusOneThisYear)
 	if err != nil {
 		panic(err)
 	}
 	// give inflation to each validator evenly
-	ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators))))
-	for _, validator := range lst.OncallValidators {
-		lb.accountManager.AddSavingCoin(ctx, validator, types.RatToCoin(ratPerValidator))
+	for i, validator := range lst.OncallValidators {
+		ratPerValidator := new(big.Rat).Quo(coin.ToRat(), big.NewRat(int64(len(lst.OncallValidators)-i), 1))
+		coinPerValidator, err := types.RatToCoin(ratPerValidator)
+		if err != nil {
+			panic(err)
+		}
+		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator, types.ValidatorInflation)
+		coin = coin.Minus(coinPerValidator)
 	}
 }
 
 // distribute inflation to infra provider monthly
 // TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	pastMonthMinusOneThisYear := (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
+	pastMonthMinusOneThisYear := lb.getPastMonthMinusOneThisYear()
 	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx, pastMonthMinusOneThisYear)
 	if err != nil {
 		panic(err)
@@ -478,14 +504,14 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-
 	for _, provider := range lst.AllInfraProviders {
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
 		if err != nil {
 			panic(err)
 		}
-		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddSavingCoin(ctx, provider, types.RatToCoin(myShare))
+		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage.GetRat())
+		myShareCoin, err := types.RatToCoin(myShareRat)
+		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin, types.InfraInflation)
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -496,7 +522,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 // distribute inflation to developer monthly
 // TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
-	pastMonthMinusOneThisYear := (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
+	pastMonthMinusOneThisYear := lb.getPastMonthMinusOneThisYear()
 	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx, pastMonthMinusOneThisYear)
 	if err != nil {
 		panic(err)
@@ -512,8 +538,9 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShare := inflation.ToRat().Mul(percentage)
-		lb.accountManager.AddSavingCoin(ctx, developer, types.RatToCoin(myShare))
+		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage)
+		myShareCoin, _ := types.RatToCoin(myShareRat)
+		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin, types.DeveloperInflation)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
@@ -542,4 +569,12 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
 		panic(err)
 	}
+}
+
+func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
+	return (lb.pastMinutes/60 - 1) % types.HoursPerYear
+}
+
+func (lb *LinoBlockchain) getPastMonthMinusOneThisYear() int64 {
+	return (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
 }

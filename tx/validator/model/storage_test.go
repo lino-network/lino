@@ -37,9 +37,9 @@ func TestValidator(t *testing.T) {
 		user    types.AccountKey
 		deposit types.Coin
 	}{
-		{1000, types.AccountKey("user"), types.NewCoin(100)},
-		{10000, types.AccountKey("user"), types.NewCoin(0)},
-		{1, types.AccountKey("user2"), types.NewCoin(10)},
+		{1000, types.AccountKey("user"), types.NewCoinFromInt64(100)},
+		{10000, types.AccountKey("user"), types.NewCoinFromInt64(0)},
+		{1, types.AccountKey("user2"), types.NewCoinFromInt64(10)},
 	}
 
 	for _, cs := range cases {
@@ -65,7 +65,7 @@ func TestValidatorList(t *testing.T) {
 		{ValidatorList{[]types.AccountKey{types.AccountKey("user1")},
 			[]types.AccountKey{types.AccountKey("user2")},
 			nil,
-			types.NewCoin(100), types.AccountKey("user2")}},
+			types.NewCoinFromInt64(100), types.AccountKey("user2")}},
 	}
 
 	for _, cs := range cases {

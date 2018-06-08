@@ -1,4 +1,7 @@
+.DS_Store
 vendor/
 cmd/lino/lino
 cmd/linocli/linocli
 server/server
+lino
+linocli

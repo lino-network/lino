@@ -15,17 +15,13 @@ type AccountInfo struct {
 	MasterKey      crypto.PubKey    `json:"master_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
 	PostKey        crypto.PubKey    `json:"post_key"`
-	Address        sdk.Address      `json:"address"`
 }
 
 // AccountBank uses Address as the key instead of Username
 type AccountBank struct {
-	Address         sdk.Address      `json:"address"`
-	Saving          types.Coin       `json:"saving"`
-	Checking        types.Coin       `json:"checking"`
-	Username        types.AccountKey `json:"username"`
-	Stake           types.Coin       `json:"stake"`
-	FrozenMoneyList []FrozenMoney    `json:"frozen_money_list"`
+	Saving          types.Coin    `json:"saving"`
+	Stake           types.Coin    `json:"stake"`
+	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
 }
 
 type FrozenMoney struct {
@@ -66,6 +62,7 @@ type AccountMeta struct {
 	Sequence            int64      `json:"sequence"`
 	LastActivityAt      int64      `json:"last_activity_at"`
 	TransactionCapacity types.Coin `json:"transaction_capacity"`
+	JSONMeta            string     `json:"json_meta"`
 }
 
 // AccountInfraConsumption records infra utility consumption
@@ -97,4 +94,16 @@ type Reward struct {
 // Relationship between accounts
 type Relationship struct {
 	DonationTimes int64 `json:"donation_times"`
+}
+
+// BalanceHistory records all transactions in a certain time period
+type BalanceHistory struct {
+	Details []Detail `json:"details"`
+}
+
+// Detail is information about each transaction related to balance
+type Detail struct {
+	DetailType types.BalanceHistoryDetailType `json:"detail"`
+	Amount     types.Coin                     `json:"amount"`
+	CreatedAt  int64                          `json:"created_at"`
 }

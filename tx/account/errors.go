@@ -17,12 +17,16 @@ func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("username not found"))
 }
 
-func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid Username"))
+func ErrInvalidUsername(msg string) sdk.Error {
+	return sdk.NewError(types.CodeInvalidUsername, msg)
 }
 
 func ErrInvalidMemo() sdk.Error {
 	return sdk.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo"))
+}
+
+func ErrInvalidJSONMeta() sdk.Error {
+	return sdk.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid account JSON meta"))
 }
 
 func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
@@ -34,8 +38,8 @@ func ErrOpenBankFeeInsufficient(provide types.Coin, expect types.Coin) sdk.Error
 		fmt.Sprintf("open bank failed, fee insufficient, need %v, but only %v provided", expect, provide))
 }
 
-func ErrAddCoinToAddress(addr sdk.Address) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add coin to address %v failed", addr))
+func ErrAddCoinAccountNotFound(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed, account not found", accKey))
 }
 
 func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
@@ -74,6 +78,10 @@ func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
 }
 
+func ErrUpdateJSONMeta(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v JSON meta failed", accKey))
+}
+
 func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v master key failed", accKey))
 }
@@ -92,6 +100,10 @@ func ErrGetBankChecking(accKey types.AccountKey) sdk.Error {
 
 func ErrGetSequence(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
+}
+
+func ErrGetFrozenMoneyList(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v frozen money list failed", accKey))
 }
 
 func ErrIncreaseSequenceByOne(accKey types.AccountKey) sdk.Error {

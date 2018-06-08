@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetBankCmd returns a query bank that will display the
@@ -24,7 +21,7 @@ func GetBankCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 		cdc,
 	}
 	return &cobra.Command{
-		Use:   "address <address>",
+		Use:   "username <username>",
 		Short: "Query bank balance",
 		RunE:  cmdr.getBankCmd,
 	}
@@ -55,14 +52,9 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide an address")
 	}
 
-	addr := args[0]
-	bz, err := hex.DecodeString(addr)
-	if err != nil {
-		return err
-	}
-	key := sdk.Address(bz)
+	username := types.AccountKey(args[0])
 
-	res, err := ctx.Query(model.GetAccountBankKey(key), c.storeName)
+	res, err := ctx.Query(model.GetAccountBankKey(username), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -99,7 +91,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = ctx.Query(model.GetAccountBankKey(info.Address), c.storeName)
+	res, err = ctx.Query(model.GetAccountBankKey(accKey), c.storeName)
 	if err != nil {
 		return err
 	}

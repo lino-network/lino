@@ -41,7 +41,7 @@ func handleDepositMsg(
 	}
 
 	// withdraw money from validator's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, coin); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, coin, types.ValidatorDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -136,21 +136,14 @@ func handleRevokeMsg(
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin) sdk.Error {
-	events := []types.Event{}
-	for i := int64(0); i < times; i++ {
-		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
-		piece := types.RatToCoin(pieceRat)
-		coin = coin.Minus(piece)
-
-		event := acc.ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
-		}
-		events = append(events, event)
-	}
 
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		return err
+	}
+
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.ValidatorReturnCoin)
+	if err != nil {
 		return err
 	}
 

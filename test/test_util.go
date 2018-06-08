@@ -15,7 +15,6 @@ import (
 	"github.com/lino-network/lino/param"
 	acc "github.com/lino-network/lino/tx/account"
 	post "github.com/lino-network/lino/tx/post"
-	reg "github.com/lino-network/lino/tx/register"
 	val "github.com/lino-network/lino/tx/validator"
 	"github.com/lino-network/lino/types"
 
@@ -38,8 +37,8 @@ var (
 	GenesisTotalLino types.LNO = "10000000000"
 	LNOPerValidator  types.LNO = "100000000"
 
-	PenaltyMissVote       types.Coin = types.NewCoin(200 * types.Decimals)
-	ChangeParamMinDeposit types.Coin = types.NewCoin(100000 * types.Decimals)
+	PenaltyMissVote       types.Coin = types.NewCoinFromInt64(20000 * types.Decimals)
+	ChangeParamMinDeposit types.Coin = types.NewCoinFromInt64(100000 * types.Decimals)
 
 	ProposalDecideHr            int64   = 24 * 7
 	ParamChangeHr               int64   = 24
@@ -169,14 +168,10 @@ func CreateAccount(
 	masterPriv crypto.PrivKeyEd25519, transactionPriv crypto.PrivKeyEd25519, postPriv crypto.PrivKeyEd25519,
 	numOfLino string) {
 
-	transferMsg := acc.NewTransferMsg(
-		GenesisUser, types.LNO(numOfLino),
-		"", acc.TransferToAddr(masterPriv.PubKey().Address()))
-
-	SignCheckDeliver(t, lb, transferMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
-
-	registerMsg := reg.NewRegisterMsg(accountName, masterPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, 0, true, masterPriv, time.Now().Unix())
+	registerMsg := acc.NewRegisterMsg(
+		GenesisUser, accountName, types.LNO(numOfLino),
+		masterPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
+	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
@@ -252,4 +247,8 @@ func CreateTestPost(
 	}
 	msg := post.NewCreatePostMsg(postCreateParams)
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
+}
+
+func CoinToString(coin types.Coin) string {
+	return strconv.FormatInt(coin.ToInt64()/types.Decimals, 10)
 }

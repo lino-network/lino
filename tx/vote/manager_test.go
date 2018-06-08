@@ -3,15 +3,17 @@ package vote
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/tx/vote/model"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestCanBecomeValidator(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
 	cases := []struct {
@@ -20,7 +22,7 @@ func TestCanBecomeValidator(t *testing.T) {
 		coin         types.Coin
 		expectResult bool
 	}{
-		{false, user1, types.NewCoin(0), false},
+		{false, user1, types.NewCoinFromInt64(0), false},
 		{true, user1, voteParam.VoterMinDeposit, false},
 		{true, user1, valParam.ValidatorMinVotingDeposit, true},
 	}
@@ -36,7 +38,8 @@ func TestCanBecomeValidator(t *testing.T) {
 
 func TestAddVoter(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	cases := []struct {
@@ -44,7 +47,7 @@ func TestAddVoter(t *testing.T) {
 		coin         types.Coin
 		expectResult sdk.Error
 	}{
-		{user1, types.NewCoin(100 * types.Decimals), ErrRegisterFeeNotEnough()},
+		{user1, types.NewCoinFromInt64(100 * types.Decimals), ErrRegisterFeeNotEnough()},
 		{user1, param.VoterMinDeposit, nil},
 	}
 
@@ -56,9 +59,10 @@ func TestAddVoter(t *testing.T) {
 
 func TestIsInValidatorList(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
-	user2 := createTestAccount(ctx, am, "user2")
-	user3 := createTestAccount(ctx, am, "user3")
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	user2 := createTestAccount(ctx, am, "user2", minBalance)
+	user3 := createTestAccount(ctx, am, "user3", minBalance)
 
 	cases := []struct {
 		username      types.AccountKey
@@ -82,10 +86,11 @@ func TestIsInValidatorList(t *testing.T) {
 
 func TestIsLegalVoterWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
-	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoin(100*types.Decimals)))
+	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)))
 
 	cases := []struct {
 		allValidators []types.AccountKey
@@ -93,10 +98,10 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{[]types.AccountKey{}, user1, param.VoterMinWithdraw.Minus(types.NewCoin(1 * types.Decimals)), false},
+		{[]types.AccountKey{}, user1, param.VoterMinWithdraw.Minus(types.NewCoinFromInt64(1 * types.Decimals)), false},
 		{[]types.AccountKey{}, user1, param.VoterMinWithdraw, true},
 		{[]types.AccountKey{user1}, user1, param.VoterMinWithdraw, false},
-		{[]types.AccountKey{}, user1, types.NewCoin(100), false},
+		{[]types.AccountKey{}, user1, types.NewCoinFromInt64(100), false},
 	}
 
 	for _, cs := range cases {
@@ -111,8 +116,9 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 
 func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
-	user1 := createTestAccount(ctx, am, "user1")
-	user2 := createTestAccount(ctx, am, "user2")
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
@@ -125,10 +131,10 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 		withdraw      types.Coin
 		expectResult  bool
 	}{
-		{false, types.NewCoin(0), user2, user1, param.DelegatorMinWithdraw, false},
-		{true, types.NewCoin(100 * types.Decimals), user2, user1, param.DelegatorMinWithdraw, true},
-		{false, types.NewCoin(0), user2, user1, types.NewCoin(0), false},
-		{false, types.NewCoin(0), user2, user1, types.NewCoin(101 * types.Decimals), false},
+		{false, types.NewCoinFromInt64(0), user2, user1, param.DelegatorMinWithdraw, false},
+		{true, types.NewCoinFromInt64(100 * types.Decimals), user2, user1, param.DelegatorMinWithdraw, true},
+		{false, types.NewCoinFromInt64(0), user2, user1, types.NewCoinFromInt64(0), false},
+		{false, types.NewCoinFromInt64(0), user2, user1, types.NewCoinFromInt64(101 * types.Decimals), false},
 	}
 
 	for _, cs := range cases {

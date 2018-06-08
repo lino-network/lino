@@ -6,6 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	acc "github.com/lino-network/lino/tx/account"
+	dev "github.com/lino-network/lino/tx/developer"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/post/model"
 	"github.com/lino-network/lino/types"
@@ -13,34 +15,37 @@ import (
 	"github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
 // Construct some global addrs and txs for tests.
 var (
-	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
-	TestPostKVStoreKey    = sdk.NewKVStoreKey("post")
-	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
-	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
+	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
+	TestPostKVStoreKey      = sdk.NewKVStoreKey("post")
+	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
+	TestDeveloperKVStoreKey = sdk.NewKVStoreKey("developer")
+	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
 
-	initCoin = types.NewCoin(1 * types.Decimals)
+	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoin(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest(
 	t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, param.ParamHolder, PostManager, global.GlobalManager) {
+	sdk.Context, acc.AccountManager, param.ParamHolder,
+	PostManager, global.GlobalManager, dev.DeveloperManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
 	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
 	postManager := NewPostManager(TestPostKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	devManager := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
+	devManager.InitGenesis(ctx)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -48,7 +53,7 @@ func setupTest(
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, ph, postManager, globalManager
+	return ctx, accManager, ph, postManager, globalManager, devManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -58,6 +63,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
@@ -85,10 +91,8 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMe
 func createTestAccount(
 	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	err := am.AddSavingCoinToAddress(ctx, priv.PubKey().Address(), initCoin)
-	assert.Nil(t, err)
-	err = am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey())
+	err := am.CreateAccount(ctx, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }

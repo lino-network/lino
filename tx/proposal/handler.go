@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/tx/account"
 	"github.com/lino-network/lino/tx/global"
 	"github.com/lino-network/lino/tx/post"
 	"github.com/lino-network/lino/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/tx/account"
 )
 
 func NewHandler(
@@ -57,7 +58,8 @@ func handleChangeParamMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ChangeParamMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -97,7 +99,8 @@ func handleProtocolUpgradeMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -141,7 +144,8 @@ func handleContentCensorshipMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -160,21 +164,13 @@ func handleContentCensorshipMsg(
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin) sdk.Error {
-	events := []types.Event{}
-	for i := int64(0); i < times; i++ {
-		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i))
-		piece := types.RatToCoin(pieceRat)
-		coin = coin.Minus(piece)
-
-		event := acc.ReturnCoinEvent{
-			Username: name,
-			Amount:   piece,
-		}
-		events = append(events, event)
-	}
-
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		return err
+	}
+
+	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.ProposalReturnCoin)
+	if err != nil {
 		return err
 	}
 

@@ -4,6 +4,7 @@ package account
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -16,8 +17,8 @@ var _ sdk.Msg = UnfollowMsg{}
 var _ sdk.Msg = ClaimMsg{}
 var _ sdk.Msg = TransferMsg{}
 var _ sdk.Msg = RecoverMsg{}
-var _ sdk.Msg = SavingToCheckingMsg{}
-var _ sdk.Msg = CheckingToSavingMsg{}
+var _ sdk.Msg = RegisterMsg{}
+var _ sdk.Msg = UpdateAccountMsg{}
 
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
@@ -40,37 +41,28 @@ type RecoverMsg struct {
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
-type SavingToCheckingMsg struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.LNO        `json:"amount"`
-}
-
-type CheckingToSavingMsg struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.LNO        `json:"amount"`
-}
-
 // we can support to transfer to an user or an address
 type TransferMsg struct {
-	Sender       types.AccountKey `json:"sender"`
-	ReceiverName types.AccountKey `json:"receiver_name"`
-	ReceiverAddr sdk.Address      `json:"receiver_addr"`
-	Amount       types.LNO        `json:"amount"`
-	Memo         string           `json:"memo"`
+	Sender   types.AccountKey `json:"sender"`
+	Receiver types.AccountKey `json:"receiver"`
+	Amount   types.LNO        `json:"amount"`
+	Memo     string           `json:"memo"`
 }
 
-type TransferOption func(*TransferMsg)
-
-func TransferToUser(userName string) TransferOption {
-	return func(args *TransferMsg) {
-		args.ReceiverName = types.AccountKey(userName)
-	}
+// RegisterMsg - bind username with public key, need to be referred by others (pay for it).
+type RegisterMsg struct {
+	Referrer             types.AccountKey `json:"referrer"`
+	RegisterFee          types.LNO        `json:"register_fee"`
+	NewUser              types.AccountKey `json:"new_username"`
+	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
+	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
-func TransferToAddr(addr sdk.Address) TransferOption {
-	return func(args *TransferMsg) {
-		args.ReceiverAddr = addr
-	}
+// UpdateAccountMsg - update account JSON meta info.
+type UpdateAccountMsg struct {
+	Username types.AccountKey `json:"username"`
+	JSONMeta string           `json:"json_meta"`
 }
 
 // Follow Msg Implementations
@@ -88,7 +80,7 @@ func (msg FollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
+		return ErrInvalidUsername("illeagle length")
 	}
 	return nil
 }
@@ -128,7 +120,7 @@ func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
+		return ErrInvalidUsername("illeagle length")
 	}
 	return nil
 }
@@ -165,7 +157,7 @@ func (msg ClaimMsg) Type() string { return types.AccountRouterName }
 func (msg ClaimMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
+		return ErrInvalidUsername("illeagle length")
 	}
 	return nil
 }
@@ -191,29 +183,23 @@ func (msg ClaimMsg) GetSigners() []sdk.Address {
 }
 
 // Transfer Msg Implementations
-func NewTransferMsg(sender string, amount types.LNO, memo string, setters ...TransferOption) TransferMsg {
-	msg := &TransferMsg{
-		Sender: types.AccountKey(sender),
-		Amount: amount,
-		Memo:   memo,
+func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) TransferMsg {
+	return TransferMsg{
+		Sender:   types.AccountKey(sender),
+		Amount:   amount,
+		Memo:     memo,
+		Receiver: types.AccountKey(receiver),
 	}
-	for _, setter := range setters {
-		setter(msg)
-	}
-	return *msg
 }
 
 func (msg TransferMsg) Type() string { return types.AccountRouterName }
 
 func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) < types.MinimumUsernameLength ||
-		len(msg.Sender) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-
-	// should have either receiver's addr or username
-	if len(msg.ReceiverAddr) == 0 && len(msg.ReceiverName) == 0 {
-		return ErrInvalidUsername()
+		len(msg.Sender) > types.MaximumUsernameLength ||
+		len(msg.Receiver) < types.MinimumUsernameLength ||
+		len(msg.Receiver) > types.MaximumUsernameLength {
+		return ErrInvalidUsername("illeagle length")
 	}
 	_, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -227,8 +213,8 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg TransferMsg) String() string {
-	return fmt.Sprintf("TransferMsg{Sender:%v, ReceiverName:%v, ReceiverAddr:%v}",
-		msg.Sender, msg.ReceiverName, msg.ReceiverAddr)
+	return fmt.Sprintf("TransferMsg{Sender:%v, Receiver:%v, Amount:%v, Memo:%v}",
+		msg.Sender, msg.Receiver, msg.Amount, msg.Memo)
 }
 
 func (msg TransferMsg) Get(key interface{}) (value interface{}) {
@@ -270,7 +256,7 @@ func (msg RecoverMsg) Type() string { return types.AccountRouterName }
 func (msg RecoverMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
+		return ErrInvalidUsername("illeagle length")
 	}
 
 	return nil
@@ -304,102 +290,135 @@ func (msg RecoverMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }
 
-// SavingToChecking Msg Implementations
-func NewSavingToCheckingMsg(username string, amount types.LNO) SavingToCheckingMsg {
-	return SavingToCheckingMsg{
-		Username: types.AccountKey(username),
-		Amount:   amount,
+// NewRegisterMsg - construct register msg.
+func NewRegisterMsg(
+	referrer string,
+	newUser string,
+	registerFee types.LNO,
+	masterPubkey crypto.PubKey,
+	transactionPubkey crypto.PubKey,
+	postPubkey crypto.PubKey) RegisterMsg {
+	return RegisterMsg{
+		Referrer:             types.AccountKey(referrer),
+		NewUser:              types.AccountKey(newUser),
+		RegisterFee:          registerFee,
+		NewMasterPubKey:      masterPubkey,
+		NewTransactionPubKey: transactionPubkey,
+		NewPostPubKey:        postPubkey,
 	}
 }
 
-func (msg SavingToCheckingMsg) Type() string { return types.AccountRouterName }
+// Implements Msg.
+func (msg RegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
-func (msg SavingToCheckingMsg) ValidateBasic() sdk.Error {
-	// Ensure permlink exists
-	if len(msg.Username) == 0 {
-		return ErrInvalidUsername()
+// Implements Msg.
+func (msg RegisterMsg) ValidateBasic() sdk.Error {
+	if len(msg.NewUser) < types.MinimumUsernameLength ||
+		len(msg.NewUser) > types.MaximumUsernameLength ||
+		len(msg.Referrer) < types.MinimumUsernameLength ||
+		len(msg.Referrer) > types.MaximumUsernameLength {
+		return ErrInvalidUsername("illeagle length")
 	}
 
-	_, err := types.LinoToCoin(msg.Amount)
+	match, err := regexp.MatchString(types.UsernameReCheck, string(msg.NewUser))
 	if err != nil {
-		return err
+		return ErrInvalidUsername("match error").TraceCause(err, "re error")
+	}
+	if !match {
+		return ErrInvalidUsername("illeagle input")
+	}
+
+	_, coinErr := types.LinoToCoin(msg.RegisterFee)
+	if coinErr != nil {
+		return coinErr
 	}
 	return nil
 }
 
-func (msg SavingToCheckingMsg) String() string {
-	return fmt.Sprintf("SavingToCheckingMsg{user:%v, amount:%v}", msg.Username, msg.Amount)
+func (msg RegisterMsg) String() string {
+	return fmt.Sprintf("RegisterMsg{Newuser:%v, Master Key:%v, Post Key:%v, Transaction Key:%v}",
+		msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
-func (msg SavingToCheckingMsg) Get(key interface{}) (value interface{}) {
+// Implements Msg.
+func (msg RegisterMsg) Get(key interface{}) (value interface{}) {
 	keyStr, ok := key.(string)
 	if !ok {
 		return nil
 	}
+	// the permission will not be checked at auth
 	if keyStr == types.PermissionLevel {
 		return types.TransactionPermission
 	}
 	return nil
 }
 
-func (msg SavingToCheckingMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+// Implements Msg.
+func (msg RegisterMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
 	return b
 }
 
-func (msg SavingToCheckingMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+// Implements Msg.
+func (msg RegisterMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Referrer)}
 }
 
-// CheckingToSaving Msg Implementations
-func NewCheckingToSavingMsg(username string, amount types.LNO) CheckingToSavingMsg {
-	return CheckingToSavingMsg{
+// NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
+func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
+	return UpdateAccountMsg{
 		Username: types.AccountKey(username),
-		Amount:   amount,
+		JSONMeta: JSONMeta,
 	}
 }
 
-func (msg CheckingToSavingMsg) Type() string { return types.AccountRouterName }
+// Implements Msg.
+func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
-func (msg CheckingToSavingMsg) ValidateBasic() sdk.Error {
-	// Ensure permlink exists
-	if len(msg.Username) == 0 {
-		return ErrInvalidUsername()
+// Implements Msg.
+func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername("illeagle length")
 	}
 
-	_, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err
+	if len(msg.JSONMeta) > types.MaximumJSONMetaLength {
+		return ErrInvalidJSONMeta()
 	}
+
 	return nil
 }
 
-func (msg CheckingToSavingMsg) String() string {
-	return fmt.Sprintf("CheckingToSavingMsg{user:%v, amount:%v}", msg.Username, msg.Amount)
+func (msg UpdateAccountMsg) String() string {
+	return fmt.Sprintf("UpdateAccountMsg{User:%v, JSON meta:%v}", msg.Username, msg.JSONMeta)
 }
 
-func (msg CheckingToSavingMsg) Get(key interface{}) (value interface{}) {
+// Implements Msg.
+func (msg UpdateAccountMsg) Get(key interface{}) (value interface{}) {
 	keyStr, ok := key.(string)
 	if !ok {
 		return nil
 	}
+	// the permission will not be checked at auth
 	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
+		return types.PostPermission
 	}
 	return nil
 }
 
-func (msg CheckingToSavingMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+// Implements Msg.
+func (msg UpdateAccountMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
 	return b
 }
 
-func (msg CheckingToSavingMsg) GetSigners() []sdk.Address {
+// Implements Msg.
+func (msg UpdateAccountMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }

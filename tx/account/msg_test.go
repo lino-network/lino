@@ -65,7 +65,7 @@ func TestFollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -120,7 +120,7 @@ func TestUnfollowMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -135,19 +135,10 @@ func TestTransferMsg(t *testing.T) {
 	}{
 		"normal case - transfer to an username": {
 			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverName: userB,
-				Amount:       types.LNO("1900"),
-				Memo:         memo1,
-			},
-			wantCode: sdk.CodeOK,
-		},
-		"normal case - transfer to an address": {
-			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverAddr: sdk.Address("2137192887931"),
-				Amount:       types.LNO("1900"),
-				Memo:         memo1,
+				Sender:   userA,
+				Receiver: userB,
+				Amount:   types.LNO("1900"),
+				Memo:     memo1,
 			},
 			wantCode: sdk.CodeOK,
 		},
@@ -159,35 +150,32 @@ func TestTransferMsg(t *testing.T) {
 			},
 			wantCode: types.CodeInvalidUsername,
 		},
-		"invalid transfer - both username and address are invalid": {
-			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverName: types.AccountKey(""),
-				ReceiverAddr: sdk.Address(""),
-				Amount:       types.LNO("1900"),
-				Memo:         memo1,
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
 		"invalid transfer -  amount is invalid": {
 			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverName: userB,
-				ReceiverAddr: sdk.Address(""),
-				Amount:       types.LNO("-1900"),
-				Memo:         memo1,
+				Sender:   userA,
+				Receiver: userB,
+				Amount:   types.LNO("-1900"),
+				Memo:     memo1,
 			},
 			wantCode: sdk.CodeInvalidCoins,
 		},
 		"invalid transfer -  memo is invalid": {
 			msg: TransferMsg{
-				Sender:       userA,
-				ReceiverName: userB,
-				ReceiverAddr: sdk.Address(""),
-				Amount:       types.LNO("1900"),
-				Memo:         invalidMemo,
+				Sender:   userA,
+				Receiver: userB,
+				Amount:   types.LNO("1900"),
+				Memo:     invalidMemo,
 			},
 			wantCode: types.CodeInvalidMemo,
+		},
+		"valid lino": {
+			msg: TransferMsg{
+				Sender:   userA,
+				Receiver: userB,
+				Amount:   types.LNO("100"),
+				Memo:     memo1,
+			},
+			wantCode: sdk.CodeOK,
 		},
 	}
 
@@ -198,7 +186,7 @@ func TestTransferMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -236,9 +224,9 @@ func TestRecoverMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
@@ -246,45 +234,88 @@ func TestRecoverMsg(t *testing.T) {
 	}
 }
 
-func TestCheckingToSavingMsg(t *testing.T) {
+func TestUpdateAccountMsg(t *testing.T) {
 	testCases := map[string]struct {
-		msg      CheckingToSavingMsg
+		msg      UpdateAccountMsg
 		wantCode sdk.CodeType
 	}{
-		"normal case": {
-			msg: CheckingToSavingMsg{
-				Username: "test",
-				Amount:   types.LNO("100"),
+		"normal case - update JSON Meta": {
+			msg: UpdateAccountMsg{
+				Username: userA,
+				JSONMeta: "{'test':'test'}",
 			},
 			wantCode: sdk.CodeOK,
 		},
-		"username is too short": {
-			msg: CheckingToSavingMsg{
-				Username: "",
-				Amount:   types.LNO("100"),
+		"normal case - update JSON Meta too long": {
+			msg: UpdateAccountMsg{
+				Username: userA,
+				JSONMeta: string(make([]byte, 501)),
 			},
+			wantCode: types.CodeInvalidMsg,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				return
+			}
+			continue
+		}
+		if got.ABCICode() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		}
+	}
+}
+
+func TestRegisterUsername(t *testing.T) {
+	testCases := map[string]struct {
+		msg      RegisterMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg: NewRegisterMsg("referrer", "newUser", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: sdk.CodeOK,
+		},
+		"register username minimum length": {
+			msg: NewRegisterMsg("referrer", "new", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: sdk.CodeOK,
+		},
+		"register username maximum length": {
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: sdk.CodeOK,
+		},
+		"register username length exceeds requirement": {
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
 			wantCode: types.CodeInvalidUsername,
 		},
-		"invalid amount - zero": {
-			msg: CheckingToSavingMsg{
-				Username: "test",
-				Amount:   types.LNO("0"),
-			},
-			wantCode: sdk.CodeInvalidCoins,
+		"register username length doesn't meet requirement": {
+			msg: NewRegisterMsg("referrer", "ne", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: types.CodeInvalidUsername,
 		},
-		"invalid amount - negative": {
-			msg: CheckingToSavingMsg{
-				Username: "test",
-				Amount:   types.LNO("-1"),
-			},
-			wantCode: sdk.CodeInvalidCoins,
+		"referrer invalid": {
+			msg: NewRegisterMsg("", "newUser", "1", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: types.CodeInvalidUsername,
 		},
-		"invalid amount - overflow": {
-			msg: CheckingToSavingMsg{
-				Username: "test",
-				Amount:   types.LNO("1000000000000000"),
-			},
-			wantCode: sdk.CodeInvalidCoins,
+		"register fee invalid": {
+			msg: NewRegisterMsg("", "newUser", "1.", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			),
+			wantCode: types.CodeInvalidUsername,
 		},
 	}
 
@@ -295,61 +326,23 @@ func TestCheckingToSavingMsg(t *testing.T) {
 			if tc.wantCode != sdk.CodeOK {
 				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
 			}
-			return
+			continue
 		}
 		if got.ABCICode() != tc.wantCode {
 			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
 		}
 	}
-}
 
-func TestSavingToCheckingMsg(t *testing.T) {
-	testCases := map[string]struct {
-		msg      SavingToCheckingMsg
-		wantCode sdk.CodeType
-	}{
-		"normal case": {
-			msg: SavingToCheckingMsg{
-				Username: "test",
-				Amount:   types.LNO("100"),
-			},
-			wantCode: sdk.CodeOK,
-		},
-		"username is too short": {
-			msg: SavingToCheckingMsg{
-				Username: "",
-				Amount:   types.LNO("100"),
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid amount - zero": {
-			msg: SavingToCheckingMsg{
-				Username: "test",
-				Amount:   types.LNO("0"),
-			},
-			wantCode: sdk.CodeInvalidCoins,
-		},
-		"invalid amount - overflow": {
-			msg: SavingToCheckingMsg{
-				Username: "test",
-				Amount:   types.LNO("1000000000000000"),
-			},
-			wantCode: sdk.CodeInvalidCoins,
-		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
-			}
-			return
-		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
-		}
+	// Illegel character
+	registerList := [...]string{"register#", "_register", "-register", "reg@ister",
+		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register",
+		"reg=ister", "register^", "register.", "reg$ister,"}
+	for _, register := range registerList {
+		msg := NewRegisterMsg(
+			"referer", register, "0", crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey())
+		result := msg.ValidateBasic()
+		assert.Equal(t, result, ErrInvalidUsername("illeagle input"))
 	}
 }
 
@@ -358,17 +351,8 @@ func TestMsgPermission(t *testing.T) {
 		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
-		"saving to checking": {
-			NewSavingToCheckingMsg("test", types.LNO("1")),
-			types.TransactionPermission},
-		"checking to saving": {
-			NewCheckingToSavingMsg("test", types.LNO("1")),
-			types.TransactionPermission},
 		"transfer to user": {
-			NewTransferMsg("test", types.LNO("1"), "memo", TransferToUser("test_user")),
-			types.TransactionPermission},
-		"transfer to address": {
-			NewTransferMsg("test", types.LNO("1"), "memo", TransferToAddr(sdk.Address("test_address"))),
+			NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
 			types.TransactionPermission},
 		"follow": {
 			NewFollowMsg("userA", "userB"),
@@ -383,6 +367,12 @@ func TestMsgPermission(t *testing.T) {
 			types.MasterPermission},
 		"claim": {
 			NewClaimMsg("test"), types.PostPermission},
+		"register msg": {
+			NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
+			types.TransactionPermission},
+		"update msg": {
+			NewUpdateAccountMsg("user", "{'test':'test'}"), types.PostPermission},
 	}
 
 	for testName, cs := range cases {
