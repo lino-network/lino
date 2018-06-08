@@ -8,7 +8,7 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
-	acc "github.com/lino-network/lino/tx/account"
+	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/types"
 
 	abci "github.com/tendermint/abci/types"
