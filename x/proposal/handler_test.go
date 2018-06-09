@@ -31,13 +31,18 @@ func TestChangeParamProposal(t *testing.T) {
 
 	user1 := createTestAccount(ctx, am, "user1", c460000)
 	user2 := createTestAccount(ctx, am, "user2", c4600)
+
+	curTime := ctx.BlockHeader().Time
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
+
 	proposal1 := &model.ChangeParamProposal{model.ProposalInfo{
 		Creator:       user1,
 		ProposalID:    proposalID1,
 		AgreeVotes:    types.NewCoinFromInt64(0),
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
+		CreatedAt:     curTime,
+		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
 	}, allocation}
 
 	testCases := []struct {
@@ -99,6 +104,7 @@ func TestChangeParamProposal(t *testing.T) {
 func TestContentCensorshipProposal(t *testing.T) {
 	ctx, am, proposalManager, postManager, _, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, proposalManager, postManager, gm)
+	curTime := ctx.BlockHeader().Time
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
 	proposalManager.InitGenesis(ctx)
@@ -117,6 +123,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 		AgreeVotes:    types.NewCoinFromInt64(0),
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
+		CreatedAt:     curTime,
+		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
 	}, types.GetPermLink(user1, postID1)}
 
 	testCases := []struct {

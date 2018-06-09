@@ -136,6 +136,7 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
 	cdc.RegisterConcrete(acc.ClaimMsg{}, "claim", nil)
 	cdc.RegisterConcrete(acc.RecoverMsg{}, "recover", nil)
+	cdc.RegisterConcrete(acc.UpdateAccountMsg{}, "update/account", nil)
 	cdc.RegisterConcrete(post.CreatePostMsg{}, "post", nil)
 	cdc.RegisterConcrete(post.UpdatePostMsg{}, "update/post", nil)
 	cdc.RegisterConcrete(post.DeletePostMsg{}, "delete/post", nil)
