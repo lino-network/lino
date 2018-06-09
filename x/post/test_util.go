@@ -6,11 +6,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post/model"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
 
@@ -28,6 +28,7 @@ var (
 	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
 
 	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
+	referrer = types.AccountKey("referrer")
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -91,7 +92,7 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMe
 func createTestAccount(
 	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	err := am.CreateAccount(ctx, types.AccountKey(username),
+	err := am.CreateAccount(ctx, referrer, types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	assert.Nil(t, err)
 	return types.AccountKey(username)

@@ -7,22 +7,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
+	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/proposal"
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
-	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
 )
 
 func TestForceValidatorVote(t *testing.T) {
 	accountTransactionPriv := crypto.GenPrivKeyEd25519()
 	accountPostPriv := crypto.GenPrivKeyEd25519()
-	accountName := "newUser"
+	accountName := "newuser"
 	validatorPriv := crypto.GenPrivKeyEd25519()
 
 	accountTransactionPriv2 := crypto.GenPrivKeyEd25519()
 	accountPostPriv2 := crypto.GenPrivKeyEd25519()
-	accountName2 := "newUser2"
+	accountName2 := "newuser2"
 	validatorPriv2 := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 100

@@ -49,32 +49,32 @@ const (
 	Inflation     = DonationType(1)
 
 	// Different possible incomes
-	TransferIn           = BalanceHistoryDetailType(0)
-	DonationIn           = BalanceHistoryDetailType(1)
-	ClaimReward          = BalanceHistoryDetailType(2)
-	ValidatorInflation   = BalanceHistoryDetailType(3)
-	DeveloperInflation   = BalanceHistoryDetailType(4)
-	InfraInflation       = BalanceHistoryDetailType(5)
-	VoteReturnCoin       = BalanceHistoryDetailType(6)
-	DelegationReturnCoin = BalanceHistoryDetailType(7)
-	ValidatorReturnCoin  = BalanceHistoryDetailType(8)
-	DeveloperReturnCoin  = BalanceHistoryDetailType(9)
-	InfraReturnCoin      = BalanceHistoryDetailType(10)
-	ProposalReturnCoin   = BalanceHistoryDetailType(11)
-	GenesisCoin          = BalanceHistoryDetailType(12)
+	TransferIn           = TransferInDetail(0)
+	DonationIn           = TransferInDetail(1)
+	ClaimReward          = TransferInDetail(2)
+	ValidatorInflation   = TransferInDetail(3)
+	DeveloperInflation   = TransferInDetail(4)
+	InfraInflation       = TransferInDetail(5)
+	VoteReturnCoin       = TransferInDetail(6)
+	DelegationReturnCoin = TransferInDetail(7)
+	ValidatorReturnCoin  = TransferInDetail(8)
+	DeveloperReturnCoin  = TransferInDetail(9)
+	InfraReturnCoin      = TransferInDetail(10)
+	ProposalReturnCoin   = TransferInDetail(11)
+	GenesisCoin          = TransferInDetail(12)
 
 	// Different possible outcomes
-	TransferOut      = BalanceHistoryDetailType(13)
-	DonationOut      = BalanceHistoryDetailType(14)
-	Delegate         = BalanceHistoryDetailType(15)
-	VoterDeposit     = BalanceHistoryDetailType(16)
-	ValidatorDeposit = BalanceHistoryDetailType(17)
-	DeveloperDeposit = BalanceHistoryDetailType(18)
-	InfraDeposit     = BalanceHistoryDetailType(19)
-	ProposalDeposit  = BalanceHistoryDetailType(20)
+	TransferOut      = TransferOutDetail(0)
+	DonationOut      = TransferOutDetail(1)
+	Delegate         = TransferOutDetail(2)
+	VoterDeposit     = TransferOutDetail(3)
+	ValidatorDeposit = TransferOutDetail(4)
+	DeveloperDeposit = TransferOutDetail(5)
+	InfraDeposit     = TransferOutDetail(6)
+	ProposalDeposit  = TransferOutDetail(7)
 
 	// UsernameReCheck is used to check user registration
-	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
+	UsernameReCheck = "^[a-z0-9]([a-z0-9_-]){2,20}$"
 
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
@@ -116,4 +116,17 @@ const (
 	MinutesPerMonth = MinutesPerYear / 12
 
 	PrecisionFactor = 1000
+
+	// Detail from sources
+	FromRewardPool         = InternalObject("reward pool")
+	FromCoinReturnEvent    = InternalObject("coin return event")
+	FromValidatorInflation = InternalObject("validator inflation")
+	FromInfraInflation     = InternalObject("infra inflation")
+	FromDeveloperInflation = InternalObject("developer inflation")
+
+	// Detail to target
+	ToDeveloperDeposit = InternalObject("developer deposit")
+	ToVoterDeposit     = InternalObject("voter deposit")
+	ToValidatorDeposit = InternalObject("validator deposit")
+	ToProposalDeposit  = InternalObject("proposal deposit")
 )

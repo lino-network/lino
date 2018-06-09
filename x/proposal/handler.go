@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
-	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -59,7 +59,8 @@ func handleChangeParamMsg(
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, types.ToProposalDeposit,
+		types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -100,7 +101,8 @@ func handleProtocolUpgradeMsg(
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit,
+		types.ToProposalDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -133,7 +135,9 @@ func handleContentCensorshipMsg(
 	}
 
 	proposal := proposalManager.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
-	proposalID, err := proposalManager.AddProposal(ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
+	proposalID, err :=
+		proposalManager.AddProposal(
+			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
 	if err != nil {
 		return err.Result()
 	}
@@ -145,7 +149,8 @@ func handleContentCensorshipMsg(
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit,
+		types.ToProposalDeposit, types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 

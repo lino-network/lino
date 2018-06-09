@@ -8,6 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var _ Detail = TransferIn{}
+var _ Detail = TransferOut{}
+
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`
@@ -60,11 +63,10 @@ type GrantPubKey struct {
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence                     int64      `json:"sequence"`
-	LastActivityAt               int64      `json:"last_activity_at"`
-	TransactionCapacity          types.Coin `json:"transaction_capacity"`
-	JSONMeta                     string     `json:"json_meta"`
-	NumberOfBalanceHistoryBundle int64      `json:"num_of_balance_history_bundle"`
+	Sequence            int64      `json:"sequence"`
+	LastActivityAt      int64      `json:"last_activity_at"`
+	TransactionCapacity types.Coin `json:"transaction_capacity"`
+	JSONMeta            string     `json:"json_meta"`
 }
 
 // AccountInfraConsumption records infra utility consumption
@@ -107,9 +109,24 @@ type BalanceHistory struct {
 	Details []Detail `json:"details"`
 }
 
-// Detail is information about each transaction related to balance
-type Detail struct {
-	DetailType types.BalanceHistoryDetailType `json:"detail"`
-	Amount     types.Coin                     `json:"amount"`
-	CreatedAt  int64                          `json:"created_at"`
+type Detail interface {
+	IsBalanceDetail()
 }
+
+type TransferIn struct {
+	DetailType types.TransferInDetail `json:"detail_type"`
+	From       types.TransferObject   `json:"from"`
+	Amount     types.Coin             `json:"amount"`
+	CreatedAt  int64                  `json:"created_at"`
+}
+
+func (_ TransferIn) IsBalanceDetail() {}
+
+type TransferOut struct {
+	DetailType types.TransferOutDetail `json:"detail_type"`
+	To         types.TransferObject    `json:"to"`
+	Amount     types.Coin              `json:"amount"`
+	CreatedAt  int64                   `json:"created_at"`
+}
+
+func (_ TransferOut) IsBalanceDetail() {}

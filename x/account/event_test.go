@@ -17,7 +17,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		times        int64
 		interval     int64
 		returnAmount types.Coin
-		returnType   types.BalanceHistoryDetailType
+		returnType   types.TransferInDetail
 	}{
 		{"normal return coin event", "user1", 100, 100,
 			types.NewCoinFromInt64(100), types.DelegationReturnCoin},
@@ -76,7 +76,8 @@ func TestReturnCoinEvent(t *testing.T) {
 		}, baseTime, types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
 			model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					model.TransferIn{
+						From:       types.FromCoinReturnEvent,
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
 						CreatedAt:  baseTime,
@@ -91,12 +92,14 @@ func TestReturnCoinEvent(t *testing.T) {
 		}, baseTime, types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
 			model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					model.TransferIn{
+						From:       types.FromCoinReturnEvent,
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
 						CreatedAt:  baseTime,
 					},
-					model.Detail{
+					model.TransferIn{
+						From:       types.FromCoinReturnEvent,
 						DetailType: types.VoteReturnCoin,
 						Amount:     types.NewCoinFromInt64(0),
 						CreatedAt:  baseTime,
