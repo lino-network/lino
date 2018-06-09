@@ -6,12 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
@@ -78,7 +78,7 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.CreateAccount(ctx, types.AccountKey(username),
+	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	return types.AccountKey(username)
 }

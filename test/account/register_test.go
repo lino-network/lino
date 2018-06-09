@@ -8,8 +8,8 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
 
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -18,7 +18,7 @@ import (
 // test normal transfer and register
 func TestTransferAndRegisterAccount(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
@@ -35,7 +35,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 // register failed if register fee is insufficient
 func TestRegisterAccountFailed(t *testing.T) {
 	newAccountPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()

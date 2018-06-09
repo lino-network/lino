@@ -166,7 +166,8 @@ func TestTransferNormal(t *testing.T) {
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
 
-	am.AddSavingCoin(ctx, types.AccountKey("user1"), c2000, types.TransferIn)
+	am.AddSavingCoin(
+		ctx, types.AccountKey("user1"), c2000, types.InternalObject(""), types.TransferIn)
 
 	testCases := []struct {
 		testName            string
@@ -289,7 +290,8 @@ func TestHandleRegister(t *testing.T) {
 
 	createTestAccount(ctx, am, referrer)
 	am.AddSavingCoin(
-		ctx, types.AccountKey(referrer), types.NewCoinFromInt64(100*types.Decimals), types.TransferIn)
+		ctx, types.AccountKey(referrer), types.NewCoinFromInt64(100*types.Decimals),
+		types.InternalObject(""), types.TransferIn)
 
 	testCases := []struct {
 		testName             string

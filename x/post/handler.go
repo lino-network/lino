@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -118,7 +118,7 @@ func handleDonateMsg(
 			return ErrDonateFailed(permLink).Result()
 		}
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.DonationOut); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin, permLink, types.DonationOut); err != nil {
 		return ErrAccountSavingCoinNotEnough(permLink).Result()
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
@@ -191,7 +191,7 @@ func processDonationFriction(
 	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit, types.DirectDeposit); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
-	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit, types.DonationIn); err != nil {
+	if err := am.AddSavingCoin(ctx, postAuthor, directDeposit, consumer, types.DonationIn); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	if err := gm.AddConsumption(ctx, coin); err != nil {

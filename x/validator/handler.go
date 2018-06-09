@@ -5,10 +5,10 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	vote "github.com/lino-network/lino/x/vote"
-	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm global.GlobalManager) sdk.Handler {
@@ -41,7 +41,7 @@ func handleDepositMsg(
 	}
 
 	// withdraw money from validator's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, coin, types.ValidatorDeposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, coin, types.ToValidatorDeposit, types.ValidatorDeposit); err != nil {
 		return err.Result()
 	}
 

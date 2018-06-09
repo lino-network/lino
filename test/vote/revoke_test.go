@@ -14,7 +14,7 @@ import (
 
 func TestVoterRevoke(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	delegator1TransactionPriv := crypto.GenPrivKeyEd25519()

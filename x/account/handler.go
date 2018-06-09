@@ -79,12 +79,13 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Sender, coin, types.TransferOut); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Sender, coin, msg.Receiver, types.TransferOut); err != nil {
 		return err.Result()
 	}
 
 	// send coins using username
-	if err := am.AddSavingCoin(ctx, msg.Receiver, coin, types.TransferIn); err != nil {
+	if err := am.AddSavingCoin(ctx, msg.Receiver, coin, msg.Sender, types.TransferIn); err != nil {
 		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 	}
 	return sdk.Result{}
@@ -120,11 +121,12 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Referrer, coin, types.TransferOut); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Referrer, coin, msg.NewUser, types.TransferOut); err != nil {
 		return err.Result()
 	}
 	if err := am.CreateAccount(
-		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewTransactionPubKey,
+		ctx, msg.Referrer, msg.NewUser, msg.NewMasterPubKey, msg.NewTransactionPubKey,
 		msg.NewPostPubKey, coin); err != nil {
 		return err.Result()
 	}

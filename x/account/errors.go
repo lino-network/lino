@@ -46,8 +46,8 @@ func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
 	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed", accKey))
 }
 
-func ErrAddCoinToAccountChecking(accKey types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add checking coin to account %v failed", accKey))
+func ErrAddBalanceHistory(accKey types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add balance history to account %v failed", accKey))
 }
 
 func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
