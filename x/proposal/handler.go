@@ -37,18 +37,18 @@ func handleChangeParamMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
+	param, err := pm.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ChangeParamDecideHr)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
 	event, err := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
@@ -78,18 +78,18 @@ func handleProtocolUpgradeMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
+	param, err := pm.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ProtocolUpgradeDecideHr)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
 	event, err := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
@@ -127,18 +127,18 @@ func handleContentCensorshipMsg(
 		return ErrCensorshipPostIsDeleted(msg.GetPermLink()).Result()
 	}
 
+	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	proposal := proposalManager.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
-	proposalID, err := proposalManager.AddProposal(ctx, msg.GetCreator(), proposal)
+	proposalID, err := proposalManager.AddProposal(ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
 	event, err := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err.Result()
 	}

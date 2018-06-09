@@ -16,6 +16,8 @@ type ProposalInfo struct {
 	AgreeVotes    types.Coin           `json:"agree_vote"`
 	DisagreeVotes types.Coin           `json:"disagree_vote"`
 	Result        types.ProposalResult `json:"result"`
+	CreatedAt     int64                `json:"created_at"`
+	ExpiredAt     int64                `json:"expired_at"`
 }
 
 type ChangeParamProposal struct {
