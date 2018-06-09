@@ -38,10 +38,11 @@ func TestDecideProposal(t *testing.T) {
 	param2 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(80, 100),
 	}
+
 	p1 := pm.CreateChangeParamProposal(ctx, param1)
 	p2 := pm.CreateChangeParamProposal(ctx, param2)
-	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1)
-	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2)
+	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1, 10)
+	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2, 10)
 
 	e1 := DecideProposalEvent{
 		ProposalType: types.ChangeParam,

@@ -53,12 +53,13 @@ func TestProposal(t *testing.T) {
 	user := types.AccountKey("user")
 	proposalID := types.ProposalKey("123")
 	res := types.ProposalPass
+	curTime := ctx.BlockHeader().Time
 
 	cases := []struct {
 		ChangeParamProposal
 	}{
 		{ChangeParamProposal{
-			ProposalInfo{user, proposalID, types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), res},
+			ProposalInfo{user, proposalID, types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), res, curTime, curTime + 100},
 			param.GlobalAllocationParam{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
 				sdk.NewRat(0)}}},
 	}

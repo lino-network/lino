@@ -25,10 +25,12 @@ func TestUpdateProposalStatus(t *testing.T) {
 		PermLink: permLink,
 	}
 	pm.InitGenesis(ctx)
+	curTime := ctx.BlockHeader().Time
+	decideHr := int64(100)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
-	proposalID1, _ := pm.AddProposal(ctx, "user1", proposal1)
-	proposalID2, _ := pm.AddProposal(ctx, "user1", proposal2)
-	proposalID3, _ := pm.AddProposal(ctx, "user1", proposal3)
+	proposalID1, _ := pm.AddProposal(ctx, "user1", proposal1, decideHr)
+	proposalID2, _ := pm.AddProposal(ctx, "user1", proposal2, decideHr)
+	proposalID3, _ := pm.AddProposal(ctx, "user1", proposal3, decideHr)
 	testCases := []struct {
 		testName        string
 		votingRes       types.VotingResult
@@ -51,6 +53,8 @@ func TestUpdateProposalStatus(t *testing.T) {
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
 				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
 				Result:        types.ProposalPass,
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
 			}, permLink},
 		},
 
@@ -68,6 +72,8 @@ func TestUpdateProposalStatus(t *testing.T) {
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
 				DisagreeVotes: types.NewCoinFromInt64(0),
 				Result:        types.ProposalNotPass,
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
 			}, permLink},
 		},
 
@@ -85,6 +91,8 @@ func TestUpdateProposalStatus(t *testing.T) {
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
 				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 				Result:        types.ProposalPass,
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
 			}, permLink},
 		},
 	}

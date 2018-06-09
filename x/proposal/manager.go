@@ -69,7 +69,7 @@ func (pm ProposalManager) CreateChangeParamProposal(
 }
 
 func (pm ProposalManager) AddProposal(
-	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal) (types.ProposalKey, sdk.Error) {
+	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideHr int64) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.paramHolder.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
@@ -81,6 +81,8 @@ func (pm ProposalManager) AddProposal(
 		AgreeVotes:    types.NewCoinFromInt64(0),
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
+		CreatedAt:     ctx.BlockHeader().Time,
+		ExpiredAt:     ctx.BlockHeader().Time + decideHr*3600,
 	}
 	proposal.SetProposalInfo(info)
 
