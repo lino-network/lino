@@ -5,8 +5,8 @@ import (
 	"reflect"
 
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 
 	"github.com/tendermint/go-crypto"
 
@@ -126,11 +126,12 @@ func (accManager AccountManager) AddSavingCoin(
 	if err != nil {
 		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
-	bank.Saving = bank.Saving.Plus(coin)
 
-	if err := accManager.AddBalanceHistory(ctx, username, coin, coinFrom); err != nil {
+	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx, coin, coinFrom); err != nil {
 		return err
 	}
+	bank.Saving = bank.Saving.Plus(coin)
+	bank.NumOfTx++
 
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
@@ -153,7 +154,7 @@ func (accManager AccountManager) AddSavingCoin(
 }
 
 func (accManager AccountManager) AddBalanceHistory(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin,
+	ctx sdk.Context, username types.AccountKey, numOfTx int64, coin types.Coin,
 	detailType types.BalanceHistoryDetailType) sdk.Error {
 	// set balance history
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
@@ -162,7 +163,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	}
 	balanceHistory, err :=
 		accManager.storage.GetBalanceHistory(
-			ctx, username, ctx.BlockHeader().Time/accParams.BalanceHistoryIntervalTime)
+			ctx, username, numOfTx/accParams.BalanceHistoryBundleLimitation)
 	if err != nil {
 		return err
 	}
@@ -176,7 +177,8 @@ func (accManager AccountManager) AddBalanceHistory(
 			DetailType: detailType,
 		})
 	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, ctx.BlockHeader().Time/accParams.BalanceHistoryIntervalTime, balanceHistory); err != nil {
+		ctx, username, numOfTx/accParams.BalanceHistoryBundleLimitation,
+		balanceHistory); err != nil {
 		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
 	return nil
@@ -190,6 +192,10 @@ func (accManager AccountManager) MinusSavingCoin(
 		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
 
+	if err := accManager.AddBalanceHistory(ctx, username, accountBank.NumOfTx, coin, coinFor); err != nil {
+		return err
+	}
+
 	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
 		return err
@@ -198,10 +204,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	if !remain.IsGTE(accountParams.MinimumBalance) {
 		return ErrAccountSavingCoinNotEnough()
 	}
-
-	if err := accManager.AddBalanceHistory(ctx, username, coin, coinFor); err != nil {
-		return err
-	}
+	accountBank.NumOfTx++
 
 	pendingStakeQueue, err :=
 		accManager.storage.GetPendingStakeQueue(ctx, username)
@@ -225,7 +228,7 @@ func (accManager AccountManager) MinusSavingCoin(
 			pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 		if coin.IsGTE(pendingStake.Coin) {
-			// if withdraw money more than last pending transaction, remove last transaction
+			// if withdraw money is much than last pending transaction, remove last transaction
 			coin = coin.Minus(pendingStake.Coin)
 
 			pendingStakeCoinWithoutLastTx :=

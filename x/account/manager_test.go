@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
@@ -84,12 +84,10 @@ func TestAddCoin(t *testing.T) {
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
 
-	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
-	baseTime = baseTime / accParam.BalanceHistoryIntervalTime * accParam.BalanceHistoryIntervalTime
 	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
 	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
-	baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
+	baseTime3 := baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
 	priv1 := createTestAccount(ctx, am, "user1")
 	cases := []struct {
@@ -107,7 +105,8 @@ func TestAddCoin(t *testing.T) {
 			types.AccountKey("user1"), priv1.PubKey().Address(),
 			c100, types.TransferIn, baseTime,
 			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(c100),
+				Saving:  accParam.RegisterFee.Plus(c100),
+				NumOfTx: 2,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
@@ -144,7 +143,8 @@ func TestAddCoin(t *testing.T) {
 		{"add coin to exist account's saving while previous tx is still in pending queue",
 			types.AccountKey("user1"), priv1.PubKey().Address(), c100, types.DonationIn, baseTime1,
 			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(c200),
+				Saving:  accParam.RegisterFee.Plus(c200),
+				NumOfTx: 3,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime1,
@@ -191,8 +191,9 @@ func TestAddCoin(t *testing.T) {
 		{"add coin to exist account's saving while previous tx just finished pending",
 			types.AccountKey("user1"), priv1.PubKey().Address(), c100, types.ClaimReward, baseTime2,
 			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(c300),
-				Stake:  accParam.RegisterFee.Plus(c100),
+				Saving:  accParam.RegisterFee.Plus(c300),
+				Stake:   accParam.RegisterFee.Plus(c100),
+				NumOfTx: 4,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2,
@@ -236,50 +237,18 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
-		{"add coin at next balance history slot",
-			types.AccountKey("user1"), priv1.PubKey().Address(), c100, types.ClaimReward, baseTime3,
-			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(c400),
-				Stake:  accParam.RegisterFee.Plus(c300),
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime3,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        c100,
-				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime3,
-						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      c100,
-					},
-				},
-			},
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
-						Amount:     c100,
-						CreatedAt:  baseTime3,
-						DetailType: types.ClaimReward,
-					},
-				},
-			},
-		},
 		{"add coin is zero",
 			types.AccountKey("user1"), priv1.PubKey().Address(), c0, types.DelegationReturnCoin, baseTime3,
 			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(c400),
-				Stake:  accParam.RegisterFee.Plus(c300),
+				Saving:  accParam.RegisterFee.Plus(c300),
+				Stake:   accParam.RegisterFee.Plus(c300),
+				NumOfTx: 5,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime3,
 				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        c100,
+				TotalCoin:        c0,
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
-						StartTime: baseTime3,
-						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
-						Coin:      c100,
-					},
 					model.PendingStake{
 						StartTime: baseTime3,
 						EndTime:   baseTime3 + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -290,8 +259,23 @@ func TestAddCoin(t *testing.T) {
 			model.BalanceHistory{
 				[]model.Detail{
 					model.Detail{
+						Amount:     accParam.RegisterFee,
+						CreatedAt:  baseTime,
+						DetailType: types.TransferIn,
+					},
+					model.Detail{
 						Amount:     c100,
-						CreatedAt:  baseTime3,
+						CreatedAt:  baseTime,
+						DetailType: types.TransferIn,
+					},
+					model.Detail{
+						Amount:     c100,
+						CreatedAt:  baseTime1,
+						DetailType: types.DonationIn,
+					},
+					model.Detail{
+						Amount:     c100,
+						CreatedAt:  baseTime2,
 						DetailType: types.ClaimReward,
 					},
 					model.Detail{
@@ -315,7 +299,7 @@ func TestAddCoin(t *testing.T) {
 		checkBankKVByUsername(t, ctx, cs.ToUser, cs.ExpectBank)
 		checkPendingStake(t, ctx, cs.ToUser, cs.ExpectPendingStakeQueue)
 		checkBalanceHistory(
-			t, ctx, cs.ToUser, cs.AtWhen/accParam.BalanceHistoryIntervalTime, cs.ExpectBalanceHistorySlot)
+			t, ctx, cs.ToUser, 0, cs.ExpectBalanceHistorySlot)
 	}
 }
 
@@ -330,8 +314,6 @@ func TestMinusCoin(t *testing.T) {
 
 	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
-	baseTime = baseTime / accParam.BalanceHistoryIntervalTime * accParam.BalanceHistoryIntervalTime
-	baseTime1 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 
@@ -356,7 +338,8 @@ func TestMinusCoin(t *testing.T) {
 		{"minus saving coin from user with sufficient saving",
 			userWithSufficientSaving, priv1, nil, coin1, baseTime,
 			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
+				Saving:  accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
+				NumOfTx: 3,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
@@ -394,33 +377,12 @@ func TestMinusCoin(t *testing.T) {
 				},
 			},
 		},
-		{"minus saving coin from user with sufficient saving at next slot",
-			userWithSufficientSaving, priv1, nil, coin1, baseTime1,
-			model.AccountBank{
-				Saving: accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin2),
-				Stake:  accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin2),
-			},
-			model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime1,
-				StakeCoinInQueue: sdk.ZeroRat,
-				TotalCoin:        types.NewCoinFromInt64(0),
-				PendingStakeList: nil,
-			}, types.TransferOut,
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
-						Amount:     coin1,
-						CreatedAt:  baseTime1,
-						DetailType: types.TransferOut,
-					},
-				},
-			},
-		},
 		{"minus saving coin from user with limit saving",
 			userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
 			coin1, baseTime,
 			model.AccountBank{
-				Saving: accParam.RegisterFee,
+				Saving:  accParam.RegisterFee,
+				NumOfTx: 1,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
@@ -447,7 +409,8 @@ func TestMinusCoin(t *testing.T) {
 			userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
 			c100, baseTime,
 			model.AccountBank{
-				Saving: accParam.RegisterFee,
+				Saving:  accParam.RegisterFee,
+				NumOfTx: 1,
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
@@ -476,10 +439,108 @@ func TestMinusCoin(t *testing.T) {
 		err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount, cs.DetailType)
 
 		assert.Equal(t, cs.ExpectErr, err, fmt.Sprintf("%s: minus coin failed, err: %v", cs.TestName, err))
-		checkBankKVByUsername(t, ctx, cs.FromUser, cs.ExpectBank)
-		checkPendingStake(t, ctx, cs.FromUser, cs.ExpectPendingStakeQueue)
-		checkBalanceHistory(t, ctx, cs.FromUser,
-			cs.AtWhen/accParam.BalanceHistoryIntervalTime, cs.ExpectBalanceHistory)
+		if cs.ExpectErr == nil {
+			checkBankKVByUsername(t, ctx, cs.FromUser, cs.ExpectBank)
+			checkPendingStake(t, ctx, cs.FromUser, cs.ExpectPendingStakeQueue)
+			checkBalanceHistory(t, ctx, cs.FromUser,
+				0, cs.ExpectBalanceHistory)
+		}
+	}
+}
+
+func TestBalanceHistory(t *testing.T) {
+	cases := []struct {
+		TestName        string
+		NumOfAdding     int
+		NumOfMinus      int
+		expectTotalSlot int64
+	}{
+		{"test only one adding", 1, 0, 1},
+		{"test 99 adding, which fullfills 1 bundles", 99, 0, 1},
+		{"test adding and minus, which results in 2 bundles", 50, 50, 2},
+	}
+	for _, cs := range cases {
+		ctx, am, accParam := setupTest(t, 1)
+
+		user1 := types.AccountKey("user1")
+		createTestAccount(ctx, am, string(user1))
+
+		for i := 0; i < cs.NumOfAdding; i++ {
+			err := am.AddSavingCoin(ctx, user1, coin1, types.TransferIn)
+			assert.Nil(t, err)
+		}
+		for i := 0; i < cs.NumOfMinus; i++ {
+			err := am.MinusSavingCoin(ctx, user1, coin1, types.TransferOut)
+			assert.Nil(t, err)
+		}
+		bank, err := am.storage.GetBankFromAccountKey(ctx, user1)
+		assert.Nil(t, err)
+		// add one init transfer in
+		expectNumOfTx := int64(cs.NumOfAdding + cs.NumOfMinus + 1)
+		assert.Equal(t, expectNumOfTx, bank.NumOfTx)
+
+		// total slot should use previous states to get expected slots
+		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleLimitation + 1
+		assert.Equal(t, cs.expectTotalSlot, actualTotalSlot)
+		actualNumOfAdding, actualNumOfMinus := 0, 0
+		for slot := int64(0); slot < actualTotalSlot; slot++ {
+			balanceHistory, err := am.storage.GetBalanceHistory(ctx, user1, slot)
+			assert.Nil(t, err)
+			for _, tx := range balanceHistory.Details {
+				if tx.DetailType == types.TransferIn {
+					actualNumOfAdding++
+				}
+				if tx.DetailType == types.TransferOut {
+					actualNumOfMinus++
+				}
+			}
+		}
+		// include create account init transaction
+		assert.Equal(t, cs.NumOfAdding+1, actualNumOfAdding)
+		assert.Equal(t, cs.NumOfMinus, actualNumOfMinus)
+	}
+}
+
+func TestAddBalanceHistory(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
+
+	// check bundle limitation
+	user1 := types.AccountKey("user1")
+	// user2 := types.AccountKey("user2")
+	cases := []struct {
+		testName              string
+		numOfTx               int64
+		coin                  types.Coin
+		txType                types.BalanceHistoryDetailType
+		expectNumOfTxInBundle int
+	}{
+		{"try first transaction in first slot",
+			0, types.NewCoinFromInt64(1), types.TransferIn, 1,
+		},
+		{"try second transaction in first slot",
+			0, types.NewCoinFromInt64(1 * types.Decimals), types.TransferOut, 2,
+		},
+		{"add transaction to the end of the first slot limitation",
+			99, types.NewCoinFromInt64(1), types.TransferIn, 3,
+		},
+		{"add transaction to next slot",
+			100, types.NewCoinFromInt64(1), types.DeveloperInflation, 1,
+		},
+	}
+
+	for _, cs := range cases {
+		err := am.AddBalanceHistory(ctx, user1, cs.numOfTx, cs.coin, cs.txType)
+		assert.Nil(t, err)
+		balanceHistory, err :=
+			am.storage.GetBalanceHistory(
+				ctx, user1, cs.numOfTx/accParam.BalanceHistoryBundleLimitation)
+		assert.Nil(t, err)
+		assert.Equal(t, cs.expectNumOfTxInBundle, len(balanceHistory.Details))
+		assert.Equal(t, model.Detail{
+			Amount:     cs.coin,
+			CreatedAt:  ctx.BlockHeader().Time,
+			DetailType: cs.txType,
+		}, balanceHistory.Details[cs.expectNumOfTxInBundle-1])
 	}
 }
 
@@ -499,7 +560,8 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	assert.True(t, am.IsAccountExist(ctx, accKey))
 	bank := model.AccountBank{
-		Saving: accParam.RegisterFee,
+		Saving:  accParam.RegisterFee,
+		NumOfTx: 1,
 	}
 	checkBankKVByUsername(t, ctx, accKey, bank)
 	pendingStakeQueue := model.PendingStakeQueue{
@@ -613,6 +675,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 	baseTime2 := baseTime + totalCoinDaysSec + (totalCoinDaysSec/registerFee)/2 + 1
+	expectNumOfTx := int64(1)
 
 	createTestAccount(ctx, am, string(accKey))
 
@@ -664,9 +727,12 @@ func TestCoinDayByAccountKey(t *testing.T) {
 			return
 		}
 
+		expectNumOfTx++
+
 		bank := model.AccountBank{
-			Saving: cs.ExpectSavingBalance,
-			Stake:  cs.ExpectStakeInBank,
+			Saving:  cs.ExpectSavingBalance,
+			Stake:   cs.ExpectStakeInBank,
+			NumOfTx: expectNumOfTx,
 		}
 		checkBankKVByUsername(t, ctx, accKey, bank)
 	}
@@ -688,14 +754,16 @@ func TestAccountReward(t *testing.T) {
 	checkAccountReward(t, ctx, accKey, reward)
 
 	bank := model.AccountBank{
-		Saving: accParam.RegisterFee,
-		Stake:  c0,
+		Saving:  accParam.RegisterFee,
+		NumOfTx: 1,
+		Stake:   c0,
 	}
 	checkBankKVByUsername(t, ctx, accKey, bank)
 
 	err = am.ClaimReward(ctx, accKey)
 	assert.Nil(t, err)
 	bank.Saving = accParam.RegisterFee.Plus(c500)
+	bank.NumOfTx = 2
 	checkBankKVByUsername(t, ctx, accKey, bank)
 	reward = model.Reward{c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)
@@ -946,8 +1014,9 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 		PostKey:        newPostPrivKey.PubKey(),
 	}
 	bank := model.AccountBank{
-		Saving: accParam.RegisterFee,
-		Stake:  coin0,
+		Saving:  accParam.RegisterFee,
+		Stake:   coin0,
+		NumOfTx: 1,
 	}
 
 	checkAccountInfo(t, ctx, user1, accInfo)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 
 	"github.com/stretchr/testify/assert"
 
@@ -275,7 +275,8 @@ func TestHandleAccountRecover(t *testing.T) {
 		}
 		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
 		newBank := model.AccountBank{
-			Saving: accParam.RegisterFee,
+			Saving:  accParam.RegisterFee,
+			NumOfTx: 1,
 		}
 		checkBankKVByUsername(t, ctx, types.AccountKey(tc.user), newBank)
 	}

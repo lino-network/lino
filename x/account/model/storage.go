@@ -280,9 +280,9 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 
 // GetRelationship returns the relationship between two accounts.
 func (as AccountStorage) GetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, timeSlot int64) (*BalanceHistory, sdk.Error) {
+	ctx sdk.Context, me types.AccountKey, transactionSlot int64) (*BalanceHistory, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, timeSlot))
+	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, transactionSlot))
 	if balanceHistoryBytes == nil {
 		return nil, nil
 	}
