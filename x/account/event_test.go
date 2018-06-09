@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,8 +62,6 @@ func TestReturnCoinEvent(t *testing.T) {
 
 	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
-	baseTime = baseTime / accParam.BalanceHistoryIntervalTime * accParam.BalanceHistoryIntervalTime
-
 	testCases := []struct {
 		testName             string
 		event                ReturnCoinEvent

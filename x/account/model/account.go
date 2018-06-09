@@ -22,6 +22,7 @@ type AccountBank struct {
 	Saving          types.Coin    `json:"saving"`
 	Stake           types.Coin    `json:"stake"`
 	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
+	NumOfTx         int64         `json:"number_of_transaction"`
 }
 
 type FrozenMoney struct {
@@ -59,10 +60,11 @@ type GrantPubKey struct {
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence            int64      `json:"sequence"`
-	LastActivityAt      int64      `json:"last_activity_at"`
-	TransactionCapacity types.Coin `json:"transaction_capacity"`
-	JSONMeta            string     `json:"json_meta"`
+	Sequence                     int64      `json:"sequence"`
+	LastActivityAt               int64      `json:"last_activity_at"`
+	TransactionCapacity          types.Coin `json:"transaction_capacity"`
+	JSONMeta                     string     `json:"json_meta"`
+	NumberOfBalanceHistoryBundle int64      `json:"num_of_balance_history_bundle"`
 }
 
 // AccountInfraConsumption records infra utility consumption
@@ -96,7 +98,11 @@ type Relationship struct {
 	DonationTimes int64 `json:"donation_times"`
 }
 
-// BalanceHistory records all transactions in a certain time period
+// BalanceHistory records all transactions belong to the user
+// Currently one balance history bundle can store at most 1000 transactions
+// If number of transaction exceeds the limitation, a new bundle will be
+// generated in KVStore
+// Total number of history bundle is defined in metadata
 type BalanceHistory struct {
 	Details []Detail `json:"details"`
 }
