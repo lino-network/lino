@@ -129,7 +129,7 @@ func (accManager AccountManager) AddSavingCoin(
 	}
 
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
-		model.TransferIn{
+		model.BalanceIn{
 			Amount:     coin,
 			DetailType: detailType,
 			From:       from,
@@ -169,7 +169,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	}
 
 	if err := accManager.AddBalanceHistory(
-		ctx, username, accountBank.NumOfTx, model.TransferOut{
+		ctx, username, accountBank.NumOfTx, model.BalanceOut{
 			Amount:     coin,
 			DetailType: detailType,
 			To:         to,

@@ -130,13 +130,13 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						From:       fromUser1,
 						CreatedAt:  baseTime,
@@ -176,19 +176,19 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						From:       fromUser1,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
@@ -224,25 +224,25 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						From:       fromUser1,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
 						From:       fromUser2,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						CreatedAt:  baseTime2,
 						DetailType: types.ClaimReward,
@@ -273,31 +273,31 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						From:       fromUser1,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
 						From:       fromUser2,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c100,
 						CreatedAt:  baseTime2,
 						DetailType: types.ClaimReward,
 						From:       types.FromRewardPool,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     c0,
 						CreatedAt:  baseTime3,
 						DetailType: types.DelegationReturnCoin,
@@ -382,19 +382,19 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       fromUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.TransferOut{
+					model.BalanceOut{
 						Amount:     coin1,
 						To:         toUser,
 						CreatedAt:  baseTime,
@@ -423,7 +423,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
@@ -452,7 +452,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.BalanceHistory{
 				[]model.Detail{
-					model.TransferIn{
+					model.BalanceIn{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						CreatedAt:  baseTime,
@@ -517,9 +517,9 @@ func TestBalanceHistory(t *testing.T) {
 			assert.Nil(t, err)
 			for _, tx := range balanceHistory.Details {
 				switch tx.(type) {
-				case model.TransferIn:
+				case model.BalanceIn:
 					actualNumOfAdding++
-				case model.TransferOut:
+				case model.BalanceOut:
 					actualNumOfMinus++
 				}
 			}
@@ -543,7 +543,7 @@ func TestAddBalanceHistory(t *testing.T) {
 		expectNumOfTxInBundle int
 	}{
 		{"try first transaction in first slot",
-			0, model.TransferIn{
+			0, model.BalanceIn{
 				From:       types.AccountKey("test1"),
 				Amount:     types.NewCoinFromInt64(1),
 				DetailType: types.TransferIn,
@@ -551,7 +551,7 @@ func TestAddBalanceHistory(t *testing.T) {
 			}, 1,
 		},
 		{"try second transaction in first slot",
-			1, model.TransferOut{
+			1, model.BalanceOut{
 				To:         types.AccountKey("test1"),
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.TransferOut,
@@ -559,7 +559,7 @@ func TestAddBalanceHistory(t *testing.T) {
 			}, 2,
 		},
 		{"add transaction to the end of the first slot limitation",
-			99, model.TransferOut{
+			99, model.BalanceOut{
 				To:         types.PermLink("test1"),
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.DonationOut,
@@ -567,7 +567,7 @@ func TestAddBalanceHistory(t *testing.T) {
 			}, 3,
 		},
 		{"add transaction to next slot",
-			100, model.TransferOut{
+			100, model.BalanceOut{
 				To:         types.AccountKey("test1"),
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.DeveloperDeposit,
@@ -640,7 +640,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(balanceHistory.Details))
-	assert.Equal(t, model.TransferIn{
+	assert.Equal(t, model.BalanceIn{
 		From:       accountReferrer,
 		Amount:     accParam.RegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
