@@ -36,8 +36,8 @@ func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 	wire.RegisterCrypto(cdc)
 
 	cdc.RegisterInterface((*Detail)(nil), nil)
-	cdc.RegisterConcrete(TransferIn{}, "transfer/in", nil)
-	cdc.RegisterConcrete(TransferOut{}, "transfer/out", nil)
+	cdc.RegisterConcrete(BalanceIn{}, "transfer/in", nil)
+	cdc.RegisterConcrete(BalanceOut{}, "transfer/out", nil)
 
 	cdc.RegisterInterface((*types.TransferObject)(nil), nil)
 	cdc.RegisterConcrete(types.AccountKey(""), "transfer/to/acckey", nil)
