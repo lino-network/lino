@@ -291,9 +291,9 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:                 types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                    types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleLimitation: 100,
+		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize: 100,
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam, evaluateOfContentValueParam,
 		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam)

@@ -163,7 +163,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	}
 	balanceHistory, err :=
 		accManager.storage.GetBalanceHistory(
-			ctx, username, numOfTx/accParams.BalanceHistoryBundleLimitation)
+			ctx, username, numOfTx/accParams.BalanceHistoryBundleSize)
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (accManager AccountManager) AddBalanceHistory(
 			DetailType: detailType,
 		})
 	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, numOfTx/accParams.BalanceHistoryBundleLimitation,
+		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
 		balanceHistory); err != nil {
 		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}

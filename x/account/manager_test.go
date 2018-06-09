@@ -480,7 +480,7 @@ func TestBalanceHistory(t *testing.T) {
 		assert.Equal(t, expectNumOfTx, bank.NumOfTx)
 
 		// total slot should use previous states to get expected slots
-		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleLimitation + 1
+		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleSize + 1
 		assert.Equal(t, cs.expectTotalSlot, actualTotalSlot)
 		actualNumOfAdding, actualNumOfMinus := 0, 0
 		for slot := int64(0); slot < actualTotalSlot; slot++ {
@@ -533,7 +533,7 @@ func TestAddBalanceHistory(t *testing.T) {
 		assert.Nil(t, err)
 		balanceHistory, err :=
 			am.storage.GetBalanceHistory(
-				ctx, user1, cs.numOfTx/accParam.BalanceHistoryBundleLimitation)
+				ctx, user1, cs.numOfTx/accParam.BalanceHistoryBundleSize)
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectNumOfTxInBundle, len(balanceHistory.Details))
 		assert.Equal(t, model.Detail{
