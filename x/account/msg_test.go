@@ -276,7 +276,7 @@ func TestRegisterUsername(t *testing.T) {
 		wantCode sdk.CodeType
 	}{
 		"normal case": {
-			msg: NewRegisterMsg("referrer", "newUser", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "newuser", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
@@ -306,13 +306,13 @@ func TestRegisterUsername(t *testing.T) {
 			wantCode: types.CodeInvalidUsername,
 		},
 		"referrer invalid": {
-			msg: NewRegisterMsg("", "newUser", "1", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("", "newuser", "1", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"register fee invalid": {
-			msg: NewRegisterMsg("", "newUser", "1.", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("", "newuser", "1.", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
@@ -336,7 +336,7 @@ func TestRegisterUsername(t *testing.T) {
 	// Illegel character
 	registerList := [...]string{"register#", "_register", "-register", "reg@ister",
 		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register",
-		"reg=ister", "register^", "register.", "reg$ister,"}
+		"reg=ister", "register^", "register.", "reg$ister,", "Register"}
 	for _, register := range registerList {
 		msg := NewRegisterMsg(
 			"referer", register, "0", crypto.GenPrivKeyEd25519().PubKey(),

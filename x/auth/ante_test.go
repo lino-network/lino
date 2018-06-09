@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
-	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,7 +33,7 @@ func createTestAccount(
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
-	am.CreateAccount(ctx, types.AccountKey(username),
+	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
 		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
 }

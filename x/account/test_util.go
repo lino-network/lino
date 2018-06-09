@@ -19,6 +19,8 @@ var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
 	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
+	accountReferrer = types.AccountKey("referrer")
+
 	l0    = types.LNO("0")
 	l100  = types.LNO("100")
 	l200  = types.LNO("200")
@@ -75,7 +77,7 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
 	priv := crypto.GenPrivKeyEd25519()
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.CreateAccount(ctx, types.AccountKey(username),
+	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
 	return priv
 }

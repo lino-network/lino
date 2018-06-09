@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -388,16 +388,16 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	userWithSufficientSaving := createTestAccount(t, ctx, am, "userWithSufficientSaving")
 	err = am.AddSavingCoin(
-		ctx, userWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals), types.TransferIn)
+		ctx, userWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals), referrer, types.TransferIn)
 	assert.Nil(t, err)
 
 	secondUserWithSufficientSaving := createTestAccount(t, ctx, am, "secondUserWithSufficientSaving")
 	err = am.AddSavingCoin(
-		ctx, secondUserWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals), types.TransferIn)
+		ctx, secondUserWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals), referrer, types.TransferIn)
 	assert.Nil(t, err)
 
 	microPaymentUser := createTestAccount(t, ctx, am, "microPaymentUser")
-	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(1), types.TransferIn)
+	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(1), referrer, types.TransferIn)
 	assert.Nil(t, err)
 
 	cases := []struct {
@@ -605,7 +605,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
-	err := am.AddSavingCoin(ctx, user3, types.NewCoinFromInt64(123*types.Decimals), types.TransferIn)
+	err := am.AddSavingCoin(
+		ctx, user3, types.NewCoinFromInt64(123*types.Decimals), referrer, types.TransferIn)
 	assert.Nil(t, err)
 	// repost
 	postCreateParams := PostCreateParams{

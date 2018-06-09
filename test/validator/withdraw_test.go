@@ -17,7 +17,7 @@ func TestValidatorRevoke(t *testing.T) {
 	newAccountMasterPriv := crypto.GenPrivKeyEd25519()
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 3600

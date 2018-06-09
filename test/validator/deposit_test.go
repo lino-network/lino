@@ -16,7 +16,7 @@ import (
 func TestValidatorDeposit(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 100

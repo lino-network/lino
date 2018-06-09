@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
 
 	crypto "github.com/tendermint/go-crypto"
 )
 
 // test normal transfer to account name
 func TestTransferToAccount(t *testing.T) {
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	baseTime := time.Now().Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 

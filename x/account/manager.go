@@ -34,7 +34,7 @@ func (accManager AccountManager) IsAccountExist(ctx sdk.Context, username types.
 
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
-	ctx sdk.Context, username types.AccountKey,
+	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
 	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey,
 	registerFee types.Coin) sdk.Error {
 	if accManager.IsAccountExist(ctx, username) {
@@ -81,7 +81,8 @@ func (accManager AccountManager) CreateAccount(
 		ctx, username, &model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}); err != nil {
 		return err
 	}
-	if err := accManager.AddSavingCoin(ctx, username, registerFee, types.TransferIn); err != nil {
+	if err := accManager.AddSavingCoin(
+		ctx, username, registerFee, referrer, types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -117,8 +118,8 @@ func (accManager AccountManager) GetStake(
 }
 
 func (accManager AccountManager) AddSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin,
-	coinFrom types.BalanceHistoryDetailType) (err sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.TransferObject,
+	detailType types.TransferInDetail) (err sdk.Error) {
 	if !accManager.IsAccountExist(ctx, username) {
 		return ErrAddCoinAccountNotFound(username)
 	}
@@ -127,7 +128,13 @@ func (accManager AccountManager) AddSavingCoin(
 		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
 	}
 
-	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx, coin, coinFrom); err != nil {
+	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
+		model.TransferIn{
+			Amount:     coin,
+			DetailType: detailType,
+			From:       from,
+			CreatedAt:  ctx.BlockHeader().Time,
+		}); err != nil {
 		return err
 	}
 	bank.Saving = bank.Saving.Plus(coin)
@@ -153,46 +160,21 @@ func (accManager AccountManager) AddSavingCoin(
 	return nil
 }
 
-func (accManager AccountManager) AddBalanceHistory(
-	ctx sdk.Context, username types.AccountKey, numOfTx int64, coin types.Coin,
-	detailType types.BalanceHistoryDetailType) sdk.Error {
-	// set balance history
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
-	balanceHistory, err :=
-		accManager.storage.GetBalanceHistory(
-			ctx, username, numOfTx/accParams.BalanceHistoryBundleSize)
-	if err != nil {
-		return err
-	}
-	if balanceHistory == nil {
-		balanceHistory = &model.BalanceHistory{Details: []model.Detail{}}
-	}
-	balanceHistory.Details = append(balanceHistory.Details,
-		model.Detail{
-			Amount:     coin,
-			CreatedAt:  ctx.BlockHeader().Time,
-			DetailType: detailType,
-		})
-	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
-		balanceHistory); err != nil {
-		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
-	}
-	return nil
-}
-
 func (accManager AccountManager) MinusSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin,
-	coinFor types.BalanceHistoryDetailType) (err sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.TransferObject,
+	detailType types.TransferOutDetail) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
 
-	if err := accManager.AddBalanceHistory(ctx, username, accountBank.NumOfTx, coin, coinFor); err != nil {
+	if err := accManager.AddBalanceHistory(
+		ctx, username, accountBank.NumOfTx, model.TransferOut{
+			Amount:     coin,
+			DetailType: detailType,
+			To:         to,
+			CreatedAt:  ctx.BlockHeader().Time,
+		}); err != nil {
 		return err
 	}
 
@@ -266,6 +248,33 @@ func (accManager AccountManager) MinusSavingCoin(
 		ctx, username, accountBank); err != nil {
 		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
+	return nil
+}
+
+func (accManager AccountManager) AddBalanceHistory(
+	ctx sdk.Context, username types.AccountKey, numOfTx int64,
+	transactionDetail model.Detail) sdk.Error {
+	// set balance history
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	balanceHistory, err :=
+		accManager.storage.GetBalanceHistory(
+			ctx, username, numOfTx/accParams.BalanceHistoryBundleSize)
+	if err != nil {
+		return err
+	}
+	if balanceHistory == nil {
+		balanceHistory = &model.BalanceHistory{Details: []model.Detail{}}
+	}
+	balanceHistory.Details = append(balanceHistory.Details, transactionDetail)
+	if err := accManager.storage.SetBalanceHistory(
+		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
+		balanceHistory); err != nil {
+		return ErrAddBalanceHistory(username).TraceCause(err, "")
+	}
+
 	return nil
 }
 
@@ -364,12 +373,14 @@ func (accManager AccountManager) AddIncomeAndReward(
 	return nil
 }
 
-func (accManager AccountManager) ClaimReward(ctx sdk.Context, username types.AccountKey) sdk.Error {
+func (accManager AccountManager) ClaimReward(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
 		return ErrClaimReward(username).TraceCause(err, "")
 	}
-	if err := accManager.AddSavingCoin(ctx, username, reward.UnclaimReward, types.ClaimReward); err != nil {
+	if err := accManager.AddSavingCoin(
+		ctx, username, reward.UnclaimReward, types.FromRewardPool, types.ClaimReward); err != nil {
 		return ErrClaimReward(username).TraceCause(err, "")
 	}
 	reward.UnclaimReward = types.NewCoinFromInt64(0)

@@ -39,7 +39,8 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, deposit, types.DeveloperDeposit); err != nil {
+	if err = am.MinusSavingCoin(
+		ctx, msg.Username, deposit, types.ToDeveloperDeposit, types.DeveloperDeposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(ctx, msg.Username, deposit); err != nil {
@@ -49,7 +50,8 @@ func handleDeveloperRegisterMsg(
 }
 
 func handleDeveloperRevokeMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager,
+	gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
 	if !dm.IsDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
 	}

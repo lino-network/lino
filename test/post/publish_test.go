@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
-	post "github.com/lino-network/lino/x/post"
 	"github.com/lino-network/lino/types"
+	post "github.com/lino-network/lino/x/post"
 
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -15,7 +15,7 @@ import (
 func TestNormalPublish(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	postID1 := "New Post 1"
 	postID2 := "New Post 2"
 	// recover some stake
@@ -34,7 +34,7 @@ func TestNormalPublish(t *testing.T) {
 // test publish a repost
 func TestNormalRepost(t *testing.T) {
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
 	baseTime := time.Now().Unix() + 3600
@@ -54,7 +54,7 @@ func TestNormalRepost(t *testing.T) {
 // test invalid repost if source post id doesn't exist
 func TestInvalidRepost(t *testing.T) {
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
 	baseTime := time.Now().Unix() + 3600
@@ -84,7 +84,7 @@ func TestInvalidRepost(t *testing.T) {
 // test publish a comment
 func TestComment(t *testing.T) {
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	postID := "New Post"
 	comment := "Comment"
 	baseTime := time.Now().Unix() + 3600
