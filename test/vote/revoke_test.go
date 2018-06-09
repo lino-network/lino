@@ -7,8 +7,8 @@ import (
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
 
-	val "github.com/lino-network/lino/tx/validator"
-	vote "github.com/lino-network/lino/tx/vote"
+	val "github.com/lino-network/lino/x/validator"
+	vote "github.com/lino-network/lino/x/vote"
 	crypto "github.com/tendermint/go-crypto"
 )
 

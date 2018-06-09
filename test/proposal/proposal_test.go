@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/tx/proposal"
-	val "github.com/lino-network/lino/tx/validator"
-	vote "github.com/lino-network/lino/tx/vote"
+	"github.com/lino-network/lino/x/proposal"
+	val "github.com/lino-network/lino/x/validator"
+	vote "github.com/lino-network/lino/x/vote"
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/go-crypto"
 )
