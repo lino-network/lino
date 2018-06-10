@@ -47,7 +47,7 @@ func handleVoterDepositMsg(
 	}
 
 	// withdraw money from voter's bank
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.ToVoterDeposit, types.VoterDeposit); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin, "", "", types.VoterDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -143,7 +143,8 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 	}
 
 	// withdraw money from delegator's bank
-	if err := am.MinusSavingCoin(ctx, msg.Delegator, coin, msg.Voter, types.Delegate); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Delegator, coin, string(msg.Voter), "", types.Delegate); err != nil {
 		return err.Result()
 	}
 	// add delegation relation
@@ -219,7 +220,7 @@ func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
 
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
-	times int64, interval int64, coin types.Coin, returnType types.TransferInDetail) sdk.Error {
+	times int64, interval int64, coin types.Coin, returnType types.TransferDetailType) sdk.Error {
 
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
