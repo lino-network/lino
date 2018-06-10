@@ -8,9 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ Detail = BalanceIn{}
-var _ Detail = BalanceOut{}
-
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`
@@ -109,24 +106,12 @@ type BalanceHistory struct {
 	Details []Detail `json:"details"`
 }
 
-type Detail interface {
-	IsBalanceDetail()
+type Detail struct {
+	DetailType types.TransferDetailType `json:"detail_type"`
+	From       string                   `json:"from"`
+	To         string                   `json:"to"`
+	PermLink   types.PermLink           `json:"perm_link"`
+	Amount     types.Coin               `json:"amount"`
+	CreatedAt  int64                    `json:"created_at"`
+	Memo       string                   `json:"memo"`
 }
-
-type BalanceIn struct {
-	DetailType types.TransferInDetail `json:"detail_type"`
-	From       types.TransferObject   `json:"from"`
-	Amount     types.Coin             `json:"amount"`
-	CreatedAt  int64                  `json:"created_at"`
-}
-
-func (_ BalanceIn) IsBalanceDetail() {}
-
-type BalanceOut struct {
-	DetailType types.TransferOutDetail `json:"detail_type"`
-	To         types.TransferObject    `json:"to"`
-	Amount     types.Coin              `json:"amount"`
-	CreatedAt  int64                   `json:"created_at"`
-}
-
-func (_ BalanceOut) IsBalanceDetail() {}
