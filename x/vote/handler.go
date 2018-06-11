@@ -144,7 +144,7 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 
 	// withdraw money from delegator's bank
 	if err := am.MinusSavingCoin(
-		ctx, msg.Delegator, coin, string(msg.Voter), "", types.Delegate); err != nil {
+		ctx, msg.Delegator, coin, msg.Voter, "", types.Delegate); err != nil {
 		return err.Result()
 	}
 	// add delegation relation

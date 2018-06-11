@@ -108,9 +108,8 @@ type BalanceHistory struct {
 
 type Detail struct {
 	DetailType types.TransferDetailType `json:"detail_type"`
-	From       string                   `json:"from"`
-	To         string                   `json:"to"`
-	PermLink   types.PermLink           `json:"perm_link"`
+	From       types.AccountKey         `json:"from"`
+	To         types.AccountKey         `json:"to"`
 	Amount     types.Coin               `json:"amount"`
 	CreatedAt  int64                    `json:"created_at"`
 	Memo       string                   `json:"memo"`

@@ -84,19 +84,19 @@ func TestAddCoin(t *testing.T) {
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
 
-	fromUser1, fromUser2 := types.AccountKey("fromUser1"), types.AccountKey("fromuser2")
-	testUser := "testUser"
+	fromUser1, fromUser2, testUser :=
+		types.AccountKey("fromUser1"), types.AccountKey("fromuser2"), types.AccountKey("testUser")
 
 	baseTime := time.Now().Unix()
 	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
 	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	baseTime3 := baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
-	createTestAccount(ctx, am, testUser)
+	createTestAccount(ctx, am, string(testUser))
 	cases := []struct {
 		testName                 string
 		Amount                   types.Coin
-		From                     string
+		From                     types.AccountKey
 		DetailType               types.TransferDetailType
 		Memo                     string
 		AtWhen                   int64
@@ -105,7 +105,7 @@ func TestAddCoin(t *testing.T) {
 		ExpectBalanceHistorySlot model.BalanceHistory
 	}{
 		{"add coin to account's saving",
-			c100, string(fromUser1), types.TransferIn, "memo", baseTime,
+			c100, fromUser1, types.TransferIn, "memo", baseTime,
 			model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c100),
 				NumOfTx: 2,
@@ -131,7 +131,7 @@ func TestAddCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
+						From:       accountReferrer,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -139,7 +139,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser1),
+						From:       fromUser1,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -149,7 +149,7 @@ func TestAddCoin(t *testing.T) {
 			},
 		},
 		{"add coin to exist account's saving while previous tx is still in pending queue", c100,
-			string(fromUser2), types.DonationIn, "permlink", baseTime1,
+			fromUser2, types.DonationIn, "permlink", baseTime1,
 			model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c200),
 				NumOfTx: 3,
@@ -180,7 +180,7 @@ func TestAddCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
+						From:       accountReferrer,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -188,7 +188,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser1),
+						From:       fromUser1,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -196,7 +196,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser2),
+						From:       fromUser2,
 						To:         testUser,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
@@ -233,7 +233,7 @@ func TestAddCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
+						From:       accountReferrer,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -241,7 +241,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser1),
+						From:       fromUser1,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -249,7 +249,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser2),
+						From:       fromUser2,
 						To:         testUser,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
@@ -289,7 +289,7 @@ func TestAddCoin(t *testing.T) {
 
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
+						From:       accountReferrer,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -297,7 +297,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser1),
+						From:       fromUser1,
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
@@ -305,7 +305,7 @@ func TestAddCoin(t *testing.T) {
 					},
 					model.Detail{
 						Amount:     c100,
-						From:       string(fromUser2),
+						From:       fromUser2,
 						To:         testUser,
 						CreatedAt:  baseTime1,
 						DetailType: types.DonationIn,
@@ -333,7 +333,7 @@ func TestAddCoin(t *testing.T) {
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
 		err = am.AddSavingCoin(
-			ctx, types.AccountKey(testUser), cs.Amount, cs.From, cs.Memo, cs.DetailType)
+			ctx, testUser, cs.Amount, cs.From, cs.Memo, cs.DetailType)
 
 		if err != nil {
 			t.Errorf("%s: add coin failed, err: %v", cs.testName, err)
@@ -365,7 +365,7 @@ func TestMinusCoin(t *testing.T) {
 	priv1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
 	priv3 := createTestAccount(ctx, am, string(userWithLimitSaving))
 	err = am.AddSavingCoin(
-		ctx, userWithSufficientSaving, accParam.RegisterFee, string(fromUser), "", types.TransferIn)
+		ctx, userWithSufficientSaving, accParam.RegisterFee, fromUser, "", types.TransferIn)
 	assert.Nil(t, err)
 
 	cases := []struct {
@@ -408,23 +408,23 @@ func TestMinusCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
-						To:         string(userWithSufficientSaving),
+						From:       accountReferrer,
+						To:         userWithSufficientSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 						Memo:       "init account",
 					},
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(fromUser),
-						To:         string(userWithSufficientSaving),
+						From:       fromUser,
+						To:         userWithSufficientSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
 					model.Detail{
 						Amount:     coin1,
-						From:       string(userWithSufficientSaving),
-						To:         string(toUser),
+						From:       userWithSufficientSaving,
+						To:         toUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferOut,
 						Memo:       "memo",
@@ -454,8 +454,8 @@ func TestMinusCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
-						To:         string(toUser),
+						From:       accountReferrer,
+						To:         toUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 						Memo:       "init account",
@@ -485,8 +485,8 @@ func TestMinusCoin(t *testing.T) {
 				[]model.Detail{
 					model.Detail{
 						Amount:     accParam.RegisterFee,
-						From:       string(accountReferrer),
-						To:         string(userWithLimitSaving),
+						From:       accountReferrer,
+						To:         userWithLimitSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 						Memo:       "init account",
@@ -497,7 +497,7 @@ func TestMinusCoin(t *testing.T) {
 	}
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
-		err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount, string(cs.To), cs.Memo, cs.DetailType)
+		err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount, cs.To, cs.Memo, cs.DetailType)
 
 		assert.Equal(t, cs.ExpectErr, err, fmt.Sprintf("%s: minus coin failed, err: %v", cs.TestName, err))
 		if cs.ExpectErr == nil {
@@ -510,7 +510,7 @@ func TestMinusCoin(t *testing.T) {
 }
 
 func TestBalanceHistory(t *testing.T) {
-	fromUser, toUser := "fromUser", "toUser"
+	fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
 	cases := []struct {
 		TestName        string
 		NumOfAdding     int
@@ -676,8 +676,8 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(balanceHistory.Details))
 	assert.Equal(t, model.Detail{
-		From:       string(accountReferrer),
-		To:         string(accKey),
+		From:       accountReferrer,
+		To:         accKey,
 		Amount:     accParam.RegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
 		DetailType: types.TransferIn,

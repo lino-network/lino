@@ -389,17 +389,17 @@ func TestHandlerPostDonate(t *testing.T) {
 	userWithSufficientSaving := createTestAccount(t, ctx, am, "userWithSufficientSaving")
 	err = am.AddSavingCoin(
 		ctx, userWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals),
-		string(referrer), "", types.TransferIn)
+		referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
 	secondUserWithSufficientSaving := createTestAccount(t, ctx, am, "secondUserWithSufficientSaving")
 	err = am.AddSavingCoin(
 		ctx, secondUserWithSufficientSaving, types.NewCoinFromInt64(100*types.Decimals),
-		string(referrer), "", types.TransferIn)
+		referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
 	microPaymentUser := createTestAccount(t, ctx, am, "microPaymentUser")
-	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(1), string(referrer), "", types.TransferIn)
+	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(1), referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
 	cases := []struct {
@@ -609,7 +609,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	user3 := createTestAccount(t, ctx, am, "user3")
 	err := am.AddSavingCoin(
 		ctx, user3, types.NewCoinFromInt64(123*types.Decimals),
-		string(referrer), "", types.TransferIn)
+		referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 	// repost
 	postCreateParams := PostCreateParams{

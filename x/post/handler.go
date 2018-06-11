@@ -119,7 +119,7 @@ func handleDonateMsg(
 		}
 	}
 	if err := am.MinusSavingCoin(
-		ctx, msg.Username, coin, string(msg.Author),
+		ctx, msg.Username, coin, msg.Author,
 		string(permLink), types.DonationOut); err != nil {
 		return ErrAccountSavingCoinNotEnough(permLink).Result()
 	}
@@ -194,7 +194,7 @@ func processDonationFriction(
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	if err := am.AddSavingCoin(
-		ctx, postAuthor, directDeposit, string(consumer), string(postKey), types.DonationIn); err != nil {
+		ctx, postAuthor, directDeposit, consumer, string(postKey), types.DonationIn); err != nil {
 		return ErrDonateFailed(postKey).TraceCause(err, "")
 	}
 	if err := gm.AddConsumption(ctx, coin); err != nil {

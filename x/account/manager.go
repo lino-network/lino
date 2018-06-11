@@ -82,7 +82,7 @@ func (accManager AccountManager) CreateAccount(
 		return err
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee, string(referrer), "init account", types.TransferIn); err != nil {
+		ctx, username, registerFee, referrer, "init account", types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -118,7 +118,7 @@ func (accManager AccountManager) GetStake(
 }
 
 func (accManager AccountManager) AddSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, from string, memo string,
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
 	if !accManager.IsAccountExist(ctx, username) {
 		return ErrAddCoinAccountNotFound(username)
@@ -132,7 +132,7 @@ func (accManager AccountManager) AddSavingCoin(
 		model.Detail{
 			Amount:     coin,
 			DetailType: detailType,
-			To:         string(username),
+			To:         username,
 			From:       from,
 			CreatedAt:  ctx.BlockHeader().Time,
 			Memo:       memo,
@@ -163,8 +163,8 @@ func (accManager AccountManager) AddSavingCoin(
 }
 
 func (accManager AccountManager) MinusSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, to string, memo string,
-	detailType types.TransferDetailType) (err sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
+	memo string, detailType types.TransferDetailType) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return ErrMinusCoinToAccount(username).TraceCause(err, "")
@@ -175,7 +175,7 @@ func (accManager AccountManager) MinusSavingCoin(
 			Amount:     coin,
 			DetailType: detailType,
 			To:         to,
-			From:       string(username),
+			From:       username,
 			CreatedAt:  ctx.BlockHeader().Time,
 			Memo:       memo,
 		}); err != nil {
