@@ -87,7 +87,7 @@ func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
 	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
-	postCreateParams := &post.PostCreateParams{
+	msg := &post.CreatePostMsg{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -99,7 +99,14 @@ func createTestPost(
 		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
-	err := pm.CreatePost(ctx, postCreateParams)
+	splitRate, err := sdk.NewRatFromDecimal(redistributionRate)
+	assert.Nil(t, err)
+
+	err = pm.CreatePost(
+		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+		msg.ParentAuthor, msg.ParentPostID, msg.Content,
+		msg.Title, splitRate, msg.Links)
+
 	assert.Nil(t, err)
 	return user, postID
 }

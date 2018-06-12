@@ -17,8 +17,8 @@ var _ sdk.Msg = DonateMsg{}
 var _ sdk.Msg = ReportOrUpvoteMsg{}
 var _ sdk.Msg = ViewMsg{}
 
-// PostCreateParams can also use to publish comment(with parent) or repost(with source)
-type PostCreateParams struct {
+// CreatePostMsg contains information to create a post
+type CreatePostMsg struct {
 	Author                  types.AccountKey       `json:"author"`
 	PostID                  string                 `json:"post_id"`
 	Title                   string                 `json:"title"`
@@ -29,11 +29,6 @@ type PostCreateParams struct {
 	SourcePostID            string                 `json:"source_postID"`
 	Links                   []types.IDToURLMapping `json:"links"`
 	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
-}
-
-// CreatePostMsg contains information to create a post
-type CreatePostMsg struct {
-	PostCreateParams
 }
 
 type UpdatePostMsg struct {
@@ -84,8 +79,20 @@ type ReportOrUpvoteMsg struct {
 }
 
 // NewCreatePostMsg constructs a post msg
-func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
-	return CreatePostMsg{PostCreateParams: postCreateParams}
+func NewCreatePostMsg(
+	author, postID, title, content, parentAuthor, parentPostID,
+	sourceAuthor, sourcePostID, redistributionSplitRate string,
+	links []types.IDToURLMapping) CreatePostMsg {
+	return CreatePostMsg{
+		Author:       types.AccountKey(author),
+		PostID:       postID,
+		Title:        title,
+		Content:      content,
+		SourceAuthor: types.AccountKey(sourceAuthor),
+		SourcePostID: sourcePostID,
+		Links:        links,
+		RedistributionSplitRate: redistributionSplitRate,
+	}
 }
 
 // NewUpdatePostMsg constructs a UpdatePost msg
@@ -183,9 +190,17 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-
-	if len(msg.RedistributionSplitRate) > 10 {
+	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
 		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
+	for _, link := range msg.Links {
+		if len(link.Identifier) > types.MaximumLinkIdentifier {
+			return ErrIdentifierLengthTooLong()
+		}
+		if len(link.URL) > types.MaximumLinkURL {
+			return ErrURLLengthTooLong()
+		}
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
@@ -213,8 +228,17 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if len(msg.RedistributionSplitRate) > 10 {
+	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
 		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
+	for _, link := range msg.Links {
+		if len(link.Identifier) > types.MaximumLinkIdentifier {
+			return ErrIdentifierLengthTooLong()
+		}
+		if len(link.URL) > types.MaximumLinkURL {
+			return ErrURLLengthTooLong()
+		}
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
@@ -388,7 +412,7 @@ func (msg ViewMsg) GetSigners() []sdk.Address {
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
-	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostCreateParams)
+	return fmt.Sprintf("%v", msg)
 }
 
 func (msg UpdatePostMsg) String() string {

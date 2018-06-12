@@ -102,19 +102,13 @@ func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
 	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
-	postCreateParams := &PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionRate,
-	}
-	err := pm.CreatePost(ctx, postCreateParams)
+
+	splitRate, err := sdk.NewRatFromDecimal(redistributionRate)
+	assert.Nil(t, err)
+	err = pm.CreatePost(
+		ctx, types.AccountKey(user), postID, "", "", "", "",
+		string(make([]byte, 1000)), string(make([]byte, 50)),
+		splitRate, []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }
@@ -124,19 +118,11 @@ func createTestRepost(
 	am acc.AccountManager, pm PostManager, sourceUser types.AccountKey,
 	sourcePostID string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
-	postCreateParams := &PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: sourceUser,
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: "0",
-	}
-	err := pm.CreatePost(ctx, postCreateParams)
+
+	err := pm.CreatePost(
+		ctx, types.AccountKey(user), postID, sourceUser, sourcePostID, "", "",
+		string(make([]byte, 1000)), string(make([]byte, 50)),
+		sdk.ZeroRat, []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }
