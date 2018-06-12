@@ -80,12 +80,13 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 		return err.Result()
 	}
 	if err := am.MinusSavingCoin(
-		ctx, msg.Sender, coin, msg.Receiver, types.TransferOut); err != nil {
+		ctx, msg.Sender, coin, msg.Receiver, msg.Memo, types.TransferOut); err != nil {
 		return err.Result()
 	}
 
 	// send coins using username
-	if err := am.AddSavingCoin(ctx, msg.Receiver, coin, msg.Sender, types.TransferIn); err != nil {
+	if err := am.AddSavingCoin(
+		ctx, msg.Receiver, coin, msg.Sender, msg.Memo, types.TransferIn); err != nil {
 		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
 	}
 	return sdk.Result{}
@@ -122,7 +123,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 		return err.Result()
 	}
 	if err := am.MinusSavingCoin(
-		ctx, msg.Referrer, coin, msg.NewUser, types.TransferOut); err != nil {
+		ctx, msg.Referrer, coin, msg.NewUser, "", types.TransferOut); err != nil {
 		return err.Result()
 	}
 	if err := am.CreateAccount(

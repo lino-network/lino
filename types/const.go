@@ -49,29 +49,29 @@ const (
 	Inflation     = DonationType(1)
 
 	// Different possible incomes
-	TransferIn           = TransferInDetail(0)
-	DonationIn           = TransferInDetail(1)
-	ClaimReward          = TransferInDetail(2)
-	ValidatorInflation   = TransferInDetail(3)
-	DeveloperInflation   = TransferInDetail(4)
-	InfraInflation       = TransferInDetail(5)
-	VoteReturnCoin       = TransferInDetail(6)
-	DelegationReturnCoin = TransferInDetail(7)
-	ValidatorReturnCoin  = TransferInDetail(8)
-	DeveloperReturnCoin  = TransferInDetail(9)
-	InfraReturnCoin      = TransferInDetail(10)
-	ProposalReturnCoin   = TransferInDetail(11)
-	GenesisCoin          = TransferInDetail(12)
+	TransferIn           = TransferDetailType(0)
+	DonationIn           = TransferDetailType(1)
+	ClaimReward          = TransferDetailType(2)
+	ValidatorInflation   = TransferDetailType(3)
+	DeveloperInflation   = TransferDetailType(4)
+	InfraInflation       = TransferDetailType(5)
+	VoteReturnCoin       = TransferDetailType(6)
+	DelegationReturnCoin = TransferDetailType(7)
+	ValidatorReturnCoin  = TransferDetailType(8)
+	DeveloperReturnCoin  = TransferDetailType(9)
+	InfraReturnCoin      = TransferDetailType(10)
+	ProposalReturnCoin   = TransferDetailType(11)
+	GenesisCoin          = TransferDetailType(12)
 
 	// Different possible outcomes
-	TransferOut      = TransferOutDetail(0)
-	DonationOut      = TransferOutDetail(1)
-	Delegate         = TransferOutDetail(2)
-	VoterDeposit     = TransferOutDetail(3)
-	ValidatorDeposit = TransferOutDetail(4)
-	DeveloperDeposit = TransferOutDetail(5)
-	InfraDeposit     = TransferOutDetail(6)
-	ProposalDeposit  = TransferOutDetail(7)
+	TransferOut      = TransferDetailType(13)
+	DonationOut      = TransferDetailType(14)
+	Delegate         = TransferDetailType(15)
+	VoterDeposit     = TransferDetailType(16)
+	ValidatorDeposit = TransferDetailType(17)
+	DeveloperDeposit = TransferDetailType(18)
+	InfraDeposit     = TransferDetailType(19)
+	ProposalDeposit  = TransferDetailType(20)
 
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-z0-9]([a-z0-9_-]){2,20}$"
@@ -116,17 +116,4 @@ const (
 	MinutesPerMonth = MinutesPerYear / 12
 
 	PrecisionFactor = 1000
-
-	// Detail from sources
-	FromRewardPool         = InternalObject("reward pool")
-	FromCoinReturnEvent    = InternalObject("coin return event")
-	FromValidatorInflation = InternalObject("validator inflation")
-	FromInfraInflation     = InternalObject("infra inflation")
-	FromDeveloperInflation = InternalObject("developer inflation")
-
-	// Detail to target
-	ToDeveloperDeposit = InternalObject("developer deposit")
-	ToVoterDeposit     = InternalObject("voter deposit")
-	ToValidatorDeposit = InternalObject("validator deposit")
-	ToProposalDeposit  = InternalObject("proposal deposit")
 )

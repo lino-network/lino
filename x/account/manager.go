@@ -82,7 +82,7 @@ func (accManager AccountManager) CreateAccount(
 		return err
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee, referrer, types.TransferIn); err != nil {
+		ctx, username, registerFee, referrer, "init account", types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -118,8 +118,8 @@ func (accManager AccountManager) GetStake(
 }
 
 func (accManager AccountManager) AddSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.TransferObject,
-	detailType types.TransferInDetail) (err sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
+	detailType types.TransferDetailType) (err sdk.Error) {
 	if !accManager.IsAccountExist(ctx, username) {
 		return ErrAddCoinAccountNotFound(username)
 	}
@@ -129,11 +129,13 @@ func (accManager AccountManager) AddSavingCoin(
 	}
 
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
-		model.BalanceIn{
+		model.Detail{
 			Amount:     coin,
 			DetailType: detailType,
+			To:         username,
 			From:       from,
 			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
 		}); err != nil {
 		return err
 	}
@@ -161,19 +163,21 @@ func (accManager AccountManager) AddSavingCoin(
 }
 
 func (accManager AccountManager) MinusSavingCoin(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.TransferObject,
-	detailType types.TransferOutDetail) (err sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
+	memo string, detailType types.TransferDetailType) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return ErrMinusCoinToAccount(username).TraceCause(err, "")
 	}
 
 	if err := accManager.AddBalanceHistory(
-		ctx, username, accountBank.NumOfTx, model.BalanceOut{
+		ctx, username, accountBank.NumOfTx, model.Detail{
 			Amount:     coin,
 			DetailType: detailType,
 			To:         to,
+			From:       username,
 			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
 		}); err != nil {
 		return err
 	}
@@ -380,7 +384,7 @@ func (accManager AccountManager) ClaimReward(
 		return ErrClaimReward(username).TraceCause(err, "")
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, reward.UnclaimReward, types.FromRewardPool, types.ClaimReward); err != nil {
+		ctx, username, reward.UnclaimReward, "", "", types.ClaimReward); err != nil {
 		return ErrClaimReward(username).TraceCause(err, "")
 	}
 	reward.UnclaimReward = types.NewCoinFromInt64(0)
