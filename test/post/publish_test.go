@@ -63,20 +63,18 @@ func TestInvalidRepost(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
 
-	postCreateParams := post.PostCreateParams{
+	msg := post.CreatePostMsg{
 		PostID:                  postID,
 		Title:                   string(make([]byte, 50)),
 		Content:                 string(make([]byte, 1000)),
 		Author:                  types.AccountKey(newAccountName),
 		RedistributionSplitRate: "0",
 	}
-	msg := post.NewCreatePostMsg(postCreateParams)
 	// reject due to stake
 	test.SignCheckDeliver(t, lb, msg, 0, true, newAccountPostPriv, baseTime)
-	postCreateParams.SourceAuthor = types.AccountKey(newAccountName)
-	postCreateParams.SourcePostID = "invalid"
-	postCreateParams.PostID = repostID
-	msg = post.NewCreatePostMsg(postCreateParams)
+	msg.SourceAuthor = types.AccountKey(newAccountName)
+	msg.SourcePostID = "invalid"
+	msg.PostID = repostID
 	// invalid source post id
 	test.SignCheckDeliver(t, lb, msg, 1, false, newAccountPostPriv, baseTime)
 }

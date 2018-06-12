@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +38,7 @@ func TestCreatePost(t *testing.T) {
 
 	for _, cs := range cases {
 		// test valid postInfo
-		postCreateParams := PostCreateParams{
+		msg := CreatePostMsg{
 			PostID:       cs.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
@@ -46,22 +46,24 @@ func TestCreatePost(t *testing.T) {
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
 			Links:        nil,
-			RedistributionSplitRate: "0",
 		}
-		err := pm.CreatePost(ctx, &postCreateParams)
+		err := pm.CreatePost(
+			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+			msg.ParentAuthor, msg.ParentPostID, msg.Content,
+			msg.Title, sdk.ZeroRat, msg.Links)
 		assert.Equal(t, err, cs.expectResult)
 
 		if err != nil {
 			continue
 		}
 		postInfo := model.PostInfo{
-			PostID:       postCreateParams.PostID,
-			Title:        postCreateParams.Title,
-			Content:      postCreateParams.Content,
-			Author:       postCreateParams.Author,
-			SourceAuthor: postCreateParams.SourceAuthor,
-			SourcePostID: postCreateParams.SourcePostID,
-			Links:        postCreateParams.Links,
+			PostID:       msg.PostID,
+			Title:        msg.Title,
+			Content:      msg.Content,
+			Author:       msg.Author,
+			SourceAuthor: msg.SourceAuthor,
+			SourcePostID: msg.SourcePostID,
+			Links:        msg.Links,
 		}
 
 		postMeta := model.PostMeta{
@@ -73,7 +75,7 @@ func TestCreatePost(t *testing.T) {
 			RedistributionSplitRate: sdk.ZeroRat,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermLink(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+			types.GetPermLink(msg.Author, msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -155,7 +157,7 @@ func TestGetSourcePost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postCreateParams := PostCreateParams{
+		msg := CreatePostMsg{
 			PostID:       cs.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
@@ -167,7 +169,10 @@ func TestGetSourcePost(t *testing.T) {
 			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
-		err := pm.CreatePost(ctx, &postCreateParams)
+		err := pm.CreatePost(
+			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+			msg.ParentAuthor, msg.ParentPostID, msg.Content,
+			msg.Title, sdk.ZeroRat, msg.Links)
 		assert.Nil(t, err)
 		sourceAuthor, sourcePostID, err :=
 			pm.GetSourcePost(ctx, types.GetPermLink(cs.author, cs.postID))

@@ -115,5 +115,15 @@ const (
 	// as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
 
+	// all decimals will around to allow at most 3 decimals
 	PrecisionFactor = 1000
+
+	// Maximum length of sdk.Rat can pass into blockchain
+	MaximumSdkRatLength = 10
+
+	// Maximum length of Links identifier
+	MaximumLinkIdentifier = 20
+
+	// Maximum length of Links URL
+	MaximumLinkURL = 50
 )

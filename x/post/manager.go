@@ -4,8 +4,8 @@ import (
 	"math/big"
 
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -81,17 +81,22 @@ func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInf
 }
 
 // create the post
-func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreateParams) sdk.Error {
+func (pm PostManager) CreatePost(
+	ctx sdk.Context, author types.AccountKey, postID string,
+	sourceAuthor types.AccountKey, sourcePostID string,
+	parentAuthor types.AccountKey, parentPostID string,
+	content string, title string, redistributionSplitRate sdk.Rat,
+	links []types.IDToURLMapping) sdk.Error {
 	postInfo := &model.PostInfo{
-		PostID:       postCreateParams.PostID,
-		Title:        postCreateParams.Title,
-		Content:      postCreateParams.Content,
-		Author:       postCreateParams.Author,
-		ParentAuthor: postCreateParams.ParentAuthor,
-		ParentPostID: postCreateParams.ParentPostID,
-		SourceAuthor: postCreateParams.SourceAuthor,
-		SourcePostID: postCreateParams.SourcePostID,
-		Links:        postCreateParams.Links,
+		PostID:       postID,
+		Title:        title,
+		Content:      content,
+		Author:       author,
+		ParentAuthor: parentAuthor,
+		ParentPostID: parentPostID,
+		SourceAuthor: sourceAuthor,
+		SourcePostID: sourcePostID,
+		Links:        links,
 	}
 	permLink := types.GetPermLink(postInfo.Author, postInfo.PostID)
 	if pm.IsPostExist(ctx, permLink) {
@@ -103,17 +108,13 @@ func (pm PostManager) CreatePost(ctx sdk.Context, postCreateParams *PostCreatePa
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
 		return ErrCreatePost(permLink).TraceCause(err, "")
 	}
-	splitRate, err := sdk.NewRatFromDecimal(postCreateParams.RedistributionSplitRate)
-	if err != nil {
-		return ErrCreatePost(permLink).TraceCause(err, "")
-	}
 	postMeta := &model.PostMeta{
 		CreatedAt:               ctx.BlockHeader().Time,
 		LastUpdatedAt:           ctx.BlockHeader().Time,
 		LastActivityAt:          ctx.BlockHeader().Time,
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
-		RedistributionSplitRate: splitRate.Round(types.PrecisionFactor),
+		RedistributionSplitRate: redistributionSplitRate.Round(types.PrecisionFactor),
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
 		return ErrCreatePost(permLink).TraceCause(err, "")

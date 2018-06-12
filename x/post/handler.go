@@ -55,7 +55,16 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 			return err.Result()
 		}
 	}
-	if err := pm.CreatePost(ctx, &msg.PostCreateParams); err != nil {
+
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	if err != nil {
+		return ErrCreatePost(permLink).Result()
+	}
+
+	if err := pm.CreatePost(
+		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+		msg.ParentAuthor, msg.ParentPostID, msg.Content, msg.Title,
+		splitRate, msg.Links); err != nil {
 		return err.Result()
 	}
 

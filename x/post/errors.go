@@ -212,6 +212,14 @@ func ErrRedistributionSplitRateLengthTooLong() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("redistribution rate string is too long"))
 }
 
+func ErrIdentifierLengthTooLong() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("identifier is too long"))
+}
+
+func ErrURLLengthTooLong() sdk.Error {
+	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("url is too long"))
+}
+
 func ErrPostViewNoUsername() sdk.Error {
 	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("view msg needs username"))
 }
