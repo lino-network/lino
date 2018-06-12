@@ -13,10 +13,10 @@ import (
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
-	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
@@ -233,7 +233,7 @@ func CreateTestPost(
 	parentAuthor, parentPostID string,
 	redistributionSplitRate string, publishTime int64) {
 
-	postCreateParams := post.PostCreateParams{
+	msg := post.CreatePostMsg{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -245,7 +245,6 @@ func CreateTestPost(
 		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionSplitRate,
 	}
-	msg := post.NewCreatePostMsg(postCreateParams)
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
 }
 

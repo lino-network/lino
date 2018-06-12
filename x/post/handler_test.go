@@ -20,7 +20,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	user := createTestAccount(t, ctx, am, "user1")
 
 	// test valid post
-	postCreateParams := PostCreateParams{
+	msg := CreatePostMsg{
 		PostID:       "TestPostID",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -32,16 +32,14 @@ func TestHandlerCreatePost(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
-	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	assert.True(t, pm.IsPostExist(ctx, types.GetPermLink(postCreateParams.Author, postCreateParams.PostID)))
+	assert.True(t, pm.IsPostExist(ctx, types.GetPermLink(msg.Author, msg.PostID)))
 
 	// test invlaid author
-	postCreateParams.Author = types.AccountKey("invalid")
-	msg = NewCreatePostMsg(postCreateParams)
+	msg.Author = types.AccountKey("invalid")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreatePostAuthorNotFound(postCreateParams.Author).Result())
+	assert.Equal(t, result, ErrCreatePostAuthorNotFound(msg.Author).Result())
 }
 
 func TestHandlerUpdatePost(t *testing.T) {
@@ -163,7 +161,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test comment
-	postCreateParams := PostCreateParams{
+	msg := CreatePostMsg{
 		PostID:       "comment",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -175,21 +173,20 @@ func TestHandlerCreateComment(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
-	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
 	// after handler check KVStore
 	postInfo := model.PostInfo{
-		PostID:       postCreateParams.PostID,
-		Title:        postCreateParams.Title,
-		Content:      postCreateParams.Content,
-		Author:       postCreateParams.Author,
-		ParentAuthor: postCreateParams.ParentAuthor,
-		ParentPostID: postCreateParams.ParentPostID,
-		SourceAuthor: postCreateParams.SourceAuthor,
-		SourcePostID: postCreateParams.SourcePostID,
-		Links:        postCreateParams.Links,
+		PostID:       msg.PostID,
+		Title:        msg.Title,
+		Content:      msg.Content,
+		Author:       msg.Author,
+		ParentAuthor: msg.ParentAuthor,
+		ParentPostID: msg.ParentPostID,
+		SourceAuthor: msg.SourceAuthor,
+		SourcePostID: msg.SourcePostID,
+		Links:        msg.Links,
 	}
 
 	postMeta := model.PostMeta{
@@ -211,33 +208,30 @@ func TestHandlerCreateComment(t *testing.T) {
 	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
 
 	// test invalid parent
-	postCreateParams.PostID = "invalid post"
-	postCreateParams.ParentAuthor = user
-	postCreateParams.ParentPostID = "invalid parent"
-	msg = NewCreatePostMsg(postCreateParams)
+	msg.PostID = "invalid post"
+	msg.ParentAuthor = user
+	msg.ParentPostID = "invalid parent"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, postCreateParams.ParentPostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, msg.ParentPostID)).Result())
 
 	// test duplicate comment
-	postCreateParams.Author = user
-	postCreateParams.PostID = "comment"
-	postCreateParams.ParentAuthor = user
-	postCreateParams.ParentPostID = "TestPostID"
-	msg = NewCreatePostMsg(postCreateParams)
+	msg.Author = user
+	msg.PostID = "comment"
+	msg.ParentAuthor = user
+	msg.ParentPostID = "TestPostID"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreateExistPost(types.GetPermLink(postCreateParams.Author, postCreateParams.PostID)).Result())
+	assert.Equal(t, result, ErrCreateExistPost(types.GetPermLink(msg.Author, msg.PostID)).Result())
 
 	// test cycle comment
-	postCreateParams.Author = user
-	postCreateParams.PostID = "newComment"
-	postCreateParams.ParentAuthor = user
-	postCreateParams.ParentPostID = "newComment"
-	msg = NewCreatePostMsg(postCreateParams)
+	msg.Author = user
+	msg.PostID = "newComment"
+	msg.ParentAuthor = user
+	msg.ParentPostID = "newComment"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, postCreateParams.PostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, msg.PostID)).Result())
 }
 
 func TestHandlerRepost(t *testing.T) {
@@ -247,7 +241,7 @@ func TestHandlerRepost(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test repost
-	postCreateParams := PostCreateParams{
+	msg := CreatePostMsg{
 		PostID:       "repost",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -259,21 +253,20 @@ func TestHandlerRepost(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
-	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
 	// after handler check KVStore
 	postInfo := model.PostInfo{
-		PostID:       postCreateParams.PostID,
-		Title:        postCreateParams.Title,
-		Content:      postCreateParams.Content,
-		Author:       postCreateParams.Author,
-		ParentAuthor: postCreateParams.ParentAuthor,
-		ParentPostID: postCreateParams.ParentPostID,
-		SourceAuthor: postCreateParams.SourceAuthor,
-		SourcePostID: postCreateParams.SourcePostID,
-		Links:        postCreateParams.Links,
+		PostID:       msg.PostID,
+		Title:        msg.Title,
+		Content:      msg.Content,
+		Author:       msg.Author,
+		ParentAuthor: msg.ParentAuthor,
+		ParentPostID: msg.ParentPostID,
+		SourceAuthor: msg.SourceAuthor,
+		SourcePostID: msg.SourcePostID,
+		Links:        msg.Links,
 	}
 
 	postMeta := model.PostMeta{
@@ -287,10 +280,9 @@ func TestHandlerRepost(t *testing.T) {
 	checkPostKVStore(t, ctx, types.GetPermLink(user, "repost"), postInfo, postMeta)
 
 	// test 2 depth repost
-	postCreateParams.PostID = "repost-repost"
-	postCreateParams.SourceAuthor = user
-	postCreateParams.SourcePostID = "repost"
-	msg = NewCreatePostMsg(postCreateParams)
+	msg.PostID = "repost-repost"
+	msg.SourceAuthor = user
+	msg.SourcePostID = "repost"
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix()})
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
@@ -612,7 +604,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 	// repost
-	postCreateParams := PostCreateParams{
+	msg := CreatePostMsg{
 		PostID:       "repost",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -624,7 +616,6 @@ func TestHandlerRePostDonate(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
-	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -638,15 +629,15 @@ func TestHandlerRePostDonate(t *testing.T) {
 	// after handler check KVStore
 	// check repost first
 	postInfo := model.PostInfo{
-		PostID:       postCreateParams.PostID,
-		Title:        postCreateParams.Title,
-		Content:      postCreateParams.Content,
-		Author:       postCreateParams.Author,
-		ParentAuthor: postCreateParams.ParentAuthor,
-		ParentPostID: postCreateParams.ParentPostID,
-		SourceAuthor: postCreateParams.SourceAuthor,
-		SourcePostID: postCreateParams.SourcePostID,
-		Links:        postCreateParams.Links,
+		PostID:       msg.PostID,
+		Title:        msg.Title,
+		Content:      msg.Content,
+		Author:       msg.Author,
+		ParentAuthor: msg.ParentAuthor,
+		ParentPostID: msg.ParentPostID,
+		SourceAuthor: msg.SourceAuthor,
+		SourcePostID: msg.SourcePostID,
+		Links:        msg.Links,
 	}
 	totalReward, err := types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(95, 100)).GetRat())
 	assert.Nil(t, err)
@@ -803,7 +794,7 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 
 	// repost
 	repostID := "repost"
-	postCreateParams := PostCreateParams{
+	msg := CreatePostMsg{
 		PostID:       "repost",
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -815,7 +806,6 @@ func TestHandlerRepostReportOrUpvote(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
-	msg := NewCreatePostMsg(postCreateParams)
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
