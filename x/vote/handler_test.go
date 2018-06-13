@@ -1,11 +1,12 @@
 package vote
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
-	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,6 +69,11 @@ func TestDelegateBasic(t *testing.T) {
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
 	assert.Equal(t, minBalance.Minus(delegatedCoin).Minus(delegatedCoin), acc2Balance)
 
+	// check user2's delegatee list
+	delegateeList, _ := vm.storage.GetDelegateeList(ctx, user2)
+	assert.Equal(t, 1, len(delegateeList.DelegateeList))
+	assert.Equal(t, user1, delegateeList.DelegateeList[0])
+
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", coinToString(delegatedCoin))
 	result3 := handler(ctx, msg3)
@@ -78,6 +84,11 @@ func TestDelegateBasic(t *testing.T) {
 	assert.Equal(t, 2, len(delegators))
 	assert.Equal(t, user2, delegators[0])
 	assert.Equal(t, user3, delegators[1])
+
+	// check user3's delegatee list
+	delegateeList, _ = vm.storage.GetDelegateeList(ctx, user3)
+	assert.Equal(t, 1, len(delegateeList.DelegateeList))
+	assert.Equal(t, user1, delegateeList.DelegateeList[0])
 
 	// check delegation are correct
 	delegation1, _ := vm.storage.GetDelegation(ctx, "user1", "user2")
@@ -99,16 +110,16 @@ func TestRevokeBasic(t *testing.T) {
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", coinToString(voteParam.VoterMinDeposit))
-	handler(ctx, msg)
+	fmt.Println(handler(ctx, msg))
 
 	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
 	// let user2 delegate power to user1
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
-	handler(ctx, msg2)
+	fmt.Println(handler(ctx, msg2))
 
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", coinToString(delegatedCoin))
-	handler(ctx, msg3)
+	fmt.Println(handler(ctx, msg3))
 
 	_, res := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Nil(t, res)
@@ -122,9 +133,13 @@ func TestRevokeBasic(t *testing.T) {
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
 	acc3Balance, _ := am.GetSavingFromBank(ctx, user3)
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
-	assert.Equal(t, ErrGetDelegation(), err)
+	assert.Equal(t, model.ErrGetDelegation(), err)
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc3Balance)
+
+	// check user3's delegatee list
+	delegateeList, _ := vm.storage.GetDelegateeList(ctx, user3)
+	assert.Equal(t, 0, len(delegateeList.DelegateeList))
 
 	// set user1 as validator (cannot revoke)
 	referenceList := &model.ReferenceList{
@@ -138,7 +153,7 @@ func TestRevokeBasic(t *testing.T) {
 	// invalid user cannot revoke
 	invalidMsg := NewVoterRevokeMsg("wqwdqwdasdsa")
 	resultInvalid := handler(ctx, invalidMsg)
-	assert.Equal(t, ErrGetVoter().Result(), resultInvalid)
+	assert.Equal(t, model.ErrGetVoter().Result(), resultInvalid)
 
 	//  user1  can revoke voter candidancy now
 	referenceList = &model.ReferenceList{
@@ -152,8 +167,8 @@ func TestRevokeBasic(t *testing.T) {
 	_, err2 := vm.storage.GetVoter(ctx, "user1")
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
-	assert.Equal(t, ErrGetDelegation(), err)
-	assert.Equal(t, ErrGetVoter(), err2)
+	assert.Equal(t, model.ErrGetDelegation(), err)
+	assert.Equal(t, model.ErrGetVoter(), err2)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
 }
@@ -249,7 +264,7 @@ func TestVoteBasic(t *testing.T) {
 	// test delete vote
 	vm.storage.DeleteVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
 	vote, err := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	assert.Equal(t, ErrGetVote(), err)
+	assert.Equal(t, model.ErrGetVote(), err)
 
 }
 

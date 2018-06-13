@@ -137,6 +137,11 @@ func handleVoterRevokeMsg(
 }
 
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
+	// Must have an normal acount
+	if !am.IsAccountExist(ctx, msg.Voter) {
+		return ErrUsernameNotFound().Result()
+	}
+
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()

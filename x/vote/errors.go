@@ -12,14 +12,6 @@ func ErrGetVoter() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get voter failed"))
 }
 
-func ErrGetVote() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get vote failed"))
-}
-
-func ErrGetDelegation() sdk.Error {
-	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get delegation failed"))
-}
-
 func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Username not found"))
 }
