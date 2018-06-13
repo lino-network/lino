@@ -118,6 +118,9 @@ func handleDonateMsg(
 	if !pm.IsPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink).Result()
 	}
+	if isDeleted, err := pm.IsDeleted(ctx, permLink); isDeleted || err != nil {
+		return ErrDonatePostIsDeleted(permLink).Result()
+	}
 
 	if msg.Username == msg.Author {
 		return ErrDonateToSelf(msg.Username).Result()
