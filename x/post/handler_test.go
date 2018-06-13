@@ -365,18 +365,9 @@ func TestHandlerPostDonate(t *testing.T) {
 	assert.Nil(t, err)
 
 	author, postID := createTestPost(t, ctx, "author", "postID", am, pm, "0")
+	author1, deletedPostID := createTestPost(t, ctx, "author1", "delete", am, pm, "0")
 
-	postInfo := model.PostInfo{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       author,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        nil,
-	}
+	pm.DeletePost(ctx, types.GetPermLink(author1, deletedPostID))
 
 	userWithSufficientSaving := createTestAccount(t, ctx, am, "userWithSufficientSaving")
 	err = am.AddSavingCoin(
@@ -391,7 +382,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	assert.Nil(t, err)
 
 	microPaymentUser := createTestAccount(t, ctx, am, "microPaymentUser")
-	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(1), referrer, "", types.TransferIn)
+	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(2), referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
 	cases := []struct {
@@ -529,7 +520,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat,
 			},
-			accParam.RegisterFee,
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
 			accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000001)),
 			RewardEvent{
@@ -542,6 +533,15 @@ func TestHandlerPostDonate(t *testing.T) {
 				FromApp:    "",
 			}, 1, types.NewCoinFromInt64(20000001),
 		},
+		{"donate to deleted post",
+			microPaymentUser, types.LNO("0.00001"), author1, deletedPostID,
+			ErrDonatePostIsDeleted(types.GetPermLink(author1, deletedPostID)).Result(),
+			model.PostMeta{},
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
+			accParam.RegisterFee.Plus(
+				types.NewCoinFromInt64(19000001)),
+			RewardEvent{}, 0, types.NewCoinFromInt64(20000001),
+		},
 	}
 
 	for _, cs := range cases {
@@ -550,7 +550,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
 		if cs.ExpectErr.Code == sdk.CodeOK {
-			checkPostKVStore(t, ctx, types.GetPermLink(cs.ToAuthor, cs.ToPostID), postInfo, cs.ExpectPostMeta)
+			checkPostMeta(t, ctx, types.GetPermLink(cs.ToAuthor, cs.ToPostID), cs.ExpectPostMeta)
 		}
 		authorSaving, err := am.GetSavingFromBank(ctx, author)
 		assert.Nil(t, err)
