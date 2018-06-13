@@ -20,6 +20,16 @@ var _ sdk.Msg = RecoverMsg{}
 var _ sdk.Msg = RegisterMsg{}
 var _ sdk.Msg = UpdateAccountMsg{}
 
+// RegisterMsg - bind username with public key, need to be referred by others (pay for it).
+type RegisterMsg struct {
+	Referrer             types.AccountKey `json:"referrer"`
+	RegisterFee          types.LNO        `json:"register_fee"`
+	NewUser              types.AccountKey `json:"new_username"`
+	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
+	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
+	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+}
+
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
 	Followee types.AccountKey `json:"followee"`
@@ -47,16 +57,6 @@ type TransferMsg struct {
 	Receiver types.AccountKey `json:"receiver"`
 	Amount   types.LNO        `json:"amount"`
 	Memo     string           `json:"memo"`
-}
-
-// RegisterMsg - bind username with public key, need to be referred by others (pay for it).
-type RegisterMsg struct {
-	Referrer             types.AccountKey `json:"referrer"`
-	RegisterFee          types.LNO        `json:"register_fee"`
-	NewUser              types.AccountKey `json:"new_username"`
-	NewMasterPubKey      crypto.PubKey    `json:"new_master_public_key"`
-	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
-	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 }
 
 // UpdateAccountMsg - update account JSON meta info.
