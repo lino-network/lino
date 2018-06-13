@@ -42,6 +42,7 @@ type ChangeParamMsg interface {
 type ContentCensorshipMsg interface {
 	GetCreator() types.AccountKey
 	GetPermLink() types.PermLink
+	GetReason() string
 }
 
 type ProtocolUpgradeMsg interface {
@@ -52,6 +53,7 @@ type ProtocolUpgradeMsg interface {
 type DeletePostContentMsg struct {
 	Creator  types.AccountKey `json:"creator"`
 	PermLink types.PermLink   `json:"permLink"`
+	Reason   string           `json:"reason"`
 }
 
 type ChangeGlobalAllocationParamMsg struct {
@@ -107,15 +109,18 @@ type ChangeAccountParamMsg struct {
 //----------------------------------------
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
-func NewDeletePostContentMsg(creator string, permLink types.PermLink) DeletePostContentMsg {
+func NewDeletePostContentMsg(
+	creator string, permLink types.PermLink, reason string) DeletePostContentMsg {
 	return DeletePostContentMsg{
 		Creator:  types.AccountKey(creator),
 		PermLink: permLink,
+		Reason:   reason,
 	}
 }
 
 func (msg DeletePostContentMsg) GetPermLink() types.PermLink  { return msg.PermLink }
 func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creator }
+func (msg DeletePostContentMsg) GetReason() string            { return msg.Reason }
 func (msg DeletePostContentMsg) Type() string                 { return types.ProposalRouterName }
 
 func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {

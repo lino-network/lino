@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,16 +13,20 @@ func TestUpdateProposalStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
 	permLink := types.PermLink("postlink")
 	user1 := types.AccountKey("user1")
+	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
 		PermLink: permLink,
+		Reason:   censorshipReason,
 	}
 
 	proposal2 := &model.ContentCensorshipProposal{
 		PermLink: permLink,
+		Reason:   censorshipReason,
 	}
 
 	proposal3 := &model.ContentCensorshipProposal{
 		PermLink: permLink,
+		Reason:   censorshipReason,
 	}
 	pm.InitGenesis(ctx)
 	curTime := ctx.BlockHeader().Time
@@ -55,7 +59,7 @@ func TestUpdateProposalStatus(t *testing.T) {
 				Result:        types.ProposalPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink},
+			}, permLink, censorshipReason},
 		},
 
 		{testName: "test votes don't meet min requirement ",
@@ -74,7 +78,7 @@ func TestUpdateProposalStatus(t *testing.T) {
 				Result:        types.ProposalNotPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink},
+			}, permLink, censorshipReason},
 		},
 
 		{testName: "test votes ratio doesn't meet requirement ",
@@ -93,7 +97,7 @@ func TestUpdateProposalStatus(t *testing.T) {
 				Result:        types.ProposalPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink},
+			}, permLink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

@@ -4,8 +4,8 @@ import (
 	"math/big"
 
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/proposal/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -49,9 +49,10 @@ func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.Pr
 }
 
 func (pm ProposalManager) CreateContentCensorshipProposal(
-	ctx sdk.Context, permLink types.PermLink) model.Proposal {
+	ctx sdk.Context, permLink types.PermLink, reason string) model.Proposal {
 	return &model.ContentCensorshipProposal{
 		PermLink: permLink,
+		Reason:   reason,
 	}
 }
 

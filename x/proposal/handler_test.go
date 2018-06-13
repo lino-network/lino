@@ -6,9 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/proposal/model"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -117,6 +117,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 	user3 := createTestAccount(
 		ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoinFromInt64((1))))
 	postManager.DeletePost(ctx, types.GetPermLink(user2, postID2))
+	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{model.ProposalInfo{
 		Creator:       user2,
 		ProposalID:    proposalID1,
@@ -125,7 +126,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		Result:        types.ProposalNotPass,
 		CreatedAt:     curTime,
 		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
-	}, types.GetPermLink(user1, postID1)}
+	}, types.GetPermLink(user1, postID1), censorshipReason}
 
 	testCases := []struct {
 		testName            string
@@ -190,7 +191,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		msg := NewDeletePostContentMsg(string(tc.creator), tc.permLink)
+		msg := NewDeletePostContentMsg(string(tc.creator), tc.permLink, censorshipReason)
 		result := handler(ctx, msg)
 		assert.Equal(t, tc.wantRes, result)
 

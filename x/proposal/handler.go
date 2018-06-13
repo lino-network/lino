@@ -134,7 +134,9 @@ func handleContentCensorshipMsg(
 		return err.Result()
 	}
 
-	proposal := proposalManager.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
+	proposal :=
+		proposalManager.CreateContentCensorshipProposal(
+			ctx, msg.GetPermLink(), msg.GetReason())
 	proposalID, err :=
 		proposalManager.AddProposal(
 			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
