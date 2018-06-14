@@ -34,7 +34,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	}
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	assert.True(t, pm.IsPostExist(ctx, types.GetPermLink(msg.Author, msg.PostID)))
+	assert.True(t, pm.DoesPostExist(ctx, types.GetPermLink(msg.Author, msg.PostID)))
 
 	// test invlaid author
 	msg.Author = types.AccountKey("invalid")
@@ -779,61 +779,5 @@ func TestHandlerView(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, cs.expectUserViewCount, view.Times)
 		assert.Equal(t, cs.viewTime, view.LastViewAt)
-	}
-}
-
-func TestHandlerRepostReportOrUpvote(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm)
-
-	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
-	user2 := createTestAccount(t, ctx, am, "user2")
-	user3 := createTestAccount(t, ctx, am, "user3")
-
-	accParam, _ := ph.GetAccountParam(ctx)
-
-	// repost
-	repostID := "repost"
-	msg := CreatePostMsg{
-		PostID:       "repost",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user2,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: user1,
-		SourcePostID: postID,
-		Links:        nil,
-		RedistributionSplitRate: "0",
-	}
-	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
-
-	cases := []struct {
-		reportOrUpvoteUser      types.AccountKey
-		isReport                bool
-		expectSourceReportStake types.Coin
-		expectSourceUpvoteStake types.Coin
-	}{
-		{user2, true, accParam.RegisterFee, types.NewCoinFromInt64(0)},
-		{user3, false, accParam.RegisterFee, accParam.RegisterFee},
-	}
-
-	for _, cs := range cases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + +7*3600*24})
-		msg := NewReportOrUpvoteMsg(string(cs.reportOrUpvoteUser), string(user2), repostID, cs.isReport)
-		result := handler(newCtx, msg)
-		assert.Equal(t, result, sdk.Result{})
-		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          newCtx.BlockHeader().Time,
-			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
-			TotalReportStake:        cs.expectSourceReportStake,
-			TotalUpvoteStake:        cs.expectSourceUpvoteStake,
-		}
-		postKey := types.GetPermLink(user1, postID)
-		checkPostMeta(t, ctx, postKey, postMeta)
 	}
 }

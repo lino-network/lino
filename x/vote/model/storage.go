@@ -214,7 +214,7 @@ func GetDelegationPrefix(me types.AccountKey) []byte {
 	return append(append(delegationSubstore, me...), types.KeySeparator...)
 }
 
-// "delegator substore" + "me(voter)" + "my delegator"
+// "delegation substore" + "me(voter)" + "my delegator"
 func GetDelegationKey(me types.AccountKey, myDelegator types.AccountKey) []byte {
 	return append(GetDelegationPrefix(me), myDelegator...)
 }

@@ -33,6 +33,10 @@ func handleDeveloperRegisterMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
+	if dm.IsDeveloperExist(ctx, msg.Username) {
+		return ErrDeveloperExist(msg.Username).Result()
+	}
+
 	deposit, err := types.LinoToCoin(msg.Deposit)
 	if err != nil {
 		return err.Result()
