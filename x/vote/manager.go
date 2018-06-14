@@ -2,8 +2,8 @@ package vote
 
 import (
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -161,6 +161,9 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 		delegation = &model.Delegation{
 			Delegator: delegatorName,
 		}
+		if err := vm.AddDelegatee(ctx, delegatorName, voterName); err != nil {
+			return err
+		}
 	} else {
 		delegation, err = vm.storage.GetDelegation(ctx, voterName, delegatorName)
 		if err != nil {
@@ -183,6 +186,19 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 		return err
 	}
 	return nil
+}
+
+func (vm VoteManager) AddDelegatee(
+	ctx sdk.Context, me types.AccountKey, delegatee types.AccountKey) sdk.Error {
+	delegateeList, err := vm.storage.GetDelegateeList(ctx, me)
+	if err != nil {
+		return err
+	}
+	if delegateeList == nil {
+		delegateeList = &model.DelegateeList{[]types.AccountKey{}}
+	}
+	delegateeList.DelegateeList = append(delegateeList.DelegateeList, delegatee)
+	return vm.storage.SetDelegateeList(ctx, me, delegateeList)
 }
 
 func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
@@ -254,7 +270,8 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 	return voter.Deposit, nil
 }
 
-func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) DelegatorWithdraw(
+	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrNoCoinToWithdraw()
 	}
@@ -279,11 +296,32 @@ func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.Account
 		if err := vm.storage.DeleteDelegation(ctx, voterName, delegatorName); err != nil {
 			return err
 		}
+		if err := vm.RemoveDelegatee(ctx, delegatorName, voterName); err != nil {
+			return err
+		}
 	} else {
 		vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation)
 	}
 
 	return nil
+}
+
+func (vm VoteManager) RemoveDelegatee(
+	ctx sdk.Context, me types.AccountKey, delegateeToRemove types.AccountKey) sdk.Error {
+	delegateeList, err := vm.storage.GetDelegateeList(ctx, me)
+	if err != nil {
+		return err
+	}
+	idx := 0
+	for idx < len(delegateeList.DelegateeList) {
+		if delegateeList.DelegateeList[idx] == delegateeToRemove {
+			delegateeList.DelegateeList =
+				append(delegateeList.DelegateeList[:idx], delegateeList.DelegateeList[idx+1:]...)
+			continue
+		}
+		idx += 1
+	}
+	return vm.storage.SetDelegateeList(ctx, me, delegateeList)
 }
 
 func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey) (types.Coin, sdk.Error) {

@@ -45,6 +45,7 @@ const (
 	// Vote errors reserve 700 ~ 799
 	CodeVoteHandlerFailed sdk.CodeType = 700
 	CodeVoteManagerFailed sdk.CodeType = 701
+	CodeVoteStorageFailed sdk.CodeType = 702
 
 	// Infra errors reserve 800 ~ 899
 	CodeInfraProviderHandlerFailed sdk.CodeType = 800
