@@ -121,7 +121,7 @@ func handleContentCensorshipMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
-	if !postManager.IsPostExist(ctx, msg.GetPermLink()) {
+	if !postManager.DoesPostExist(ctx, msg.GetPermLink()) {
 		return ErrPostNotFound().Result()
 	}
 

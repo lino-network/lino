@@ -2,12 +2,12 @@ package proposal
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
-	types "github.com/lino-network/lino/types"
 )
 
 type DecideProposalEvent struct {
@@ -100,7 +100,7 @@ func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	}
 
 	// TODO add content censorship logic
-	if exist := postManager.IsPostExist(ctx, permLink); !exist {
+	if exist := postManager.DoesPostExist(ctx, permLink); !exist {
 		return ErrCensorshipPostNotFound()
 	}
 	if err := postManager.DeletePost(ctx, permLink); err != nil {

@@ -412,7 +412,10 @@ func (msg ViewMsg) GetSigners() []sdk.Address {
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
-	return fmt.Sprintf("%v", msg)
+	return fmt.Sprintf("Post.CreatePostMsg{author:%v, postID:%v, title:%v, content:%v, parentAuthor:%v,"+
+		"parentPostID:%v, sourceAuthor:%v, sourcePostID:%v,links:%v, redistribution split rate:%v}",
+		msg.Author, msg.PostID, msg.Title, msg.Content, msg.ParentAuthor, msg.ParentPostID, msg.SourceAuthor, msg.SourcePostID,
+		msg.Links, msg.RedistributionSplitRate)
 }
 
 func (msg UpdatePostMsg) String() string {
