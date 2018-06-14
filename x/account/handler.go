@@ -116,7 +116,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.Result {
 	if !am.IsAccountExist(ctx, msg.Referrer) {
-		return ErrUsernameNotFound().Result()
+		return ErrUsernameExist().Result()
 	}
 	coin, err := types.LinoToCoin(msg.RegisterFee)
 	if err != nil {

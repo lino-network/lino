@@ -1,7 +1,6 @@
 package vote
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -110,16 +109,16 @@ func TestRevokeBasic(t *testing.T) {
 
 	// let user1 register as voter
 	msg := NewVoterDepositMsg("user1", coinToString(voteParam.VoterMinDeposit))
-	fmt.Println(handler(ctx, msg))
+	handler(ctx, msg)
 
 	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
 	// let user2 delegate power to user1
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
-	fmt.Println(handler(ctx, msg2))
+	handler(ctx, msg2)
 
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", coinToString(delegatedCoin))
-	fmt.Println(handler(ctx, msg3))
+	handler(ctx, msg3)
 
 	_, res := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Nil(t, res)

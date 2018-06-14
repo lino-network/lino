@@ -12,6 +12,10 @@ func ErrDeveloperNotFound() sdk.Error {
 	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Developer not found"))
 }
 
+func ErrDeveloperExist(username types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodeDeveloperHandlerFailed, fmt.Sprintf("Developer %v exist", username))
+}
+
 func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
 }

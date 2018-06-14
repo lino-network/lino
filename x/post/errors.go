@@ -132,12 +132,12 @@ func ErrUpdatePostIsDeleted(permLink types.PermLink) sdk.Error {
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("update post %v failed, post is deleted", permLink))
 }
 
-func ErrReportFailed(permLink types.PermLink) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed", permLink))
+func ErrReportOrUpvoteFailed(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report or upvote to post %v failed", permLink))
 }
 
-func ErrReportUserNotFound(user types.AccountKey) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, user %v not found", user))
+func ErrReportOrUpvoteUserNotFound(user types.AccountKey) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report or upvote failed, user %v not found", user))
 }
 
 func ErrDonateToSelf(user types.AccountKey) sdk.Error {
@@ -156,8 +156,8 @@ func ErrReportAuthorNotFound(permLink types.PermLink, author types.AccountKey) s
 	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report failed, post %v author %v not found", permLink, author))
 }
 
-func ErrReportPostDoesntExist(permLink types.PermLink) sdk.Error {
-	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report to post %v failed, post doesn't exist", permLink))
+func ErrReportOrUpvotePostDoesntExist(permLink types.PermLink) sdk.Error {
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("report or upvote to post %v failed, post doesn't exist", permLink))
 }
 
 func ErrUpvoteUserNotFound(user types.AccountKey) sdk.Error {
@@ -185,7 +185,7 @@ func ErrCommentAndRepostError() sdk.Error {
 }
 
 func ErrCommentInvalidParent(parentPostKey types.PermLink) sdk.Error {
-	return sdk.NewError(types.CodePostMsgError, fmt.Sprintf("comment post parent %v doesn't exist", parentPostKey))
+	return sdk.NewError(types.CodePostHandlerError, fmt.Sprintf("comment post parent %v doesn't exist", parentPostKey))
 }
 
 func ErrPostLikeNoUsername() sdk.Error {
