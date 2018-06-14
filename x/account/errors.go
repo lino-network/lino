@@ -17,6 +17,10 @@ func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("username not found"))
 }
 
+func ErrUsernameExist() sdk.Error {
+	return sdk.NewError(types.CodeAccountHandlerFail, fmt.Sprintf("username exist"))
+}
+
 func ErrInvalidUsername(msg string) sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, msg)
 }
@@ -155,9 +159,5 @@ func ErrUsernameAddressMismatch() sdk.Error {
 }
 
 func ErrAccountSavingCoinNotEnough() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
-}
-
-func ErrAccountCheckingCoinNotEnough() sdk.Error {
-	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("Account bank's saving coins not enough"))
+	return sdk.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account bank's saving coins not enough"))
 }

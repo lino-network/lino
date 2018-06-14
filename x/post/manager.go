@@ -40,7 +40,7 @@ func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.Pe
 }
 
 // check if post exist
-func (pm PostManager) IsPostExist(ctx sdk.Context, permLink types.PermLink) bool {
+func (pm PostManager) DoesPostExist(ctx sdk.Context, permLink types.PermLink) bool {
 	if postInfo, _ := pm.postStorage.GetPostInfo(ctx, permLink); postInfo == nil {
 		return false
 	}
@@ -99,7 +99,7 @@ func (pm PostManager) CreatePost(
 		Links:        links,
 	}
 	permLink := types.GetPermLink(postInfo.Author, postInfo.PostID)
-	if pm.IsPostExist(ctx, permLink) {
+	if pm.DoesPostExist(ctx, permLink) {
 		return ErrPostExist(permLink)
 	}
 	if err := pm.setRootSourcePost(ctx, postInfo); err != nil {

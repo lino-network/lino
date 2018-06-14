@@ -3,8 +3,8 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/wire"
 
-	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -47,7 +47,7 @@ func (event RewardEvent) Execute(
 	if !am.IsAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
-	if !pm.IsPostExist(ctx, permLink) {
+	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink)
 	}
 	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward, types.Inflation); err != nil {
