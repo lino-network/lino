@@ -21,6 +21,10 @@ func ErrUsernameExist() sdk.Error {
 	return sdk.NewError(types.CodeAccountHandlerFail, fmt.Sprintf("username exist"))
 }
 
+func ErrReferrerNotFound() sdk.Error {
+	return sdk.NewError(types.CodeAccountHandlerFail, fmt.Sprintf("referrer not found"))
+}
+
 func ErrInvalidUsername(msg string) sdk.Error {
 	return sdk.NewError(types.CodeInvalidUsername, msg)
 }
