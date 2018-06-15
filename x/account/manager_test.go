@@ -1168,7 +1168,7 @@ func TestAddFrozenMoney(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	cases := []struct {
+	testCases := []struct {
 		frozenAmount            types.Coin
 		startAt                 int64
 		interval                int64
@@ -1179,15 +1179,16 @@ func TestAddFrozenMoney(t *testing.T) {
 		{types.NewCoinFromInt64(100), 10100, 10, 5, 1},
 		{types.NewCoinFromInt64(100), 10110, 10, 5, 2},
 		{types.NewCoinFromInt64(100), 10151, 10, 5, 2},
+		{types.NewCoinFromInt64(100), 10500, 10, 5, 1}, // this one is used to re-produce the out-of-bound bug.
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.startAt})
-		err := am.AddFrozenMoney(ctx, user1, cs.frozenAmount, cs.startAt, cs.interval, cs.times)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.startAt})
+		err := am.AddFrozenMoney(ctx, user1, tc.frozenAmount, tc.startAt, tc.interval, tc.times)
 		assert.Nil(t, err)
 
 		accountBank, err := am.storage.GetBankFromAccountKey(ctx, user1)
 		assert.Nil(t, err)
-		assert.Equal(t, cs.expectNumOfFrozenAmount, len(accountBank.FrozenMoneyList))
+		assert.Equal(t, tc.expectNumOfFrozenAmount, len(accountBank.FrozenMoneyList))
 	}
 }

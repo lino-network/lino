@@ -8,8 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -476,11 +476,18 @@ func (vm ValidatorManager) AdjustValidatorList(ctx sdk.Context) sdk.Error {
 }
 
 func remove(me types.AccountKey, users []types.AccountKey) []types.AccountKey {
-	for idx, username := range users {
+	idx := 0
+	for idx < len(users) {
+		username := users[idx]
+
 		if me == username {
 			users = append(users[:idx], users[idx+1:]...)
+			continue
 		}
+
+		idx++
 	}
+
 	return users
 }
 
