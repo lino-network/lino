@@ -281,9 +281,9 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 
 // GetRelationship returns the relationship between two accounts.
 func (as AccountStorage) GetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, transactionSlot int64) (*BalanceHistory, sdk.Error) {
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64) (*BalanceHistory, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, transactionSlot))
+	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, bucketSlot))
 	if balanceHistoryBytes == nil {
 		return nil, nil
 	}
@@ -296,13 +296,13 @@ func (as AccountStorage) GetBalanceHistory(
 
 // SetBalanceHistory sets balance history.
 func (as AccountStorage) SetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, timeSlot int64, history *BalanceHistory) sdk.Error {
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64, history *BalanceHistory) sdk.Error {
 	store := ctx.KVStore(as.key)
 	historyBytes, err := as.cdc.MarshalJSON(*history)
 	if err != nil {
 		return ErrSetBalanceHistoryFailed().TraceCause(err, "")
 	}
-	store.Set(getBalanceHistoryKey(me, timeSlot), historyBytes)
+	store.Set(getBalanceHistoryKey(me, bucketSlot), historyBytes)
 	return nil
 }
 
@@ -360,6 +360,6 @@ func getBalanceHistoryPrefix(me types.AccountKey) []byte {
 	return append(append(accountBalanceHistorySubstore, me...), types.KeySeparator...)
 }
 
-func getBalanceHistoryKey(me types.AccountKey, atWhen int64) []byte {
-	return strconv.AppendInt(getBalanceHistoryPrefix(me), atWhen, 10)
+func getBalanceHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
+	return strconv.AppendInt(getBalanceHistoryPrefix(me), bucketSlot, 10)
 }
