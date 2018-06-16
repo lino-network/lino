@@ -725,7 +725,7 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 	idx := 0
 	for idx < len(bank.FrozenMoneyList) {
 		frozenMoney := bank.FrozenMoneyList[idx]
-		if ctx.BlockHeader().Time > frozenMoney.StartAt+frozenMoney.Interval*frozenMoney.Times {
+		if ctx.BlockHeader().Time > frozenMoney.StartAt+3600*frozenMoney.Interval*frozenMoney.Times {
 			bank.FrozenMoneyList = append(bank.FrozenMoneyList[:idx], bank.FrozenMoneyList[idx+1:]...)
 			continue
 		}
