@@ -103,19 +103,6 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 	return res.IsNotNegative()
 }
 
-// func (vm VoteManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
-// 	lst, err := vm.storage.GetReferenceList(ctx)
-// 	if err != nil {
-// 		return false
-// 	}
-// 	for _, id := range lst.OngoingProposal {
-// 		if id == proposalID {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-
 func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -369,6 +356,7 @@ func (vm VoteManager) GetPenaltyList(
 				break
 			}
 		}
+		// TODO: Decide if we wanna delete vote.
 		// vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
 	}
 

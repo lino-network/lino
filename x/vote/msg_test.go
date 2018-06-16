@@ -8,21 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestVoteMsg(t *testing.T) {
-// 	cases := []struct {
-// 		voteMsg     VoteMsg
-// 		expectError sdk.Error
-// 	}{
-// 		{NewVoteMsg("user1", 1, true), nil},
-// 		{NewVoteMsg("", 1, true), ErrInvalidUsername()},
-// 	}
-
-// 	for _, cs := range cases {
-// 		result := cs.voteMsg.ValidateBasic()
-// 		assert.Equal(t, result, cs.expectError)
-// 	}
-// }
-
 func TestVoterDepositMsg(t *testing.T) {
 	cases := []struct {
 		voterDepositMsg VoterDepositMsg
@@ -142,9 +127,6 @@ func TestMsgPermission(t *testing.T) {
 		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
-		// "vote msg": {
-		// 	NewVoteMsg("test", 1, true),
-		// 	types.TransactionPermission},
 		"vote deposit": {
 			NewVoterDepositMsg("test", types.LNO("1")),
 			types.TransactionPermission},
