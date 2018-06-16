@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
+	"github.com/lino-network/lino/x/vote"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -14,7 +15,7 @@ import (
 
 func NewHandler(
 	am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm global.GlobalManager) sdk.Handler {
+	postManager post.PostManager, gm global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -23,6 +24,8 @@ func NewHandler(
 			return handleContentCensorshipMsg(ctx, am, proposalManager, postManager, gm, msg)
 		case ProtocolUpgradeMsg:
 			return handleProtocolUpgradeMsg(ctx, am, proposalManager, gm, msg)
+		case VoteProposalMsg:
+			return handleVoteProposalMsg(ctx, proposalManager, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized proposal Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -165,6 +168,32 @@ func handleContentCensorshipMsg(
 		param.ContentCensorshipDecideHr, param.ContentCensorshipMinDeposit); err != nil {
 		return err.Result()
 	}
+	return sdk.Result{}
+}
+
+func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm vote.VoteManager, msg VoteProposalMsg) sdk.Result {
+	if !vm.IsVoterExist(ctx, msg.Voter) {
+		return ErrGetVoter().Result()
+	}
+
+	if !proposalManager.IsOngoingProposal(ctx, msg.ProposalID) {
+		return ErrNotOngoingProposal().Result()
+	}
+
+	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
+		return err.Result()
+	}
+
+	v, err := vm.GetVote(ctx, msg.ProposalID, msg.Voter)
+	if err != nil {
+		return err.Result()
+	}
+
+	err = proposalManager.UpdateProposalVotingStatus(ctx, msg.ProposalID, msg.Voter, v.Result, v.VotingPower)
+	if err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }
 

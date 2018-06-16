@@ -103,7 +103,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
 			lb.developerManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.ProposalRouterName, proposal.NewHandler(
-			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager)).
+			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager, lb.voteManager)).
 		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
@@ -153,13 +153,14 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(vote.DelegateMsg{}, "delegate", nil)
 	cdc.RegisterConcrete(vote.DelegatorWithdrawMsg{}, "delegate/withdraw", nil)
 	cdc.RegisterConcrete(vote.RevokeDelegationMsg{}, "delegate/revoke", nil)
-	cdc.RegisterConcrete(vote.VoteMsg{}, "vote", nil)
 	cdc.RegisterConcrete(developer.DeveloperRegisterMsg{}, "developer/register", nil)
 	cdc.RegisterConcrete(developer.DeveloperRevokeMsg{}, "developer/revoke", nil)
 	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
 	cdc.RegisterConcrete(developer.GrantDeveloperMsg{}, "grant/developer", nil)
 
+	cdc.RegisterConcrete(proposal.VoteProposalMsg{}, "voteProposal", nil)
 	cdc.RegisterConcrete(proposal.DeletePostContentMsg{}, "deletePostContent", nil)
+	cdc.RegisterConcrete(proposal.UpgradeProtocolMsg{}, "upgradeProtocol", nil)
 	cdc.RegisterConcrete(proposal.ChangeGlobalAllocationParamMsg{}, "changeGlobalAllocation", nil)
 	cdc.RegisterConcrete(proposal.ChangeEvaluateOfContentValueParamMsg{}, "changeEvaluation", nil)
 	cdc.RegisterConcrete(proposal.ChangeInfraInternalAllocationParamMsg{}, "changeInfraAllocation", nil)
@@ -560,17 +561,11 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 		panic(err)
 	}
 
-	proposalList, err := lb.proposalManager.GetProposalList(ctx)
-	if err != nil {
-		panic(err)
-	}
-
 	referenceList, err := lb.voteManager.GetValidatorReferenceList(ctx)
 	if err != nil {
 		panic(err)
 	}
 	referenceList.AllValidators = validatorList.AllValidators
-	referenceList.OngoingProposal = proposalList.OngoingProposal
 	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
 		panic(err)
 	}

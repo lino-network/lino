@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/x/account"
 )
 
 func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
@@ -25,8 +26,6 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, am, msg)
-		case VoteMsg:
-			return handleVoteMsg(ctx, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -203,21 +202,6 @@ func handleRevokeDelegationMsg(
 	if err := returnCoinTo(
 		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
 		param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
-	if !vm.IsVoterExist(ctx, msg.Voter) {
-		return ErrGetVoter().Result()
-	}
-
-	if !vm.IsOngoingProposal(ctx, msg.ProposalID) {
-		return ErrNotOngoingProposal().Result()
-	}
-
-	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

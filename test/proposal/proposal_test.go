@@ -71,8 +71,8 @@ func TestForceValidatorVote(t *testing.T) {
 
 	test.SimulateOneBlock(lb, baseTime)
 	// let validator 1 vote and validator 2 not vote.
-	voteMsg := vote.NewVoteMsg(accountName, int64(1), true)
-	test.SignCheckDeliver(t, lb, voteMsg, 3, true, accountTransactionPriv, baseTime)
+	voteProposalMsg := proposal.NewVoteProposalMsg(accountName, int64(1), true)
+	test.SignCheckDeliver(t, lb, voteProposalMsg, 3, true, accountTransactionPriv, baseTime)
 
 	test.SimulateOneBlock(lb, baseTime+test.ProposalDecideHr*3600+1)
 	test.SimulateOneBlock(lb, baseTime+(test.ProposalDecideHr+test.ParamChangeHr)*3600+2)

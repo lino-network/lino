@@ -35,8 +35,6 @@ type IDToURLMapping struct {
 	URL        string `json:"url"`
 }
 
-type VotingResult struct {
-	AgreeVotes    Coin         `json:"agree_votes"`
-	DisagreeVotes Coin         `json:"disagree_votes"`
-	PenaltyList   []AccountKey `json:"penalty_list"`
+type PenaltyList struct {
+	PenaltyList []AccountKey `json:"penalty_list"`
 }

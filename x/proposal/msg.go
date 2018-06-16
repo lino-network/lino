@@ -3,6 +3,7 @@ package proposal
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
@@ -10,6 +11,7 @@ import (
 )
 
 var _ sdk.Msg = DeletePostContentMsg{}
+var _ sdk.Msg = UpgradeProtocolMsg{}
 var _ sdk.Msg = ChangeGlobalAllocationParamMsg{}
 var _ sdk.Msg = ChangeEvaluateOfContentValueParamMsg{}
 var _ sdk.Msg = ChangeInfraInternalAllocationParamMsg{}
@@ -20,6 +22,7 @@ var _ sdk.Msg = ChangeValidatorParamMsg{}
 var _ sdk.Msg = ChangeCoinDayParamMsg{}
 var _ sdk.Msg = ChangeBandwidthParamMsg{}
 var _ sdk.Msg = ChangeAccountParamMsg{}
+var _ sdk.Msg = VoteProposalMsg{}
 
 var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
 var _ ChangeParamMsg = ChangeEvaluateOfContentValueParamMsg{}
@@ -33,6 +36,8 @@ var _ ChangeParamMsg = ChangeBandwidthParamMsg{}
 var _ ChangeParamMsg = ChangeAccountParamMsg{}
 
 var _ ContentCensorshipMsg = DeletePostContentMsg{}
+
+var _ ProtocolUpgradeMsg = UpgradeProtocolMsg{}
 
 type ChangeParamMsg interface {
 	GetParameter() param.Parameter
@@ -54,6 +59,11 @@ type DeletePostContentMsg struct {
 	Creator  types.AccountKey `json:"creator"`
 	PermLink types.PermLink   `json:"permLink"`
 	Reason   string           `json:"reason"`
+}
+
+type UpgradeProtocolMsg struct {
+	Creator types.AccountKey `json:"creator"`
+	Link    string           `json:"link"`
 }
 
 type ChangeGlobalAllocationParamMsg struct {
@@ -106,6 +116,12 @@ type ChangeAccountParamMsg struct {
 	Parameter param.AccountParam `json:"parameter"`
 }
 
+type VoteProposalMsg struct {
+	Voter      types.AccountKey  `json:"voter"`
+	ProposalID types.ProposalKey `json:"proposal_id"`
+	Result     bool              `json:"result"`
+}
+
 //----------------------------------------
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
@@ -151,6 +167,52 @@ func (msg DeletePostContentMsg) GetSignBytes() []byte {
 }
 
 func (msg DeletePostContentMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Creator)}
+}
+
+//----------------------------------------
+// UpgradeProtocolMsg Msg Implementations
+
+func NewUpgradeProtocolMsg(
+	creator string, link string) UpgradeProtocolMsg {
+	return UpgradeProtocolMsg{
+		Creator: types.AccountKey(creator),
+		Link:    link,
+	}
+}
+
+func (msg UpgradeProtocolMsg) GetCreator() types.AccountKey { return msg.Creator }
+func (msg UpgradeProtocolMsg) GetLink() string              { return msg.Link }
+func (msg UpgradeProtocolMsg) Type() string                 { return types.ProposalRouterName }
+
+func (msg UpgradeProtocolMsg) ValidateBasic() sdk.Error {
+	if len(msg.Creator) < types.MinimumUsernameLength ||
+		len(msg.Creator) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	if len(msg.GetLink()) == 0 {
+		return ErrInvalidLink()
+	}
+	return nil
+}
+
+func (msg UpgradeProtocolMsg) String() string {
+	return fmt.Sprintf("UpgradeProtocolMsg{Creator:%v, Link:%v}", msg.Creator, msg.GetLink())
+}
+
+func (msg UpgradeProtocolMsg) Get(key interface{}) (value interface{}) {
+	return nil
+}
+
+func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg UpgradeProtocolMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }
 
@@ -746,4 +808,52 @@ func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
 
 func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
+}
+
+//----------------------------------------
+// VoteProposalMsg Msg Implementations
+
+func NewVoteProposalMsg(voter string, proposalID int64, result bool) VoteProposalMsg {
+	return VoteProposalMsg{
+		Voter:      types.AccountKey(voter),
+		ProposalID: types.ProposalKey(strconv.FormatInt(proposalID, 10)),
+		Result:     result,
+	}
+}
+
+func (msg VoteProposalMsg) Type() string { return types.ProposalRouterName }
+
+func (msg VoteProposalMsg) ValidateBasic() sdk.Error {
+	if len(msg.Voter) < types.MinimumUsernameLength ||
+		len(msg.Voter) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	return nil
+}
+
+func (msg VoteProposalMsg) String() string {
+	return fmt.Sprintf("VoteProposalMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
+}
+
+func (msg VoteProposalMsg) Get(key interface{}) (value interface{}) {
+	keyStr, ok := key.(string)
+	if !ok {
+		return nil
+	}
+	if keyStr == types.PermissionLevel {
+		return types.TransactionPermission
+	}
+	return nil
+}
+
+func (msg VoteProposalMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg VoteProposalMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Voter)}
 }

@@ -1,13 +1,14 @@
 package proposal
 
 import (
+	"github.com/lino-network/lino/x/global"
+	"github.com/lino-network/lino/x/post"
+	"github.com/lino-network/lino/x/vote"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
-	"github.com/lino-network/lino/x/global"
-	"github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
-	"github.com/lino-network/lino/x/vote"
 )
 
 type DecideProposalEvent struct {
@@ -30,15 +31,15 @@ func (dpe DecideProposalEvent) Execute(
 		return err
 	}
 
-	// calculate voting result
-	votingRes, err := voteManager.CalculateVotingResult(
+	// get penalty list
+	penaltyList, err := voteManager.GetPenaltyList(
 		ctx, dpe.ProposalID, dpe.ProposalType, lst.OncallValidators)
 	if err != nil {
 		return err
 	}
 
 	// punish validators who didn't vote
-	actualPenalty, err := valManager.PunishValidatorsDidntVote(ctx, votingRes.PenaltyList)
+	actualPenalty, err := valManager.PunishValidatorsDidntVote(ctx, penaltyList.PenaltyList)
 	if err != nil {
 		return err
 	}
@@ -49,8 +50,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// update the ongoing and past proposal list
-	proposalRes, err := proposalManager.UpdateProposalStatus(
-		ctx, votingRes, dpe.ProposalType, dpe.ProposalID)
+	proposalRes, err := proposalManager.UpdateProposalPassStatus(
+		ctx, dpe.ProposalType, dpe.ProposalID)
 	if err != nil {
 		return err
 	}
