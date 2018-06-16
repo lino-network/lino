@@ -1,7 +1,6 @@
 package vote
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -202,70 +201,70 @@ func TestVoterWithdraw(t *testing.T) {
 	assert.Equal(t, voteParam.VoterMinDeposit, voter.Deposit)
 }
 
-func TestVoteBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
+// func TestVoteBasic(t *testing.T) {
+// 	ctx, am, vm, gm := setupTest(t, 0)
+// 	handler := NewHandler(vm, am, gm)
 
-	proposalID := int64(1)
-	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
+// 	proposalID := int64(1)
+// 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+// 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 
-	// create test users
-	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
-	user2 := createTestAccount(ctx, am, "user2", minBalance.Plus(voteParam.VoterMinDeposit))
-	user3 := createTestAccount(ctx, am, "user3", minBalance.Plus(voteParam.VoterMinDeposit))
+// 	// create test users
+// 	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
+// 	user2 := createTestAccount(ctx, am, "user2", minBalance.Plus(voteParam.VoterMinDeposit))
+// 	user3 := createTestAccount(ctx, am, "user3", minBalance.Plus(voteParam.VoterMinDeposit))
 
-	// let user1 create a proposal
-	referenceList := &model.ReferenceList{
-		OngoingProposal: []types.ProposalKey{types.ProposalKey("1")},
-	}
-	vm.storage.SetReferenceList(ctx, referenceList)
+// 	// let user1 create a proposal
+// 	referenceList := &model.ReferenceList{
+// 		OngoingProposal: []types.ProposalKey{types.ProposalKey("1")},
+// 	}
+// 	vm.storage.SetReferenceList(ctx, referenceList)
 
-	// must become a voter before voting
-	voteMsg := NewVoteMsg("user2", proposalID, true)
-	result2 := handler(ctx, voteMsg)
-	assert.Equal(t, ErrGetVoter().Result(), result2)
+// 	// must become a voter before voting
+// 	voteMsg := NewVoteMsg("user2", proposalID, true)
+// 	result2 := handler(ctx, voteMsg)
+// 	assert.Equal(t, ErrGetVoter().Result(), result2)
 
-	depositMsg := NewVoterDepositMsg("user2", coinToString(voteParam.VoterMinDeposit))
-	depositMsg2 := NewVoterDepositMsg("user3", coinToString(voteParam.VoterMinDeposit))
-	handler(ctx, depositMsg)
-	handler(ctx, depositMsg2)
+// 	depositMsg := NewVoterDepositMsg("user2", coinToString(voteParam.VoterMinDeposit))
+// 	depositMsg2 := NewVoterDepositMsg("user3", coinToString(voteParam.VoterMinDeposit))
+// 	handler(ctx, depositMsg)
+// 	handler(ctx, depositMsg2)
 
-	// invalid deposit
-	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", coinToString(voteParam.VoterMinDeposit))
-	res := handler(ctx, invalidDepositMsg)
-	assert.Equal(t, ErrUsernameNotFound().Result(), res)
+// 	// invalid deposit
+// 	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", coinToString(voteParam.VoterMinDeposit))
+// 	res := handler(ctx, invalidDepositMsg)
+// 	assert.Equal(t, ErrUsernameNotFound().Result(), res)
 
-	// Now user2 can vote, vote on a non exist proposal
-	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
-	voteRes := handler(ctx, invalidaVoteMsg)
-	assert.Equal(t, ErrNotOngoingProposal().Result(), voteRes)
+// 	// Now user2 can vote, vote on a non exist proposal
+// 	invalidaVoteMsg := NewVoteMsg("user3", 10, true)
+// 	voteRes := handler(ctx, invalidaVoteMsg)
+// 	assert.Equal(t, ErrNotOngoingProposal().Result(), voteRes)
 
-	// successfully vote
-	voteMsg2 := NewVoteMsg("user2", proposalID, true)
-	voteMsg3 := NewVoteMsg("user3", proposalID, true)
-	handler(ctx, voteMsg2)
-	handler(ctx, voteMsg3)
+// 	// successfully vote
+// 	voteMsg2 := NewVoteMsg("user2", proposalID, true)
+// 	voteMsg3 := NewVoteMsg("user3", proposalID, true)
+// 	handler(ctx, voteMsg2)
+// 	handler(ctx, voteMsg3)
 
-	// user cannot vote again
-	voteAgainMsg := NewVoteMsg("user3", proposalID, false)
-	res = handler(ctx, voteAgainMsg)
-	assert.Equal(t, ErrVoteExist().Result(), res)
+// 	// user cannot vote again
+// 	voteAgainMsg := NewVoteMsg("user3", proposalID, false)
+// 	res = handler(ctx, voteAgainMsg)
+// 	assert.Equal(t, ErrVoteExist().Result(), res)
 
-	// Check vote is correct
-	vote, _ := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	assert.Equal(t, true, vote.Result)
-	assert.Equal(t, user2, vote.Voter)
+// 	// Check vote is correct
+// 	vote, _ := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+// 	assert.Equal(t, true, vote.Result)
+// 	assert.Equal(t, user2, vote.Voter)
 
-	voteList, _ := vm.storage.GetAllVotes(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)))
-	assert.Equal(t, user3, voteList[1].Voter)
+// 	voteList, _ := vm.storage.GetAllVotes(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)))
+// 	assert.Equal(t, user3, voteList[1].Voter)
 
-	// test delete vote
-	vm.storage.DeleteVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	vote, err := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
-	assert.Equal(t, model.ErrGetVote(), err)
+// 	// test delete vote
+// 	vm.storage.DeleteVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+// 	vote, err := vm.storage.GetVote(ctx, types.ProposalKey(strconv.FormatInt(proposalID, 10)), "user2")
+// 	assert.Equal(t, model.ErrGetVote(), err)
 
-}
+// }
 
 func TestDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)

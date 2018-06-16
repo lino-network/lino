@@ -27,6 +27,10 @@ func ErrInvalidPermLink() sdk.Error {
 	return sdk.NewError(types.CodeProposalMsgError, fmt.Sprintf("Invalid PermLink"))
 }
 
+func ErrInvalidLink() sdk.Error {
+	return sdk.NewError(types.CodeProposalMsgError, fmt.Sprintf("Invalid Link"))
+}
+
 func ErrCensorshipPostNotFound() sdk.Error {
 	return sdk.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post not found"))
 }
@@ -45,4 +49,12 @@ func ErrProposalInfoNotFound() sdk.Error {
 
 func ErrWrongProposalType() sdk.Error {
 	return sdk.NewError(types.CodeProposalManagerError, fmt.Sprintf("Wrong proposal type"))
+}
+
+func ErrGetVoter() sdk.Error {
+	return sdk.NewError(types.CodeProposalHandlerError, fmt.Sprintf("Get voter failed"))
+}
+
+func ErrNotOngoingProposal() sdk.Error {
+	return sdk.NewError(types.CodeProposalHandlerError, fmt.Sprintf("Not ongoing proposal"))
 }

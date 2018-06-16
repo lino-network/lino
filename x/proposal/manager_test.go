@@ -9,7 +9,86 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdateProposalStatus(t *testing.T) {
+func TestUpdateProposalVotingStatus(t *testing.T) {
+	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
+	permLink := types.PermLink("postlink")
+	user1 := types.AccountKey("user1")
+	censorshipReason := "reason"
+	proposal1 := &model.ContentCensorshipProposal{
+		PermLink: permLink,
+		Reason:   censorshipReason,
+	}
+
+	pm.InitGenesis(ctx)
+	curTime := ctx.BlockHeader().Time
+	decideHr := int64(100)
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
+
+	testCases := []struct {
+		testName     string
+		proposalID   types.ProposalKey
+		voter        types.AccountKey
+		voteResult   bool
+		votingPower  types.Coin
+		wantProposal model.Proposal
+	}{
+		{
+			testName:    "agree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  true,
+			votingPower: types.NewCoinFromInt64(1),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(1),
+				DisagreeVotes: types.NewCoinFromInt64(0),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permLink, censorshipReason},
+		},
+		{
+			testName:    "one more agree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  true,
+			votingPower: types.NewCoinFromInt64(2),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(3),
+				DisagreeVotes: types.NewCoinFromInt64(0),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permLink, censorshipReason},
+		},
+		{
+			testName:    "one disagree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  false,
+			votingPower: types.NewCoinFromInt64(5),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(3),
+				DisagreeVotes: types.NewCoinFromInt64(5),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permLink, censorshipReason},
+		},
+	}
+	for _, tc := range testCases {
+		err := pm.UpdateProposalVotingStatus(ctx, tc.proposalID, tc.voter, tc.voteResult, tc.votingPower)
+		assert.Nil(t, err)
+
+		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
+		assert.Equal(t, tc.wantProposal, proposal)
+	}
+
+}
+
+func TestUpdateProposalPassStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
 	permLink := types.PermLink("postlink")
 	user1 := types.AccountKey("user1")
@@ -32,9 +111,10 @@ func TestUpdateProposalStatus(t *testing.T) {
 	curTime := ctx.BlockHeader().Time
 	decideHr := int64(100)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
-	proposalID1, _ := pm.AddProposal(ctx, "user1", proposal1, decideHr)
-	proposalID2, _ := pm.AddProposal(ctx, "user1", proposal2, decideHr)
-	proposalID3, _ := pm.AddProposal(ctx, "user1", proposal3, decideHr)
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
+	proposalID2, _ := pm.AddProposal(ctx, user1, proposal2, decideHr)
+	proposalID3, _ := pm.AddProposal(ctx, user1, proposal3, decideHr)
+
 	testCases := []struct {
 		testName        string
 		votingRes       types.VotingResult
@@ -101,7 +181,10 @@ func TestUpdateProposalStatus(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		res, err := pm.UpdateProposalStatus(ctx, tc.votingRes, tc.proposalType, tc.proposalID)
+		err := addProposalInfo(ctx, pm, tc.proposalID, tc.votingRes.AgreeVotes, tc.votingRes.DisagreeVotes)
+		assert.Nil(t, err)
+
+		res, err := pm.UpdateProposalPassStatus(ctx, tc.proposalType, tc.proposalID)
 		assert.Nil(t, err)
 		assert.Equal(t, tc.wantProposalRes, res)
 		if tc.wantProposalRes == types.ProposalNotPass {
@@ -110,7 +193,6 @@ func TestUpdateProposalStatus(t *testing.T) {
 		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
 		assert.Equal(t, tc.wantProposal, proposal)
 	}
-
 }
 
 func TestGetProposalPassParam(t *testing.T) {

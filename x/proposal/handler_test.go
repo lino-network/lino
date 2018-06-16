@@ -19,8 +19,8 @@ var (
 )
 
 func TestChangeParamProposal(t *testing.T) {
-	ctx, am, proposalManager, postManager, _, _, gm := setupTest(t, 0)
-	handler := NewHandler(am, proposalManager, postManager, gm)
+	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
+	handler := NewHandler(am, proposalManager, postManager, gm, vm)
 	proposalManager.InitGenesis(ctx)
 
 	allocation := param.GlobalAllocationParam{
@@ -102,8 +102,8 @@ func TestChangeParamProposal(t *testing.T) {
 }
 
 func TestContentCensorshipProposal(t *testing.T) {
-	ctx, am, proposalManager, postManager, _, _, gm := setupTest(t, 0)
-	handler := NewHandler(am, proposalManager, postManager, gm)
+	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
+	handler := NewHandler(am, proposalManager, postManager, gm, vm)
 	curTime := ctx.BlockHeader().Time
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 

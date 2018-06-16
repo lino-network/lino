@@ -4,17 +4,18 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
-	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/x/account"
+	val "github.com/lino-network/lino/x/validator"
+	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
@@ -109,4 +110,23 @@ func createTestPost(
 
 	assert.Nil(t, err)
 	return user, postID
+}
+
+func addProposalInfo(ctx sdk.Context, pm ProposalManager, proposalID types.ProposalKey,
+	agreeVotes, disagreeVotes types.Coin) sdk.Error {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return err
+	}
+
+	proposalInfo := proposal.GetProposalInfo()
+	proposalInfo.AgreeVotes = agreeVotes
+	proposalInfo.DisagreeVotes = disagreeVotes
+
+	proposal.SetProposalInfo(proposalInfo)
+
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+		return err
+	}
+	return nil
 }

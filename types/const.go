@@ -35,8 +35,8 @@ const (
 	MasterPermission      = Permission(2)
 
 	// Different proposal result
-	ProposalPass    = ProposalResult(0)
-	ProposalNotPass = ProposalResult(1)
+	ProposalNotPass = ProposalResult(0)
+	ProposalPass    = ProposalResult(1)
 	ProposalRevoked = ProposalResult(2)
 
 	// Different proposal types

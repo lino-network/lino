@@ -36,7 +36,10 @@ type IDToURLMapping struct {
 }
 
 type VotingResult struct {
-	AgreeVotes    Coin         `json:"agree_votes"`
-	DisagreeVotes Coin         `json:"disagree_votes"`
-	PenaltyList   []AccountKey `json:"penalty_list"`
+	AgreeVotes    Coin `json:"agree_votes"`
+	DisagreeVotes Coin `json:"disagree_votes"`
+}
+
+type PenaltyList struct {
+	PenaltyList []AccountKey `json:"penalty_list"`
 }
