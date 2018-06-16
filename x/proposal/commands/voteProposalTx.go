@@ -7,17 +7,17 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/vote"
+	"github.com/lino-network/lino/x/proposal"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// VoteTxCmd will create a vote tx and sign it with the given key
-func VoteTxCmd(cdc *wire.Codec) *cobra.Command {
+// VoteProposalTxCmd will create a voteProposal tx and sign it with the given key
+func VoteProposalTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote",
-		Short: "vote a voter",
-		RunE:  sendVoteTx(cdc),
+		Use:   "vote-proposal",
+		Short: "vote a proposal",
+		RunE:  sendVoteProposalTx(cdc),
 	}
 	cmd.Flags().String(client.FlagVoter, "", "voter for the proposal")
 	cmd.Flags().Int64(client.FlagProposalID, -1, "proposal id")
@@ -25,7 +25,7 @@ func VoteTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func sendVoteTx(cdc *wire.Codec) client.CommandTxCallback {
+func sendVoteProposalTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		voter := viper.GetString(client.FlagVoter)
@@ -33,7 +33,7 @@ func sendVoteTx(cdc *wire.Codec) client.CommandTxCallback {
 		result := viper.GetBool(client.FlagResult)
 
 		// create the message
-		msg := vote.NewVoteMsg(voter, id, result)
+		msg := proposal.NewVoteProposalMsg(voter, id, result)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

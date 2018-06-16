@@ -121,8 +121,30 @@ func (pm ProposalManager) GetProposalPassParam(
 	}
 }
 
-func (pm ProposalManager) UpdateProposalStatus(
-	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType,
+func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID types.ProposalKey,
+	voter types.AccountKey, voteResult bool, votingPower types.Coin) sdk.Error {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return err
+	}
+	proposalInfo := proposal.GetProposalInfo()
+
+	if voteResult == true {
+		proposalInfo.AgreeVotes = proposalInfo.AgreeVotes.Plus(votingPower)
+	} else {
+		proposalInfo.DisagreeVotes = proposalInfo.DisagreeVotes.Plus(votingPower)
+	}
+
+	proposal.SetProposalInfo(proposalInfo)
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pm ProposalManager) UpdateProposalPassStatus(
+	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
 	lst, err := pm.storage.GetProposalList(ctx)
 	if err != nil {
@@ -136,19 +158,16 @@ func (pm ProposalManager) UpdateProposalStatus(
 
 	proposalInfo := proposal.GetProposalInfo()
 
-	proposalInfo.AgreeVotes = res.AgreeVotes
-	proposalInfo.DisagreeVotes = res.DisagreeVotes
-
 	// calculate if agree votes meet minimum pass requirement
 	ratio, minVotes, err := pm.GetProposalPassParam(ctx, proposalType)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
-	totalVotes := res.AgreeVotes.Plus(res.DisagreeVotes)
+	totalVotes := proposalInfo.AgreeVotes.Plus(proposalInfo.DisagreeVotes)
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := new(big.Rat).Quo(res.AgreeVotes.ToRat(), totalVotes.ToRat())
+	actualRatio := new(big.Rat).Quo(proposalInfo.AgreeVotes.ToRat(), totalVotes.ToRat())
 	if actualRatio.Cmp(ratio.GetRat()) >= 0 {
 		proposalInfo.Result = types.ProposalPass
 	} else {

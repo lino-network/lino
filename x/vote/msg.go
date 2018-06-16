@@ -4,14 +4,13 @@ package vote
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = VoteMsg{}
+// var _ sdk.Msg = VoteMsg{}
 var _ sdk.Msg = VoterDepositMsg{}
 var _ sdk.Msg = VoterWithdrawMsg{}
 var _ sdk.Msg = VoterRevokeMsg{}
@@ -19,11 +18,11 @@ var _ sdk.Msg = DelegateMsg{}
 var _ sdk.Msg = DelegatorWithdrawMsg{}
 var _ sdk.Msg = RevokeDelegationMsg{}
 
-type VoteMsg struct {
-	Voter      types.AccountKey  `json:"voter"`
-	ProposalID types.ProposalKey `json:"proposal_id"`
-	Result     bool              `json:"result"`
-}
+// type VoteMsg struct {
+// 	Voter      types.AccountKey  `json:"voter"`
+// 	ProposalID types.ProposalKey `json:"proposal_id"`
+// 	Result     bool              `json:"result"`
+// }
 
 type VoterDepositMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -312,50 +311,50 @@ func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 //----------------------------------------
 // VoteMsg Msg Implementations
 
-func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
-	return VoteMsg{
-		Voter:      types.AccountKey(voter),
-		ProposalID: types.ProposalKey(strconv.FormatInt(proposalID, 10)),
-		Result:     result,
-	}
-}
+// func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
+// 	return VoteMsg{
+// 		Voter:      types.AccountKey(voter),
+// 		ProposalID: types.ProposalKey(strconv.FormatInt(proposalID, 10)),
+// 		Result:     result,
+// 	}
+// }
 
-func (msg VoteMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+// func (msg VoteMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
-func (msg VoteMsg) ValidateBasic() sdk.Error {
-	if len(msg.Voter) < types.MinimumUsernameLength ||
-		len(msg.Voter) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-	return nil
-}
+// func (msg VoteMsg) ValidateBasic() sdk.Error {
+// 	if len(msg.Voter) < types.MinimumUsernameLength ||
+// 		len(msg.Voter) > types.MaximumUsernameLength {
+// 		return ErrInvalidUsername()
+// 	}
+// 	return nil
+// }
 
-func (msg VoteMsg) String() string {
-	return fmt.Sprintf("VoterMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
-}
+// func (msg VoteMsg) String() string {
+// 	return fmt.Sprintf("VoterMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
+// }
 
-func (msg VoteMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
-}
+// func (msg VoteMsg) Get(key interface{}) (value interface{}) {
+// 	keyStr, ok := key.(string)
+// 	if !ok {
+// 		return nil
+// 	}
+// 	if keyStr == types.PermissionLevel {
+// 		return types.TransactionPermission
+// 	}
+// 	return nil
+// }
 
-func (msg VoteMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
+// func (msg VoteMsg) GetSignBytes() []byte {
+// 	b, err := json.Marshal(msg)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return b
+// }
 
-func (msg VoteMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Voter)}
-}
+// func (msg VoteMsg) GetSigners() []sdk.Address {
+// 	return []sdk.Address{sdk.Address(msg.Voter)}
+// }
 
 //----------------------------------------
 // DelegatoWithdrawMsg Msg Implementations

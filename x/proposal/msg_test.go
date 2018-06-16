@@ -9,6 +9,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestVoteProposalMsg(t *testing.T) {
+	cases := []struct {
+		voteProposalMsg VoteProposalMsg
+		expectError     sdk.Error
+	}{
+		{NewVoteProposalMsg("user1", 1, true), nil},
+		{NewVoteProposalMsg("", 1, true), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.voteProposalMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
 		InfraAllocation:          sdk.NewRat(20, 100),
@@ -39,6 +54,9 @@ func TestMsgPermission(t *testing.T) {
 		msg              sdk.Msg
 		expectPermission types.Permission
 	}{
+		"vote proposal msg": {
+			NewVoteProposalMsg("test", 1, true),
+			types.TransactionPermission},
 		"change evaluate of content value param": {
 			NewChangeEvaluateOfContentValueParamMsg("creator",
 				param.EvaluateOfContentValueParam{}),
@@ -502,6 +520,23 @@ func TestDeletePostContentMsg(t *testing.T) {
 
 	for _, cs := range cases {
 		result := cs.deletePostContentMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestUpgradeProtocolMsg(t *testing.T) {
+	cases := []struct {
+		upgradeProtocolMsg UpgradeProtocolMsg
+		expectError        sdk.Error
+	}{
+		{NewUpgradeProtocolMsg("user1", "link"), nil},
+		{NewUpgradeProtocolMsg("us", "link"), ErrInvalidUsername()},
+		{NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link"), ErrInvalidUsername()},
+		{NewUpgradeProtocolMsg("user1", ""), ErrInvalidLink()},
+	}
+
+	for _, cs := range cases {
+		result := cs.upgradeProtocolMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
 	}
 }
