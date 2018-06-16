@@ -1175,11 +1175,11 @@ func TestAddFrozenMoney(t *testing.T) {
 		times                   int64
 		expectNumOfFrozenAmount int
 	}{
-		{types.NewCoinFromInt64(100), 10000, 10, 5, 1},
-		{types.NewCoinFromInt64(100), 10100, 10, 5, 1},
-		{types.NewCoinFromInt64(100), 10110, 10, 5, 2},
-		{types.NewCoinFromInt64(100), 10151, 10, 5, 2},
-		{types.NewCoinFromInt64(100), 10500, 10, 5, 1}, // this one is used to re-produce the out-of-bound bug.
+		{types.NewCoinFromInt64(100), 1000000, 10, 5, 1},
+		{types.NewCoinFromInt64(100), 1200000, 10, 5, 1},
+		{types.NewCoinFromInt64(100), 1300000, 10, 5, 2},
+		{types.NewCoinFromInt64(100), 1400000, 10, 5, 2},
+		{types.NewCoinFromInt64(100), 1600000, 10, 5, 1}, // this one is used to re-produce the out-of-bound bug.
 	}
 
 	for _, tc := range testCases {
