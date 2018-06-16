@@ -22,7 +22,6 @@ type Delegation struct {
 }
 
 type ReferenceList struct {
-	// OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
 	AllValidators []types.AccountKey `json:"all_validators"`
 }
 

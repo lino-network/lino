@@ -117,17 +117,16 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 
 	testCases := []struct {
 		testName        string
-		votingRes       types.VotingResult
+		agreeVotes      types.Coin
+		disagreeVotes   types.Coin
 		proposalType    types.ProposalType
 		proposalID      types.ProposalKey
 		wantProposalRes types.ProposalResult
 		wantProposal    model.Proposal
 	}{
 		{testName: "test passed proposal has historical data",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes,
+			disagreeVotes:   proposalParam.ContentCensorshipPassVotes,
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID1,
 			wantProposalRes: types.ProposalPass,
@@ -143,10 +142,8 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		},
 
 		{testName: "test votes don't meet min requirement ",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: types.NewCoinFromInt64(0),
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
+			disagreeVotes:   types.NewCoinFromInt64(0),
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID2,
 			wantProposalRes: types.ProposalNotPass,
@@ -162,10 +159,8 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		},
 
 		{testName: "test votes ratio doesn't meet requirement ",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
+			disagreeVotes:   proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID3,
 			wantProposalRes: types.ProposalNotPass,
@@ -181,7 +176,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		err := addProposalInfo(ctx, pm, tc.proposalID, tc.votingRes.AgreeVotes, tc.votingRes.DisagreeVotes)
+		err := addProposalInfo(ctx, pm, tc.proposalID, tc.agreeVotes, tc.disagreeVotes)
 		assert.Nil(t, err)
 
 		res, err := pm.UpdateProposalPassStatus(ctx, tc.proposalType, tc.proposalID)

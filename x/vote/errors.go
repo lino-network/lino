@@ -8,10 +8,6 @@ import (
 )
 
 // Error constructors
-// func ErrGetVoter() sdk.Error {
-// 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Get voter failed"))
-// }
-
 func ErrUsernameNotFound() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Username not found"))
 }
@@ -35,10 +31,6 @@ func ErrInvalidUsername() sdk.Error {
 func ErrValidatorCannotRevoke() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid revoke"))
 }
-
-// func ErrNotOngoingProposal() sdk.Error {
-// 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Not ongoing proposal"))
-// }
 
 func ErrVoteExist() sdk.Error {
 	return sdk.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote exist"))
