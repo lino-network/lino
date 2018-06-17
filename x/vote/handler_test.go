@@ -189,6 +189,11 @@ func TestVoterWithdraw(t *testing.T) {
 	msg := NewVoterDepositMsg("user1", coinToString(voteParam.VoterMinDeposit.Plus(voteParam.VoterMinWithdraw)))
 	handler(ctx, msg)
 
+	// invalid deposit
+	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", coinToString(voteParam.VoterMinDeposit))
+	res = handler(ctx, invalidDepositMsg)
+	assert.Equal(t, ErrUsernameNotFound().Result(), res)
+
 	msg2 := NewVoterWithdrawMsg("user1", coinToString(minBalance.Plus(voteParam.VoterMinWithdraw)))
 	result2 := handler(ctx, msg2)
 	assert.Equal(t, ErrIllegalWithdraw().Result(), result2)
@@ -269,4 +274,32 @@ func TestAddFrozenMoney(t *testing.T) {
 		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
 
 	}
+}
+
+func TestDeleteVoteBasic(t *testing.T) {
+	ctx, am, vm, gm := setupTest(t, 0)
+	vm.InitGenesis(ctx)
+	handler := NewHandler(vm, am, gm)
+
+	proposalID1 := types.ProposalKey("1")
+	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
+
+	// create test users
+	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
+	user2 := createTestAccount(ctx, am, "user2", minBalance.Plus(voteParam.VoterMinDeposit))
+
+	depositMsg := NewVoterDepositMsg("user2", coinToString(voteParam.VoterMinDeposit))
+	handler(ctx, depositMsg)
+
+	// add vote
+	_ = vm.AddVote(ctx, proposalID1, user2, true)
+
+	voteList, _ := vm.storage.GetAllVotes(ctx, proposalID1)
+	assert.Equal(t, user2, voteList[0].Voter)
+
+	// test delete vote
+	vm.storage.DeleteVote(ctx, proposalID1, "user2")
+	_, err := vm.storage.GetVote(ctx, proposalID1, "user2")
+	assert.Equal(t, model.ErrGetVote(), err)
 }
