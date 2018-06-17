@@ -17,7 +17,6 @@ var (
 	c460000 = types.NewCoinFromInt64(460000 * types.Decimals)
 	c4600   = types.NewCoinFromInt64(4600 * types.Decimals)
 	c46     = types.NewCoinFromInt64(46 * types.Decimals)
-	c0      = types.NewCoinFromInt64(0)
 )
 
 func TestChangeParamProposal(t *testing.T) {
