@@ -53,6 +53,11 @@ func (ps ProposalStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+func (ps ProposalStorage) DoesProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	store := ctx.KVStore(ps.key)
+	return store.Has(GetProposalKey(proposalID))
+}
+
 func (ps ProposalStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	lstByte := store.Get(GetProposalListKey())

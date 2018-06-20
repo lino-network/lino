@@ -36,7 +36,7 @@ func NewHandler(
 func handleChangeParamMsg(
 	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
 	msg ChangeParamMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -78,7 +78,7 @@ func handleChangeParamMsg(
 func handleProtocolUpgradeMsg(
 	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
 	msg ProtocolUpgradeMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -120,7 +120,7 @@ func handleProtocolUpgradeMsg(
 func handleContentCensorshipMsg(
 	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
 	postManager post.PostManager, gm global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -172,7 +172,7 @@ func handleContentCensorshipMsg(
 }
 
 func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm vote.VoteManager, msg VoteProposalMsg) sdk.Result {
-	if !vm.IsVoterExist(ctx, msg.Voter) {
+	if !vm.DoesVoterExist(ctx, msg.Voter) {
 		return ErrGetVoter().Result()
 	}
 

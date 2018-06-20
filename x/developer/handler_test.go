@@ -26,7 +26,7 @@ func TestRegistertBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
 	assert.Equal(t, true, acc1Saving.IsEqual(minBalance))
-	assert.Equal(t, true, dm.IsDeveloperExist(ctx, developer1))
+	assert.Equal(t, true, dm.DoesDeveloperExist(ctx, developer1))
 
 	// check acc1 is in the developer list
 	lst, _ := dm.GetDeveloperList(ctx)
@@ -53,12 +53,12 @@ func TestRevokeBasic(t *testing.T) {
 	// check acc1's depoist has not been added back
 	acc1Saving, _ := am.GetSavingFromBank(ctx, developer1)
 	assert.Equal(t, true, acc1Saving.IsEqual(minBalance))
-	assert.Equal(t, false, dm.IsDeveloperExist(ctx, developer1))
+	assert.Equal(t, false, dm.DoesDeveloperExist(ctx, developer1))
 
 	// check acc1 is not in the developer list
 	lst, _ := dm.GetDeveloperList(ctx)
 	assert.Equal(t, 0, len(lst.AllDevelopers))
-	assert.Equal(t, false, dm.IsDeveloperExist(ctx, "developer1"))
+	assert.Equal(t, false, dm.DoesDeveloperExist(ctx, "developer1"))
 }
 
 func TestAddFrozenMoney(t *testing.T) {

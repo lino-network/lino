@@ -39,7 +39,7 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, 
 
 // Handle RegisterMsg
 func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Author) {
+	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
@@ -73,7 +73,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 
 // Handle LikeMsg
 func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
@@ -89,7 +89,7 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 
 // Handle ViewMsg
 func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrViewPostUserNotFound(msg.Username).Result()
 	}
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
@@ -112,7 +112,7 @@ func handleDonateMsg(
 	if err != nil {
 		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
 	}
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrDonateUserNotFound(msg.Username).Result()
 	}
 	if !pm.DoesPostExist(ctx, permLink) {
@@ -126,7 +126,7 @@ func handleDonateMsg(
 		return ErrDonateToSelf(msg.Username).Result()
 	}
 	if msg.FromApp != "" {
-		if !dm.IsDeveloperExist(ctx, msg.FromApp) {
+		if !dm.DoesDeveloperExist(ctx, msg.FromApp) {
 			return ErrDonateFailed(permLink).Result()
 		}
 	}
@@ -171,7 +171,7 @@ func processDonationFriction(
 	if coin.IsZero() {
 		return nil
 	}
-	if !am.IsAccountExist(ctx, postAuthor) {
+	if !am.DoesAccountExist(ctx, postAuthor) {
 		return ErrDonateAuthorNotFound(postKey, postAuthor)
 	}
 	consumptionFrictionRate, err := gm.GetConsumptionFrictionRate(ctx)
@@ -235,7 +235,7 @@ func evaluateConsumption(
 // Handle ReportMsgOrUpvoteMsg
 func handleReportOrUpvoteMsg(
 	ctx sdk.Context, msg ReportOrUpvoteMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrReportOrUpvoteUserNotFound(msg.Username).Result()
 	}
 
@@ -258,7 +258,7 @@ func handleReportOrUpvoteMsg(
 
 func handleUpdatePostMsg(
 	ctx sdk.Context, msg UpdatePostMsg, pm PostManager, am acc.AccountManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Author) {
+	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrUpdatePostAuthorNotFound(msg.Author).Result()
 	}
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
@@ -282,7 +282,7 @@ func handleUpdatePostMsg(
 
 func handleDeletePostMsg(
 	ctx sdk.Context, msg DeletePostMsg, pm PostManager, am acc.AccountManager) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Author) {
+	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrDeletePostAuthorNotFound(msg.Author).Result()
 	}
 	permLink := types.GetPermLink(msg.Author, msg.PostID)

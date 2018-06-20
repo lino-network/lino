@@ -259,7 +259,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 	if err != nil {
 		panic(err)
 	}
-	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
+	if lb.accountManager.DoesAccountExist(ctx, types.AccountKey(ga.Name)) {
 		panic(sdk.ErrGenesisParse("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
@@ -301,7 +301,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 // convert GenesisDeveloper to AppDeveloper
 func (lb *LinoBlockchain) toAppDeveloper(
 	ctx sdk.Context, developer genesis.GenesisAppDeveloper) sdk.Error {
-	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(developer.Name)) {
+	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(developer.Name)) {
 		return sdk.ErrGenesisParse("genesis developer account doesn't exist")
 	}
 	coin, err := types.LinoToCoin(types.LNO(developer.Deposit))
@@ -325,7 +325,7 @@ func (lb *LinoBlockchain) toAppDeveloper(
 // convert GenesisInfra to AppInfra
 func (lb *LinoBlockchain) toAppInfra(
 	ctx sdk.Context, infra genesis.GenesisInfraProvider) sdk.Error {
-	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(infra.Name)) {
+	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(infra.Name)) {
 		return sdk.ErrGenesisParse("genesis infra account doesn't exist")
 	}
 	if err := lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey(infra.Name)); err != nil {

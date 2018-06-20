@@ -15,6 +15,7 @@ var (
 	postCommentSubStore        = []byte{0x04} // SubStore for all comments
 	postViewsSubStore          = []byte{0x05} // SubStore for all views
 	postDonationsSubStore      = []byte{0x06} // SubStore for all donations
+	commentListSubStore        = []byte{0x07} // Substore for comment list
 )
 
 type PostStorage struct {
@@ -35,6 +36,11 @@ func NewPostStorage(key sdk.StoreKey) PostStorage {
 		key: key,
 		cdc: cdc,
 	}
+}
+
+func (ps PostStorage) DoesPostExist(ctx sdk.Context, permLink types.PermLink) bool {
+	store := ctx.KVStore(ps.key)
+	return store.Has(GetPostInfoKey(permLink))
 }
 
 func (ps PostStorage) GetPostInfo(ctx sdk.Context, permLink types.PermLink) (*PostInfo, sdk.Error) {
@@ -215,6 +221,31 @@ func (ps PostStorage) SetPostDonations(
 	return nil
 }
 
+func (ps PostStorage) GetCommentList(ctx sdk.Context, permLink types.PermLink) (*CommentList, sdk.Error) {
+	store := ctx.KVStore(ps.key)
+	lstByte := store.Get(GetCommentListKey(permLink))
+	if lstByte == nil {
+		return nil, nil
+	}
+	lst := new(CommentList)
+	if unmarshalErr := ps.cdc.UnmarshalJSON(lstByte, lst); unmarshalErr != nil {
+		return nil, ErrPostUnmarshalError(unmarshalErr)
+	}
+	return lst, nil
+}
+
+func (ps PostStorage) SetCommentList(
+	ctx sdk.Context, permLink types.PermLink, lst *CommentList) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	lstByte, err := ps.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrPostMarshalError(err)
+	}
+	store.Set(GetCommentListKey(permLink), lstByte)
+
+	return nil
+}
+
 func GetPostInfoKey(permLink types.PermLink) []byte {
 	return append(postInfoSubStore, permLink...)
 }
@@ -271,4 +302,8 @@ func getPostDonationPrefix(permLink types.PermLink) []byte {
 
 func GetPostDonationKey(permLink types.PermLink, donateUser types.AccountKey) []byte {
 	return append(getPostDonationPrefix(permLink), donateUser...)
+}
+
+func GetCommentListKey(permLink types.PermLink) []byte {
+	return append(commentListSubStore, permLink...)
 }

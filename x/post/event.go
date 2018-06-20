@@ -41,10 +41,10 @@ func (event RewardEvent) Execute(
 	if err != nil {
 		return err
 	}
-	if dm.IsDeveloperExist(ctx, event.FromApp) {
+	if dm.DoesDeveloperExist(ctx, event.FromApp) {
 		dm.ReportConsumption(ctx, event.FromApp, reward)
 	}
-	if !am.IsAccountExist(ctx, event.PostAuthor) {
+	if !am.DoesAccountExist(ctx, event.PostAuthor) {
 		return acc.ErrUsernameNotFound()
 	}
 	if !pm.DoesPostExist(ctx, permLink) {

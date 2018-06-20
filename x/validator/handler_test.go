@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
 
@@ -34,7 +34,7 @@ func TestRegisterBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
 	// now user1 should be the only validator
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
@@ -297,7 +297,7 @@ func TestDepositBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, valParam.ValidatorMinCommitingDeposit, verifyList.LowestPower)

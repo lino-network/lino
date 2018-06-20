@@ -33,9 +33,8 @@ func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (vm ValidatorManager) IsValidatorExist(ctx sdk.Context, accKey types.AccountKey) bool {
-	infoByte, _ := vm.storage.GetValidator(ctx, accKey)
-	return infoByte != nil
+func (vm ValidatorManager) DoesValidatorExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	return vm.storage.DoesValidatorExist(ctx, accKey)
 }
 
 func (vm ValidatorManager) IsLegalWithdraw(
