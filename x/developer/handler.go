@@ -29,11 +29,11 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 
 func handleDeveloperRegisterMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
-	if dm.IsDeveloperExist(ctx, msg.Username) {
+	if dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperExist(msg.Username).Result()
 	}
 
@@ -56,7 +56,7 @@ func handleDeveloperRegisterMsg(
 func handleDeveloperRevokeMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager,
 	gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
-	if !dm.IsDeveloperExist(ctx, msg.Username) {
+	if !dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
 	}
 
@@ -83,10 +83,10 @@ func handleDeveloperRevokeMsg(
 
 func handleGrantDeveloperMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantDeveloperMsg) sdk.Result {
-	if !dm.IsDeveloperExist(ctx, msg.AuthenticateApp) {
+	if !dm.DoesDeveloperExist(ctx, msg.AuthenticateApp) {
 		return ErrDeveloperNotFound().Result()
 	}
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 

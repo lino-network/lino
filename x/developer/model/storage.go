@@ -33,6 +33,11 @@ func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+func (ds DeveloperStorage) DoesDeveloperExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(ds.key)
+	return store.Has(GetDeveloperKey(accKey))
+}
+
 func (ds DeveloperStorage) GetDeveloper(
 	ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
 	store := ctx.KVStore(ds.key)

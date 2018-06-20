@@ -1,9 +1,10 @@
 package model
 
 import (
+	"github.com/lino-network/lino/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/types"
 )
 
 var (
@@ -36,6 +37,21 @@ func (vs VoteStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	return nil
+}
+
+func (vs VoteStorage) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetVoterKey(accKey))
+}
+
+func (vs VoteStorage) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetVoteKey(proposalID, voter))
+}
+
+func (vs VoteStorage) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetDelegationKey(voter, delegator))
 }
 
 func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter, sdk.Error) {

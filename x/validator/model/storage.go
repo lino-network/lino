@@ -37,6 +37,11 @@ func (vs ValidatorStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+func (vs ValidatorStorage) DoesValidatorExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetValidatorKey(accKey))
+}
+
 func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey types.AccountKey) (*Validator, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	validatorByte := store.Get(GetValidatorKey(accKey))

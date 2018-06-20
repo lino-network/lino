@@ -72,11 +72,11 @@ func checkAccountGrantKeyList(
 	assert.Equal(t, grantList, *grantListPtr, "accout grantList should be equal")
 }
 
-func TestIsAccountExist(t *testing.T) {
+func TestDoesAccountExist(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
-	assert.False(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
+	assert.False(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
 	createTestAccount(ctx, am, "user1")
-	assert.True(t, am.IsAccountExist(ctx, types.AccountKey("user1")))
+	assert.True(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
 }
 
 func TestAddCoin(t *testing.T) {
@@ -631,12 +631,12 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	assert.Nil(t, err)
 
 	// normal test
-	assert.False(t, am.IsAccountExist(ctx, accKey))
+	assert.False(t, am.DoesAccountExist(ctx, accKey))
 	err = am.CreateAccount(ctx, accountReferrer, accKey,
 		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
 	assert.Nil(t, err)
 
-	assert.True(t, am.IsAccountExist(ctx, accKey))
+	assert.True(t, am.DoesAccountExist(ctx, accKey))
 	bank := model.AccountBank{
 		Saving:  accParam.RegisterFee,
 		NumOfTx: 1,

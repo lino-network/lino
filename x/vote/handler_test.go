@@ -28,7 +28,7 @@ func TestVoterDepositBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1saving, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, minBalance, acc1saving)
-	assert.Equal(t, true, vm.IsVoterExist(ctx, user1))
+	assert.Equal(t, true, vm.DoesVoterExist(ctx, user1))
 
 	// make sure the voter's account info is correct
 	voter, _ := vm.storage.GetVoter(ctx, user1)

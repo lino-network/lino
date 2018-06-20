@@ -31,7 +31,7 @@ func handleDepositMsg(
 	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
 	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -46,7 +46,7 @@ func handleDepositMsg(
 	}
 
 	// Register the user if this name has not been registered
-	if !valManager.IsValidatorExist(ctx, msg.Username) {
+	if !valManager.DoesValidatorExist(ctx, msg.Username) {
 		// check validator minimum voting deposit requirement
 		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
 			return ErrVotingDepositNotEnough().Result()

@@ -3,8 +3,8 @@ package infra
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/infra/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/infra/model"
 )
 
 type InfraManager struct {
@@ -27,9 +27,8 @@ func (im InfraManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (im InfraManager) IsInfraProviderExist(ctx sdk.Context, username types.AccountKey) bool {
-	infoByte, _ := im.storage.GetInfraProvider(ctx, username)
-	return infoByte != nil
+func (im InfraManager) DoesInfraProviderExist(ctx sdk.Context, username types.AccountKey) bool {
+	return im.storage.DoesInfraProviderExist(ctx, username)
 }
 
 func (im InfraManager) RegisterInfraProvider(ctx sdk.Context, username types.AccountKey) sdk.Error {
