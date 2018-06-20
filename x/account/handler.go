@@ -34,7 +34,7 @@ func NewHandler(am AccountManager) sdk.Handler {
 }
 
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
+	if !am.DoesAccountExist(ctx, msg.Followee) || !am.DoesAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
 	}
 	// add the "msg.Follower" to the "msg.Followee" 's follower list.
@@ -52,7 +52,7 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 }
 
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
+	if !am.DoesAccountExist(ctx, msg.Followee) || !am.DoesAccountExist(ctx, msg.Follower) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -71,7 +71,7 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 }
 
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Receiver) || !am.IsAccountExist(ctx, msg.Sender) {
+	if !am.DoesAccountExist(ctx, msg.Receiver) || !am.DoesAccountExist(ctx, msg.Sender) {
 		return ErrUsernameNotFound().Result()
 	}
 	// withdraw money from sender's bank
@@ -102,7 +102,7 @@ func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result
 
 func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Result {
 	// recover
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 	if err := am.RecoverAccount(
@@ -115,7 +115,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Referrer) {
+	if !am.DoesAccountExist(ctx, msg.Referrer) {
 		return ErrReferrerNotFound().Result()
 	}
 	coin, err := types.LinoToCoin(msg.RegisterFee)
@@ -136,7 +136,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 
 // Handle RegisterMsg
 func handleUpdateAccountMsg(ctx sdk.Context, am AccountManager, msg UpdateAccountMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 	if err := am.UpdateJSONMeta(ctx, msg.Username, msg.JSONMeta); err != nil {

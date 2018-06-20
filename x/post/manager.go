@@ -41,10 +41,7 @@ func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.Pe
 
 // check if post exist
 func (pm PostManager) DoesPostExist(ctx sdk.Context, permLink types.PermLink) bool {
-	if postInfo, _ := pm.postStorage.GetPostInfo(ctx, permLink); postInfo == nil {
-		return false
-	}
-	return true
+	return pm.postStorage.DoesPostExist(ctx, permLink)
 }
 
 // return root source post
@@ -246,8 +243,36 @@ func (pm PostManager) ReportOrUpvoteToPost(
 // add comment to post comment list
 func (pm PostManager) AddComment(
 	ctx sdk.Context, permLink types.PermLink, commentUser types.AccountKey, commentPostID string) sdk.Error {
-	comment := &model.Comment{Author: commentUser, PostID: commentPostID, CreatedAt: ctx.BlockHeader().Time}
-	return pm.postStorage.SetPostComment(ctx, permLink, comment)
+	comment := &model.Comment{
+		Author:    commentUser,
+		PostID:    commentPostID,
+		CreatedAt: ctx.BlockHeader().Time,
+	}
+	if err := pm.postStorage.SetPostComment(ctx, permLink, comment); err != nil {
+		return err
+	}
+
+	if err := pm.AddCommentToList(ctx, permLink, commentUser, commentPostID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pm PostManager) AddCommentToList(ctx sdk.Context, permLink types.PermLink, commentUser types.AccountKey, commentPostID string) sdk.Error {
+	commentList, err := pm.postStorage.GetCommentList(ctx, permLink)
+	if err != nil {
+		return err
+	}
+
+	if commentList == nil {
+		commentList = &model.CommentList{[]types.PermLink{}}
+	}
+
+	commentPermLink := types.GetPermLink(commentUser, commentPostID)
+	commentList.CommentList = append(commentList.CommentList, commentPermLink)
+
+	return pm.postStorage.SetCommentList(ctx, permLink, commentList)
 }
 
 // add donation to post donation list

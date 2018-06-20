@@ -28,8 +28,8 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManage
 }
 
 // check if account exist
-func (accManager AccountManager) IsAccountExist(ctx sdk.Context, username types.AccountKey) bool {
-	return accManager.storage.AccountExist(ctx, username)
+func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool {
+	return accManager.storage.DoesAccountExist(ctx, username)
 }
 
 // create account, caller should make sure the register fee is valid
@@ -37,7 +37,7 @@ func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
 	masterKey crypto.PubKey, transactionKey crypto.PubKey, postKey crypto.PubKey,
 	registerFee types.Coin) sdk.Error {
-	if accManager.IsAccountExist(ctx, username) {
+	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
 	}
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
@@ -120,7 +120,7 @@ func (accManager AccountManager) GetStake(
 func (accManager AccountManager) AddSavingCoin(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
-	if !accManager.IsAccountExist(ctx, username) {
+	if !accManager.DoesAccountExist(ctx, username) {
 		return ErrAddCoinAccountNotFound(username)
 	}
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)

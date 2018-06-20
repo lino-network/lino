@@ -29,9 +29,8 @@ func (pm ProposalManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
-	proposalByte, _ := pm.storage.GetProposal(ctx, proposalID)
-	return proposalByte != nil
+func (pm ProposalManager) DoesProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	return pm.storage.DoesProposalExist(ctx, proposalID)
 }
 
 func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {

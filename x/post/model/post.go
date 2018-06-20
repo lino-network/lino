@@ -85,3 +85,7 @@ type Donations struct {
 	Username     types.AccountKey `json:"username"`
 	DonationList []Donation       `json:"donation_list"`
 }
+
+type CommentList struct {
+	CommentList []types.PermLink `json:"comment_list"`
+}

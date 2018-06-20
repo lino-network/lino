@@ -32,6 +32,11 @@ func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+func (is InfraProviderStorage) DoesInfraProviderExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(is.key)
+	return store.Has(GetInfraProviderKey(accKey))
+}
+
 func (is InfraProviderStorage) GetInfraProvider(
 	ctx sdk.Context, accKey types.AccountKey) (*InfraProvider, sdk.Error) {
 	store := ctx.KVStore(is.key)

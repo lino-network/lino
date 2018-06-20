@@ -29,9 +29,8 @@ func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (dm DeveloperManager) IsDeveloperExist(ctx sdk.Context, username types.AccountKey) bool {
-	infoByte, _ := dm.storage.GetDeveloper(ctx, username)
-	return infoByte != nil
+func (dm DeveloperManager) DoesDeveloperExist(ctx sdk.Context, username types.AccountKey) bool {
+	return dm.storage.DoesDeveloperExist(ctx, username)
 }
 
 func (dm DeveloperManager) RegisterDeveloper(

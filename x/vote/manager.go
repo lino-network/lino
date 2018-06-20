@@ -27,14 +27,16 @@ func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
-	voterByte, _ := vm.storage.GetVoter(ctx, accKey)
-	return voterByte != nil
+func (vm VoteManager) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	return vm.storage.DoesVoterExist(ctx, accKey)
 }
 
-func (vm VoteManager) IsVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
-	voteByte, _ := vm.storage.GetVote(ctx, proposalID, accKey)
-	return voteByte != nil
+func (vm VoteManager) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
+	return vm.storage.DoesVoteExist(ctx, proposalID, accKey)
+}
+
+func (vm VoteManager) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+	return vm.storage.DoesDelegationExist(ctx, voter, delegator)
 }
 
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
@@ -48,11 +50,6 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 		}
 	}
 	return false
-}
-
-func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
-	delegationByte, _ := vm.storage.GetDelegation(ctx, voter, delegator)
-	return delegationByte != nil
 }
 
 func (vm VoteManager) IsLegalVoterWithdraw(
@@ -119,7 +116,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 // only support change parameter proposal now
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
 	// check if the vote exist
-	if vm.IsVoteExist(ctx, proposalID, voter) {
+	if vm.DoesVoteExist(ctx, proposalID, voter) {
 		return ErrVoteExist()
 	}
 
@@ -148,7 +145,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	var delegation *model.Delegation
 	var err sdk.Error
 
-	if !vm.IsDelegationExist(ctx, voterName, delegatorName) {
+	if !vm.DoesDelegationExist(ctx, voterName, delegatorName) {
 		delegation = &model.Delegation{
 			Delegator: delegatorName,
 		}

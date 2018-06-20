@@ -16,7 +16,7 @@ type ReturnCoinEvent struct {
 
 // execute return coin event
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
-	if !am.IsAccountExist(ctx, event.Username) {
+	if !am.DoesAccountExist(ctx, event.Username) {
 		return ErrUsernameNotFound()
 	}
 

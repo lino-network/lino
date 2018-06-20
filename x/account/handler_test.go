@@ -344,7 +344,7 @@ func TestHandleRegister(t *testing.T) {
 		result := handler(ctx, tc.registerMsg)
 		assert.Equal(t, tc.expectResult, result)
 		if result.Code == sdk.CodeOK {
-			assert.True(t, am.IsAccountExist(ctx, tc.registerMsg.NewUser))
+			assert.True(t, am.DoesAccountExist(ctx, tc.registerMsg.NewUser))
 			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
 			assert.Nil(t, err)
 			assert.Equal(t, txKey, tc.registerMsg.NewTransactionPubKey)

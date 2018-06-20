@@ -36,7 +36,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 func handleVoterDepositMsg(
 	ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -51,7 +51,7 @@ func handleVoterDepositMsg(
 	}
 
 	// Register the user if this name has not been registered
-	if !vm.IsVoterExist(ctx, msg.Username) {
+	if !vm.DoesVoterExist(ctx, msg.Username) {
 		if err := vm.AddVoter(ctx, msg.Username, coin); err != nil {
 			return err.Result()
 		}
@@ -137,7 +137,7 @@ func handleVoterRevokeMsg(
 
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
 	// Must have an normal acount
-	if !am.IsAccountExist(ctx, msg.Voter) {
+	if !am.DoesAccountExist(ctx, msg.Voter) {
 		return ErrUsernameNotFound().Result()
 	}
 

@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/lino-network/lino/types"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	postModel "github.com/lino-network/lino/x/post/model"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -141,7 +141,7 @@ func TestRewardEvent(t *testing.T) {
 			t.Errorf("%s get post meta failed: got %v, want %v",
 				tc.testName, *postMeta, tc.expectPostMeta)
 		}
-		if dm.IsDeveloperExist(ctx, tc.rewardEvent.FromApp) {
+		if dm.DoesDeveloperExist(ctx, tc.rewardEvent.FromApp) {
 			consumptionWeight, err := dm.GetConsumptionWeight(ctx, tc.rewardEvent.FromApp)
 			assert.Nil(t, err)
 			if tc.expectAppWeight.Cmp(consumptionWeight) != 0 {

@@ -42,7 +42,7 @@ func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 }
 
 // AccountExist returns true when a specific account exist in the KVStore.
-func (as AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
+func (as AccountStorage) DoesAccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
 	return store.Has(GetAccountInfoKey(accKey))
 }
