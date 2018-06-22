@@ -122,7 +122,4 @@ const (
 
 	// Maximum length of Links URL
 	MaximumLinkURL = 50
-
-	// See https://github.com/cosmos/cosmos-sdk/issues/766
-	LinoErrorCodeSpace = 1
 )
