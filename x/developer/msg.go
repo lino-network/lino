@@ -2,7 +2,6 @@ package developer
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
@@ -62,7 +61,7 @@ func (msg DeveloperRegisterMsg) GetPermission() types.Permission {
 }
 
 func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +98,7 @@ func (msg DeveloperRevokeMsg) GetPermission() types.Permission {
 }
 
 func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +149,7 @@ func (msg GrantDeveloperMsg) GetPermission() types.Permission {
 }
 
 func (msg GrantDeveloperMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

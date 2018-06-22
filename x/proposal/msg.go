@@ -1,7 +1,6 @@
 package proposal
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -159,7 +158,7 @@ func (msg DeletePostContentMsg) GetPermission() types.Permission {
 }
 
 func (msg DeletePostContentMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -205,7 +204,7 @@ func (msg UpgradeProtocolMsg) GetPermission() types.Permission {
 }
 
 func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -255,7 +254,7 @@ func (msg ChangeGlobalAllocationParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeGlobalAllocationParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -302,7 +301,7 @@ func (msg ChangeEvaluateOfContentValueParamMsg) GetPermission() types.Permission
 }
 
 func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -350,7 +349,7 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetPermission() types.Permissio
 }
 
 func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -405,7 +404,7 @@ func (msg ChangeVoteParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -472,7 +471,7 @@ func (msg ChangeProposalParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeProposalParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -524,7 +523,7 @@ func (msg ChangeDeveloperParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -583,7 +582,7 @@ func (msg ChangeValidatorParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -632,7 +631,7 @@ func (msg ChangeCoinDayParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeCoinDayParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -679,7 +678,7 @@ func (msg ChangeAccountParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -729,7 +728,7 @@ func (msg ChangeBandwidthParamMsg) GetPermission() types.Permission {
 }
 
 func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -770,7 +769,7 @@ func (msg VoteProposalMsg) GetPermission() types.Permission {
 }
 
 func (msg VoteProposalMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

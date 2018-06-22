@@ -1,7 +1,6 @@
 package post
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
@@ -373,7 +372,7 @@ func (msg ViewMsg) GetSignBytes() []byte {
 }
 
 func getSignBytes(msg sdk.Msg) []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

@@ -82,7 +82,7 @@ func (msg VoterDepositMsg) GetPermission() types.Permission {
 }
 
 func (msg VoterDepositMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

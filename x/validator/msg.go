@@ -2,7 +2,6 @@ package validator
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -65,7 +64,7 @@ func (msg ValidatorDepositMsg) GetPermission() types.Permission {
 }
 
 func (msg ValidatorDepositMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +106,7 @@ func (msg ValidatorWithdrawMsg) GetPermission() types.Permission {
 }
 
 func (msg ValidatorWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +143,7 @@ func (msg ValidatorRevokeMsg) GetPermission() types.Permission {
 }
 
 func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

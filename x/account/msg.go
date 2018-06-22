@@ -2,7 +2,6 @@ package account
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -95,7 +94,7 @@ func (msg FollowMsg) GetPermission() types.Permission {
 }
 
 func (msg FollowMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -136,7 +135,7 @@ func (msg UnfollowMsg) GetPermission() types.Permission {
 }
 
 func (msg UnfollowMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -173,7 +172,7 @@ func (msg ClaimMsg) GetPermission() types.Permission {
 }
 
 func (msg ClaimMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -224,7 +223,7 @@ func (msg TransferMsg) GetPermission() types.Permission {
 }
 
 func (msg TransferMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -267,7 +266,7 @@ func (msg RecoverMsg) GetPermission() types.Permission {
 }
 
 func (msg RecoverMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
