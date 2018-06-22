@@ -80,7 +80,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	var cdc = MakeCodec()
 	var lb = &LinoBlockchain{
 		BaseApp:              bam.NewBaseApp(appName, cdc, logger, db),
-		cdc:                  MakeCodec(),
+		cdc:                  cdc,
 		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		CapKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
@@ -101,8 +101,6 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
-
-	RegisterEvent(lb.globalManager.WireCodec())
 
 	lb.Router().
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
@@ -151,10 +149,10 @@ func MakeCodec() *wire.Codec {
 
 func RegisterEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(post.RewardEvent{}, "event/reward", nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
-	cdc.RegisterConcrete(param.ChangeParamEvent{}, "event/cpe", nil)
-	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "event/dpe", nil)
+	cdc.RegisterConcrete(post.RewardEvent{}, "lino/eventReward", nil)
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "lino/eventReturn", nil)
+	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
+	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
 }
 
 // custom logic for basecoin initialization
