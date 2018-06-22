@@ -1,17 +1,17 @@
 package validator
 
 import (
-	"encoding/hex"
 	"math"
 	"reflect"
-	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/validator/model"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type ValidatorManager struct {
@@ -127,61 +127,44 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.Validato
 	return vm.storage.SetValidatorList(ctx, lst)
 }
 
-func (vm ValidatorManager) UpdateAbsentValidator(ctx sdk.Context, absentValidators []int32) sdk.Error {
+func (vm ValidatorManager) UpdateSigningValidator(
+	ctx sdk.Context, signingValidators []abci.SigningValidator) sdk.Error {
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	// add number of produced blocks for all validators
+	pkToSigningInfo := make(map[crypto.PubKey]bool)
+
+	// go through signing validator and update sign and absent info
+	for _, signingValidator := range signingValidators {
+		pubkey, err := tmtypes.PB2TM.PubKey(signingValidator.Validator.PubKey)
+		if err != nil {
+			panic(err)
+		}
+
+		pkToSigningInfo[pubkey] = signingValidator.SignedLastBlock
+	}
+
+	// go through oncall validator list to get all address and name mapping
 	for _, curValidator := range lst.OncallValidators {
-		validator, err := vm.storage.GetValidator(ctx, curValidator)
-		if err != nil {
-			return err
+		validator, getErr := vm.storage.GetValidator(ctx, curValidator)
+		if getErr != nil {
+			panic(getErr)
 		}
-		validator.ProducedBlocks += 1
+		pubkey, err := tmtypes.PB2TM.PubKey(validator.ABCIValidator.PubKey)
+		if err != nil {
+			panic(err)
+		}
+		signedLastBlock, exist := pkToSigningInfo[pubkey]
+		if !exist || !signedLastBlock {
+			validator.AbsentCommit++
+		} else {
+			validator.ProducedBlocks++
+			validator.AbsentCommit--
+		}
 		if err := vm.storage.SetValidator(ctx, curValidator, validator); err != nil {
-			return err
-		}
-
-	}
-
-	// sort the oncall validator list according to their address
-	var addrs []string
-	addrToName := make(map[string]types.AccountKey)
-
-	for _, validatorName := range lst.OncallValidators {
-		validator, err := vm.storage.GetValidator(ctx, validatorName)
-		if err != nil {
-			return err
-		}
-
-		keyBytes := validator.ABCIValidator.GetPubKey()
-		pubKey, cerr := crypto.PubKeyFromBytes(keyBytes)
-		if cerr != nil {
-			return ErrGetPubKeyFailed()
-		}
-		addr := hex.EncodeToString(pubKey.Address())
-		addrs = append(addrs, addr)
-		addrToName[addr] = validatorName
-	}
-
-	sort.Strings(addrs)
-
-	for _, idx := range absentValidators {
-		if idx >= int32(len(addrs)) {
-			return ErrAbsentValidatorNotCorrect()
-		}
-		validatorName := addrToName[addrs[idx]]
-		validator, err := vm.storage.GetValidator(ctx, validatorName)
-		if err != nil {
-			return err
-		}
-		validator.AbsentCommit += 1
-		validator.ProducedBlocks -= 1
-
-		if err := vm.storage.SetValidator(ctx, validatorName, validator); err != nil {
-			return err
+			panic(err)
 		}
 	}
 
@@ -230,7 +213,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 }
 
 func (vm ValidatorManager) FireIncompetentValidator(
-	ctx sdk.Context, ByzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
+	ctx sdk.Context, byzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoinFromInt64(0)
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
@@ -247,6 +230,19 @@ func (vm ValidatorManager) FireIncompetentValidator(
 		if err != nil {
 			return totalPenalty, err
 		}
+
+		for _, evidence := range byzantineValidators {
+			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.Validator.PubKey) {
+				actualPenalty, err := vm.PunishOncallValidator(
+					ctx, validator.Username, param.PenaltyByzantine, true)
+				if err != nil {
+					return totalPenalty, err
+				}
+				totalPenalty = totalPenalty.Plus(actualPenalty)
+				break
+			}
+		}
+
 		if validator.AbsentCommit > param.AbsentCommitLimitation {
 			actualPenalty, err := vm.PunishOncallValidator(
 				ctx, validator.Username, param.PenaltyMissCommit, true)
@@ -254,17 +250,6 @@ func (vm ValidatorManager) FireIncompetentValidator(
 				return totalPenalty, err
 			}
 			totalPenalty = totalPenalty.Plus(actualPenalty)
-		}
-
-		for _, evidence := range ByzantineValidators {
-			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.PubKey) {
-				actualPenalty, err := vm.PunishOncallValidator(
-					ctx, validator.Username, param.PenaltyByzantine, true)
-				if err != nil {
-					return totalPenalty, err
-				}
-				totalPenalty = totalPenalty.Plus(actualPenalty)
-			}
 		}
 	}
 
@@ -291,7 +276,7 @@ func (vm ValidatorManager) PunishValidatorsDidntVote(
 }
 
 func (vm ValidatorManager) RegisterValidator(
-	ctx sdk.Context, username types.AccountKey, pubKey []byte, coin types.Coin, link string) sdk.Error {
+	ctx sdk.Context, username types.AccountKey, pubKey crypto.PubKey, coin types.Coin, link string) sdk.Error {
 	// check validator minimum commiting deposit requirement
 	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
@@ -317,7 +302,7 @@ func (vm ValidatorManager) RegisterValidator(
 		}
 	}
 	curValidator := &model.Validator{
-		ABCIValidator: abci.Validator{PubKey: pubKey, Power: 1000},
+		ABCIValidator: abci.Validator{Address: pubKey.Address(), PubKey: tmtypes.TM2PB.PubKey(pubKey), Power: 1000},
 		Username:      username,
 		Deposit:       coin,
 		Link:          link,

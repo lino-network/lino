@@ -87,7 +87,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 	// send coins using username
 	if err := am.AddSavingCoin(
 		ctx, msg.Receiver, coin, msg.Sender, msg.Memo, types.TransferIn); err != nil {
-		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
+		return ErrTransferHandler(msg.Sender).Result()
 	}
 	return sdk.Result{}
 }

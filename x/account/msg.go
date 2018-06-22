@@ -322,7 +322,7 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 
 	match, err := regexp.MatchString(types.UsernameReCheck, string(msg.NewUser))
 	if err != nil {
-		return ErrInvalidUsername("match error").TraceCause(err, "re error")
+		return ErrInvalidUsername("match error")
 	}
 	if !match {
 		return ErrInvalidUsername("illeagle input")
@@ -355,7 +355,7 @@ func (msg RegisterMsg) Get(key interface{}) (value interface{}) {
 
 // Implements Msg.
 func (msg RegisterMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg) // XXX: ensure some canonical form
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -411,7 +411,7 @@ func (msg UpdateAccountMsg) Get(key interface{}) (value interface{}) {
 
 // Implements Msg.
 func (msg UpdateAccountMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg) // XXX: ensure some canonical form
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

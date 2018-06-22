@@ -207,7 +207,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -246,7 +246,7 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 		return ErrPostRedistributionSplitRate()
 	}
 
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil

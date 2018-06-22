@@ -479,9 +479,9 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat) ||
-		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat) ||
-		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat) ||
+	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat()) ||
+		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat()) ||
+		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat()) ||
 		msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.NewRat(1, 1)) ||
 		msg.Parameter.ChangeParamPassRatio.GT(sdk.NewRat(1, 1)) ||
 		msg.Parameter.ContentCensorshipPassRatio.GT(sdk.NewRat(1, 1)) {

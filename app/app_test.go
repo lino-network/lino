@@ -37,13 +37,13 @@ var (
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	db := dbm.NewMemDB()
+
 	return logger, db
 }
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
-	logger, db := loggerAndDB()
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
+	db := dbm.NewMemDB()
 	lb := NewLinoBlockchain(logger, db)
 
 	genesisState := genesis.GenesisState{

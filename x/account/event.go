@@ -1,8 +1,6 @@
 package account
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
 )
@@ -34,7 +32,7 @@ func CreateCoinReturnEvents(
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
-		pieceRat := new(big.Rat).Quo(coin.ToRat(), big.NewRat(times-i, 1))
+		pieceRat := coin.ToRat().Quo(sdk.NewRat(times-i, 1))
 		piece, err := types.RatToCoin(pieceRat)
 		if err != nil {
 			return nil, err

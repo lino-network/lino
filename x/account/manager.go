@@ -1,7 +1,6 @@
 package account
 
 import (
-	"math/big"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -53,7 +52,7 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, &model.AccountBank{}); err != nil {
-		return ErrAccountCreateFailed(username).TraceCause(err, "")
+		return ErrAccountCreateFailed(username)
 	}
 
 	accountInfo := &model.AccountInfo{
@@ -64,7 +63,7 @@ func (accManager AccountManager) CreateAccount(
 		PostKey:        postKey,
 	}
 	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
-		return ErrAccountCreateFailed(username).TraceCause(err, "")
+		return ErrAccountCreateFailed(username)
 	}
 
 	accountMeta := &model.AccountMeta{
@@ -72,10 +71,10 @@ func (accManager AccountManager) CreateAccount(
 		TransactionCapacity: types.NewCoinFromInt64(0),
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
-		return ErrAccountCreateFailed(username).TraceCause(err, "")
+		return ErrAccountCreateFailed(username)
 	}
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
-		return ErrAccountCreateFailed(username).TraceCause(err, "")
+		return ErrAccountCreateFailed(username)
 	}
 	if err := accManager.storage.SetGrantKeyList(
 		ctx, username, &model.GrantKeyList{GrantPubKeyList: []model.GrantPubKey{}}); err != nil {
@@ -93,7 +92,7 @@ func (accManager AccountManager) GetStake(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetStake(username).TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetStake(username)
 	}
 	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
@@ -112,7 +111,7 @@ func (accManager AccountManager) GetStake(
 	}
 
 	stake := bank.Stake
-	stakeInQueue, err := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue.GetRat())
+	stakeInQueue, err := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)
 	totalStake := stake.Plus(stakeInQueue)
 	return totalStake, nil
 }
@@ -125,7 +124,7 @@ func (accManager AccountManager) AddSavingCoin(
 	}
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
+		return ErrAddCoinToAccountSaving(username)
 	}
 
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
@@ -153,11 +152,11 @@ func (accManager AccountManager) AddSavingCoin(
 		Coin:      coin,
 	}
 	if err := accManager.addPendingStakeToQueue(ctx, username, bank, pendingStake); err != nil {
-		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
+		return ErrAddCoinToAccountSaving(username)
 	}
 
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return ErrAddCoinToAccountSaving(username).TraceCause(err, "")
+		return ErrAddCoinToAccountSaving(username)
 	}
 	return nil
 }
@@ -167,7 +166,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	memo string, detailType types.TransferDetailType) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrMinusCoinToAccount(username).TraceCause(err, "")
+		return ErrMinusCoinToAccount(username)
 	}
 
 	if err := accManager.AddBalanceHistory(
@@ -210,7 +209,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		lengthOfQueue := len(pendingStakeQueue.PendingStakeList)
 		pendingStake := pendingStakeQueue.PendingStakeList[lengthOfQueue-1]
-		recoverRatio := big.NewRat(
+		recoverRatio := sdk.NewRat(
 			pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 		if coin.IsGTE(pendingStake.Coin) {
@@ -218,20 +217,17 @@ func (accManager AccountManager) MinusSavingCoin(
 			coin = coin.Minus(pendingStake.Coin)
 
 			pendingStakeCoinWithoutLastTx :=
-				new(big.Rat).Sub(
-					pendingStakeQueue.StakeCoinInQueue.GetRat(),
-					(new(big.Rat).Mul(recoverRatio, pendingStake.Coin.ToRat())))
-			pendingStakeQueue.StakeCoinInQueue = sdk.ToRat(pendingStakeCoinWithoutLastTx)
+				pendingStakeQueue.StakeCoinInQueue.Sub((recoverRatio.Mul(pendingStake.Coin.ToRat())))
+			pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutLastTx
 
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
 			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[:lengthOfQueue-1]
 		} else {
 			// otherwise try to cut last pending transaction
 			pendingStakeCoinWithoutSpentCoin :=
-				new(big.Rat).Sub(
-					pendingStakeQueue.StakeCoinInQueue.GetRat(),
-					(new(big.Rat).Mul(recoverRatio, coin.ToRat())))
-			pendingStakeQueue.StakeCoinInQueue = sdk.ToRat(pendingStakeCoinWithoutSpentCoin)
+				pendingStakeQueue.StakeCoinInQueue.Sub(
+					recoverRatio.Mul(coin.ToRat()))
+			pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutSpentCoin
 
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
 			pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin =
@@ -250,7 +246,7 @@ func (accManager AccountManager) MinusSavingCoin(
 
 	if err := accManager.storage.SetBankFromAccountKey(
 		ctx, username, accountBank); err != nil {
-		return ErrMinusCoinToAccount(username).TraceCause(err, "")
+		return ErrMinusCoinToAccount(username)
 	}
 	return nil
 }
@@ -276,7 +272,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	if err := accManager.storage.SetBalanceHistory(
 		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
 		balanceHistory); err != nil {
-		return ErrAddBalanceHistory(username).TraceCause(err, "")
+		return ErrAddBalanceHistory(username)
 	}
 
 	return nil
@@ -286,7 +282,7 @@ func (accManager AccountManager) GetTransactionKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetTransactionKey(username).TraceCause(err, "")
+		return nil, ErrGetTransactionKey(username)
 	}
 	return accountInfo.TransactionKey, nil
 }
@@ -295,7 +291,7 @@ func (accManager AccountManager) UpdateJSONMeta(
 	ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrUpdateJSONMeta(username).TraceCause(err, "")
+		return ErrUpdateJSONMeta(username)
 	}
 	accountMeta.JSONMeta = JSONMeta
 
@@ -306,7 +302,7 @@ func (accManager AccountManager) GetMasterKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetMasterKey(username).TraceCause(err, "")
+		return nil, ErrGetMasterKey(username)
 	}
 	return accountInfo.MasterKey, nil
 }
@@ -315,7 +311,7 @@ func (accManager AccountManager) GetPostKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetPostKey(username).TraceCause(err, "")
+		return nil, ErrGetPostKey(username)
 	}
 	return accountInfo.PostKey, nil
 }
@@ -324,7 +320,7 @@ func (accManager AccountManager) GetSavingFromBank(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.Coin{}, ErrGetBankSaving(username).TraceCause(err, "")
+		return types.Coin{}, ErrGetBankSaving(username)
 	}
 	return accountBank.Saving, nil
 }
@@ -333,7 +329,7 @@ func (accManager AccountManager) GetSequence(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, ErrGetSequence(username).TraceCause(err, "")
+		return 0, ErrGetSequence(username)
 	}
 	return accountMeta.Sequence, nil
 }
@@ -342,7 +338,7 @@ func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return nil, ErrGetFrozenMoneyList(username).TraceCause(err, "")
+		return nil, ErrGetFrozenMoneyList(username)
 	}
 	return accountBank.FrozenMoneyList, nil
 }
@@ -351,11 +347,11 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrGetSequence(username).TraceCause(err, "")
+		return ErrGetSequence(username)
 	}
 	accountMeta.Sequence += 1
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(username).TraceCause(err, "")
+		return ErrIncreaseSequenceByOne(username)
 	}
 	return nil
 }
@@ -365,14 +361,14 @@ func (accManager AccountManager) AddIncomeAndReward(
 	originIncome, friction, actualReward types.Coin) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrAddIncomeAndReward(username).TraceCause(err, "")
+		return ErrAddIncomeAndReward(username)
 	}
 	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
 	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
 	reward.ActualReward = reward.ActualReward.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return ErrAddIncomeAndReward(username).TraceCause(err, "")
+		return ErrAddIncomeAndReward(username)
 	}
 	return nil
 }
@@ -381,15 +377,15 @@ func (accManager AccountManager) ClaimReward(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrClaimReward(username).TraceCause(err, "")
+		return ErrClaimReward(username)
 	}
 	if err := accManager.AddSavingCoin(
 		ctx, username, reward.UnclaimReward, "", "", types.ClaimReward); err != nil {
-		return ErrClaimReward(username).TraceCause(err, "")
+		return ErrClaimReward(username)
 	}
 	reward.UnclaimReward = types.NewCoinFromInt64(0)
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return ErrClaimReward(username).TraceCause(err, "")
+		return ErrClaimReward(username)
 	}
 	return nil
 }
@@ -452,11 +448,11 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, me)
 	if err != nil {
-		return ErrCheckUserTPSCapacity(me).TraceCause(err, "")
+		return ErrCheckUserTPSCapacity(me)
 	}
 	stake, err := accManager.GetStake(ctx, me)
 	if err != nil {
-		return ErrCheckUserTPSCapacity(me).TraceCause(err, "")
+		return ErrCheckUserTPSCapacity(me)
 	}
 
 	bandwidthParams, err := accManager.paramHolder.GetBandwidthParam(ctx)
@@ -467,15 +463,14 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake
 	} else {
-		incrementRatio := big.NewRat(
+		incrementRatio := sdk.NewRat(
 			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
 		if incrementRatio.Cmp(types.OneRat) > 0 {
-			incrementRatio = types.OneRat
+			incrementRatio = sdk.OneRat()
 		}
 		capacityTillStake := stake.Minus(accountMeta.TransactionCapacity)
-		increateCapacity, err := types.RatToCoin(
-			new(big.Rat).Mul(capacityTillStake.ToRat(), incrementRatio))
+		increateCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
 		if err != nil {
 			return err
 		}
@@ -483,7 +478,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 			accountMeta.TransactionCapacity.Plus(increateCapacity)
 	}
 	currentTxCost, err := types.RatToCoin(
-		new(big.Rat).Mul(bandwidthParams.CapacityUsagePerTransaction.ToRat(), tpsCapacityRatio.GetRat()))
+		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
 	if err != nil {
 		return err
 	}
@@ -493,7 +488,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(me).TraceCause(err, "")
+		return ErrIncreaseSequenceByOne(me)
 	}
 	return nil
 }
@@ -660,13 +655,13 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		if pendingStake.EndTime < ctx.BlockHeader().Time {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
-			stakeRatioOfThisTransaction := big.NewRat(
+			stakeRatioOfThisTransaction := sdk.NewRat(
 				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 				coinDayParams.SecondsToRecoverCoinDayStake)
 			// remote the stake in the queue of this transaction
 			pendingStakeQueue.StakeCoinInQueue =
 				pendingStakeQueue.StakeCoinInQueue.Sub(
-					sdk.ToRat(new(big.Rat).Mul(stakeRatioOfThisTransaction, pendingStake.Coin.ToRat())))
+					stakeRatioOfThisTransaction.Mul(pendingStake.Coin.ToRat()))
 			// update bank stake
 			bank.Stake = bank.Stake.Plus(pendingStake.Coin)
 
@@ -679,11 +674,11 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	}
 	if len(pendingStakeQueue.PendingStakeList) == 0 {
 		pendingStakeQueue.TotalCoin = types.NewCoinFromInt64(0)
-		pendingStakeQueue.StakeCoinInQueue = sdk.ZeroRat
+		pendingStakeQueue.StakeCoinInQueue = sdk.ZeroRat()
 	} else {
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
-		recoverRatio := big.NewRat(
+		recoverRatio := sdk.NewRat(
 			ctx.BlockHeader().Time-pendingStakeQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 
@@ -692,7 +687,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		}
 		pendingStakeQueue.StakeCoinInQueue =
 			pendingStakeQueue.StakeCoinInQueue.Add(
-				sdk.ToRat(new(big.Rat).Mul(recoverRatio, pendingStakeQueue.TotalCoin.ToRat())))
+				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
 	}
 
 	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
@@ -704,7 +699,7 @@ func (accManager AccountManager) AddFrozenMoney(
 	amount types.Coin, start, interval, times int64) sdk.Error {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrUpdateFrozenMoney(username).TraceCause(err, "")
+		return ErrUpdateFrozenMoney(username)
 	}
 	accManager.cleanExpiredFrozenMoney(ctx, accountBank)
 	frozenMoney := model.FrozenMoney{

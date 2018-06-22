@@ -8,13 +8,13 @@ import (
 )
 
 func ErrProposalMarshalError(err error) sdk.Error {
-	return sdk.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal marshal error: %s", err.Error()))
+	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal marshal error: %s", err.Error()))
 }
 
 func ErrProposalUnmarshalError(err error) sdk.Error {
-	return sdk.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal unmarshal error: %s", err.Error()))
+	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal unmarshal error: %s", err.Error()))
 }
 
 func ErrGetProposal() sdk.Error {
-	return sdk.NewError(types.CodeProposalStoreError, fmt.Sprintf("Get proposal failed"))
+	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Get proposal failed"))
 }
