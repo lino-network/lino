@@ -9,7 +9,7 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var _ sdk.Msg = ProviderReportMsg{}
+var _ types.Msg = ProviderReportMsg{}
 
 type ProviderReportMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -45,15 +45,8 @@ func (msg ProviderReportMsg) String() string {
 	return fmt.Sprintf("ProviderReportMsg{Username:%v, Usage:%v}", msg.Username, msg.Usage)
 }
 
-func (msg ProviderReportMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ProviderReportMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ProviderReportMsg) GetSignBytes() []byte {

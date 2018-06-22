@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -42,7 +43,8 @@ func TestPost(t *testing.T) {
 
 func TestPostMeta(t *testing.T) {
 	postMeta := PostMeta{
-		AllowReplies: true,
+		AllowReplies:            true,
+		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 
 	runTest(t, func(env TestEnv) {
@@ -134,5 +136,5 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }

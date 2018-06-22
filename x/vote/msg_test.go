@@ -24,14 +24,6 @@ func TestVoterDepositMsg(t *testing.T) {
 	}
 }
 
-func TestVoterDepositMsgPermission(t *testing.T) {
-	msg := NewVoterDepositMsg("user1", "1")
-	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(types.Permission)
-	assert.Equal(t, ok, true)
-	assert.Equal(t, permission, types.TransactionPermission)
-}
-
 func TestVoterWithdrawMsg(t *testing.T) {
 	cases := []struct {
 		voterWithdrawMsg VoterWithdrawMsg
@@ -81,14 +73,6 @@ func TestDelegateMsg(t *testing.T) {
 	}
 }
 
-func TestDelegateMsgPermission(t *testing.T) {
-	msg := NewDelegateMsg("user1", "user2", "1")
-	permissionLevel := msg.Get(types.PermissionLevel)
-	permission, ok := permissionLevel.(types.Permission)
-	assert.Equal(t, ok, true)
-	assert.Equal(t, permission, types.TransactionPermission)
-}
-
 func TestRevokeDelegationMsg(t *testing.T) {
 	cases := []struct {
 		revokeDelegationMsg RevokeDelegationMsg
@@ -124,7 +108,7 @@ func TestDelegatorWithdrawMsg(t *testing.T) {
 
 func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
-		msg              sdk.Msg
+		msg              types.Msg
 		expectPermission types.Permission
 	}{
 		"vote deposit": {
@@ -148,19 +132,7 @@ func TestMsgPermission(t *testing.T) {
 	}
 
 	for testName, cs := range cases {
-		permissionLevel := cs.msg.Get(types.PermissionLevel)
-		if permissionLevel == nil {
-			if cs.expectPermission != types.PostPermission {
-				t.Errorf(
-					"%s: expect permission incorrect, expect %v, got %v",
-					testName, cs.expectPermission, types.PostPermission)
-				return
-			} else {
-				continue
-			}
-		}
-		permission, ok := permissionLevel.(types.Permission)
-		assert.Equal(t, ok, true)
+		permission := cs.msg.GetPermission()
 		if cs.expectPermission != permission {
 			t.Errorf(
 				"%s: expect permission incorrect, expect %v, got %v",

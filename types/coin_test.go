@@ -118,10 +118,11 @@ func TestRatToCoin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		rat, success := new(big.Rat).SetString(tc.inputString)
+		bigRat, success := new(big.Rat).SetString(tc.inputString)
 		assert.True(success)
-		coin, err := RatToCoin(rat)
-		assert.Nil(err)
+		rat := sdk.Rat{*bigRat}
+		coin, changeErr := RatToCoin(rat)
+		assert.Nil(changeErr)
 		assert.Equal(tc.expectCoin, coin)
 	}
 }

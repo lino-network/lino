@@ -10,12 +10,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = VoterDepositMsg{}
-var _ sdk.Msg = VoterWithdrawMsg{}
-var _ sdk.Msg = VoterRevokeMsg{}
-var _ sdk.Msg = DelegateMsg{}
-var _ sdk.Msg = DelegatorWithdrawMsg{}
-var _ sdk.Msg = RevokeDelegationMsg{}
+var _ types.Msg = VoterDepositMsg{}
+var _ types.Msg = VoterWithdrawMsg{}
+var _ types.Msg = VoterRevokeMsg{}
+var _ types.Msg = DelegateMsg{}
+var _ types.Msg = DelegatorWithdrawMsg{}
+var _ types.Msg = RevokeDelegationMsg{}
 
 type VoterDepositMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -77,15 +77,8 @@ func (msg VoterDepositMsg) String() string {
 	return fmt.Sprintf("VoterDepositMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
-func (msg VoterDepositMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterDepositMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterDepositMsg) GetSignBytes() []byte {
@@ -127,15 +120,8 @@ func (msg VoterWithdrawMsg) String() string {
 	return fmt.Sprintf("VoterWithdrawMsg{Username:%v, Amount:%v}", msg.Username, msg.Amount)
 }
 
-func (msg VoterWithdrawMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterWithdrawMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterWithdrawMsg) GetSignBytes() []byte {
@@ -173,15 +159,8 @@ func (msg VoterRevokeMsg) String() string {
 	return fmt.Sprintf("VoterRevokeMsg{Username:%v}", msg.Username)
 }
 
-func (msg VoterRevokeMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterRevokeMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterRevokeMsg) GetSignBytes() []byte {
@@ -228,15 +207,8 @@ func (msg DelegateMsg) String() string {
 	return fmt.Sprintf("DelegateMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
-func (msg DelegateMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DelegateMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DelegateMsg) GetSignBytes() []byte {
@@ -278,15 +250,8 @@ func (msg RevokeDelegationMsg) String() string {
 	return fmt.Sprintf("RevokeDelegationMsg{Delegator:%v, Voter:%v}", msg.Delegator, msg.Voter)
 }
 
-func (msg RevokeDelegationMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg RevokeDelegationMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg RevokeDelegationMsg) GetSignBytes() []byte {
@@ -331,15 +296,8 @@ func (msg DelegatorWithdrawMsg) String() string {
 	return fmt.Sprintf("DelegatorWithdrawMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
-func (msg DelegatorWithdrawMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DelegatorWithdrawMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {

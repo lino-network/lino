@@ -343,7 +343,7 @@ func TestHandleRegister(t *testing.T) {
 	for _, tc := range testCases {
 		result := handler(ctx, tc.registerMsg)
 		assert.Equal(t, tc.expectResult, result)
-		if result.Code == sdk.CodeOK {
+		if result.Code == sdk.ABCICodeOK {
 			assert.True(t, am.DoesAccountExist(ctx, tc.registerMsg.NewUser))
 			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
 			assert.Nil(t, err)

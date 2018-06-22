@@ -112,7 +112,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
@@ -274,7 +274,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime3,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        c0,
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
@@ -390,7 +390,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
@@ -441,7 +441,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
@@ -472,7 +472,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
-				StakeCoinInQueue: sdk.ZeroRat,
+				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
@@ -644,7 +644,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	checkBankKVByUsername(t, ctx, accKey, bank)
 	pendingStakeQueue := model.PendingStakeQueue{
 		LastUpdatedAt:    ctx.BlockHeader().Time,
-		StakeCoinInQueue: sdk.ZeroRat,
+		StakeCoinInQueue: sdk.ZeroRat(),
 		TotalCoin:        accParam.RegisterFee,
 		PendingStakeList: []model.PendingStake{model.PendingStake{
 			StartTime: ctx.BlockHeader().Time,
@@ -1114,7 +1114,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	pendingStakeQueue := model.PendingStakeQueue{
 		LastUpdatedAt:    ctx.BlockHeader().Time,
-		StakeCoinInQueue: sdk.ZeroRat,
+		StakeCoinInQueue: sdk.ZeroRat(),
 		TotalCoin:        accParam.RegisterFee,
 		PendingStakeList: []model.PendingStake{
 			model.PendingStake{

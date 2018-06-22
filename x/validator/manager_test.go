@@ -1,18 +1,18 @@
 package validator
 
 import (
-	"encoding/hex"
-	"sort"
+	"math/rand"
 	"strconv"
 	"testing"
 
-	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func TestByzantines(t *testing.T) {
@@ -43,7 +43,10 @@ func TestByzantines(t *testing.T) {
 	byzantineList := []int32{3, 8, 14}
 	byzantines := []abci.Evidence{}
 	for _, idx := range byzantineList {
-		byzantines = append(byzantines, abci.Evidence{PubKey: valKeys[idx].Bytes()})
+		byzantines = append(byzantines, abci.Evidence{Validator: abci.Validator{
+			Address: valKeys[idx].Address(),
+			PubKey:  tmtypes.TM2PB.PubKey(valKeys[idx]),
+			Power:   1000}})
 	}
 	_, err := valManager.FireIncompetentValidator(ctx, byzantines)
 	assert.Nil(t, err)
@@ -64,9 +67,6 @@ func TestAbsentValidator(t *testing.T) {
 	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
 
-	var addrs []string
-	addrToName := make(map[string]types.AccountKey)
-
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
 	// create 21 test users
@@ -80,37 +80,70 @@ func TestAbsentValidator(t *testing.T) {
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
-		addrStr := hex.EncodeToString(valKeys[i].Address())
 		name := "user" + strconv.Itoa(i)
-		addrs = append(addrs, addrStr)
-		addrToName[addrStr] = types.AccountKey(name)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
 
 	}
 
-	// absent list
-	absentList := []int32{0, 1, 10}
-	err := valManager.UpdateAbsentValidator(ctx, absentList)
+	// construct signing list
+	absentList := []int{0, 1, 10}
+	index := 0
+	signingList := []abci.SigningValidator{}
+	for i := 0; i < 21; i++ {
+		signingList = append(signingList, abci.SigningValidator{
+			Validator: abci.Validator{
+				Address: valKeys[i].Address(),
+				PubKey:  tmtypes.TM2PB.PubKey(valKeys[i]),
+				Power:   1000},
+			SignedLastBlock: true,
+		})
+		if index < len(absentList) && i == absentList[index] {
+			signingList[i].SignedLastBlock = false
+			index++
+		}
+	}
+	// shuffle the signing validator array
+	destSigningList := make([]abci.SigningValidator, len(signingList))
+	perm := rand.Perm(len(signingList))
+	for i, v := range perm {
+		destSigningList[v] = signingList[i]
+	}
+	err := valManager.UpdateSigningValidator(ctx, signingList)
 	assert.Nil(t, err)
 
-	sort.Strings(addrs)
-	for _, idx := range absentList {
-		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
-		assert.Equal(t, validator.AbsentCommit, int64(1))
+	index = 0
+	for i := 0; i < 21; i++ {
+		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(i)))
+		if index < len(absentList) && i == absentList[index] {
+			assert.Equal(t, int64(1), validator.AbsentCommit)
+			assert.Equal(t, int64(0), validator.ProducedBlocks)
+			index++
+		} else {
+			assert.Equal(t, int64(0), validator.AbsentCommit)
+			assert.Equal(t, int64(1), validator.ProducedBlocks)
+		}
 	}
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	// absent exceeds limitation
 	for i := int64(0); i < param.AbsentCommitLimitation; i++ {
-		err := valManager.UpdateAbsentValidator(ctx, absentList)
+		err := valManager.UpdateSigningValidator(ctx, signingList)
 		assert.Nil(t, err)
 	}
 
-	for _, idx := range absentList {
-		validator, _ := valManager.storage.GetValidator(ctx, addrToName[addrs[idx]])
-		assert.Equal(t, validator.AbsentCommit, int64(101))
+	index = 0
+	for i := 0; i < 21; i++ {
+		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(i)))
+		if index < len(absentList) && i == absentList[index] {
+			assert.Equal(t, int64(101), validator.AbsentCommit)
+			assert.Equal(t, int64(0), validator.ProducedBlocks)
+			index++
+		} else {
+			assert.Equal(t, int64(0), validator.AbsentCommit)
+			assert.Equal(t, int64(101), validator.ProducedBlocks)
+		}
 	}
 
 	_, err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{})
@@ -120,8 +153,8 @@ func TestAbsentValidator(t *testing.T) {
 	assert.Equal(t, 18, len(validatorList2.AllValidators))
 
 	for _, idx := range absentList {
-		assert.Equal(t, -1, FindAccountInList(addrToName[addrs[idx]], validatorList2.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(addrToName[addrs[idx]], validatorList2.AllValidators))
+		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.OncallValidators))
+		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.AllValidators))
 	}
 
 }
@@ -256,20 +289,22 @@ func TestGetUpdateValidatorList(t *testing.T) {
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	valManager.RegisterValidator(ctx, user1, valKey1.Bytes(), param.ValidatorMinCommitingDeposit, "")
-	valManager.RegisterValidator(ctx, user2, valKey2.Bytes(), param.ValidatorMinCommitingDeposit, "")
+	valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommitingDeposit, "")
+	valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommitingDeposit, "")
 
 	val1, _ := valManager.storage.GetValidator(ctx, user1)
 	val2, _ := valManager.storage.GetValidator(ctx, user2)
 
 	val1NoPower := abci.Validator{
-		Power:  0,
-		PubKey: val1.ABCIValidator.GetPubKey(),
+		Address: valKey1.Address(),
+		Power:   0,
+		PubKey:  val1.ABCIValidator.GetPubKey(),
 	}
 
 	val2NoPower := abci.Validator{
-		Power:  0,
-		PubKey: val2.ABCIValidator.GetPubKey(),
+		Address: valKey2.Address(),
+		Power:   0,
+		PubKey:  val2.ABCIValidator.GetPubKey(),
 	}
 
 	cases := []struct {
@@ -303,7 +338,7 @@ func TestIsLegalWithdraw(t *testing.T) {
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	valManager.InitGenesis(ctx)
 	valManager.RegisterValidator(
-		ctx, user1, crypto.GenPrivKeyEd25519().PubKey().Bytes(),
+		ctx, user1, crypto.GenPrivKeyEd25519().PubKey(),
 		param.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
 
 	cases := []struct {
