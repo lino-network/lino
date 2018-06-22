@@ -54,7 +54,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 			pubKey, postPriv.PubKey(), transactionPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcastBasedOnKeyBase(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

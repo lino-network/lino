@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -52,7 +53,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
+	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil, log.NewNopLogger())
 }
 
 // helper function to create an account for testing purpose

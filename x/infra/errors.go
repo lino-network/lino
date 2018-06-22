@@ -9,13 +9,13 @@ import (
 
 // Error constructors
 func ErrProviderNotFound() sdk.Error {
-	return sdk.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Provider not found"))
+	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Provider not found"))
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return sdk.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
+	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
 }
 
 func ErrInvalidUsage() sdk.Error {
-	return sdk.NewError(types.CodeInfraInvalidMsg, fmt.Sprintf("Invalid Usage"))
+	return types.NewError(types.CodeInfraInvalidMsg, fmt.Sprintf("Invalid Usage"))
 }

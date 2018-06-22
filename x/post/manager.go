@@ -1,8 +1,6 @@
 package post
 
 import (
-	"math/big"
-
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/post/model"
@@ -26,7 +24,7 @@ func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return sdk.ZeroRat, ErrGetRedistributionSplitRate(permLink).TraceCause(err, "")
+		return sdk.ZeroRat(), ErrGetRedistributionSplitRate(permLink)
 	}
 	return postMeta.RedistributionSplitRate, nil
 }
@@ -34,7 +32,7 @@ func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types
 func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.PermLink) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return 0, types.NewCoinFromInt64(0), ErrGetCreatedTime(permLink).TraceCause(err, "")
+		return 0, types.NewCoinFromInt64(0), ErrGetCreatedTime(permLink)
 	}
 	return postMeta.CreatedAt, postMeta.TotalReward, nil
 }
@@ -49,7 +47,7 @@ func (pm PostManager) GetSourcePost(
 	ctx sdk.Context, permLink types.PermLink) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
 	if err != nil {
-		return types.AccountKey(""), "", ErrGetRootSourcePost(permLink).TraceCause(err, "")
+		return types.AccountKey(""), "", ErrGetRootSourcePost(permLink)
 	}
 
 	// check source post's source, that's the root
@@ -68,7 +66,7 @@ func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInf
 	rootAuthor, rootPostID, err :=
 		pm.GetSourcePost(ctx, types.GetPermLink(postInfo.SourceAuthor, postInfo.SourcePostID))
 	if err != nil {
-		return ErrSetRootSourcePost(permLink).TraceCause(err, "")
+		return ErrSetRootSourcePost(permLink)
 	}
 	if rootAuthor != types.AccountKey("") && rootPostID != "" {
 		postInfo.SourceAuthor = rootAuthor
@@ -103,7 +101,7 @@ func (pm PostManager) CreatePost(
 		return ErrCreatePostSourceInvalid(permLink)
 	}
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
-		return ErrCreatePost(permLink).TraceCause(err, "")
+		return ErrCreatePost(permLink)
 	}
 	postMeta := &model.PostMeta{
 		CreatedAt:               ctx.BlockHeader().Time,
@@ -114,7 +112,7 @@ func (pm PostManager) CreatePost(
 		RedistributionSplitRate: redistributionSplitRate.Round(types.PrecisionFactor),
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrCreatePost(permLink).TraceCause(err, "")
+		return ErrCreatePost(permLink)
 	}
 	return nil
 }
@@ -151,7 +149,7 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, weight int64) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return ErrAddOrUpdateLikeToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateLikeToPost(permLink)
 	}
 	like, _ := pm.postStorage.GetPostLike(ctx, permLink, user)
 	// Revoke privous
@@ -175,10 +173,10 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	}
 	postMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostLike(ctx, permLink, like); err != nil {
-		return ErrAddOrUpdateLikeToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateLikeToPost(permLink)
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrAddOrUpdateLikeToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateLikeToPost(permLink)
 	}
 	return nil
 }
@@ -188,7 +186,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	ctx sdk.Context, permLink types.PermLink, user types.AccountKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateViewToPost(permLink)
 	}
 	view, _ := pm.postStorage.GetPostView(ctx, permLink, user)
 	// Revoke previous
@@ -199,10 +197,10 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	view.Times += 1
 	view.LastViewAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostView(ctx, permLink, view); err != nil {
-		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateViewToPost(permLink)
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrAddOrUpdateViewToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateViewToPost(permLink)
 	}
 	return nil
 }
@@ -212,7 +210,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateReportOrUpvoteToPost(permLink)
 	}
 	postMeta.LastActivityAt = ctx.BlockHeader().Time
 
@@ -232,10 +230,10 @@ func (pm PostManager) ReportOrUpvoteToPost(
 		reportOrUpvote.IsReport = false
 	}
 	if err := pm.postStorage.SetPostReportOrUpvote(ctx, permLink, reportOrUpvote); err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateReportOrUpvoteToPost(permLink)
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permLink).TraceCause(err, "")
+		return ErrAddOrUpdateReportOrUpvoteToPost(permLink)
 	}
 	return nil
 }
@@ -281,7 +279,7 @@ func (pm PostManager) AddDonation(
 	amount types.Coin, donationType types.DonationType) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return ErrAddDonation(permLink).TraceCause(err, "")
+		return ErrAddDonation(permLink)
 	}
 	donation := model.Donation{
 		Amount:       amount,
@@ -294,12 +292,12 @@ func (pm PostManager) AddDonation(
 	}
 	donations.DonationList = append(donations.DonationList, donation)
 	if err := pm.postStorage.SetPostDonations(ctx, permLink, donations); err != nil {
-		return ErrAddDonation(permLink).TraceCause(err, "")
+		return ErrAddDonation(permLink)
 	}
 	postMeta.TotalReward = postMeta.TotalReward.Plus(donation.Amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrAddDonation(permLink).TraceCause(err, "")
+		return ErrAddDonation(permLink)
 	}
 	return nil
 }
@@ -308,22 +306,22 @@ func (pm PostManager) AddDonation(
 func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return ErrDeletePost(permLink).TraceCause(err, "")
+		return ErrDeletePost(permLink)
 	}
 	postMeta.IsDeleted = true
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
-		return ErrAddDonation(permLink).TraceCause(err, "")
+		return ErrAddDonation(permLink)
 	}
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
 	if err != nil {
-		return ErrDeletePost(permLink).TraceCause(err, "")
+		return ErrDeletePost(permLink)
 	}
 	postInfo.Title = ""
 	postInfo.Content = ""
 	postInfo.Links = nil
 
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
-		return ErrDeletePost(permLink).TraceCause(err, "")
+		return ErrDeletePost(permLink)
 	}
 	return nil
 }
@@ -331,38 +329,37 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.E
 func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return false, ErrDeletePost(permLink).TraceCause(err, "")
+		return false, ErrDeletePost(permLink)
 	}
 	return postMeta.IsDeleted, nil
 }
 
 // get penalty score from report and upvote
-func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (*big.Rat, sdk.Error) {
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
-		return nil, ErrGetPenaltyScore(permLink).TraceCause(err, "")
+		return sdk.ZeroRat(), ErrGetPenaltyScore(permLink)
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(sourceAuthor, sourcePostID))
 		if err != nil {
-			return nil, err
+			return sdk.ZeroRat(), err
 		}
 		return paneltyScore, nil
 	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
-		return nil, ErrGetPenaltyScore(permLink).TraceCause(err, "")
+		return sdk.ZeroRat(), ErrGetPenaltyScore(permLink)
 	}
 	if postMeta.TotalReportStake.IsZero() {
-		return big.NewRat(0, 1), nil
+		return sdk.ZeroRat(), nil
 	}
 	if postMeta.TotalUpvoteStake.IsZero() {
-		return big.NewRat(1, 1), nil
+		return sdk.OneRat(), nil
 	}
-	penaltyScore := new(big.Rat)
-	penaltyScore.Quo(postMeta.TotalReportStake.ToRat(), postMeta.TotalUpvoteStake.ToRat())
-	if penaltyScore.Cmp(big.NewRat(1, 1)) > 0 {
-		return big.NewRat(1, 1), nil
+	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
+	if penaltyScore.GT(sdk.OneRat()) {
+		return sdk.OneRat(), nil
 	}
 	return penaltyScore, nil
 }

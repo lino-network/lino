@@ -7,12 +7,13 @@ import (
 
 // Validator is basic structure records all validator information
 type Validator struct {
-	ABCIValidator  abci.Validator
-	Username       types.AccountKey `json:"username"`
-	Deposit        types.Coin       `json:"deposit"`
-	AbsentCommit   int64            `json:"absent_commit"`
-	ProducedBlocks int64            `json:"produced_blocks"`
-	Link           string           `json:"link"`
+	ABCIValidator   abci.Validator
+	Username        types.AccountKey `json:"username"`
+	Deposit         types.Coin       `json:"deposit"`
+	AbsentCommit    int64            `json:"absent_commit"`
+	ByzantineCommit int64            `json:"byzantine_commit"`
+	ProducedBlocks  int64            `json:"produced_blocks"`
+	Link            string           `json:"link"`
 }
 
 // Validator list

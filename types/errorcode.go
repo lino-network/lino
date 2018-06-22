@@ -8,7 +8,9 @@ const (
 	// ABCI Response Codes
 	// Base SDK reserves 0 ~ 99.
 	// Coin errors reserve 100 ~ 199.
-	// Lino authentication errors reserve 200 ~ 299.
+	// Lino app errors reserve 200 ~ 299.
+	CodeGenesisFailed sdk.CodeType = 200
+
 	// Lino register handler errors reserve 300 ~ 309.
 	CodeInvalidUsername   sdk.CodeType = 301
 	CodeAccRegisterFailed sdk.CodeType = 302

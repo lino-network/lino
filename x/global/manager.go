@@ -2,12 +2,11 @@ package global
 
 import (
 	"math"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -48,7 +47,7 @@ func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, eve
 	}
 	eventList.Events = append(eventList.Events, event)
 	if err := gm.storage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
-		return ErrGlobalManagerRegisterEventAtTime(unixTime).TraceCause(err, "")
+		return ErrGlobalManagerRegisterEventAtTime(unixTime)
 	}
 	return nil
 }
@@ -140,8 +139,8 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(
 	if err != nil {
 		return err
 	}
-	resRat := new(big.Rat).Mul(pool.ContentCreatorInflationPool.ToRat(),
-		big.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
+	resRat := pool.ContentCreatorInflationPool.ToRat().Mul(
+		sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return err
@@ -177,38 +176,35 @@ func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error 
 		return err
 	}
 
-	infraInflationCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		globalMeta.TotalLinoCoin.ToRat(),
-		(new(big.Rat).Mul(
-			growthRate.GetRat(),
-			allocation.InfraAllocation.GetRat()))))
+	infraInflationCoin, err :=
+		types.RatToCoin(
+			globalMeta.TotalLinoCoin.ToRat().Mul(
+				growthRate.Mul(allocation.InfraAllocation)))
 	if err != nil {
 		return err
 	}
 
-	contentCreatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		globalMeta.TotalLinoCoin.ToRat(),
-		(new(big.Rat).Mul(
-			growthRate.GetRat(),
-			allocation.ContentCreatorAllocation.GetRat()))))
+	contentCreatorCoin, err :=
+		types.RatToCoin(
+			globalMeta.TotalLinoCoin.ToRat().Mul(
+				growthRate.Mul(
+					allocation.ContentCreatorAllocation)))
 	if err != nil {
 		return err
 	}
 
-	developerCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		globalMeta.TotalLinoCoin.ToRat(),
-		(new(big.Rat).Mul(
-			growthRate.GetRat(),
-			allocation.DeveloperAllocation.GetRat()))))
+	developerCoin, err := types.RatToCoin(
+		globalMeta.TotalLinoCoin.ToRat().Mul(
+			growthRate.Mul(
+				allocation.DeveloperAllocation)))
 	if err != nil {
 		return err
 	}
 
-	validatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		globalMeta.TotalLinoCoin.ToRat(),
-		(new(big.Rat).Mul(
-			growthRate.GetRat(),
-			allocation.ValidatorAllocation.GetRat()))))
+	validatorCoin, err := types.RatToCoin(
+		globalMeta.TotalLinoCoin.ToRat().Mul(
+			growthRate.Mul(
+				allocation.ValidatorAllocation)))
 	if err != nil {
 		return err
 	}
@@ -230,7 +226,7 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	var growthRate sdk.Rat
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
-		return sdk.ZeroRat, err
+		return sdk.ZeroRat(), err
 	}
 	// if last year cumulative consumption is zero, we use the same growth rate as the last year
 	if globalMeta.LastYearCumulativeConsumption.IsZero() {
@@ -239,13 +235,9 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 		// growthRate = (consumption this year - consumption last year) / consumption last year
 		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
 		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
-		consumptionIncrement := new(big.Rat).Sub(thisYearConsumptionRat, lastYearConsumptionRat)
+		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 
-		growthRateStr := new(big.Rat).Quo(consumptionIncrement, lastYearConsumptionRat).FloatString(3)
-		growthRate, err = sdk.NewRatFromDecimal(growthRateStr)
-		if err != nil {
-			return sdk.ZeroRat, err
-		}
+		growthRate := consumptionIncrement.Quo(lastYearConsumptionRat)
 		if growthRate.GT(globalMeta.Ceiling) {
 			growthRate = globalMeta.Ceiling
 		} else if growthRate.LT(globalMeta.Floor) {
@@ -256,39 +248,39 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
 	globalMeta.GrowthRate = growthRate.Round(types.PrecisionFactor)
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return sdk.ZeroRat, err
+		return sdk.ZeroRat(), err
 	}
 	return growthRate, nil
 }
 
 // after 7 days, one consumption needs to claim its reward from consumption reward pool
 func (gm GlobalManager) GetRewardAndPopFromWindow(
-	ctx sdk.Context, evaluate types.Coin, penaltyScore *big.Rat) (types.Coin, sdk.Error) {
+	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
 	if evaluate.IsZero() {
 		return types.NewCoinFromInt64(0), nil
 	}
 
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
 	}
 
 	// consumptionRatio = this consumption * penalty score) / (total consumption in 7 days window)
-	consumptionRatio := new(big.Rat).Quo(
-		new(big.Rat).Mul(evaluate.ToRat(), new(big.Rat).Sub(big.NewRat(1, 1), penaltyScore)),
-		consumptionMeta.ConsumptionWindow.ToRat())
+	consumptionRatio :=
+		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
+			consumptionMeta.ConsumptionWindow.ToRat())
 	// reward = (consumption reward pool) * (consumptionRatio)
 	reward, err := types.RatToCoin(
-		new(big.Rat).Mul(consumptionMeta.ConsumptionRewardPool.ToRat(), consumptionRatio))
+		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
 	}
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow().TraceCause(err, "")
+		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
 	}
 	return reward, nil
 }
@@ -328,9 +320,9 @@ func (gm GlobalManager) GetValidatorHourlyInflation(
 		return types.NewCoinFromInt64(0), err
 	}
 
-	resRat := new(big.Rat).Mul(
-		pool.ValidatorInflationPool.ToRat(),
-		big.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
+	resRat :=
+		pool.ValidatorInflationPool.ToRat().Mul(
+			sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -353,9 +345,9 @@ func (gm GlobalManager) GetInfraMonthlyInflation(
 		return types.NewCoinFromInt64(0), err
 	}
 
-	resRat := new(big.Rat).Mul(
-		pool.InfraInflationPool.ToRat(),
-		big.NewRat(1, 12-pastMonthMinusOneThisYear))
+	resRat :=
+		pool.InfraInflationPool.ToRat().Mul(
+			sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -378,9 +370,9 @@ func (gm GlobalManager) GetDeveloperMonthlyInflation(
 		return types.NewCoinFromInt64(0), err
 	}
 
-	resRat := new(big.Rat).Mul(
-		pool.DeveloperInflationPool.ToRat(),
-		big.NewRat(1, 12-pastMonthMinusOneThisYear))
+	resRat :=
+		pool.DeveloperInflationPool.ToRat().Mul(
+			sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
 	resCoin, err := types.RatToCoin(resRat)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -415,7 +407,7 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Erro
 		return err
 	}
 	if ctx.BlockHeader().Time == lastBlockTime {
-		tps.CurrentTPS = sdk.ZeroRat
+		tps.CurrentTPS = sdk.ZeroRat()
 	} else {
 		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
 	}
@@ -432,7 +424,7 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Erro
 func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	tps, err := gm.storage.GetTPS(ctx)
 	if err != nil {
-		return sdk.ZeroRat, err
+		return sdk.ZeroRat(), err
 	}
 	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
 }
@@ -446,7 +438,7 @@ func (gm GlobalManager) EvaluateConsumption(
 	}
 	// evaluate result coin^0.8 * total consumption adjustment *
 	// post time adjustment * consumption times adjustment
-	expPara, _ := paras.AmountOfConsumptionExponent.GetRat().Float64()
+	expPara, _ := paras.AmountOfConsumptionExponent.Float64()
 	return types.NewCoinFromInt64(
 		int64(math.Pow(float64(coin.ToInt64()), expPara) *
 			PostTotalConsumptionAdjustment(totalReward, paras) *
