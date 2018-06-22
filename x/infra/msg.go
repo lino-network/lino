@@ -2,7 +2,6 @@ package infra
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +49,7 @@ func (msg ProviderReportMsg) GetPermission() types.Permission {
 }
 
 func (msg ProviderReportMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
