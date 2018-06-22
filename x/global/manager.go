@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -154,7 +155,6 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(
 	}
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(resCoin)
-
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}
@@ -215,6 +215,7 @@ func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error 
 		DeveloperInflationPool:      developerCoin,
 		ValidatorInflationPool:      validatorCoin,
 	}
+	fmt.Println(inflationPool, growthRate)
 	if err := gm.storage.SetInflationPool(ctx, inflationPool); err != nil {
 		return err
 	}
@@ -237,7 +238,7 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 
-		growthRate := consumptionIncrement.Quo(lastYearConsumptionRat)
+		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat)
 		if growthRate.GT(globalMeta.Ceiling) {
 			growthRate = globalMeta.Ceiling
 		} else if growthRate.LT(globalMeta.Floor) {
@@ -246,7 +247,8 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
-	globalMeta.GrowthRate = growthRate.Round(types.PrecisionFactor)
+	growthRate = growthRate.Round(types.PrecisionFactor)
+	globalMeta.GrowthRate = growthRate
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return sdk.ZeroRat(), err
 	}

@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = DeveloperRegisterMsg{}
-var _ sdk.Msg = DeveloperRevokeMsg{}
-var _ sdk.Msg = GrantDeveloperMsg{}
+var _ types.Msg = DeveloperRegisterMsg{}
+var _ types.Msg = DeveloperRevokeMsg{}
+var _ types.Msg = GrantDeveloperMsg{}
 
 type DeveloperRegisterMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -57,15 +57,8 @@ func (msg DeveloperRegisterMsg) String() string {
 	return fmt.Sprintf("DeveloperRegisterMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
-func (msg DeveloperRegisterMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DeveloperRegisterMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
@@ -101,15 +94,8 @@ func (msg DeveloperRevokeMsg) String() string {
 	return fmt.Sprintf("DeveloperRevokeMsg{Username:%v}", msg.Username)
 }
 
-func (msg DeveloperRevokeMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DeveloperRevokeMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
@@ -159,15 +145,8 @@ func (msg GrantDeveloperMsg) String() string {
 		msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel)
 }
 
-func (msg GrantDeveloperMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg GrantDeveloperMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg GrantDeveloperMsg) GetSignBytes() []byte {

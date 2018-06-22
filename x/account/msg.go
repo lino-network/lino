@@ -12,13 +12,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = FollowMsg{}
-var _ sdk.Msg = UnfollowMsg{}
-var _ sdk.Msg = ClaimMsg{}
-var _ sdk.Msg = TransferMsg{}
-var _ sdk.Msg = RecoverMsg{}
-var _ sdk.Msg = RegisterMsg{}
-var _ sdk.Msg = UpdateAccountMsg{}
+var _ types.Msg = FollowMsg{}
+var _ types.Msg = UnfollowMsg{}
+var _ types.Msg = ClaimMsg{}
+var _ types.Msg = TransferMsg{}
+var _ types.Msg = RecoverMsg{}
+var _ types.Msg = RegisterMsg{}
+var _ types.Msg = UpdateAccountMsg{}
 
 // RegisterMsg - bind username with public key, need to be referred by others (pay for it).
 type RegisterMsg struct {
@@ -89,8 +89,9 @@ func (msg FollowMsg) String() string {
 	return fmt.Sprintf("FollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
 }
 
-func (msg FollowMsg) Get(key interface{}) (value interface{}) {
-	return nil
+// Implements Msg.
+func (msg FollowMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 func (msg FollowMsg) GetSignBytes() []byte {
@@ -129,8 +130,9 @@ func (msg UnfollowMsg) String() string {
 	return fmt.Sprintf("UnfollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
 }
 
-func (msg UnfollowMsg) Get(key interface{}) (value interface{}) {
-	return nil
+// Implements Msg.
+func (msg UnfollowMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 func (msg UnfollowMsg) GetSignBytes() []byte {
@@ -166,8 +168,8 @@ func (msg ClaimMsg) String() string {
 	return fmt.Sprintf("ClaimMsg{Username:%v}", msg.Username)
 }
 
-func (msg ClaimMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg ClaimMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 func (msg ClaimMsg) GetSignBytes() []byte {
@@ -217,15 +219,8 @@ func (msg TransferMsg) String() string {
 		msg.Sender, msg.Receiver, msg.Amount, msg.Memo)
 }
 
-func (msg TransferMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg TransferMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg TransferMsg) GetSignBytes() []byte {
@@ -267,15 +262,8 @@ func (msg RecoverMsg) String() string {
 		msg.Username, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
-func (msg RecoverMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.MasterPermission
-	}
-	return nil
+func (msg RecoverMsg) GetPermission() types.Permission {
+	return types.MasterPermission
 }
 
 func (msg RecoverMsg) GetSignBytes() []byte {
@@ -341,25 +329,16 @@ func (msg RegisterMsg) String() string {
 }
 
 // Implements Msg.
-func (msg RegisterMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	// the permission will not be checked at auth
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
-}
-
-// Implements Msg.
 func (msg RegisterMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
 	return b
+}
+
+func (msg RegisterMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 // Implements Msg.
@@ -397,16 +376,8 @@ func (msg UpdateAccountMsg) String() string {
 }
 
 // Implements Msg.
-func (msg UpdateAccountMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	// the permission will not be checked at auth
-	if keyStr == types.PermissionLevel {
-		return types.PostPermission
-	}
-	return nil
+func (msg UpdateAccountMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 // Implements Msg.

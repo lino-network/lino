@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -20,7 +21,7 @@ func setup(t *testing.T) (sdk.Context, VoteStorage) {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
+	ctx := sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 	vs := NewVoteStorage(TestKVStoreKey)
 	return ctx, vs
 }

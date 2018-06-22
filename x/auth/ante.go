@@ -9,10 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	acc "github.com/lino-network/lino/x/account"
-	dev "github.com/lino-network/lino/x/developer"
-	post "github.com/lino-network/lino/x/post"
-	val "github.com/lino-network/lino/x/validator"
-	vote "github.com/lino-network/lino/x/vote"
 )
 
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
@@ -30,7 +26,11 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				sdk.ErrUnauthorized("no signers").Result(),
 				true
 		}
-		msg := tx.GetMsg()
+		sdkMsg := tx.GetMsg()
+		msg, ok := sdkMsg.(types.Msg)
+		if !ok {
+			return ctx, sdk.ErrInternal("unrecognize msg").Result(), true
+		}
 
 		// Assert that number of signatures is correct.
 		var signerAddrs = msg.GetSigners()
@@ -44,17 +44,14 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		accNums := make([]int64, len(signerAddrs))
-		for i := 0; i < len(signerAddrs); i++ {
-			accNums[i] = sigs[i].AccountNumber
-		}
+		// for i := 0; i < len(signerAddrs); i++ {
+		// 	accNums[i] = sigs[i].AccountNumber
+		// }
 		fee := stdTx.Fee
-		signBytes := auth.StdSignBytes(ctx.ChainID(), accNums, sequences, fee, msg)
+		signBytes := auth.StdSignBytes(ctx.ChainID(), []int64{}, sequences, fee, msg)
+		// fmt.Println("=========== auth", string(signBytes))
 
-		permission, err := getPermissionLevel(msg)
-		if err != nil {
-			return ctx, err.Result(), true
-		}
+		permission := msg.GetPermission()
 		signers := msg.GetSigners()
 		if len(sigs) < len(signers) {
 			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
@@ -94,18 +91,5 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 
 		// TODO(Lino): verify application signature.
 		return ctx, sdk.Result{}, false
-	}
-}
-
-func getPermissionLevel(msg sdk.Msg) (types.Permission, sdk.Error) {
-	switch msg.(type) {
-	case acc.RecoverMsg:
-		return types.MasterPermission, nil
-	case acc.TransferMsg, acc.RegisterMsg, post.DonateMsg, dev.DeveloperRegisterMsg,
-		dev.DeveloperRevokeMsg, dev.GrantDeveloperMsg, vote.VoterDepositMsg, vote.VoterRevokeMsg,
-		vote.DelegateMsg, vote.DelegatorWithdrawMsg, val.ValidatorWithdrawMsg, val.ValidatorDepositMsg, val.ValidatorRevokeMsg:
-		return types.TransactionPermission, nil
-	default:
-		return types.PostPermission, nil
 	}
 }

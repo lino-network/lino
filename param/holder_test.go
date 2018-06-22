@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tmlibs/log"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
@@ -21,7 +23,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }
 
 func TestGlobalAllocationParam(t *testing.T) {

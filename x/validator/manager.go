@@ -161,7 +161,9 @@ func (vm ValidatorManager) UpdateSigningValidator(
 			validator.AbsentCommit++
 		} else {
 			validator.ProducedBlocks++
-			validator.AbsentCommit--
+			if validator.AbsentCommit > 0 {
+				validator.AbsentCommit--
+			}
 		}
 		if err := vm.storage.SetValidator(ctx, curValidator, validator); err != nil {
 			panic(err)
@@ -297,7 +299,7 @@ func (vm ValidatorManager) RegisterValidator(
 		if err != nil {
 			return err
 		}
-		if reflect.DeepEqual(validator.ABCIValidator.PubKey, pubKey) {
+		if reflect.DeepEqual(validator.ABCIValidator.PubKey, tmtypes.TM2PB.PubKey(pubKey)) {
 			return ErrPubKeyHasBeenRegistered()
 		}
 	}

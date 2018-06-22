@@ -25,7 +25,10 @@ func TestChangeParamProposal(t *testing.T) {
 	proposalManager.InitGenesis(ctx)
 
 	allocation := param.GlobalAllocationParam{
-		ContentCreatorAllocation: sdk.Rat{Denom: 10, Num: 5},
+		DeveloperAllocation:      sdk.ZeroRat(),
+		ValidatorAllocation:      sdk.ZeroRat(),
+		InfraAllocation:          sdk.ZeroRat(),
+		ContentCreatorAllocation: sdk.NewRat(5, 10),
 	}
 	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
@@ -272,14 +275,15 @@ func TestVoteProposalBasic(t *testing.T) {
 	decideHr := int64(100)
 	proposalID1, _ := proposalManager.AddProposal(ctx, user1, proposal1, decideHr)
 
-	testCases := map[string]struct {
+	testCases := []struct {
+		testName            string
 		msg                 VoteProposalMsg
 		wantRes             sdk.Result
 		wantOK              bool
 		wantOngoingProposal []types.ProposalKey
 		wantProposal        model.Proposal
 	}{
-		"Must become a voter before voting": {
+		{testName: "Must become a voter before voting",
 			msg: VoteProposalMsg{
 				Voter:      user2,
 				ProposalID: proposalID1,
@@ -299,7 +303,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permLink, censorshipReason},
 		},
-		"Vote on a non-exist proposal should fail": {
+		{testName: "Vote on a non-exist proposal should fail",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: types.ProposalKey(100),
@@ -318,7 +322,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permLink, censorshipReason},
 		},
-		"vote successfully": {
+		{testName: "vote successfully",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: proposalID1,
@@ -338,7 +342,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permLink, censorshipReason},
 		},
-		"user can't double-vote": {
+		{testName: "user can't double-vote",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: proposalID1,

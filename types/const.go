@@ -25,10 +25,6 @@ const (
 	DeveloperRouterName = "developer"
 	ProposalRouterName  = "proposal"
 
-	// Msg key
-	IsRegister      = "is_register"
-	PermissionLevel = "permission_level"
-
 	// Different permission level for msg
 	PostPermission        = Permission(0)
 	TransactionPermission = Permission(1)

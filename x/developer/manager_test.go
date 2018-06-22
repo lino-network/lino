@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,19 +34,19 @@ func TestReportConsumption(t *testing.T) {
 	cases := map[string]struct {
 		Developer1Consumption             types.Coin
 		Developer2Consumption             types.Coin
-		ExpectDeveloper1ConsumptionWeight *big.Rat
-		ExpectDeveloper2ConsumptionWeight *big.Rat
+		ExpectDeveloper1ConsumptionWeight sdk.Rat
+		ExpectDeveloper2ConsumptionWeight sdk.Rat
 	}{
 		"test normal consumption": {
 			types.NewCoinFromInt64(2500 * types.Decimals), types.NewCoinFromInt64(7500 * types.Decimals),
-			big.NewRat(1, 4), big.NewRat(3, 4),
+			sdk.NewRat(1, 4), sdk.NewRat(3, 4),
 		},
 		"test empty consumption": {
-			types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), big.NewRat(1, 2), big.NewRat(1, 2),
+			types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), sdk.NewRat(1, 2), sdk.NewRat(1, 2),
 		},
 		"issue https://github.com/lino-network/lino/issues/150": {
 			types.NewCoinFromInt64(3333333), types.NewCoinFromInt64(4444444),
-			big.NewRat(3, 7), big.NewRat(4, 7),
+			sdk.NewRat(3, 7), sdk.NewRat(4, 7),
 		},
 	}
 	for testName, cs := range cases {
@@ -53,7 +54,7 @@ func TestReportConsumption(t *testing.T) {
 		dm.ReportConsumption(ctx, "developer2", cs.Developer2Consumption)
 
 		p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-		if cs.ExpectDeveloper1ConsumptionWeight.Cmp(p1) != 0 {
+		if !cs.ExpectDeveloper1ConsumptionWeight.Equal(p1) {
 			t.Errorf(
 				"%s: expect developer1 usage weight %v, got %v",
 				testName, cs.ExpectDeveloper1ConsumptionWeight, p1)
@@ -61,7 +62,7 @@ func TestReportConsumption(t *testing.T) {
 		}
 
 		p2, _ := dm.GetConsumptionWeight(ctx, "developer2")
-		if cs.ExpectDeveloper2ConsumptionWeight.Cmp(p2) != 0 {
+		if !cs.ExpectDeveloper2ConsumptionWeight.Equal(p2) {
 			t.Errorf(
 				"%s: expect developer2 usage weight %v, got %v",
 				testName, cs.ExpectDeveloper2ConsumptionWeight, p2)

@@ -9,11 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 const (
@@ -39,7 +40,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }
 
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
@@ -68,16 +69,16 @@ func TestTPS(t *testing.T) {
 		ExpectMaxTPS        sdk.Rat
 		ExpectCapacityRatio sdk.Rat
 	}{
-		{BaseTime: baseTime, NextTime: baseTime, NumOfTx: 0, ExpectCurrentTPS: sdk.ZeroRat,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.ZeroRat},
-		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2, ExpectCurrentTPS: sdk.OneRat,
+		{BaseTime: baseTime, NextTime: baseTime, NumOfTx: 0, ExpectCurrentTPS: sdk.ZeroRat(),
+			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.ZeroRat()},
+		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2, ExpectCurrentTPS: sdk.OneRat(),
 			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.NewRat(1, 1000)},
 		{BaseTime: baseTime, NextTime: baseTime + 1, NumOfTx: 1000, ExpectCurrentTPS: initMaxTPS,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat},
+			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat()},
 		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2000, ExpectCurrentTPS: initMaxTPS,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat},
+			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat()},
 		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 3000, ExpectCurrentTPS: sdk.NewRat(1500),
-			ExpectMaxTPS: sdk.NewRat(1500), ExpectCapacityRatio: sdk.OneRat},
+			ExpectMaxTPS: sdk.NewRat(1500), ExpectCapacityRatio: sdk.OneRat()},
 		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2000, ExpectCurrentTPS: sdk.NewRat(1000),
 			ExpectMaxTPS: sdk.NewRat(1500), ExpectCapacityRatio: sdk.NewRat(2, 3)},
 	}
@@ -178,31 +179,31 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 	ctx, gm := setupTest(t)
 	cases := []struct {
 		evaluate                    types.Coin
-		penaltyScore                *big.Rat
+		penaltyScore                sdk.Rat
 		expectReward                types.Coin
 		initConsumptionRewardPool   types.Coin
 		initConsumptionWindow       types.Coin
 		expectConsumptionRewardPool types.Coin
 		expectConsumptionWindow     types.Coin
 	}{
-		{types.NewCoinFromInt64(1), big.NewRat(0, 1), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.ZeroRat(), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), big.NewRat(1, 1000), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.NewRat(1, 1000), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), big.NewRat(6, 1000), types.NewCoinFromInt64(99), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.NewRat(6, 1000), types.NewCoinFromInt64(99), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(901), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), big.NewRat(1, 10), types.NewCoinFromInt64(90), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.NewRat(1, 10), types.NewCoinFromInt64(90), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(910), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), big.NewRat(5, 10), types.NewCoinFromInt64(50), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.NewRat(5, 10), types.NewCoinFromInt64(50), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(950), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), big.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(1), sdk.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(0), big.NewRat(0, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(0), sdk.ZeroRat(), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
-		{types.NewCoinFromInt64(0), big.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
+		{types.NewCoinFromInt64(0), sdk.OneRat(), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
 			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
 		// issue https://github.com/lino-network/lino/issues/150
-		{types.NewCoinFromInt64(77777777777777), big.NewRat(0, 1), types.NewCoinFromInt64(23333333),
+		{types.NewCoinFromInt64(77777777777777), sdk.ZeroRat(), types.NewCoinFromInt64(23333333),
 			types.NewCoinFromInt64(100000000), types.NewCoinFromInt64(333333333333333),
 			types.NewCoinFromInt64(76666667), types.NewCoinFromInt64(255555555555556)},
 	}
@@ -370,20 +371,20 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 		assert.Nil(t, err)
 		expectDeveloperInflation, _ := types.RatToCoin(
-			new(big.Rat).Mul(allocation.DeveloperAllocation.GetRat(),
-				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+			allocation.DeveloperAllocation.Mul(
+				totalLino.ToRat().Mul(cs.expectGrowthRate)))
 		assert.Equal(t, expectDeveloperInflation, pool.DeveloperInflationPool)
 		expectContentCreatorInflation, _ := types.RatToCoin(
-			new(big.Rat).Mul(allocation.ContentCreatorAllocation.GetRat(),
-				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+			allocation.ContentCreatorAllocation.Mul(
+				totalLino.ToRat().Mul(cs.expectGrowthRate)))
 		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
 		expectInfraInflation, _ := types.RatToCoin(
-			new(big.Rat).Mul(allocation.InfraAllocation.GetRat(),
-				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+			allocation.InfraAllocation.Mul(
+				totalLino.ToRat().Mul(cs.expectGrowthRate)))
 		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
 		expectValidatorInflation, _ := types.RatToCoin(
-			new(big.Rat).Mul(allocation.ValidatorAllocation.GetRat(),
-				new(big.Rat).Mul(totalLino.ToRat(), cs.expectGrowthRate.GetRat())))
+			allocation.ValidatorAllocation.Mul(
+				totalLino.ToRat().Mul(cs.expectGrowthRate)))
 		assert.Equal(t, expectValidatorInflation, pool.ValidatorInflationPool)
 		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
 		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
@@ -475,7 +476,7 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 		assert.Nil(t, err)
 		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i))
 		assert.Nil(t, err)
-		hourlyCoinRat := new(big.Rat).Mul(pool.ValidatorInflationPool.ToRat(), big.NewRat(1, int64(types.HoursPerYear-i)))
+		hourlyCoinRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))
 		hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
 		assert.Nil(t, err)
 
@@ -503,9 +504,9 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 			assert.Nil(t, err)
 			coin, err := gm.GetInfraMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
 			assert.Nil(t, err)
-			hourlyCoinRat := new(big.Rat).Mul(
-				pool.InfraInflationPool.ToRat(),
-				big.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
+			hourlyCoinRat :=
+				pool.InfraInflationPool.ToRat().Mul(
+					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
 			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
 			assert.Nil(t, err)
 			assert.Equal(t, coin, hourlyCoin)
@@ -533,9 +534,9 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 			assert.Nil(t, err)
 			coin, err := gm.GetDeveloperMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
 			assert.Nil(t, err)
-			hourlyCoinRat := new(big.Rat).Mul(
-				pool.DeveloperInflationPool.ToRat(),
-				big.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
+			hourlyCoinRat :=
+				pool.DeveloperInflationPool.ToRat().Mul(
+					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
 			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
 			assert.Equal(t, coin, hourlyCoin)
 		}
