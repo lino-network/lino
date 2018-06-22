@@ -10,16 +10,16 @@ import (
 )
 
 var (
-	accountInfoSubstore              = []byte{0x00}
-	accountBankSubstore              = []byte{0x01}
-	accountMetaSubstore              = []byte{0x02}
-	accountFollowerSubstore          = []byte{0x03}
-	accountFollowingSubstore         = []byte{0x04}
-	accountRewardSubstore            = []byte{0x05}
-	accountPendingStakeQueueSubstore = []byte{0x06}
-	accountRelationshipSubstore      = []byte{0x07}
-	accountGrantListSubstore         = []byte{0x08}
-	accountBalanceHistorySubstore    = []byte{0x09}
+	AccountInfoSubstore              = []byte{0x00}
+	AccountBankSubstore              = []byte{0x01}
+	AccountMetaSubstore              = []byte{0x02}
+	AccountFollowerSubstore          = []byte{0x03}
+	AccountFollowingSubstore         = []byte{0x04}
+	AccountRewardSubstore            = []byte{0x05}
+	AccountPendingStakeQueueSubstore = []byte{0x06}
+	AccountRelationshipSubstore      = []byte{0x07}
+	AccountGrantListSubstore         = []byte{0x08}
+	AccountBalanceHistorySubstore    = []byte{0x09}
 )
 
 type AccountStorage struct {
@@ -307,15 +307,15 @@ func (as AccountStorage) SetBalanceHistory(
 }
 
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
-	return append(accountInfoSubstore, accKey...)
+	return append(AccountInfoSubstore, accKey...)
 }
 
 func GetAccountBankKey(accKey types.AccountKey) []byte {
-	return append(accountBankSubstore, accKey...)
+	return append(AccountBankSubstore, accKey...)
 }
 
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
-	return append(accountMetaSubstore, accKey...)
+	return append(AccountMetaSubstore, accKey...)
 }
 
 // "follower substore" + "me" + "my follower"
@@ -324,7 +324,7 @@ func getFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
 }
 
 func getFollowerPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowerSubstore, me...), types.KeySeparator...)
+	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
 }
 
 // "following substore" + "me" + "my following"
@@ -333,11 +333,11 @@ func getFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
 }
 
 func getFollowingPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowingSubstore, me...), types.KeySeparator...)
+	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
 }
 
 func getRewardKey(accKey types.AccountKey) []byte {
-	return append(accountRewardSubstore, accKey...)
+	return append(AccountRewardSubstore, accKey...)
 }
 
 func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
@@ -345,19 +345,19 @@ func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
 }
 
 func getRelationshipPrefix(me types.AccountKey) []byte {
-	return append(append(accountRelationshipSubstore, me...), types.KeySeparator...)
+	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
 func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
-	return append(accountPendingStakeQueueSubstore, accKey...)
+	return append(AccountPendingStakeQueueSubstore, accKey...)
 }
 
 func getGrantKeyListKey(me types.AccountKey) []byte {
-	return append(accountGrantListSubstore, me...)
+	return append(AccountGrantListSubstore, me...)
 }
 
 func getBalanceHistoryPrefix(me types.AccountKey) []byte {
-	return append(append(accountBalanceHistorySubstore, me...), types.KeySeparator...)
+	return append(append(AccountBalanceHistorySubstore, me...), types.KeySeparator...)
 }
 
 func getBalanceHistoryKey(me types.AccountKey, bucketSlot int64) []byte {

@@ -35,8 +35,8 @@ const (
 
 // default home directories for expected binaries
 var (
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.gaiacli")
-	DefaultNodeHome = os.ExpandEnv("$HOME/.gaiad")
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.linocli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.lino")
 )
 
 // Extended ABCI application
