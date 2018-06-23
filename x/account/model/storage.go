@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/lino-network/lino/types"
+	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
@@ -20,6 +21,7 @@ var (
 	AccountRelationshipSubstore      = []byte{0x07}
 	AccountGrantListSubstore         = []byte{0x08}
 	AccountBalanceHistorySubstore    = []byte{0x09}
+	AccountGrantUserSubstore         = []byte{0x10}
 )
 
 type AccountStorage struct {
@@ -229,29 +231,36 @@ func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, me types.AccountK
 	return nil
 }
 
-// SetGrantKeyList sets a list of grant public keys for a given account.
-func (as AccountStorage) SetGrantKeyList(ctx sdk.Context, me types.AccountKey, grantKeyList *GrantKeyList) sdk.Error {
+// DeleteGrantUser deletes given pubkey in KV.
+func (as AccountStorage) DeleteGrantUser(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) {
 	store := ctx.KVStore(as.key)
-	GrantKeyListByte, err := as.cdc.MarshalJSON(*grantKeyList)
-	if err != nil {
-		return ErrSetGrantListFailed()
-	}
-	store.Set(getGrantKeyListKey(me), GrantKeyListByte)
-	return nil
+	store.Delete(getGrantUserKey(me, pubKey))
+	return
 }
 
-// GetGrantKeyList returns a list of grant public keys for a given account.
-func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (*GrantKeyList, sdk.Error) {
+// GetGrantUser returns grant user info keyed with pubkey.
+func (as AccountStorage) GetGrantUser(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) (*GrantUser, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	grantKeyListByte := store.Get(getGrantKeyListKey(me))
-	if grantKeyListByte == nil {
-		return nil, ErrGetGrantListFailed()
+	grantUserByte := store.Get(getGrantUserKey(me, pubKey))
+	if grantUserByte == nil {
+		return nil, ErrGetGrantUserFailed()
 	}
-	grantKeyList := new(GrantKeyList)
-	if err := as.cdc.UnmarshalJSON(grantKeyListByte, grantKeyList); err != nil {
-		return nil, ErrGetGrantListFailed()
+	grantUser := new(GrantUser)
+	if err := as.cdc.UnmarshalJSON(grantUserByte, grantUser); err != nil {
+		return nil, ErrGetGrantUserFailed()
 	}
-	return grantKeyList, nil
+	return grantUser, nil
+}
+
+// SetGrantUser sets a grant user to KV. Key is pubkey and value is grant user info.
+func (as AccountStorage) SetGrantUser(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantUser *GrantUser) sdk.Error {
+	store := ctx.KVStore(as.key)
+	grantUserByte, err := as.cdc.MarshalJSON(*grantUser)
+	if err != nil {
+		return ErrSetGrantUserFailed()
+	}
+	store.Set(getGrantUserKey(me, pubKey), grantUserByte)
+	return nil
 }
 
 // GetRelationship returns the relationship between two accounts.
@@ -352,8 +361,16 @@ func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
 	return append(AccountPendingStakeQueueSubstore, accKey...)
 }
 
-func getGrantKeyListKey(me types.AccountKey) []byte {
+func getGrantUserListKey(me types.AccountKey) []byte {
 	return append(AccountGrantListSubstore, me...)
+}
+
+func getGrantUserPrefix(me types.AccountKey) []byte {
+	return append(append(AccountGrantUserSubstore, me...), types.KeySeparator...)
+}
+
+func getGrantUserKey(me types.AccountKey, pubKey crypto.PubKey) []byte {
+	return append(getGrantUserPrefix(me), pubKey.Bytes()...)
 }
 
 func getBalanceHistoryPrefix(me types.AccountKey) []byte {

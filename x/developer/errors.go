@@ -35,3 +35,7 @@ func ErrNoCoinToWithdraw() sdk.Error {
 func ErrInvalidValidityPeriod() sdk.Error {
 	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant validity period"))
 }
+
+func ErrGrantPermissionTooHigh() sdk.Error {
+	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant permission, can only grant micropayment or post permission"))
+}

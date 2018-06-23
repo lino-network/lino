@@ -136,6 +136,11 @@ func (msg GrantDeveloperMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidValidityPeriod()
 	}
 
+	if msg.GrantLevel == types.MasterPermission ||
+		msg.GrantLevel == types.TransactionPermission {
+		return ErrGrantPermissionTooHigh()
+	}
+
 	return nil
 }
 
@@ -145,7 +150,7 @@ func (msg GrantDeveloperMsg) String() string {
 }
 
 func (msg GrantDeveloperMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
+	return msg.GrantLevel
 }
 
 func (msg GrantDeveloperMsg) GetSignBytes() []byte {

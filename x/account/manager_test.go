@@ -632,8 +632,9 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	// normal test
 	assert.False(t, am.DoesAccountExist(ctx, accKey))
-	err = am.CreateAccount(ctx, accountReferrer, accKey,
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
+	err = am.CreateAccount(
+		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
+		priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
 	assert.Nil(t, err)
 
 	assert.True(t, am.DoesAccountExist(ctx, accKey))
@@ -653,11 +654,12 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		}}}
 	checkPendingStake(t, ctx, accKey, pendingStakeQueue)
 	accInfo := model.AccountInfo{
-		Username:       accKey,
-		CreatedAt:      ctx.BlockHeader().Time,
-		MasterKey:      priv.PubKey(),
-		TransactionKey: priv.Generate(1).PubKey(),
-		PostKey:        priv.Generate(2).PubKey(),
+		Username:        accKey,
+		CreatedAt:       ctx.BlockHeader().Time,
+		MasterKey:       priv.PubKey(),
+		TransactionKey:  priv.Generate(0).PubKey(),
+		MicropaymentKey: priv.Generate(1).PubKey(),
+		PostKey:         priv.Generate(2).PubKey(),
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
@@ -720,7 +722,7 @@ func TestInvalidCreateAccount(t *testing.T) {
 	for _, cs := range cases {
 		err := am.CreateAccount(
 			ctx, accountReferrer, cs.username, cs.privkey.PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), cs.registerFee)
 		assert.Equal(t, cs.expectErr, err,
 			fmt.Sprintf("%s: create account failed: expect %v, got %v",
@@ -945,10 +947,11 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
+	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	am.CreateAccount(
 		ctx, accountReferrer, user1, masterKey.PubKey(), transactionKey.PubKey(),
-		postKey.PubKey(), accParam.RegisterFee)
+		micropaymentKey.PubKey(), postKey.PubKey(), accParam.RegisterFee)
 
 	priv2 := createTestAccount(ctx, am, string(user2))
 	priv3 := createTestAccount(ctx, am, string(user3))
@@ -1090,18 +1093,21 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	createTestAccount(ctx, am, string(user1))
 
 	newMasterPrivKey := crypto.GenPrivKeyEd25519()
-	newTransactionPrivKey := newMasterPrivKey.Generate(1)
+	newTransactionPrivKey := newMasterPrivKey.Generate(0)
+	newMicropaymentPrivKey := newMasterPrivKey.Generate(1)
 	newPostPrivKey := newMasterPrivKey.Generate(2)
 
-	err = am.RecoverAccount(ctx, user1,
-		newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(), newPostPrivKey.PubKey())
+	err = am.RecoverAccount(
+		ctx, user1, newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
+		newMicropaymentPrivKey.PubKey(), newPostPrivKey.PubKey())
 	assert.Nil(t, err)
 	accInfo := model.AccountInfo{
-		Username:       user1,
-		CreatedAt:      ctx.BlockHeader().Time,
-		MasterKey:      newMasterPrivKey.PubKey(),
-		TransactionKey: newTransactionPrivKey.PubKey(),
-		PostKey:        newPostPrivKey.PubKey(),
+		Username:        user1,
+		CreatedAt:       ctx.BlockHeader().Time,
+		MasterKey:       newMasterPrivKey.PubKey(),
+		TransactionKey:  newTransactionPrivKey.PubKey(),
+		MicropaymentKey: newMicropaymentPrivKey.PubKey(),
+		PostKey:         newPostPrivKey.PubKey(),
 	}
 	bank := model.AccountBank{
 		Saving:  accParam.RegisterFee,

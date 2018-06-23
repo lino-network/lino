@@ -23,7 +23,7 @@ func TestNormalPublish(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, newAccountPostPriv, "100")
+		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID1, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
@@ -41,7 +41,7 @@ func TestNormalRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
@@ -61,7 +61,7 @@ func TestInvalidRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
 
 	msg := post.CreatePostMsg{
 		PostID:                  postID,
@@ -89,7 +89,7 @@ func TestComment(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)

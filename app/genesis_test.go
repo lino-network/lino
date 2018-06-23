@@ -34,7 +34,6 @@ func TestGetGenesisJson(t *testing.T) {
 	}
 	genesisState := GenesisState{
 		Accounts:   []GenesisAccount{genesisAcc},
-		TotalLino:  totalLino,
 		Developers: []GenesisAppDeveloper{genesisAppDeveloper},
 		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 	}

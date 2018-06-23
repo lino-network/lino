@@ -40,6 +40,28 @@ func TestDeveloperRevokeMsg(t *testing.T) {
 	}
 }
 
+func TestGrantDeveloperMsgMsg(t *testing.T) {
+	cases := []struct {
+		grantDeveloperMsg GrantDeveloperMsg
+		expectError       sdk.Error
+	}{
+		{NewGrantDeveloperMsg("user1", "app", 10, types.MicropaymentPermission), nil},
+		{NewGrantDeveloperMsg("user1", "app", 10, types.PostPermission), nil},
+		{NewGrantDeveloperMsg("user1", "app", 10, types.MasterPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantDeveloperMsg("user1", "app", 10, types.TransactionPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantDeveloperMsg("user1", "app", -1, types.PostPermission), ErrInvalidValidityPeriod()},
+		{NewGrantDeveloperMsg("us", "app", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantDeveloperMsg("user1", "ap", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantDeveloperMsg("user1user1user1user1user1", "app", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantDeveloperMsg("user1", "appappappappappappapp", 1, types.PostPermission), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.grantDeveloperMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
 func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
 		msg              types.Msg
@@ -51,9 +73,12 @@ func TestMsgPermission(t *testing.T) {
 		"developer revoke msg": {
 			NewDeveloperRevokeMsg("test"),
 			types.TransactionPermission},
-		"grant developer msg": {
+		"grant developer post msg": {
 			NewGrantDeveloperMsg("test", "app", 24*3600, types.PostPermission),
-			types.TransactionPermission},
+			types.PostPermission},
+		"grant developer micropayment msg": {
+			NewGrantDeveloperMsg("test", "app", 24*3600, types.MicropaymentPermission),
+			types.MicropaymentPermission},
 	}
 
 	for testName, cs := range cases {

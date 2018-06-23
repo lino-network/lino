@@ -251,28 +251,31 @@ func TestHandleAccountRecover(t *testing.T) {
 	createTestAccount(ctx, am, user1)
 
 	testCases := map[string]struct {
-		user              string
-		newMasterKey      crypto.PubKey
-		newPostKey        crypto.PubKey
-		newTransactionKey crypto.PubKey
+		user               string
+		newMasterKey       crypto.PubKey
+		newTransactionKey  crypto.PubKey
+		newMicropaymentKey crypto.PubKey
+		newPostKey         crypto.PubKey
 	}{
 		"normal case": {
 			user1, crypto.GenPrivKeyEd25519().PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		assert.Equal(
 			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
 		accInfo := model.AccountInfo{
-			Username:       types.AccountKey(tc.user),
-			CreatedAt:      ctx.BlockHeader().Time,
-			MasterKey:      tc.newMasterKey,
-			TransactionKey: tc.newTransactionKey,
-			PostKey:        tc.newPostKey,
+			Username:        types.AccountKey(tc.user),
+			CreatedAt:       ctx.BlockHeader().Time,
+			MasterKey:       tc.newMasterKey,
+			TransactionKey:  tc.newTransactionKey,
+			MicropaymentKey: tc.newMicropaymentKey,
+			PostKey:         tc.newPostKey,
 		}
 		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
 		newBank := model.AccountBank{
@@ -305,12 +308,14 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			sdk.Result{}, c100,
 		},
 		{"account already exist",
 			NewRegisterMsg(
 				"referrer", "user1", "1",
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
@@ -324,6 +329,7 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			ErrRegisterFeeInsufficient().Result(),
 			types.NewCoinFromInt64(9890000),
@@ -331,6 +337,7 @@ func TestHandleRegister(t *testing.T) {
 		{"referrer deposit insufficient",
 			NewRegisterMsg(
 				"referrer", "user2", "1000",
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
