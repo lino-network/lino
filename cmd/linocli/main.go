@@ -173,6 +173,10 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
+			acccmd.GetAccountsCmd(types.AccountKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
 			postcmd.GetPostCmd(types.PostKVStoreKey, cdc),
 		)...)
 

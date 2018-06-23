@@ -1,8 +1,6 @@
 package proposal
 
 import (
-	"math/big"
-
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/proposal/model"
@@ -166,8 +164,8 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := new(big.Rat).Quo(proposalInfo.AgreeVotes.ToRat(), totalVotes.ToRat())
-	if actualRatio.Cmp(ratio.GetRat()) >= 0 {
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
+	if ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalPass
 	} else {
 		proposalInfo.Result = types.ProposalNotPass

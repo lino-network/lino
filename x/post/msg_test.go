@@ -178,7 +178,7 @@ func TestDeletePostMsg(t *testing.T) {
 			t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
 		}
 		if got != nil {
-			if got.ABCICode() != tc.wantErrCode {
+			if got.Code() != tc.wantErrCode {
 				t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
 			}
 		}
@@ -304,7 +304,7 @@ func TestViewMsg(t *testing.T) {
 
 func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
-		msg              sdk.Msg
+		msg              types.Msg
 		expectPermission types.Permission
 	}{
 		"donateMsg": {
@@ -361,19 +361,7 @@ func TestMsgPermission(t *testing.T) {
 	}
 
 	for testName, cs := range cases {
-		permissionLevel := cs.msg.Get(types.PermissionLevel)
-		if permissionLevel == nil {
-			if cs.expectPermission != types.PostPermission {
-				t.Errorf(
-					"%s: expect permission incorrect, expect %v, got %v",
-					testName, cs.expectPermission, types.PostPermission)
-				return
-			} else {
-				continue
-			}
-		}
-		permission, ok := permissionLevel.(types.Permission)
-		assert.Equal(t, ok, true)
+		permission := cs.msg.GetPermission()
 		if cs.expectPermission != permission {
 			t.Errorf(
 				"%s: expect permission incorrect, expect %v, got %v",

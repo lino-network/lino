@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/param"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -30,5 +31,5 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
+	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil, log.NewNopLogger())
 }

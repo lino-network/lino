@@ -5,10 +5,12 @@ import (
 )
 
 const (
+	// See https://github.com/cosmos/cosmos-sdk/issues/766
+	LinoErrorCodeSpace = 11
+
 	// ABCI Response Codes
-	// Base SDK reserves 0 ~ 99.
-	// Coin errors reserve 100 ~ 199.
-	// Lino authentication errors reserve 200 ~ 299.
+	CodeGenesisFailed sdk.CodeType = 200
+
 	// Lino register handler errors reserve 300 ~ 309.
 	CodeInvalidUsername   sdk.CodeType = 301
 	CodeAccRegisterFailed sdk.CodeType = 302

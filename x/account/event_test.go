@@ -1,10 +1,10 @@
 package account
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		assert.Nil(t, err)
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
-			returnCoin, err := types.RatToCoin(big.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
+			returnCoin, err := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
 			assert.Nil(t, err)
 			event := ReturnCoinEvent{
 				Username:   tc.username,

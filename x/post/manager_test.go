@@ -50,7 +50,7 @@ func TestCreatePost(t *testing.T) {
 		err := pm.CreatePost(
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
-			msg.Title, sdk.ZeroRat, msg.Links)
+			msg.Title, sdk.ZeroRat(), msg.Links)
 		assert.Equal(t, err, cs.expectResult)
 
 		if err != nil {
@@ -72,7 +72,7 @@ func TestCreatePost(t *testing.T) {
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			IsDeleted:               false,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermLink(msg.Author, msg.PostID), postInfo, postMeta)
@@ -172,7 +172,7 @@ func TestGetSourcePost(t *testing.T) {
 		err := pm.CreatePost(
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
-			msg.Title, sdk.ZeroRat, msg.Links)
+			msg.Title, sdk.ZeroRat(), msg.Links)
 		assert.Nil(t, err)
 		sourceAuthor, sourcePostID, err :=
 			pm.GetSourcePost(ctx, types.GetPermLink(cs.author, cs.postID))
@@ -214,7 +214,7 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalLikeCount:          cs.expectTotalLikeCount,
 			TotalLikeWeight:         cs.expectTotalLikeWeight,
 			TotalDislikeWeight:      cs.expectTotalDislikeWeight,
@@ -255,7 +255,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 			LastUpdatedAt:           createTime,
 			LastActivityAt:          createTime,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalViewCount:          cs.expectTotalViewCount,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
@@ -294,7 +294,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.expectTotalReportStake,
 			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
 		}
@@ -339,7 +339,7 @@ func TestDonation(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalDonateCount:        cs.expectDonateCount,
 			TotalReward:             cs.expectTotalDonation,
 		}
@@ -375,7 +375,7 @@ func TestGetPenaltyScore(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.totalReportStake,
 			TotalUpvoteStake:        cs.totalUpvoteStake,
 		}
@@ -413,7 +413,7 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.totalReportStake,
 			TotalUpvoteStake:        cs.totalUpvoteStake,
 		}

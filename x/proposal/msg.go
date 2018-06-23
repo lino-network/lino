@@ -1,7 +1,6 @@
 package proposal
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -10,19 +9,19 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-var _ sdk.Msg = DeletePostContentMsg{}
-var _ sdk.Msg = UpgradeProtocolMsg{}
-var _ sdk.Msg = ChangeGlobalAllocationParamMsg{}
-var _ sdk.Msg = ChangeEvaluateOfContentValueParamMsg{}
-var _ sdk.Msg = ChangeInfraInternalAllocationParamMsg{}
-var _ sdk.Msg = ChangeVoteParamMsg{}
-var _ sdk.Msg = ChangeProposalParamMsg{}
-var _ sdk.Msg = ChangeDeveloperParamMsg{}
-var _ sdk.Msg = ChangeValidatorParamMsg{}
-var _ sdk.Msg = ChangeCoinDayParamMsg{}
-var _ sdk.Msg = ChangeBandwidthParamMsg{}
-var _ sdk.Msg = ChangeAccountParamMsg{}
-var _ sdk.Msg = VoteProposalMsg{}
+var _ types.Msg = DeletePostContentMsg{}
+var _ types.Msg = UpgradeProtocolMsg{}
+var _ types.Msg = ChangeGlobalAllocationParamMsg{}
+var _ types.Msg = ChangeEvaluateOfContentValueParamMsg{}
+var _ types.Msg = ChangeInfraInternalAllocationParamMsg{}
+var _ types.Msg = ChangeVoteParamMsg{}
+var _ types.Msg = ChangeProposalParamMsg{}
+var _ types.Msg = ChangeDeveloperParamMsg{}
+var _ types.Msg = ChangeValidatorParamMsg{}
+var _ types.Msg = ChangeCoinDayParamMsg{}
+var _ types.Msg = ChangeBandwidthParamMsg{}
+var _ types.Msg = ChangeAccountParamMsg{}
+var _ types.Msg = VoteProposalMsg{}
 
 var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
 var _ ChangeParamMsg = ChangeEvaluateOfContentValueParamMsg{}
@@ -154,12 +153,12 @@ func (msg DeletePostContentMsg) String() string {
 	return fmt.Sprintf("DeletePostContentMsg{Creator:%v, post:%v}", msg.Creator, msg.GetPermLink())
 }
 
-func (msg DeletePostContentMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg DeletePostContentMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DeletePostContentMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -200,12 +199,12 @@ func (msg UpgradeProtocolMsg) String() string {
 	return fmt.Sprintf("UpgradeProtocolMsg{Creator:%v, Link:%v}", msg.Creator, msg.GetLink())
 }
 
-func (msg UpgradeProtocolMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg UpgradeProtocolMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -250,19 +249,12 @@ func (msg ChangeGlobalAllocationParamMsg) String() string {
 	return fmt.Sprintf("ChangeGlobalAllocationParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeGlobalAllocationParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeGlobalAllocationParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeGlobalAllocationParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -304,19 +296,12 @@ func (msg ChangeEvaluateOfContentValueParamMsg) String() string {
 	return fmt.Sprintf("ChangeEvaluateOfContentValueParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeEvaluateOfContentValueParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeEvaluateOfContentValueParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -359,19 +344,12 @@ func (msg ChangeInfraInternalAllocationParamMsg) String() string {
 	return fmt.Sprintf("ChangeInfraInternalAllocationParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeInfraInternalAllocationParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeInfraInternalAllocationParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -421,19 +399,12 @@ func (msg ChangeVoteParamMsg) String() string {
 	return fmt.Sprintf("ChangeVoteParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeVoteParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeVoteParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -479,9 +450,9 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat) ||
-		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat) ||
-		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat) ||
+	if !msg.Parameter.ContentCensorshipPassRatio.GT(sdk.ZeroRat()) ||
+		!msg.Parameter.ChangeParamPassRatio.GT(sdk.ZeroRat()) ||
+		!msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.ZeroRat()) ||
 		msg.Parameter.ProtocolUpgradePassRatio.GT(sdk.NewRat(1, 1)) ||
 		msg.Parameter.ChangeParamPassRatio.GT(sdk.NewRat(1, 1)) ||
 		msg.Parameter.ContentCensorshipPassRatio.GT(sdk.NewRat(1, 1)) {
@@ -495,19 +466,12 @@ func (msg ChangeProposalParamMsg) String() string {
 	return fmt.Sprintf("ChangeProposalParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeProposalParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeProposalParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeProposalParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -554,19 +518,12 @@ func (msg ChangeDeveloperParamMsg) String() string {
 	return fmt.Sprintf("ChangeDeveloperParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeDeveloperParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeDeveloperParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -620,19 +577,12 @@ func (msg ChangeValidatorParamMsg) String() string {
 	return fmt.Sprintf("ChangeValidatorParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeValidatorParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeValidatorParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -676,19 +626,12 @@ func (msg ChangeCoinDayParamMsg) String() string {
 	return fmt.Sprintf("ChangeCoinDayParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeCoinDayParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeCoinDayParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeCoinDayParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -730,19 +673,12 @@ func (msg ChangeAccountParamMsg) String() string {
 	return fmt.Sprintf("ChangeAccountParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeAccountParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeAccountParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -787,19 +723,12 @@ func (msg ChangeBandwidthParamMsg) String() string {
 	return fmt.Sprintf("ChangeBandwidthParamMsg{Creator:%v}", msg.Creator)
 }
 
-func (msg ChangeBandwidthParamMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ChangeBandwidthParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -835,19 +764,12 @@ func (msg VoteProposalMsg) String() string {
 	return fmt.Sprintf("VoteProposalMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
 }
 
-func (msg VoteProposalMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoteProposalMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoteProposalMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
@@ -71,7 +72,9 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
+	return sdk.NewContext(
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()},
+		false, nil, log.NewNopLogger())
 }
 
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {

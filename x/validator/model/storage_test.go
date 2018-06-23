@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -21,7 +23,7 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	ctx := sdk.NewContext(ms, abci.Header{}, false, nil)
+	ctx := sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 	vs := NewValidatorStorage(TestKVStoreKey)
 	err := vs.InitGenesis(ctx)
 	assert.Nil(t, err)
@@ -44,9 +46,12 @@ func TestValidator(t *testing.T) {
 
 	for _, cs := range cases {
 		validator := Validator{
-			ABCIValidator: abci.Validator{PubKey: priv.PubKey().Bytes(), Power: cs.power},
-			Username:      cs.user,
-			Deposit:       cs.deposit,
+			ABCIValidator: abci.Validator{
+				Address: priv.PubKey().Address(),
+				PubKey:  tmtypes.TM2PB.PubKey(priv.PubKey()),
+				Power:   1000},
+			Username: cs.user,
+			Deposit:  cs.deposit,
 		}
 		err := vs.SetValidator(ctx, cs.user, &validator)
 		assert.Nil(t, err)

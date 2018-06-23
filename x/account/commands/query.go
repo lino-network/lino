@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/pkg/errors"
@@ -38,6 +38,20 @@ func GetAccountCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 		Use:   "username <username>",
 		Short: "Query account",
 		RunE:  cmdr.getAccountCmd,
+	}
+}
+
+// GetAccountCmd returns a query account that will display the
+// state of the account at a given username
+func GetAccountsCmd(storeName string, cdc *wire.Codec) *cobra.Command {
+	cmdr := commander{
+		storeName,
+		cdc,
+	}
+	return &cobra.Command{
+		Use:   "accounts",
+		Short: "Query all accounts",
+		RunE:  cmdr.getAccountsCmd,
 	}
 }
 
@@ -110,6 +124,28 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := client.PrintIndent(info, bank, meta); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c commander) getAccountsCmd(cmd *cobra.Command, args []string) error {
+	ctx := client.NewCoreContextFromViper()
+
+	resKVs, err := ctx.QuerySubspace(c.cdc, model.AccountInfoSubstore, c.storeName)
+	if err != nil {
+		return err
+	}
+	var accounts []model.AccountInfo
+	for _, KV := range resKVs {
+		var info model.AccountInfo
+		if err := c.cdc.UnmarshalJSON(KV.Value, &info); err != nil {
+			return err
+		}
+		accounts = append(accounts, info)
+	}
+
+	if err := client.PrintIndent(accounts); err != nil {
 		return err
 	}
 	return nil

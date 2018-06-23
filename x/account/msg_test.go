@@ -67,8 +67,8 @@ func TestFollowMsg(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -122,8 +122,8 @@ func TestUnfollowMsg(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -188,8 +188,8 @@ func TestTransferMsg(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -228,8 +228,42 @@ func TestRecoverMsg(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+		}
+	}
+}
+
+func TestClaimMsg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      ClaimMsg
+		wantCode sdk.CodeType
+	}{
+		"normal case": {
+			msg:      NewClaimMsg("test"),
+			wantCode: sdk.CodeOK,
+		},
+		"invalid claim - Username is too short": {
+			msg:      NewClaimMsg("te"),
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid claim - Username is too long": {
+			msg:      NewClaimMsg("testtesttesttesttesttest"),
+			wantCode: types.CodeInvalidUsername,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+			}
+			continue
+		}
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -264,8 +298,8 @@ func TestUpdateAccountMsg(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -328,8 +362,8 @@ func TestRegisterUsername(t *testing.T) {
 			}
 			continue
 		}
-		if got.ABCICode() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.ABCICode(), tc.wantCode)
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
 		}
 	}
 
@@ -348,7 +382,7 @@ func TestRegisterUsername(t *testing.T) {
 
 func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
-		msg              sdk.Msg
+		msg              types.Msg
 		expectPermission types.Permission
 	}{
 		"transfer to user": {
@@ -376,19 +410,7 @@ func TestMsgPermission(t *testing.T) {
 	}
 
 	for testName, cs := range cases {
-		permissionLevel := cs.msg.Get(types.PermissionLevel)
-		if permissionLevel == nil {
-			if cs.expectPermission != types.PostPermission {
-				t.Errorf(
-					"%s: expect permission incorrect, expect %v, got %v",
-					testName, cs.expectPermission, types.PostPermission)
-				return
-			} else {
-				continue
-			}
-		}
-		permission, ok := permissionLevel.(types.Permission)
-		assert.Equal(t, ok, true)
+		permission := cs.msg.GetPermission()
 		if cs.expectPermission != permission {
 			t.Errorf(
 				"%s: expect permission incorrect, expect %v, got %v",

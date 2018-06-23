@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -47,7 +48,7 @@ func TestRegisterBasic(t *testing.T) {
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, valParam.ValidatorMinCommitingDeposit, verifyAccount.Deposit)
-	assert.Equal(t, valKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
+	assert.Equal(t, tmtypes.TM2PB.PubKey(valKey), verifyAccount.ABCIValidator.GetPubKey())
 }
 
 func TestRegisterFeeNotEnough(t *testing.T) {

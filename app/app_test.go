@@ -2,22 +2,21 @@ package app
 
 import (
 	"encoding/json"
-	"math/big"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/lino-network/lino/genesis"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 
 	globalModel "github.com/lino-network/lino/x/global/model"
 )
@@ -36,23 +35,23 @@ var (
 	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
 )
 
-func loggerAndDB() (log.Logger, dbm.DB) {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	db := dbm.NewMemDB()
-	return logger, db
+func loggerAndDB() (logger log.Logger, db dbm.DB) {
+	logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "lino/app")
+	db = dbm.NewMemDB()
+	return
 }
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	logger, db := loggerAndDB()
 	lb := NewLinoBlockchain(logger, db)
 
-	genesisState := genesis.GenesisState{
-		Accounts:  []genesis.GenesisAccount{},
+	genesisState := GenesisState{
+		Accounts:  []GenesisAccount{},
 		TotalLino: genesisTotalLino,
 	}
 
 	// Generate 21 validators
-	genesisAcc := genesis.GenesisAccount{
+	genesisAcc := GenesisAccount{
 		Name:           user1,
 		Lino:           LNOPerValidator,
 		MasterKey:      priv1.PubKey(),
@@ -63,7 +62,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	}
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	for i := 1; i < numOfValidators; i++ {
-		genesisAcc := genesis.GenesisAccount{
+		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
 			Lino:           LNOPerValidator,
 			MasterKey:      crypto.GenPrivKeyEd25519().PubKey(),
@@ -75,11 +74,10 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
-	result, err := genesis.GetGenesisJson(genesisState)
+	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
-	vals := []abci.Validator{}
-	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
+	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
 	lb.Commit()
 
 	lb.BeginBlock(abci.RequestBeginBlock{
@@ -112,12 +110,12 @@ func TestGenesisAcc(t *testing.T) {
 			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			false, crypto.GenPrivKeyEd25519().PubKey()},
 	}
-	genesisState := genesis.GenesisState{
-		Accounts:  []genesis.GenesisAccount{},
+	genesisState := GenesisState{
+		Accounts:  []GenesisAccount{},
 		TotalLino: genesisTotalLino,
 	}
 	for _, acc := range accs {
-		genesisAcc := genesis.GenesisAccount{
+		genesisAcc := GenesisAccount{
 			Name:           acc.genesisAccountName,
 			Lino:           acc.numOfLino,
 			MasterKey:      acc.masterKey,
@@ -129,11 +127,10 @@ func TestGenesisAcc(t *testing.T) {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
-	result, err := genesis.GetGenesisJson(genesisState)
+	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
-	vals := []abci.Validator{}
-	lb.InitChain(abci.RequestInitChain{vals, json.RawMessage(result)})
+	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
 	lb.Commit()
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
@@ -173,8 +170,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
 	remainValidatorPool, _ := types.RatToCoin(
-		new(big.Rat).Mul(genesisTotalCoin.ToRat(),
-			new(big.Rat).Mul(growthRate.GetRat(), validatorAllocation.GetRat())))
+		genesisTotalCoin.ToRat().Mul(
+			growthRate.Mul(validatorAllocation)))
 	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
@@ -196,14 +193,14 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			if testPastMinutes%60 == 0 {
 				// hourly inflation
 				inflationForValidator, _ :=
-					types.RatToCoin(new(big.Rat).Mul(remainValidatorPool.ToRat(),
-						big.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
+					types.RatToCoin(remainValidatorPool.ToRat().Mul(
+						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
 				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
 				// expectBalance for all validators
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
-					inflation, _ := types.RatToCoin(new(big.Rat).
-						Quo(inflationForValidator.ToRat(), big.NewRat(int64(21-i), 1)))
+					inflation, _ := types.RatToCoin(
+						inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
 					expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 					saving, err :=
 						lb.accountManager.GetSavingFromBank(
@@ -222,7 +219,8 @@ func TestFireByzantineValidators(t *testing.T) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
 			ChainID: "Lino", Time: time.Now().Unix()},
-		ByzantineValidators: []abci.Evidence{abci.Evidence{PubKey: priv2.PubKey().Bytes()}}})
+		ByzantineValidators: []abci.Evidence{
+			abci.Evidence{Validator: abci.Validator{PubKey: tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
@@ -278,9 +276,9 @@ func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
 		assert.Nil(t, err)
 		consumption, err := globalStore.GetConsumptionMeta(ctx)
 		assert.Nil(t, err)
-		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
-			cs.beforeDistributionInflationPool.ToRat(),
-			new(big.Rat).SetInt64(types.HoursPerYear-lb.getPastHoursMinusOneThisYear())))
+		expectInflation, _ := types.RatToCoin(
+			cs.beforeDistributionInflationPool.ToRat().Quo(
+				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 		if !cs.beforeDistributionRewardPool.Plus(expectInflation).
 			IsEqual(consumption.ConsumptionRewardPool) {
 			t.Errorf(
@@ -334,9 +332,9 @@ func TestDistributeInflationToValidator(t *testing.T) {
 		lb.distributeInflationToValidator(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
 		assert.Nil(t, err)
-		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
-			cs.beforeDistributionInflationPool.ToRat(),
-			new(big.Rat).SetInt64(types.HoursPerYear-lb.getPastHoursMinusOneThisYear())))
+		expectInflation, _ := types.RatToCoin(
+			cs.beforeDistributionInflationPool.ToRat().Quo(
+				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.ValidatorInflationPool) {
 			t.Errorf(
@@ -384,9 +382,9 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		lb.distributeInflationToInfraProvider(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
 		assert.Nil(t, err)
-		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
-			cs.beforeDistributionInflationPool.ToRat(),
-			new(big.Rat).SetInt64(12-lb.getPastMonthMinusOneThisYear())))
+		expectInflation, _ := types.RatToCoin(
+			cs.beforeDistributionInflationPool.ToRat().Quo(
+				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.InfraInflationPool) {
 			t.Errorf(
@@ -434,9 +432,9 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 		lb.distributeInflationToDeveloper(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
 		assert.Nil(t, err)
-		expectInflation, _ := types.RatToCoin(new(big.Rat).Quo(
-			cs.beforeDistributionInflationPool.ToRat(),
-			new(big.Rat).SetInt64(12-lb.getPastMonthMinusOneThisYear())))
+		expectInflation, _ := types.RatToCoin(
+			cs.beforeDistributionInflationPool.ToRat().Quo(
+				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.DeveloperInflationPool) {
 			t.Errorf(

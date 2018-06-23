@@ -2,7 +2,6 @@ package post
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 
 	"github.com/lino-network/lino/types"
@@ -110,7 +109,7 @@ func handleDonateMsg(
 	permLink := types.GetPermLink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
-		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
+		return ErrDonateFailed(permLink).Result()
 	}
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrDonateUserNotFound(msg.Username).Result()
@@ -137,16 +136,16 @@ func handleDonateMsg(
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
-		return ErrDonateFailed(permLink).TraceCause(err, "").Result()
+		return ErrDonateFailed(permLink).Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		sourcePermLink := types.GetPermLink(sourceAuthor, sourcePostID)
 
 		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermLink)
 		if err != nil {
-			return ErrDonateFailed(permLink).TraceCause(err, "").Result()
+			return ErrDonateFailed(permLink).Result()
 		}
-		sourceIncome, err := types.RatToCoin(new(big.Rat).Mul(coin.ToRat(), sdk.OneRat.Sub(redistributionSplitRate).GetRat()))
+		sourceIncome, err := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
 		if err != nil {
 			return err.Result()
 		}
@@ -176,11 +175,11 @@ func processDonationFriction(
 	}
 	consumptionFrictionRate, err := gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
-	frictionCoin, err := types.RatToCoin(new(big.Rat).Mul(coin.ToRat(), consumptionFrictionRate.GetRat()))
+	frictionCoin, err := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
 	if err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
 	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
@@ -203,17 +202,17 @@ func processDonationFriction(
 
 	directDeposit := coin.Minus(frictionCoin)
 	if err := pm.AddDonation(ctx, postKey, consumer, directDeposit, types.DirectDeposit); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
 	if err := am.AddSavingCoin(
 		ctx, postAuthor, directDeposit, consumer, string(postKey), types.DonationIn); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
 	if err := gm.AddConsumption(ctx, coin); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
 	if err := am.UpdateDonationRelationship(ctx, postAuthor, consumer); err != nil {
-		return ErrDonateFailed(postKey).TraceCause(err, "")
+		return ErrDonateFailed(postKey)
 	}
 	return nil
 }
@@ -246,7 +245,7 @@ func handleReportOrUpvoteMsg(
 
 	stake, err := am.GetStake(ctx, msg.Username)
 	if err != nil {
-		return ErrReportOrUpvoteFailed(permLink).TraceCause(err, "").Result()
+		return ErrReportOrUpvoteFailed(permLink).Result()
 	}
 
 	if err := pm.ReportOrUpvoteToPost(

@@ -13,6 +13,7 @@ import (
 	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
@@ -68,7 +69,7 @@ func getContext(height int64) sdk.Context {
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil, log.NewNopLogger())
 }
 
 func checkPostKVStore(
@@ -122,7 +123,7 @@ func createTestRepost(
 	err := pm.CreatePost(
 		ctx, types.AccountKey(user), postID, sourceUser, sourcePostID, "", "",
 		string(make([]byte, 1000)), string(make([]byte, 50)),
-		sdk.ZeroRat, []types.IDToURLMapping{})
+		sdk.ZeroRat(), []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }

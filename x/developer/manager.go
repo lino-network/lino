@@ -1,8 +1,6 @@
 package developer
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -106,10 +104,10 @@ func (dm DeveloperManager) ReportConsumption(
 }
 
 func (dm DeveloperManager) GetConsumptionWeight(
-	ctx sdk.Context, username types.AccountKey) (*big.Rat, sdk.Error) {
+	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
 	lst, err := dm.storage.GetDeveloperList(ctx)
 	if err != nil {
-		return nil, err
+		return sdk.ZeroRat(), err
 	}
 
 	totalConsumption := types.NewCoinFromInt64(0)
@@ -117,7 +115,7 @@ func (dm DeveloperManager) GetConsumptionWeight(
 	for _, developerName := range lst.AllDevelopers {
 		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
 		if err != nil {
-			return nil, err
+			return sdk.ZeroRat(), err
 		}
 		totalConsumption = totalConsumption.Plus(curDeveloper.AppConsumption)
 		if curDeveloper.Username == username {
@@ -125,10 +123,10 @@ func (dm DeveloperManager) GetConsumptionWeight(
 		}
 	}
 	// if not any consumption here, we evenly distribute all inflation
-	if totalConsumption.ToRat().Sign() == 0 {
-		return big.NewRat(1, int64(len(lst.AllDevelopers))), nil
+	if totalConsumption.ToRat().IsZero() {
+		return sdk.NewRat(1, int64(len(lst.AllDevelopers))), nil
 	}
-	return new(big.Rat).Quo(myConsumption.ToRat(), totalConsumption.ToRat()), nil
+	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
 }
 
 func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {

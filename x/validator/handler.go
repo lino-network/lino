@@ -52,7 +52,7 @@ func handleDepositMsg(
 			return ErrVotingDepositNotEnough().Result()
 		}
 		if err := valManager.RegisterValidator(
-			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link); err != nil {
+			ctx, msg.Username, msg.ValPubKey, coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	} else {

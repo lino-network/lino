@@ -1,4 +1,4 @@
-package genesis
+package app
 
 import (
 	"testing"
@@ -41,11 +41,11 @@ func TestGetGenesisJson(t *testing.T) {
 
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
-	result, err := GetGenesisJson(genesisState)
+	appState, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
 	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	appGenesisState := new(GenesisState)
-	err = cdc.UnmarshalJSON([]byte(result), appGenesisState)
+	err = cdc.UnmarshalJSON([]byte(appState), appGenesisState)
 	assert.Nil(t, err)
 
 	assert.Equal(t, genesisState, *appGenesisState)

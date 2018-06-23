@@ -1,7 +1,6 @@
 package post
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
@@ -9,13 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = CreatePostMsg{}
-var _ sdk.Msg = UpdatePostMsg{}
-var _ sdk.Msg = DeletePostMsg{}
-var _ sdk.Msg = LikeMsg{}
-var _ sdk.Msg = DonateMsg{}
-var _ sdk.Msg = ReportOrUpvoteMsg{}
-var _ sdk.Msg = ViewMsg{}
+var _ types.Msg = CreatePostMsg{}
+var _ types.Msg = UpdatePostMsg{}
+var _ types.Msg = DeletePostMsg{}
+var _ types.Msg = LikeMsg{}
+var _ types.Msg = DonateMsg{}
+var _ types.Msg = ReportOrUpvoteMsg{}
+var _ types.Msg = ViewMsg{}
 
 // CreatePostMsg contains information to create a post
 type CreatePostMsg struct {
@@ -207,7 +206,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -246,7 +245,7 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 		return ErrPostRedistributionSplitRate()
 	}
 
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -321,33 +320,26 @@ func (msg ViewMsg) ValidateBasic() sdk.Error {
 }
 
 // Get implements sdk.Msg; should not be called
-func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg CreatePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg UpdatePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg UpdatePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg DeletePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg DeletePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg LikeMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg LikeMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg DonateMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DonateMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
-func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg ViewMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg ViewMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 // GetSignBytes implements sdk.Msg
@@ -380,7 +372,7 @@ func (msg ViewMsg) GetSignBytes() []byte {
 }
 
 func getSignBytes(msg sdk.Msg) []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

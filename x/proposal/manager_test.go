@@ -129,13 +129,13 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			disagreeVotes:   proposalParam.ContentCensorshipPassVotes,
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID1,
-			wantProposalRes: types.ProposalPass,
+			wantProposalRes: types.ProposalNotPass,
 			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
 				Creator:       user1,
 				ProposalID:    proposalID1,
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
 				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
-				Result:        types.ProposalPass,
+				Result:        types.ProposalNotPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
 			}, permLink, censorshipReason},
@@ -181,7 +181,10 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 
 		res, err := pm.UpdateProposalPassStatus(ctx, tc.proposalType, tc.proposalID)
 		assert.Nil(t, err)
-		assert.Equal(t, tc.wantProposalRes, res)
+		if tc.wantProposalRes != res {
+			t.Errorf("%s: test failed, want %v, got %v", tc.testName, tc.wantProposalRes, res)
+			return
+		}
 		if tc.wantProposalRes == types.ProposalNotPass {
 			continue
 		}

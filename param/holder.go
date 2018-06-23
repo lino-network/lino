@@ -49,7 +49,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ValidatorAllocation:      sdk.NewRat(5, 100),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	infraInternalAllocationParam := &InfraInternalAllocationParam{
@@ -57,7 +57,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		CDNAllocation:     sdk.NewRat(50, 100),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	evaluateOfContentValueParam := &EvaluateOfContentValueParam{
@@ -69,7 +69,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 	}
 	if err := ph.setEvaluateOfContentValueParam(ctx, evaluateOfContentValueParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	developerParam := &DeveloperParam{
@@ -78,7 +78,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		DeveloperCoinReturnTimes:      int64(7),
 	}
 	if err := ph.setDeveloperParam(ctx, developerParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	validatorParam := &ValidatorParam{
@@ -94,7 +94,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		AbsentCommitLimitation:        int64(100),
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	voteParam := &VoteParam{
@@ -107,7 +107,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		DelegatorCoinReturnTimes:      int64(7),
 	}
 	if err := ph.setVoteParam(ctx, voteParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	proposalParam := &ProposalParam{
@@ -129,7 +129,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		NextProposalID: int64(0),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	coinDayParam := &CoinDayParam{
@@ -137,7 +137,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	if err := ph.setCoinDayParam(ctx, coinDayParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	bandwidthParam := &BandwidthParam{
@@ -145,7 +145,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	accountParam := &AccountParam{
@@ -154,7 +154,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		BalanceHistoryBundleSize: 100,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	return nil
