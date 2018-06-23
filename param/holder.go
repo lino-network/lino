@@ -20,6 +20,7 @@ var (
 	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
+	postParamSubStore                    = []byte{0x10} // Substore for evaluate of content value
 )
 
 type ParamHolder struct {
@@ -57,6 +58,13 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		CDNAllocation:     sdk.NewRat(50, 100),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
+		return ErrParamHolderGenesisFailed()
+	}
+
+	postParam := &PostParam{
+		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
+	}
+	if err := ph.setPostParam(ctx, postParam); err != nil {
 		return ErrParamHolderGenesisFailed()
 	}
 
@@ -149,9 +157,10 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize: 100,
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return ErrParamHolderGenesisFailed()
@@ -200,6 +209,30 @@ func (ph ParamHolder) GetInfraInternalAllocationParam(
 		return nil, ErrEventUnmarshalError(err)
 	}
 	return allocation, nil
+}
+
+func (ph ParamHolder) GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetPostParamKey())
+	if paramBytes == nil {
+		return nil, ErrPostParamNotFound()
+	}
+	param := new(PostParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return param, nil
+}
+
+func (ph ParamHolder) setPostParam(
+	ctx sdk.Context, para *PostParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	paraBytes, err := ph.cdc.MarshalJSON(*para)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetPostParamKey(), paraBytes)
+	return nil
 }
 
 func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.Error) {
@@ -406,6 +439,10 @@ func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.
 	}
 	store.Set(GetAccountParamKey(), accountBytes)
 	return nil
+}
+
+func GetPostParamKey() []byte {
+	return postParamSubStore
 }
 
 func GetEvaluateOfContentValueParamKey() []byte {

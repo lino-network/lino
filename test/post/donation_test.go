@@ -37,7 +37,7 @@ func TestNormalDonation(t *testing.T) {
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(100*types.Decimals))
 
 	donateMsg := post.NewDonateMsg(
-		newDonateUser, types.LNO("50"), newPostUser, postID, "", "")
+		newDonateUser, types.LNO("50"), newPostUser, postID, "", "", false)
 
 	test.SignCheckDeliver(t, lb, donateMsg, 0, true, newDonateUserTransactionPriv, baseTime)
 

@@ -390,6 +390,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		DonateUesr          types.AccountKey
 		Amount              types.LNO
 		ToAuthor            types.AccountKey
+		IsMicropayment      bool
 		ToPostID            string
 		ExpectErr           sdk.Result
 		ExpectPostMeta      model.PostMeta
@@ -401,7 +402,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		ExpectCumulativeConsumption       types.Coin
 	}{
 		{"donate from sufficient saving",
-			userWithSufficientSaving, types.LNO("100"), author, postID, sdk.Result{},
+			userWithSufficientSaving, types.LNO("100"), author, false, postID, sdk.Result{},
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -424,7 +425,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			}, 1, types.NewCoinFromInt64(100 * types.Decimals),
 		},
 		{"donate from insufficient saving",
-			userWithSufficientSaving, types.LNO("100"), author, postID,
+			userWithSufficientSaving, types.LNO("100"), author, false, postID,
 			ErrAccountSavingCoinNotEnough(types.GetPermLink(author, postID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee, accParam.RegisterFee.Plus(
@@ -432,7 +433,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			RewardEvent{}, 1, types.NewCoinFromInt64(100 * types.Decimals),
 		},
 		{"donate less money from second user with sufficient saving",
-			secondUserWithSufficientSaving, types.LNO("50"), author, postID, sdk.Result{},
+			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -456,7 +457,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			}, 1, types.NewCoinFromInt64(150 * types.Decimals),
 		},
 		{"donate second times from second user with sufficient saving",
-			secondUserWithSufficientSaving, types.LNO("50"), author, postID, sdk.Result{},
+			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -479,7 +480,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			}, 2, types.NewCoinFromInt64(200 * types.Decimals),
 		},
 		{"invalid target postID",
-			userWithSufficientSaving, types.LNO("1"), author, "invalid",
+			userWithSufficientSaving, types.LNO("1"), author, false, "invalid",
 			ErrDonatePostNotFound(types.GetPermLink(author, "invalid")).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
@@ -487,7 +488,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			RewardEvent{}, 1, types.NewCoinFromInt64(200 * types.Decimals),
 		},
 		{"invalid target author",
-			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), postID,
+			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), false, postID,
 			ErrDonatePostNotFound(types.GetPermLink(types.AccountKey("invalid"), postID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
@@ -495,7 +496,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			RewardEvent{}, 0, types.NewCoinFromInt64(200 * types.Decimals),
 		},
 		{"donate to self",
-			author, types.LNO("100"), author, postID, ErrDonateToSelf(author).Result(),
+			author, types.LNO("100"), author, false, postID, ErrDonateToSelf(author).Result(),
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -509,8 +510,17 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
 		},
+		{"invalid micropayment",
+			microPaymentUser, types.LNO("10000"), author, true, postID,
+			ErrMicropaymentExceedsLimitation().Result(),
+			model.PostMeta{},
+			accParam.RegisterFee.Plus(types.NewCoinFromInt64(2)),
+			accParam.RegisterFee.Plus(
+				types.NewCoinFromInt64(19000000)),
+			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
+		},
 		{"micropayment",
-			microPaymentUser, types.LNO("0.00001"), author, postID, sdk.Result{},
+			microPaymentUser, types.LNO("0.00001"), author, true, postID, sdk.Result{},
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -534,7 +544,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			}, 1, types.NewCoinFromInt64(20000001),
 		},
 		{"donate to deleted post",
-			microPaymentUser, types.LNO("0.00001"), author1, deletedPostID,
+			microPaymentUser, types.LNO("0.00001"), author1, false, deletedPostID,
 			ErrDonatePostIsDeleted(types.GetPermLink(author1, deletedPostID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
@@ -546,7 +556,7 @@ func TestHandlerPostDonate(t *testing.T) {
 
 	for _, cs := range cases {
 		donateMsg := NewDonateMsg(
-			string(cs.DonateUesr), cs.Amount, string(cs.ToAuthor), cs.ToPostID, "", memo1)
+			string(cs.DonateUesr), cs.Amount, string(cs.ToAuthor), cs.ToPostID, "", memo1, cs.IsMicropayment)
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
 		if cs.ExpectErr.Code == sdk.ABCICodeOK {
@@ -620,7 +630,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 
 	donateMsg := NewDonateMsg(
-		string(user3), types.LNO("100"), string(user2), "repost", "", memo1)
+		string(user3), types.LNO("100"), string(user2), "repost", "", memo1, false)
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 	eventList :=

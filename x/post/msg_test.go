@@ -239,20 +239,20 @@ func TestDonationMsg(t *testing.T) {
 		expectError sdk.Error
 	}{
 		{NewDonateMsg("test", types.LNO("1"),
-			"author", "postID", "", memo1), nil},
-		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
+			"author", "postID", "", memo1, true), nil},
+		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1, true),
 			ErrPostDonateNoUsername()},
-		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
+		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1, true),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
+		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1, true),
 			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
+		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1, true),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1, true),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
+		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1, true),
 			ErrPostDonateInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
+		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo, true),
 			ErrInvalidMemo()},
 	}
 
@@ -310,8 +310,14 @@ func TestMsgPermission(t *testing.T) {
 		"donateMsg": {
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1),
+				"author", "postID", "", memo1, false),
 			expectPermission: types.TransactionPermission,
+		},
+		"micropayment donateMsg": {
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1, true),
+			expectPermission: types.MicropaymentPermission,
 		},
 		"create post": {
 			msg: CreatePostMsg{

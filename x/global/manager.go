@@ -43,12 +43,13 @@ func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, eve
 		return ErrGlobalManagerRegisterExpiredEvent(unixTime)
 	}
 	eventList, err := gm.storage.GetTimeEventList(ctx, unixTime)
-	fmt.Println("Debug: ", err)
+	if err != nil {
+		return err
+	}
 	if eventList == nil {
 		eventList = &types.TimeEventList{Events: []types.Event{}}
 	}
 	eventList.Events = append(eventList.Events, event)
-	fmt.Println("Debug: ", eventList)
 	if err := gm.storage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
 		return ErrGlobalManagerRegisterEventAtTime(unixTime)
 	}

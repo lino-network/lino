@@ -48,6 +48,10 @@ func ErrInfraAllocationParamNotFound() sdk.Error {
 	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("Infra internal allocation param not found"))
 }
 
+func ErrPostParamNotFound() sdk.Error {
+	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("post param not found"))
+}
+
 func ErrEvaluateOfContentValueParamNotFound() sdk.Error {
 	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("Evaluate of content value param not found"))
 }

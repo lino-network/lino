@@ -8,7 +8,8 @@ import (
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(DeveloperRegisterMsg{}, "lino/devRegister", nil)
 	cdc.RegisterConcrete(DeveloperRevokeMsg{}, "lino/devRevoke", nil)
-	cdc.RegisterConcrete(GrantDeveloperMsg{}, "lino/grantDeveloper", nil)
+	cdc.RegisterConcrete(GrantPermissionMsg{}, "lino/grantPermission", nil)
+	cdc.RegisterConcrete(RevokePermissionMsg{}, "lino/revokePermission", nil)
 }
 
 var msgCdc = wire.NewCodec()
