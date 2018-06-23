@@ -3,10 +3,10 @@ services:
   lino:
     build:
       context: .
-      dockerfile: Dockerfile_lino
+      dockerfile: docker/Dockerfile_lino
   linocli:
     build:
       context: .
-      dockerfile: Dockerfile_linocli
+      dockerfile: docker/Dockerfile_linocli
     depends_on:
       - "lino"

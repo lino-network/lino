@@ -16,6 +16,6 @@ RUN dep ensure
 
 WORKDIR cmd/linocli
 RUN go build
-COPY cli_test.sh .
+COPY docker/cli_test.sh .
 RUN chmod +x cli_test.sh
-CMD ["./cli_test.sh"]
+CMD ./cli_test.sh
