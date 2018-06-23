@@ -44,7 +44,6 @@ type GenesisState struct {
 	Accounts   []GenesisAccount       `json:"accounts"`
 	Developers []GenesisAppDeveloper  `json:"developers"`
 	Infra      []GenesisInfraProvider `json:"infra"`
-	TotalLino  types.LNO              `json:"total_lino"`
 }
 
 // genesis account will get coin to the address and register user
@@ -82,7 +81,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
-		Name:           "Lino",
+		Name:           "lino",
 		Lino:           totalLino,
 		MasterKey:      masterPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
@@ -128,12 +127,12 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
-		Name:    "Lino",
+		Name:    "lino",
 		Deposit: "1000000",
 	}
 	genesisState.Developers = append(genesisState.Developers, genesisAppDeveloper)
 	genesisInfraProvider := GenesisInfraProvider{
-		Name: "Lino",
+		Name: "lino",
 	}
 	genesisState.Infra = append(genesisState.Infra, genesisInfraProvider)
 

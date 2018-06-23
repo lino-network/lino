@@ -23,6 +23,7 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cauth "github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -115,6 +116,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
 
+	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
@@ -132,8 +134,22 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	return lb
 }
 
+// custom logic for transaction decoding
+func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
+	var tx = cauth.StdTx{}
+
+	// StdTx.Msg is an interface.
+	err := lb.cdc.UnmarshalJSON(txBytes, &tx)
+	if err != nil {
+		return nil, sdk.ErrTxDecode("")
+	}
+	return tx, nil
+}
+
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
+	wire.RegisterCrypto(cdc)
+	sdk.RegisterWire(cdc)
 	acc.RegisterWire(cdc)
 	post.RegisterWire(cdc)
 	developer.RegisterWire(cdc)
@@ -141,7 +157,6 @@ func MakeCodec() *wire.Codec {
 	vote.RegisterWire(cdc)
 	val.RegisterWire(cdc)
 	proposal.RegisterWire(cdc)
-	wire.RegisterCrypto(cdc)
 
 	RegisterEvent(cdc)
 	return cdc
