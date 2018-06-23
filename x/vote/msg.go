@@ -2,7 +2,6 @@ package vote
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
@@ -125,7 +124,7 @@ func (msg VoterWithdrawMsg) GetPermission() types.Permission {
 }
 
 func (msg VoterWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +163,7 @@ func (msg VoterRevokeMsg) GetPermission() types.Permission {
 }
 
 func (msg VoterRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -212,7 +211,7 @@ func (msg DelegateMsg) GetPermission() types.Permission {
 }
 
 func (msg DelegateMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -255,7 +254,7 @@ func (msg RevokeDelegationMsg) GetPermission() types.Permission {
 }
 
 func (msg RevokeDelegationMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -301,7 +300,7 @@ func (msg DelegatorWithdrawMsg) GetPermission() types.Permission {
 }
 
 func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
