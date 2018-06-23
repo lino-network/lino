@@ -361,10 +361,6 @@ func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
 	return append(AccountPendingStakeQueueSubstore, accKey...)
 }
 
-func getGrantUserListKey(me types.AccountKey) []byte {
-	return append(AccountGrantListSubstore, me...)
-}
-
 func getGrantUserPrefix(me types.AccountKey) []byte {
 	return append(append(AccountGrantUserSubstore, me...), types.KeySeparator...)
 }

@@ -48,11 +48,6 @@ type PendingStake struct {
 	Coin      types.Coin `json:"coin"`
 }
 
-// GrantKeyList stores a list of key authenticated by the use
-type GrantUserList struct {
-	GrantUserList []GrantUser `json:"grant_user_list"`
-}
-
 type GrantUser struct {
 	Username   types.AccountKey `json:"username"`
 	Permission types.Permission `json:"permission"`
