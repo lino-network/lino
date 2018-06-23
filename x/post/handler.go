@@ -129,6 +129,15 @@ func handleDonateMsg(
 			return ErrDonateFailed(permLink).Result()
 		}
 	}
+	if msg.IsMicroPayment {
+		postParam, err := pm.paramHolder.GetPostParam(ctx)
+		if err != nil {
+			return err.Result()
+		}
+		if coin.IsGT(postParam.MicropaymentLimitation) {
+			return ErrMicropaymentExceedsLimitation().Result()
+		}
+	}
 	if err := am.MinusSavingCoin(
 		ctx, msg.Username, coin, msg.Author,
 		string(permLink), types.DonationOut); err != nil {

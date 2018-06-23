@@ -45,7 +45,7 @@ func (event RewardEvent) Execute(
 		dm.ReportConsumption(ctx, event.FromApp, reward)
 	}
 	if !am.DoesAccountExist(ctx, event.PostAuthor) {
-		return acc.ErrUsernameNotFound()
+		return acc.ErrUsernameNotFound(event.PostAuthor)
 	}
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrDonatePostNotFound(permLink)

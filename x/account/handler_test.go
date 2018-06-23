@@ -51,13 +51,13 @@ func TestFollowUserNotExist(t *testing.T) {
 	msg := NewFollowMsg("user2", "user1")
 	result := handler(ctx, msg)
 
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user2").Result())
 	assert.False(t, am.IsMyFollower(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 	// let user1 follows user3(not exists)
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user3").Result())
 	assert.False(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user3")))
 }
 
@@ -119,12 +119,12 @@ func TestUnfollowUserNotExist(t *testing.T) {
 	// let user2(not exists) unfollows user1
 	msg := NewUnfollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user2").Result())
 
 	// let user1 unfollows user3(not exists)
 	msg = NewUnfollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user3").Result())
 }
 
 func TestInvalidUnfollow(t *testing.T) {
@@ -240,7 +240,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", "dnqwondqowindow", l2000, memo)
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrUsernameNotFound().Result().Code, result.Code)
+	assert.Equal(t, ErrUsernameNotFound("dnqwondqowindow").Result().Code, result.Code)
 }
 
 func TestHandleAccountRecover(t *testing.T) {
@@ -385,7 +385,7 @@ func TesthandleUpdateAccountMsg(t *testing.T) {
 		},
 		{"invalid username",
 			NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
-			ErrUsernameNotFound().Result(),
+			ErrUsernameNotFound("invalid").Result(),
 		},
 	}
 	for _, cs := range cases {

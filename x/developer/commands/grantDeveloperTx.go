@@ -30,7 +30,7 @@ func sendGrantDeveloperTx(cdc *wire.Codec) client.CommandTxCallback {
 		username := viper.GetString(client.FlagUser)
 		developer := viper.GetString(client.FlagDeveloper)
 		seconds := viper.GetInt64(client.FlagSeconds)
-		msg := dev.NewGrantDeveloperMsg(username, developer, seconds, 0)
+		msg := dev.NewGrantPermissionMsg(username, developer, seconds, 0)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(msg, cdc)

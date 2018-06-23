@@ -199,8 +199,10 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -293,12 +295,16 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize: 100,
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
+	}
+	postParam := PostParam{
+		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam, evaluateOfContentValueParam,
-		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam)
+		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
@@ -306,7 +312,8 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	expectEvaluateOfContentValueParam EvaluateOfContentValueParam, expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
-	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam) {
+	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
+	expectPostParam PostParam) {
 	evaluateOfContentValueParam, err := ph.GetEvaluateOfContentValueParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectEvaluateOfContentValueParam, *evaluateOfContentValueParam)
@@ -346,4 +353,8 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	accountParam, err := ph.GetAccountParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectAccountParam, *accountParam)
+
+	postParam, err := ph.GetPostParam(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, expectPostParam, *postParam)
 }

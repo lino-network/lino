@@ -517,10 +517,20 @@ func (accManager AccountManager) UpdateDonationRelationship(
 
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
-	validityPeriod int64, grantLevel types.Permission) sdk.Error {
+	validityPeriod int64, times int64, grantLevel types.Permission) sdk.Error {
+	if grantLevel == types.MicropaymentPermission {
+		accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+		if err != nil {
+			return err
+		}
+		if times > accParams.MaximumMicropaymentGrantTimes {
+			return ErrGrantTimesExceedsLimitation(accParams.MaximumMicropaymentGrantTimes)
+		}
+	}
 	newGrantUser := model.GrantUser{
 		Username:   authorizedUser,
 		Permission: grantLevel,
+		LeftTimes:  times,
 		CreatedAt:  ctx.BlockHeader().Time,
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
 	}
@@ -539,6 +549,23 @@ func (accManager AccountManager) AuthorizePermission(
 		return accManager.storage.SetGrantUser(ctx, me, postKey, &newGrantUser)
 	}
 	return ErrUnsupportGrantLevel()
+}
+
+func (accManager AccountManager) RevokePermission(
+	ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantLevel types.Permission) sdk.Error {
+	grantUser, err := accManager.storage.GetGrantUser(ctx, me, pubKey)
+	if err != nil {
+		return err
+	}
+	if grantUser.ExpiresAt < ctx.BlockHeader().Time {
+		accManager.storage.DeleteGrantUser(ctx, me, pubKey)
+		return nil
+	}
+	if grantLevel != grantUser.Permission {
+		return ErrRevokePermissionLevelMismatch(grantLevel, grantUser.Permission)
+	}
+	accManager.storage.DeleteGrantUser(ctx, me, pubKey)
+	return nil
 }
 
 func (accManager AccountManager) CheckSigningPubKeyOwner(
@@ -594,7 +621,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	// if user doesn't use his own key, check his grant user pubkey
 	grantUser, err := accManager.storage.GetGrantUser(ctx, me, signKey)
 	if err != nil {
-		return "", err
+		return "", ErrCheckAuthenticatePubKeyOwner(me)
 	}
 	if grantUser.ExpiresAt < ctx.BlockHeader().Time {
 		accManager.storage.DeleteGrantUser(ctx, me, signKey)
@@ -603,15 +630,24 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if permission != grantUser.Permission {
 		ErrGrantKeyMismatch(grantUser.Username)
 	}
+
 	// check again if public key matched
 	if permission == types.MicropaymentPermission {
+		if grantUser.LeftTimes <= 0 {
+			accManager.storage.DeleteGrantUser(ctx, me, signKey)
+			return "", ErrGrantKeyExpired(me)
+		}
 		micropaymentKey, err := accManager.GetMicropaymentKey(ctx, grantUser.Username)
 		if err != nil {
 			return "", err
 		}
 		if !reflect.DeepEqual(signKey, micropaymentKey) {
 			accManager.storage.DeleteGrantUser(ctx, me, signKey)
-			return "", ErrGrantKeyMismatch(me)
+			return "", ErrGrantKeyMismatch(grantUser.Username)
+		}
+		grantUser.LeftTimes--
+		if err := accManager.storage.SetGrantUser(ctx, me, signKey, grantUser); err != nil {
+			return "", nil
 		}
 		return grantUser.Username, nil
 	}
@@ -622,7 +658,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		if !reflect.DeepEqual(signKey, postKey) {
 			accManager.storage.DeleteGrantUser(ctx, me, signKey)
-			return "", ErrGrantKeyMismatch(me)
+			return "", ErrGrantKeyMismatch(grantUser.Username)
 		}
 		return grantUser.Username, nil
 	}

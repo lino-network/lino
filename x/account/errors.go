@@ -110,8 +110,16 @@ func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
 }
 
+func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant times exceeds %v limitation", limitation))
+}
+
 func ErrUnsupportGrantLevel() sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("unsupport grant level"))
+}
+
+func ErrRevokePermissionLevelMismatch(got, expect types.Permission) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("revoke permission level mismatch, got %v, expect %v", got, expect))
 }
 
 func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {
