@@ -24,7 +24,7 @@ func TestValidatorRevoke(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		newAccountMasterPriv, newAccountTransactionPriv, newAccountPostPriv, "500000")
+		newAccountMasterPriv, newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), newAccountPostPriv, "500000")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)

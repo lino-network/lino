@@ -98,6 +98,8 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
+	RegisterEvent(lb.globalManager.WireCodec())
+
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
@@ -242,7 +244,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
-		ga.MasterKey, ga.TransactionKey, ga.PostKey, coin); err != nil {
+		ga.MasterKey, ga.TransactionKey, ga.MicropaymentKey, ga.PostKey, coin); err != nil {
 		panic(err)
 	}
 

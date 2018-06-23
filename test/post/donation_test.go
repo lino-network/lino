@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post"
-	"github.com/lino-network/lino/types"
 
 	crypto "github.com/tendermint/go-crypto"
 )
@@ -26,9 +26,9 @@ func TestNormalDonation(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newPostUser, lb, 0,
-		crypto.GenPrivKeyEd25519(), newPostUserTransactionPriv, newPostUserPostPriv, "100")
+		crypto.GenPrivKeyEd25519(), newPostUserTransactionPriv, crypto.GenPrivKeyEd25519(), newPostUserPostPriv, "100")
 	test.CreateAccount(t, newDonateUser, lb, 1,
-		crypto.GenPrivKeyEd25519(), newDonateUserTransactionPriv, crypto.GenPrivKeyEd25519(), "100")
+		crypto.GenPrivKeyEd25519(), newDonateUserTransactionPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
 
 	test.CreateTestPost(
 		t, lb, newPostUser, postID, 0, newPostUserPostPriv, "", "", "", "", "0", baseTime)

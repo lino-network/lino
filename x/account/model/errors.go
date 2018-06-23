@@ -101,6 +101,14 @@ func ErrSetPendingStakeFailed() sdk.Error {
 	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set pending stake failed"))
 }
 
+func ErrGetGrantUserFailed() sdk.Error {
+	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get grant user failed"))
+}
+
+func ErrSetGrantUserFailed() sdk.Error {
+	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set grant user failed"))
+}
+
 func ErrGetGrantListFailed() sdk.Error {
 	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get grant key list failed"))
 }
