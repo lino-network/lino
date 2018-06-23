@@ -107,9 +107,10 @@ func (ctx CoreContext) SignAndBuild(msg sdk.Msg, cdc *wire.Codec) ([]byte, error
 	}
 	sequence := ctx.Sequence
 	signMsg := auth.StdSignMsg{
-		ChainID:   chainID,
-		Sequences: []int64{sequence},
-		Msg:       msg,
+		ChainID:        chainID,
+		AccountNumbers: []int64{},
+		Sequences:      []int64{sequence},
+		Msg:            msg,
 	}
 
 	// sign and build
