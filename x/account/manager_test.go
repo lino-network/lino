@@ -64,14 +64,6 @@ func checkAccountReward(
 	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
 }
 
-func checkAccountGrantKeyList(
-	t *testing.T, ctx sdk.Context, accKey types.AccountKey, grantList model.GrantKeyList) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	grantListPtr, err := accStorage.GetGrantKeyList(ctx, accKey)
-	assert.Nil(t, err)
-	assert.Equal(t, grantList, *grantListPtr, "accout grantList should be equal")
-}
-
 func TestDoesAccountExist(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	assert.False(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
@@ -632,8 +624,9 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	// normal test
 	assert.False(t, am.DoesAccountExist(ctx, accKey))
-	err = am.CreateAccount(ctx, accountReferrer, accKey,
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
+	err = am.CreateAccount(
+		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
+		priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
 	assert.Nil(t, err)
 
 	assert.True(t, am.DoesAccountExist(ctx, accKey))
@@ -653,11 +646,12 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		}}}
 	checkPendingStake(t, ctx, accKey, pendingStakeQueue)
 	accInfo := model.AccountInfo{
-		Username:       accKey,
-		CreatedAt:      ctx.BlockHeader().Time,
-		MasterKey:      priv.PubKey(),
-		TransactionKey: priv.Generate(1).PubKey(),
-		PostKey:        priv.Generate(2).PubKey(),
+		Username:        accKey,
+		CreatedAt:       ctx.BlockHeader().Time,
+		MasterKey:       priv.PubKey(),
+		TransactionKey:  priv.Generate(0).PubKey(),
+		MicropaymentKey: priv.Generate(1).PubKey(),
+		PostKey:         priv.Generate(2).PubKey(),
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
@@ -667,10 +661,6 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	reward := model.Reward{coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
-
-	var grantPubKeyList []model.GrantPubKey
-	grantList := model.GrantKeyList{GrantPubKeyList: grantPubKeyList}
-	checkAccountGrantKeyList(t, ctx, accKey, grantList)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
 	assert.Nil(t, err)
@@ -720,7 +710,7 @@ func TestInvalidCreateAccount(t *testing.T) {
 	for _, cs := range cases {
 		err := am.CreateAccount(
 			ctx, accountReferrer, cs.username, cs.privkey.PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), cs.registerFee)
 		assert.Equal(t, cs.expectErr, err,
 			fmt.Sprintf("%s: create account failed: expect %v, got %v",
@@ -940,60 +930,130 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
-	user2 := types.AccountKey("user2")
-	user3 := types.AccountKey("user3")
+	postPermissionUser := types.AccountKey("user2")
+	micropaymentPermissionUser := types.AccountKey("user3")
+	multiTimesUser := types.AccountKey("user4")
+	unauthUser := types.AccountKey("user5")
+	fullyAuthUser := types.AccountKey("user6")
 
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
+	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	am.CreateAccount(
 		ctx, accountReferrer, user1, masterKey.PubKey(), transactionKey.PubKey(),
-		postKey.PubKey(), accParam.RegisterFee)
+		micropaymentKey.PubKey(), postKey.PubKey(), accParam.RegisterFee)
 
-	priv2 := createTestAccount(ctx, am, string(user2))
-	priv3 := createTestAccount(ctx, am, string(user3))
-	err := am.AuthorizePermission(ctx, user1, user2, 100, types.PostPermission)
+	postPriv := createTestAccount(ctx, am, string(postPermissionUser))
+	microPriv := createTestAccount(ctx, am, string(micropaymentPermissionUser))
+	unauthPriv := createTestAccount(ctx, am, string(unauthUser))
+	fullyAuthPriv := createTestAccount(ctx, am, string(fullyAuthUser))
+	multiTimesPriv := createTestAccount(ctx, am, string(multiTimesUser))
+	defaultGrantTimes := int64(1)
+	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, defaultGrantTimes, types.PostPermission)
+	assert.Nil(t, err)
+	err = am.AuthorizePermission(
+		ctx, user1, micropaymentPermissionUser, 100, defaultGrantTimes, types.MicropaymentPermission)
+	assert.Nil(t, err)
+	err = am.AuthorizePermission(ctx, user1, fullyAuthUser, 100, defaultGrantTimes, types.PostPermission)
+	assert.Nil(t, err)
+	err = am.AuthorizePermission(ctx, user1, fullyAuthUser, 100, defaultGrantTimes, types.MicropaymentPermission)
+	assert.Nil(t, err)
+	err = am.AuthorizePermission(ctx, user1, multiTimesUser, 100, defaultGrantTimes, types.MicropaymentPermission)
 	assert.Nil(t, err)
 
 	baseTime := ctx.BlockHeader().Time
 
 	cases := []struct {
-		testName     string
-		checkUser    types.AccountKey
-		checkPubKey  crypto.PubKey
-		atWhen       int64
-		grantLevel   types.Permission
-		expectUser   types.AccountKey
-		expectResult sdk.Error
+		testName        string
+		checkUser       types.AccountKey
+		checkPubKey     crypto.PubKey
+		atWhen          int64
+		permission      types.Permission
+		expectUser      types.AccountKey
+		expectResult    sdk.Error
+		expectGrantUser *model.GrantUser
 	}{
 		{"check user's master key",
-			user1, masterKey.PubKey(), baseTime, types.MasterPermission, user1, nil},
+			user1, masterKey.PubKey(), baseTime, types.MasterPermission, user1, nil, nil},
 		{"check user's transaction key",
-			user1, transactionKey.PubKey(), baseTime, types.TransactionPermission, user1, nil},
+			user1, transactionKey.PubKey(), baseTime, types.TransactionPermission, user1, nil, nil},
+		{"check user's micropayment key",
+			user1, micropaymentKey.PubKey(), baseTime, types.MicropaymentPermission, user1, nil, nil},
 		{"check user's post key",
-			user1, postKey.PubKey(), baseTime, types.PostPermission, user1, nil},
+			user1, postKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
+		{"user's transaction key can authorize micropayment permission",
+			user1, transactionKey.PubKey(), baseTime, types.MicropaymentPermission, user1, nil, nil},
 		{"user's transaction key can authorize post permission",
-			user1, transactionKey.PubKey(), baseTime, types.PostPermission, user1, nil},
+			user1, transactionKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
 		{"check user's transaction key can't authorize master permission",
 			user1, transactionKey.PubKey(), baseTime, types.MasterPermission, user1,
-			ErrCheckMasterKey()},
+			ErrCheckMasterKey(), nil},
+		{"user's micropayment key can authorize post permission",
+			user1, micropaymentKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
+		{"user's micropayment key can't authorize master permission",
+			user1, micropaymentKey.PubKey(), baseTime, types.MasterPermission, user1, ErrCheckMasterKey(), nil},
+		{"user's micropayment key can't authorize transaction permission",
+			user1, micropaymentKey.PubKey(), baseTime, types.TransactionPermission, user1, ErrCheckTransactionKey(), nil},
 		{"check user's post key can't authorize master permission",
 			user1, postKey.PubKey(), baseTime, types.MasterPermission, user1,
-			ErrCheckMasterKey()},
+			ErrCheckMasterKey(), nil},
 		{"check user's post key can't authorize transaction permission",
 			user1, postKey.PubKey(), baseTime, types.TransactionPermission, user1,
-			ErrCheckTransactionKey()},
-		{"check user2's pubkey",
-			user1, priv2.Generate(2).PubKey(), baseTime, types.PostPermission, user2, nil},
-		{"check unauthorized user pubkey",
-			user1, priv3.Generate(2).PubKey(), baseTime, types.PostPermission, "",
-			ErrCheckAuthenticatePubKeyOwner(user1)},
+			ErrCheckTransactionKey(), nil},
+		{"check user's post key can't authorize micropayment permission",
+			user1, postKey.PubKey(), baseTime, types.MicropaymentPermission, user1,
+			ErrCheckAuthenticatePubKeyOwner(user1), nil},
+		{"check post pubkey of user with post permission",
+			user1, postPriv.Generate(2).PubKey(), baseTime, types.PostPermission, postPermissionUser, nil,
+			&model.GrantUser{
+				Username:   postPermissionUser,
+				Permission: types.PostPermission,
+				LeftTimes:  defaultGrantTimes,
+				CreatedAt:  baseTime,
+				ExpiresAt:  baseTime + 100,
+			}},
+		{"check micropayment pubkey of user with post permission",
+			user1, postPriv.Generate(1).PubKey(), baseTime, types.PostPermission,
+			postPermissionUser, ErrCheckAuthenticatePubKeyOwner(user1), nil},
+		{"check micropayment pubkey of user with micropayment permission",
+			user1, multiTimesPriv.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, multiTimesUser, nil,
+			&model.GrantUser{
+				Username:   multiTimesUser,
+				Permission: types.MicropaymentPermission,
+				LeftTimes:  defaultGrantTimes - 1,
+				CreatedAt:  baseTime,
+				ExpiresAt:  baseTime + 100,
+			}},
+		{"check post pubkey of user with micropayment permission",
+			user1, microPriv.Generate(2).PubKey(), baseTime, types.MicropaymentPermission,
+			micropaymentPermissionUser, ErrCheckAuthenticatePubKeyOwner(user1), nil},
+		{"check unauthorized user post pubkey",
+			user1, unauthPriv.Generate(2).PubKey(), baseTime, types.PostPermission, "",
+			ErrCheckAuthenticatePubKeyOwner(user1), nil},
+		{"check unauthorized user micropayment pubkey",
+			user1, unauthPriv.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, "",
+			ErrCheckAuthenticatePubKeyOwner(user1), nil},
+		{"check fully authed user micropayment pubkey but post permission",
+			user1, fullyAuthPriv.Generate(1).PubKey(), baseTime, types.PostPermission, "",
+			ErrGrantKeyMismatch(fullyAuthUser), nil},
+		{"check fully authed user post pubkey but micropayment permission",
+			user1, fullyAuthPriv.Generate(2).PubKey(), baseTime, types.MicropaymentPermission, "",
+			ErrGrantKeyMismatch(fullyAuthUser), nil},
+		{"check expired micropayment permission",
+			user1, microPriv.Generate(1).PubKey(), baseTime + 101,
+			types.MicropaymentPermission, "", ErrGrantKeyExpired(user1), nil},
+		{"check expired post permission",
+			user1, postPriv.Generate(2).PubKey(), baseTime + 101, types.PostPermission,
+			"", ErrGrantKeyExpired(user1), nil},
+		{"check micropayment pubkey exceeds limitation",
+			user1, multiTimesPriv.Generate(1).PubKey(), baseTime,
+			types.MicropaymentPermission, multiTimesUser, ErrGrantKeyExpired(user1), nil},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
-		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.grantLevel)
-		assert.Equal(t, cs.expectResult, err)
+		grantUser, err := am.CheckSigningPubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.permission)
 		if cs.expectResult == nil {
 			if cs.expectUser != grantUser {
 				t.Errorf(
@@ -1001,12 +1061,66 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 					cs.testName, cs.expectUser, grantUser)
 				return
 			}
+		} else {
+			assert.Equal(t, cs.expectResult.Result(), err.Result())
+		}
+		grantUserInfo, err := am.storage.GetGrantUser(ctx, cs.checkUser, cs.checkPubKey)
+		if cs.expectGrantUser == nil {
+			assert.NotNil(t, err)
+		} else {
+			assert.Nil(t, err)
+			assert.Equal(t, *cs.expectGrantUser, *grantUserInfo)
 		}
 	}
 }
 
-func TestGrantPubkey(t *testing.T) {
+func TestRevokePermission(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+	userWithMicropaymentPermission := types.AccountKey("userWithMicropaymentPermission")
+	userWithBothPermission := types.AccountKey("userWithBothPermission")
+
+	createTestAccount(ctx, am, string(user1))
+	priv2 := createTestAccount(ctx, am, string(userWithMicropaymentPermission))
+	priv3 := createTestAccount(ctx, am, string(userWithBothPermission))
+
+	baseTime := ctx.BlockHeader().Time
+
+	err := am.AuthorizePermission(ctx, user1, userWithMicropaymentPermission, 100, 10, types.MicropaymentPermission)
+	assert.Nil(t, err)
+
+	err = am.AuthorizePermission(ctx, user1, userWithBothPermission, 100, 10, types.MicropaymentPermission)
+	assert.Nil(t, err)
+	err = am.AuthorizePermission(ctx, user1, userWithBothPermission, 100, 10, types.PostPermission)
+	assert.Nil(t, err)
+
+	cases := []struct {
+		testName     string
+		user         types.AccountKey
+		revokePubkey crypto.PubKey
+		atWhen       int64
+		level        types.Permission
+		expectResult sdk.Error
+	}{
+		{"normal revoke post permission", user1, priv3.Generate(2).PubKey(), baseTime, types.PostPermission, nil},
+		{"normal revoke micropayment permission", user1, priv2.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, nil},
+		{"revoke permission mismatch", user1, priv3.Generate(1).PubKey(),
+			baseTime, types.PostPermission, ErrRevokePermissionLevelMismatch(types.PostPermission, types.MicropaymentPermission)},
+		{"revoke non-exist pubkey", user1, priv3.Generate(2).PubKey(),
+			baseTime, types.PostPermission, model.ErrGetGrantUserFailed()},
+		{"revoke expired pubkey", user1, priv3.Generate(1).PubKey(),
+			baseTime + 101, types.PostPermission, nil},
+	}
+
+	for _, cs := range cases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
+		err := am.RevokePermission(ctx, cs.user, cs.revokePubkey, cs.level)
+		assert.Equal(t, cs.expectResult, err, cs.testName)
+	}
+}
+
+func TestAuthorizePermission(t *testing.T) {
+	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user3")
@@ -1018,33 +1132,41 @@ func TestGrantPubkey(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	cases := []struct {
-		user             types.AccountKey
-		grantTo          types.AccountKey
-		expireTime       int64
-		checkTime        int64
-		checkGrantUser   types.AccountKey
-		checkGrantPubKey crypto.PubKey
-		expectResult     sdk.Error
+		testName       string
+		user           types.AccountKey
+		grantTo        types.AccountKey
+		level          types.Permission
+		validityPeriod int64
+		allowTimes     int64
+		expectResult   sdk.Error
+		expectPubKey   crypto.PubKey
 	}{
-		{user1, user2, 100, baseTime + 99, user2, priv2.Generate(2).PubKey(), nil},
-		{user1, user3, 100, baseTime + 99, user3, priv3.Generate(2).PubKey(), nil},
-		{user1, user2, 100, baseTime + 101, user2, priv2.Generate(2).PubKey(),
-			ErrCheckAuthenticatePubKeyOwner(user1)},
-		{user1, user2, 100, baseTime + 99, user2, priv2.Generate(2).PubKey(), nil},
-		{user1, user2, 500, baseTime + 101, user2, priv2.Generate(2).PubKey(), nil},
-		{user1, user2, 300, baseTime + 301, user2, priv2.Generate(2).PubKey(),
-			ErrCheckAuthenticatePubKeyOwner(user1)},
+		{"normal grant post permission", user1, user2, types.PostPermission,
+			100, 10, nil, priv2.Generate(2).PubKey()},
+		{"normal grant micropayment permission", user1, user3, types.MicropaymentPermission,
+			100, 10, nil, priv3.Generate(1).PubKey()},
+		{"override permission", user1, user3, types.MicropaymentPermission,
+			1000, 10, nil, priv3.Generate(1).PubKey()},
+		{"micropayment authorization exceeds maximum requirement", user1, user3, types.MicropaymentPermission,
+			1000, accParam.MaximumMicropaymentGrantTimes + 1,
+			ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes), priv3.Generate(1).PubKey()},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
-		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.expireTime, types.PostPermission)
-		assert.Nil(t, err)
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.checkTime})
-		grantUser, err := am.CheckAuthenticatePubKeyOwner(ctx, cs.user, cs.checkGrantPubKey, 0)
-		assert.Equal(t, err, cs.expectResult)
+		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.validityPeriod, cs.allowTimes, cs.level)
+		assert.Equal(t, cs.expectResult, err, cs.testName)
 		if cs.expectResult == nil {
-			assert.Equal(t, grantUser, cs.checkGrantUser)
+			grantUser, err := am.storage.GetGrantUser(ctx, cs.user, cs.expectPubKey)
+			assert.Nil(t, err)
+			expectGrantUser := model.GrantUser{
+				Username:   cs.grantTo,
+				ExpiresAt:  baseTime + cs.validityPeriod,
+				CreatedAt:  baseTime,
+				LeftTimes:  cs.allowTimes,
+				Permission: cs.level,
+			}
+			assert.Equal(t, expectGrantUser, *grantUser)
 		}
 	}
 }
@@ -1090,18 +1212,21 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	createTestAccount(ctx, am, string(user1))
 
 	newMasterPrivKey := crypto.GenPrivKeyEd25519()
-	newTransactionPrivKey := newMasterPrivKey.Generate(1)
+	newTransactionPrivKey := newMasterPrivKey.Generate(0)
+	newMicropaymentPrivKey := newMasterPrivKey.Generate(1)
 	newPostPrivKey := newMasterPrivKey.Generate(2)
 
-	err = am.RecoverAccount(ctx, user1,
-		newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(), newPostPrivKey.PubKey())
+	err = am.RecoverAccount(
+		ctx, user1, newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
+		newMicropaymentPrivKey.PubKey(), newPostPrivKey.PubKey())
 	assert.Nil(t, err)
 	accInfo := model.AccountInfo{
-		Username:       user1,
-		CreatedAt:      ctx.BlockHeader().Time,
-		MasterKey:      newMasterPrivKey.PubKey(),
-		TransactionKey: newTransactionPrivKey.PubKey(),
-		PostKey:        newPostPrivKey.PubKey(),
+		Username:        user1,
+		CreatedAt:       ctx.BlockHeader().Time,
+		MasterKey:       newMasterPrivKey.PubKey(),
+		TransactionKey:  newTransactionPrivKey.PubKey(),
+		MicropaymentKey: newMicropaymentPrivKey.PubKey(),
+		PostKey:         newPostPrivKey.PubKey(),
 	}
 	bank := model.AccountBank{
 		Saving:  accParam.RegisterFee,

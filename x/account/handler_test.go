@@ -51,13 +51,13 @@ func TestFollowUserNotExist(t *testing.T) {
 	msg := NewFollowMsg("user2", "user1")
 	result := handler(ctx, msg)
 
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user2").Result())
 	assert.False(t, am.IsMyFollower(ctx, types.AccountKey("user1"), types.AccountKey("user2")))
 
 	// let user1 follows user3(not exists)
 	msg = NewFollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user3").Result())
 	assert.False(t, am.IsMyFollowing(ctx, types.AccountKey("user1"), types.AccountKey("user3")))
 }
 
@@ -119,12 +119,12 @@ func TestUnfollowUserNotExist(t *testing.T) {
 	// let user2(not exists) unfollows user1
 	msg := NewUnfollowMsg("user2", "user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user2").Result())
 
 	// let user1 unfollows user3(not exists)
 	msg = NewUnfollowMsg("user1", "user3")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrUsernameNotFound().Result())
+	assert.Equal(t, result, ErrUsernameNotFound("user3").Result())
 }
 
 func TestInvalidUnfollow(t *testing.T) {
@@ -240,7 +240,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 	// let user1 transfers 2000 to a random user
 	msg := NewTransferMsg("user1", "dnqwondqowindow", l2000, memo)
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrUsernameNotFound().Result().Code, result.Code)
+	assert.Equal(t, ErrUsernameNotFound("dnqwondqowindow").Result().Code, result.Code)
 }
 
 func TestHandleAccountRecover(t *testing.T) {
@@ -251,28 +251,31 @@ func TestHandleAccountRecover(t *testing.T) {
 	createTestAccount(ctx, am, user1)
 
 	testCases := map[string]struct {
-		user              string
-		newMasterKey      crypto.PubKey
-		newPostKey        crypto.PubKey
-		newTransactionKey crypto.PubKey
+		user               string
+		newMasterKey       crypto.PubKey
+		newTransactionKey  crypto.PubKey
+		newMicropaymentKey crypto.PubKey
+		newPostKey         crypto.PubKey
 	}{
 		"normal case": {
 			user1, crypto.GenPrivKeyEd25519().PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+			crypto.GenPrivKeyEd25519().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		assert.Equal(
 			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
 		accInfo := model.AccountInfo{
-			Username:       types.AccountKey(tc.user),
-			CreatedAt:      ctx.BlockHeader().Time,
-			MasterKey:      tc.newMasterKey,
-			TransactionKey: tc.newTransactionKey,
-			PostKey:        tc.newPostKey,
+			Username:        types.AccountKey(tc.user),
+			CreatedAt:       ctx.BlockHeader().Time,
+			MasterKey:       tc.newMasterKey,
+			TransactionKey:  tc.newTransactionKey,
+			MicropaymentKey: tc.newMicropaymentKey,
+			PostKey:         tc.newPostKey,
 		}
 		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
 		newBank := model.AccountBank{
@@ -305,12 +308,14 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			sdk.Result{}, c100,
 		},
 		{"account already exist",
 			NewRegisterMsg(
 				"referrer", "user1", "1",
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
@@ -324,6 +329,7 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			ErrRegisterFeeInsufficient().Result(),
 			types.NewCoinFromInt64(9890000),
@@ -331,6 +337,7 @@ func TestHandleRegister(t *testing.T) {
 		{"referrer deposit insufficient",
 			NewRegisterMsg(
 				"referrer", "user2", "1000",
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
@@ -378,7 +385,7 @@ func TesthandleUpdateAccountMsg(t *testing.T) {
 		},
 		{"invalid username",
 			NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
-			ErrUsernameNotFound().Result(),
+			ErrUsernameNotFound("invalid").Result(),
 		},
 	}
 	for _, cs := range cases {

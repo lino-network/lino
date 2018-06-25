@@ -19,7 +19,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ChangeCoinDayParamMsg{}, "lino/changeCoinDayParam", nil)
 	cdc.RegisterConcrete(ChangeBandwidthParamMsg{}, "lino/changeBandwidthParam", nil)
 	cdc.RegisterConcrete(ChangeAccountParamMsg{}, "lino/changeAccountParam", nil)
-
+	cdc.RegisterConcrete(ChangePostParamMsg{}, "lino/changePostParam", nil)
 }
 
 var msgCdc = wire.NewCodec()

@@ -58,7 +58,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			accKey, err := am.CheckAuthenticatePubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
+			accKey, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
 			if err != nil {
 				return ctx, err.Result(), true
 			}

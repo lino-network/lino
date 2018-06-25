@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -453,7 +452,6 @@ func TestGetGrowthRate(t *testing.T) {
 		assert.Nil(t, err)
 		growthRate, err := gm.getGrowthRate(ctx)
 		assert.Nil(t, err)
-		fmt.Println(growthRate, cs.expectGrowthRate)
 		assert.True(t, cs.expectGrowthRate.Equal(growthRate))
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		assert.Nil(t, err)

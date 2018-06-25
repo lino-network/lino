@@ -13,8 +13,8 @@ func ErrInvalidLinoAmount() sdk.Error {
 	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid Lino amount"))
 }
 
-func ErrUsernameNotFound() sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("username not found"))
+func ErrUsernameNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("user %s not found", username))
 }
 
 func ErrUsernameExist() sdk.Error {
@@ -82,8 +82,12 @@ func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v authenticate public key match failed", accKey))
 }
 
-func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+func ErrGrantKeyExpired(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant user %v key expired", owner))
+}
+
+func ErrGrantKeyMismatch(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant user %v key can't match his own key", owner))
 }
 
 func ErrUpdateJSONMeta(accKey types.AccountKey) sdk.Error {
@@ -94,8 +98,28 @@ func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v master key failed", accKey))
 }
 
+func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+}
+
+func ErrGetMicropaymentKey(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v micropayment key failed", accKey))
+}
+
 func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
+}
+
+func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant times exceeds %v limitation", limitation))
+}
+
+func ErrUnsupportGrantLevel() sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("unsupport grant level"))
+}
+
+func ErrRevokePermissionLevelMismatch(got, expect types.Permission) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("revoke permission level mismatch, got %v, expect %v", got, expect))
 }
 
 func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {

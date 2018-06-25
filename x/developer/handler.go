@@ -16,10 +16,12 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
 			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
-		case GrantDeveloperMsg:
-			return handleGrantDeveloperMsg(ctx, dm, am, msg)
+		case GrantPermissionMsg:
+			return handleGrantPermissionMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
 			return handleDeveloperRevokeMsg(ctx, dm, am, gm, msg)
+		case RevokePermissionMsg:
+			return handleRevokePermissionMsg(ctx, dm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -81,8 +83,8 @@ func handleDeveloperRevokeMsg(
 	return sdk.Result{}
 }
 
-func handleGrantDeveloperMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantDeveloperMsg) sdk.Result {
+func handleGrantPermissionMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantPermissionMsg) sdk.Result {
 	if !dm.DoesDeveloperExist(ctx, msg.AuthenticateApp) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -91,7 +93,20 @@ func handleGrantDeveloperMsg(
 	}
 
 	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
+		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.Times, msg.GrantLevel); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleRevokePermissionMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg RevokePermissionMsg) sdk.Result {
+	if !am.DoesAccountExist(ctx, msg.Username) {
+		return ErrUsernameNotFound().Result()
+	}
+
+	if err := am.RevokePermission(
+		ctx, msg.Username, msg.PubKey, msg.GrantLevel); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

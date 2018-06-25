@@ -46,8 +46,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	lb := NewLinoBlockchain(logger, db)
 
 	genesisState := GenesisState{
-		Accounts:  []GenesisAccount{},
-		TotalLino: genesisTotalLino,
+		Accounts: []GenesisAccount{},
 	}
 
 	// Generate 21 validators
@@ -111,8 +110,7 @@ func TestGenesisAcc(t *testing.T) {
 			false, crypto.GenPrivKeyEd25519().PubKey()},
 	}
 	genesisState := GenesisState{
-		Accounts:  []GenesisAccount{},
-		TotalLino: genesisTotalLino,
+		Accounts: []GenesisAccount{},
 	}
 	for _, acc := range accs {
 		genesisAcc := GenesisAccount{

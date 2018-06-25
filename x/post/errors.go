@@ -144,6 +144,10 @@ func ErrDonateToSelf(user types.AccountKey) sdk.Error {
 	return types.NewError(types.CodePostHandlerError, fmt.Sprintf("donate failed, user %v donate to self", user))
 }
 
+func ErrMicropaymentExceedsLimitation() sdk.Error {
+	return types.NewError(types.CodePostHandlerError, fmt.Sprintf("donate failed, micropayment exceeds limitation"))
+}
+
 func ErrUpdatePostAuthorNotFound(author types.AccountKey) sdk.Error {
 	return types.NewError(types.CodePostHandlerError, fmt.Sprintf("update post failed, author %v not found", author))
 }

@@ -42,7 +42,10 @@ func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, eve
 	if unixTime < ctx.BlockHeader().Time {
 		return ErrGlobalManagerRegisterExpiredEvent(unixTime)
 	}
-	eventList, _ := gm.storage.GetTimeEventList(ctx, unixTime)
+	eventList, err := gm.storage.GetTimeEventList(ctx, unixTime)
+	if err != nil {
+		return err
+	}
 	if eventList == nil {
 		eventList = &types.TimeEventList{Events: []types.Event{}}
 	}

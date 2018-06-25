@@ -34,11 +34,12 @@ func TestAccountInfo(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username:       types.AccountKey("test"),
-		CreatedAt:      0,
-		MasterKey:      priv.PubKey(),
-		TransactionKey: priv.Generate(1).PubKey(),
-		PostKey:        priv.Generate(2).PubKey(),
+		Username:        types.AccountKey("test"),
+		CreatedAt:       0,
+		MasterKey:       priv.PubKey(),
+		TransactionKey:  priv.Generate(0).PubKey(),
+		MicropaymentKey: priv.Generate(1).PubKey(),
+		PostKey:         priv.Generate(2).PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -123,4 +124,24 @@ func TestAccountBalanceHistory(t *testing.T) {
 	resultPtr, err := as.GetBalanceHistory(ctx, types.AccountKey("test"), 0)
 	assert.Nil(t, err)
 	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
+}
+
+func TestAccountGrantUser(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+	priv := crypto.GenPrivKeyEd25519()
+
+	grantUser := GrantUser{}
+	err := as.SetGrantUser(ctx, types.AccountKey("test"), priv.PubKey(), &grantUser)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
+	assert.Nil(t, err)
+	assert.Equal(t, grantUser, *resultPtr, "Account grant user should be equal")
+
+	as.DeleteGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
+	resultPtr, err = as.GetGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
+	assert.NotNil(t, err)
+	assert.Nil(t, resultPtr)
+
 }

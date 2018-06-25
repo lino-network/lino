@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	crypto "github.com/tendermint/go-crypto"
 )
 
 func TestDeveloperRegisterMsg(t *testing.T) {
@@ -40,6 +41,47 @@ func TestDeveloperRevokeMsg(t *testing.T) {
 	}
 }
 
+func TestGrantPermissionMsgMsg(t *testing.T) {
+	cases := []struct {
+		grantPermissionMsg GrantPermissionMsg
+		expectError        sdk.Error
+	}{
+		{NewGrantPermissionMsg("user1", "app", 10, types.MicropaymentPermission), nil},
+		{NewGrantPermissionMsg("user1", "app", 10, types.PostPermission), nil},
+		{NewGrantPermissionMsg("user1", "app", 10, types.MasterPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", -1, types.PostPermission), ErrInvalidValidityPeriod()},
+		{NewGrantPermissionMsg("us", "app", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "ap", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.PostPermission), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.grantPermissionMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestRevokePermissionMsgMsg(t *testing.T) {
+	cases := []struct {
+		revokePermissionMsg RevokePermissionMsg
+		expectError         sdk.Error
+	}{
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission), nil},
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), nil},
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.MasterPermission), ErrGrantPermissionTooHigh()},
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.TransactionPermission), ErrGrantPermissionTooHigh()},
+		{NewRevokePermissionMsg("us", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), ErrInvalidUsername()},
+		{NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.revokePermissionMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
 func TestMsgPermission(t *testing.T) {
 	cases := map[string]struct {
 		msg              types.Msg
@@ -51,9 +93,18 @@ func TestMsgPermission(t *testing.T) {
 		"developer revoke msg": {
 			NewDeveloperRevokeMsg("test"),
 			types.TransactionPermission},
-		"grant developer msg": {
-			NewGrantDeveloperMsg("test", "app", 24*3600, types.PostPermission),
-			types.TransactionPermission},
+		"grant developer post permission msg": {
+			NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
+			types.PostPermission},
+		"grant developer micropayment permission msg": {
+			NewGrantPermissionMsg("test", "app", 24*3600, types.MicropaymentPermission),
+			types.MicropaymentPermission},
+		"revoke developer micropayment permission msg": {
+			NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
+			types.MicropaymentPermission},
+		"revoke developer post permission msg": {
+			NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			types.PostPermission},
 	}
 
 	for testName, cs := range cases {

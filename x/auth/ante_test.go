@@ -33,10 +33,11 @@ func createTestAccount(
 	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
+	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
+		masterKey.PubKey(), transactionKey.PubKey(), micropaymentKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
 }
 
@@ -221,7 +222,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, 1)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, 10, types.PostPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant
@@ -233,7 +234,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	assert.Equal(t, seq, int64(1))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
-	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.

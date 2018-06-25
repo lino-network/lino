@@ -60,20 +60,20 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	lb := app.NewLinoBlockchain(logger, db)
 
 	genesisState := app.GenesisState{
-		Accounts:  []app.GenesisAccount{},
-		TotalLino: GenesisTotalLino,
+		Accounts: []app.GenesisAccount{},
 	}
 
 	// Generate 21 validators
 	for i := 0; i < numOfValidators; i++ {
 		genesisAcc := app.GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Lino:           LNOPerValidator,
-			MasterKey:      crypto.GenPrivKeyEd25519().PubKey(),
-			TransactionKey: crypto.GenPrivKeyEd25519().PubKey(),
-			PostKey:        crypto.GenPrivKeyEd25519().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      crypto.GenPrivKeyEd25519().PubKey(),
+			Name:            "validator" + strconv.Itoa(i),
+			Lino:            LNOPerValidator,
+			MasterKey:       crypto.GenPrivKeyEd25519().PubKey(),
+			TransactionKey:  crypto.GenPrivKeyEd25519().PubKey(),
+			MicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
+			PostKey:         crypto.GenPrivKeyEd25519().PubKey(),
+			IsValidator:     true,
+			ValPubKey:       crypto.GenPrivKeyEd25519().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -82,13 +82,14 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	validatorAmt, _ := strconv.ParseInt(LNOPerValidator, 10, 64)
 	initLNO := strconv.FormatInt(totalAmt-int64(numOfValidators)*validatorAmt, 10)
 	genesisAcc := app.GenesisAccount{
-		Name:           GenesisUser,
-		Lino:           initLNO,
-		MasterKey:      GenesisPriv.PubKey(),
-		TransactionKey: GenesisTransactionPriv.PubKey(),
-		PostKey:        GenesisPostPriv.PubKey(),
-		IsValidator:    false,
-		ValPubKey:      GenesisPriv.PubKey(),
+		Name:            GenesisUser,
+		Lino:            initLNO,
+		MasterKey:       GenesisPriv.PubKey(),
+		TransactionKey:  GenesisTransactionPriv.PubKey(),
+		MicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
+		PostKey:         GenesisPostPriv.PubKey(),
+		IsValidator:     false,
+		ValPubKey:       GenesisPriv.PubKey(),
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
@@ -166,12 +167,12 @@ func CheckAllValidatorList(
 
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
-	masterPriv crypto.PrivKeyEd25519, transactionPriv crypto.PrivKeyEd25519, postPriv crypto.PrivKeyEd25519,
+	masterPriv, transactionPriv, micropaymentPriv, postPriv crypto.PrivKeyEd25519,
 	numOfLino string) {
 
 	registerMsg := acc.NewRegisterMsg(
 		GenesisUser, accountName, types.LNO(numOfLino),
-		masterPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
+		masterPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 
