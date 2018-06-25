@@ -26,10 +26,11 @@ const (
 	ProposalRouterName  = "proposal"
 
 	// Different permission level for msg
-	PostPermission         = Permission(0)
-	MicropaymentPermission = Permission(1)
-	TransactionPermission  = Permission(2)
-	MasterPermission       = Permission(3)
+	UnknownPermission      = Permission(0)
+	PostPermission         = Permission(1)
+	MicropaymentPermission = Permission(2)
+	TransactionPermission  = Permission(3)
+	MasterPermission       = Permission(4)
 
 	// Different proposal result
 	ProposalNotPass = ProposalResult(0)
