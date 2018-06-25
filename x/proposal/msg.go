@@ -21,6 +21,7 @@ var _ types.Msg = ChangeValidatorParamMsg{}
 var _ types.Msg = ChangeCoinDayParamMsg{}
 var _ types.Msg = ChangeBandwidthParamMsg{}
 var _ types.Msg = ChangeAccountParamMsg{}
+var _ types.Msg = ChangePostParamMsg{}
 var _ types.Msg = VoteProposalMsg{}
 
 var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
@@ -33,6 +34,7 @@ var _ ChangeParamMsg = ChangeValidatorParamMsg{}
 var _ ChangeParamMsg = ChangeCoinDayParamMsg{}
 var _ ChangeParamMsg = ChangeBandwidthParamMsg{}
 var _ ChangeParamMsg = ChangeAccountParamMsg{}
+var _ ChangeParamMsg = ChangePostParamMsg{}
 
 var _ ContentCensorshipMsg = DeletePostContentMsg{}
 
@@ -113,6 +115,11 @@ type ChangeBandwidthParamMsg struct {
 type ChangeAccountParamMsg struct {
 	Creator   types.AccountKey   `json:"creator"`
 	Parameter param.AccountParam `json:"parameter"`
+}
+
+type ChangePostParamMsg struct {
+	Creator   types.AccountKey `json:"creator"`
+	Parameter param.PostParam  `json:"parameter"`
 }
 
 type VoteProposalMsg struct {
@@ -686,6 +693,52 @@ func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 }
 
 func (msg ChangeAccountParamMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Creator)}
+}
+
+//----------------------------------------
+// ChangePostParam Msg Implementations
+
+func NewChangePostParamMsg(creator string, parameter param.PostParam) ChangePostParamMsg {
+	return ChangePostParamMsg{
+		Creator:   types.AccountKey(creator),
+		Parameter: parameter,
+	}
+}
+
+func (msg ChangePostParamMsg) GetParameter() param.Parameter { return msg.Parameter }
+func (msg ChangePostParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangePostParamMsg) Type() string                  { return types.ProposalRouterName }
+
+func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
+	if len(msg.Creator) < types.MinimumUsernameLength ||
+		len(msg.Creator) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.MicropaymentLimitation) {
+		return ErrIllegalParameter()
+	}
+	return nil
+}
+
+func (msg ChangePostParamMsg) String() string {
+	return fmt.Sprintf("ChangePostParamMsg{Creator:%v, param:%v}", msg.Creator, msg.Parameter)
+}
+
+func (msg ChangePostParamMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+func (msg ChangePostParamMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg ChangePostParamMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }
 

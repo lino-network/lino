@@ -29,6 +29,10 @@ func (cpe ChangeParamEvent) Execute(ctx sdk.Context, ph ParamHolder) sdk.Error {
 		return ph.setCoinDayParam(ctx, &parameter)
 	case BandwidthParam:
 		return ph.setBandwidthParam(ctx, &parameter)
+	case AccountParam:
+		return ph.setAccountParam(ctx, &parameter)
+	case PostParam:
+		return ph.setPostParam(ctx, &parameter)
 	default:
 		return ErrInvalidaParameter()
 	}
