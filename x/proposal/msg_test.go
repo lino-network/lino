@@ -474,3 +474,89 @@ func TestUpgradeProtocolMsg(t *testing.T) {
 		assert.Equal(t, result, cs.expectError)
 	}
 }
+
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              types.Msg
+		expectPermission types.Permission
+	}{
+		"delete post content msg": {
+			msg: NewDeletePostContentMsg(
+				"creator", "perm_link", "reason"),
+			expectPermission: types.TransactionPermission,
+		},
+		"upgrade protocal msg": {
+			msg:              NewUpgradeProtocolMsg("creator", "link"),
+			expectPermission: types.TransactionPermission,
+		},
+		"change global allocaiton param msg": {
+			msg: NewChangeGlobalAllocationParamMsg(
+				"creator", param.GlobalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change evaluate of content value param msg": {
+			msg: NewChangeEvaluateOfContentValueParamMsg(
+				"creator", param.EvaluateOfContentValueParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change infra internal allocation param msg": {
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change vote param msg": {
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change proposal param msg": {
+			msg: NewChangeProposalParamMsg(
+				"creator", param.ProposalParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change developer param msg": {
+			msg: NewChangeDeveloperParamMsg(
+				"creator", param.DeveloperParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change validator param msg": {
+			msg: NewChangeValidatorParamMsg(
+				"creator", param.ValidatorParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change coin day param msg": {
+			msg: NewChangeCoinDayParamMsg(
+				"creator", param.CoinDayParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change bandwidth param msg": {
+			msg: NewChangeBandwidthParamMsg(
+				"creator", param.BandwidthParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change account param msg": {
+			msg: NewChangeAccountParamMsg(
+				"creator", param.AccountParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change post param msg": {
+			msg: NewChangePostParamMsg(
+				"creator", param.PostParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"vote proposal msg": {
+			msg:              NewVoteProposalMsg("voter", 1, true),
+			expectPermission: types.TransactionPermission,
+		},
+	}
+
+	for testName, cs := range cases {
+		permission := cs.msg.GetPermission()
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
+		}
+	}
+}
