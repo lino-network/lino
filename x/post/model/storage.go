@@ -138,13 +138,6 @@ func (ps PostStorage) SetPostReportOrUpvote(
 	return nil
 }
 
-func (ps PostStorage) RemovePostReportOrUpvote(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	store.Delete(GetPostReportOrUpvoteKey(permLink, user))
-	return nil
-}
-
 func (ps PostStorage) GetPostComment(
 	ctx sdk.Context, permLink types.PermLink, commentPermLink types.PermLink) (*Comment, sdk.Error) {
 	store := ctx.KVStore(ps.key)
@@ -221,31 +214,6 @@ func (ps PostStorage) SetPostDonations(
 	return nil
 }
 
-func (ps PostStorage) GetCommentList(ctx sdk.Context, permLink types.PermLink) (*CommentList, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	lstByte := store.Get(GetCommentListKey(permLink))
-	if lstByte == nil {
-		return nil, nil
-	}
-	lst := new(CommentList)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(lstByte, lst); unmarshalErr != nil {
-		return nil, ErrPostUnmarshalError(unmarshalErr)
-	}
-	return lst, nil
-}
-
-func (ps PostStorage) SetCommentList(
-	ctx sdk.Context, permLink types.PermLink, lst *CommentList) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	lstByte, err := ps.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrPostMarshalError(err)
-	}
-	store.Set(GetCommentListKey(permLink), lstByte)
-
-	return nil
-}
-
 func GetPostInfoKey(permLink types.PermLink) []byte {
 	return append(postInfoSubStore, permLink...)
 }
@@ -274,7 +242,7 @@ func GetPostReportOrUpvoteKey(permLink types.PermLink, user types.AccountKey) []
 	return append(getPostReportOrUpvotePrefix(permLink), user...)
 }
 
-// PostViewPrefix format is ViewSubStore / PostKey
+// PostViewPrefix format is ViewSubStore / permlink
 // which can be used to access all views belong to this post
 func getPostViewPrefix(permLink types.PermLink) []byte {
 	return append(append(postViewsSubStore, permLink...), types.KeySeparator...)
@@ -284,17 +252,17 @@ func GetPostViewKey(permLink types.PermLink, viewUser types.AccountKey) []byte {
 	return append(getPostViewPrefix(permLink), viewUser...)
 }
 
-// PostCommentPrefix format is CommentSubStore / PostKey
+// PostCommentPrefix format is CommentSubStore / permlink
 // which can be used to access all comments belong to this post
 func getPostCommentPrefix(permLink types.PermLink) []byte {
 	return append(append(postCommentSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostCommentKey(permLink types.PermLink, commentPostKey types.PermLink) []byte {
-	return append(getPostCommentPrefix(permLink), commentPostKey...)
+func GetPostCommentKey(permLink types.PermLink, commentPermlink types.PermLink) []byte {
+	return append(getPostCommentPrefix(permLink), commentPermlink...)
 }
 
-// PostDonationPrefix format is DonationSubStore / PostKey
+// PostDonationPrefix format is DonationSubStore / permlink
 // which can be used to access all donations belong to this post
 func getPostDonationPrefix(permLink types.PermLink) []byte {
 	return append(append(postDonationsSubStore, permLink...), types.KeySeparator...)
@@ -302,8 +270,4 @@ func getPostDonationPrefix(permLink types.PermLink) []byte {
 
 func GetPostDonationKey(permLink types.PermLink, donateUser types.AccountKey) []byte {
 	return append(getPostDonationPrefix(permLink), donateUser...)
-}
-
-func GetCommentListKey(permLink types.PermLink) []byte {
-	return append(commentListSubStore, permLink...)
 }

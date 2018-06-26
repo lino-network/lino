@@ -180,6 +180,10 @@ func ErrNoPostID() sdk.Error {
 	return types.NewError(types.CodePostMsgError, fmt.Sprintf("No Post ID"))
 }
 
+func ErrPostIDTooLong() sdk.Error {
+	return types.NewError(types.CodePostMsgError, fmt.Sprintf("Post ID too long"))
+}
+
 func ErrNoAuthor() sdk.Error {
 	return types.NewError(types.CodePostMsgError, fmt.Sprintf("No Author"))
 }
@@ -222,6 +226,10 @@ func ErrIdentifierLengthTooLong() sdk.Error {
 
 func ErrURLLengthTooLong() sdk.Error {
 	return types.NewError(types.CodePostMsgError, fmt.Sprintf("url is too long"))
+}
+
+func ErrTooManyURL() sdk.Error {
+	return types.NewError(types.CodePostMsgError, fmt.Sprintf("too many url"))
 }
 
 func ErrPostViewNoUsername() sdk.Error {

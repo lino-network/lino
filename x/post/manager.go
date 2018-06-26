@@ -240,9 +240,9 @@ func (pm PostManager) ReportOrUpvoteToPost(
 
 // add comment to post comment list
 func (pm PostManager) AddComment(
-	ctx sdk.Context, permLink types.PermLink, commentUser types.AccountKey, commentPostID string) sdk.Error {
+	ctx sdk.Context, permLink types.PermLink, commentAuthor types.AccountKey, commentPostID string) sdk.Error {
 	comment := &model.Comment{
-		Author:    commentUser,
+		Author:    commentAuthor,
 		PostID:    commentPostID,
 		CreatedAt: ctx.BlockHeader().Time,
 	}
@@ -250,27 +250,7 @@ func (pm PostManager) AddComment(
 		return err
 	}
 
-	if err := pm.AddCommentToList(ctx, permLink, commentUser, commentPostID); err != nil {
-		return err
-	}
-
 	return nil
-}
-
-func (pm PostManager) AddCommentToList(ctx sdk.Context, permLink types.PermLink, commentUser types.AccountKey, commentPostID string) sdk.Error {
-	commentList, err := pm.postStorage.GetCommentList(ctx, permLink)
-	if err != nil {
-		return err
-	}
-
-	if commentList == nil {
-		commentList = &model.CommentList{[]types.PermLink{}}
-	}
-
-	commentPermLink := types.GetPermLink(commentUser, commentPostID)
-	commentList.CommentList = append(commentList.CommentList, commentPermLink)
-
-	return pm.postStorage.SetCommentList(ctx, permLink, commentList)
 }
 
 // add donation to post donation list
@@ -309,6 +289,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.E
 		return ErrDeletePost(permLink)
 	}
 	postMeta.IsDeleted = true
+	postMeta.RedistributionSplitRate = sdk.OneRat()
 	if err := pm.postStorage.SetPostMeta(ctx, permLink, postMeta); err != nil {
 		return ErrAddDonation(permLink)
 	}

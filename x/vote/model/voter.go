@@ -24,7 +24,3 @@ type Delegation struct {
 type ReferenceList struct {
 	AllValidators []types.AccountKey `json:"all_validators"`
 }
-
-type DelegateeList struct {
-	DelegateeList []types.AccountKey `json:"delegatee_list"`
-}

@@ -65,10 +65,10 @@ type AccountMeta struct {
 }
 
 // AccountInfraConsumption records infra utility consumption
-type AccountInfraConsumption struct {
-	Storage   int64 `json:"storage"`
-	Bandwidth int64 `json:"bandwidth"`
-}
+// type AccountInfraConsumption struct {
+// 	Storage   int64 `json:"storage"`
+// 	Bandwidth int64 `json:"bandwidth"`
+// }
 
 // FollowerMeta record all meta info about this relation
 type FollowerMeta struct {

@@ -178,6 +178,9 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.PostID) == 0 {
 		return ErrNoPostID()
 	}
+	if len(msg.PostID) > types.MaximumLengthOfPostID {
+		return ErrPostIDTooLong()
+	}
 	if len(msg.Author) == 0 {
 		return ErrNoAuthor()
 	}
@@ -193,6 +196,10 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	}
 	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
 		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
+	if len(msg.Links) > types.MaximumNumOfLinks {
+		return ErrTooManyURL()
 	}
 
 	for _, link := range msg.Links {
