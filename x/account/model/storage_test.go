@@ -126,21 +126,21 @@ func TestAccountBalanceHistory(t *testing.T) {
 	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
 }
 
-func TestAccountGrantUser(t *testing.T) {
+func TestAccountGrantPubkey(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 	priv := crypto.GenPrivKeyEd25519()
 
-	grantUser := GrantUser{}
-	err := as.SetGrantUser(ctx, types.AccountKey("test"), priv.PubKey(), &grantUser)
+	grantPubKey := GrantPubKey{}
+	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey(), &grantPubKey)
 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
+	resultPtr, err := as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
 	assert.Nil(t, err)
-	assert.Equal(t, grantUser, *resultPtr, "Account grant user should be equal")
+	assert.Equal(t, grantPubKey, *resultPtr, "Account grant user should be equal")
 
-	as.DeleteGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
-	resultPtr, err = as.GetGrantUser(ctx, types.AccountKey("test"), priv.PubKey())
+	as.DeleteGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
+	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
 	assert.NotNil(t, err)
 	assert.Nil(t, resultPtr)
 
