@@ -140,7 +140,8 @@ func handleDonateMsg(
 	}
 	if err := am.MinusSavingCoin(
 		ctx, msg.Username, coin, msg.Author,
-		string(permLink), types.DonationOut); err != nil {
+		fmt.Sprintf("donate to post: %v, memo: %v", string(permLink), msg.Memo),
+		types.DonationOut); err != nil {
 		return ErrAccountSavingCoinNotEnough(permLink).Result()
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
