@@ -965,14 +965,14 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	cases := []struct {
-		testName        string
-		checkUser       types.AccountKey
-		checkPubKey     crypto.PubKey
-		atWhen          int64
-		permission      types.Permission
-		expectUser      types.AccountKey
-		expectResult    sdk.Error
-		expectGrantUser *model.GrantUser
+		testName          string
+		checkUser         types.AccountKey
+		checkPubKey       crypto.PubKey
+		atWhen            int64
+		permission        types.Permission
+		expectUser        types.AccountKey
+		expectResult      sdk.Error
+		expectGrantPubKey *model.GrantPubKey
 	}{
 		{"check user's master key",
 			user1, masterKey.PubKey(), baseTime, types.MasterPermission, user1, nil, nil},
@@ -1006,7 +1006,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			ErrCheckAuthenticatePubKeyOwner(user1), nil},
 		{"check post pubkey of user with post permission",
 			user1, postPriv.Generate(2).PubKey(), baseTime, types.PostPermission, postPermissionUser, nil,
-			&model.GrantUser{
+			&model.GrantPubKey{
 				Username:   postPermissionUser,
 				Permission: types.PostPermission,
 				LeftTimes:  defaultGrantTimes,
@@ -1018,7 +1018,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			postPermissionUser, ErrCheckAuthenticatePubKeyOwner(user1), nil},
 		{"check micropayment pubkey of user with micropayment permission",
 			user1, multiTimesPriv.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, multiTimesUser, nil,
-			&model.GrantUser{
+			&model.GrantPubKey{
 				Username:   multiTimesUser,
 				Permission: types.MicropaymentPermission,
 				LeftTimes:  defaultGrantTimes - 1,
@@ -1053,23 +1053,23 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
-		grantUser, err := am.CheckSigningPubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.permission)
+		grantPubKey, err := am.CheckSigningPubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.permission)
 		if cs.expectResult == nil {
-			if cs.expectUser != grantUser {
+			if cs.expectUser != grantPubKey {
 				t.Errorf(
 					"%s: expect key owner incorrect, expect %v, got %v",
-					cs.testName, cs.expectUser, grantUser)
+					cs.testName, cs.expectUser, grantPubKey)
 				return
 			}
 		} else {
 			assert.Equal(t, cs.expectResult.Result(), err.Result())
 		}
-		grantUserInfo, err := am.storage.GetGrantUser(ctx, cs.checkUser, cs.checkPubKey)
-		if cs.expectGrantUser == nil {
+		grantPubKeyInfo, err := am.storage.GetGrantPubKey(ctx, cs.checkUser, cs.checkPubKey)
+		if cs.expectGrantPubKey == nil {
 			assert.NotNil(t, err)
 		} else {
 			assert.Nil(t, err)
-			assert.Equal(t, *cs.expectGrantUser, *grantUserInfo)
+			assert.Equal(t, *cs.expectGrantPubKey, *grantPubKeyInfo)
 		}
 	}
 }
@@ -1107,7 +1107,7 @@ func TestRevokePermission(t *testing.T) {
 		{"revoke permission mismatch", user1, priv3.Generate(1).PubKey(),
 			baseTime, types.PostPermission, ErrRevokePermissionLevelMismatch(types.PostPermission, types.MicropaymentPermission)},
 		{"revoke non-exist pubkey", user1, priv3.Generate(2).PubKey(),
-			baseTime, types.PostPermission, model.ErrGetGrantUserFailed()},
+			baseTime, types.PostPermission, model.ErrGetGrantPubKeyFailed()},
 		{"revoke expired pubkey", user1, priv3.Generate(1).PubKey(),
 			baseTime + 101, types.PostPermission, nil},
 	}
@@ -1157,16 +1157,16 @@ func TestAuthorizePermission(t *testing.T) {
 		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.validityPeriod, cs.allowTimes, cs.level)
 		assert.Equal(t, cs.expectResult, err, cs.testName)
 		if cs.expectResult == nil {
-			grantUser, err := am.storage.GetGrantUser(ctx, cs.user, cs.expectPubKey)
+			grantPubKey, err := am.storage.GetGrantPubKey(ctx, cs.user, cs.expectPubKey)
 			assert.Nil(t, err)
-			expectGrantUser := model.GrantUser{
+			expectGrantPubKey := model.GrantPubKey{
 				Username:   cs.grantTo,
 				ExpiresAt:  baseTime + cs.validityPeriod,
 				CreatedAt:  baseTime,
 				LeftTimes:  cs.allowTimes,
 				Permission: cs.level,
 			}
-			assert.Equal(t, expectGrantUser, *grantUser)
+			assert.Equal(t, expectGrantPubKey, *grantPubKey)
 		}
 	}
 }
