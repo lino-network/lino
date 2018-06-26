@@ -29,7 +29,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		sdkMsg := tx.GetMsg()
 		msg, ok := sdkMsg.(types.Msg)
 		if !ok {
-			return ctx, sdk.ErrInternal("unrecognize msg").Result(), true
+			return ctx, sdk.ErrInternal("unrecognized msg").Result(), true
 		}
 
 		// Assert that number of signatures is correct.
@@ -58,21 +58,21 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		}
 		// signers get from msg should be verify first
 		for i, signer := range signers {
-			accKey, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
+			_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
 			if err != nil {
 				return ctx, err.Result(), true
 			}
 
-			seq, err := am.GetSequence(ctx, accKey)
+			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
 			if err != nil {
 				return ctx, err.Result(), true
 			}
 			if seq != sigs[i].Sequence {
 				return ctx, sdk.ErrInvalidSequence(
 					fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
-						accKey, sigs[i].Sequence, seq)).Result(), true
+						types.AccountKey(signer), sigs[i].Sequence, seq)).Result(), true
 			}
-			if err := am.IncreaseSequenceByOne(ctx, accKey); err != nil {
+			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
 				return ctx, err.Result(), true
 			}
 

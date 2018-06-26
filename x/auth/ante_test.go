@@ -226,12 +226,15 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant
-	privs, seqs = []crypto.PrivKey{post2}, []int64{0}
+	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err = am.GetSequence(ctx, user2)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(1))
+	assert.Equal(t, seq, int64(0))
+	seq, err = am.GetSequence(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(2))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
