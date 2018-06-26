@@ -124,4 +124,10 @@ const (
 
 	// Maximum length of Links URL
 	MaximumLinkURL = 50
+
+	// Maximum length of post ID
+	MaximumLengthOfPostID = 50
+
+	// Maximum number of links per post
+	MaximumNumOfLinks = 10
 )

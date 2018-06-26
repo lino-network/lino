@@ -67,11 +67,6 @@ func TestDelegateBasic(t *testing.T) {
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
 	assert.Equal(t, minBalance.Minus(delegatedCoin).Minus(delegatedCoin), acc2Balance)
 
-	// check user2's delegatee list
-	delegateeList, _ := vm.storage.GetDelegateeList(ctx, user2)
-	assert.Equal(t, 1, len(delegateeList.DelegateeList))
-	assert.Equal(t, user1, delegateeList.DelegateeList[0])
-
 	// let user3 delegate power to user1
 	msg3 := NewDelegateMsg("user3", "user1", coinToString(delegatedCoin))
 	result3 := handler(ctx, msg3)
@@ -82,11 +77,6 @@ func TestDelegateBasic(t *testing.T) {
 	assert.Equal(t, 2, len(delegators))
 	assert.Equal(t, user2, delegators[0])
 	assert.Equal(t, user3, delegators[1])
-
-	// check user3's delegatee list
-	delegateeList, _ = vm.storage.GetDelegateeList(ctx, user3)
-	assert.Equal(t, 1, len(delegateeList.DelegateeList))
-	assert.Equal(t, user1, delegateeList.DelegateeList[0])
 
 	// check delegation are correct
 	delegation1, _ := vm.storage.GetDelegation(ctx, "user1", "user2")
@@ -134,10 +124,6 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, model.ErrGetDelegation(), err)
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc3Balance)
-
-	// check user3's delegatee list
-	delegateeList, _ := vm.storage.GetDelegateeList(ctx, user3)
-	assert.Equal(t, 0, len(delegateeList.DelegateeList))
 
 	// set user1 as validator (cannot revoke)
 	referenceList := &model.ReferenceList{

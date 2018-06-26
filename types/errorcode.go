@@ -38,6 +38,7 @@ const (
 	// validator errors reserve 500 ~ 599
 	CodeValidatorHandlerFailed sdk.CodeType = 500
 	CodeValidatorManagerFailed sdk.CodeType = 501
+	CodeValidatorStorageFailed sdk.CodeType = 502
 
 	// Event errors reserve 600 ~ 699
 	CodeGlobalStorageGenesisError sdk.CodeType = 600

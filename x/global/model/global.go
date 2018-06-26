@@ -20,16 +20,6 @@ type TPS struct {
 	MaxTPS     sdk.Rat `json:"max_tps"`
 }
 
-// GlobalStatistics
-type GlobalStatistics struct {
-	numOfAccount  int64 `json:"number_of_account"`
-	numOfPost     int64 `json:"number_of_post"`
-	numOfComment  int64 `json:"number_of_comment"`
-	numOfTransfer int64 `json:"number_of_transfer"`
-	numOfLike     int64 `json:"number_of_like"`
-	numOfDonation int64 `json:"number_of_donation"`
-}
-
 // InflationPool, determined by GlobalAllocation
 // InfraInflationPool inflation pool for infra
 // TotalContentCreatorInflationPool total inflation pool for content creator this year
@@ -45,14 +35,10 @@ type InflationPool struct {
 
 // ConsumptionMeta
 // ConsumptionFrictionRate: percentage the user consumption deducted and added to the TotalLinoInflationPool
-// ReportStakeWindow used to evaluate the panelty of the post within the freezing period
-// DislikeStakeWindow used to evaluate the panelty of the post within the freezing period
 // ConsumptionWindow records all content related consumption within the freezing period
 // ConsumptionFreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
 	ConsumptionFrictionRate     sdk.Rat    `json:"consumption_friction_rate"`
-	ReportStakeWindow           sdk.Rat    `json:"report_stake_window"`
-	DislikeStakeWindow          sdk.Rat    `json:"dislike_stake_window"`
 	ConsumptionWindow           types.Coin `json:"consumption_window"`
 	ConsumptionRewardPool       types.Coin `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodHr int64      `json:"consumption_freezing_period"`

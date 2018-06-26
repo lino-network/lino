@@ -12,7 +12,7 @@ var (
 	voterSubstore         = []byte{0x01}
 	voteSubstore          = []byte{0x02}
 	referenceListSubStore = []byte{0x03}
-	delegateeListSubStore = []byte{0x04}
+	delegateeSubStore     = []byte{0x04}
 )
 
 type VoteStorage struct {
@@ -132,12 +132,14 @@ func (vs VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, del
 		return ErrMarshalError(err)
 	}
 	store.Set(GetDelegationKey(voter, delegator), delegationByte)
+	store.Set(GetDelegateeKey(delegator, voter), delegationByte)
 	return nil
 }
 
 func (vs VoteStorage) DeleteDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) sdk.Error {
 	store := ctx.KVStore(vs.key)
 	store.Delete(GetDelegationKey(voter, delegator))
+	store.Delete(GetDelegateeKey(delegator, voter))
 	return nil
 }
 
@@ -202,30 +204,6 @@ func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.
 	return nil
 }
 
-func (vs VoteStorage) GetDelegateeList(ctx sdk.Context, me types.AccountKey) (*DelegateeList, sdk.Error) {
-	store := ctx.KVStore(vs.key)
-	lstByte := store.Get(GetDelegateeListKey(me))
-	if lstByte == nil {
-		return nil, nil
-	}
-	lst := new(DelegateeList)
-	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (vs VoteStorage) SetDelegateeList(
-	ctx sdk.Context, me types.AccountKey, lst *DelegateeList) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	lstByte, err := vs.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrMarshalError(err)
-	}
-	store.Set(GetDelegateeListKey(me), lstByte)
-	return nil
-}
-
 func GetDelegationPrefix(me types.AccountKey) []byte {
 	return append(append(delegationSubstore, me...), types.KeySeparator...)
 }
@@ -252,8 +230,12 @@ func GetReferenceListKey() []byte {
 	return referenceListSubStore
 }
 
-func GetDelegateeListKey(me types.AccountKey) []byte {
-	return append(delegateeListSubStore, me...)
+func GetDelegateePrefix(me types.AccountKey) []byte {
+	return append(append(delegateeSubStore, me...), types.KeySeparator...)
+}
+
+func GetDelegateeKey(me, delegatee types.AccountKey) []byte {
+	return append(GetDelegateePrefix(me), delegatee...)
 }
 
 func subspace(prefix []byte) (start, end []byte) {
