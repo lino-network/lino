@@ -47,7 +47,7 @@ type ChangeParamMsg interface {
 
 type ContentCensorshipMsg interface {
 	GetCreator() types.AccountKey
-	GetPermLink() types.PermLink
+	GetPermlink() types.Permlink
 	GetReason() string
 }
 
@@ -58,7 +58,7 @@ type ProtocolUpgradeMsg interface {
 
 type DeletePostContentMsg struct {
 	Creator  types.AccountKey `json:"creator"`
-	PermLink types.PermLink   `json:"permLink"`
+	Permlink types.Permlink   `json:"permLink"`
 	Reason   string           `json:"reason"`
 }
 
@@ -132,15 +132,15 @@ type VoteProposalMsg struct {
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
 func NewDeletePostContentMsg(
-	creator string, permLink types.PermLink, reason string) DeletePostContentMsg {
+	creator string, permLink types.Permlink, reason string) DeletePostContentMsg {
 	return DeletePostContentMsg{
 		Creator:  types.AccountKey(creator),
-		PermLink: permLink,
+		Permlink: permLink,
 		Reason:   reason,
 	}
 }
 
-func (msg DeletePostContentMsg) GetPermLink() types.PermLink  { return msg.PermLink }
+func (msg DeletePostContentMsg) GetPermlink() types.Permlink  { return msg.Permlink }
 func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creator }
 func (msg DeletePostContentMsg) GetReason() string            { return msg.Reason }
 func (msg DeletePostContentMsg) Type() string                 { return types.ProposalRouterName }
@@ -150,14 +150,14 @@ func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
 		len(msg.Creator) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-	if len(msg.GetPermLink()) == 0 {
-		return ErrInvalidPermLink()
+	if len(msg.GetPermlink()) == 0 {
+		return ErrInvalidPermlink()
 	}
 	return nil
 }
 
 func (msg DeletePostContentMsg) String() string {
-	return fmt.Sprintf("DeletePostContentMsg{Creator:%v, post:%v}", msg.Creator, msg.GetPermLink())
+	return fmt.Sprintf("DeletePostContentMsg{Creator:%v, post:%v}", msg.Creator, msg.GetPermlink())
 }
 
 func (msg DeletePostContentMsg) GetPermission() types.Permission {

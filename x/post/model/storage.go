@@ -38,12 +38,12 @@ func NewPostStorage(key sdk.StoreKey) PostStorage {
 	}
 }
 
-func (ps PostStorage) DoesPostExist(ctx sdk.Context, permLink types.PermLink) bool {
+func (ps PostStorage) DoesPostExist(ctx sdk.Context, permLink types.Permlink) bool {
 	store := ctx.KVStore(ps.key)
 	return store.Has(GetPostInfoKey(permLink))
 }
 
-func (ps PostStorage) GetPostInfo(ctx sdk.Context, permLink types.PermLink) (*PostInfo, sdk.Error) {
+func (ps PostStorage) GetPostInfo(ctx sdk.Context, permLink types.Permlink) (*PostInfo, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	infoByte := store.Get(GetPostInfoKey(permLink))
 	if infoByte == nil {
@@ -62,11 +62,11 @@ func (ps PostStorage) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error
 	if err != nil {
 		return ErrPostMarshalError(err)
 	}
-	store.Set(GetPostInfoKey(types.GetPermLink(postInfo.Author, postInfo.PostID)), infoByte)
+	store.Set(GetPostInfoKey(types.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
 	return nil
 }
 
-func (ps PostStorage) GetPostMeta(ctx sdk.Context, permLink types.PermLink) (*PostMeta, sdk.Error) {
+func (ps PostStorage) GetPostMeta(ctx sdk.Context, permLink types.Permlink) (*PostMeta, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	metaBytes := store.Get(GetPostMetaKey(permLink))
 	if metaBytes == nil {
@@ -79,7 +79,7 @@ func (ps PostStorage) GetPostMeta(ctx sdk.Context, permLink types.PermLink) (*Po
 	return postMeta, nil
 }
 
-func (ps PostStorage) SetPostMeta(ctx sdk.Context, permLink types.PermLink, postMeta *PostMeta) sdk.Error {
+func (ps PostStorage) SetPostMeta(ctx sdk.Context, permLink types.Permlink, postMeta *PostMeta) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	metaBytes, err := ps.cdc.MarshalJSON(*postMeta)
 	if err != nil {
@@ -90,7 +90,7 @@ func (ps PostStorage) SetPostMeta(ctx sdk.Context, permLink types.PermLink, post
 }
 
 func (ps PostStorage) GetPostLike(
-	ctx sdk.Context, permLink types.PermLink, likeUser types.AccountKey) (*Like, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink, likeUser types.AccountKey) (*Like, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	likeBytes := store.Get(GetPostLikeKey(permLink, likeUser))
 	if likeBytes == nil {
@@ -103,7 +103,7 @@ func (ps PostStorage) GetPostLike(
 	return postLike, nil
 }
 
-func (ps PostStorage) SetPostLike(ctx sdk.Context, permLink types.PermLink, postLike *Like) sdk.Error {
+func (ps PostStorage) SetPostLike(ctx sdk.Context, permLink types.Permlink, postLike *Like) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	likeByte, err := ps.cdc.MarshalJSON(*postLike)
 	if err != nil {
@@ -114,7 +114,7 @@ func (ps PostStorage) SetPostLike(ctx sdk.Context, permLink types.PermLink, post
 }
 
 func (ps PostStorage) GetPostReportOrUpvote(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	reportOrUpvoteBytes := store.Get(GetPostReportOrUpvoteKey(permLink, user))
 	if reportOrUpvoteBytes == nil {
@@ -128,7 +128,7 @@ func (ps PostStorage) GetPostReportOrUpvote(
 }
 
 func (ps PostStorage) SetPostReportOrUpvote(
-	ctx sdk.Context, permLink types.PermLink, reportOrUpvote *ReportOrUpvote) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, reportOrUpvote *ReportOrUpvote) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	reportOrUpvoteByte, err := ps.cdc.MarshalJSON(*reportOrUpvote)
 	if err != nil {
@@ -139,11 +139,11 @@ func (ps PostStorage) SetPostReportOrUpvote(
 }
 
 func (ps PostStorage) GetPostComment(
-	ctx sdk.Context, permLink types.PermLink, commentPermLink types.PermLink) (*Comment, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink, commentPermlink types.Permlink) (*Comment, sdk.Error) {
 	store := ctx.KVStore(ps.key)
-	commentBytes := store.Get(GetPostCommentKey(permLink, commentPermLink))
+	commentBytes := store.Get(GetPostCommentKey(permLink, commentPermlink))
 	if commentBytes == nil {
-		return nil, ErrPostCommentNotFound(GetPostCommentKey(permLink, commentPermLink))
+		return nil, ErrPostCommentNotFound(GetPostCommentKey(permLink, commentPermlink))
 	}
 	postComment := new(Comment)
 	if unmarshalErr := ps.cdc.UnmarshalJSON(commentBytes, postComment); unmarshalErr != nil {
@@ -153,20 +153,20 @@ func (ps PostStorage) GetPostComment(
 }
 
 func (ps PostStorage) SetPostComment(
-	ctx sdk.Context, permLink types.PermLink, postComment *Comment) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, postComment *Comment) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	postCommentByte, err := ps.cdc.MarshalJSON(*postComment)
 	if err != nil {
 		return ErrPostMarshalError(err)
 	}
 	store.Set(
-		GetPostCommentKey(permLink, types.GetPermLink(postComment.Author, postComment.PostID)),
+		GetPostCommentKey(permLink, types.GetPermlink(postComment.Author, postComment.PostID)),
 		postCommentByte)
 	return nil
 }
 
 func (ps PostStorage) GetPostView(
-	ctx sdk.Context, permLink types.PermLink, viewUser types.AccountKey) (*View, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink, viewUser types.AccountKey) (*View, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	viewBytes := store.Get(GetPostViewKey(permLink, viewUser))
 	if viewBytes == nil {
@@ -179,7 +179,7 @@ func (ps PostStorage) GetPostView(
 	return postView, nil
 }
 
-func (ps PostStorage) SetPostView(ctx sdk.Context, permLink types.PermLink, postView *View) sdk.Error {
+func (ps PostStorage) SetPostView(ctx sdk.Context, permLink types.Permlink, postView *View) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	postViewByte, err := ps.cdc.MarshalJSON(*postView)
 	if err != nil {
@@ -190,7 +190,7 @@ func (ps PostStorage) SetPostView(ctx sdk.Context, permLink types.PermLink, post
 }
 
 func (ps PostStorage) GetPostDonations(
-	ctx sdk.Context, permLink types.PermLink, donateUser types.AccountKey) (*Donations, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink, donateUser types.AccountKey) (*Donations, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	donateBytes := store.Get(GetPostDonationKey(permLink, donateUser))
 	if donateBytes == nil {
@@ -204,7 +204,7 @@ func (ps PostStorage) GetPostDonations(
 }
 
 func (ps PostStorage) SetPostDonations(
-	ctx sdk.Context, permLink types.PermLink, postDonations *Donations) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, postDonations *Donations) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	postDonationsByte, err := ps.cdc.MarshalJSON(*postDonations)
 	if err != nil {
@@ -214,60 +214,60 @@ func (ps PostStorage) SetPostDonations(
 	return nil
 }
 
-func GetPostInfoKey(permLink types.PermLink) []byte {
+func GetPostInfoKey(permLink types.Permlink) []byte {
 	return append(postInfoSubStore, permLink...)
 }
 
-func GetPostMetaKey(permLink types.PermLink) []byte {
+func GetPostMetaKey(permLink types.Permlink) []byte {
 	return append(postMetaSubStore, permLink...)
 }
 
 // PostLikePrefix format is LikeSubStore / PostKey
 // which can be used to access all likes belong to this post
-func getPostLikePrefix(permLink types.PermLink) []byte {
+func getPostLikePrefix(permLink types.Permlink) []byte {
 	return append(append(postLikeSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostLikeKey(permLink types.PermLink, likeUser types.AccountKey) []byte {
+func GetPostLikeKey(permLink types.Permlink, likeUser types.AccountKey) []byte {
 	return append(getPostLikePrefix(permLink), likeUser...)
 }
 
 // PostReportPrefix format is ReportSubStore / PostKey
 // which can be used to access all reports belong to this post
-func getPostReportOrUpvotePrefix(permLink types.PermLink) []byte {
+func getPostReportOrUpvotePrefix(permLink types.Permlink) []byte {
 	return append(append(postReportOrUpvoteSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostReportOrUpvoteKey(permLink types.PermLink, user types.AccountKey) []byte {
+func GetPostReportOrUpvoteKey(permLink types.Permlink, user types.AccountKey) []byte {
 	return append(getPostReportOrUpvotePrefix(permLink), user...)
 }
 
 // PostViewPrefix format is ViewSubStore / permlink
 // which can be used to access all views belong to this post
-func getPostViewPrefix(permLink types.PermLink) []byte {
+func getPostViewPrefix(permLink types.Permlink) []byte {
 	return append(append(postViewsSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostViewKey(permLink types.PermLink, viewUser types.AccountKey) []byte {
+func GetPostViewKey(permLink types.Permlink, viewUser types.AccountKey) []byte {
 	return append(getPostViewPrefix(permLink), viewUser...)
 }
 
 // PostCommentPrefix format is CommentSubStore / permlink
 // which can be used to access all comments belong to this post
-func getPostCommentPrefix(permLink types.PermLink) []byte {
+func getPostCommentPrefix(permLink types.Permlink) []byte {
 	return append(append(postCommentSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostCommentKey(permLink types.PermLink, commentPermlink types.PermLink) []byte {
+func GetPostCommentKey(permLink types.Permlink, commentPermlink types.Permlink) []byte {
 	return append(getPostCommentPrefix(permLink), commentPermlink...)
 }
 
 // PostDonationPrefix format is DonationSubStore / permlink
 // which can be used to access all donations belong to this post
-func getPostDonationPrefix(permLink types.PermLink) []byte {
+func getPostDonationPrefix(permLink types.Permlink) []byte {
 	return append(append(postDonationsSubStore, permLink...), types.KeySeparator...)
 }
 
-func GetPostDonationKey(permLink types.PermLink, donateUser types.AccountKey) []byte {
+func GetPostDonationKey(permLink types.Permlink, donateUser types.AccountKey) []byte {
 	return append(getPostDonationPrefix(permLink), donateUser...)
 }

@@ -133,14 +133,14 @@ func TestRewardEvent(t *testing.T) {
 			ConsumptionRewardPool: tc.initRewardPool,
 			ConsumptionWindow:     tc.initRewardWindow,
 		})
-		pm.postStorage.SetPostMeta(ctx, types.GetPermLink(user, postID),
+		pm.postStorage.SetPostMeta(ctx, types.GetPermlink(user, postID),
 			&postModel.PostMeta{
 				TotalUpvoteStake: tc.totalUpvoteOfthePost,
 				TotalReportStake: tc.totalReportOfthePost,
 			})
 		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm)
 		assert.Nil(t, err)
-		checkPostMeta(t, ctx, types.GetPermLink(user, postID), tc.expectPostMeta)
+		checkPostMeta(t, ctx, types.GetPermlink(user, postID), tc.expectPostMeta)
 		if dm.DoesDeveloperExist(ctx, tc.rewardEvent.FromApp) {
 			consumptionWeight, err := dm.GetConsumptionWeight(ctx, tc.rewardEvent.FromApp)
 			assert.Nil(t, err)

@@ -38,7 +38,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	// find the key to look up the account
 	author := args[0]
 	postID := args[1]
-	postKey := types.GetPermLink(types.AccountKey(author), postID)
+	postKey := types.GetPermlink(types.AccountKey(author), postID)
 
 	res, err := ctx.Query(model.GetPostInfoKey(postKey), c.storeName)
 	if err != nil {
