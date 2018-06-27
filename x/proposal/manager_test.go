@@ -11,11 +11,11 @@ import (
 
 func TestUpdateProposalVotingStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
-	permLink := types.Permlink("postlink")
+	permlink := types.Permlink("postlink")
 	user1 := types.AccountKey("user1")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
 
@@ -45,7 +45,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 				DisagreeVotes: types.NewCoinFromInt64(0),
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 		{
 			testName:    "one more agree vote",
@@ -60,7 +60,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 				DisagreeVotes: types.NewCoinFromInt64(0),
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 		{
 			testName:    "one disagree vote",
@@ -75,7 +75,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 				DisagreeVotes: types.NewCoinFromInt64(5),
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {
@@ -90,21 +90,21 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 
 func TestUpdateProposalPassStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
-	permLink := types.Permlink("postlink")
+	permlink := types.Permlink("postlink")
 	user1 := types.AccountKey("user1")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
 
 	proposal2 := &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
 
 	proposal3 := &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
 	pm.InitGenesis(ctx)
@@ -138,7 +138,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 				Result:        types.ProposalNotPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 
 		{testName: "test votes don't meet min requirement ",
@@ -155,7 +155,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 				Result:        types.ProposalNotPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 
 		{testName: "test votes ratio doesn't meet requirement ",
@@ -172,7 +172,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 				Result:        types.ProposalPass,
 				CreatedAt:     curTime,
 				ExpiredAt:     curTime + decideHr*3600,
-			}, permLink, censorshipReason},
+			}, permlink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

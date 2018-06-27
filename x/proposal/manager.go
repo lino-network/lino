@@ -46,9 +46,9 @@ func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.Pr
 }
 
 func (pm ProposalManager) CreateContentCensorshipProposal(
-	ctx sdk.Context, permLink types.Permlink, reason string) model.Proposal {
+	ctx sdk.Context, permlink types.Permlink, reason string) model.Proposal {
 	return &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   reason,
 	}
 }
