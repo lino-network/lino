@@ -5,10 +5,10 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	vote "github.com/lino-network/lino/x/vote"
-	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm global.GlobalManager) sdk.Handler {
@@ -31,7 +31,7 @@ func handleDepositMsg(
 	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
 	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -41,18 +41,18 @@ func handleDepositMsg(
 	}
 
 	// withdraw money from validator's bank
-	if err = am.MinusSavingCoin(ctx, msg.Username, coin, types.ValidatorDeposit); err != nil {
+	if err = am.MinusSavingCoin(ctx, msg.Username, coin, "", "", types.ValidatorDeposit); err != nil {
 		return err.Result()
 	}
 
 	// Register the user if this name has not been registered
-	if !valManager.IsValidatorExist(ctx, msg.Username) {
+	if !valManager.DoesValidatorExist(ctx, msg.Username) {
 		// check validator minimum voting deposit requirement
 		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
 			return ErrVotingDepositNotEnough().Result()
 		}
 		if err := valManager.RegisterValidator(
-			ctx, msg.Username, msg.ValPubKey.Bytes(), coin, msg.Link); err != nil {
+			ctx, msg.Username, msg.ValPubKey, coin, msg.Link); err != nil {
 			return err.Result()
 		}
 	} else {

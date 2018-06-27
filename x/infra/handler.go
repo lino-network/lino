@@ -20,7 +20,7 @@ func NewHandler(im InfraManager) sdk.Handler {
 }
 
 func handleProviderReportMsg(ctx sdk.Context, im InfraManager, msg ProviderReportMsg) sdk.Result {
-	if !im.IsInfraProviderExist(ctx, msg.Username) {
+	if !im.DoesInfraProviderExist(ctx, msg.Username) {
 		return ErrProviderNotFound().Result()
 	}
 

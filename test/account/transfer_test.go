@@ -5,20 +5,20 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
 
 	crypto "github.com/tendermint/go-crypto"
 )
 
 // test normal transfer to account name
 func TestTransferToAccount(t *testing.T) {
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	baseTime := time.Now().Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
+		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
 
 	transferMsg := acc.NewTransferMsg(
 		test.GenesisUser, newAccountName, types.LNO("200"), "")

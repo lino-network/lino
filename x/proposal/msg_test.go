@@ -9,6 +9,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestVoteProposalMsg(t *testing.T) {
+	cases := []struct {
+		voteProposalMsg VoteProposalMsg
+		expectError     sdk.Error
+	}{
+		{NewVoteProposalMsg("user1", 1, true), nil},
+		{NewVoteProposalMsg("", 1, true), ErrInvalidUsername()},
+	}
+
+	for _, cs := range cases {
+		result := cs.voteProposalMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
 		InfraAllocation:          sdk.NewRat(20, 100),
@@ -31,69 +46,6 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	for _, cs := range cases {
 		result := cs.ChangeGlobalAllocationParamMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
-	}
-}
-
-func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
-		msg              sdk.Msg
-		expectPermission types.Permission
-	}{
-		"change evaluate of content value param": {
-			NewChangeEvaluateOfContentValueParamMsg("creator",
-				param.EvaluateOfContentValueParam{}),
-			types.TransactionPermission},
-		"change global allocation param": {
-			NewChangeGlobalAllocationParamMsg("creator",
-				param.GlobalAllocationParam{}),
-			types.TransactionPermission},
-		"change infra internal allocation param": {
-			NewChangeInfraInternalAllocationParamMsg("creator",
-				param.InfraInternalAllocationParam{}),
-			types.TransactionPermission},
-		"change vote param": {
-			NewChangeVoteParamMsg("creator", param.VoteParam{}),
-			types.TransactionPermission},
-		"change proposal param": {
-			NewChangeProposalParamMsg("creator", param.ProposalParam{}),
-			types.TransactionPermission},
-		"change developer param": {
-			NewChangeDeveloperParamMsg("creator", param.DeveloperParam{}),
-			types.TransactionPermission},
-		"change validator param": {
-			NewChangeValidatorParamMsg("creator", param.ValidatorParam{}),
-			types.TransactionPermission},
-		"change coinday param": {
-			NewChangeCoinDayParamMsg("creator", param.CoinDayParam{}),
-			types.TransactionPermission},
-		"change bandwidth param": {
-			NewChangeBandwidthParamMsg("creator", param.BandwidthParam{}),
-			types.TransactionPermission},
-		"change account param": {
-			NewChangeAccountParamMsg("creator", param.AccountParam{}),
-			types.TransactionPermission},
-	}
-
-	for testName, cs := range cases {
-		permissionLevel := cs.msg.Get(types.PermissionLevel)
-		if permissionLevel == nil {
-			if cs.expectPermission != types.PostPermission {
-				t.Errorf(
-					"%s: expect permission incorrect, expect %v, got %v",
-					testName, cs.expectPermission, types.PostPermission)
-				return
-			} else {
-				continue
-			}
-		}
-		permission, ok := permissionLevel.(types.Permission)
-		assert.Equal(t, ok, true)
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
-			return
-		}
 	}
 }
 
@@ -494,14 +446,117 @@ func TestDeletePostContentMsg(t *testing.T) {
 		deletePostContentMsg DeletePostContentMsg
 		expectError          sdk.Error
 	}{
-		{NewDeletePostContentMsg("user1", "permLink"), nil},
-		{NewDeletePostContentMsg("us", "permLink"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permLink"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1", ""), ErrInvalidPermLink()},
+		{NewDeletePostContentMsg("user1", "permlink", "reason"), nil},
+		{NewDeletePostContentMsg("us", "permlink", "reason"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permlink", "reason"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1", "", "reason"), ErrInvalidPermlink()},
 	}
 
 	for _, cs := range cases {
 		result := cs.deletePostContentMsg.ValidateBasic()
 		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestUpgradeProtocolMsg(t *testing.T) {
+	cases := []struct {
+		upgradeProtocolMsg UpgradeProtocolMsg
+		expectError        sdk.Error
+	}{
+		{NewUpgradeProtocolMsg("user1", "link"), nil},
+		{NewUpgradeProtocolMsg("us", "link"), ErrInvalidUsername()},
+		{NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link"), ErrInvalidUsername()},
+		{NewUpgradeProtocolMsg("user1", ""), ErrInvalidLink()},
+	}
+
+	for _, cs := range cases {
+		result := cs.upgradeProtocolMsg.ValidateBasic()
+		assert.Equal(t, result, cs.expectError)
+	}
+}
+
+func TestMsgPermission(t *testing.T) {
+	cases := map[string]struct {
+		msg              types.Msg
+		expectPermission types.Permission
+	}{
+		"delete post content msg": {
+			msg: NewDeletePostContentMsg(
+				"creator", "perm_link", "reason"),
+			expectPermission: types.TransactionPermission,
+		},
+		"upgrade protocal msg": {
+			msg:              NewUpgradeProtocolMsg("creator", "link"),
+			expectPermission: types.TransactionPermission,
+		},
+		"change global allocaiton param msg": {
+			msg: NewChangeGlobalAllocationParamMsg(
+				"creator", param.GlobalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change evaluate of content value param msg": {
+			msg: NewChangeEvaluateOfContentValueParamMsg(
+				"creator", param.EvaluateOfContentValueParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change infra internal allocation param msg": {
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change vote param msg": {
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change proposal param msg": {
+			msg: NewChangeProposalParamMsg(
+				"creator", param.ProposalParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change developer param msg": {
+			msg: NewChangeDeveloperParamMsg(
+				"creator", param.DeveloperParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change validator param msg": {
+			msg: NewChangeValidatorParamMsg(
+				"creator", param.ValidatorParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change coin day param msg": {
+			msg: NewChangeCoinDayParamMsg(
+				"creator", param.CoinDayParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change bandwidth param msg": {
+			msg: NewChangeBandwidthParamMsg(
+				"creator", param.BandwidthParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change account param msg": {
+			msg: NewChangeAccountParamMsg(
+				"creator", param.AccountParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"change post param msg": {
+			msg: NewChangePostParamMsg(
+				"creator", param.PostParam{}),
+			expectPermission: types.TransactionPermission,
+		},
+		"vote proposal msg": {
+			msg:              NewVoteProposalMsg("voter", 1, true),
+			expectPermission: types.TransactionPermission,
+		},
+	}
+
+	for testName, cs := range cases {
+		permission := cs.msg.GetPermission()
+		if cs.expectPermission != permission {
+			t.Errorf(
+				"%s: expect permission incorrect, expect %v, got %v",
+				testName, cs.expectPermission, permission)
+			return
+		}
 	}
 }

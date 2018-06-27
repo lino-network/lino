@@ -2,7 +2,6 @@ package validator
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,9 +9,9 @@ import (
 	"github.com/tendermint/go-crypto"
 )
 
-var _ sdk.Msg = ValidatorDepositMsg{}
-var _ sdk.Msg = ValidatorWithdrawMsg{}
-var _ sdk.Msg = ValidatorRevokeMsg{}
+var _ types.Msg = ValidatorDepositMsg{}
+var _ types.Msg = ValidatorWithdrawMsg{}
+var _ types.Msg = ValidatorRevokeMsg{}
 
 type ValidatorDepositMsg struct {
 	Username  types.AccountKey `json:"username"`
@@ -60,19 +59,12 @@ func (msg ValidatorDepositMsg) String() string {
 	return fmt.Sprintf("ValidatorDepositMsg{Username:%v, Deposit:%v, PubKey:%v}", msg.Username, msg.Deposit, msg.ValPubKey)
 }
 
-func (msg ValidatorDepositMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ValidatorDepositMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ValidatorDepositMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -109,19 +101,12 @@ func (msg ValidatorWithdrawMsg) String() string {
 	return fmt.Sprintf("ValidatorWithdrawMsg{Username:%v}", msg.Username)
 }
 
-func (msg ValidatorWithdrawMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ValidatorWithdrawMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ValidatorWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -153,19 +138,12 @@ func (msg ValidatorRevokeMsg) String() string {
 	return fmt.Sprintf("ValidatorRevokeMsg{Username:%v}", msg.Username)
 }
 
-func (msg ValidatorRevokeMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg ValidatorRevokeMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}

@@ -4,10 +4,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -34,7 +35,7 @@ func TestRegisterBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
 	// now user1 should be the only validator
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
@@ -47,7 +48,7 @@ func TestRegisterBasic(t *testing.T) {
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, valParam.ValidatorMinCommitingDeposit, verifyAccount.Deposit)
-	assert.Equal(t, valKey.Bytes(), verifyAccount.ABCIValidator.GetPubKey())
+	assert.Equal(t, tmtypes.TM2PB.PubKey(valKey), verifyAccount.ABCIValidator.GetPubKey())
 }
 
 func TestRegisterFeeNotEnough(t *testing.T) {
@@ -297,7 +298,7 @@ func TestDepositBasic(t *testing.T) {
 	// check acc1's money has been withdrawn
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
-	assert.Equal(t, true, valManager.IsValidatorExist(ctx, user1))
+	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, valParam.ValidatorMinCommitingDeposit, verifyList.LowestPower)

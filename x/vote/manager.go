@@ -2,8 +2,8 @@ package vote
 
 import (
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,14 +27,16 @@ func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (vm VoteManager) IsVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
-	voterByte, _ := vm.storage.GetVoter(ctx, accKey)
-	return voterByte != nil
+func (vm VoteManager) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	return vm.storage.DoesVoterExist(ctx, accKey)
 }
 
-func (vm VoteManager) IsVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
-	voteByte, _ := vm.storage.GetVote(ctx, proposalID, accKey)
-	return voteByte != nil
+func (vm VoteManager) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
+	return vm.storage.DoesVoteExist(ctx, proposalID, accKey)
+}
+
+func (vm VoteManager) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+	return vm.storage.DoesDelegationExist(ctx, voter, delegator)
 }
 
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
@@ -48,11 +50,6 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 		}
 	}
 	return false
-}
-
-func (vm VoteManager) IsDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
-	delegationByte, _ := vm.storage.GetDelegation(ctx, voter, delegator)
-	return delegationByte != nil
 }
 
 func (vm VoteManager) IsLegalVoterWithdraw(
@@ -103,19 +100,6 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 	return res.IsNotNegative()
 }
 
-func (vm VoteManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
-	lst, err := vm.storage.GetReferenceList(ctx)
-	if err != nil {
-		return false
-	}
-	for _, id := range lst.OngoingProposal {
-		if id == proposalID {
-			return true
-		}
-	}
-	return false
-}
-
 func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -132,7 +116,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 // only support change parameter proposal now
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
 	// check if the vote exist
-	if vm.IsVoteExist(ctx, proposalID, voter) {
+	if vm.DoesVoteExist(ctx, proposalID, voter) {
 		return ErrVoteExist()
 	}
 
@@ -153,11 +137,15 @@ func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 	return nil
 }
 
+func (vm VoteManager) GetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) (*model.Vote, sdk.Error) {
+	return vm.storage.GetVote(ctx, proposalID, voter)
+}
+
 func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	var delegation *model.Delegation
 	var err sdk.Error
 
-	if !vm.IsDelegationExist(ctx, voterName, delegatorName) {
+	if !vm.DoesDelegationExist(ctx, voterName, delegatorName) {
 		delegation = &model.Delegation{
 			Delegator: delegatorName,
 		}
@@ -254,7 +242,8 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 	return voter.Deposit, nil
 }
 
-func (vm VoteManager) DelegatorWithdraw(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) DelegatorWithdraw(
+	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrNoCoinToWithdraw()
 	}
@@ -306,28 +295,20 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 	return res, nil
 }
 
-func (vm VoteManager) CalculateVotingResult(
+func (vm VoteManager) GetPenaltyList(
 	ctx sdk.Context, proposalID types.ProposalKey, proposalType types.ProposalType,
-	oncallValidators []types.AccountKey) (types.VotingResult, sdk.Error) {
-	res := types.VotingResult{
-		AgreeVotes:    types.NewCoinFromInt64(0),
-		DisagreeVotes: types.NewCoinFromInt64(0),
-		PenaltyList:   []types.AccountKey{},
+	oncallValidators []types.AccountKey) (types.PenaltyList, sdk.Error) {
+	penaltyList := types.PenaltyList{
+		PenaltyList: []types.AccountKey{},
 	}
 
 	// get all votes to calculate the voting result
 	votes, err := vm.storage.GetAllVotes(ctx, proposalID)
 	if err != nil {
-		return res, err
+		return penaltyList, err
 	}
 
 	for _, vote := range votes {
-		if vote.Result == true {
-			res.AgreeVotes = res.AgreeVotes.Plus(vote.VotingPower)
-		} else {
-			res.DisagreeVotes = res.DisagreeVotes.Plus(vote.VotingPower)
-		}
-
 		// remove from list if the validator voted
 		for idx, validator := range oncallValidators {
 			if validator == vote.Voter {
@@ -335,14 +316,15 @@ func (vm VoteManager) CalculateVotingResult(
 				break
 			}
 		}
-		vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
+		// TODO: Decide if we wanna delete vote.
+		// vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
 	}
 
 	// put all validators who didn't vote on these two types proposal into penalty list
 	if proposalType == types.ChangeParam || proposalType == types.ProtocolUpgrade {
-		res.PenaltyList = oncallValidators
+		penaltyList.PenaltyList = oncallValidators
 	}
-	return res, nil
+	return penaltyList, nil
 }
 
 func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {

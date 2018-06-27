@@ -2,28 +2,19 @@ package vote
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = VoteMsg{}
-var _ sdk.Msg = VoterDepositMsg{}
-var _ sdk.Msg = VoterWithdrawMsg{}
-var _ sdk.Msg = VoterRevokeMsg{}
-var _ sdk.Msg = DelegateMsg{}
-var _ sdk.Msg = DelegatorWithdrawMsg{}
-var _ sdk.Msg = RevokeDelegationMsg{}
-
-type VoteMsg struct {
-	Voter      types.AccountKey  `json:"voter"`
-	ProposalID types.ProposalKey `json:"proposal_id"`
-	Result     bool              `json:"result"`
-}
+var _ types.Msg = VoterDepositMsg{}
+var _ types.Msg = VoterWithdrawMsg{}
+var _ types.Msg = VoterRevokeMsg{}
+var _ types.Msg = DelegateMsg{}
+var _ types.Msg = DelegatorWithdrawMsg{}
+var _ types.Msg = RevokeDelegationMsg{}
 
 type VoterDepositMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -85,19 +76,12 @@ func (msg VoterDepositMsg) String() string {
 	return fmt.Sprintf("VoterDepositMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
-func (msg VoterDepositMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterDepositMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterDepositMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -135,19 +119,12 @@ func (msg VoterWithdrawMsg) String() string {
 	return fmt.Sprintf("VoterWithdrawMsg{Username:%v, Amount:%v}", msg.Username, msg.Amount)
 }
 
-func (msg VoterWithdrawMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterWithdrawMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -181,19 +158,12 @@ func (msg VoterRevokeMsg) String() string {
 	return fmt.Sprintf("VoterRevokeMsg{Username:%v}", msg.Username)
 }
 
-func (msg VoterRevokeMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg VoterRevokeMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg VoterRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -236,19 +206,12 @@ func (msg DelegateMsg) String() string {
 	return fmt.Sprintf("DelegateMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
-func (msg DelegateMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DelegateMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DelegateMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -286,19 +249,12 @@ func (msg RevokeDelegationMsg) String() string {
 	return fmt.Sprintf("RevokeDelegationMsg{Delegator:%v, Voter:%v}", msg.Delegator, msg.Voter)
 }
 
-func (msg RevokeDelegationMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg RevokeDelegationMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg RevokeDelegationMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -307,54 +263,6 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 
 func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Delegator)}
-}
-
-//----------------------------------------
-// VoteMsg Msg Implementations
-
-func NewVoteMsg(voter string, proposalID int64, result bool) VoteMsg {
-	return VoteMsg{
-		Voter:      types.AccountKey(voter),
-		ProposalID: types.ProposalKey(strconv.FormatInt(proposalID, 10)),
-		Result:     result,
-	}
-}
-
-func (msg VoteMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
-
-func (msg VoteMsg) ValidateBasic() sdk.Error {
-	if len(msg.Voter) < types.MinimumUsernameLength ||
-		len(msg.Voter) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-	return nil
-}
-
-func (msg VoteMsg) String() string {
-	return fmt.Sprintf("VoterMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
-}
-
-func (msg VoteMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
-}
-
-func (msg VoteMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func (msg VoteMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Voter)}
 }
 
 //----------------------------------------
@@ -387,19 +295,12 @@ func (msg DelegatorWithdrawMsg) String() string {
 	return fmt.Sprintf("DelegatorWithdrawMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
-func (msg DelegatorWithdrawMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DelegatorWithdrawMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}

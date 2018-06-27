@@ -1,0 +1,12 @@
+version: '3'
+services:
+  lino:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_lino
+  linocli:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_linocli
+    depends_on:
+      - "lino"

@@ -1,11 +1,9 @@
 package proposal
 
 import (
-	"math/big"
-
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/proposal/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -29,9 +27,8 @@ func (pm ProposalManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (pm ProposalManager) IsProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
-	proposalByte, _ := pm.storage.GetProposal(ctx, proposalID)
-	return proposalByte != nil
+func (pm ProposalManager) DoesProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
+	return pm.storage.DoesProposalExist(ctx, proposalID)
 }
 
 func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
@@ -49,9 +46,10 @@ func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.Pr
 }
 
 func (pm ProposalManager) CreateContentCensorshipProposal(
-	ctx sdk.Context, permLink types.PermLink) model.Proposal {
+	ctx sdk.Context, permlink types.Permlink, reason string) model.Proposal {
 	return &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permlink,
+		Reason:   reason,
 	}
 }
 
@@ -69,7 +67,7 @@ func (pm ProposalManager) CreateChangeParamProposal(
 }
 
 func (pm ProposalManager) AddProposal(
-	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal) (types.ProposalKey, sdk.Error) {
+	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideHr int64) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.paramHolder.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
@@ -81,6 +79,8 @@ func (pm ProposalManager) AddProposal(
 		AgreeVotes:    types.NewCoinFromInt64(0),
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
+		CreatedAt:     ctx.BlockHeader().Time,
+		ExpiredAt:     ctx.BlockHeader().Time + decideHr*3600,
 	}
 	proposal.SetProposalInfo(info)
 
@@ -118,8 +118,30 @@ func (pm ProposalManager) GetProposalPassParam(
 	}
 }
 
-func (pm ProposalManager) UpdateProposalStatus(
-	ctx sdk.Context, res types.VotingResult, proposalType types.ProposalType,
+func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID types.ProposalKey,
+	voter types.AccountKey, voteResult bool, votingPower types.Coin) sdk.Error {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return err
+	}
+	proposalInfo := proposal.GetProposalInfo()
+
+	if voteResult == true {
+		proposalInfo.AgreeVotes = proposalInfo.AgreeVotes.Plus(votingPower)
+	} else {
+		proposalInfo.DisagreeVotes = proposalInfo.DisagreeVotes.Plus(votingPower)
+	}
+
+	proposal.SetProposalInfo(proposalInfo)
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pm ProposalManager) UpdateProposalPassStatus(
+	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
 	lst, err := pm.storage.GetProposalList(ctx)
 	if err != nil {
@@ -133,20 +155,17 @@ func (pm ProposalManager) UpdateProposalStatus(
 
 	proposalInfo := proposal.GetProposalInfo()
 
-	proposalInfo.AgreeVotes = res.AgreeVotes
-	proposalInfo.DisagreeVotes = res.DisagreeVotes
-
 	// calculate if agree votes meet minimum pass requirement
 	ratio, minVotes, err := pm.GetProposalPassParam(ctx, proposalType)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
-	totalVotes := res.AgreeVotes.Plus(res.DisagreeVotes)
+	totalVotes := proposalInfo.AgreeVotes.Plus(proposalInfo.DisagreeVotes)
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := new(big.Rat).Quo(res.AgreeVotes.ToRat(), totalVotes.ToRat())
-	if actualRatio.Cmp(ratio.GetRat()) >= 0 {
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
+	if ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalPass
 	} else {
 		proposalInfo.Result = types.ProposalNotPass
@@ -199,17 +218,17 @@ func (pm ProposalManager) CreateParamChangeEvent(
 	return event, nil
 }
 
-func (pm ProposalManager) GetPermLink(ctx sdk.Context, proposalID types.ProposalKey) (types.PermLink, sdk.Error) {
+func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.ProposalKey) (types.Permlink, sdk.Error) {
 	proposal, err := pm.storage.GetProposal(ctx, proposalID)
 	if err != nil {
-		return types.PermLink(""), err
+		return types.Permlink(""), err
 	}
 
 	p, ok := proposal.(*model.ContentCensorshipProposal)
 	if !ok {
-		return types.PermLink(""), ErrWrongProposalType()
+		return types.Permlink(""), ErrWrongProposalType()
 	}
-	return p.PermLink, nil
+	return p.Permlink, nil
 }
 
 func (pm ProposalManager) GetProposalList(ctx sdk.Context) (*model.ProposalList, sdk.Error) {

@@ -36,7 +36,7 @@ func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		author := viper.GetString(client.FlagAuthor)
-		postCreateParams := post.PostCreateParams{
+		msg := post.CreatePostMsg{
 			Author:                  types.AccountKey(author),
 			PostID:                  viper.GetString(client.FlagPostID),
 			Title:                   viper.GetString(client.FlagTitle),
@@ -47,8 +47,6 @@ func sendPostTx(cdc *wire.Codec) client.CommandTxCallback {
 			SourcePostID:            viper.GetString(client.FlagSourcePostID),
 			RedistributionSplitRate: viper.GetString(client.FlagRedistributionSplitRate),
 		}
-
-		msg := post.NewCreatePostMsg(postCreateParams)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast(msg, cdc)

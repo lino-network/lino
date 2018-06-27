@@ -1,16 +1,18 @@
 package model
 
 import (
+	"github.com/lino-network/lino/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/types"
 )
 
 var (
-	delegatorSubstore     = []byte{0x00}
+	delegationSubstore    = []byte{0x00}
 	voterSubstore         = []byte{0x01}
 	voteSubstore          = []byte{0x02}
 	referenceListSubStore = []byte{0x03}
+	delegateeSubStore     = []byte{0x04}
 )
 
 type VoteStorage struct {
@@ -35,6 +37,21 @@ func (vs VoteStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	return nil
+}
+
+func (vs VoteStorage) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetVoterKey(accKey))
+}
+
+func (vs VoteStorage) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetVoteKey(proposalID, voter))
+}
+
+func (vs VoteStorage) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+	store := ctx.KVStore(vs.key)
+	return store.Has(GetDelegationKey(voter, delegator))
 }
 
 func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter, sdk.Error) {
@@ -115,18 +132,20 @@ func (vs VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, del
 		return ErrMarshalError(err)
 	}
 	store.Set(GetDelegationKey(voter, delegator), delegationByte)
+	store.Set(GetDelegateeKey(delegator, voter), delegationByte)
 	return nil
 }
 
 func (vs VoteStorage) DeleteDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) sdk.Error {
 	store := ctx.KVStore(vs.key)
 	store.Delete(GetDelegationKey(voter, delegator))
+	store.Delete(GetDelegateeKey(delegator, voter))
 	return nil
 }
 
 func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	store := ctx.KVStore(vs.key)
-	iterator := store.Iterator(subspace(GetDelegatorPrefix(voterName)))
+	iterator := store.Iterator(subspace(GetDelegationPrefix(voterName)))
 
 	var delegators []types.AccountKey
 
@@ -185,13 +204,13 @@ func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.
 	return nil
 }
 
-func GetDelegatorPrefix(me types.AccountKey) []byte {
-	return append(append(delegatorSubstore, me...), types.KeySeparator...)
+func GetDelegationPrefix(me types.AccountKey) []byte {
+	return append(append(delegationSubstore, me...), types.KeySeparator...)
 }
 
-// "delegator substore" + "me(voter)" + "my delegator"
+// "delegation substore" + "me(voter)" + "my delegator"
 func GetDelegationKey(me types.AccountKey, myDelegator types.AccountKey) []byte {
-	return append(GetDelegatorPrefix(me), myDelegator...)
+	return append(GetDelegationPrefix(me), myDelegator...)
 }
 
 func GetVotePrefix(id types.ProposalKey) []byte {
@@ -206,8 +225,17 @@ func GetVoteKey(proposalID types.ProposalKey, voter types.AccountKey) []byte {
 func GetVoterKey(me types.AccountKey) []byte {
 	return append(voterSubstore, me...)
 }
+
 func GetReferenceListKey() []byte {
 	return referenceListSubStore
+}
+
+func GetDelegateePrefix(me types.AccountKey) []byte {
+	return append(append(delegateeSubStore, me...), types.KeySeparator...)
+}
+
+func GetDelegateeKey(me, delegatee types.AccountKey) []byte {
+	return append(GetDelegateePrefix(me), delegatee...)
 }
 
 func subspace(prefix []byte) (start, end []byte) {

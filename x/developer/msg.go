@@ -2,17 +2,17 @@ package developer
 
 // nolint
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
+	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = DeveloperRegisterMsg{}
-var _ sdk.Msg = DeveloperRevokeMsg{}
-var _ sdk.Msg = GrantDeveloperMsg{}
+var _ types.Msg = DeveloperRegisterMsg{}
+var _ types.Msg = DeveloperRevokeMsg{}
+var _ types.Msg = GrantPermissionMsg{}
 
 type DeveloperRegisterMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -23,11 +23,18 @@ type DeveloperRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
-type GrantDeveloperMsg struct {
+type GrantPermissionMsg struct {
 	Username        types.AccountKey `json:"username"`
 	AuthenticateApp types.AccountKey `json:"authenticate_app"`
 	ValidityPeriod  int64            `json:"validity_period"`
 	GrantLevel      types.Permission `json:"grant_level"`
+	Times           int64            `json:"times"`
+}
+
+type RevokePermissionMsg struct {
+	Username   types.AccountKey `json:"username"`
+	PubKey     crypto.PubKey    `json:"public_key"`
+	GrantLevel types.Permission `json:"grant_level"`
 }
 
 // DeveloperRegisterMsg Msg Implementations
@@ -57,19 +64,12 @@ func (msg DeveloperRegisterMsg) String() string {
 	return fmt.Sprintf("DeveloperRegisterMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
-func (msg DeveloperRegisterMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DeveloperRegisterMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -101,19 +101,12 @@ func (msg DeveloperRevokeMsg) String() string {
 	return fmt.Sprintf("DeveloperRevokeMsg{Username:%v}", msg.Username)
 }
 
-func (msg DeveloperRevokeMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg DeveloperRevokeMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
 }
 
 func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -125,8 +118,8 @@ func (msg DeveloperRevokeMsg) GetSigners() []sdk.Address {
 }
 
 // Grant Msg Implementations
-func NewGrantDeveloperMsg(user, app string, validityPeriod int64, grantLevel types.Permission) GrantDeveloperMsg {
-	return GrantDeveloperMsg{
+func NewGrantPermissionMsg(user, app string, validityPeriod int64, grantLevel types.Permission) GrantPermissionMsg {
+	return GrantPermissionMsg{
 		Username:        types.AccountKey(user),
 		AuthenticateApp: types.AccountKey(app),
 		ValidityPeriod:  validityPeriod,
@@ -134,9 +127,9 @@ func NewGrantDeveloperMsg(user, app string, validityPeriod int64, grantLevel typ
 	}
 }
 
-func (msg GrantDeveloperMsg) Type() string { return types.DeveloperRouterName }
+func (msg GrantPermissionMsg) Type() string { return types.DeveloperRouterName }
 
-func (msg GrantDeveloperMsg) ValidateBasic() sdk.Error {
+func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
@@ -151,33 +144,77 @@ func (msg GrantDeveloperMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidValidityPeriod()
 	}
 
+	if msg.GrantLevel == types.MasterPermission ||
+		msg.GrantLevel == types.TransactionPermission {
+		return ErrGrantPermissionTooHigh()
+	}
+
 	return nil
 }
 
-func (msg GrantDeveloperMsg) String() string {
-	return fmt.Sprintf("GrantDeveloperMsg{User:%v, Grant to App:%v, validity period:%v, grant level:%v}",
+func (msg GrantPermissionMsg) String() string {
+	return fmt.Sprintf("GrantPermissionMsg{User:%v, Grant to App:%v, validity period:%v, grant level:%v}",
 		msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel)
 }
 
-func (msg GrantDeveloperMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
-	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+func (msg GrantPermissionMsg) GetPermission() types.Permission {
+	return msg.GrantLevel
 }
 
-func (msg GrantDeveloperMsg) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+func (msg GrantPermissionMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
 	return b
 }
 
-func (msg GrantDeveloperMsg) GetSigners() []sdk.Address {
+func (msg GrantPermissionMsg) GetSigners() []sdk.Address {
+	return []sdk.Address{sdk.Address(msg.Username)}
+}
+
+// Revoke Msg Implementations
+func NewRevokePermissionMsg(user string, pubKey crypto.PubKey, grantLevel types.Permission) RevokePermissionMsg {
+	return RevokePermissionMsg{
+		Username:   types.AccountKey(user),
+		PubKey:     pubKey,
+		GrantLevel: grantLevel,
+	}
+}
+
+func (msg RevokePermissionMsg) Type() string { return types.DeveloperRouterName }
+
+func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if msg.GrantLevel == types.MasterPermission ||
+		msg.GrantLevel == types.TransactionPermission {
+		return ErrGrantPermissionTooHigh()
+	}
+
+	return nil
+}
+
+func (msg RevokePermissionMsg) String() string {
+	return fmt.Sprintf("RevokePermissionMsg{User:%v, revoke key:%v, grant level:%v}",
+		msg.Username, msg.PubKey, msg.GrantLevel)
+}
+
+func (msg RevokePermissionMsg) GetPermission() types.Permission {
+	return msg.GrantLevel
+}
+
+func (msg RevokePermissionMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg RevokePermissionMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Username)}
 }

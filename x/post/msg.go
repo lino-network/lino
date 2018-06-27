@@ -1,7 +1,6 @@
 package post
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/lino-network/lino/types"
@@ -9,16 +8,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = CreatePostMsg{}
-var _ sdk.Msg = UpdatePostMsg{}
-var _ sdk.Msg = DeletePostMsg{}
-var _ sdk.Msg = LikeMsg{}
-var _ sdk.Msg = DonateMsg{}
-var _ sdk.Msg = ReportOrUpvoteMsg{}
-var _ sdk.Msg = ViewMsg{}
+var _ types.Msg = CreatePostMsg{}
+var _ types.Msg = UpdatePostMsg{}
+var _ types.Msg = DeletePostMsg{}
+var _ types.Msg = LikeMsg{}
+var _ types.Msg = DonateMsg{}
+var _ types.Msg = ReportOrUpvoteMsg{}
+var _ types.Msg = ViewMsg{}
 
-// PostCreateParams can also use to publish comment(with parent) or repost(with source)
-type PostCreateParams struct {
+// CreatePostMsg contains information to create a post
+type CreatePostMsg struct {
 	Author                  types.AccountKey       `json:"author"`
 	PostID                  string                 `json:"post_id"`
 	Title                   string                 `json:"title"`
@@ -29,11 +28,6 @@ type PostCreateParams struct {
 	SourcePostID            string                 `json:"source_postID"`
 	Links                   []types.IDToURLMapping `json:"links"`
 	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
-}
-
-// CreatePostMsg contains information to create a post
-type CreatePostMsg struct {
-	PostCreateParams
 }
 
 type UpdatePostMsg struct {
@@ -60,12 +54,13 @@ type LikeMsg struct {
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username types.AccountKey `json:"username"`
-	Amount   types.LNO        `json:"amount"`
-	Author   types.AccountKey `json:"author"`
-	PostID   string           `json:"post_id"`
-	FromApp  types.AccountKey `json:"from_app"`
-	Memo     string           `json:"memo"`
+	Username       types.AccountKey `json:"username"`
+	Amount         types.LNO        `json:"amount"`
+	Author         types.AccountKey `json:"author"`
+	PostID         string           `json:"post_id"`
+	FromApp        types.AccountKey `json:"from_app"`
+	Memo           string           `json:"memo"`
+	IsMicroPayment bool             `json:"is_micropayment"`
 }
 
 // ViewMsg sent from a user to a post
@@ -84,8 +79,20 @@ type ReportOrUpvoteMsg struct {
 }
 
 // NewCreatePostMsg constructs a post msg
-func NewCreatePostMsg(postCreateParams PostCreateParams) CreatePostMsg {
-	return CreatePostMsg{PostCreateParams: postCreateParams}
+func NewCreatePostMsg(
+	author, postID, title, content, parentAuthor, parentPostID,
+	sourceAuthor, sourcePostID, redistributionSplitRate string,
+	links []types.IDToURLMapping) CreatePostMsg {
+	return CreatePostMsg{
+		Author:       types.AccountKey(author),
+		PostID:       postID,
+		Title:        title,
+		Content:      content,
+		SourceAuthor: types.AccountKey(sourceAuthor),
+		SourcePostID: sourcePostID,
+		Links:        links,
+		RedistributionSplitRate: redistributionSplitRate,
+	}
 }
 
 // NewUpdatePostMsg constructs a UpdatePost msg
@@ -132,14 +139,15 @@ func NewViewMsg(user, author string, postID string) ViewMsg {
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user string, amount types.LNO, author string,
-	postID string, fromApp string, memo string) DonateMsg {
+	postID string, fromApp string, memo string, isMicropayment bool) DonateMsg {
 	return DonateMsg{
-		Username: types.AccountKey(user),
-		Amount:   amount,
-		Author:   types.AccountKey(author),
-		PostID:   postID,
-		FromApp:  types.AccountKey(fromApp),
-		Memo:     memo,
+		Username:       types.AccountKey(user),
+		Amount:         amount,
+		Author:         types.AccountKey(author),
+		PostID:         postID,
+		FromApp:        types.AccountKey(fromApp),
+		Memo:           memo,
+		IsMicroPayment: isMicropayment,
 	}
 }
 
@@ -170,6 +178,9 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.PostID) == 0 {
 		return ErrNoPostID()
 	}
+	if len(msg.PostID) > types.MaximumLengthOfPostID {
+		return ErrPostIDTooLong()
+	}
 	if len(msg.Author) == 0 {
 		return ErrNoAuthor()
 	}
@@ -183,16 +194,28 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-
-	if len(msg.RedistributionSplitRate) > 10 {
+	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
 		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
+	if len(msg.Links) > types.MaximumNumOfLinks {
+		return ErrTooManyURL()
+	}
+
+	for _, link := range msg.Links {
+		if len(link.Identifier) > types.MaximumLinkIdentifier {
+			return ErrIdentifierLengthTooLong()
+		}
+		if len(link.URL) > types.MaximumLinkURL {
+			return ErrURLLengthTooLong()
+		}
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {
 		return ErrPostRedistributionSplitRate()
 	}
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -213,8 +236,17 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if len(msg.RedistributionSplitRate) > 10 {
+	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
 		return ErrRedistributionSplitRateLengthTooLong()
+	}
+
+	for _, link := range msg.Links {
+		if len(link.Identifier) > types.MaximumLinkIdentifier {
+			return ErrIdentifierLengthTooLong()
+		}
+		if len(link.URL) > types.MaximumLinkURL {
+			return ErrURLLengthTooLong()
+		}
 	}
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
@@ -222,7 +254,7 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 		return ErrPostRedistributionSplitRate()
 	}
 
-	if splitRate.LT(sdk.ZeroRat) || splitRate.GT(sdk.OneRat) {
+	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
 		return ErrPostRedistributionSplitRate()
 	}
 	return nil
@@ -297,33 +329,29 @@ func (msg ViewMsg) ValidateBasic() sdk.Error {
 }
 
 // Get implements sdk.Msg; should not be called
-func (msg CreatePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg CreatePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg UpdatePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg UpdatePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg DeletePostMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg DeletePostMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg LikeMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg LikeMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg DonateMsg) Get(key interface{}) (value interface{}) {
-	keyStr, ok := key.(string)
-	if !ok {
-		return nil
+func (msg DonateMsg) GetPermission() types.Permission {
+	if msg.IsMicroPayment {
+		return types.MicropaymentPermission
 	}
-	if keyStr == types.PermissionLevel {
-		return types.TransactionPermission
-	}
-	return nil
+	return types.TransactionPermission
 }
-func (msg ReportOrUpvoteMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
-func (msg ViewMsg) Get(key interface{}) (value interface{}) {
-	return nil
+func (msg ViewMsg) GetPermission() types.Permission {
+	return types.PostPermission
 }
 
 // GetSignBytes implements sdk.Msg
@@ -356,7 +384,7 @@ func (msg ViewMsg) GetSignBytes() []byte {
 }
 
 func getSignBytes(msg sdk.Msg) []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
 		panic(err)
 	}
@@ -388,7 +416,10 @@ func (msg ViewMsg) GetSigners() []sdk.Address {
 
 // String implements Stringer
 func (msg CreatePostMsg) String() string {
-	return fmt.Sprintf("Post.CreatePostMsg{postInfo:%v}", msg.PostCreateParams)
+	return fmt.Sprintf("Post.CreatePostMsg{author:%v, postID:%v, title:%v, content:%v, parentAuthor:%v,"+
+		"parentPostID:%v, sourceAuthor:%v, sourcePostID:%v,links:%v, redistribution split rate:%v}",
+		msg.Author, msg.PostID, msg.Title, msg.Content, msg.ParentAuthor, msg.ParentPostID, msg.SourceAuthor, msg.SourcePostID,
+		msg.Links, msg.RedistributionSplitRate)
 }
 
 func (msg UpdatePostMsg) String() string {

@@ -16,6 +16,8 @@ type ProposalInfo struct {
 	AgreeVotes    types.Coin           `json:"agree_vote"`
 	DisagreeVotes types.Coin           `json:"disagree_vote"`
 	Result        types.ProposalResult `json:"result"`
+	CreatedAt     int64                `json:"created_at"`
+	ExpiredAt     int64                `json:"expired_at"`
 }
 
 type ChangeParamProposal struct {
@@ -28,7 +30,8 @@ func (p *ChangeParamProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInf
 
 type ContentCensorshipProposal struct {
 	ProposalInfo
-	PermLink types.PermLink `json:"perm_link"`
+	Permlink types.Permlink `json:"permlink"`
+	Reason   string         `json:"reason"`
 }
 
 func (p *ContentCensorshipProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }

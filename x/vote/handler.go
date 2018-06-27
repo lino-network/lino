@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
-	"github.com/lino-network/lino/x/global"
-	"github.com/lino-network/lino/types"
 )
 
 func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
@@ -25,8 +26,6 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
 		case RevokeDelegationMsg:
 			return handleRevokeDelegationMsg(ctx, vm, gm, am, msg)
-		case VoteMsg:
-			return handleVoteMsg(ctx, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -37,7 +36,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 func handleVoterDepositMsg(
 	ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
-	if !am.IsAccountExist(ctx, msg.Username) {
+	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrUsernameNotFound().Result()
 	}
 
@@ -47,12 +46,12 @@ func handleVoterDepositMsg(
 	}
 
 	// withdraw money from voter's bank
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin, types.VoterDeposit); err != nil {
+	if err := am.MinusSavingCoin(ctx, msg.Username, coin, "", "", types.VoterDeposit); err != nil {
 		return err.Result()
 	}
 
 	// Register the user if this name has not been registered
-	if !vm.IsVoterExist(ctx, msg.Username) {
+	if !vm.DoesVoterExist(ctx, msg.Username) {
 		if err := vm.AddVoter(ctx, msg.Username, coin); err != nil {
 			return err.Result()
 		}
@@ -137,13 +136,19 @@ func handleVoterRevokeMsg(
 }
 
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
+	// Must have an normal acount
+	if !am.DoesAccountExist(ctx, msg.Voter) {
+		return ErrUsernameNotFound().Result()
+	}
+
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
 	// withdraw money from delegator's bank
-	if err := am.MinusSavingCoin(ctx, msg.Delegator, coin, types.Delegate); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Delegator, coin, msg.Voter, "", types.Delegate); err != nil {
 		return err.Result()
 	}
 	// add delegation relation
@@ -202,24 +207,9 @@ func handleRevokeDelegationMsg(
 	return sdk.Result{}
 }
 
-func handleVoteMsg(ctx sdk.Context, vm VoteManager, msg VoteMsg) sdk.Result {
-	if !vm.IsVoterExist(ctx, msg.Voter) {
-		return ErrGetVoter().Result()
-	}
-
-	if !vm.IsOngoingProposal(ctx, msg.ProposalID) {
-		return ErrNotOngoingProposal().Result()
-	}
-
-	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
-	times int64, interval int64, coin types.Coin, returnType types.BalanceHistoryDetailType) sdk.Error {
+	times int64, interval int64, coin types.Coin, returnType types.TransferDetailType) sdk.Error {
 
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {

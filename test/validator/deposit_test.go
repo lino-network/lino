@@ -16,14 +16,14 @@ import (
 func TestValidatorDeposit(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
 	newAccountPostPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	baseTime := time.Now().Unix() + 100
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, newAccountPostPriv, "500000")
+		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), newAccountPostPriv, "500000")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)

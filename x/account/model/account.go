@@ -10,11 +10,12 @@ import (
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Username       types.AccountKey `json:"username"`
-	CreatedAt      int64            `json:"created_at"`
-	MasterKey      crypto.PubKey    `json:"master_key"`
-	TransactionKey crypto.PubKey    `json:"transaction_key"`
-	PostKey        crypto.PubKey    `json:"post_key"`
+	Username        types.AccountKey `json:"username"`
+	CreatedAt       int64            `json:"created_at"`
+	MasterKey       crypto.PubKey    `json:"master_key"`
+	TransactionKey  crypto.PubKey    `json:"transaction_key"`
+	MicropaymentKey crypto.PubKey    `json:"micropayment_key"`
+	PostKey         crypto.PubKey    `json:"post_key"`
 }
 
 // AccountBank uses Address as the key instead of Username
@@ -22,6 +23,7 @@ type AccountBank struct {
 	Saving          types.Coin    `json:"saving"`
 	Stake           types.Coin    `json:"stake"`
 	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
+	NumOfTx         int64         `json:"number_of_transaction"`
 }
 
 type FrozenMoney struct {
@@ -46,15 +48,12 @@ type PendingStake struct {
 	Coin      types.Coin `json:"coin"`
 }
 
-// GrantKeyList stores a list of key authenticated by the use
-type GrantKeyList struct {
-	GrantPubKeyList []GrantPubKey `json:"grant_public_key_list"`
-}
-
 type GrantPubKey struct {
-	Username  types.AccountKey `json:"username"`
-	PubKey    crypto.PubKey    `json:"public_key"`
-	ExpiresAt int64            `json:"expires_at"`
+	Username   types.AccountKey `json:"username"`
+	Permission types.Permission `json:"permission"`
+	LeftTimes  int64            `json:"left_times"`
+	CreatedAt  int64            `json:"created_at"`
+	ExpiresAt  int64            `json:"expires_at"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.
@@ -66,10 +65,10 @@ type AccountMeta struct {
 }
 
 // AccountInfraConsumption records infra utility consumption
-type AccountInfraConsumption struct {
-	Storage   int64 `json:"storage"`
-	Bandwidth int64 `json:"bandwidth"`
-}
+// type AccountInfraConsumption struct {
+// 	Storage   int64 `json:"storage"`
+// 	Bandwidth int64 `json:"bandwidth"`
+// }
 
 // FollowerMeta record all meta info about this relation
 type FollowerMeta struct {
@@ -96,14 +95,20 @@ type Relationship struct {
 	DonationTimes int64 `json:"donation_times"`
 }
 
-// BalanceHistory records all transactions in a certain time period
+// BalanceHistory records all transactions belong to the user
+// Currently one balance history bundle can store at most 1000 transactions
+// If number of transaction exceeds the limitation, a new bundle will be
+// generated in KVStore
+// Total number of history bundle is defined in metadata
 type BalanceHistory struct {
 	Details []Detail `json:"details"`
 }
 
-// Detail is information about each transaction related to balance
 type Detail struct {
-	DetailType types.BalanceHistoryDetailType `json:"detail"`
-	Amount     types.Coin                     `json:"amount"`
-	CreatedAt  int64                          `json:"created_at"`
+	DetailType types.TransferDetailType `json:"detail_type"`
+	From       types.AccountKey         `json:"from"`
+	To         types.AccountKey         `json:"to"`
+	Amount     types.Coin               `json:"amount"`
+	CreatedAt  int64                    `json:"created_at"`
+	Memo       string                   `json:"memo"`
 }

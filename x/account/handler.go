@@ -34,8 +34,11 @@ func NewHandler(am AccountManager) sdk.Handler {
 }
 
 func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Followee) {
+		return ErrUsernameNotFound(msg.Followee).Result()
+	}
+	if !am.DoesAccountExist(ctx, msg.Follower) {
+		return ErrUsernameNotFound(msg.Follower).Result()
 	}
 	// add the "msg.Follower" to the "msg.Followee" 's follower list.
 	// add "msg.Followee/msg.Follower" key under "follower" prefix.
@@ -52,8 +55,11 @@ func handleFollowMsg(ctx sdk.Context, am AccountManager, msg FollowMsg) sdk.Resu
 }
 
 func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Followee) || !am.IsAccountExist(ctx, msg.Follower) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Followee) {
+		return ErrUsernameNotFound(msg.Followee).Result()
+	}
+	if !am.DoesAccountExist(ctx, msg.Follower) {
+		return ErrUsernameNotFound(msg.Follower).Result()
 	}
 
 	// remove the "msg.Follower" from the "msg.Followee" 's follower list.
@@ -71,21 +77,27 @@ func handleUnfollowMsg(ctx sdk.Context, am AccountManager, msg UnfollowMsg) sdk.
 }
 
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Receiver) || !am.IsAccountExist(ctx, msg.Sender) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Receiver) {
+		return ErrUsernameNotFound(msg.Receiver).Result()
+	}
+
+	if !am.DoesAccountExist(ctx, msg.Sender) {
+		return ErrUsernameNotFound(msg.Sender).Result()
 	}
 	// withdraw money from sender's bank
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Sender, coin, types.TransferOut); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Sender, coin, msg.Receiver, msg.Memo, types.TransferOut); err != nil {
 		return err.Result()
 	}
 
 	// send coins using username
-	if err := am.AddSavingCoin(ctx, msg.Receiver, coin, types.TransferIn); err != nil {
-		return ErrTransferHandler(msg.Sender).TraceCause(err, "").Result()
+	if err := am.AddSavingCoin(
+		ctx, msg.Receiver, coin, msg.Sender, msg.Memo, types.TransferIn); err != nil {
+		return ErrTransferHandler(msg.Sender).Result()
 	}
 	return sdk.Result{}
 }
@@ -100,12 +112,12 @@ func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result
 
 func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Result {
 	// recover
-	if !am.IsAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Username) {
+		return ErrUsernameNotFound(msg.Username).Result()
 	}
 	if err := am.RecoverAccount(
 		ctx, msg.Username, msg.NewMasterPubKey, msg.NewTransactionPubKey,
-		msg.NewPostPubKey); err != nil {
+		msg.NewMicropaymentPubKey, msg.NewPostPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -113,19 +125,20 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Referrer) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Referrer) {
+		return ErrReferrerNotFound().Result()
 	}
 	coin, err := types.LinoToCoin(msg.RegisterFee)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusSavingCoin(ctx, msg.Referrer, coin, types.TransferOut); err != nil {
+	if err := am.MinusSavingCoin(
+		ctx, msg.Referrer, coin, msg.NewUser, "", types.TransferOut); err != nil {
 		return err.Result()
 	}
 	if err := am.CreateAccount(
-		ctx, msg.NewUser, msg.NewMasterPubKey, msg.NewTransactionPubKey,
-		msg.NewPostPubKey, coin); err != nil {
+		ctx, msg.Referrer, msg.NewUser, msg.NewMasterPubKey, msg.NewTransactionPubKey,
+		msg.NewMicropaymentPubKey, msg.NewPostPubKey, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -133,8 +146,8 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 
 // Handle RegisterMsg
 func handleUpdateAccountMsg(ctx sdk.Context, am AccountManager, msg UpdateAccountMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+	if !am.DoesAccountExist(ctx, msg.Username) {
+		return ErrUsernameNotFound(msg.Username).Result()
 	}
 	if err := am.UpdateJSONMeta(ctx, msg.Username, msg.JSONMeta); err != nil {
 		return err.Result()

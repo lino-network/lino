@@ -1,13 +1,14 @@
 package proposal
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
-	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
+	val "github.com/lino-network/lino/x/validator"
 )
 
 type DecideProposalEvent struct {
@@ -30,15 +31,15 @@ func (dpe DecideProposalEvent) Execute(
 		return err
 	}
 
-	// calculate voting result
-	votingRes, err := voteManager.CalculateVotingResult(
+	// get penalty list
+	penaltyList, err := voteManager.GetPenaltyList(
 		ctx, dpe.ProposalID, dpe.ProposalType, lst.OncallValidators)
 	if err != nil {
 		return err
 	}
 
 	// punish validators who didn't vote
-	actualPenalty, err := valManager.PunishValidatorsDidntVote(ctx, votingRes.PenaltyList)
+	actualPenalty, err := valManager.PunishValidatorsDidntVote(ctx, penaltyList.PenaltyList)
 	if err != nil {
 		return err
 	}
@@ -49,8 +50,8 @@ func (dpe DecideProposalEvent) Execute(
 	}
 
 	// update the ongoing and past proposal list
-	proposalRes, err := proposalManager.UpdateProposalStatus(
-		ctx, votingRes, dpe.ProposalType, dpe.ProposalID)
+	proposalRes, err := proposalManager.UpdateProposalPassStatus(
+		ctx, dpe.ProposalType, dpe.ProposalID)
 	if err != nil {
 		return err
 	}
@@ -94,16 +95,16 @@ func (dpe DecideProposalEvent) ExecuteChangeParam(
 func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
 	postManager post.PostManager) sdk.Error {
-	permLink, err := proposalManager.GetPermLink(ctx, curID)
+	permlink, err := proposalManager.GetPermlink(ctx, curID)
 	if err != nil {
 		return err
 	}
 
 	// TODO add content censorship logic
-	if exist := postManager.IsPostExist(ctx, permLink); !exist {
+	if exist := postManager.DoesPostExist(ctx, permlink); !exist {
 		return ErrCensorshipPostNotFound()
 	}
-	if err := postManager.DeletePost(ctx, permLink); err != nil {
+	if err := postManager.DeletePost(ctx, permlink); err != nil {
 		return err
 	}
 	return nil

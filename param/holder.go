@@ -20,6 +20,7 @@ var (
 	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
+	postParamSubStore                    = []byte{0x10} // Substore for evaluate of content value
 )
 
 type ParamHolder struct {
@@ -49,7 +50,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ValidatorAllocation:      sdk.NewRat(5, 100),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	infraInternalAllocationParam := &InfraInternalAllocationParam{
@@ -57,7 +58,14 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		CDNAllocation:     sdk.NewRat(50, 100),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
+	}
+
+	postParam := &PostParam{
+		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
+	}
+	if err := ph.setPostParam(ctx, postParam); err != nil {
+		return ErrParamHolderGenesisFailed()
 	}
 
 	evaluateOfContentValueParam := &EvaluateOfContentValueParam{
@@ -69,7 +77,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 	}
 	if err := ph.setEvaluateOfContentValueParam(ctx, evaluateOfContentValueParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	developerParam := &DeveloperParam{
@@ -78,7 +86,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		DeveloperCoinReturnTimes:      int64(7),
 	}
 	if err := ph.setDeveloperParam(ctx, developerParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	validatorParam := &ValidatorParam{
@@ -94,7 +102,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		AbsentCommitLimitation:        int64(100),
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	voteParam := &VoteParam{
@@ -107,7 +115,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		DelegatorCoinReturnTimes:      int64(7),
 	}
 	if err := ph.setVoteParam(ctx, voteParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	proposalParam := &ProposalParam{
@@ -129,7 +137,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		NextProposalID: int64(0),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	coinDayParam := &CoinDayParam{
@@ -137,7 +145,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	if err := ph.setCoinDayParam(ctx, coinDayParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	bandwidthParam := &BandwidthParam{
@@ -145,16 +153,17 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryIntervalTime: types.MinutesPerMonth * 60,
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
-		return ErrParamHolderGenesisFailed().TraceCause(err, "")
+		return ErrParamHolderGenesisFailed()
 	}
 
 	return nil
@@ -200,6 +209,30 @@ func (ph ParamHolder) GetInfraInternalAllocationParam(
 		return nil, ErrEventUnmarshalError(err)
 	}
 	return allocation, nil
+}
+
+func (ph ParamHolder) GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetPostParamKey())
+	if paramBytes == nil {
+		return nil, ErrPostParamNotFound()
+	}
+	param := new(PostParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrEventUnmarshalError(err)
+	}
+	return param, nil
+}
+
+func (ph ParamHolder) setPostParam(
+	ctx sdk.Context, para *PostParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	paraBytes, err := ph.cdc.MarshalJSON(*para)
+	if err != nil {
+		return ErrEventMarshalError(err)
+	}
+	store.Set(GetPostParamKey(), paraBytes)
+	return nil
 }
 
 func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.Error) {
@@ -406,6 +439,10 @@ func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.
 	}
 	store.Set(GetAccountParamKey(), accountBytes)
 	return nil
+}
+
+func GetPostParamKey() []byte {
+	return postParamSubStore
 }
 
 func GetEvaluateOfContentValueParamKey() []byte {

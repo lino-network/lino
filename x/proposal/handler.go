@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
-	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -14,7 +15,7 @@ import (
 
 func NewHandler(
 	am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm global.GlobalManager) sdk.Handler {
+	postManager post.PostManager, gm global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -23,6 +24,8 @@ func NewHandler(
 			return handleContentCensorshipMsg(ctx, am, proposalManager, postManager, gm, msg)
 		case ProtocolUpgradeMsg:
 			return handleProtocolUpgradeMsg(ctx, am, proposalManager, gm, msg)
+		case VoteProposalMsg:
+			return handleVoteProposalMsg(ctx, proposalManager, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized proposal Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -33,22 +36,22 @@ func NewHandler(
 func handleChangeParamMsg(
 	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
 	msg ChangeParamMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
+	param, err := pm.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ChangeParamDecideHr)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
 	event, err := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
@@ -59,7 +62,8 @@ func handleChangeParamMsg(
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, "",
+		string(proposalID), types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -74,22 +78,22 @@ func handleChangeParamMsg(
 func handleProtocolUpgradeMsg(
 	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
 	msg ProtocolUpgradeMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
+	param, err := pm.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
 	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ProtocolUpgradeDecideHr)
 	if err != nil {
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
 	event, err := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
@@ -100,7 +104,8 @@ func handleProtocolUpgradeMsg(
 
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit,
+		"", string(proposalID), types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -115,20 +120,29 @@ func handleProtocolUpgradeMsg(
 func handleContentCensorshipMsg(
 	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
 	postManager post.PostManager, gm global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
-	if !am.IsAccountExist(ctx, msg.GetCreator()) {
+	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrUsernameNotFound().Result()
 	}
 
-	if !postManager.IsPostExist(ctx, msg.GetPermLink()) {
+	if !postManager.DoesPostExist(ctx, msg.GetPermlink()) {
 		return ErrPostNotFound().Result()
 	}
 
-	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermLink()); isDeleted || err != nil {
-		return ErrCensorshipPostIsDeleted(msg.GetPermLink()).Result()
+	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermlink()); isDeleted || err != nil {
+		return ErrCensorshipPostIsDeleted(msg.GetPermlink()).Result()
 	}
 
-	proposal := proposalManager.CreateContentCensorshipProposal(ctx, msg.GetPermLink())
-	proposalID, err := proposalManager.AddProposal(ctx, msg.GetCreator(), proposal)
+	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	proposal :=
+		proposalManager.CreateContentCensorshipProposal(
+			ctx, msg.GetPermlink(), msg.GetReason())
+	proposalID, err :=
+		proposalManager.AddProposal(
+			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
 	if err != nil {
 		return err.Result()
 	}
@@ -138,14 +152,10 @@ func handleContentCensorshipMsg(
 		return err.Result()
 	}
 
-	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit, types.ProposalDeposit); err != nil {
+		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit,
+		"", string(proposalID), types.ProposalDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -158,6 +168,32 @@ func handleContentCensorshipMsg(
 		param.ContentCensorshipDecideHr, param.ContentCensorshipMinDeposit); err != nil {
 		return err.Result()
 	}
+	return sdk.Result{}
+}
+
+func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm vote.VoteManager, msg VoteProposalMsg) sdk.Result {
+	if !vm.DoesVoterExist(ctx, msg.Voter) {
+		return ErrGetVoter().Result()
+	}
+
+	if !proposalManager.IsOngoingProposal(ctx, msg.ProposalID) {
+		return ErrNotOngoingProposal().Result()
+	}
+
+	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
+		return err.Result()
+	}
+
+	v, err := vm.GetVote(ctx, msg.ProposalID, msg.Voter)
+	if err != nil {
+		return err.Result()
+	}
+
+	err = proposalManager.UpdateProposalVotingStatus(ctx, msg.ProposalID, msg.Voter, v.Result, v.VotingPower)
+	if err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }
 

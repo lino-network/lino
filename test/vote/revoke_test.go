@@ -14,7 +14,7 @@ import (
 
 func TestVoterRevoke(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
-	newAccountName := "newUser"
+	newAccountName := "newuser"
 	newValidatorPriv := crypto.GenPrivKeyEd25519()
 
 	delegator1TransactionPriv := crypto.GenPrivKeyEd25519()
@@ -27,11 +27,11 @@ func TestVoterRevoke(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), "500000")
+		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "500000")
 	test.CreateAccount(t, delegator1Name, lb, 1,
-		crypto.GenPrivKeyEd25519(), delegator1TransactionPriv, crypto.GenPrivKeyEd25519(), "210100")
+		crypto.GenPrivKeyEd25519(), delegator1TransactionPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "210100")
 	test.CreateAccount(t, delegator2Name, lb, 2,
-		crypto.GenPrivKeyEd25519(), delegator2TransactionPriv, crypto.GenPrivKeyEd25519(), "70100")
+		crypto.GenPrivKeyEd25519(), delegator2TransactionPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "70100")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)

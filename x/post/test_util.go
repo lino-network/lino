@@ -6,13 +6,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post/model"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
@@ -28,6 +29,7 @@ var (
 	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
 
 	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
+	referrer = types.AccountKey("referrer")
 )
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -67,11 +69,11 @@ func getContext(height int64) sdk.Context {
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil)
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil, log.NewNopLogger())
 }
 
 func checkPostKVStore(
-	t *testing.T, ctx sdk.Context, postKey types.PermLink, postInfo model.PostInfo, postMeta model.PostMeta) {
+	t *testing.T, ctx sdk.Context, postKey types.Permlink, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -80,7 +82,7 @@ func checkPostKVStore(
 	checkPostMeta(t, ctx, postKey, postMeta)
 }
 
-func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMeta model.PostMeta) {
+func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.Permlink, postMeta model.PostMeta) {
 	// check post meta structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
@@ -91,8 +93,8 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMe
 func createTestAccount(
 	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	err := am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
+	err := am.CreateAccount(ctx, referrer, types.AccountKey(username),
+		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }
@@ -101,19 +103,13 @@ func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string,
 	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
-	postCreateParams := &PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionRate,
-	}
-	err := pm.CreatePost(ctx, postCreateParams)
+
+	splitRate, err := sdk.NewRatFromDecimal(redistributionRate)
+	assert.Nil(t, err)
+	err = pm.CreatePost(
+		ctx, types.AccountKey(user), postID, "", "", "", "",
+		string(make([]byte, 1000)), string(make([]byte, 50)),
+		splitRate, []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }
@@ -123,19 +119,11 @@ func createTestRepost(
 	am acc.AccountManager, pm PostManager, sourceUser types.AccountKey,
 	sourcePostID string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
-	postCreateParams := &PostCreateParams{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: sourceUser,
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: "0",
-	}
-	err := pm.CreatePost(ctx, postCreateParams)
+
+	err := pm.CreatePost(
+		ctx, types.AccountKey(user), postID, sourceUser, sourcePostID, "", "",
+		string(make([]byte, 1000)), string(make([]byte, 50)),
+		sdk.ZeroRat(), []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }

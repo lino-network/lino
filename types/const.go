@@ -25,18 +25,16 @@ const (
 	DeveloperRouterName = "developer"
 	ProposalRouterName  = "proposal"
 
-	// Msg key
-	IsRegister      = "is_register"
-	PermissionLevel = "permission_level"
-
 	// Different permission level for msg
-	PostPermission        = Permission(0)
-	TransactionPermission = Permission(1)
-	MasterPermission      = Permission(2)
+	UnknownPermission      = Permission(0)
+	PostPermission         = Permission(1)
+	MicropaymentPermission = Permission(2)
+	TransactionPermission  = Permission(3)
+	MasterPermission       = Permission(4)
 
 	// Different proposal result
-	ProposalPass    = ProposalResult(0)
-	ProposalNotPass = ProposalResult(1)
+	ProposalNotPass = ProposalResult(0)
+	ProposalPass    = ProposalResult(1)
 	ProposalRevoked = ProposalResult(2)
 
 	// Different proposal types
@@ -49,32 +47,32 @@ const (
 	Inflation     = DonationType(1)
 
 	// Different possible incomes
-	TransferIn           = BalanceHistoryDetailType(0)
-	DonationIn           = BalanceHistoryDetailType(1)
-	ClaimReward          = BalanceHistoryDetailType(2)
-	ValidatorInflation   = BalanceHistoryDetailType(3)
-	DeveloperInflation   = BalanceHistoryDetailType(4)
-	InfraInflation       = BalanceHistoryDetailType(5)
-	VoteReturnCoin       = BalanceHistoryDetailType(6)
-	DelegationReturnCoin = BalanceHistoryDetailType(7)
-	ValidatorReturnCoin  = BalanceHistoryDetailType(8)
-	DeveloperReturnCoin  = BalanceHistoryDetailType(9)
-	InfraReturnCoin      = BalanceHistoryDetailType(10)
-	ProposalReturnCoin   = BalanceHistoryDetailType(11)
-	GenesisCoin          = BalanceHistoryDetailType(12)
+	TransferIn           = TransferDetailType(0)
+	DonationIn           = TransferDetailType(1)
+	ClaimReward          = TransferDetailType(2)
+	ValidatorInflation   = TransferDetailType(3)
+	DeveloperInflation   = TransferDetailType(4)
+	InfraInflation       = TransferDetailType(5)
+	VoteReturnCoin       = TransferDetailType(6)
+	DelegationReturnCoin = TransferDetailType(7)
+	ValidatorReturnCoin  = TransferDetailType(8)
+	DeveloperReturnCoin  = TransferDetailType(9)
+	InfraReturnCoin      = TransferDetailType(10)
+	ProposalReturnCoin   = TransferDetailType(11)
+	GenesisCoin          = TransferDetailType(12)
 
 	// Different possible outcomes
-	TransferOut      = BalanceHistoryDetailType(13)
-	DonationOut      = BalanceHistoryDetailType(14)
-	Delegate         = BalanceHistoryDetailType(15)
-	VoterDeposit     = BalanceHistoryDetailType(16)
-	ValidatorDeposit = BalanceHistoryDetailType(17)
-	DeveloperDeposit = BalanceHistoryDetailType(18)
-	InfraDeposit     = BalanceHistoryDetailType(19)
-	ProposalDeposit  = BalanceHistoryDetailType(20)
+	TransferOut      = TransferDetailType(13)
+	DonationOut      = TransferDetailType(14)
+	Delegate         = TransferDetailType(15)
+	VoterDeposit     = TransferDetailType(16)
+	ValidatorDeposit = TransferDetailType(17)
+	DeveloperDeposit = TransferDetailType(18)
+	InfraDeposit     = TransferDetailType(19)
+	ProposalDeposit  = TransferDetailType(20)
 
 	// UsernameReCheck is used to check user registration
-	UsernameReCheck = "^[a-zA-Z0-9]([a-zA-Z0-9_-]){2,20}$"
+	UsernameReCheck = "^[a-z0-9]([a-z0-9_-]){2,20}$"
 
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
@@ -115,5 +113,21 @@ const (
 	// as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
 
+	// all decimals will around to allow at most 3 decimals
 	PrecisionFactor = 1000
+
+	// Maximum length of sdk.Rat can pass into blockchain
+	MaximumSdkRatLength = 10
+
+	// Maximum length of Links identifier
+	MaximumLinkIdentifier = 20
+
+	// Maximum length of Links URL
+	MaximumLinkURL = 50
+
+	// Maximum length of post ID
+	MaximumLengthOfPostID = 50
+
+	// Maximum number of links per post
+	MaximumNumOfLinks = 10
 )

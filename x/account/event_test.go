@@ -1,12 +1,12 @@
 package account
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/x/account/model"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +17,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		times        int64
 		interval     int64
 		returnAmount types.Coin
-		returnType   types.BalanceHistoryDetailType
+		returnType   types.TransferDetailType
 	}{
 		{"normal return coin event", "user1", 100, 100,
 			types.NewCoinFromInt64(100), types.DelegationReturnCoin},
@@ -41,7 +41,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		assert.Nil(t, err)
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
-			returnCoin, err := types.RatToCoin(big.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
+			returnCoin, err := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
 			assert.Nil(t, err)
 			event := ReturnCoinEvent{
 				Username:   tc.username,
@@ -62,8 +62,6 @@ func TestReturnCoinEvent(t *testing.T) {
 
 	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
-	baseTime = baseTime / accParam.BalanceHistoryIntervalTime * accParam.BalanceHistoryIntervalTime
-
 	testCases := []struct {
 		testName             string
 		event                ReturnCoinEvent
@@ -79,6 +77,7 @@ func TestReturnCoinEvent(t *testing.T) {
 			model.BalanceHistory{
 				[]model.Detail{
 					model.Detail{
+						From:       "",
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
 						CreatedAt:  baseTime,
@@ -94,11 +93,13 @@ func TestReturnCoinEvent(t *testing.T) {
 			model.BalanceHistory{
 				[]model.Detail{
 					model.Detail{
+						From:       "",
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
 						CreatedAt:  baseTime,
 					},
 					model.Detail{
+						From:       "",
 						DetailType: types.VoteReturnCoin,
 						Amount:     types.NewCoinFromInt64(0),
 						CreatedAt:  baseTime,

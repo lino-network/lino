@@ -5,10 +5,12 @@ import (
 )
 
 const (
+	// See https://github.com/cosmos/cosmos-sdk/issues/766
+	LinoErrorCodeSpace = 11
+
 	// ABCI Response Codes
-	// Base SDK reserves 0 ~ 99.
-	// Coin errors reserve 100 ~ 199.
-	// Lino authentication errors reserve 200 ~ 299.
+	CodeGenesisFailed sdk.CodeType = 200
+
 	// Lino register handler errors reserve 300 ~ 309.
 	CodeInvalidUsername   sdk.CodeType = 301
 	CodeAccRegisterFailed sdk.CodeType = 302
@@ -36,6 +38,7 @@ const (
 	// validator errors reserve 500 ~ 599
 	CodeValidatorHandlerFailed sdk.CodeType = 500
 	CodeValidatorManagerFailed sdk.CodeType = 501
+	CodeValidatorStorageFailed sdk.CodeType = 502
 
 	// Event errors reserve 600 ~ 699
 	CodeGlobalStorageGenesisError sdk.CodeType = 600
@@ -45,6 +48,7 @@ const (
 	// Vote errors reserve 700 ~ 799
 	CodeVoteHandlerFailed sdk.CodeType = 700
 	CodeVoteManagerFailed sdk.CodeType = 701
+	CodeVoteStorageFailed sdk.CodeType = 702
 
 	// Infra errors reserve 800 ~ 899
 	CodeInfraProviderHandlerFailed sdk.CodeType = 800

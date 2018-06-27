@@ -4,17 +4,19 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
-	acc "github.com/lino-network/lino/x/account"
+	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
-	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
-	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tmlibs/log"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/x/account"
+	val "github.com/lino-network/lino/x/validator"
+	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
@@ -71,15 +73,15 @@ func getContext(height int64) sdk.Context {
 
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil)
+	return sdk.NewContext(ms, abci.Header{Height: height}, false, nil, log.NewNopLogger())
 }
 
 // helper function to create an account for testing purpose
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	priv := crypto.GenPrivKeyEd25519()
-	am.CreateAccount(ctx, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
+	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
+		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), initCoin)
 	return types.AccountKey(username)
 }
 
@@ -87,7 +89,7 @@ func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
 	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
-	postCreateParams := &post.PostCreateParams{
+	msg := &post.CreatePostMsg{
 		PostID:       postID,
 		Title:        string(make([]byte, 50)),
 		Content:      string(make([]byte, 1000)),
@@ -99,7 +101,33 @@ func createTestPost(
 		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
-	err := pm.CreatePost(ctx, postCreateParams)
+	splitRate, err := sdk.NewRatFromDecimal(redistributionRate)
+	assert.Nil(t, err)
+
+	err = pm.CreatePost(
+		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+		msg.ParentAuthor, msg.ParentPostID, msg.Content,
+		msg.Title, splitRate, msg.Links)
+
 	assert.Nil(t, err)
 	return user, postID
+}
+
+func addProposalInfo(ctx sdk.Context, pm ProposalManager, proposalID types.ProposalKey,
+	agreeVotes, disagreeVotes types.Coin) sdk.Error {
+	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	if err != nil {
+		return err
+	}
+
+	proposalInfo := proposal.GetProposalInfo()
+	proposalInfo.AgreeVotes = agreeVotes
+	proposalInfo.DisagreeVotes = disagreeVotes
+
+	proposal.SetProposalInfo(proposalInfo)
+
+	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+		return err
+	}
+	return nil
 }

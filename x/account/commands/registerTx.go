@@ -38,23 +38,23 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		name := viper.GetString(client.FlagUser)
 		referrer := viper.GetString(client.FlagReferrer)
 		amount := viper.GetString(client.FlagAmount)
-		pubKey, err := GetPubKey()
 
-		if err != nil {
-			return err
-		}
+		masterPriv := crypto.GenPrivKeyEd25519()
 		transactionPriv := crypto.GenPrivKeyEd25519()
+		micropaymentPriv := crypto.GenPrivKeyEd25519()
 		postPriv := crypto.GenPrivKeyEd25519()
+		fmt.Println("master private key is:", strings.ToUpper(hex.EncodeToString(masterPriv.Bytes())))
 		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+		fmt.Println("micropayment private key is:", strings.ToUpper(hex.EncodeToString(micropaymentPriv.Bytes())))
 		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
 		msg := acc.NewRegisterMsg(
 			referrer, name, types.LNO(amount),
-			pubKey, postPriv.PubKey(), transactionPriv.PubKey())
+			masterPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcastBasedOnKeyBase(name, msg, cdc)
+		res, err := ctx.SignBuildBroadcast(msg, cdc)
 
 		if err != nil {
 			return err

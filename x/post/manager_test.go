@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,17 +28,17 @@ func TestCreatePost(t *testing.T) {
 	}{
 		{"postID", user1, "", "", nil},
 		{"postID", user2, "", "", nil},
-		{"postID", user1, "", "", ErrPostExist(types.GetPermLink(user1, "postID"))},
-		{"postID", user2, "postID", user1, ErrPostExist(types.GetPermLink(user2, "postID"))},
-		{"postID", user2, "postID", user2, ErrPostExist(types.GetPermLink(user2, "postID"))},
+		{"postID", user1, "", "", ErrPostExist(types.GetPermlink(user1, "postID"))},
+		{"postID", user2, "postID", user1, ErrPostExist(types.GetPermlink(user2, "postID"))},
+		{"postID", user2, "postID", user2, ErrPostExist(types.GetPermlink(user2, "postID"))},
 		{"postID2", user2, "postID", user1, nil},
 		{"postID3", user2, "postID3", user1,
-			ErrCreatePostSourceInvalid(types.GetPermLink(user2, "postID3"))},
+			ErrCreatePostSourceInvalid(types.GetPermlink(user2, "postID3"))},
 	}
 
 	for _, cs := range cases {
 		// test valid postInfo
-		postCreateParams := PostCreateParams{
+		msg := CreatePostMsg{
 			PostID:       cs.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
@@ -46,22 +46,24 @@ func TestCreatePost(t *testing.T) {
 			SourceAuthor: cs.sourceAuthor,
 			SourcePostID: cs.sourcePostID,
 			Links:        nil,
-			RedistributionSplitRate: "0",
 		}
-		err := pm.CreatePost(ctx, &postCreateParams)
+		err := pm.CreatePost(
+			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+			msg.ParentAuthor, msg.ParentPostID, msg.Content,
+			msg.Title, sdk.ZeroRat(), msg.Links)
 		assert.Equal(t, err, cs.expectResult)
 
 		if err != nil {
 			continue
 		}
 		postInfo := model.PostInfo{
-			PostID:       postCreateParams.PostID,
-			Title:        postCreateParams.Title,
-			Content:      postCreateParams.Content,
-			Author:       postCreateParams.Author,
-			SourceAuthor: postCreateParams.SourceAuthor,
-			SourcePostID: postCreateParams.SourcePostID,
-			Links:        postCreateParams.Links,
+			PostID:       msg.PostID,
+			Title:        msg.Title,
+			Content:      msg.Content,
+			Author:       msg.Author,
+			SourceAuthor: msg.SourceAuthor,
+			SourcePostID: msg.SourcePostID,
+			Links:        msg.Links,
 		}
 
 		postMeta := model.PostMeta{
@@ -70,10 +72,10 @@ func TestCreatePost(t *testing.T) {
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			IsDeleted:               false,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermLink(postCreateParams.Author, postCreateParams.PostID), postInfo, postMeta)
+			types.GetPermlink(msg.Author, msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -94,12 +96,12 @@ func TestUpdatePost(t *testing.T) {
 			NewUpdatePostMsg(
 				"invalid", postID, "update to this title", "update to this content",
 				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink("invalid", postID)))},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID)))},
 		"update with invalid author": {
 			NewUpdatePostMsg(
 				string(user), "invalid", "update to this title", "update to this content",
 				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermLink(user, "invalid")))},
+				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid")))},
 	}
 
 	for testname, cs := range cases {
@@ -130,7 +132,7 @@ func TestUpdatePost(t *testing.T) {
 			RedistributionSplitRate: splitRate,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermLink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
+			types.GetPermlink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -155,7 +157,7 @@ func TestGetSourcePost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postCreateParams := PostCreateParams{
+		msg := CreatePostMsg{
 			PostID:       cs.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
@@ -167,10 +169,13 @@ func TestGetSourcePost(t *testing.T) {
 			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
-		err := pm.CreatePost(ctx, &postCreateParams)
+		err := pm.CreatePost(
+			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
+			msg.ParentAuthor, msg.ParentPostID, msg.Content,
+			msg.Title, sdk.ZeroRat(), msg.Links)
 		assert.Nil(t, err)
 		sourceAuthor, sourcePostID, err :=
-			pm.GetSourcePost(ctx, types.GetPermLink(cs.author, cs.postID))
+			pm.GetSourcePost(ctx, types.GetPermlink(cs.author, cs.postID))
 		assert.Nil(t, err)
 		assert.Equal(t, sourceAuthor, cs.expectSourceAuthor)
 		assert.Equal(t, sourcePostID, cs.expectSourcePostID)
@@ -201,7 +206,7 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermLink(cs.author, cs.postID)
+		postKey := types.GetPermlink(cs.author, cs.postID)
 		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -209,7 +214,7 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalLikeCount:          cs.expectTotalLikeCount,
 			TotalLikeWeight:         cs.expectTotalLikeWeight,
 			TotalDislikeWeight:      cs.expectTotalDislikeWeight,
@@ -241,7 +246,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermLink(cs.author, cs.postID)
+		postKey := types.GetPermlink(cs.author, cs.postID)
 		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
 		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
 		assert.Nil(t, err)
@@ -250,7 +255,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 			LastUpdatedAt:           createTime,
 			LastActivityAt:          createTime,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalViewCount:          cs.expectTotalViewCount,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
@@ -281,7 +286,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermLink(cs.author, cs.postID)
+		postKey := types.GetPermlink(cs.author, cs.postID)
 		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -289,7 +294,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.expectTotalReportStake,
 			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
 		}
@@ -326,7 +331,7 @@ func TestDonation(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermLink(cs.author, cs.postID)
+		postKey := types.GetPermlink(cs.author, cs.postID)
 		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount, cs.donationType)
 		assert.Nil(t, err)
 		postMeta := model.PostMeta{
@@ -334,7 +339,7 @@ func TestDonation(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalDonateCount:        cs.expectDonateCount,
 			TotalReward:             cs.expectTotalDonation,
 		}
@@ -348,7 +353,7 @@ func TestDonation(t *testing.T) {
 func TestGetPenaltyScore(t *testing.T) {
 	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
-	postKey := types.GetPermLink(user, postID)
+	postKey := types.GetPermlink(user, postID)
 	cases := []struct {
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
@@ -370,7 +375,7 @@ func TestGetPenaltyScore(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.totalReportStake,
 			TotalUpvoteStake:        cs.totalUpvoteStake,
 		}
@@ -387,8 +392,8 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
-	postKey := types.GetPermLink(user, postID)
-	repostKey := types.GetPermLink(user2, postID2)
+	postKey := types.GetPermlink(user, postID)
+	repostKey := types.GetPermlink(user2, postID2)
 	cases := []struct {
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
@@ -408,7 +413,7 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat,
+			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        cs.totalReportStake,
 			TotalUpvoteStake:        cs.totalUpvoteStake,
 		}
@@ -420,11 +425,11 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 	}
 }
 
-func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permLink types.PermLink) {
-	isDeleted, err := pm.IsDeleted(ctx, permLink)
+func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permlink types.Permlink) {
+	isDeleted, err := pm.IsDeleted(ctx, permlink)
 	assert.Nil(t, err)
 	assert.Equal(t, true, isDeleted)
-	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
+	postInfo, err := pm.postStorage.GetPostInfo(ctx, permlink)
 	assert.Nil(t, err)
 	assert.Equal(t, "", postInfo.Title)
 	assert.Equal(t, "", postInfo.Content)
@@ -435,13 +440,13 @@ func TestDeletePost(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
-	err := pm.DeletePost(ctx, types.GetPermLink(user2, postID2))
+	err := pm.DeletePost(ctx, types.GetPermlink(user2, postID2))
 	assert.Nil(t, err)
-	checkIsDelete(t, ctx, pm, types.GetPermLink(user2, postID2))
-	postMeta, err := pm.postStorage.GetPostMeta(ctx, types.GetPermLink(user, postID))
+	checkIsDelete(t, ctx, pm, types.GetPermlink(user2, postID2))
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, types.GetPermlink(user, postID))
 	assert.Nil(t, err)
 	assert.Equal(t, false, postMeta.IsDeleted)
-	err = pm.DeletePost(ctx, types.GetPermLink(user, postID))
+	err = pm.DeletePost(ctx, types.GetPermlink(user, postID))
 	assert.Nil(t, err)
-	checkIsDelete(t, ctx, pm, types.GetPermLink(user, postID))
+	checkIsDelete(t, ctx, pm, types.GetPermlink(user, postID))
 }

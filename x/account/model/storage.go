@@ -4,22 +4,23 @@ import (
 	"strconv"
 
 	"github.com/lino-network/lino/types"
+	crypto "github.com/tendermint/go-crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 var (
-	accountInfoSubstore              = []byte{0x00}
-	accountBankSubstore              = []byte{0x01}
-	accountMetaSubstore              = []byte{0x02}
-	accountFollowerSubstore          = []byte{0x03}
-	accountFollowingSubstore         = []byte{0x04}
-	accountRewardSubstore            = []byte{0x05}
-	accountPendingStakeQueueSubstore = []byte{0x06}
-	accountRelationshipSubstore      = []byte{0x07}
-	accountGrantListSubstore         = []byte{0x08}
-	accountBalanceHistorySubstore    = []byte{0x09}
+	AccountInfoSubstore              = []byte{0x00}
+	AccountBankSubstore              = []byte{0x01}
+	AccountMetaSubstore              = []byte{0x02}
+	AccountFollowerSubstore          = []byte{0x03}
+	AccountFollowingSubstore         = []byte{0x04}
+	AccountRewardSubstore            = []byte{0x05}
+	AccountPendingStakeQueueSubstore = []byte{0x06}
+	AccountRelationshipSubstore      = []byte{0x07}
+	AccountBalanceHistorySubstore    = []byte{0x08}
+	AccountGrantPubKeySubstore       = []byte{0x09}
 )
 
 type AccountStorage struct {
@@ -34,6 +35,7 @@ type AccountStorage struct {
 func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
+
 	return AccountStorage{
 		key: key,
 		cdc: cdc,
@@ -41,7 +43,7 @@ func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 }
 
 // AccountExist returns true when a specific account exist in the KVStore.
-func (as AccountStorage) AccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
+func (as AccountStorage) DoesAccountExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(as.key)
 	return store.Has(GetAccountInfoKey(accKey))
 }
@@ -55,7 +57,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	}
 	info := new(AccountInfo)
 	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
-		return nil, ErrGetAccountInfo().TraceCause(err, "")
+		return nil, ErrGetAccountInfo()
 	}
 	return info, nil
 }
@@ -82,7 +84,7 @@ func (as AccountStorage) GetBankFromAccountKey(
 	}
 	bank := new(AccountBank)
 	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
-		return nil, ErrGetBankFromAccountKey().TraceCause(err, "")
+		return nil, ErrGetBankFromAccountKey()
 	}
 	return bank, nil
 }
@@ -93,7 +95,7 @@ func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, username types.A
 	store := ctx.KVStore(as.key)
 	bankByte, err := as.cdc.MarshalJSON(*accBank)
 	if err != nil {
-		return ErrSetBankFailed().TraceCause(err, "")
+		return ErrSetBankFailed()
 	}
 	store.Set(GetAccountBankKey(username), bankByte)
 	return nil
@@ -109,7 +111,7 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	}
 	meta := new(AccountMeta)
 	if err := as.cdc.UnmarshalJSON(metaByte, meta); err != nil {
-		return nil, ErrGetMetaFailed().TraceCause(err, "")
+		return nil, ErrGetMetaFailed()
 	}
 	return meta, nil
 }
@@ -119,7 +121,7 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMe
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(*accMeta)
 	if err != nil {
-		return ErrSetMetaFailed().TraceCause(err, "")
+		return ErrSetMetaFailed()
 	}
 	store.Set(GetAccountMetaKey(accKey), metaByte)
 	return nil
@@ -138,7 +140,7 @@ func (as AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, m
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
-		return ErrSetFollowerMeta().TraceCause(err, "")
+		return ErrSetFollowerMeta()
 	}
 	store.Set(getFollowerKey(me, meta.FollowerName), metaByte)
 	return nil
@@ -164,7 +166,7 @@ func (as AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, 
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
-		return ErrSetFollowingMeta().TraceCause(err, "")
+		return ErrSetFollowingMeta()
 	}
 	store.Set(getFollowingKey(me, meta.FollowingName), metaByte)
 	return nil
@@ -186,7 +188,7 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 	}
 	reward := new(Reward)
 	if err := as.cdc.UnmarshalJSON(rewardByte, reward); err != nil {
-		return nil, ErrGetRewardFailed().TraceCause(err, "")
+		return nil, ErrGetRewardFailed()
 	}
 	return reward, nil
 }
@@ -196,7 +198,7 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 	store := ctx.KVStore(as.key)
 	rewardByte, err := as.cdc.MarshalJSON(*reward)
 	if err != nil {
-		return ErrSetRewardFailed().TraceCause(err, "")
+		return ErrSetRewardFailed()
 	}
 	store.Set(getRewardKey(accKey), rewardByte)
 	return nil
@@ -212,7 +214,7 @@ func (as AccountStorage) GetPendingStakeQueue(
 	}
 	queue := new(PendingStakeQueue)
 	if err := as.cdc.UnmarshalJSON(pendingStakeQueueByte, queue); err != nil {
-		return nil, ErrGetPendingStakeFailed().TraceCause(err, "")
+		return nil, ErrGetPendingStakeFailed()
 	}
 	return queue, nil
 }
@@ -222,35 +224,42 @@ func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, me types.AccountK
 	store := ctx.KVStore(as.key)
 	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
 	if err != nil {
-		return ErrSetRewardFailed().TraceCause(err, "")
+		return ErrSetRewardFailed()
 	}
 	store.Set(getPendingStakeQueueKey(me), pendingStakeQueueByte)
 	return nil
 }
 
-// SetGrantKeyList sets a list of grant public keys for a given account.
-func (as AccountStorage) SetGrantKeyList(ctx sdk.Context, me types.AccountKey, grantKeyList *GrantKeyList) sdk.Error {
+// DeleteGrantPubKey deletes given pubkey in KV.
+func (as AccountStorage) DeleteGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) {
 	store := ctx.KVStore(as.key)
-	GrantKeyListByte, err := as.cdc.MarshalJSON(*grantKeyList)
-	if err != nil {
-		return ErrSetGrantListFailed().TraceCause(err, "")
-	}
-	store.Set(getGrantKeyListKey(me), GrantKeyListByte)
-	return nil
+	store.Delete(getGrantPubKeyKey(me, pubKey))
+	return
 }
 
-// GetGrantKeyList returns a list of grant public keys for a given account.
-func (as AccountStorage) GetGrantKeyList(ctx sdk.Context, me types.AccountKey) (*GrantKeyList, sdk.Error) {
+// GetGrantPubKey returns grant user info keyed with pubkey.
+func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) (*GrantPubKey, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	grantKeyListByte := store.Get(getGrantKeyListKey(me))
-	if grantKeyListByte == nil {
-		return nil, ErrGetGrantListFailed()
+	grantPubKeyByte := store.Get(getGrantPubKeyKey(me, pubKey))
+	if grantPubKeyByte == nil {
+		return nil, ErrGetGrantPubKeyFailed()
 	}
-	grantKeyList := new(GrantKeyList)
-	if err := as.cdc.UnmarshalJSON(grantKeyListByte, grantKeyList); err != nil {
-		return nil, ErrGetGrantListFailed().TraceCause(err, "")
+	grantPubKey := new(GrantPubKey)
+	if err := as.cdc.UnmarshalJSON(grantPubKeyByte, grantPubKey); err != nil {
+		return nil, ErrGetGrantPubKeyFailed()
 	}
-	return grantKeyList, nil
+	return grantPubKey, nil
+}
+
+// SetGrantPubKey sets a grant user to KV. Key is pubkey and value is grant user info.
+func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantPubKey *GrantPubKey) sdk.Error {
+	store := ctx.KVStore(as.key)
+	grantPubKeyByte, err := as.cdc.MarshalJSON(*grantPubKey)
+	if err != nil {
+		return ErrSetGrantPubKeyFailed()
+	}
+	store.Set(getGrantPubKeyKey(me, pubKey), grantPubKeyByte)
+	return nil
 }
 
 // GetRelationship returns the relationship between two accounts.
@@ -262,7 +271,7 @@ func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, o
 	}
 	queue := new(Relationship)
 	if err := as.cdc.UnmarshalJSON(relationshipByte, queue); err != nil {
-		return nil, ErrGetRelationshipFailed().TraceCause(err, "")
+		return nil, ErrGetRelationshipFailed()
 	}
 	return queue, nil
 }
@@ -272,7 +281,7 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 	store := ctx.KVStore(as.key)
 	relationshipByte, err := as.cdc.MarshalJSON(*relationship)
 	if err != nil {
-		return ErrSetRelationshipFailed().TraceCause(err, "")
+		return ErrSetRelationshipFailed()
 	}
 	store.Set(getRelationshipKey(me, other), relationshipByte)
 	return nil
@@ -280,41 +289,41 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 
 // GetRelationship returns the relationship between two accounts.
 func (as AccountStorage) GetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, timeSlot int64) (*BalanceHistory, sdk.Error) {
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64) (*BalanceHistory, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, timeSlot))
+	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, bucketSlot))
 	if balanceHistoryBytes == nil {
 		return nil, nil
 	}
 	history := new(BalanceHistory)
 	if err := as.cdc.UnmarshalJSON(balanceHistoryBytes, history); err != nil {
-		return nil, ErrGetBalanceHistoryFailed().TraceCause(err, "")
+		return nil, ErrGetBalanceHistoryFailed()
 	}
 	return history, nil
 }
 
 // SetBalanceHistory sets balance history.
 func (as AccountStorage) SetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, timeSlot int64, history *BalanceHistory) sdk.Error {
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64, history *BalanceHistory) sdk.Error {
 	store := ctx.KVStore(as.key)
 	historyBytes, err := as.cdc.MarshalJSON(*history)
 	if err != nil {
-		return ErrSetBalanceHistoryFailed().TraceCause(err, "")
+		return ErrSetBalanceHistoryFailed()
 	}
-	store.Set(getBalanceHistoryKey(me, timeSlot), historyBytes)
+	store.Set(getBalanceHistoryKey(me, bucketSlot), historyBytes)
 	return nil
 }
 
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
-	return append(accountInfoSubstore, accKey...)
+	return append(AccountInfoSubstore, accKey...)
 }
 
 func GetAccountBankKey(accKey types.AccountKey) []byte {
-	return append(accountBankSubstore, accKey...)
+	return append(AccountBankSubstore, accKey...)
 }
 
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
-	return append(accountMetaSubstore, accKey...)
+	return append(AccountMetaSubstore, accKey...)
 }
 
 // "follower substore" + "me" + "my follower"
@@ -323,7 +332,7 @@ func getFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
 }
 
 func getFollowerPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowerSubstore, me...), types.KeySeparator...)
+	return append(append(AccountFollowerSubstore, me...), types.KeySeparator...)
 }
 
 // "following substore" + "me" + "my following"
@@ -332,11 +341,11 @@ func getFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
 }
 
 func getFollowingPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowingSubstore, me...), types.KeySeparator...)
+	return append(append(AccountFollowingSubstore, me...), types.KeySeparator...)
 }
 
 func getRewardKey(accKey types.AccountKey) []byte {
-	return append(accountRewardSubstore, accKey...)
+	return append(AccountRewardSubstore, accKey...)
 }
 
 func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
@@ -344,21 +353,25 @@ func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
 }
 
 func getRelationshipPrefix(me types.AccountKey) []byte {
-	return append(append(accountRelationshipSubstore, me...), types.KeySeparator...)
+	return append(append(AccountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
 func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
-	return append(accountPendingStakeQueueSubstore, accKey...)
+	return append(AccountPendingStakeQueueSubstore, accKey...)
 }
 
-func getGrantKeyListKey(me types.AccountKey) []byte {
-	return append(accountGrantListSubstore, me...)
+func getGrantPubKeyPrefix(me types.AccountKey) []byte {
+	return append(append(AccountGrantPubKeySubstore, me...), types.KeySeparator...)
+}
+
+func getGrantPubKeyKey(me types.AccountKey, pubKey crypto.PubKey) []byte {
+	return append(getGrantPubKeyPrefix(me), pubKey.Bytes()...)
 }
 
 func getBalanceHistoryPrefix(me types.AccountKey) []byte {
-	return append(append(accountBalanceHistorySubstore, me...), types.KeySeparator...)
+	return append(append(AccountBalanceHistorySubstore, me...), types.KeySeparator...)
 }
 
-func getBalanceHistoryKey(me types.AccountKey, atWhen int64) []byte {
-	return strconv.AppendInt(getBalanceHistoryPrefix(me), atWhen, 10)
+func getBalanceHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
+	return strconv.AppendInt(getBalanceHistoryPrefix(me), bucketSlot, 10)
 }

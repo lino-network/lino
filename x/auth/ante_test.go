@@ -9,12 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
-	"github.com/lino-network/lino/types"
+	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -31,10 +33,11 @@ func createTestAccount(
 	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
 	masterKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
+	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
-	am.CreateAccount(ctx, types.AccountKey(username),
-		masterKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
+	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
+		masterKey.PubKey(), transactionKey.PubKey(), micropaymentKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
 	return masterKey, transactionKey, postKey, types.AccountKey(username)
 }
 
@@ -51,7 +54,7 @@ func setupTest() (
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil)
+		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, nil, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
@@ -67,17 +70,19 @@ type TestMsg struct {
 	signers []types.AccountKey
 }
 
-func (msg *TestMsg) Type() string                            { return "normal msg" }
-func (msg *TestMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg *TestMsg) GetSignBytes() []byte {
+var _ types.Msg = TestMsg{}
+
+func (msg TestMsg) Type() string                    { return "normal msg" }
+func (msg TestMsg) GetPermission() types.Permission { return types.PostPermission }
+func (msg TestMsg) GetSignBytes() []byte {
 	bz, err := json.Marshal(msg.signers)
 	if err != nil {
 		panic(err)
 	}
 	return bz
 }
-func (msg *TestMsg) ValidateBasic() sdk.Error { return nil }
-func (msg *TestMsg) GetSigners() []sdk.Address {
+func (msg TestMsg) ValidateBasic() sdk.Error { return nil }
+func (msg TestMsg) GetSigners() []sdk.Address {
 	addrs := make([]sdk.Address, len(msg.signers))
 	for i, signer := range msg.signers {
 		addrs[i] = sdk.Address(signer)
@@ -85,8 +90,8 @@ func (msg *TestMsg) GetSigners() []sdk.Address {
 	return addrs
 }
 
-func newTestMsg(accKeys ...types.AccountKey) *TestMsg {
-	return &TestMsg{
+func newTestMsg(accKeys ...types.AccountKey) TestMsg {
+	return TestMsg{
 		signers: accKeys,
 	}
 }
@@ -95,7 +100,7 @@ func newTestMsg(accKeys ...types.AccountKey) *TestMsg {
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx) {
 	_, result, abort := anteHandler(ctx, tx)
 	assert.False(t, abort)
-	assert.Equal(t, sdk.CodeOK, result.Code)
+	assert.Equal(t, sdk.ABCICodeOK, result.Code)
 	assert.True(t, result.IsOK())
 }
 
@@ -108,18 +113,18 @@ func checkInvalidTx(
 }
 
 func newTestTx(ctx sdk.Context, msg sdk.Msg, privs []crypto.PrivKey, seqs []int64) sdk.Tx {
-	signBytes := sdk.StdSignBytes(ctx.ChainID(), seqs, sdk.StdFee{}, msg)
+	signBytes := auth.StdSignBytes(ctx.ChainID(), []int64{}, seqs, auth.StdFee{}, msg)
 	return newTestTxWithSignBytes(msg, privs, seqs, signBytes)
 }
 
 func newTestTxWithSignBytes(
 	msg sdk.Msg, privs []crypto.PrivKey, seqs []int64, signBytes []byte) sdk.Tx {
-	sigs := make([]sdk.StdSignature, len(privs))
+	sigs := make([]auth.StdSignature, len(privs))
 	for i, priv := range privs {
-		sigs[i] = sdk.StdSignature{
+		sigs[i] = auth.StdSignature{
 			PubKey: priv.PubKey(), Signature: priv.Sign(signBytes), Sequence: seqs[i]}
 	}
-	tx := sdk.NewStdTx(msg, sdk.StdFee{}, sigs)
+	tx := auth.NewStdTx(msg, auth.StdFee{}, sigs)
 	return tx
 }
 
@@ -190,7 +195,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	// test wrong sig number
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []int64{2, 0}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, sdk.ErrUnauthorized("wrong number of signers").Result())
 }
 
 // Test grant authentication.
@@ -217,19 +222,22 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, 1)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, 10, types.PostPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant
-	privs, seqs = []crypto.PrivKey{post2}, []int64{0}
+	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err = am.GetSequence(ctx, user2)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(1))
+	assert.Equal(t, seq, int64(0))
+	seq, err = am.GetSequence(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(2))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
-	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -12,13 +11,11 @@ import (
 )
 
 var (
-	heightEventListSubStore = []byte{0x00} // SubStore for height event list
-	timeEventListSubStore   = []byte{0x01} // SubStore for time event list
-	statisticsSubStore      = []byte{0x02} // SubStore for statistics
-	globalMetaSubStore      = []byte{0x03} // SubStore for global meta
-	inflationPoolSubStore   = []byte{0x04} // SubStore for allocation
-	consumptionMetaSubStore = []byte{0x05} // SubStore for consumption meta
-	tpsSubStore             = []byte{0x06} // SubStore for tps
+	timeEventListSubStore   = []byte{0x00} // SubStore for time event list
+	globalMetaSubStore      = []byte{0x01} // SubStore for global meta
+	inflationPoolSubStore   = []byte{0x02} // SubStore for allocation
+	consumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
+	tpsSubStore             = []byte{0x04} // SubStore for tps
 )
 
 type GlobalStorage struct {
@@ -64,44 +61,35 @@ func (gs GlobalStorage) InitGlobalState(
 	}
 
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
-	}
-	if err := gs.SetGlobalStatistics(ctx, &GlobalStatistics{}); err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
 
-	infraInflationCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		totalLino.ToRat(),
-		(new(big.Rat).Mul(
-			globalMeta.GrowthRate.GetRat(),
-			param.InfraAllocation.GetRat()))))
+	infraInflationCoin, err := types.RatToCoin(
+		totalLino.ToRat().Mul(globalMeta.GrowthRate.Mul(param.InfraAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
-	contentCreatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		totalLino.ToRat(),
-		(new(big.Rat).Mul(
-			globalMeta.GrowthRate.GetRat(),
-			param.ContentCreatorAllocation.GetRat()))))
+	contentCreatorCoin, err := types.RatToCoin(
+		totalLino.ToRat().Mul(
+			globalMeta.GrowthRate.Mul(
+				param.ContentCreatorAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
-	developerCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		totalLino.ToRat(),
-		(new(big.Rat).Mul(
-			globalMeta.GrowthRate.GetRat(),
-			param.DeveloperAllocation.GetRat()))))
+	developerCoin, err := types.RatToCoin(
+		totalLino.ToRat().Mul(
+			globalMeta.GrowthRate.Mul(
+				param.DeveloperAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
-	validatorCoin, err := types.RatToCoin(new(big.Rat).Mul(
-		totalLino.ToRat(),
-		(new(big.Rat).Mul(
-			globalMeta.GrowthRate.GetRat(),
-			param.ValidatorAllocation.GetRat()))))
+	validatorCoin, err := types.RatToCoin(
+		totalLino.ToRat().Mul(
+			globalMeta.GrowthRate.Mul(
+				param.ValidatorAllocation)))
 
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
 
 	inflationPool := &InflationPool{
@@ -111,26 +99,24 @@ func (gs GlobalStorage) InitGlobalState(
 		ValidatorInflationPool:      validatorCoin,
 	}
 	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
 
 	consumptionMeta := &ConsumptionMeta{
 		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
-		ReportStakeWindow:           sdk.ZeroRat,
-		DislikeStakeWindow:          sdk.ZeroRat,
 		ConsumptionWindow:           types.NewCoinFromInt64(0),
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
 	tps := &TPS{
-		CurrentTPS: sdk.ZeroRat,
+		CurrentTPS: sdk.ZeroRat(),
 		MaxTPS:     sdk.NewRat(1000),
 	}
 	if err := gs.SetTPS(ctx, tps); err != nil {
-		return ErrGlobalStorageGenesisFailed().TraceCause(err, "")
+		return ErrGlobalStorageGenesisFailed()
 	}
 	return nil
 }
@@ -162,29 +148,6 @@ func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *t
 func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	store.Delete(GetTimeEventListKey(unixTime))
-	return nil
-}
-
-func (gs GlobalStorage) GetGlobalStatistics(ctx sdk.Context) (*GlobalStatistics, sdk.Error) {
-	store := ctx.KVStore(gs.key)
-	statisticsBytes := store.Get(GetGlobalStatisticsKey())
-	if statisticsBytes == nil {
-		return nil, ErrGlobalStatisticsNotFound()
-	}
-	statistics := new(GlobalStatistics)
-	if err := gs.cdc.UnmarshalJSON(statisticsBytes, statistics); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return statistics, nil
-}
-
-func (gs GlobalStorage) SetGlobalStatistics(ctx sdk.Context, statistics *GlobalStatistics) sdk.Error {
-	store := ctx.KVStore(gs.key)
-	statisticsBytes, err := gs.cdc.MarshalJSON(*statistics)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetGlobalStatisticsKey(), statisticsBytes)
 	return nil
 }
 
@@ -280,16 +243,8 @@ func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	return nil
 }
 
-func GetHeightEventListKey(height int64) []byte {
-	return append(heightEventListSubStore, strconv.FormatInt(height, 10)...)
-}
-
 func GetTimeEventListKey(unixTime int64) []byte {
 	return append(timeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
-}
-
-func GetGlobalStatisticsKey() []byte {
-	return statisticsSubStore
 }
 
 func GetGlobalMetaKey() []byte {

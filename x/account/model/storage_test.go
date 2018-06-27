@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tmlibs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
@@ -24,7 +25,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }
 
 func TestAccountInfo(t *testing.T) {
@@ -33,11 +34,12 @@ func TestAccountInfo(t *testing.T) {
 
 	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
-		Username:       types.AccountKey("test"),
-		CreatedAt:      0,
-		MasterKey:      priv.PubKey(),
-		TransactionKey: priv.Generate(1).PubKey(),
-		PostKey:        priv.Generate(2).PubKey(),
+		Username:        types.AccountKey("test"),
+		CreatedAt:       0,
+		MasterKey:       priv.PubKey(),
+		TransactionKey:  priv.Generate(0).PubKey(),
+		MicropaymentKey: priv.Generate(1).PubKey(),
+		PostKey:         priv.Generate(2).PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -122,4 +124,24 @@ func TestAccountBalanceHistory(t *testing.T) {
 	resultPtr, err := as.GetBalanceHistory(ctx, types.AccountKey("test"), 0)
 	assert.Nil(t, err)
 	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
+}
+
+func TestAccountGrantPubkey(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+	priv := crypto.GenPrivKeyEd25519()
+
+	grantPubKey := GrantPubKey{}
+	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey(), &grantPubKey)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
+	assert.Nil(t, err)
+	assert.Equal(t, grantPubKey, *resultPtr, "Account grant user should be equal")
+
+	as.DeleteGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
+	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
+	assert.NotNil(t, err)
+	assert.Nil(t, resultPtr)
+
 }

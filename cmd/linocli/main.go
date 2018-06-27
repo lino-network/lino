@@ -121,10 +121,6 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			votecmd.VoteTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
 			votecmd.WithdrawVoterTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
@@ -139,6 +135,10 @@ func main() {
 	linocliCmd.AddCommand(
 		client.GetCommands(
 			proposalcmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			proposalcmd.VoteProposalTxCmd(cdc),
 		)...)
 
 	linocliCmd.AddCommand(
@@ -170,6 +170,10 @@ func main() {
 	linocliCmd.AddCommand(
 		client.GetCommands(
 			acccmd.GetAccountCmd(types.AccountKVStoreKey, cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.GetCommands(
+			acccmd.GetAccountsCmd(types.AccountKVStoreKey, cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(

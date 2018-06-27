@@ -1,15 +1,16 @@
 package app
 
 import (
-	"math/big"
+	"encoding/json"
+	"errors"
+	"os"
 
-	"github.com/lino-network/lino/genesis"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/auth"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
 	"github.com/lino-network/lino/x/proposal"
-	"github.com/lino-network/lino/types"
 
 	acc "github.com/lino-network/lino/x/account"
 	developer "github.com/lino-network/lino/x/developer"
@@ -22,13 +23,21 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cauth "github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
 )
 
 const (
 	appName = "LinoBlockchain"
+)
+
+// default home directories for expected binaries
+var (
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.linocli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.lino")
 )
 
 // Extended ABCI application
@@ -69,9 +78,10 @@ type LinoBlockchain struct {
 
 func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	// create your application object
+	var cdc = MakeCodec()
 	var lb = &LinoBlockchain{
-		BaseApp:              bam.NewBaseApp(appName, logger, db),
-		cdc:                  MakeCodec(),
+		BaseApp:              bam.NewBaseApp(appName, cdc, logger, db),
+		cdc:                  cdc,
 		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
 		CapKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
@@ -88,12 +98,12 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
+	RegisterEvent(lb.globalManager.WireCodec())
+
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
-
-	RegisterEvent(lb.globalManager.WireCodec())
 
 	lb.Router().
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager)).
@@ -103,7 +113,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
 			lb.developerManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.ProposalRouterName, proposal.NewHandler(
-			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager)).
+			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager, lb.voteManager)).
 		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
@@ -112,6 +122,7 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager))
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
@@ -119,85 +130,52 @@ func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
 		lb.CapKeyParamStore, lb.CapKeyProposalStore)
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager))
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
 	return lb
 }
 
+// custom logic for transaction decoding
+func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
+	var tx = cauth.StdTx{}
+
+	// StdTx.Msg is an interface.
+	err := lb.cdc.UnmarshalJSON(txBytes, &tx)
+	if err != nil {
+		return nil, sdk.ErrTxDecode("")
+	}
+	return tx, nil
+}
+
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
-
-	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(acc.RegisterMsg{}, "register", nil)
-	cdc.RegisterConcrete(acc.FollowMsg{}, "follow", nil)
-	cdc.RegisterConcrete(acc.UnfollowMsg{}, "unfollow", nil)
-	cdc.RegisterConcrete(acc.TransferMsg{}, "transfer", nil)
-	cdc.RegisterConcrete(acc.ClaimMsg{}, "claim", nil)
-	cdc.RegisterConcrete(acc.RecoverMsg{}, "recover", nil)
-	cdc.RegisterConcrete(post.CreatePostMsg{}, "post", nil)
-	cdc.RegisterConcrete(post.UpdatePostMsg{}, "update/post", nil)
-	cdc.RegisterConcrete(post.DeletePostMsg{}, "delete/post", nil)
-	cdc.RegisterConcrete(post.LikeMsg{}, "like", nil)
-	cdc.RegisterConcrete(post.DonateMsg{}, "donate", nil)
-	cdc.RegisterConcrete(post.ViewMsg{}, "view", nil)
-	cdc.RegisterConcrete(post.ReportOrUpvoteMsg{}, "reportOrUpvote", nil)
-	cdc.RegisterConcrete(val.ValidatorDepositMsg{}, "val/deposit", nil)
-	cdc.RegisterConcrete(val.ValidatorWithdrawMsg{}, "val/withdraw", nil)
-	cdc.RegisterConcrete(val.ValidatorRevokeMsg{}, "val/revoke", nil)
-	cdc.RegisterConcrete(vote.VoterDepositMsg{}, "vote/deposit", nil)
-	cdc.RegisterConcrete(vote.VoterRevokeMsg{}, "vote/revoke", nil)
-	cdc.RegisterConcrete(vote.VoterWithdrawMsg{}, "vote/withdraw", nil)
-	cdc.RegisterConcrete(vote.DelegateMsg{}, "delegate", nil)
-	cdc.RegisterConcrete(vote.DelegatorWithdrawMsg{}, "delegate/withdraw", nil)
-	cdc.RegisterConcrete(vote.RevokeDelegationMsg{}, "delegate/revoke", nil)
-	cdc.RegisterConcrete(vote.VoteMsg{}, "vote", nil)
-	cdc.RegisterConcrete(developer.DeveloperRegisterMsg{}, "developer/register", nil)
-	cdc.RegisterConcrete(developer.DeveloperRevokeMsg{}, "developer/revoke", nil)
-	cdc.RegisterConcrete(infra.ProviderReportMsg{}, "provider/report", nil)
-	cdc.RegisterConcrete(developer.GrantDeveloperMsg{}, "grant/developer", nil)
-
-	cdc.RegisterConcrete(proposal.DeletePostContentMsg{}, "deletePostContent", nil)
-	cdc.RegisterConcrete(proposal.ChangeGlobalAllocationParamMsg{}, "changeGlobalAllocation", nil)
-	cdc.RegisterConcrete(proposal.ChangeEvaluateOfContentValueParamMsg{}, "changeEvaluation", nil)
-	cdc.RegisterConcrete(proposal.ChangeInfraInternalAllocationParamMsg{}, "changeInfraAllocation", nil)
-	cdc.RegisterConcrete(proposal.ChangeVoteParamMsg{}, "changeVoteParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeProposalParamMsg{}, "changeProposalParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeDeveloperParamMsg{}, "changeDeveloperParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeValidatorParamMsg{}, "changeValidatorParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeCoinDayParamMsg{}, "changeCoinDayParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeBandwidthParamMsg{}, "changeBandwidthParam", nil)
-	cdc.RegisterConcrete(proposal.ChangeAccountParamMsg{}, "changeAccountParam", nil)
-
 	wire.RegisterCrypto(cdc)
+	sdk.RegisterWire(cdc)
+	acc.RegisterWire(cdc)
+	post.RegisterWire(cdc)
+	developer.RegisterWire(cdc)
+	infra.RegisterWire(cdc)
+	vote.RegisterWire(cdc)
+	val.RegisterWire(cdc)
+	proposal.RegisterWire(cdc)
+
+	RegisterEvent(cdc)
 	return cdc
 }
 
 func RegisterEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(post.RewardEvent{}, "event/reward", nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "event/return", nil)
-	cdc.RegisterConcrete(param.ChangeParamEvent{}, "event/cpe", nil)
-	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "event/dpe", nil)
-}
-
-// custom logic for transaction decoding
-func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-	var tx = sdk.StdTx{}
-
-	// StdTx.Msg is an interface.
-	err := lb.cdc.UnmarshalJSON(txBytes, &tx)
-	if err != nil {
-		return nil, sdk.ErrTxDecode("").TraceCause(err, "")
-	}
-	return tx, nil
+	cdc.RegisterConcrete(post.RewardEvent{}, "lino/eventReward", nil)
+	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "lino/eventReturn", nil)
+	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
+	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
 }
 
 // custom logic for basecoin initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
-	genesisState := new(genesis.GenesisState)
+	genesisState := new(GenesisState)
 	if err := lb.cdc.UnmarshalJSON(stateJSON, genesisState); err != nil {
 		panic(err)
 	}
@@ -206,11 +184,15 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
-	totalCoin, err := types.LinoToCoin(genesisState.TotalLino)
-	if err != nil {
-		panic(err)
-	}
+	totalCoin := types.NewCoinFromInt64(0)
 
+	for _, gacc := range genesisState.Accounts {
+		coin, err := types.LinoToCoin(gacc.Lino)
+		if err != nil {
+			panic(err)
+		}
+		totalCoin = totalCoin.Plus(coin)
+	}
 	if err := lb.globalManager.InitGlobalManager(ctx, totalCoin); err != nil {
 		panic(err)
 	}
@@ -251,18 +233,18 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 }
 
 // convert GenesisAccount to AppAccount
-func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccount) sdk.Error {
+func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.Error {
 	// send coins using address (even no account bank associated with this addr)
 	coin, err := types.LinoToCoin(ga.Lino)
 	if err != nil {
 		panic(err)
 	}
-	if lb.accountManager.IsAccountExist(ctx, types.AccountKey(ga.Name)) {
-		panic(sdk.ErrGenesisParse("genesis account already exist"))
+	if lb.accountManager.DoesAccountExist(ctx, types.AccountKey(ga.Name)) {
+		panic(errors.New("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
-		ctx, types.AccountKey(ga.Name),
-		ga.MasterKey, ga.TransactionKey, ga.PostKey, coin); err != nil {
+		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
+		ga.MasterKey, ga.TransactionKey, ga.MicropaymentKey, ga.PostKey, coin); err != nil {
 		panic(err)
 	}
 
@@ -276,7 +258,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 		if err := lb.accountManager.MinusSavingCoin(
 			ctx, types.AccountKey(ga.Name),
 			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
-			types.ValidatorDeposit); err != nil {
+			"", "", types.ValidatorDeposit); err != nil {
 			panic(err)
 		}
 
@@ -285,7 +267,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 			panic(err)
 		}
 		if err := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey.Bytes(),
+			ctx, types.AccountKey(ga.Name), ga.ValPubKey,
 			valParam.ValidatorMinCommitingDeposit, ""); err != nil {
 			panic(err)
 		}
@@ -298,9 +280,9 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga genesis.GenesisAccoun
 
 // convert GenesisDeveloper to AppDeveloper
 func (lb *LinoBlockchain) toAppDeveloper(
-	ctx sdk.Context, developer genesis.GenesisAppDeveloper) sdk.Error {
-	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(developer.Name)) {
-		return sdk.ErrGenesisParse("genesis developer account doesn't exist")
+	ctx sdk.Context, developer GenesisAppDeveloper) sdk.Error {
+	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(developer.Name)) {
+		return ErrGenesisFailed("genesis developer account doesn't exist")
 	}
 	coin, err := types.LinoToCoin(types.LNO(developer.Deposit))
 	if err != nil {
@@ -308,7 +290,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	}
 
 	if err := lb.accountManager.MinusSavingCoin(
-		ctx, types.AccountKey(developer.Name), coin, types.DeveloperDeposit); err != nil {
+		ctx, types.AccountKey(developer.Name), coin,
+		"", "", types.DeveloperDeposit); err != nil {
 		return err
 	}
 
@@ -321,9 +304,9 @@ func (lb *LinoBlockchain) toAppDeveloper(
 
 // convert GenesisInfra to AppInfra
 func (lb *LinoBlockchain) toAppInfra(
-	ctx sdk.Context, infra genesis.GenesisInfraProvider) sdk.Error {
-	if !lb.accountManager.IsAccountExist(ctx, types.AccountKey(infra.Name)) {
-		return sdk.ErrGenesisParse("genesis infra account doesn't exist")
+	ctx sdk.Context, infra GenesisInfraProvider) sdk.Error {
+	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(infra.Name)) {
+		return ErrGenesisFailed("genesis infra account doesn't exist")
 	}
 	if err := lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey(infra.Name)); err != nil {
 		return err
@@ -337,33 +320,13 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		lb.chainStartTime = ctx.BlockHeader().Time
 		lb.lastBlockTime = ctx.BlockHeader().Time
 	}
-	if err := lb.globalManager.UpdateTPS(ctx, lb.lastBlockTime); err != nil {
-		panic(err)
-	}
+
 	for (ctx.BlockHeader().Time-lb.chainStartTime)/60 > lb.pastMinutes {
 		lb.increaseMinute(ctx)
 	}
 
-	validatorList, err := lb.valManager.GetValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	validatorList.PreBlockValidators = validatorList.OncallValidators
-	if err := lb.valManager.SetValidatorList(ctx, validatorList); err != nil {
-		panic(err)
-	}
-
-	absentValidators := req.GetAbsentValidators()
-	if absentValidators != nil {
-		if err := lb.valManager.UpdateAbsentValidator(ctx, absentValidators); err != nil {
-			panic(err)
-		}
-	}
-
-	actualPenalty, err := lb.valManager.FireIncompetentValidator(ctx, req.GetByzantineValidators())
-	if err != nil {
-		panic(err)
-	}
+	tags := global.BeginBlocker(ctx, req, lb.globalManager, lb.lastBlockTime)
+	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
 	if err := lb.globalManager.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
@@ -372,7 +335,9 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 	lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
-	return abci.ResponseBeginBlock{}
+	return abci.ResponseBeginBlock{
+		Tags: tags.ToKVPairs(),
+	}
 }
 
 // execute events between last block time and current block time
@@ -481,12 +446,13 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
-		ratPerValidator := new(big.Rat).Quo(coin.ToRat(), big.NewRat(int64(len(lst.OncallValidators)-i), 1))
+		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
 		coinPerValidator, err := types.RatToCoin(ratPerValidator)
 		if err != nil {
 			panic(err)
 		}
-		lb.accountManager.AddSavingCoin(ctx, validator, coinPerValidator, types.ValidatorInflation)
+		lb.accountManager.AddSavingCoin(
+			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -509,9 +475,10 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage.GetRat())
+		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin, err := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, provider, myShareCoin, types.InfraInflation)
+		lb.accountManager.AddSavingCoin(
+			ctx, provider, myShareCoin, "", "", types.InfraInflation)
 	}
 
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
@@ -538,9 +505,10 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := new(big.Rat).Mul(inflation.ToRat(), percentage)
+		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin, _ := types.RatToCoin(myShareRat)
-		lb.accountManager.AddSavingCoin(ctx, developer, myShareCoin, types.DeveloperInflation)
+		lb.accountManager.AddSavingCoin(
+			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
@@ -555,17 +523,11 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 		panic(err)
 	}
 
-	proposalList, err := lb.proposalManager.GetProposalList(ctx)
-	if err != nil {
-		panic(err)
-	}
-
 	referenceList, err := lb.voteManager.GetValidatorReferenceList(ctx)
 	if err != nil {
 		panic(err)
 	}
 	referenceList.AllValidators = validatorList.AllValidators
-	referenceList.OngoingProposal = proposalList.OngoingProposal
 	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
 		panic(err)
 	}
@@ -577,4 +539,32 @@ func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
 
 func (lb *LinoBlockchain) getPastMonthMinusOneThisYear() int64 {
 	return (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
+}
+
+// Custom logic for state export
+func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+	//ctx := lb.NewContext(true, abci.Header{})
+
+	// // iterate to get the accounts
+	// accounts := []*GenesisAccount{}
+	// appendAccount := func(acc auth.Account) (stop bool) {
+	// 	account := &types.GenesisAccount{
+	// 		Address: acc.GetAddress(),
+	// 		Coins:   acc.GetCoins(),
+	// 	}
+	// 	accounts = append(accounts, account)
+	// 	return false
+	// }
+	// app.accountMapper.IterateAccounts(ctx, appendAccount)
+
+	// genState := types.GenesisState{
+	// 	Accounts:    accounts,
+	// 	POWGenesis:  pow.WriteGenesis(ctx, app.powKeeper),
+	// 	CoolGenesis: cool.WriteGenesis(ctx, app.coolKeeper),
+	// }
+	// appState, err = wire.MarshalJSONIndent(app.cdc, genState)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	return appState, validators, nil
 }

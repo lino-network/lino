@@ -3,8 +3,8 @@ package vote
 import (
 	"testing"
 
-	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

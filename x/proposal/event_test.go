@@ -38,10 +38,11 @@ func TestDecideProposal(t *testing.T) {
 	param2 := param.GlobalAllocationParam{
 		InfraAllocation: sdk.NewRat(80, 100),
 	}
+
 	p1 := pm.CreateChangeParamProposal(ctx, param1)
 	p2 := pm.CreateChangeParamProposal(ctx, param2)
-	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1)
-	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2)
+	id1, _ := pm.AddProposal(ctx, types.AccountKey("c1"), p1, 10)
+	id2, _ := pm.AddProposal(ctx, types.AccountKey("c2"), p2, 10)
 
 	e1 := DecideProposalEvent{
 		ProposalType: types.ChangeParam,
@@ -54,33 +55,129 @@ func TestDecideProposal(t *testing.T) {
 	}
 
 	cases := []struct {
+		testName              string
 		event                 DecideProposalEvent
 		decideProposal        bool
 		voter                 types.AccountKey
 		proposalID            types.ProposalKey
 		voterRes              bool
+		votingPower           types.Coin
 		expectOngoingProposal []types.ProposalKey
 		expectDecidedProposal []types.ProposalKey
 		expectProposalRes     types.ProposalResult
 		expectAgreeVotes      types.Coin
 		expectDisagreeVotes   types.Coin
 	}{
-		{e1, false, user1, id1, true, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
-			c1, c2},
-		{e1, false, user2, id1, false, []types.ProposalKey{id1, id2}, nil, types.ProposalNotPass,
-			c1, c2},
-		{e1, true, types.AccountKey(""), id1, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
-			types.ProposalNotPass, c1, c2},
-		{e2, false, user1, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
-			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{e2, false, user2, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
-			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{e2, false, user4, id2, true, []types.ProposalKey{id2}, []types.ProposalKey{id1},
-			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{e2, false, user3, id2, false, []types.ProposalKey{id2}, []types.ProposalKey{id1},
-			types.ProposalNotPass, c1.Plus(c2).Plus(c4), c3},
-		{e2, true, types.AccountKey(""), id2, false, nil, []types.ProposalKey{id1, id2},
-			types.ProposalPass, c1.Plus(c2).Plus(c4), c3},
+		{
+			testName:              "test1",
+			event:                 e1,
+			decideProposal:        false,
+			voter:                 user1,
+			proposalID:            id1,
+			voterRes:              true,
+			votingPower:           c1,
+			expectOngoingProposal: []types.ProposalKey{id1, id2},
+			expectDecidedProposal: nil,
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1,
+			expectDisagreeVotes:   c2,
+		},
+		{
+			testName:              "test2",
+			event:                 e1,
+			decideProposal:        false,
+			voter:                 user2,
+			proposalID:            id1,
+			voterRes:              false,
+			votingPower:           c2,
+			expectOngoingProposal: []types.ProposalKey{id1, id2},
+			expectDecidedProposal: nil,
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1,
+			expectDisagreeVotes:   c2,
+		},
+		{
+			testName:              "test3",
+			event:                 e1,
+			decideProposal:        true,
+			voter:                 types.AccountKey(""),
+			proposalID:            id1,
+			voterRes:              false,
+			expectOngoingProposal: []types.ProposalKey{id2},
+			expectDecidedProposal: []types.ProposalKey{id1},
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1,
+			expectDisagreeVotes:   c2,
+		},
+		{
+			testName:              "test4",
+			event:                 e2,
+			decideProposal:        false,
+			voter:                 user1,
+			proposalID:            id2,
+			voterRes:              true,
+			votingPower:           c1,
+			expectOngoingProposal: []types.ProposalKey{id2},
+			expectDecidedProposal: []types.ProposalKey{id1},
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1.Plus(c2).Plus(c4),
+			expectDisagreeVotes:   c3,
+		},
+		{
+			testName:              "test5",
+			event:                 e2,
+			decideProposal:        false,
+			voter:                 user2,
+			proposalID:            id2,
+			voterRes:              true,
+			votingPower:           c2,
+			expectOngoingProposal: []types.ProposalKey{id2},
+			expectDecidedProposal: []types.ProposalKey{id1},
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1.Plus(c2).Plus(c4),
+			expectDisagreeVotes:   c3,
+		},
+		{
+			testName:              "test6",
+			event:                 e2,
+			decideProposal:        false,
+			voter:                 user4,
+			proposalID:            id2,
+			voterRes:              true,
+			votingPower:           c4,
+			expectOngoingProposal: []types.ProposalKey{id2},
+			expectDecidedProposal: []types.ProposalKey{id1},
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1.Plus(c2).Plus(c4),
+			expectDisagreeVotes:   c3,
+		},
+		{
+			testName:              "test7",
+			event:                 e2,
+			decideProposal:        false,
+			voter:                 user3,
+			proposalID:            id2,
+			voterRes:              false,
+			votingPower:           c3,
+			expectOngoingProposal: []types.ProposalKey{id2},
+			expectDecidedProposal: []types.ProposalKey{id1},
+			expectProposalRes:     types.ProposalNotPass,
+			expectAgreeVotes:      c1.Plus(c2).Plus(c4),
+			expectDisagreeVotes:   c3,
+		},
+		{
+			testName:              "test8",
+			event:                 e2,
+			decideProposal:        true,
+			voter:                 types.AccountKey(""),
+			proposalID:            id2,
+			voterRes:              false,
+			expectOngoingProposal: nil,
+			expectDecidedProposal: []types.ProposalKey{id1, id2},
+			expectProposalRes:     types.ProposalPass,
+			expectAgreeVotes:      c1.Plus(c2).Plus(c4),
+			expectDisagreeVotes:   c3,
+		},
 	}
 
 	for _, cs := range cases {
@@ -95,6 +192,9 @@ func TestDecideProposal(t *testing.T) {
 
 		} else {
 			voteManager.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
+
+			err := pm.UpdateProposalVotingStatus(ctx, cs.proposalID, cs.voter, cs.voterRes, cs.votingPower)
+			assert.Nil(t, err)
 		}
 
 		lst, err := pm.storage.GetProposalList(ctx)

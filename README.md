@@ -31,3 +31,8 @@ Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous conte
     cd cmd/linocli
     go build
 
+## run test image
+
+    docker-compose up --build
+
+

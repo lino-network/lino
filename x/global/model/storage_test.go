@@ -1,7 +1,6 @@
 package model
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -25,7 +25,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }
 
 func InitGlobalStorage(
@@ -33,12 +33,9 @@ func InitGlobalStorage(
 	return gm.InitGlobalState(ctx, types.NewCoinFromInt64(10000*types.Decimals), param)
 }
 
-func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
+func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage,
 	expectGlobalMeta GlobalMeta, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
-	globalStatistic, err := gm.GetGlobalStatistics(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectGlobalStatistic, *globalStatistic)
 	globalMeta, err := gm.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalMeta, *globalMeta)
@@ -70,34 +67,28 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		Floor:   sdk.NewRat(30, 1000),
 	}
 
-	globalStatistics := GlobalStatistics{}
 	consumptionMeta := ConsumptionMeta{
-		ConsumptionFrictionRate:     sdk.Rat{5, 100},
-		ReportStakeWindow:           sdk.ZeroRat,
-		DislikeStakeWindow:          sdk.ZeroRat,
+		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
 		ConsumptionWindow:           types.NewCoinFromInt64(0),
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
-	infraInflationPool, _ := types.RatToCoin(new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
-		new(big.Rat).Mul(globalMeta.TotalLinoCoin.ToRat(), allocationParam.InfraAllocation.GetRat())))
+	infraInflationPool, _ := types.RatToCoin(globalMeta.GrowthRate.Mul(
+		globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.InfraAllocation)))
 	contentCreatorInflationPool, _ := types.RatToCoin(
-		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
-			new(big.Rat).Mul(
-				globalMeta.TotalLinoCoin.ToRat(), allocationParam.ContentCreatorAllocation.GetRat())))
+		globalMeta.GrowthRate.Mul(
+			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ContentCreatorAllocation)))
 	developerInflaionPool, _ := types.RatToCoin(
-		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
-			new(big.Rat).Mul(
-				globalMeta.TotalLinoCoin.ToRat(), allocationParam.DeveloperAllocation.GetRat())))
+		globalMeta.GrowthRate.Mul(
+			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.DeveloperAllocation)))
 	validatorInflaionPool, _ := types.RatToCoin(
-		new(big.Rat).Mul(globalMeta.GrowthRate.GetRat(),
-			new(big.Rat).Mul(
-				globalMeta.TotalLinoCoin.ToRat(), allocationParam.ValidatorAllocation.GetRat())))
+		globalMeta.GrowthRate.Mul(
+			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ValidatorAllocation)))
 	inflationPool := InflationPool{
 		InfraInflationPool:          infraInflationPool,
 		ContentCreatorInflationPool: contentCreatorInflationPool,
 		DeveloperInflationPool:      developerInflaionPool,
 		ValidatorInflationPool:      validatorInflaionPool,
 	}
-	checkGlobalStorage(t, ctx, gm, globalStatistics, globalMeta, consumptionMeta, inflationPool)
+	checkGlobalStorage(t, ctx, gm, globalMeta, consumptionMeta, inflationPool)
 }

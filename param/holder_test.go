@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tmlibs/log"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
 	dbm "github.com/tendermint/tmlibs/db"
 )
@@ -21,7 +23,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil)
+	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
 }
 
 func TestGlobalAllocationParam(t *testing.T) {
@@ -197,8 +199,10 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -291,12 +295,16 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryIntervalTime: types.MinutesPerMonth * 60,
+		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:      100,
+		MaximumMicropaymentGrantTimes: 20,
+	}
+	postParam := PostParam{
+		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam, evaluateOfContentValueParam,
-		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam)
+		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
@@ -304,7 +312,8 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	expectEvaluateOfContentValueParam EvaluateOfContentValueParam, expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
-	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam) {
+	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
+	expectPostParam PostParam) {
 	evaluateOfContentValueParam, err := ph.GetEvaluateOfContentValueParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectEvaluateOfContentValueParam, *evaluateOfContentValueParam)
@@ -344,4 +353,8 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	accountParam, err := ph.GetAccountParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectAccountParam, *accountParam)
+
+	postParam, err := ph.GetPostParam(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, expectPostParam, *postParam)
 }

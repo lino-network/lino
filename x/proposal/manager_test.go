@@ -4,61 +4,146 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdateProposalStatus(t *testing.T) {
+func TestUpdateProposalVotingStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
-	permLink := types.PermLink("postlink")
+	permlink := types.Permlink("postlink")
 	user1 := types.AccountKey("user1")
+	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permlink,
+		Reason:   censorshipReason,
+	}
+
+	pm.InitGenesis(ctx)
+	curTime := ctx.BlockHeader().Time
+	decideHr := int64(100)
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
+
+	testCases := []struct {
+		testName     string
+		proposalID   types.ProposalKey
+		voter        types.AccountKey
+		voteResult   bool
+		votingPower  types.Coin
+		wantProposal model.Proposal
+	}{
+		{
+			testName:    "agree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  true,
+			votingPower: types.NewCoinFromInt64(1),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(1),
+				DisagreeVotes: types.NewCoinFromInt64(0),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
+		},
+		{
+			testName:    "one more agree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  true,
+			votingPower: types.NewCoinFromInt64(2),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(3),
+				DisagreeVotes: types.NewCoinFromInt64(0),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
+		},
+		{
+			testName:    "one disagree vote",
+			proposalID:  proposalID1,
+			voter:       user1,
+			voteResult:  false,
+			votingPower: types.NewCoinFromInt64(5),
+			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
+				Creator:       user1,
+				ProposalID:    proposalID1,
+				AgreeVotes:    types.NewCoinFromInt64(3),
+				DisagreeVotes: types.NewCoinFromInt64(5),
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
+		},
+	}
+	for _, tc := range testCases {
+		err := pm.UpdateProposalVotingStatus(ctx, tc.proposalID, tc.voter, tc.voteResult, tc.votingPower)
+		assert.Nil(t, err)
+
+		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
+		assert.Equal(t, tc.wantProposal, proposal)
+	}
+
+}
+
+func TestUpdateProposalPassStatus(t *testing.T) {
+	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
+	permlink := types.Permlink("postlink")
+	user1 := types.AccountKey("user1")
+	censorshipReason := "reason"
+	proposal1 := &model.ContentCensorshipProposal{
+		Permlink: permlink,
+		Reason:   censorshipReason,
 	}
 
 	proposal2 := &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permlink,
+		Reason:   censorshipReason,
 	}
 
 	proposal3 := &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permlink,
+		Reason:   censorshipReason,
 	}
 	pm.InitGenesis(ctx)
+	curTime := ctx.BlockHeader().Time
+	decideHr := int64(100)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
-	proposalID1, _ := pm.AddProposal(ctx, "user1", proposal1)
-	proposalID2, _ := pm.AddProposal(ctx, "user1", proposal2)
-	proposalID3, _ := pm.AddProposal(ctx, "user1", proposal3)
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
+	proposalID2, _ := pm.AddProposal(ctx, user1, proposal2, decideHr)
+	proposalID3, _ := pm.AddProposal(ctx, user1, proposal3, decideHr)
+
 	testCases := []struct {
 		testName        string
-		votingRes       types.VotingResult
+		agreeVotes      types.Coin
+		disagreeVotes   types.Coin
 		proposalType    types.ProposalType
 		proposalID      types.ProposalKey
 		wantProposalRes types.ProposalResult
 		wantProposal    model.Proposal
 	}{
 		{testName: "test passed proposal has historical data",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes,
+			disagreeVotes:   proposalParam.ContentCensorshipPassVotes,
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID1,
-			wantProposalRes: types.ProposalPass,
+			wantProposalRes: types.ProposalNotPass,
 			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
 				Creator:       user1,
 				ProposalID:    proposalID1,
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
 				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
-				Result:        types.ProposalPass,
-			}, permLink},
+				Result:        types.ProposalNotPass,
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
 		},
 
 		{testName: "test votes don't meet min requirement ",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: types.NewCoinFromInt64(0),
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
+			disagreeVotes:   types.NewCoinFromInt64(0),
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID2,
 			wantProposalRes: types.ProposalNotPass,
@@ -68,14 +153,14 @@ func TestUpdateProposalStatus(t *testing.T) {
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
 				DisagreeVotes: types.NewCoinFromInt64(0),
 				Result:        types.ProposalNotPass,
-			}, permLink},
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
 		},
 
 		{testName: "test votes ratio doesn't meet requirement ",
-			votingRes: types.VotingResult{
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
-			},
+			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
+			disagreeVotes:   proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID3,
 			wantProposalRes: types.ProposalNotPass,
@@ -85,20 +170,27 @@ func TestUpdateProposalStatus(t *testing.T) {
 				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
 				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 				Result:        types.ProposalPass,
-			}, permLink},
+				CreatedAt:     curTime,
+				ExpiredAt:     curTime + decideHr*3600,
+			}, permlink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {
-		res, err := pm.UpdateProposalStatus(ctx, tc.votingRes, tc.proposalType, tc.proposalID)
+		err := addProposalInfo(ctx, pm, tc.proposalID, tc.agreeVotes, tc.disagreeVotes)
 		assert.Nil(t, err)
-		assert.Equal(t, tc.wantProposalRes, res)
+
+		res, err := pm.UpdateProposalPassStatus(ctx, tc.proposalType, tc.proposalID)
+		assert.Nil(t, err)
+		if tc.wantProposalRes != res {
+			t.Errorf("%s: test failed, want %v, got %v", tc.testName, tc.wantProposalRes, res)
+			return
+		}
 		if tc.wantProposalRes == types.ProposalNotPass {
 			continue
 		}
 		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
 		assert.Equal(t, tc.wantProposal, proposal)
 	}
-
 }
 
 func TestGetProposalPassParam(t *testing.T) {

@@ -3,8 +3,8 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/wire"
 
-	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -32,8 +32,8 @@ func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
 
-	permLink := types.GetPermLink(event.PostAuthor, event.PostID)
-	paneltyScore, err := pm.GetPenaltyScore(ctx, permLink)
+	permlink := types.GetPermlink(event.PostAuthor, event.PostID)
+	paneltyScore, err := pm.GetPenaltyScore(ctx, permlink)
 	if err != nil {
 		return err
 	}
@@ -41,16 +41,16 @@ func (event RewardEvent) Execute(
 	if err != nil {
 		return err
 	}
-	if dm.IsDeveloperExist(ctx, event.FromApp) {
+	if dm.DoesDeveloperExist(ctx, event.FromApp) {
 		dm.ReportConsumption(ctx, event.FromApp, reward)
 	}
-	if !am.IsAccountExist(ctx, event.PostAuthor) {
-		return acc.ErrUsernameNotFound()
+	if !am.DoesAccountExist(ctx, event.PostAuthor) {
+		return acc.ErrUsernameNotFound(event.PostAuthor)
 	}
-	if !pm.IsPostExist(ctx, permLink) {
-		return ErrDonatePostNotFound(permLink)
+	if !pm.DoesPostExist(ctx, permlink) {
+		return ErrDonatePostNotFound(permlink)
 	}
-	if err := pm.AddDonation(ctx, permLink, event.Consumer, reward, types.Inflation); err != nil {
+	if err := pm.AddDonation(ctx, permlink, event.Consumer, reward, types.Inflation); err != nil {
 		return err
 	}
 	if err := am.AddIncomeAndReward(

@@ -8,37 +8,37 @@ import (
 )
 
 func ErrGlobalStorageGenesisInflationFailed() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("inflation allocation more than 100 percent"))
+	return types.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("inflation allocation more than 100 percent"))
 }
 
 func ErrGlobalStorageGenesisFailed() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("GlobalStorage genesis failed"))
+	return types.NewError(types.CodeGlobalStorageGenesisError, fmt.Sprintf("GlobalStorage genesis failed"))
 }
 
 func ErrEventUnmarshalError(err error) sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Event unmarshal error: %s", err.Error()))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Event unmarshal error: %s", err.Error()))
 }
 
 func ErrEventMarshalError(err error) sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Event marshal error: %s", err.Error()))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Event marshal error: %s", err.Error()))
 }
 
 func ErrGlobalStatisticsNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global statistic not found"))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global statistic not found"))
 }
 
 func ErrGlobalMetaNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global meta not found"))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global meta not found"))
 }
 
 func ErrInflationPoolNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Inflation pool not found"))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Inflation pool not found"))
 }
 
 func ErrGlobalConsumptionMetaNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global consumption meta not found"))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global consumption meta not found"))
 }
 
 func ErrGlobalTPSNotFound() sdk.Error {
-	return sdk.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global tps not found"))
+	return types.NewError(types.CodeGlobalStorageError, fmt.Sprintf("Global tps not found"))
 }
