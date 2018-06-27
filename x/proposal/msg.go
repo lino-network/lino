@@ -58,7 +58,7 @@ type ProtocolUpgradeMsg interface {
 
 type DeletePostContentMsg struct {
 	Creator  types.AccountKey `json:"creator"`
-	Permlink types.Permlink   `json:"permLink"`
+	Permlink types.Permlink   `json:"permlink"`
 	Reason   string           `json:"reason"`
 }
 
@@ -132,10 +132,10 @@ type VoteProposalMsg struct {
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
 func NewDeletePostContentMsg(
-	creator string, permLink types.Permlink, reason string) DeletePostContentMsg {
+	creator string, permlink types.Permlink, reason string) DeletePostContentMsg {
 	return DeletePostContentMsg{
 		Creator:  types.AccountKey(creator),
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   reason,
 	}
 }

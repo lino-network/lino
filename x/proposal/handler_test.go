@@ -135,7 +135,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 	testCases := []struct {
 		testName            string
 		creator             types.AccountKey
-		permLink            types.Permlink
+		permlink            types.Permlink
 		proposalID          types.ProposalKey
 		wantOK              bool
 		wantRes             sdk.Result
@@ -145,7 +145,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 	}{
 		{testName: "user2 censorship user1's post successfully",
 			creator:             user2,
-			permLink:            types.GetPermlink(user1, postID1),
+			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              true,
 			wantRes:             sdk.Result{},
@@ -155,7 +155,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "target post is not exist",
 			creator:             user2,
-			permLink:            types.GetPermlink(user1, "invalid"),
+			permlink:            types.GetPermlink(user1, "invalid"),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             ErrPostNotFound().Result(),
@@ -165,7 +165,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "target post is deleted",
 			creator:             user1,
-			permLink:            types.GetPermlink(user2, postID2),
+			permlink:            types.GetPermlink(user2, postID2),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermlink(user2, postID2)).Result(),
@@ -175,7 +175,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "proposal is invalid",
 			creator:             "invalid",
-			permLink:            types.GetPermlink(user1, postID1),
+			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             ErrUsernameNotFound().Result(),
@@ -185,7 +185,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "user3 doesn't have enough money to create proposal",
 			creator:             user3,
-			permLink:            types.GetPermlink(user1, postID1),
+			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
@@ -195,7 +195,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		msg := NewDeletePostContentMsg(string(tc.creator), tc.permLink, censorshipReason)
+		msg := NewDeletePostContentMsg(string(tc.creator), tc.permlink, censorshipReason)
 		result := handler(ctx, msg)
 		assert.Equal(t, tc.wantRes, result)
 
@@ -213,9 +213,9 @@ func TestContentCensorshipProposal(t *testing.T) {
 		assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal)
 		proposal, _ := proposalManager.storage.GetProposal(ctx, tc.proposalID)
 		assert.Equal(t, tc.wantProposal, proposal)
-		permLink, err := proposalManager.GetPermlink(ctx, tc.proposalID)
+		permlink, err := proposalManager.GetPermlink(ctx, tc.proposalID)
 		assert.Nil(t, err)
-		assert.Equal(t, tc.permLink, permLink)
+		assert.Equal(t, tc.permlink, permlink)
 	}
 }
 
@@ -266,10 +266,10 @@ func TestVoteProposalBasic(t *testing.T) {
 	_ = vm.AddVoter(ctx, user1, c4600)
 
 	// create proposal
-	permLink := types.Permlink("postlink")
+	permlink := types.Permlink("postlink")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
-		Permlink: permLink,
+		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
 	decideHr := int64(100)
@@ -301,7 +301,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideHr*3600,
-				}, permLink, censorshipReason},
+				}, permlink, censorshipReason},
 		},
 		{testName: "Vote on a non-exist proposal should fail",
 			msg: VoteProposalMsg{
@@ -320,7 +320,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideHr*3600,
-				}, permLink, censorshipReason},
+				}, permlink, censorshipReason},
 		},
 		{testName: "vote successfully",
 			msg: VoteProposalMsg{
@@ -340,7 +340,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideHr*3600,
-				}, permLink, censorshipReason},
+				}, permlink, censorshipReason},
 		},
 		{testName: "user can't double-vote",
 			msg: VoteProposalMsg{
@@ -360,7 +360,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideHr*3600,
-				}, permLink, censorshipReason},
+				}, permlink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

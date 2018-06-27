@@ -35,8 +35,8 @@ func ErrCensorshipPostNotFound() sdk.Error {
 	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post not found"))
 }
 
-func ErrCensorshipPostIsDeleted(permLink types.Permlink) sdk.Error {
-	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post %v is deleted", permLink))
+func ErrCensorshipPostIsDeleted(permlink types.Permlink) sdk.Error {
+	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post %v is deleted", permlink))
 }
 
 func ErrIllegalParameter() sdk.Error {
