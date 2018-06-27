@@ -39,3 +39,7 @@ func ErrInvalidValidityPeriod() sdk.Error {
 func ErrGrantPermissionTooHigh() sdk.Error {
 	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant permission, can only grant micropayment or post permission"))
 }
+
+func ErrInvalidGrantTimes() sdk.Error {
+	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant times, should not be negative"))
+}

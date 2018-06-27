@@ -15,7 +15,6 @@ var (
 	postCommentSubStore        = []byte{0x04} // SubStore for all comments
 	postViewsSubStore          = []byte{0x05} // SubStore for all views
 	postDonationsSubStore      = []byte{0x06} // SubStore for all donations
-	commentListSubStore        = []byte{0x07} // Substore for comment list
 )
 
 type PostStorage struct {
@@ -264,10 +263,10 @@ func GetPostCommentKey(permlink types.Permlink, commentPermlink types.Permlink) 
 
 // PostDonationPrefix format is DonationSubStore / permlink
 // which can be used to access all donations belong to this post
-func getPostDonationPrefix(permlink types.Permlink) []byte {
+func getPostDonationsPrefix(permlink types.Permlink) []byte {
 	return append(append(postDonationsSubStore, permlink...), types.KeySeparator...)
 }
 
 func GetPostDonationKey(permlink types.Permlink, donateUser types.AccountKey) []byte {
-	return append(getPostDonationPrefix(permlink), donateUser...)
+	return append(getPostDonationsPrefix(permlink), donateUser...)
 }

@@ -46,15 +46,18 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 		grantPermissionMsg GrantPermissionMsg
 		expectError        sdk.Error
 	}{
-		{NewGrantPermissionMsg("user1", "app", 10, types.MicropaymentPermission), nil},
-		{NewGrantPermissionMsg("user1", "app", 10, types.PostPermission), nil},
-		{NewGrantPermissionMsg("user1", "app", 10, types.MasterPermission), ErrGrantPermissionTooHigh()},
-		{NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission), ErrGrantPermissionTooHigh()},
-		{NewGrantPermissionMsg("user1", "app", -1, types.PostPermission), ErrInvalidValidityPeriod()},
-		{NewGrantPermissionMsg("us", "app", 1, types.PostPermission), ErrInvalidUsername()},
-		{NewGrantPermissionMsg("user1", "ap", 1, types.PostPermission), ErrInvalidUsername()},
-		{NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.PostPermission), ErrInvalidUsername()},
-		{NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.MicropaymentPermission), nil},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.PostPermission), nil},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.MasterPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.TransactionPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.GrantMicropaymentPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", 10, 1, types.GrantPostPermission), ErrGrantPermissionTooHigh()},
+		{NewGrantPermissionMsg("user1", "app", -1, 1, types.PostPermission), ErrInvalidValidityPeriod()},
+		{NewGrantPermissionMsg("us", "app", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "ap", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "appappappappappappapp", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "app", 1, -1, types.PostPermission), ErrInvalidGrantTimes()},
 	}
 
 	for _, cs := range cases {
@@ -71,7 +74,9 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission), nil},
 		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), nil},
 		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.MasterPermission), ErrGrantPermissionTooHigh()},
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantMicropaymentPermission), ErrGrantPermissionTooHigh()},
 		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.TransactionPermission), ErrGrantPermissionTooHigh()},
+		{NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantPostPermission), ErrGrantPermissionTooHigh()},
 		{NewRevokePermissionMsg("us", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), ErrInvalidUsername()},
 		{NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission), ErrInvalidUsername()},
 	}
@@ -94,10 +99,10 @@ func TestMsgPermission(t *testing.T) {
 			NewDeveloperRevokeMsg("test"),
 			types.TransactionPermission},
 		"grant developer post permission msg": {
-			NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
+			NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
 			types.GrantPostPermission},
 		"grant developer micropayment permission msg": {
-			NewGrantPermissionMsg("test", "app", 24*3600, types.MicropaymentPermission),
+			NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
 			types.GrantMicropaymentPermission},
 		"revoke developer micropayment permission msg": {
 			NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
