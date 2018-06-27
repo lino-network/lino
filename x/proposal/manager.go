@@ -46,9 +46,9 @@ func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.Pr
 }
 
 func (pm ProposalManager) CreateContentCensorshipProposal(
-	ctx sdk.Context, permLink types.PermLink, reason string) model.Proposal {
+	ctx sdk.Context, permLink types.Permlink, reason string) model.Proposal {
 	return &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permLink,
 		Reason:   reason,
 	}
 }
@@ -218,17 +218,17 @@ func (pm ProposalManager) CreateParamChangeEvent(
 	return event, nil
 }
 
-func (pm ProposalManager) GetPermLink(ctx sdk.Context, proposalID types.ProposalKey) (types.PermLink, sdk.Error) {
+func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.ProposalKey) (types.Permlink, sdk.Error) {
 	proposal, err := pm.storage.GetProposal(ctx, proposalID)
 	if err != nil {
-		return types.PermLink(""), err
+		return types.Permlink(""), err
 	}
 
 	p, ok := proposal.(*model.ContentCensorshipProposal)
 	if !ok {
-		return types.PermLink(""), ErrWrongProposalType()
+		return types.Permlink(""), ErrWrongProposalType()
 	}
-	return p.PermLink, nil
+	return p.Permlink, nil
 }
 
 func (pm ProposalManager) GetProposalList(ctx sdk.Context) (*model.ProposalList, sdk.Error) {

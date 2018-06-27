@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	timeEventListSubStore   = []byte{0x01} // SubStore for time event list
-	globalMetaSubStore      = []byte{0x02} // SubStore for global meta
-	inflationPoolSubStore   = []byte{0x03} // SubStore for allocation
-	consumptionMetaSubStore = []byte{0x04} // SubStore for consumption meta
-	tpsSubStore             = []byte{0x05} // SubStore for tps
+	timeEventListSubStore   = []byte{0x00} // SubStore for time event list
+	globalMetaSubStore      = []byte{0x01} // SubStore for global meta
+	inflationPoolSubStore   = []byte{0x02} // SubStore for allocation
+	consumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
+	tpsSubStore             = []byte{0x04} // SubStore for tps
 )
 
 type GlobalStorage struct {

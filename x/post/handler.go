@@ -41,12 +41,12 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrCreatePostAuthorNotFound(msg.Author).Result()
 	}
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if pm.DoesPostExist(ctx, permLink) {
 		return ErrCreateExistPost(permLink).Result()
 	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
-		parentPostKey := types.GetPermLink(msg.ParentAuthor, msg.ParentPostID)
+		parentPostKey := types.GetPermlink(msg.ParentAuthor, msg.ParentPostID)
 		if !pm.DoesPostExist(ctx, parentPostKey) {
 			return ErrCommentInvalidParent(parentPostKey).Result()
 		}
@@ -75,7 +75,7 @@ func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountM
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrLikePostUserNotFound(msg.Username).Result()
 	}
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrLikeNonExistPost(permLink).Result()
 	}
@@ -91,7 +91,7 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrViewPostUserNotFound(msg.Username).Result()
 	}
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrViewNonExistPost(permLink).Result()
 	}
@@ -106,7 +106,7 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 func handleDonateMsg(
 	ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager,
 	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Result {
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return ErrDonateFailed(permLink).Result()
@@ -149,9 +149,9 @@ func handleDonateMsg(
 		return ErrDonateFailed(permLink).Result()
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePermLink := types.GetPermLink(sourceAuthor, sourcePostID)
+		sourcePermlink := types.GetPermlink(sourceAuthor, sourcePostID)
 
-		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermLink)
+		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermlink)
 		if err != nil {
 			return ErrDonateFailed(permLink).Result()
 		}
@@ -176,7 +176,7 @@ func processDonationFriction(
 	ctx sdk.Context, consumer types.AccountKey, coin types.Coin,
 	postAuthor types.AccountKey, postID string, fromApp types.AccountKey,
 	am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
-	postKey := types.GetPermLink(postAuthor, postID)
+	postKey := types.GetPermlink(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
 	}
@@ -234,7 +234,7 @@ func evaluateConsumption(
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
-	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermLink(postAuthor, postID))
+	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermlink(postAuthor, postID))
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
@@ -248,7 +248,7 @@ func handleReportOrUpvoteMsg(
 		return ErrReportOrUpvoteUserNotFound(msg.Username).Result()
 	}
 
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrReportOrUpvotePostDoesntExist(permLink).Result()
 	}
@@ -270,7 +270,7 @@ func handleUpdatePostMsg(
 	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrUpdatePostAuthorNotFound(msg.Author).Result()
 	}
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrUpdatePostNotFound(permLink).Result()
 	}
@@ -294,7 +294,7 @@ func handleDeletePostMsg(
 	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrDeletePostAuthorNotFound(msg.Author).Result()
 	}
-	permLink := types.GetPermLink(msg.Author, msg.PostID)
+	permLink := types.GetPermlink(msg.Author, msg.PostID)
 	if !pm.DoesPostExist(ctx, permLink) {
 		return ErrDeletePostNotFound(permLink).Result()
 	}

@@ -30,7 +30,7 @@ func (p *ChangeParamProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInf
 
 type ContentCensorshipProposal struct {
 	ProposalInfo
-	PermLink types.PermLink `json:"permLink"`
+	Permlink types.Permlink `json:"permLink"`
 	Reason   string         `json:"reason"`
 }
 

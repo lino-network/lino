@@ -21,7 +21,7 @@ func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 	}
 }
 
-func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types.Permlink) (sdk.Rat, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return sdk.ZeroRat(), ErrGetRedistributionSplitRate(permLink)
@@ -29,7 +29,7 @@ func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permLink types
 	return postMeta.RedistributionSplitRate, nil
 }
 
-func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.PermLink) (int64, types.Coin, sdk.Error) {
+func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.Permlink) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return 0, types.NewCoinFromInt64(0), ErrGetCreatedTime(permLink)
@@ -38,13 +38,13 @@ func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permLink types.Pe
 }
 
 // check if post exist
-func (pm PostManager) DoesPostExist(ctx sdk.Context, permLink types.PermLink) bool {
+func (pm PostManager) DoesPostExist(ctx sdk.Context, permLink types.Permlink) bool {
 	return pm.postStorage.DoesPostExist(ctx, permLink)
 }
 
 // return root source post
 func (pm PostManager) GetSourcePost(
-	ctx sdk.Context, permLink types.PermLink) (types.AccountKey, string, sdk.Error) {
+	ctx sdk.Context, permLink types.Permlink) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
 	if err != nil {
 		return types.AccountKey(""), "", ErrGetRootSourcePost(permLink)
@@ -62,9 +62,9 @@ func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInf
 	if postInfo.SourceAuthor == types.AccountKey("") || postInfo.SourcePostID == "" {
 		return nil
 	}
-	permLink := types.GetPermLink(postInfo.Author, postInfo.PostID)
+	permLink := types.GetPermlink(postInfo.Author, postInfo.PostID)
 	rootAuthor, rootPostID, err :=
-		pm.GetSourcePost(ctx, types.GetPermLink(postInfo.SourceAuthor, postInfo.SourcePostID))
+		pm.GetSourcePost(ctx, types.GetPermlink(postInfo.SourceAuthor, postInfo.SourcePostID))
 	if err != nil {
 		return ErrSetRootSourcePost(permLink)
 	}
@@ -93,7 +93,7 @@ func (pm PostManager) CreatePost(
 		SourcePostID: sourcePostID,
 		Links:        links,
 	}
-	permLink := types.GetPermLink(postInfo.Author, postInfo.PostID)
+	permLink := types.GetPermlink(postInfo.Author, postInfo.PostID)
 	if pm.DoesPostExist(ctx, permLink) {
 		return ErrPostExist(permLink)
 	}
@@ -120,7 +120,7 @@ func (pm PostManager) CreatePost(
 func (pm PostManager) UpdatePost(
 	ctx sdk.Context, author types.AccountKey, postID, title, content string,
 	links []types.IDToURLMapping, redistributionSplitRate sdk.Rat) sdk.Error {
-	permLink := types.GetPermLink(author, postID)
+	permLink := types.GetPermlink(author, postID)
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permLink)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (pm PostManager) UpdatePost(
 
 // add or update like from the user if like exists
 func (pm PostManager) AddOrUpdateLikeToPost(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, weight int64) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, user types.AccountKey, weight int64) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrAddOrUpdateLikeToPost(permLink)
@@ -183,7 +183,7 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 
 // add or update like from the user if like exists
 func (pm PostManager) AddOrUpdateViewToPost(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, user types.AccountKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrAddOrUpdateViewToPost(permLink)
@@ -207,7 +207,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
-	ctx sdk.Context, permLink types.PermLink, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(permLink)
@@ -240,7 +240,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 
 // add comment to post comment list
 func (pm PostManager) AddComment(
-	ctx sdk.Context, permLink types.PermLink, commentAuthor types.AccountKey, commentPostID string) sdk.Error {
+	ctx sdk.Context, permLink types.Permlink, commentAuthor types.AccountKey, commentPostID string) sdk.Error {
 	comment := &model.Comment{
 		Author:    commentAuthor,
 		PostID:    commentPostID,
@@ -255,7 +255,7 @@ func (pm PostManager) AddComment(
 
 // add donation to post donation list
 func (pm PostManager) AddDonation(
-	ctx sdk.Context, permLink types.PermLink, donator types.AccountKey,
+	ctx sdk.Context, permLink types.Permlink, donator types.AccountKey,
 	amount types.Coin, donationType types.DonationType) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
@@ -283,7 +283,7 @@ func (pm PostManager) AddDonation(
 }
 
 // DeletePost triggered by censorship proposal
-func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.Error {
+func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.Permlink) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return ErrDeletePost(permLink)
@@ -307,7 +307,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permLink types.PermLink) sdk.E
 	return nil
 }
 
-func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool, sdk.Error) {
+func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.Permlink) (bool, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permLink)
 	if err != nil {
 		return false, ErrDeletePost(permLink)
@@ -316,13 +316,13 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permLink types.PermLink) (bool,
 }
 
 // get penalty score from report and upvote
-func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.PermLink) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permLink types.Permlink) (sdk.Rat, sdk.Error) {
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permLink)
 	if err != nil {
 		return sdk.ZeroRat(), ErrGetPenaltyScore(permLink)
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermLink(sourceAuthor, sourcePostID))
+		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermlink(sourceAuthor, sourcePostID))
 		if err != nil {
 			return sdk.ZeroRat(), err
 		}

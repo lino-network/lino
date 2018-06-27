@@ -32,7 +32,7 @@ func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
 	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
 
-	permLink := types.GetPermLink(event.PostAuthor, event.PostID)
+	permLink := types.GetPermlink(event.PostAuthor, event.PostID)
 	paneltyScore, err := pm.GetPenaltyScore(ctx, permLink)
 	if err != nil {
 		return err

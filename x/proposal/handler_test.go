@@ -120,7 +120,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID", c4600, am, postManager, "0")
 	user3 := createTestAccount(
 		ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoinFromInt64((1))))
-	postManager.DeletePost(ctx, types.GetPermLink(user2, postID2))
+	postManager.DeletePost(ctx, types.GetPermlink(user2, postID2))
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{model.ProposalInfo{
 		Creator:       user2,
@@ -130,12 +130,12 @@ func TestContentCensorshipProposal(t *testing.T) {
 		Result:        types.ProposalNotPass,
 		CreatedAt:     curTime,
 		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
-	}, types.GetPermLink(user1, postID1), censorshipReason}
+	}, types.GetPermlink(user1, postID1), censorshipReason}
 
 	testCases := []struct {
 		testName            string
 		creator             types.AccountKey
-		permLink            types.PermLink
+		permLink            types.Permlink
 		proposalID          types.ProposalKey
 		wantOK              bool
 		wantRes             sdk.Result
@@ -145,7 +145,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 	}{
 		{testName: "user2 censorship user1's post successfully",
 			creator:             user2,
-			permLink:            types.GetPermLink(user1, postID1),
+			permLink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              true,
 			wantRes:             sdk.Result{},
@@ -155,7 +155,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "target post is not exist",
 			creator:             user2,
-			permLink:            types.GetPermLink(user1, "invalid"),
+			permLink:            types.GetPermlink(user1, "invalid"),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             ErrPostNotFound().Result(),
@@ -165,17 +165,17 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "target post is deleted",
 			creator:             user1,
-			permLink:            types.GetPermLink(user2, postID2),
+			permLink:            types.GetPermlink(user2, postID2),
 			proposalID:          proposalID1,
 			wantOK:              false,
-			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermLink(user2, postID2)).Result(),
+			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermlink(user2, postID2)).Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
 		},
 		{testName: "proposal is invalid",
 			creator:             "invalid",
-			permLink:            types.GetPermLink(user1, postID1),
+			permLink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             ErrUsernameNotFound().Result(),
@@ -185,7 +185,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		},
 		{testName: "user3 doesn't have enough money to create proposal",
 			creator:             user3,
-			permLink:            types.GetPermLink(user1, postID1),
+			permLink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
 			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
@@ -213,7 +213,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal)
 		proposal, _ := proposalManager.storage.GetProposal(ctx, tc.proposalID)
 		assert.Equal(t, tc.wantProposal, proposal)
-		permLink, err := proposalManager.GetPermLink(ctx, tc.proposalID)
+		permLink, err := proposalManager.GetPermlink(ctx, tc.proposalID)
 		assert.Nil(t, err)
 		assert.Equal(t, tc.permLink, permLink)
 	}
@@ -266,10 +266,10 @@ func TestVoteProposalBasic(t *testing.T) {
 	_ = vm.AddVoter(ctx, user1, c4600)
 
 	// create proposal
-	permLink := types.PermLink("postlink")
+	permLink := types.Permlink("postlink")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
-		PermLink: permLink,
+		Permlink: permLink,
 		Reason:   censorshipReason,
 	}
 	decideHr := int64(100)

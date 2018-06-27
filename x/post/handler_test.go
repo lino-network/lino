@@ -34,7 +34,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	}
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
-	assert.True(t, pm.DoesPostExist(ctx, types.GetPermLink(msg.Author, msg.PostID)))
+	assert.True(t, pm.DoesPostExist(ctx, types.GetPermlink(msg.Author, msg.PostID)))
 
 	// test invlaid author
 	msg.Author = types.AccountKey("invalid")
@@ -49,7 +49,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
-	err := pm.DeletePost(ctx, types.GetPermLink(user1, postID1))
+	err := pm.DeletePost(ctx, types.GetPermlink(user1, postID1))
 	assert.Nil(t, err)
 
 	testCases := map[string]struct {
@@ -66,15 +66,15 @@ func TestHandlerUpdatePost(t *testing.T) {
 		},
 		"update post doesn't exist - invalid post ID": {
 			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user, "invalid")).Result(),
+			wantResult: ErrUpdatePostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 		"update post doesn't exist - invalid author": {
 			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermLink(user2, postID)).Result(),
+			wantResult: ErrUpdatePostNotFound(types.GetPermlink(user2, postID)).Result(),
 		},
 		"update deleted post": {
 			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostIsDeleted(types.GetPermLink(user1, postID1)).Result(),
+			wantResult: ErrUpdatePostIsDeleted(types.GetPermlink(user1, postID1)).Result(),
 		},
 	}
 	for _, tc := range testCases {
@@ -104,7 +104,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 			RedistributionSplitRate: splitRate,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermLink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
+			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -138,14 +138,14 @@ func TestHandlerDeletePost(t *testing.T) {
 				Author: user1,
 				PostID: "postID",
 			},
-			wantResult: ErrDeletePostNotFound(types.GetPermLink(user1, postID)).Result(),
+			wantResult: ErrDeletePostNotFound(types.GetPermlink(user1, postID)).Result(),
 		},
 		"post doesn't exist - invalid postID": {
 			msg: DeletePostMsg{
 				Author: user,
 				PostID: "invalid",
 			},
-			wantResult: ErrDeletePostNotFound(types.GetPermLink(user, "invalid")).Result(),
+			wantResult: ErrDeletePostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 	}
 	for _, tc := range testCases {
@@ -197,7 +197,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 
-	checkPostKVStore(t, ctx, types.GetPermLink(user, "comment"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, "comment"), postInfo, postMeta)
 
 	// check parent
 	postInfo.PostID = postID
@@ -205,7 +205,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.ParentPostID = ""
 	postMeta.CreatedAt = ctx.BlockHeader().Time
 	postMeta.LastUpdatedAt = ctx.BlockHeader().Time
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test invalid parent
 	msg.PostID = "invalid post"
@@ -213,7 +213,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "invalid parent"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, msg.ParentPostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermlink(user, msg.ParentPostID)).Result())
 
 	// test duplicate comment
 	msg.Author = user
@@ -222,7 +222,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "TestPostID"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreateExistPost(types.GetPermLink(msg.Author, msg.PostID)).Result())
+	assert.Equal(t, result, ErrCreateExistPost(types.GetPermlink(msg.Author, msg.PostID)).Result())
 
 	// test cycle comment
 	msg.Author = user
@@ -231,7 +231,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "newComment"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermLink(user, msg.PostID)).Result())
+	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermlink(user, msg.PostID)).Result())
 }
 
 func TestHandlerRepost(t *testing.T) {
@@ -277,7 +277,7 @@ func TestHandlerRepost(t *testing.T) {
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 
-	checkPostKVStore(t, ctx, types.GetPermLink(user, "repost"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, "repost"), postInfo, postMeta)
 
 	// test 2 depth repost
 	msg.PostID = "repost-repost"
@@ -299,7 +299,7 @@ func TestHandlerRepost(t *testing.T) {
 	}
 	postInfo.SourceAuthor = user
 	postInfo.SourcePostID = postID
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postInfo.PostID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postInfo.PostID), postInfo, postMeta)
 }
 
 func TestHandlerPostLike(t *testing.T) {
@@ -333,7 +333,7 @@ func TestHandlerPostLike(t *testing.T) {
 		TotalLikeWeight:         10000,
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test update like
 	likeMsg = NewLikeMsg(string(user), -10000, string(user), postID)
@@ -341,20 +341,20 @@ func TestHandlerPostLike(t *testing.T) {
 	assert.Equal(t, result, sdk.Result{})
 	postMeta.TotalDislikeWeight = 10000
 	postMeta.TotalLikeWeight = 0
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test invalid like target post
 	likeMsg = NewLikeMsg(string(user), -10000, string(user), "invalid")
 	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, ErrLikeNonExistPost(types.GetPermLink(user, "invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
+	assert.Equal(t, result, ErrLikeNonExistPost(types.GetPermlink(user, "invalid")).Result())
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test invalid like username
 	likeMsg = NewLikeMsg("invalid", 10000, string(user), postID)
 	result = handler(ctx, likeMsg)
 
 	assert.Equal(t, result, ErrLikePostUserNotFound(likeMsg.Username).Result())
-	checkPostKVStore(t, ctx, types.GetPermLink(user, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 }
 
 func TestHandlerPostDonate(t *testing.T) {
@@ -367,7 +367,7 @@ func TestHandlerPostDonate(t *testing.T) {
 	author, postID := createTestPost(t, ctx, "author", "postID", am, pm, "0")
 	author1, deletedPostID := createTestPost(t, ctx, "author1", "delete", am, pm, "0")
 
-	pm.DeletePost(ctx, types.GetPermLink(author1, deletedPostID))
+	pm.DeletePost(ctx, types.GetPermlink(author1, deletedPostID))
 
 	userWithSufficientSaving := createTestAccount(t, ctx, am, "userWithSufficientSaving")
 	err = am.AddSavingCoin(
@@ -426,7 +426,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"donate from insufficient saving",
 			userWithSufficientSaving, types.LNO("100"), author, false, postID,
-			ErrAccountSavingCoinNotEnough(types.GetPermLink(author, postID)).Result(),
+			ErrAccountSavingCoinNotEnough(types.GetPermlink(author, postID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee, accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(95 * types.Decimals)),
@@ -481,7 +481,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target postID",
 			userWithSufficientSaving, types.LNO("1"), author, false, "invalid",
-			ErrDonatePostNotFound(types.GetPermLink(author, "invalid")).Result(),
+			ErrDonatePostNotFound(types.GetPermlink(author, "invalid")).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -489,7 +489,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target author",
 			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), false, postID,
-			ErrDonatePostNotFound(types.GetPermLink(types.AccountKey("invalid"), postID)).Result(),
+			ErrDonatePostNotFound(types.GetPermlink(types.AccountKey("invalid"), postID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -545,7 +545,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"donate to deleted post",
 			microPaymentUser, types.LNO("0.00001"), author1, false, deletedPostID,
-			ErrDonatePostIsDeleted(types.GetPermLink(author1, deletedPostID)).Result(),
+			ErrDonatePostIsDeleted(types.GetPermlink(author1, deletedPostID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
 			accParam.RegisterFee.Plus(
@@ -560,7 +560,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		result := handler(ctx, donateMsg)
 		assert.Equal(t, cs.ExpectErr, result)
 		if cs.ExpectErr.Code == sdk.ABCICodeOK {
-			checkPostMeta(t, ctx, types.GetPermLink(cs.ToAuthor, cs.ToPostID), cs.ExpectPostMeta)
+			checkPostMeta(t, ctx, types.GetPermlink(cs.ToAuthor, cs.ToPostID), cs.ExpectPostMeta)
 		}
 		authorSaving, err := am.GetSavingFromBank(ctx, author)
 		assert.Nil(t, err)
@@ -660,7 +660,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		TotalReward:             totalReward,
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
-	checkPostKVStore(t, ctx, types.GetPermLink(user2, "repost"), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user2, "repost"), postInfo, postMeta)
 	repostRewardEvent := RewardEvent{
 		PostAuthor: user2,
 		PostID:     "repost",
@@ -680,7 +680,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	postInfo.SourcePostID = ""
 	postMeta.RedistributionSplitRate = sdk.NewRat(3, 20)
 
-	checkPostKVStore(t, ctx, types.GetPermLink(user1, postID), postInfo, postMeta)
+	checkPostKVStore(t, ctx, types.GetPermlink(user1, postID), postInfo, postMeta)
 
 	acc1Saving, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Saving, _ := am.GetSavingFromBank(ctx, user2)
@@ -742,7 +742,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			TotalReportStake:        tc.expectTotalReportStake,
 			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
 		}
-		postKey := types.GetPermLink(user1, postID)
+		postKey := types.GetPermlink(user1, postID)
 		checkPostMeta(t, ctx, postKey, postMeta)
 	}
 }
@@ -771,7 +771,7 @@ func TestHandlerView(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermLink(cs.author, cs.postID)
+		postKey := types.GetPermlink(cs.author, cs.postID)
 		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
 		msg := NewViewMsg(string(cs.viewUser), string(cs.author), cs.postID)
 		result := handler(ctx, msg)
