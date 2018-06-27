@@ -158,7 +158,10 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
-	return msg.GrantLevel
+	if msg.GrantLevel == types.MicropaymentPermission {
+		return types.GrantMicropaymentPermission
+	}
+	return types.GrantPostPermission
 }
 
 func (msg GrantPermissionMsg) GetSignBytes() []byte {
@@ -204,7 +207,10 @@ func (msg RevokePermissionMsg) String() string {
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	return msg.GrantLevel
+	if msg.GrantLevel == types.MicropaymentPermission {
+		return types.GrantMicropaymentPermission
+	}
+	return types.GrantPostPermission
 }
 
 func (msg RevokePermissionMsg) GetSignBytes() []byte {

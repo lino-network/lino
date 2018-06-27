@@ -95,16 +95,16 @@ func TestMsgPermission(t *testing.T) {
 			types.TransactionPermission},
 		"grant developer post permission msg": {
 			NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
-			types.PostPermission},
+			types.GrantPostPermission},
 		"grant developer micropayment permission msg": {
 			NewGrantPermissionMsg("test", "app", 24*3600, types.MicropaymentPermission),
-			types.MicropaymentPermission},
+			types.GrantMicropaymentPermission},
 		"revoke developer micropayment permission msg": {
 			NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
-			types.MicropaymentPermission},
+			types.GrantMicropaymentPermission},
 		"revoke developer post permission msg": {
 			NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
-			types.PostPermission},
+			types.GrantPostPermission},
 	}
 
 	for testName, cs := range cases {

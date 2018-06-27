@@ -78,6 +78,14 @@ func ErrCheckTransactionKey() sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transaction needs transaction key"))
 }
 
+func ErrCheckGrantMicropaymentKey() sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("only user's own micropayment key or above can sign grant micropayment msg"))
+}
+
+func ErrCheckGrantPostKey() sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("only user's own post key or above can sign grant post msg"))
+}
+
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v authenticate public key match failed", accKey))
 }
