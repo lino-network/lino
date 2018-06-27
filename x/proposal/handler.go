@@ -124,12 +124,12 @@ func handleContentCensorshipMsg(
 		return ErrUsernameNotFound().Result()
 	}
 
-	if !postManager.DoesPostExist(ctx, msg.GetPermLink()) {
+	if !postManager.DoesPostExist(ctx, msg.GetPermlink()) {
 		return ErrPostNotFound().Result()
 	}
 
-	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermLink()); isDeleted || err != nil {
-		return ErrCensorshipPostIsDeleted(msg.GetPermLink()).Result()
+	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermlink()); isDeleted || err != nil {
+		return ErrCensorshipPostIsDeleted(msg.GetPermlink()).Result()
 	}
 
 	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
@@ -139,7 +139,7 @@ func handleContentCensorshipMsg(
 
 	proposal :=
 		proposalManager.CreateContentCensorshipProposal(
-			ctx, msg.GetPermLink(), msg.GetReason())
+			ctx, msg.GetPermlink(), msg.GetReason())
 	proposalID, err :=
 		proposalManager.AddProposal(
 			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)

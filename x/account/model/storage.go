@@ -19,9 +19,8 @@ var (
 	AccountRewardSubstore            = []byte{0x05}
 	AccountPendingStakeQueueSubstore = []byte{0x06}
 	AccountRelationshipSubstore      = []byte{0x07}
-	AccountGrantListSubstore         = []byte{0x08}
-	AccountBalanceHistorySubstore    = []byte{0x09}
-	AccountGrantPubKeySubstore       = []byte{0x10}
+	AccountBalanceHistorySubstore    = []byte{0x08}
+	AccountGrantPubKeySubstore       = []byte{0x09}
 )
 
 type AccountStorage struct {

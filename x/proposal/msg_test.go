@@ -446,10 +446,10 @@ func TestDeletePostContentMsg(t *testing.T) {
 		deletePostContentMsg DeletePostContentMsg
 		expectError          sdk.Error
 	}{
-		{NewDeletePostContentMsg("user1", "permLink", "reason"), nil},
-		{NewDeletePostContentMsg("us", "permLink", "reason"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permLink", "reason"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1", "", "reason"), ErrInvalidPermLink()},
+		{NewDeletePostContentMsg("user1", "permlink", "reason"), nil},
+		{NewDeletePostContentMsg("us", "permlink", "reason"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permlink", "reason"), ErrInvalidUsername()},
+		{NewDeletePostContentMsg("user1", "", "reason"), ErrInvalidPermlink()},
 	}
 
 	for _, cs := range cases {

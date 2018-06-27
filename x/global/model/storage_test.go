@@ -33,12 +33,9 @@ func InitGlobalStorage(
 	return gm.InitGlobalState(ctx, types.NewCoinFromInt64(10000*types.Decimals), param)
 }
 
-func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage, expectGlobalStatistic GlobalStatistics,
+func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage,
 	expectGlobalMeta GlobalMeta, expectConsumptionMeta ConsumptionMeta,
 	expectInflationPool InflationPool) {
-	globalStatistic, err := gm.GetGlobalStatistics(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectGlobalStatistic, *globalStatistic)
 	globalMeta, err := gm.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalMeta, *globalMeta)
@@ -70,11 +67,8 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		Floor:   sdk.NewRat(30, 1000),
 	}
 
-	globalStatistics := GlobalStatistics{}
 	consumptionMeta := ConsumptionMeta{
 		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
-		ReportStakeWindow:           sdk.ZeroRat(),
-		DislikeStakeWindow:          sdk.ZeroRat(),
 		ConsumptionWindow:           types.NewCoinFromInt64(0),
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
@@ -96,5 +90,5 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		DeveloperInflationPool:      developerInflaionPool,
 		ValidatorInflationPool:      validatorInflaionPool,
 	}
-	checkGlobalStorage(t, ctx, gm, globalStatistics, globalMeta, consumptionMeta, inflationPool)
+	checkGlobalStorage(t, ctx, gm, globalMeta, consumptionMeta, inflationPool)
 }

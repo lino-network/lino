@@ -73,7 +73,7 @@ func getContext(height int64) sdk.Context {
 }
 
 func checkPostKVStore(
-	t *testing.T, ctx sdk.Context, postKey types.PermLink, postInfo model.PostInfo, postMeta model.PostMeta) {
+	t *testing.T, ctx sdk.Context, postKey types.Permlink, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
@@ -82,7 +82,7 @@ func checkPostKVStore(
 	checkPostMeta(t, ctx, postKey, postMeta)
 }
 
-func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.PermLink, postMeta model.PostMeta) {
+func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.Permlink, postMeta model.PostMeta) {
 	// check post meta structs in KVStore
 	postStorage := model.NewPostStorage(TestPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)

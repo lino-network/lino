@@ -23,8 +23,8 @@ func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeProposalManagerError, fmt.Sprintf("Invalid Username"))
 }
 
-func ErrInvalidPermLink() sdk.Error {
-	return types.NewError(types.CodeProposalMsgError, fmt.Sprintf("Invalid PermLink"))
+func ErrInvalidPermlink() sdk.Error {
+	return types.NewError(types.CodeProposalMsgError, fmt.Sprintf("Invalid Permlink"))
 }
 
 func ErrInvalidLink() sdk.Error {
@@ -35,8 +35,8 @@ func ErrCensorshipPostNotFound() sdk.Error {
 	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post not found"))
 }
 
-func ErrCensorshipPostIsDeleted(permLink types.PermLink) sdk.Error {
-	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post %v is deleted", permLink))
+func ErrCensorshipPostIsDeleted(permlink types.Permlink) sdk.Error {
+	return types.NewError(types.CodeProposalEventError, fmt.Sprintf("Censorship post %v is deleted", permlink))
 }
 
 func ErrIllegalParameter() sdk.Error {
