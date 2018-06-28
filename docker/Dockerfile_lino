@@ -22,7 +22,7 @@ RUN mkdir -p /root/.lino/config/
 COPY docker/genesis.json /root/.lino/config/genesis.json
 COPY docker/priv_validator.json /root/.lino/config/priv_validator.json
 
-EXPOSE 46657
+EXPOSE 26657
 
 CMD ["./lino", "unsafe_reset_all"]
 CMD ["./lino", "start", "--log_level=error"]
