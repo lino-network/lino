@@ -607,8 +607,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return me, nil
 	}
 
+	if permission == types.GrantMicropaymentPermission {
+		return "", ErrCheckGrantMicropaymentKey()
+	}
+
 	// if all above keys not matched, check last one, post key
-	if permission == types.PostPermission {
+	if permission == types.PostPermission || permission == types.GrantPostPermission {
 		pubKey, err = accManager.GetPostKey(ctx, me)
 		if err != nil {
 			return "", err
@@ -616,6 +620,10 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		if reflect.DeepEqual(pubKey, signKey) {
 			return me, nil
 		}
+	}
+
+	if permission == types.GrantPostPermission {
+		return "", ErrCheckGrantPostKey()
 	}
 
 	// if user doesn't use his own key, check his grant user pubkey
