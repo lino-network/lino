@@ -39,7 +39,7 @@ type PostMeta struct {
 	TotalReportStake        types.Coin `json:"total_report_stake"`
 	TotalUpvoteStake        types.Coin `json:"total_upvote_stake"`
 	TotalViewCount          int64      `json:"total_view_count"`
-	TotalReward             types.Coin `json:"reward"`
+	TotalReward             types.Coin `json:"total_reward"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
 }
 
