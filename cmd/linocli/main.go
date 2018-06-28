@@ -160,7 +160,11 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			developercmd.GrantDeveloperTxCmd(cdc),
+			developercmd.GrantPermissionTxCmd(cdc),
+		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.RevokePermissionTxCmd(cdc),
 		)...)
 
 	linocliCmd.AddCommand(

@@ -24,11 +24,13 @@ const (
 	FlagMemo     = "memo"
 
 	// Developer
-	FlagDeveloper = "developer"
-	FlagDeposit   = "deposit"
-	FlagUser      = "user"
-	FlagReferrer  = "referrer"
-	FlagSeconds   = "seconds"
+	FlagDeveloper  = "developer"
+	FlagDeposit    = "deposit"
+	FlagUser       = "user"
+	FlagReferrer   = "referrer"
+	FlagSeconds    = "seconds"
+	FlagTimes      = "times"
+	FlagPermission = "permission"
 
 	// Infra
 	FlagProvider = "provider"
@@ -66,7 +68,7 @@ func GetCommands(cmds ...*cobra.Command) []*cobra.Command {
 		// TODO: make this default false when we support proofs
 		c.Flags().Bool(FlagTrustNode, true, "Don't verify proofs for responses")
 		c.Flags().String(FlagChainID, "", "Chain ID of tendermint node")
-		c.Flags().String(FlagNode, "tcp://localhost:46657", "<host>:<port> to tendermint rpc interface for this chain")
+		c.Flags().String(FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
 		c.Flags().Int64(FlagHeight, 0, "block height to query, omit to get most recent provable block")
 	}
 	return cmds
