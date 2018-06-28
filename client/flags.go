@@ -24,11 +24,13 @@ const (
 	FlagMemo     = "memo"
 
 	// Developer
-	FlagDeveloper = "developer"
-	FlagDeposit   = "deposit"
-	FlagUser      = "user"
-	FlagReferrer  = "referrer"
-	FlagSeconds   = "seconds"
+	FlagDeveloper  = "developer"
+	FlagDeposit    = "deposit"
+	FlagUser       = "user"
+	FlagReferrer   = "referrer"
+	FlagSeconds    = "seconds"
+	FlagTimes      = "times"
+	FlagPermission = "permission"
 
 	// Infra
 	FlagProvider = "provider"
