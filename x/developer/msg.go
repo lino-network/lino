@@ -13,6 +13,7 @@ import (
 var _ types.Msg = DeveloperRegisterMsg{}
 var _ types.Msg = DeveloperRevokeMsg{}
 var _ types.Msg = GrantPermissionMsg{}
+var _ types.Msg = RevokePermissionMsg{}
 
 type DeveloperRegisterMsg struct {
 	Username types.AccountKey `json:"username"`
@@ -118,12 +119,14 @@ func (msg DeveloperRevokeMsg) GetSigners() []sdk.Address {
 }
 
 // Grant Msg Implementations
-func NewGrantPermissionMsg(user, app string, validityPeriod int64, grantLevel types.Permission) GrantPermissionMsg {
+func NewGrantPermissionMsg(
+	user, app string, validityPeriod int64, times int64, grantLevel types.Permission) GrantPermissionMsg {
 	return GrantPermissionMsg{
 		Username:        types.AccountKey(user),
 		AuthenticateApp: types.AccountKey(app),
 		ValidityPeriod:  validityPeriod,
 		GrantLevel:      grantLevel,
+		Times:           times,
 	}
 }
 
@@ -144,8 +147,14 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidValidityPeriod()
 	}
 
+	if msg.Times < 0 {
+		return ErrInvalidGrantTimes()
+	}
+
 	if msg.GrantLevel == types.MasterPermission ||
-		msg.GrantLevel == types.TransactionPermission {
+		msg.GrantLevel == types.TransactionPermission ||
+		msg.GrantLevel == types.GrantMicropaymentPermission ||
+		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
 
@@ -158,7 +167,10 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
-	return msg.GrantLevel
+	if msg.GrantLevel == types.MicropaymentPermission {
+		return types.GrantMicropaymentPermission
+	}
+	return types.GrantPostPermission
 }
 
 func (msg GrantPermissionMsg) GetSignBytes() []byte {
@@ -191,7 +203,9 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 	}
 
 	if msg.GrantLevel == types.MasterPermission ||
-		msg.GrantLevel == types.TransactionPermission {
+		msg.GrantLevel == types.TransactionPermission ||
+		msg.GrantLevel == types.GrantMicropaymentPermission ||
+		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
 
@@ -204,7 +218,10 @@ func (msg RevokePermissionMsg) String() string {
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	return msg.GrantLevel
+	if msg.GrantLevel == types.MicropaymentPermission {
+		return types.GrantMicropaymentPermission
+	}
+	return types.GrantPostPermission
 }
 
 func (msg RevokePermissionMsg) GetSignBytes() []byte {
