@@ -77,8 +77,13 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
 		return ErrAccountCreateFailed(username)
 	}
+	if err := accManager.AddSavingCoinWithFullStake(
+		ctx, username, accParams.RegisterFee, referrer,
+		"init register fee with full stake", types.TransferIn); err != nil {
+		return err
+	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee, referrer, "init account", types.TransferIn); err != nil {
+		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, "init account", types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -119,6 +124,9 @@ func (accManager AccountManager) AddSavingCoin(
 	if !accManager.DoesAccountExist(ctx, username) {
 		return ErrAddCoinAccountNotFound(username)
 	}
+	if coin.IsZero() {
+		return nil
+	}
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return ErrAddCoinToAccountSaving(username)
@@ -158,12 +166,60 @@ func (accManager AccountManager) AddSavingCoin(
 	return nil
 }
 
+func (accManager AccountManager) AddSavingCoinWithFullStake(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
+	detailType types.TransferDetailType) (err sdk.Error) {
+	if !accManager.DoesAccountExist(ctx, username) {
+		return ErrAddCoinAccountNotFound(username)
+	}
+	if coin.IsZero() {
+		return nil
+	}
+	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return ErrAddCoinToAccountSaving(username)
+	}
+
+	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
+		model.Detail{
+			Amount:     coin,
+			DetailType: detailType,
+			To:         username,
+			From:       from,
+			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
+		}); err != nil {
+		return err
+	}
+	bank.Saving = bank.Saving.Plus(coin)
+	bank.Stake = bank.Stake.Plus(coin)
+	bank.NumOfTx++
+
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
+		return ErrAddCoinToAccountSaving(username)
+	}
+	return nil
+}
+
 func (accManager AccountManager) MinusSavingCoin(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
 	memo string, detailType types.TransferDetailType) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return ErrMinusCoinToAccount(username)
+	}
+
+	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	remain := accountBank.Saving.Minus(coin)
+	if !remain.IsGTE(accountParams.MinimumBalance) {
+		return ErrAccountSavingCoinNotEnough()
+	}
+
+	if coin.IsZero() {
+		return nil
 	}
 
 	if err := accManager.AddBalanceHistory(
@@ -177,24 +233,14 @@ func (accManager AccountManager) MinusSavingCoin(
 		}); err != nil {
 		return err
 	}
-
-	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
-	remain := accountBank.Saving.Minus(coin)
-	if !remain.IsGTE(accountParams.MinimumBalance) {
-		return ErrAccountSavingCoinNotEnough()
-	}
 	accountBank.NumOfTx++
+	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	pendingStakeQueue, err :=
 		accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
 		return err
 	}
-	accountBank.Saving = accountBank.Saving.Minus(coin)
-
 	// update pending stake queue, remove expired transaction
 	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
 

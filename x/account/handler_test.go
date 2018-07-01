@@ -281,6 +281,7 @@ func TestHandleAccountRecover(t *testing.T) {
 		newBank := model.AccountBank{
 			Saving:  accParam.RegisterFee,
 			NumOfTx: 1,
+			Stake:   accParam.RegisterFee,
 		}
 		checkBankKVByUsername(t, ctx, types.AccountKey(tc.user), newBank)
 	}
