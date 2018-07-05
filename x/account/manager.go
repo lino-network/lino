@@ -68,8 +68,8 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivityAt:      ctx.BlockHeader().Time,
-		TransactionCapacity: types.NewCoinFromInt64(0),
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return ErrAccountCreateFailed(username)
@@ -384,6 +384,27 @@ func (accManager AccountManager) GetSequence(
 		return 0, ErrGetSequence(username)
 	}
 	return accountMeta.Sequence, nil
+}
+
+// check if account exist
+func (accManager AccountManager) GetLastReportOrUpvoteAt(
+	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return 0, ErrGetLastReportOrUpvoteAt(username)
+	}
+	return accountMeta.LastReportOrUpvoteAt, nil
+}
+
+// check if account exist
+func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return ErrGetLastReportOrUpvoteAt(username)
+	}
+	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time
+	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
 func (accManager AccountManager) GetFrozenMoneyList(

@@ -267,28 +267,45 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 }
 
 func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, _, pm, _, _ := setupTest(t, 1)
+	ctx, am, ph, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
+	user4 := types.AccountKey("user4")
+
+	postParam, err := ph.GetPostParam(ctx)
+	assert.Nil(t, err)
+	permlink := types.GetPermlink(user1, postID1)
 
 	cases := []struct {
 		user                   types.AccountKey
 		stake                  types.Coin
-		postID                 string
-		author                 types.AccountKey
 		isReport               bool
+		lastReportOrUpvoteAt   int64
+		expectResult           sdk.Error
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{user3, types.NewCoinFromInt64(1), postID1, user1, true, types.NewCoinFromInt64(1), types.NewCoinFromInt64(0)},
-		{user2, types.NewCoinFromInt64(100), postID1, user1, false, types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
+		{user3, types.NewCoinFromInt64(1), true,
+			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval, nil,
+			types.NewCoinFromInt64(1), types.NewCoinFromInt64(0)},
+		{user2, types.NewCoinFromInt64(100), false,
+			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval, nil,
+			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
+		{user3, types.NewCoinFromInt64(100), false,
+			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
+			ErrReportOrUpvoteToPostExist(permlink),
+			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
+		{user4, types.NewCoinFromInt64(100), false,
+			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval + 1,
+			ErrReportOrUpvoteTooOften(),
+			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
 	}
 
 	for _, cs := range cases {
-		postKey := types.GetPermlink(cs.author, cs.postID)
-		err := pm.ReportOrUpvoteToPost(ctx, postKey, cs.user, cs.stake, cs.isReport)
-		assert.Nil(t, err)
+		err := pm.ReportOrUpvoteToPost(
+			ctx, permlink, cs.user, cs.stake, cs.isReport, cs.lastReportOrUpvoteAt)
+		assert.Equal(t, cs.expectResult, err)
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -298,7 +315,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			TotalReportStake:        cs.expectTotalReportStake,
 			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
 		}
-		checkPostMeta(t, ctx, postKey, postMeta)
+		checkPostMeta(t, ctx, permlink, postMeta)
 	}
 }
 

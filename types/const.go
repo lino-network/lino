@@ -138,4 +138,7 @@ const (
 
 	// Init account deposit fee memo
 	InitAccountRegisterDepositMemo = "init deposit"
+
+	// Permlink separator
+	PermlinkSeparator = "#"
 )

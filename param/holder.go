@@ -63,6 +63,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	postParam := &PostParam{
 		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
+		ReportOrUpvoteInterval: 24 * 3600,
 	}
 	if err := ph.setPostParam(ctx, postParam); err != nil {
 		return ErrParamHolderGenesisFailed()

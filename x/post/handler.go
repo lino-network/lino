@@ -258,8 +258,16 @@ func handleReportOrUpvoteMsg(
 		return ErrReportOrUpvoteFailed(permlink).Result()
 	}
 
+	lastReportOrUpvoteAt, err := am.GetLastReportOrUpvoteAt(ctx, msg.Username)
+	if err != nil {
+		return ErrReportOrUpvoteFailed(permlink).Result()
+	}
+
 	if err := pm.ReportOrUpvoteToPost(
-		ctx, permlink, msg.Username, stake, msg.IsReport); err != nil {
+		ctx, permlink, msg.Username, stake, msg.IsReport, lastReportOrUpvoteAt); err != nil {
+		return err.Result()
+	}
+	if err := am.UpdateLastReportOrUpvoteAt(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

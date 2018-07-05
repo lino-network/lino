@@ -101,4 +101,5 @@ type AccountParam struct {
 
 type PostParam struct {
 	MicropaymentLimitation types.Coin `json:"micropayment_limitation"`
+	ReportOrUpvoteInterval int64      `json:"report_or_upvote_interval"`
 }

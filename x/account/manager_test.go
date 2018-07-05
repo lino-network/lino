@@ -634,7 +634,8 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivityAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
@@ -700,7 +701,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivityAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 

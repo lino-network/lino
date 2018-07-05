@@ -142,6 +142,14 @@ func ErrGetSequence(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
 }
 
+func ErrGetLastReportOrUpvoteAt(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v last report or upvote time failed", accKey))
+}
+
+func ErrSetLastReportOrUpvoteAt(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("set %v last report or upvote time failed", accKey))
+}
+
 func ErrGetFrozenMoneyList(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v frozen money list failed", accKey))
 }
