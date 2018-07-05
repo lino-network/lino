@@ -79,11 +79,11 @@ func (accManager AccountManager) CreateAccount(
 	}
 	if err := accManager.AddSavingCoinWithFullStake(
 		ctx, username, accParams.RegisterFee, referrer,
-		"init register fee with full stake", types.TransferIn); err != nil {
+		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
 		return err
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, "init account", types.TransferIn); err != nil {
+		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -552,7 +552,9 @@ func (accManager AccountManager) UpdateDonationRelationship(
 		return err
 	}
 	if relationship == nil {
-		relationship = &model.Relationship{0}
+		relationship = &model.Relationship{
+			DonationTimes: 0,
+		}
 	}
 	relationship.DonationTimes += 1
 	if err := accManager.storage.SetRelationship(ctx, me, other, relationship); err != nil {
