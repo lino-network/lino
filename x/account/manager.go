@@ -518,16 +518,16 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		incrementRatio := sdk.NewRat(
 			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
-		if incrementRatio.Cmp(types.OneRat) > 0 {
+		if incrementRatio.GT(sdk.OneRat()) {
 			incrementRatio = sdk.OneRat()
 		}
 		capacityTillStake := stake.Minus(accountMeta.TransactionCapacity)
-		increateCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
+		increaseCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
 		if err != nil {
 			return err
 		}
 		accountMeta.TransactionCapacity =
-			accountMeta.TransactionCapacity.Plus(increateCapacity)
+			accountMeta.TransactionCapacity.Plus(increaseCapacity)
 	}
 	currentTxCost, err := types.RatToCoin(
 		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
@@ -540,7 +540,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(me)
+		return ErrCheckUserTPSCapacity(me)
 	}
 	return nil
 }

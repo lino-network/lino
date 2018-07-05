@@ -145,8 +145,8 @@ func (c commander) getAccountsCmd(cmd *cobra.Command, args []string) error {
 		accounts = append(accounts, info)
 	}
 
-	if err := client.PrintIndent(accounts); err != nil {
-		return err
-	}
+	// if err := client.PrintIndent(accounts); err != nil {
+	// 	return err
+	// }
 	return nil
 }

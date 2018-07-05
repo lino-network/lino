@@ -51,7 +51,8 @@ func (ctx CoreContext) QuerySubspace(cdc *wire.Codec, subspace []byte, storeName
 	if err != nil {
 		return res, err
 	}
-	cdc.MustUnmarshalBinary(resRaw, &res)
+	fmt.Println(resRaw)
+	cdc.UnmarshalJSON(resRaw, &res)
 	return
 }
 
@@ -68,6 +69,7 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 		Trusted: ctx.TrustNode,
 	}
 	result, err := node.ABCIQueryWithOptions(path, key, opts)
+	fmt.Println("=====", string(result.Response.Value))
 	if err != nil {
 		return res, err
 	}

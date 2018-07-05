@@ -15,7 +15,6 @@ type LNO = string
 var (
 	LowerBoundRat = big.NewRat(1, Decimals)
 	UpperBoundRat = big.NewRat(math.MaxInt64/Decimals, 1)
-	OneRat        = big.NewRat(1, 1)
 )
 
 // Coin holds some amount of one currency
