@@ -20,8 +20,8 @@ var (
 	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
-	postParamSubStore                    = []byte{0x10} // Substore for evaluate of content value
-	proposalIDParamSubStore              = []byte{0x11} // Substore for proposal id param
+	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
+	proposalIDParamSubStore              = []byte{0x0b} // Substore for proposal id param
 )
 
 type ParamHolder struct {
