@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/hex"
 	"strconv"
 
 	"github.com/lino-network/lino/types"
@@ -365,7 +366,7 @@ func getGrantPubKeyPrefix(me types.AccountKey) []byte {
 }
 
 func getGrantPubKeyKey(me types.AccountKey, pubKey crypto.PubKey) []byte {
-	return append(getGrantPubKeyPrefix(me), pubKey.Bytes()...)
+	return append(getGrantPubKeyPrefix(me), hex.EncodeToString(pubKey.Bytes())...)
 }
 
 func getBalanceHistoryPrefix(me types.AccountKey) []byte {
