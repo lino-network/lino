@@ -48,10 +48,6 @@ type VoteParam struct {
 	DelegatorCoinReturnTimes      int64      `json:"delegator_coin_return_times"`
 }
 
-type ProposalIDParam struct {
-	NextProposalID int64 `json:"next_proposal_id"`
-}
-
 type ProposalParam struct {
 	ContentCensorshipDecideHr   int64      `json:"content_censorship_decide_hr"`
 	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`

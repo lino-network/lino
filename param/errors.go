@@ -40,10 +40,6 @@ func ErrProposalParamNotFound() sdk.Error {
 	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("Proposal param not found"))
 }
 
-func ErrProposalIDParamNotFound() sdk.Error {
-	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("Proposal id param not found"))
-}
-
 func ErrGlobalAllocationParamNotFound() sdk.Error {
 	return types.NewError(types.CodeParamStoreError, fmt.Sprintf("Global allocation param not found"))
 }

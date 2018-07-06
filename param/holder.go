@@ -1,8 +1,6 @@
 package param
 
 import (
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 
@@ -21,7 +19,6 @@ var (
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
 	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
-	proposalIDParamSubStore              = []byte{0x0b} // Substore for proposal id param
 )
 
 type ParamHolder struct {
@@ -137,13 +134,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
-		return ErrParamHolderGenesisFailed()
-	}
-
-	proposalIDParam := &ProposalIDParam{
-		NextProposalID: int64(0),
-	}
-	if err := ph.setProposalIDParam(ctx, proposalIDParam); err != nil {
 		return ErrParamHolderGenesisFailed()
 	}
 
@@ -281,19 +271,6 @@ func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Err
 	return param, nil
 }
 
-func (ph ParamHolder) GetProposalIDParam(ctx sdk.Context) (*ProposalIDParam, sdk.Error) {
-	store := ctx.KVStore(ph.key)
-	paramBytes := store.Get(GetProposalIDParamKey())
-	if paramBytes == nil {
-		return nil, ErrProposalIDParamNotFound()
-	}
-	param := new(ProposalIDParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
-		return nil, ErrEventUnmarshalError(err)
-	}
-	return param, nil
-}
-
 func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetValidatorParamKey())
@@ -344,18 +321,6 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 		return nil, ErrEventMarshalError(err)
 	}
 	return param, nil
-}
-
-func (ph ParamHolder) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
-	param, err := ph.GetProposalIDParam(ctx)
-	if err != nil {
-		return types.ProposalKey(""), err
-	}
-	param.NextProposalID += 1
-	if err := ph.setProposalIDParam(ctx, param); err != nil {
-		return types.ProposalKey(""), err
-	}
-	return types.ProposalKey(strconv.FormatInt(param.NextProposalID, 10)), nil
 }
 
 func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) sdk.Error {
@@ -431,16 +396,6 @@ func (ph ParamHolder) setProposalParam(ctx sdk.Context, param *ProposalParam) sd
 	return nil
 }
 
-func (ph ParamHolder) setProposalIDParam(ctx sdk.Context, param *ProposalIDParam) sdk.Error {
-	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
-	if err != nil {
-		return ErrEventMarshalError(err)
-	}
-	store.Set(GetProposalIDParamKey(), paramBytes)
-	return nil
-}
-
 func (ph ParamHolder) setCoinDayParam(ctx sdk.Context, param *CoinDayParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
 	paramBytes, err := ph.cdc.MarshalJSON(*param)
@@ -501,10 +456,6 @@ func GetValidatorParamKey() []byte {
 
 func GetProposalParamKey() []byte {
 	return proposalParamSubStore
-}
-
-func GetProposalIDParamKey() []byte {
-	return proposalIDParamSubStore
 }
 
 func GetCoinDayParamKey() []byte {

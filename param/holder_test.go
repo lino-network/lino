@@ -163,20 +163,6 @@ func TestProposalParam(t *testing.T) {
 	assert.Equal(t, parameter, *resultPtr, "Proposal param should be equal")
 }
 
-func TestProposalIDParam(t *testing.T) {
-	ph := NewParamHolder(TestKVStoreKey)
-	ctx := getContext()
-	parameter := ProposalIDParam{
-		NextProposalID: int64(0),
-	}
-	err := ph.setProposalIDParam(ctx, &parameter)
-	assert.Nil(t, err)
-
-	resultPtr, err := ph.GetProposalIDParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Proposal id param should be equal")
-}
-
 func TestCoinDayParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
@@ -296,10 +282,6 @@ func TestInitParam(t *testing.T) {
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
 
-	proposalIDParam := ProposalIDParam{
-		NextProposalID: int64(0),
-	}
-
 	coinDayParam := CoinDayParam{
 		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
@@ -320,16 +302,16 @@ func TestInitParam(t *testing.T) {
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
-		proposalParam, proposalIDParam, coinDayParam, bandwidthParam, accountParam, postParam)
+		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
 	expectInfraInternalAllocationParam InfraInternalAllocationParam,
 	expectEvaluateOfContentValueParam EvaluateOfContentValueParam, expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
-	expectProposalParam ProposalParam, expectProposalIDParam ProposalIDParam,
-	expectCoinDayParam CoinDayParam, expectBandwidthParam BandwidthParam,
-	expectAccountParam AccountParam, expectPostParam PostParam) {
+	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
+	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
+	expectPostParam PostParam) {
 	evaluateOfContentValueParam, err := ph.GetEvaluateOfContentValueParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectEvaluateOfContentValueParam, *evaluateOfContentValueParam)
@@ -357,10 +339,6 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	proposalParam, err := ph.GetProposalParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectProposalParam, *proposalParam)
-
-	proposalIDParam, err := ph.GetProposalIDParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectProposalIDParam, *proposalIDParam)
 
 	coinDayParam, err := ph.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
