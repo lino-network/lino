@@ -84,9 +84,9 @@ func TestNextProposalID(t *testing.T) {
 
 	id, err := ps.GetNextProposalID(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, NextProposalID{0}, *id)
+	assert.Equal(t, NextProposalID{1}, *id)
 
-	id.NextProposalID = 1
+	id.NextProposalID = 2
 	err = ps.SetNextProposalID(ctx, id)
 	assert.Nil(t, err)
 

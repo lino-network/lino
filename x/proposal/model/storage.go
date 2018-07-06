@@ -54,7 +54,7 @@ func (ps ProposalStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 	}
 
 	nextProposalID := &NextProposalID{
-		NextProposalID: 0,
+		NextProposalID: 1,
 	}
 	if err := ps.SetNextProposalID(ctx, nextProposalID); err != nil {
 		return err

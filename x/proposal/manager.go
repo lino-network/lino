@@ -74,12 +74,21 @@ func (pm ProposalManager) GetNextProposalID(ctx sdk.Context) (types.ProposalKey,
 		return types.ProposalKey(""), err
 	}
 
-	nextProposalID.NextProposalID += 1
-	if err := pm.storage.SetNextProposalID(ctx, nextProposalID); err != nil {
-		return types.ProposalKey(""), err
+	return types.ProposalKey(strconv.FormatInt(nextProposalID.NextProposalID, 10)), nil
+}
+
+func (pm ProposalManager) IncreaseNextProposalID(ctx sdk.Context) sdk.Error {
+	nextProposalID, err := pm.storage.GetNextProposalID(ctx)
+	if err != nil {
+		return err
 	}
 
-	return types.ProposalKey(strconv.FormatInt(nextProposalID.NextProposalID, 10)), nil
+	nextProposalID.NextProposalID += 1
+	if err := pm.storage.SetNextProposalID(ctx, nextProposalID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (pm ProposalManager) AddProposal(
@@ -110,6 +119,10 @@ func (pm ProposalManager) AddProposal(
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
 	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
+		return newID, err
+	}
+
+	if err := pm.IncreaseNextProposalID(ctx); err != nil {
 		return newID, err
 	}
 
