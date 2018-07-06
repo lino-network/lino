@@ -154,8 +154,6 @@ func TestProposalParam(t *testing.T) {
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
 	}
 	err := ph.setProposalParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -282,8 +280,6 @@ func TestInitParam(t *testing.T) {
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
 	}
 
 	coinDayParam := CoinDayParam{
@@ -304,8 +300,9 @@ func TestInitParam(t *testing.T) {
 		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
 		ReportOrUpvoteInterval: 24 * 3600,
 	}
-	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam, evaluateOfContentValueParam,
-		developerParam, validatorParam, voteParam, proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
+	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
+		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,

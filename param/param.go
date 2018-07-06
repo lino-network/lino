@@ -31,6 +31,8 @@ type GlobalAllocationParam struct {
 	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
 }
 
+// TODO: year period
+
 type InfraInternalAllocationParam struct {
 	StorageAllocation sdk.Rat `json:"storage_allocation"`
 	CDNAllocation     sdk.Rat `json:"CDN_allocation"`
@@ -47,7 +49,6 @@ type VoteParam struct {
 }
 
 type ProposalParam struct {
-	NextProposalID              int64      `json:"next_proposal_id"`
 	ContentCensorshipDecideHr   int64      `json:"content_censorship_decide_hr"`
 	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`
 	ContentCensorshipPassRatio  sdk.Rat    `json:"content_censorship_pass_ratio"`
@@ -68,6 +69,7 @@ type DeveloperParam struct {
 	DeveloperCoinReturnTimes      int64      `json:"developer_coin_return_times"`
 }
 
+// TODO: number of validators 20 -> 41
 type ValidatorParam struct {
 	ValidatorMinWithdraw          types.Coin `json:"validator_min_withdraw"`
 	ValidatorMinVotingDeposit     types.Coin `json:"validator_min_voting_deposit"`

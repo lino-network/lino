@@ -1,6 +1,8 @@
 package proposal
 
 import (
+	"strconv"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/proposal/model"
@@ -66,9 +68,32 @@ func (pm ProposalManager) CreateChangeParamProposal(
 	}
 }
 
+func (pm ProposalManager) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
+	nextProposalID, err := pm.storage.GetNextProposalID(ctx)
+	if err != nil {
+		return types.ProposalKey(""), err
+	}
+
+	return types.ProposalKey(strconv.FormatInt(nextProposalID.NextProposalID, 10)), nil
+}
+
+func (pm ProposalManager) IncreaseNextProposalID(ctx sdk.Context) sdk.Error {
+	nextProposalID, err := pm.storage.GetNextProposalID(ctx)
+	if err != nil {
+		return err
+	}
+
+	nextProposalID.NextProposalID += 1
+	if err := pm.storage.SetNextProposalID(ctx, nextProposalID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (pm ProposalManager) AddProposal(
 	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideHr int64) (types.ProposalKey, sdk.Error) {
-	newID, err := pm.paramHolder.GetNextProposalID(ctx)
+	newID, err := pm.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
 	}
@@ -94,6 +119,10 @@ func (pm ProposalManager) AddProposal(
 	}
 	lst.OngoingProposal = append(lst.OngoingProposal, newID)
 	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
+		return newID, err
+	}
+
+	if err := pm.IncreaseNextProposalID(ctx); err != nil {
 		return newID, err
 	}
 

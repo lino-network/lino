@@ -1,8 +1,6 @@
 package param
 
 import (
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 
@@ -20,7 +18,7 @@ var (
 	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
-	postParamSubStore                    = []byte{0x10} // Substore for evaluate of content value
+	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
 )
 
 type ParamHolder struct {
@@ -134,8 +132,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
 	}
 	if err := ph.setProposalParam(ctx, proposalParam); err != nil {
 		return ErrParamHolderGenesisFailed()
@@ -325,18 +321,6 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 		return nil, ErrEventMarshalError(err)
 	}
 	return param, nil
-}
-
-func (ph ParamHolder) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
-	param, err := ph.GetProposalParam(ctx)
-	if err != nil {
-		return types.ProposalKey(""), err
-	}
-	param.NextProposalID += 1
-	if err := ph.setProposalParam(ctx, param); err != nil {
-		return types.ProposalKey(""), err
-	}
-	return types.ProposalKey(strconv.FormatInt(param.NextProposalID, 10)), nil
 }
 
 func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) sdk.Error {

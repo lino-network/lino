@@ -49,3 +49,7 @@ type ProposalList struct {
 	OngoingProposal []types.ProposalKey `json:"ongoing_proposal"`
 	PastProposal    []types.ProposalKey `json:"past_proposal"`
 }
+
+type NextProposalID struct {
+	NextProposalID int64 `json:"next_proposal_id"`
+}

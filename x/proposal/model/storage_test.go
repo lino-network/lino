@@ -30,9 +30,9 @@ func setup(t *testing.T) (sdk.Context, ProposalStorage) {
 }
 
 func TestProposalList(t *testing.T) {
-	ctx, vs := setup(t)
+	ctx, ps := setup(t)
 
-	proposalList, err := vs.GetProposalList(ctx)
+	proposalList, err := ps.GetProposalList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, ProposalList{}, *proposalList)
 	proposalList.OngoingProposal =
@@ -41,16 +41,16 @@ func TestProposalList(t *testing.T) {
 		append(proposalList.OngoingProposal, types.ProposalKey("test2"))
 	proposalList.PastProposal = append(proposalList.PastProposal, types.ProposalKey("test3"))
 
-	err = vs.SetProposalList(ctx, proposalList)
+	err = ps.SetProposalList(ctx, proposalList)
 	assert.Nil(t, err)
 
-	proposalListPtr, err := vs.GetProposalList(ctx)
+	proposalListPtr, err := ps.GetProposalList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, proposalList, proposalListPtr)
 }
 
 func TestProposal(t *testing.T) {
-	ctx, vs := setup(t)
+	ctx, ps := setup(t)
 	user := types.AccountKey("user")
 	proposalID := types.ProposalKey("123")
 	res := types.ProposalPass
@@ -66,15 +66,31 @@ func TestProposal(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		err := vs.SetProposal(ctx, proposalID, &cs.ChangeParamProposal)
+		err := ps.SetProposal(ctx, proposalID, &cs.ChangeParamProposal)
 		assert.Nil(t, err)
-		proposal, err := vs.GetProposal(ctx, proposalID)
+		proposal, err := ps.GetProposal(ctx, proposalID)
 		assert.Nil(t, err)
 		assert.Equal(t, &cs.ChangeParamProposal, proposal.(*ChangeParamProposal))
-		err = vs.DeleteProposal(ctx, proposalID)
+		err = ps.DeleteProposal(ctx, proposalID)
 		assert.Nil(t, err)
-		proposal, err = vs.GetProposal(ctx, proposalID)
+		proposal, err = ps.GetProposal(ctx, proposalID)
 		assert.Nil(t, proposal)
 		assert.Equal(t, ErrGetProposal(), err)
 	}
+}
+
+func TestNextProposalID(t *testing.T) {
+	ctx, ps := setup(t)
+
+	id, err := ps.GetNextProposalID(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, NextProposalID{1}, *id)
+
+	id.NextProposalID = 2
+	err = ps.SetNextProposalID(ctx, id)
+	assert.Nil(t, err)
+
+	nextProposalID, err := ps.GetNextProposalID(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, nextProposalID, id)
 }

@@ -37,6 +37,7 @@ func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
 	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
 	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
+	cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
 
 	wire.RegisterCrypto(cdc)
 	return GlobalStorage{
