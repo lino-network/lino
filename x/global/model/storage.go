@@ -32,11 +32,13 @@ func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
 	cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
+	cdc.RegisterConcrete(param.ProposalIDParam{}, "param/proposalID", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
 	cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
 	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
 	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
 	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
+	cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
 
 	wire.RegisterCrypto(cdc)
 	return GlobalStorage{

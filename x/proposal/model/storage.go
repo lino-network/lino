@@ -31,11 +31,13 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "contentValue", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
 	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
+	cdc.RegisterConcrete(param.ProposalIDParam{}, "proposalIDParam", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)
 	cdc.RegisterConcrete(param.ValidatorParam{}, "validatorParam", nil)
 	cdc.RegisterConcrete(param.CoinDayParam{}, "coinDayParam", nil)
 	cdc.RegisterConcrete(param.BandwidthParam{}, "bandwidthParam", nil)
 	cdc.RegisterConcrete(param.AccountParam{}, "accountParam", nil)
+	cdc.RegisterConcrete(param.PostParam{}, "postParam", nil)
 
 	wire.RegisterCrypto(cdc)
 	vs := ProposalStorage{
