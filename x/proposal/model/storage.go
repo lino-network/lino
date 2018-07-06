@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	proposalSubstore     = []byte{0x00}
-	proposalListSubStore = []byte{0x01}
+	proposalSubstore       = []byte{0x00}
+	proposalListSubStore   = []byte{0x01}
+	nextProposalIDSubstore = []byte{0x02}
 )
 
 type ProposalStorage struct {
@@ -31,7 +32,6 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "contentValue", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
 	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
-	cdc.RegisterConcrete(param.ProposalIDParam{}, "proposalIDParam", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)
 	cdc.RegisterConcrete(param.ValidatorParam{}, "validatorParam", nil)
 	cdc.RegisterConcrete(param.CoinDayParam{}, "coinDayParam", nil)
@@ -50,6 +50,13 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 func (ps ProposalStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 	proposalLst := &ProposalList{}
 	if err := ps.SetProposalList(ctx, proposalLst); err != nil {
+		return err
+	}
+
+	nextProposalID := &NextProposalID{
+		NextProposalID: 0,
+	}
+	if err := ps.SetNextProposalID(ctx, nextProposalID); err != nil {
 		return err
 	}
 	return nil
@@ -83,7 +90,7 @@ func (ps ProposalStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sd
 	return nil
 }
 
-// onle support change parameter proposal now
+// only support change parameter proposal now
 func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	proposalByte := store.Get(GetProposalKey(proposalID))
@@ -97,7 +104,7 @@ func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.Proposal
 	return *proposal, nil
 }
 
-// onle support change parameter proposal now
+// only support change parameter proposal now
 func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	proposalByte, err := ps.cdc.MarshalJSON(proposal)
@@ -105,6 +112,29 @@ func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.Proposal
 		return ErrProposalMarshalError(err)
 	}
 	store.Set(GetProposalKey(proposalID), proposalByte)
+	return nil
+}
+
+func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, sdk.Error) {
+	store := ctx.KVStore(ps.key)
+	nextProposalIDByte := store.Get(GetNextProposalIDKey())
+	if nextProposalIDByte == nil {
+		return nil, ErrGetNextProposalID()
+	}
+	nextProposalID := new(NextProposalID)
+	if err := ps.cdc.UnmarshalJSON(nextProposalIDByte, nextProposalID); err != nil {
+		return nil, ErrNextProposalIDUnmarshalError(err)
+	}
+	return nextProposalID, nil
+}
+
+func (ps ProposalStorage) SetNextProposalID(ctx sdk.Context, nextProposalID *NextProposalID) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	nextProposalIDByte, err := ps.cdc.MarshalJSON(*nextProposalID)
+	if err != nil {
+		return ErrNextProposalIDMarshalError(err)
+	}
+	store.Set(GetNextProposalIDKey(), nextProposalIDByte)
 	return nil
 }
 
@@ -120,4 +150,8 @@ func GetProposalKey(proposalID types.ProposalKey) []byte {
 
 func GetProposalListKey() []byte {
 	return proposalListSubStore
+}
+
+func GetNextProposalIDKey() []byte {
+	return nextProposalIDSubstore
 }
