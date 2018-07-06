@@ -708,31 +708,51 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	handler := NewHandler(pm, am, gm, dm)
 	coinDayParam, _ := ph.GetCoinDayParam(ctx)
 	accParam, _ := ph.GetAccountParam(ctx)
+	postParam, _ := ph.GetPostParam(ctx)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
+	user4 := createTestAccount(t, ctx, am, "user4")
+
+	baseTime := ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake
+	permlink := types.GetPermlink(user1, postID)
+	invalidPermlink := types.GetPermlink("invalid", "invalid")
 
 	testCases := []struct {
 		testName               string
 		reportOrUpvoteUser     string
 		isReport               bool
+		targetPostAuthor       string
+		targetPostID           string
+		lastReportOrUpvoteAt   int64
+		expectResult           sdk.Result
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{"user1 report", string(user1), true, accParam.RegisterFee, types.NewCoinFromInt64(0)},
-		{"user2 report", string(user2), true,
-			accParam.RegisterFee.Plus(accParam.RegisterFee), types.NewCoinFromInt64(0)},
-		{"user3 upvote", string(user3), false,
-			accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+		{"user1 report", string(user1), true, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
+			sdk.Result{}, accParam.RegisterFee, types.NewCoinFromInt64(0)},
+		{"user2 report", string(user2), true, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
+			sdk.Result{}, accParam.RegisterFee.Plus(accParam.RegisterFee), types.NewCoinFromInt64(0)},
+		{"user3 upvote", string(user3), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
+			sdk.Result{}, accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+		{"user1 wanna change report to upvote", string(user1), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
+			ErrReportOrUpvoteToPostExist(permlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+		{"user4 report to an invalid post", string(user4), true, "invalid", "invalid", baseTime - postParam.ReportOrUpvoteInterval,
+			ErrReportOrUpvotePostDoesntExist(invalidPermlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
 	}
 
 	for _, tc := range testCases {
-		newCtx := ctx.WithBlockHeader(
-			abci.Header{ChainID: "Lino", Time: ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake})
-		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, string(user1), postID, tc.isReport)
+		lastReportOrUpvoteAtCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.lastReportOrUpvoteAt})
+		am.UpdateLastReportOrUpvoteAt(lastReportOrUpvoteAtCtx, types.AccountKey(tc.reportOrUpvoteUser))
+
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime})
+		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, tc.targetPostAuthor, tc.targetPostID, tc.isReport)
 		result := handler(newCtx, msg)
-		assert.Equal(t, result, sdk.Result{}, fmt.Sprintf("%s: got %v, want %v", tc.testName, result, sdk.Result{}))
+		assert.Equal(t, tc.expectResult, result, fmt.Sprintf("%s: got %v, want %v", tc.testName, result, sdk.Result{}))
+		if tc.expectResult.Code != sdk.ABCICodeOK {
+			continue
+		}
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -742,8 +762,10 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			TotalReportStake:        tc.expectTotalReportStake,
 			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
 		}
-		postKey := types.GetPermlink(user1, postID)
-		checkPostMeta(t, ctx, postKey, postMeta)
+		targetPost := types.GetPermlink(types.AccountKey(tc.targetPostAuthor), tc.targetPostID)
+		checkPostMeta(t, ctx, targetPost, postMeta)
+		lastReportOrUpvoteAt, _ := am.GetLastReportOrUpvoteAt(ctx, types.AccountKey(tc.reportOrUpvoteUser))
+		assert.Equal(t, baseTime, lastReportOrUpvoteAt)
 	}
 }
 

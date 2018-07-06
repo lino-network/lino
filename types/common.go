@@ -12,6 +12,9 @@ type ProposalKey string
 // user permission type to present different permission for different msg
 type Permission int
 
+// msg CapacityLevel, different level cost different user capacity
+type CapacityLevel int
+
 // indicates the current proposal status
 type ProposalResult int
 
@@ -26,7 +29,7 @@ type TransferDetailType int
 
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPermlink(author AccountKey, postID string) Permlink {
-	return Permlink(string(author) + "#" + postID)
+	return Permlink(string(author) + PermlinkSeparator + postID)
 }
 
 // Donation struct, only used in Donation

@@ -132,4 +132,13 @@ const (
 
 	// Maximum number of links per post
 	MaximumNumOfLinks = 10
+
+	// Init account with full stake memo
+	InitAccountWithFullStakeMemo = "init register fee"
+
+	// Init account deposit fee memo
+	InitAccountRegisterDepositMemo = "init deposit"
+
+	// Permlink separator
+	PermlinkSeparator = "#"
 )

@@ -58,10 +58,11 @@ type GrantPubKey struct {
 
 // AccountMeta stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence            int64      `json:"sequence"`
-	LastActivityAt      int64      `json:"last_activity_at"`
-	TransactionCapacity types.Coin `json:"transaction_capacity"`
-	JSONMeta            string     `json:"json_meta"`
+	Sequence             int64      `json:"sequence"`
+	LastActivityAt       int64      `json:"last_activity_at"`
+	TransactionCapacity  types.Coin `json:"transaction_capacity"`
+	JSONMeta             string     `json:"json_meta"`
+	LastReportOrUpvoteAt int64      `json:"last_report_or_upvote_at"`
 }
 
 // AccountInfraConsumption records infra utility consumption

@@ -123,7 +123,7 @@ func TestAddCoin(t *testing.T) {
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 					model.Detail{
 						Amount:     c100,
@@ -168,7 +168,7 @@ func TestAddCoin(t *testing.T) {
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 					model.Detail{
 						Amount:     c100,
@@ -221,7 +221,7 @@ func TestAddCoin(t *testing.T) {
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 					model.Detail{
 						Amount:     c100,
@@ -282,7 +282,7 @@ func TestAddCoin(t *testing.T) {
 						To:         testUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 					model.Detail{
 						Amount:     c100,
@@ -390,7 +390,7 @@ func TestMinusCoin(t *testing.T) {
 						To:         userWithSufficientSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 					model.Detail{
 						Amount:     accParam.RegisterFee,
@@ -437,7 +437,7 @@ func TestMinusCoin(t *testing.T) {
 						To:         toUser,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init register fee with full stake",
+						Memo:       types.InitAccountWithFullStakeMemo,
 					},
 				},
 			},
@@ -469,7 +469,7 @@ func TestMinusCoin(t *testing.T) {
 						To:         userWithLimitSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
-						Memo:       "init account",
+						Memo:       types.InitAccountRegisterDepositMemo,
 					},
 				},
 			},
@@ -634,7 +634,8 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivityAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
@@ -650,7 +651,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		Amount:     accParam.RegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
 		DetailType: types.TransferIn,
-		Memo:       "init register fee with full stake",
+		Memo:       types.InitAccountWithFullStakeMemo,
 	}, balanceHistory.Details[0])
 }
 
@@ -700,7 +701,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkAccountInfo(t, ctx, accKey, accInfo)
 	accMeta := model.AccountMeta{
-		LastActivityAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
@@ -716,7 +718,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		Amount:     accParam.RegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
 		DetailType: types.TransferIn,
-		Memo:       "init register fee with full stake",
+		Memo:       types.InitAccountWithFullStakeMemo,
 	}, balanceHistory.Details[0])
 	assert.Equal(t, model.Detail{
 		From:       accountReferrer,
@@ -724,7 +726,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		Amount:     extraRegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
 		DetailType: types.TransferIn,
-		Memo:       "init account",
+		Memo:       types.InitAccountRegisterDepositMemo,
 	}, balanceHistory.Details[1])
 }
 
