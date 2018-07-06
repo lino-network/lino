@@ -18,7 +18,6 @@ var _ types.Msg = ChangeVoteParamMsg{}
 var _ types.Msg = ChangeProposalParamMsg{}
 var _ types.Msg = ChangeDeveloperParamMsg{}
 var _ types.Msg = ChangeValidatorParamMsg{}
-var _ types.Msg = ChangeCoinDayParamMsg{}
 var _ types.Msg = ChangeBandwidthParamMsg{}
 var _ types.Msg = ChangeAccountParamMsg{}
 var _ types.Msg = ChangePostParamMsg{}
@@ -31,7 +30,6 @@ var _ ChangeParamMsg = ChangeVoteParamMsg{}
 var _ ChangeParamMsg = ChangeProposalParamMsg{}
 var _ ChangeParamMsg = ChangeDeveloperParamMsg{}
 var _ ChangeParamMsg = ChangeValidatorParamMsg{}
-var _ ChangeParamMsg = ChangeCoinDayParamMsg{}
 var _ ChangeParamMsg = ChangeBandwidthParamMsg{}
 var _ ChangeParamMsg = ChangeAccountParamMsg{}
 var _ ChangeParamMsg = ChangePostParamMsg{}
@@ -100,11 +98,6 @@ type ChangeDeveloperParamMsg struct {
 type ChangeValidatorParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.ValidatorParam `json:"parameter"`
-}
-
-type ChangeCoinDayParamMsg struct {
-	Creator   types.AccountKey   `json:"creator"`
-	Parameter param.CoinDayParam `json:"parameter"`
 }
 
 type ChangeBandwidthParamMsg struct {
@@ -597,55 +590,6 @@ func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
 }
 
 func (msg ChangeValidatorParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
-}
-
-//----------------------------------------
-// ChangeCoinDayParamMsg Msg Implementations
-
-func NewChangeCoinDayParamMsg(creator string, parameter param.CoinDayParam) ChangeCoinDayParamMsg {
-	return ChangeCoinDayParamMsg{
-		Creator:   types.AccountKey(creator),
-		Parameter: parameter,
-	}
-}
-
-func (msg ChangeCoinDayParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeCoinDayParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeCoinDayParamMsg) Type() string                  { return types.ProposalRouterName }
-
-func (msg ChangeCoinDayParamMsg) ValidateBasic() sdk.Error {
-	if len(msg.Creator) < types.MinimumUsernameLength ||
-		len(msg.Creator) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-
-	if msg.Parameter.DaysToRecoverCoinDayStake <= 0 ||
-		msg.Parameter.SecondsToRecoverCoinDayStake <= 0 ||
-		msg.Parameter.DaysToRecoverCoinDayStake*24*3600 !=
-			msg.Parameter.SecondsToRecoverCoinDayStake {
-		return ErrIllegalParameter()
-	}
-	return nil
-}
-
-func (msg ChangeCoinDayParamMsg) String() string {
-	return fmt.Sprintf("ChangeCoinDayParamMsg{Creator:%v}", msg.Creator)
-}
-
-func (msg ChangeCoinDayParamMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-func (msg ChangeCoinDayParamMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func (msg ChangeCoinDayParamMsg) GetSigners() []sdk.Address {
 	return []sdk.Address{sdk.Address(msg.Creator)}
 }
 

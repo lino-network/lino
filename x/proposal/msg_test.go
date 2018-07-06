@@ -242,8 +242,6 @@ func TestChangeProposalParamMsg(t *testing.T) {
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
-
-		NextProposalID: int64(0),
 	}
 
 	p2 := p1
@@ -407,40 +405,6 @@ func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 	}
 }
 
-func TestChangeCoinDayParamMsg(t *testing.T) {
-	p1 := param.CoinDayParam{
-		DaysToRecoverCoinDayStake:    7,
-		SecondsToRecoverCoinDayStake: 7 * 24 * 3600,
-	}
-
-	p2 := p1
-	p2.DaysToRecoverCoinDayStake = 0
-
-	p3 := p1
-	p3.SecondsToRecoverCoinDayStake = 0
-
-	p4 := p1
-	p2.DaysToRecoverCoinDayStake = 1
-	p4.SecondsToRecoverCoinDayStake = 3600
-
-	cases := []struct {
-		changeCoinDayParamMsg ChangeCoinDayParamMsg
-		expectError           sdk.Error
-	}{
-		{NewChangeCoinDayParamMsg("user1", p1), nil},
-		{NewChangeCoinDayParamMsg("us", p1), ErrInvalidUsername()},
-		{NewChangeCoinDayParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
-		{NewChangeCoinDayParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeCoinDayParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeCoinDayParamMsg("user1", p4), ErrIllegalParameter()},
-	}
-
-	for _, cs := range cases {
-		result := cs.changeCoinDayParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
-	}
-}
-
 func TestDeletePostContentMsg(t *testing.T) {
 	cases := []struct {
 		deletePostContentMsg DeletePostContentMsg
@@ -522,11 +486,6 @@ func TestMsgPermission(t *testing.T) {
 		"change validator param msg": {
 			msg: NewChangeValidatorParamMsg(
 				"creator", param.ValidatorParam{}),
-			expectPermission: types.TransactionPermission,
-		},
-		"change coin day param msg": {
-			msg: NewChangeCoinDayParamMsg(
-				"creator", param.CoinDayParam{}),
 			expectPermission: types.TransactionPermission,
 		},
 		"change bandwidth param msg": {
