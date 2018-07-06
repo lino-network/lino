@@ -207,7 +207,15 @@ func (pm PostManager) AddOrUpdateViewToPost(
 
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
-	ctx sdk.Context, permlink types.Permlink, user types.AccountKey, stake types.Coin, isReport bool) sdk.Error {
+	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
+	stake types.Coin, isReport bool, lastReportOrUpvoteAt int64) sdk.Error {
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
+	if err != nil {
+		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
+	}
+	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteInterval > ctx.BlockHeader().Time {
+		return ErrReportOrUpvoteTooOften()
+	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
 		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
@@ -215,7 +223,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	postMeta.LastActivityAt = ctx.BlockHeader().Time
 
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
-	// Revoke privous
+
 	if reportOrUpvote != nil {
 		return ErrReportOrUpvoteToPostExist(permlink)
 	} else {

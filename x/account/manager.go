@@ -68,8 +68,8 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivityAt:      ctx.BlockHeader().Time,
-		TransactionCapacity: types.NewCoinFromInt64(0),
+		LastActivityAt:       ctx.BlockHeader().Time,
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return ErrAccountCreateFailed(username)
@@ -79,11 +79,11 @@ func (accManager AccountManager) CreateAccount(
 	}
 	if err := accManager.AddSavingCoinWithFullStake(
 		ctx, username, accParams.RegisterFee, referrer,
-		"init register fee with full stake", types.TransferIn); err != nil {
+		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
 		return err
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, "init account", types.TransferIn); err != nil {
+		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
 		return err
 	}
 	return nil
@@ -386,6 +386,27 @@ func (accManager AccountManager) GetSequence(
 	return accountMeta.Sequence, nil
 }
 
+// check if account exist
+func (accManager AccountManager) GetLastReportOrUpvoteAt(
+	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return 0, ErrGetLastReportOrUpvoteAt(username)
+	}
+	return accountMeta.LastReportOrUpvoteAt, nil
+}
+
+// check if account exist
+func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return ErrGetLastReportOrUpvoteAt(username)
+	}
+	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time
+	return accManager.storage.SetMeta(ctx, username, accountMeta)
+}
+
 func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
@@ -518,16 +539,16 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		incrementRatio := sdk.NewRat(
 			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
-		if incrementRatio.Cmp(types.OneRat) > 0 {
+		if incrementRatio.GT(sdk.OneRat()) {
 			incrementRatio = sdk.OneRat()
 		}
 		capacityTillStake := stake.Minus(accountMeta.TransactionCapacity)
-		increateCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
+		increaseCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
 		if err != nil {
 			return err
 		}
 		accountMeta.TransactionCapacity =
-			accountMeta.TransactionCapacity.Plus(increateCapacity)
+			accountMeta.TransactionCapacity.Plus(increaseCapacity)
 	}
 	currentTxCost, err := types.RatToCoin(
 		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
@@ -540,7 +561,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(me)
+		return ErrCheckUserTPSCapacity(me)
 	}
 	return nil
 }
@@ -552,7 +573,9 @@ func (accManager AccountManager) UpdateDonationRelationship(
 		return err
 	}
 	if relationship == nil {
-		relationship = &model.Relationship{0}
+		relationship = &model.Relationship{
+			DonationTimes: 0,
+		}
 	}
 	relationship.DonationTimes += 1
 	if err := accManager.storage.SetRelationship(ctx, me, other, relationship); err != nil {

@@ -316,6 +316,7 @@ func TestInitParam(t *testing.T) {
 	}
 	postParam := PostParam{
 		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
+		ReportOrUpvoteInterval: 24 * 3600,
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
