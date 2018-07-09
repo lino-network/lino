@@ -45,11 +45,11 @@ func ErrMicropaymentExceedsLimitation() sdk.Error {
 }
 
 func ErrProcessSourceDonation(permlink types.Permlink) sdk.Error {
-	return types.NewError(types.CodeProcessSourceDonation, fmt.Sprint("failed to process source donation: %s", permlink))
+	return types.NewError(types.CodeProcessSourceDonation, fmt.Sprintf("failed to process source donation: %s", permlink))
 }
 
 func ErrProcessDonation(permlink types.Permlink) sdk.Error {
-	return types.NewError(types.CodeProcessDonation, fmt.Sprint("failed to process donation: %s", permlink))
+	return types.NewError(types.CodeProcessDonation, fmt.Sprintf("failed to process donation: %s", permlink))
 }
 
 func ErrUpdatePostIsDeleted(permlink types.Permlink) sdk.Error {
