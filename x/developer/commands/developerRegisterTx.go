@@ -28,7 +28,8 @@ func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(client.FlagDeveloper)
-		msg := developer.NewDeveloperRegisterMsg(username, types.LNO(viper.GetString(client.FlagDeposit)))
+		msg := developer.NewDeveloperRegisterMsg(
+			username, types.LNO(viper.GetString(client.FlagDeposit)), "", "", "")
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
