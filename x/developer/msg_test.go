@@ -54,9 +54,9 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 		{NewGrantPermissionMsg("user1", "app", 10, 1, types.GrantPostPermission), ErrGrantPermissionTooHigh()},
 		{NewGrantPermissionMsg("user1", "app", -1, 1, types.PostPermission), ErrInvalidValidityPeriod()},
 		{NewGrantPermissionMsg("us", "app", 1, 1, types.PostPermission), ErrInvalidUsername()},
-		{NewGrantPermissionMsg("user1", "ap", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "ap", 1, 1, types.PostPermission), ErrInvalidAuthenticateApp()},
 		{NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, 1, types.PostPermission), ErrInvalidUsername()},
-		{NewGrantPermissionMsg("user1", "appappappappappappapp", 1, 1, types.PostPermission), ErrInvalidUsername()},
+		{NewGrantPermissionMsg("user1", "appappappappappappapp", 1, 1, types.PostPermission), ErrInvalidAuthenticateApp()},
 		{NewGrantPermissionMsg("user1", "app", 1, -1, types.PostPermission), ErrInvalidGrantTimes()},
 	}
 

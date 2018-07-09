@@ -288,7 +288,7 @@ func TestUpdateAccountMsg(t *testing.T) {
 				Username: userA,
 				JSONMeta: string(make([]byte, 501)),
 			},
-			wantCode: types.CodeInvalidMsg,
+			wantCode: types.CodeInvalidJSONMeta,
 		},
 	}
 

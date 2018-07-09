@@ -178,7 +178,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
-			wantRes:             ErrUsernameNotFound().Result(),
+			wantRes:             ErrAccountNotFound().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
@@ -289,7 +289,7 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: proposalID1,
 				Result:     true,
 			},
-			wantRes:             ErrGetVoter().Result(),
+			wantRes:             ErrVoterNotFound().Result(),
 			wantOK:              true,
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal: &model.ContentCensorshipProposal{
@@ -348,7 +348,7 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: proposalID1,
 				Result:     false,
 			},
-			wantRes:             vote.ErrVoteExist().Result(),
+			wantRes:             vote.ErrVoteAlreadyExist().Result(),
 			wantOK:              true,
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal: &model.ContentCensorshipProposal{

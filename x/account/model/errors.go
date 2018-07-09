@@ -8,115 +8,101 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Error constructors
+// not found error
 func ErrAccountInfoNotFound() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account info is not found"))
-}
-
-func ErrGetAccountInfo() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get account info failed"))
+	return types.NewError(types.CodeAccountInfoNotFound, fmt.Sprintf("account info is not found"))
 }
 
 func ErrAccountBankNotFound() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account bank is not found"))
+	return types.NewError(types.CodeAccountBankNotFound, fmt.Sprintf("account bank is not found"))
 }
 
-func ErrGetBankFromAccountKey() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get bank from account key failed"))
+func ErrAccountMetaNotFound() sdk.Error {
+	return types.NewError(types.CodeAccountMetaNotFound, fmt.Sprintf("account meta is not found"))
 }
 
-func ErrGetBankFromAddress() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("get bank from address failed"))
+func ErrRewardNotFound() sdk.Error {
+	return types.NewError(types.CodeRewardNotFound, fmt.Sprintf("reward is not found"))
 }
 
-func ErrAccountStorageInternal() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("account storage internal err"))
+func ErrPendingStakeQueueNotFound() sdk.Error {
+	return types.NewError(types.CodePendingStakeQueueNotFound, fmt.Sprintf("pending stake queue is not found"))
 }
 
-func ErrGetInfo() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("account storage operation failed"))
+func ErrGrantPubKeyNotFound() sdk.Error {
+	return types.NewError(types.CodeGrantPubKeyNotFound, fmt.Sprintf("grant public key is not found"))
 }
 
-func ErrInvalidLinoAmount() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("Invalid Lino amount"))
+// marshal error
+func ErrFailedToMarshalAccountInfo(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalAccountInfo, fmt.Sprintf("failed to marshal account info: %s", err.Error()))
 }
 
-func ErrUsernameNotFound() sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
+func ErrFailedToMarshalAccountBank(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalAccountBank, fmt.Sprintf("failed to marshal account bank: %s", err.Error()))
 }
 
-func ErrInvalidUsername() sdk.Error {
-	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+func ErrFailedToMarshalAccountMeta(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalAccountMeta, fmt.Sprintf("failed to marshal account meta: %s", err.Error()))
 }
 
-func ErrUsernameAddressMismatch() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("Username and address mismatch"))
+func ErrFailedToMarshalFollowerMeta(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalFollowerMeta, fmt.Sprintf("failed to marshal follower meta: %s", err.Error()))
 }
 
-func ErrSetInfoFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set info failed"))
+func ErrFailedToMarshalFollowingMeta(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalFollowingMeta, fmt.Sprintf("failed to marshal following meta: %s", err.Error()))
 }
 
-func ErrSetBankFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set bank failed"))
+func ErrFailedToMarshalReward(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalReward, fmt.Sprintf("failed to marshal reward: %s", err.Error()))
 }
 
-func ErrGetMetaFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get meta failed"))
+func ErrFailedToMarshalPendingStakeQueue(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalPendingStakeQueue, fmt.Sprintf("failed to marshal pending stake queue: %s", err.Error()))
 }
 
-func ErrSetMetaFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set meta failed"))
+func ErrFailedToMarshalGrantPubKey(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalGrantPubKey, fmt.Sprintf("failed to marshal grant pub key: %s", err.Error()))
 }
 
-func ErrGetRewardFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get reward failed"))
+func ErrFailedToMarshalRelationship(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalRelationship, fmt.Sprintf("failed to marshal relationship: %s", err.Error()))
 }
 
-func ErrSetRewardFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set reward failed"))
+func ErrFailedToMarshalBalanceHistory(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalBalanceHistory, fmt.Sprintf("failed to marshal balance history: %s", err.Error()))
 }
 
-func ErrGetRelationshipFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get relationship failed"))
+// unmarshal error
+func ErrFailedToUnmarshalAccountInfo(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalAccountInfo, fmt.Sprintf("failed to unmarshal account info: %s", err.Error()))
 }
 
-func ErrSetRelationshipFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set relationship failed"))
+func ErrFailedToUnmarshalAccountBank(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalAccountBank, fmt.Sprintf("failed to unmarshal account bank: %s", err.Error()))
 }
 
-func ErrSetBalanceHistoryFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set balance history failed"))
+func ErrFailedToUnmarshalAccountMeta(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalAccountMeta, fmt.Sprintf("failed to unmarshal account meta: %s", err.Error()))
 }
 
-func ErrGetBalanceHistoryFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get balance history failed"))
+func ErrFailedToUnmarshalReward(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalReward, fmt.Sprintf("failed to unmarshal reward: %s", err.Error()))
 }
 
-func ErrGetPendingStakeFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get pending stake failed"))
+func ErrFailedToUnmarshalPendingStakeQueue(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalPendingStakeQueue, fmt.Sprintf("failed to unmarshal pending stake queue: %s", err.Error()))
 }
 
-func ErrSetPendingStakeFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set pending stake failed"))
+func ErrFailedToUnmarshalGrantPubKey(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalGrantPubKey, fmt.Sprintf("failed to unmarshal grant pub key: %s", err.Error()))
 }
 
-func ErrGetGrantPubKeyFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage get grant public key failed"))
+func ErrFailedToUnmarshalRelationship(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalRelationship, fmt.Sprintf("failed to unmarshal relationship: %s", err.Error()))
 }
 
-func ErrSetGrantPubKeyFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set grant public key failed"))
-}
-
-func ErrAddMoneyFailed() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage add money to bank failed"))
-}
-
-func ErrSetFollowerMeta() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set follower meta failed"))
-}
-
-func ErrSetFollowingMeta() sdk.Error {
-	return types.NewError(types.CodeAccountStorageFail, fmt.Sprintf("AccountStorage set following meta failed"))
+func ErrFailedToUnmarshalBalanceHistory(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalBalanceHistory, fmt.Sprintf("failed to unmarshal balance history: %s", err.Error()))
 }

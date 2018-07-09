@@ -7,26 +7,41 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func ErrProposalMarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal marshal error: %s", err.Error()))
+// not found err
+func ErrProposalNotFound() sdk.Error {
+	return types.NewError(types.CodeProposalNotFound, fmt.Sprintf("proposal is not found"))
 }
 
-func ErrNextProposalIDMarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Next proposal id marshal error: %s", err.Error()))
+func ErrProposalListNotFound() sdk.Error {
+	return types.NewError(types.CodeProposalListNotFound, fmt.Sprintf("proposal list is not found"))
 }
 
-func ErrProposalUnmarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Proposal unmarshal error: %s", err.Error()))
+func ErrNextProposalIDNotFound() sdk.Error {
+	return types.NewError(types.CodeNextProposalIDNotFound, fmt.Sprintf("next proposal id is not found"))
 }
 
-func ErrNextProposalIDUnmarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Next proposal id unmarshal error: %s", err.Error()))
+// marshal error
+func ErrFailedToMarshalProposal(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalProposal, fmt.Sprintf("failed to marshal proposal: %s", err.Error()))
 }
 
-func ErrGetProposal() sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Get proposal failed"))
+func ErrFailedToMarshalProposalList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalProposalList, fmt.Sprintf("failed to marshal proposal list: %s", err.Error()))
 }
 
-func ErrGetNextProposalID() sdk.Error {
-	return types.NewError(types.CodeProposalStoreError, fmt.Sprintf("Get next proposal id failed"))
+func ErrFailedToMarshalNextProposalID(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalNextProposalID, fmt.Sprintf("failed to marshal next proposal id: %s", err.Error()))
+}
+
+// unmarshal error
+func ErrFailedToUnmarshalProposal(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalProposal, fmt.Sprintf("failed to unmarshal proposal: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalProposalList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalProposalList, fmt.Sprintf("failed to unmarshal proposal list: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalNextProposalID(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalNextProposalID, fmt.Sprintf("failed to unmarshal next proposal id: %s", err.Error()))
 }

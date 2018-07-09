@@ -121,7 +121,7 @@ func TestRevokeBasic(t *testing.T) {
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
 	acc3Balance, _ := am.GetSavingFromBank(ctx, user3)
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
-	assert.Equal(t, model.ErrGetDelegation(), err)
+	assert.Equal(t, model.ErrDelegationNotFound(), err)
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc3Balance)
 
@@ -137,7 +137,7 @@ func TestRevokeBasic(t *testing.T) {
 	// invalid user cannot revoke
 	invalidMsg := NewVoterRevokeMsg("wqwdqwdasdsa")
 	resultInvalid := handler(ctx, invalidMsg)
-	assert.Equal(t, model.ErrGetVoter().Result(), resultInvalid)
+	assert.Equal(t, model.ErrVoterNotFound().Result(), resultInvalid)
 
 	//  user1  can revoke voter candidancy now
 	referenceList = &model.ReferenceList{
@@ -151,8 +151,8 @@ func TestRevokeBasic(t *testing.T) {
 	_, err2 := vm.storage.GetVoter(ctx, "user1")
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
-	assert.Equal(t, model.ErrGetDelegation(), err)
-	assert.Equal(t, model.ErrGetVoter(), err2)
+	assert.Equal(t, model.ErrDelegationNotFound(), err)
+	assert.Equal(t, model.ErrVoterNotFound(), err2)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
 }
@@ -178,7 +178,7 @@ func TestVoterWithdraw(t *testing.T) {
 	// invalid deposit
 	invalidDepositMsg := NewVoterDepositMsg("1du1i2bdi12bud", coinToString(voteParam.VoterMinDeposit))
 	res = handler(ctx, invalidDepositMsg)
-	assert.Equal(t, ErrUsernameNotFound().Result(), res)
+	assert.Equal(t, ErrAccountNotFound().Result(), res)
 
 	msg2 := NewVoterWithdrawMsg("user1", coinToString(minBalance.Plus(voteParam.VoterMinWithdraw)))
 	result2 := handler(ctx, msg2)
@@ -287,5 +287,5 @@ func TestDeleteVoteBasic(t *testing.T) {
 	// test delete vote
 	vm.storage.DeleteVote(ctx, proposalID1, "user2")
 	_, err := vm.storage.GetVote(ctx, proposalID1, "user2")
-	assert.Equal(t, model.ErrGetVote(), err)
+	assert.Equal(t, model.ErrVoteNotFound(), err)
 }

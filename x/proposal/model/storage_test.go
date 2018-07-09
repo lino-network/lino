@@ -75,7 +75,7 @@ func TestProposal(t *testing.T) {
 		assert.Nil(t, err)
 		proposal, err = ps.GetProposal(ctx, proposalID)
 		assert.Nil(t, proposal)
-		assert.Equal(t, ErrGetProposal(), err)
+		assert.Equal(t, ErrProposalNotFound(), err)
 	}
 }
 

@@ -227,7 +227,7 @@ func TestGetProposalPassParam(t *testing.T) {
 
 		{testName: "test wrong proposal type",
 			proposalType:  23,
-			wantError:     ErrWrongProposalType(),
+			wantError:     ErrIncorrectProposalType(),
 			wantPassRatio: proposalParam.ProtocolUpgradePassRatio,
 			wantPassVotes: proposalParam.ProtocolUpgradePassVotes,
 		},

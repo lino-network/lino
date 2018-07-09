@@ -125,7 +125,7 @@ func TestGrantPermissionMsg(t *testing.T) {
 		{"grant permission to non-exist app",
 			NewGrantPermissionMsg("user2", "invalidApp", 10000, 1, types.MicropaymentPermission), ErrDeveloperNotFound().Result()},
 		{"grant permission to non-exist user",
-			NewGrantPermissionMsg("invalid", "app", 10000, 1, types.MicropaymentPermission), ErrUsernameNotFound().Result()},
+			NewGrantPermissionMsg("invalid", "app", 10000, 1, types.MicropaymentPermission), ErrAccountNotFound().Result()},
 		{"grant permission exceeds maximum limitation",
 			NewGrantPermissionMsg("user1", "app", 10000, 100, types.MicropaymentPermission),
 			acc.ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes).Result()},
@@ -169,12 +169,12 @@ func TestRevokePermissionMsg(t *testing.T) {
 		{"normal revoke post permission",
 			NewRevokePermissionMsg("user1", appPriv.Generate(2).PubKey(), types.PostPermission), sdk.Result{}},
 		{"revoke non-exist pubkey",
-			NewRevokePermissionMsg("user1", appPriv.PubKey(), types.PostPermission), accstore.ErrGetGrantPubKeyFailed().Result()},
+			NewRevokePermissionMsg("user1", appPriv.PubKey(), types.PostPermission), accstore.ErrGrantPubKeyNotFound().Result()},
 		{"revoke pubkey permission mismatch",
 			NewRevokePermissionMsg("user1", appPriv.Generate(1).PubKey(), types.PostPermission),
 			acc.ErrRevokePermissionLevelMismatch(types.MicropaymentPermission, types.PostPermission).Result()},
 		{"invalid revoke user",
-			NewRevokePermissionMsg("invalid", appPriv.Generate(1).PubKey(), types.MicropaymentPermission), ErrUsernameNotFound().Result()},
+			NewRevokePermissionMsg("invalid", appPriv.Generate(1).PubKey(), types.MicropaymentPermission), ErrAccountNotFound().Result()},
 	}
 
 	for _, tc := range testCases {

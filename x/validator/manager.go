@@ -285,7 +285,7 @@ func (vm ValidatorManager) RegisterValidator(
 		return err
 	}
 	if !coin.IsGTE(param.ValidatorMinCommitingDeposit) {
-		return ErrCommitingDepositNotEnough()
+		return ErrInsufficientDeposit()
 	}
 
 	// make sure the pub key has not been registered
@@ -300,7 +300,7 @@ func (vm ValidatorManager) RegisterValidator(
 			return err
 		}
 		if reflect.DeepEqual(validator.ABCIValidator.PubKey, tmtypes.TM2PB.PubKey(pubKey)) {
-			return ErrPubKeyHasBeenRegistered()
+			return ErrValidatorPubKeyAlreadyExist()
 		}
 	}
 	curValidator := &model.Validator{
@@ -335,7 +335,7 @@ func (vm ValidatorManager) Deposit(
 // this method won't check if it is a legal withdraw, caller should check by itself
 func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
-		return ErrNoCoinToWithdraw()
+		return ErrInvalidCoin()
 	}
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
@@ -375,7 +375,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	}
 	// check minimum requirements
 	if !curValidator.Deposit.IsGTE(param.ValidatorMinCommitingDeposit) {
-		return ErrCommitingDepositNotEnough()
+		return ErrInsufficientDeposit()
 	}
 
 	lst, err := vm.storage.GetValidatorList(ctx)

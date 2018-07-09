@@ -32,7 +32,7 @@ func handleDepositMsg(
 	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	coin, err := types.LinoToCoin(msg.Deposit)
@@ -49,7 +49,7 @@ func handleDepositMsg(
 	if !valManager.DoesValidatorExist(ctx, msg.Username) {
 		// check validator minimum voting deposit requirement
 		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
-			return ErrVotingDepositNotEnough().Result()
+			return ErrInsufficientDeposit().Result()
 		}
 		if err := valManager.RegisterValidator(
 			ctx, msg.Username, msg.ValPubKey, coin, msg.Link); err != nil {
@@ -69,7 +69,7 @@ func handleDepositMsg(
 	}
 
 	if !valManager.IsBalancedAccount(ctx, msg.Username, votingDeposit) {
-		return ErrCommitingDepositExceedVotingDeposit().Result()
+		return ErrUnbalancedAccount().Result()
 	}
 
 	// Try to become oncall validator

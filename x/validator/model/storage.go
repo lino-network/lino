@@ -46,11 +46,11 @@ func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey types.AccountKey
 	store := ctx.KVStore(vs.key)
 	validatorByte := store.Get(GetValidatorKey(accKey))
 	if validatorByte == nil {
-		return nil, ErrGetValidator()
+		return nil, ErrValidatorNotFound()
 	}
 	validator := new(Validator)
 	if err := vs.cdc.UnmarshalJSON(validatorByte, validator); err != nil {
-		return nil, ErrValidatorUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalValidator(err)
 	}
 	return validator, nil
 }
@@ -59,7 +59,7 @@ func (vs ValidatorStorage) SetValidator(ctx sdk.Context, accKey types.AccountKey
 	store := ctx.KVStore(vs.key)
 	validatorByte, err := vs.cdc.MarshalJSON(*validator)
 	if err != nil {
-		return ErrValidatorMarshalError(err)
+		return ErrFailedToMarshalValidator(err)
 	}
 	store.Set(GetValidatorKey(accKey), validatorByte)
 	return nil
@@ -75,11 +75,11 @@ func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) (*ValidatorList, sd
 	store := ctx.KVStore(vs.key)
 	listByte := store.Get(GetValidatorListKey())
 	if listByte == nil {
-		return nil, ErrGetValidatorList()
+		return nil, ErrValidatorListNotFound()
 	}
 	lst := new(ValidatorList)
 	if err := vs.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrValidatorUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalValidatorList(err)
 	}
 	return lst, nil
 }
@@ -88,7 +88,7 @@ func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList)
 	store := ctx.KVStore(vs.key)
 	listByte, err := vs.cdc.MarshalJSON(*lst)
 	if err != nil {
-		return ErrSetValidatorList()
+		return ErrFailedToMarshalValidatorList(err)
 	}
 	store.Set(GetValidatorListKey(), listByte)
 	return nil

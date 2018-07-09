@@ -8,21 +8,36 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Error constructors
-func ErrInvalidLinoAmount() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid Lino amount"))
+func ErrFolloweeNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeFolloweeNotFound, fmt.Sprintf("followee %s not found", username))
 }
 
-func ErrUsernameNotFound(username types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("user %s not found", username))
+func ErrFollowerNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeFollowerNotFound, fmt.Sprintf("follower %s not found", username))
 }
 
-func ErrUsernameExist() sdk.Error {
-	return types.NewError(types.CodeAccountHandlerFail, fmt.Sprintf("username exist"))
+func ErrReceiverNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeReceiverNotFound, fmt.Sprintf("receiver %s not found", username))
 }
 
-func ErrReferrerNotFound() sdk.Error {
-	return types.NewError(types.CodeAccountHandlerFail, fmt.Sprintf("referrer not found"))
+func ErrSenderNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeSenderNotFound, fmt.Sprintf("sender %s not found", username))
+}
+
+func ErrAccountNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("account %s not found", username))
+}
+
+func ErrReferrerNotFound(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeReferrerNotFound, fmt.Sprintf("referrer %s not found", username))
+}
+
+func ErrAddSavingCoinWithFullStake() sdk.Error {
+	return types.NewError(types.CodeAddSavingCoinWithFullStake, fmt.Sprint("failed to add saving coin with full stake"))
+}
+
+func ErrAddSavingCoin() sdk.Error {
+	return types.NewError(types.CodeAddSavingCoin, fmt.Sprint("failed to add saving coin"))
 }
 
 func ErrInvalidUsername(msg string) sdk.Error {
@@ -34,174 +49,93 @@ func ErrInvalidMemo() sdk.Error {
 }
 
 func ErrInvalidJSONMeta() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid account JSON meta"))
-}
-
-func ErrTransferHandler(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transfer from account %v failed", accKey))
-}
-
-func ErrOpenBankFeeInsufficient(provide types.Coin, expect types.Coin) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail,
-		fmt.Sprintf("open bank failed, fee insufficient, need %v, but only %v provided", expect, provide))
-}
-
-func ErrAddCoinAccountNotFound(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed, account not found", accKey))
-}
-
-func ErrAddCoinToAccountSaving(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add saving coin to account %v failed", accKey))
-}
-
-func ErrAddBalanceHistory(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add balance history to account %v failed", accKey))
-}
-
-func ErrMinusCoinToAccount(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("minus coin to account %v failed", accKey))
-}
-
-func ErrUpdateFrozenMoney(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v frozen money failed", accKey))
-}
-
-func ErrGetBankAddress(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank address failed", accKey))
+	return types.NewError(types.CodeInvalidJSONMeta, fmt.Sprintf("invalid account JSON meta"))
 }
 
 func ErrCheckMasterKey() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transaction needs master key"))
+	return types.NewError(types.CodeCheckMasterKey, fmt.Sprintf("transaction needs master key"))
 }
 
 func ErrCheckTransactionKey() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("transaction needs transaction key"))
+	return types.NewError(types.CodeCheckTransactionKey, fmt.Sprintf("transaction needs transaction key"))
 }
 
 func ErrCheckGrantMicropaymentKey() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("only user's own micropayment key or above can sign grant micropayment msg"))
+	return types.NewError(types.CodeCheckGrantMicropaymentKey, fmt.Sprintf("only user's own micropayment key or above can sign grant micropayment msg"))
 }
 
 func ErrCheckGrantPostKey() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("only user's own post key or above can sign grant post msg"))
+	return types.NewError(types.CodeCheckGrantPostKey, fmt.Sprintf("only user's own post key or above can sign grant post msg"))
 }
 
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v authenticate public key match failed", accKey))
+	return types.NewError(types.CodeCheckAuthenticatePubKeyOwner, fmt.Sprintf("user %v authenticate public key match failed", accKey))
 }
 
 func ErrGrantKeyExpired(owner types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant user %v key expired", owner))
+	return types.NewError(types.CodeGrantKeyExpired, fmt.Sprintf("grant user %v key expired", owner))
+}
+
+func ErrGrantKeyNoLeftTimes(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeGrantKeyNoLeftTimes, fmt.Sprintf("grant user %v key no left times", owner))
 }
 
 func ErrGrantKeyMismatch(owner types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant user %v key can't match his own key", owner))
+	return types.NewError(types.CodeGrantKeyMismatch, fmt.Sprintf("grant user %v key can't match his own key", owner))
 }
 
-func ErrUpdateJSONMeta(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update %v JSON meta failed", accKey))
+func ErrMicropaymentGrantKeyMismatch(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeMicropaymentGrantKeyMismatch, fmt.Sprintf("grant user %v micropayment key can't match his own key", owner))
+}
+
+func ErrPostGrantKeyMismatch(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodePostGrantKeyMismatch, fmt.Sprintf("grant user %v post key can't match his own key", owner))
 }
 
 func ErrGetMasterKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v master key failed", accKey))
+	return types.NewError(types.CodeGetMasterKey, fmt.Sprintf("get %v master key failed", accKey))
 }
 
 func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v transaction key failed", accKey))
+	return types.NewError(types.CodeGetTransactionKey, fmt.Sprintf("get %v transaction key failed", accKey))
 }
 
 func ErrGetMicropaymentKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v micropayment key failed", accKey))
+	return types.NewError(types.CodeGetMicropaymentKey, fmt.Sprintf("get %v micropayment key failed", accKey))
 }
 
 func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v post key failed", accKey))
+	return types.NewError(types.CodeGetMicropaymentKey, fmt.Sprintf("get %v post key failed", accKey))
 }
 
 func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("grant times exceeds %v limitation", limitation))
+	return types.NewError(types.CodeGrantTimesExceedsLimitation, fmt.Sprintf("grant times exceeds %v limitation", limitation))
 }
 
 func ErrUnsupportGrantLevel() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("unsupport grant level"))
+	return types.NewError(types.CodeUnsupportGrantLevel, fmt.Sprintf("unsupport grant level"))
 }
 
 func ErrRevokePermissionLevelMismatch(got, expect types.Permission) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("revoke permission level mismatch, got %v, expect %v", got, expect))
-}
-
-func ErrGetBankSaving(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank saving failed", accKey))
-}
-
-func ErrGetBankChecking(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v bank checking failed", accKey))
-}
-
-func ErrGetSequence(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v sequence failed", accKey))
-}
-
-func ErrGetLastReportOrUpvoteAt(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v last report or upvote time failed", accKey))
-}
-
-func ErrSetLastReportOrUpvoteAt(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("set %v last report or upvote time failed", accKey))
-}
-
-func ErrGetFrozenMoneyList(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get %v frozen money list failed", accKey))
-}
-
-func ErrIncreaseSequenceByOne(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("increase account %v sequence failed", accKey))
-}
-
-func ErrAddIncomeAndReward(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("add income and reward for user %v failed", accKey))
-}
-
-func ErrClaimReward(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("claim user %v reward failed", accKey))
-}
-
-func ErrGetStake(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("get user %v stake failed", accKey))
+	return types.NewError(types.CodeRevokePermissionLevelMismatch, fmt.Sprintf("revoke permission level mismatch, got %v, expect %v", got, expect))
 }
 
 func ErrCheckUserTPSCapacity(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("update user %v transaction capacity failed", accKey))
+	return types.NewError(types.CodeCheckUserTPSCapacity, fmt.Sprintf("update user %v transaction capacity failed", accKey))
 }
 
 func ErrAccountTPSCapacityNotEnough(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("user %v transaction capacity not enough, please wait", accKey))
+	return types.NewError(types.CodeAccountTPSCapacityNotEnough, fmt.Sprintf("user %v transaction capacity not enough, please wait", accKey))
 }
 
 func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account %v exists", accKey))
-}
-
-func ErrRecoverMasterKeyAlreadyOccupied() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, "recover account failed: master key occupied")
-}
-
-func ErrBankAlreadyRegistered() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("bank connection exists"))
+	return types.NewError(types.CodeAccountAlreadyExists, fmt.Sprintf("account %v already exists", accKey))
 }
 
 func ErrRegisterFeeInsufficient() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("register fee insufficient"))
-}
-
-func ErrAccountCreateFailed(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("create account %v failed", accKey))
-}
-
-func ErrUsernameAddressMismatch() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("username and address mismatch"))
+	return types.NewError(types.CodeRegisterFeeInsufficient, fmt.Sprintf("register fee insufficient"))
 }
 
 func ErrAccountSavingCoinNotEnough() sdk.Error {
-	return types.NewError(types.CodeAccountManagerFail, fmt.Sprintf("account bank's saving coins not enough"))
+	return types.NewError(types.CodeAccountSavingCoinNotEnough, fmt.Sprintf("account bank's saving coins not enough"))
 }

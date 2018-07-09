@@ -186,7 +186,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	}
 	if (len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0) &&
 		(len(msg.SourceAuthor) > 0 || len(msg.SourcePostID) > 0) {
-		return ErrCommentAndRepostError()
+		return ErrCommentAndRepostConflict()
 	}
 	if len(msg.Title) > types.MaxPostTitleLength {
 		return ErrPostTitleExceedMaxLength()
@@ -213,10 +213,10 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {
-		return ErrPostRedistributionSplitRate()
+		return err
 	}
 	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
-		return ErrPostRedistributionSplitRate()
+		return ErrInvalidPostRedistributionSplitRate()
 	}
 	return nil
 }
@@ -251,11 +251,11 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 
 	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
 	if err != nil {
-		return ErrPostRedistributionSplitRate()
+		return err
 	}
 
 	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
-		return ErrPostRedistributionSplitRate()
+		return ErrInvalidPostRedistributionSplitRate()
 	}
 	return nil
 }
@@ -274,25 +274,25 @@ func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 func (msg LikeMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink exists
 	if len(msg.Username) == 0 {
-		return ErrPostLikeNoUsername()
+		return ErrNoUsername()
 	}
 	if msg.Weight > types.MaxLikeWeight ||
 		msg.Weight < types.MinLikeWeight {
 		return ErrPostLikeWeightOverflow(msg.Weight)
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrPostLikeInvalidTarget()
+		return ErrInvalidTarget()
 	}
 	return nil
 }
 
 func (msg DonateMsg) ValidateBasic() sdk.Error {
-	// Ensure permlink exists
+	// Ensure permlink  exists
 	if len(msg.Username) == 0 {
-		return ErrPostDonateNoUsername()
+		return ErrNoUsername()
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrPostDonateInvalidTarget()
+		return ErrInvalidTarget()
 	}
 
 	_, err := types.LinoToCoin(msg.Amount)
@@ -309,10 +309,10 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 // ValidateBasic implements sdk.Msg
 func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) == 0 {
-		return ErrPostReportOrUpvoteNoUsername()
+		return ErrNoUsername()
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrPostReportOrUpvoteInvalidTarget()
+		return ErrInvalidTarget()
 	}
 	return nil
 }
@@ -320,10 +320,10 @@ func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 // ValidateBasic implements sdk.Msg
 func (msg ViewMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) == 0 {
-		return ErrPostViewNoUsername()
+		return ErrNoUsername()
 	}
 	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrPostViewInvalidTarget()
+		return ErrInvalidTarget()
 	}
 	return nil
 }

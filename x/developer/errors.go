@@ -8,38 +8,39 @@ import (
 )
 
 // Error constructors
+
+func ErrAccountNotFound() sdk.Error {
+	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("account not found"))
+}
+
+func ErrDeveloperAlreadyExist(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeDeveloperAlreadyExist, fmt.Sprintf("developer %v already exist", username))
+}
+
 func ErrDeveloperNotFound() sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Developer not found"))
+	return types.NewError(types.CodeDeveloperNotFound, fmt.Sprintf("developer not found"))
 }
 
-func ErrDeveloperExist(username types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeDeveloperHandlerFailed, fmt.Sprintf("Developer %v exist", username))
-}
-
-func ErrUsernameNotFound() sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
-}
-
-func ErrDeveloperDepositNotEnough() sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Developer deposit not enough"))
+func ErrInsufficientDeveloperDeposit() sdk.Error {
+	return types.NewError(types.CodeInsufficientDeveloperDeposit, fmt.Sprintf("developer deposit not enough"))
 }
 
 func ErrInvalidUsername() sdk.Error {
-	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
+	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
 }
 
-func ErrNoCoinToWithdraw() sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("No coin to withdraw"))
+func ErrInvalidAuthenticateApp() sdk.Error {
+	return types.NewError(types.CodeInvalidAuthenticateApp, fmt.Sprintf("invalid authenticate app"))
 }
 
 func ErrInvalidValidityPeriod() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant validity period"))
+	return types.NewError(types.CodeInvalidValidityPeriod, fmt.Sprintf("invalid grant validity period"))
 }
 
 func ErrGrantPermissionTooHigh() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant permission, can only grant micropayment or post permission"))
+	return types.NewError(types.CodeGrantPermissionTooHigh, fmt.Sprintf("grant permission is too high"))
 }
 
 func ErrInvalidGrantTimes() sdk.Error {
-	return types.NewError(types.CodeInvalidMsg, fmt.Sprintf("invalid grant times, should not be negative"))
+	return types.NewError(types.CodeInvalidGrantTimes, fmt.Sprintf("invalid grant times, should not be negative"))
 }

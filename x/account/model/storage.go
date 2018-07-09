@@ -58,7 +58,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	}
 	info := new(AccountInfo)
 	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
-		return nil, ErrGetAccountInfo()
+		return nil, ErrFailedToUnmarshalAccountInfo(err)
 	}
 	return info, nil
 }
@@ -68,7 +68,7 @@ func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accIn
 	store := ctx.KVStore(as.key)
 	infoByte, err := as.cdc.MarshalJSON(*accInfo)
 	if err != nil {
-		return ErrSetInfoFailed()
+		return ErrFailedToMarshalAccountInfo(err)
 	}
 	store.Set(GetAccountInfoKey(accKey), infoByte)
 	return nil
@@ -85,7 +85,7 @@ func (as AccountStorage) GetBankFromAccountKey(
 	}
 	bank := new(AccountBank)
 	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
-		return nil, ErrGetBankFromAccountKey()
+		return nil, ErrFailedToUnmarshalAccountBank(err)
 	}
 	return bank, nil
 }
@@ -96,7 +96,7 @@ func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, username types.A
 	store := ctx.KVStore(as.key)
 	bankByte, err := as.cdc.MarshalJSON(*accBank)
 	if err != nil {
-		return ErrSetBankFailed()
+		return ErrFailedToMarshalAccountBank(err)
 	}
 	store.Set(GetAccountBankKey(username), bankByte)
 	return nil
@@ -108,11 +108,11 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 	store := ctx.KVStore(as.key)
 	metaByte := store.Get(GetAccountMetaKey(accKey))
 	if metaByte == nil {
-		return nil, ErrGetMetaFailed()
+		return nil, ErrAccountMetaNotFound()
 	}
 	meta := new(AccountMeta)
 	if err := as.cdc.UnmarshalJSON(metaByte, meta); err != nil {
-		return nil, ErrGetMetaFailed()
+		return nil, ErrFailedToUnmarshalAccountMeta(err)
 	}
 	return meta, nil
 }
@@ -122,7 +122,7 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMe
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(*accMeta)
 	if err != nil {
-		return ErrSetMetaFailed()
+		return ErrFailedToMarshalAccountMeta(err)
 	}
 	store.Set(GetAccountMetaKey(accKey), metaByte)
 	return nil
@@ -141,7 +141,7 @@ func (as AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, m
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
-		return ErrSetFollowerMeta()
+		return ErrFailedToMarshalFollowerMeta(err)
 	}
 	store.Set(getFollowerKey(me, meta.FollowerName), metaByte)
 	return nil
@@ -167,7 +167,7 @@ func (as AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, 
 	store := ctx.KVStore(as.key)
 	metaByte, err := as.cdc.MarshalJSON(meta)
 	if err != nil {
-		return ErrSetFollowingMeta()
+		return ErrFailedToMarshalFollowingMeta(err)
 	}
 	store.Set(getFollowingKey(me, meta.FollowingName), metaByte)
 	return nil
@@ -185,11 +185,11 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 	store := ctx.KVStore(as.key)
 	rewardByte := store.Get(getRewardKey(accKey))
 	if rewardByte == nil {
-		return nil, ErrGetRewardFailed()
+		return nil, ErrRewardNotFound()
 	}
 	reward := new(Reward)
 	if err := as.cdc.UnmarshalJSON(rewardByte, reward); err != nil {
-		return nil, ErrGetRewardFailed()
+		return nil, ErrFailedToUnmarshalReward(err)
 	}
 	return reward, nil
 }
@@ -199,7 +199,7 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 	store := ctx.KVStore(as.key)
 	rewardByte, err := as.cdc.MarshalJSON(*reward)
 	if err != nil {
-		return ErrSetRewardFailed()
+		return ErrFailedToMarshalReward(err)
 	}
 	store.Set(getRewardKey(accKey), rewardByte)
 	return nil
@@ -211,11 +211,11 @@ func (as AccountStorage) GetPendingStakeQueue(
 	store := ctx.KVStore(as.key)
 	pendingStakeQueueByte := store.Get(getPendingStakeQueueKey(me))
 	if pendingStakeQueueByte == nil {
-		return nil, ErrGetPendingStakeFailed()
+		return nil, ErrPendingStakeQueueNotFound()
 	}
 	queue := new(PendingStakeQueue)
 	if err := as.cdc.UnmarshalJSON(pendingStakeQueueByte, queue); err != nil {
-		return nil, ErrGetPendingStakeFailed()
+		return nil, ErrFailedToUnmarshalPendingStakeQueue(err)
 	}
 	return queue, nil
 }
@@ -225,7 +225,7 @@ func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, me types.AccountK
 	store := ctx.KVStore(as.key)
 	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
 	if err != nil {
-		return ErrSetRewardFailed()
+		return ErrFailedToMarshalPendingStakeQueue(err)
 	}
 	store.Set(getPendingStakeQueueKey(me), pendingStakeQueueByte)
 	return nil
@@ -243,11 +243,11 @@ func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 	store := ctx.KVStore(as.key)
 	grantPubKeyByte := store.Get(getGrantPubKeyKey(me, pubKey))
 	if grantPubKeyByte == nil {
-		return nil, ErrGetGrantPubKeyFailed()
+		return nil, ErrGrantPubKeyNotFound()
 	}
 	grantPubKey := new(GrantPubKey)
 	if err := as.cdc.UnmarshalJSON(grantPubKeyByte, grantPubKey); err != nil {
-		return nil, ErrGetGrantPubKeyFailed()
+		return nil, ErrFailedToUnmarshalGrantPubKey(err)
 	}
 	return grantPubKey, nil
 }
@@ -257,7 +257,7 @@ func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 	store := ctx.KVStore(as.key)
 	grantPubKeyByte, err := as.cdc.MarshalJSON(*grantPubKey)
 	if err != nil {
-		return ErrSetGrantPubKeyFailed()
+		return ErrFailedToMarshalGrantPubKey(err)
 	}
 	store.Set(getGrantPubKeyKey(me, pubKey), grantPubKeyByte)
 	return nil
@@ -272,7 +272,7 @@ func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, o
 	}
 	queue := new(Relationship)
 	if err := as.cdc.UnmarshalJSON(relationshipByte, queue); err != nil {
-		return nil, ErrGetRelationshipFailed()
+		return nil, ErrFailedToUnmarshalRelationship(err)
 	}
 	return queue, nil
 }
@@ -282,7 +282,7 @@ func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, o
 	store := ctx.KVStore(as.key)
 	relationshipByte, err := as.cdc.MarshalJSON(*relationship)
 	if err != nil {
-		return ErrSetRelationshipFailed()
+		return ErrFailedToMarshalRelationship(err)
 	}
 	store.Set(getRelationshipKey(me, other), relationshipByte)
 	return nil
@@ -298,7 +298,7 @@ func (as AccountStorage) GetBalanceHistory(
 	}
 	history := new(BalanceHistory)
 	if err := as.cdc.UnmarshalJSON(balanceHistoryBytes, history); err != nil {
-		return nil, ErrGetBalanceHistoryFailed()
+		return nil, ErrFailedToUnmarshalBalanceHistory(err)
 	}
 	return history, nil
 }
@@ -309,7 +309,7 @@ func (as AccountStorage) SetBalanceHistory(
 	store := ctx.KVStore(as.key)
 	historyBytes, err := as.cdc.MarshalJSON(*history)
 	if err != nil {
-		return ErrSetBalanceHistoryFailed()
+		return ErrFailedToMarshalBalanceHistory(err)
 	}
 	store.Set(getBalanceHistoryKey(me, bucketSlot), historyBytes)
 	return nil

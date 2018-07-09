@@ -45,7 +45,7 @@ func TestVoter(t *testing.T) {
 	vs.DeleteVoter(ctx, user)
 	voterPtr, err = vs.GetVoter(ctx, user)
 	assert.Nil(t, voterPtr)
-	assert.Equal(t, ErrGetVoter(), err)
+	assert.Equal(t, ErrVoterNotFound(), err)
 }
 
 func TestVote(t *testing.T) {
@@ -78,7 +78,7 @@ func TestVote(t *testing.T) {
 			vs.DeleteVote(ctx, cs.proposalID, cs.voter)
 			votePtr, err := vs.GetVote(ctx, cs.proposalID, cs.voter)
 			assert.Nil(t, votePtr)
-			assert.Equal(t, ErrGetVote(), err)
+			assert.Equal(t, ErrVoteNotFound(), err)
 		} else {
 			vote := Vote{
 				Voter:       cs.voter,
@@ -126,7 +126,7 @@ func TestDelegation(t *testing.T) {
 		assert.Nil(t, err)
 		delegationPtr, err = vs.GetDelegation(ctx, cs.delegateTo, cs.delegator)
 		assert.Nil(t, delegationPtr)
-		assert.Equal(t, ErrGetDelegation(), err)
+		assert.Equal(t, ErrDelegationNotFound(), err)
 	}
 
 	getAllDelegatorsCases := []struct {

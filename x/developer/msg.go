@@ -140,7 +140,7 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 
 	if len(msg.AuthenticateApp) < types.MinimumUsernameLength ||
 		len(msg.AuthenticateApp) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
+		return ErrInvalidAuthenticateApp()
 	}
 
 	if msg.ValidityPeriod <= 0 {

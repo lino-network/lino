@@ -7,23 +7,29 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-// // Error constructors
-func ErrGetInfraProvider() sdk.Error {
-	return types.NewError(types.CodeInfraProviderManagerFailed, fmt.Sprintf("Get infra provider failed"))
+// not found error
+func ErrInfraProviderNotFound() sdk.Error {
+	return types.NewError(types.CodeInfraProviderNotFound, fmt.Sprintf("infra provider is not found"))
 }
 
-func ErrSetInfraProviderList() sdk.Error {
-	return types.NewError(types.CodeInfraProviderManagerFailed, fmt.Sprintf("Set infra provider list failed"))
+func ErrInfraProviderListNotFound() sdk.Error {
+	return types.NewError(types.CodeInfraProviderListNotFound, fmt.Sprintf("infra provider list is not found"))
 }
 
-func ErrGetInfraProviderList() sdk.Error {
-	return types.NewError(types.CodeInfraProviderManagerFailed, fmt.Sprintf("Get infra provider list failed"))
+// marshal error
+func ErrFailedToMarshalInfraProvider(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalInfraProvider, fmt.Sprintf("failed to marshal infra provider: %s", err.Error()))
 }
 
-func ErrInfraProviderMarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeInfraProviderManagerFailed, fmt.Sprintf("Infra provider marshal error: %s", err.Error()))
+func ErrFailedToMarshalInfraProviderList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalInfraProviderList, fmt.Sprintf("failed to marshal infra provider list: %s", err.Error()))
 }
 
-func ErrInfraProviderUnmarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeInfraProviderManagerFailed, fmt.Sprintf("Infra provider unmarshal error: %s", err.Error()))
+// unmarshal error
+func ErrFailedToUnmarshalInfraProvider(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalInfraProvider, fmt.Sprintf("failed to unmarshal infra provider: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalInfraProviderList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalInfraProviderList, fmt.Sprintf("failed to unmarshal infra provider list: %s", err.Error()))
 }

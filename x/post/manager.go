@@ -24,7 +24,7 @@ func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return sdk.ZeroRat(), ErrGetRedistributionSplitRate(permlink)
+		return sdk.ZeroRat(), err
 	}
 	return postMeta.RedistributionSplitRate, nil
 }
@@ -32,7 +32,7 @@ func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types
 func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permlink types.Permlink) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return 0, types.NewCoinFromInt64(0), ErrGetCreatedTime(permlink)
+		return 0, types.NewCoinFromInt64(0), err
 	}
 	return postMeta.CreatedAt, postMeta.TotalReward, nil
 }
@@ -47,7 +47,7 @@ func (pm PostManager) GetSourcePost(
 	ctx sdk.Context, permlink types.Permlink) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permlink)
 	if err != nil {
-		return types.AccountKey(""), "", ErrGetRootSourcePost(permlink)
+		return types.AccountKey(""), "", err
 	}
 
 	// check source post's source, that's the root
@@ -66,7 +66,7 @@ func (pm PostManager) setRootSourcePost(ctx sdk.Context, postInfo *model.PostInf
 	rootAuthor, rootPostID, err :=
 		pm.GetSourcePost(ctx, types.GetPermlink(postInfo.SourceAuthor, postInfo.SourcePostID))
 	if err != nil {
-		return ErrSetRootSourcePost(permlink)
+		return ErrGetSourcePost(permlink)
 	}
 	if rootAuthor != types.AccountKey("") && rootPostID != "" {
 		postInfo.SourceAuthor = rootAuthor
@@ -95,13 +95,13 @@ func (pm PostManager) CreatePost(
 	}
 	permlink := types.GetPermlink(postInfo.Author, postInfo.PostID)
 	if pm.DoesPostExist(ctx, permlink) {
-		return ErrPostExist(permlink)
+		return ErrPostAlreadyExist(permlink)
 	}
 	if err := pm.setRootSourcePost(ctx, postInfo); err != nil {
 		return ErrCreatePostSourceInvalid(permlink)
 	}
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
-		return ErrCreatePost(permlink)
+		return err
 	}
 	postMeta := &model.PostMeta{
 		CreatedAt:               ctx.BlockHeader().Time,
@@ -112,7 +112,7 @@ func (pm PostManager) CreatePost(
 		RedistributionSplitRate: redistributionSplitRate.Round(types.PrecisionFactor),
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrCreatePost(permlink)
+		return err
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey, weight int64) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return ErrAddOrUpdateLikeToPost(permlink)
+		return err
 	}
 	like, _ := pm.postStorage.GetPostLike(ctx, permlink, user)
 	// Revoke privous
@@ -173,10 +173,10 @@ func (pm PostManager) AddOrUpdateLikeToPost(
 	}
 	postMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostLike(ctx, permlink, like); err != nil {
-		return ErrAddOrUpdateLikeToPost(permlink)
+		return err
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrAddOrUpdateLikeToPost(permlink)
+		return err
 	}
 	return nil
 }
@@ -186,7 +186,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return ErrAddOrUpdateViewToPost(permlink)
+		return err
 	}
 	view, _ := pm.postStorage.GetPostView(ctx, permlink, user)
 	// Revoke previous
@@ -197,10 +197,10 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	view.Times += 1
 	view.LastViewAt = ctx.BlockHeader().Time
 	if err := pm.postStorage.SetPostView(ctx, permlink, view); err != nil {
-		return ErrAddOrUpdateViewToPost(permlink)
+		return err
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrAddOrUpdateViewToPost(permlink)
+		return err
 	}
 	return nil
 }
@@ -211,21 +211,21 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	stake types.Coin, isReport bool, lastReportOrUpvoteAt int64) sdk.Error {
 	postParam, err := pm.paramHolder.GetPostParam(ctx)
 	if err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
+		return err
 	}
 	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteInterval > ctx.BlockHeader().Time {
 		return ErrReportOrUpvoteTooOften()
 	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
+		return err
 	}
 	postMeta.LastActivityAt = ctx.BlockHeader().Time
 
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
 
 	if reportOrUpvote != nil {
-		return ErrReportOrUpvoteToPostExist(permlink)
+		return ErrReportOrUpvoteAlreadyExist(permlink)
 	} else {
 		reportOrUpvote =
 			&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
@@ -238,10 +238,10 @@ func (pm PostManager) ReportOrUpvoteToPost(
 		reportOrUpvote.IsReport = false
 	}
 	if err := pm.postStorage.SetPostReportOrUpvote(ctx, permlink, reportOrUpvote); err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
+		return err
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrAddOrUpdateReportOrUpvoteToPost(permlink)
+		return err
 	}
 	return nil
 }
@@ -267,7 +267,7 @@ func (pm PostManager) AddDonation(
 	amount types.Coin, donationType types.DonationType) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return ErrAddDonation(permlink)
+		return err
 	}
 	donation := model.Donation{
 		Amount:       amount,
@@ -280,12 +280,12 @@ func (pm PostManager) AddDonation(
 	}
 	donations.DonationList = append(donations.DonationList, donation)
 	if err := pm.postStorage.SetPostDonations(ctx, permlink, donations); err != nil {
-		return ErrAddDonation(permlink)
+		return err
 	}
 	postMeta.TotalReward = postMeta.TotalReward.Plus(donation.Amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrAddDonation(permlink)
+		return err
 	}
 	return nil
 }
@@ -294,23 +294,23 @@ func (pm PostManager) AddDonation(
 func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return ErrDeletePost(permlink)
+		return err
 	}
 	postMeta.IsDeleted = true
 	postMeta.RedistributionSplitRate = sdk.OneRat()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return ErrAddDonation(permlink)
+		return err
 	}
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permlink)
 	if err != nil {
-		return ErrDeletePost(permlink)
+		return err
 	}
 	postInfo.Title = ""
 	postInfo.Content = ""
 	postInfo.Links = nil
 
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
-		return ErrDeletePost(permlink)
+		return err
 	}
 	return nil
 }
@@ -318,7 +318,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.E
 func (pm PostManager) IsDeleted(ctx sdk.Context, permlink types.Permlink) (bool, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return false, ErrDeletePost(permlink)
+		return false, err
 	}
 	return postMeta.IsDeleted, nil
 }
@@ -327,7 +327,7 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permlink types.Permlink) (bool,
 func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
 	if err != nil {
-		return sdk.ZeroRat(), ErrGetPenaltyScore(permlink)
+		return sdk.ZeroRat(), err
 	}
 	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
 		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermlink(sourceAuthor, sourcePostID))
@@ -338,7 +338,7 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) 
 	}
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return sdk.ZeroRat(), ErrGetPenaltyScore(permlink)
+		return sdk.ZeroRat(), err
 	}
 	if postMeta.TotalReportStake.IsZero() {
 		return sdk.ZeroRat(), nil

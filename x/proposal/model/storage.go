@@ -67,39 +67,16 @@ func (ps ProposalStorage) DoesProposalExist(ctx sdk.Context, proposalID types.Pr
 	return store.Has(GetProposalKey(proposalID))
 }
 
-func (ps ProposalStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	lstByte := store.Get(GetProposalListKey())
-	if lstByte == nil {
-		return nil, ErrGetProposal()
-	}
-	lst := new(ProposalList)
-	if err := ps.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
-	}
-	return lst, nil
-}
-
-func (ps ProposalStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	lstByte, err := ps.cdc.MarshalJSON(*lst)
-	if err != nil {
-		return ErrProposalMarshalError(err)
-	}
-	store.Set(GetProposalListKey(), lstByte)
-	return nil
-}
-
 // only support change parameter proposal now
 func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	proposalByte := store.Get(GetProposalKey(proposalID))
 	if proposalByte == nil {
-		return nil, ErrGetProposal()
+		return nil, ErrProposalNotFound()
 	}
 	proposal := new(Proposal)
 	if err := ps.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
-		return nil, ErrProposalUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalProposal(err)
 	}
 	return *proposal, nil
 }
@@ -109,21 +86,50 @@ func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.Proposal
 	store := ctx.KVStore(ps.key)
 	proposalByte, err := ps.cdc.MarshalJSON(proposal)
 	if err != nil {
-		return ErrProposalMarshalError(err)
+		return ErrFailedToMarshalProposal(err)
 	}
 	store.Set(GetProposalKey(proposalID), proposalByte)
 	return nil
 }
 
+func (ps ProposalStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	store.Delete(GetProposalKey(proposalID))
+	return nil
+}
+
+func (ps ProposalStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
+	store := ctx.KVStore(ps.key)
+	lstByte := store.Get(GetProposalListKey())
+	if lstByte == nil {
+		return nil, ErrProposalListNotFound()
+	}
+	lst := new(ProposalList)
+	if err := ps.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+		return nil, ErrFailedToUnmarshalProposalList(err)
+	}
+	return lst, nil
+}
+
+func (ps ProposalStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	lstByte, err := ps.cdc.MarshalJSON(*lst)
+	if err != nil {
+		return ErrFailedToMarshalProposalList(err)
+	}
+	store.Set(GetProposalListKey(), lstByte)
+	return nil
+}
+
 func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, sdk.Error) {
 	store := ctx.KVStore(ps.key)
-	nextProposalIDByte := store.Get(GetNextProposalIDKey())
+	nextProposalIDByte := store.Get(getNextProposalIDKey())
 	if nextProposalIDByte == nil {
-		return nil, ErrGetNextProposalID()
+		return nil, ErrNextProposalIDNotFound()
 	}
 	nextProposalID := new(NextProposalID)
 	if err := ps.cdc.UnmarshalJSON(nextProposalIDByte, nextProposalID); err != nil {
-		return nil, ErrNextProposalIDUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalNextProposalID(err)
 	}
 	return nextProposalID, nil
 }
@@ -132,15 +138,9 @@ func (ps ProposalStorage) SetNextProposalID(ctx sdk.Context, nextProposalID *Nex
 	store := ctx.KVStore(ps.key)
 	nextProposalIDByte, err := ps.cdc.MarshalJSON(*nextProposalID)
 	if err != nil {
-		return ErrNextProposalIDMarshalError(err)
+		return ErrFailedToMarshalNextProposalID(err)
 	}
-	store.Set(GetNextProposalIDKey(), nextProposalIDByte)
-	return nil
-}
-
-func (ps ProposalStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	store.Delete(GetProposalKey(proposalID))
+	store.Set(getNextProposalIDKey(), nextProposalIDByte)
 	return nil
 }
 
@@ -152,6 +152,6 @@ func GetProposalListKey() []byte {
 	return proposalListSubStore
 }
 
-func GetNextProposalIDKey() []byte {
+func getNextProposalIDKey() []byte {
 	return nextProposalIDSubstore
 }
