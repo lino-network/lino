@@ -372,7 +372,7 @@ func (accManager AccountManager) GetSavingFromBank(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.Coin{}, err
+		return types.Coin{}, ErrGetSavingFromBank(err)
 	}
 	return accountBank.Saving, nil
 }
@@ -381,7 +381,7 @@ func (accManager AccountManager) GetSequence(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, err
+		return 0, ErrGetSequence(err)
 	}
 	return accountMeta.Sequence, nil
 }
@@ -391,7 +391,7 @@ func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, err
+		return 0, ErrGetLastReportOrUpvoteAt(err)
 	}
 	return accountMeta.LastReportOrUpvoteAt, nil
 }
@@ -401,7 +401,7 @@ func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return err
+		return ErrUpdateLastReportOrUpvoteAt(err)
 	}
 	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
@@ -411,7 +411,7 @@ func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return nil, err
+		return nil, ErrGetFrozenMoneyList(err)
 	}
 	return accountBank.FrozenMoneyList, nil
 }
@@ -420,7 +420,7 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return err
+		return ErrIncreaseSequenceByOne(err)
 	}
 	accountMeta.Sequence += 1
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {

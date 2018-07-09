@@ -8,7 +8,6 @@ import (
 )
 
 // Error constructors
-
 func ErrAccountNotFound() sdk.Error {
 	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("account not found"))
 }

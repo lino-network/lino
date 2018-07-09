@@ -162,12 +162,12 @@ func handleDonateMsg(
 		coin = coin.Minus(sourceIncome)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
-			return err.Result()
+			return ErrProcessSourceDonation(sourcePermlink).Result()
 		}
 	}
 	if err := processDonationFriction(
 		ctx, msg.Username, coin, msg.Author, msg.PostID, msg.FromApp, am, pm, gm); err != nil {
-		return err.Result()
+		return ErrProcessDonation(permlink).Result()
 	}
 	return sdk.Result{}
 }
