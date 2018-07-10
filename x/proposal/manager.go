@@ -143,7 +143,7 @@ func (pm ProposalManager) GetProposalPassParam(
 	case types.ProtocolUpgrade:
 		return param.ProtocolUpgradePassRatio, param.ProtocolUpgradePassVotes, nil
 	default:
-		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), ErrWrongProposalType()
+		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), ErrIncorrectProposalType()
 	}
 }
 
@@ -238,7 +238,7 @@ func (pm ProposalManager) CreateParamChangeEvent(
 
 	p, ok := proposal.(*model.ChangeParamProposal)
 	if !ok {
-		return nil, ErrWrongProposalType()
+		return nil, ErrIncorrectProposalType()
 	}
 
 	event := param.ChangeParamEvent{
@@ -255,7 +255,7 @@ func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.Proposal
 
 	p, ok := proposal.(*model.ContentCensorshipProposal)
 	if !ok {
-		return types.Permlink(""), ErrWrongProposalType()
+		return types.Permlink(""), ErrIncorrectProposalType()
 	}
 	return p.Permlink, nil
 }

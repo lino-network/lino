@@ -117,7 +117,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
 	// check if the vote exist
 	if vm.DoesVoteExist(ctx, proposalID, voter) {
-		return ErrVoteExist()
+		return ErrVoteAlreadyExist()
 	}
 
 	votingPower, err := vm.GetVotingPower(ctx, voter)
@@ -186,7 +186,7 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 
 	// check minimum requirements for registering as a voter
 	if !coin.IsGTE(param.VoterMinDeposit) {
-		return ErrRegisterFeeNotEnough()
+		return ErrInsufficientDeposit()
 	}
 
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
@@ -210,7 +210,7 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin t
 // this method won't check if it is a legal withdraw, caller should check by itself
 func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
-		return ErrNoCoinToWithdraw()
+		return ErrInvalidCoin()
 	}
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -245,7 +245,7 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 func (vm VoteManager) DelegatorWithdraw(
 	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
-		return ErrNoCoinToWithdraw()
+		return ErrInvalidCoin()
 	}
 	// change voter's delegated power
 	voter, err := vm.storage.GetVoter(ctx, voterName)

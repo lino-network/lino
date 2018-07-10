@@ -62,27 +62,27 @@ func (gs GlobalStorage) InitGlobalState(
 	}
 
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return err
 	}
 
 	infraInflationCoin, err := types.RatToCoin(
 		totalLino.ToRat().Mul(globalMeta.GrowthRate.Mul(param.InfraAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return ErrInfraInflationCoinConversion()
 	}
 	contentCreatorCoin, err := types.RatToCoin(
 		totalLino.ToRat().Mul(
 			globalMeta.GrowthRate.Mul(
 				param.ContentCreatorAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return ErrContentCreatorCoinConversion()
 	}
 	developerCoin, err := types.RatToCoin(
 		totalLino.ToRat().Mul(
 			globalMeta.GrowthRate.Mul(
 				param.DeveloperAllocation)))
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return ErrDeveloperCoinConversion()
 	}
 	validatorCoin, err := types.RatToCoin(
 		totalLino.ToRat().Mul(
@@ -90,7 +90,7 @@ func (gs GlobalStorage) InitGlobalState(
 				param.ValidatorAllocation)))
 
 	if err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return ErrValidatorCoinConversion()
 	}
 
 	inflationPool := &InflationPool{
@@ -100,7 +100,7 @@ func (gs GlobalStorage) InitGlobalState(
 		ValidatorInflationPool:      validatorCoin,
 	}
 	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return err
 	}
 
 	consumptionMeta := &ConsumptionMeta{
@@ -110,14 +110,14 @@ func (gs GlobalStorage) InitGlobalState(
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return err
 	}
 	tps := &TPS{
 		CurrentTPS: sdk.ZeroRat(),
 		MaxTPS:     sdk.NewRat(1000),
 	}
 	if err := gs.SetTPS(ctx, tps); err != nil {
-		return ErrGlobalStorageGenesisFailed()
+		return err
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*type
 	}
 	lst := new(types.TimeEventList)
 	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrEventUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalTimeEventList(err)
 	}
 	return lst, nil
 }
@@ -140,7 +140,7 @@ func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *t
 	store := ctx.KVStore(gs.key)
 	listByte, err := gs.cdc.MarshalJSON(*lst)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrFailedToMarshalTimeEventList(err)
 	}
 	store.Set(GetTimeEventListKey(unixTime), listByte)
 	return nil
@@ -160,7 +160,7 @@ func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) 
 	}
 	globalMeta := new(GlobalMeta)
 	if err := gs.cdc.UnmarshalJSON(globalMetaBytes, globalMeta); err != nil {
-		return nil, ErrEventUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalGlobalMeta(err)
 	}
 	return globalMeta, nil
 }
@@ -169,7 +169,7 @@ func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) s
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrFailedToMarshalGlobalMeta(err)
 	}
 	store.Set(GetGlobalMetaKey(), globalMetaBytes)
 	return nil
@@ -183,7 +183,7 @@ func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.E
 	}
 	inflationPool := new(InflationPool)
 	if err := gs.cdc.UnmarshalJSON(inflationPoolBytes, inflationPool); err != nil {
-		return nil, ErrEventUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalInflationPool(err)
 	}
 	return inflationPool, nil
 }
@@ -192,7 +192,7 @@ func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *Inflati
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrFailedToMarshalInflationPool(err)
 	}
 	store.Set(GetInflationPoolKey(), inflationPoolBytes)
 	return nil
@@ -206,7 +206,7 @@ func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, s
 	}
 	consumptionMeta := new(ConsumptionMeta)
 	if err := gs.cdc.UnmarshalJSON(consumptionMetaBytes, consumptionMeta); err != nil {
-		return nil, ErrEventUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalConsumptionMeta(err)
 	}
 	return consumptionMeta, nil
 }
@@ -215,7 +215,7 @@ func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *Con
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrFailedToMarshalConsumptionMeta(err)
 	}
 	store.Set(GetConsumptionMetaKey(), consumptionMetaBytes)
 	return nil
@@ -229,7 +229,7 @@ func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	}
 	tps := new(TPS)
 	if err := gs.cdc.UnmarshalJSON(tpsBytes, tps); err != nil {
-		return nil, ErrEventUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalTPS(err)
 	}
 	return tps, nil
 }
@@ -238,7 +238,7 @@ func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	tpsBytes, err := gs.cdc.MarshalJSON(*tps)
 	if err != nil {
-		return ErrEventMarshalError(err)
+		return ErrFailedToMarshalTPS(err)
 	}
 	store.Set(GetTPSKey(), tpsBytes)
 	return nil

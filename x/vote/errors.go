@@ -8,30 +8,30 @@ import (
 )
 
 // Error constructors
-func ErrUsernameNotFound() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Username not found"))
+func ErrAccountNotFound() sdk.Error {
+	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("account is not found"))
 }
 
 func ErrIllegalWithdraw() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Illegal withdraw"))
-}
-
-func ErrNoCoinToWithdraw() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("No coin to withdraw"))
-}
-
-func ErrRegisterFeeNotEnough() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Register fee not enough"))
-}
-
-func ErrInvalidUsername() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid Username"))
+	return types.NewError(types.CodeIllegalWithdraw, fmt.Sprintf("illegal withdraw"))
 }
 
 func ErrValidatorCannotRevoke() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Invalid revoke"))
+	return types.NewError(types.CodeValidatorCannotRevoke, fmt.Sprintf("invalid revoke"))
 }
 
-func ErrVoteExist() sdk.Error {
-	return types.NewError(types.CodeVoteManagerFailed, fmt.Sprintf("Vote exist"))
+func ErrVoteAlreadyExist() sdk.Error {
+	return types.NewError(types.CodeVoteAlreadyExist, fmt.Sprintf("Vote exist"))
+}
+
+func ErrInvalidCoin() sdk.Error {
+	return types.NewError(types.CodeInvalidCoin, fmt.Sprintf("can't withdraw 0 coin"))
+}
+
+func ErrInsufficientDeposit() sdk.Error {
+	return types.NewError(types.CodeInsufficientDeposit, fmt.Sprintf("deposit is not enough"))
+}
+
+func ErrInvalidUsername() sdk.Error {
+	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid username"))
 }

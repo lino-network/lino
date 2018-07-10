@@ -39,7 +39,7 @@ func (dm DeveloperManager) RegisterDeveloper(
 	}
 	// check developer mindmum deposit requirement
 	if !deposit.IsGTE(param.DeveloperMinDeposit) {
-		return ErrDeveloperDepositNotEnough()
+		return ErrInsufficientDeveloperDeposit()
 	}
 
 	developer := &model.Developer{

@@ -234,7 +234,7 @@ func TestTimeEventList(t *testing.T) {
 	}{
 		{baseTime, nil, &types.TimeEventList{[]types.Event{testEvent{}}}},
 		{baseTime, nil, &types.TimeEventList{[]types.Event{testEvent{}, testEvent{}}}},
-		{baseTime - 1, ErrGlobalManagerRegisterExpiredEvent(baseTime - 1), nil},
+		{baseTime - 1, ErrRegisterExpiredEvent(baseTime - 1), nil},
 		{baseTime + 1, nil, &types.TimeEventList{[]types.Event{testEvent{}}}},
 	}
 

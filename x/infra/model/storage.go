@@ -42,11 +42,11 @@ func (is InfraProviderStorage) GetInfraProvider(
 	store := ctx.KVStore(is.key)
 	providerByte := store.Get(GetInfraProviderKey(accKey))
 	if providerByte == nil {
-		return nil, ErrGetInfraProvider()
+		return nil, ErrInfraProviderNotFound()
 	}
 	provider := new(InfraProvider)
 	if err := is.cdc.UnmarshalJSON(providerByte, provider); err != nil {
-		return nil, ErrInfraProviderUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalInfraProvider(err)
 	}
 	return provider, nil
 }
@@ -56,7 +56,7 @@ func (is InfraProviderStorage) SetInfraProvider(
 	store := ctx.KVStore(is.key)
 	InfraProviderByte, err := is.cdc.MarshalJSON(*InfraProvider)
 	if err != nil {
-		return ErrInfraProviderMarshalError(err)
+		return ErrFailedToMarshalInfraProvider(err)
 	}
 	store.Set(GetInfraProviderKey(accKey), InfraProviderByte)
 	return nil
@@ -66,11 +66,11 @@ func (is InfraProviderStorage) GetInfraProviderList(ctx sdk.Context) (*InfraProv
 	store := ctx.KVStore(is.key)
 	listByte := store.Get(GetInfraProviderListKey())
 	if listByte == nil {
-		return nil, ErrGetInfraProviderList()
+		return nil, ErrInfraProviderListNotFound()
 	}
 	lst := new(InfraProviderList)
 	if err := is.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrInfraProviderUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalInfraProviderList(err)
 	}
 	return lst, nil
 }
@@ -79,7 +79,7 @@ func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraP
 	store := ctx.KVStore(is.key)
 	listByte, err := is.cdc.MarshalJSON(*lst)
 	if err != nil {
-		return ErrSetInfraProviderList()
+		return ErrFailedToMarshalInfraProviderList(err)
 	}
 	store.Set(GetInfraProviderListKey(), listByte)
 	return nil

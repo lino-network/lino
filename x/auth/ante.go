@@ -17,26 +17,26 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
 		stdTx, ok := tx.(auth.StdTx)
 		if !ok {
-			return ctx, sdk.ErrInternal("tx must be StdTx").Result(), true
+			return ctx, ErrIncorrectStdTxType().Result(), true
 		}
 		// Assert that there are signatures.
 		var sigs = stdTx.GetSignatures()
 		if len(sigs) == 0 {
 			return ctx,
-				sdk.ErrUnauthorized("no signers").Result(),
+				ErrNoSignatures().Result(),
 				true
 		}
 		sdkMsg := tx.GetMsg()
 		msg, ok := sdkMsg.(types.Msg)
 		if !ok {
-			return ctx, sdk.ErrInternal("unrecognized msg").Result(), true
+			return ctx, ErrUnknownMsgType().Result(), true
 		}
 
 		// Assert that number of signatures is correct.
-		var signerAddrs = msg.GetSigners()
-		if len(sigs) != len(signerAddrs) {
+		var signers = msg.GetSigners()
+		if len(sigs) != len(signers) {
 			return ctx,
-				sdk.ErrUnauthorized("wrong number of signers").Result(),
+				ErrWrongNumberOfSigners().Result(),
 				true
 		}
 
@@ -44,7 +44,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		// for i := 0; i < len(signerAddrs); i++ {
+		// for i := 0; i < len(signers); i++ {
 		// 	accNums[i] = sigs[i].AccountNumber
 		// }
 		fee := stdTx.Fee
@@ -52,10 +52,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		// fmt.Println("=========== auth", string(signBytes))
 
 		permission := msg.GetPermission()
-		signers := msg.GetSigners()
-		if len(sigs) < len(signers) {
-			return ctx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
-		}
+
 		// signers get from msg should be verify first
 		for i, signer := range signers {
 			_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
@@ -68,7 +65,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				return ctx, err.Result(), true
 			}
 			if seq != sigs[i].Sequence {
-				return ctx, sdk.ErrInvalidSequence(
+				return ctx, ErrInvalidSequence(
 					fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
 						types.AccountKey(signer), sigs[i].Sequence, seq)).Result(), true
 			}
@@ -77,7 +74,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			}
 
 			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
-				return ctx, sdk.ErrUnauthorized(
+				return ctx, ErrUnverifiedBytes(
 					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
 			}
 			tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)

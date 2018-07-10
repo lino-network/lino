@@ -40,7 +40,7 @@ func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin)
 
 func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
 	if unixTime < ctx.BlockHeader().Time {
-		return ErrGlobalManagerRegisterExpiredEvent(unixTime)
+		return ErrRegisterExpiredEvent(unixTime)
 	}
 	eventList, err := gm.storage.GetTimeEventList(ctx, unixTime)
 	if err != nil {
@@ -51,7 +51,7 @@ func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, eve
 	}
 	eventList.Events = append(eventList.Events, event)
 	if err := gm.storage.SetTimeEventList(ctx, unixTime, eventList); err != nil {
-		return ErrGlobalManagerRegisterEventAtTime(unixTime)
+		return err
 	}
 	return nil
 }
@@ -267,7 +267,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
+		return types.NewCoinFromInt64(0), err
 	}
 
 	// consumptionRatio = this consumption * penalty score) / (total consumption in 7 days window)
@@ -278,14 +278,14 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 	reward, err := types.RatToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
+		return types.NewCoinFromInt64(0), err
 	}
 
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
-		return types.NewCoinFromInt64(0), ErrGetRewardAndPopFromWindow()
+		return types.NewCoinFromInt64(0), err
 	}
 	return reward, nil
 }

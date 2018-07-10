@@ -80,11 +80,11 @@ func TestCreatePostMsg(t *testing.T) {
 		{msg: CreatePostMsg{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
 			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "-1"},
-			expectResult: ErrPostRedistributionSplitRate()},
+			expectResult: ErrInvalidPostRedistributionSplitRate()},
 		{msg: CreatePostMsg{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
 			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1.01"},
-			expectResult: ErrPostRedistributionSplitRate()},
+			expectResult: ErrInvalidPostRedistributionSplitRate()},
 		{msg: CreatePostMsg{
 			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
 			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0.00000000001"},
@@ -131,10 +131,10 @@ func TestUpdatePostMsg(t *testing.T) {
 			[]types.IDToURLMapping{}, "0"), expectResult: ErrPostContentExceedMaxLength()},
 		{updatePostMsg: NewUpdatePostMsg(
 			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-			[]types.IDToURLMapping{}, "1.01"), expectResult: ErrPostRedistributionSplitRate()},
+			[]types.IDToURLMapping{}, "1.01"), expectResult: ErrInvalidPostRedistributionSplitRate()},
 		{updatePostMsg: NewUpdatePostMsg(
 			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-			[]types.IDToURLMapping{}, "-1"), expectResult: ErrPostRedistributionSplitRate()},
+			[]types.IDToURLMapping{}, "-1"), expectResult: ErrInvalidPostRedistributionSplitRate()},
 		{updatePostMsg: NewUpdatePostMsg(
 			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
 			[]types.IDToURLMapping{}, "0.000000000001"), expectResult: ErrRedistributionSplitRateLengthTooLong()},
@@ -162,14 +162,14 @@ func TestDeletePostMsg(t *testing.T) {
 				Author: "",
 				PostID: "postID",
 			},
-			wantErrCode: types.CodePostMsgError,
+			wantErrCode: types.CodeNoAuthor,
 		},
 		"empty postID": {
 			msg: DeletePostMsg{
 				Author: "author",
 				PostID: "",
 			},
-			wantErrCode: types.CodePostMsgError,
+			wantErrCode: types.CodeNoPostID,
 		},
 	}
 	for testName, tc := range testCases {
@@ -198,12 +198,12 @@ func TestCommentAndRepost(t *testing.T) {
 		{getCommentAndRepost(t, "", "", "", ""), nil},
 		{getCommentAndRepost(t, parentAuthor, parentPostID, "", ""), nil},
 		{getCommentAndRepost(t, "", "", sourceAuthor, sourcePostID), nil},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, ""), ErrCommentAndRepostError()},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, "", sourcePostID), ErrCommentAndRepostError()},
-		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
-		{getCommentAndRepost(t, "", parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostError()},
-		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostError()},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, ""), ErrCommentAndRepostConflict()},
+		{getCommentAndRepost(t, parentAuthor, parentPostID, "", sourcePostID), ErrCommentAndRepostConflict()},
+		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
+		{getCommentAndRepost(t, "", parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
+		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostConflict()},
 	}
 	for _, cs := range cases {
 		result := cs.msg.ValidateBasic()
@@ -222,10 +222,10 @@ func TestLikeMsg(t *testing.T) {
 			ErrPostLikeWeightOverflow(10001)},
 		{NewLikeMsg("test", -10001, "author", "postID"),
 			ErrPostLikeWeightOverflow(-10001)},
-		{NewLikeMsg("", 10000, "author", "postID"), ErrPostLikeNoUsername()},
-		{NewLikeMsg("test", 10000, "", "postID"), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg("test", 10000, "author", ""), ErrPostLikeInvalidTarget()},
-		{NewLikeMsg("test", 10000, "", ""), ErrPostLikeInvalidTarget()},
+		{NewLikeMsg("", 10000, "author", "postID"), ErrNoUsername()},
+		{NewLikeMsg("test", 10000, "", "postID"), ErrInvalidTarget()},
+		{NewLikeMsg("test", 10000, "author", ""), ErrInvalidTarget()},
+		{NewLikeMsg("test", 10000, "", ""), ErrInvalidTarget()},
 	}
 
 	for _, cs := range cases {
@@ -241,17 +241,17 @@ func TestDonationMsg(t *testing.T) {
 		{NewDonateMsg("test", types.LNO("1"),
 			"author", "postID", "", memo1, true), nil},
 		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1, true),
-			ErrPostDonateNoUsername()},
+			ErrNoUsername()},
 		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1, true),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			types.ErrInvalidCoins("LNO can't be less than lower bound")},
 		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1, true),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			types.ErrInvalidCoins("LNO can't be less than lower bound")},
 		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1, true),
-			ErrPostDonateInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1, true),
-			ErrPostDonateInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1, true),
-			ErrPostDonateInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo, true),
 			ErrInvalidMemo()},
 	}
@@ -269,13 +269,13 @@ func TestReportOrUpvoteMsg(t *testing.T) {
 		{NewReportOrUpvoteMsg("test", "author", "postID", true), nil},
 		{NewReportOrUpvoteMsg("test", "author", "postID", false), nil},
 		{NewReportOrUpvoteMsg("", "author", "postID", true),
-			ErrPostReportOrUpvoteNoUsername()},
+			ErrNoUsername()},
 		{NewReportOrUpvoteMsg("test", "author", "", true),
-			ErrPostReportOrUpvoteInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewReportOrUpvoteMsg("test", "", "postID", false),
-			ErrPostReportOrUpvoteInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewReportOrUpvoteMsg("test", "", "", false),
-			ErrPostReportOrUpvoteInvalidTarget()},
+			ErrInvalidTarget()},
 	}
 
 	for _, cs := range cases {
@@ -290,11 +290,11 @@ func TestViewMsg(t *testing.T) {
 	}{
 		{NewViewMsg("test", "author", "postID"), nil},
 		{NewViewMsg("", "author", "postID"),
-			ErrPostViewNoUsername()},
+			ErrNoUsername()},
 		{NewViewMsg("test", "", "postID"),
-			ErrPostViewInvalidTarget()},
+			ErrInvalidTarget()},
 		{NewViewMsg("test", "author", ""),
-			ErrPostViewInvalidTarget()},
+			ErrInvalidTarget()},
 	}
 
 	for _, cs := range cases {

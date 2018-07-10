@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	acc "github.com/lino-network/lino/x/account"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -39,7 +40,7 @@ func TestHandlerCreatePost(t *testing.T) {
 	// test invlaid author
 	msg.Author = types.AccountKey("invalid")
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreatePostAuthorNotFound(msg.Author).Result())
+	assert.Equal(t, result, ErrAccountNotFound(msg.Author).Result())
 }
 
 func TestHandlerUpdatePost(t *testing.T) {
@@ -62,15 +63,15 @@ func TestHandlerUpdatePost(t *testing.T) {
 		},
 		"update author doesn't exist": {
 			msg:        NewUpdatePostMsg("invalid", postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostAuthorNotFound("invalid").Result(),
+			wantResult: ErrAccountNotFound("invalid").Result(),
 		},
 		"update post doesn't exist - invalid post ID": {
 			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermlink(user, "invalid")).Result(),
+			wantResult: ErrPostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 		"update post doesn't exist - invalid author": {
 			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
-			wantResult: ErrUpdatePostNotFound(types.GetPermlink(user2, postID)).Result(),
+			wantResult: ErrPostNotFound(types.GetPermlink(user2, postID)).Result(),
 		},
 		"update deleted post": {
 			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil), "1"),
@@ -131,21 +132,21 @@ func TestHandlerDeletePost(t *testing.T) {
 				Author: types.AccountKey("invalid"),
 				PostID: postID,
 			},
-			wantResult: ErrDeletePostAuthorNotFound("invalid").Result(),
+			wantResult: ErrAccountNotFound("invalid").Result(),
 		},
 		"post doesn't exist - invalid author": {
 			msg: DeletePostMsg{
 				Author: user1,
 				PostID: "postID",
 			},
-			wantResult: ErrDeletePostNotFound(types.GetPermlink(user1, postID)).Result(),
+			wantResult: ErrPostNotFound(types.GetPermlink(user1, postID)).Result(),
 		},
 		"post doesn't exist - invalid postID": {
 			msg: DeletePostMsg{
 				Author: user,
 				PostID: "invalid",
 			},
-			wantResult: ErrDeletePostNotFound(types.GetPermlink(user, "invalid")).Result(),
+			wantResult: ErrPostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 	}
 	for _, tc := range testCases {
@@ -213,7 +214,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "invalid parent"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermlink(user, msg.ParentPostID)).Result())
+	assert.Equal(t, result, ErrPostNotFound(types.GetPermlink(user, msg.ParentPostID)).Result())
 
 	// test duplicate comment
 	msg.Author = user
@@ -222,7 +223,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "TestPostID"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCreateExistPost(types.GetPermlink(msg.Author, msg.PostID)).Result())
+	assert.Equal(t, result, ErrPostAlreadyExist(types.GetPermlink(msg.Author, msg.PostID)).Result())
 
 	// test cycle comment
 	msg.Author = user
@@ -231,7 +232,7 @@ func TestHandlerCreateComment(t *testing.T) {
 	msg.ParentPostID = "newComment"
 
 	result = handler(ctx, msg)
-	assert.Equal(t, result, ErrCommentInvalidParent(types.GetPermlink(user, msg.PostID)).Result())
+	assert.Equal(t, result, ErrPostNotFound(types.GetPermlink(user, msg.PostID)).Result())
 }
 
 func TestHandlerRepost(t *testing.T) {
@@ -346,14 +347,14 @@ func TestHandlerPostLike(t *testing.T) {
 	// test invalid like target post
 	likeMsg = NewLikeMsg(string(user), -10000, string(user), "invalid")
 	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, ErrLikeNonExistPost(types.GetPermlink(user, "invalid")).Result())
+	assert.Equal(t, result, ErrPostNotFound(types.GetPermlink(user, "invalid")).Result())
 	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test invalid like username
 	likeMsg = NewLikeMsg("invalid", 10000, string(user), postID)
 	result = handler(ctx, likeMsg)
 
-	assert.Equal(t, result, ErrLikePostUserNotFound(likeMsg.Username).Result())
+	assert.Equal(t, result, ErrAccountNotFound(likeMsg.Username).Result())
 	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 }
 
@@ -426,7 +427,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"donate from insufficient saving",
 			userWithSufficientSaving, types.LNO("100"), author, false, postID,
-			ErrAccountSavingCoinNotEnough(types.GetPermlink(author, postID)).Result(),
+			acc.ErrAccountSavingCoinNotEnough().Result(),
 			model.PostMeta{},
 			accParam.RegisterFee, accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(95 * types.Decimals)),
@@ -481,7 +482,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target postID",
 			userWithSufficientSaving, types.LNO("1"), author, false, "invalid",
-			ErrDonatePostNotFound(types.GetPermlink(author, "invalid")).Result(),
+			ErrPostNotFound(types.GetPermlink(author, "invalid")).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -489,14 +490,14 @@ func TestHandlerPostDonate(t *testing.T) {
 		},
 		{"invalid target author",
 			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), false, postID,
-			ErrDonatePostNotFound(types.GetPermlink(types.AccountKey("invalid"), postID)).Result(),
+			ErrPostNotFound(types.GetPermlink(types.AccountKey("invalid"), postID)).Result(),
 			model.PostMeta{},
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(200 * types.Decimals),
 		},
 		{"donate to self",
-			author, types.LNO("100"), author, false, postID, ErrDonateToSelf(author).Result(),
+			author, types.LNO("100"), author, false, postID, ErrCannotDonateToSelf(author).Result(),
 			model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -737,9 +738,9 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		{"user3 upvote", string(user3), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
 			sdk.Result{}, accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
 		{"user1 wanna change report to upvote", string(user1), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
-			ErrReportOrUpvoteToPostExist(permlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+			ErrReportOrUpvoteAlreadyExist(permlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
 		{"user4 report to an invalid post", string(user4), true, "invalid", "invalid", baseTime - postParam.ReportOrUpvoteInterval,
-			ErrReportOrUpvotePostDoesntExist(invalidPermlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+			ErrPostNotFound(invalidPermlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
 	}
 
 	for _, tc := range testCases {

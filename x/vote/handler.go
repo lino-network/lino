@@ -37,7 +37,7 @@ func handleVoterDepositMsg(
 	ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	coin, err := types.LinoToCoin(msg.Deposit)
@@ -138,7 +138,7 @@ func handleVoterRevokeMsg(
 func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Voter) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	coin, err := types.LinoToCoin(msg.Amount)

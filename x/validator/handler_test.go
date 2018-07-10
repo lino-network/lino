@@ -66,13 +66,13 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrVotingDepositNotEnough().Result(), result)
+	assert.Equal(t, ErrInsufficientDeposit().Result(), result)
 
 	// let user register as voter
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	result2 := handler(ctx, msg)
-	assert.Equal(t, ErrCommitingDepositNotEnough().Result(), result2)
+	assert.Equal(t, ErrInsufficientDeposit().Result(), result2)
 
 	verifyList, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(verifyList.OncallValidators))
@@ -122,7 +122,7 @@ func TestRevokeNonExistUser(t *testing.T) {
 	// let user1(not exists) revoke candidancy
 	msg := NewValidatorRevokeMsg("user1")
 	result := handler(ctx, msg)
-	assert.Equal(t, model.ErrGetValidator().Result(), result)
+	assert.Equal(t, model.ErrValidatorNotFound().Result(), result)
 }
 
 // this is the same situation as we find Byzantine and replace the Byzantine
@@ -330,7 +330,7 @@ func TestCommitingDepositExceedVotingDeposit(t *testing.T) {
 	deposit := coinToString(valParam.ValidatorMinVotingDeposit.Plus(types.NewCoinFromInt64(2 * types.Decimals)))
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrCommitingDepositExceedVotingDeposit().Result(), result)
+	assert.Equal(t, ErrUnbalancedAccount().Result(), result)
 }
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
@@ -342,7 +342,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 	valKey := crypto.GenPrivKeyEd25519().PubKey()
 	msg := NewValidatorDepositMsg("qwqwndqwnd", coinToString(valParam.ValidatorMinWithdraw), valKey, "")
 	result := handler(ctx, msg)
-	assert.Equal(t, ErrUsernameNotFound().Result(), result)
+	assert.Equal(t, ErrAccountNotFound().Result(), result)
 }
 
 func TestValidatorReplacement(t *testing.T) {
@@ -489,7 +489,7 @@ func TestRegisterWithDupKey(t *testing.T) {
 	handler(ctx, msg1)
 
 	result2 := handler(ctx, msg2)
-	assert.Equal(t, ErrPubKeyHasBeenRegistered().Result(), result2)
+	assert.Equal(t, ErrValidatorPubKeyAlreadyExist().Result(), result2)
 
 }
 

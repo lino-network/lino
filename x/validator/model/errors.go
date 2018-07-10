@@ -7,22 +7,29 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func ErrGetValidator() sdk.Error {
-	return types.NewError(types.CodeValidatorStorageFailed, fmt.Sprintf("Get validator failed"))
+// not found
+func ErrValidatorNotFound() sdk.Error {
+	return types.NewError(types.CodeValidatorNotFound, fmt.Sprintf("validator is not found"))
 }
 
-func ErrSetValidatorList() sdk.Error {
-	return types.NewError(types.CodeValidatorStorageFailed, fmt.Sprintf("Set validator list failed"))
+func ErrValidatorListNotFound() sdk.Error {
+	return types.NewError(types.CodeValidatorListNotFound, fmt.Sprintf("validator list is not found"))
 }
 
-func ErrGetValidatorList() sdk.Error {
-	return types.NewError(types.CodeValidatorStorageFailed, fmt.Sprintf("Get validator list failed"))
+// marshal error
+func ErrFailedToMarshalValidator(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalValidator, fmt.Sprintf("failed to marshal validator: %s", err.Error()))
 }
 
-func ErrValidatorMarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeValidatorStorageFailed, fmt.Sprintf("Validator marshal error: %s", err.Error()))
+func ErrFailedToMarshalValidatorList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalValidatorList, fmt.Sprintf("failed to marshal validator list: %s", err.Error()))
 }
 
-func ErrValidatorUnmarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeValidatorStorageFailed, fmt.Sprintf("Validator unmarshal error: %s", err.Error()))
+// unmarshal error
+func ErrFailedToUnmarshalValidator(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalValidator, fmt.Sprintf("failed to unmarshal validator: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalValidatorList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalValidatorList, fmt.Sprintf("failed to unmarshal validator list: %s", err.Error()))
 }

@@ -32,7 +32,7 @@ func NewCoinFromBigInt(amount *big.Int) (Coin, sdk.Error) {
 	// return Coin{big.NewInt(amount)}
 	r, err := new(mathutil.Int128).SetBigInt(amount)
 	if err != nil {
-		return NewCoinFromInt64(0), sdk.ErrInvalidCoins("Invalid rat")
+		return NewCoinFromInt64(0), ErrInvalidCoins("Invalid rat")
 	}
 	return NewCoin(r), nil
 }
@@ -45,13 +45,13 @@ func NewCoin(amount mathutil.Int128) Coin {
 func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	num, success := new(big.Rat).SetString(lino)
 	if !success {
-		return NewCoinFromInt64(0), sdk.ErrInvalidCoins("Illegal LNO")
+		return NewCoinFromInt64(0), ErrInvalidCoins("Illegal LNO")
 	}
 	if num.Cmp(UpperBoundRat) > 0 {
-		return NewCoinFromInt64(0), sdk.ErrInvalidCoins("LNO overflow")
+		return NewCoinFromInt64(0), ErrInvalidCoins("LNO overflow")
 	}
 	if num.Cmp(LowerBoundRat) < 0 {
-		return NewCoinFromInt64(0), sdk.ErrInvalidCoins("LNO can't be less than lower bound")
+		return NewCoinFromInt64(0), ErrInvalidCoins("LNO can't be less than lower bound")
 	}
 	return RatToCoin(sdk.Rat{*new(big.Rat).Mul(num, big.NewRat(Decimals, 1))})
 }

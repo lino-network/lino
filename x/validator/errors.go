@@ -7,46 +7,30 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
-func ErrAbsentValidatorNotCorrect() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Absent validator index out of range"))
+func ErrAccountNotFound() sdk.Error {
+	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("username is not found"))
 }
 
-func ErrGetPubKeyFailed() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Get ABCI public key failed"))
+func ErrInsufficientDeposit() sdk.Error {
+	return types.NewError(types.CodeInsufficientDeposit, fmt.Sprintf("voting deposit fee not enough"))
 }
 
-func ErrNotInTheList() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Account not in the list"))
-}
-
-func ErrUsernameNotFound() sdk.Error {
-	return types.NewError(types.CodeUsernameNotFound, fmt.Sprintf("Username not found"))
+func ErrUnbalancedAccount() sdk.Error {
+	return types.NewError(types.CodeUnbalancedAccount, fmt.Sprintf("commiting deposit not enough"))
 }
 
 func ErrIllegalWithdraw() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Illegal withdraw"))
+	return types.NewError(types.CodeIllegalWithdraw, fmt.Sprintf("illegal withdraw"))
 }
 
-func ErrNoCoinToWithdraw() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("No coin to withdraw"))
-}
-
-func ErrCommitingDepositNotEnough() sdk.Error {
-	return types.NewError(types.CodeValidatorManagerFailed, fmt.Sprintf("Commiting deposit not enough"))
-}
-
-func ErrVotingDepositNotEnough() sdk.Error {
-	return types.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Voting Deposit fee not enough"))
-}
-
-func ErrCommitingDepositExceedVotingDeposit() sdk.Error {
-	return types.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Commiting deposit exceed voting deposit"))
+func ErrInvalidCoin() sdk.Error {
+	return types.NewError(types.CodeInvalidCoin, fmt.Sprintf("no coin to withdraw"))
 }
 
 func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }
 
-func ErrPubKeyHasBeenRegistered() sdk.Error {
-	return types.NewError(types.CodeValidatorHandlerFailed, fmt.Sprintf("Public key has been registered"))
+func ErrValidatorPubKeyAlreadyExist() sdk.Error {
+	return types.NewError(types.CodeValidatorPubKeyAlreadyExist, fmt.Sprintf("validator public key has been registered"))
 }

@@ -32,11 +32,11 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 func handleDeveloperRegisterMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	if dm.DoesDeveloperExist(ctx, msg.Username) {
-		return ErrDeveloperExist(msg.Username).Result()
+		return ErrDeveloperAlreadyExist(msg.Username).Result()
 	}
 
 	deposit, err := types.LinoToCoin(msg.Deposit)
@@ -89,7 +89,7 @@ func handleGrantPermissionMsg(
 		return ErrDeveloperNotFound().Result()
 	}
 	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	if err := am.AuthorizePermission(
@@ -102,7 +102,7 @@ func handleGrantPermissionMsg(
 func handleRevokePermissionMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg RevokePermissionMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrUsernameNotFound().Result()
+		return ErrAccountNotFound().Result()
 	}
 
 	if err := am.RevokePermission(

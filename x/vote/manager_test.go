@@ -47,7 +47,7 @@ func TestAddVoter(t *testing.T) {
 		coin         types.Coin
 		expectResult sdk.Error
 	}{
-		{user1, types.NewCoinFromInt64(100 * types.Decimals), ErrRegisterFeeNotEnough()},
+		{user1, types.NewCoinFromInt64(100 * types.Decimals), ErrInsufficientDeposit()},
 		{user1, param.VoterMinDeposit, nil},
 	}
 

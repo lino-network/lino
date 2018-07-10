@@ -43,11 +43,11 @@ func (ds DeveloperStorage) GetDeveloper(
 	store := ctx.KVStore(ds.key)
 	providerByte := store.Get(GetDeveloperKey(accKey))
 	if providerByte == nil {
-		return nil, ErrGetDeveloper()
+		return nil, ErrDeveloperNotFound()
 	}
 	provider := new(Developer)
 	if err := ds.cdc.UnmarshalJSON(providerByte, provider); err != nil {
-		return nil, ErrDeveloperUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalDeveloper(err)
 	}
 	return provider, nil
 }
@@ -57,7 +57,7 @@ func (ds DeveloperStorage) SetDeveloper(
 	store := ctx.KVStore(ds.key)
 	developerByte, err := ds.cdc.MarshalJSON(*developer)
 	if err != nil {
-		return ErrDeveloperMarshalError(err)
+		return ErrFailedToMarshalDeveloper(err)
 	}
 	store.Set(GetDeveloperKey(accKey), developerByte)
 	return nil
@@ -73,11 +73,11 @@ func (ds DeveloperStorage) GetDeveloperList(ctx sdk.Context) (*DeveloperList, sd
 	store := ctx.KVStore(ds.key)
 	listByte := store.Get(GetDeveloperListKey())
 	if listByte == nil {
-		return nil, ErrGetDeveloperList()
+		return nil, ErrDeveloperListNotFound()
 	}
 	lst := new(DeveloperList)
 	if err := ds.cdc.UnmarshalJSON(listByte, lst); err != nil {
-		return nil, ErrDeveloperUnmarshalError(err)
+		return nil, ErrFailedToUnmarshalDeveloperList(err)
 	}
 	return lst, nil
 }
@@ -86,7 +86,7 @@ func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList)
 	store := ctx.KVStore(ds.key)
 	listByte, err := ds.cdc.MarshalJSON(*lst)
 	if err != nil {
-		return ErrSetDeveloperList()
+		return ErrFailedToMarshalDeveloperList(err)
 	}
 	store.Set(GetDeveloperListKey(), listByte)
 	return nil

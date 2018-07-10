@@ -52,7 +52,7 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, &model.AccountBank{}); err != nil {
-		return ErrAccountCreateFailed(username)
+		return err
 	}
 
 	accountInfo := &model.AccountInfo{
@@ -64,7 +64,7 @@ func (accManager AccountManager) CreateAccount(
 		PostKey:         postKey,
 	}
 	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
-		return ErrAccountCreateFailed(username)
+		return err
 	}
 
 	accountMeta := &model.AccountMeta{
@@ -72,19 +72,19 @@ func (accManager AccountManager) CreateAccount(
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
-		return ErrAccountCreateFailed(username)
+		return err
 	}
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
-		return ErrAccountCreateFailed(username)
+		return err
 	}
 	if err := accManager.AddSavingCoinWithFullStake(
 		ctx, username, accParams.RegisterFee, referrer,
 		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
-		return err
+		return ErrAddSavingCoinWithFullStake()
 	}
 	if err := accManager.AddSavingCoin(
 		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
-		return err
+		return ErrAddSavingCoin()
 	}
 	return nil
 }
@@ -94,7 +94,7 @@ func (accManager AccountManager) GetStake(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.NewCoinFromInt64(0), ErrGetStake(username)
+		return types.NewCoinFromInt64(0), err
 	}
 	pendingStakeQueue, err := accManager.storage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
@@ -122,14 +122,14 @@ func (accManager AccountManager) AddSavingCoin(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
 	if !accManager.DoesAccountExist(ctx, username) {
-		return ErrAddCoinAccountNotFound(username)
+		return ErrAccountNotFound(username)
 	}
 	if coin.IsZero() {
 		return nil
 	}
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrAddCoinToAccountSaving(username)
+		return err
 	}
 
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
@@ -157,11 +157,11 @@ func (accManager AccountManager) AddSavingCoin(
 		Coin:      coin,
 	}
 	if err := accManager.addPendingStakeToQueue(ctx, username, bank, pendingStake); err != nil {
-		return ErrAddCoinToAccountSaving(username)
+		return err
 	}
 
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return ErrAddCoinToAccountSaving(username)
+		return err
 	}
 	return nil
 }
@@ -170,14 +170,14 @@ func (accManager AccountManager) AddSavingCoinWithFullStake(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
 	if !accManager.DoesAccountExist(ctx, username) {
-		return ErrAddCoinAccountNotFound(username)
+		return ErrAccountNotFound(username)
 	}
 	if coin.IsZero() {
 		return nil
 	}
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrAddCoinToAccountSaving(username)
+		return err
 	}
 
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
@@ -196,7 +196,7 @@ func (accManager AccountManager) AddSavingCoinWithFullStake(
 	bank.NumOfTx++
 
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return ErrAddCoinToAccountSaving(username)
+		return err
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	memo string, detailType types.TransferDetailType) (err sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrMinusCoinToAccount(username)
+		return err
 	}
 
 	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
@@ -289,7 +289,7 @@ func (accManager AccountManager) MinusSavingCoin(
 
 	if err := accManager.storage.SetBankFromAccountKey(
 		ctx, username, accountBank); err != nil {
-		return ErrMinusCoinToAccount(username)
+		return err
 	}
 	return nil
 }
@@ -315,7 +315,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	if err := accManager.storage.SetBalanceHistory(
 		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
 		balanceHistory); err != nil {
-		return ErrAddBalanceHistory(username)
+		return err
 	}
 
 	return nil
@@ -325,7 +325,7 @@ func (accManager AccountManager) UpdateJSONMeta(
 	ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrUpdateJSONMeta(username)
+		return err
 	}
 	accountMeta.JSONMeta = JSONMeta
 
@@ -372,7 +372,7 @@ func (accManager AccountManager) GetSavingFromBank(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return types.Coin{}, ErrGetBankSaving(username)
+		return types.Coin{}, ErrGetSavingFromBank(err)
 	}
 	return accountBank.Saving, nil
 }
@@ -381,7 +381,7 @@ func (accManager AccountManager) GetSequence(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, ErrGetSequence(username)
+		return 0, ErrGetSequence(err)
 	}
 	return accountMeta.Sequence, nil
 }
@@ -391,7 +391,7 @@ func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return 0, ErrGetLastReportOrUpvoteAt(username)
+		return 0, ErrGetLastReportOrUpvoteAt(err)
 	}
 	return accountMeta.LastReportOrUpvoteAt, nil
 }
@@ -401,7 +401,7 @@ func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrGetLastReportOrUpvoteAt(username)
+		return ErrUpdateLastReportOrUpvoteAt(err)
 	}
 	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
@@ -411,7 +411,7 @@ func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return nil, ErrGetFrozenMoneyList(username)
+		return nil, ErrGetFrozenMoneyList(err)
 	}
 	return accountBank.FrozenMoneyList, nil
 }
@@ -420,11 +420,11 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
-		return ErrGetSequence(username)
+		return ErrIncreaseSequenceByOne(err)
 	}
 	accountMeta.Sequence += 1
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
-		return ErrIncreaseSequenceByOne(username)
+		return err
 	}
 	return nil
 }
@@ -434,14 +434,14 @@ func (accManager AccountManager) AddIncomeAndReward(
 	originIncome, friction, actualReward types.Coin) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrAddIncomeAndReward(username)
+		return err
 	}
 	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
 	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
 	reward.ActualReward = reward.ActualReward.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return ErrAddIncomeAndReward(username)
+		return err
 	}
 	return nil
 }
@@ -450,15 +450,15 @@ func (accManager AccountManager) ClaimReward(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
-		return ErrClaimReward(username)
+		return err
 	}
 	if err := accManager.AddSavingCoin(
 		ctx, username, reward.UnclaimReward, "", "", types.ClaimReward); err != nil {
-		return ErrClaimReward(username)
+		return err
 	}
 	reward.UnclaimReward = types.NewCoinFromInt64(0)
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return ErrClaimReward(username)
+		return err
 	}
 	return nil
 }
@@ -521,11 +521,11 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, me)
 	if err != nil {
-		return ErrCheckUserTPSCapacity(me)
+		return err
 	}
 	stake, err := accManager.GetStake(ctx, me)
 	if err != nil {
-		return ErrCheckUserTPSCapacity(me)
+		return err
 	}
 
 	bandwidthParams, err := accManager.paramHolder.GetBandwidthParam(ctx)
@@ -561,7 +561,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivityAt = ctx.BlockHeader().Time
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
-		return ErrCheckUserTPSCapacity(me)
+		return err
 	}
 	return nil
 }
@@ -641,7 +641,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
 	permission types.Permission) (types.AccountKey, sdk.Error) {
 	if !accManager.DoesAccountExist(ctx, me) {
-		return "", ErrUsernameNotFound(me)
+		return "", ErrAccountNotFound(me)
 	}
 	// if permission is master, only master key can sign for the msg
 	if permission == types.MasterPermission {
@@ -698,7 +698,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	// if user doesn't use his own key, check his grant user pubkey
 	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, signKey)
 	if err != nil {
-		return "", ErrCheckAuthenticatePubKeyOwner(me)
+		return "", err
 	}
 	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time {
 		accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
@@ -712,7 +712,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if permission == types.MicropaymentPermission {
 		if grantPubKey.LeftTimes <= 0 {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrGrantKeyExpired(me)
+			return "", ErrGrantKeyNoLeftTimes(me)
 		}
 		micropaymentKey, err := accManager.GetMicropaymentKey(ctx, grantPubKey.Username)
 		if err != nil {
@@ -720,7 +720,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		if !reflect.DeepEqual(signKey, micropaymentKey) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrGrantKeyMismatch(grantPubKey.Username)
+			return "", ErrMicropaymentGrantKeyMismatch(grantPubKey.Username)
 		}
 		grantPubKey.LeftTimes--
 		if err := accManager.storage.SetGrantPubKey(ctx, me, signKey, grantPubKey); err != nil {
@@ -735,7 +735,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		if !reflect.DeepEqual(signKey, postKey) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrGrantKeyMismatch(grantPubKey.Username)
+			return "", ErrPostGrantKeyMismatch(grantPubKey.Username)
 		}
 		return grantPubKey.Username, nil
 	}
@@ -842,7 +842,7 @@ func (accManager AccountManager) AddFrozenMoney(
 	amount types.Coin, start, interval, times int64) sdk.Error {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return ErrUpdateFrozenMoney(username)
+		return err
 	}
 	accManager.cleanExpiredFrozenMoney(ctx, accountBank)
 	frozenMoney := model.FrozenMoney{

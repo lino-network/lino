@@ -8,23 +8,29 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// // Error constructors
-func ErrGetDeveloper() sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Get developer failed"))
+// not found error
+func ErrDeveloperNotFound() sdk.Error {
+	return types.NewError(types.CodeDeveloperNotFound, fmt.Sprintf("developer is not found"))
 }
 
-func ErrSetDeveloperList() sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Set developer list failed"))
+func ErrDeveloperListNotFound() sdk.Error {
+	return types.NewError(types.CodeDeveloperListNotFound, fmt.Sprintf("developer list is not found"))
 }
 
-func ErrGetDeveloperList() sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Get developer list failed"))
+// marshal error
+func ErrFailedToMarshalDeveloper(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalDeveloper, fmt.Sprintf("failed to marshal developer: %s", err.Error()))
 }
 
-func ErrDeveloperMarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Developer marshal error: %s", err.Error()))
+func ErrFailedToMarshalDeveloperList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalDeveloperList, fmt.Sprintf("failed to marshal developer list: %s", err.Error()))
 }
 
-func ErrDeveloperUnmarshalError(err error) sdk.Error {
-	return types.NewError(types.CodeDeveloperManagerFailed, fmt.Sprintf("Developer unmarshal error: %s", err.Error()))
+// unmarshal error
+func ErrFailedToUnmarshalDeveloper(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalDeveloper, fmt.Sprintf("failed to unmarshal developer: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalDeveloperList(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalDeveloperList, fmt.Sprintf("failed to unmarshal developer list: %s", err.Error()))
 }
