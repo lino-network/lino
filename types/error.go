@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -12,5 +10,5 @@ func NewError(code sdk.CodeType, msg string) sdk.Error {
 }
 
 func ErrInvalidCoins(msg string) sdk.Error {
-	return NewError(CodeInvalidCoins, fmt.Sprintf("%s", msg))
+	return NewError(CodeInvalidCoins, msg)
 }
