@@ -157,7 +157,7 @@ func TestTransferMsg(t *testing.T) {
 				Amount:   types.LNO("-1900"),
 				Memo:     memo1,
 			},
-			wantCode: sdk.CodeInvalidCoins,
+			wantCode: types.CodeInvalidCoins,
 		},
 		"invalid transfer -  memo is invalid": {
 			msg: TransferMsg{

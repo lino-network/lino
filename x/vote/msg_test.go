@@ -15,7 +15,7 @@ func TestVoterDepositMsg(t *testing.T) {
 	}{
 		{NewVoterDepositMsg("user1", "1"), nil},
 		{NewVoterDepositMsg("", "1"), ErrInvalidUsername()},
-		{NewVoterDepositMsg("user1", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewVoterDepositMsg("user1", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -31,7 +31,7 @@ func TestVoterWithdrawMsg(t *testing.T) {
 	}{
 		{NewVoterWithdrawMsg("user1", "1"), nil},
 		{NewVoterWithdrawMsg("", "1"), ErrInvalidUsername()},
-		{NewVoterWithdrawMsg("user1", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewVoterWithdrawMsg("user1", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -64,7 +64,7 @@ func TestDelegateMsg(t *testing.T) {
 		{NewDelegateMsg("", "user2", "1"), ErrInvalidUsername()},
 		{NewDelegateMsg("user1", "", "1"), ErrInvalidUsername()},
 		{NewDelegateMsg("", "", "1"), ErrInvalidUsername()},
-		{NewDelegateMsg("user1", "user2", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDelegateMsg("user1", "user2", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -97,7 +97,7 @@ func TestDelegatorWithdrawMsg(t *testing.T) {
 	}{
 		{NewDelegatorWithdrawMsg("user1", "user2", "1"), nil},
 		{NewDelegatorWithdrawMsg("", "", "1"), ErrInvalidUsername()},
-		{NewDelegatorWithdrawMsg("user1", "user2", "-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{NewDelegatorWithdrawMsg("user1", "user2", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {

@@ -78,16 +78,16 @@ func TestLNOToCoin(t *testing.T) {
 		{"0.0001", NewCoinFromInt64(0.0001 * Decimals), nil},
 		{"0.00001", NewCoinFromInt64(0.00001 * Decimals), nil},
 		{"0.000001", NewCoinFromInt64(0),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			ErrInvalidCoins("LNO can't be less than lower bound")},
 		{"0", NewCoinFromInt64(0),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			ErrInvalidCoins("LNO can't be less than lower bound")},
 		{"-1", NewCoinFromInt64(0),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			ErrInvalidCoins("LNO can't be less than lower bound")},
 		{"-0.1", NewCoinFromInt64(0),
-			sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			ErrInvalidCoins("LNO can't be less than lower bound")},
 		{"92233720368548", NewCoinFromInt64(0),
-			sdk.ErrInvalidCoins("LNO overflow")},
-		{"1$", NewCoinFromInt64(0), sdk.ErrInvalidCoins("Illegal LNO")},
+			ErrInvalidCoins("LNO overflow")},
+		{"1$", NewCoinFromInt64(0), ErrInvalidCoins("Illegal LNO")},
 	}
 
 	for _, tc := range cases {

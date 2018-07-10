@@ -18,6 +18,7 @@ const (
 	CodeInvalidCoin         sdk.CodeType = 106
 	CodePostNotFound        sdk.CodeType = 107
 	CodeDeveloperNotFound   sdk.CodeType = 108
+	CodeInvalidCoins        sdk.CodeType = 109
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150

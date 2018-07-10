@@ -17,7 +17,7 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 		{NewDeveloperRegisterMsg("user1", "10"), nil},
 		{NewDeveloperRegisterMsg("", "10"), ErrInvalidUsername()},
 		{NewDeveloperRegisterMsg("user1",
-			"-1"), sdk.ErrInvalidCoins("LNO can't be less than lower bound")},
+			"-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
