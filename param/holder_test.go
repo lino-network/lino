@@ -201,6 +201,7 @@ func TestAccountParam(t *testing.T) {
 		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
 		BalanceHistoryBundleSize:      100,
 		MaximumMicropaymentGrantTimes: 20,
+		RewardHistoryBundleSize:       100,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -295,6 +296,7 @@ func TestInitParam(t *testing.T) {
 		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
 		BalanceHistoryBundleSize:      100,
 		MaximumMicropaymentGrantTimes: 20,
+		RewardHistoryBundleSize:       100,
 	}
 	postParam := PostParam{
 		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),

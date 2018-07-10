@@ -126,6 +126,37 @@ func TestAccountBalanceHistory(t *testing.T) {
 	assert.Equal(t, balanceHistory, *resultPtr, "Account balance history should be equal")
 }
 
+func TestAccountRewardHistory(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	rewardHistory := RewardHistory{[]RewardDetail{RewardDetail{}}}
+	err := as.SetRewardHistory(ctx, types.AccountKey("test"), 0, &rewardHistory)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetRewardHistory(ctx, types.AccountKey("test"), 0)
+	assert.Nil(t, err)
+	assert.Equal(t, rewardHistory, *resultPtr, "Account reward history should be equal")
+
+	err = as.SetRewardHistory(ctx, types.AccountKey("test"), 1, &rewardHistory)
+	assert.Nil(t, err)
+
+	resultPtr, err = as.GetRewardHistory(ctx, types.AccountKey("test"), 1)
+	assert.Nil(t, err)
+	assert.Equal(t, rewardHistory, *resultPtr, "Account reward history should be equal")
+
+	// delete history
+	as.DeleteRewardHistory(ctx, types.AccountKey("test"), 0)
+
+	resultPtr, err = as.GetRewardHistory(ctx, types.AccountKey("test"), 0)
+	assert.Nil(t, err)
+	assert.Nil(t, resultPtr)
+
+	resultPtr, err = as.GetRewardHistory(ctx, types.AccountKey("test"), 1)
+	assert.Nil(t, err)
+	assert.Equal(t, rewardHistory, *resultPtr, "Account reward history should be equal")
+}
+
 func TestAccountGrantPubkey(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()

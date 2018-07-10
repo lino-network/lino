@@ -158,6 +158,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
 		BalanceHistoryBundleSize:      100,
 		MaximumMicropaymentGrantTimes: 20,
+		RewardHistoryBundleSize:       100,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err

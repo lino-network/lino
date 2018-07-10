@@ -54,7 +54,7 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	if err := am.AddIncomeAndReward(
-		ctx, event.PostAuthor, event.Original, event.Friction, reward); err != nil {
+		ctx, event.PostAuthor, event.Original, event.Friction, reward, event.Consumer, event.PostID); err != nil {
 		return err
 	}
 	return nil

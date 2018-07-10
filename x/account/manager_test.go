@@ -64,6 +64,14 @@ func checkAccountReward(
 	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
 }
 
+func checkRewardHistory(
+	t *testing.T, ctx sdk.Context, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
+	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
+	assert.Nil(t, err)
+	assert.Equal(t, wantNumOfReward, len(rewardHistoryPtr.Details), "accout reward should be equal")
+}
+
 func TestDoesAccountExist(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	assert.False(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
@@ -877,19 +885,22 @@ func TestAccountReward(t *testing.T) {
 
 	createTestAccount(ctx, am, string(accKey))
 
-	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300)
+	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300, "donor1", "post1")
 	assert.Nil(t, err)
 	reward := model.Reward{c500, c200, c300, c300}
 	checkAccountReward(t, ctx, accKey, reward)
-	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200)
+	checkRewardHistory(t, ctx, accKey, 0, 1)
+	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200, "donor2", "post1")
 	assert.Nil(t, err)
 	reward = model.Reward{c1000, c500, c500, c500}
 	checkAccountReward(t, ctx, accKey, reward)
+	checkRewardHistory(t, ctx, accKey, 0, 2)
 
 	bank := model.AccountBank{
-		Saving:  accParam.RegisterFee,
-		NumOfTx: 1,
-		Stake:   accParam.RegisterFee,
+		Saving:      accParam.RegisterFee,
+		NumOfTx:     1,
+		NumOfReward: 2,
+		Stake:       accParam.RegisterFee,
 	}
 	checkBankKVByUsername(t, ctx, accKey, bank)
 
@@ -897,6 +908,7 @@ func TestAccountReward(t *testing.T) {
 	assert.Nil(t, err)
 	bank.Saving = accParam.RegisterFee.Plus(c500)
 	bank.NumOfTx = 2
+	bank.NumOfReward = 0
 	checkBankKVByUsername(t, ctx, accKey, bank)
 	reward = model.Reward{c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)

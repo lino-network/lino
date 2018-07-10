@@ -431,7 +431,7 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 
 func (accManager AccountManager) AddIncomeAndReward(
 	ctx sdk.Context, username types.AccountKey,
-	originIncome, friction, actualReward types.Coin) sdk.Error {
+	originIncome, friction, actualReward types.Coin, consumer types.AccountKey, postID string) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
 		return err
@@ -443,6 +443,59 @@ func (accManager AccountManager) AddIncomeAndReward(
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
 		return err
 	}
+
+	// add reward detail
+	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	rewardDetail := model.RewardDetail{
+		OriginalIncome: originIncome,
+		FrictionIncome: friction,
+		ActualReward:   actualReward,
+		Consumer:       consumer,
+		PostID:         postID,
+	}
+	if err := accManager.AddRewardHistory(ctx, username, bank.NumOfReward,
+		rewardDetail); err != nil {
+		return err
+	}
+
+	bank.NumOfReward++
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (accManager AccountManager) AddRewardHistory(
+	ctx sdk.Context, username types.AccountKey, numOfReward int64,
+	rewardDetail model.RewardDetail) sdk.Error {
+	// set reward history
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	slotNum := numOfReward / accParams.RewardHistoryBundleSize
+
+	rewardHistory, err := accManager.storage.GetRewardHistory(ctx, username, slotNum)
+	if err != nil {
+		return err
+	}
+	if rewardHistory == nil {
+		rewardHistory = &model.RewardHistory{Details: []model.RewardDetail{}}
+	}
+
+	rewardHistory.Details = append(rewardHistory.Details, rewardDetail)
+
+	if err := accManager.storage.SetRewardHistory(
+		ctx, username, slotNum, rewardHistory); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -460,6 +513,37 @@ func (accManager AccountManager) ClaimReward(
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
 		return err
 	}
+
+	// clear reward history
+	if err := accManager.ClearRewardHistory(ctx, username); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (accManager AccountManager) ClearRewardHistory(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	slotNum := bank.NumOfReward / accParams.RewardHistoryBundleSize
+	for i := int64(0); i <= slotNum; i++ {
+		accManager.storage.DeleteRewardHistory(ctx, username, i)
+	}
+
+	bank.NumOfReward = 0
+	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
+		return err
+	}
+
 	return nil
 }
 
