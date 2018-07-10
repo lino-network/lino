@@ -431,7 +431,7 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 
 func (accManager AccountManager) AddIncomeAndReward(
 	ctx sdk.Context, username types.AccountKey,
-	originIncome, friction, actualReward types.Coin, consumer types.AccountKey, postID string) sdk.Error {
+	originIncome, friction, actualReward types.Coin, consumer, postAuthor types.AccountKey, postID string) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
 		return err
@@ -455,6 +455,7 @@ func (accManager AccountManager) AddIncomeAndReward(
 		FrictionIncome: friction,
 		ActualReward:   actualReward,
 		Consumer:       consumer,
+		PostAuthor:     postAuthor,
 		PostID:         postID,
 	}
 	if err := accManager.AddRewardHistory(ctx, username, bank.NumOfReward,

@@ -885,12 +885,12 @@ func TestAccountReward(t *testing.T) {
 
 	createTestAccount(ctx, am, string(accKey))
 
-	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300, "donor1", "post1")
+	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300, "donor1", "postAutho1", "post1")
 	assert.Nil(t, err)
 	reward := model.Reward{c500, c200, c300, c300}
 	checkAccountReward(t, ctx, accKey, reward)
 	checkRewardHistory(t, ctx, accKey, 0, 1)
-	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200, "donor2", "post1")
+	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200, "donor2", "postAuthor1", "post1")
 	assert.Nil(t, err)
 	reward = model.Reward{c1000, c500, c500, c500}
 	checkAccountReward(t, ctx, accKey, reward)

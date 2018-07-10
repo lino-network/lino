@@ -97,6 +97,7 @@ type RewardDetail struct {
 	FrictionIncome types.Coin       `json:"friction_income"`
 	ActualReward   types.Coin       `json:"actual_reward"`
 	Consumer       types.AccountKey `json:"consumer"`
+	PostAuthor     types.AccountKey `json:"post_author"`
 	PostID         string           `json:"post_id`
 }
 
