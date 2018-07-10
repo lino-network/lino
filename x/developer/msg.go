@@ -16,8 +16,11 @@ var _ types.Msg = GrantPermissionMsg{}
 var _ types.Msg = RevokePermissionMsg{}
 
 type DeveloperRegisterMsg struct {
-	Username types.AccountKey `json:"username"`
-	Deposit  types.LNO        `json:"deposit"`
+	Username    types.AccountKey `json:"username"`
+	Deposit     types.LNO        `json:"deposit"`
+	Website     string           `json:"website"`
+	Description string           `json:"description"`
+	AppMetaData string           `json:"app_meta_data"`
 }
 
 type DeveloperRevokeMsg struct {
@@ -39,10 +42,13 @@ type RevokePermissionMsg struct {
 }
 
 // DeveloperRegisterMsg Msg Implementations
-func NewDeveloperRegisterMsg(developer string, deposit types.LNO) DeveloperRegisterMsg {
+func NewDeveloperRegisterMsg(developer string, deposit types.LNO, website string, description string, appMetaData string) DeveloperRegisterMsg {
 	return DeveloperRegisterMsg{
-		Username: types.AccountKey(developer),
-		Deposit:  deposit,
+		Username:    types.AccountKey(developer),
+		Deposit:     deposit,
+		Website:     website,
+		Description: description,
+		AppMetaData: appMetaData,
 	}
 }
 

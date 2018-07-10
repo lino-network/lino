@@ -32,7 +32,8 @@ func (dm DeveloperManager) DoesDeveloperExist(ctx sdk.Context, username types.Ac
 }
 
 func (dm DeveloperManager) RegisterDeveloper(
-	ctx sdk.Context, username types.AccountKey, deposit types.Coin) sdk.Error {
+	ctx sdk.Context, username types.AccountKey, deposit types.Coin,
+	website, description, appMetaData string) sdk.Error {
 	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	if err != nil {
 		return err
@@ -43,8 +44,11 @@ func (dm DeveloperManager) RegisterDeveloper(
 	}
 
 	developer := &model.Developer{
-		Username: username,
-		Deposit:  deposit,
+		Username:    username,
+		Deposit:     deposit,
+		Website:     website,
+		Description: description,
+		AppMetaData: appMetaData,
 	}
 	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
 		return err

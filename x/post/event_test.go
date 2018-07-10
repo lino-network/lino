@@ -16,9 +16,9 @@ func TestRewardEvent(t *testing.T) {
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1 := createTestAccount(t, ctx, am, "user1")
-	err := dm.RegisterDeveloper(ctx, "LinoApp1", types.NewCoinFromInt64(1000000*types.Decimals))
+	err := dm.RegisterDeveloper(ctx, "LinoApp1", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
 	assert.Nil(t, err)
-	err = dm.RegisterDeveloper(ctx, "LinoApp2", types.NewCoinFromInt64(1000000*types.Decimals))
+	err = dm.RegisterDeveloper(ctx, "LinoApp2", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
 	assert.Nil(t, err)
 
 	testCases := []struct {

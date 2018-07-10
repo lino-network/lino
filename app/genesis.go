@@ -61,8 +61,11 @@ type GenesisAccount struct {
 
 // register developer in genesis phase
 type GenesisAppDeveloper struct {
-	Name    string    `json:"name"`
-	Deposit types.LNO `json:"deposit"`
+	Name        string    `json:"name"`
+	Deposit     types.LNO `json:"deposit"`
+	Website     string    `json:"web_site"`
+	Description string    `json:"description"`
+	AppMetaData string    `json:"app_meta_data"`
 }
 
 // register infra provider in genesis phase
@@ -131,8 +134,11 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
-		Name:    "lino",
-		Deposit: "1000000",
+		Name:        "lino",
+		Deposit:     "1000000",
+		Website:     "https://lino.network/",
+		Description: "",
+		AppMetaData: "",
 	}
 	genesisState.Developers = append(genesisState.Developers, genesisAppDeveloper)
 	genesisInfraProvider := GenesisInfraProvider{

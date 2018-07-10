@@ -296,7 +296,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	}
 
 	if err := lb.developerManager.RegisterDeveloper(
-		ctx, types.AccountKey(developer.Name), coin); err != nil {
+		ctx, types.AccountKey(developer.Name), coin, developer.Website,
+		developer.Description, developer.AppMetaData); err != nil {
 		return err
 	}
 	return nil

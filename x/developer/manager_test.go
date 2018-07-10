@@ -14,8 +14,8 @@ func TestReportConsumption(t *testing.T) {
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
-	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit)
-	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit)
+	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit, "", "", "")
+	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit, "", "", "")
 
 	con1 := types.NewCoinFromInt64(100)
 	dm.ReportConsumption(ctx, "developer1", con1)
