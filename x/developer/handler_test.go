@@ -21,7 +21,7 @@ func TestRegistertBasic(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
 	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
-	msg := NewDeveloperRegisterMsg("developer1", deposit)
+	msg := NewDeveloperRegisterMsg("developer1", deposit, "", "", "")
 	res := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, res)
 
@@ -46,7 +46,7 @@ func TestRevokeBasic(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
 	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
-	msg := NewDeveloperRegisterMsg("developer1", deposit)
+	msg := NewDeveloperRegisterMsg("developer1", deposit, "", "", "")
 	handler(ctx, msg)
 
 	msg2 := NewDeveloperRevokeMsg("developer1")
@@ -110,7 +110,7 @@ func TestGrantPermissionMsg(t *testing.T) {
 	createTestAccount(ctx, am, "user1", minBalance)
 	createTestAccount(ctx, am, "user2", minBalance)
 	createTestAccount(ctx, am, "app", minBalance)
-	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit)
+	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 
 	testCases := []struct {
@@ -153,7 +153,7 @@ func TestRevokePermissionMsg(t *testing.T) {
 	createTestAccount(ctx, am, "user1", accParam.RegisterFee)
 	createTestAccount(ctx, am, "user2", minBalance)
 	appPriv := createTestAccount(ctx, am, "app", minBalance)
-	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit)
+	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 	err = am.AuthorizePermission(
 		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, 10, types.PostPermission)

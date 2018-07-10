@@ -420,7 +420,7 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 	for testName, cs := range cases {
 		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		err := lb.developerManager.RegisterDeveloper(ctx, "Lino", types.NewCoinFromInt64(1000000*types.Decimals))
+		err := lb.developerManager.RegisterDeveloper(ctx, "Lino", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
 		assert.Nil(t, err)
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{

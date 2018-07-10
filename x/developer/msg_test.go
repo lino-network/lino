@@ -14,10 +14,10 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 		developerRegisterMsg DeveloperRegisterMsg
 		expectError          sdk.Error
 	}{
-		{NewDeveloperRegisterMsg("user1", "10"), nil},
-		{NewDeveloperRegisterMsg("", "10"), ErrInvalidUsername()},
+		{NewDeveloperRegisterMsg("user1", "10", "", "", ""), nil},
+		{NewDeveloperRegisterMsg("", "10", "", "", ""), ErrInvalidUsername()},
 		{NewDeveloperRegisterMsg("user1",
-			"-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
+			"-1", "", "", ""), types.ErrInvalidCoins("LNO can't be less than lower bound")},
 	}
 
 	for _, cs := range cases {
@@ -93,7 +93,7 @@ func TestMsgPermission(t *testing.T) {
 		expectPermission types.Permission
 	}{
 		"developer register msg": {
-			NewDeveloperRegisterMsg("test", types.LNO("1")),
+			NewDeveloperRegisterMsg("test", types.LNO("1"), "", "", ""),
 			types.TransactionPermission},
 		"developer revoke msg": {
 			NewDeveloperRevokeMsg("test"),
