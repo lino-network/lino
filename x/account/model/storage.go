@@ -22,6 +22,7 @@ var (
 	AccountRelationshipSubstore      = []byte{0x07}
 	AccountBalanceHistorySubstore    = []byte{0x08}
 	AccountGrantPubKeySubstore       = []byte{0x09}
+	AccountRewardHistorySubstore     = []byte{0x0a}
 )
 
 type AccountStorage struct {
@@ -315,6 +316,39 @@ func (as AccountStorage) SetBalanceHistory(
 	return nil
 }
 
+// GetRewardHistory returns the history of rewards that a user received.
+func (as AccountStorage) GetRewardHistory(
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64) (*RewardHistory, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	rewardHistoryBytes := store.Get(getRewardHistoryKey(me, bucketSlot))
+	if rewardHistoryBytes == nil {
+		return nil, nil
+	}
+	history := new(RewardHistory)
+	if err := as.cdc.UnmarshalJSON(rewardHistoryBytes, history); err != nil {
+		return nil, ErrFailedToUnmarshalRewardHistory(err)
+	}
+	return history, nil
+}
+
+// SetRewardHistory sets reward history.
+func (as AccountStorage) SetRewardHistory(
+	ctx sdk.Context, me types.AccountKey, bucketSlot int64, history *RewardHistory) sdk.Error {
+	store := ctx.KVStore(as.key)
+	historyBytes, err := as.cdc.MarshalJSON(*history)
+	if err != nil {
+		return ErrFailedToMarshalRewardHistory(err)
+	}
+	store.Set(getRewardHistoryKey(me, bucketSlot), historyBytes)
+	return nil
+}
+
+func (as AccountStorage) DeleteRewardHistory(ctx sdk.Context, me types.AccountKey, bucketSlot int64) {
+	store := ctx.KVStore(as.key)
+	store.Delete(getRewardHistoryKey(me, bucketSlot))
+	return
+}
+
 func GetAccountInfoKey(accKey types.AccountKey) []byte {
 	return append(AccountInfoSubstore, accKey...)
 }
@@ -375,4 +409,12 @@ func getBalanceHistoryPrefix(me types.AccountKey) []byte {
 
 func getBalanceHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
 	return strconv.AppendInt(getBalanceHistoryPrefix(me), bucketSlot, 10)
+}
+
+func getRewardHistoryPrefix(me types.AccountKey) []byte {
+	return append(append(AccountRewardHistorySubstore, me...), types.KeySeparator...)
+}
+
+func getRewardHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
+	return strconv.AppendInt(getRewardHistoryPrefix(me), bucketSlot, 10)
 }

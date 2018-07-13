@@ -74,6 +74,10 @@ func ErrFailedToMarshalBalanceHistory(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalBalanceHistory, fmt.Sprintf("failed to marshal balance history: %s", err.Error()))
 }
 
+func ErrFailedToMarshalRewardHistory(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalRewardHistory, fmt.Sprintf("failed to marshal reward history: %s", err.Error()))
+}
+
 // unmarshal error
 func ErrFailedToUnmarshalAccountInfo(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalAccountInfo, fmt.Sprintf("failed to unmarshal account info: %s", err.Error()))
@@ -105,4 +109,8 @@ func ErrFailedToUnmarshalRelationship(err error) sdk.Error {
 
 func ErrFailedToUnmarshalBalanceHistory(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalBalanceHistory, fmt.Sprintf("failed to unmarshal balance history: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalRewardHistory(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalRewardHistory, fmt.Sprintf("failed to unmarshal reward history: %s", err.Error()))
 }

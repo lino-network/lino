@@ -270,7 +270,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 		return types.NewCoinFromInt64(0), err
 	}
 
-	// consumptionRatio = this consumption * penalty score) / (total consumption in 7 days window)
+	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
 	consumptionRatio :=
 		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
 			consumptionMeta.ConsumptionWindow.ToRat())

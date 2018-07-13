@@ -97,6 +97,8 @@ const (
 	CodeAccountSavingCoinNotEnough         sdk.CodeType = 358
 	CodeAccountAlreadyExists               sdk.CodeType = 359
 	CodeRegisterFeeInsufficient            sdk.CodeType = 360
+	CodeFailedToMarshalRewardHistory       sdk.CodeType = 361
+	CodeFailedToUnmarshalRewardHistory     sdk.CodeType = 362
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400
