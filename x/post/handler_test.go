@@ -11,6 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -401,6 +402,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		ExpectRegisteredEvent             RewardEvent
 		ExpectDonateTimesFromUserToAuthor int64
 		ExpectCumulativeConsumption       types.Coin
+		ExpectAuthorReward                accmodel.Reward
 	}{
 		{"donate from sufficient saving",
 			userWithSufficientSaving, types.LNO("100"), author, false, postID, sdk.Result{},
@@ -424,6 +426,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(5 * types.Decimals),
 				FromApp:    "",
 			}, 1, types.NewCoinFromInt64(100 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(95 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(95 * types.Decimals),
+			},
 		},
 		{"donate from insufficient saving",
 			userWithSufficientSaving, types.LNO("100"), author, false, postID,
@@ -432,6 +438,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee, accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(95 * types.Decimals)),
 			RewardEvent{}, 1, types.NewCoinFromInt64(100 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(95 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(95 * types.Decimals),
+			},
 		},
 		{"donate less money from second user with sufficient saving",
 			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
@@ -456,6 +466,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(250000),
 				FromApp:    "",
 			}, 1, types.NewCoinFromInt64(150 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(14250000),
+				OriginalIncome: types.NewCoinFromInt64(14250000),
+			},
 		},
 		{"donate second times from second user with sufficient saving",
 			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
@@ -479,6 +493,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(250000),
 				FromApp:    "",
 			}, 2, types.NewCoinFromInt64(200 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{"invalid target postID",
 			userWithSufficientSaving, types.LNO("1"), author, false, "invalid",
@@ -487,6 +505,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			RewardEvent{}, 1, types.NewCoinFromInt64(200 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{"invalid target author",
 			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), false, postID,
@@ -495,6 +517,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee,
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(200 * types.Decimals),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{"donate to self",
 			author, types.LNO("100"), author, false, postID, ErrCannotDonateToSelf(author).Result(),
@@ -510,6 +536,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{"invalid micropayment",
 			microPaymentUser, types.LNO("10000"), author, true, postID,
@@ -519,6 +549,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000000)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{"micropayment",
 			microPaymentUser, types.LNO("0.00001"), author, true, postID, sdk.Result{},
@@ -543,6 +577,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(0),
 				FromApp:    "",
 			}, 1, types.NewCoinFromInt64(20000001),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
+			},
 		},
 		{"donate to deleted post",
 			microPaymentUser, types.LNO("0.00001"), author1, false, deletedPostID,
@@ -552,6 +590,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000001)),
 			RewardEvent{}, 0, types.NewCoinFromInt64(20000001),
+			accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
+			},
 		},
 	}
 
@@ -583,6 +625,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			eventList :=
 				gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
 			assert.Equal(t, cs.ExpectRegisteredEvent, eventList.Events[len(eventList.Events)-1])
+			as := accmodel.NewAccountStorage(TestAccountKVStoreKey)
+			reward, err := as.GetReward(ctx, cs.ToAuthor)
+			assert.Nil(t, err)
+			assert.Equal(t, cs.ExpectAuthorReward, *reward)
 		}
 		times, err := am.GetDonationRelationship(ctx, cs.ToAuthor, cs.DonateUesr)
 		assert.Nil(t, err)
