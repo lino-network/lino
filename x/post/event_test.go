@@ -24,15 +24,16 @@ func TestRewardEvent(t *testing.T) {
 	testCases := []struct {
 		testName             string
 		rewardEvent          RewardEvent
-		totalReportOfthePost types.Coin
-		totalUpvoteOfthePost types.Coin
+		totalReportOfThePost types.Coin
+		totalUpvoteOfThePost types.Coin
 		initRewardPool       types.Coin
 		initRewardWindow     types.Coin
 		expectPostMeta       postModel.PostMeta
 		expectAppWeight      sdk.Rat
 	}{
-		{"normal event",
-			RewardEvent{
+		{
+			testName: "normal event",
+			rewardEvent: RewardEvent{
 				PostAuthor: user,
 				PostID:     postID,
 				Consumer:   user1,
@@ -40,18 +41,23 @@ func TestRewardEvent(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100),
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
-			}, types.NewCoinFromInt64(0), types.NewCoinFromInt64(100),
-			types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			postModel.PostMeta{
+			},
+			totalReportOfThePost: types.NewCoinFromInt64(0),
+			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
 				TotalUpvoteStake:        types.NewCoinFromInt64(100),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
-			}, sdk.OneRat(),
+			},
+			expectAppWeight: sdk.OneRat(),
 		},
-		{"100% panelty reward post",
-			RewardEvent{
+		{
+			testName: "100% panelty reward post",
+			rewardEvent: RewardEvent{
 				PostAuthor: user,
 				PostID:     postID,
 				Consumer:   user1,
@@ -59,18 +65,23 @@ func TestRewardEvent(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100),
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
-			}, types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			postModel.PostMeta{
+			},
+			totalReportOfThePost: types.NewCoinFromInt64(100),
+			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
 				TotalUpvoteStake:        types.NewCoinFromInt64(100),
 				TotalReportStake:        types.NewCoinFromInt64(100),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
-			}, sdk.OneRat(),
+			},
+			expectAppWeight: sdk.OneRat(),
 		},
-		{"50% panelty reward post",
-			RewardEvent{
+		{
+			testName: "50% panelty reward post",
+			rewardEvent: RewardEvent{
 				PostAuthor: user,
 				PostID:     postID,
 				Consumer:   user1,
@@ -78,18 +89,23 @@ func TestRewardEvent(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100),
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
-			}, types.NewCoinFromInt64(50), types.NewCoinFromInt64(100),
-			types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			postModel.PostMeta{
+			},
+			totalReportOfThePost: types.NewCoinFromInt64(50),
+			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
 				TotalUpvoteStake:        types.NewCoinFromInt64(100),
 				TotalReportStake:        types.NewCoinFromInt64(50),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(50),
 				RedistributionSplitRate: sdk.ZeroRat(),
-			}, sdk.OneRat(),
+			},
+			expectAppWeight: sdk.OneRat(),
 		},
-		{"evaluate as 1% of total window",
-			RewardEvent{
+		{
+			testName: "evaluate as 1% of total window",
+			rewardEvent: RewardEvent{
 				PostAuthor: user,
 				PostID:     postID,
 				Consumer:   user1,
@@ -97,18 +113,23 @@ func TestRewardEvent(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100),
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
-			}, types.NewCoinFromInt64(0), types.NewCoinFromInt64(100),
-			types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			postModel.PostMeta{
+			},
+			totalReportOfThePost: types.NewCoinFromInt64(0),
+			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
 				TotalUpvoteStake:        types.NewCoinFromInt64(100),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(1),
 				RedistributionSplitRate: sdk.ZeroRat(),
-			}, sdk.OneRat(),
+			},
+			expectAppWeight: sdk.OneRat(),
 		},
-		{"reward from different app",
-			RewardEvent{
+		{
+			testName: "reward from different app",
+			rewardEvent: RewardEvent{
 				PostAuthor: user,
 				PostID:     postID,
 				Consumer:   user1,
@@ -116,15 +137,19 @@ func TestRewardEvent(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100),
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp2"),
-			}, types.NewCoinFromInt64(0), types.NewCoinFromInt64(100),
-			types.NewCoinFromInt64(100), types.NewCoinFromInt64(100),
-			postModel.PostMeta{
+			},
+			totalReportOfThePost: types.NewCoinFromInt64(0),
+			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
 				TotalUpvoteStake:        types.NewCoinFromInt64(100),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
-			}, sdk.NewRat(100, 251),
+			},
+			expectAppWeight: sdk.NewRat(100, 251),
 		},
 	}
 
@@ -135,18 +160,22 @@ func TestRewardEvent(t *testing.T) {
 		})
 		pm.postStorage.SetPostMeta(ctx, types.GetPermlink(user, postID),
 			&postModel.PostMeta{
-				TotalUpvoteStake: tc.totalUpvoteOfthePost,
-				TotalReportStake: tc.totalReportOfthePost,
+				TotalUpvoteStake: tc.totalUpvoteOfThePost,
+				TotalReportStake: tc.totalReportOfThePost,
 			})
+
 		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to execute, got err %v", err)
+		}
 		checkPostMeta(t, ctx, types.GetPermlink(user, postID), tc.expectPostMeta)
 		if dm.DoesDeveloperExist(ctx, tc.rewardEvent.FromApp) {
 			consumptionWeight, err := dm.GetConsumptionWeight(ctx, tc.rewardEvent.FromApp)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to get consumption weight, got err %v", err)
+			}
 			if !tc.expectAppWeight.Equal(consumptionWeight) {
-				t.Errorf("%s get expect app weight failed: got %v, want %v",
-					tc.testName, consumptionWeight, tc.expectAppWeight)
+				t.Errorf("%s: diff consumption weight, got %v, want %v", tc.testName, consumptionWeight, tc.expectAppWeight)
 			}
 		}
 	}

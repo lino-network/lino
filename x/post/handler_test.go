@@ -1,7 +1,6 @@
 package post
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -78,14 +77,20 @@ func TestHandlerUpdatePost(t *testing.T) {
 			wantResult: ErrUpdatePostIsDeleted(types.GetPermlink(user1, postID1)).Result(),
 		},
 	}
-	for _, tc := range testCases {
+	for testName, tc := range testCases {
 		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to convert rat from decimal, got err %v", testName, err)
+		}
+
 		result := handler(ctx, tc.msg)
-		assert.Equal(t, tc.wantResult, result)
+		if !assert.Equal(t, tc.wantResult, result) {
+			t.Errorf("%s: diff result, got %v, want %v", testName, result, tc.wantResult)
+		}
 		if tc.wantResult.Code != sdk.ABCICodeOK {
 			continue
 		}
+
 		postInfo := model.PostInfo{
 			PostID:       tc.msg.PostID,
 			Title:        tc.msg.Title,
@@ -149,9 +154,11 @@ func TestHandlerDeletePost(t *testing.T) {
 			wantResult: ErrPostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 	}
-	for _, tc := range testCases {
+	for testName, tc := range testCases {
 		result := handler(ctx, tc.msg)
-		assert.Equal(t, tc.wantResult, result)
+		if !assert.Equal(t, tc.wantResult, result) {
+			t.Errorf("%s: diff result, got %v, want %v", testName, result, tc.wantResult)
+		}
 	}
 }
 
@@ -386,25 +393,31 @@ func TestHandlerPostDonate(t *testing.T) {
 	err = am.AddSavingCoin(ctx, microPaymentUser, types.NewCoinFromInt64(2), referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
-	cases := []struct {
-		TestName            string
-		DonateUesr          types.AccountKey
-		Amount              types.LNO
-		ToAuthor            types.AccountKey
-		IsMicropayment      bool
-		ToPostID            string
-		ExpectErr           sdk.Result
-		ExpectPostMeta      model.PostMeta
-		ExpectDonatorSaving types.Coin
-		ExpectAuthorSaving  types.Coin
+	testCases := []struct {
+		testName            string
+		donateUser          types.AccountKey
+		amount              types.LNO
+		toAuthor            types.AccountKey
+		isMicropayment      bool
+		toPostID            string
+		expectErr           sdk.Result
+		expectPostMeta      model.PostMeta
+		expectDonatorSaving types.Coin
+		expectAuthorSaving  types.Coin
 		//https://github.com/lino-network/lino/issues/154
-		ExpectRegisteredEvent             RewardEvent
-		ExpectDonateTimesFromUserToAuthor int64
-		ExpectCumulativeConsumption       types.Coin
+		expectRegisteredEvent             RewardEvent
+		expectDonateTimesFromUserToAuthor int64
+		expectCumulativeConsumption       types.Coin
 	}{
-		{"donate from sufficient saving",
-			userWithSufficientSaving, types.LNO("100"), author, false, postID, sdk.Result{},
-			model.PostMeta{
+		{
+			testName:       "donate from sufficient saving",
+			donateUser:     userWithSufficientSaving,
+			amount:         types.LNO("100"),
+			toAuthor:       author,
+			isMicropayment: false,
+			toPostID:       postID,
+			expectErr:      sdk.Result{},
+			expectPostMeta: model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
 				LastActivityAt:          ctx.BlockHeader().Time,
@@ -413,9 +426,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(95 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			accParam.RegisterFee, accParam.RegisterFee.Plus(
+			expectDonatorSaving: accParam.RegisterFee,
+			expectAuthorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(95 * types.Decimals)),
-			RewardEvent{
+			expectRegisteredEvent: RewardEvent{
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   userWithSufficientSaving,
@@ -423,19 +437,35 @@ func TestHandlerPostDonate(t *testing.T) {
 				Original:   types.NewCoinFromInt64(100 * types.Decimals),
 				Friction:   types.NewCoinFromInt64(5 * types.Decimals),
 				FromApp:    "",
-			}, 1, types.NewCoinFromInt64(100 * types.Decimals),
+			},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(100 * types.Decimals),
 		},
-		{"donate from insufficient saving",
-			userWithSufficientSaving, types.LNO("100"), author, false, postID,
-			acc.ErrAccountSavingCoinNotEnough().Result(),
-			model.PostMeta{},
-			accParam.RegisterFee, accParam.RegisterFee.Plus(
+		{
+			testName:            "donate from insufficient saving",
+			donateUser:          userWithSufficientSaving,
+			amount:              types.LNO("100"),
+			toAuthor:            author,
+			isMicropayment:      false,
+			toPostID:            postID,
+			expectErr:           acc.ErrAccountSavingCoinNotEnough().Result(),
+			expectPostMeta:      model.PostMeta{},
+			expectDonatorSaving: accParam.RegisterFee,
+			expectAuthorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(95 * types.Decimals)),
-			RewardEvent{}, 1, types.NewCoinFromInt64(100 * types.Decimals),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(100 * types.Decimals),
 		},
-		{"donate less money from second user with sufficient saving",
-			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
-			model.PostMeta{
+		{
+			testName:       "donate less money from second user with sufficient saving",
+			donateUser:     secondUserWithSufficientSaving,
+			amount:         types.LNO("50"),
+			toAuthor:       author,
+			isMicropayment: false,
+			toPostID:       postID,
+			expectErr:      sdk.Result{},
+			expectPostMeta: model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
 				LastActivityAt:          ctx.BlockHeader().Time,
@@ -444,10 +474,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(14250000),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			accParam.RegisterFee.Plus(
+			expectDonatorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(50 * types.Decimals)),
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(14250000)),
-			RewardEvent{
+			expectAuthorSaving: accParam.RegisterFee.Plus(types.NewCoinFromInt64(14250000)),
+			expectRegisteredEvent: RewardEvent{
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   secondUserWithSufficientSaving,
@@ -455,11 +485,19 @@ func TestHandlerPostDonate(t *testing.T) {
 				Original:   types.NewCoinFromInt64(50 * types.Decimals),
 				Friction:   types.NewCoinFromInt64(250000),
 				FromApp:    "",
-			}, 1, types.NewCoinFromInt64(150 * types.Decimals),
+			},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(150 * types.Decimals),
 		},
-		{"donate second times from second user with sufficient saving",
-			secondUserWithSufficientSaving, types.LNO("50"), author, false, postID, sdk.Result{},
-			model.PostMeta{
+		{
+			testName:       "donate second times from second user with sufficient saving",
+			donateUser:     secondUserWithSufficientSaving,
+			amount:         types.LNO("50"),
+			toAuthor:       author,
+			isMicropayment: false,
+			toPostID:       postID,
+			expectErr:      sdk.Result{},
+			expectPostMeta: model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
 				LastActivityAt:          ctx.BlockHeader().Time,
@@ -468,9 +506,9 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			accParam.RegisterFee,
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
-			RewardEvent{
+			expectDonatorSaving: accParam.RegisterFee,
+			expectAuthorSaving:  accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
+			expectRegisteredEvent: RewardEvent{
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   secondUserWithSufficientSaving,
@@ -478,27 +516,49 @@ func TestHandlerPostDonate(t *testing.T) {
 				Original:   types.NewCoinFromInt64(50 * types.Decimals),
 				Friction:   types.NewCoinFromInt64(250000),
 				FromApp:    "",
-			}, 2, types.NewCoinFromInt64(200 * types.Decimals),
+			},
+			expectDonateTimesFromUserToAuthor: 2,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
 		},
-		{"invalid target postID",
-			userWithSufficientSaving, types.LNO("1"), author, false, "invalid",
-			ErrPostNotFound(types.GetPermlink(author, "invalid")).Result(),
-			model.PostMeta{},
-			accParam.RegisterFee,
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
-			RewardEvent{}, 1, types.NewCoinFromInt64(200 * types.Decimals),
+		{
+			testName:                          "invalid target postID",
+			donateUser:                        userWithSufficientSaving,
+			amount:                            types.LNO("1"),
+			toAuthor:                          author,
+			isMicropayment:                    false,
+			toPostID:                          "invalid",
+			expectErr:                         ErrPostNotFound(types.GetPermlink(author, "invalid")).Result(),
+			expectPostMeta:                    model.PostMeta{},
+			expectDonatorSaving:               accParam.RegisterFee,
+			expectAuthorSaving:                accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
 		},
-		{"invalid target author",
-			userWithSufficientSaving, types.LNO("1"), types.AccountKey("invalid"), false, postID,
-			ErrPostNotFound(types.GetPermlink(types.AccountKey("invalid"), postID)).Result(),
-			model.PostMeta{},
-			accParam.RegisterFee,
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
-			RewardEvent{}, 0, types.NewCoinFromInt64(200 * types.Decimals),
+		{
+			testName:                          "invalid target author",
+			donateUser:                        userWithSufficientSaving,
+			amount:                            types.LNO("1"),
+			toAuthor:                          types.AccountKey("invalid"),
+			isMicropayment:                    false,
+			toPostID:                          postID,
+			expectErr:                         ErrPostNotFound(types.GetPermlink(types.AccountKey("invalid"), postID)).Result(),
+			expectPostMeta:                    model.PostMeta{},
+			expectDonatorSaving:               accParam.RegisterFee,
+			expectAuthorSaving:                accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 0,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
 		},
-		{"donate to self",
-			author, types.LNO("100"), author, false, postID, ErrCannotDonateToSelf(author).Result(),
-			model.PostMeta{
+		{
+			testName:       "donate to self",
+			donateUser:     author,
+			amount:         types.LNO("100"),
+			toAuthor:       author,
+			isMicropayment: false,
+			toPostID:       postID,
+			expectErr:      ErrCannotDonateToSelf(author).Result(),
+			expectPostMeta: model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
 				LastActivityAt:          ctx.BlockHeader().Time,
@@ -507,22 +567,37 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
-			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
+			expectDonatorSaving:               accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
+			expectAuthorSaving:                accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 0,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(20000000),
 		},
-		{"invalid micropayment",
-			microPaymentUser, types.LNO("10000"), author, true, postID,
-			ErrMicropaymentExceedsLimitation().Result(),
-			model.PostMeta{},
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(2)),
-			accParam.RegisterFee.Plus(
+		{
+			testName:            "invalid micropayment",
+			donateUser:          microPaymentUser,
+			amount:              types.LNO("10000"),
+			toAuthor:            author,
+			isMicropayment:      true,
+			toPostID:            postID,
+			expectErr:           ErrMicropaymentExceedsLimitation().Result(),
+			expectPostMeta:      model.PostMeta{},
+			expectDonatorSaving: accParam.RegisterFee.Plus(types.NewCoinFromInt64(2)),
+			expectAuthorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000000)),
-			RewardEvent{}, 0, types.NewCoinFromInt64(20000000),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 0,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(20000000),
 		},
-		{"micropayment",
-			microPaymentUser, types.LNO("0.00001"), author, true, postID, sdk.Result{},
-			model.PostMeta{
+		{
+			testName:       "micropayment",
+			donateUser:     microPaymentUser,
+			amount:         types.LNO("0.00001"),
+			toAuthor:       author,
+			isMicropayment: true,
+			toPostID:       postID,
+			expectErr:      sdk.Result{},
+			expectPostMeta: model.PostMeta{
 				CreatedAt:               ctx.BlockHeader().Time,
 				LastUpdatedAt:           ctx.BlockHeader().Time,
 				LastActivityAt:          ctx.BlockHeader().Time,
@@ -531,10 +606,10 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
-			accParam.RegisterFee.Plus(
+			expectDonatorSaving: accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
+			expectAuthorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000001)),
-			RewardEvent{
+			expectRegisteredEvent: RewardEvent{
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   microPaymentUser,
@@ -542,62 +617,80 @@ func TestHandlerPostDonate(t *testing.T) {
 				Original:   types.NewCoinFromInt64(1),
 				Friction:   types.NewCoinFromInt64(0),
 				FromApp:    "",
-			}, 1, types.NewCoinFromInt64(20000001),
+			},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(20000001),
 		},
-		{"donate to deleted post",
-			microPaymentUser, types.LNO("0.00001"), author1, false, deletedPostID,
-			ErrDonatePostIsDeleted(types.GetPermlink(author1, deletedPostID)).Result(),
-			model.PostMeta{},
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
-			accParam.RegisterFee.Plus(
+		{
+			testName:            "donate to deleted post",
+			donateUser:          microPaymentUser,
+			amount:              types.LNO("0.00001"),
+			toAuthor:            author1,
+			isMicropayment:      false,
+			toPostID:            deletedPostID,
+			expectErr:           ErrDonatePostIsDeleted(types.GetPermlink(author1, deletedPostID)).Result(),
+			expectPostMeta:      model.PostMeta{},
+			expectDonatorSaving: accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
+			expectAuthorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(19000001)),
-			RewardEvent{}, 0, types.NewCoinFromInt64(20000001),
+			expectRegisteredEvent:             RewardEvent{},
+			expectDonateTimesFromUserToAuthor: 0,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(20000001),
 		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		donateMsg := NewDonateMsg(
-			string(cs.DonateUesr), cs.Amount, string(cs.ToAuthor), cs.ToPostID, "", memo1, cs.IsMicropayment)
+			string(tc.donateUser), tc.amount, string(tc.toAuthor), tc.toPostID, "", memo1, tc.isMicropayment)
 		result := handler(ctx, donateMsg)
-		assert.Equal(t, cs.ExpectErr, result)
-		if cs.ExpectErr.Code == sdk.ABCICodeOK {
-			checkPostMeta(t, ctx, types.GetPermlink(cs.ToAuthor, cs.ToPostID), cs.ExpectPostMeta)
+		if !assert.Equal(t, tc.expectErr, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectErr)
 		}
+		if tc.expectErr.Code == sdk.ABCICodeOK {
+			checkPostMeta(t, ctx, types.GetPermlink(tc.toAuthor, tc.toPostID), tc.expectPostMeta)
+		}
+
 		authorSaving, err := am.GetSavingFromBank(ctx, author)
-		assert.Nil(t, err)
-		if !authorSaving.IsEqual(cs.ExpectAuthorSaving) {
-			t.Errorf(
-				"%s: expect author saving %v, got %v",
-				cs.TestName, cs.ExpectAuthorSaving, authorSaving)
+		if err != nil {
+			t.Errorf("%s: failed to get author saving from bank, got err %v", tc.testName, err)
+		}
+		if !authorSaving.IsEqual(tc.expectAuthorSaving) {
+			t.Errorf("%s: diff author saving %v, got %v, want %v", tc.testName, authorSaving, tc.expectAuthorSaving)
 			return
 		}
-		donatorSaving, err := am.GetSavingFromBank(ctx, cs.DonateUesr)
-		assert.Nil(t, err)
-		if !donatorSaving.IsEqual(cs.ExpectDonatorSaving) {
-			t.Errorf(
-				"%s: expect donator saving %v, got %v",
-				cs.TestName, cs.ExpectDonatorSaving, donatorSaving)
+
+		donatorSaving, err := am.GetSavingFromBank(ctx, tc.donateUser)
+		if err != nil {
+			t.Errorf("%s: failed to get donator saving from bank, got err %v", tc.testName, err)
+		}
+		if !donatorSaving.IsEqual(tc.expectDonatorSaving) {
+			t.Errorf("%s: diff donator saving %v, got %v", tc.testName, donatorSaving, tc.expectDonatorSaving)
 			return
 		}
-		if cs.ExpectErr.Code == sdk.ABCICodeOK {
-			eventList :=
-				gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
-			assert.Equal(t, cs.ExpectRegisteredEvent, eventList.Events[len(eventList.Events)-1])
+		if tc.expectErr.Code == sdk.ABCICodeOK {
+			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
+			if !assert.Equal(t, tc.expectRegisteredEvent, eventList.Events[len(eventList.Events)-1]) {
+				t.Errorf("%s: diff event, got %v, want %v", tc.testName,
+					eventList.Events[len(eventList.Events)-1], tc.expectRegisteredEvent)
+			}
 		}
-		times, err := am.GetDonationRelationship(ctx, cs.ToAuthor, cs.DonateUesr)
-		assert.Nil(t, err)
-		if cs.ExpectDonateTimesFromUserToAuthor != times {
-			t.Errorf(
-				"%s: expect donate times %v, got %v",
-				cs.TestName, cs.ExpectDonateTimesFromUserToAuthor, times)
+
+		times, err := am.GetDonationRelationship(ctx, tc.toAuthor, tc.donateUser)
+		if err != nil {
+			t.Errorf("%s: failed to get donation relationship, got err %v", tc.testName, err)
+		}
+		if tc.expectDonateTimesFromUserToAuthor != times {
+			t.Errorf("%s: diff donate times, got %v, want %v", tc.testName, times, tc.expectDonateTimesFromUserToAuthor)
 			return
 		}
+
 		cumulativeConsumption, err := gm.GetConsumption(ctx)
-		assert.Nil(t, err)
-		if !cs.ExpectCumulativeConsumption.IsEqual(cumulativeConsumption) {
-			t.Errorf(
-				"%s: expect cumulative consumption %v, got %v",
-				cs.TestName, cs.ExpectCumulativeConsumption, cumulativeConsumption)
+		if err != nil {
+			t.Errorf("%s: failed to get consumption, got err %v", tc.testName, err)
+		}
+		if !tc.expectCumulativeConsumption.IsEqual(cumulativeConsumption) {
+			t.Errorf("%s: diff cumulative consumption, got %v, want %v",
+				tc.testName, cumulativeConsumption, tc.expectCumulativeConsumption)
 			return
 		}
 	}
@@ -731,16 +824,61 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{"user1 report", string(user1), true, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
-			sdk.Result{}, accParam.RegisterFee, types.NewCoinFromInt64(0)},
-		{"user2 report", string(user2), true, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
-			sdk.Result{}, accParam.RegisterFee.Plus(accParam.RegisterFee), types.NewCoinFromInt64(0)},
-		{"user3 upvote", string(user3), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
-			sdk.Result{}, accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
-		{"user1 wanna change report to upvote", string(user1), false, string(user1), postID, baseTime - postParam.ReportOrUpvoteInterval,
-			ErrReportOrUpvoteAlreadyExist(permlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
-		{"user4 report to an invalid post", string(user4), true, "invalid", "invalid", baseTime - postParam.ReportOrUpvoteInterval,
-			ErrPostNotFound(invalidPermlink).Result(), accParam.RegisterFee.Plus(accParam.RegisterFee), accParam.RegisterFee},
+		{
+			testName:               "user1 report",
+			reportOrUpvoteUser:     string(user1),
+			isReport:               true,
+			targetPostAuthor:       string(user1),
+			targetPostID:           postID,
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
+			expectResult:           sdk.Result{},
+			expectTotalReportStake: accParam.RegisterFee,
+			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:               "user2 report",
+			reportOrUpvoteUser:     string(user2),
+			isReport:               true,
+			targetPostAuthor:       string(user1),
+			targetPostID:           postID,
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
+			expectResult:           sdk.Result{},
+			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:               "user3 upvote",
+			reportOrUpvoteUser:     string(user3),
+			isReport:               false,
+			targetPostAuthor:       string(user1),
+			targetPostID:           postID,
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
+			expectResult:           sdk.Result{},
+			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteStake: accParam.RegisterFee,
+		},
+		{
+			testName:               "user1 wanna change report to upvote",
+			reportOrUpvoteUser:     string(user1),
+			isReport:               false,
+			targetPostAuthor:       string(user1),
+			targetPostID:           postID,
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
+			expectResult:           ErrReportOrUpvoteAlreadyExist(permlink).Result(),
+			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteStake: accParam.RegisterFee,
+		},
+		{
+			testName:               "user4 report to an invalid post",
+			reportOrUpvoteUser:     string(user4),
+			isReport:               true,
+			targetPostAuthor:       "invalid",
+			targetPostID:           "invalid",
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
+			expectResult:           ErrPostNotFound(invalidPermlink).Result(),
+			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteStake: accParam.RegisterFee,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -749,11 +887,15 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime})
 		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, tc.targetPostAuthor, tc.targetPostID, tc.isReport)
+
 		result := handler(newCtx, msg)
-		assert.Equal(t, tc.expectResult, result, fmt.Sprintf("%s: got %v, want %v", tc.testName, result, sdk.Result{}))
+		if !assert.Equal(t, tc.expectResult, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
+		}
 		if tc.expectResult.Code != sdk.ABCICodeOK {
 			continue
 		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
@@ -765,8 +907,12 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		}
 		targetPost := types.GetPermlink(types.AccountKey(tc.targetPostAuthor), tc.targetPostID)
 		checkPostMeta(t, ctx, targetPost, postMeta)
+
 		lastReportOrUpvoteAt, _ := am.GetLastReportOrUpvoteAt(ctx, types.AccountKey(tc.reportOrUpvoteUser))
-		assert.Equal(t, baseTime, lastReportOrUpvoteAt)
+		// assert.Equal(t, baseTime, lastReportOrUpvoteAt)
+		if baseTime != lastReportOrUpvoteAt {
+			t.Errorf("%s: diff time, got %v, want %v", tc.testName, lastReportOrUpvoteAt, baseTime)
+		}
 	}
 }
 
@@ -778,7 +924,8 @@ func TestHandlerView(t *testing.T) {
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
-	cases := []struct {
+	testCases := []struct {
+		testName             string
 		viewUser             types.AccountKey
 		postID               string
 		author               types.AccountKey
@@ -786,31 +933,80 @@ func TestHandlerView(t *testing.T) {
 		expectTotalViewCount int64
 		expectUserViewCount  int64
 	}{
-		{user3, postID, user1, 1, 1, 1},
-		{user3, postID, user1, 2, 2, 2},
-		{user2, postID, user1, 3, 3, 1},
-		{user2, postID, user1, 4, 4, 2},
-		{user1, postID, user1, 5, 5, 1},
+		{
+			testName:             "user3 views (postID, user1)",
+			viewUser:             user3,
+			postID:               postID,
+			author:               user1,
+			viewTime:             1,
+			expectTotalViewCount: 1,
+			expectUserViewCount:  1,
+		},
+		{
+			testName:             "user3 views (postID, user1) again",
+			viewUser:             user3,
+			postID:               postID,
+			author:               user1,
+			viewTime:             2,
+			expectTotalViewCount: 2,
+			expectUserViewCount:  2,
+		},
+		{
+			testName:             "user2 views (postID, user1)",
+			viewUser:             user2,
+			postID:               postID,
+			author:               user1,
+			viewTime:             3,
+			expectTotalViewCount: 3,
+			expectUserViewCount:  1,
+		},
+		{
+			testName:             "user2 views (postID, user1) again",
+			viewUser:             user2,
+			postID:               postID,
+			author:               user1,
+			viewTime:             4,
+			expectTotalViewCount: 4,
+			expectUserViewCount:  2,
+		},
+		{
+			testName:             "user1 views (postID, user1)",
+			viewUser:             user1,
+			postID:               postID,
+			author:               user1,
+			viewTime:             5,
+			expectTotalViewCount: 5,
+			expectUserViewCount:  1,
+		},
 	}
 
-	for _, cs := range cases {
-		postKey := types.GetPermlink(cs.author, cs.postID)
-		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
-		msg := NewViewMsg(string(cs.viewUser), string(cs.author), cs.postID)
+	for _, tc := range testCases {
+		postKey := types.GetPermlink(tc.author, tc.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: tc.viewTime})
+		msg := NewViewMsg(string(tc.viewUser), string(tc.author), tc.postID)
 		result := handler(ctx, msg)
-		assert.Equal(t, result, sdk.Result{})
+		if !assert.Equal(t, result, sdk.Result{}) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, sdk.Result{})
+		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               createTime,
 			LastUpdatedAt:           createTime,
 			LastActivityAt:          createTime,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalViewCount:          cs.expectTotalViewCount,
+			TotalViewCount:          tc.expectTotalViewCount,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
-		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectUserViewCount, view.Times)
-		assert.Equal(t, cs.viewTime, view.LastViewAt)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, tc.viewUser)
+		if err != nil {
+			t.Errorf("%s: failed to get post view, got err %v", tc.testName, err)
+		}
+		if view.Times != tc.expectUserViewCount {
+			t.Errorf("%s: diff view times, got %v, want %v", tc.testName, view.Times, tc.expectUserViewCount)
+		}
+		if view.LastViewAt != tc.viewTime {
+			t.Errorf("%s: diff last view at, got %v, want %v", tc.testName, view.LastViewAt, tc.viewTime)
+		}
 	}
 }

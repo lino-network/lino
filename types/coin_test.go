@@ -22,263 +22,626 @@ var (
 )
 
 func TestNewCoinFromInt64(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
+	testCases := []struct {
+		testName       string
 		inputInt64     int64
 		expectedAmount mathutil.Int128
 	}{
-		{1, new(mathutil.Int128).SetInt64(1)},
-		{0, new(mathutil.Int128).SetInt64(0)},
-		{-1, new(mathutil.Int128).SetInt64(-1)},
-		{9223372036854775807, new(mathutil.Int128).SetInt64(9223372036854775807)},
-		{-9223372036854775808, new(mathutil.Int128).SetInt64(-9223372036854775808)},
+		{
+			testName:       "amount 1",
+			inputInt64:     1,
+			expectedAmount: new(mathutil.Int128).SetInt64(1),
+		},
+		{
+			testName:       "amount 0",
+			inputInt64:     0,
+			expectedAmount: new(mathutil.Int128).SetInt64(0),
+		},
+		{
+			testName:       "amount -1",
+			inputInt64:     -1,
+			expectedAmount: new(mathutil.Int128).SetInt64(-1),
+		},
+		{
+			testName:       "amount 9223372036854775807",
+			inputInt64:     9223372036854775807,
+			expectedAmount: new(mathutil.Int128).SetInt64(9223372036854775807),
+		},
+		{
+			testName:       "amount -9223372036854775808",
+			inputInt64:     -9223372036854775808,
+			expectedAmount: new(mathutil.Int128).SetInt64(-9223372036854775808),
+		},
 	}
 
-	for _, tc := range cases {
-		assert.Equal(NewCoinFromInt64(tc.inputInt64).Amount, tc.expectedAmount)
+	for _, tc := range testCases {
+		coin := NewCoinFromInt64(tc.inputInt64)
+		if tc.expectedAmount.Cmp(coin.Amount) != 0 {
+			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin.Amount, tc.expectedAmount)
+		}
 	}
 }
 func TestNewCoinFromBigInt(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
+	testCases := []struct {
+		testName       string
 		inputBigInt    *big.Int
 		expectedAmount mathutil.Int128
 	}{
-		{new(big.Int).SetInt64(1), new(mathutil.Int128).SetInt64(1)},
-		{new(big.Int).SetInt64(0), new(mathutil.Int128).SetInt64(0)},
-		{new(big.Int).SetInt64(-1), new(mathutil.Int128).SetInt64(-1)},
-		{new(big.Int).SetInt64(100), new(mathutil.Int128).SetInt64(100)},
-		{new(big.Int).SetInt64(9223372036854775807),
-			new(mathutil.Int128).SetInt64(9223372036854775807)},
-		{new(big.Int).SetInt64(-9223372036854775808),
-			new(mathutil.Int128).SetInt64(-9223372036854775808)},
-		{bigInt, bigInt128},
+		{
+			testName:       "amount 1",
+			inputBigInt:    new(big.Int).SetInt64(1),
+			expectedAmount: new(mathutil.Int128).SetInt64(1),
+		},
+		{
+			testName:       "amount 0",
+			inputBigInt:    new(big.Int).SetInt64(0),
+			expectedAmount: new(mathutil.Int128).SetInt64(0),
+		},
+		{
+			testName:       "amount -1",
+			inputBigInt:    new(big.Int).SetInt64(-1),
+			expectedAmount: new(mathutil.Int128).SetInt64(-1),
+		},
+		{
+			testName:       "amount 100",
+			inputBigInt:    new(big.Int).SetInt64(100),
+			expectedAmount: new(mathutil.Int128).SetInt64(100),
+		},
+		{
+			testName:       "amount 9223372036854775807",
+			inputBigInt:    new(big.Int).SetInt64(9223372036854775807),
+			expectedAmount: new(mathutil.Int128).SetInt64(9223372036854775807),
+		},
+		{
+			testName:       "amount -9223372036854775808",
+			inputBigInt:    new(big.Int).SetInt64(-9223372036854775808),
+			expectedAmount: new(mathutil.Int128).SetInt64(-9223372036854775808),
+		},
+		{
+			testName:       "amount bigInt",
+			inputBigInt:    bigInt,
+			expectedAmount: bigInt128,
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		coin, err := NewCoinFromBigInt(tc.inputBigInt)
-		assert.Nil(err)
-		assert.Equal(coin.Amount, tc.expectedAmount)
+		if err != nil {
+			t.Errorf("%s: failed to convert coin, got err %v", tc.testName, err)
+		}
+		if coin.Amount.Cmp(tc.expectedAmount) != 0 {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, coin.Amount, tc.expectedAmount)
+		}
 	}
 }
 
 func TestLNOToCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
+	testCases := []struct {
+		testName     string
 		inputString  string
 		expectCoin   Coin
 		expectResult sdk.Error
 	}{
-		{"1", NewCoinFromInt64(1 * Decimals), nil},
-		{"92233720368547", NewCoinFromInt64(92233720368547 * Decimals), nil},
-		{"0.001", NewCoinFromInt64(0.001 * Decimals), nil},
-		{"0.0001", NewCoinFromInt64(0.0001 * Decimals), nil},
-		{"0.00001", NewCoinFromInt64(0.00001 * Decimals), nil},
-		{"0.000001", NewCoinFromInt64(0),
-			ErrInvalidCoins("LNO can't be less than lower bound")},
-		{"0", NewCoinFromInt64(0),
-			ErrInvalidCoins("LNO can't be less than lower bound")},
-		{"-1", NewCoinFromInt64(0),
-			ErrInvalidCoins("LNO can't be less than lower bound")},
-		{"-0.1", NewCoinFromInt64(0),
-			ErrInvalidCoins("LNO can't be less than lower bound")},
-		{"92233720368548", NewCoinFromInt64(0),
-			ErrInvalidCoins("LNO overflow")},
-		{"1$", NewCoinFromInt64(0), ErrInvalidCoins("Illegal LNO")},
+		{
+			testName:     "LNO 1",
+			inputString:  "1",
+			expectCoin:   NewCoinFromInt64(1 * Decimals),
+			expectResult: nil,
+		},
+		{
+			testName:     "LNO 92233720368547",
+			inputString:  "92233720368547",
+			expectCoin:   NewCoinFromInt64(92233720368547 * Decimals),
+			expectResult: nil,
+		},
+		{
+			testName:     "LNO 0.001",
+			inputString:  "0.001",
+			expectCoin:   NewCoinFromInt64(0.001 * Decimals),
+			expectResult: nil,
+		},
+		{
+			testName:     "LNO 0.0001",
+			inputString:  "0.0001",
+			expectCoin:   NewCoinFromInt64(0.0001 * Decimals),
+			expectResult: nil,
+		},
+		{
+			testName:     "LNO 0.00001",
+			inputString:  "0.00001",
+			expectCoin:   NewCoinFromInt64(0.00001 * Decimals),
+			expectResult: nil,
+		},
+		{
+			testName:     "less than lower bound LNO is invalid",
+			inputString:  "0.000001",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:     "0 LNO is invalid",
+			inputString:  "0",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:     "negative LNO is invalid",
+			inputString:  "-1",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:     "negative -0.1 LNO is invalid",
+			inputString:  "-0.1",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:     "overflow LNO is invalid",
+			inputString:  "92233720368548",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("LNO overflow"),
+		},
+		{
+			testName:     "illegal coin",
+			inputString:  "1$",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("Illegal LNO"),
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		coin, err := LinoToCoin(LNO(tc.inputString))
-		assert.Equal(tc.expectResult, err)
-		assert.Equal(coin, tc.expectCoin)
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err)
+		}
+		if !coin.IsEqual(tc.expectCoin) {
+			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)
+		}
 	}
 }
 
 func TestRatToCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
+	testCases := []struct {
+		testName    string
 		inputString string
 		expectCoin  Coin
 	}{
-		{"1", NewCoinFromInt64(1)},
-		{"0", NewCoinFromInt64(0)},
-		{"-1", NewCoinFromInt64(-1)},
-		{"100000", NewCoinFromInt64(100000)},
-		{"0.5", NewCoinFromInt64(0)},
-		{"0.6", NewCoinFromInt64(1)},
-		{"1.4", NewCoinFromInt64(1)},
-		{"1.5", NewCoinFromInt64(2)},
-		{"9223372036854775807", NewCoinFromInt64(9223372036854775807)},
-		{"-9223372036854775807", NewCoinFromInt64(-9223372036854775807)},
-		{bigString, NewCoin(bigInt128)},
+		{
+			testName:    "Coin 1",
+			inputString: "1",
+			expectCoin:  NewCoinFromInt64(1),
+		},
+		{
+			testName:    "Coin 0",
+			inputString: "0",
+			expectCoin:  NewCoinFromInt64(0),
+		},
+		{
+			testName:    "Coin -1",
+			inputString: "-1",
+			expectCoin:  NewCoinFromInt64(-1),
+		},
+		{
+			testName:    "Coin 100000",
+			inputString: "100000",
+			expectCoin:  NewCoinFromInt64(100000),
+		},
+		{
+			testName:    "Coin 0.5",
+			inputString: "0.5",
+			expectCoin:  NewCoinFromInt64(0),
+		},
+		{
+			testName:    "Coin 0.6 will be rounded to 1",
+			inputString: "0.6",
+			expectCoin:  NewCoinFromInt64(1),
+		},
+		{
+			testName:    "Coin 1.4 will be rounded to 1",
+			inputString: "1.4",
+			expectCoin:  NewCoinFromInt64(1),
+		},
+		{
+			testName:    "Coin 1 will be rounded to 2",
+			inputString: "1.5",
+			expectCoin:  NewCoinFromInt64(2),
+		},
+		{
+			testName:    "Coin 9223372036854775807",
+			inputString: "9223372036854775807",
+			expectCoin:  NewCoinFromInt64(9223372036854775807),
+		},
+		{
+			testName:    "Coin -9223372036854775807",
+			inputString: "-9223372036854775807",
+			expectCoin:  NewCoinFromInt64(-9223372036854775807),
+		},
+		{
+			testName:    "Coin bigString",
+			inputString: bigString,
+			expectCoin:  NewCoin(bigInt128),
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		bigRat, success := new(big.Rat).SetString(tc.inputString)
-		assert.True(success)
+		if !success {
+			t.Errorf("%s: failed to convert input to big rat", tc.testName)
+		}
+
 		rat := sdk.Rat{*bigRat}
 		coin, changeErr := RatToCoin(rat)
-		assert.Nil(changeErr)
-		assert.Equal(tc.expectCoin, coin)
+		if changeErr != nil {
+			t.Errorf("%s: failed to convert rat to coin, got err %v", tc.testName, changeErr)
+		}
+		if !coin.IsEqual(tc.expectCoin) {
+			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)
+		}
 	}
 }
 
 func TestIsPositiveCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		expected bool
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		expectResult bool
 	}{
-		{NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(0), false},
-		{NewCoinFromInt64(-1), false},
-		{NewCoin(bigInt128), true},
-		{NewCoin(doubleBigInt128), true},
+		{
+			testName:     "1 is positive",
+			inputOne:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "0 is not positive",
+			inputOne:     NewCoinFromInt64(0),
+			expectResult: false,
+		},
+		{
+			testName:     "-1 is not positive",
+			inputOne:     NewCoinFromInt64(-1),
+			expectResult: false,
+		},
+		{
+			testName:     "bigInt128 is positive",
+			inputOne:     NewCoin(bigInt128),
+			expectResult: true,
+		},
+		{
+			testName:     "doubleBigInt128 is not positive",
+			inputOne:     NewCoin(doubleBigInt128),
+			expectResult: true,
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.IsPositive()
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestIsNotNegativeCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		expected bool
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		expectResult bool
 	}{
-		{NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(0), true},
-		{NewCoinFromInt64(-1), false},
-		{NewCoin(bigInt128), true},
-		{NewCoin(doubleBigInt128), true},
+		{
+			testName:     "1 is not negative",
+			inputOne:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "0 is not negative",
+			inputOne:     NewCoinFromInt64(0),
+			expectResult: true,
+		},
+		{
+			testName:     "-1 is negative",
+			inputOne:     NewCoinFromInt64(-1),
+			expectResult: false,
+		},
+		{
+			testName:     "bigInt128 is not negative",
+			inputOne:     NewCoin(bigInt128),
+			expectResult: true,
+		},
+		{
+			testName:     "doubleBigInt128 is not negative",
+			inputOne:     NewCoin(doubleBigInt128),
+			expectResult: true,
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.IsNotNegative()
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestIsGTECoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		inputTwo Coin
-		expected bool
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		inputTwo     Coin
+		expectResult bool
 	}{
-		{NewCoinFromInt64(1), NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(2), NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(-1), NewCoinFromInt64(5), false},
-		{NewCoin(bigInt128), NewCoinFromInt64(5), true},
-		{NewCoin(bigInt128), NewCoin(bigInt128), true},
-		{NewCoin(doubleBigInt128), NewCoin(bigInt128), true},
+		{
+			testName:     "inputs 1 are equal",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "inputOne is bigger than inputTwo",
+			inputOne:     NewCoinFromInt64(2),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "inputOne is less than inputTwo",
+			inputOne:     NewCoinFromInt64(-1),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: false,
+		},
+		{
+			testName:     "bigInt128 is bigger than 5",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: true,
+		},
+		{
+			testName:     "inputs bigInt128 are equal",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: true,
+		},
+		{
+			testName:     "doubleBigInt128 is bigger than bigInt128",
+			inputOne:     NewCoin(doubleBigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: true,
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.IsGTE(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestIsGTCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		inputTwo Coin
-		expected bool
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		inputTwo     Coin
+		expectResult bool
 	}{
-		{NewCoinFromInt64(1), NewCoinFromInt64(1), false},
-		{NewCoinFromInt64(2), NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(-1), NewCoinFromInt64(5), false},
-		{NewCoin(bigInt128), NewCoinFromInt64(5), true},
-		{NewCoin(bigInt128), NewCoin(bigInt128), false},
-		{NewCoin(doubleBigInt128), NewCoin(bigInt128), true},
+		{
+			testName:     "1 equals to 1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: false,
+		},
+		{
+			testName:     "2 is bigger than 1",
+			inputOne:     NewCoinFromInt64(2),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "-1 is less than 5",
+			inputOne:     NewCoinFromInt64(-1),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: false,
+		},
+		{
+			testName:     "bigInt128 is bigger than 5",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: true,
+		},
+		{
+			testName:     "bigInt128 is not bigger than bigInt128",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: false,
+		},
+		{
+			testName:     "doubleBigInt128 is bigger than bigInt128",
+			inputOne:     NewCoin(doubleBigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: true,
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.IsGT(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestIsEqualCoin(t *testing.T) {
-	assert := assert.New(t)
-
 	coin1, err := NewCoinFromBigInt(new(big.Int).SetInt64(1))
-	assert.Nil(err)
-
-	cases := []struct {
-		inputOne Coin
-		inputTwo Coin
-		expected bool
-	}{
-		{NewCoin(bigInt128), NewCoin(bigInt128), true},
-		{NewCoinFromInt64(1), NewCoinFromInt64(1), true},
-		{NewCoinFromInt64(1), NewCoinFromInt64(10), false},
-		{NewCoinFromInt64(-11), NewCoinFromInt64(10), false},
-		{NewCoinFromInt64(1), NewCoin(new(mathutil.Int128).SetInt64(1)), true},
-		{NewCoinFromInt64(1), coin1, true},
+	if err != nil {
+		t.Errorf("TestIsEqualCoin: failed to convert coin, got err %v", err)
 	}
 
-	for _, tc := range cases {
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		inputTwo     Coin
+		expectResult bool
+	}{
+		{
+			testName:     "bigInt128 equals to bigInt128",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: true,
+		},
+		{
+			testName:     "1 equals to 1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: true,
+		},
+		{
+			testName:     "1 is not equal to 10",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(10),
+			expectResult: false,
+		},
+		{
+			testName:     "-11 is not equal to 10",
+			inputOne:     NewCoinFromInt64(-11),
+			inputTwo:     NewCoinFromInt64(10),
+			expectResult: false,
+		},
+		{
+			testName:     "1 equals to int128 1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoin(new(mathutil.Int128).SetInt64(1)),
+			expectResult: true,
+		},
+		{
+			testName:     "1 equals to coin1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     coin1,
+			expectResult: true,
+		},
+	}
+
+	for _, tc := range testCases {
 		res := tc.inputOne.IsEqual(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestPlusCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		inputTwo Coin
-		expected Coin
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		inputTwo     Coin
+		expectResult Coin
 	}{
-		{NewCoinFromInt64(0), NewCoinFromInt64(1), NewCoinFromInt64(1)},
-		{NewCoinFromInt64(1), NewCoinFromInt64(0), NewCoinFromInt64(1)},
-		{NewCoinFromInt64(1), NewCoinFromInt64(1), NewCoinFromInt64(2)},
-		{NewCoinFromInt64(-4), NewCoinFromInt64(5), NewCoinFromInt64(1)},
-		{NewCoinFromInt64(-1), NewCoinFromInt64(1), NewCoinFromInt64(0)},
-		{NewCoin(bigInt128), NewCoin(bigInt128), NewCoin(doubleBigInt128)},
+		{
+			testName:     "0 + 1 = 1",
+			inputOne:     NewCoinFromInt64(0),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: NewCoinFromInt64(1),
+		},
+		{
+			testName:     "1 + 0 = 1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(0),
+			expectResult: NewCoinFromInt64(1),
+		},
+		{
+			testName:     "1 + 1 = 2",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: NewCoinFromInt64(2),
+		},
+		{
+			testName:     "-4 + 5 = 1",
+			inputOne:     NewCoinFromInt64(-4),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: NewCoinFromInt64(1),
+		},
+		{
+			testName:     "-1 + 1 = 0",
+			inputOne:     NewCoinFromInt64(-1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: NewCoinFromInt64(0),
+		},
+		{
+			testName:     "bigInt128 + bigInt128 = doubleBigInt128",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: NewCoin(doubleBigInt128),
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.Plus(tc.inputTwo)
-		assert.Equal(tc.expected, res)
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
 func TestMinusCoin(t *testing.T) {
-	assert := assert.New(t)
-
-	cases := []struct {
-		inputOne Coin
-		inputTwo Coin
-		expected Coin
+	testCases := []struct {
+		testName     string
+		inputOne     Coin
+		inputTwo     Coin
+		expectResult Coin
 	}{
-		{NewCoinFromInt64(0), NewCoinFromInt64(0), NewCoinFromInt64(0)},
-		{NewCoinFromInt64(1), NewCoinFromInt64(0), NewCoinFromInt64(1)},
-		{NewCoinFromInt64(1), NewCoinFromInt64(1), NewCoinFromInt64(0)},
-		{NewCoinFromInt64(1), NewCoinFromInt64(-1), NewCoinFromInt64(2)},
-		{NewCoinFromInt64(-1), NewCoinFromInt64(-1), NewCoinFromInt64(0)},
-		{NewCoinFromInt64(-4), NewCoinFromInt64(5), NewCoinFromInt64(-9)},
-		{NewCoinFromInt64(10), NewCoinFromInt64(1), NewCoinFromInt64(9)},
-		{NewCoin(bigInt128), NewCoin(bigInt128), NewCoinFromInt64(0)},
+		{
+			testName:     "0 - 0 = 0",
+			inputOne:     NewCoinFromInt64(0),
+			inputTwo:     NewCoinFromInt64(0),
+			expectResult: NewCoinFromInt64(0),
+		},
+		{
+			testName:     "1 - 0 = 1",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(0),
+			expectResult: NewCoinFromInt64(1),
+		},
+		{
+			testName:     "1 - 1 = 0",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: NewCoinFromInt64(0),
+		},
+		{
+			testName:     "1 - (-1) = 2",
+			inputOne:     NewCoinFromInt64(1),
+			inputTwo:     NewCoinFromInt64(-1),
+			expectResult: NewCoinFromInt64(2),
+		},
+		{
+			testName:     "-1 - (-1) = 0",
+			inputOne:     NewCoinFromInt64(-1),
+			inputTwo:     NewCoinFromInt64(-1),
+			expectResult: NewCoinFromInt64(0),
+		},
+		{
+			testName:     "-4 - 5 = -9",
+			inputOne:     NewCoinFromInt64(-4),
+			inputTwo:     NewCoinFromInt64(5),
+			expectResult: NewCoinFromInt64(-9),
+		},
+		{
+			testName:     "10 - 1 = 9",
+			inputOne:     NewCoinFromInt64(10),
+			inputTwo:     NewCoinFromInt64(1),
+			expectResult: NewCoinFromInt64(9),
+		},
+		{
+			testName:     "bigInt128 - bigInt128 = 0",
+			inputOne:     NewCoin(bigInt128),
+			inputTwo:     NewCoin(bigInt128),
+			expectResult: NewCoinFromInt64(0),
+		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		res := tc.inputOne.Minus(tc.inputTwo)
-		assert.True(tc.expected.IsEqual(res))
+		if res != tc.expectResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
+		}
 	}
 }
 
@@ -289,7 +652,9 @@ func TestSerializationGoWire(t *testing.T) {
 
 	//bz, err := json.Marshal(r)
 	bz, err := cdc.MarshalJSON(r)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestSerializationGoWire: failed to marshal, got err %v", err)
+	}
 
 	//str, err := r.MarshalJSON()
 	//require.Nil(t, err)
@@ -298,7 +663,11 @@ func TestSerializationGoWire(t *testing.T) {
 	//err = json.Unmarshal([]byte(bz), &r2)
 	err = cdc.UnmarshalJSON([]byte(bz), &r2)
 	//panic(fmt.Sprintf("debug bz: %v\n", string(bz)))
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestSerializationGoWire: failed to unmarshal, got err %v", err)
+	}
 
-	assert.True(t, r.IsEqual(r2), "original: %v, unmarshalled: %v", r, r2)
+	if !r2.IsEqual(r) {
+		t.Errorf("TestSerializationGoWire: diff result, got %v, want %v", r2, r)
+	}
 }

@@ -204,27 +204,65 @@ func TestDelegatorWithdraw(t *testing.T) {
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
-	cases := []struct {
-		addDelegation bool
-		delegatedCoin types.Coin
-		delegator     types.AccountKey
-		voter         types.AccountKey
-		withdraw      types.Coin
-		expectResult  sdk.Result
+	testCases := []struct {
+		testName       string
+		addDelegation  bool
+		delegatedCoin  types.Coin
+		delegator      types.AccountKey
+		voter          types.AccountKey
+		withdraw       types.Coin
+		expectedResult sdk.Result
 	}{
-		{false, types.NewCoinFromInt64(0), user2, user1, param.DelegatorMinWithdraw, ErrIllegalWithdraw().Result()},
-		{true, delegatedCoin, user2, user1, param.DelegatorMinWithdraw.Minus(delta), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoinFromInt64(0), user2, user1, delegatedCoin.Plus(delta), ErrIllegalWithdraw().Result()},
-		{false, types.NewCoinFromInt64(0), user2, user1, delegatedCoin.Minus(delta), sdk.Result{}},
+		{
+			testName:       "no delegation exist, can't withdraw",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       param.DelegatorMinWithdraw,
+			expectedResult: ErrIllegalWithdraw().Result(),
+		},
+		{
+			testName:       "withdraw amount is less than minimum requirement",
+			addDelegation:  true,
+			delegatedCoin:  delegatedCoin,
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       param.DelegatorMinWithdraw.Minus(delta),
+			expectedResult: ErrIllegalWithdraw().Result(),
+		},
+		{
+			testName:       "no delegation exist, can't withdraw delegatedCoin+delta",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       delegatedCoin.Plus(delta),
+			expectedResult: ErrIllegalWithdraw().Result(),
+		},
+		{
+			testName:       "no delegation exist, can't withdraw delegatedCoin-delta",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       delegatedCoin.Minus(delta),
+			expectedResult: sdk.Result{},
+		},
 	}
 
-	for _, cs := range cases {
-		if cs.addDelegation {
-			vm.AddDelegation(ctx, cs.voter, cs.delegator, cs.delegatedCoin)
+	for _, tc := range testCases {
+		if tc.addDelegation {
+			err := vm.AddDelegation(ctx, tc.voter, tc.delegator, tc.delegatedCoin)
+			if err != nil {
+				t.Errorf("%s: failed to add delegation, got err %v", tc.testName, err)
+			}
 		}
-		msg := NewDelegatorWithdrawMsg(string(cs.delegator), string(cs.voter), coinToString(cs.withdraw))
+		msg := NewDelegatorWithdrawMsg(string(tc.delegator), string(tc.voter), coinToString(tc.withdraw))
 		res := handler(ctx, msg)
-		assert.Equal(t, cs.expectResult, res)
+		if !assert.Equal(t, tc.expectedResult, res) {
+			t.Errorf("%s: diff result, got %v, want %v", res, tc.expectedResult)
+		}
 	}
 }
 
@@ -245,20 +283,49 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectedFrozenTimes    int64
 		expectedFrozenInterval int64
 	}{
-		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
-		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+		{
+			testName:               "return coin to user",
+			times:                  10,
+			interval:               2,
+			returnedCoin:           types.NewCoinFromInt64(100),
+			expectedFrozenListLen:  1,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100),
+			expectedFrozenTimes:    10,
+			expectedFrozenInterval: 2,
+		},
+		{
+			testName:               "return coin to user again",
+			times:                  100000,
+			interval:               20000,
+			returnedCoin:           types.NewCoinFromInt64(100000),
+			expectedFrozenListLen:  2,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
+			expectedFrozenTimes:    100000,
+			expectedFrozenInterval: 20000},
 	}
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
 			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin, types.VoteReturnCoin)
-		assert.Equal(t, nil, err)
+		if err != nil {
+			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
+		}
 		lst, err := am.GetFrozenMoneyList(ctx, user)
-		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
-		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
-		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
-		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
-
+		if err != nil {
+			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
+		}
+		if len(lst) != tc.expectedFrozenListLen {
+			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
+		}
+		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
+		}
+		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {
+			t.Errorf("%s: diff times, got %v, want %v", tc.testName, lst[len(lst)-1].Times, tc.expectedFrozenTimes)
+		}
+		if lst[len(lst)-1].Interval != tc.expectedFrozenInterval {
+			t.Errorf("%s: diff interval, got %v, want %v", tc.testName, lst[len(lst)-1].Interval, tc.expectedFrozenInterval)
+		}
 	}
 }
 

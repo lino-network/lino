@@ -55,39 +55,44 @@ func TestReportUsage(t *testing.T) {
 	im.AddToInfraProviderList(ctx, "user1")
 	im.AddToInfraProviderList(ctx, "user2")
 
-	cases := map[string]struct {
-		User1Usage             int64
-		User2Usage             int64
-		ExpectUser1UsageWeight sdk.Rat
-		ExpectUser2UsageWeight sdk.Rat
+	testCases := map[string]struct {
+		user1Usage             int64
+		user2Usage             int64
+		expectUser1UsageWeight sdk.Rat
+		expectUser2UsageWeight sdk.Rat
 	}{
 		"test normal report": {
-			25, 75, sdk.NewRat(1, 4), sdk.NewRat(3, 4),
+			user1Usage:             25,
+			user2Usage:             75,
+			expectUser1UsageWeight: sdk.NewRat(1, 4),
+			expectUser2UsageWeight: sdk.NewRat(3, 4),
 		},
 		"test empty report": {
-			0, 0, sdk.NewRat(1, 2), sdk.NewRat(1, 2),
+			user1Usage:             0,
+			user2Usage:             0,
+			expectUser1UsageWeight: sdk.NewRat(1, 2),
+			expectUser2UsageWeight: sdk.NewRat(1, 2),
 		},
 		"issue https://github.com/lino-network/lino/issues/150": {
-			3333333, 4444444, sdk.NewRat(429, 1000), sdk.NewRat(571, 1000),
+			user1Usage:             3333333,
+			user2Usage:             4444444,
+			expectUser1UsageWeight: sdk.NewRat(429, 1000),
+			expectUser2UsageWeight: sdk.NewRat(571, 1000),
 		},
 	}
-	for testName, cs := range cases {
-		im.ReportUsage(ctx, "user1", cs.User1Usage)
-		im.ReportUsage(ctx, "user2", cs.User2Usage)
+	for testName, tc := range testCases {
+		im.ReportUsage(ctx, "user1", tc.user1Usage)
+		im.ReportUsage(ctx, "user2", tc.user2Usage)
 
 		w1, _ := im.GetUsageWeight(ctx, "user1")
-		if !cs.ExpectUser1UsageWeight.Equal(w1) {
-			t.Errorf(
-				"%s: expect user1 usage weight %v, got %v",
-				testName, cs.ExpectUser1UsageWeight, w1)
+		if !tc.expectUser1UsageWeight.Equal(w1) {
+			t.Errorf("%s: diff user1 usage weight, got %v, want %v", testName, w1, tc.expectUser1UsageWeight)
 			return
 		}
 
 		w2, _ := im.GetUsageWeight(ctx, "user2")
-		if !cs.ExpectUser2UsageWeight.Equal(w2) {
-			t.Errorf(
-				"%s: expect user2 usage weight %v, got %v",
-				testName, cs.ExpectUser2UsageWeight, w2)
+		if !tc.expectUser2UsageWeight.Equal(w2) {
+			t.Errorf("%s: diff user2 usage weight, got %v, want %v", testName, w2, tc.expectUser2UsageWeight)
 			return
 		}
 		im.ClearUsage(ctx)

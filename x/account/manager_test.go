@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -16,73 +15,108 @@ import (
 )
 
 func checkBankKVByUsername(
-	t *testing.T, ctx sdk.Context, username types.AccountKey, bank model.AccountBank) {
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, bank model.AccountBank) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	bankPtr, err := accStorage.GetBankFromAccountKey(ctx, username)
-	assert.Nil(t, err)
-	assert.Equal(t, bank, *bankPtr, "bank should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get bank, got err %", testName, err)
+	}
+	if !assert.Equal(t, bank, *bankPtr) {
+		t.Errorf("%s: diff bank, got %v, want %v", testName, *bankPtr, bank)
+	}
 }
 
 func checkBalanceHistory(
-	t *testing.T, ctx sdk.Context, username types.AccountKey,
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey,
 	timeSlot int64, balanceHistory model.BalanceHistory) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, username, timeSlot)
-	assert.Nil(t, err)
-	assert.Equal(t, balanceHistory, *balanceHistoryPtr, "balance history should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get balance history, got err %", testName, err)
+	}
+	if !assert.Equal(t, balanceHistory, *balanceHistoryPtr) {
+		t.Errorf("%s: diff balance history, got %v, want %v", testName, *balanceHistoryPtr, balanceHistory)
+	}
 }
 
 func checkPendingStake(
-	t *testing.T, ctx sdk.Context, username types.AccountKey, pendingStakeQueue model.PendingStakeQueue) {
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingStakeQueue model.PendingStakeQueue) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, username)
-	assert.Nil(t, err)
-	assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr, "pending stake should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get pending stake queue, got err %", testName, err)
+	}
+	if !assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr) {
+		t.Errorf("%s: diff pending stake queue, got %v, want %v", testName, *pendingStakeQueuePtr, pendingStakeQueue)
+	}
 }
 
 func checkAccountInfo(
-	t *testing.T, ctx sdk.Context, accKey types.AccountKey, accInfo model.AccountInfo) {
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accInfo model.AccountInfo) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	info, err := accStorage.GetInfo(ctx, accKey)
-	assert.Nil(t, err)
-	assert.Equal(t, accInfo, *info, "accout info should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get account info, got err %", testName, err)
+	}
+	if !assert.Equal(t, accInfo, *info) {
+		t.Errorf("%s: diff account info, got %v, want %v", testName, *info, accInfo)
+	}
 }
 
 func checkAccountMeta(
-	t *testing.T, ctx sdk.Context, accKey types.AccountKey, accMeta model.AccountMeta) {
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accMeta model.AccountMeta) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	metaPtr, err := accStorage.GetMeta(ctx, accKey)
-	assert.Nil(t, err)
-	assert.Equal(t, accMeta, *metaPtr, "accout meta should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get account meta, got err %", testName, err)
+	}
+	if !assert.Equal(t, accMeta, *metaPtr) {
+		t.Errorf("%s: diff account meta, got %v, want %v", testName, *metaPtr, accMeta)
+	}
 }
 
 func checkAccountReward(
-	t *testing.T, ctx sdk.Context, accKey types.AccountKey, reward model.Reward) {
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, reward model.Reward) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	rewardPtr, err := accStorage.GetReward(ctx, accKey)
-	assert.Nil(t, err)
-	assert.Equal(t, reward, *rewardPtr, "accout reward should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get reward, got err %", testName, err)
+	}
+	if !assert.Equal(t, reward, *rewardPtr) {
+		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
+	}
 }
 
 func checkRewardHistory(
-	t *testing.T, ctx sdk.Context, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
-	assert.Nil(t, err)
-	assert.Equal(t, wantNumOfReward, len(rewardHistoryPtr.Details), "accout reward should be equal")
+	if err != nil {
+		t.Errorf("%s, failed to get reward history, got err %", testName, err)
+	}
+	if wantNumOfReward != len(rewardHistoryPtr.Details) {
+		t.Errorf("%s: diff account rewards, got %v, want %v", testName, len(rewardHistoryPtr.Details), wantNumOfReward)
+	}
 }
 
 func TestDoesAccountExist(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
-	assert.False(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
+	if am.DoesAccountExist(ctx, types.AccountKey("user1")) {
+		t.Error("TestDoesAccountExist: user1 has already existed")
+	}
+
 	createTestAccount(ctx, am, "user1")
-	assert.True(t, am.DoesAccountExist(ctx, types.AccountKey("user1")))
+	if !am.DoesAccountExist(ctx, types.AccountKey("user1")) {
+		t.Error("TestDoesAccountExist: user1 should exist, but not")
+	}
 }
 
 func TestAddCoin(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Error("TestAddCoin: failed to get coin day param")
+	}
 
 	fromUser1, fromUser2, testUser :=
 		types.AccountKey("fromUser1"), types.AccountKey("fromuser2"), types.AccountKey("testUser")
@@ -91,41 +125,48 @@ func TestAddCoin(t *testing.T) {
 	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
 	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	baseTime3 := baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake + 1
+
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
 	createTestAccount(ctx, am, string(testUser))
+
 	cases := []struct {
 		testName                 string
-		Amount                   types.Coin
-		From                     types.AccountKey
-		DetailType               types.TransferDetailType
-		Memo                     string
-		AtWhen                   int64
-		ExpectBank               model.AccountBank
-		ExpectPendingStakeQueue  model.PendingStakeQueue
-		ExpectBalanceHistorySlot model.BalanceHistory
+		amount                   types.Coin
+		from                     types.AccountKey
+		detailType               types.TransferDetailType
+		memo                     string
+		atWhen                   int64
+		expectBank               model.AccountBank
+		expectPendingStakeQueue  model.PendingStakeQueue
+		expectBalanceHistorySlot model.BalanceHistory
 	}{
-		{"add coin to account's saving",
-			c100, fromUser1, types.TransferIn, "memo", baseTime,
-			model.AccountBank{
+		{
+			testName:   "add coin to account's saving",
+			amount:     c100,
+			from:       fromUser1,
+			detailType: types.TransferIn,
+			memo:       "memo",
+			atWhen:     baseTime,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c100),
 				Stake:   accParam.RegisterFee,
 				NumOfTx: 2,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        c100,
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime,
 						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
 			},
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
+			expectBalanceHistorySlot: model.BalanceHistory{
+				Details: []model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
@@ -133,7 +174,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
@@ -144,33 +185,38 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
-		{"add coin to exist account's saving while previous tx is still in pending queue", c100,
-			fromUser2, types.DonationIn, "permlink", baseTime1,
-			model.AccountBank{
+		{
+			testName:   "add coin to exist account's saving while previous tx is still in pending queue",
+			amount:     c100,
+			from:       fromUser2,
+			detailType: types.DonationIn,
+			memo:       "permlink",
+			atWhen:     baseTime1,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c200),
 				Stake:   accParam.RegisterFee,
 				NumOfTx: 3,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime1,
 				StakeCoinInQueue: sdk.NewRat(5000000, 1),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime,
 						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
-					model.PendingStake{
+					{
 						StartTime: baseTime1,
 						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
 			},
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
+			expectBalanceHistorySlot: model.BalanceHistory{
+				Details: []model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
@@ -178,7 +224,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
@@ -186,7 +232,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       "memo",
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser2,
 						To:         testUser,
@@ -197,33 +243,38 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
-		{"add coin to exist account's saving while previous tx just finished pending", c100, "",
-			types.ClaimReward, "", baseTime2,
-			model.AccountBank{
+		{
+			testName:   "add coin to exist account's saving while previous tx just finished pending",
+			amount:     c100,
+			from:       "",
+			detailType: types.ClaimReward,
+			memo:       "",
+			atWhen:     baseTime2,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c300),
 				Stake:   accParam.RegisterFee.Plus(c100),
 				NumOfTx: 4,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2,
 				StakeCoinInQueue: sdk.NewRat(945003125, 189),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime1,
 						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
-					model.PendingStake{
+					{
 						StartTime: baseTime2,
 						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
 			},
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
+			expectBalanceHistorySlot: model.BalanceHistory{
+				Details: []model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
@@ -231,7 +282,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
@@ -239,7 +290,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       "memo",
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser2,
 						To:         testUser,
@@ -247,7 +298,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.DonationIn,
 						Memo:       "permlink",
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       "",
 						To:         testUser,
@@ -257,34 +308,38 @@ func TestAddCoin(t *testing.T) {
 				},
 			},
 		},
-		{"add coin is zero", c0, "",
-			types.DelegationReturnCoin, "", baseTime3,
-			model.AccountBank{
+		{
+			testName:   "add coin is zero",
+			amount:     c0,
+			from:       "",
+			detailType: types.DelegationReturnCoin,
+			memo:       "",
+			atWhen:     baseTime3,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(c300),
 				Stake:   accParam.RegisterFee.Plus(c100),
 				NumOfTx: 4,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2,
 				StakeCoinInQueue: sdk.NewRat(945003125, 189),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime1,
 						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
-					model.PendingStake{
+					{
 						StartTime: baseTime2,
 						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
 			},
-			model.BalanceHistory{
-				[]model.Detail{
-
-					model.Detail{
+			expectBalanceHistorySlot: model.BalanceHistory{
+				Details: []model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
@@ -292,7 +347,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
@@ -300,7 +355,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       "memo",
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       fromUser2,
 						To:         testUser,
@@ -308,7 +363,7 @@ func TestAddCoin(t *testing.T) {
 						DetailType: types.DonationIn,
 						Memo:       "permlink",
 					},
-					model.Detail{
+					{
 						Amount:     c100,
 						From:       "",
 						To:         testUser,
@@ -321,18 +376,18 @@ func TestAddCoin(t *testing.T) {
 	}
 
 	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
 		err = am.AddSavingCoin(
-			ctx, testUser, cs.Amount, cs.From, cs.Memo, cs.DetailType)
+			ctx, testUser, cs.amount, cs.from, cs.memo, cs.detailType)
 
 		if err != nil {
-			t.Errorf("%s: add coin failed, err: %v", cs.testName, err)
+			t.Errorf("%s: failed to add coin, got err: %v", cs.testName, err)
 			return
 		}
-		checkBankKVByUsername(t, ctx, types.AccountKey(testUser), cs.ExpectBank)
-		checkPendingStake(t, ctx, types.AccountKey(testUser), cs.ExpectPendingStakeQueue)
+		checkBankKVByUsername(t, ctx, cs.testName, types.AccountKey(testUser), cs.expectBank)
+		checkPendingStake(t, ctx, cs.testName, types.AccountKey(testUser), cs.expectPendingStakeQueue)
 		checkBalanceHistory(
-			t, ctx, types.AccountKey(testUser), 0, cs.ExpectBalanceHistorySlot)
+			t, ctx, cs.testName, types.AccountKey(testUser), 0, cs.expectBalanceHistorySlot)
 	}
 }
 
@@ -340,7 +395,9 @@ func TestMinusCoin(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Error("TestMinusCoin: failed to get coin day param")
+	}
 
 	userWithSufficientSaving := types.AccountKey("user1")
 	userWithLimitSaving := types.AccountKey("user3")
@@ -354,45 +411,56 @@ func TestMinusCoin(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
 	priv1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
 	priv3 := createTestAccount(ctx, am, string(userWithLimitSaving))
+
 	err = am.AddSavingCoin(
 		ctx, userWithSufficientSaving, accParam.RegisterFee, fromUser, "", types.TransferIn)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestMinusCoin: failed to add saving coin, got err %v", err)
+	}
 
 	cases := []struct {
-		TestName                string
-		FromUser                types.AccountKey
-		UserPriv                crypto.PrivKey
-		ExpectErr               sdk.Error
-		Amount                  types.Coin
-		AtWhen                  int64
-		To                      types.AccountKey
-		Memo                    string
-		DetailType              types.TransferDetailType
-		ExpectBank              model.AccountBank
-		ExpectPendingStakeQueue model.PendingStakeQueue
-		ExpectBalanceHistory    model.BalanceHistory
+		testName                string
+		fromUser                types.AccountKey
+		userPriv                crypto.PrivKey
+		expectErr               sdk.Error
+		amount                  types.Coin
+		atWhen                  int64
+		to                      types.AccountKey
+		memo                    string
+		detailType              types.TransferDetailType
+		expectBank              model.AccountBank
+		expectPendingStakeQueue model.PendingStakeQueue
+		expectBalanceHistory    model.BalanceHistory
 	}{
-		{"minus saving coin from user with sufficient saving",
-			userWithSufficientSaving, priv1, nil, coin1, baseTime, toUser, "memo", types.TransferOut,
-			model.AccountBank{
+		{
+			testName:   "minus saving coin from user with sufficient saving",
+			fromUser:   userWithSufficientSaving,
+			userPriv:   priv1,
+			expectErr:  nil,
+			amount:     coin1,
+			atWhen:     baseTime,
+			to:         toUser,
+			memo:       "memo",
+			detailType: types.TransferOut,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
 				NumOfTx: 3,
 				Stake:   accParam.RegisterFee,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Minus(coin1),
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime,
 						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee.Minus(coin1),
 					}},
 			},
-			model.BalanceHistory{
-				[]model.Detail{
-					model.Detail{
+			expectBalanceHistory: model.BalanceHistory{
+				Details: []model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         userWithSufficientSaving,
@@ -400,14 +468,14 @@ func TestMinusCoin(t *testing.T) {
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
-					model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       fromUser,
 						To:         userWithSufficientSaving,
 						CreatedAt:  baseTime,
 						DetailType: types.TransferIn,
 					},
-					model.Detail{
+					{
 						Amount:     coin1,
 						From:       userWithSufficientSaving,
 						To:         toUser,
@@ -418,15 +486,22 @@ func TestMinusCoin(t *testing.T) {
 				},
 			},
 		},
-		{"minus saving coin from user with limit saving",
-			userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
-			coin1, baseTime, toUser, "memo", types.TransferOut,
-			model.AccountBank{
+		{
+			testName:   "minus saving coin from user with limit saving",
+			fromUser:   userWithLimitSaving,
+			userPriv:   priv3,
+			expectErr:  ErrAccountSavingCoinNotEnough(),
+			amount:     coin1,
+			atWhen:     baseTime,
+			to:         toUser,
+			memo:       "memo",
+			detailType: types.TransferOut,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee,
 				NumOfTx: 1,
 				Stake:   accParam.RegisterFee,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
@@ -437,9 +512,9 @@ func TestMinusCoin(t *testing.T) {
 						Coin:      accParam.RegisterFee,
 					}},
 			},
-			model.BalanceHistory{
+			expectBalanceHistory: model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         toUser,
@@ -450,28 +525,35 @@ func TestMinusCoin(t *testing.T) {
 				},
 			},
 		},
-		{"minus saving coin exceeds the coin user hold",
-			userWithLimitSaving, priv3, ErrAccountSavingCoinNotEnough(),
-			c100, baseTime, toUser, "memo", types.TransferOut,
-			model.AccountBank{
+		{
+			testName:   "minus saving coin exceeds the coin user hold",
+			fromUser:   userWithLimitSaving,
+			userPriv:   priv3,
+			expectErr:  ErrAccountSavingCoinNotEnough(),
+			amount:     c100,
+			atWhen:     baseTime,
+			to:         toUser,
+			memo:       "memo",
+			detailType: types.TransferOut,
+			expectBank: model.AccountBank{
 				Saving:  accParam.RegisterFee,
 				NumOfTx: 1,
 				Stake:   accParam.RegisterFee,
 			},
-			model.PendingStakeQueue{
+			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime,
 						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee,
 					}},
 			},
-			model.BalanceHistory{
+			expectBalanceHistory: model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         userWithLimitSaving,
@@ -484,30 +566,47 @@ func TestMinusCoin(t *testing.T) {
 		},
 	}
 	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
-		err = am.MinusSavingCoin(ctx, cs.FromUser, cs.Amount, cs.To, cs.Memo, cs.DetailType)
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
+		err = am.MinusSavingCoin(ctx, cs.fromUser, cs.amount, cs.to, cs.memo, cs.detailType)
 
-		assert.Equal(t, cs.ExpectErr, err, fmt.Sprintf("%s: minus coin failed, err: %v", cs.TestName, err))
-		if cs.ExpectErr == nil {
-			checkBankKVByUsername(t, ctx, cs.FromUser, cs.ExpectBank)
-			checkPendingStake(t, ctx, cs.FromUser, cs.ExpectPendingStakeQueue)
-			checkBalanceHistory(t, ctx, cs.FromUser,
-				0, cs.ExpectBalanceHistory)
+		if !assert.Equal(t, cs.expectErr, err) {
+			t.Errorf("%s: diff err, got %v, want %v", cs.testName, err, cs.expectErr)
+		}
+		if cs.expectErr == nil {
+			checkBankKVByUsername(t, ctx, cs.testName, cs.fromUser, cs.expectBank)
+			checkPendingStake(t, ctx, cs.testName, cs.fromUser, cs.expectPendingStakeQueue)
+			checkBalanceHistory(t, ctx, cs.testName, cs.fromUser, 0, cs.expectBalanceHistory)
 		}
 	}
 }
 
 func TestBalanceHistory(t *testing.T) {
 	fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
+
 	cases := []struct {
-		TestName        string
-		NumOfAdding     int
-		NumOfMinus      int
+		testName        string
+		numOfAdding     int
+		numOfMinus      int
 		expectTotalSlot int64
 	}{
-		{"test only one adding", 1, 0, 1},
-		{"test 99 adding, which fullfills 1 bundles", 99, 0, 1},
-		{"test adding and minus, which results in 2 bundles", 50, 50, 2},
+		{
+			testName:        "test only one adding",
+			numOfAdding:     1,
+			numOfMinus:      0,
+			expectTotalSlot: 1,
+		},
+		{
+			testName:        "test 99 adding, which fullfills 1 bundles",
+			numOfAdding:     99,
+			numOfMinus:      0,
+			expectTotalSlot: 1,
+		},
+		{
+			testName:        "test adding and minus, which results in 2 bundles",
+			numOfAdding:     50,
+			numOfMinus:      50,
+			expectTotalSlot: 2,
+		},
 	}
 	for _, cs := range cases {
 		ctx, am, accParam := setupTest(t, 1)
@@ -515,27 +614,43 @@ func TestBalanceHistory(t *testing.T) {
 		user1 := types.AccountKey("user1")
 		createTestAccount(ctx, am, string(user1))
 
-		for i := 0; i < cs.NumOfAdding; i++ {
+		for i := 0; i < cs.numOfAdding; i++ {
 			err := am.AddSavingCoin(ctx, user1, coin1, fromUser, "", types.TransferIn)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to add saving coin, got err %v", cs.testName, err)
+			}
 		}
-		for i := 0; i < cs.NumOfMinus; i++ {
+		for i := 0; i < cs.numOfMinus; i++ {
 			err := am.MinusSavingCoin(ctx, user1, coin1, toUser, "", types.TransferOut)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to minus saving coin, got err %v", cs.testName, err)
+			}
 		}
+
 		bank, err := am.storage.GetBankFromAccountKey(ctx, user1)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get bank, got err %v", cs.testName, err)
+		}
+
 		// add one init transfer in
-		expectNumOfTx := int64(cs.NumOfAdding + cs.NumOfMinus + 1)
-		assert.Equal(t, expectNumOfTx, bank.NumOfTx)
+		expectNumOfTx := int64(cs.numOfAdding + cs.numOfMinus + 1)
+		if expectNumOfTx != bank.NumOfTx {
+			t.Errorf("%s: diff num of tx, got %v, want %v", cs.testName, bank.NumOfTx, expectNumOfTx)
+		}
 
 		// total slot should use previous states to get expected slots
 		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleSize + 1
-		assert.Equal(t, cs.expectTotalSlot, actualTotalSlot)
+		if cs.expectTotalSlot != actualTotalSlot {
+			t.Errorf("%s: diff total slot, got %v, want %v", cs.testName, actualTotalSlot, cs.expectTotalSlot)
+		}
+
 		actualNumOfAdding, actualNumOfMinus := 0, 0
 		for slot := int64(0); slot < actualTotalSlot; slot++ {
 			balanceHistory, err := am.storage.GetBalanceHistory(ctx, user1, slot)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to get balance history, got err %v", cs.testName, err)
+			}
+
 			for _, tx := range balanceHistory.Details {
 				if tx.DetailType == types.TransferIn {
 					actualNumOfAdding++
@@ -546,8 +661,12 @@ func TestBalanceHistory(t *testing.T) {
 			}
 		}
 		// include create account init transaction
-		assert.Equal(t, cs.NumOfAdding+1, actualNumOfAdding)
-		assert.Equal(t, cs.NumOfMinus, actualNumOfMinus)
+		if cs.numOfAdding+1 != actualNumOfAdding {
+			t.Errorf("%s: diff num of adding, got %v, want %v", cs.testName, actualNumOfAdding, cs.numOfAdding+1)
+		}
+		if cs.numOfMinus != actualNumOfMinus {
+			t.Errorf("%s: diff num of minus, got %v, want %v", cs.testName, actualNumOfMinus, cs.numOfMinus)
+		}
 	}
 }
 
@@ -560,54 +679,76 @@ func TestAddBalanceHistory(t *testing.T) {
 		detail                model.Detail
 		expectNumOfTxInBundle int
 	}{
-		{"try first transaction in first slot",
-			0, model.Detail{
+		{
+			testName: "try first transaction in first slot",
+			numOfTx:  0,
+			detail: model.Detail{
 				From:       "test1",
 				To:         "test2",
 				Amount:     types.NewCoinFromInt64(1),
 				DetailType: types.TransferIn,
 				CreatedAt:  time.Now().Unix(),
-			}, 1,
+			},
+			expectNumOfTxInBundle: 1,
 		},
-		{"try second transaction in first slot",
-			1, model.Detail{
+		{
+			testName: "try second transaction in first slot",
+			numOfTx:  1,
+			detail: model.Detail{
 				From:       "test2",
 				To:         "test1",
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.TransferOut,
 				CreatedAt:  time.Now().Unix(),
-			}, 2,
+			},
+			expectNumOfTxInBundle: 2,
 		},
-		{"add transaction to the end of the first slot limitation",
-			99, model.Detail{
+		{
+			testName: "add transaction to the end of the first slot limitation",
+			numOfTx:  99,
+			detail: model.Detail{
 				From:       "test1",
 				To:         "post",
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.DonationOut,
 				CreatedAt:  time.Now().Unix(),
 				Memo:       "",
-			}, 3,
+			},
+			expectNumOfTxInBundle: 3,
 		},
-		{"add transaction to next slot",
-			100, model.Detail{
+		{
+			testName: "add transaction to next slot",
+			numOfTx:  100,
+			detail: model.Detail{
 				From:       "",
 				To:         "test1",
 				Amount:     types.NewCoinFromInt64(1 * types.Decimals),
 				DetailType: types.DeveloperDeposit,
 				CreatedAt:  time.Now().Unix(),
-			}, 1,
+			},
+			expectNumOfTxInBundle: 1,
 		},
 	}
 
 	for _, cs := range cases {
 		err := am.AddBalanceHistory(ctx, user1, cs.numOfTx, cs.detail)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to add balance history, got err %v", cs.testName, err)
+		}
+
 		balanceHistory, err :=
 			am.storage.GetBalanceHistory(
 				ctx, user1, cs.numOfTx/accParam.BalanceHistoryBundleSize)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectNumOfTxInBundle, len(balanceHistory.Details))
-		assert.Equal(t, cs.detail, balanceHistory.Details[cs.expectNumOfTxInBundle-1])
+		if err != nil {
+			t.Errorf("%s: failed to get balance history, got err %v", cs.testName, err)
+		}
+
+		if cs.expectNumOfTxInBundle != len(balanceHistory.Details) {
+			t.Errorf("%s: diff num of tx in bunlde, got %v, want %v", cs.testName, len(balanceHistory.Details), cs.expectNumOfTxInBundle)
+		}
+		if !assert.Equal(t, cs.detail, balanceHistory.Details[cs.expectNumOfTxInBundle-1]) {
+			t.Errorf("%s: diff detail, got %v, want %v", cs.testName, balanceHistory.Details[cs.expectNumOfTxInBundle-1], cs.detail)
+		}
 	}
 }
 
@@ -621,7 +762,9 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	err := am.CreateAccount(
 		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
 		priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestCreateAccountNormalCase: failed to create account, got err %v", err)
+	}
 
 	assert.True(t, am.DoesAccountExist(ctx, accKey))
 	bank := model.AccountBank{
@@ -629,9 +772,11 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		NumOfTx: 1,
 		Stake:   accParam.RegisterFee,
 	}
-	checkBankKVByUsername(t, ctx, accKey, bank)
+	checkBankKVByUsername(t, ctx, "TestCreateAccountNormalCase", accKey, bank)
+
 	pendingStakeQueue := model.PendingStakeQueue{StakeCoinInQueue: sdk.ZeroRat()}
-	checkPendingStake(t, ctx, accKey, pendingStakeQueue)
+	checkPendingStake(t, ctx, "TestCreateAccountNormalCase", accKey, pendingStakeQueue)
+
 	accInfo := model.AccountInfo{
 		Username:        accKey,
 		CreatedAt:       ctx.BlockHeader().Time,
@@ -640,44 +785,61 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		MicropaymentKey: priv.Generate(1).PubKey(),
 		PostKey:         priv.Generate(2).PubKey(),
 	}
-	checkAccountInfo(t, ctx, accKey, accInfo)
+	checkAccountInfo(t, ctx, "TestCreateAccountNormalCase", accKey, accInfo)
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
-	checkAccountMeta(t, ctx, accKey, accMeta)
+	checkAccountMeta(t, ctx, "TestCreateAccountNormalCase", accKey, accMeta)
 
 	reward := model.Reward{coin0, coin0, coin0, coin0}
-	checkAccountReward(t, ctx, accKey, reward)
+	checkAccountReward(t, ctx, "TestCreateAccountNormalCase", accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(balanceHistory.Details))
-	assert.Equal(t, model.Detail{
+	if err != nil {
+		t.Errorf("TestCreateAccountNormalCase: failed to get balance history, got err %v", err)
+	}
+	if len(balanceHistory.Details) != 1 {
+		t.Errorf("TestCreateAccountNormalCase: diff num of balance, got %v, want %v", len(balanceHistory.Details), 1)
+	}
+
+	wantDetail := model.Detail{
 		From:       accountReferrer,
 		To:         accKey,
 		Amount:     accParam.RegisterFee,
 		CreatedAt:  ctx.BlockHeader().Time,
 		DetailType: types.TransferIn,
 		Memo:       types.InitAccountWithFullStakeMemo,
-	}, balanceHistory.Details[0])
+	}
+	if !assert.Equal(t, wantDetail, balanceHistory.Details[0]) {
+		t.Errorf("TestCreateAccountNormalCase: diff detail, got %v, want %v", balanceHistory.Details[0], wantDetail)
+	}
 }
 
 func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
+	testName := "TestCreateAccountWithLargeRegisterFee"
+
 	ctx, am, accParam := setupTest(t, 1)
 	priv := crypto.GenPrivKeyEd25519()
 	accKey := types.AccountKey("accKey")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to get coin day param, got err %v", testName, err)
+	}
 
 	extraRegisterFee := types.NewCoinFromInt64(100 * types.Decimals)
 	// normal test
-	assert.False(t, am.DoesAccountExist(ctx, accKey))
+	if am.DoesAccountExist(ctx, accKey) {
+		t.Errorf("%s: account %v already exist", testName, accKey)
+	}
+
 	err = am.CreateAccount(
 		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
 		priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee.Plus(extraRegisterFee))
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to create account, got err %v", testName, err)
+	}
 
 	assert.True(t, am.DoesAccountExist(ctx, accKey))
 	bank := model.AccountBank{
@@ -685,7 +847,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		NumOfTx: 2,
 		Stake:   accParam.RegisterFee,
 	}
-	checkBankKVByUsername(t, ctx, accKey, bank)
+	checkBankKVByUsername(t, ctx, testName, accKey, bank)
+
 	pendingStakeQueue := model.PendingStakeQueue{
 		LastUpdatedAt:    ctx.BlockHeader().Time,
 		StakeCoinInQueue: sdk.ZeroRat(),
@@ -698,7 +861,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 			},
 		},
 	}
-	checkPendingStake(t, ctx, accKey, pendingStakeQueue)
+	checkPendingStake(t, ctx, testName, accKey, pendingStakeQueue)
+
 	accInfo := model.AccountInfo{
 		Username:        accKey,
 		CreatedAt:       ctx.BlockHeader().Time,
@@ -707,35 +871,46 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		MicropaymentKey: priv.Generate(1).PubKey(),
 		PostKey:         priv.Generate(2).PubKey(),
 	}
-	checkAccountInfo(t, ctx, accKey, accInfo)
+	checkAccountInfo(t, ctx, testName, accKey, accInfo)
+
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
 	}
-	checkAccountMeta(t, ctx, accKey, accMeta)
+	checkAccountMeta(t, ctx, testName, accKey, accMeta)
 
 	reward := model.Reward{coin0, coin0, coin0, coin0}
-	checkAccountReward(t, ctx, accKey, reward)
+	checkAccountReward(t, ctx, testName, accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(balanceHistory.Details))
-	assert.Equal(t, model.Detail{
-		From:       accountReferrer,
-		To:         accKey,
-		Amount:     accParam.RegisterFee,
-		CreatedAt:  ctx.BlockHeader().Time,
-		DetailType: types.TransferIn,
-		Memo:       types.InitAccountWithFullStakeMemo,
-	}, balanceHistory.Details[0])
-	assert.Equal(t, model.Detail{
-		From:       accountReferrer,
-		To:         accKey,
-		Amount:     extraRegisterFee,
-		CreatedAt:  ctx.BlockHeader().Time,
-		DetailType: types.TransferIn,
-		Memo:       types.InitAccountRegisterDepositMemo,
-	}, balanceHistory.Details[1])
+	if err != nil {
+		t.Errorf("%s: failed to get balance history, got err %v", testName, err)
+	}
+	if len(balanceHistory.Details) != 2 {
+		t.Errorf("%s: diff num of balance history, got %v, want %v", testName, len(balanceHistory.Details), 2)
+	}
+
+	wantDetails := []model.Detail{
+		{
+			From:       accountReferrer,
+			To:         accKey,
+			Amount:     accParam.RegisterFee,
+			CreatedAt:  ctx.BlockHeader().Time,
+			DetailType: types.TransferIn,
+			Memo:       types.InitAccountWithFullStakeMemo,
+		},
+		{
+			From:       accountReferrer,
+			To:         accKey,
+			Amount:     extraRegisterFee,
+			CreatedAt:  ctx.BlockHeader().Time,
+			DetailType: types.TransferIn,
+			Memo:       types.InitAccountRegisterDepositMemo,
+		},
+	}
+	if !assert.Equal(t, wantDetails, balanceHistory.Details) {
+		t.Errorf("%s: diff details, got %v, want %v", testName, balanceHistory.Details, wantDetails)
+	}
 }
 
 func TestInvalidCreateAccount(t *testing.T) {
@@ -750,34 +925,54 @@ func TestInvalidCreateAccount(t *testing.T) {
 	cases := []struct {
 		testName    string
 		username    types.AccountKey
-		privkey     crypto.PrivKey
+		privKey     crypto.PrivKey
 		registerFee types.Coin
 		expectErr   sdk.Error
 	}{
-		{"register user with sufficient saving coin",
-			accKey1, priv1, accParam.RegisterFee, nil,
+		{
+			testName:    "register user with sufficient saving coin",
+			username:    accKey1,
+			privKey:     priv1,
+			registerFee: accParam.RegisterFee,
+			expectErr:   nil,
 		},
-		{"username already took",
-			accKey1, priv1, accParam.RegisterFee, ErrAccountAlreadyExists(accKey1),
+		{
+			testName:    "username already took",
+			username:    accKey1,
+			privKey:     priv1,
+			registerFee: accParam.RegisterFee,
+			expectErr:   ErrAccountAlreadyExists(accKey1),
 		},
-		{"username already took with different private key",
-			accKey1, priv2, accParam.RegisterFee, ErrAccountAlreadyExists(accKey1),
+		{
+			testName:    "username already took with different private key",
+			username:    accKey1,
+			privKey:     priv2,
+			registerFee: accParam.RegisterFee,
+			expectErr:   ErrAccountAlreadyExists(accKey1),
 		},
-		{"register the same private key",
-			accKey2, priv1, accParam.RegisterFee, nil,
+		{
+			testName:    "register the same private key",
+			username:    accKey2,
+			privKey:     priv1,
+			registerFee: accParam.RegisterFee,
+			expectErr:   nil,
 		},
-		{"insufficient register fee",
-			accKey3, priv1, types.NewCoinFromInt64(1), ErrRegisterFeeInsufficient(),
+		{
+			testName:    "insufficient register fee",
+			username:    accKey3,
+			privKey:     priv1,
+			registerFee: types.NewCoinFromInt64(1),
+			expectErr:   ErrRegisterFeeInsufficient(),
 		},
 	}
 	for _, cs := range cases {
 		err := am.CreateAccount(
-			ctx, accountReferrer, cs.username, cs.privkey.PubKey(),
+			ctx, accountReferrer, cs.username, cs.privKey.PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), cs.registerFee)
-		assert.Equal(t, cs.expectErr, err,
-			fmt.Sprintf("%s: create account failed: expect %v, got %v",
-				cs.testName, cs.expectErr, err))
+		if !assert.Equal(t, cs.expectErr, err) {
+			t.Errorf("%s: diff err, got %v, want %v", cs.testName, err, cs.expectErr)
+		}
 	}
 }
 
@@ -792,16 +987,25 @@ func TestUpdateJSONMeta(t *testing.T) {
 		username types.AccountKey
 		JSONMeta string
 	}{
-		{"normal update",
-			accKey, "{'link':'https://lino.network'}",
+		{
+			testName: "normal update",
+			username: accKey,
+			JSONMeta: "{'link':'https://lino.network'}",
 		},
 	}
 	for _, cs := range cases {
 		err := am.UpdateJSONMeta(ctx, cs.username, cs.JSONMeta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to update json meta, got err %v", cs.testName, err)
+		}
+
 		accMeta, err := am.storage.GetMeta(ctx, cs.username)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.JSONMeta, accMeta.JSONMeta)
+		if err != nil {
+			t.Errorf("%s: failed to get meta, got err %v", cs.testName, err)
+		}
+		if cs.JSONMeta != accMeta.JSONMeta {
+			t.Errorf("%s: diff json meta, got %v, want %v", cs.testName, accMeta.JSONMeta, cs.JSONMeta)
+		}
 	}
 }
 
@@ -810,7 +1014,10 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestCoinDayByAccountKey: failed to get coin day param, got err %v", err)
+	}
+
 	totalCoinDaysSec := coinDayParams.SecondsToRecoverCoinDayStake
 	registerFee := accParam.RegisterFee.ToInt64()
 	doubleRegisterFee := types.NewCoinFromInt64(registerFee * 2)
@@ -823,78 +1030,143 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 	cases := []struct {
 		testName            string
-		IsAdd               bool
-		Coin                types.Coin
-		AtWhen              int64
-		ExpectSavingBalance types.Coin
-		ExpectStake         types.Coin
-		ExpectStakeInBank   types.Coin
-		ExpectNumOfTx       int64
+		isAdd               bool
+		coin                types.Coin
+		atWhen              int64
+		expectSavingBalance types.Coin
+		expectStake         types.Coin
+		expectStakeInBank   types.Coin
+		expectNumOfTx       int64
 	}{
-		{"add coin before charging first coin",
-			true, accParam.RegisterFee, baseTime + (totalCoinDaysSec/registerFee)/2,
-			doubleRegisterFee, accParam.RegisterFee, accParam.RegisterFee, 2},
-		{"check first coin",
-			true, coin0, baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
-			doubleRegisterFee, accParam.RegisterFee, accParam.RegisterFee, 2},
-		{"check both transactions fully charged",
-			true, coin0, baseTime2, doubleRegisterFee, doubleRegisterFee, doubleRegisterFee, 2},
-		{"withdraw half deposit",
-			false, accParam.RegisterFee, baseTime2,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, 3},
-		{"charge again",
-			true, accParam.RegisterFee, baseTime2,
-			doubleRegisterFee, accParam.RegisterFee, accParam.RegisterFee, 4},
-		{"withdraw half deposit while the last transaction is still charging",
-			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee.Plus(halfRegisterFee),
-			accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)), accParam.RegisterFee, 5},
-		{"withdraw last transaction which is still charging",
-			false, halfRegisterFee, baseTime2 + totalCoinDaysSec/2 + 1,
-			accParam.RegisterFee, accParam.RegisterFee, accParam.RegisterFee, 6},
+		{
+			testName:            "add coin before charging first coin",
+			isAdd:               true,
+			coin:                accParam.RegisterFee,
+			atWhen:              baseTime + (totalCoinDaysSec/registerFee)/2,
+			expectSavingBalance: doubleRegisterFee,
+			expectStake:         accParam.RegisterFee,
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       2,
+		},
+		{
+			testName:            "check first coin",
+			isAdd:               true,
+			coin:                coin0,
+			atWhen:              baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
+			expectSavingBalance: doubleRegisterFee,
+			expectStake:         accParam.RegisterFee,
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       2,
+		},
+		{
+			testName:            "check both transactions fully charged",
+			isAdd:               true,
+			coin:                coin0,
+			atWhen:              baseTime2,
+			expectSavingBalance: doubleRegisterFee,
+			expectStake:         doubleRegisterFee,
+			expectStakeInBank:   doubleRegisterFee,
+			expectNumOfTx:       2,
+		},
+		{
+			testName:            "withdraw half deposit",
+			isAdd:               false,
+			coin:                accParam.RegisterFee,
+			atWhen:              baseTime2,
+			expectSavingBalance: accParam.RegisterFee,
+			expectStake:         accParam.RegisterFee,
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       3,
+		},
+		{
+			testName:            "charge again",
+			isAdd:               true,
+			coin:                accParam.RegisterFee,
+			atWhen:              baseTime2,
+			expectSavingBalance: doubleRegisterFee,
+			expectStake:         accParam.RegisterFee,
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       4,
+		},
+		{
+			testName:            "withdraw half deposit while the last transaction is still charging",
+			isAdd:               false,
+			coin:                halfRegisterFee,
+			atWhen:              baseTime2 + totalCoinDaysSec/2 + 1,
+			expectSavingBalance: accParam.RegisterFee.Plus(halfRegisterFee),
+			expectStake:         accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)),
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       5,
+		},
+		{
+			testName:            "withdraw last transaction which is still charging",
+			isAdd:               false,
+			coin:                halfRegisterFee,
+			atWhen:              baseTime2 + totalCoinDaysSec/2 + 1,
+			expectSavingBalance: accParam.RegisterFee,
+			expectStake:         accParam.RegisterFee,
+			expectStakeInBank:   accParam.RegisterFee,
+			expectNumOfTx:       6,
+		},
 	}
 
 	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.AtWhen})
-		if cs.IsAdd {
-			err := am.AddSavingCoin(ctx, accKey, cs.Coin, "", "", types.TransferIn)
-			assert.Nil(t, err)
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
+		if cs.isAdd {
+			err := am.AddSavingCoin(ctx, accKey, cs.coin, "", "", types.TransferIn)
+			if err != nil {
+				t.Errorf("%s: failed to add saving coin, got err %v", cs.testName, err)
+			}
 		} else {
-			err := am.MinusSavingCoin(ctx, accKey, cs.Coin, "", "", types.TransferOut)
-			assert.Nil(t, err)
+			err := am.MinusSavingCoin(ctx, accKey, cs.coin, "", "", types.TransferOut)
+			if err != nil {
+				t.Errorf("%s: failed to minus saving coin, got err %v", cs.testName, err)
+			}
 		}
 		coin, err := am.GetStake(ctx, accKey)
-		assert.Nil(t, err)
-		if !cs.ExpectStake.IsEqual(coin) {
-			t.Errorf("%s: expect stake incorrect, expect %v, got %v", cs.testName, cs.ExpectStake, coin)
+		if err != nil {
+			t.Errorf("%s: failed to get stake, got err %v", cs.testName, err)
+		}
+
+		if !cs.expectStake.IsEqual(coin) {
+			t.Errorf("%s: diff stake, got %v, want %v", cs.testName, coin, cs.expectStake)
 			return
 		}
 
 		bank := model.AccountBank{
-			Saving:  cs.ExpectSavingBalance,
-			Stake:   cs.ExpectStakeInBank,
-			NumOfTx: cs.ExpectNumOfTx,
+			Saving:  cs.expectSavingBalance,
+			Stake:   cs.expectStakeInBank,
+			NumOfTx: cs.expectNumOfTx,
 		}
-		checkBankKVByUsername(t, ctx, accKey, bank)
+		checkBankKVByUsername(t, ctx, cs.testName, accKey, bank)
 	}
 }
 
 func TestAccountReward(t *testing.T) {
+	testName := "TestAccountReward"
+
 	ctx, am, accParam := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
 
 	createTestAccount(ctx, am, string(accKey))
 
 	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300, "donor1", "postAutho1", "post1")
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to add income and reward, got err %v", testName, err)
+	}
+
 	reward := model.Reward{c500, c200, c300, c300}
-	checkAccountReward(t, ctx, accKey, reward)
-	checkRewardHistory(t, ctx, accKey, 0, 1)
+	checkAccountReward(t, ctx, testName, accKey, reward)
+	checkRewardHistory(t, ctx, testName, accKey, 0, 1)
+
 	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200, "donor2", "postAuthor1", "post1")
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to add income and reward again, got err %v", testName, err)
+	}
+
 	reward = model.Reward{c1000, c500, c500, c500}
-	checkAccountReward(t, ctx, accKey, reward)
-	checkRewardHistory(t, ctx, accKey, 0, 2)
+	checkAccountReward(t, ctx, testName, accKey, reward)
+	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
 
 	bank := model.AccountBank{
 		Saving:      accParam.RegisterFee,
@@ -902,16 +1174,20 @@ func TestAccountReward(t *testing.T) {
 		NumOfReward: 2,
 		Stake:       accParam.RegisterFee,
 	}
-	checkBankKVByUsername(t, ctx, accKey, bank)
+	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
 	err = am.ClaimReward(ctx, accKey)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to add claim reward, got err %v", testName, err)
+	}
+
 	bank.Saving = accParam.RegisterFee.Plus(c500)
 	bank.NumOfTx = 2
 	bank.NumOfReward = 0
-	checkBankKVByUsername(t, ctx, accKey, bank)
+	checkBankKVByUsername(t, ctx, testName, accKey, bank)
+
 	reward = model.Reward{c1000, c500, c500, c0}
-	checkAccountReward(t, ctx, accKey, reward)
+	checkAccountReward(t, ctx, testName, accKey, reward)
 }
 
 func TestCheckUserTPSCapacity(t *testing.T) {
@@ -919,80 +1195,166 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 
 	bandwidthParams, err := am.paramHolder.GetBandwidthParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestCheckUserTPSCapacity: failed to get bandwidth param, got err %v", err)
+	}
 	secondsToRecoverBandwidth := bandwidthParams.SecondsToRecoverBandwidth
 
 	baseTime := ctx.BlockHeader().Time
 
 	createTestAccount(ctx, am, string(accKey))
 	err = am.AddSavingCoin(ctx, accKey, c100, "", "", types.TransferIn)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestCheckUserTPSCapacity: failed to add saving coin, got err %v", err)
+	}
 
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	err = accStorage.SetPendingStakeQueue(
 		ctx, accKey, &model.PendingStakeQueue{})
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("TestCheckUserTPSCapacity: failed to set pending stake queue, got err %v", err)
+	}
 
 	cases := []struct {
-		TPSCapacityRatio     sdk.Rat
-		UserStake            types.Coin
-		LastActivity         int64
-		LastCapacity         types.Coin
-		CurrentTime          int64
-		ExpectResult         sdk.Error
-		ExpectRemainCapacity types.Coin
+		testName             string
+		tpsCapacityRatio     sdk.Rat
+		userStake            types.Coin
+		lastActivity         int64
+		lastCapacity         types.Coin
+		currentTime          int64
+		expectResult         sdk.Error
+		expectRemainCapacity types.Coin
 	}{
-		{sdk.NewRat(1, 10), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(0)},
-		{sdk.NewRat(1, 10), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(990000)},
-		{sdk.NewRat(1, 2), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(950000)},
-		{sdk.NewRat(1, 1), types.NewCoinFromInt64(10 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime + secondsToRecoverBandwidth, nil, types.NewCoinFromInt64(9 * types.Decimals)},
-		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), baseTime,
-			types.NewCoinFromInt64(10 * types.Decimals), baseTime, nil, types.NewCoinFromInt64(0)},
-		{sdk.NewRat(1, 1), types.NewCoinFromInt64(10), baseTime, types.NewCoinFromInt64(1 * types.Decimals),
-			baseTime, ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(1 * types.Decimals)},
-		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime + secondsToRecoverBandwidth/2,
-			ErrAccountTPSCapacityNotEnough(accKey), types.NewCoinFromInt64(0)},
-		{sdk.NewRat(1, 2), types.NewCoinFromInt64(1 * types.Decimals), baseTime, types.NewCoinFromInt64(0),
-			baseTime + secondsToRecoverBandwidth/2, nil, types.NewCoinFromInt64(0)},
-		{sdk.NewRat(1, 1), types.NewCoinFromInt64(1 * types.Decimals), 0, types.NewCoinFromInt64(0),
-			baseTime, nil, types.NewCoinFromInt64(0)},
+		{
+			testName:             "tps capacity not enough",
+			tpsCapacityRatio:     sdk.NewRat(1, 10),
+			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime,
+			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
+			expectRemainCapacity: types.NewCoinFromInt64(0)},
+		{
+			testName:             " 1/10 capacity ratio",
+			tpsCapacityRatio:     sdk.NewRat(1, 10),
+			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime + secondsToRecoverBandwidth,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(990000),
+		},
+		{
+			testName:             " 1/2 capacity ratio",
+			tpsCapacityRatio:     sdk.NewRat(1, 2),
+			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime + secondsToRecoverBandwidth,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(950000),
+		},
+		{
+			testName:             " 1/1 capacity ratio",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime + secondsToRecoverBandwidth,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(9 * types.Decimals),
+		},
+		{
+			testName:             " 1/1 capacity ratio with 0 remaining",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(10 * types.Decimals),
+			currentTime:          baseTime,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:             " 1/1 capacity ratio with 1 remaining",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(10),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(1 * types.Decimals),
+			currentTime:          baseTime,
+			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
+			expectRemainCapacity: types.NewCoinFromInt64(1 * types.Decimals),
+		},
+		{
+			testName:             " 1/1 capacity ratio with 1 stake and 0 remaining",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime + secondsToRecoverBandwidth/2,
+			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
+			expectRemainCapacity: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:             " 1/2 capacity ratio with 0 remaining",
+			tpsCapacityRatio:     sdk.NewRat(1, 2),
+			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
+			lastActivity:         baseTime,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime + secondsToRecoverBandwidth/2,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:             " 1/1 capacity ratio with 0 remaining and base time",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
+			lastActivity:         0,
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime,
+			expectResult:         nil,
+			expectRemainCapacity: types.NewCoinFromInt64(0),
+		},
 	}
 
 	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.CurrentTime})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.currentTime})
 		bank := &model.AccountBank{
-			Saving: cs.UserStake,
-			Stake:  cs.UserStake,
+			Saving: cs.userStake,
+			Stake:  cs.userStake,
 		}
 		err = accStorage.SetBankFromAccountKey(ctx, accKey, bank)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set bank, got err %v", cs.testName, err)
+		}
+
 		meta := &model.AccountMeta{
-			LastActivityAt:      cs.LastActivity,
-			TransactionCapacity: cs.LastCapacity,
+			LastActivityAt:      cs.lastActivity,
+			TransactionCapacity: cs.lastCapacity,
 		}
 		err = accStorage.SetMeta(ctx, accKey, meta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set meta, got err %v", cs.testName, err)
+		}
 
-		err = am.CheckUserTPSCapacity(ctx, accKey, cs.TPSCapacityRatio)
-		assert.Equal(t, cs.ExpectResult, err)
+		err = am.CheckUserTPSCapacity(ctx, accKey, cs.tpsCapacityRatio)
+		if !assert.Equal(t, cs.expectResult, err) {
+			t.Errorf("%s: diff tps capacity, got %v, want %v", cs.testName, err, cs.expectResult)
+		}
 
 		accMeta := model.AccountMeta{
 			LastActivityAt:      ctx.BlockHeader().Time,
-			TransactionCapacity: cs.ExpectRemainCapacity,
+			TransactionCapacity: cs.expectRemainCapacity,
 		}
-		if cs.ExpectResult != nil {
-			accMeta.LastActivityAt = cs.LastActivity
+		if cs.expectResult != nil {
+			accMeta.LastActivityAt = cs.lastActivity
 		}
-		checkAccountMeta(t, ctx, accKey, accMeta)
+		checkAccountMeta(t, ctx, cs.testName, accKey, accMeta)
 	}
 }
 
 func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
+	testName := "TestCheckAuthenticatePubKeyOwner"
+
 	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	postPermissionUser := types.AccountKey("user2")
@@ -1016,16 +1378,30 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	multiTimesPriv := createTestAccount(ctx, am, string(multiTimesUser))
 	defaultGrantTimes := int64(1)
 	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, defaultGrantTimes, types.PostPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize post permission, got err %v", testName, err)
+	}
+
 	err = am.AuthorizePermission(
 		ctx, user1, micropaymentPermissionUser, 100, defaultGrantTimes, types.MicropaymentPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize micropayment permission, got err %v", testName, err)
+	}
+
 	err = am.AuthorizePermission(ctx, user1, fullyAuthUser, 100, defaultGrantTimes, types.PostPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize fully post permission, got err %v", testName, err)
+	}
+
 	err = am.AuthorizePermission(ctx, user1, fullyAuthUser, 100, defaultGrantTimes, types.MicropaymentPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize fully micropayment permission, got err %v", testName, err)
+	}
+
 	err = am.AuthorizePermission(ctx, user1, multiTimesUser, 100, defaultGrantTimes, types.MicropaymentPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize multi micropayment permission, got err %v", testName, err)
+	}
 
 	baseTime := ctx.BlockHeader().Time
 
@@ -1039,100 +1415,338 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		expectResult      sdk.Error
 		expectGrantPubKey *model.GrantPubKey
 	}{
-		{"check user's master key",
-			user1, masterKey.PubKey(), baseTime, types.MasterPermission, user1, nil, nil},
-		{"check user's transaction key",
-			user1, transactionKey.PubKey(), baseTime, types.TransactionPermission, user1, nil, nil},
-		{"check user's micropayment key",
-			user1, micropaymentKey.PubKey(), baseTime, types.MicropaymentPermission, user1, nil, nil},
-		{"check user's post key",
-			user1, postKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
-		{"user's transaction key can authorize micropayment permission",
-			user1, transactionKey.PubKey(), baseTime, types.MicropaymentPermission, user1, nil, nil},
-		{"user's transaction key can authorize grant micropayment permission",
-			user1, transactionKey.PubKey(), baseTime, types.GrantMicropaymentPermission, user1, nil, nil},
-		{"user's transaction key can authorize grant post permission",
-			user1, transactionKey.PubKey(), baseTime, types.GrantPostPermission, user1, nil, nil},
-		{"user's transaction key can authorize post permission",
-			user1, transactionKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
-		{"check user's transaction key can't authorize master permission",
-			user1, transactionKey.PubKey(), baseTime, types.MasterPermission, user1,
-			ErrCheckMasterKey(), nil},
-		{"user's micropayment key can authorize post permission",
-			user1, micropaymentKey.PubKey(), baseTime, types.PostPermission, user1, nil, nil},
-		{"user's micropayment key can authorize grant micropayment permission",
-			user1, micropaymentKey.PubKey(), baseTime, types.GrantMicropaymentPermission, user1, nil, nil},
-		{"user's micropayment key can authorize grant post permission",
-			user1, micropaymentKey.PubKey(), baseTime, types.GrantPostPermission, user1, nil, nil},
-		{"user's micropayment key can't authorize master permission",
-			user1, micropaymentKey.PubKey(), baseTime, types.MasterPermission, user1, ErrCheckMasterKey(), nil},
-		{"user's micropayment key can't authorize transaction permission",
-			user1, micropaymentKey.PubKey(), baseTime, types.TransactionPermission, user1, ErrCheckTransactionKey(), nil},
-		{"check user's post key can authorize grant post permission",
-			user1, postKey.PubKey(), baseTime, types.GrantPostPermission, user1, nil, nil},
-		{"check user's post key can't authorize master permission",
-			user1, postKey.PubKey(), baseTime, types.MasterPermission, user1,
-			ErrCheckMasterKey(), nil},
-		{"check user's post key can't authorize transaction permission",
-			user1, postKey.PubKey(), baseTime, types.TransactionPermission, user1,
-			ErrCheckTransactionKey(), nil},
-		{"check user's post key can't authorize micropayment permission",
-			user1, postKey.PubKey(), baseTime, types.MicropaymentPermission, user1,
-			model.ErrGrantPubKeyNotFound(), nil},
-		{"check post pubkey of user with post permission",
-			user1, postPriv.Generate(2).PubKey(), baseTime, types.PostPermission, postPermissionUser, nil,
-			&model.GrantPubKey{
+		{
+			testName:          "check user's master key",
+			checkUser:         user1,
+			checkPubKey:       masterKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MasterPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's transaction key",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.TransactionPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's micropayment key",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's post key",
+			checkUser:         user1,
+			checkPubKey:       postKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's transaction key can authorize micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's transaction key can authorize grant micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantMicropaymentPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's transaction key can authorize grant post permission",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantPostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's transaction key can authorize post permission",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's transaction key can't authorize master permission",
+			checkUser:         user1,
+			checkPubKey:       transactionKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MasterPermission,
+			expectUser:        user1,
+			expectResult:      ErrCheckMasterKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's micropayment key can authorize post permission",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's micropayment key can authorize grant micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantMicropaymentPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's micropayment key can authorize grant post permission",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantPostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's micropayment key can't authorize master permission",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MasterPermission,
+			expectUser:        user1,
+			expectResult:      ErrCheckMasterKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "user's micropayment key can't authorize transaction permission",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.TransactionPermission,
+			expectUser:        user1,
+			expectResult:      ErrCheckTransactionKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's post key can authorize grant post permission",
+			checkUser:         user1,
+			checkPubKey:       postKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantPostPermission,
+			expectUser:        user1,
+			expectResult:      nil,
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's post key can't authorize master permission",
+			checkUser:         user1,
+			checkPubKey:       postKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MasterPermission,
+			expectUser:        user1,
+			expectResult:      ErrCheckMasterKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's post key can't authorize transaction permission",
+			checkUser:         user1,
+			checkPubKey:       postKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.TransactionPermission,
+			expectUser:        user1,
+			expectResult:      ErrCheckTransactionKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check user's post key can't authorize micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       postKey.PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        user1,
+			expectResult:      model.ErrGrantPubKeyNotFound(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:     "check post pubkey of user with post permission",
+			checkUser:    user1,
+			checkPubKey:  postPriv.Generate(2).PubKey(),
+			atWhen:       baseTime,
+			permission:   types.PostPermission,
+			expectUser:   postPermissionUser,
+			expectResult: nil,
+			expectGrantPubKey: &model.GrantPubKey{
 				Username:   postPermissionUser,
 				Permission: types.PostPermission,
 				LeftTimes:  defaultGrantTimes,
 				CreatedAt:  baseTime,
 				ExpiresAt:  baseTime + 100,
-			}},
-		{"check micropayment pubkey of user with post permission",
-			user1, postPriv.Generate(1).PubKey(), baseTime, types.PostPermission,
-			postPermissionUser, model.ErrGrantPubKeyNotFound(), nil},
-		{"check micropayment pubkey of user with micropayment permission",
-			user1, multiTimesPriv.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, multiTimesUser, nil,
-			&model.GrantPubKey{
+			},
+		},
+		{
+			testName:          "check micropayment pubkey of user with post permission",
+			checkUser:         user1,
+			checkPubKey:       postPriv.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        postPermissionUser,
+			expectResult:      model.ErrGrantPubKeyNotFound(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:     "check micropayment pubkey of user with micropayment permission",
+			checkUser:    user1,
+			checkPubKey:  multiTimesPriv.Generate(1).PubKey(),
+			atWhen:       baseTime,
+			permission:   types.MicropaymentPermission,
+			expectUser:   multiTimesUser,
+			expectResult: nil,
+			expectGrantPubKey: &model.GrantPubKey{
 				Username:   multiTimesUser,
 				Permission: types.MicropaymentPermission,
 				LeftTimes:  defaultGrantTimes - 1,
 				CreatedAt:  baseTime,
 				ExpiresAt:  baseTime + 100,
-			}},
-		{"check post pubkey of user with micropayment permission",
-			user1, microPriv.Generate(2).PubKey(), baseTime, types.MicropaymentPermission,
-			micropaymentPermissionUser, model.ErrGrantPubKeyNotFound(), nil},
-		{"check unauthorized user post pubkey",
-			user1, unauthPriv.Generate(2).PubKey(), baseTime, types.PostPermission, "",
-			model.ErrGrantPubKeyNotFound(), nil},
-		{"check unauthorized user micropayment pubkey",
-			user1, unauthPriv.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, "",
-			model.ErrGrantPubKeyNotFound(), nil},
-		{"check fully authed user micropayment pubkey but post permission",
-			user1, fullyAuthPriv.Generate(1).PubKey(), baseTime, types.PostPermission, "",
-			ErrPostGrantKeyMismatch(fullyAuthUser), nil},
-		{"check fully authed user post pubkey but micropayment permission",
-			user1, fullyAuthPriv.Generate(2).PubKey(), baseTime, types.MicropaymentPermission, "",
-			ErrMicropaymentGrantKeyMismatch(fullyAuthUser), nil},
-		{"check expired micropayment permission",
-			user1, microPriv.Generate(1).PubKey(), baseTime + 101,
-			types.MicropaymentPermission, "", ErrGrantKeyExpired(user1), nil},
-		{"check expired post permission",
-			user1, postPriv.Generate(2).PubKey(), baseTime + 101, types.PostPermission,
-			"", ErrGrantKeyExpired(user1), nil},
-		{"check micropayment pubkey exceeds limitation",
-			user1, multiTimesPriv.Generate(1).PubKey(), baseTime,
-			types.MicropaymentPermission, multiTimesUser, ErrGrantKeyNoLeftTimes(user1), nil},
-		{"check grant micropayment key can't sign grant permission msg",
-			user1, micropaymentKey.Generate(1).PubKey(), baseTime,
-			types.GrantMicropaymentPermission, micropaymentPermissionUser, ErrCheckGrantMicropaymentKey(), nil},
-		{"check grant micropayment key can't sign grant post msg",
-			user1, micropaymentKey.Generate(1).PubKey(), baseTime,
-			types.GrantPostPermission, micropaymentPermissionUser, ErrCheckGrantPostKey(), nil},
-		{"check grant post key can't sign grant post msg",
-			user1, postKey.Generate(1).PubKey(), baseTime,
-			types.GrantPostPermission, postPermissionUser, ErrCheckGrantPostKey(), nil},
+			},
+		},
+		{
+			testName:          "check post pubkey of user with micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       microPriv.Generate(2).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        micropaymentPermissionUser,
+			expectResult:      model.ErrGrantPubKeyNotFound(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check unauthorized user post pubkey",
+			checkUser:         user1,
+			checkPubKey:       unauthPriv.Generate(2).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        "",
+			expectResult:      model.ErrGrantPubKeyNotFound(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check unauthorized user micropayment pubkey",
+			checkUser:         user1,
+			checkPubKey:       unauthPriv.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        "",
+			expectResult:      model.ErrGrantPubKeyNotFound(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check fully authed user micropayment pubkey but post permission",
+			checkUser:         user1,
+			checkPubKey:       fullyAuthPriv.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.PostPermission,
+			expectUser:        "",
+			expectResult:      ErrPostGrantKeyMismatch(fullyAuthUser),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check fully authed user post pubkey but micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       fullyAuthPriv.Generate(2).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        "",
+			expectResult:      ErrMicropaymentGrantKeyMismatch(fullyAuthUser),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check expired micropayment permission",
+			checkUser:         user1,
+			checkPubKey:       microPriv.Generate(1).PubKey(),
+			atWhen:            baseTime + 101,
+			permission:        types.MicropaymentPermission,
+			expectUser:        "",
+			expectResult:      ErrGrantKeyExpired(user1),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check expired post permission",
+			checkUser:         user1,
+			checkPubKey:       postPriv.Generate(2).PubKey(),
+			atWhen:            baseTime + 101,
+			permission:        types.PostPermission,
+			expectUser:        "",
+			expectResult:      ErrGrantKeyExpired(user1),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check micropayment pubkey exceeds limitation",
+			checkUser:         user1,
+			checkPubKey:       multiTimesPriv.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.MicropaymentPermission,
+			expectUser:        multiTimesUser,
+			expectResult:      ErrGrantKeyNoLeftTimes(user1),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check grant micropayment key can't sign grant permission msg",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantMicropaymentPermission,
+			expectUser:        micropaymentPermissionUser,
+			expectResult:      ErrCheckGrantMicropaymentKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check grant micropayment key can't sign grant post msg",
+			checkUser:         user1,
+			checkPubKey:       micropaymentKey.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantPostPermission,
+			expectUser:        micropaymentPermissionUser,
+			expectResult:      ErrCheckGrantPostKey(),
+			expectGrantPubKey: nil,
+		},
+		{
+			testName:          "check grant post key can't sign grant post msg",
+			checkUser:         user1,
+			checkPubKey:       postKey.Generate(1).PubKey(),
+			atWhen:            baseTime,
+			permission:        types.GrantPostPermission,
+			expectUser:        postPermissionUser,
+			expectResult:      ErrCheckGrantPostKey(),
+			expectGrantPubKey: nil,
+		},
 	}
 
 	for _, cs := range cases {
@@ -1140,25 +1754,34 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		grantPubKey, err := am.CheckSigningPubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.permission)
 		if cs.expectResult == nil {
 			if cs.expectUser != grantPubKey {
-				t.Errorf(
-					"%s: expect key owner incorrect, expect %v, got %v",
-					cs.testName, cs.expectUser, grantPubKey)
+				t.Errorf("%s: diff key owner,  got %v, want %v", cs.testName, grantPubKey, cs.expectUser)
 				return
 			}
 		} else {
-			assert.Equal(t, cs.expectResult.Result(), err.Result())
+			if !assert.Equal(t, cs.expectResult.Result(), err.Result()) {
+				t.Errorf("%s: diff result,  got %v, want %v", cs.testName, err.Result(), cs.expectResult.Result())
+			}
 		}
+
 		grantPubKeyInfo, err := am.storage.GetGrantPubKey(ctx, cs.checkUser, cs.checkPubKey)
 		if cs.expectGrantPubKey == nil {
-			assert.NotNil(t, err)
+			if err == nil {
+				t.Errorf("%s: got nil err", cs.testName)
+			}
 		} else {
-			assert.Nil(t, err)
-			assert.Equal(t, *cs.expectGrantPubKey, *grantPubKeyInfo)
+			if err != nil {
+				t.Errorf("%s: got non-empty err %v", cs.testName, err)
+			}
+			if !assert.Equal(t, *cs.expectGrantPubKey, *grantPubKeyInfo) {
+				t.Errorf("%s: diff grant key,  got %v, want %v", cs.testName, *grantPubKeyInfo, *cs.expectGrantPubKey)
+			}
 		}
 	}
 }
 
 func TestRevokePermission(t *testing.T) {
+	testName := "TestRevokePermission"
+
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	userWithMicropaymentPermission := types.AccountKey("userWithMicropaymentPermission")
@@ -1171,35 +1794,76 @@ func TestRevokePermission(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	err := am.AuthorizePermission(ctx, user1, userWithMicropaymentPermission, 100, 10, types.MicropaymentPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize micropayment permission to uesr with only micropayment permission, got err %v", testName, err)
+	}
 
 	err = am.AuthorizePermission(ctx, user1, userWithBothPermission, 100, 10, types.MicropaymentPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize micropayment permission to user with both permission, got err %v", testName, err)
+	}
+
 	err = am.AuthorizePermission(ctx, user1, userWithBothPermission, 100, 10, types.PostPermission)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to authorize post permission to user with both permission, got err %v", testName, err)
+	}
 
 	cases := []struct {
 		testName     string
 		user         types.AccountKey
-		revokePubkey crypto.PubKey
+		revokePubKey crypto.PubKey
 		atWhen       int64
 		level        types.Permission
 		expectResult sdk.Error
 	}{
-		{"normal revoke post permission", user1, priv3.Generate(2).PubKey(), baseTime, types.PostPermission, nil},
-		{"normal revoke micropayment permission", user1, priv2.Generate(1).PubKey(), baseTime, types.MicropaymentPermission, nil},
-		{"revoke permission mismatch", user1, priv3.Generate(1).PubKey(),
-			baseTime, types.PostPermission, ErrRevokePermissionLevelMismatch(types.PostPermission, types.MicropaymentPermission)},
-		{"revoke non-exist pubkey", user1, priv3.Generate(2).PubKey(),
-			baseTime, types.PostPermission, model.ErrGrantPubKeyNotFound()},
-		{"revoke expired pubkey", user1, priv3.Generate(1).PubKey(),
-			baseTime + 101, types.PostPermission, nil},
+		{
+			testName:     "normal revoke post permission",
+			user:         user1,
+			revokePubKey: priv3.Generate(2).PubKey(),
+			atWhen:       baseTime,
+			level:        types.PostPermission,
+			expectResult: nil,
+		},
+		{
+			testName:     "normal revoke micropayment permission",
+			user:         user1,
+			revokePubKey: priv2.Generate(1).PubKey(),
+			atWhen:       baseTime,
+			level:        types.MicropaymentPermission,
+			expectResult: nil,
+		},
+		{
+			testName:     "revoke permission mismatch",
+			user:         user1,
+			revokePubKey: priv3.Generate(1).PubKey(),
+			atWhen:       baseTime,
+			level:        types.PostPermission,
+			expectResult: ErrRevokePermissionLevelMismatch(types.PostPermission, types.MicropaymentPermission),
+		},
+		{
+			testName:     "revoke non-exist pubkey",
+			user:         user1,
+			revokePubKey: priv3.Generate(2).PubKey(),
+			atWhen:       baseTime,
+			level:        types.PostPermission,
+			expectResult: model.ErrGrantPubKeyNotFound(),
+		},
+		{
+			testName:     "revoke expired pubkey",
+			user:         user1,
+			revokePubKey: priv3.Generate(1).PubKey(),
+			atWhen:       baseTime + 101,
+			level:        types.PostPermission,
+			expectResult: nil,
+		},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
-		err := am.RevokePermission(ctx, cs.user, cs.revokePubkey, cs.level)
-		assert.Equal(t, cs.expectResult, err, cs.testName)
+		err := am.RevokePermission(ctx, cs.user, cs.revokePubKey, cs.level)
+		if !assert.Equal(t, cs.expectResult, err) {
+			t.Errorf("%s: diff result, got %v, want %v", cs.testName, err, cs.expectResult)
+		}
 	}
 }
 
@@ -1225,26 +1889,70 @@ func TestAuthorizePermission(t *testing.T) {
 		expectResult   sdk.Error
 		expectPubKey   crypto.PubKey
 	}{
-		{"normal grant post permission", user1, user2, types.PostPermission,
-			100, 10, nil, priv2.Generate(2).PubKey()},
-		{"normal grant micropayment permission", user1, user3, types.MicropaymentPermission,
-			100, 10, nil, priv3.Generate(1).PubKey()},
-		{"override micropayment permission", user1, user3, types.MicropaymentPermission,
-			1000, 10, nil, priv3.Generate(1).PubKey()},
-		{"override post permission", user1, user2, types.PostPermission,
-			1000, 10, nil, priv2.Generate(2).PubKey()},
-		{"micropayment authorization exceeds maximum requirement", user1, user3, types.MicropaymentPermission,
-			1000, accParam.MaximumMicropaymentGrantTimes + 1,
-			ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes), priv3.Generate(1).PubKey()},
+		{
+			testName:       "normal grant post permission",
+			user:           user1,
+			grantTo:        user2,
+			level:          types.PostPermission,
+			validityPeriod: 100,
+			allowTimes:     10,
+			expectResult:   nil,
+			expectPubKey:   priv2.Generate(2).PubKey(),
+		},
+		{
+			testName:       "normal grant micropayment permission",
+			user:           user1,
+			grantTo:        user3,
+			level:          types.MicropaymentPermission,
+			validityPeriod: 100,
+			allowTimes:     10,
+			expectResult:   nil,
+			expectPubKey:   priv3.Generate(1).PubKey(),
+		},
+		{
+			testName:       "override micropayment permission",
+			user:           user1,
+			grantTo:        user3,
+			level:          types.MicropaymentPermission,
+			validityPeriod: 1000,
+			allowTimes:     10,
+			expectResult:   nil,
+			expectPubKey:   priv3.Generate(1).PubKey(),
+		},
+		{
+			testName:       "override post permission",
+			user:           user1,
+			grantTo:        user2,
+			level:          types.PostPermission,
+			validityPeriod: 1000,
+			allowTimes:     10,
+			expectResult:   nil,
+			expectPubKey:   priv2.Generate(2).PubKey(),
+		},
+		{
+			testName:       "micropayment authorization exceeds maximum requirement",
+			user:           user1,
+			grantTo:        user3,
+			level:          types.MicropaymentPermission,
+			validityPeriod: 1000,
+			allowTimes:     accParam.MaximumMicropaymentGrantTimes + 1,
+			expectResult:   ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes),
+			expectPubKey:   priv3.Generate(1).PubKey(),
+		},
 	}
 
 	for _, cs := range cases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
 		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.validityPeriod, cs.allowTimes, cs.level)
-		assert.Equal(t, cs.expectResult, err, cs.testName)
+		if !assert.Equal(t, cs.expectResult, err) {
+			t.Errorf("%s: failed to authorize permission, got err %v", cs.testName, err)
+		}
+
 		if cs.expectResult == nil {
 			grantPubKey, err := am.storage.GetGrantPubKey(ctx, cs.user, cs.expectPubKey)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to get grant pub key, got err %v", cs.testName, err)
+			}
 			expectGrantPubKey := model.GrantPubKey{
 				Username:   cs.grantTo,
 				ExpiresAt:  baseTime + cs.validityPeriod,
@@ -1252,7 +1960,9 @@ func TestAuthorizePermission(t *testing.T) {
 				LeftTimes:  cs.allowTimes,
 				Permission: cs.level,
 			}
-			assert.Equal(t, expectGrantPubKey, *grantPubKey)
+			if !assert.Equal(t, expectGrantPubKey, *grantPubKey) {
+				t.Errorf("%s: diff grant pub key, got %v, want %v", cs.testName, *grantPubKey, expectGrantPubKey)
+			}
 		}
 	}
 }
@@ -1268,32 +1978,69 @@ func TestDonationRelationship(t *testing.T) {
 	createTestAccount(ctx, am, string(user3))
 
 	cases := []struct {
+		testName         string
 		user             types.AccountKey
 		donateTo         types.AccountKey
 		expectDonateTime int64
 	}{
-		{user1, user2, 1},
-		{user1, user2, 2},
-		{user1, user3, 1},
-		{user3, user1, 1},
-		{user2, user1, 1},
+		{
+			testName:         "user1 donates to user2",
+			user:             user1,
+			donateTo:         user2,
+			expectDonateTime: 1,
+		},
+		{
+			testName:         "user1 donates to user2 again",
+			user:             user1,
+			donateTo:         user2,
+			expectDonateTime: 2,
+		},
+		{
+			testName:         "user1 donates to user3",
+			user:             user1,
+			donateTo:         user3,
+			expectDonateTime: 1,
+		},
+		{
+			testName:         "user3 donates to user1",
+			user:             user3,
+			donateTo:         user1,
+			expectDonateTime: 1,
+		},
+		{
+			testName:         "user2 donates to user1",
+			user:             user2,
+			donateTo:         user1,
+			expectDonateTime: 1,
+		},
 	}
 
 	for _, cs := range cases {
 		err := am.UpdateDonationRelationship(ctx, cs.user, cs.donateTo)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to update donation relationship, got err %v", cs.testName, err)
+		}
+
 		donateTime, err := am.GetDonationRelationship(ctx, cs.user, cs.donateTo)
-		assert.Nil(t, err)
-		assert.Equal(t, donateTime, cs.expectDonateTime)
+		if err != nil {
+			t.Errorf("%s: failed to get donation relationship, got err %v", cs.testName, err)
+		}
+		if donateTime != cs.expectDonateTime {
+			t.Errorf("%s: diff donate time, got %v, want %v", cs.testName, donateTime, cs.expectDonateTime)
+		}
 	}
 }
 
 func TestAccountRecoverNormalCase(t *testing.T) {
+	testName := "TestAccountRecoverNormalCase"
+
 	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to get coin day param relationship, got err %v", testName, err)
+	}
 
 	createTestAccount(ctx, am, string(user1))
 
@@ -1305,7 +2052,10 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	err = am.RecoverAccount(
 		ctx, user1, newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
 		newMicropaymentPrivKey.PubKey(), newPostPrivKey.PubKey())
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("%s: failed to recover account, got err %v", testName, err)
+	}
+
 	accInfo := model.AccountInfo{
 		Username:        user1,
 		CreatedAt:       ctx.BlockHeader().Time,
@@ -1320,23 +2070,33 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 		NumOfTx: 1,
 	}
 
-	checkAccountInfo(t, ctx, user1, accInfo)
-	checkBankKVByUsername(t, ctx, user1, bank)
+	checkAccountInfo(t, ctx, testName, user1, accInfo)
+	checkBankKVByUsername(t, ctx, testName, user1, bank)
 
 	pendingStakeQueue := model.PendingStakeQueue{
 		StakeCoinInQueue: sdk.ZeroRat(),
 	}
-	checkPendingStake(t, ctx, user1, pendingStakeQueue)
+	checkPendingStake(t, ctx, testName, user1, pendingStakeQueue)
+
 	stake, err := am.GetStake(ctx, user1)
-	assert.Nil(t, err)
-	assert.Equal(t, accParam.RegisterFee, stake)
+	if err != nil {
+		t.Errorf("%s: failed to get stake, got err %v", testName, err)
+	}
+	if !stake.IsEqual(accParam.RegisterFee) {
+		t.Errorf("%s: diff stake, got %v, want %v", testName, stake, accParam.RegisterFee)
+	}
+
 	ctx = ctx.WithBlockHeader(
 		abci.Header{
 			ChainID: "Lino", Height: 1,
 			Time: ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake})
 	stake, err = am.GetStake(ctx, user1)
-	assert.Nil(t, err)
-	assert.Equal(t, accParam.RegisterFee, stake)
+	if err != nil {
+		t.Errorf("%s: failed to get stake again, got err %v", testName, err)
+	}
+	if !stake.IsEqual(accParam.RegisterFee) {
+		t.Errorf("%s: diff stake again, got %v, want %v", testName, stake, accParam.RegisterFee)
+	}
 }
 
 func TestIncreaseSequenceByOne(t *testing.T) {
@@ -1346,22 +2106,36 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 	createTestAccount(ctx, am, string(user1))
 
 	cases := []struct {
+		testName       string
 		user           types.AccountKey
 		increaseTimes  int
 		expectSequence int64
 	}{
-		{user1, 1, 1},
-		{user1, 100, 101},
+		{
+			testName:       "increase seq once",
+			user:           user1,
+			increaseTimes:  1,
+			expectSequence: 1,
+		},
+		{
+			testName:       "increase seq 100 times",
+			user:           user1,
+			increaseTimes:  100,
+			expectSequence: 101,
+		},
 	}
 
 	for _, cs := range cases {
-
 		for i := 0; i < cs.increaseTimes; i++ {
 			am.IncreaseSequenceByOne(ctx, user1)
 		}
 		seq, err := am.GetSequence(ctx, user1)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectSequence, seq)
+		if err != nil {
+			t.Errorf("%s: failed to get sequence, got err %v", cs.testName, err)
+		}
+		if seq != cs.expectSequence {
+			t.Errorf("%s: diff seq, got %v, want %v", cs.testName, seq, cs.expectSequence)
+		}
 	}
 }
 
@@ -1372,26 +2146,68 @@ func TestAddFrozenMoney(t *testing.T) {
 	createTestAccount(ctx, am, string(user1))
 
 	testCases := []struct {
+		testName                string
 		frozenAmount            types.Coin
 		startAt                 int64
 		interval                int64
 		times                   int64
 		expectNumOfFrozenAmount int
 	}{
-		{types.NewCoinFromInt64(100), 1000000, 10, 5, 1},
-		{types.NewCoinFromInt64(100), 1200000, 10, 5, 1},
-		{types.NewCoinFromInt64(100), 1300000, 10, 5, 2},
-		{types.NewCoinFromInt64(100), 1400000, 10, 5, 2},
-		{types.NewCoinFromInt64(100), 1600000, 10, 5, 1}, // this one is used to re-produce the out-of-bound bug.
+		{
+			testName:     "add the first 100 frozen money",
+			frozenAmount: types.NewCoinFromInt64(100),
+			startAt:      1000000,
+			interval:     10,
+			times:        5,
+			expectNumOfFrozenAmount: 1,
+		},
+		{
+			testName:     "add the second 100 frozen money, clear the first one",
+			frozenAmount: types.NewCoinFromInt64(100),
+			startAt:      1200000,
+			interval:     10,
+			times:        5,
+			expectNumOfFrozenAmount: 1,
+		},
+		{
+			testName:     "add the third 100 frozen money",
+			frozenAmount: types.NewCoinFromInt64(100),
+			startAt:      1300000,
+			interval:     10,
+			times:        5,
+			expectNumOfFrozenAmount: 2,
+		},
+		{
+			testName:     "add the fourth 100 frozen money, clear the second one",
+			frozenAmount: types.NewCoinFromInt64(100),
+			startAt:      1400000,
+			interval:     10,
+			times:        5,
+			expectNumOfFrozenAmount: 2,
+		},
+		{
+			testName:     "add the fifth 100 frozen money, clear the third and fourth ones",
+			frozenAmount: types.NewCoinFromInt64(100),
+			startAt:      1600000,
+			interval:     10,
+			times:        5,
+			expectNumOfFrozenAmount: 1,
+		}, // this one is used to re-produce the out-of-bound bug.
 	}
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.startAt})
 		err := am.AddFrozenMoney(ctx, user1, tc.frozenAmount, tc.startAt, tc.interval, tc.times)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to add frozen money, got err %v", tc.testName, err)
+		}
 
 		accountBank, err := am.storage.GetBankFromAccountKey(ctx, user1)
-		assert.Nil(t, err)
-		assert.Equal(t, tc.expectNumOfFrozenAmount, len(accountBank.FrozenMoneyList))
+		if err != nil {
+			t.Errorf("%s: failed to get bank, got err %v", tc.testName, err)
+		}
+		if len(accountBank.FrozenMoneyList) != tc.expectNumOfFrozenAmount {
+			t.Errorf("%s: diff num of frozen money, got %v, want %v", tc.testName, len(accountBank.FrozenMoneyList), tc.expectNumOfFrozenAmount)
+		}
 	}
 }

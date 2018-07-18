@@ -59,7 +59,8 @@ func TestChangeParamProposal(t *testing.T) {
 		wantOngoingProposal []types.ProposalKey
 		wantProposal        model.Proposal
 	}{
-		{testName: "user1 creates change param msg successfully",
+		{
+			testName: "user1 creates change param msg successfully",
 			msg: ChangeGlobalAllocationParamMsg{
 				Creator:   user1,
 				Parameter: allocation,
@@ -72,7 +73,8 @@ func TestChangeParamProposal(t *testing.T) {
 			wantProposal:        proposal1,
 		},
 
-		{testName: "user2 doesn't have enough money to create proposal",
+		{
+			testName: "user2 doesn't have enough money to create proposal",
 			msg: ChangeGlobalAllocationParamMsg{
 				Creator:   user2,
 				Parameter: allocation,
@@ -87,7 +89,9 @@ func TestChangeParamProposal(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		result := handler(ctx, tc.msg)
-		assert.Equal(t, tc.wantRes, result)
+		if !assert.Equal(t, tc.wantRes, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.wantRes)
+		}
 
 		if !tc.wantOK {
 			continue
@@ -95,13 +99,24 @@ func TestChangeParamProposal(t *testing.T) {
 
 		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.msg.GetCreator())
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
-			t.Errorf("%s get creator bank balance(%v): got %v, want %v", tc.testName, tc.msg.Creator, creatorBalance, tc.wantCreatorBalance)
+			t.Errorf("%s: diff bank balance: got %v, want %v", tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
 
-		proposalList, _ := proposalManager.GetProposalList(ctx)
-		assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal)
-		proposal, _ := proposalManager.storage.GetProposal(ctx, tc.proposalID)
-		assert.Equal(t, tc.wantProposal, proposal)
+		proposalList, err := proposalManager.GetProposalList(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
+			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
+		}
+
+		proposal, err := proposalManager.storage.GetProposal(ctx, tc.proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantProposal, proposal) {
+			t.Errorf("%s: diff proposal, got %v, want %v", tc.testName, proposal, tc.wantProposal)
+		}
 	}
 }
 
@@ -114,7 +129,6 @@ func TestContentCensorshipProposal(t *testing.T) {
 	proposalManager.InitGenesis(ctx)
 
 	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
-	//proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))
 
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID", c460000, am, postManager, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID", c4600, am, postManager, "0")
@@ -143,7 +157,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 		wantOngoingProposal []types.ProposalKey
 		wantProposal        model.Proposal
 	}{
-		{testName: "user2 censorship user1's post successfully",
+		{
+			testName:            "user2 censorship user1's post successfully",
 			creator:             user2,
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
@@ -153,7 +168,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
 		},
-		{testName: "target post is not exist",
+		{
+			testName:            "target post is not exist",
 			creator:             user2,
 			permlink:            types.GetPermlink(user1, "invalid"),
 			proposalID:          proposalID1,
@@ -163,7 +179,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
 		},
-		{testName: "target post is deleted",
+		{
+			testName:            "target post is deleted",
 			creator:             user1,
 			permlink:            types.GetPermlink(user2, postID2),
 			proposalID:          proposalID1,
@@ -173,7 +190,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
 		},
-		{testName: "proposal is invalid",
+		{
+			testName:            "proposal is invalid",
 			creator:             "invalid",
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
@@ -183,7 +201,8 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOngoingProposal: []types.ProposalKey{proposalID1},
 			wantProposal:        proposal1,
 		},
-		{testName: "user3 doesn't have enough money to create proposal",
+		{
+			testName:            "user3 doesn't have enough money to create proposal",
 			creator:             user3,
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
@@ -197,7 +216,9 @@ func TestContentCensorshipProposal(t *testing.T) {
 	for _, tc := range testCases {
 		msg := NewDeletePostContentMsg(string(tc.creator), tc.permlink, censorshipReason)
 		result := handler(ctx, msg)
-		assert.Equal(t, tc.wantRes, result)
+		if !assert.Equal(t, tc.wantRes, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.wantRes)
+		}
 
 		if !tc.wantOK {
 			continue
@@ -205,17 +226,33 @@ func TestContentCensorshipProposal(t *testing.T) {
 
 		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.creator)
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
-			t.Errorf("%s get creator bank balance(%v): got %v, want %v",
-				tc.testName, msg.Creator, creatorBalance, tc.wantCreatorBalance)
+			t.Errorf("%s: diff bank balance(%v): got %v, want %v",
+				tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
 
-		proposalList, _ := proposalManager.GetProposalList(ctx)
-		assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal)
-		proposal, _ := proposalManager.storage.GetProposal(ctx, tc.proposalID)
-		assert.Equal(t, tc.wantProposal, proposal)
+		proposalList, err := proposalManager.GetProposalList(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
+			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
+		}
+
+		proposal, err := proposalManager.storage.GetProposal(ctx, tc.proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantProposal, proposal) {
+			t.Errorf("%s: diff proposal, got %v, want %v", tc.testName, proposal, tc.wantProposal)
+		}
+
 		permlink, err := proposalManager.GetPermlink(ctx, tc.proposalID)
-		assert.Nil(t, err)
-		assert.Equal(t, tc.permlink, permlink)
+		if err != nil {
+			t.Errorf("%s: failed to get permlink, get err %v", tc.testName, err)
+		}
+		if permlink != tc.permlink {
+			t.Errorf("%s: diff permlink, got %v, want %v", tc.testName, permlink, tc.permlink)
+		}
 	}
 }
 
@@ -236,19 +273,51 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectedFrozenTimes    int64
 		expectedFrozenInterval int64
 	}{
-		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
-		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+		{
+			testName:               "return coin to user",
+			times:                  10,
+			interval:               2,
+			returnedCoin:           types.NewCoinFromInt64(100),
+			expectedFrozenListLen:  1,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100),
+			expectedFrozenTimes:    10,
+			expectedFrozenInterval: 2,
+		},
+		{
+			testName:               "return coin to user multiple times",
+			times:                  100000,
+			interval:               20000,
+			returnedCoin:           types.NewCoinFromInt64(100000),
+			expectedFrozenListLen:  2,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
+			expectedFrozenTimes:    100000,
+			expectedFrozenInterval: 20000,
+		},
 	}
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
 			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
-		assert.Equal(t, nil, err)
+		if err != nil {
+			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
+		}
+
 		lst, err := am.GetFrozenMoneyList(ctx, user)
-		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
-		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
-		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
-		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
+		if err != nil {
+			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
+		}
+		if len(lst) != tc.expectedFrozenListLen {
+			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
+		}
+		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
+		}
+		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {
+			t.Errorf("%s: diff times, got %v, want %v", tc.testName, lst[len(lst)-1].Times, tc.expectedFrozenTimes)
+		}
+		if lst[len(lst)-1].Interval != tc.expectedFrozenInterval {
+			t.Errorf("%s: diff interval, got %v, want %v", tc.testName, lst[len(lst)-1].Interval, tc.expectedFrozenInterval)
+		}
 	}
 }
 
@@ -283,7 +352,8 @@ func TestVoteProposalBasic(t *testing.T) {
 		wantOngoingProposal []types.ProposalKey
 		wantProposal        model.Proposal
 	}{
-		{testName: "Must become a voter before voting",
+		{
+			testName: "Must become a voter before voting",
 			msg: VoteProposalMsg{
 				Voter:      user2,
 				ProposalID: proposalID1,
@@ -303,7 +373,8 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permlink, censorshipReason},
 		},
-		{testName: "Vote on a non-exist proposal should fail",
+		{
+			testName: "Vote on a non-exist proposal should fail",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: types.ProposalKey(100),
@@ -322,7 +393,8 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permlink, censorshipReason},
 		},
-		{testName: "vote successfully",
+		{
+			testName: "vote successfully",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: proposalID1,
@@ -342,7 +414,8 @@ func TestVoteProposalBasic(t *testing.T) {
 					ExpiredAt:     curTime + decideHr*3600,
 				}, permlink, censorshipReason},
 		},
-		{testName: "user can't double-vote",
+		{
+			testName: "user can't double-vote",
 			msg: VoteProposalMsg{
 				Voter:      user1,
 				ProposalID: proposalID1,
@@ -365,15 +438,28 @@ func TestVoteProposalBasic(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		result := handler(ctx, tc.msg)
-		assert.Equal(t, tc.wantRes, result)
+		if !assert.Equal(t, tc.wantRes, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.wantRes)
+		}
 
 		if !tc.wantOK {
 			continue
 		}
 
-		proposalList, _ := proposalManager.GetProposalList(ctx)
-		assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal)
-		proposal, _ := proposalManager.storage.GetProposal(ctx, tc.msg.ProposalID)
-		assert.Equal(t, tc.wantProposal, proposal)
+		proposalList, err := proposalManager.GetProposalList(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
+			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
+		}
+
+		proposal, err := proposalManager.storage.GetProposal(ctx, tc.msg.ProposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantProposal, proposal) {
+			t.Errorf("%s: diff proposal, got %v, want %v", tc.testName, proposal, tc.wantProposal)
+		}
 	}
 }

@@ -80,12 +80,18 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		err := pm.UpdateProposalVotingStatus(ctx, tc.proposalID, tc.voter, tc.voteResult, tc.votingPower)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to update proposal voting status, got err %v", tc.testName, err)
+		}
 
-		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
-		assert.Equal(t, tc.wantProposal, proposal)
+		proposal, err := pm.storage.GetProposal(ctx, tc.proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, got err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantProposal, proposal) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, proposal, tc.wantProposal)
+		}
 	}
-
 }
 
 func TestUpdateProposalPassStatus(t *testing.T) {
@@ -124,7 +130,8 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		wantProposalRes types.ProposalResult
 		wantProposal    model.Proposal
 	}{
-		{testName: "test passed proposal has historical data",
+		{
+			testName:        "test passed proposal has historical data",
 			agreeVotes:      proposalParam.ContentCensorshipPassVotes,
 			disagreeVotes:   proposalParam.ContentCensorshipPassVotes,
 			proposalType:    types.ContentCensorship,
@@ -141,7 +148,8 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			}, permlink, censorshipReason},
 		},
 
-		{testName: "test votes don't meet min requirement ",
+		{
+			testName:        "test votes don't meet min requirement ",
 			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
 			disagreeVotes:   types.NewCoinFromInt64(0),
 			proposalType:    types.ContentCensorship,
@@ -158,7 +166,8 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			}, permlink, censorshipReason},
 		},
 
-		{testName: "test votes ratio doesn't meet requirement ",
+		{
+			testName:        "test votes ratio doesn't meet requirement ",
 			agreeVotes:      proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
 			disagreeVotes:   proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
 			proposalType:    types.ContentCensorship,
@@ -177,19 +186,28 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		err := addProposalInfo(ctx, pm, tc.proposalID, tc.agreeVotes, tc.disagreeVotes)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to add proposal info, got err %v", tc.testName, err)
+		}
 
 		res, err := pm.UpdateProposalPassStatus(ctx, tc.proposalType, tc.proposalID)
-		assert.Nil(t, err)
-		if tc.wantProposalRes != res {
-			t.Errorf("%s: test failed, want %v, got %v", tc.testName, tc.wantProposalRes, res)
+		if err != nil {
+			t.Errorf("%s: failed to update proposal pass status, got err %v", tc.testName, err)
+		}
+		if res != tc.wantProposalRes {
+			t.Errorf("%s: test failed, got %v, want %v", tc.testName, res, tc.wantProposalRes)
 			return
 		}
 		if tc.wantProposalRes == types.ProposalNotPass {
 			continue
 		}
-		proposal, _ := pm.storage.GetProposal(ctx, tc.proposalID)
-		assert.Equal(t, tc.wantProposal, proposal)
+		proposal, err := pm.storage.GetProposal(ctx, tc.proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, got err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.wantProposal, proposal) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, proposal, tc.wantProposal)
+		}
 	}
 }
 
@@ -204,28 +222,32 @@ func TestGetProposalPassParam(t *testing.T) {
 		wantPassRatio sdk.Rat
 		wantPassVotes types.Coin
 	}{
-		{testName: "test pass param for changeParamProposal",
+		{
+			testName:      "test pass param for changeParamProposal",
 			proposalType:  types.ChangeParam,
 			wantError:     nil,
 			wantPassRatio: proposalParam.ChangeParamPassRatio,
 			wantPassVotes: proposalParam.ChangeParamPassVotes,
 		},
 
-		{testName: "test pass param for contenCensorshipProposal",
+		{
+			testName:      "test pass param for contenCensorshipProposal",
 			proposalType:  types.ContentCensorship,
 			wantError:     nil,
 			wantPassRatio: proposalParam.ContentCensorshipPassRatio,
 			wantPassVotes: proposalParam.ContentCensorshipPassVotes,
 		},
 
-		{testName: "test pass param for protocolUpgradeProposal",
+		{
+			testName:      "test pass param for protocolUpgradeProposal",
 			proposalType:  types.ProtocolUpgrade,
 			wantError:     nil,
 			wantPassRatio: proposalParam.ProtocolUpgradePassRatio,
 			wantPassVotes: proposalParam.ProtocolUpgradePassVotes,
 		},
 
-		{testName: "test wrong proposal type",
+		{
+			testName:      "test wrong proposal type",
 			proposalType:  23,
 			wantError:     ErrIncorrectProposalType(),
 			wantPassRatio: proposalParam.ProtocolUpgradePassRatio,
@@ -234,12 +256,19 @@ func TestGetProposalPassParam(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		ratio, votes, err := pm.GetProposalPassParam(ctx, tc.proposalType)
-		assert.Equal(t, tc.wantError, err)
+		if !assert.Equal(t, tc.wantError, err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.wantError)
+		}
+
 		if tc.wantError != nil {
 			continue
 		}
-		assert.Equal(t, tc.wantPassRatio, ratio)
-		assert.Equal(t, tc.wantPassVotes, votes)
+		if !assert.Equal(t, tc.wantPassRatio, ratio) {
+			t.Errorf("%s: diff ratio, got %v, want %v", tc.testName, ratio, tc.wantPassRatio)
+		}
+		if !assert.Equal(t, tc.wantPassVotes, votes) {
+			t.Errorf("%s: diff pass votes, got %v, want %v", tc.testName, votes, tc.wantPassVotes)
+		}
 	}
 
 }

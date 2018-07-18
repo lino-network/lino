@@ -80,19 +80,51 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectedFrozenTimes    int64
 		expectedFrozenInterval int64
 	}{
-		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
-		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+		{
+			testName:               "return coin to user",
+			times:                  10,
+			interval:               2,
+			returnedCoin:           types.NewCoinFromInt64(100),
+			expectedFrozenListLen:  1,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100),
+			expectedFrozenTimes:    10,
+			expectedFrozenInterval: 2,
+		},
+		{
+			testName:               "return coin to user again",
+			times:                  100000,
+			interval:               20000,
+			returnedCoin:           types.NewCoinFromInt64(100000),
+			expectedFrozenListLen:  2,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
+			expectedFrozenTimes:    100000,
+			expectedFrozenInterval: 20000,
+		},
 	}
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
 			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
-		assert.Equal(t, nil, err)
+		if err != nil {
+			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
+		}
+
 		lst, err := am.GetFrozenMoneyList(ctx, types.AccountKey("user"))
-		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
-		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
-		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
-		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
+		if err != nil {
+			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
+		}
+		if len(lst) != tc.expectedFrozenListLen {
+			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
+		}
+		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
+		}
+		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {
+			t.Errorf("%s: diff times, got %v, want %v", tc.testName, lst[len(lst)-1].Times, tc.expectedFrozenTimes)
+		}
+		if lst[len(lst)-1].Interval != tc.expectedFrozenInterval {
+			t.Errorf("%s: diff interval, got %v, want %v", tc.testName, lst[len(lst)-1].Interval, tc.expectedFrozenInterval)
+		}
 	}
 }
 
@@ -118,23 +150,37 @@ func TestGrantPermissionMsg(t *testing.T) {
 		msg          GrantPermissionMsg
 		expectResult sdk.Result
 	}{
-		{"normal grant post permission",
-			NewGrantPermissionMsg("user1", "app", 10000, 1, types.PostPermission), sdk.Result{}},
-		{"normal grant micropayment permission",
-			NewGrantPermissionMsg("user2", "app", 10000, 1, types.MicropaymentPermission), sdk.Result{}},
-		{"grant permission to non-exist app",
-			NewGrantPermissionMsg("user2", "invalidApp", 10000, 1, types.MicropaymentPermission), ErrDeveloperNotFound().Result()},
-		{"grant permission to non-exist user",
-			NewGrantPermissionMsg("invalid", "app", 10000, 1, types.MicropaymentPermission), ErrAccountNotFound().Result()},
-		{"grant permission exceeds maximum limitation",
-			NewGrantPermissionMsg("user1", "app", 10000, 100, types.MicropaymentPermission),
-			acc.ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes).Result()},
+		{
+			testName:     "normal grant post permission",
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, 1, types.PostPermission),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName:     "normal grant micropayment permission",
+			msg:          NewGrantPermissionMsg("user2", "app", 10000, 1, types.MicropaymentPermission),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName:     "grant permission to non-exist app",
+			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, 1, types.MicropaymentPermission),
+			expectResult: ErrDeveloperNotFound().Result(),
+		},
+		{
+			testName:     "grant permission to non-exist user",
+			msg:          NewGrantPermissionMsg("invalid", "app", 10000, 1, types.MicropaymentPermission),
+			expectResult: ErrAccountNotFound().Result(),
+		},
+		{
+			testName:     "grant permission exceeds maximum limitation",
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, 100, types.MicropaymentPermission),
+			expectResult: acc.ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes).Result(),
+		},
 	}
 
 	for _, tc := range testCases {
 		result := handler(ctx, tc.msg)
 		if result.Code != tc.expectResult.Code {
-			t.Errorf("%s: test failed, expect %v, got %v", tc.testName, tc.expectResult, result)
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
 		}
 	}
 }
@@ -166,21 +212,32 @@ func TestRevokePermissionMsg(t *testing.T) {
 		msg          RevokePermissionMsg
 		expectResult sdk.Result
 	}{
-		{"normal revoke post permission",
-			NewRevokePermissionMsg("user1", appPriv.Generate(2).PubKey(), types.PostPermission), sdk.Result{}},
-		{"revoke non-exist pubkey",
-			NewRevokePermissionMsg("user1", appPriv.PubKey(), types.PostPermission), accstore.ErrGrantPubKeyNotFound().Result()},
-		{"revoke pubkey permission mismatch",
-			NewRevokePermissionMsg("user1", appPriv.Generate(1).PubKey(), types.PostPermission),
-			acc.ErrRevokePermissionLevelMismatch(types.MicropaymentPermission, types.PostPermission).Result()},
-		{"invalid revoke user",
-			NewRevokePermissionMsg("invalid", appPriv.Generate(1).PubKey(), types.MicropaymentPermission), ErrAccountNotFound().Result()},
+		{
+			testName:     "normal revoke post permission",
+			msg:          NewRevokePermissionMsg("user1", appPriv.Generate(2).PubKey(), types.PostPermission),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName:     "revoke non-exist pubkey",
+			msg:          NewRevokePermissionMsg("user1", appPriv.PubKey(), types.PostPermission),
+			expectResult: accstore.ErrGrantPubKeyNotFound().Result(),
+		},
+		{
+			testName:     "revoke pubkey permission mismatch",
+			msg:          NewRevokePermissionMsg("user1", appPriv.Generate(1).PubKey(), types.PostPermission),
+			expectResult: acc.ErrRevokePermissionLevelMismatch(types.MicropaymentPermission, types.PostPermission).Result(),
+		},
+		{
+			testName:     "invalid revoke user",
+			msg:          NewRevokePermissionMsg("invalid", appPriv.Generate(1).PubKey(), types.MicropaymentPermission),
+			expectResult: ErrAccountNotFound().Result(),
+		},
 	}
 
 	for _, tc := range testCases {
 		result := handler(ctx, tc.msg)
 		if result.Code != tc.expectResult.Code {
-			t.Errorf("%s: test failed, expect %v, got %v", tc.testName, tc.expectResult, result)
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
 		}
 	}
 }

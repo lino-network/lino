@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -176,7 +175,8 @@ func TestTransferNormal(t *testing.T) {
 		wantSenderBalance   types.Coin
 		wantReceiverBalance types.Coin
 	}{
-		{testName: "user1 transfers 200 LNO to user2 (by username)",
+		{
+			testName:            "user1 transfers 200 LNO to user2 (by username)",
 			msg:                 NewTransferMsg("user1", "user2", l200, memo),
 			wantOK:              true,
 			wantSenderBalance:   c1800.Plus(accParam.RegisterFee),
@@ -188,23 +188,17 @@ func TestTransferNormal(t *testing.T) {
 		result := handler(ctx, tc.msg)
 
 		if result.IsOK() != tc.wantOK {
-			t.Errorf(
-				"%s handler(%v): got %v, want %v, err:%v",
-				tc.testName, tc.msg, result.IsOK(), tc.wantOK, result)
+			t.Errorf("%s diff result, got %v, want %v", tc.testName, result.IsOK(), tc.wantOK)
 		}
 
 		senderSaving, _ := am.GetSavingFromBank(ctx, tc.msg.Sender)
 		receiverSaving, _ := am.GetSavingFromBank(ctx, tc.msg.Receiver)
 
 		if !senderSaving.IsEqual(tc.wantSenderBalance) {
-			t.Errorf(
-				"%s get sender bank Saving(%v): got %v, want %v",
-				tc.testName, tc.msg.Sender, senderSaving, tc.wantSenderBalance)
+			t.Errorf("%s: diff sender saving, got %v, want %v", tc.testName, senderSaving, tc.wantSenderBalance)
 		}
 		if !receiverSaving.IsEqual(tc.wantReceiverBalance) {
-			t.Errorf(
-				"%s: get receiver bank Saving(%v): got %v, want %v",
-				tc.testName, tc.msg.Receiver, receiverSaving, tc.wantReceiverBalance)
+			t.Errorf("%s: diff receiver saving, got %v, want %v", tc.testName, receiverSaving, tc.wantReceiverBalance)
 		}
 	}
 }
@@ -258,17 +252,21 @@ func TestHandleAccountRecover(t *testing.T) {
 		newPostKey         crypto.PubKey
 	}{
 		"normal case": {
-			user1, crypto.GenPrivKeyEd25519().PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(),
+			user:               user1,
+			newMasterKey:       crypto.GenPrivKeyEd25519().PubKey(),
+			newTransactionKey:  crypto.GenPrivKeyEd25519().PubKey(),
+			newMicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
+			newPostKey:         crypto.GenPrivKeyEd25519().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
 		msg := NewRecoverMsg(tc.user, tc.newMasterKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
 		result := handler(ctx, msg)
-		assert.Equal(
-			t, sdk.Result{}, result, fmt.Sprintf("%s: got %v, want %v", testName, result, sdk.Result{}))
+		if !assert.Equal(t, sdk.Result{}, result) {
+			t.Errorf("%s: diff result, got %v, want %v", testName, result, sdk.Result{})
+		}
+
 		accInfo := model.AccountInfo{
 			Username:        types.AccountKey(tc.user),
 			CreatedAt:       ctx.BlockHeader().Time,
@@ -277,13 +275,14 @@ func TestHandleAccountRecover(t *testing.T) {
 			MicropaymentKey: tc.newMicropaymentKey,
 			PostKey:         tc.newPostKey,
 		}
-		checkAccountInfo(t, ctx, types.AccountKey(tc.user), accInfo)
+		checkAccountInfo(t, ctx, testName, types.AccountKey(tc.user), accInfo)
+
 		newBank := model.AccountBank{
 			Saving:  accParam.RegisterFee,
 			NumOfTx: 1,
 			Stake:   accParam.RegisterFee,
 		}
-		checkBankKVByUsername(t, ctx, types.AccountKey(tc.user), newBank)
+		checkBankKVByUsername(t, ctx, testName, types.AccountKey(tc.user), newBank)
 	}
 }
 
@@ -303,69 +302,107 @@ func TestHandleRegister(t *testing.T) {
 		expectResult         sdk.Result
 		expectReferrerSaving types.Coin
 	}{
-		{"normal case",
-			NewRegisterMsg(
+		{
+			testName: "normal case",
+			registerMsg: NewRegisterMsg(
 				"referrer", "user1", "1",
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
-			sdk.Result{}, c100,
+			expectResult:         sdk.Result{},
+			expectReferrerSaving: c100,
 		},
-		{"account already exist",
-			NewRegisterMsg(
+		{
+			testName: "account already exist",
+			registerMsg: NewRegisterMsg(
 				"referrer", "user1", "1",
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
-			ErrAccountAlreadyExists("user1").Result(),
-			types.NewCoinFromInt64(99 * types.Decimals),
+			expectResult:         ErrAccountAlreadyExists("user1").Result(),
+			expectReferrerSaving: types.NewCoinFromInt64(99 * types.Decimals),
 		},
-		{"account register fee insufficient",
-			NewRegisterMsg(
+		{
+			testName: "account register fee insufficient",
+			registerMsg: NewRegisterMsg(
 				"referrer", "user2", "0.1",
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
-			ErrRegisterFeeInsufficient().Result(),
-			types.NewCoinFromInt64(9890000),
+			expectResult:         ErrRegisterFeeInsufficient().Result(),
+			expectReferrerSaving: types.NewCoinFromInt64(9890000),
 		},
-		{"referrer deposit insufficient",
-			NewRegisterMsg(
+		{
+			testName: "referrer deposit insufficient",
+			registerMsg: NewRegisterMsg(
 				"referrer", "user2", "1000",
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
-			ErrAccountSavingCoinNotEnough().Result(),
-			types.NewCoinFromInt64(9890000),
+			expectResult:         ErrAccountSavingCoinNotEnough().Result(),
+			expectReferrerSaving: types.NewCoinFromInt64(9890000),
 		},
 	}
 
 	for _, tc := range testCases {
 		result := handler(ctx, tc.registerMsg)
-		assert.Equal(t, tc.expectResult, result)
-		if result.Code == sdk.ABCICodeOK {
-			assert.True(t, am.DoesAccountExist(ctx, tc.registerMsg.NewUser))
-			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
-			assert.Nil(t, err)
-			assert.Equal(t, txKey, tc.registerMsg.NewTransactionPubKey)
-			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)
-			assert.Nil(t, err)
-			assert.Equal(t, postKey, tc.registerMsg.NewPostPubKey)
-			masterKey, err := am.GetMasterKey(ctx, tc.registerMsg.NewUser)
-			assert.Nil(t, err)
-			assert.Equal(t, masterKey, tc.registerMsg.NewMasterPubKey)
+		if !assert.Equal(t, tc.expectResult, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
 		}
+
+		if result.Code == sdk.ABCICodeOK {
+			if !am.DoesAccountExist(ctx, tc.registerMsg.NewUser) {
+				t.Errorf("%s: account %s doesn't exist", tc.testName, tc.registerMsg.NewUser)
+			}
+
+			masterKey, err := am.GetMasterKey(ctx, tc.registerMsg.NewUser)
+			if err != nil {
+				t.Errorf("%s: failed to get master key, got err %v", tc.testName, err)
+			}
+			if !masterKey.Equals(tc.registerMsg.NewMasterPubKey) {
+				t.Errorf("%s: diff master key, got %v, want %v", tc.testName, masterKey, tc.registerMsg.NewMasterPubKey)
+			}
+
+			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)
+			if err != nil {
+				t.Errorf("%s: failed to get transaction key, got err %v", tc.testName, err)
+			}
+			if !txKey.Equals(tc.registerMsg.NewTransactionPubKey) {
+				t.Errorf("%s: diff transaction key, got %v, want %v", tc.testName, txKey, tc.registerMsg.NewTransactionPubKey)
+			}
+
+			micropaymentKey, err := am.GetMicropaymentKey(ctx, tc.registerMsg.NewUser)
+			if err != nil {
+				t.Errorf("%s: failed to get micropayment key, got err %v", tc.testName, err)
+			}
+			if !micropaymentKey.Equals(tc.registerMsg.NewMicropaymentPubKey) {
+				t.Errorf("%s: diff micropayment key, got %v, want %v", tc.testName, micropaymentKey, tc.registerMsg.NewMicropaymentPubKey)
+			}
+
+			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)
+			if err != nil {
+				t.Errorf("%s: failed to get post key, got err %v", tc.testName, err)
+			}
+			if !postKey.Equals(tc.registerMsg.NewPostPubKey) {
+				t.Errorf("%s: diff post key, got %v, want %v", tc.testName, postKey, tc.registerMsg.NewPostPubKey)
+			}
+		}
+
 		saving, err := am.GetSavingFromBank(ctx, tc.registerMsg.Referrer)
-		assert.Nil(t, err)
-		assert.Equal(t, tc.expectReferrerSaving, saving)
+		if err != nil {
+			t.Errorf("%s: failed to get saving from bank, got err %v", tc.testName, err)
+		}
+		if !saving.IsEqual(tc.expectReferrerSaving) {
+			t.Errorf("%s: diff saving, got %v, want %v", tc.testName, saving, tc.expectReferrerSaving)
+		}
 	}
 }
 
@@ -375,22 +412,26 @@ func TesthandleUpdateAccountMsg(t *testing.T) {
 
 	createTestAccount(ctx, am, "accKey")
 
-	cases := []struct {
+	testCases := []struct {
 		testName         string
 		updateAccountMsg UpdateAccountMsg
 		expectResult     sdk.Result
 	}{
-		{"normal update",
-			NewUpdateAccountMsg("accKey", "{'link':'https://lino.network'}"),
-			sdk.Result{},
+		{
+			testName:         "normal update",
+			updateAccountMsg: NewUpdateAccountMsg("accKey", "{'link':'https://lino.network'}"),
+			expectResult:     sdk.Result{},
 		},
-		{"invalid username",
-			NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
-			ErrAccountNotFound("invalid").Result(),
+		{
+			testName:         "invalid username",
+			updateAccountMsg: NewUpdateAccountMsg("invalid", "{'link':'https://lino.network'}"),
+			expectResult:     ErrAccountNotFound("invalid").Result(),
 		},
 	}
-	for _, cs := range cases {
-		result := handler(ctx, cs.updateAccountMsg)
-		assert.Equal(t, result, cs.expectResult)
+	for _, tc := range testCases {
+		result := handler(ctx, tc.updateAccountMsg)
+		if !assert.Equal(t, result, tc.expectResult) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
+		}
 	}
 }

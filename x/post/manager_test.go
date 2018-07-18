@@ -1,7 +1,6 @@
 package post
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -19,39 +18,90 @@ func TestCreatePost(t *testing.T) {
 	user1 := createTestAccount(t, ctx, am, "user1")
 	user2 := createTestAccount(t, ctx, am, "user2")
 
-	cases := []struct {
+	testCases := []struct {
+		testName     string
 		postID       string
 		author       types.AccountKey
 		sourcePostID string
 		sourceAuthor types.AccountKey
 		expectResult sdk.Error
 	}{
-		{"postID", user1, "", "", nil},
-		{"postID", user2, "", "", nil},
-		{"postID", user1, "", "", ErrPostAlreadyExist(types.GetPermlink(user1, "postID"))},
-		{"postID", user2, "postID", user1, ErrPostAlreadyExist(types.GetPermlink(user2, "postID"))},
-		{"postID", user2, "postID", user2, ErrPostAlreadyExist(types.GetPermlink(user2, "postID"))},
-		{"postID2", user2, "postID", user1, nil},
-		{"postID3", user2, "postID3", user1,
-			ErrCreatePostSourceInvalid(types.GetPermlink(user2, "postID3"))},
+		{
+			testName:     "creates (postID, user1) sucessfully",
+			postID:       "postID",
+			author:       user1,
+			sourcePostID: "",
+			sourceAuthor: "",
+			expectResult: nil,
+		},
+		{
+			testName:     "creates (postID, user2) sucessfully",
+			postID:       "postID",
+			author:       user2,
+			sourcePostID: "",
+			sourceAuthor: "",
+			expectResult: nil,
+		},
+		{
+			testName:     "(postID, user1) already exists",
+			postID:       "postID",
+			author:       user1,
+			sourcePostID: "",
+			sourceAuthor: "",
+			expectResult: ErrPostAlreadyExist(types.GetPermlink(user1, "postID")),
+		},
+		{
+			testName:     "(postID, user2) already exists case 1",
+			postID:       "postID",
+			author:       user2,
+			sourcePostID: "postID",
+			sourceAuthor: user1,
+			expectResult: ErrPostAlreadyExist(types.GetPermlink(user2, "postID")),
+		},
+		{
+			testName:     "(postID, user2) already exists case 2",
+			postID:       "postID",
+			author:       user2,
+			sourcePostID: "postID",
+			sourceAuthor: user2,
+			expectResult: ErrPostAlreadyExist(types.GetPermlink(user2, "postID")),
+		},
+		{
+			testName:     "creates (postID2, user2) successfully",
+			postID:       "postID2",
+			author:       user2,
+			sourcePostID: "postID",
+			sourceAuthor: user1,
+			expectResult: nil,
+		},
+		{
+			testName:     "source doesn't exist",
+			postID:       "postID3",
+			author:       user2,
+			sourcePostID: "postID3",
+			sourceAuthor: user1,
+			expectResult: ErrCreatePostSourceInvalid(types.GetPermlink(user2, "postID3")),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		// test valid postInfo
 		msg := CreatePostMsg{
-			PostID:       cs.postID,
+			PostID:       tc.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
-			Author:       cs.author,
-			SourceAuthor: cs.sourceAuthor,
-			SourcePostID: cs.sourcePostID,
+			Author:       tc.author,
+			SourceAuthor: tc.sourceAuthor,
+			SourcePostID: tc.sourcePostID,
 			Links:        nil,
 		}
 		err := pm.CreatePost(
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
 			msg.Title, sdk.ZeroRat(), msg.Links)
-		assert.Equal(t, err, cs.expectResult)
+		if !assert.Equal(t, err, tc.expectResult) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectResult)
+		}
 
 		if err != nil {
 			continue
@@ -83,44 +133,61 @@ func TestUpdatePost(t *testing.T) {
 	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
-	cases := map[string]struct {
+	testCases := []struct {
+		testName  string
 		msg       UpdatePostMsg
 		expectErr sdk.Error
 	}{
-		"normal update": {
-			NewUpdatePostMsg(
+		{
+			testName: "normal update",
+			msg: NewUpdatePostMsg(
 				string(user), postID, "update to this title", "update to this content",
 				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"0"), nil},
-		"update with invalid post id": {
-			NewUpdatePostMsg(
+				"0"),
+			expectErr: nil,
+		},
+		{
+			testName: "update with invalid post id",
+			msg: NewUpdatePostMsg(
 				"invalid", postID, "update to this title", "update to this content",
 				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID)))},
-		"update with invalid author": {
-			NewUpdatePostMsg(
+				"1"),
+			expectErr: model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID))),
+		},
+		{
+			testName: "update with invalid author",
+			msg: NewUpdatePostMsg(
 				string(user), "invalid", "update to this title", "update to this content",
 				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"), model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid")))},
+				"1"),
+			expectErr: model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid"))),
+		},
 	}
 
-	for testname, cs := range cases {
-		splitRate, err := sdk.NewRatFromDecimal(cs.msg.RedistributionSplitRate)
+	for _, tc := range testCases {
+		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate)
 		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get rat from decimal, got err %v", tc.testName, err)
+		}
+
 		err = pm.UpdatePost(
-			ctx, cs.msg.Author, cs.msg.PostID, cs.msg.Title, cs.msg.Content, cs.msg.Links, splitRate)
-		assert.Equal(t, cs.expectErr, err, fmt.Sprintf("%s: expect %v, got %v", testname, cs.expectErr, err))
-		if cs.expectErr != nil {
+			ctx, tc.msg.Author, tc.msg.PostID, tc.msg.Title, tc.msg.Content, tc.msg.Links, splitRate)
+		if !assert.Equal(t, err, tc.expectErr) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
+		}
+		if tc.expectErr != nil {
 			continue
 		}
+
 		postInfo := model.PostInfo{
-			PostID:       cs.msg.PostID,
-			Title:        cs.msg.Title,
-			Content:      cs.msg.Content,
-			Author:       cs.msg.Author,
+			PostID:       tc.msg.PostID,
+			Title:        tc.msg.Title,
+			Content:      tc.msg.Content,
+			Author:       tc.msg.Author,
 			SourceAuthor: "",
 			SourcePostID: "",
-			Links:        cs.msg.Links,
+			Links:        tc.msg.Links,
 		}
 
 		postMeta := model.PostMeta{
@@ -132,7 +199,7 @@ func TestUpdatePost(t *testing.T) {
 			RedistributionSplitRate: splitRate,
 		}
 		checkPostKVStore(t, ctx,
-			types.GetPermlink(cs.msg.Author, cs.msg.PostID), postInfo, postMeta)
+			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
 	}
 }
 
@@ -142,7 +209,9 @@ func TestGetSourcePost(t *testing.T) {
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user3")
-	cases := []struct {
+
+	testCases := []struct {
+		testName           string
 		postID             string
 		author             types.AccountKey
 		sourcePostID       string
@@ -150,22 +219,54 @@ func TestGetSourcePost(t *testing.T) {
 		expectSourcePostID string
 		expectSourceAuthor types.AccountKey
 	}{
-		{"postID", user1, "", "", "", ""},
-		{"postID1", user1, "postID", user1, "postID", user1},
-		{"postID", user2, "postID1", user1, "postID", user1},
-		{"postID", user3, "postID", user2, "postID", user1},
+		{
+			testName:           "create post without source",
+			postID:             "postID",
+			author:             user1,
+			sourcePostID:       "",
+			sourceAuthor:       "",
+			expectSourcePostID: "",
+			expectSourceAuthor: "",
+		},
+		{
+			testName:           "creat post with original source",
+			postID:             "postID1",
+			author:             user1,
+			sourcePostID:       "postID",
+			sourceAuthor:       user1,
+			expectSourcePostID: "postID",
+			expectSourceAuthor: user1,
+		},
+		{
+			testName:           "create post with secondary source, but expect original source",
+			postID:             "postID",
+			author:             user2,
+			sourcePostID:       "postID1",
+			sourceAuthor:       user1,
+			expectSourcePostID: "postID",
+			expectSourceAuthor: user1,
+		},
+		{
+			testName:           "create post with secodary source again, but expect orignal source",
+			postID:             "postID",
+			author:             user3,
+			sourcePostID:       "postID",
+			sourceAuthor:       user2,
+			expectSourcePostID: "postID",
+			expectSourceAuthor: user1,
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		msg := CreatePostMsg{
-			PostID:       cs.postID,
+			PostID:       tc.postID,
 			Title:        string(make([]byte, 50)),
 			Content:      string(make([]byte, 1000)),
-			Author:       cs.author,
+			Author:       tc.author,
 			ParentAuthor: "",
 			ParentPostID: "",
-			SourceAuthor: cs.sourceAuthor,
-			SourcePostID: cs.sourcePostID,
+			SourceAuthor: tc.sourceAuthor,
+			SourcePostID: tc.sourcePostID,
 			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
@@ -173,12 +274,21 @@ func TestGetSourcePost(t *testing.T) {
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
 			msg.Title, sdk.ZeroRat(), msg.Links)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to create post, got err %v", tc.testName, err)
+		}
+
 		sourceAuthor, sourcePostID, err :=
-			pm.GetSourcePost(ctx, types.GetPermlink(cs.author, cs.postID))
-		assert.Nil(t, err)
-		assert.Equal(t, sourceAuthor, cs.expectSourceAuthor)
-		assert.Equal(t, sourcePostID, cs.expectSourcePostID)
+			pm.GetSourcePost(ctx, types.GetPermlink(tc.author, tc.postID))
+		if err != nil {
+			t.Errorf("%s: failed to get source post, got err %v", tc.testName, err)
+		}
+		if sourceAuthor != tc.expectSourceAuthor {
+			t.Errorf("%s: diff source author, got %v, want %v", tc.testName, sourceAuthor, tc.expectSourceAuthor)
+		}
+		if sourcePostID != tc.expectSourcePostID {
+			t.Errorf("%s: diff source post id, got %v, want %v", tc.testName, sourcePostID, tc.expectSourcePostID)
+		}
 	}
 }
 
@@ -188,7 +298,8 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
-	cases := []struct {
+	testCases := []struct {
+		testName                 string
 		likeUser                 types.AccountKey
 		postID                   string
 		author                   types.AccountKey
@@ -197,27 +308,84 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 		expectTotalLikeWeight    int64
 		expectTotalDislikeWeight int64
 	}{
-		{user3, postID1, user1, 10000, 1, 10000, 0},
-		{user3, postID2, user2, 10000, 1, 10000, 0},
-		{user1, postID2, user2, 10000, 2, 20000, 0},
-		{user2, postID1, user1, -10000, 2, 10000, 10000},
-		{user3, postID2, user2, 0, 2, 10000, 0},
-		{user3, postID1, user1, -10000, 2, 0, 20000},
+		{
+			testName:                 "user3 likes (postID1, user1)",
+			likeUser:                 user3,
+			postID:                   postID1,
+			author:                   user1,
+			weight:                   10000,
+			expectTotalLikeCount:     1,
+			expectTotalLikeWeight:    10000,
+			expectTotalDislikeWeight: 0,
+		},
+		{
+			testName:                 "user3 likes (postID2, user2)",
+			likeUser:                 user3,
+			postID:                   postID2,
+			author:                   user2,
+			weight:                   10000,
+			expectTotalLikeCount:     1,
+			expectTotalLikeWeight:    10000,
+			expectTotalDislikeWeight: 0,
+		},
+		{
+			testName:                 "user1 likes (postID2, user2)",
+			likeUser:                 user1,
+			postID:                   postID2,
+			author:                   user2,
+			weight:                   10000,
+			expectTotalLikeCount:     2,
+			expectTotalLikeWeight:    20000,
+			expectTotalDislikeWeight: 0,
+		},
+		{
+			testName:                 "user2 dislikes (postID1, user1)",
+			likeUser:                 user2,
+			postID:                   postID1,
+			author:                   user1,
+			weight:                   -10000,
+			expectTotalLikeCount:     2,
+			expectTotalLikeWeight:    10000,
+			expectTotalDislikeWeight: 10000,
+		},
+		{
+			testName:                 "user3 likes (postID2, user2) with 0 weight, which reverts the previous like",
+			likeUser:                 user3,
+			postID:                   postID2,
+			author:                   user2,
+			weight:                   0,
+			expectTotalLikeCount:     2,
+			expectTotalLikeWeight:    10000,
+			expectTotalDislikeWeight: 0,
+		},
+		{
+			testName:                 "user3 dislikes (postID1, user1), which reverts the previous like",
+			likeUser:                 user3,
+			postID:                   postID1,
+			author:                   user1,
+			weight:                   -10000,
+			expectTotalLikeCount:     2,
+			expectTotalLikeWeight:    0,
+			expectTotalDislikeWeight: 20000,
+		},
 	}
 
-	for _, cs := range cases {
-		postKey := types.GetPermlink(cs.author, cs.postID)
-		err := pm.AddOrUpdateLikeToPost(ctx, postKey, cs.likeUser, cs.weight)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		postKey := types.GetPermlink(tc.author, tc.postID)
+		err := pm.AddOrUpdateLikeToPost(ctx, postKey, tc.likeUser, tc.weight)
+		if err != nil {
+			t.Errorf("%s: failed to add or update like to post, got err %v", tc.testName, err)
+		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalLikeCount:          cs.expectTotalLikeCount,
-			TotalLikeWeight:         cs.expectTotalLikeWeight,
-			TotalDislikeWeight:      cs.expectTotalDislikeWeight,
+			TotalLikeCount:          tc.expectTotalLikeCount,
+			TotalLikeWeight:         tc.expectTotalLikeWeight,
+			TotalDislikeWeight:      tc.expectTotalDislikeWeight,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
 	}
@@ -230,7 +398,8 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
-	cases := []struct {
+	testCases := []struct {
+		testName             string
 		viewUser             types.AccountKey
 		postID               string
 		author               types.AccountKey
@@ -238,31 +407,80 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 		expectTotalViewCount int64
 		expectUserViewCount  int64
 	}{
-		{user3, postID1, user1, 1, 1, 1},
-		{user3, postID1, user1, 2, 2, 2},
-		{user2, postID1, user1, 3, 3, 1},
-		{user2, postID1, user1, 4, 4, 2},
-		{user1, postID1, user1, 5, 5, 1},
+		{
+			testName:             "user3 views (postID1, user1)",
+			viewUser:             user3,
+			postID:               postID1,
+			author:               user1,
+			viewTime:             1,
+			expectTotalViewCount: 1,
+			expectUserViewCount:  1,
+		},
+		{
+			testName:             "user3 views (postID1, user1) again",
+			viewUser:             user3,
+			postID:               postID1,
+			author:               user1,
+			viewTime:             2,
+			expectTotalViewCount: 2,
+			expectUserViewCount:  2,
+		},
+		{
+			testName:             "user2 views (postID1, user1)",
+			viewUser:             user2,
+			postID:               postID1,
+			author:               user1,
+			viewTime:             3,
+			expectTotalViewCount: 3,
+			expectUserViewCount:  1,
+		},
+		{
+			testName:             "user2 views (postID1, user1) again",
+			viewUser:             user2,
+			postID:               postID1,
+			author:               user1,
+			viewTime:             4,
+			expectTotalViewCount: 4,
+			expectUserViewCount:  2,
+		},
+		{
+			testName:             "user1 views (postID1, user1)",
+			viewUser:             user1,
+			postID:               postID1,
+			author:               user1,
+			viewTime:             5,
+			expectTotalViewCount: 5,
+			expectUserViewCount:  1,
+		},
 	}
 
-	for _, cs := range cases {
-		postKey := types.GetPermlink(cs.author, cs.postID)
-		ctx = ctx.WithBlockHeader(abci.Header{Time: cs.viewTime})
-		err := pm.AddOrUpdateViewToPost(ctx, postKey, cs.viewUser)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		postKey := types.GetPermlink(tc.author, tc.postID)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: tc.viewTime})
+		err := pm.AddOrUpdateViewToPost(ctx, postKey, tc.viewUser)
+		if err != nil {
+			t.Errorf("%s: failed to add or update view to post, got err %v", tc.testName, err)
+		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               createTime,
 			LastUpdatedAt:           createTime,
 			LastActivityAt:          createTime,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalViewCount:          cs.expectTotalViewCount,
+			TotalViewCount:          tc.expectTotalViewCount,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
-		view, err := pm.postStorage.GetPostView(ctx, postKey, cs.viewUser)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectUserViewCount, view.Times)
-		assert.Equal(t, cs.viewTime, view.LastViewAt)
+		view, err := pm.postStorage.GetPostView(ctx, postKey, tc.viewUser)
+		if err != nil {
+			t.Errorf("%s: failed to get post view, got err %v", tc.testName, err)
+		}
+		if view.Times != tc.expectUserViewCount {
+			t.Errorf("%s: diff user view count, got %v, want %v", tc.testName, view.Times, tc.expectUserViewCount)
+		}
+		if view.LastViewAt != tc.viewTime {
+			t.Errorf("%s: diff view time, got %v, want %v", tc.testName, view.LastViewAt, tc.viewTime)
+		}
 	}
 }
 
@@ -277,7 +495,8 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 	assert.Nil(t, err)
 	permlink := types.GetPermlink(user1, postID1)
 
-	cases := []struct {
+	testCases := []struct {
+		testName               string
 		user                   types.AccountKey
 		stake                  types.Coin
 		isReport               bool
@@ -286,34 +505,63 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
 	}{
-		{user3, types.NewCoinFromInt64(1), true,
-			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval, nil,
-			types.NewCoinFromInt64(1), types.NewCoinFromInt64(0)},
-		{user2, types.NewCoinFromInt64(100), false,
-			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval, nil,
-			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
-		{user3, types.NewCoinFromInt64(100), false,
-			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
-			ErrReportOrUpvoteAlreadyExist(permlink),
-			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
-		{user4, types.NewCoinFromInt64(100), false,
-			ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval + 1,
-			ErrReportOrUpvoteTooOften(),
-			types.NewCoinFromInt64(1), types.NewCoinFromInt64(100)},
+		{
+			testName:               "user3 reports with 1 stake",
+			user:                   user3,
+			stake:                  types.NewCoinFromInt64(1),
+			isReport:               true,
+			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(1),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
+		},
+		{
+			testName:               "user2 upvotes with 100 stake",
+			user:                   user2,
+			stake:                  types.NewCoinFromInt64(100),
+			isReport:               false,
+			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(1),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+		},
+		{
+			testName:               "user3 upvotes with 100 stake but already exist",
+			user:                   user3,
+			stake:                  types.NewCoinFromInt64(100),
+			isReport:               false,
+			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
+			expectResult:           ErrReportOrUpvoteAlreadyExist(permlink),
+			expectTotalReportStake: types.NewCoinFromInt64(1),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+		},
+		{
+			testName:               "user4 upvotes with 100 stake but is too often",
+			user:                   user4,
+			stake:                  types.NewCoinFromInt64(100),
+			isReport:               false,
+			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval + 1,
+			expectResult:           ErrReportOrUpvoteTooOften(),
+			expectTotalReportStake: types.NewCoinFromInt64(1),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		err := pm.ReportOrUpvoteToPost(
-			ctx, permlink, cs.user, cs.stake, cs.isReport, cs.lastReportOrUpvoteAt)
-		assert.Equal(t, cs.expectResult, err)
+			ctx, permlink, tc.user, tc.stake, tc.isReport, tc.lastReportOrUpvoteAt)
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
+		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportStake:        cs.expectTotalReportStake,
-			TotalUpvoteStake:        cs.expectTotalUpvoteStake,
+			TotalReportStake:        tc.expectTotalReportStake,
+			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
 		}
 		checkPostMeta(t, ctx, permlink, postMeta)
 	}
@@ -326,7 +574,8 @@ func TestDonation(t *testing.T) {
 	user3 := types.AccountKey("user3")
 
 	baseTime := ctx.BlockHeader().Time
-	cases := []struct {
+	testCases := []struct {
+		testName            string
 		user                types.AccountKey
 		donateAt            int64
 		amount              types.Coin
@@ -337,33 +586,98 @@ func TestDonation(t *testing.T) {
 		expectTotalDonation types.Coin
 		expectDonationList  model.Donations
 	}{
-		{user3, baseTime, types.NewCoinFromInt64(1), types.DirectDeposit, postID1, user1, 1, types.NewCoinFromInt64(1),
-			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.DirectDeposit}}}},
-		{user3, baseTime, types.NewCoinFromInt64(1), types.Inflation, postID2, user2, 1, types.NewCoinFromInt64(1),
-			model.Donations{user3, []model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation}}}},
-		{user3, baseTime, types.NewCoinFromInt64(20), types.DirectDeposit, postID2, user2, 2, types.NewCoinFromInt64(21),
-			model.Donations{user3,
-				[]model.Donation{model.Donation{types.NewCoinFromInt64(1), baseTime, types.Inflation},
-					model.Donation{types.NewCoinFromInt64(20), baseTime, types.DirectDeposit}}}},
+		{
+			testName:            "user3 donates to (postID1, user1)",
+			user:                user3,
+			donateAt:            baseTime,
+			amount:              types.NewCoinFromInt64(1),
+			donationType:        types.DirectDeposit,
+			postID:              postID1,
+			author:              user1,
+			expectDonateCount:   1,
+			expectTotalDonation: types.NewCoinFromInt64(1),
+			expectDonationList: model.Donations{
+				Username: user3,
+				DonationList: []model.Donation{
+					{
+						Amount:       types.NewCoinFromInt64(1),
+						CreatedAt:    baseTime,
+						DonationType: types.DirectDeposit,
+					},
+				},
+			},
+		},
+		{
+			testName:            "user3 donates to (postID2, user2)",
+			user:                user3,
+			donateAt:            baseTime,
+			amount:              types.NewCoinFromInt64(1),
+			donationType:        types.Inflation,
+			postID:              postID2,
+			author:              user2,
+			expectDonateCount:   1,
+			expectTotalDonation: types.NewCoinFromInt64(1),
+			expectDonationList: model.Donations{
+				Username: user3,
+				DonationList: []model.Donation{
+					{
+						Amount:       types.NewCoinFromInt64(1),
+						CreatedAt:    baseTime,
+						DonationType: types.Inflation,
+					},
+				},
+			},
+		},
+		{
+			testName:            "user3 donates to (postID2, user2) again",
+			user:                user3,
+			donateAt:            baseTime,
+			amount:              types.NewCoinFromInt64(20),
+			donationType:        types.DirectDeposit,
+			postID:              postID2,
+			author:              user2,
+			expectDonateCount:   2,
+			expectTotalDonation: types.NewCoinFromInt64(21),
+			expectDonationList: model.Donations{
+				Username: user3,
+				DonationList: []model.Donation{
+					{
+						Amount:       types.NewCoinFromInt64(1),
+						CreatedAt:    baseTime,
+						DonationType: types.Inflation,
+					},
+					{
+						Amount:       types.NewCoinFromInt64(20),
+						CreatedAt:    baseTime,
+						DonationType: types.DirectDeposit,
+					},
+				},
+			},
+		},
 	}
 
-	for _, cs := range cases {
-		postKey := types.GetPermlink(cs.author, cs.postID)
-		err := pm.AddDonation(ctx, postKey, cs.user, cs.amount, cs.donationType)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		postKey := types.GetPermlink(tc.author, tc.postID)
+		err := pm.AddDonation(ctx, postKey, tc.user, tc.amount, tc.donationType)
+		if err != nil {
+			t.Errorf("%s: failed to add donation, got err %v", tc.testName, err)
+		}
+
 		postMeta := model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalDonateCount:        cs.expectDonateCount,
-			TotalReward:             cs.expectTotalDonation,
+			TotalDonateCount:        tc.expectDonateCount,
+			TotalReward:             tc.expectTotalDonation,
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
 		storage := model.NewPostStorage(TestPostKVStoreKey)
-		donations, _ := storage.GetPostDonations(ctx, postKey, cs.user)
-		assert.Equal(t, cs.expectDonationList, *donations)
+		donations, _ := storage.GetPostDonations(ctx, postKey, tc.user)
+		if !assert.Equal(t, tc.expectDonationList, *donations) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *donations, tc.expectDonationList)
+		}
 	}
 }
 
@@ -371,36 +685,79 @@ func TestGetPenaltyScore(t *testing.T) {
 	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	postKey := types.GetPermlink(user, postID)
-	cases := []struct {
+	testCases := []struct {
+		testName           string
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
 		expectPenaltyScore *big.Rat
 	}{
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(0), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(1), big.NewRat(0, 1)},
-		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), big.NewRat(0, 1)},
-		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(1000), types.NewCoinFromInt64(100), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(50), types.NewCoinFromInt64(100), big.NewRat(1, 2)},
+		{
+			testName:           "1 report and 0 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(1),
+			totalUpvoteStake:   types.NewCoinFromInt64(0),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "0 report and 1 upvote expects 0 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(0),
+			totalUpvoteStake:   types.NewCoinFromInt64(1),
+			expectPenaltyScore: big.NewRat(0, 1),
+		},
+		{
+			testName:           "0 report and 0 upvote expects 0 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(0),
+			totalUpvoteStake:   types.NewCoinFromInt64(0),
+			expectPenaltyScore: big.NewRat(0, 1),
+		},
+		{
+			testName:           "100 report and 100 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(100),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "1000 report and 100 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(1000),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "50 report and 100 upvote expects 1/2 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(50),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 2),
+		},
 		// issue https://github.com/lino-network/lino/issues/150
-		{types.NewCoinFromInt64(3333), types.NewCoinFromInt64(7777), big.NewRat(3, 7)},
+		{
+			testName:           "3333 report and 7777 upvote expects 3/7 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(3333),
+			totalUpvoteStake:   types.NewCoinFromInt64(7777),
+			expectPenaltyScore: big.NewRat(3, 7),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		postMeta := &model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportStake:        cs.totalReportStake,
-			TotalUpvoteStake:        cs.totalUpvoteStake,
+			TotalReportStake:        tc.totalReportStake,
+			TotalUpvoteStake:        tc.totalUpvoteStake,
 		}
 		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set post meta, got err %v", tc.testName, err)
+		}
+
 		penaltyScore, err := pm.GetPenaltyScore(ctx, postKey)
-		assert.Nil(t, err)
-		assert.True(t, penaltyScore.Cmp(cs.expectPenaltyScore) == 0)
+		if err != nil {
+			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
+		}
+		if penaltyScore.Cmp(tc.expectPenaltyScore) != 0 {
+			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
+		}
 	}
 }
 
@@ -411,34 +768,72 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 
 	postKey := types.GetPermlink(user, postID)
 	repostKey := types.GetPermlink(user2, postID2)
-	cases := []struct {
+	testCases := []struct {
+		testName           string
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
 		expectPenaltyScore *big.Rat
 	}{
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(0), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(1), big.NewRat(0, 1)},
-		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), big.NewRat(0, 1)},
-		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(1000), types.NewCoinFromInt64(100), big.NewRat(1, 1)},
-		{types.NewCoinFromInt64(50), types.NewCoinFromInt64(100), big.NewRat(1, 2)},
+		{
+			testName:           "1 report and 0 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(1),
+			totalUpvoteStake:   types.NewCoinFromInt64(0),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "0 report and 1 upvote expects 0 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(0),
+			totalUpvoteStake:   types.NewCoinFromInt64(1),
+			expectPenaltyScore: big.NewRat(0, 1),
+		},
+		{
+			testName:           "0 report and 0 upvote expects 0 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(0),
+			totalUpvoteStake:   types.NewCoinFromInt64(0),
+			expectPenaltyScore: big.NewRat(0, 1),
+		},
+		{
+			testName:           "100 report and 100 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(100),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "1000 report and 100 upvote expects 1 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(1000),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 1),
+		},
+		{
+			testName:           "50 report and 100 upvote expects 1/2 penalty score",
+			totalReportStake:   types.NewCoinFromInt64(50),
+			totalUpvoteStake:   types.NewCoinFromInt64(100),
+			expectPenaltyScore: big.NewRat(1, 2),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		postMeta := &model.PostMeta{
 			CreatedAt:               ctx.BlockHeader().Time,
 			LastUpdatedAt:           ctx.BlockHeader().Time,
 			LastActivityAt:          ctx.BlockHeader().Time,
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportStake:        cs.totalReportStake,
-			TotalUpvoteStake:        cs.totalUpvoteStake,
+			TotalReportStake:        tc.totalReportStake,
+			TotalUpvoteStake:        tc.totalUpvoteStake,
 		}
 		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set post meta, got err %v", tc.testName, err)
+		}
+
 		penaltyScore, err := pm.GetPenaltyScore(ctx, repostKey)
-		assert.Nil(t, err)
-		assert.True(t, penaltyScore.Cmp(cs.expectPenaltyScore) == 0)
+		if err != nil {
+			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
+		}
+		if penaltyScore.Cmp(tc.expectPenaltyScore) != 0 {
+			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
+		}
 	}
 }
 

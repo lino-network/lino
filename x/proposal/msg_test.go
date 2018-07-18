@@ -10,17 +10,28 @@ import (
 )
 
 func TestVoteProposalMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName        string
 		voteProposalMsg VoteProposalMsg
-		expectError     sdk.Error
+		expectedError   sdk.Error
 	}{
-		{NewVoteProposalMsg("user1", 1, true), nil},
-		{NewVoteProposalMsg("", 1, true), ErrInvalidUsername()},
+		{
+			testName:        "normal case",
+			voteProposalMsg: NewVoteProposalMsg("user1", 1, true),
+			expectedError:   nil,
+		},
+		{
+			testName:        "empty username is illegal",
+			voteProposalMsg: NewVoteProposalMsg("", 1, true),
+			expectedError:   ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.voteProposalMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.voteProposalMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -34,18 +45,33 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p2 := p1
 	p2.DeveloperAllocation = sdk.NewRat(25, 100)
 
-	cases := []struct {
+	testCases := []struct {
+		testName                       string
 		ChangeGlobalAllocationParamMsg ChangeGlobalAllocationParamMsg
-		expectError                    sdk.Error
+		expectedError                  sdk.Error
 	}{
-		{NewChangeGlobalAllocationParamMsg("user1", p1), nil},
-		{NewChangeGlobalAllocationParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeGlobalAllocationParamMsg("", p1), ErrInvalidUsername()},
+		{
+			testName:                       "normal case",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p1),
+			expectedError:                  nil,
+		},
+		{
+			testName:                       "illegal parameter",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p2),
+			expectedError:                  ErrIllegalParameter(),
+		},
+		{
+			testName:                       "empty username is illegal",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("", p1),
+			expectedError:                  ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeGlobalAllocationParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeGlobalAllocationParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -57,18 +83,33 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 
 	p2 := p1
 	p2.StorageAllocation = sdk.NewRat(101, 100)
-	cases := []struct {
+	testCases := []struct {
+		testName                              string
 		ChangeInfraInternalAllocationParamMsg ChangeInfraInternalAllocationParamMsg
-		expectError                           sdk.Error
+		expectedError                         sdk.Error
 	}{
-		{NewChangeInfraInternalAllocationParamMsg("user1", p1), nil},
-		{NewChangeInfraInternalAllocationParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeInfraInternalAllocationParamMsg("", p1), ErrInvalidUsername()},
+		{
+			testName: "normal case",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1),
+			expectedError:                         nil,
+		},
+		{
+			testName: "illegal parameter",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2),
+			expectedError:                         ErrIllegalParameter(),
+		},
+		{
+			testName: "empty username is illegal",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1),
+			expectedError:                         ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeInfraInternalAllocationParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeInfraInternalAllocationParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -104,24 +145,63 @@ func TestChangeVoteParamMsg(t *testing.T) {
 	p8 := p1
 	p8.DelegatorCoinReturnTimes = int64(0)
 
-	cases := []struct {
+	testCases := []struct {
+		testName           string
 		ChangeVoteParamMsg ChangeVoteParamMsg
-		expectError        sdk.Error
+		expectedError      sdk.Error
 	}{
-		{NewChangeVoteParamMsg("user1", p1), nil},
-		{NewChangeVoteParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p4), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p5), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p6), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p7), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("user1", p8), ErrIllegalParameter()},
-		{NewChangeVoteParamMsg("", p1), ErrInvalidUsername()},
+		{
+			testName:           "normal case",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p1),
+			expectedError:      nil,
+		},
+		{
+			testName:           "negative voter min depost is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero voter min withdraw is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p3),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero delegator min withdraw is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p4),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero VoterCoinReturnIntervalHr is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p5),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero VoterCoinReturnTimes is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p6),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "negative DelegatorCoinReturnIntervalHr is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p7),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero DelegatorCoinReturnTimes is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p8),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "empty username is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("", p1),
+			expectedError:      ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeVoteParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeVoteParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -141,20 +221,43 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 	p4 := p1
 	p4.DeveloperMinDeposit = types.NewCoinFromInt64(-1 * types.Decimals)
 
-	cases := []struct {
+	testCases := []struct {
+		testName                string
 		ChangeDeveloperParamMsg ChangeDeveloperParamMsg
-		expectError             sdk.Error
+		expectedError           sdk.Error
 	}{
-		{NewChangeDeveloperParamMsg("user1", p1), nil},
-		{NewChangeDeveloperParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeDeveloperParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeDeveloperParamMsg("user1", p4), ErrIllegalParameter()},
-		{NewChangeDeveloperParamMsg("", p1), ErrInvalidUsername()},
+		{
+			testName:                "normal case",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p1),
+			expectedError:           nil,
+		},
+		{
+			testName:                "negative DeveloperCoinReturnTimes is illegal",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p2),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "zero DeveloperCoinReturnIntervalHr is illegal",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p3),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative DeveloperMinDeposit is iilegal",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p4),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "empty username is illegal",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("", p1),
+			expectedError:           ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeDeveloperParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeDeveloperParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -202,27 +305,78 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p11 := p1
 	p11.ValidatorListSize = int64(-1)
 
-	cases := []struct {
+	testCases := []struct {
+		testName                string
 		ChangeValidatorParamMsg ChangeValidatorParamMsg
-		expectError             sdk.Error
+		expectedError           sdk.Error
 	}{
-		{NewChangeValidatorParamMsg("user1", p1), nil},
-		{NewChangeValidatorParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p4), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p5), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p6), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p7), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p8), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p9), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p10), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("user1", p11), ErrIllegalParameter()},
-		{NewChangeValidatorParamMsg("", p1), ErrInvalidUsername()},
+		{
+			testName:                "normal case",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p1),
+			expectedError:           nil,
+		},
+		{
+			testName:                "negative ValidatorMinWithdraw is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p2),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "zero ValidatorMinVotingDeposit is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p3),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative ValidatorMinCommitingDeposit is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p4),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative ValidatorCoinReturnIntervalHr is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p5),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "zero ValidatorCoinReturnTimes is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p6),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative PenaltyMissVote is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p7),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative PenaltyByzantine is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p8),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "zero PenaltyMissCommit is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p9),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "zero AbsentCommitLimitation is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p10),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative ValidatorListSize is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p11),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "empty username is illegal",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("", p1),
+			expectedError:           ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeValidatorParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeValidatorParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -280,29 +434,88 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p13 := p1
 	p13.ProtocolUpgradeMinDeposit = types.NewCoinFromInt64(-1000000 * types.Decimals)
 
-	cases := []struct {
+	testCases := []struct {
+		testName               string
 		ChangeProposalParamMsg ChangeProposalParamMsg
-		expectError            sdk.Error
+		expectedError          sdk.Error
 	}{
-		{NewChangeProposalParamMsg("user1", p1), nil},
-		{NewChangeProposalParamMsg("", p1), ErrInvalidUsername()},
-		{NewChangeProposalParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p4), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p5), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p6), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p7), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p8), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p9), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p10), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p11), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p12), ErrIllegalParameter()},
-		{NewChangeProposalParamMsg("user1", p13), ErrIllegalParameter()},
+		{
+			testName:               "normal case",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p1),
+			expectedError:          nil,
+		},
+		{
+			testName:               "invalid username",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("", p1),
+			expectedError:          ErrInvalidUsername(),
+		},
+		{
+			testName:               "negative ContentCensorshipDecideHr is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p2),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "ContentCensorshipPassRatio that is larger than one is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p3),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ContentCensorshipPassVotes is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p4),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ContentCensorshipMinDeposit is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p5),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ChangeParamDecideHr is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p6),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "zero ChangeParamPassRatio is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p7),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "zero ChangeParamPassVotes is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p8),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ChangeParamMinDeposit is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p9),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "zero ProtocolUpgradeDecideHr is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p10),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "zero ProtocolUpgradePassRatio is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p11),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ProtocolUpgradePassVotes is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p12),
+			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName:               "negative ProtocolUpgradeMinDeposit is illegal",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p13),
+			expectedError:          ErrIllegalParameter(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.ChangeProposalParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.ChangeProposalParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -321,25 +534,48 @@ func TestChangeAccountParamMsg(t *testing.T) {
 	p4 := p1
 	p4.RegisterFee = types.NewCoinFromInt64(-1)
 
-	p5 := p1
-	p5.RegisterFee = types.NewCoinFromInt64(-1)
-
-	cases := []struct {
+	testCases := []struct {
+		testName              string
 		changeAccountParamMsg ChangeAccountParamMsg
-		expectError           sdk.Error
+		expectedError         sdk.Error
 	}{
-		{NewChangeAccountParamMsg("user1", p1), nil},
-		{NewChangeAccountParamMsg("us", p1), ErrInvalidUsername()},
-		{NewChangeAccountParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
-		{NewChangeAccountParamMsg("user1", p2), nil},
-		{NewChangeAccountParamMsg("user1", p3), nil},
-		{NewChangeAccountParamMsg("user1", p4), ErrIllegalParameter()},
-		{NewChangeAccountParamMsg("user1", p5), ErrIllegalParameter()},
+		{
+			testName:              "normal case",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p1),
+			expectedError:         nil,
+		},
+		{
+			testName:              "too short username is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("us", p1),
+			expectedError:         ErrInvalidUsername(),
+		},
+		{
+			testName:              "too long username is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1user1user1user1user1user1", p1),
+			expectedError:         ErrInvalidUsername(),
+		},
+		{
+			testName:              "zero MinimumBalance is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p2),
+			expectedError:         nil,
+		},
+		{
+			testName:              "zero RegisterFee is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p3),
+			expectedError:         nil,
+		},
+		{
+			testName:              "negative RegisterFee is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p4),
+			expectedError:         ErrIllegalParameter(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.changeAccountParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.changeAccountParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -355,20 +591,43 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 	p3 := p1
 	p3.CapacityUsagePerTransaction = types.NewCoinFromInt64(-1)
 
-	cases := []struct {
+	testCases := []struct {
+		testName                string
 		changeBandwidthParamMsg ChangeBandwidthParamMsg
-		expectError             sdk.Error
+		expectedError           sdk.Error
 	}{
-		{NewChangeBandwidthParamMsg("user1", p1), nil},
-		{NewChangeBandwidthParamMsg("us", p1), ErrInvalidUsername()},
-		{NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1), ErrInvalidUsername()},
-		{NewChangeBandwidthParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeBandwidthParamMsg("user1", p3), ErrIllegalParameter()},
+		{
+			testName:                "normal case",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p1),
+			expectedError:           nil,
+		},
+		{
+			testName:                "too short username is illegal",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("us", p1),
+			expectedError:           ErrInvalidUsername(),
+		},
+		{
+			testName:                "too long username is illegal",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1),
+			expectedError:           ErrInvalidUsername(),
+		},
+		{
+			testName:                "negative SecondsToRecoverBandwidth is illegal",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p2),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative CapacityUsagePerTransaction is illegal",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p3),
+			expectedError:           ErrIllegalParameter(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.changeBandwidthParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.changeBandwidthParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
@@ -388,133 +647,206 @@ func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 	p3 := p1
 	p3.TotalAmountOfConsumptionBase = 0
 
-	cases := []struct {
+	testCases := []struct {
+		testName              string
 		changeAccountParamMsg ChangeEvaluateOfContentValueParamMsg
-		expectError           sdk.Error
+		expectedError         sdk.Error
 	}{
-		{NewChangeEvaluateOfContentValueParamMsg("user1", p1), nil},
-		{NewChangeEvaluateOfContentValueParamMsg("user1", p2), ErrIllegalParameter()},
-		{NewChangeEvaluateOfContentValueParamMsg("user1", p3), ErrIllegalParameter()},
-		{NewChangeEvaluateOfContentValueParamMsg("us", p1), ErrInvalidUsername()},
-		{NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1), ErrInvalidUsername()},
+		{
+			testName:              "normal case",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p1),
+			expectedError:         nil,
+		},
+		{
+			testName:              "zero ConsumptionTimeAdjustBase is illegal",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p2),
+			expectedError:         ErrIllegalParameter(),
+		},
+		{
+			testName:              "zero TotalAmountOfConsumptionBase is illegal",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p3),
+			expectedError:         ErrIllegalParameter(),
+		},
+		{
+			testName:              "too short username is illegal",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("us", p1),
+			expectedError:         ErrInvalidUsername(),
+		},
+		{
+			testName:              "too long username is illegal",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1),
+			expectedError:         ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.changeAccountParamMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.changeAccountParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestDeletePostContentMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName             string
 		deletePostContentMsg DeletePostContentMsg
-		expectError          sdk.Error
+		expectedError        sdk.Error
 	}{
-		{NewDeletePostContentMsg("user1", "permlink", "reason"), nil},
-		{NewDeletePostContentMsg("us", "permlink", "reason"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1user1user1user1user1user1", "permlink", "reason"), ErrInvalidUsername()},
-		{NewDeletePostContentMsg("user1", "", "reason"), ErrInvalidPermlink()},
+		{
+			testName:             "normal case",
+			deletePostContentMsg: NewDeletePostContentMsg("user1", "permlink", "reason"),
+			expectedError:        nil,
+		},
+		{
+			testName:             "too short username is illegal",
+			deletePostContentMsg: NewDeletePostContentMsg("us", "permlink", "reason"),
+			expectedError:        ErrInvalidUsername(),
+		},
+		{
+			testName:             "too long username is illegal",
+			deletePostContentMsg: NewDeletePostContentMsg("user1user1user1user1user1user1", "permlink", "reason"),
+			expectedError:        ErrInvalidUsername(),
+		},
+		{
+			testName:             "empty permlink is illegal",
+			deletePostContentMsg: NewDeletePostContentMsg("user1", "", "reason"),
+			expectedError:        ErrInvalidPermlink(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.deletePostContentMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.deletePostContentMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestUpgradeProtocolMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName           string
 		upgradeProtocolMsg UpgradeProtocolMsg
-		expectError        sdk.Error
+		expectedError      sdk.Error
 	}{
-		{NewUpgradeProtocolMsg("user1", "link"), nil},
-		{NewUpgradeProtocolMsg("us", "link"), ErrInvalidUsername()},
-		{NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link"), ErrInvalidUsername()},
-		{NewUpgradeProtocolMsg("user1", ""), ErrInvalidLink()},
+		{
+			testName:           "normal case",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "link"),
+			expectedError:      nil,
+		},
+		{
+			testName:           "too short username is illegal",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("us", "link"),
+			expectedError:      ErrInvalidUsername(),
+		},
+		{
+			testName:           "too long username is illegal",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link"),
+			expectedError:      ErrInvalidUsername(),
+		},
+		{
+			testName:           "empty link is illegal",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", ""),
+			expectedError:      ErrInvalidLink(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.upgradeProtocolMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.upgradeProtocolMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
+	testCases := []struct {
+		testName         string
 		msg              types.Msg
 		expectPermission types.Permission
 	}{
-		"delete post content msg": {
+		{
+			testName: "delete post content msg",
 			msg: NewDeletePostContentMsg(
 				"creator", "perm_link", "reason"),
 			expectPermission: types.TransactionPermission,
 		},
-		"upgrade protocal msg": {
+		{
+			testName:         "upgrade protocal msg",
 			msg:              NewUpgradeProtocolMsg("creator", "link"),
 			expectPermission: types.TransactionPermission,
 		},
-		"change global allocaiton param msg": {
+		{
+			testName: "change global allocaiton param msg",
 			msg: NewChangeGlobalAllocationParamMsg(
 				"creator", param.GlobalAllocationParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change evaluate of content value param msg": {
+		{
+			testName: "change evaluate of content value param msg",
 			msg: NewChangeEvaluateOfContentValueParamMsg(
 				"creator", param.EvaluateOfContentValueParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change infra internal allocation param msg": {
+		{
+			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
 				"creator", param.InfraInternalAllocationParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change vote param msg": {
+		{
+			testName: "change vote param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
 				"creator", param.InfraInternalAllocationParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change proposal param msg": {
+		{
+			testName: "change proposal param msg",
 			msg: NewChangeProposalParamMsg(
 				"creator", param.ProposalParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change developer param msg": {
+		{
+			testName: "change developer param msg",
 			msg: NewChangeDeveloperParamMsg(
 				"creator", param.DeveloperParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change validator param msg": {
+		{
+			testName: "change validator param msg",
 			msg: NewChangeValidatorParamMsg(
 				"creator", param.ValidatorParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change bandwidth param msg": {
+		{
+			testName: "change bandwidth param msg",
 			msg: NewChangeBandwidthParamMsg(
 				"creator", param.BandwidthParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change account param msg": {
+		{
+			testName: "change account param msg",
 			msg: NewChangeAccountParamMsg(
 				"creator", param.AccountParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"change post param msg": {
+		{
+			testName: "change post param msg",
 			msg: NewChangePostParamMsg(
 				"creator", param.PostParam{}),
 			expectPermission: types.TransactionPermission,
 		},
-		"vote proposal msg": {
+		{
+			testName:         "vote proposal msg",
 			msg:              NewVoteProposalMsg("voter", 1, true),
 			expectPermission: types.TransactionPermission,
 		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
+	for _, tc := range testCases {
+		permission := tc.msg.GetPermission()
+		if tc.expectPermission != permission {
+			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectPermission)
 			return
 		}
 	}
