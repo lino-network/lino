@@ -647,7 +647,8 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0, coin0}
+	reward := model.Reward{
+		coin0, coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
@@ -714,7 +715,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0, coin0}
+	reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
@@ -879,7 +880,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	}
 }
 
-func TestAccountReward(t *testing.T) {
+func TestAddIncomeAndReward(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
 
@@ -887,15 +888,20 @@ func TestAccountReward(t *testing.T) {
 
 	err := am.AddIncomeAndReward(ctx, accKey, c500, c200, c300, "donor1", "postAutho1", "post1")
 	assert.Nil(t, err)
-	reward := model.Reward{c500, c200, c300, c300}
+	reward := model.Reward{c300, c200, c200, c300, c300}
 	checkAccountReward(t, ctx, accKey, reward)
 	checkRewardHistory(t, ctx, accKey, 0, 1)
 	err = am.AddIncomeAndReward(ctx, accKey, c500, c300, c200, "donor2", "postAuthor1", "post1")
 	assert.Nil(t, err)
-	reward = model.Reward{c1000, c500, c500, c500}
+	reward = model.Reward{c500, c500, c500, c500, c500}
 	checkAccountReward(t, ctx, accKey, reward)
 	checkRewardHistory(t, ctx, accKey, 0, 2)
 
+	err = am.AddDirectDeposit(ctx, accKey, c500)
+	assert.Nil(t, err)
+	reward = model.Reward{c1000, c1000, c500, c500, c500}
+	checkAccountReward(t, ctx, accKey, reward)
+	checkRewardHistory(t, ctx, accKey, 0, 2)
 	bank := model.AccountBank{
 		Saving:      accParam.RegisterFee,
 		NumOfTx:     1,
@@ -910,7 +916,7 @@ func TestAccountReward(t *testing.T) {
 	bank.NumOfTx = 2
 	bank.NumOfReward = 0
 	checkBankKVByUsername(t, ctx, accKey, bank)
-	reward = model.Reward{c1000, c500, c500, c0}
+	reward = model.Reward{c1000, c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, accKey, reward)
 }
 

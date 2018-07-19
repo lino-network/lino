@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+	accModel "github.com/lino-network/lino/x/account/model"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	postModel "github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 func TestRewardEvent(t *testing.T) {
 	ctx, am, _, pm, gm, dm := setupTest(t, 1)
 	gs := globalModel.NewGlobalStorage(TestGlobalKVStoreKey)
+	as := accModel.NewAccountStorage(TestAccountKVStoreKey)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1 := createTestAccount(t, ctx, am, "user1")
@@ -30,6 +32,7 @@ func TestRewardEvent(t *testing.T) {
 		initRewardWindow     types.Coin
 		expectPostMeta       postModel.PostMeta
 		expectAppWeight      sdk.Rat
+		expectAuthorReward   accModel.Reward
 	}{
 		{"normal event",
 			RewardEvent{
@@ -49,6 +52,13 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			}, sdk.OneRat(),
+			accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(100),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
+			},
 		},
 		{"100% panelty reward post",
 			RewardEvent{
@@ -68,6 +78,10 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			}, sdk.OneRat(),
+			accModel.Reward{
+				OriginalIncome: types.NewCoinFromInt64(15),
+				FrictionIncome: types.NewCoinFromInt64(15),
+			},
 		},
 		{"50% panelty reward post",
 			RewardEvent{
@@ -87,6 +101,13 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(50),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			}, sdk.OneRat(),
+			accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(50),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(50),
+				UnclaimReward:   types.NewCoinFromInt64(50),
+			},
 		},
 		{"evaluate as 1% of total window",
 			RewardEvent{
@@ -106,6 +127,13 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(1),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			}, sdk.OneRat(),
+			accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(1),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(1),
+				UnclaimReward:   types.NewCoinFromInt64(1),
+			},
 		},
 		{"reward from different app",
 			RewardEvent{
@@ -125,6 +153,13 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			}, sdk.NewRat(100, 251),
+			accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(100),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
+			},
 		},
 	}
 
@@ -138,6 +173,7 @@ func TestRewardEvent(t *testing.T) {
 				TotalUpvoteStake: tc.totalUpvoteOfthePost,
 				TotalReportStake: tc.totalReportOfthePost,
 			})
+		as.SetReward(ctx, user, &accModel.Reward{})
 		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm)
 		assert.Nil(t, err)
 		checkPostMeta(t, ctx, types.GetPermlink(user, postID), tc.expectPostMeta)
@@ -149,5 +185,8 @@ func TestRewardEvent(t *testing.T) {
 					tc.testName, consumptionWeight, tc.expectAppWeight)
 			}
 		}
+		reward, err := as.GetReward(ctx, user)
+		assert.Nil(t, err)
+		assert.Equal(t, tc.expectAuthorReward, *reward)
 	}
 }

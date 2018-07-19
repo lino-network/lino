@@ -429,16 +429,38 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 	return nil
 }
 
-func (accManager AccountManager) AddIncomeAndReward(
-	ctx sdk.Context, username types.AccountKey,
-	originIncome, friction, actualReward types.Coin, consumer, postAuthor types.AccountKey, postID string) sdk.Error {
+// When user received the donation, the donation except friction will be added to
+// total income and original income
+func (accManager AccountManager) AddDirectDeposit(
+	ctx sdk.Context, username types.AccountKey, directDeposit types.Coin) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
 	if err != nil {
 		return err
 	}
-	reward.OriginalIncome = reward.OriginalIncome.Plus(originIncome)
+	reward.TotalIncome = reward.TotalIncome.Plus(directDeposit)
+	reward.OriginalIncome = reward.OriginalIncome.Plus(directDeposit)
+	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// After the evaluate of content value, the original friction will be added to
+// original income and friciton income. The actual inflation will be added to
+// inflation income, total income and unclaim reward
+func (accManager AccountManager) AddIncomeAndReward(
+	ctx sdk.Context, username types.AccountKey,
+	originalDonation, friction, actualReward types.Coin,
+	consumer, postAuthor types.AccountKey, postID string) sdk.Error {
+	reward, err := accManager.storage.GetReward(ctx, username)
+	if err != nil {
+		return err
+	}
+	reward.TotalIncome = reward.TotalIncome.Plus(actualReward)
+	reward.OriginalIncome = reward.OriginalIncome.Plus(friction)
 	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
-	reward.ActualReward = reward.ActualReward.Plus(actualReward)
+	reward.InflationIncome = reward.InflationIncome.Plus(actualReward)
 	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
 		return err
@@ -451,12 +473,12 @@ func (accManager AccountManager) AddIncomeAndReward(
 	}
 
 	rewardDetail := model.RewardDetail{
-		OriginalIncome: originIncome,
-		FrictionIncome: friction,
-		ActualReward:   actualReward,
-		Consumer:       consumer,
-		PostAuthor:     postAuthor,
-		PostID:         postID,
+		OriginalDonation: originalDonation,
+		FrictionDonation: friction,
+		ActualReward:     actualReward,
+		Consumer:         consumer,
+		PostAuthor:       postAuthor,
+		PostID:           postID,
 	}
 	if err := accManager.AddRewardHistory(ctx, username, bank.NumOfReward,
 		rewardDetail); err != nil {

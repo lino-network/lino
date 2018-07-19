@@ -86,19 +86,20 @@ type FollowingMeta struct {
 
 // Reward get from the inflation pool, only 1% of total income
 type Reward struct {
-	OriginalIncome types.Coin `json:"original_income"`
-	FrictionIncome types.Coin `json:"friction_income"`
-	ActualReward   types.Coin `json:"actual_reward"`
-	UnclaimReward  types.Coin `json:"unclaim_reward"`
+	TotalIncome     types.Coin `json:"total_income"`
+	OriginalIncome  types.Coin `json:"original_income"`
+	FrictionIncome  types.Coin `json:"friction_income"`
+	InflationIncome types.Coin `json:"inflation_income"`
+	UnclaimReward   types.Coin `json:"unclaim_reward"`
 }
 
 type RewardDetail struct {
-	OriginalIncome types.Coin       `json:"original_income"`
-	FrictionIncome types.Coin       `json:"friction_income"`
-	ActualReward   types.Coin       `json:"actual_reward"`
-	Consumer       types.AccountKey `json:"consumer"`
-	PostAuthor     types.AccountKey `json:"post_author"`
-	PostID         string           `json:"post_id`
+	OriginalDonation types.Coin       `json:"original_donation"`
+	FrictionDonation types.Coin       `json:"friction_donation"`
+	ActualReward     types.Coin       `json:"actual_reward"`
+	Consumer         types.AccountKey `json:"consumer"`
+	PostAuthor       types.AccountKey `json:"post_author"`
+	PostID           string           `json:"post_id`
 }
 
 type RewardHistory struct {
