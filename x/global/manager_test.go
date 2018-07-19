@@ -11,9 +11,9 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 const (
@@ -39,7 +39,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }
 
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
@@ -343,11 +343,11 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get consumption meta, got err %v", tc.testName, err)
 		}
-		if consumptionMeta.ConsumptionRewardPool != tc.expectCoinInRewardPool {
+		if !consumptionMeta.ConsumptionRewardPool.IsEqual(tc.expectCoinInRewardPool) {
 			t.Errorf("%s: diff consumption reward pool, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionRewardPool, tc.expectCoinInRewardPool)
 		}
-		if consumptionMeta.ConsumptionWindow != tc.expectCoinInWindow {
+		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectCoinInWindow) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectCoinInWindow)
 		}
@@ -765,7 +765,7 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 			t.Errorf("%s: failed to get global allocation param, got err %v", tc.testName, err)
 		}
 
-		expectDeveloperInflation, _ := types.RatToCoin(
+		expectDeveloperInflation := types.RatToCoin(
 			allocation.DeveloperAllocation.Mul(
 				totalLino.ToRat().Mul(tc.expectGrowthRate)))
 		if !expectDeveloperInflation.IsEqual(pool.DeveloperInflationPool) {
@@ -773,7 +773,7 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 				pool.DeveloperInflationPool, expectDeveloperInflation)
 		}
 
-		expectContentCreatorInflation, _ := types.RatToCoin(
+		expectContentCreatorInflation := types.RatToCoin(
 			allocation.ContentCreatorAllocation.Mul(
 				totalLino.ToRat().Mul(tc.expectGrowthRate)))
 		if !expectContentCreatorInflation.IsEqual(pool.ContentCreatorInflationPool) {
@@ -781,7 +781,7 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 				pool.ContentCreatorInflationPool, expectContentCreatorInflation)
 		}
 
-		expectInfraInflation, _ := types.RatToCoin(
+		expectInfraInflation := types.RatToCoin(
 			allocation.InfraAllocation.Mul(
 				totalLino.ToRat().Mul(tc.expectGrowthRate)))
 		if !expectInfraInflation.IsEqual(pool.InfraInflationPool) {
@@ -789,7 +789,7 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 				pool.InfraInflationPool, expectInfraInflation)
 		}
 
-		expectValidatorInflation, _ := types.RatToCoin(
+		expectValidatorInflation := types.RatToCoin(
 			allocation.ValidatorAllocation.Mul(
 				totalLino.ToRat().Mul(tc.expectGrowthRate)))
 		if !expectValidatorInflation.IsEqual(pool.ValidatorInflationPool) {
@@ -823,8 +823,8 @@ func TestGetGrowthRate(t *testing.T) {
 	floor := sdk.NewRat(30, 1000)
 	bigLastYearConsumption, _ := new(big.Int).SetString("77777777777777777777", 10)
 	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
-	bigLastYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigLastYearConsumption)
-	bigThisYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigThisYearConsumption)
+	bigLastYearConsumptionCoin := types.NewCoinFromBigInt(bigLastYearConsumption)
+	bigThisYearConsumptionCoin := types.NewCoinFromBigInt(bigThisYearConsumption)
 
 	testCases := []struct {
 		testName            string
@@ -982,8 +982,7 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i))
 		assert.Nil(t, err)
 		hourlyCoinRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))
-		hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
-		assert.Nil(t, err)
+		hourlyCoin := types.RatToCoin(hourlyCoinRat)
 
 		assert.Equal(t, coin, hourlyCoin)
 	}
@@ -1012,8 +1011,7 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 			hourlyCoinRat :=
 				pool.InfraInflationPool.ToRat().Mul(
 					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
-			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
-			assert.Nil(t, err)
+			hourlyCoin := types.RatToCoin(hourlyCoinRat)
 			assert.Equal(t, coin, hourlyCoin)
 		}
 	}
@@ -1042,7 +1040,7 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 			hourlyCoinRat :=
 				pool.DeveloperInflationPool.ToRat().Mul(
 					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
-			hourlyCoin, err := types.RatToCoin(hourlyCoinRat)
+			hourlyCoin := types.RatToCoin(hourlyCoinRat)
 			assert.Equal(t, coin, hourlyCoin)
 		}
 	}

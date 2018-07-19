@@ -8,12 +8,12 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/tendermint/go-crypto"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
 var (
@@ -74,7 +74,7 @@ func getContext(height int64) sdk.Context {
 
 	return sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()},
-		false, nil, log.NewNopLogger())
+		false, log.NewNopLogger())
 }
 
 func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {

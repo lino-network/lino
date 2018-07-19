@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lino-network/lino/types"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -83,8 +83,8 @@ func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg DeveloperRegisterMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg DeveloperRegisterMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // DeveloperRevokeMsg Msg Implementations
@@ -120,8 +120,8 @@ func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg DeveloperRevokeMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg DeveloperRevokeMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // Grant Msg Implementations
@@ -187,8 +187,8 @@ func (msg GrantPermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg GrantPermissionMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg GrantPermissionMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // Revoke Msg Implementations
@@ -238,6 +238,6 @@ func (msg RevokePermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg RevokePermissionMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg RevokePermissionMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }

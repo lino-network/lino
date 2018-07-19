@@ -90,8 +90,11 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				OriginalIncome: types.NewCoinFromInt64(15),
-				FrictionIncome: types.NewCoinFromInt64(15),
+				TotalIncome:     types.NewCoinFromInt64(0),
+				InflationIncome: types.NewCoinFromInt64(0),
+				UnclaimReward:   types.NewCoinFromInt64(0),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
 			},
 		},
 		{
@@ -198,6 +201,7 @@ func TestRewardEvent(t *testing.T) {
 			&postModel.PostMeta{
 				TotalUpvoteStake: tc.totalUpvoteOfThePost,
 				TotalReportStake: tc.totalReportOfThePost,
+				TotalReward:      types.NewCoinFromInt64(0),
 			})
 
 		as.SetReward(ctx, user, &accModel.Reward{})

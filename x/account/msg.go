@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/lino-network/lino/types"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -103,8 +103,8 @@ func (msg FollowMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg FollowMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Follower)}
+func (msg FollowMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
 // Unfollow Msg Implementations
@@ -144,8 +144,8 @@ func (msg UnfollowMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg UnfollowMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Follower)}
+func (msg UnfollowMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
 // Claim Msg Implementations
@@ -181,8 +181,8 @@ func (msg ClaimMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ClaimMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ClaimMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // Transfer Msg Implementations
@@ -232,8 +232,8 @@ func (msg TransferMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg TransferMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Sender)}
+func (msg TransferMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Sender)}
 }
 
 // Recover Msg Implementations
@@ -277,8 +277,8 @@ func (msg RecoverMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg RecoverMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // NewRegisterMsg - construct register msg.
@@ -343,8 +343,8 @@ func (msg RegisterMsg) GetPermission() types.Permission {
 }
 
 // Implements Msg.
-func (msg RegisterMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Referrer)}
+func (msg RegisterMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Referrer)}
 }
 
 // NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
@@ -391,6 +391,6 @@ func (msg UpdateAccountMsg) GetSignBytes() []byte {
 }
 
 // Implements Msg.
-func (msg UpdateAccountMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg UpdateAccountMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }

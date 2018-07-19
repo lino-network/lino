@@ -55,7 +55,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return ErrInvalidPostRedistributionSplitRate().Result()
 	}
@@ -155,10 +155,7 @@ func handleDonateMsg(
 		if err != nil {
 			return err.Result()
 		}
-		sourceIncome, err := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
-		if err != nil {
-			return err.Result()
-		}
+		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
@@ -187,10 +184,7 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	frictionCoin, err := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
-	if err != nil {
-		return err
-	}
+	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
 	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
 	if err != nil {
@@ -289,7 +283,7 @@ func handleUpdatePostMsg(
 		return ErrUpdatePostIsDeleted(permlink).Result()
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return err.Result()
 	}

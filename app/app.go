@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 
 	"github.com/lino-network/lino/param"
@@ -19,15 +20,15 @@ import (
 	vote "github.com/lino-network/lino/x/vote"
 
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/libs/log"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cauth "github.com/cosmos/cosmos-sdk/x/auth"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
-	dbm "github.com/tendermint/tmlibs/db"
 )
 
 const (
@@ -76,11 +77,14 @@ type LinoBlockchain struct {
 	pastMinutes    int64
 }
 
-func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
+func NewLinoBlockchain(
+	logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *LinoBlockchain {
 	// create your application object
-	var cdc = MakeCodec()
+	cdc := MakeCodec()
+	bApp := bam.NewBaseApp(appName, cdc, logger, db, baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
-		BaseApp:              bam.NewBaseApp(appName, cdc, logger, db),
+		BaseApp:              bApp,
 		cdc:                  cdc,
 		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
@@ -448,10 +452,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
 		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
-		coinPerValidator, err := types.RatToCoin(ratPerValidator)
-		if err != nil {
-			panic(err)
-		}
+		coinPerValidator := types.RatToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
@@ -477,7 +478,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin, err := types.RatToCoin(myShareRat)
+		myShareCoin := types.RatToCoin(myShareRat)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
 	}
@@ -507,7 +508,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin, _ := types.RatToCoin(myShareRat)
+		myShareCoin := types.RatToCoin(myShareRat)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
 	}

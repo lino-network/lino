@@ -9,7 +9,7 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post"
 
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 // test donate to a normal post

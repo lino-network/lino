@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cznic/mathutil"
 )
 
 type LNO = string
@@ -20,26 +19,22 @@ var (
 // Coin holds some amount of one currency
 type Coin struct {
 	// Amount *big.Int `json:"amount"`
-	Amount mathutil.Int128 `json:"amount"`
+	Amount sdk.Int `json:"amount"`
 }
 
 func NewCoinFromInt64(amount int64) Coin {
 	// return Coin{big.NewInt(amount)}
-	return Coin{new(mathutil.Int128).SetInt64(amount)}
+	return Coin{sdk.NewInt(amount)}
 }
 
-func NewCoinFromBigInt(amount *big.Int) (Coin, sdk.Error) {
-	// return Coin{big.NewInt(amount)}
-	r, err := new(mathutil.Int128).SetBigInt(amount)
-	if err != nil {
-		return NewCoinFromInt64(0), ErrInvalidCoins("Invalid rat")
-	}
-	return NewCoin(r), nil
+func NewCoinFromBigInt(amount *big.Int) Coin {
+	sdkInt := sdk.NewIntFromBigInt(amount)
+	return Coin{sdkInt}
 }
 
-func NewCoin(amount mathutil.Int128) Coin {
-	// return Coin{big.NewInt(amount)}
-	return Coin{amount}
+func NewCoinFromString(amount string) (Coin, bool) {
+	res, ok := sdk.NewIntFromString(amount)
+	return Coin{res}, ok
 }
 
 func LinoToCoin(lino LNO) (Coin, sdk.Error) {
@@ -53,7 +48,7 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if num.Cmp(LowerBoundRat) < 0 {
 		return NewCoinFromInt64(0), ErrInvalidCoins("LNO can't be less than lower bound")
 	}
-	return RatToCoin(sdk.Rat{*new(big.Rat).Mul(num, big.NewRat(Decimals, 1))})
+	return RatToCoin(sdk.Rat{new(big.Rat).Mul(num, big.NewRat(Decimals, 1))}), nil
 }
 
 var (
@@ -65,7 +60,7 @@ var (
 	ten   = big.NewInt(10)
 )
 
-func RatToCoin(rat sdk.Rat) (Coin, sdk.Error) {
+func RatToCoin(rat sdk.Rat) Coin {
 	//return Coin{rat.EvaluateBig()}
 
 	// num := rat.Num()
@@ -96,7 +91,7 @@ func RatToCoin(rat sdk.Rat) (Coin, sdk.Error) {
 }
 
 func (coin Coin) ToRat() sdk.Rat {
-	return sdk.Rat{*new(big.Rat).SetInt(coin.Amount.BigInt())}
+	return sdk.Rat{new(big.Rat).SetInt(coin.Amount.BigInt())}
 }
 
 func (coin Coin) ToInt64() int64 {
@@ -115,18 +110,18 @@ func (coin Coin) IsZero() bool {
 
 // IsGT returns true if the receiver is greater value
 func (coin Coin) IsGT(other Coin) bool {
-	return coin.Amount.Cmp(other.Amount) > 0
+	return coin.Amount.GT(other.Amount)
 }
 
 // IsGTE returns true if they are the same type and the receiver is
 // an equal or greater value
 func (coin Coin) IsGTE(other Coin) bool {
-	return coin.Amount.Cmp(other.Amount) >= 0
+	return coin.Amount.GT(other.Amount) || coin.Amount.Equal(other.Amount)
 }
 
 // IsEqual returns true if the two sets of Coins have the same value
 func (coin Coin) IsEqual(other Coin) bool {
-	return coin.Amount.Cmp(other.Amount) == 0
+	return coin.Amount.Equal(other.Amount)
 }
 
 // IsPositive returns true if coin amount is positive
@@ -141,24 +136,14 @@ func (coin Coin) IsNotNegative() bool {
 
 // Adds amounts of two coins with same denom
 func (coin Coin) Plus(coinB Coin) Coin {
-	r, cy := coin.Amount.Add(coinB.Amount)
-	if cy {
-		panic("overflow")
-	}
-	return NewCoin(r)
+	r := coin.Amount.Add(coinB.Amount)
+	return Coin{r}
 }
 
 // Subtracts amounts of two coins with same denom
 func (coin Coin) Minus(coinB Coin) Coin {
-	negNum, success := coinB.Amount.Neg()
-	if !success {
-		panic("overflow")
-	}
-	r, cy := coin.Amount.Add(negNum)
-	if cy {
-		panic("overflow")
-	}
-	return NewCoin(r)
+	sdkInt := coin.Amount.Sub(coinB.Amount)
+	return Coin{sdkInt}
 }
 
 // TODO(Lino) wait until https://github.com/cosmos/cosmos-sdk/issues/785 pass

@@ -10,6 +10,8 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	"github.com/cosmos/cosmos-sdk/wire"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // VoteProposalTxCmd will create a voteProposal tx and sign it with the given key
@@ -36,7 +38,7 @@ func sendVoteProposalTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := proposal.NewVoteProposalMsg(voter, id, result)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

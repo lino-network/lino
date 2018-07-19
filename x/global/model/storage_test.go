@@ -8,9 +8,9 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -25,7 +25,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }
 
 func InitGlobalStorage(
@@ -73,15 +73,15 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
-	infraInflationPool, _ := types.RatToCoin(globalMeta.GrowthRate.Mul(
+	infraInflationPool := types.RatToCoin(globalMeta.GrowthRate.Mul(
 		globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.InfraAllocation)))
-	contentCreatorInflationPool, _ := types.RatToCoin(
+	contentCreatorInflationPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ContentCreatorAllocation)))
-	developerInflaionPool, _ := types.RatToCoin(
+	developerInflaionPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.DeveloperAllocation)))
-	validatorInflaionPool, _ := types.RatToCoin(
+	validatorInflaionPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ValidatorAllocation)))
 	inflationPool := InflationPool{

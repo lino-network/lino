@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -13,6 +13,7 @@ type CoreContext struct {
 	NodeURI         string
 	FromAddressName string
 	Sequence        int64
+	Memo            string
 	Client          rpcclient.Client
 	PrivKey         crypto.PrivKey
 }

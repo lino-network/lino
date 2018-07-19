@@ -1,15 +1,16 @@
 package model
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -21,7 +22,7 @@ func setup(t *testing.T) (sdk.Context, VoteStorage) {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	ctx := sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	vs := NewVoteStorage(TestKVStoreKey)
 	return ctx, vs
 }
@@ -215,7 +216,7 @@ func TestVote(t *testing.T) {
 			if err != nil {
 				t.Errorf("%s: failed to get vote, got non-empty err: %v", tc.testName, err)
 			}
-			if *votePtr != vote {
+			if !reflect.DeepEqual(*votePtr, vote) {
 				t.Errorf("%s: diff vote, got %v, want %v", tc.testName, *votePtr, vote)
 			}
 		}

@@ -56,6 +56,6 @@ func (msg ProviderReportMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ProviderReportMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ProviderReportMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	post "github.com/lino-network/lino/x/post"
 )
 
@@ -33,7 +34,7 @@ func sendDeletePostTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := post.NewDeletePostMsg(author, postID)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

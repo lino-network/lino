@@ -11,7 +11,7 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 func TestForceValidatorVote(t *testing.T) {

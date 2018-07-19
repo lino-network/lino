@@ -20,10 +20,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	abci "github.com/tendermint/tendermint/abci/types"
+	crypto "github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 // construct some global keys and addrs.
@@ -57,7 +57,7 @@ func loggerAndDB() (log.Logger, dbm.DB) {
 
 func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchain {
 	logger, db := loggerAndDB()
-	lb := app.NewLinoBlockchain(logger, db)
+	lb := app.NewLinoBlockchain(logger, db, nil)
 
 	genesisState := app.GenesisState{
 		Accounts: []app.GenesisAccount{},
@@ -219,12 +219,13 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 }
 
 func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeyEd25519) auth.StdTx {
+	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),
-		Signature: priv.Sign(auth.StdSignBytes("Lino", []int64{}, []int64{seq}, auth.StdFee{}, msg)),
+		Signature: bz,
 		Sequence:  seq}}
 	// fmt.Println("===========", string(auth.StdSignBytes("Lino", []int64{}, []int64{seq}, auth.StdFee{}, msg)))
-	return auth.NewStdTx(msg, auth.StdFee{}, sigs)
+	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 
 func CreateTestPost(

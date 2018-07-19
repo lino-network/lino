@@ -42,7 +42,7 @@ func sendFollowTx(cdc *wire.Codec) client.CommandTxCallback {
 		}
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

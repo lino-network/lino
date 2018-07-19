@@ -211,7 +211,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return err
 	}
@@ -392,26 +392,26 @@ func getSignBytes(msg sdk.Msg) []byte {
 }
 
 // GetSigners implements sdk.Msg.
-func (msg CreatePostMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Author)}
+func (msg CreatePostMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
-func (msg UpdatePostMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Author)}
+func (msg UpdatePostMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
-func (msg DeletePostMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Author)}
+func (msg DeletePostMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
-func (msg LikeMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg LikeMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
-func (msg DonateMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg DonateMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
-func (msg ReportOrUpvoteMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ReportOrUpvoteMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
-func (msg ViewMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ViewMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // String implements Stringer

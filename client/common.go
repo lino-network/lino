@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/client/core"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )

@@ -8,10 +8,10 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 

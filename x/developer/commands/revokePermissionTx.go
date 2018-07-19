@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	dev "github.com/lino-network/lino/x/developer"
 )
 
@@ -57,7 +58,7 @@ func sendRevokePermissionTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := dev.NewRevokePermissionMsg(username, pubKey, permission)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 		if signErr != nil {
 			return signErr
 		}

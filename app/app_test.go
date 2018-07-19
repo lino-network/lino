@@ -10,13 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
+	abci "github.com/tendermint/tendermint/abci/types"
+	crypto "github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tmlibs/db"
 
 	globalModel "github.com/lino-network/lino/x/global/model"
 )
@@ -43,7 +43,7 @@ func loggerAndDB() (logger log.Logger, db dbm.DB) {
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	logger, db := loggerAndDB()
-	lb := NewLinoBlockchain(logger, db)
+	lb := NewLinoBlockchain(logger, db, nil)
 
 	genesisState := GenesisState{
 		Accounts: []GenesisAccount{},
@@ -88,7 +88,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 
 func TestGenesisAcc(t *testing.T) {
 	logger, db := loggerAndDB()
-	lb := NewLinoBlockchain(logger, db)
+	lb := NewLinoBlockchain(logger, db, nil)
 
 	accs := []struct {
 		genesisAccountName string
@@ -145,29 +145,13 @@ func TestGenesisAcc(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expectBalance, saving)
 	}
-
-	// reload app and ensure the account is still there
-	lb = NewLinoBlockchain(logger, db)
-	ctx = lb.BaseApp.NewContext(true, abci.Header{})
-	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(acc.numOfLino)
-		assert.Nil(t, err)
-		if acc.isValidator {
-			expectBalance = expectBalance.Minus(
-				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
-		}
-		saving, err :=
-			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
-		assert.Nil(t, err)
-		assert.Equal(t, expectBalance, saving)
-	}
 }
 
 func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
-	remainValidatorPool, _ := types.RatToCoin(
+	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
 			growthRate.Mul(validatorAllocation)))
 	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
@@ -190,14 +174,14 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			testPastMinutes += 1
 			if testPastMinutes%60 == 0 {
 				// hourly inflation
-				inflationForValidator, _ :=
+				inflationForValidator :=
 					types.RatToCoin(remainValidatorPool.ToRat().Mul(
 						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
 				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
 				// expectBalance for all validators
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
-					inflation, _ := types.RatToCoin(
+					inflation := types.RatToCoin(
 						inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
 					expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 					saving, err :=
@@ -286,7 +270,7 @@ func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
 			t.Errorf("%s: failed to get consumption meta, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 
@@ -351,7 +335,7 @@ func TestDistributeInflationToValidator(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 
@@ -411,7 +395,7 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
@@ -470,7 +454,7 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).

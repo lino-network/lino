@@ -11,8 +11,9 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/x/account"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // RecoverCommand will create a send tx and sign it with the given key
@@ -45,7 +46,7 @@ func sendRecoverTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := acc.NewRecoverMsg(name, masterPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 		if err != nil {
 			return err
 		}
