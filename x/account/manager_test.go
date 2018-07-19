@@ -513,7 +513,7 @@ func TestMinusCoin(t *testing.T) {
 					}},
 			},
 			expectBalanceHistory: model.BalanceHistory{
-				[]model.Detail{
+				Details: []model.Detail{
 					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
@@ -552,7 +552,7 @@ func TestMinusCoin(t *testing.T) {
 					}},
 			},
 			expectBalanceHistory: model.BalanceHistory{
-				[]model.Detail{
+				Details: []model.Detail{
 					{
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
@@ -789,6 +789,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+		TransactionCapacity:  accParam.RegisterFee,
 	}
 	checkAccountMeta(t, ctx, "TestCreateAccountNormalCase", accKey, accMeta)
 
@@ -876,6 +877,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+		TransactionCapacity:  accParam.RegisterFee,
 	}
 	checkAccountMeta(t, ctx, testName, accKey, accMeta)
 
