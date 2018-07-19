@@ -6,9 +6,14 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+)
+
+const (
+	maxMemoCharacters = 100
 )
 
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
@@ -26,19 +31,20 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				ErrNoSignatures().Result(),
 				true
 		}
-		sdkMsg := tx.GetMsg()
-		msg, ok := sdkMsg.(types.Msg)
-		if !ok {
-			return ctx, ErrUnknownMsgType().Result(), true
-		}
 
-		// Assert that number of signatures is correct.
-		var signers = msg.GetSigners()
-		if len(sigs) != len(signers) {
+		memo := stdTx.GetMemo()
+		if len(memo) > maxMemoCharacters {
 			return ctx,
-				ErrWrongNumberOfSigners().Result(),
+				sdk.ErrMemoTooLarge(
+					fmt.Sprintf("maximum number of characters is %d but received %d characters",
+						maxMemoCharacters, len(memo))).Result(),
 				true
 		}
+
+		// msg, ok := sdkMsgs.(types.Msg)
+		// if !ok {
+		// 	return ctx, ErrUnknownMsgType().Result(), true
+		// }
 
 		sequences := make([]int64, len(sigs))
 		for i := 0; i < len(sigs); i++ {
@@ -48,41 +54,61 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 		// 	accNums[i] = sigs[i].AccountNumber
 		// }
 		fee := stdTx.Fee
-		signBytes := auth.StdSignBytes(ctx.ChainID(), []int64{}, sequences, fee, msg)
 		// fmt.Println("=========== auth", string(signBytes))
 
-		permission := msg.GetPermission()
+		sdkMsgs := tx.GetMsgs()
 
+		var signers []sdk.AccAddress
+		for _, msg := range sdkMsgs {
+			for _, signer := range msg.GetSigners() {
+				signers = append(signers, signer)
+			}
+		}
+		if len(signers) != len(sigs) {
+			return ctx,
+				ErrWrongNumberOfSigners().Result(),
+				true
+		}
 		// signers get from msg should be verify first
-		for i, signer := range signers {
-			_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(signer), sigs[i].PubKey, permission)
-			if err != nil {
-				return ctx, err.Result(), true
+		var idx = 0
+		for _, msg := range sdkMsgs {
+			msg, ok := msg.(types.Msg)
+			if !ok {
+				return ctx, ErrUnknownMsgType().Result(), true
 			}
+			permission := msg.GetPermission()
+			msgSigners := msg.GetSigners()
+			for _, msgSigner := range msgSigners {
+				_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission)
+				if err != nil {
+					return ctx, err.Result(), true
+				}
+				seq, err := am.GetSequence(ctx, types.AccountKey(msgSigner))
+				if err != nil {
+					return ctx, err.Result(), true
+				}
+				if seq != sigs[idx].Sequence {
+					return ctx, ErrInvalidSequence(
+						fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
+							types.AccountKey(msgSigner), sigs[idx].Sequence, seq)).Result(), true
+				}
+				if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(msgSigner)); err != nil {
+					return ctx, err.Result(), true
+				}
 
-			seq, err := am.GetSequence(ctx, types.AccountKey(signer))
-			if err != nil {
-				return ctx, err.Result(), true
-			}
-			if seq != sigs[i].Sequence {
-				return ctx, ErrInvalidSequence(
-					fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",
-						types.AccountKey(signer), sigs[i].Sequence, seq)).Result(), true
-			}
-			if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(signer)); err != nil {
-				return ctx, err.Result(), true
-			}
-
-			if !sigs[i].PubKey.VerifyBytes(signBytes, sigs[i].Signature) {
-				return ctx, ErrUnverifiedBytes(
-					fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
-			}
-			tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-			if err != nil {
-				return ctx, err.Result(), true
-			}
-			if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(signer), tpsCapacityRatio); err != nil {
-				return ctx, err.Result(), true
+				tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+				if err != nil {
+					return ctx, err.Result(), true
+				}
+				if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
+					return ctx, err.Result(), true
+				}
+				signBytes := auth.StdSignBytes(ctx.ChainID(), 0, sequences[idx], fee, sdkMsgs, stdTx.GetMemo())
+				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
+					return ctx, ErrUnverifiedBytes(
+						fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
+				}
+				idx++
 			}
 		}
 

@@ -10,13 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
+	abci "github.com/tendermint/tendermint/abci/types"
+	crypto "github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tmlibs/db"
 
 	globalModel "github.com/lino-network/lino/x/global/model"
 )
@@ -43,7 +43,7 @@ func loggerAndDB() (logger log.Logger, db dbm.DB) {
 
 func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	logger, db := loggerAndDB()
-	lb := NewLinoBlockchain(logger, db)
+	lb := NewLinoBlockchain(logger, db, nil)
 
 	genesisState := GenesisState{
 		Accounts: []GenesisAccount{},
@@ -88,7 +88,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 
 func TestGenesisAcc(t *testing.T) {
 	logger, db := loggerAndDB()
-	lb := NewLinoBlockchain(logger, db)
+	lb := NewLinoBlockchain(logger, db, nil)
 
 	accs := []struct {
 		genesisAccountName string
@@ -133,22 +133,6 @@ func TestGenesisAcc(t *testing.T) {
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
-	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(acc.numOfLino)
-		assert.Nil(t, err)
-		if acc.isValidator {
-			expectBalance = expectBalance.Minus(
-				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
-		}
-		saving, err :=
-			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
-		assert.Nil(t, err)
-		assert.Equal(t, expectBalance, saving)
-	}
-
-	// reload app and ensure the account is still there
-	lb = NewLinoBlockchain(logger, db)
-	ctx = lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
 		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)

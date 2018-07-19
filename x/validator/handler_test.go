@@ -7,7 +7,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -546,7 +546,7 @@ func TestAddFrozenMoney(t *testing.T) {
 		if len(lst) != tc.expectedFrozenListLen {
 			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
 		}
-		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+		if !lst[len(lst)-1].Amount.IsEqual(tc.expectedFrozenMoney) {
 			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
 		}
 		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {

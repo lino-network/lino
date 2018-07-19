@@ -2,16 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/lino-network/lino/app"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tmlibs/cli"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
 
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tmlibs/db"
 )
 
 // // defaultOptions sets up the app_options for the
@@ -36,8 +39,8 @@ import (
 // }
 
 // generate Lino application
-func newApp(logger log.Logger, db dbm.DB) abci.Application {
-	return app.NewLinoBlockchain(logger, db)
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+	return app.NewLinoBlockchain(logger, db, traceStore, baseapp.SetPruning(viper.GetString("pruning")))
 }
 
 func main() {
@@ -59,7 +62,7 @@ func main() {
 }
 
 func exportAppStateAndTMValidators(
-	logger log.Logger, db dbm.DB) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	lb := app.NewLinoBlockchain(logger, db)
+	logger log.Logger, db dbm.DB, traceStore io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+	lb := app.NewLinoBlockchain(logger, db, traceStore)
 	return lb.ExportAppStateAndValidators()
 }

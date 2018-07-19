@@ -116,7 +116,7 @@ func TestAddFrozenMoney(t *testing.T) {
 		if len(lst) != tc.expectedFrozenListLen {
 			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
 		}
-		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+		if !lst[len(lst)-1].Amount.IsEqual(tc.expectedFrozenMoney) {
 			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
 		}
 		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {

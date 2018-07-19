@@ -3,7 +3,7 @@ package model
 import (
 	"github.com/lino-network/lino/types"
 
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

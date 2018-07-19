@@ -118,6 +118,9 @@ const (
 	// all decimals will around to allow at most 3 decimals
 	PrecisionFactor = 1000
 
+	// precision used in sdk NewRatFromDecimal
+	NewRatFromDecimalPrecision = 5
+
 	// Maximum length of sdk.Rat can pass into blockchain
 	MaximumSdkRatLength = 10
 

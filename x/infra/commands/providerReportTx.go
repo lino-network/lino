@@ -10,6 +10,7 @@ import (
 	"github.com/lino-network/lino/client"
 	infra "github.com/lino-network/lino/x/infra"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -38,7 +39,7 @@ func sendProviderReportTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := infra.NewProviderReportMsg(username, usage)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 		if signErr != nil {
 			return signErr
 		}

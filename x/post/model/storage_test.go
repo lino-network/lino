@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -45,6 +45,9 @@ func TestPostMeta(t *testing.T) {
 	postMeta := PostMeta{
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat(),
+		TotalUpvoteStake:        types.NewCoinFromInt64(0),
+		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalReward:             types.NewCoinFromInt64(0),
 	}
 
 	runTest(t, func(env TestEnv) {
@@ -101,7 +104,7 @@ func TestPostView(t *testing.T) {
 
 func TestPostDonate(t *testing.T) {
 	user := types.AccountKey("test")
-	postDonations := Donations{Username: user, DonationList: []Donation{Donation{CreatedAt: 100}}}
+	postDonations := Donations{Username: user, DonationList: []Donation{Donation{CreatedAt: 100, Amount: types.NewCoinFromInt64(0)}}}
 
 	runTest(t, func(env TestEnv) {
 		err := env.ps.SetPostDonations(env.ctx, types.Permlink("test"), &postDonations)
@@ -136,5 +139,5 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }

@@ -10,9 +10,9 @@ import (
 	"github.com/pkg/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	cmn "github.com/tendermint/tmlibs/common"
 )
 
 // Broadcast the transaction bytes to Tendermint
@@ -79,7 +79,7 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 }
 
 // Get the from address from the name flag
-func (ctx CoreContext) GetFromAddress() (from sdk.Address, err error) {
+func (ctx CoreContext) GetFromAddress() (from sdk.AccAddress, err error) {
 	keybase, err := keys.GetKeyBase()
 	if err != nil {
 		return nil, err
@@ -95,22 +95,23 @@ func (ctx CoreContext) GetFromAddress() (from sdk.Address, err error) {
 		return nil, errors.Errorf("No key for: %s", name)
 	}
 
-	return info.PubKey.Address(), nil
+	return sdk.AccAddress(info.GetPubKey().Address()), nil
 }
 
 // sign and build the transaction from the msg
-func (ctx CoreContext) SignAndBuild(msg sdk.Msg, cdc *wire.Codec) ([]byte, error) {
+func (ctx CoreContext) SignAndBuild(msgs []sdk.Msg, cdc *wire.Codec) ([]byte, error) {
 	// build the Sign Messsage from the Standard Message
 	chainID := ctx.ChainID
 	if chainID == "" {
 		return nil, errors.Errorf("Chain ID required but not specified")
 	}
 	sequence := ctx.Sequence
+	memo := ctx.Memo
 	signMsg := auth.StdSignMsg{
-		ChainID:        chainID,
-		AccountNumbers: []int64{},
-		Sequences:      []int64{sequence},
-		Msg:            msg,
+		ChainID:       chainID,
+		AccountNumber: 0,
+		Sequence:      sequence,
+		Msgs:          msgs,
 	}
 
 	// sign and build
@@ -118,7 +119,10 @@ func (ctx CoreContext) SignAndBuild(msg sdk.Msg, cdc *wire.Codec) ([]byte, error
 	if ctx.PrivKey == nil {
 		return nil, errors.New("Must provide private key")
 	}
-	sig := ctx.PrivKey.Sign(bz)
+	sig, err := ctx.PrivKey.Sign(bz)
+	if err != nil {
+		return nil, err
+	}
 	sigs := []auth.StdSignature{{
 		PubKey:    ctx.PrivKey.PubKey(),
 		Signature: sig,
@@ -126,14 +130,14 @@ func (ctx CoreContext) SignAndBuild(msg sdk.Msg, cdc *wire.Codec) ([]byte, error
 	}}
 
 	// marshal bytes
-	tx := auth.NewStdTx(signMsg.Msg, signMsg.Fee, sigs)
+	tx := auth.NewStdTx(signMsg.Msgs, signMsg.Fee, sigs, memo)
 	return cdc.MarshalJSON(tx)
 }
 
 // sign and build the transaction from the msg
 func (ctx CoreContext) SignBuildBroadcast(
-	msg sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
-	txBytes, err := ctx.SignAndBuild(msg, cdc)
+	msgs []sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
+	txBytes, err := ctx.SignAndBuild(msgs, cdc)
 	if err != nil {
 		return nil, err
 	}

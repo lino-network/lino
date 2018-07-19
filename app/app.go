@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 
 	"github.com/lino-network/lino/param"
@@ -19,15 +20,15 @@ import (
 	vote "github.com/lino-network/lino/x/vote"
 
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/libs/log"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cauth "github.com/cosmos/cosmos-sdk/x/auth"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
-	dbm "github.com/tendermint/tmlibs/db"
 )
 
 const (
@@ -76,11 +77,14 @@ type LinoBlockchain struct {
 	pastMinutes    int64
 }
 
-func NewLinoBlockchain(logger log.Logger, db dbm.DB) *LinoBlockchain {
+func NewLinoBlockchain(
+	logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *LinoBlockchain {
 	// create your application object
-	var cdc = MakeCodec()
+	cdc := MakeCodec()
+	bApp := bam.NewBaseApp(appName, cdc, logger, db, baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
-		BaseApp:              bam.NewBaseApp(appName, cdc, logger, db),
+		BaseApp:              bApp,
 		cdc:                  cdc,
 		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
 		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),

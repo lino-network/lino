@@ -88,8 +88,8 @@ func (msg VoterDepositMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg VoterDepositMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg VoterDepositMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 //----------------------------------------
@@ -131,8 +131,8 @@ func (msg VoterWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg VoterWithdrawMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg VoterWithdrawMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 //----------------------------------------
@@ -170,8 +170,8 @@ func (msg VoterRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg VoterRevokeMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg VoterRevokeMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 //----------------------------------------
@@ -218,8 +218,8 @@ func (msg DelegateMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg DelegateMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Delegator)}
+func (msg DelegateMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
 //----------------------------------------
@@ -261,8 +261,8 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg RevokeDelegationMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Delegator)}
+func (msg RevokeDelegationMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
 //----------------------------------------
@@ -307,6 +307,6 @@ func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg DelegatorWithdrawMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Delegator)}
+func (msg DelegatorWithdrawMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }

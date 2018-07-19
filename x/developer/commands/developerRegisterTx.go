@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	developer "github.com/lino-network/lino/x/developer"
 )
 
@@ -32,7 +33,7 @@ func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 			username, types.LNO(viper.GetString(client.FlagDeposit)), "", "", "")
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 		if signErr != nil {
 			return signErr
 		}

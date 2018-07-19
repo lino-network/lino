@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
+	abci "github.com/tendermint/tendermint/abci/types"
+	crypto "github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 )
 
 var (
@@ -23,7 +23,7 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
-	ctx := sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	vs := NewValidatorStorage(TestKVStoreKey)
 	err := vs.InitGenesis(ctx)
 	assert.Nil(t, err)

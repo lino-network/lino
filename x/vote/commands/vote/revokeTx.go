@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/x/vote"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -32,7 +33,7 @@ func sendRevokeVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := vote.NewVoterRevokeMsg(user)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if signErr != nil {
 			return signErr

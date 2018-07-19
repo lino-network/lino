@@ -9,7 +9,7 @@ import (
 
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 // test validator deposit

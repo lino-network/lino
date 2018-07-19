@@ -148,6 +148,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	if !vm.DoesDelegationExist(ctx, voterName, delegatorName) {
 		delegation = &model.Delegation{
 			Delegator: delegatorName,
+			Amount:    types.NewCoinFromInt64(0),
 		}
 	} else {
 		delegation, err = vm.storage.GetDelegation(ctx, voterName, delegatorName)
@@ -160,7 +161,6 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	if err != nil {
 		return err
 	}
-
 	voter.DelegatedPower = voter.DelegatedPower.Plus(coin)
 	delegation.Amount = delegation.Amount.Plus(coin)
 

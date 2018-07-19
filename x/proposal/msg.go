@@ -165,8 +165,8 @@ func (msg DeletePostContentMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg DeletePostContentMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg DeletePostContentMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -211,8 +211,8 @@ func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg UpgradeProtocolMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg UpgradeProtocolMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -261,8 +261,8 @@ func (msg ChangeGlobalAllocationParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -308,8 +308,8 @@ func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeEvaluateOfContentValueParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeEvaluateOfContentValueParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -356,8 +356,8 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeInfraInternalAllocationParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeInfraInternalAllocationParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -411,8 +411,8 @@ func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeVoteParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeVoteParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -478,8 +478,8 @@ func (msg ChangeProposalParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeProposalParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeProposalParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -530,8 +530,8 @@ func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeDeveloperParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeDeveloperParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -589,8 +589,8 @@ func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeValidatorParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeValidatorParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -636,8 +636,8 @@ func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeAccountParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeAccountParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -682,8 +682,8 @@ func (msg ChangePostParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangePostParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangePostParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -732,8 +732,8 @@ func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Creator)}
+func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
 //----------------------------------------
@@ -773,6 +773,6 @@ func (msg VoteProposalMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg VoteProposalMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Voter)}
+func (msg VoteProposalMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Voter)}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/x/validator"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -33,7 +34,7 @@ func sendRevokeTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := validator.NewValidatorRevokeMsg(name)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

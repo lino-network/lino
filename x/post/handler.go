@@ -55,7 +55,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return ErrInvalidPostRedistributionSplitRate().Result()
 	}
@@ -289,7 +289,7 @@ func handleUpdatePostMsg(
 		return ErrUpdatePostIsDeleted(permlink).Result()
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate)
+	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 	if err != nil {
 		return err.Result()
 	}

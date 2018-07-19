@@ -12,12 +12,12 @@ import (
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
 // Construct some global addrs and txs for tests.
@@ -69,7 +69,7 @@ func getContext(height int64) sdk.Context {
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, nil, log.NewNopLogger())
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now().Unix()}, false, log.NewNopLogger())
 }
 
 func checkPostKVStore(
@@ -104,7 +104,7 @@ func createTestPost(
 	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 
-	splitRate, err := sdk.NewRatFromDecimal(redistributionRate)
+	splitRate, err := sdk.NewRatFromDecimal(redistributionRate, types.NewRatFromDecimalPrecision)
 	assert.Nil(t, err)
 	err = pm.CreatePost(
 		ctx, types.AccountKey(user), postID, "", "", "", "",

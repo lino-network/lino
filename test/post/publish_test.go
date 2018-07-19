@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 	post "github.com/lino-network/lino/x/post"
 
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 // test publish a normal post

@@ -14,8 +14,9 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -54,7 +55,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 			masterPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err
@@ -82,5 +83,5 @@ func GetPubKey() (pubKey crypto.PubKey, err error) {
 		return nil, errors.Errorf("No key for: %s", name)
 	}
 
-	return info.PubKey, nil
+	return info.GetPubKey(), nil
 }

@@ -2,7 +2,7 @@ package model
 
 import (
 	types "github.com/lino-network/lino/types"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // Validator is basic structure records all validator information

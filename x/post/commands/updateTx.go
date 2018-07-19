@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	post "github.com/lino-network/lino/x/post"
 )
 
@@ -38,7 +39,7 @@ func sendUpdatePostTx(cdc *wire.Codec) client.CommandTxCallback {
 			[]types.IDToURLMapping(nil), viper.GetString(client.FlagRedistributionSplitRate))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

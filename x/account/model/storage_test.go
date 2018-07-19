@@ -7,12 +7,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
-	"github.com/tendermint/tmlibs/log"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
 var (
@@ -25,7 +25,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, nil, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }
 
 func TestAccountInfo(t *testing.T) {
@@ -64,6 +64,7 @@ func TestAccountBank(t *testing.T) {
 
 	accBank := AccountBank{
 		Saving: types.NewCoinFromInt64(int64(123)),
+		Stake:  types.NewCoinFromInt64(0),
 	}
 	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
 	assert.Nil(t, err)
@@ -77,7 +78,7 @@ func TestAccountMeta(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	accMeta := AccountMeta{}
+	accMeta := AccountMeta{TransactionCapacity: types.NewCoinFromInt64(0)}
 	err := as.SetMeta(ctx, types.AccountKey("test"), &accMeta)
 	assert.Nil(t, err)
 
@@ -90,7 +91,13 @@ func TestAccountReward(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	reward := Reward{}
+	reward := Reward{
+		TotalIncome:     types.NewCoinFromInt64(0),
+		OriginalIncome:  types.NewCoinFromInt64(0),
+		FrictionIncome:  types.NewCoinFromInt64(0),
+		InflationIncome: types.NewCoinFromInt64(0),
+		UnclaimReward:   types.NewCoinFromInt64(0),
+	}
 	err := as.SetReward(ctx, types.AccountKey("test"), &reward)
 	assert.Nil(t, err)
 
@@ -117,7 +124,7 @@ func TestAccountBalanceHistory(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	balanceHistory := BalanceHistory{[]Detail{Detail{}}}
+	balanceHistory := BalanceHistory{[]Detail{Detail{Amount: types.NewCoinFromInt64(0)}}}
 	err := as.SetBalanceHistory(ctx, types.AccountKey("test"), 0, &balanceHistory)
 	assert.Nil(t, err)
 
@@ -130,7 +137,11 @@ func TestAccountRewardHistory(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	rewardHistory := RewardHistory{[]RewardDetail{RewardDetail{}}}
+	rewardHistory := RewardHistory{[]RewardDetail{RewardDetail{
+		OriginalDonation: types.NewCoinFromInt64(0),
+		FrictionDonation: types.NewCoinFromInt64(0),
+		ActualReward:     types.NewCoinFromInt64(0),
+	}}}
 	err := as.SetRewardHistory(ctx, types.AccountKey("test"), 0, &rewardHistory)
 	assert.Nil(t, err)
 

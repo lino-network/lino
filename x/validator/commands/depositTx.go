@@ -6,12 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -49,7 +50,7 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 			name, types.LNO(viper.GetString(client.FlagAmount)), pubKey, viper.GetString(client.FlagLink))
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, err := ctx.SignBuildBroadcast(msg, cdc)
+		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return err

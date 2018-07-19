@@ -8,109 +8,106 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cznic/mathutil"
 )
 
 var (
-	bigString    = "1000000000000000000000000"
-	bigInt, _    = new(big.Int).SetString(bigString, 10)
-	bigInt128, _ = new(mathutil.Int128).SetBigInt(bigInt)
+	bigString = "1000000000000000000000000"
+	bigInt, _ = new(big.Int).SetString(bigString, 10)
 
-	doubleBigString    = "2000000000000000000000000"
-	doubleBigInt, _    = new(big.Int).SetString(doubleBigString, 10)
-	doubleBigInt128, _ = new(mathutil.Int128).SetBigInt(doubleBigInt)
+	doubleBigString  = "2000000000000000000000000"
+	doubleBigInt, _  = new(big.Int).SetString(doubleBigString, 10)
+	bigCoin, _       = NewCoinFromString(bigString)
+	doubleBigCoin, _ = NewCoinFromString(doubleBigString)
 )
 
 func TestNewCoinFromInt64(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		inputInt64     int64
-		expectedAmount mathutil.Int128
+		expectedAmount *big.Int
 	}{
 		{
 			testName:       "amount 1",
 			inputInt64:     1,
-			expectedAmount: new(mathutil.Int128).SetInt64(1),
+			expectedAmount: new(big.Int).SetInt64(1),
 		},
 		{
 			testName:       "amount 0",
 			inputInt64:     0,
-			expectedAmount: new(mathutil.Int128).SetInt64(0),
+			expectedAmount: new(big.Int).SetInt64(0),
 		},
 		{
 			testName:       "amount -1",
 			inputInt64:     -1,
-			expectedAmount: new(mathutil.Int128).SetInt64(-1),
+			expectedAmount: new(big.Int).SetInt64(-1),
 		},
 		{
 			testName:       "amount 9223372036854775807",
 			inputInt64:     9223372036854775807,
-			expectedAmount: new(mathutil.Int128).SetInt64(9223372036854775807),
+			expectedAmount: new(big.Int).SetInt64(9223372036854775807),
 		},
 		{
 			testName:       "amount -9223372036854775808",
 			inputInt64:     -9223372036854775808,
-			expectedAmount: new(mathutil.Int128).SetInt64(-9223372036854775808),
+			expectedAmount: new(big.Int).SetInt64(-9223372036854775808),
 		},
 	}
 
 	for _, tc := range testCases {
 		coin := NewCoinFromInt64(tc.inputInt64)
-		if tc.expectedAmount.Cmp(coin.Amount) != 0 {
+		if !coin.IsEqual(NewCoinFromBigInt(tc.expectedAmount)) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin.Amount, tc.expectedAmount)
 		}
 	}
 }
+
 func TestNewCoinFromBigInt(t *testing.T) {
 	testCases := []struct {
-		testName       string
-		inputBigInt    *big.Int
-		expectedAmount mathutil.Int128
+		testName    string
+		inputBigInt *big.Int
+		expectCoin  Coin
 	}{
 		{
-			testName:       "amount 1",
-			inputBigInt:    new(big.Int).SetInt64(1),
-			expectedAmount: new(mathutil.Int128).SetInt64(1),
+			testName:    "amount 1",
+			inputBigInt: new(big.Int).SetInt64(1),
+			expectCoin:  NewCoinFromInt64(1),
 		},
 		{
-			testName:       "amount 0",
-			inputBigInt:    new(big.Int).SetInt64(0),
-			expectedAmount: new(mathutil.Int128).SetInt64(0),
+			testName:    "amount 0",
+			inputBigInt: new(big.Int).SetInt64(0),
+			expectCoin:  NewCoinFromInt64(0),
 		},
 		{
-			testName:       "amount -1",
-			inputBigInt:    new(big.Int).SetInt64(-1),
-			expectedAmount: new(mathutil.Int128).SetInt64(-1),
+			testName:    "amount -1",
+			inputBigInt: new(big.Int).SetInt64(-1),
+			expectCoin:  NewCoinFromInt64(-1),
 		},
 		{
-			testName:       "amount 100",
-			inputBigInt:    new(big.Int).SetInt64(100),
-			expectedAmount: new(mathutil.Int128).SetInt64(100),
+			testName:    "amount 100",
+			inputBigInt: new(big.Int).SetInt64(100),
+			expectCoin:  NewCoinFromInt64(100),
 		},
 		{
-			testName:       "amount 9223372036854775807",
-			inputBigInt:    new(big.Int).SetInt64(9223372036854775807),
-			expectedAmount: new(mathutil.Int128).SetInt64(9223372036854775807),
+			testName:    "amount 9223372036854775807",
+			inputBigInt: new(big.Int).SetInt64(9223372036854775807),
+			expectCoin:  NewCoinFromInt64(9223372036854775807),
 		},
 		{
-			testName:       "amount -9223372036854775808",
-			inputBigInt:    new(big.Int).SetInt64(-9223372036854775808),
-			expectedAmount: new(mathutil.Int128).SetInt64(-9223372036854775808),
+			testName:    "amount -9223372036854775808",
+			inputBigInt: new(big.Int).SetInt64(-9223372036854775808),
+			expectCoin:  NewCoinFromInt64(-9223372036854775808),
 		},
 		{
-			testName:       "amount bigInt",
-			inputBigInt:    bigInt,
-			expectedAmount: bigInt128,
+			testName:    "amount bigInt",
+			inputBigInt: bigInt,
+			expectCoin:  bigCoin,
 		},
 	}
 
 	for _, tc := range testCases {
-		coin, err := NewCoinFromBigInt(tc.inputBigInt)
-		if err != nil {
-			t.Errorf("%s: failed to convert coin, got err %v", tc.testName, err)
-		}
-		if coin.Amount.Cmp(tc.expectedAmount) != 0 {
-			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, coin.Amount, tc.expectedAmount)
+		coin := NewCoinFromBigInt(tc.inputBigInt)
+		if !coin.IsEqual(tc.expectCoin) {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, coin.Amount, tc.expectCoin.Amount)
 		}
 	}
 }
@@ -260,7 +257,7 @@ func TestRatToCoin(t *testing.T) {
 		{
 			testName:    "Coin bigString",
 			inputString: bigString,
-			expectCoin:  NewCoin(bigInt128),
+			expectCoin:  bigCoin,
 		},
 	}
 
@@ -270,7 +267,7 @@ func TestRatToCoin(t *testing.T) {
 			t.Errorf("%s: failed to convert input to big rat", tc.testName)
 		}
 
-		rat := sdk.Rat{*bigRat}
+		rat := sdk.Rat{bigRat}
 		coin, changeErr := RatToCoin(rat)
 		if changeErr != nil {
 			t.Errorf("%s: failed to convert rat to coin, got err %v", tc.testName, changeErr)
@@ -304,12 +301,12 @@ func TestIsPositiveCoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 is positive",
-			inputOne:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
 			expectResult: true,
 		},
 		{
 			testName:     "doubleBigInt128 is not positive",
-			inputOne:     NewCoin(doubleBigInt128),
+			inputOne:     doubleBigCoin,
 			expectResult: true,
 		},
 	}
@@ -345,12 +342,12 @@ func TestIsNotNegativeCoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 is not negative",
-			inputOne:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
 			expectResult: true,
 		},
 		{
 			testName:     "doubleBigInt128 is not negative",
-			inputOne:     NewCoin(doubleBigInt128),
+			inputOne:     doubleBigCoin,
 			expectResult: true,
 		},
 	}
@@ -390,20 +387,20 @@ func TestIsGTECoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 is bigger than 5",
-			inputOne:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
 			inputTwo:     NewCoinFromInt64(5),
 			expectResult: true,
 		},
 		{
 			testName:     "inputs bigInt128 are equal",
-			inputOne:     NewCoin(bigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
+			inputTwo:     bigCoin,
 			expectResult: true,
 		},
 		{
 			testName:     "doubleBigInt128 is bigger than bigInt128",
-			inputOne:     NewCoin(doubleBigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     doubleBigCoin,
+			inputTwo:     bigCoin,
 			expectResult: true,
 		},
 	}
@@ -443,20 +440,20 @@ func TestIsGTCoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 is bigger than 5",
-			inputOne:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
 			inputTwo:     NewCoinFromInt64(5),
 			expectResult: true,
 		},
 		{
 			testName:     "bigInt128 is not bigger than bigInt128",
-			inputOne:     NewCoin(bigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
+			inputTwo:     bigCoin,
 			expectResult: false,
 		},
 		{
 			testName:     "doubleBigInt128 is bigger than bigInt128",
-			inputOne:     NewCoin(doubleBigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     doubleBigCoin,
+			inputTwo:     bigCoin,
 			expectResult: true,
 		},
 	}
@@ -470,11 +467,6 @@ func TestIsGTCoin(t *testing.T) {
 }
 
 func TestIsEqualCoin(t *testing.T) {
-	coin1, err := NewCoinFromBigInt(new(big.Int).SetInt64(1))
-	if err != nil {
-		t.Errorf("TestIsEqualCoin: failed to convert coin, got err %v", err)
-	}
-
 	testCases := []struct {
 		testName     string
 		inputOne     Coin
@@ -483,8 +475,8 @@ func TestIsEqualCoin(t *testing.T) {
 	}{
 		{
 			testName:     "bigInt128 equals to bigInt128",
-			inputOne:     NewCoin(bigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
+			inputTwo:     bigCoin,
 			expectResult: true,
 		},
 		{
@@ -508,13 +500,13 @@ func TestIsEqualCoin(t *testing.T) {
 		{
 			testName:     "1 equals to int128 1",
 			inputOne:     NewCoinFromInt64(1),
-			inputTwo:     NewCoin(new(mathutil.Int128).SetInt64(1)),
+			inputTwo:     NewCoinFromBigInt(new(big.Int).SetInt64(1)),
 			expectResult: true,
 		},
 		{
 			testName:     "1 equals to coin1",
 			inputOne:     NewCoinFromInt64(1),
-			inputTwo:     coin1,
+			inputTwo:     NewCoinFromBigInt(new(big.Int).SetInt64(1)),
 			expectResult: true,
 		},
 	}
@@ -566,15 +558,15 @@ func TestPlusCoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 + bigInt128 = doubleBigInt128",
-			inputOne:     NewCoin(bigInt128),
-			inputTwo:     NewCoin(bigInt128),
-			expectResult: NewCoin(doubleBigInt128),
+			inputOne:     bigCoin,
+			inputTwo:     bigCoin,
+			expectResult: doubleBigCoin,
 		},
 	}
 
 	for _, tc := range testCases {
 		res := tc.inputOne.Plus(tc.inputTwo)
-		if res != tc.expectResult {
+		if !res.IsEqual(tc.expectResult) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
 		}
 	}
@@ -631,15 +623,15 @@ func TestMinusCoin(t *testing.T) {
 		},
 		{
 			testName:     "bigInt128 - bigInt128 = 0",
-			inputOne:     NewCoin(bigInt128),
-			inputTwo:     NewCoin(bigInt128),
+			inputOne:     bigCoin,
+			inputTwo:     bigCoin,
 			expectResult: NewCoinFromInt64(0),
 		},
 	}
 
 	for _, tc := range testCases {
 		res := tc.inputOne.Minus(tc.inputTwo)
-		if res != tc.expectResult {
+		if !res.IsEqual(tc.expectResult) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectResult)
 		}
 	}
@@ -648,7 +640,7 @@ func TestMinusCoin(t *testing.T) {
 var cdc = wire.NewCodec() //var jsonCdc JSONCodec // TODO wire.Codec
 
 func TestSerializationGoWire(t *testing.T) {
-	r := NewCoin(bigInt128)
+	r := bigCoin
 
 	//bz, err := json.Marshal(r)
 	bz, err := cdc.MarshalJSON(r)

@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 var _ types.Msg = ValidatorDepositMsg{}
@@ -71,8 +71,8 @@ func (msg ValidatorDepositMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ValidatorDepositMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ValidatorDepositMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // ValidatorWithdrawMsg Msg Implementations
@@ -113,8 +113,8 @@ func (msg ValidatorWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ValidatorWithdrawMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ValidatorWithdrawMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
 // ValidatorRevokeMsg Msg Implementations
@@ -150,6 +150,6 @@ func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
-func (msg ValidatorRevokeMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{sdk.Address(msg.Username)}
+func (msg ValidatorRevokeMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }

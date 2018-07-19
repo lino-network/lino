@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	dev "github.com/lino-network/lino/x/developer"
 )
 
@@ -49,7 +50,7 @@ func sendGrantDeveloperTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := dev.NewGrantPermissionMsg(username, developer, seconds, times, permission)
 
 		// build and sign the transaction, then broadcast to Tendermint
-		res, signErr := ctx.SignBuildBroadcast(msg, cdc)
+		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
 		if signErr != nil {
 			return signErr
 		}

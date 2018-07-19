@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // test create post
@@ -123,6 +123,9 @@ func TestCreatePost(t *testing.T) {
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: sdk.ZeroRat(),
+			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(msg.Author, msg.PostID), postInfo, postMeta)
@@ -165,7 +168,7 @@ func TestUpdatePost(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate)
+		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
 		assert.Nil(t, err)
 		if err != nil {
 			t.Errorf("%s: failed to get rat from decimal, got err %v", tc.testName, err)
@@ -197,6 +200,9 @@ func TestUpdatePost(t *testing.T) {
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: splitRate,
+			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
@@ -386,6 +392,9 @@ func TestAddOrUpdateLikeToPost(t *testing.T) {
 			TotalLikeCount:          tc.expectTotalLikeCount,
 			TotalLikeWeight:         tc.expectTotalLikeWeight,
 			TotalDislikeWeight:      tc.expectTotalDislikeWeight,
+			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
 	}
@@ -469,6 +478,9 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalViewCount:          tc.expectTotalViewCount,
+			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
 		view, err := pm.postStorage.GetPostView(ctx, postKey, tc.viewUser)
@@ -562,6 +574,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        tc.expectTotalReportStake,
 			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
+			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, permlink, postMeta)
 	}
@@ -671,6 +684,8 @@ func TestDonation(t *testing.T) {
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalDonateCount:        tc.expectDonateCount,
 			TotalReward:             tc.expectTotalDonation,
+			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalReportStake:        types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
 		storage := model.NewPostStorage(TestPostKVStoreKey)

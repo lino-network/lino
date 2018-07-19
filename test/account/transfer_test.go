@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 // test normal transfer to account name

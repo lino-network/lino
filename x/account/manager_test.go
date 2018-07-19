@@ -8,10 +8,10 @@ import (
 	"github.com/lino-network/lino/x/account/model"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func checkBankKVByUsername(
@@ -774,7 +774,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	}
 	checkBankKVByUsername(t, ctx, "TestCreateAccountNormalCase", accKey, bank)
 
-	pendingStakeQueue := model.PendingStakeQueue{StakeCoinInQueue: sdk.ZeroRat()}
+	pendingStakeQueue := model.PendingStakeQueue{StakeCoinInQueue: sdk.ZeroRat(), TotalCoin: types.NewCoinFromInt64(0)}
 	checkPendingStake(t, ctx, "TestCreateAccountNormalCase", accKey, pendingStakeQueue)
 
 	accInfo := model.AccountInfo{
@@ -2085,6 +2085,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	pendingStakeQueue := model.PendingStakeQueue{
 		StakeCoinInQueue: sdk.ZeroRat(),
+		TotalCoin:        types.NewCoinFromInt64(0),
 	}
 	checkPendingStake(t, ctx, testName, user1, pendingStakeQueue)
 
