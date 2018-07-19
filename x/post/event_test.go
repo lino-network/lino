@@ -218,7 +218,7 @@ func TestRewardEvent(t *testing.T) {
 		}
 		reward, err := as.GetReward(ctx, user)
 		if err != nil {
-			t.Errorf("%s: failed to get reward, got err %v", err)
+			t.Errorf("%s: failed to get reward, got err %v", tc.testName, err)
 		}
 		if !assert.Equal(t, tc.expectAuthorReward, *reward) {
 			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)

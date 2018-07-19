@@ -242,10 +242,10 @@ func TestMsgPermission(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range testCases {
+	for _, tc := range testCases {
 		permission := tc.msg.GetPermission()
 		if tc.expectedPermission != permission {
-			t.Errorf("%s: diff permission, got %v, want %v", testName, permission, tc.expectedPermission)
+			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectedPermission)
 		}
 	}
 }
