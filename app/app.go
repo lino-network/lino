@@ -452,10 +452,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
 		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
-		coinPerValidator, err := types.RatToCoin(ratPerValidator)
-		if err != nil {
-			panic(err)
-		}
+		coinPerValidator := types.RatToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
@@ -481,7 +478,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin, err := types.RatToCoin(myShareRat)
+		myShareCoin := types.RatToCoin(myShareRat)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
 	}
@@ -511,7 +508,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin, _ := types.RatToCoin(myShareRat)
+		myShareCoin := types.RatToCoin(myShareRat)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
 	}

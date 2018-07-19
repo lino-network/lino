@@ -151,7 +151,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	baseTime := time.Now().Unix()
-	remainValidatorPool, _ := types.RatToCoin(
+	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
 			growthRate.Mul(validatorAllocation)))
 	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
@@ -174,14 +174,14 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			testPastMinutes += 1
 			if testPastMinutes%60 == 0 {
 				// hourly inflation
-				inflationForValidator, _ :=
+				inflationForValidator :=
 					types.RatToCoin(remainValidatorPool.ToRat().Mul(
 						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
 				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
 				// expectBalance for all validators
 				ctx := lb.BaseApp.NewContext(true, abci.Header{})
 				for i := 0; i < 21; i++ {
-					inflation, _ := types.RatToCoin(
+					inflation := types.RatToCoin(
 						inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
 					expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 					saving, err :=
@@ -270,7 +270,7 @@ func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
 			t.Errorf("%s: failed to get consumption meta, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 
@@ -335,7 +335,7 @@ func TestDistributeInflationToValidator(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
 
@@ -395,7 +395,7 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
@@ -454,7 +454,7 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation, _ := types.RatToCoin(
+		expectInflation := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).

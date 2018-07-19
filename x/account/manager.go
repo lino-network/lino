@@ -114,7 +114,7 @@ func (accManager AccountManager) GetStake(
 	}
 
 	stake := bank.Stake
-	stakeInQueue, err := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)
+	stakeInQueue := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)
 	totalStake := stake.Plus(stakeInQueue)
 	return totalStake, nil
 }
@@ -651,18 +651,12 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 			incrementRatio = sdk.OneRat()
 		}
 		capacityTillStake := stake.Minus(accountMeta.TransactionCapacity)
-		increaseCapacity, err := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
-		if err != nil {
-			return err
-		}
+		increaseCapacity := types.RatToCoin(capacityTillStake.ToRat().Mul(incrementRatio))
 		accountMeta.TransactionCapacity =
 			accountMeta.TransactionCapacity.Plus(increaseCapacity)
 	}
-	currentTxCost, err := types.RatToCoin(
+	currentTxCost := types.RatToCoin(
 		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
-	if err != nil {
-		return err
-	}
 	if currentTxCost.IsGT(accountMeta.TransactionCapacity) {
 		return ErrAccountTPSCapacityNotEnough(me)
 	}

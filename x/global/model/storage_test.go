@@ -73,15 +73,15 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
-	infraInflationPool, _ := types.RatToCoin(globalMeta.GrowthRate.Mul(
+	infraInflationPool := types.RatToCoin(globalMeta.GrowthRate.Mul(
 		globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.InfraAllocation)))
-	contentCreatorInflationPool, _ := types.RatToCoin(
+	contentCreatorInflationPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ContentCreatorAllocation)))
-	developerInflaionPool, _ := types.RatToCoin(
+	developerInflaionPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.DeveloperAllocation)))
-	validatorInflaionPool, _ := types.RatToCoin(
+	validatorInflaionPool := types.RatToCoin(
 		globalMeta.GrowthRate.Mul(
 			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ValidatorAllocation)))
 	inflationPool := InflationPool{

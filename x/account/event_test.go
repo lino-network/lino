@@ -86,10 +86,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
-			returnCoin, err := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
-			if err != nil {
-				t.Errorf("%s: failed to convert coin, got err %v", tc.testName, err)
-			}
+			returnCoin := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
 
 			event := ReturnCoinEvent{
 				Username:   tc.username,

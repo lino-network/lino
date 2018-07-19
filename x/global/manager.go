@@ -145,10 +145,7 @@ func (gm GlobalManager) AddHourlyInflationToRewardPool(
 	}
 	resRat := pool.ContentCreatorInflationPool.ToRat().Mul(
 		sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
-	resCoin, err := types.RatToCoin(resRat)
-	if err != nil {
-		return err
-	}
+	resCoin := types.RatToCoin(resRat)
 	pool.ContentCreatorInflationPool = pool.ContentCreatorInflationPool.Minus(resCoin)
 	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
 		return err
@@ -179,38 +176,23 @@ func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error 
 		return err
 	}
 
-	infraInflationCoin, err :=
+	infraInflationCoin :=
 		types.RatToCoin(
 			globalMeta.TotalLinoCoin.ToRat().Mul(
 				growthRate.Mul(allocation.InfraAllocation)))
-	if err != nil {
-		return err
-	}
-
-	contentCreatorCoin, err :=
+	contentCreatorCoin :=
 		types.RatToCoin(
 			globalMeta.TotalLinoCoin.ToRat().Mul(
 				growthRate.Mul(
 					allocation.ContentCreatorAllocation)))
-	if err != nil {
-		return err
-	}
-
-	developerCoin, err := types.RatToCoin(
+	developerCoin := types.RatToCoin(
 		globalMeta.TotalLinoCoin.ToRat().Mul(
 			growthRate.Mul(
 				allocation.DeveloperAllocation)))
-	if err != nil {
-		return err
-	}
-
-	validatorCoin, err := types.RatToCoin(
+	validatorCoin := types.RatToCoin(
 		globalMeta.TotalLinoCoin.ToRat().Mul(
 			growthRate.Mul(
 				allocation.ValidatorAllocation)))
-	if err != nil {
-		return err
-	}
 
 	inflationPool := &model.InflationPool{
 		InfraInflationPool:          infraInflationCoin,
@@ -275,12 +257,8 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
 			consumptionMeta.ConsumptionWindow.ToRat())
 	// reward = (consumption reward pool) * (consumptionRatio)
-	reward, err := types.RatToCoin(
+	reward := types.RatToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 
@@ -328,10 +306,7 @@ func (gm GlobalManager) GetValidatorHourlyInflation(
 	resRat :=
 		pool.ValidatorInflationPool.ToRat().Mul(
 			sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear))
-	resCoin, err := types.RatToCoin(resRat)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
+	resCoin := types.RatToCoin(resRat)
 	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Minus(resCoin)
 	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -353,10 +328,7 @@ func (gm GlobalManager) GetInfraMonthlyInflation(
 	resRat :=
 		pool.InfraInflationPool.ToRat().Mul(
 			sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
-	resCoin, err := types.RatToCoin(resRat)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
+	resCoin := types.RatToCoin(resRat)
 	pool.InfraInflationPool = pool.InfraInflationPool.Minus(resCoin)
 	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -378,10 +350,7 @@ func (gm GlobalManager) GetDeveloperMonthlyInflation(
 	resRat :=
 		pool.DeveloperInflationPool.ToRat().Mul(
 			sdk.NewRat(1, 12-pastMonthMinusOneThisYear))
-	resCoin, err := types.RatToCoin(resRat)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
+	resCoin := types.RatToCoin(resRat)
 	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Minus(resCoin)
 	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
 		return types.NewCoinFromInt64(0), err

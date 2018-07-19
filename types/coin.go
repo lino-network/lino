@@ -48,7 +48,7 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if num.Cmp(LowerBoundRat) < 0 {
 		return NewCoinFromInt64(0), ErrInvalidCoins("LNO can't be less than lower bound")
 	}
-	return RatToCoin(sdk.Rat{new(big.Rat).Mul(num, big.NewRat(Decimals, 1))})
+	return RatToCoin(sdk.Rat{new(big.Rat).Mul(num, big.NewRat(Decimals, 1))}), nil
 }
 
 var (
@@ -60,7 +60,7 @@ var (
 	ten   = big.NewInt(10)
 )
 
-func RatToCoin(rat sdk.Rat) (Coin, sdk.Error) {
+func RatToCoin(rat sdk.Rat) Coin {
 	//return Coin{rat.EvaluateBig()}
 
 	// num := rat.Num()
@@ -87,7 +87,7 @@ func RatToCoin(rat sdk.Rat) (Coin, sdk.Error) {
 	// case remainderDigit.Cmp(nFive) != 1: //remainderDigit <= -5:
 	// 	d.Sub(d, one)
 	// }
-	return NewCoinFromBigInt(rat.EvaluateBig()), nil
+	return NewCoinFromBigInt(rat.EvaluateBig())
 }
 
 func (coin Coin) ToRat() sdk.Rat {

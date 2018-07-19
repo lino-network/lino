@@ -65,33 +65,20 @@ func (gs GlobalStorage) InitGlobalState(
 		return err
 	}
 
-	infraInflationCoin, err := types.RatToCoin(
+	infraInflationCoin := types.RatToCoin(
 		totalLino.ToRat().Mul(globalMeta.GrowthRate.Mul(param.InfraAllocation)))
-	if err != nil {
-		return ErrInfraInflationCoinConversion()
-	}
-	contentCreatorCoin, err := types.RatToCoin(
+	contentCreatorCoin := types.RatToCoin(
 		totalLino.ToRat().Mul(
 			globalMeta.GrowthRate.Mul(
 				param.ContentCreatorAllocation)))
-	if err != nil {
-		return ErrContentCreatorCoinConversion()
-	}
-	developerCoin, err := types.RatToCoin(
+	developerCoin := types.RatToCoin(
 		totalLino.ToRat().Mul(
 			globalMeta.GrowthRate.Mul(
 				param.DeveloperAllocation)))
-	if err != nil {
-		return ErrDeveloperCoinConversion()
-	}
-	validatorCoin, err := types.RatToCoin(
+	validatorCoin := types.RatToCoin(
 		totalLino.ToRat().Mul(
 			globalMeta.GrowthRate.Mul(
 				param.ValidatorAllocation)))
-
-	if err != nil {
-		return ErrValidatorCoinConversion()
-	}
 
 	inflationPool := &InflationPool{
 		InfraInflationPool:          infraInflationCoin,

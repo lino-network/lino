@@ -22,41 +22,41 @@ var (
 
 func TestNewCoinFromInt64(t *testing.T) {
 	testCases := []struct {
-		testName       string
-		inputInt64     int64
-		expectedAmount *big.Int
+		testName     string
+		inputInt64   int64
+		expectedCoin Coin
 	}{
 		{
-			testName:       "amount 1",
-			inputInt64:     1,
-			expectedAmount: new(big.Int).SetInt64(1),
+			testName:     "amount 1",
+			inputInt64:   1,
+			expectedCoin: NewCoinFromBigInt(new(big.Int).SetInt64(1)),
 		},
 		{
-			testName:       "amount 0",
-			inputInt64:     0,
-			expectedAmount: new(big.Int).SetInt64(0),
+			testName:     "amount 0",
+			inputInt64:   0,
+			expectedCoin: NewCoinFromBigInt(new(big.Int).SetInt64(0)),
 		},
 		{
-			testName:       "amount -1",
-			inputInt64:     -1,
-			expectedAmount: new(big.Int).SetInt64(-1),
+			testName:     "amount -1",
+			inputInt64:   -1,
+			expectedCoin: NewCoinFromBigInt(new(big.Int).SetInt64(-1)),
 		},
 		{
-			testName:       "amount 9223372036854775807",
-			inputInt64:     9223372036854775807,
-			expectedAmount: new(big.Int).SetInt64(9223372036854775807),
+			testName:     "amount 9223372036854775807",
+			inputInt64:   9223372036854775807,
+			expectedCoin: NewCoinFromBigInt(new(big.Int).SetInt64(9223372036854775807)),
 		},
 		{
-			testName:       "amount -9223372036854775808",
-			inputInt64:     -9223372036854775808,
-			expectedAmount: new(big.Int).SetInt64(-9223372036854775808),
+			testName:     "amount -9223372036854775808",
+			inputInt64:   -9223372036854775808,
+			expectedCoin: NewCoinFromBigInt(new(big.Int).SetInt64(-9223372036854775808)),
 		},
 	}
 
 	for _, tc := range testCases {
 		coin := NewCoinFromInt64(tc.inputInt64)
-		if !coin.IsEqual(NewCoinFromBigInt(tc.expectedAmount)) {
-			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin.Amount, tc.expectedAmount)
+		if !coin.IsEqual(tc.expectedCoin) {
+			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin.Amount, tc.expectedCoin)
 		}
 	}
 }
@@ -268,10 +268,7 @@ func TestRatToCoin(t *testing.T) {
 		}
 
 		rat := sdk.Rat{bigRat}
-		coin, changeErr := RatToCoin(rat)
-		if changeErr != nil {
-			t.Errorf("%s: failed to convert rat to coin, got err %v", tc.testName, changeErr)
-		}
+		coin := RatToCoin(rat)
 		if !coin.IsEqual(tc.expectCoin) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)
 		}
