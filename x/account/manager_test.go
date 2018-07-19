@@ -789,7 +789,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
-		TransactionCapacity:  types.NewCoinFromInt64(1 * types.Decimals),
+		TransactionCapacity:  accParam.RegisterFee,
 	}
 	checkAccountMeta(t, ctx, "TestCreateAccountNormalCase", accKey, accMeta)
 
@@ -877,7 +877,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	accMeta := model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
-		TransactionCapacity:  types.NewCoinFromInt64(1 * types.Decimals),
+		TransactionCapacity:  accParam.RegisterFee,
 	}
 	checkAccountMeta(t, ctx, testName, accKey, accMeta)
 
