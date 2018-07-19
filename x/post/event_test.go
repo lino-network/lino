@@ -3,16 +3,19 @@ package post
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+	"github.com/stretchr/testify/assert"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	accModel "github.com/lino-network/lino/x/account/model"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	postModel "github.com/lino-network/lino/x/post/model"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRewardEvent(t *testing.T) {
 	ctx, am, _, pm, gm, dm := setupTest(t, 1)
 	gs := globalModel.NewGlobalStorage(TestGlobalKVStoreKey)
+	as := accModel.NewAccountStorage(TestAccountKVStoreKey)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1 := createTestAccount(t, ctx, am, "user1")
@@ -30,6 +33,7 @@ func TestRewardEvent(t *testing.T) {
 		initRewardWindow     types.Coin
 		expectPostMeta       postModel.PostMeta
 		expectAppWeight      sdk.Rat
+		expectAuthorReward   accModel.Reward
 	}{
 		{
 			testName: "normal event",
@@ -54,6 +58,13 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectAppWeight: sdk.OneRat(),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(100),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
+			},
 		},
 		{
 			testName: "100% panelty reward post",
@@ -78,6 +89,10 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectAppWeight: sdk.OneRat(),
+			expectAuthorReward: accModel.Reward{
+				OriginalIncome: types.NewCoinFromInt64(15),
+				FrictionIncome: types.NewCoinFromInt64(15),
+			},
 		},
 		{
 			testName: "50% panelty reward post",
@@ -102,6 +117,13 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectAppWeight: sdk.OneRat(),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(50),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(50),
+				UnclaimReward:   types.NewCoinFromInt64(50),
+			},
 		},
 		{
 			testName: "evaluate as 1% of total window",
@@ -126,6 +148,13 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectAppWeight: sdk.OneRat(),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(1),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(1),
+				UnclaimReward:   types.NewCoinFromInt64(1),
+			},
 		},
 		{
 			testName: "reward from different app",
@@ -150,6 +179,13 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectAppWeight: sdk.NewRat(100, 251),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(100),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
+			},
 		},
 	}
 
@@ -164,19 +200,28 @@ func TestRewardEvent(t *testing.T) {
 				TotalReportStake: tc.totalReportOfThePost,
 			})
 
+		as.SetReward(ctx, user, &accModel.Reward{})
+
 		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm)
 		if err != nil {
-			t.Errorf("%s: failed to execute, got err %v", err)
+			t.Errorf("%s: failed to execute, got err %v", tc.testName, err)
 		}
 		checkPostMeta(t, ctx, types.GetPermlink(user, postID), tc.expectPostMeta)
 		if dm.DoesDeveloperExist(ctx, tc.rewardEvent.FromApp) {
 			consumptionWeight, err := dm.GetConsumptionWeight(ctx, tc.rewardEvent.FromApp)
 			if err != nil {
-				t.Errorf("%s: failed to get consumption weight, got err %v", err)
+				t.Errorf("%s: failed to get consumption weight, got err %v", tc.testName, err)
 			}
 			if !tc.expectAppWeight.Equal(consumptionWeight) {
 				t.Errorf("%s: diff consumption weight, got %v, want %v", tc.testName, consumptionWeight, tc.expectAppWeight)
 			}
+		}
+		reward, err := as.GetReward(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get reward, got err %v", err)
+		}
+		if !assert.Equal(t, tc.expectAuthorReward, *reward) {
+			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)
 		}
 	}
 }

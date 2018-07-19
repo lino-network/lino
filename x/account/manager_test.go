@@ -19,7 +19,7 @@ func checkBankKVByUsername(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	bankPtr, err := accStorage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		t.Errorf("%s, failed to get bank, got err %", testName, err)
+		t.Errorf("%s, failed to get bank, got err %v", testName, err)
 	}
 	if !assert.Equal(t, bank, *bankPtr) {
 		t.Errorf("%s: diff bank, got %v, want %v", testName, *bankPtr, bank)
@@ -32,7 +32,7 @@ func checkBalanceHistory(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, username, timeSlot)
 	if err != nil {
-		t.Errorf("%s, failed to get balance history, got err %", testName, err)
+		t.Errorf("%s, failed to get balance history, got err %v", testName, err)
 	}
 	if !assert.Equal(t, balanceHistory, *balanceHistoryPtr) {
 		t.Errorf("%s: diff balance history, got %v, want %v", testName, *balanceHistoryPtr, balanceHistory)
@@ -44,7 +44,7 @@ func checkPendingStake(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, username)
 	if err != nil {
-		t.Errorf("%s, failed to get pending stake queue, got err %", testName, err)
+		t.Errorf("%s, failed to get pending stake queue, got err %v", testName, err)
 	}
 	if !assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr) {
 		t.Errorf("%s: diff pending stake queue, got %v, want %v", testName, *pendingStakeQueuePtr, pendingStakeQueue)
@@ -56,7 +56,7 @@ func checkAccountInfo(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	info, err := accStorage.GetInfo(ctx, accKey)
 	if err != nil {
-		t.Errorf("%s, failed to get account info, got err %", testName, err)
+		t.Errorf("%s, failed to get account info, got err %v", testName, err)
 	}
 	if !assert.Equal(t, accInfo, *info) {
 		t.Errorf("%s: diff account info, got %v, want %v", testName, *info, accInfo)
@@ -68,7 +68,7 @@ func checkAccountMeta(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	metaPtr, err := accStorage.GetMeta(ctx, accKey)
 	if err != nil {
-		t.Errorf("%s, failed to get account meta, got err %", testName, err)
+		t.Errorf("%s, failed to get account meta, got err %v", testName, err)
 	}
 	if !assert.Equal(t, accMeta, *metaPtr) {
 		t.Errorf("%s: diff account meta, got %v, want %v", testName, *metaPtr, accMeta)
@@ -80,7 +80,7 @@ func checkAccountReward(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	rewardPtr, err := accStorage.GetReward(ctx, accKey)
 	if err != nil {
-		t.Errorf("%s, failed to get reward, got err %", testName, err)
+		t.Errorf("%s, failed to get reward, got err %v", testName, err)
 	}
 	if !assert.Equal(t, reward, *rewardPtr) {
 		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
@@ -92,7 +92,7 @@ func checkRewardHistory(
 	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
 	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
 	if err != nil {
-		t.Errorf("%s, failed to get reward history, got err %", testName, err)
+		t.Errorf("%s, failed to get reward history, got err %v", testName, err)
 	}
 	if wantNumOfReward != len(rewardHistoryPtr.Details) {
 		t.Errorf("%s: diff account rewards, got %v, want %v", testName, len(rewardHistoryPtr.Details), wantNumOfReward)
@@ -129,7 +129,7 @@ func TestAddCoin(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
 	createTestAccount(ctx, am, string(testUser))
 
-	cases := []struct {
+	testCases := []struct {
 		testName                 string
 		amount                   types.Coin
 		from                     types.AccountKey
@@ -375,19 +375,19 @@ func TestAddCoin(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.atWhen})
 		err = am.AddSavingCoin(
-			ctx, testUser, cs.amount, cs.from, cs.memo, cs.detailType)
+			ctx, testUser, tc.amount, tc.from, tc.memo, tc.detailType)
 
 		if err != nil {
-			t.Errorf("%s: failed to add coin, got err: %v", cs.testName, err)
+			t.Errorf("%s: failed to add coin, got err: %v", tc.testName, err)
 			return
 		}
-		checkBankKVByUsername(t, ctx, cs.testName, types.AccountKey(testUser), cs.expectBank)
-		checkPendingStake(t, ctx, cs.testName, types.AccountKey(testUser), cs.expectPendingStakeQueue)
+		checkBankKVByUsername(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectBank)
+		checkPendingStake(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectPendingStakeQueue)
 		checkBalanceHistory(
-			t, ctx, cs.testName, types.AccountKey(testUser), 0, cs.expectBalanceHistorySlot)
+			t, ctx, tc.testName, types.AccountKey(testUser), 0, tc.expectBalanceHistorySlot)
 	}
 }
 
@@ -418,7 +418,7 @@ func TestMinusCoin(t *testing.T) {
 		t.Errorf("TestMinusCoin: failed to add saving coin, got err %v", err)
 	}
 
-	cases := []struct {
+	testCases := []struct {
 		testName                string
 		fromUser                types.AccountKey
 		userPriv                crypto.PrivKey
@@ -565,17 +565,17 @@ func TestMinusCoin(t *testing.T) {
 			},
 		},
 	}
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
-		err = am.MinusSavingCoin(ctx, cs.fromUser, cs.amount, cs.to, cs.memo, cs.detailType)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.atWhen})
+		err = am.MinusSavingCoin(ctx, tc.fromUser, tc.amount, tc.to, tc.memo, tc.detailType)
 
-		if !assert.Equal(t, cs.expectErr, err) {
-			t.Errorf("%s: diff err, got %v, want %v", cs.testName, err, cs.expectErr)
+		if !assert.Equal(t, tc.expectErr, err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
-		if cs.expectErr == nil {
-			checkBankKVByUsername(t, ctx, cs.testName, cs.fromUser, cs.expectBank)
-			checkPendingStake(t, ctx, cs.testName, cs.fromUser, cs.expectPendingStakeQueue)
-			checkBalanceHistory(t, ctx, cs.testName, cs.fromUser, 0, cs.expectBalanceHistory)
+		if tc.expectErr == nil {
+			checkBankKVByUsername(t, ctx, tc.testName, tc.fromUser, tc.expectBank)
+			checkPendingStake(t, ctx, tc.testName, tc.fromUser, tc.expectPendingStakeQueue)
+			checkBalanceHistory(t, ctx, tc.testName, tc.fromUser, 0, tc.expectBalanceHistory)
 		}
 	}
 }
@@ -583,7 +583,7 @@ func TestMinusCoin(t *testing.T) {
 func TestBalanceHistory(t *testing.T) {
 	fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
 
-	cases := []struct {
+	testCases := []struct {
 		testName        string
 		numOfAdding     int
 		numOfMinus      int
@@ -608,47 +608,47 @@ func TestBalanceHistory(t *testing.T) {
 			expectTotalSlot: 2,
 		},
 	}
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		ctx, am, accParam := setupTest(t, 1)
 
 		user1 := types.AccountKey("user1")
 		createTestAccount(ctx, am, string(user1))
 
-		for i := 0; i < cs.numOfAdding; i++ {
+		for i := 0; i < tc.numOfAdding; i++ {
 			err := am.AddSavingCoin(ctx, user1, coin1, fromUser, "", types.TransferIn)
 			if err != nil {
-				t.Errorf("%s: failed to add saving coin, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to add saving coin, got err %v", tc.testName, err)
 			}
 		}
-		for i := 0; i < cs.numOfMinus; i++ {
+		for i := 0; i < tc.numOfMinus; i++ {
 			err := am.MinusSavingCoin(ctx, user1, coin1, toUser, "", types.TransferOut)
 			if err != nil {
-				t.Errorf("%s: failed to minus saving coin, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to minus saving coin, got err %v", tc.testName, err)
 			}
 		}
 
 		bank, err := am.storage.GetBankFromAccountKey(ctx, user1)
 		if err != nil {
-			t.Errorf("%s: failed to get bank, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get bank, got err %v", tc.testName, err)
 		}
 
 		// add one init transfer in
-		expectNumOfTx := int64(cs.numOfAdding + cs.numOfMinus + 1)
+		expectNumOfTx := int64(tc.numOfAdding + tc.numOfMinus + 1)
 		if expectNumOfTx != bank.NumOfTx {
-			t.Errorf("%s: diff num of tx, got %v, want %v", cs.testName, bank.NumOfTx, expectNumOfTx)
+			t.Errorf("%s: diff num of tx, got %v, want %v", tc.testName, bank.NumOfTx, expectNumOfTx)
 		}
 
 		// total slot should use previous states to get expected slots
 		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleSize + 1
-		if cs.expectTotalSlot != actualTotalSlot {
-			t.Errorf("%s: diff total slot, got %v, want %v", cs.testName, actualTotalSlot, cs.expectTotalSlot)
+		if tc.expectTotalSlot != actualTotalSlot {
+			t.Errorf("%s: diff total slot, got %v, want %v", tc.testName, actualTotalSlot, tc.expectTotalSlot)
 		}
 
 		actualNumOfAdding, actualNumOfMinus := 0, 0
 		for slot := int64(0); slot < actualTotalSlot; slot++ {
 			balanceHistory, err := am.storage.GetBalanceHistory(ctx, user1, slot)
 			if err != nil {
-				t.Errorf("%s: failed to get balance history, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to get balance history, got err %v", tc.testName, err)
 			}
 
 			for _, tx := range balanceHistory.Details {
@@ -661,11 +661,11 @@ func TestBalanceHistory(t *testing.T) {
 			}
 		}
 		// include create account init transaction
-		if cs.numOfAdding+1 != actualNumOfAdding {
-			t.Errorf("%s: diff num of adding, got %v, want %v", cs.testName, actualNumOfAdding, cs.numOfAdding+1)
+		if tc.numOfAdding+1 != actualNumOfAdding {
+			t.Errorf("%s: diff num of adding, got %v, want %v", tc.testName, actualNumOfAdding, tc.numOfAdding+1)
 		}
-		if cs.numOfMinus != actualNumOfMinus {
-			t.Errorf("%s: diff num of minus, got %v, want %v", cs.testName, actualNumOfMinus, cs.numOfMinus)
+		if tc.numOfMinus != actualNumOfMinus {
+			t.Errorf("%s: diff num of minus, got %v, want %v", tc.testName, actualNumOfMinus, tc.numOfMinus)
 		}
 	}
 }
@@ -673,7 +673,7 @@ func TestBalanceHistory(t *testing.T) {
 func TestAddBalanceHistory(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 
-	cases := []struct {
+	testCases := []struct {
 		testName              string
 		numOfTx               int64
 		detail                model.Detail
@@ -730,24 +730,24 @@ func TestAddBalanceHistory(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		err := am.AddBalanceHistory(ctx, user1, cs.numOfTx, cs.detail)
+	for _, tc := range testCases {
+		err := am.AddBalanceHistory(ctx, user1, tc.numOfTx, tc.detail)
 		if err != nil {
-			t.Errorf("%s: failed to add balance history, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to add balance history, got err %v", tc.testName, err)
 		}
 
 		balanceHistory, err :=
 			am.storage.GetBalanceHistory(
-				ctx, user1, cs.numOfTx/accParam.BalanceHistoryBundleSize)
+				ctx, user1, tc.numOfTx/accParam.BalanceHistoryBundleSize)
 		if err != nil {
-			t.Errorf("%s: failed to get balance history, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get balance history, got err %v", tc.testName, err)
 		}
 
-		if cs.expectNumOfTxInBundle != len(balanceHistory.Details) {
-			t.Errorf("%s: diff num of tx in bunlde, got %v, want %v", cs.testName, len(balanceHistory.Details), cs.expectNumOfTxInBundle)
+		if tc.expectNumOfTxInBundle != len(balanceHistory.Details) {
+			t.Errorf("%s: diff num of tx in bunlde, got %v, want %v", tc.testName, len(balanceHistory.Details), tc.expectNumOfTxInBundle)
 		}
-		if !assert.Equal(t, cs.detail, balanceHistory.Details[cs.expectNumOfTxInBundle-1]) {
-			t.Errorf("%s: diff detail, got %v, want %v", cs.testName, balanceHistory.Details[cs.expectNumOfTxInBundle-1], cs.detail)
+		if !assert.Equal(t, tc.detail, balanceHistory.Details[tc.expectNumOfTxInBundle-1]) {
+			t.Errorf("%s: diff detail, got %v, want %v", tc.testName, balanceHistory.Details[tc.expectNumOfTxInBundle-1], tc.detail)
 		}
 	}
 }
@@ -792,7 +792,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, "TestCreateAccountNormalCase", accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0, coin0}
+	reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, "TestCreateAccountNormalCase", accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
@@ -879,7 +879,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, testName, accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0, coin0}
+	reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
@@ -922,7 +922,7 @@ func TestInvalidCreateAccount(t *testing.T) {
 	accKey2 := types.AccountKey("accKey2")
 	accKey3 := types.AccountKey("accKey3")
 
-	cases := []struct {
+	testCases := []struct {
 		testName    string
 		username    types.AccountKey
 		privKey     crypto.PrivKey
@@ -965,13 +965,13 @@ func TestInvalidCreateAccount(t *testing.T) {
 			expectErr:   ErrRegisterFeeInsufficient(),
 		},
 	}
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		err := am.CreateAccount(
-			ctx, accountReferrer, cs.username, cs.privKey.PubKey(),
+			ctx, accountReferrer, tc.username, tc.privKey.PubKey(),
 			crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(), cs.registerFee)
-		if !assert.Equal(t, cs.expectErr, err) {
-			t.Errorf("%s: diff err, got %v, want %v", cs.testName, err, cs.expectErr)
+			crypto.GenPrivKeyEd25519().PubKey(), tc.registerFee)
+		if !assert.Equal(t, tc.expectErr, err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
 	}
 }
@@ -982,7 +982,7 @@ func TestUpdateJSONMeta(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 	createTestAccount(ctx, am, string(accKey))
 
-	cases := []struct {
+	testCases := []struct {
 		testName string
 		username types.AccountKey
 		JSONMeta string
@@ -993,18 +993,18 @@ func TestUpdateJSONMeta(t *testing.T) {
 			JSONMeta: "{'link':'https://lino.network'}",
 		},
 	}
-	for _, cs := range cases {
-		err := am.UpdateJSONMeta(ctx, cs.username, cs.JSONMeta)
+	for _, tc := range testCases {
+		err := am.UpdateJSONMeta(ctx, tc.username, tc.JSONMeta)
 		if err != nil {
-			t.Errorf("%s: failed to update json meta, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to update json meta, got err %v", tc.testName, err)
 		}
 
-		accMeta, err := am.storage.GetMeta(ctx, cs.username)
+		accMeta, err := am.storage.GetMeta(ctx, tc.username)
 		if err != nil {
-			t.Errorf("%s: failed to get meta, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get meta, got err %v", tc.testName, err)
 		}
-		if cs.JSONMeta != accMeta.JSONMeta {
-			t.Errorf("%s: diff json meta, got %v, want %v", cs.testName, accMeta.JSONMeta, cs.JSONMeta)
+		if tc.JSONMeta != accMeta.JSONMeta {
+			t.Errorf("%s: diff json meta, got %v, want %v", tc.testName, accMeta.JSONMeta, tc.JSONMeta)
 		}
 	}
 }
@@ -1028,7 +1028,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 
 	createTestAccount(ctx, am, string(accKey))
 
-	cases := []struct {
+	testCases := []struct {
 		testName            string
 		isAdd               bool
 		coin                types.Coin
@@ -1110,40 +1110,40 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: cs.atWhen})
-		if cs.isAdd {
-			err := am.AddSavingCoin(ctx, accKey, cs.coin, "", "", types.TransferIn)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.atWhen})
+		if tc.isAdd {
+			err := am.AddSavingCoin(ctx, accKey, tc.coin, "", "", types.TransferIn)
 			if err != nil {
-				t.Errorf("%s: failed to add saving coin, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to add saving coin, got err %v", tc.testName, err)
 			}
 		} else {
-			err := am.MinusSavingCoin(ctx, accKey, cs.coin, "", "", types.TransferOut)
+			err := am.MinusSavingCoin(ctx, accKey, tc.coin, "", "", types.TransferOut)
 			if err != nil {
-				t.Errorf("%s: failed to minus saving coin, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to minus saving coin, got err %v", tc.testName, err)
 			}
 		}
 		coin, err := am.GetStake(ctx, accKey)
 		if err != nil {
-			t.Errorf("%s: failed to get stake, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get stake, got err %v", tc.testName, err)
 		}
 
-		if !cs.expectStake.IsEqual(coin) {
-			t.Errorf("%s: diff stake, got %v, want %v", cs.testName, coin, cs.expectStake)
+		if !tc.expectStake.IsEqual(coin) {
+			t.Errorf("%s: diff stake, got %v, want %v", tc.testName, coin, tc.expectStake)
 			return
 		}
 
 		bank := model.AccountBank{
-			Saving:  cs.expectSavingBalance,
-			Stake:   cs.expectStakeInBank,
-			NumOfTx: cs.expectNumOfTx,
+			Saving:  tc.expectSavingBalance,
+			Stake:   tc.expectStakeInBank,
+			NumOfTx: tc.expectNumOfTx,
 		}
-		checkBankKVByUsername(t, ctx, cs.testName, accKey, bank)
+		checkBankKVByUsername(t, ctx, tc.testName, accKey, bank)
 	}
 }
 
-func TestAccountReward(t *testing.T) {
-	testName := "TestAccountReward"
+func TestAddIncomeAndReward(t *testing.T) {
+	testName := "TestAddIncomeAndReward"
 
 	ctx, am, accParam := setupTest(t, 1)
 	accKey := types.AccountKey("accKey")
@@ -1155,7 +1155,7 @@ func TestAccountReward(t *testing.T) {
 		t.Errorf("%s: failed to add income and reward, got err %v", testName, err)
 	}
 
-	reward := model.Reward{c500, c200, c300, c300}
+	reward := model.Reward{c300, c200, c200, c300, c300}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 1)
 
@@ -1164,10 +1164,18 @@ func TestAccountReward(t *testing.T) {
 		t.Errorf("%s: failed to add income and reward again, got err %v", testName, err)
 	}
 
-	reward = model.Reward{c1000, c500, c500, c500}
+	reward = model.Reward{c500, c500, c500, c500, c500}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
 
+	err = am.AddDirectDeposit(ctx, accKey, c500)
+	if err != nil {
+		t.Errorf("%s: failed to add direct deposit, got err %v", testName, err)
+	}
+
+	reward = model.Reward{c1000, c1000, c500, c500, c500}
+	checkAccountReward(t, ctx, testName, accKey, reward)
+	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
 	bank := model.AccountBank{
 		Saving:      accParam.RegisterFee,
 		NumOfTx:     1,
@@ -1186,7 +1194,7 @@ func TestAccountReward(t *testing.T) {
 	bank.NumOfReward = 0
 	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
-	reward = model.Reward{c1000, c500, c500, c0}
+	reward = model.Reward{c1000, c1000, c500, c500, c0}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 }
 
@@ -1215,7 +1223,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		t.Errorf("TestCheckUserTPSCapacity: failed to set pending stake queue, got err %v", err)
 	}
 
-	cases := []struct {
+	testCases := []struct {
 		testName             string
 		tpsCapacityRatio     sdk.Rat
 		userStake            types.Coin
@@ -1316,39 +1324,39 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.currentTime})
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.currentTime})
 		bank := &model.AccountBank{
-			Saving: cs.userStake,
-			Stake:  cs.userStake,
+			Saving: tc.userStake,
+			Stake:  tc.userStake,
 		}
-		err = accStorage.SetBankFromAccountKey(ctx, accKey, bank)
+		err := accStorage.SetBankFromAccountKey(ctx, accKey, bank)
 		if err != nil {
-			t.Errorf("%s: failed to set bank, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to set bank, got err %v", tc.testName, err)
 		}
 
 		meta := &model.AccountMeta{
-			LastActivityAt:      cs.lastActivity,
-			TransactionCapacity: cs.lastCapacity,
+			LastActivityAt:      tc.lastActivity,
+			TransactionCapacity: tc.lastCapacity,
 		}
 		err = accStorage.SetMeta(ctx, accKey, meta)
 		if err != nil {
-			t.Errorf("%s: failed to set meta, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to set meta, got err %v", tc.testName, err)
 		}
 
-		err = am.CheckUserTPSCapacity(ctx, accKey, cs.tpsCapacityRatio)
-		if !assert.Equal(t, cs.expectResult, err) {
-			t.Errorf("%s: diff tps capacity, got %v, want %v", cs.testName, err, cs.expectResult)
+		err = am.CheckUserTPSCapacity(ctx, accKey, tc.tpsCapacityRatio)
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: diff tps capacity, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
 
 		accMeta := model.AccountMeta{
 			LastActivityAt:      ctx.BlockHeader().Time,
-			TransactionCapacity: cs.expectRemainCapacity,
+			TransactionCapacity: tc.expectRemainCapacity,
 		}
-		if cs.expectResult != nil {
-			accMeta.LastActivityAt = cs.lastActivity
+		if tc.expectResult != nil {
+			accMeta.LastActivityAt = tc.lastActivity
 		}
-		checkAccountMeta(t, ctx, cs.testName, accKey, accMeta)
+		checkAccountMeta(t, ctx, tc.testName, accKey, accMeta)
 	}
 }
 
@@ -1405,7 +1413,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 
-	cases := []struct {
+	testCases := []struct {
 		testName          string
 		checkUser         types.AccountKey
 		checkPubKey       crypto.PubKey
@@ -1749,31 +1757,31 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
-		grantPubKey, err := am.CheckSigningPubKeyOwner(ctx, cs.checkUser, cs.checkPubKey, cs.permission)
-		if cs.expectResult == nil {
-			if cs.expectUser != grantPubKey {
-				t.Errorf("%s: diff key owner,  got %v, want %v", cs.testName, grantPubKey, cs.expectUser)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
+		grantPubKey, err := am.CheckSigningPubKeyOwner(ctx, tc.checkUser, tc.checkPubKey, tc.permission)
+		if tc.expectResult == nil {
+			if tc.expectUser != grantPubKey {
+				t.Errorf("%s: diff key owner,  got %v, want %v", tc.testName, grantPubKey, tc.expectUser)
 				return
 			}
 		} else {
-			if !assert.Equal(t, cs.expectResult.Result(), err.Result()) {
-				t.Errorf("%s: diff result,  got %v, want %v", cs.testName, err.Result(), cs.expectResult.Result())
+			if !assert.Equal(t, tc.expectResult.Result(), err.Result()) {
+				t.Errorf("%s: diff result,  got %v, want %v", tc.testName, err.Result(), tc.expectResult.Result())
 			}
 		}
 
-		grantPubKeyInfo, err := am.storage.GetGrantPubKey(ctx, cs.checkUser, cs.checkPubKey)
-		if cs.expectGrantPubKey == nil {
+		grantPubKeyInfo, err := am.storage.GetGrantPubKey(ctx, tc.checkUser, tc.checkPubKey)
+		if tc.expectGrantPubKey == nil {
 			if err == nil {
-				t.Errorf("%s: got nil err", cs.testName)
+				t.Errorf("%s: got nil err", tc.testName)
 			}
 		} else {
 			if err != nil {
-				t.Errorf("%s: got non-empty err %v", cs.testName, err)
+				t.Errorf("%s: got non-empty err %v", tc.testName, err)
 			}
-			if !assert.Equal(t, *cs.expectGrantPubKey, *grantPubKeyInfo) {
-				t.Errorf("%s: diff grant key,  got %v, want %v", cs.testName, *grantPubKeyInfo, *cs.expectGrantPubKey)
+			if !assert.Equal(t, *tc.expectGrantPubKey, *grantPubKeyInfo) {
+				t.Errorf("%s: diff grant key,  got %v, want %v", tc.testName, *grantPubKeyInfo, *tc.expectGrantPubKey)
 			}
 		}
 	}
@@ -1808,7 +1816,7 @@ func TestRevokePermission(t *testing.T) {
 		t.Errorf("%s: failed to authorize post permission to user with both permission, got err %v", testName, err)
 	}
 
-	cases := []struct {
+	testCases := []struct {
 		testName     string
 		user         types.AccountKey
 		revokePubKey crypto.PubKey
@@ -1858,11 +1866,11 @@ func TestRevokePermission(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: cs.atWhen})
-		err := am.RevokePermission(ctx, cs.user, cs.revokePubKey, cs.level)
-		if !assert.Equal(t, cs.expectResult, err) {
-			t.Errorf("%s: diff result, got %v, want %v", cs.testName, err, cs.expectResult)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
+		err := am.RevokePermission(ctx, tc.user, tc.revokePubKey, tc.level)
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
 	}
 }
@@ -1879,7 +1887,7 @@ func TestAuthorizePermission(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 
-	cases := []struct {
+	testCases := []struct {
 		testName       string
 		user           types.AccountKey
 		grantTo        types.AccountKey
@@ -1941,27 +1949,27 @@ func TestAuthorizePermission(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
-		err := am.AuthorizePermission(ctx, cs.user, cs.grantTo, cs.validityPeriod, cs.allowTimes, cs.level)
-		if !assert.Equal(t, cs.expectResult, err) {
-			t.Errorf("%s: failed to authorize permission, got err %v", cs.testName, err)
+		err := am.AuthorizePermission(ctx, tc.user, tc.grantTo, tc.validityPeriod, tc.allowTimes, tc.level)
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: failed to authorize permission, got err %v", tc.testName, err)
 		}
 
-		if cs.expectResult == nil {
-			grantPubKey, err := am.storage.GetGrantPubKey(ctx, cs.user, cs.expectPubKey)
+		if tc.expectResult == nil {
+			grantPubKey, err := am.storage.GetGrantPubKey(ctx, tc.user, tc.expectPubKey)
 			if err != nil {
-				t.Errorf("%s: failed to get grant pub key, got err %v", cs.testName, err)
+				t.Errorf("%s: failed to get grant pub key, got err %v", tc.testName, err)
 			}
 			expectGrantPubKey := model.GrantPubKey{
-				Username:   cs.grantTo,
-				ExpiresAt:  baseTime + cs.validityPeriod,
+				Username:   tc.grantTo,
+				ExpiresAt:  baseTime + tc.validityPeriod,
 				CreatedAt:  baseTime,
-				LeftTimes:  cs.allowTimes,
-				Permission: cs.level,
+				LeftTimes:  tc.allowTimes,
+				Permission: tc.level,
 			}
 			if !assert.Equal(t, expectGrantPubKey, *grantPubKey) {
-				t.Errorf("%s: diff grant pub key, got %v, want %v", cs.testName, *grantPubKey, expectGrantPubKey)
+				t.Errorf("%s: diff grant pub key, got %v, want %v", tc.testName, *grantPubKey, expectGrantPubKey)
 			}
 		}
 	}
@@ -1977,7 +1985,7 @@ func TestDonationRelationship(t *testing.T) {
 	createTestAccount(ctx, am, string(user2))
 	createTestAccount(ctx, am, string(user3))
 
-	cases := []struct {
+	testCases := []struct {
 		testName         string
 		user             types.AccountKey
 		donateTo         types.AccountKey
@@ -2015,18 +2023,18 @@ func TestDonationRelationship(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		err := am.UpdateDonationRelationship(ctx, cs.user, cs.donateTo)
+	for _, tc := range testCases {
+		err := am.UpdateDonationRelationship(ctx, tc.user, tc.donateTo)
 		if err != nil {
-			t.Errorf("%s: failed to update donation relationship, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to update donation relationship, got err %v", tc.testName, err)
 		}
 
-		donateTime, err := am.GetDonationRelationship(ctx, cs.user, cs.donateTo)
+		donateTime, err := am.GetDonationRelationship(ctx, tc.user, tc.donateTo)
 		if err != nil {
-			t.Errorf("%s: failed to get donation relationship, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get donation relationship, got err %v", tc.testName, err)
 		}
-		if donateTime != cs.expectDonateTime {
-			t.Errorf("%s: diff donate time, got %v, want %v", cs.testName, donateTime, cs.expectDonateTime)
+		if donateTime != tc.expectDonateTime {
+			t.Errorf("%s: diff donate time, got %v, want %v", tc.testName, donateTime, tc.expectDonateTime)
 		}
 	}
 }
@@ -2105,7 +2113,7 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	cases := []struct {
+	testCases := []struct {
 		testName       string
 		user           types.AccountKey
 		increaseTimes  int
@@ -2125,16 +2133,16 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 		},
 	}
 
-	for _, cs := range cases {
-		for i := 0; i < cs.increaseTimes; i++ {
+	for _, tc := range testCases {
+		for i := 0; i < tc.increaseTimes; i++ {
 			am.IncreaseSequenceByOne(ctx, user1)
 		}
 		seq, err := am.GetSequence(ctx, user1)
 		if err != nil {
-			t.Errorf("%s: failed to get sequence, got err %v", cs.testName, err)
+			t.Errorf("%s: failed to get sequence, got err %v", tc.testName, err)
 		}
-		if seq != cs.expectSequence {
-			t.Errorf("%s: diff seq, got %v, want %v", cs.testName, seq, cs.expectSequence)
+		if seq != tc.expectSequence {
+			t.Errorf("%s: diff seq, got %v, want %v", tc.testName, seq, tc.expectSequence)
 		}
 	}
 }

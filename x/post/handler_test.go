@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	abci "github.com/tendermint/abci/types"
 )
 
@@ -408,6 +409,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		expectRegisteredEvent             RewardEvent
 		expectDonateTimesFromUserToAuthor int64
 		expectCumulativeConsumption       types.Coin
+		expectAuthorReward                accmodel.Reward
 	}{
 		{
 			testName:       "donate from sufficient saving",
@@ -440,6 +442,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			},
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(100 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(95 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(95 * types.Decimals),
+			},
 		},
 		{
 			testName:            "donate from insufficient saving",
@@ -456,6 +462,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(100 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(95 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(95 * types.Decimals),
+			},
 		},
 		{
 			testName:       "donate less money from second user with sufficient saving",
@@ -488,6 +498,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			},
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(150 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(14250000),
+				OriginalIncome: types.NewCoinFromInt64(14250000),
+			},
 		},
 		{
 			testName:       "donate second times from second user with sufficient saving",
@@ -519,6 +533,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			},
 			expectDonateTimesFromUserToAuthor: 2,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{
 			testName:                          "invalid target postID",
@@ -534,6 +552,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{
 			testName:                          "invalid target author",
@@ -549,6 +571,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{
 			testName:       "donate to self",
@@ -572,6 +598,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(20000000),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{
 			testName:            "invalid micropayment",
@@ -588,6 +618,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(20000000),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
+				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+			},
 		},
 		{
 			testName:       "micropayment",
@@ -620,6 +654,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			},
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(20000001),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
+			},
 		},
 		{
 			testName:            "donate to deleted post",
@@ -636,6 +674,10 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectRegisteredEvent:             RewardEvent{},
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(20000001),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
+			},
 		},
 	}
 
@@ -655,7 +697,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			t.Errorf("%s: failed to get author saving from bank, got err %v", tc.testName, err)
 		}
 		if !authorSaving.IsEqual(tc.expectAuthorSaving) {
-			t.Errorf("%s: diff author saving %v, got %v, want %v", tc.testName, authorSaving, tc.expectAuthorSaving)
+			t.Errorf("%s: diff author saving, got %v, want %v", tc.testName, authorSaving, tc.expectAuthorSaving)
 			return
 		}
 
@@ -667,11 +709,21 @@ func TestHandlerPostDonate(t *testing.T) {
 			t.Errorf("%s: diff donator saving %v, got %v", tc.testName, donatorSaving, tc.expectDonatorSaving)
 			return
 		}
+
 		if tc.expectErr.Code == sdk.ABCICodeOK {
 			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
 			if !assert.Equal(t, tc.expectRegisteredEvent, eventList.Events[len(eventList.Events)-1]) {
 				t.Errorf("%s: diff event, got %v, want %v", tc.testName,
 					eventList.Events[len(eventList.Events)-1], tc.expectRegisteredEvent)
+			}
+
+			as := accmodel.NewAccountStorage(TestAccountKVStoreKey)
+			reward, err := as.GetReward(ctx, tc.toAuthor)
+			if err != nil {
+				t.Errorf("%s: failed to get reward, got err %v", tc.testName, err)
+			}
+			if !assert.Equal(t, tc.expectAuthorReward, *reward) {
+				t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)
 			}
 		}
 

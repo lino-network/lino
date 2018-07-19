@@ -261,7 +261,7 @@ func TestDelegatorWithdraw(t *testing.T) {
 		msg := NewDelegatorWithdrawMsg(string(tc.delegator), string(tc.voter), coinToString(tc.withdraw))
 		res := handler(ctx, msg)
 		if !assert.Equal(t, tc.expectedResult, res) {
-			t.Errorf("%s: diff result, got %v, want %v", res, tc.expectedResult)
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
 		}
 	}
 }

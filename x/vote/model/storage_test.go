@@ -195,7 +195,7 @@ func TestVote(t *testing.T) {
 			vs.DeleteVote(ctx, tc.proposalID, tc.voter)
 			votePtr, err := vs.GetVote(ctx, tc.proposalID, tc.voter)
 			if err.Code() != types.CodeVoteNotFound {
-				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, err.Code, types.CodeVoteNotFound)
+				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, err.Code(), types.CodeVoteNotFound)
 			}
 			if votePtr != nil {
 				t.Errorf("%s: got non-empty vote, got %v, want nil", tc.testName, votePtr)

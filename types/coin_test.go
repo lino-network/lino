@@ -193,7 +193,7 @@ func TestLNOToCoin(t *testing.T) {
 	for _, tc := range testCases {
 		coin, err := LinoToCoin(LNO(tc.inputString))
 		if !assert.Equal(t, tc.expectResult, err) {
-			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err)
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
 		if !coin.IsEqual(tc.expectCoin) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)

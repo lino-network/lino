@@ -226,7 +226,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 
 		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.creator)
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
-			t.Errorf("%s: diff bank balance(%v): got %v, want %v",
+			t.Errorf("%s: diff bank balance: got %v, want %v",
 				tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
 

@@ -218,6 +218,9 @@ func processDonationFriction(
 		ctx, postAuthor, directDeposit, consumer, string(postKey), types.DonationIn); err != nil {
 		return err
 	}
+	if err := am.AddDirectDeposit(ctx, postAuthor, directDeposit); err != nil {
+		return err
+	}
 	if err := gm.AddConsumption(ctx, coin); err != nil {
 		return err
 	}

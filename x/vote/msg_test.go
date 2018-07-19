@@ -213,35 +213,39 @@ func TestMsgPermission(t *testing.T) {
 		{
 			testName:           "vote deposit",
 			msg:                NewVoterDepositMsg("test", types.LNO("1")),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 		{
 			testName:           "vote withdraw",
 			msg:                NewVoterWithdrawMsg("test", types.LNO("1")),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 		{
 			testName:           "vote revoke",
 			msg:                NewVoterRevokeMsg("test"),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 		{
 			testName:           "delegate to voter",
 			msg:                NewDelegateMsg("delegator", "voter", types.LNO("1")),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 		{
 			testName:           "delegate withdraw",
 			msg:                NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 		{
 			testName:           "revoke delegation",
 			msg:                NewRevokeDelegationMsg("delegator", "voter"),
-			expectedPermission: types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
 	}
 
 	for testName, tc := range testCases {
 		permission := tc.msg.GetPermission()
 		if tc.expectedPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, tc.expectedPermission, permission)
+			t.Errorf("%s: diff permission, got %v, want %v", testName, permission, tc.expectedPermission)
 		}
 	}
 }
