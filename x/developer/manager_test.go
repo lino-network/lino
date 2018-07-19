@@ -31,41 +31,46 @@ func TestReportConsumption(t *testing.T) {
 	p3, _ := dm.GetConsumptionWeight(ctx, "developer1")
 	assert.True(t, p3.Cmp(big.NewRat(1, 2)) == 0)
 
-	cases := map[string]struct {
-		Developer1Consumption             types.Coin
-		Developer2Consumption             types.Coin
-		ExpectDeveloper1ConsumptionWeight sdk.Rat
-		ExpectDeveloper2ConsumptionWeight sdk.Rat
+	testCases := map[string]struct {
+		developer1Consumption             types.Coin
+		developer2Consumption             types.Coin
+		expectDeveloper1ConsumptionWeight sdk.Rat
+		expectDeveloper2ConsumptionWeight sdk.Rat
 	}{
 		"test normal consumption": {
-			types.NewCoinFromInt64(2500 * types.Decimals), types.NewCoinFromInt64(7500 * types.Decimals),
-			sdk.NewRat(1, 4), sdk.NewRat(3, 4),
+			developer1Consumption:             types.NewCoinFromInt64(2500 * types.Decimals),
+			developer2Consumption:             types.NewCoinFromInt64(7500 * types.Decimals),
+			expectDeveloper1ConsumptionWeight: sdk.NewRat(1, 4),
+			expectDeveloper2ConsumptionWeight: sdk.NewRat(3, 4),
 		},
 		"test empty consumption": {
-			types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), sdk.NewRat(1, 2), sdk.NewRat(1, 2),
+			developer1Consumption:             types.NewCoinFromInt64(0),
+			developer2Consumption:             types.NewCoinFromInt64(0),
+			expectDeveloper1ConsumptionWeight: sdk.NewRat(1, 2),
+			expectDeveloper2ConsumptionWeight: sdk.NewRat(1, 2),
 		},
 		"issue https://github.com/lino-network/lino/issues/150": {
-			types.NewCoinFromInt64(3333333), types.NewCoinFromInt64(4444444),
-			sdk.NewRat(3, 7), sdk.NewRat(4, 7),
+			developer1Consumption:             types.NewCoinFromInt64(3333333),
+			developer2Consumption:             types.NewCoinFromInt64(4444444),
+			expectDeveloper1ConsumptionWeight: sdk.NewRat(3, 7),
+			expectDeveloper2ConsumptionWeight: sdk.NewRat(4, 7),
 		},
 	}
-	for testName, cs := range cases {
-		dm.ReportConsumption(ctx, "developer1", cs.Developer1Consumption)
-		dm.ReportConsumption(ctx, "developer2", cs.Developer2Consumption)
+	for testName, tc := range testCases {
+		dm.ReportConsumption(ctx, "developer1", tc.developer1Consumption)
+		dm.ReportConsumption(ctx, "developer2", tc.developer2Consumption)
 
 		p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-		if !cs.ExpectDeveloper1ConsumptionWeight.Equal(p1) {
-			t.Errorf(
-				"%s: expect developer1 usage weight %v, got %v",
-				testName, cs.ExpectDeveloper1ConsumptionWeight, p1)
+		if !tc.expectDeveloper1ConsumptionWeight.Equal(p1) {
+			t.Errorf("%s: diff developer1 usage weight, got %v, want %v",
+				testName, p1, tc.expectDeveloper1ConsumptionWeight)
 			return
 		}
 
 		p2, _ := dm.GetConsumptionWeight(ctx, "developer2")
-		if !cs.ExpectDeveloper2ConsumptionWeight.Equal(p2) {
-			t.Errorf(
-				"%s: expect developer2 usage weight %v, got %v",
-				testName, cs.ExpectDeveloper2ConsumptionWeight, p2)
+		if !tc.expectDeveloper2ConsumptionWeight.Equal(p2) {
+			t.Errorf("%s: diff developer2 usage weight, got %v, want %v",
+				testName, p2, tc.expectDeveloper2ConsumptionWeight)
 			return
 		}
 		dm.ClearConsumption(ctx)

@@ -19,30 +19,78 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		returnAmount types.Coin
 		returnType   types.TransferDetailType
 	}{
-		{"normal return coin event", "user1", 100, 100,
-			types.NewCoinFromInt64(100), types.DelegationReturnCoin},
-		{"return coin is insufficient for each round", "user1", 100, 100,
-			types.NewCoinFromInt64(1000), types.DelegationReturnCoin},
-		{"only one return event", "user1", 1, 100,
-			types.NewCoinFromInt64(1000), types.DelegationReturnCoin},
-		{"no return interval", "user1", 100, 0,
-			types.NewCoinFromInt64(1000), types.DelegationReturnCoin},
-		{"if return time is zero", "user1", 0, 0,
-			types.NewCoinFromInt64(1000), types.DelegationReturnCoin},
-		{"return to different user", "user2", 1, 0,
-			types.NewCoinFromInt64(1000), types.DelegationReturnCoin},
-		{"different return type", "user2", 1, 0,
-			types.NewCoinFromInt64(1000), types.VoteReturnCoin},
+		{
+			testName:     "normal return coin event",
+			username:     "user1",
+			times:        100,
+			interval:     100,
+			returnAmount: types.NewCoinFromInt64(100),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "return coin is insufficient for each round",
+			username:     "user1",
+			times:        100,
+			interval:     100,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "only one return event",
+			username:     "user1",
+			times:        1,
+			interval:     100,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "no return interval",
+			username:     "user1",
+			times:        100,
+			interval:     0,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "if return time is zero",
+			username:     "user1",
+			times:        0,
+			interval:     0,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "return to different user",
+			username:     "user2",
+			times:        1,
+			interval:     0,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.DelegationReturnCoin,
+		},
+		{
+			testName:     "different return type",
+			username:     "user2",
+			times:        1,
+			interval:     0,
+			returnAmount: types.NewCoinFromInt64(1000),
+			returnType:   types.VoteReturnCoin,
+		},
 	}
 
 	for _, tc := range testCases {
 		events, err := CreateCoinReturnEvents(
 			tc.username, tc.times, tc.interval, tc.returnAmount, tc.returnType)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to create coin return events, got err %v", tc.testName, err)
+		}
+
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
 			returnCoin, err := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
-			assert.Nil(t, err)
+			if err != nil {
+				t.Errorf("%s: failed to convert coin, got err %v", tc.testName, err)
+			}
+
 			event := ReturnCoinEvent{
 				Username:   tc.username,
 				Amount:     returnCoin,
@@ -51,7 +99,10 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 			tc.returnAmount = tc.returnAmount.Minus(returnCoin)
 			expectEvents = append(expectEvents, event)
 		}
-		assert.Equal(t, expectEvents, events)
+
+		if !assert.Equal(t, expectEvents, events) {
+			t.Errorf("%s: diff events, got %v, want %v", tc.testName, events, expectEvents)
+		}
 	}
 }
 
@@ -65,18 +116,22 @@ func TestReturnCoinEvent(t *testing.T) {
 	testCases := []struct {
 		testName             string
 		event                ReturnCoinEvent
-		AtWhen               int64
+		atWhen               int64
 		expectSaving         types.Coin
 		expectBalanceHistory model.BalanceHistory
 	}{
-		{"normal return case", ReturnCoinEvent{
-			Username:   "user1",
-			Amount:     types.NewCoinFromInt64(100),
-			ReturnType: types.DelegationReturnCoin,
-		}, baseTime, types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
-			model.BalanceHistory{
+		{
+			testName: "normal return case",
+			event: ReturnCoinEvent{
+				Username:   "user1",
+				Amount:     types.NewCoinFromInt64(100),
+				ReturnType: types.DelegationReturnCoin,
+			},
+			atWhen:       baseTime,
+			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			expectBalanceHistory: model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					{
 						From:       "",
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
@@ -85,20 +140,24 @@ func TestReturnCoinEvent(t *testing.T) {
 				},
 			},
 		},
-		{"return zero coin", ReturnCoinEvent{
-			Username:   "user1",
-			Amount:     types.NewCoinFromInt64(0),
-			ReturnType: types.VoteReturnCoin,
-		}, baseTime, types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
-			model.BalanceHistory{
+		{
+			testName: "return zero coin",
+			event: ReturnCoinEvent{
+				Username:   "user1",
+				Amount:     types.NewCoinFromInt64(0),
+				ReturnType: types.VoteReturnCoin,
+			},
+			atWhen:       baseTime,
+			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			expectBalanceHistory: model.BalanceHistory{
 				[]model.Detail{
-					model.Detail{
+					{
 						From:       "",
 						DetailType: types.DelegationReturnCoin,
 						Amount:     types.NewCoinFromInt64(100),
 						CreatedAt:  baseTime,
 					},
-					model.Detail{
+					{
 						From:       "",
 						DetailType: types.VoteReturnCoin,
 						Amount:     types.NewCoinFromInt64(0),
@@ -111,9 +170,15 @@ func TestReturnCoinEvent(t *testing.T) {
 
 	for _, tc := range testCases {
 		err := tc.event.Execute(ctx, am)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to execute event, got err %v", tc.testName, err)
+		}
 		saving, err := am.GetSavingFromBank(ctx, tc.event.Username)
-		assert.Nil(t, err)
-		assert.Equal(t, saving, tc.expectSaving)
+		if err != nil {
+			t.Errorf("%s: failed to get saving from bank, got err %v", tc.testName, err)
+		}
+		if !saving.IsEqual(tc.expectSaving) {
+			t.Errorf("%s: diff saving, got %v, want %v", tc.testName, saving, tc.expectSaving)
+		}
 	}
 }

@@ -60,38 +60,93 @@ func TestTPS(t *testing.T) {
 	baseTime := time.Now().Unix()
 	var initMaxTPS = sdk.NewRat(1000)
 
-	cases := []struct {
-		BaseTime            int64
-		NextTime            int64
-		NumOfTx             int32
-		ExpectCurrentTPS    sdk.Rat
-		ExpectMaxTPS        sdk.Rat
-		ExpectCapacityRatio sdk.Rat
+	testCases := []struct {
+		testName            string
+		baseTime            int64
+		nextTime            int64
+		numOfTx             int32
+		expectCurrentTPS    sdk.Rat
+		expectMaxTPS        sdk.Rat
+		expectCapacityRatio sdk.Rat
 	}{
-		{BaseTime: baseTime, NextTime: baseTime, NumOfTx: 0, ExpectCurrentTPS: sdk.ZeroRat(),
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.ZeroRat()},
-		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2, ExpectCurrentTPS: sdk.OneRat(),
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.NewRat(1, 1000)},
-		{BaseTime: baseTime, NextTime: baseTime + 1, NumOfTx: 1000, ExpectCurrentTPS: initMaxTPS,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat()},
-		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2000, ExpectCurrentTPS: initMaxTPS,
-			ExpectMaxTPS: initMaxTPS, ExpectCapacityRatio: sdk.OneRat()},
-		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 3000, ExpectCurrentTPS: sdk.NewRat(1500),
-			ExpectMaxTPS: sdk.NewRat(1500), ExpectCapacityRatio: sdk.OneRat()},
-		{BaseTime: baseTime, NextTime: baseTime + 2, NumOfTx: 2000, ExpectCurrentTPS: sdk.NewRat(1000),
-			ExpectMaxTPS: sdk.NewRat(1500), ExpectCapacityRatio: sdk.NewRat(2, 3)},
+		{
+			testName:            "0 tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime,
+			numOfTx:             0,
+			expectCurrentTPS:    sdk.ZeroRat(),
+			expectMaxTPS:        initMaxTPS,
+			expectCapacityRatio: sdk.ZeroRat(),
+		},
+		{
+			testName:            "2/2 got 1 current tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime + 2,
+			numOfTx:             2,
+			expectCurrentTPS:    sdk.OneRat(),
+			expectMaxTPS:        initMaxTPS,
+			expectCapacityRatio: sdk.NewRat(1, 1000),
+		},
+		{
+			testName:            "1000/1 got max tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime + 1,
+			numOfTx:             1000,
+			expectCurrentTPS:    initMaxTPS,
+			expectMaxTPS:        initMaxTPS,
+			expectCapacityRatio: sdk.OneRat(),
+		},
+		{
+			testName:            "2000/2 got max tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime + 2,
+			numOfTx:             2000,
+			expectCurrentTPS:    initMaxTPS,
+			expectMaxTPS:        initMaxTPS,
+			expectCapacityRatio: sdk.OneRat(),
+		},
+		{
+			testName:            "3000/2 got 1500 current tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime + 2,
+			numOfTx:             3000,
+			expectCurrentTPS:    sdk.NewRat(1500),
+			expectMaxTPS:        sdk.NewRat(1500),
+			expectCapacityRatio: sdk.OneRat(),
+		},
+		{
+			testName:            "2000/2 got 1000 current tps",
+			baseTime:            baseTime,
+			nextTime:            baseTime + 2,
+			numOfTx:             2000,
+			expectCurrentTPS:    sdk.NewRat(1000),
+			expectMaxTPS:        sdk.NewRat(1500),
+			expectCapacityRatio: sdk.NewRat(2, 3),
+		},
 	}
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.NextTime, NumTxs: cs.NumOfTx})
-		err := gm.UpdateTPS(ctx, cs.BaseTime)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.nextTime, NumTxs: tc.numOfTx})
+		err := gm.UpdateTPS(ctx, tc.baseTime)
+		if err != nil {
+			t.Errorf("%s: failed to update TPS, got err %v", tc.testName, err)
+		}
+
 		storage := model.NewGlobalStorage(TestGlobalKVStoreKey)
 		tps, err := storage.GetTPS(ctx)
-		assert.Equal(t, true, cs.ExpectCurrentTPS.Equal(tps.CurrentTPS))
-		assert.Equal(t, true, cs.ExpectMaxTPS.Equal(tps.MaxTPS))
+		if !tc.expectCurrentTPS.Equal(tps.CurrentTPS) {
+			t.Errorf("%s: diff current tps, got %v, want %v", tc.testName, tps.CurrentTPS, tc.expectCurrentTPS)
+		}
+		if !tc.expectMaxTPS.Equal(tps.MaxTPS) {
+			t.Errorf("%s: diff max tps, got %v, want %v", tc.testName, tps.MaxTPS, tc.expectMaxTPS)
+		}
+
 		ratio, err := gm.GetTPSCapacityRatio(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, true, cs.ExpectCapacityRatio.Equal(ratio))
+		if err != nil {
+			t.Errorf("%s: failed to get TPS capacity ratio, got err %v", tc.testName, err)
+		}
+		if !tc.expectCapacityRatio.Equal(ratio) {
+			t.Errorf("%s: diff ratio, got %v, want %v", tc.testName, ratio, tc.expectCapacityRatio)
+		}
 	}
 }
 
@@ -99,84 +154,216 @@ func TestEvaluateConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time
 	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
-	assert.Nil(t, err)
-	cases := []struct {
+	if err != nil {
+		t.Errorf("TestEvaluateConsumption: failed to get evaluate of content value param, got err %v", err)
+	}
+
+	testCases := []struct {
+		testName                           string
 		createdTime                        int64
 		evaluateTime                       int64
 		expectedTimeAdjustment             float64
 		totalConsumption                   types.Coin
 		expectedTotalConsumptionAdjustment float64
 		numOfConsumptionOnAuthor           int64
-		expectedConumptionTimesAdjustment  float64
-		Consumption                        types.Coin
-		ExpectEvaluateResult               types.Coin
+		expectedConsumptionTimesAdjustment float64
+		consumption                        types.Coin
+		expectEvaluateResult               types.Coin
 	}{
-		{baseTime, baseTime + 3153600*5, 0.5, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 7, 2.5,
-			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(470)},
-		{baseTime, baseTime, 0.9933071490757153, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(1243)},
-		{baseTime, baseTime + 360*24*3600, 0.007667910249215412, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoinFromInt64(1000), types.NewCoinFromInt64(9)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoinFromInt64(5 * types.Decimals), types.NewCoinFromInt64(179346)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(0), 1.9933071490757153, 7, 2.5,
-			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(49489)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(1000 * types.Decimals), 1.9820137900379085, 7, 2.5,
-			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(49209)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 7, 2.5,
-			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(37242)},
-		{baseTime, baseTime + 24*3600, 0.9931225268669581, types.NewCoinFromInt64(5000 * types.Decimals), 1.5, 100, 2,
-			types.NewCoinFromInt64(1 * types.Decimals), types.NewCoinFromInt64(29793)},
+		{
+			testName:                           "evaluate in 182 days",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 3153600*5,
+			expectedTimeAdjustment:             0.5,
+			totalConsumption:                   types.NewCoinFromInt64(5000 * types.Decimals),
+			expectedTotalConsumptionAdjustment: 1.5,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1000),
+			expectEvaluateResult:               types.NewCoinFromInt64(470),
+		},
+		{
+			testName:                           "evaluate immediately",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime,
+			expectedTimeAdjustment:             0.9933071490757153,
+			totalConsumption:                   types.NewCoinFromInt64(0),
+			expectedTotalConsumptionAdjustment: 1.9933071490757153,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1000),
+			expectEvaluateResult:               types.NewCoinFromInt64(1243),
+		},
+		{
+			testName:                           "evaluate in 360 days",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 360*24*3600,
+			expectedTimeAdjustment:             0.007667910249215412,
+			totalConsumption:                   types.NewCoinFromInt64(0),
+			expectedTotalConsumptionAdjustment: 1.9933071490757153,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1000),
+			expectEvaluateResult:               types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                           "evaluate in 1 day with 5 consumption",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 24*3600,
+			expectedTimeAdjustment:             0.9931225268669581,
+			totalConsumption:                   types.NewCoinFromInt64(0),
+			expectedTotalConsumptionAdjustment: 1.9933071490757153,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(5 * types.Decimals),
+			expectEvaluateResult:               types.NewCoinFromInt64(179346),
+		},
+		{
+			testName:                           "evaluate in 1 day with 1 consumption",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 24*3600,
+			expectedTimeAdjustment:             0.9931225268669581,
+			totalConsumption:                   types.NewCoinFromInt64(0),
+			expectedTotalConsumptionAdjustment: 1.9933071490757153,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
+			expectEvaluateResult:               types.NewCoinFromInt64(49489),
+		},
+		{
+			testName:                           "evaluate in 1 day with 1000 total consumption",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 24*3600,
+			expectedTimeAdjustment:             0.9931225268669581,
+			totalConsumption:                   types.NewCoinFromInt64(1000 * types.Decimals),
+			expectedTotalConsumptionAdjustment: 1.9820137900379085,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
+			expectEvaluateResult:               types.NewCoinFromInt64(49209)},
+		{
+			testName:                           "evaluate in 1 day with 5000 total consumption",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 24*3600,
+			expectedTimeAdjustment:             0.9931225268669581,
+			totalConsumption:                   types.NewCoinFromInt64(5000 * types.Decimals),
+			expectedTotalConsumptionAdjustment: 1.5,
+			numOfConsumptionOnAuthor:           7,
+			expectedConsumptionTimesAdjustment: 2.5,
+			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
+			expectEvaluateResult:               types.NewCoinFromInt64(37242),
+		},
+		{
+			testName:                           "evaluate in 1 day with 5000 total consumption and 100 consumption on author",
+			createdTime:                        baseTime,
+			evaluateTime:                       baseTime + 24*3600,
+			expectedTimeAdjustment:             0.9931225268669581,
+			totalConsumption:                   types.NewCoinFromInt64(5000 * types.Decimals),
+			expectedTotalConsumptionAdjustment: 1.5,
+			numOfConsumptionOnAuthor:           100,
+			expectedConsumptionTimesAdjustment: 2,
+			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
+			expectEvaluateResult:               types.NewCoinFromInt64(29793),
+		},
 	}
 
-	for _, cs := range cases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.evaluateTime})
-		assert.Equal(t, cs.expectedTotalConsumptionAdjustment,
-			PostTotalConsumptionAdjustment(cs.totalConsumption, paras))
-		assert.Equal(t, cs.expectedTimeAdjustment,
-			PostTimeAdjustment(cs.evaluateTime-cs.createdTime, paras))
-		assert.Equal(t, cs.expectedConumptionTimesAdjustment,
-			PostConsumptionTimesAdjustment(cs.numOfConsumptionOnAuthor, paras))
+	for _, tc := range testCases {
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.evaluateTime})
+		if PostTotalConsumptionAdjustment(tc.totalConsumption, paras) != tc.expectedTotalConsumptionAdjustment {
+			t.Errorf("%s: diff total consumption adjustment, got %v, want %v", tc.testName,
+				PostTotalConsumptionAdjustment(tc.totalConsumption, paras), tc.expectedTotalConsumptionAdjustment)
+		}
+		if PostTimeAdjustment(tc.evaluateTime-tc.createdTime, paras) != tc.expectedTimeAdjustment {
+			t.Errorf("%s: diff time adjustment, got %v, want %v", tc.testName,
+				PostTimeAdjustment(tc.evaluateTime-tc.createdTime, paras), tc.expectedTimeAdjustment)
+		}
+		if PostConsumptionTimesAdjustment(tc.numOfConsumptionOnAuthor, paras) != tc.expectedConsumptionTimesAdjustment {
+			t.Errorf("%s: diff consumption times adjustment, got %v, want %v", tc.testName,
+				PostConsumptionTimesAdjustment(tc.numOfConsumptionOnAuthor, paras), tc.expectedConsumptionTimesAdjustment)
+		}
+
 		evaluateResult, err := gm.EvaluateConsumption(
-			newCtx, cs.Consumption, cs.numOfConsumptionOnAuthor,
-			cs.createdTime, cs.totalConsumption)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.ExpectEvaluateResult, evaluateResult)
+			newCtx, tc.consumption, tc.numOfConsumptionOnAuthor,
+			tc.createdTime, tc.totalConsumption)
+		if err != nil {
+			t.Errorf("%s: failed to evaluate consumption, got err %v", tc.testName, err)
+		}
+		if !evaluateResult.IsEqual(tc.expectEvaluateResult) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, evaluateResult, tc.expectEvaluateResult)
+		}
 	}
 }
 
 func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time
-	cases := []struct {
+	testCases := []struct {
+		testName               string
 		frictionCoin           types.Coin
 		evaluateCoin           types.Coin
 		registerBaseTime       int64
 		expectCoinInRewardPool types.Coin
 		expectCoinInWindow     types.Coin
 	}{
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(1), baseTime, types.NewCoinFromInt64(1), types.NewCoinFromInt64(1)},
-		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(1), baseTime + 100, types.NewCoinFromInt64(101), types.NewCoinFromInt64(2)},
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(100), baseTime + 1001, types.NewCoinFromInt64(102), types.NewCoinFromInt64(102)},
+		{
+			testName:               "add 1 friction",
+			frictionCoin:           types.NewCoinFromInt64(1),
+			evaluateCoin:           types.NewCoinFromInt64(1),
+			registerBaseTime:       baseTime,
+			expectCoinInRewardPool: types.NewCoinFromInt64(1),
+			expectCoinInWindow:     types.NewCoinFromInt64(1),
+		},
+		{
+			testName:               "add 100 more friction",
+			frictionCoin:           types.NewCoinFromInt64(100),
+			evaluateCoin:           types.NewCoinFromInt64(1),
+			registerBaseTime:       baseTime + 100,
+			expectCoinInRewardPool: types.NewCoinFromInt64(101),
+			expectCoinInWindow:     types.NewCoinFromInt64(2),
+		},
+		{
+			testName:               "add 1 more friction",
+			frictionCoin:           types.NewCoinFromInt64(1),
+			evaluateCoin:           types.NewCoinFromInt64(100),
+			registerBaseTime:       baseTime + 1001,
+			expectCoinInRewardPool: types.NewCoinFromInt64(102),
+			expectCoinInWindow:     types.NewCoinFromInt64(102),
+		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.registerBaseTime})
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.registerBaseTime})
 		err := gm.AddFrictionAndRegisterContentRewardEvent(
-			ctx, testEvent{}, cs.frictionCoin, cs.evaluateCoin)
-		assert.Nil(t, err)
+			ctx, testEvent{}, tc.frictionCoin, tc.evaluateCoin)
+		if err != nil {
+			t.Errorf("%s: failed to add friction and register event, got err %v", tc.testName, err)
+		}
+
 		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectCoinInRewardPool, consumptionMeta.ConsumptionRewardPool)
-		assert.Equal(t, cs.expectCoinInWindow, consumptionMeta.ConsumptionWindow)
-		timeEventList := gm.GetTimeEventListAtTime(ctx, cs.registerBaseTime+24*7*3600)
-		assert.Equal(t, types.TimeEventList{[]types.Event{testEvent{}}}, *timeEventList)
+		if err != nil {
+			t.Errorf("%s: failed to get consumption meta, got err %v", tc.testName, err)
+		}
+		if consumptionMeta.ConsumptionRewardPool != tc.expectCoinInRewardPool {
+			t.Errorf("%s: diff consumption reward pool, got %v, want %v", tc.testName,
+				consumptionMeta.ConsumptionRewardPool, tc.expectCoinInRewardPool)
+		}
+		if consumptionMeta.ConsumptionWindow != tc.expectCoinInWindow {
+			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
+				consumptionMeta.ConsumptionWindow, tc.expectCoinInWindow)
+		}
+
+		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.registerBaseTime+24*7*3600)
+		if !assert.Equal(t, types.TimeEventList{[]types.Event{testEvent{}}}, *timeEventList) {
+			t.Errorf("%s: diff event list, got %v, want %v", tc.testName,
+				*timeEventList, types.TimeEventList{[]types.Event{testEvent{}}})
+		}
 	}
 }
 
 func TestGetRewardAndPopFromWindow(t *testing.T) {
 	ctx, gm := setupTest(t)
-	cases := []struct {
+	testCases := []struct {
+		testName                    string
 		evaluate                    types.Coin
 		penaltyScore                sdk.Rat
 		expectReward                types.Coin
@@ -185,119 +372,295 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		expectConsumptionRewardPool types.Coin
 		expectConsumptionWindow     types.Coin
 	}{
-		{types.NewCoinFromInt64(1), sdk.ZeroRat(), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), sdk.NewRat(1, 1000), types.NewCoinFromInt64(100), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(900), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), sdk.NewRat(6, 1000), types.NewCoinFromInt64(99), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(901), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), sdk.NewRat(1, 10), types.NewCoinFromInt64(90), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(910), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), sdk.NewRat(5, 10), types.NewCoinFromInt64(50), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(950), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(1), sdk.NewRat(1, 1), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(9)},
-		{types.NewCoinFromInt64(0), sdk.ZeroRat(), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
-		{types.NewCoinFromInt64(0), sdk.OneRat(), types.NewCoinFromInt64(0), types.NewCoinFromInt64(1000),
-			types.NewCoinFromInt64(10), types.NewCoinFromInt64(1000), types.NewCoinFromInt64(10)},
+		{
+			testName:                    "1 evaluate, 0 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.ZeroRat(),
+			expectReward:                types.NewCoinFromInt64(100),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(900),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                    "1/1000 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.NewRat(1, 1000),
+			expectReward:                types.NewCoinFromInt64(100),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(900),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                    "6/1000 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.NewRat(6, 1000),
+			expectReward:                types.NewCoinFromInt64(99),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(901),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9)},
+		{
+			testName:                    "1/10 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.NewRat(1, 10),
+			expectReward:                types.NewCoinFromInt64(90),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(910),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                    "5/10 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.NewRat(5, 10),
+			expectReward:                types.NewCoinFromInt64(50),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(950),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                    "1/1 penalty",
+			evaluate:                    types.NewCoinFromInt64(1),
+			penaltyScore:                sdk.NewRat(1, 1),
+			expectReward:                types.NewCoinFromInt64(0),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
+			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+		},
+		{
+			testName:                    "6/1000 penalty",
+			evaluate:                    types.NewCoinFromInt64(0),
+			penaltyScore:                sdk.ZeroRat(),
+			expectReward:                types.NewCoinFromInt64(0),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
+			expectConsumptionWindow:     types.NewCoinFromInt64(10),
+		},
+		{
+			testName:                    "0 evaluate, 0 penalty",
+			evaluate:                    types.NewCoinFromInt64(0),
+			penaltyScore:                sdk.OneRat(),
+			expectReward:                types.NewCoinFromInt64(0),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
+			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
+			expectConsumptionWindow:     types.NewCoinFromInt64(10),
+		},
 		// issue https://github.com/lino-network/lino/issues/150
-		{types.NewCoinFromInt64(77777777777777), sdk.ZeroRat(), types.NewCoinFromInt64(23333333),
-			types.NewCoinFromInt64(100000000), types.NewCoinFromInt64(333333333333333),
-			types.NewCoinFromInt64(76666667), types.NewCoinFromInt64(255555555555556)},
+		{
+			testName:                    "test overflow",
+			evaluate:                    types.NewCoinFromInt64(77777777777777),
+			penaltyScore:                sdk.ZeroRat(),
+			expectReward:                types.NewCoinFromInt64(23333333),
+			initConsumptionRewardPool:   types.NewCoinFromInt64(100000000),
+			initConsumptionWindow:       types.NewCoinFromInt64(333333333333333),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(76666667),
+			expectConsumptionWindow:     types.NewCoinFromInt64(255555555555556),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
-		assert.Nil(t, err)
-		consumptionMeta.ConsumptionRewardPool = cs.initConsumptionRewardPool
-		consumptionMeta.ConsumptionWindow = cs.initConsumptionWindow
+		if err != nil {
+			t.Errorf("%s: failed to get consumption meta, got err %v", tc.testName, err)
+		}
+
+		consumptionMeta.ConsumptionRewardPool = tc.initConsumptionRewardPool
+		consumptionMeta.ConsumptionWindow = tc.initConsumptionWindow
+
 		err = gm.storage.SetConsumptionMeta(ctx, consumptionMeta)
-		assert.Nil(t, err)
-		reward, err := gm.GetRewardAndPopFromWindow(ctx, cs.evaluate, cs.penaltyScore)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectReward, reward)
+		if err != nil {
+			t.Errorf("%s: failed to set consumption meta, got err %v", tc.testName, err)
+		}
+
+		reward, err := gm.GetRewardAndPopFromWindow(ctx, tc.evaluate, tc.penaltyScore)
+		if err != nil {
+			t.Errorf("%s: failed to get reward and pop from window, got err %v", tc.testName, err)
+		}
+		if !reward.IsEqual(tc.expectReward) {
+			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, reward, tc.expectReward)
+		}
+
 		consumptionMeta, err = gm.storage.GetConsumptionMeta(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectConsumptionRewardPool, consumptionMeta.ConsumptionRewardPool)
-		assert.Equal(t, cs.expectConsumptionWindow, consumptionMeta.ConsumptionWindow)
+		if err != nil {
+			t.Errorf("%s: failed to get consumption meta again, got err %v", tc.testName, err)
+		}
+		if !consumptionMeta.ConsumptionRewardPool.IsEqual(tc.expectConsumptionRewardPool) {
+			t.Errorf("%s: diff consumption reward pool, got %v, want %v", tc.testName,
+				consumptionMeta.ConsumptionRewardPool, tc.expectConsumptionRewardPool)
+		}
+		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectConsumptionWindow) {
+			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
+				consumptionMeta.ConsumptionWindow, tc.expectConsumptionWindow)
+		}
 	}
 }
 
 func TestTimeEventList(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time
-	regcases := []struct {
+	regCases := []struct {
+		testName        string
 		registerAtTime  int64
 		expectResult    sdk.Error
 		expectEventList *types.TimeEventList
 	}{
-		{baseTime, nil, &types.TimeEventList{[]types.Event{testEvent{}}}},
-		{baseTime, nil, &types.TimeEventList{[]types.Event{testEvent{}, testEvent{}}}},
-		{baseTime - 1, ErrRegisterExpiredEvent(baseTime - 1), nil},
-		{baseTime + 1, nil, &types.TimeEventList{[]types.Event{testEvent{}}}},
+		{
+			testName:        "register one event",
+			registerAtTime:  baseTime,
+			expectResult:    nil,
+			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}}},
+		},
+		{
+			testName:        "register two events",
+			registerAtTime:  baseTime,
+			expectResult:    nil,
+			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}, testEvent{}}}},
+		{
+			testName:        "can't register expired event",
+			registerAtTime:  baseTime - 1,
+			expectResult:    ErrRegisterExpiredEvent(baseTime - 1),
+			expectEventList: nil,
+		},
+		{
+			testName:        "register one event again",
+			registerAtTime:  baseTime + 1,
+			expectResult:    nil,
+			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}}},
+		},
 	}
 
-	for _, cs := range regcases {
-		err := gm.registerEventAtTime(ctx, cs.registerAtTime, testEvent{})
-		assert.Equal(t, cs.expectResult, err)
-		eventList := gm.GetTimeEventListAtTime(ctx, cs.registerAtTime)
-		assert.Equal(t, cs.expectEventList, eventList)
+	for _, tc := range regCases {
+		err := gm.registerEventAtTime(ctx, tc.registerAtTime, testEvent{})
+		if !assert.Equal(t, tc.expectResult, err) {
+			t.Errorf("%s: diff err result, got %v, want %v", tc.testName, err, tc.expectResult)
+		}
+		eventList := gm.GetTimeEventListAtTime(ctx, tc.registerAtTime)
+		if !assert.Equal(t, tc.expectEventList, eventList) {
+			t.Errorf("%s: diff event list, got %v, want %v", tc.testName, eventList, tc.expectEventList)
+		}
 	}
 
-	rmcases := []struct {
+	rmCases := []struct {
+		testName        string
 		removeAtTime    int64
 		expectEventList *types.TimeEventList
 	}{
-		{baseTime, nil},
-		{baseTime - 1, nil},
-		{baseTime + 1, nil},
+		{
+			testName:        "remove event",
+			removeAtTime:    baseTime,
+			expectEventList: nil,
+		},
+		{
+			testName:        "remove expired event",
+			removeAtTime:    baseTime - 1,
+			expectEventList: nil,
+		},
+		{
+			testName:        "remove future event",
+			removeAtTime:    baseTime + 1,
+			expectEventList: nil,
+		},
 	}
 
-	for _, cs := range rmcases {
-		err := gm.RemoveTimeEventList(ctx, cs.removeAtTime)
-		assert.Nil(t, err)
-		eventList := gm.GetTimeEventListAtTime(ctx, cs.removeAtTime)
-		assert.Equal(t, cs.expectEventList, eventList)
+	for _, tc := range rmCases {
+		err := gm.RemoveTimeEventList(ctx, tc.removeAtTime)
+		if err != nil {
+			t.Errorf("%s: failed to remove time event list, got err %v", tc.testName, err)
+		}
+		eventList := gm.GetTimeEventListAtTime(ctx, tc.removeAtTime)
+		if !assert.Equal(t, tc.expectEventList, eventList) {
+			t.Errorf("%s: diff event list, got %v, want %v", tc.testName, eventList, tc.expectEventList)
+		}
 	}
 }
 
 func TestRegisterCoinReturnEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time
-	cases := []struct {
+	testCases := []struct {
+		testName               string
 		registerAtTime         int64
 		times                  int64
 		interval               int64
 		expectTimeWithTwoEvent []int64
 		expectTimeWithOneEvent []int64
 	}{
-		{baseTime, 5, 10, []int64{},
-			[]int64{baseTime + 10*3600, baseTime + 20*3600, baseTime + 30*3600,
-				baseTime + 40*3600, baseTime + 50*3600}},
-		{baseTime, 2, 10, []int64{baseTime + 10*3600, baseTime + 20*3600},
-			[]int64{baseTime + 30*3600, baseTime + 40*3600, baseTime + 50*3600}},
-		{baseTime + 20*3600, 4, 5,
-			[]int64{baseTime + 10*3600, baseTime + 20*3600, baseTime + 30*3600,
-				baseTime + 40*3600},
-			[]int64{baseTime + 25*3600, baseTime + 35*3600, baseTime + 50*3600}},
+		{
+			testName:               "one event with 5 times",
+			registerAtTime:         baseTime,
+			times:                  5,
+			interval:               10,
+			expectTimeWithTwoEvent: []int64{},
+			expectTimeWithOneEvent: []int64{
+				baseTime + 10*3600,
+				baseTime + 20*3600,
+				baseTime + 30*3600,
+				baseTime + 40*3600,
+				baseTime + 50*3600,
+			},
+		},
+		{
+			testName:       "two event with 2 times and one event with 3 times",
+			registerAtTime: baseTime,
+			times:          2,
+			interval:       10,
+			expectTimeWithTwoEvent: []int64{
+				baseTime + 10*3600,
+				baseTime + 20*3600,
+			},
+			expectTimeWithOneEvent: []int64{
+				baseTime + 30*3600,
+				baseTime + 40*3600,
+				baseTime + 50*3600,
+			},
+		},
+		{
+			testName:       "two event with 4 times and one event with 3 times",
+			registerAtTime: baseTime + 20*3600,
+			times:          4,
+			interval:       5,
+			expectTimeWithTwoEvent: []int64{
+				baseTime + 10*3600,
+				baseTime + 20*3600,
+				baseTime + 30*3600,
+				baseTime + 40*3600,
+			},
+			expectTimeWithOneEvent: []int64{
+				baseTime + 25*3600,
+				baseTime + 35*3600,
+				baseTime + 50*3600,
+			},
+		},
 	}
 
-	for _, cs := range cases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: cs.registerAtTime})
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.registerAtTime})
 		events := []types.Event{}
-		for i := int64(0); i < cs.times; i++ {
+		for i := int64(0); i < tc.times; i++ {
 			events = append(events, testEvent{})
 		}
-		err := gm.RegisterCoinReturnEvent(ctx, events, cs.times, cs.interval)
-		assert.Nil(t, err)
-		for _, time := range cs.expectTimeWithOneEvent {
-			eventList := gm.GetTimeEventListAtTime(ctx, time)
-			assert.Equal(t, 1, len(eventList.Events))
+		err := gm.RegisterCoinReturnEvent(ctx, events, tc.times, tc.interval)
+		if err != nil {
+			t.Errorf("%s: failed to register coin return event, got err %v", tc.testName, err)
 		}
-		for _, time := range cs.expectTimeWithTwoEvent {
+
+		for _, time := range tc.expectTimeWithOneEvent {
 			eventList := gm.GetTimeEventListAtTime(ctx, time)
-			assert.Equal(t, 2, len(eventList.Events))
+			if len(eventList.Events) != 1 {
+				t.Errorf("%s: diff time one event, got %v, want 1", tc.testName, len(eventList.Events))
+			}
+		}
+		for _, time := range tc.expectTimeWithTwoEvent {
+			eventList := gm.GetTimeEventListAtTime(ctx, time)
+			if len(eventList.Events) != 2 {
+				t.Errorf("%s: diff time one event, got %v, want 1", tc.testName, len(eventList.Events))
+			}
 		}
 	}
 }
@@ -335,63 +698,121 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 	ceiling := sdk.NewRat(98, 1000)
 	floor := sdk.NewRat(30, 1000)
 
-	cases := []struct {
-		lastYearConsumtion types.Coin
-		thisYearConsumtion types.Coin
-		expectGrowthRate   sdk.Rat
+	testCases := []struct {
+		testName            string
+		lastYearConsumption types.Coin
+		thisYearConsumption types.Coin
+		expectGrowthRate    sdk.Rat
 	}{
-		{types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(100000000 * types.Decimals), floor},
-		{types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(103000000 * types.Decimals), floor},
-		{types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(1098000000 * types.Decimals), ceiling},
-		{types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(1099000000 * types.Decimals), ceiling},
-		{types.NewCoinFromInt64(100000000 * types.Decimals),
-			types.NewCoinFromInt64(90000000 * types.Decimals), floor},
+		{
+			testName:            "same consumption of last year and this year, get floor growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "right equal to floor growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "right equal to ceiling growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(1098000000 * types.Decimals),
+			expectGrowthRate:    ceiling,
+		},
+		{
+			testName:            "bigger than ceiling will be rounded to ceiling growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(1099000000 * types.Decimals),
+			expectGrowthRate:    ceiling,
+		},
+		{
+			testName:            "less year consumption will use floor growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(90000000 * types.Decimals),
+			expectGrowthRate:    floor,
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		globalMeta := &model.GlobalMeta{
 			TotalLinoCoin:                 totalLino,
-			LastYearCumulativeConsumption: cs.lastYearConsumtion,
-			CumulativeConsumption:         cs.thisYearConsumtion,
+			LastYearCumulativeConsumption: tc.lastYearConsumption,
+			CumulativeConsumption:         tc.thisYearConsumption,
 			GrowthRate:                    ceiling,
 			Ceiling:                       ceiling,
 			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
+		}
+
 		err = gm.RecalculateAnnuallyInflation(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to recalculate annually inflation, got err %v", tc.testName, err)
+		}
+
 		pool, err := gm.storage.GetInflationPool(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", tc.testName, err)
+		}
+
 		allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get global allocation param, got err %v", tc.testName, err)
+		}
+
 		expectDeveloperInflation, _ := types.RatToCoin(
 			allocation.DeveloperAllocation.Mul(
-				totalLino.ToRat().Mul(cs.expectGrowthRate)))
-		assert.Equal(t, expectDeveloperInflation, pool.DeveloperInflationPool)
+				totalLino.ToRat().Mul(tc.expectGrowthRate)))
+		if !expectDeveloperInflation.IsEqual(pool.DeveloperInflationPool) {
+			t.Errorf("%s: diff developer inflation, got %v, want %v", tc.testName,
+				pool.DeveloperInflationPool, expectDeveloperInflation)
+		}
+
 		expectContentCreatorInflation, _ := types.RatToCoin(
 			allocation.ContentCreatorAllocation.Mul(
-				totalLino.ToRat().Mul(cs.expectGrowthRate)))
-		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
+				totalLino.ToRat().Mul(tc.expectGrowthRate)))
+		if !expectContentCreatorInflation.IsEqual(pool.ContentCreatorInflationPool) {
+			t.Errorf("%s: diff content creator inflation, got %v, want %v", tc.testName,
+				pool.ContentCreatorInflationPool, expectContentCreatorInflation)
+		}
+
 		expectInfraInflation, _ := types.RatToCoin(
 			allocation.InfraAllocation.Mul(
-				totalLino.ToRat().Mul(cs.expectGrowthRate)))
-		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
+				totalLino.ToRat().Mul(tc.expectGrowthRate)))
+		if !expectInfraInflation.IsEqual(pool.InfraInflationPool) {
+			t.Errorf("%s: diff infra inflation, got %v, want %v", tc.testName,
+				pool.InfraInflationPool, expectInfraInflation)
+		}
+
 		expectValidatorInflation, _ := types.RatToCoin(
 			allocation.ValidatorAllocation.Mul(
-				totalLino.ToRat().Mul(cs.expectGrowthRate)))
-		assert.Equal(t, expectValidatorInflation, pool.ValidatorInflationPool)
-		assert.Equal(t, expectContentCreatorInflation, pool.ContentCreatorInflationPool)
-		assert.Equal(t, expectInfraInflation, pool.InfraInflationPool)
-		assert.Equal(t, expectValidatorInflation, pool.ValidatorInflationPool)
+				totalLino.ToRat().Mul(tc.expectGrowthRate)))
+		if !expectValidatorInflation.IsEqual(pool.ValidatorInflationPool) {
+			t.Errorf("%s: diff validator inflation, got %v, want %v", tc.testName,
+				pool.ValidatorInflationPool, expectValidatorInflation)
+		}
+
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.thisYearConsumtion, globalMeta.LastYearCumulativeConsumption)
-		assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.CumulativeConsumption)
+		if err != nil {
+			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+		}
+		if !expectValidatorInflation.IsEqual(pool.ValidatorInflationPool) {
+			t.Errorf("%s: diff validator inflation, got %v, want %v", tc.testName,
+				pool.ValidatorInflationPool, expectValidatorInflation)
+		}
+		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
+			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
+				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
+		}
+		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
+			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
+				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
+		}
 	}
 }
 
@@ -404,60 +825,146 @@ func TestGetGrowthRate(t *testing.T) {
 	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
 	bigLastYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigLastYearConsumption)
 	bigThisYearConsumptionCoin, _ := types.NewCoinFromBigInt(bigThisYearConsumption)
-	cases := []struct {
-		lastYearConsumtion types.Coin
-		thisYearConsumtion types.Coin
-		lastYearGrowthRate sdk.Rat
-		expectGrowthRate   sdk.Rat
+
+	testCases := []struct {
+		testName            string
+		lastYearConsumption types.Coin
+		thisYearConsumption types.Coin
+		lastYearGrowthRate  sdk.Rat
+		expectGrowthRate    sdk.Rat
 	}{
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(0 * types.Decimals),
-			sdk.NewRat(98, 1000), floor},
-		{types.NewCoinFromInt64(0 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
-			sdk.NewRat(98, 1000), sdk.NewRat(98, 1000)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100000000 * types.Decimals),
-			sdk.NewRat(98, 1000), floor},
-		{types.NewCoinFromInt64(0), types.NewCoinFromInt64(100000000 * types.Decimals),
-			sdk.NewRat(98, 1000), sdk.NewRat(98, 1000)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(100010000 * types.Decimals),
-			sdk.NewRat(98, 1000), floor},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(102900000 * types.Decimals),
-			sdk.NewRat(98, 1000), floor},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103000000 * types.Decimals),
-			sdk.NewRat(98, 1000), floor},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(103100000 * types.Decimals),
-			sdk.NewRat(98, 1000), sdk.NewRat(31, 1000)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109800000 * types.Decimals),
-			sdk.NewRat(98, 1000), ceiling},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109900000 * types.Decimals),
-			sdk.NewRat(98, 1000), ceiling},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(109700000 * types.Decimals),
-			sdk.NewRat(98, 1000), sdk.NewRat(97, 1000)},
-		{types.NewCoinFromInt64(100000000 * types.Decimals), types.NewCoinFromInt64(104700000 * types.Decimals),
-			sdk.NewRat(98, 1000), sdk.NewRat(47, 1000)},
+		{
+			testName:            "floor growth rate, 0 thisYearConsumption",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "ceiling growth rate, 0 lastYearConsumption",
+			lastYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(98, 1000),
+		},
+		{
+			testName:            "floor growth rate, thisYearConsumption = lastYearConsumption",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "ceiling growth rate, 0 lastYearConsumption",
+			lastYearConsumption: types.NewCoinFromInt64(0),
+			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(98, 1000),
+		},
+		{
+			testName:            "less than floor will be rounded to floor growth rate 1",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(100010000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "less than floor will be rounded to floor growth rate 2",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(102900000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "less than floor will be rounded to floor growth rate 3",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    floor,
+		},
+		{
+			testName:            "growth rate between floor and ceiling 1",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(103100000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(31, 1000),
+		},
+		{
+			testName:            "right equal to ceiling growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(109800000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    ceiling,
+		},
+		{
+			testName:            "higher than ceiling will be rouned to ceiling growth rate",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(109900000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    ceiling,
+		},
+		{
+			testName:            "growth rate between floor and ceiling 2",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(109700000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(97, 1000),
+		},
+		{
+			testName:            "growth rate between floor and ceiling 3",
+			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+			thisYearConsumption: types.NewCoinFromInt64(104700000 * types.Decimals),
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(47, 1000),
+		},
 		// issue https://github.com/lino-network/lino/issues/150
-		{bigLastYearConsumptionCoin, bigThisYearConsumptionCoin,
-			sdk.NewRat(98, 1000), sdk.NewRat(71, 1000)},
+		{
+			testName:            "overflow testing",
+			lastYearConsumption: bigLastYearConsumptionCoin,
+			thisYearConsumption: bigThisYearConsumptionCoin,
+			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			expectGrowthRate:    sdk.NewRat(71, 1000),
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		globalMeta := &model.GlobalMeta{
 			TotalLinoCoin:                 totalLino,
-			LastYearCumulativeConsumption: cs.lastYearConsumtion,
-			CumulativeConsumption:         cs.thisYearConsumtion,
-			GrowthRate:                    cs.lastYearGrowthRate,
+			LastYearCumulativeConsumption: tc.lastYearConsumption,
+			CumulativeConsumption:         tc.thisYearConsumption,
+			GrowthRate:                    tc.lastYearGrowthRate,
 			Ceiling:                       ceiling,
 			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
+		}
+
 		growthRate, err := gm.getGrowthRate(ctx)
-		assert.Nil(t, err)
-		assert.True(t, cs.expectGrowthRate.Equal(growthRate))
+		if err != nil {
+			t.Errorf("%s: failed to get growth rate, got err %v", tc.testName, err)
+		}
+		if !tc.expectGrowthRate.Equal(growthRate) {
+			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName, growthRate, tc.expectGrowthRate)
+		}
+
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.thisYearConsumtion, globalMeta.LastYearCumulativeConsumption)
-		assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.CumulativeConsumption)
-		assert.True(t, cs.expectGrowthRate.Equal(globalMeta.GrowthRate))
+		if err != nil {
+			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+		}
+		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
+			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
+				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
+		}
+		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
+			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
+				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
+		}
+		if !tc.expectGrowthRate.Equal(globalMeta.GrowthRate) {
+			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName,
+				globalMeta.GrowthRate, tc.expectGrowthRate)
+		}
 	}
 }
 
@@ -556,39 +1063,72 @@ func TestAddToValidatorInflationPool(t *testing.T) {
 	err := gm.storage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
 
-	cases := []struct {
-		coin   types.Coin
-		expect types.Coin
+	testCases := []struct {
+		testName string
+		coin     types.Coin
+		expect   types.Coin
 	}{
-		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100)},
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(101)},
+		{
+			testName: "add 100 inflation",
+			coin:     types.NewCoinFromInt64(100),
+			expect:   types.NewCoinFromInt64(100),
+		},
+		{
+			testName: "add 1 more inflation",
+			coin:     types.NewCoinFromInt64(1),
+			expect:   types.NewCoinFromInt64(101),
+		},
 	}
 
-	for _, cs := range cases {
-		err := gm.AddToValidatorInflationPool(ctx, cs.coin)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		err := gm.AddToValidatorInflationPool(ctx, tc.coin)
+		if err != nil {
+			t.Errorf("%s: failed to add validator inflation pool, got err %v", tc.testName, err)
+		}
 		pool, err := gm.storage.GetInflationPool(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expect, pool.ValidatorInflationPool)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", tc.testName, err)
+		}
+		if !pool.ValidatorInflationPool.IsEqual(tc.expect) {
+			t.Errorf("%s: diff validator inflation pool, got %v, want %v", tc.testName,
+				pool.ValidatorInflationPool, tc.expect)
+		}
 	}
 }
 
 func TestAddConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
 
-	cases := []struct {
-		coin   types.Coin
-		expect types.Coin
+	testCases := []struct {
+		testName string
+		coin     types.Coin
+		expect   types.Coin
 	}{
-		{types.NewCoinFromInt64(100), types.NewCoinFromInt64(100)},
-		{types.NewCoinFromInt64(1), types.NewCoinFromInt64(101)},
+		{
+			testName: "add 100 consumption",
+			coin:     types.NewCoinFromInt64(100),
+			expect:   types.NewCoinFromInt64(100),
+		},
+		{
+			testName: "add 1 more consumption",
+			coin:     types.NewCoinFromInt64(1),
+			expect:   types.NewCoinFromInt64(101),
+		},
 	}
 
-	for _, cs := range cases {
-		err := gm.AddConsumption(ctx, cs.coin)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		err := gm.AddConsumption(ctx, tc.coin)
+		if err != nil {
+			t.Errorf("%s: failed to add consumption, got err %v", tc.testName, err)
+		}
+
 		globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expect, globalMeta.CumulativeConsumption)
+		if err != nil {
+			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+		}
+		if !globalMeta.CumulativeConsumption.IsEqual(tc.expect) {
+			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
+				globalMeta.CumulativeConsumption, tc.expect)
+		}
 	}
 }

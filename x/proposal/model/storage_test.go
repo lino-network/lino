@@ -56,26 +56,58 @@ func TestProposal(t *testing.T) {
 	res := types.ProposalPass
 	curTime := ctx.BlockHeader().Time
 
-	cases := []struct {
-		ChangeParamProposal
+	testCases := []struct {
+		testName            string
+		changeParamProposal ChangeParamProposal
 	}{
-		{ChangeParamProposal{
-			ProposalInfo{user, proposalID, types.NewCoinFromInt64(0), types.NewCoinFromInt64(0), res, curTime, curTime + 100},
-			param.GlobalAllocationParam{sdk.NewRat(0), sdk.NewRat(0), sdk.NewRat(0),
-				sdk.NewRat(0)}}},
+		{
+			testName: "change param proposal",
+			changeParamProposal: ChangeParamProposal{
+				ProposalInfo: ProposalInfo{
+					Creator:       user,
+					ProposalID:    proposalID,
+					AgreeVotes:    types.NewCoinFromInt64(0),
+					DisagreeVotes: types.NewCoinFromInt64(0),
+					Result:        res,
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + 100,
+				},
+				Param: param.GlobalAllocationParam{
+					InfraAllocation:          sdk.NewRat(0),
+					ContentCreatorAllocation: sdk.NewRat(0),
+					DeveloperAllocation:      sdk.NewRat(0),
+					ValidatorAllocation:      sdk.NewRat(0),
+				},
+			},
+		},
 	}
 
-	for _, cs := range cases {
-		err := ps.SetProposal(ctx, proposalID, &cs.ChangeParamProposal)
-		assert.Nil(t, err)
+	for _, tc := range testCases {
+		err := ps.SetProposal(ctx, proposalID, &tc.changeParamProposal)
+		if err != nil {
+			t.Errorf("%s: failed to set proposal, get err %v", tc.testName, err)
+		}
+
 		proposal, err := ps.GetProposal(ctx, proposalID)
-		assert.Nil(t, err)
-		assert.Equal(t, &cs.ChangeParamProposal, proposal.(*ChangeParamProposal))
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, &tc.changeParamProposal, proposal.(*ChangeParamProposal)) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, proposal.(*ChangeParamProposal), &tc.changeParamProposal)
+		}
+
 		err = ps.DeleteProposal(ctx, proposalID)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to delete proposal, get err %v", tc.testName, err)
+		}
+
 		proposal, err = ps.GetProposal(ctx, proposalID)
-		assert.Nil(t, proposal)
-		assert.Equal(t, ErrProposalNotFound(), err)
+		if err == nil {
+			t.Errorf("%s: failed to get proposal after deletion, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, ErrProposalNotFound(), err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, ErrProposalNotFound())
+		}
 	}
 }
 

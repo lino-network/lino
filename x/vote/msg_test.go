@@ -9,135 +9,243 @@ import (
 )
 
 func TestVoterDepositMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName        string
 		voterDepositMsg VoterDepositMsg
-		expectError     sdk.Error
+		expectedError   sdk.Error
 	}{
-		{NewVoterDepositMsg("user1", "1"), nil},
-		{NewVoterDepositMsg("", "1"), ErrInvalidUsername()},
-		{NewVoterDepositMsg("user1", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{
+			testName:        "normal case",
+			voterDepositMsg: NewVoterDepositMsg("user1", "1"),
+			expectedError:   nil,
+		},
+		{
+			testName:        "invalid username",
+			voterDepositMsg: NewVoterDepositMsg("", "1"),
+			expectedError:   ErrInvalidUsername(),
+		},
+		{
+			testName:        "invalid deposit amount",
+			voterDepositMsg: NewVoterDepositMsg("user1", "-1"),
+			expectedError:   types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.voterDepositMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.voterDepositMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestVoterWithdrawMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName         string
 		voterWithdrawMsg VoterWithdrawMsg
-		expectError      sdk.Error
+		expectedError    sdk.Error
 	}{
-		{NewVoterWithdrawMsg("user1", "1"), nil},
-		{NewVoterWithdrawMsg("", "1"), ErrInvalidUsername()},
-		{NewVoterWithdrawMsg("user1", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{
+			testName:         "normal case",
+			voterWithdrawMsg: NewVoterWithdrawMsg("user1", "1"),
+			expectedError:    nil,
+		},
+		{
+			testName:         "invalid username",
+			voterWithdrawMsg: NewVoterWithdrawMsg("", "1"),
+			expectedError:    ErrInvalidUsername(),
+		},
+		{
+			testName:         "invalid withdraw amount",
+			voterWithdrawMsg: NewVoterWithdrawMsg("user1", "-1"),
+			expectedError:    types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.voterWithdrawMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.voterWithdrawMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestVoterRevokeMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName       string
 		voterRevokeMsg VoterRevokeMsg
-		expectError    sdk.Error
+		expectedError  sdk.Error
 	}{
-		{NewVoterRevokeMsg("user1"), nil},
-		{NewVoterRevokeMsg(""), ErrInvalidUsername()},
+		{
+			testName:       "normal case",
+			voterRevokeMsg: NewVoterRevokeMsg("user1"),
+			expectedError:  nil,
+		},
+		{
+			testName:       "invalid username",
+			voterRevokeMsg: NewVoterRevokeMsg(""),
+			expectedError:  ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.voterRevokeMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.voterRevokeMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestDelegateMsg(t *testing.T) {
-	cases := []struct {
-		delegateMsg DelegateMsg
-		expectError sdk.Error
+	testCases := []struct {
+		testName      string
+		delegateMsg   DelegateMsg
+		expectedError sdk.Error
 	}{
-		{NewDelegateMsg("user1", "user2", "1"), nil},
-		{NewDelegateMsg("", "user2", "1"), ErrInvalidUsername()},
-		{NewDelegateMsg("user1", "", "1"), ErrInvalidUsername()},
-		{NewDelegateMsg("", "", "1"), ErrInvalidUsername()},
-		{NewDelegateMsg("user1", "user2", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{
+			testName:      "normal case",
+			delegateMsg:   NewDelegateMsg("user1", "user2", "1"),
+			expectedError: nil,
+		},
+		{
+			testName:      "invalid delegator",
+			delegateMsg:   NewDelegateMsg("", "user2", "1"),
+			expectedError: ErrInvalidUsername(),
+		},
+		{
+			testName:      "invalid voter",
+			delegateMsg:   NewDelegateMsg("user1", "", "1"),
+			expectedError: ErrInvalidUsername(),
+		},
+		{
+			testName:      "both delegator and voter are invalid",
+			delegateMsg:   NewDelegateMsg("", "", "1"),
+			expectedError: ErrInvalidUsername(),
+		},
+		{
+			testName:      "invalid delegated coin",
+			delegateMsg:   NewDelegateMsg("user1", "user2", "-1"),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.delegateMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.delegateMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestRevokeDelegationMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName            string
 		revokeDelegationMsg RevokeDelegationMsg
-		expectError         sdk.Error
+		expectedError       sdk.Error
 	}{
-		{NewRevokeDelegationMsg("user1", "user2"), nil},
-		{NewRevokeDelegationMsg("", "user2"), ErrInvalidUsername()},
-		{NewRevokeDelegationMsg("user1", ""), ErrInvalidUsername()},
-		{NewRevokeDelegationMsg("", ""), ErrInvalidUsername()},
+		{
+			testName:            "normal case",
+			revokeDelegationMsg: NewRevokeDelegationMsg("user1", "user2"),
+			expectedError:       nil,
+		},
+		{
+			testName:            "invalid delegator",
+			revokeDelegationMsg: NewRevokeDelegationMsg("", "user2"),
+			expectedError:       ErrInvalidUsername(),
+		},
+		{
+			testName:            "invalid voter",
+			revokeDelegationMsg: NewRevokeDelegationMsg("user1", ""),
+			expectedError:       ErrInvalidUsername(),
+		},
+		{
+			testName:            "both delegator and voter are invalid",
+			revokeDelegationMsg: NewRevokeDelegationMsg("", ""),
+			expectedError:       ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.revokeDelegationMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.revokeDelegationMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestDelegatorWithdrawMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName             string
 		delegatorWithdrawMsg DelegatorWithdrawMsg
-		expectError          sdk.Error
+		expectedError        sdk.Error
 	}{
-		{NewDelegatorWithdrawMsg("user1", "user2", "1"), nil},
-		{NewDelegatorWithdrawMsg("", "", "1"), ErrInvalidUsername()},
-		{NewDelegatorWithdrawMsg("user1", "user2", "-1"), types.ErrInvalidCoins("LNO can't be less than lower bound")},
+		{
+			testName:             "normal case",
+			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("user1", "user2", "1"),
+			expectedError:        nil,
+		},
+		{
+			testName:             "invalid username",
+			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("", "", "1"),
+			expectedError:        ErrInvalidUsername(),
+		},
+		{
+			testName:             "invalid withdraw amount",
+			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("user1", "user2", "-1"),
+			expectedError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.delegatorWithdrawMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.delegatorWithdrawMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
-		msg              types.Msg
-		expectPermission types.Permission
+	testCases := []struct {
+		testName           string
+		msg                types.Msg
+		expectedPermission types.Permission
 	}{
-		"vote deposit": {
-			NewVoterDepositMsg("test", types.LNO("1")),
-			types.TransactionPermission},
-		"vote withdraw": {
-			NewVoterWithdrawMsg("test", types.LNO("1")),
-			types.TransactionPermission},
-		"vote revoke": {
-			NewVoterRevokeMsg("test"),
-			types.TransactionPermission},
-		"delegate to voter": {
-			NewDelegateMsg("delegator", "voter", types.LNO("1")),
-			types.TransactionPermission},
-		"delegate withdraw": {
-			NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-			types.TransactionPermission},
-		"revoke delegation": {
-			NewRevokeDelegationMsg("delegator", "voter"),
-			types.TransactionPermission},
+		{
+			testName:           "vote deposit",
+			msg:                NewVoterDepositMsg("test", types.LNO("1")),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "vote withdraw",
+			msg:                NewVoterWithdrawMsg("test", types.LNO("1")),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "vote revoke",
+			msg:                NewVoterRevokeMsg("test"),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "delegate to voter",
+			msg:                NewDelegateMsg("delegator", "voter", types.LNO("1")),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "delegate withdraw",
+			msg:                NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "revoke delegation",
+			msg:                NewRevokeDelegationMsg("delegator", "voter"),
+			expectedPermission: types.TransactionPermission,
+		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
-			return
+	for _, tc := range testCases {
+		permission := tc.msg.GetPermission()
+		if tc.expectedPermission != permission {
+			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectedPermission)
 		}
 	}
 }

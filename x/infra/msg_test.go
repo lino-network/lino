@@ -9,37 +9,51 @@ import (
 )
 
 func TestProviderReportMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName          string
 		providerReportMsg ProviderReportMsg
 		expectError       sdk.Error
 	}{
-		{NewProviderReportMsg("user1", 100), nil},
-		{NewProviderReportMsg("", 100), ErrInvalidUsername()},
-		{NewProviderReportMsg("user1", -100), ErrInvalidUsage()},
+		{
+			testName:          "normal case",
+			providerReportMsg: NewProviderReportMsg("user1", 100),
+			expectError:       nil,
+		},
+		{
+			testName:          "invalid username",
+			providerReportMsg: NewProviderReportMsg("", 100),
+			expectError:       ErrInvalidUsername(),
+		},
+		{
+			testName:          "invalid usage",
+			providerReportMsg: NewProviderReportMsg("user1", -100),
+			expectError:       ErrInvalidUsage(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.providerReportMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.providerReportMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectError)
+		}
 	}
 }
 
 func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
+	testCases := map[string]struct {
 		msg              types.Msg
 		expectPermission types.Permission
 	}{
 		"provider report msg": {
-			NewProviderReportMsg("test", 1),
-			types.TransactionPermission},
+			msg:              NewProviderReportMsg("test", 1),
+			expectPermission: types.TransactionPermission,
+		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
+	for testName, tc := range testCases {
+		permission := tc.msg.GetPermission()
+		if tc.expectPermission != permission {
+			t.Errorf("%s: diff permission,  got %v, want %v", testName, permission, tc.expectPermission)
 			return
 		}
 	}

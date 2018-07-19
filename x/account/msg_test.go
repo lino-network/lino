@@ -63,12 +63,12 @@ func TestFollowMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -118,12 +118,12 @@ func TestUnfollowMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -184,12 +184,12 @@ func TestTransferMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -227,12 +227,12 @@ func TestRecoverMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				t.Errorf("%s: diff error: got %v, want %v", testName, tc.wantCode, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -261,12 +261,12 @@ func TestClaimMsg(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				t.Errorf("%s: diff error: got %v, want %v", testName, tc.wantCode, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -296,13 +296,13 @@ func TestUpdateAccountMsg(t *testing.T) {
 		got := tc.msg.ValidateBasic()
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, tc.wantCode)
+				t.Errorf("%s: diff error: got %v, want %v", testName, tc.wantCode, tc.wantCode)
 				return
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 }
@@ -368,12 +368,12 @@ func TestRegisterUsername(t *testing.T) {
 
 		if got == nil {
 			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: ValidateBasic(%v) error: got %v, want %v", testName, tc.msg, nil, sdk.CodeOK)
+				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
 			}
 			continue
 		}
 		if got.Code() != tc.wantCode {
-			t.Errorf("%s: ValidateBasic(%v) errorCode: got %v, want %v", testName, tc.msg, got.Code(), tc.wantCode)
+			t.Errorf("%s: diff errorCode: got %v, want %v", testName, got.Code(), tc.wantCode)
 		}
 	}
 
@@ -397,37 +397,44 @@ func TestMsgPermission(t *testing.T) {
 		expectPermission types.Permission
 	}{
 		"transfer to user": {
-			NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
-			types.TransactionPermission},
+			msg:              NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
+			expectPermission: types.TransactionPermission,
+		},
 		"follow": {
-			NewFollowMsg("userA", "userB"),
-			types.PostPermission},
+			msg:              NewFollowMsg("userA", "userB"),
+			expectPermission: types.PostPermission,
+		},
 		"unfollow": {
-			NewUnfollowMsg("userA", "userB"),
-			types.PostPermission},
+			msg:              NewUnfollowMsg("userA", "userB"),
+			expectPermission: types.PostPermission,
+		},
 		"recover": {
-			NewRecoverMsg(
+			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey()),
-			types.MasterPermission},
+			expectPermission: types.MasterPermission,
+		},
 		"claim": {
-			NewClaimMsg("test"), types.PostPermission},
+			msg:              NewClaimMsg("test"),
+			expectPermission: types.PostPermission,
+		},
 		"register msg": {
-			NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
+			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey()),
-			types.TransactionPermission},
+			expectPermission: types.TransactionPermission,
+		},
 		"update msg": {
-			NewUpdateAccountMsg("user", "{'test':'test'}"), types.PostPermission},
+			msg:              NewUpdateAccountMsg("user", "{'test':'test'}"),
+			expectPermission: types.PostPermission,
+		},
 	}
 
 	for testName, cs := range cases {
 		permission := cs.msg.GetPermission()
 		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
+			t.Errorf("%s: diff permission, got %v, want %v", testName, permission, cs.expectPermission)
 			return
 		}
 	}

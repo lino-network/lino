@@ -10,58 +10,85 @@ import (
 )
 
 func TestValidatorRevokeMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName           string
 		validatorRevokeMsg ValidatorRevokeMsg
-		expectError        sdk.Error
+		expectedError      sdk.Error
 	}{
-		{NewValidatorRevokeMsg("user1"), nil},
-		{NewValidatorRevokeMsg(""), ErrInvalidUsername()},
+		{
+			testName:           "normal case",
+			validatorRevokeMsg: NewValidatorRevokeMsg("user1"),
+			expectedError:      nil,
+		},
+		{
+			testName:           "invalid username",
+			validatorRevokeMsg: NewValidatorRevokeMsg(""),
+			expectedError:      ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.validatorRevokeMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.validatorRevokeMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestValidatorWithdrawMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName             string
 		validatorWithdrawMsg ValidatorWithdrawMsg
-		expectError          sdk.Error
+		expectedError        sdk.Error
 	}{
-		{NewValidatorWithdrawMsg("user1", "1"), nil},
-		{NewValidatorWithdrawMsg("", "1"), ErrInvalidUsername()},
+		{
+			testName:             "normal case",
+			validatorWithdrawMsg: NewValidatorWithdrawMsg("user1", "1"),
+			expectedError:        nil,
+		},
+		{
+			testName:             "invalid username",
+			validatorWithdrawMsg: NewValidatorWithdrawMsg("", "1"),
+			expectedError:        ErrInvalidUsername(),
+		},
 	}
 
-	for _, cs := range cases {
-		result := cs.validatorWithdrawMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.validatorWithdrawMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
-		msg              types.Msg
-		expectPermission types.Permission
+	testCases := []struct {
+		testName           string
+		msg                types.Msg
+		expectedPermission types.Permission
 	}{
-		"validator deposit msg": {
-			NewValidatorDepositMsg(
+		{
+			testName: "validator deposit msg",
+			msg: NewValidatorDepositMsg(
 				"test", types.LNO("1"), crypto.GenPrivKeyEd25519().PubKey(), "https://lino.network"),
-			types.TransactionPermission},
-		"validator withdraw msg": {
-			NewValidatorWithdrawMsg("test", types.LNO("1")),
-			types.TransactionPermission},
-		"validator revoke msg": {
-			NewValidatorRevokeMsg("test"),
-			types.TransactionPermission},
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "validator withdraw msg",
+			msg:                NewValidatorWithdrawMsg("test", types.LNO("1")),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "validator revoke msg",
+			msg:                NewValidatorRevokeMsg("test"),
+			expectedPermission: types.TransactionPermission,
+		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
+	for _, tc := range testCases {
+		permission := tc.msg.GetPermission()
+		if tc.expectedPermission != permission {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, permission, tc.expectedPermission)
 			return
 		}
 	}

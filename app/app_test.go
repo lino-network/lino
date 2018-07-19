@@ -264,33 +264,47 @@ func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
 				ConsumptionRewardPool: cs.beforeDistributionRewardPool,
 			},
 		)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set consumption meta, got err %v", testName, err)
+		}
+
 		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			ContentCreatorInflationPool: cs.beforeDistributionInflationPool,
 		})
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
+
 		lb.distributeInflationToConsumptionRewardPool(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
+		}
+
 		consumption, err := globalStore.GetConsumptionMeta(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get consumption meta, got err %v", testName, err)
+		}
+
 		expectInflation, _ := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
+
 		if !cs.beforeDistributionRewardPool.Plus(expectInflation).
 			IsEqual(consumption.ConsumptionRewardPool) {
 			t.Errorf(
-				"%s: expect inflation pool %v, got %v",
-				testName, cs.beforeDistributionRewardPool.Plus(expectInflation),
-				inflationPool.ContentCreatorInflationPool)
+				"%s: diff consumption reward pool, got %v, want %v",
+				testName, consumption.ConsumptionRewardPool,
+				cs.beforeDistributionRewardPool.Plus(expectInflation))
 			return
 		}
+
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.ContentCreatorInflationPool) {
 			t.Errorf(
-				"%s: expect inflation pool %v, got %v",
-				testName, cs.beforeDistributionRewardPool.Plus(expectInflation),
-				inflationPool.ContentCreatorInflationPool)
+				"%s: diff content creator inflation pool, got %v, want %v",
+				testName, inflationPool.ContentCreatorInflationPool,
+				cs.beforeDistributionRewardPool.Plus(expectInflation))
 			return
 		}
 	}
@@ -323,22 +337,30 @@ func TestDistributeInflationToValidator(t *testing.T) {
 		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+
 		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			ValidatorInflationPool: cs.beforeDistributionInflationPool,
 		})
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
+
 		lb.distributeInflationToValidator(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
+		}
+
 		expectInflation, _ := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
+
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.ValidatorInflationPool) {
 			t.Errorf(
-				"%s: expect inflation pool %v, got %v",
-				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
-				inflationPool.ValidatorInflationPool)
+				"%s: diff validator inflation pool, got %v, want %v",
+				testName, inflationPool.ValidatorInflationPool,
+				cs.beforeDistributionInflationPool.Minus(expectInflation))
 			return
 		}
 	}
@@ -371,24 +393,33 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
 		err := lb.infraManager.RegisterInfraProvider(ctx, "Lino")
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
+		}
+
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			InfraInflationPool: cs.beforeDistributionInflationPool,
 		})
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
+
 		lb.distributeInflationToInfraProvider(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
+		}
+
 		expectInflation, _ := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.InfraInflationPool) {
 			t.Errorf(
-				"%s: expect inflation pool %v, got %v",
-				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
-				inflationPool.InfraInflationPool)
+				"%s: diff infra inflation pool, got %v, want %v",
+				testName, inflationPool.InfraInflationPool,
+				cs.beforeDistributionInflationPool.Minus(expectInflation))
 			return
 		}
 	}
@@ -421,24 +452,33 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
 		err := lb.developerManager.RegisterDeveloper(ctx, "Lino", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to register developer, got err %v", testName, err)
+		}
+
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			DeveloperInflationPool: cs.beforeDistributionInflationPool,
 		})
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
+
 		lb.distributeInflationToDeveloper(ctx)
 		inflationPool, err := globalStore.GetInflationPool(ctx)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
+		}
+
 		expectInflation, _ := types.RatToCoin(
 			cs.beforeDistributionInflationPool.ToRat().Quo(
 				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
 		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
 			IsEqual(inflationPool.DeveloperInflationPool) {
 			t.Errorf(
-				"%s: expect inflation pool %v, got %v",
-				testName, cs.beforeDistributionInflationPool.Minus(expectInflation),
-				inflationPool.DeveloperInflationPool)
+				"%s: diff developer inflation pool, got %v, want %v",
+				testName, inflationPool.DeveloperInflationPool,
+				cs.beforeDistributionInflationPool.Minus(expectInflation))
 			return
 		}
 	}

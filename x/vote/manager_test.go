@@ -10,50 +10,88 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestCanBecomeValidator(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
-	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
-	user1 := createTestAccount(ctx, am, "user1", minBalance)
-	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
-	cases := []struct {
-		addVoter     bool
-		username     types.AccountKey
-		coin         types.Coin
-		expectResult bool
-	}{
-		{false, user1, types.NewCoinFromInt64(0), false},
-		{true, user1, voteParam.VoterMinDeposit, false},
-		{true, user1, valParam.ValidatorMinVotingDeposit, true},
-	}
-
-	for _, cs := range cases {
-		if cs.addVoter {
-			vm.AddVoter(ctx, cs.username, cs.coin)
-		}
-		actualRes := vm.CanBecomeValidator(ctx, cs.username)
-		assert.Equal(t, cs.expectResult, actualRes)
-	}
-}
-
 func TestAddVoter(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
-	cases := []struct {
-		username     types.AccountKey
-		coin         types.Coin
-		expectResult sdk.Error
+	testCases := []struct {
+		testName       string
+		username       types.AccountKey
+		coin           types.Coin
+		expectedResult sdk.Error
 	}{
-		{user1, types.NewCoinFromInt64(100 * types.Decimals), ErrInsufficientDeposit()},
-		{user1, param.VoterMinDeposit, nil},
+		{
+			testName:       "insufficient deposit",
+			username:       user1,
+			coin:           types.NewCoinFromInt64(100 * types.Decimals),
+			expectedResult: ErrInsufficientDeposit(),
+		},
+		{
+			testName:       "normal case",
+			username:       user1,
+			coin:           param.VoterMinDeposit,
+			expectedResult: nil,
+		},
 	}
 
-	for _, cs := range cases {
-		res := vm.AddVoter(ctx, cs.username, cs.coin)
-		assert.Equal(t, cs.expectResult, res)
+	for _, tc := range testCases {
+		res := vm.AddVoter(ctx, tc.username, tc.coin)
+		if !assert.Equal(t, tc.expectedResult, res) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
+	}
+}
+
+func TestCanBecomeValidator(t *testing.T) {
+	ctx, am, vm, _ := setupTest(t, 0)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
+
+	testCases := []struct {
+		testName       string
+		addVoter       bool
+		username       types.AccountKey
+		coin           types.Coin
+		expectedResult bool
+	}{
+		{
+			testName:       "non-voter can't become validator",
+			addVoter:       false,
+			username:       user1,
+			coin:           types.NewCoinFromInt64(0),
+			expectedResult: false,
+		},
+		{
+			testName:       "validator has reached min deposit",
+			addVoter:       true,
+			username:       user1,
+			coin:           voteParam.VoterMinDeposit,
+			expectedResult: false,
+		},
+		{
+			testName:       "become validator successfully",
+			addVoter:       true,
+			username:       user1,
+			coin:           valParam.ValidatorMinVotingDeposit,
+			expectedResult: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		if tc.addVoter {
+			err := vm.AddVoter(ctx, tc.username, tc.coin)
+			if err != nil {
+				t.Errorf("%s: failed to add voter, got err %v", tc.testName, err)
+			}
+		}
+		actualRes := vm.CanBecomeValidator(ctx, tc.username)
+		if actualRes != tc.expectedResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, actualRes, tc.expectedResult)
+		}
 	}
 }
 
@@ -64,23 +102,44 @@ func TestIsInValidatorList(t *testing.T) {
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	user3 := createTestAccount(ctx, am, "user3", minBalance)
 
-	cases := []struct {
-		username      types.AccountKey
-		allValidators []types.AccountKey
-		expectResult  bool
+	testCases := []struct {
+		testName       string
+		username       types.AccountKey
+		allValidators  []types.AccountKey
+		expectedResult bool
 	}{
-		{user1, []types.AccountKey{}, false},
-		{user1, []types.AccountKey{user2, user3}, false},
-		{user1, []types.AccountKey{user1}, true},
+		{
+			testName:       "not in empty validator list",
+			username:       user1,
+			allValidators:  []types.AccountKey{},
+			expectedResult: false,
+		},
+		{
+			testName:       "not in validator list",
+			username:       user1,
+			allValidators:  []types.AccountKey{user2, user3},
+			expectedResult: false,
+		},
+		{
+			testName:       "in validator list",
+			username:       user1,
+			allValidators:  []types.AccountKey{user1},
+			expectedResult: true,
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		referenceList := &model.ReferenceList{
-			AllValidators: cs.allValidators,
+			AllValidators: tc.allValidators,
 		}
-		vm.storage.SetReferenceList(ctx, referenceList)
-		res := vm.IsInValidatorList(ctx, cs.username)
-		assert.Equal(t, cs.expectResult, res)
+		err := vm.storage.SetReferenceList(ctx, referenceList)
+		if err != nil {
+			t.Errorf("%s: failed to set reference list, got err %v", tc.testName, err)
+		}
+		res := vm.IsInValidatorList(ctx, tc.username)
+		if res != tc.expectedResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
 	}
 }
 
@@ -92,25 +151,57 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)))
 
-	cases := []struct {
-		allValidators []types.AccountKey
-		username      types.AccountKey
-		withdraw      types.Coin
-		expectResult  bool
+	testCases := []struct {
+		testName       string
+		allValidators  []types.AccountKey
+		username       types.AccountKey
+		withdraw       types.Coin
+		expectedResult bool
 	}{
-		{[]types.AccountKey{}, user1, param.VoterMinWithdraw.Minus(types.NewCoinFromInt64(1 * types.Decimals)), false},
-		{[]types.AccountKey{}, user1, param.VoterMinWithdraw, true},
-		{[]types.AccountKey{user1}, user1, param.VoterMinWithdraw, false},
-		{[]types.AccountKey{}, user1, types.NewCoinFromInt64(100), false},
+		{
+			testName:       "illegal withdraw that less than minimum withdraw",
+			allValidators:  []types.AccountKey{},
+			username:       user1,
+			withdraw:       param.VoterMinWithdraw.Minus(types.NewCoinFromInt64(1 * types.Decimals)),
+			expectedResult: false,
+		},
+		{
+			testName:       "normal case",
+			allValidators:  []types.AccountKey{},
+			username:       user1,
+			withdraw:       param.VoterMinWithdraw,
+			expectedResult: true,
+		},
+		{
+			testName:       "validator can't withdraw",
+			allValidators:  []types.AccountKey{user1},
+			username:       user1,
+			withdraw:       param.VoterMinWithdraw,
+			expectedResult: false,
+		},
+		{
+			testName:       "illegal withdraw",
+			allValidators:  []types.AccountKey{},
+			username:       user1,
+			withdraw:       types.NewCoinFromInt64(100),
+			expectedResult: false,
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		referenceList := &model.ReferenceList{
-			AllValidators: cs.allValidators,
+			AllValidators: tc.allValidators,
 		}
-		vm.storage.SetReferenceList(ctx, referenceList)
-		res := vm.IsLegalVoterWithdraw(ctx, cs.username, cs.withdraw)
-		assert.Equal(t, cs.expectResult, res)
+
+		err := vm.storage.SetReferenceList(ctx, referenceList)
+		if err != nil {
+			t.Errorf("%s: failed to set reference list, got err %v", tc.testName, err)
+		}
+
+		res := vm.IsLegalVoterWithdraw(ctx, tc.username, tc.withdraw)
+		if res != tc.expectedResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
 	}
 }
 
@@ -123,25 +214,63 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 
 	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
 
-	cases := []struct {
-		addDelegation bool
-		delegatedCoin types.Coin
-		delegator     types.AccountKey
-		voter         types.AccountKey
-		withdraw      types.Coin
-		expectResult  bool
+	testCases := []struct {
+		testName       string
+		addDelegation  bool
+		delegatedCoin  types.Coin
+		delegator      types.AccountKey
+		voter          types.AccountKey
+		withdraw       types.Coin
+		expectedResult bool
 	}{
-		{false, types.NewCoinFromInt64(0), user2, user1, param.DelegatorMinWithdraw, false},
-		{true, types.NewCoinFromInt64(100 * types.Decimals), user2, user1, param.DelegatorMinWithdraw, true},
-		{false, types.NewCoinFromInt64(0), user2, user1, types.NewCoinFromInt64(0), false},
-		{false, types.NewCoinFromInt64(0), user2, user1, types.NewCoinFromInt64(101 * types.Decimals), false},
+		{
+			testName:       "no delegation exist, can't withdraw",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       param.DelegatorMinWithdraw,
+			expectedResult: false,
+		},
+		{
+			testName:       "normal case",
+			addDelegation:  true,
+			delegatedCoin:  types.NewCoinFromInt64(100 * types.Decimals),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       param.DelegatorMinWithdraw,
+			expectedResult: true,
+		},
+		{
+			testName:       "no delegation exist, can't withdraw 0",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       types.NewCoinFromInt64(0),
+			expectedResult: false,
+		},
+		{
+			testName:       "no delegation exist, can't withdraw 101",
+			addDelegation:  false,
+			delegatedCoin:  types.NewCoinFromInt64(0),
+			delegator:      user2,
+			voter:          user1,
+			withdraw:       types.NewCoinFromInt64(101 * types.Decimals),
+			expectedResult: false,
+		},
 	}
 
-	for _, cs := range cases {
-		if cs.addDelegation {
-			vm.AddDelegation(ctx, cs.voter, cs.delegator, cs.delegatedCoin)
+	for _, tc := range testCases {
+		if tc.addDelegation {
+			err := vm.AddDelegation(ctx, tc.voter, tc.delegator, tc.delegatedCoin)
+			if err != nil {
+				t.Errorf("%s: failed to add delegation, got err %v", tc.testName, err)
+			}
 		}
-		res := vm.IsLegalDelegatorWithdraw(ctx, cs.voter, cs.delegator, cs.withdraw)
-		assert.Equal(t, cs.expectResult, res)
+		res := vm.IsLegalDelegatorWithdraw(ctx, tc.voter, tc.delegator, tc.withdraw)
+		if res != tc.expectedResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
 	}
 }

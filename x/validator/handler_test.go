@@ -510,19 +510,50 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectedFrozenTimes    int64
 		expectedFrozenInterval int64
 	}{
-		{"return coin to user", 10, 2, types.NewCoinFromInt64(100), 1, types.NewCoinFromInt64(100), 10, 2},
-		{"return coin to user multiple times", 100000, 20000, types.NewCoinFromInt64(100000), 2, types.NewCoinFromInt64(100000), 100000, 20000},
+		{
+			testName:               "return coin to user",
+			times:                  10,
+			interval:               2,
+			returnedCoin:           types.NewCoinFromInt64(100),
+			expectedFrozenListLen:  1,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100),
+			expectedFrozenTimes:    10,
+			expectedFrozenInterval: 2,
+		},
+		{
+			testName:               "return coin to user again",
+			times:                  100000,
+			interval:               20000,
+			returnedCoin:           types.NewCoinFromInt64(100000),
+			expectedFrozenListLen:  2,
+			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
+			expectedFrozenTimes:    100000,
+			expectedFrozenInterval: 20000,
+		},
 	}
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
 			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
-		assert.Equal(t, nil, err)
-		lst, err := am.GetFrozenMoneyList(ctx, user)
-		assert.Equal(t, tc.expectedFrozenListLen, len(lst))
-		assert.Equal(t, tc.expectedFrozenMoney, lst[len(lst)-1].Amount)
-		assert.Equal(t, tc.expectedFrozenTimes, lst[len(lst)-1].Times)
-		assert.Equal(t, tc.expectedFrozenInterval, lst[len(lst)-1].Interval)
+		if err != nil {
+			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
+		}
 
+		lst, err := am.GetFrozenMoneyList(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
+		}
+		if len(lst) != tc.expectedFrozenListLen {
+			t.Errorf("%s: diff list len, got %v, want %v", tc.testName, len(lst), tc.expectedFrozenListLen)
+		}
+		if lst[len(lst)-1].Amount != tc.expectedFrozenMoney {
+			t.Errorf("%s: diff amount, got %v, want %v", tc.testName, lst[len(lst)-1].Amount, tc.expectedFrozenMoney)
+		}
+		if lst[len(lst)-1].Times != tc.expectedFrozenTimes {
+			t.Errorf("%s: diff times, got %v, want %v", tc.testName, lst[len(lst)-1].Times, tc.expectedFrozenTimes)
+		}
+		if lst[len(lst)-1].Interval != tc.expectedFrozenInterval {
+			t.Errorf("%s: diff interval, got %v, want %v", tc.testName, lst[len(lst)-1].Interval, tc.expectedFrozenInterval)
+		}
 	}
 }

@@ -14,26 +14,6 @@ var (
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
 )
 
-func testDonationValidate(t *testing.T, donateMsg DonateMsg, expectError sdk.Error) {
-	result := donateMsg.ValidateBasic()
-	assert.Equal(t, expectError, result)
-}
-
-func testReportOrUpvoteValidate(t *testing.T, reportOrUpvoteMsg ReportOrUpvoteMsg, expectError sdk.Error) {
-	result := reportOrUpvoteMsg.ValidateBasic()
-	assert.Equal(t, expectError, result)
-}
-
-func testViewValidate(t *testing.T, viewMsg ViewMsg, expectError sdk.Error) {
-	result := viewMsg.ValidateBasic()
-	assert.Equal(t, expectError, result)
-}
-
-func testLikeValidate(t *testing.T, likeMsg LikeMsg, expectError sdk.Error) {
-	result := likeMsg.ValidateBasic()
-	assert.Equal(t, expectError, result)
-}
-
 func getCommentAndRepost(
 	t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) CreatePostMsg {
 	return CreatePostMsg{
@@ -51,120 +31,258 @@ func getCommentAndRepost(
 
 func TestCreatePostMsg(t *testing.T) {
 	author := types.AccountKey("TestAuthor")
-	cases := []struct {
-		msg          CreatePostMsg
-		expectResult sdk.Error
+	testCases := []struct {
+		testName       string
+		msg            CreatePostMsg
+		expectedResult sdk.Error
 	}{
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"}, expectResult: nil},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1"}, expectResult: nil},
-		{msg: CreatePostMsg{
-			PostID: "", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
-			expectResult: ErrNoPostID()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: "", Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
-			expectResult: ErrNoAuthor()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 51)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
-			expectResult: ErrPostTitleExceedMaxLength()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1001)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0"},
-			expectResult: ErrPostContentExceedMaxLength()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "-1"},
-			expectResult: ErrInvalidPostRedistributionSplitRate()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "1.01"},
-			expectResult: ErrInvalidPostRedistributionSplitRate()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author, Links: []types.IDToURLMapping{}, RedistributionSplitRate: "0.00000000001"},
-			expectResult: ErrRedistributionSplitRateLengthTooLong()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author,
-			Links: []types.IDToURLMapping{
-				types.IDToURLMapping{Identifier: string(make([]byte, 21)), URL: string(make([]byte, 50))}},
-			RedistributionSplitRate: "0"},
-			expectResult: ErrIdentifierLengthTooLong()},
-		{msg: CreatePostMsg{
-			PostID: "TestPostID", Title: string(make([]byte, 50)), Content: string(make([]byte, 1000)),
-			Author: author,
-			Links: []types.IDToURLMapping{
-				types.IDToURLMapping{Identifier: string(make([]byte, 20)), URL: string(make([]byte, 51))}},
-			RedistributionSplitRate: "0"},
-			expectResult: ErrURLLengthTooLong()},
+		{
+			testName: "normal case 1",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: nil,
+		},
+		{
+			testName: "normal case 2",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "1",
+			},
+			expectedResult: nil,
+		},
+		{
+			testName: "empty post id",
+			msg: CreatePostMsg{
+				PostID:  "",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrNoPostID(),
+		},
+		{
+			testName: "no author",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  "",
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrNoAuthor(),
+		},
+		{
+			testName: "post title is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 51)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrPostTitleExceedMaxLength(),
+		},
+		{
+			testName: "post content is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1001)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrPostContentExceedMaxLength(),
+		},
+		{
+			testName: "negative redistribution split rate is invalid",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "-1",
+			},
+			expectedResult: ErrInvalidPostRedistributionSplitRate(),
+		},
+		{
+			testName: "redistribution split rate can't be bigger than 1",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "1.01",
+			},
+			expectedResult: ErrInvalidPostRedistributionSplitRate(),
+		},
+		{
+			testName: "redistribution split rate length is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0.00000000001",
+			},
+			expectedResult: ErrRedistributionSplitRateLengthTooLong(),
+		},
+		{
+			testName: "identifier length is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links: []types.IDToURLMapping{
+					{
+						Identifier: string(make([]byte, 21)),
+						URL:        string(make([]byte, 50)),
+					},
+				},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrIdentifierLengthTooLong()},
+		{
+			testName: "url length is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links: []types.IDToURLMapping{
+					{
+						Identifier: string(make([]byte, 20)),
+						URL:        string(make([]byte, 51)),
+					},
+				},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrURLLengthTooLong(),
+		},
 	}
-	for _, cs := range cases {
-		result := cs.msg.ValidateBasic()
-		assert.Equal(t, cs.expectResult, result)
+	for _, tc := range testCases {
+		result := tc.msg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedResult, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedResult)
+		}
 	}
 }
 
 func TestUpdatePostMsg(t *testing.T) {
-	cases := []struct {
-		updatePostMsg UpdatePostMsg
-		expectResult  sdk.Error
+	testCases := []struct {
+		testName       string
+		updatePostMsg  UpdatePostMsg
+		expectedResult sdk.Error
 	}{
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", "title", "content", []types.IDToURLMapping{}, "1.0"), expectResult: nil},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"), expectResult: nil},
-		{updatePostMsg: NewUpdatePostMsg(
-			"", "postID", "title", "content", []types.IDToURLMapping{}, "0"), expectResult: ErrNoAuthor()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "", "title", "content", []types.IDToURLMapping{}, "0"), expectResult: ErrNoPostID()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", string(make([]byte, 51)), "content", []types.IDToURLMapping{}, "0"),
-			expectResult: ErrPostTitleExceedMaxLength()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1001)),
-			[]types.IDToURLMapping{}, "0"), expectResult: ErrPostContentExceedMaxLength()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-			[]types.IDToURLMapping{}, "1.01"), expectResult: ErrInvalidPostRedistributionSplitRate()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-			[]types.IDToURLMapping{}, "-1"), expectResult: ErrInvalidPostRedistributionSplitRate()},
-		{updatePostMsg: NewUpdatePostMsg(
-			"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-			[]types.IDToURLMapping{}, "0.000000000001"), expectResult: ErrRedistributionSplitRateLengthTooLong()},
+		{
+			testName: "normal case 1",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "1.0"),
+			expectedResult: nil,
+		},
+		{
+			testName: "normal case 2",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: nil,
+		},
+		{
+			testName: "no author",
+			updatePostMsg: NewUpdatePostMsg(
+				"", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: ErrNoAuthor(),
+		},
+		{
+			testName: "no post id",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: ErrNoPostID(),
+		},
+		{
+			testName: "post tile is too long",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 51)), "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: ErrPostTitleExceedMaxLength(),
+		},
+		{
+			testName: "post content is too long",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1001)),
+				[]types.IDToURLMapping{}, "0"),
+			expectedResult: ErrPostContentExceedMaxLength(),
+		},
+		{
+			testName: "redistribution split rate can't be bigger than 1",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
+				[]types.IDToURLMapping{}, "1.01"),
+			expectedResult: ErrInvalidPostRedistributionSplitRate(),
+		},
+		{
+			testName: "redistribution split rate can't be negative",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
+				[]types.IDToURLMapping{}, "-1"),
+			expectedResult: ErrInvalidPostRedistributionSplitRate(),
+		},
+		{
+			testName: "redistruction split rate length is too long",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
+				[]types.IDToURLMapping{}, "0.000000000001"),
+			expectedResult: ErrRedistributionSplitRateLengthTooLong(),
+		},
 	}
-	for _, cs := range cases {
-		result := cs.updatePostMsg.ValidateBasic()
-		assert.Equal(t, result, cs.expectResult)
+	for _, tc := range testCases {
+		result := tc.updatePostMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedResult) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedResult)
+		}
 	}
 }
 
 func TestDeletePostMsg(t *testing.T) {
-	testCases := map[string]struct {
+	testCases := []struct {
+		testName    string
 		msg         DeletePostMsg
 		wantErrCode sdk.CodeType
 	}{
-		"normal case": {
+		{
+			testName: "normal case",
 			msg: DeletePostMsg{
 				Author: "author",
 				PostID: "postID",
 			},
 			wantErrCode: sdk.CodeOK,
 		},
-		"empty author": {
+		{
+			testName: "empty author",
 			msg: DeletePostMsg{
 				Author: "",
 				PostID: "postID",
 			},
 			wantErrCode: types.CodeNoAuthor,
 		},
-		"empty postID": {
+		{
+			testName: "empty postID",
 			msg: DeletePostMsg{
 				Author: "author",
 				PostID: "",
@@ -172,14 +290,14 @@ func TestDeletePostMsg(t *testing.T) {
 			wantErrCode: types.CodeNoPostID,
 		},
 	}
-	for testName, tc := range testCases {
+	for _, tc := range testCases {
 		got := tc.msg.ValidateBasic()
 		if got == nil && tc.wantErrCode != sdk.CodeOK {
-			t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
+			t.Errorf("%s: got non-OK code, got %v, want %v", tc.testName, got, tc.wantErrCode)
 		}
 		if got != nil {
 			if got.Code() != tc.wantErrCode {
-				t.Errorf("%s ValidateBasic: got %v, want %v", testName, got, tc.wantErrCode)
+				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, got, tc.wantErrCode)
 			}
 		}
 	}
@@ -191,135 +309,281 @@ func TestCommentAndRepost(t *testing.T) {
 	sourceAuthor := "Source"
 	sourcePostID := "SourcePostID"
 
-	cases := []struct {
-		msg         CreatePostMsg
-		expectError sdk.Error
+	testCases := []struct {
+		testName      string
+		msg           CreatePostMsg
+		expectedError sdk.Error
 	}{
-		{getCommentAndRepost(t, "", "", "", ""), nil},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, "", ""), nil},
-		{getCommentAndRepost(t, "", "", sourceAuthor, sourcePostID), nil},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, ""), ErrCommentAndRepostConflict()},
-		{getCommentAndRepost(t, parentAuthor, parentPostID, "", sourcePostID), ErrCommentAndRepostConflict()},
-		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
-		{getCommentAndRepost(t, "", parentPostID, sourceAuthor, sourcePostID), ErrCommentAndRepostConflict()},
-		{getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""), ErrCommentAndRepostConflict()},
+		{
+			testName:      "normal case 1",
+			msg:           getCommentAndRepost(t, "", "", "", ""),
+			expectedError: nil,
+		},
+		{
+			testName:      "normal case 2",
+			msg:           getCommentAndRepost(t, parentAuthor, parentPostID, "", ""),
+			expectedError: nil,
+		},
+		{
+			testName:      "normal case 3",
+			msg:           getCommentAndRepost(t, "", "", sourceAuthor, sourcePostID),
+			expectedError: nil,
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 1",
+			msg:           getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, sourcePostID),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 2",
+			msg:           getCommentAndRepost(t, parentAuthor, parentPostID, sourceAuthor, ""),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 3",
+			msg:           getCommentAndRepost(t, parentAuthor, parentPostID, "", sourcePostID),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 4",
+			msg:           getCommentAndRepost(t, parentAuthor, "", sourceAuthor, sourcePostID),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 5",
+			msg:           getCommentAndRepost(t, "", parentPostID, sourceAuthor, sourcePostID),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
+		{
+			testName:      "post can't be comment and re-post at the same time 6",
+			msg:           getCommentAndRepost(t, parentAuthor, "", sourceAuthor, ""),
+			expectedError: ErrCommentAndRepostConflict(),
+		},
 	}
-	for _, cs := range cases {
-		result := cs.msg.ValidateBasic()
-		assert.Equal(t, cs.expectError, result)
+	for _, tc := range testCases {
+		result := tc.msg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedError, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestLikeMsg(t *testing.T) {
-	cases := []struct {
-		likeMsg     LikeMsg
-		expectError sdk.Error
+	testCases := []struct {
+		testName      string
+		likeMsg       LikeMsg
+		expectedError sdk.Error
 	}{
-		{NewLikeMsg("test", 10000, "author", "postID"), nil},
-		{NewLikeMsg("test", -10000, "author", "postID"), nil},
-		{NewLikeMsg("test", 10001, "author", "postID"),
-			ErrPostLikeWeightOverflow(10001)},
-		{NewLikeMsg("test", -10001, "author", "postID"),
-			ErrPostLikeWeightOverflow(-10001)},
-		{NewLikeMsg("", 10000, "author", "postID"), ErrNoUsername()},
-		{NewLikeMsg("test", 10000, "", "postID"), ErrInvalidTarget()},
-		{NewLikeMsg("test", 10000, "author", ""), ErrInvalidTarget()},
-		{NewLikeMsg("test", 10000, "", ""), ErrInvalidTarget()},
+		{
+			testName:      "normal case 1 - like",
+			likeMsg:       NewLikeMsg("test", 10000, "author", "postID"),
+			expectedError: nil,
+		},
+		{
+			testName:      "normal case 2 - dislike",
+			likeMsg:       NewLikeMsg("test", -10000, "author", "postID"),
+			expectedError: nil,
+		},
+		{
+			testName:      "like weight overflow positively",
+			likeMsg:       NewLikeMsg("test", 10001, "author", "postID"),
+			expectedError: ErrPostLikeWeightOverflow(10001),
+		},
+		{
+			testName:      "like weight overflow negatively",
+			likeMsg:       NewLikeMsg("test", -10001, "author", "postID"),
+			expectedError: ErrPostLikeWeightOverflow(-10001),
+		},
+		{
+			testName:      "no username",
+			likeMsg:       NewLikeMsg("", 10000, "author", "postID"),
+			expectedError: ErrNoUsername(),
+		},
+		{
+			testName:      "invalid target - no post author",
+			likeMsg:       NewLikeMsg("test", 10000, "", "postID"),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid target - not post id",
+			likeMsg:       NewLikeMsg("test", 10000, "author", ""),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid target - no post author and id",
+			likeMsg:       NewLikeMsg("test", 10000, "", ""),
+			expectedError: ErrInvalidTarget(),
+		},
 	}
 
-	for _, cs := range cases {
-		testLikeValidate(t, cs.likeMsg, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.likeMsg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedError, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestDonationMsg(t *testing.T) {
-	cases := []struct {
-		donateMsg   DonateMsg
-		expectError sdk.Error
+	testCases := []struct {
+		testName      string
+		donateMsg     DonateMsg
+		expectedError sdk.Error
 	}{
-		{NewDonateMsg("test", types.LNO("1"),
-			"author", "postID", "", memo1, true), nil},
-		{NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1, true),
-			ErrNoUsername()},
-		{NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1, true),
-			types.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1, true),
-			types.ErrInvalidCoins("LNO can't be less than lower bound")},
-		{NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1, true),
-			ErrInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1, true),
-			ErrInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "", "", "", memo1, true),
-			ErrInvalidTarget()},
-		{NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo, true),
-			ErrInvalidMemo()},
+		{
+			testName:      "normal case",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", memo1, true),
+			expectedError: nil,
+		},
+		{
+			testName:      "no username",
+			donateMsg:     NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1, true),
+			expectedError: ErrNoUsername(),
+		},
+		{
+			testName:      "zero coin is less than lower bound",
+			donateMsg:     NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1, true),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:      "negative coin is less than lower bound",
+			donateMsg:     NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1, true),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:      "invalid target - no post id",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1, true),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid target - no author",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1, true),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid target - no author and post id",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "", "", memo1, true),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid memo",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo, true),
+			expectedError: ErrInvalidMemo(),
+		},
 	}
 
-	for _, cs := range cases {
-		testDonationValidate(t, cs.donateMsg, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.donateMsg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedError, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestReportOrUpvoteMsg(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		testName          string
 		reportOrUpvoteMsg ReportOrUpvoteMsg
-		expectError       sdk.Error
+		expectedError     sdk.Error
 	}{
-		{NewReportOrUpvoteMsg("test", "author", "postID", true), nil},
-		{NewReportOrUpvoteMsg("test", "author", "postID", false), nil},
-		{NewReportOrUpvoteMsg("", "author", "postID", true),
-			ErrNoUsername()},
-		{NewReportOrUpvoteMsg("test", "author", "", true),
-			ErrInvalidTarget()},
-		{NewReportOrUpvoteMsg("test", "", "postID", false),
-			ErrInvalidTarget()},
-		{NewReportOrUpvoteMsg("test", "", "", false),
-			ErrInvalidTarget()},
+		{
+			testName:          "normal case - report",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("test", "author", "postID", true),
+			expectedError:     nil,
+		},
+		{
+			testName:          "normal case - upvote",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("test", "author", "postID", false),
+			expectedError:     nil,
+		},
+		{
+			testName:          "no username",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("", "author", "postID", true),
+			expectedError:     ErrNoUsername(),
+		},
+		{
+			testName:          "invalid target - no post id",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("test", "author", "", true),
+			expectedError:     ErrInvalidTarget(),
+		},
+		{
+			testName:          "invalid target - no author",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("test", "", "postID", false),
+			expectedError:     ErrInvalidTarget(),
+		},
+		{
+			testName:          "invalid target - no author and post id",
+			reportOrUpvoteMsg: NewReportOrUpvoteMsg("test", "", "", false),
+			expectedError:     ErrInvalidTarget(),
+		},
 	}
 
-	for _, cs := range cases {
-		testReportOrUpvoteValidate(t, cs.reportOrUpvoteMsg, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.reportOrUpvoteMsg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedError, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestViewMsg(t *testing.T) {
-	cases := []struct {
-		viewMsg     ViewMsg
-		expectError sdk.Error
+	testCases := []struct {
+		testName      string
+		viewMsg       ViewMsg
+		expectedError sdk.Error
 	}{
-		{NewViewMsg("test", "author", "postID"), nil},
-		{NewViewMsg("", "author", "postID"),
-			ErrNoUsername()},
-		{NewViewMsg("test", "", "postID"),
-			ErrInvalidTarget()},
-		{NewViewMsg("test", "author", ""),
-			ErrInvalidTarget()},
+		{
+			testName:      "normal case",
+			viewMsg:       NewViewMsg("test", "author", "postID"),
+			expectedError: nil,
+		},
+		{
+			testName:      "no username",
+			viewMsg:       NewViewMsg("", "author", "postID"),
+			expectedError: ErrNoUsername(),
+		},
+		{
+			testName:      "invalid target - no author",
+			viewMsg:       NewViewMsg("test", "", "postID"),
+			expectedError: ErrInvalidTarget(),
+		},
+		{
+			testName:      "invalid target - no post id",
+			viewMsg:       NewViewMsg("test", "author", ""),
+			expectedError: ErrInvalidTarget(),
+		},
 	}
 
-	for _, cs := range cases {
-		testViewValidate(t, cs.viewMsg, cs.expectError)
+	for _, tc := range testCases {
+		result := tc.viewMsg.ValidateBasic()
+		if !assert.Equal(t, tc.expectedError, result) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
 	}
 }
 
 func TestMsgPermission(t *testing.T) {
-	cases := map[string]struct {
-		msg              types.Msg
-		expectPermission types.Permission
+	testCases := []struct {
+		testName           string
+		msg                types.Msg
+		expectedPermission types.Permission
 	}{
-		"donateMsg": {
+		{
+			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", memo1, false),
-			expectPermission: types.TransactionPermission,
+			expectedPermission: types.TransactionPermission,
 		},
-		"micropayment donateMsg": {
+		{
+			testName: "micropayment donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", memo1, true),
-			expectPermission: types.MicropaymentPermission,
+			expectedPermission: types.MicropaymentPermission,
 		},
-		"create post": {
+		{
+			testName: "create post",
 			msg: CreatePostMsg{
 				PostID:       "test",
 				Title:        "title",
@@ -330,49 +594,51 @@ func TestMsgPermission(t *testing.T) {
 				SourceAuthor: types.AccountKey("sourceAuthor"),
 				SourcePostID: "sourcePostID",
 				Links: []types.IDToURLMapping{
-					types.IDToURLMapping{
+					{
 						Identifier: "#1",
 						URL:        "https://lino.network",
 					},
 				},
 				RedistributionSplitRate: "0.5",
 			},
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
-		"like post": {
+		{
+			testName: "like post",
 			msg: NewLikeMsg(
 				"test", 10000, "author", "postID"),
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
-		"view post": {
+		{
+			testName: "view post",
 			msg: NewViewMsg(
 				"test", "author", "postID"),
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
-		"report post": {
+		{
+			testName: "report post",
 			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", true),
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
-		"upvote post": {
+		{
+			testName: "upvote post",
 			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", false),
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
-		"update post": {
+		{
+			testName: "update post",
 			msg: NewUpdatePostMsg(
 				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
-			expectPermission: types.PostPermission,
+			expectedPermission: types.PostPermission,
 		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf(
-				"%s: expect permission incorrect, expect %v, got %v",
-				testName, cs.expectPermission, permission)
-			return
+	for _, tc := range testCases {
+		permission := tc.msg.GetPermission()
+		if tc.expectedPermission != permission {
+			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, tc.expectedPermission, permission)
 		}
 	}
 }

@@ -307,26 +307,61 @@ func TestGetUpdateValidatorList(t *testing.T) {
 		PubKey:  val2.ABCIValidator.GetPubKey(),
 	}
 
-	cases := []struct {
-		oncallValidators   []types.AccountKey
-		preBlockValidators []types.AccountKey
-		expectUpdateList   []abci.Validator
+	testCases := []struct {
+		testName            string
+		oncallValidators    []types.AccountKey
+		preBlockValidators  []types.AccountKey
+		expectedUpdatedList []abci.Validator
 	}{
-		{[]types.AccountKey{user1}, []types.AccountKey{}, []abci.Validator{val1.ABCIValidator}},
-		{[]types.AccountKey{user1, user2}, []types.AccountKey{user1}, []abci.Validator{val1.ABCIValidator, val2.ABCIValidator}},
-		{[]types.AccountKey{user1, user2}, []types.AccountKey{user1, user2}, []abci.Validator{val1.ABCIValidator, val2.ABCIValidator}},
-		{[]types.AccountKey{user2}, []types.AccountKey{user1, user2}, []abci.Validator{val1NoPower, val2.ABCIValidator}},
-		{[]types.AccountKey{}, []types.AccountKey{user2}, []abci.Validator{val2NoPower}},
+		{
+			testName:            "only one oncall validator",
+			oncallValidators:    []types.AccountKey{user1},
+			preBlockValidators:  []types.AccountKey{},
+			expectedUpdatedList: []abci.Validator{val1.ABCIValidator},
+		},
+		{
+			testName:            "two oncall validators and one pre block validator",
+			oncallValidators:    []types.AccountKey{user1, user2},
+			preBlockValidators:  []types.AccountKey{user1},
+			expectedUpdatedList: []abci.Validator{val1.ABCIValidator, val2.ABCIValidator},
+		},
+		{
+			testName:            "two oncall validatos and two pre block validators",
+			oncallValidators:    []types.AccountKey{user1, user2},
+			preBlockValidators:  []types.AccountKey{user1, user2},
+			expectedUpdatedList: []abci.Validator{val1.ABCIValidator, val2.ABCIValidator},
+		},
+		{
+			testName:            "one oncall validator and two pre block validators",
+			oncallValidators:    []types.AccountKey{user2},
+			preBlockValidators:  []types.AccountKey{user1, user2},
+			expectedUpdatedList: []abci.Validator{val1NoPower, val2.ABCIValidator},
+		},
+		{
+			testName:            "only one pre block validator",
+			oncallValidators:    []types.AccountKey{},
+			preBlockValidators:  []types.AccountKey{user2},
+			expectedUpdatedList: []abci.Validator{val2NoPower},
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		lst := &model.ValidatorList{
-			OncallValidators:   cs.oncallValidators,
-			PreBlockValidators: cs.preBlockValidators,
+			OncallValidators:   tc.oncallValidators,
+			PreBlockValidators: tc.preBlockValidators,
 		}
-		valManager.storage.SetValidatorList(ctx, lst)
-		actualList, _ := valManager.GetUpdateValidatorList(ctx)
-		assert.Equal(t, cs.expectUpdateList, actualList)
+		err := valManager.storage.SetValidatorList(ctx, lst)
+		if err != nil {
+			t.Errorf("%s: failed to set validator list, got err %v", tc.testName, err)
+		}
+
+		actualList, err := valManager.GetUpdateValidatorList(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get validator list, got err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.expectedUpdatedList, actualList) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, actualList, tc.expectedUpdatedList)
+		}
 	}
 }
 
@@ -341,24 +376,55 @@ func TestIsLegalWithdraw(t *testing.T) {
 		ctx, user1, crypto.GenPrivKeyEd25519().PubKey(),
 		param.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
 
-	cases := []struct {
+	testCases := []struct {
+		testName         string
 		oncallValidators []types.AccountKey
 		username         types.AccountKey
 		withdraw         types.Coin
-		expectResult     bool
+		expectedResult   bool
 	}{
-		{[]types.AccountKey{}, user1, param.ValidatorMinWithdraw.Minus(types.NewCoinFromInt64(1)), false},
-		{[]types.AccountKey{}, user1, param.ValidatorMinCommitingDeposit, false},
-		{[]types.AccountKey{user1}, user1, param.ValidatorMinWithdraw, false},
-		{[]types.AccountKey{}, user1, param.ValidatorMinWithdraw, true},
+		{
+			testName:         "withdraw amount is a little less than minimum requirement",
+			oncallValidators: []types.AccountKey{user1},
+			username:         user1,
+			withdraw:         param.ValidatorMinWithdraw.Minus(types.NewCoinFromInt64(1)),
+			expectedResult:   false,
+		},
+		{
+			testName:         "remaing coin is less than minimum commiting deposit",
+			oncallValidators: []types.AccountKey{user1},
+			username:         user1,
+			withdraw:         param.ValidatorMinCommitingDeposit,
+			expectedResult:   false,
+		},
+		{
+			testName:         "oncall validator can't withdraw",
+			oncallValidators: []types.AccountKey{user1},
+			username:         user1,
+			withdraw:         param.ValidatorMinWithdraw,
+			expectedResult:   false,
+		},
+		{
+			testName:         "withdraw successfully",
+			oncallValidators: []types.AccountKey{},
+			username:         user1,
+			withdraw:         param.ValidatorMinWithdraw,
+			expectedResult:   true,
+		},
 	}
 
-	for _, cs := range cases {
+	for _, tc := range testCases {
 		lst := &model.ValidatorList{
-			OncallValidators: cs.oncallValidators,
+			OncallValidators: tc.oncallValidators,
 		}
-		valManager.storage.SetValidatorList(ctx, lst)
-		res := valManager.IsLegalWithdraw(ctx, cs.username, cs.withdraw)
-		assert.Equal(t, cs.expectResult, res)
+		err := valManager.storage.SetValidatorList(ctx, lst)
+		if err != nil {
+			t.Errorf("%s: failed to set validator list, got err %v", tc.testName, err)
+		}
+
+		res := valManager.IsLegalWithdraw(ctx, tc.username, tc.withdraw)
+		if res != tc.expectedResult {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
 	}
 }
