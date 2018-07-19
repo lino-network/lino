@@ -70,6 +70,7 @@ func (accManager AccountManager) CreateAccount(
 	accountMeta := &model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+		TransactionCapacity:  accParams.RegisterFee,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err

@@ -255,6 +255,7 @@ func TestTPSCapacity(t *testing.T) {
 	privs, seqs := []crypto.PrivKey{transaction1}, []int64{0}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
+
 	seq, err := am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
 	assert.Equal(t, seq, int64(1))
@@ -262,9 +263,11 @@ func TestTPSCapacity(t *testing.T) {
 	ctx = ctx.WithBlockHeader(
 		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
 	gm.UpdateTPS(ctx, time.Now().Unix()-1)
+
 	seqs = []int64{1}
 	tx = newTestTx(ctx, msg, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
+	checkValidTx(t, anteHandler, ctx, tx)
+
 	seqs = []int64{2}
 	tx = newTestTx(ctx, msg, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
