@@ -24,7 +24,7 @@ type RegisterMsg struct {
 	Referrer              types.AccountKey `json:"referrer"`
 	RegisterFee           types.LNO        `json:"register_fee"`
 	NewUser               types.AccountKey `json:"new_username"`
-	NewMasterPubKey       crypto.PubKey    `json:"new_master_public_key"`
+	NewResetPubKey        crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey  crypto.PubKey    `json:"new_transaction_public_key"`
 	NewMicropaymentPubKey crypto.PubKey    `json:"new_micropayment_public_key"`
 	NewPostPubKey         crypto.PubKey    `json:"new_post_public_key"`
@@ -46,7 +46,7 @@ type ClaimMsg struct {
 
 type RecoverMsg struct {
 	Username              types.AccountKey `json:"username"`
-	NewMasterPubKey       crypto.PubKey    `json:"new_master_public_key"`
+	NewResetPubKey        crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey  crypto.PubKey    `json:"new_transaction_public_key"`
 	NewMicropaymentPubKey crypto.PubKey    `json:"new_micropayment_public_key"`
 	NewPostPubKey         crypto.PubKey    `json:"new_post_public_key"`
@@ -238,11 +238,11 @@ func (msg TransferMsg) GetSigners() []sdk.AccAddress {
 
 // Recover Msg Implementations
 func NewRecoverMsg(
-	username string, masterPubkey, transactionPubkey,
+	username string, resetPubkey, transactionPubkey,
 	micropaymentPubkey, postPubkey crypto.PubKey) RecoverMsg {
 	return RecoverMsg{
 		Username:              types.AccountKey(username),
-		NewMasterPubKey:       masterPubkey,
+		NewResetPubKey:        resetPubkey,
 		NewTransactionPubKey:  transactionPubkey,
 		NewMicropaymentPubKey: micropaymentPubkey,
 		NewPostPubKey:         postPubkey,
@@ -261,12 +261,12 @@ func (msg RecoverMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RecoverMsg) String() string {
-	return fmt.Sprintf("RecoverMsg{user:%v, new master key:%v, new post Key:%v, new transaction key:%v}",
-		msg.Username, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf("RecoverMsg{user:%v, new reset key:%v, new post Key:%v, new transaction key:%v}",
+		msg.Username, msg.NewResetPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
 func (msg RecoverMsg) GetPermission() types.Permission {
-	return types.MasterPermission
+	return types.ResetPermission
 }
 
 func (msg RecoverMsg) GetSignBytes() []byte {
@@ -284,13 +284,13 @@ func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
 // NewRegisterMsg - construct register msg.
 func NewRegisterMsg(
 	referrer string, newUser string, registerFee types.LNO,
-	masterPubkey, transactionPubkey, micropaymentPubkey,
+	resetPubkey, transactionPubkey, micropaymentPubkey,
 	postPubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
 		Referrer:              types.AccountKey(referrer),
 		NewUser:               types.AccountKey(newUser),
 		RegisterFee:           registerFee,
-		NewMasterPubKey:       masterPubkey,
+		NewResetPubKey:        resetPubkey,
 		NewTransactionPubKey:  transactionPubkey,
 		NewMicropaymentPubKey: micropaymentPubkey,
 		NewPostPubKey:         postPubkey,
@@ -325,8 +325,8 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{Newuser:%v, Master Key:%v, Post Key:%v, Transaction Key:%v}",
-		msg.NewUser, msg.NewMasterPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf("RegisterMsg{Newuser:%v, Reset Key:%v, Post Key:%v, Transaction Key:%v}",
+		msg.NewUser, msg.NewResetPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
 }
 
 // Implements Msg.

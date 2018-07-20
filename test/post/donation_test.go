@@ -14,21 +14,21 @@ import (
 
 // test donate to a normal post
 func TestNormalDonation(t *testing.T) {
-	newPostUserTransactionPriv := crypto.GenPrivKeyEd25519()
-	newPostUserPostPriv := crypto.GenPrivKeyEd25519()
+	newPostUserTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newPostUserPostPriv := crypto.GenPrivKeySecp256k1()
 	newPostUser := "poster"
 	postID := "New Post"
 
-	newDonateUserTransactionPriv := crypto.GenPrivKeyEd25519()
+	newDonateUserTransactionPriv := crypto.GenPrivKeySecp256k1()
 	newDonateUser := "donator"
 	// recover some stake
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newPostUser, lb, 0,
-		crypto.GenPrivKeyEd25519(), newPostUserTransactionPriv, crypto.GenPrivKeyEd25519(), newPostUserPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), newPostUserTransactionPriv, crypto.GenPrivKeySecp256k1(), newPostUserPostPriv, "100")
 	test.CreateAccount(t, newDonateUser, lb, 1,
-		crypto.GenPrivKeyEd25519(), newDonateUserTransactionPriv, crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), "100")
+		crypto.GenPrivKeySecp256k1(), newDonateUserTransactionPriv, crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), "100")
 
 	test.CreateTestPost(
 		t, lb, newPostUser, postID, 0, newPostUserPostPriv, "", "", "", "", "0", baseTime)

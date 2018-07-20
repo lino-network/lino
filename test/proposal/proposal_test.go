@@ -15,15 +15,15 @@ import (
 )
 
 func TestForceValidatorVote(t *testing.T) {
-	accountTransactionPriv := crypto.GenPrivKeyEd25519()
-	accountPostPriv := crypto.GenPrivKeyEd25519()
+	accountTransactionPriv := crypto.GenPrivKeySecp256k1()
+	accountPostPriv := crypto.GenPrivKeySecp256k1()
 	accountName := "newuser"
-	validatorPriv := crypto.GenPrivKeyEd25519()
+	validatorPriv := crypto.GenPrivKeySecp256k1()
 
-	accountTransactionPriv2 := crypto.GenPrivKeyEd25519()
-	accountPostPriv2 := crypto.GenPrivKeyEd25519()
+	accountTransactionPriv2 := crypto.GenPrivKeySecp256k1()
+	accountPostPriv2 := crypto.GenPrivKeySecp256k1()
 	accountName2 := "newuser2"
-	validatorPriv2 := crypto.GenPrivKeyEd25519()
+	validatorPriv2 := crypto.GenPrivKeySecp256k1()
 
 	baseTime := time.Now().Unix() + 100
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
@@ -35,10 +35,10 @@ func TestForceValidatorVote(t *testing.T) {
 	depositCoin, _ := types.LinoToCoin(depositLNO)
 
 	test.CreateAccount(t, accountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), accountTransactionPriv, crypto.GenPrivKeyEd25519(), accountPostPriv, totalLNO)
+		crypto.GenPrivKeySecp256k1(), accountTransactionPriv, crypto.GenPrivKeySecp256k1(), accountPostPriv, totalLNO)
 
 	test.CreateAccount(t, accountName2, lb, 1,
-		crypto.GenPrivKeyEd25519(), accountTransactionPriv2, crypto.GenPrivKeyEd25519(), accountPostPriv2, totalLNO)
+		crypto.GenPrivKeySecp256k1(), accountTransactionPriv2, crypto.GenPrivKeySecp256k1(), accountPostPriv2, totalLNO)
 
 	voteDepositMsg := vote.NewVoterDepositMsg(accountName, depositLNO)
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, accountTransactionPriv, baseTime)

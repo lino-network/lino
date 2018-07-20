@@ -29,9 +29,9 @@ import (
 // construct some global keys and addrs.
 var (
 	GenesisUser            = "genesis"
-	GenesisPriv            = crypto.GenPrivKeyEd25519()
-	GenesisTransactionPriv = crypto.GenPrivKeyEd25519()
-	GenesisPostPriv        = crypto.GenPrivKeyEd25519()
+	GenesisPriv            = crypto.GenPrivKeySecp256k1()
+	GenesisTransactionPriv = crypto.GenPrivKeySecp256k1()
+	GenesisPostPriv        = crypto.GenPrivKeySecp256k1()
 	GenesisAddr            = GenesisPriv.PubKey().Address()
 
 	DefaultNumOfVal  int       = 21
@@ -68,12 +68,12 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		genesisAcc := app.GenesisAccount{
 			Name:            "validator" + strconv.Itoa(i),
 			Lino:            LNOPerValidator,
-			MasterKey:       crypto.GenPrivKeyEd25519().PubKey(),
-			TransactionKey:  crypto.GenPrivKeyEd25519().PubKey(),
-			MicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
-			PostKey:         crypto.GenPrivKeyEd25519().PubKey(),
+			ResetKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+			TransactionKey:  crypto.GenPrivKeySecp256k1().PubKey(),
+			MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
+			PostKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 			IsValidator:     true,
-			ValPubKey:       crypto.GenPrivKeyEd25519().PubKey(),
+			ValPubKey:       crypto.GenPrivKeySecp256k1().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -84,9 +84,9 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	genesisAcc := app.GenesisAccount{
 		Name:            GenesisUser,
 		Lino:            initLNO,
-		MasterKey:       GenesisPriv.PubKey(),
+		ResetKey:        GenesisPriv.PubKey(),
 		TransactionKey:  GenesisTransactionPriv.PubKey(),
-		MicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
+		MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
 		PostKey:         GenesisPostPriv.PubKey(),
 		IsValidator:     false,
 		ValPubKey:       GenesisPriv.PubKey(),
@@ -167,7 +167,7 @@ func CheckAllValidatorList(
 
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
-	masterPriv, transactionPriv, micropaymentPriv, postPriv crypto.PrivKeyEd25519,
+	masterPriv, transactionPriv, micropaymentPriv, postPriv crypto.PrivKeySecp256k1,
 	numOfLino string) {
 
 	registerMsg := acc.NewRegisterMsg(
@@ -185,7 +185,7 @@ func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 }
 
 func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int64,
-	expPass bool, priv crypto.PrivKeyEd25519, headTime int64) {
+	expPass bool, priv crypto.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
 	// Run a Check
@@ -218,7 +218,7 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.Commit()
 }
 
-func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeyEd25519) auth.StdTx {
+func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeySecp256k1) auth.StdTx {
 	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),
@@ -230,7 +230,7 @@ func genTx(msg sdk.Msg, seq int64, priv crypto.PrivKeyEd25519) auth.StdTx {
 
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
-	username, postID string, seq int64, priv crypto.PrivKeyEd25519,
+	username, postID string, seq int64, priv crypto.PrivKeySecp256k1,
 	sourceAuthor, sourcePostID string,
 	parentAuthor, parentPostID string,
 	redistributionSplitRate string, publishTime int64) {

@@ -13,8 +13,8 @@ import (
 
 // test publish a normal post
 func TestNormalPublish(t *testing.T) {
-	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
-	newAccountPostPriv := crypto.GenPrivKeyEd25519()
+	newAccountTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID1 := "New Post 1"
 	postID2 := "New Post 2"
@@ -23,7 +23,7 @@ func TestNormalPublish(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), newAccountTransactionPriv, crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID1, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
@@ -33,7 +33,7 @@ func TestNormalPublish(t *testing.T) {
 
 // test publish a repost
 func TestNormalRepost(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeyEd25519()
+	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
@@ -41,7 +41,7 @@ func TestNormalRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
@@ -53,7 +53,7 @@ func TestNormalRepost(t *testing.T) {
 
 // test invalid repost if source post id doesn't exist
 func TestInvalidRepost(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeyEd25519()
+	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
@@ -61,7 +61,7 @@ func TestInvalidRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
 
 	msg := post.CreatePostMsg{
 		PostID:                  postID,
@@ -81,7 +81,7 @@ func TestInvalidRepost(t *testing.T) {
 
 // test publish a comment
 func TestComment(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeyEd25519()
+	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	comment := "Comment"
@@ -89,7 +89,7 @@ func TestComment(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), crypto.GenPrivKeyEd25519(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)

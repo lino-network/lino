@@ -17,14 +17,17 @@ import (
 
 // test normal transfer and register
 func TestTransferAndRegisterAccount(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
+	newResetPriv := crypto.GenPrivKeySecp256k1()
+	newTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newMicropaymentPriv := crypto.GenPrivKeySecp256k1()
+	newPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 
 	registerMsg := acc.NewRegisterMsg(test.GenesisUser, newAccountName, types.LNO("100"),
-		newAccountPriv.PubKey(), newAccountPriv.Generate(0).PubKey(), newAccountPriv.Generate(1).PubKey(), newAccountPriv.Generate(2).PubKey())
+		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newMicropaymentPriv.PubKey(), newPostPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(100*types.Decimals))
@@ -34,13 +37,16 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 
 // register failed if register fee is insufficient
 func TestRegisterAccountFailed(t *testing.T) {
-	newAccountPriv := crypto.GenPrivKeyEd25519()
+	newResetPriv := crypto.GenPrivKeySecp256k1()
+	newTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newMicropaymentPriv := crypto.GenPrivKeySecp256k1()
+	newPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 	registerMsg := acc.NewRegisterMsg(test.GenesisUser, newAccountName, "0.1",
-		newAccountPriv.PubKey(), newAccountPriv.Generate(0).PubKey(), newAccountPriv.Generate(1).PubKey(), newAccountPriv.Generate(2).PubKey())
+		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newMicropaymentPriv.PubKey(), newPostPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, false, test.GenesisPriv, baseTime)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
