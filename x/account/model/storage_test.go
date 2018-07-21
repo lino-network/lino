@@ -32,14 +32,13 @@ func TestAccountInfo(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	priv := crypto.GenPrivKeyEd25519()
 	accInfo := AccountInfo{
 		Username:        types.AccountKey("test"),
 		CreatedAt:       0,
-		ResetKey:        priv.PubKey(),
-		TransactionKey:  priv.Generate(0).PubKey(),
-		MicropaymentKey: priv.Generate(1).PubKey(),
-		PostKey:         priv.Generate(2).PubKey(),
+		ResetKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+		TransactionKey:  crypto.GenPrivKeySecp256k1().PubKey(),
+		MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
+		PostKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)

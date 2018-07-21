@@ -3,6 +3,8 @@ package developer
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
@@ -248,5 +250,93 @@ func TestMsgPermission(t *testing.T) {
 				"%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectPermission)
 			return
 		}
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		{
+			testName:      "developer register msg",
+			msg:           NewDeveloperRegisterMsg("test", types.LNO("1"), "", "", ""),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "developer revoke msg",
+			msg:           NewDeveloperRevokeMsg("test"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "grant developer post permission msg",
+			msg:           NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "grant developer micropayment permission msg",
+			msg:           NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "revoke developer micropayment permission msg",
+			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "revoke developer post permission msg",
+			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			expectSigners: []types.AccountKey{"test"},
+		},
+	}
+
+	for _, tc := range testCases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", tc.testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	testCases := []struct {
+		testName string
+		msg      types.Msg
+	}{
+		{
+			testName: "developer register msg",
+			msg:      NewDeveloperRegisterMsg("test", types.LNO("1"), "", "", ""),
+		},
+		{
+			testName: "developer revoke msg",
+			msg:      NewDeveloperRevokeMsg("test"),
+		},
+		{
+			testName: "grant developer post permission msg",
+			msg:      NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
+		},
+		{
+			testName: "grant developer micropayment permission msg",
+			msg:      NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
+		},
+		{
+			testName: "revoke developer micropayment permission msg",
+			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
+		},
+		{
+			testName: "revoke developer post permission msg",
+			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, tc.testName)
 	}
 }

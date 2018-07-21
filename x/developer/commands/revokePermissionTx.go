@@ -43,6 +43,7 @@ func sendRevokePermissionTx(cdc *wire.Codec) client.CommandTxCallback {
 		if err != nil {
 			return err
 		}
+		fmt.Println(pubKey)
 		permissionStr := viper.GetString(client.FlagPermission)
 
 		var permission types.Permission

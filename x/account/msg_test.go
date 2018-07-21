@@ -5,6 +5,7 @@ import (
 
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	crypto "github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -431,11 +432,126 @@ func TestMsgPermission(t *testing.T) {
 		},
 	}
 
-	for testName, cs := range cases {
-		permission := cs.msg.GetPermission()
-		if cs.expectPermission != permission {
-			t.Errorf("%s: diff permission, got %v, want %v", testName, permission, cs.expectPermission)
+	for testName, tc := range cases {
+		permission := tc.msg.GetPermission()
+		if tc.expectPermission != permission {
+			t.Errorf("%s: diff permission, got %v, want %v", testName, permission, tc.expectPermission)
 			return
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	cases := map[string]struct {
+		msg types.Msg
+	}{
+		"transfer to user": {
+			msg: NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
+		},
+		"follow": {
+			msg: NewFollowMsg("userA", "userB"),
+		},
+		"unfollow": {
+			msg: NewUnfollowMsg("userA", "userB"),
+		},
+		"recover msg with public key type Ed25519": {
+			msg: NewRecoverMsg(
+				"userA", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey()),
+		},
+		"recover msg with public key type Secp256k1": {
+			msg: NewRecoverMsg(
+				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey()),
+		},
+		"claim": {
+			msg: NewClaimMsg("test"),
+		},
+		"register msg with public key type Ed25519": {
+			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey()),
+		},
+		"register msg with public key type Secp256k1": {
+			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey()),
+		},
+		"update msg": {
+			msg: NewUpdateAccountMsg("user", "{'test':'test'}"),
+		},
+	}
+
+	for testName, tc := range cases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, testName)
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	cases := map[string]struct {
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		"transfer to user": {
+			msg:           NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		"follow": {
+			msg:           NewFollowMsg("userA", "userB"),
+			expectSigners: []types.AccountKey{"userA"},
+		},
+		"unfollow": {
+			msg:           NewUnfollowMsg("userA", "userB"),
+			expectSigners: []types.AccountKey{"userA"},
+		},
+		"recover msg with public key type Ed25519": {
+			msg: NewRecoverMsg(
+				"userA", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey()),
+			expectSigners: []types.AccountKey{"userA"},
+		},
+		"recover msg with public key type Secp256k1": {
+			msg: NewRecoverMsg(
+				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey()),
+			expectSigners: []types.AccountKey{"userA"},
+		},
+		"claim": {
+			msg:           NewClaimMsg("test"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		"register msg with public key type Ed25519": {
+			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey()),
+			expectSigners: []types.AccountKey{"referrer"},
+		},
+		"register msg with public key type Secp256k1": {
+			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey()),
+			expectSigners: []types.AccountKey{"referrer"},
+		},
+		"update msg": {
+			msg:           NewUpdateAccountMsg("user", "{'test':'test'}"),
+			expectSigners: []types.AccountKey{"user"},
+		},
+	}
+
+	for testName, tc := range cases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
 		}
 	}
 }
