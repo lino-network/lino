@@ -57,7 +57,7 @@ func (accManager AccountManager) CreateAccount(
 	accountInfo := &model.AccountInfo{
 		Username:       username,
 		CreatedAt:      ctx.BlockHeader().Time,
-		RecoveryKey:    resetKey,
+		ResetKey:       resetKey,
 		TransactionKey: transactionKey,
 		PostKey:        postKey,
 	}
@@ -331,13 +331,13 @@ func (accManager AccountManager) UpdateJSONMeta(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
-func (accManager AccountManager) GetRecoveryKey(
+func (accManager AccountManager) GetResetKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetRecoveryKey(username)
+		return nil, ErrGetResetKey(username)
 	}
-	return accountInfo.RecoveryKey, nil
+	return accountInfo.ResetKey, nil
 }
 
 func (accManager AccountManager) GetTransactionKey(
@@ -720,16 +720,16 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if !accManager.DoesAccountExist(ctx, me) {
 		return "", ErrAccountNotFound(me)
 	}
-	// if permission is recovery, only recovery key can sign for the msg
-	if permission == types.RecoveryPermission {
-		pubKey, err := accManager.GetRecoveryKey(ctx, me)
+	// if permission is reset, only reset key can sign for the msg
+	if permission == types.ResetPermission {
+		pubKey, err := accManager.GetResetKey(ctx, me)
 		if err != nil {
 			return "", err
 		}
 		if reflect.DeepEqual(pubKey, signKey) {
 			return me, nil
 		}
-		return "", ErrCheckRecoveryKey()
+		return "", ErrCheckResetKey()
 	}
 
 	// otherwise transaction key has the highest permission
@@ -813,13 +813,13 @@ func (accManager AccountManager) addPendingStakeToQueue(
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
-	newRecoveryPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
+	newResetPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	accInfo.RecoveryKey = newRecoveryPubKey
+	accInfo.ResetKey = newResetPubKey
 	accInfo.TransactionKey = newTransactionPubKey
 	accInfo.PostKey = newPostPubKey
 	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {

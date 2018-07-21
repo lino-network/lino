@@ -12,7 +12,7 @@ import (
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`
 	CreatedAt      int64            `json:"created_at"`
-	RecoveryKey    crypto.PubKey    `json:"recovery_key"`
+	ResetKey       crypto.PubKey    `json:"reset_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
 	PostKey        crypto.PubKey    `json:"post_key"`
 }

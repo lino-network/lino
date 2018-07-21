@@ -69,7 +69,7 @@ const (
 	CodeAddSavingCoin                      sdk.CodeType = 330
 	CodeInvalidMemo                        sdk.CodeType = 331
 	CodeInvalidJSONMeta                    sdk.CodeType = 332
-	CodeCheckRecoveryKey                   sdk.CodeType = 333
+	CodeCheckResetKey                      sdk.CodeType = 333
 	CodeCheckTransactionKey                sdk.CodeType = 334
 	CodeCheckGrantPostKey                  sdk.CodeType = 335
 	CodeCheckAuthenticatePubKeyOwner       sdk.CodeType = 336
@@ -77,7 +77,7 @@ const (
 	CodeGrantKeyNoLeftTimes                sdk.CodeType = 338
 	CodeGrantKeyMismatch                   sdk.CodeType = 339
 	CodePostGrantKeyMismatch               sdk.CodeType = 340
-	CodeGetRecoveryKey                     sdk.CodeType = 341
+	CodeGetResetKey                        sdk.CodeType = 341
 	CodeGetTransactionKey                  sdk.CodeType = 342
 	CodeGetPostKey                         sdk.CodeType = 343
 	CodeGetSavingFromBank                  sdk.CodeType = 344

@@ -780,7 +780,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:       accKey,
 		CreatedAt:      ctx.BlockHeader().Time,
-		RecoveryKey:    priv.PubKey(),
+		ResetKey:       priv.PubKey(),
 		TransactionKey: priv.Generate(0).PubKey(),
 		PostKey:        priv.Generate(1).PubKey(),
 	}
@@ -866,7 +866,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:       accKey,
 		CreatedAt:      ctx.BlockHeader().Time,
-		RecoveryKey:    priv.PubKey(),
+		ResetKey:       priv.PubKey(),
 		TransactionKey: priv.Generate(0).PubKey(),
 		PostKey:        priv.Generate(1).PubKey(),
 	}
@@ -1402,7 +1402,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			checkUser:         user1,
 			checkPubKey:       resetKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.RecoveryPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
@@ -1452,9 +1452,9 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			checkUser:         user1,
 			checkPubKey:       transactionKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.RecoveryPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
-			expectResult:      ErrCheckRecoveryKey(),
+			expectResult:      ErrCheckResetKey(),
 			expectGrantPubKey: nil,
 		},
 		{
@@ -1482,9 +1482,9 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			checkUser:         user1,
 			checkPubKey:       postKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.RecoveryPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
-			expectResult:      ErrCheckRecoveryKey(),
+			expectResult:      ErrCheckResetKey(),
 			expectGrantPubKey: nil,
 		},
 		{
@@ -1778,12 +1778,12 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	newRecoveryPrivKey := crypto.GenPrivKeyEd25519()
-	newTransactionPrivKey := newRecoveryPrivKey.Generate(0)
-	newPostPrivKey := newRecoveryPrivKey.Generate(1)
+	newResetPrivKey := crypto.GenPrivKeyEd25519()
+	newTransactionPrivKey := newResetPrivKey.Generate(0)
+	newPostPrivKey := newResetPrivKey.Generate(1)
 
 	err = am.RecoverAccount(
-		ctx, user1, newRecoveryPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
+		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
 		newPostPrivKey.PubKey())
 	if err != nil {
 		t.Errorf("%s: failed to recover account, got err %v", testName, err)
@@ -1792,7 +1792,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:       user1,
 		CreatedAt:      ctx.BlockHeader().Time,
-		RecoveryKey:    newRecoveryPrivKey.PubKey(),
+		ResetKey:       newResetPrivKey.PubKey(),
 		TransactionKey: newTransactionPrivKey.PubKey(),
 		PostKey:        newPostPrivKey.PubKey(),
 	}

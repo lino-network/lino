@@ -48,8 +48,8 @@ func ErrAddSavingCoin() sdk.Error {
 	return types.NewError(types.CodeAddSavingCoin, fmt.Sprint("failed to add saving coin"))
 }
 
-func ErrGetRecoveryKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeGetRecoveryKey, fmt.Sprintf("get %v recovery key failed", accKey))
+func ErrGetResetKey(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeGetResetKey, fmt.Sprintf("get %v reset key failed", accKey))
 }
 
 func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
@@ -84,8 +84,8 @@ func ErrIncreaseSequenceByOne(err error) sdk.Error {
 	return types.NewError(types.CodeIncreaseSequenceByOne, fmt.Sprintf("failed to increase sequence by one: %s", err.Error()))
 }
 
-func ErrCheckRecoveryKey() sdk.Error {
-	return types.NewError(types.CodeCheckRecoveryKey, fmt.Sprintf("transaction needs recovery key"))
+func ErrCheckResetKey() sdk.Error {
+	return types.NewError(types.CodeCheckResetKey, fmt.Sprintf("transaction needs reset key"))
 }
 
 func ErrCheckTransactionKey() sdk.Error {

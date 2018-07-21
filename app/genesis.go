@@ -52,7 +52,7 @@ type GenesisState struct {
 type GenesisAccount struct {
 	Name           string        `json:"name"`
 	Lino           types.LNO     `json:"lino"`
-	RecoveryKey    crypto.PubKey `json:"recovery_key"`
+	ResetKey       crypto.PubKey `json:"reset_key"`
 	TransactionKey crypto.PubKey `json:"transaction_key"`
 	PostKey        crypto.PubKey `json:"post_key"`
 	IsValidator    bool          `json:"is_validator"`
@@ -75,11 +75,11 @@ type GenesisInfraProvider struct {
 
 func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
-	recoveryPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := crypto.GenPrivKeySecp256k1()
 	transactionPriv := crypto.GenPrivKeySecp256k1()
 	postPriv := crypto.GenPrivKeySecp256k1()
 
-	fmt.Println("recovery private key is:", strings.ToUpper(hex.EncodeToString(recoveryPriv.Bytes())))
+	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
@@ -87,7 +87,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	genesisAcc := GenesisAccount{
 		Name:           "lino",
 		Lino:           totalLino,
-		RecoveryKey:    recoveryPriv.PubKey(),
+		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
 		PostKey:        postPriv.PubKey(),
 		IsValidator:    true,

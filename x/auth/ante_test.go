@@ -32,13 +32,13 @@ var (
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeyEd25519,
 	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
-	recoveryKey := crypto.GenPrivKeyEd25519()
+	resetKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		recoveryKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
-	return recoveryKey, transactionKey, postKey, types.AccountKey(username)
+		resetKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
+	return resetKey, transactionKey, postKey, types.AccountKey(username)
 }
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {

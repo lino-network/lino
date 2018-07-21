@@ -246,20 +246,20 @@ func TestHandleAccountRecover(t *testing.T) {
 
 	testCases := map[string]struct {
 		user              string
-		newRecoveryKey    crypto.PubKey
+		newResetKey       crypto.PubKey
 		newTransactionKey crypto.PubKey
 		newPostKey        crypto.PubKey
 	}{
 		"normal case": {
 			user:              user1,
-			newRecoveryKey:    crypto.GenPrivKeySecp256k1().PubKey(),
+			newResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
 			newTransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
 			newPostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newRecoveryKey, tc.newTransactionKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		if !assert.Equal(t, sdk.Result{}, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, sdk.Result{})
@@ -268,7 +268,7 @@ func TestHandleAccountRecover(t *testing.T) {
 		accInfo := model.AccountInfo{
 			Username:       types.AccountKey(tc.user),
 			CreatedAt:      ctx.BlockHeader().Time,
-			RecoveryKey:    tc.newRecoveryKey,
+			ResetKey:       tc.newResetKey,
 			TransactionKey: tc.newTransactionKey,
 			PostKey:        tc.newPostKey,
 		}
@@ -356,12 +356,12 @@ func TestHandleRegister(t *testing.T) {
 				t.Errorf("%s: account %s doesn't exist", tc.testName, tc.registerMsg.NewUser)
 			}
 
-			resetKey, err := am.GetRecoveryKey(ctx, tc.registerMsg.NewUser)
+			resetKey, err := am.GetResetKey(ctx, tc.registerMsg.NewUser)
 			if err != nil {
-				t.Errorf("%s: failed to get recovery key, got err %v", tc.testName, err)
+				t.Errorf("%s: failed to get reset key, got err %v", tc.testName, err)
 			}
-			if !resetKey.Equals(tc.registerMsg.NewRecoveryPubKey) {
-				t.Errorf("%s: diff recovery key, got %v, want %v", tc.testName, resetKey, tc.registerMsg.NewRecoveryPubKey)
+			if !resetKey.Equals(tc.registerMsg.NewResetPubKey) {
+				t.Errorf("%s: diff reset key, got %v, want %v", tc.testName, resetKey, tc.registerMsg.NewResetPubKey)
 			}
 
 			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)

@@ -401,7 +401,7 @@ func TestMsgPermission(t *testing.T) {
 			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey()),
-			expectPermission: types.RecoveryPermission,
+			expectPermission: types.ResetPermission,
 		},
 		"claim": {
 			msg:              NewClaimMsg("test"),

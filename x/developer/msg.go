@@ -157,7 +157,7 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidGrantTimes()
 	}
 
-	if msg.GrantLevel == types.RecoveryPermission ||
+	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
@@ -204,7 +204,7 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.GrantLevel == types.RecoveryPermission ||
+	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()

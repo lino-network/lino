@@ -29,7 +29,7 @@ const (
 	UnknownPermission     = Permission(0)
 	PostPermission        = Permission(1)
 	TransactionPermission = Permission(2)
-	RecoveryPermission    = Permission(3)
+	ResetPermission       = Permission(3)
 	GrantPostPermission   = Permission(4)
 
 	// Different proposal result
