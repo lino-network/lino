@@ -40,10 +40,11 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		referrer := viper.GetString(client.FlagReferrer)
 		amount := viper.GetString(client.FlagAmount)
 
-		masterPriv := crypto.GenPrivKeyEd25519()
-		transactionPriv := crypto.GenPrivKeyEd25519()
-		micropaymentPriv := crypto.GenPrivKeyEd25519()
-		postPriv := crypto.GenPrivKeyEd25519()
+		masterPriv := crypto.GenPrivKeySecp256k1()
+		transactionPriv := crypto.GenPrivKeySecp256k1()
+		micropaymentPriv := crypto.GenPrivKeySecp256k1()
+		postPriv := crypto.GenPrivKeySecp256k1()
+
 		fmt.Println("master private key is:", strings.ToUpper(hex.EncodeToString(masterPriv.Bytes())))
 		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 		fmt.Println("micropayment private key is:", strings.ToUpper(hex.EncodeToString(micropaymentPriv.Bytes())))

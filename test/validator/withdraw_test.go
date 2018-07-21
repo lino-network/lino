@@ -14,17 +14,17 @@ import (
 
 // test normal revoke
 func TestValidatorRevoke(t *testing.T) {
-	newAccountMasterPriv := crypto.GenPrivKeyEd25519()
-	newAccountTransactionPriv := crypto.GenPrivKeyEd25519()
-	newAccountPostPriv := crypto.GenPrivKeyEd25519()
+	newAccountResetPriv := crypto.GenPrivKeySecp256k1()
+	newAccountTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
-	newValidatorPriv := crypto.GenPrivKeyEd25519()
+	newValidatorPriv := crypto.GenPrivKeySecp256k1()
 
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		newAccountMasterPriv, newAccountTransactionPriv, crypto.GenPrivKeyEd25519(), newAccountPostPriv, "500000")
+		newAccountResetPriv, newAccountTransactionPriv, crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "500000")
 
 	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)

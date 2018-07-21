@@ -34,7 +34,7 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username type
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
-	masterKey, transactionKey, micropaymentKey, postKey crypto.PubKey,
+	resetKey, transactionKey, micropaymentKey, postKey crypto.PubKey,
 	registerFee types.Coin) sdk.Error {
 	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
@@ -58,7 +58,7 @@ func (accManager AccountManager) CreateAccount(
 	accountInfo := &model.AccountInfo{
 		Username:        username,
 		CreatedAt:       ctx.BlockHeader().Time,
-		MasterKey:       masterKey,
+		ResetKey:        resetKey,
 		TransactionKey:  transactionKey,
 		MicropaymentKey: micropaymentKey,
 		PostKey:         postKey,
@@ -333,13 +333,13 @@ func (accManager AccountManager) UpdateJSONMeta(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
-func (accManager AccountManager) GetMasterKey(
+func (accManager AccountManager) GetResetKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetMasterKey(username)
+		return nil, ErrGetResetKey(username)
 	}
-	return accountInfo.MasterKey, nil
+	return accountInfo.ResetKey, nil
 }
 
 func (accManager AccountManager) GetTransactionKey(
@@ -745,16 +745,16 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if !accManager.DoesAccountExist(ctx, me) {
 		return "", ErrAccountNotFound(me)
 	}
-	// if permission is master, only master key can sign for the msg
-	if permission == types.MasterPermission {
-		pubKey, err := accManager.GetMasterKey(ctx, me)
+	// if permission is reset, only reset key can sign for the msg
+	if permission == types.ResetPermission {
+		pubKey, err := accManager.GetResetKey(ctx, me)
 		if err != nil {
 			return "", err
 		}
 		if reflect.DeepEqual(pubKey, signKey) {
 			return me, nil
 		}
-		return "", ErrCheckMasterKey()
+		return "", ErrCheckResetKey()
 	}
 
 	// otherwise transaction key has the highest permission
@@ -871,13 +871,13 @@ func (accManager AccountManager) addPendingStakeToQueue(
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
-	newMasterPubKey, newTransactionPubKey, newMicropaymentPubKey, newPostPubKey crypto.PubKey) sdk.Error {
+	newResetPubKey, newTransactionPubKey, newMicropaymentPubKey, newPostPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	accInfo.MasterKey = newMasterPubKey
+	accInfo.ResetKey = newResetPubKey
 	accInfo.TransactionKey = newTransactionPubKey
 	accInfo.MicropaymentKey = newMicropaymentPubKey
 	accInfo.PostKey = newPostPubKey

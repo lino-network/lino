@@ -52,7 +52,7 @@ type GenesisState struct {
 type GenesisAccount struct {
 	Name            string        `json:"name"`
 	Lino            types.LNO     `json:"lino"`
-	MasterKey       crypto.PubKey `json:"master_key"`
+	ResetKey        crypto.PubKey `json:"reset_key"`
 	TransactionKey  crypto.PubKey `json:"transaction_key"`
 	MicropaymentKey crypto.PubKey `json:"micropayment_key"`
 	PostKey         crypto.PubKey `json:"post_key"`
@@ -76,12 +76,12 @@ type GenesisInfraProvider struct {
 
 func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
-	masterPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := crypto.GenPrivKeySecp256k1()
 	transactionPriv := crypto.GenPrivKeySecp256k1()
 	micropaymentPriv := crypto.GenPrivKeySecp256k1()
 	postPriv := crypto.GenPrivKeySecp256k1()
 
-	fmt.Println("master private key is:", strings.ToUpper(hex.EncodeToString(masterPriv.Bytes())))
+	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("micropayment private key is:", strings.ToUpper(hex.EncodeToString(micropaymentPriv.Bytes())))
 	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
@@ -90,7 +90,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	genesisAcc := GenesisAccount{
 		Name:            "lino",
 		Lino:            totalLino,
-		MasterKey:       masterPriv.PubKey(),
+		ResetKey:        resetPriv.PubKey(),
 		TransactionKey:  transactionPriv.PubKey(),
 		MicropaymentKey: micropaymentPriv.PubKey(),
 		PostKey:         postPriv.PubKey(),

@@ -780,7 +780,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:        accKey,
 		CreatedAt:       ctx.BlockHeader().Time,
-		MasterKey:       priv.PubKey(),
+		ResetKey:        priv.PubKey(),
 		TransactionKey:  priv.Generate(0).PubKey(),
 		MicropaymentKey: priv.Generate(1).PubKey(),
 		PostKey:         priv.Generate(2).PubKey(),
@@ -867,7 +867,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:        accKey,
 		CreatedAt:       ctx.BlockHeader().Time,
-		MasterKey:       priv.PubKey(),
+		ResetKey:        priv.PubKey(),
 		TransactionKey:  priv.Generate(0).PubKey(),
 		MicropaymentKey: priv.Generate(1).PubKey(),
 		PostKey:         priv.Generate(2).PubKey(),
@@ -1373,12 +1373,12 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	unauthUser := types.AccountKey("user5")
 	fullyAuthUser := types.AccountKey("user6")
 
-	masterKey := crypto.GenPrivKeyEd25519()
+	resetKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
 	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	am.CreateAccount(
-		ctx, accountReferrer, user1, masterKey.PubKey(), transactionKey.PubKey(),
+		ctx, accountReferrer, user1, resetKey.PubKey(), transactionKey.PubKey(),
 		micropaymentKey.PubKey(), postKey.PubKey(), accParam.RegisterFee)
 
 	postPriv := createTestAccount(ctx, am, string(postPermissionUser))
@@ -1426,11 +1426,11 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		expectGrantPubKey *model.GrantPubKey
 	}{
 		{
-			testName:          "check user's master key",
+			testName:          "check user's reset key",
 			checkUser:         user1,
-			checkPubKey:       masterKey.PubKey(),
+			checkPubKey:       resetKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.MasterPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
@@ -1506,13 +1506,13 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's transaction key can't authorize master permission",
+			testName:          "check user's transaction key can't authorize reset permission",
 			checkUser:         user1,
 			checkPubKey:       transactionKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.MasterPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
-			expectResult:      ErrCheckMasterKey(),
+			expectResult:      ErrCheckResetKey(),
 			expectGrantPubKey: nil,
 		},
 		{
@@ -1546,13 +1546,13 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "user's micropayment key can't authorize master permission",
+			testName:          "user's micropayment key can't authorize reset permission",
 			checkUser:         user1,
 			checkPubKey:       micropaymentKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.MasterPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
-			expectResult:      ErrCheckMasterKey(),
+			expectResult:      ErrCheckResetKey(),
 			expectGrantPubKey: nil,
 		},
 		{
@@ -1576,13 +1576,13 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's post key can't authorize master permission",
+			testName:          "check user's post key can't authorize reset permission",
 			checkUser:         user1,
 			checkPubKey:       postKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.MasterPermission,
+			permission:        types.ResetPermission,
 			expectUser:        user1,
-			expectResult:      ErrCheckMasterKey(),
+			expectResult:      ErrCheckResetKey(),
 			expectGrantPubKey: nil,
 		},
 		{
@@ -2054,13 +2054,13 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	newMasterPrivKey := crypto.GenPrivKeyEd25519()
-	newTransactionPrivKey := newMasterPrivKey.Generate(0)
-	newMicropaymentPrivKey := newMasterPrivKey.Generate(1)
-	newPostPrivKey := newMasterPrivKey.Generate(2)
+	newResetPrivKey := crypto.GenPrivKeyEd25519()
+	newTransactionPrivKey := newResetPrivKey.Generate(0)
+	newMicropaymentPrivKey := newResetPrivKey.Generate(1)
+	newPostPrivKey := newResetPrivKey.Generate(2)
 
 	err = am.RecoverAccount(
-		ctx, user1, newMasterPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
+		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
 		newMicropaymentPrivKey.PubKey(), newPostPrivKey.PubKey())
 	if err != nil {
 		t.Errorf("%s: failed to recover account, got err %v", testName, err)
@@ -2069,7 +2069,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:        user1,
 		CreatedAt:       ctx.BlockHeader().Time,
-		MasterKey:       newMasterPrivKey.PubKey(),
+		ResetKey:        newResetPrivKey.PubKey(),
 		TransactionKey:  newTransactionPrivKey.PubKey(),
 		MicropaymentKey: newMicropaymentPrivKey.PubKey(),
 		PostKey:         newPostPrivKey.PubKey(),

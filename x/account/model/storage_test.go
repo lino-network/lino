@@ -36,7 +36,7 @@ func TestAccountInfo(t *testing.T) {
 	accInfo := AccountInfo{
 		Username:        types.AccountKey("test"),
 		CreatedAt:       0,
-		MasterKey:       priv.PubKey(),
+		ResetKey:        priv.PubKey(),
 		TransactionKey:  priv.Generate(0).PubKey(),
 		MicropaymentKey: priv.Generate(1).PubKey(),
 		PostKey:         priv.Generate(2).PubKey(),
