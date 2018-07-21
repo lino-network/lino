@@ -444,13 +444,13 @@ func TestGetSignBytes(t *testing.T) {
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey()),
 		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey()),
 		},
 		"claim": {
@@ -458,13 +458,11 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		"register msg with public key type Ed25519": {
 			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey()),
+				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
 		},
 		"register msg with public key type Secp256k1": {
 			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey()),
+				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey()),
 		},
 		"update msg": {
 			msg: NewUpdateAccountMsg("user", "{'test':'test'}"),
@@ -496,14 +494,14 @@ func TestGetSigners(t *testing.T) {
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey()),
 			expectSigners: []types.AccountKey{"userA"},
 		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
 				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey()),
 			expectSigners: []types.AccountKey{"userA"},
 		},
@@ -513,13 +511,13 @@ func TestGetSigners(t *testing.T) {
 		},
 		"register msg with public key type Ed25519": {
 			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey(),
+				crypto.GenPrivKeyEd25519().PubKey(),
 				crypto.GenPrivKeyEd25519().PubKey()),
 			expectSigners: []types.AccountKey{"referrer"},
 		},
 		"register msg with public key type Secp256k1": {
 			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey()),
 			expectSigners: []types.AccountKey{"referrer"},
 		},

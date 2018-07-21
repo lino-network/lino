@@ -236,17 +236,7 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "grant developer post permission msg",
-			msg:           NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "grant developer micropayment permission msg",
-			msg:           NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "revoke developer micropayment permission msg",
-			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
+			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
@@ -285,15 +275,7 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "grant developer post permission msg",
-			msg:      NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
-		},
-		{
-			testName: "grant developer micropayment permission msg",
-			msg:      NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
-		},
-		{
-			testName: "revoke developer micropayment permission msg",
-			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
+			msg:      NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
 		},
 		{
 			testName: "revoke developer post permission msg",

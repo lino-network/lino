@@ -646,13 +646,7 @@ func TestGetSignBytes(t *testing.T) {
 			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1, false),
-		},
-		{
-			testName: "micropayment donateMsg",
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", memo1, true),
+				"author", "postID", "", memo1),
 		},
 		{
 			testName: "create post",
@@ -716,14 +710,7 @@ func TestGetSigners(t *testing.T) {
 			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1, false),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName: "micropayment donateMsg",
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", memo1, true),
+				"author", "postID", "", memo1),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
