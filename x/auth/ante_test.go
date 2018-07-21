@@ -220,7 +220,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, 10, types.PostPermission)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.PostPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant

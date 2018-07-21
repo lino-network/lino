@@ -212,7 +212,6 @@ const (
 	CodeInvalidAuthenticateApp         sdk.CodeType = 907
 	CodeInvalidValidityPeriod          sdk.CodeType = 908
 	CodeGrantPermissionTooHigh         sdk.CodeType = 909
-	CodeInvalidGrantTimes              sdk.CodeType = 910
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000

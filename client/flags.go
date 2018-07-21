@@ -29,7 +29,6 @@ const (
 	FlagUser       = "user"
 	FlagReferrer   = "referrer"
 	FlagSeconds    = "seconds"
-	FlagTimes      = "times"
 	FlagPermission = "permission"
 
 	// Infra

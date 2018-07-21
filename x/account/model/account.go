@@ -51,7 +51,6 @@ type PendingStake struct {
 type GrantPubKey struct {
 	Username   types.AccountKey `json:"username"`
 	Permission types.Permission `json:"permission"`
-	LeftTimes  int64            `json:"left_times"`
 	CreatedAt  int64            `json:"created_at"`
 	ExpiresAt  int64            `json:"expires_at"`
 }

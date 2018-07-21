@@ -74,53 +74,48 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 	}{
 		{
 			testName:           "post permission",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.PostPermission),
 			expectError:        nil,
 		},
 		{
 			testName:           "reset permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.ResetPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.ResetPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "transaction permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.TransactionPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "grant post permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.GrantPostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantPostPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "invalid validity period",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.PostPermission),
 			expectError:        ErrInvalidValidityPeriod(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.PostPermission),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too short",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.PostPermission),
 			expectError:        ErrInvalidAuthenticateApp(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.PostPermission),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too long",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.PostPermission),
 			expectError:        ErrInvalidAuthenticateApp(),
-		},
-		{
-			testName:           "invalid grant times",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 1, -1, types.PostPermission),
-			expectError:        ErrInvalidGrantTimes(),
 		},
 	}
 
@@ -201,7 +196,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "grant developer post permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
 			expectPermission: types.GrantPostPermission,
 		},
 		{

@@ -1378,9 +1378,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	postPriv := createTestAccount(ctx, am, string(postPermissionUser))
 	unauthPriv := createTestAccount(ctx, am, string(unauthUser))
 
-	defaultGrantTimes := int64(1)
-
-	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, defaultGrantTimes, types.PostPermission)
+	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, types.PostPermission)
 	if err != nil {
 		t.Errorf("%s: failed to authorize post permission, got err %v", testName, err)
 	}
@@ -1498,7 +1496,6 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: &model.GrantPubKey{
 				Username:   postPermissionUser,
 				Permission: types.PostPermission,
-				LeftTimes:  defaultGrantTimes,
 				CreatedAt:  baseTime,
 				ExpiresAt:  baseTime + 100,
 			},
@@ -1578,12 +1575,12 @@ func TestRevokePermission(t *testing.T) {
 
 	baseTime := ctx.BlockHeader().Time
 
-	err := am.AuthorizePermission(ctx, user1, userWithPostPermission, 100, 10, types.PostPermission)
+	err := am.AuthorizePermission(ctx, user1, userWithPostPermission, 100, types.PostPermission)
 	if err != nil {
 		t.Errorf("%s: failed to authorize user1 post permission to user with only post permission, got err %v", testName, err)
 	}
 
-	err = am.AuthorizePermission(ctx, user2, userWithPostPermission, 100, 10, types.PostPermission)
+	err = am.AuthorizePermission(ctx, user2, userWithPostPermission, 100, types.PostPermission)
 	if err != nil {
 		t.Errorf("%s: failed to authorize user2 post permission to user with only post permission, got err %v", testName, err)
 	}
@@ -1649,7 +1646,6 @@ func TestAuthorizePermission(t *testing.T) {
 		grantTo        types.AccountKey
 		level          types.Permission
 		validityPeriod int64
-		allowTimes     int64
 		expectResult   sdk.Error
 		expectPubKey   crypto.PubKey
 	}{
@@ -1659,7 +1655,6 @@ func TestAuthorizePermission(t *testing.T) {
 			grantTo:        user2,
 			level:          types.PostPermission,
 			validityPeriod: 100,
-			allowTimes:     10,
 			expectResult:   nil,
 			expectPubKey:   priv2.Generate(1).PubKey(),
 		},
@@ -1669,7 +1664,6 @@ func TestAuthorizePermission(t *testing.T) {
 			grantTo:        user2,
 			level:          types.PostPermission,
 			validityPeriod: 1000,
-			allowTimes:     10,
 			expectResult:   nil,
 			expectPubKey:   priv2.Generate(1).PubKey(),
 		},
@@ -1677,7 +1671,7 @@ func TestAuthorizePermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
-		err := am.AuthorizePermission(ctx, tc.user, tc.grantTo, tc.validityPeriod, tc.allowTimes, tc.level)
+		err := am.AuthorizePermission(ctx, tc.user, tc.grantTo, tc.validityPeriod, tc.level)
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: failed to authorize permission, got err %v", tc.testName, err)
 		}
@@ -1691,7 +1685,6 @@ func TestAuthorizePermission(t *testing.T) {
 				Username:   tc.grantTo,
 				ExpiresAt:  baseTime + tc.validityPeriod,
 				CreatedAt:  baseTime,
-				LeftTimes:  tc.allowTimes,
 				Permission: tc.level,
 			}
 			if !assert.Equal(t, expectGrantPubKey, *grantPubKey) {

@@ -677,12 +677,11 @@ func (accManager AccountManager) UpdateDonationRelationship(
 
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
-	validityPeriod int64, times int64, grantLevel types.Permission) sdk.Error {
+	validityPeriod int64, grantLevel types.Permission) sdk.Error {
 
 	newGrantPubKey := model.GrantPubKey{
 		Username:   authorizedUser,
 		Permission: grantLevel,
-		LeftTimes:  times,
 		CreatedAt:  ctx.BlockHeader().Time,
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
 	}

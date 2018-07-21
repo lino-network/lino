@@ -39,7 +39,3 @@ func ErrInvalidValidityPeriod() sdk.Error {
 func ErrGrantPermissionTooHigh() sdk.Error {
 	return types.NewError(types.CodeGrantPermissionTooHigh, fmt.Sprintf("grant permission is too high"))
 }
-
-func ErrInvalidGrantTimes() sdk.Error {
-	return types.NewError(types.CodeInvalidGrantTimes, fmt.Sprintf("invalid grant times, should not be negative"))
-}

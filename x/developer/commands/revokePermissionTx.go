@@ -25,7 +25,6 @@ func RevokePermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	cmd.Flags().String(client.FlagPubKey, "", "public key to revoke")
 	cmd.Flags().Int64(client.FlagSeconds, 3600, "seconds till expire")
-	cmd.Flags().Int64(client.FlagTimes, 10, "grant signing times")
 	cmd.Flags().String(client.FlagPermission, "post", "grant permission")
 	return cmd
 }

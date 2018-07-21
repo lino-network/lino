@@ -149,17 +149,17 @@ func TestGrantPermissionMsg(t *testing.T) {
 	}{
 		{
 			testName:     "normal grant post permission",
-			msg:          NewGrantPermissionMsg("user1", "app", 10000, 1, types.PostPermission),
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.PostPermission),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "grant permission to non-exist app",
-			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, 1, types.PostPermission),
+			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.PostPermission),
 			expectResult: ErrDeveloperNotFound().Result(),
 		},
 		{
 			testName:     "grant permission to non-exist user",
-			msg:          NewGrantPermissionMsg("invalid", "app", 10000, 1, types.PostPermission),
+			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.PostPermission),
 			expectResult: ErrAccountNotFound().Result(),
 		},
 	}
@@ -189,7 +189,7 @@ func TestRevokePermissionMsg(t *testing.T) {
 	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 	err = am.AuthorizePermission(
-		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, 10, types.PostPermission)
+		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.PostPermission)
 	assert.Nil(t, err)
 
 	testCases := []struct {
