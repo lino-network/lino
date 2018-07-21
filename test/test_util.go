@@ -66,14 +66,13 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	// Generate 21 validators
 	for i := 0; i < numOfValidators; i++ {
 		genesisAcc := app.GenesisAccount{
-			Name:            "validator" + strconv.Itoa(i),
-			Lino:            LNOPerValidator,
-			RecoveryKey:     crypto.GenPrivKeySecp256k1().PubKey(),
-			TransactionKey:  crypto.GenPrivKeySecp256k1().PubKey(),
-			MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			PostKey:         crypto.GenPrivKeySecp256k1().PubKey(),
-			IsValidator:     true,
-			ValPubKey:       crypto.GenPrivKeySecp256k1().PubKey(),
+			Name:           "validator" + strconv.Itoa(i),
+			Lino:           LNOPerValidator,
+			RecoveryKey:    crypto.GenPrivKeySecp256k1().PubKey(),
+			TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
+			PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+			IsValidator:    true,
+			ValPubKey:      crypto.GenPrivKeySecp256k1().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -82,14 +81,13 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	validatorAmt, _ := strconv.ParseInt(LNOPerValidator, 10, 64)
 	initLNO := strconv.FormatInt(totalAmt-int64(numOfValidators)*validatorAmt, 10)
 	genesisAcc := app.GenesisAccount{
-		Name:            GenesisUser,
-		Lino:            initLNO,
-		RecoveryKey:     GenesisPriv.PubKey(),
-		TransactionKey:  GenesisTransactionPriv.PubKey(),
-		MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		PostKey:         GenesisPostPriv.PubKey(),
-		IsValidator:     false,
-		ValPubKey:       GenesisPriv.PubKey(),
+		Name:           GenesisUser,
+		Lino:           initLNO,
+		RecoveryKey:    GenesisPriv.PubKey(),
+		TransactionKey: GenesisTransactionPriv.PubKey(),
+		PostKey:        GenesisPostPriv.PubKey(),
+		IsValidator:    false,
+		ValPubKey:      GenesisPriv.PubKey(),
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
@@ -167,12 +165,12 @@ func CheckAllValidatorList(
 
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
-	recoveryPriv, transactionPriv, micropaymentPriv, postPriv crypto.PrivKeySecp256k1,
+	recoveryPriv, transactionPriv, postPriv crypto.PrivKeySecp256k1,
 	numOfLino string) {
 
 	registerMsg := acc.NewRegisterMsg(
 		GenesisUser, accountName, types.LNO(numOfLino),
-		recoveryPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
+		recoveryPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 

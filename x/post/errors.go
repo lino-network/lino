@@ -40,10 +40,6 @@ func ErrCannotDonateToSelf(user types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeCannotDonateToSelf, fmt.Sprintf("donate failed, user %v donate to self", user))
 }
 
-func ErrMicropaymentExceedsLimitation() sdk.Error {
-	return types.NewError(types.CodeMicropaymentExceedsLimitation, fmt.Sprint("micropayment exceeds limitation"))
-}
-
 func ErrProcessSourceDonation(permlink types.Permlink) sdk.Error {
 	return types.NewError(types.CodeProcessSourceDonation, fmt.Sprintf("failed to process source donation: %s", permlink))
 }

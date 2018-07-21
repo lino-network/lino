@@ -95,14 +95,12 @@ type BandwidthParam struct {
 
 // AccountParam includes params related to account
 type AccountParam struct {
-	MinimumBalance                types.Coin `json:"minimum_balance"`
-	RegisterFee                   types.Coin `json:"register_fee"`
-	BalanceHistoryBundleSize      int64      `json:"balance_history_bundle_size"`
-	MaximumMicropaymentGrantTimes int64      `json:"maximum_micropayment_grant_times"`
-	RewardHistoryBundleSize       int64      `json:"reward_history_bundle_size"`
+	MinimumBalance           types.Coin `json:"minimum_balance"`
+	RegisterFee              types.Coin `json:"register_fee"`
+	BalanceHistoryBundleSize int64      `json:"balance_history_bundle_size"`
+	RewardHistoryBundleSize  int64      `json:"reward_history_bundle_size"`
 }
 
 type PostParam struct {
-	MicropaymentLimitation types.Coin `json:"micropayment_limitation"`
-	ReportOrUpvoteInterval int64      `json:"report_or_upvote_interval"`
+	ReportOrUpvoteInterval int64 `json:"report_or_upvote_interval"`
 }

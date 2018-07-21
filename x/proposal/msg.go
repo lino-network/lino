@@ -660,9 +660,6 @@ func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.MicropaymentLimitation) {
-		return ErrIllegalParameter()
-	}
 	return nil
 }
 

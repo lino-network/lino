@@ -10,12 +10,11 @@ import (
 
 // AccountInfo stores general Lino Account information
 type AccountInfo struct {
-	Username        types.AccountKey `json:"username"`
-	CreatedAt       int64            `json:"created_at"`
-	RecoveryKey     crypto.PubKey    `json:"recovery_key"`
-	TransactionKey  crypto.PubKey    `json:"transaction_key"`
-	MicropaymentKey crypto.PubKey    `json:"micropayment_key"`
-	PostKey         crypto.PubKey    `json:"post_key"`
+	Username       types.AccountKey `json:"username"`
+	CreatedAt      int64            `json:"created_at"`
+	RecoveryKey    crypto.PubKey    `json:"recovery_key"`
+	TransactionKey crypto.PubKey    `json:"transaction_key"`
+	PostKey        crypto.PubKey    `json:"post_key"`
 }
 
 // AccountBank uses Address as the key instead of Username

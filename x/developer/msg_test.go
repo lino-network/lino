@@ -73,11 +73,6 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 		expectError        sdk.Error
 	}{
 		{
-			testName:           "micropayment permission",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.MicropaymentPermission),
-			expectError:        nil,
-		},
-		{
 			testName:           "post permission",
 			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.PostPermission),
 			expectError:        nil,
@@ -90,11 +85,6 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 		{
 			testName:           "transaction permission is too high",
 			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.TransactionPermission),
-			expectError:        ErrGrantPermissionTooHigh(),
-		},
-		{
-			testName:           "grant micropayment permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.GrantMicropaymentPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
@@ -149,11 +139,6 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 		expectError         sdk.Error
 	}{
 		{
-			testName:            "revoke micropayment permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
-			expectError:         nil,
-		},
-		{
 			testName:            "revoke post permission",
 			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
 			expectError:         nil,
@@ -164,18 +149,13 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
-			testName:            "micropayment permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantMicropaymentPermission),
+			testName:            "post permission is too high",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantPostPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "transaction permission is too high",
 			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.TransactionPermission),
-			expectError:         ErrGrantPermissionTooHigh(),
-		},
-		{
-			testName:            "grant micropayment permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantMicropaymentPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
@@ -223,16 +203,6 @@ func TestMsgPermission(t *testing.T) {
 			testName:         "grant developer post permission msg",
 			msg:              NewGrantPermissionMsg("test", "app", 24*3600, 1, types.PostPermission),
 			expectPermission: types.GrantPostPermission,
-		},
-		{
-			testName:         "grant developer micropayment permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, 1, types.MicropaymentPermission),
-			expectPermission: types.GrantMicropaymentPermission,
-		},
-		{
-			testName:         "revoke developer micropayment permission msg",
-			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.MicropaymentPermission),
-			expectPermission: types.GrantMicropaymentPermission,
 		},
 		{
 			testName:         "revoke developer post permission msg",

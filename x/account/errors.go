@@ -56,10 +56,6 @@ func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGetTransactionKey, fmt.Sprintf("get %v transaction key failed", accKey))
 }
 
-func ErrGetMicropaymentKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeGetMicropaymentKey, fmt.Sprintf("get %v micropayment key failed", accKey))
-}
-
 func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGetPostKey, fmt.Sprintf("get %v post key failed", accKey))
 }
@@ -96,10 +92,6 @@ func ErrCheckTransactionKey() sdk.Error {
 	return types.NewError(types.CodeCheckTransactionKey, fmt.Sprintf("transaction needs transaction key"))
 }
 
-func ErrCheckGrantMicropaymentKey() sdk.Error {
-	return types.NewError(types.CodeCheckGrantMicropaymentKey, fmt.Sprintf("only user's own micropayment key or above can sign grant micropayment msg"))
-}
-
 func ErrCheckGrantPostKey() sdk.Error {
 	return types.NewError(types.CodeCheckGrantPostKey, fmt.Sprintf("only user's own post key or above can sign grant post msg"))
 }
@@ -118,10 +110,6 @@ func ErrGrantKeyNoLeftTimes(owner types.AccountKey) sdk.Error {
 
 func ErrGrantKeyMismatch(owner types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGrantKeyMismatch, fmt.Sprintf("grant user %v key can't match his own key", owner))
-}
-
-func ErrMicropaymentGrantKeyMismatch(owner types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeMicropaymentGrantKeyMismatch, fmt.Sprintf("grant user %v micropayment key can't match his own key", owner))
 }
 
 func ErrPostGrantKeyMismatch(owner types.AccountKey) sdk.Error {

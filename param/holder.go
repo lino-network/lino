@@ -60,7 +60,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	postParam := &PostParam{
-		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
 		ReportOrUpvoteInterval: 24 * 3600,
 	}
 	if err := ph.setPostParam(ctx, postParam); err != nil {
@@ -154,11 +153,10 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize:      100,
-		MaximumMicropaymentGrantTimes: 20,
-		RewardHistoryBundleSize:       100,
+		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize: 100,
+		RewardHistoryBundleSize:  100,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err

@@ -34,8 +34,7 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username type
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
-	resetKey, transactionKey, micropaymentKey, postKey crypto.PubKey,
-	registerFee types.Coin) sdk.Error {
+	resetKey, transactionKey, postKey crypto.PubKey, registerFee types.Coin) sdk.Error {
 	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
 	}
@@ -56,12 +55,11 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountInfo := &model.AccountInfo{
-		Username:        username,
-		CreatedAt:       ctx.BlockHeader().Time,
-		RecoveryKey:     resetKey,
-		TransactionKey:  transactionKey,
-		MicropaymentKey: micropaymentKey,
-		PostKey:         postKey,
+		Username:       username,
+		CreatedAt:      ctx.BlockHeader().Time,
+		RecoveryKey:    resetKey,
+		TransactionKey: transactionKey,
+		PostKey:        postKey,
 	}
 	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
 		return err
@@ -349,15 +347,6 @@ func (accManager AccountManager) GetTransactionKey(
 		return nil, ErrGetTransactionKey(username)
 	}
 	return accountInfo.TransactionKey, nil
-}
-
-func (accManager AccountManager) GetMicropaymentKey(
-	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
-	accountInfo, err := accManager.storage.GetInfo(ctx, username)
-	if err != nil {
-		return nil, ErrGetMicropaymentKey(username)
-	}
-	return accountInfo.MicropaymentKey, nil
 }
 
 func (accManager AccountManager) GetPostKey(
@@ -689,15 +678,7 @@ func (accManager AccountManager) UpdateDonationRelationship(
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
 	validityPeriod int64, times int64, grantLevel types.Permission) sdk.Error {
-	if grantLevel == types.MicropaymentPermission {
-		accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-		if err != nil {
-			return err
-		}
-		if times > accParams.MaximumMicropaymentGrantTimes {
-			return ErrGrantTimesExceedsLimitation(accParams.MaximumMicropaymentGrantTimes)
-		}
-	}
+
 	newGrantPubKey := model.GrantPubKey{
 		Username:   authorizedUser,
 		Permission: grantLevel,
@@ -705,13 +686,7 @@ func (accManager AccountManager) AuthorizePermission(
 		CreatedAt:  ctx.BlockHeader().Time,
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
 	}
-	if grantLevel == types.MicropaymentPermission {
-		micropaymentKey, err := accManager.GetMicropaymentKey(ctx, authorizedUser)
-		if err != nil {
-			return err
-		}
-		return accManager.storage.SetGrantPubKey(ctx, me, micropaymentKey, &newGrantPubKey)
-	}
+
 	if grantLevel == types.PostPermission {
 		postKey, err := accManager.GetPostKey(ctx, authorizedUser)
 		if err != nil {
@@ -769,19 +744,6 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return "", ErrCheckTransactionKey()
 	}
 
-	// then check user's micropayment key
-	pubKey, err = accManager.GetMicropaymentKey(ctx, me)
-	if err != nil {
-		return "", err
-	}
-	if reflect.DeepEqual(pubKey, signKey) {
-		return me, nil
-	}
-
-	if permission == types.GrantMicropaymentPermission {
-		return "", ErrCheckGrantMicropaymentKey()
-	}
-
 	// if all above keys not matched, check last one, post key
 	if permission == types.PostPermission || permission == types.GrantPostPermission {
 		pubKey, err = accManager.GetPostKey(ctx, me)
@@ -810,26 +772,6 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		ErrGrantKeyMismatch(grantPubKey.Username)
 	}
 
-	// check again if public key matched
-	if permission == types.MicropaymentPermission {
-		if grantPubKey.LeftTimes <= 0 {
-			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrGrantKeyNoLeftTimes(me)
-		}
-		micropaymentKey, err := accManager.GetMicropaymentKey(ctx, grantPubKey.Username)
-		if err != nil {
-			return "", err
-		}
-		if !reflect.DeepEqual(signKey, micropaymentKey) {
-			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrMicropaymentGrantKeyMismatch(grantPubKey.Username)
-		}
-		grantPubKey.LeftTimes--
-		if err := accManager.storage.SetGrantPubKey(ctx, me, signKey, grantPubKey); err != nil {
-			return "", nil
-		}
-		return grantPubKey.Username, nil
-	}
 	if permission == types.PostPermission {
 		postKey, err := accManager.GetPostKey(ctx, grantPubKey.Username)
 		if err != nil {
@@ -871,7 +813,7 @@ func (accManager AccountManager) addPendingStakeToQueue(
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
-	newRecoveryPubKey, newTransactionPubKey, newMicropaymentPubKey, newPostPubKey crypto.PubKey) sdk.Error {
+	newRecoveryPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
@@ -879,7 +821,6 @@ func (accManager AccountManager) RecoverAccount(
 
 	accInfo.RecoveryKey = newRecoveryPubKey
 	accInfo.TransactionKey = newTransactionPubKey
-	accInfo.MicropaymentKey = newMicropaymentPubKey
 	accInfo.PostKey = newPostPubKey
 	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {
 		return err

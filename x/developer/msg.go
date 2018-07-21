@@ -159,7 +159,6 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 
 	if msg.GrantLevel == types.RecoveryPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantMicropaymentPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
@@ -173,9 +172,6 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
-	if msg.GrantLevel == types.MicropaymentPermission {
-		return types.GrantMicropaymentPermission
-	}
 	return types.GrantPostPermission
 }
 
@@ -210,7 +206,6 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 
 	if msg.GrantLevel == types.RecoveryPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantMicropaymentPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
@@ -224,9 +219,6 @@ func (msg RevokePermissionMsg) String() string {
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	if msg.GrantLevel == types.MicropaymentPermission {
-		return types.GrantMicropaymentPermission
-	}
 	return types.GrantPostPermission
 }
 

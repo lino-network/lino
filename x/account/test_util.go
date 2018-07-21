@@ -81,6 +81,6 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) cryp
 	priv := crypto.GenPrivKeyEd25519()
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), priv.Generate(2).PubKey(), accParam.RegisterFee)
+		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), accParam.RegisterFee)
 	return priv
 }

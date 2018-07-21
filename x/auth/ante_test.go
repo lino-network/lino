@@ -34,11 +34,10 @@ func createTestAccount(
 	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
 	recoveryKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
-	micropaymentKey := crypto.GenPrivKeyEd25519()
 	postKey := crypto.GenPrivKeyEd25519()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		recoveryKey.PubKey(), transactionKey.PubKey(), micropaymentKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
+		recoveryKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
 	return recoveryKey, transactionKey, postKey, types.AccountKey(username)
 }
 

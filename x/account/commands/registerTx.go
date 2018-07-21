@@ -42,18 +42,16 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		recoveryPriv := crypto.GenPrivKeySecp256k1()
 		transactionPriv := crypto.GenPrivKeySecp256k1()
-		micropaymentPriv := crypto.GenPrivKeySecp256k1()
 		postPriv := crypto.GenPrivKeySecp256k1()
 
 		fmt.Println("recovery private key is:", strings.ToUpper(hex.EncodeToString(recoveryPriv.Bytes())))
 		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-		fmt.Println("micropayment private key is:", strings.ToUpper(hex.EncodeToString(micropaymentPriv.Bytes())))
 		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 		// // create the message
 		msg := acc.NewRegisterMsg(
 			referrer, name, types.LNO(amount),
-			recoveryPriv.PubKey(), transactionPriv.PubKey(), micropaymentPriv.PubKey(), postPriv.PubKey())
+			recoveryPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

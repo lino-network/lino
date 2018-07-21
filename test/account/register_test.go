@@ -19,7 +19,6 @@ import (
 func TestTransferAndRegisterAccount(t *testing.T) {
 	newResetPriv := crypto.GenPrivKeySecp256k1()
 	newTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newMicropaymentPriv := crypto.GenPrivKeySecp256k1()
 	newPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 
@@ -27,7 +26,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 	baseTime := time.Now().Unix()
 
 	registerMsg := acc.NewRegisterMsg(test.GenesisUser, newAccountName, types.LNO("100"),
-		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newMicropaymentPriv.PubKey(), newPostPriv.PubKey())
+		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newPostPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(100*types.Decimals))
@@ -39,14 +38,13 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 func TestRegisterAccountFailed(t *testing.T) {
 	newResetPriv := crypto.GenPrivKeySecp256k1()
 	newTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newMicropaymentPriv := crypto.GenPrivKeySecp256k1()
 	newPostPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 	registerMsg := acc.NewRegisterMsg(test.GenesisUser, newAccountName, "0.1",
-		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newMicropaymentPriv.PubKey(), newPostPriv.PubKey())
+		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newPostPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, false, test.GenesisPriv, baseTime)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})

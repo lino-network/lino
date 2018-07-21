@@ -41,10 +41,8 @@ func sendGrantDeveloperTx(cdc *wire.Codec) client.CommandTxCallback {
 		switch permissionStr {
 		case "post":
 			permission = types.PostPermission
-		case "micropayment":
-			permission = types.MicropaymentPermission
 		default:
-			return errors.New("only post and micropayment permission are allowed")
+			return errors.New("only post permission are allowed")
 		}
 
 		msg := dev.NewGrantPermissionMsg(username, developer, seconds, times, permission)

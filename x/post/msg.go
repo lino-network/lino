@@ -54,13 +54,12 @@ type LikeMsg struct {
 
 // DonateMsg sent from a user to a post
 type DonateMsg struct {
-	Username       types.AccountKey `json:"username"`
-	Amount         types.LNO        `json:"amount"`
-	Author         types.AccountKey `json:"author"`
-	PostID         string           `json:"post_id"`
-	FromApp        types.AccountKey `json:"from_app"`
-	Memo           string           `json:"memo"`
-	IsMicroPayment bool             `json:"is_micropayment"`
+	Username types.AccountKey `json:"username"`
+	Amount   types.LNO        `json:"amount"`
+	Author   types.AccountKey `json:"author"`
+	PostID   string           `json:"post_id"`
+	FromApp  types.AccountKey `json:"from_app"`
+	Memo     string           `json:"memo"`
 }
 
 // ViewMsg sent from a user to a post
@@ -139,15 +138,14 @@ func NewViewMsg(user, author string, postID string) ViewMsg {
 // NewDonateMsg constructs a donate msg
 func NewDonateMsg(
 	user string, amount types.LNO, author string,
-	postID string, fromApp string, memo string, isMicropayment bool) DonateMsg {
+	postID string, fromApp string, memo string) DonateMsg {
 	return DonateMsg{
-		Username:       types.AccountKey(user),
-		Amount:         amount,
-		Author:         types.AccountKey(author),
-		PostID:         postID,
-		FromApp:        types.AccountKey(fromApp),
-		Memo:           memo,
-		IsMicroPayment: isMicropayment,
+		Username: types.AccountKey(user),
+		Amount:   amount,
+		Author:   types.AccountKey(author),
+		PostID:   postID,
+		FromApp:  types.AccountKey(fromApp),
+		Memo:     memo,
 	}
 }
 
@@ -342,9 +340,6 @@ func (msg LikeMsg) GetPermission() types.Permission {
 	return types.PostPermission
 }
 func (msg DonateMsg) GetPermission() types.Permission {
-	if msg.IsMicroPayment {
-		return types.MicropaymentPermission
-	}
 	return types.TransactionPermission
 }
 func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {

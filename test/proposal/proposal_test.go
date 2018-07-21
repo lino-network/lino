@@ -35,10 +35,10 @@ func TestForceValidatorVote(t *testing.T) {
 	depositCoin, _ := types.LinoToCoin(depositLNO)
 
 	test.CreateAccount(t, accountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), accountTransactionPriv, crypto.GenPrivKeySecp256k1(), accountPostPriv, totalLNO)
+		crypto.GenPrivKeySecp256k1(), accountTransactionPriv, accountPostPriv, totalLNO)
 
 	test.CreateAccount(t, accountName2, lb, 1,
-		crypto.GenPrivKeySecp256k1(), accountTransactionPriv2, crypto.GenPrivKeySecp256k1(), accountPostPriv2, totalLNO)
+		crypto.GenPrivKeySecp256k1(), accountTransactionPriv2, accountPostPriv2, totalLNO)
 
 	voteDepositMsg := vote.NewVoterDepositMsg(accountName, depositLNO)
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, accountTransactionPriv, baseTime)
