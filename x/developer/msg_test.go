@@ -83,8 +83,8 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 			expectError:        nil,
 		},
 		{
-			testName:           "reset permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.ResetPermission),
+			testName:           "recovery permission is too high",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, 1, types.RecoveryPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
@@ -159,8 +159,8 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 			expectError:         nil,
 		},
 		{
-			testName:            "reset permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.ResetPermission),
+			testName:            "recovery permission is too high",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.RecoveryPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{

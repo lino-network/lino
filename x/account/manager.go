@@ -58,7 +58,7 @@ func (accManager AccountManager) CreateAccount(
 	accountInfo := &model.AccountInfo{
 		Username:        username,
 		CreatedAt:       ctx.BlockHeader().Time,
-		ResetKey:        resetKey,
+		RecoveryKey:     resetKey,
 		TransactionKey:  transactionKey,
 		MicropaymentKey: micropaymentKey,
 		PostKey:         postKey,
@@ -333,13 +333,13 @@ func (accManager AccountManager) UpdateJSONMeta(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
-func (accManager AccountManager) GetResetKey(
+func (accManager AccountManager) GetRecoveryKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetResetKey(username)
+		return nil, ErrGetRecoveryKey(username)
 	}
-	return accountInfo.ResetKey, nil
+	return accountInfo.RecoveryKey, nil
 }
 
 func (accManager AccountManager) GetTransactionKey(
@@ -745,16 +745,16 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if !accManager.DoesAccountExist(ctx, me) {
 		return "", ErrAccountNotFound(me)
 	}
-	// if permission is reset, only reset key can sign for the msg
-	if permission == types.ResetPermission {
-		pubKey, err := accManager.GetResetKey(ctx, me)
+	// if permission is recovery, only recovery key can sign for the msg
+	if permission == types.RecoveryPermission {
+		pubKey, err := accManager.GetRecoveryKey(ctx, me)
 		if err != nil {
 			return "", err
 		}
 		if reflect.DeepEqual(pubKey, signKey) {
 			return me, nil
 		}
-		return "", ErrCheckResetKey()
+		return "", ErrCheckRecoveryKey()
 	}
 
 	// otherwise transaction key has the highest permission
@@ -871,13 +871,13 @@ func (accManager AccountManager) addPendingStakeToQueue(
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
-	newResetPubKey, newTransactionPubKey, newMicropaymentPubKey, newPostPubKey crypto.PubKey) sdk.Error {
+	newRecoveryPubKey, newTransactionPubKey, newMicropaymentPubKey, newPostPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	accInfo.ResetKey = newResetPubKey
+	accInfo.RecoveryKey = newRecoveryPubKey
 	accInfo.TransactionKey = newTransactionPubKey
 	accInfo.MicropaymentKey = newMicropaymentPubKey
 	accInfo.PostKey = newPostPubKey
