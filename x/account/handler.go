@@ -116,7 +116,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 		return ErrAccountNotFound(msg.Username).Result()
 	}
 	if err := am.RecoverAccount(
-		ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
+		ctx, msg.Username, msg.NewRecoveryPubKey, msg.NewTransactionPubKey,
 		msg.NewMicropaymentPubKey, msg.NewPostPubKey); err != nil {
 		return err.Result()
 	}
@@ -137,7 +137,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 		return err.Result()
 	}
 	if err := am.CreateAccount(
-		ctx, msg.Referrer, msg.NewUser, msg.NewResetPubKey, msg.NewTransactionPubKey,
+		ctx, msg.Referrer, msg.NewUser, msg.NewRecoveryPubKey, msg.NewTransactionPubKey,
 		msg.NewMicropaymentPubKey, msg.NewPostPubKey, coin); err != nil {
 		return err.Result()
 	}

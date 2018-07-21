@@ -30,7 +30,7 @@ const (
 	PostPermission              = Permission(1)
 	MicropaymentPermission      = Permission(2)
 	TransactionPermission       = Permission(3)
-	ResetPermission             = Permission(4)
+	RecoveryPermission          = Permission(4)
 	GrantPostPermission         = Permission(5)
 	GrantMicropaymentPermission = Permission(6)
 

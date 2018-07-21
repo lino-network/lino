@@ -246,14 +246,14 @@ func TestHandleAccountRecover(t *testing.T) {
 
 	testCases := map[string]struct {
 		user               string
-		newResetKey        crypto.PubKey
+		newRecoveryKey     crypto.PubKey
 		newTransactionKey  crypto.PubKey
 		newMicropaymentKey crypto.PubKey
 		newPostKey         crypto.PubKey
 	}{
 		"normal case": {
 			user:               user1,
-			newResetKey:        crypto.GenPrivKeyEd25519().PubKey(),
+			newRecoveryKey:     crypto.GenPrivKeyEd25519().PubKey(),
 			newTransactionKey:  crypto.GenPrivKeyEd25519().PubKey(),
 			newMicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
 			newPostKey:         crypto.GenPrivKeyEd25519().PubKey(),
@@ -261,7 +261,7 @@ func TestHandleAccountRecover(t *testing.T) {
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newRecoveryKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		if !assert.Equal(t, sdk.Result{}, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, sdk.Result{})
@@ -270,7 +270,7 @@ func TestHandleAccountRecover(t *testing.T) {
 		accInfo := model.AccountInfo{
 			Username:        types.AccountKey(tc.user),
 			CreatedAt:       ctx.BlockHeader().Time,
-			ResetKey:        tc.newResetKey,
+			RecoveryKey:     tc.newRecoveryKey,
 			TransactionKey:  tc.newTransactionKey,
 			MicropaymentKey: tc.newMicropaymentKey,
 			PostKey:         tc.newPostKey,
@@ -363,12 +363,12 @@ func TestHandleRegister(t *testing.T) {
 				t.Errorf("%s: account %s doesn't exist", tc.testName, tc.registerMsg.NewUser)
 			}
 
-			resetKey, err := am.GetResetKey(ctx, tc.registerMsg.NewUser)
+			resetKey, err := am.GetRecoveryKey(ctx, tc.registerMsg.NewUser)
 			if err != nil {
-				t.Errorf("%s: failed to get reset key, got err %v", tc.testName, err)
+				t.Errorf("%s: failed to get recovery key, got err %v", tc.testName, err)
 			}
-			if !resetKey.Equals(tc.registerMsg.NewResetPubKey) {
-				t.Errorf("%s: diff reset key, got %v, want %v", tc.testName, resetKey, tc.registerMsg.NewResetPubKey)
+			if !resetKey.Equals(tc.registerMsg.NewRecoveryPubKey) {
+				t.Errorf("%s: diff recovery key, got %v, want %v", tc.testName, resetKey, tc.registerMsg.NewRecoveryPubKey)
 			}
 
 			txKey, err := am.GetTransactionKey(ctx, tc.registerMsg.NewUser)

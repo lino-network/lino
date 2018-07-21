@@ -53,7 +53,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	genesisAcc := GenesisAccount{
 		Name:           user1,
 		Lino:           LNOPerValidator,
-		ResetKey:       priv1.PubKey(),
+		RecoveryKey:    priv1.PubKey(),
 		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
 		PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
 		IsValidator:    true,
@@ -64,7 +64,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
 			Lino:           LNOPerValidator,
-			ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
+			RecoveryKey:    crypto.GenPrivKeySecp256k1().PubKey(),
 			TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
 			PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
 			IsValidator:    true,
@@ -93,7 +93,7 @@ func TestGenesisAcc(t *testing.T) {
 	accs := []struct {
 		genesisAccountName string
 		numOfLino          types.LNO
-		resetKey           crypto.PubKey
+		recoveryKey        crypto.PubKey
 		transactionKey     crypto.PubKey
 		postKey            crypto.PubKey
 		isValidator        bool
@@ -116,7 +116,7 @@ func TestGenesisAcc(t *testing.T) {
 		genesisAcc := GenesisAccount{
 			Name:           acc.genesisAccountName,
 			Lino:           acc.numOfLino,
-			ResetKey:       acc.resetKey,
+			RecoveryKey:    acc.recoveryKey,
 			TransactionKey: acc.transactionKey,
 			PostKey:        acc.postKey,
 			IsValidator:    acc.isValidator,
