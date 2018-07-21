@@ -32,7 +32,7 @@ func TestByzantines(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
-		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
@@ -79,7 +79,7 @@ func TestAbsentValidator(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
-		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
@@ -176,7 +176,7 @@ func TestGetOncallList(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
-		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
@@ -201,8 +201,8 @@ func TestPunishmentBasic(t *testing.T) {
 	createTestAccount(ctx, am, "user1", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 	createTestAccount(ctx, am, "user2", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 
-	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
-	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
+	valKey1 := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey2 := crypto.GenPrivKeySecp256k1().PubKey()
 
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 	voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
@@ -251,7 +251,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		num := int64((i+1)*1000) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 
-		valKeys[i] = crypto.GenPrivKeyEd25519().PubKey()
+		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
@@ -284,8 +284,8 @@ func TestGetUpdateValidatorList(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 
-	valKey1 := crypto.GenPrivKeyEd25519().PubKey()
-	valKey2 := crypto.GenPrivKeyEd25519().PubKey()
+	valKey1 := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey2 := crypto.GenPrivKeySecp256k1().PubKey()
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
@@ -373,7 +373,7 @@ func TestIsLegalWithdraw(t *testing.T) {
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	valManager.InitGenesis(ctx)
 	valManager.RegisterValidator(
-		ctx, user1, crypto.GenPrivKeyEd25519().PubKey(),
+		ctx, user1, crypto.GenPrivKeySecp256k1().PubKey(),
 		param.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
 
 	testCases := []struct {

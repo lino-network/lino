@@ -137,37 +137,37 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 	}{
 		{
 			testName:            "revoke post permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 			expectError:         nil,
 		},
 		{
 			testName:            "reset permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.ResetPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.ResetPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "post permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantPostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantPostPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "transaction permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.TransactionPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.TransactionPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "grant post permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeyEd25519().PubKey(), types.GrantPostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantPostPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "username is too short",
-			revokePermissionMsg: NewRevokePermissionMsg("us", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("us", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 			expectError:         ErrInvalidUsername(),
 		},
 		{
 			testName:            "username is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 			expectError:         ErrInvalidUsername(),
 		},
 	}
@@ -203,7 +203,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "revoke developer post permission msg",
-			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 			expectPermission: types.GrantPostPermission,
 		},
 	}
@@ -241,7 +241,7 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "revoke developer post permission msg",
-			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 			expectSigners: []types.AccountKey{"test"},
 		},
 	}
@@ -279,7 +279,7 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "revoke developer post permission msg",
-			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeyEd25519().PubKey(), types.PostPermission),
+			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
 		},
 	}
 

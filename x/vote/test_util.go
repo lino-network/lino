@@ -63,9 +63,9 @@ func getContext(height int64) sdk.Context {
 
 // helper function to create an account for testing purpose
 func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
-	priv := crypto.GenPrivKeyEd25519()
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), initCoin)
+		crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+		crypto.GenPrivKeySecp256k1().PubKey(), initCoin)
 	return types.AccountKey(username)
 }
 

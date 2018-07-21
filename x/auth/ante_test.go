@@ -30,11 +30,11 @@ var (
 )
 
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeyEd25519,
-	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
-	resetKey := crypto.GenPrivKeyEd25519()
-	transactionKey := crypto.GenPrivKeyEd25519()
-	postKey := crypto.GenPrivKeyEd25519()
+	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeySecp256k1,
+	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1, types.AccountKey) {
+	resetKey := crypto.GenPrivKeySecp256k1()
+	transactionKey := crypto.GenPrivKeySecp256k1()
+	postKey := crypto.GenPrivKeySecp256k1()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
 		resetKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)

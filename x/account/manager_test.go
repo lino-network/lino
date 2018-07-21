@@ -409,8 +409,8 @@ func TestMinusCoin(t *testing.T) {
 	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
-	priv1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
-	priv3 := createTestAccount(ctx, am, string(userWithLimitSaving))
+	_, _, priv1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
+	_, _, priv3 := createTestAccount(ctx, am, string(userWithLimitSaving))
 
 	err = am.AddSavingCoin(
 		ctx, userWithSufficientSaving, accParam.RegisterFee, fromUser, "", types.TransferIn)
@@ -754,14 +754,18 @@ func TestAddBalanceHistory(t *testing.T) {
 
 func TestCreateAccountNormalCase(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
+
+	resetPriv := crypto.GenPrivKeySecp256k1()
+	txPriv := crypto.GenPrivKeySecp256k1()
+	postPriv := crypto.GenPrivKeySecp256k1()
+
 	accKey := types.AccountKey("accKey")
 
 	// normal test
 	assert.False(t, am.DoesAccountExist(ctx, accKey))
 	err := am.CreateAccount(
-		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
-		priv.Generate(1).PubKey(), accParam.RegisterFee)
+		ctx, accountReferrer, accKey, resetPriv.PubKey(), txPriv.PubKey(),
+		postPriv.PubKey(), accParam.RegisterFee)
 	if err != nil {
 		t.Errorf("TestCreateAccountNormalCase: failed to create account, got err %v", err)
 	}
@@ -780,9 +784,9 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:       accKey,
 		CreatedAt:      ctx.BlockHeader().Time,
-		ResetKey:       priv.PubKey(),
-		TransactionKey: priv.Generate(0).PubKey(),
-		PostKey:        priv.Generate(1).PubKey(),
+		ResetKey:       resetPriv.PubKey(),
+		TransactionKey: txPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
 	}
 	checkAccountInfo(t, ctx, "TestCreateAccountNormalCase", accKey, accInfo)
 	accMeta := model.AccountMeta{
@@ -820,7 +824,11 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	testName := "TestCreateAccountWithLargeRegisterFee"
 
 	ctx, am, accParam := setupTest(t, 1)
-	priv := crypto.GenPrivKeyEd25519()
+
+	resetPriv := crypto.GenPrivKeySecp256k1()
+	txPriv := crypto.GenPrivKeySecp256k1()
+	postPriv := crypto.GenPrivKeySecp256k1()
+
 	accKey := types.AccountKey("accKey")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
@@ -835,8 +843,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 
 	err = am.CreateAccount(
-		ctx, accountReferrer, accKey, priv.PubKey(), priv.Generate(0).PubKey(),
-		priv.Generate(1).PubKey(), accParam.RegisterFee.Plus(extraRegisterFee))
+		ctx, accountReferrer, accKey, resetPriv.PubKey(), txPriv.PubKey(),
+		postPriv.PubKey(), accParam.RegisterFee.Plus(extraRegisterFee))
 	if err != nil {
 		t.Errorf("%s: failed to create account, got err %v", testName, err)
 	}
@@ -866,9 +874,9 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	accInfo := model.AccountInfo{
 		Username:       accKey,
 		CreatedAt:      ctx.BlockHeader().Time,
-		ResetKey:       priv.PubKey(),
-		TransactionKey: priv.Generate(0).PubKey(),
-		PostKey:        priv.Generate(1).PubKey(),
+		ResetKey:       resetPriv.PubKey(),
+		TransactionKey: txPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
 	}
 	checkAccountInfo(t, ctx, testName, accKey, accInfo)
 
@@ -915,8 +923,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 func TestInvalidCreateAccount(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
-	priv1 := crypto.GenPrivKeyEd25519()
-	priv2 := crypto.GenPrivKeyEd25519()
+	priv1 := crypto.GenPrivKeySecp256k1()
+	priv2 := crypto.GenPrivKeySecp256k1()
 
 	accKey1 := types.AccountKey("accKey1")
 	accKey2 := types.AccountKey("accKey2")
@@ -968,8 +976,8 @@ func TestInvalidCreateAccount(t *testing.T) {
 	for _, tc := range testCases {
 		err := am.CreateAccount(
 			ctx, accountReferrer, tc.username, tc.privKey.PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(),
-			crypto.GenPrivKeyEd25519().PubKey(), tc.registerFee)
+			crypto.GenPrivKeySecp256k1().PubKey(),
+			crypto.GenPrivKeySecp256k1().PubKey(), tc.registerFee)
 		if !assert.Equal(t, tc.expectErr, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
@@ -1375,8 +1383,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		ctx, accountReferrer, user1, resetKey.PubKey(), transactionKey.PubKey(),
 		postKey.PubKey(), accParam.RegisterFee)
 
-	postPriv := createTestAccount(ctx, am, string(postPermissionUser))
-	unauthPriv := createTestAccount(ctx, am, string(unauthUser))
+	_, _, postPriv := createTestAccount(ctx, am, string(postPermissionUser))
+	_, _, unauthPriv := createTestAccount(ctx, am, string(unauthUser))
 
 	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, types.PostPermission)
 	if err != nil {
@@ -1488,7 +1496,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		{
 			testName:     "check post pubkey of user with post permission",
 			checkUser:    user1,
-			checkPubKey:  postPriv.Generate(1).PubKey(),
+			checkPubKey:  postPriv.PubKey(),
 			atWhen:       baseTime,
 			permission:   types.PostPermission,
 			expectUser:   postPermissionUser,
@@ -1503,7 +1511,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		{
 			testName:          "check unauthorized user post pubkey",
 			checkUser:         user1,
-			checkPubKey:       unauthPriv.Generate(1).PubKey(),
+			checkPubKey:       unauthPriv.PubKey(),
 			atWhen:            baseTime,
 			permission:        types.PostPermission,
 			expectUser:        "",
@@ -1513,7 +1521,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		{
 			testName:          "check expired post permission",
 			checkUser:         user1,
-			checkPubKey:       postPriv.Generate(1).PubKey(),
+			checkPubKey:       postPriv.PubKey(),
 			atWhen:            baseTime + 101,
 			permission:        types.PostPermission,
 			expectUser:        "",
@@ -1571,7 +1579,7 @@ func TestRevokePermission(t *testing.T) {
 	userWithPostPermission := types.AccountKey("userWithPostPermission")
 
 	createTestAccount(ctx, am, string(user1))
-	priv2 := createTestAccount(ctx, am, string(userWithPostPermission))
+	_, _, postPriv2 := createTestAccount(ctx, am, string(userWithPostPermission))
 
 	baseTime := ctx.BlockHeader().Time
 
@@ -1596,7 +1604,7 @@ func TestRevokePermission(t *testing.T) {
 		{
 			testName:     "normal revoke post permission",
 			user:         user1,
-			revokePubKey: priv2.Generate(1).PubKey(),
+			revokePubKey: postPriv2.PubKey(),
 			atWhen:       baseTime,
 			level:        types.PostPermission,
 			expectResult: nil,
@@ -1604,7 +1612,7 @@ func TestRevokePermission(t *testing.T) {
 		{
 			testName:     "revoke non-exist pubkey, since it's revoked before",
 			user:         user1,
-			revokePubKey: priv2.Generate(1).PubKey(),
+			revokePubKey: postPriv2.PubKey(),
 			atWhen:       baseTime,
 			level:        types.PostPermission,
 			expectResult: model.ErrGrantPubKeyNotFound(),
@@ -1612,7 +1620,7 @@ func TestRevokePermission(t *testing.T) {
 		{
 			testName:     "revoke expired pubkey",
 			user:         user2,
-			revokePubKey: priv2.Generate(1).PubKey(),
+			revokePubKey: postPriv2.PubKey(),
 			atWhen:       baseTime + 101,
 			level:        types.PostPermission,
 			expectResult: nil,
@@ -1635,8 +1643,8 @@ func TestAuthorizePermission(t *testing.T) {
 	user3 := types.AccountKey("user3")
 
 	createTestAccount(ctx, am, string(user1))
-	priv2 := createTestAccount(ctx, am, string(user2))
-	_ = createTestAccount(ctx, am, string(user3))
+	_, _, postPriv2 := createTestAccount(ctx, am, string(user2))
+	_, _, _ = createTestAccount(ctx, am, string(user3))
 
 	baseTime := ctx.BlockHeader().Time
 
@@ -1656,7 +1664,7 @@ func TestAuthorizePermission(t *testing.T) {
 			level:          types.PostPermission,
 			validityPeriod: 100,
 			expectResult:   nil,
-			expectPubKey:   priv2.Generate(1).PubKey(),
+			expectPubKey:   postPriv2.PubKey(),
 		},
 		{
 			testName:       "override post permission",
@@ -1665,7 +1673,7 @@ func TestAuthorizePermission(t *testing.T) {
 			level:          types.PostPermission,
 			validityPeriod: 1000,
 			expectResult:   nil,
-			expectPubKey:   priv2.Generate(1).PubKey(),
+			expectPubKey:   postPriv2.PubKey(),
 		},
 	}
 
@@ -1771,9 +1779,9 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	newResetPrivKey := crypto.GenPrivKeyEd25519()
-	newTransactionPrivKey := newResetPrivKey.Generate(0)
-	newPostPrivKey := newResetPrivKey.Generate(1)
+	newResetPrivKey := crypto.GenPrivKeySecp256k1()
+	newTransactionPrivKey := crypto.GenPrivKeySecp256k1()
+	newPostPrivKey := crypto.GenPrivKeySecp256k1()
 
 	err = am.RecoverAccount(
 		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),

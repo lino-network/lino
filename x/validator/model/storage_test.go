@@ -33,7 +33,7 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 func TestValidator(t *testing.T) {
 	ctx, vs := setup(t)
 
-	priv := crypto.GenPrivKeyEd25519()
+	priv := crypto.GenPrivKeySecp256k1()
 	testCases := []struct {
 		testName string
 		power    int64

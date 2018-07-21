@@ -77,10 +77,14 @@ func getContext(height int64) sdk.Context {
 		false, log.NewNopLogger())
 }
 
-func createTestAccount(ctx sdk.Context, am AccountManager, username string) crypto.PrivKeyEd25519 {
-	priv := crypto.GenPrivKeyEd25519()
+func createTestAccount(ctx sdk.Context, am AccountManager, username string) (crypto.PrivKeySecp256k1,
+	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1) {
+	resetPriv := crypto.GenPrivKeySecp256k1()
+	txPriv := crypto.GenPrivKeySecp256k1()
+	postPriv := crypto.GenPrivKeySecp256k1()
+
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
-		priv.PubKey(), priv.Generate(0).PubKey(), priv.Generate(1).PubKey(), accParam.RegisterFee)
-	return priv
+		resetPriv.PubKey(), txPriv.PubKey(), postPriv.PubKey(), accParam.RegisterFee)
+	return resetPriv, txPriv, postPriv
 }
