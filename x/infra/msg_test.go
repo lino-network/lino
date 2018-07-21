@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProviderReportMsg(t *testing.T) {
@@ -55,6 +56,45 @@ func TestMsgPermission(t *testing.T) {
 		if tc.expectPermission != permission {
 			t.Errorf("%s: diff permission,  got %v, want %v", testName, permission, tc.expectPermission)
 			return
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	testCases := map[string]struct {
+		msg types.Msg
+	}{
+		"provider report msg": {
+			msg: NewProviderReportMsg("test", 1),
+		},
+	}
+
+	for testName, tc := range testCases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, testName)
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	testCases := map[string]struct {
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		"provider report msg": {
+			msg:           NewProviderReportMsg("test", 1),
+			expectSigners: []types.AccountKey{"test"},
+		},
+	}
+
+	for testName, tc := range testCases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
 		}
 	}
 }

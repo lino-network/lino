@@ -5,6 +5,7 @@ import (
 
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -639,6 +640,162 @@ func TestMsgPermission(t *testing.T) {
 		permission := tc.msg.GetPermission()
 		if tc.expectedPermission != permission {
 			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, tc.expectedPermission, permission)
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	testCases := []struct {
+		testName string
+		msg      types.Msg
+	}{
+		{
+			testName: "donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1, false),
+		},
+		{
+			testName: "micropayment donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1, true),
+		},
+		{
+			testName: "create post",
+			msg: CreatePostMsg{
+				PostID:       "test",
+				Title:        "title",
+				Content:      "content",
+				Author:       "author",
+				ParentAuthor: types.AccountKey("parentAuthor"),
+				ParentPostID: "parentPostID",
+				SourceAuthor: types.AccountKey("sourceAuthor"),
+				SourcePostID: "sourcePostID",
+				Links: []types.IDToURLMapping{
+					{
+						Identifier: "#1",
+						URL:        "https://lino.network",
+					},
+				},
+				RedistributionSplitRate: "0.5",
+			},
+		},
+		{
+			testName: "like post",
+			msg: NewLikeMsg(
+				"test", 10000, "author", "postID"),
+		},
+		{
+			testName: "view post",
+			msg: NewViewMsg(
+				"test", "author", "postID"),
+		},
+		{
+			testName: "report post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", true),
+		},
+		{
+			testName: "upvote post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", false),
+		},
+		{
+			testName: "update post",
+			msg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, tc.testName)
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		{
+			testName: "donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1, false),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "micropayment donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1, true),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "create post",
+			msg: CreatePostMsg{
+				PostID:       "test",
+				Title:        "title",
+				Content:      "content",
+				Author:       "author",
+				ParentAuthor: types.AccountKey("parentAuthor"),
+				ParentPostID: "parentPostID",
+				SourceAuthor: types.AccountKey("sourceAuthor"),
+				SourcePostID: "sourcePostID",
+				Links: []types.IDToURLMapping{
+					{
+						Identifier: "#1",
+						URL:        "https://lino.network",
+					},
+				},
+				RedistributionSplitRate: "0.5",
+			},
+			expectSigners: []types.AccountKey{"author"},
+		},
+		{
+			testName: "like post",
+			msg: NewLikeMsg(
+				"test", 10000, "author", "postID"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "view post",
+			msg: NewViewMsg(
+				"test", "author", "postID"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "report post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", true),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "upvote post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", false),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName: "update post",
+			msg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectSigners: []types.AccountKey{"author"},
+		},
+	}
+
+	for _, tc := range testCases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", tc.testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
 		}
 	}
 }
