@@ -93,7 +93,7 @@ func ErrCheckTransactionKey() sdk.Error {
 }
 
 func ErrCheckGrantPostKey() sdk.Error {
-	return types.NewError(types.CodeCheckGrantPostKey, fmt.Sprintf("only user's own post key or above can sign grant post msg"))
+	return types.NewError(types.CodeCheckGrantPostKey, fmt.Sprintf("only user's own post key or above can sign grant or revoke post permission msg"))
 }
 
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {

@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVoterDepositMsg(t *testing.T) {
@@ -246,6 +247,94 @@ func TestMsgPermission(t *testing.T) {
 		permission := tc.msg.GetPermission()
 		if tc.expectedPermission != permission {
 			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectedPermission)
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	testCases := []struct {
+		testName string
+		msg      types.Msg
+	}{
+		{
+			testName: "vote deposit",
+			msg:      NewVoterDepositMsg("test", types.LNO("1")),
+		},
+		{
+			testName: "vote withdraw",
+			msg:      NewVoterWithdrawMsg("test", types.LNO("1")),
+		},
+		{
+			testName: "vote revoke",
+			msg:      NewVoterRevokeMsg("test"),
+		},
+		{
+			testName: "delegate to voter",
+			msg:      NewDelegateMsg("delegator", "voter", types.LNO("1")),
+		},
+		{
+			testName: "delegate withdraw",
+			msg:      NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
+		},
+		{
+			testName: "revoke delegation",
+			msg:      NewRevokeDelegationMsg("delegator", "voter"),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, tc.testName)
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		{
+			testName:      "vote deposit",
+			msg:           NewVoterDepositMsg("test", types.LNO("1")),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "vote withdraw",
+			msg:           NewVoterWithdrawMsg("test", types.LNO("1")),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "vote revoke",
+			msg:           NewVoterRevokeMsg("test"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "delegate to voter",
+			msg:           NewDelegateMsg("delegator", "voter", types.LNO("1")),
+			expectSigners: []types.AccountKey{"delegator"},
+		},
+		{
+			testName:      "delegate withdraw",
+			msg:           NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
+			expectSigners: []types.AccountKey{"delegator"},
+		},
+		{
+			testName:      "revoke delegation",
+			msg:           NewRevokeDelegationMsg("delegator", "voter"),
+			expectSigners: []types.AccountKey{"delegator"},
+		},
+	}
+
+	for _, tc := range testCases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", tc.testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
 		}
 	}
 }

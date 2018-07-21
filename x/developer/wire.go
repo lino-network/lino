@@ -16,4 +16,5 @@ var msgCdc = wire.NewCodec()
 
 func init() {
 	RegisterWire(msgCdc)
+	wire.RegisterCrypto(msgCdc)
 }

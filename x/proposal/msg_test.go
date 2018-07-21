@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVoteProposalMsg(t *testing.T) {
@@ -848,6 +849,179 @@ func TestMsgPermission(t *testing.T) {
 		if tc.expectPermission != permission {
 			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, permission, tc.expectPermission)
 			return
+		}
+	}
+}
+
+func TestGetSignBytes(t *testing.T) {
+	testCases := []struct {
+		testName string
+		msg      types.Msg
+	}{
+		{
+			testName: "delete post content msg",
+			msg: NewDeletePostContentMsg(
+				"creator", "perm_link", "reason"),
+		},
+		{
+			testName: "upgrade protocal msg",
+			msg:      NewUpgradeProtocolMsg("creator", "link"),
+		},
+		{
+			testName: "change global allocaiton param msg",
+			msg: NewChangeGlobalAllocationParamMsg(
+				"creator", param.GlobalAllocationParam{}),
+		},
+		{
+			testName: "change evaluate of content value param msg",
+			msg: NewChangeEvaluateOfContentValueParamMsg(
+				"creator", param.EvaluateOfContentValueParam{}),
+		},
+		{
+			testName: "change infra internal allocation param msg",
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+		},
+		{
+			testName: "change vote param msg",
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+		},
+		{
+			testName: "change proposal param msg",
+			msg: NewChangeProposalParamMsg(
+				"creator", param.ProposalParam{}),
+		},
+		{
+			testName: "change developer param msg",
+			msg: NewChangeDeveloperParamMsg(
+				"creator", param.DeveloperParam{}),
+		},
+		{
+			testName: "change validator param msg",
+			msg: NewChangeValidatorParamMsg(
+				"creator", param.ValidatorParam{}),
+		},
+		{
+			testName: "change bandwidth param msg",
+			msg: NewChangeBandwidthParamMsg(
+				"creator", param.BandwidthParam{}),
+		},
+		{
+			testName: "change account param msg",
+			msg: NewChangeAccountParamMsg(
+				"creator", param.AccountParam{}),
+		},
+		{
+			testName: "change post param msg",
+			msg: NewChangePostParamMsg(
+				"creator", param.PostParam{}),
+		},
+		{
+			testName: "vote proposal msg",
+			msg:      NewVoteProposalMsg("voter", 1, true),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, tc.testName)
+	}
+}
+
+func TestGetSigners(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		msg           types.Msg
+		expectSigners []types.AccountKey
+	}{
+		{
+			testName: "delete post content msg",
+			msg: NewDeletePostContentMsg(
+				"creator", "perm_link", "reason"),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName:      "upgrade protocal msg",
+			msg:           NewUpgradeProtocolMsg("creator", "link"),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change global allocaiton param msg",
+			msg: NewChangeGlobalAllocationParamMsg(
+				"creator", param.GlobalAllocationParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change evaluate of content value param msg",
+			msg: NewChangeEvaluateOfContentValueParamMsg(
+				"creator", param.EvaluateOfContentValueParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change infra internal allocation param msg",
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change vote param msg",
+			msg: NewChangeInfraInternalAllocationParamMsg(
+				"creator", param.InfraInternalAllocationParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change proposal param msg",
+			msg: NewChangeProposalParamMsg(
+				"creator", param.ProposalParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change developer param msg",
+			msg: NewChangeDeveloperParamMsg(
+				"creator", param.DeveloperParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change validator param msg",
+			msg: NewChangeValidatorParamMsg(
+				"creator", param.ValidatorParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change bandwidth param msg",
+			msg: NewChangeBandwidthParamMsg(
+				"creator", param.BandwidthParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change account param msg",
+			msg: NewChangeAccountParamMsg(
+				"creator", param.AccountParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName: "change post param msg",
+			msg: NewChangePostParamMsg(
+				"creator", param.PostParam{}),
+			expectSigners: []types.AccountKey{"creator"},
+		},
+		{
+			testName:      "vote proposal msg",
+			msg:           NewVoteProposalMsg("voter", 1, true),
+			expectSigners: []types.AccountKey{"voter"},
+		},
+	}
+
+	for _, tc := range testCases {
+		if len(tc.msg.GetSigners()) != len(tc.expectSigners) {
+			t.Errorf("%s: expect number of signers wrong, got %v, want %v", tc.testName, len(tc.msg.GetSigners()), len(tc.expectSigners))
+			return
+		}
+		for i, signer := range tc.msg.GetSigners() {
+			if types.AccountKey(signer) != tc.expectSigners[i] {
+				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
+				return
+			}
 		}
 	}
 }
