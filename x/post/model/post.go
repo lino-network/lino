@@ -9,7 +9,7 @@ import (
 // Identifier is used to map the url in post
 type Identifier string
 
-// URL used to link resources like vedio, text or photo
+// URL used to link resources such as vedio, text or photo
 type URL string
 
 // PostInfo can also use to present comment(with parent) or repost(with source)
@@ -32,24 +32,13 @@ type PostMeta struct {
 	LastActivityAt          int64      `json:"last_activity_at"`
 	AllowReplies            bool       `json:"allow_replies"`
 	IsDeleted               bool       `json:"is_deleted"`
-	TotalLikeCount          int64      `json:"total_like_count"`
 	TotalDonateCount        int64      `json:"total_donate_count"`
-	TotalLikeWeight         int64      `json:"total_like_weight"`
-	TotalDislikeWeight      int64      `json:"total_dislike_weight"`
 	TotalReportStake        types.Coin `json:"total_report_stake"`
 	TotalUpvoteStake        types.Coin `json:"total_upvote_stake"`
 	TotalViewCount          int64      `json:"total_view_count"`
 	TotalReward             types.Coin `json:"total_reward"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
 }
-
-// Like struct, only used in Likes
-type Like struct {
-	Username  types.AccountKey `json:"username"`
-	Weight    int64            `json:"weight"`
-	CreatedAt int64            `json:"created_at"`
-}
-type Likes []Like
 
 // ReportOrUpvote struct, only used in ReportOrUpvotes
 type ReportOrUpvote struct {

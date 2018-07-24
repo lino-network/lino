@@ -80,10 +80,6 @@ func ErrCommentAndRepostConflict() sdk.Error {
 	return types.NewError(types.CodeCommentAndRepostConflict, fmt.Sprintf("post can't be comment and repost at the same time"))
 }
 
-func ErrPostLikeWeightOverflow(weight int64) sdk.Error {
-	return types.NewError(types.CodePostLikeWeightOverflow, fmt.Sprintf("post like weight overflow: %v", weight))
-}
-
 func ErrInvalidTarget() sdk.Error {
 	return types.NewError(types.CodeInvalidTarget, fmt.Sprintf("target post is invalid"))
 }

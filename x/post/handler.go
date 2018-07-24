@@ -19,8 +19,6 @@ func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, 
 			return handleCreatePostMsg(ctx, msg, pm, am, gm)
 		case DonateMsg:
 			return handleDonateMsg(ctx, msg, pm, am, gm, dm)
-		case LikeMsg:
-			return handleLikeMsg(ctx, msg, pm, am, gm)
 		case ReportOrUpvoteMsg:
 			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
 		case ViewMsg:
@@ -64,22 +62,6 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 		msg.ParentAuthor, msg.ParentPostID, msg.Content, msg.Title,
 		splitRate, msg.Links); err != nil {
-		return err.Result()
-	}
-
-	return sdk.Result{}
-}
-
-// Handle LikeMsg
-func handleLikeMsg(ctx sdk.Context, msg LikeMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound(msg.Username).Result()
-	}
-	permlink := types.GetPermlink(msg.Author, msg.PostID)
-	if !pm.DoesPostExist(ctx, permlink) {
-		return ErrPostNotFound(permlink).Result()
-	}
-	if err := pm.AddOrUpdateLikeToPost(ctx, permlink, msg.Username, msg.Weight); err != nil {
 		return err.Result()
 	}
 

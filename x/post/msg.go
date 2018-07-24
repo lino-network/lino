@@ -11,7 +11,6 @@ import (
 var _ types.Msg = CreatePostMsg{}
 var _ types.Msg = UpdatePostMsg{}
 var _ types.Msg = DeletePostMsg{}
-var _ types.Msg = LikeMsg{}
 var _ types.Msg = DonateMsg{}
 var _ types.Msg = ReportOrUpvoteMsg{}
 var _ types.Msg = ViewMsg{}
@@ -42,14 +41,6 @@ type UpdatePostMsg struct {
 type DeletePostMsg struct {
 	Author types.AccountKey `json:"author"`
 	PostID string           `json:"post_id"`
-}
-
-// LikeMsg sent from a user to a post
-type LikeMsg struct {
-	Username types.AccountKey `json:"username"`
-	Weight   int64            `json:"weight"`
-	Author   types.AccountKey `json:"author"`
-	PostID   string           `json:"post_id"`
 }
 
 // DonateMsg sent from a user to a post
@@ -115,18 +106,7 @@ func NewDeletePostMsg(author, postID string) DeletePostMsg {
 	}
 }
 
-// NewLikeMsg constructs a like msg
-func NewLikeMsg(
-	user string, weight int64, author, postID string) LikeMsg {
-	return LikeMsg{
-		Username: types.AccountKey(user),
-		Weight:   weight,
-		Author:   types.AccountKey(author),
-		PostID:   postID,
-	}
-}
-
-// NewLikeMsg constructs a view msg
+// NewViewMsg constructs a view msg
 func NewViewMsg(user, author string, postID string) ViewMsg {
 	return ViewMsg{
 		Username: types.AccountKey(user),
@@ -165,7 +145,6 @@ func NewReportOrUpvoteMsg(
 func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
 func (msg UpdatePostMsg) Type() string     { return types.PostRouterName }
 func (msg DeletePostMsg) Type() string     { return types.PostRouterName }
-func (msg LikeMsg) Type() string           { return types.PostRouterName }
 func (msg DonateMsg) Type() string         { return types.PostRouterName }
 func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
 func (msg ViewMsg) Type() string           { return types.PostRouterName }
@@ -269,21 +248,6 @@ func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg LikeMsg) ValidateBasic() sdk.Error {
-	// Ensure permlink exists
-	if len(msg.Username) == 0 {
-		return ErrNoUsername()
-	}
-	if msg.Weight > types.MaxLikeWeight ||
-		msg.Weight < types.MinLikeWeight {
-		return ErrPostLikeWeightOverflow(msg.Weight)
-	}
-	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
-		return ErrInvalidTarget()
-	}
-	return nil
-}
-
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink  exists
 	if len(msg.Username) == 0 {
@@ -336,9 +300,6 @@ func (msg UpdatePostMsg) GetPermission() types.Permission {
 func (msg DeletePostMsg) GetPermission() types.Permission {
 	return types.PostPermission
 }
-func (msg LikeMsg) GetPermission() types.Permission {
-	return types.PostPermission
-}
 func (msg DonateMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
@@ -359,10 +320,6 @@ func (msg UpdatePostMsg) GetSignBytes() []byte {
 }
 
 func (msg DeletePostMsg) GetSignBytes() []byte {
-	return getSignBytes(msg)
-}
-
-func (msg LikeMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
@@ -396,9 +353,6 @@ func (msg UpdatePostMsg) GetSigners() []sdk.AccAddress {
 func (msg DeletePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
-func (msg LikeMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
-}
 func (msg DonateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -427,11 +381,6 @@ func (msg DeletePostMsg) String() string {
 	return fmt.Sprintf("Post.DeletePostMsg{author:%v, postID:%v}", msg.Author, msg.PostID)
 }
 
-func (msg LikeMsg) String() string {
-	return fmt.Sprintf(
-		"Post.LikeMsg{like from: %v, weight: %v, post auther:%v, post id: %v}",
-		msg.Username, msg.Weight, msg.Author, msg.PostID)
-}
 func (msg DonateMsg) String() string {
 	return fmt.Sprintf(
 		"Post.DonateMsg{donation from: %v, amount: %v, post auther:%v, post id: %v}",

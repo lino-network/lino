@@ -144,44 +144,7 @@ func (pm PostManager) UpdatePost(
 	return nil
 }
 
-// add or update like from the user if like exists
-func (pm PostManager) AddOrUpdateLikeToPost(
-	ctx sdk.Context, permlink types.Permlink, user types.AccountKey, weight int64) sdk.Error {
-	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
-	if err != nil {
-		return err
-	}
-	like, _ := pm.postStorage.GetPostLike(ctx, permlink, user)
-	// Revoke privous
-	if like != nil {
-		if like.Weight > 0 {
-			postMeta.TotalLikeWeight -= like.Weight
-		}
-		if like.Weight < 0 {
-			postMeta.TotalDislikeWeight += like.Weight
-		}
-		like.Weight = weight
-	} else {
-		postMeta.TotalLikeCount += 1
-		like = &model.Like{Username: user, Weight: weight, CreatedAt: ctx.BlockHeader().Time}
-	}
-	if like.Weight > 0 {
-		postMeta.TotalLikeWeight += like.Weight
-	}
-	if like.Weight < 0 {
-		postMeta.TotalDislikeWeight -= like.Weight
-	}
-	postMeta.LastActivityAt = ctx.BlockHeader().Time
-	if err := pm.postStorage.SetPostLike(ctx, permlink, like); err != nil {
-		return err
-	}
-	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return err
-	}
-	return nil
-}
-
-// add or update like from the user if like exists
+// add or update view from the user if view exists
 func (pm PostManager) AddOrUpdateViewToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)

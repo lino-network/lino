@@ -10,11 +10,10 @@ import (
 var (
 	postInfoSubStore           = []byte{0x00} // SubStore for all post info
 	postMetaSubStore           = []byte{0x01} // SubStore for all post mata info
-	postLikeSubStore           = []byte{0x02} // SubStore for all like to post
-	postReportOrUpvoteSubStore = []byte{0x03} // SubStore for all like to post
-	postCommentSubStore        = []byte{0x04} // SubStore for all comments
-	postViewsSubStore          = []byte{0x05} // SubStore for all views
-	postDonationsSubStore      = []byte{0x06} // SubStore for all donations
+	postReportOrUpvoteSubStore = []byte{0x02} // SubStore for all report or upvote to post
+	postCommentSubStore        = []byte{0x03} // SubStore for all comments
+	postViewsSubStore          = []byte{0x04} // SubStore for all views
+	postDonationsSubStore      = []byte{0x05} // SubStore for all donations
 )
 
 type PostStorage struct {
@@ -85,30 +84,6 @@ func (ps PostStorage) SetPostMeta(ctx sdk.Context, permlink types.Permlink, post
 		return ErrFailedToMarshalPostMeta(err)
 	}
 	store.Set(GetPostMetaKey(permlink), metaBytes)
-	return nil
-}
-
-func (ps PostStorage) GetPostLike(
-	ctx sdk.Context, permlink types.Permlink, likeUser types.AccountKey) (*Like, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	likeBytes := store.Get(getPostLikeKey(permlink, likeUser))
-	if likeBytes == nil {
-		return nil, ErrPostLikeNotFound(getPostLikeKey(permlink, likeUser))
-	}
-	postLike := new(Like)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(likeBytes, postLike); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostLike(unmarshalErr)
-	}
-	return postLike, nil
-}
-
-func (ps PostStorage) SetPostLike(ctx sdk.Context, permlink types.Permlink, postLike *Like) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	likeByte, err := ps.cdc.MarshalJSON(*postLike)
-	if err != nil {
-		return ErrFailedToMarshalPostLike(err)
-	}
-	store.Set(getPostLikeKey(permlink, postLike.Username), likeByte)
 	return nil
 }
 
@@ -219,16 +194,6 @@ func GetPostInfoKey(permlink types.Permlink) []byte {
 
 func GetPostMetaKey(permlink types.Permlink) []byte {
 	return append(postMetaSubStore, permlink...)
-}
-
-// PostLikePrefix format is LikeSubStore / PostKey
-// which can be used to access all likes belong to this post
-func getPostLikePrefix(permlink types.Permlink) []byte {
-	return append(append(postLikeSubStore, permlink...), types.KeySeparator...)
-}
-
-func getPostLikeKey(permlink types.Permlink, likeUser types.AccountKey) []byte {
-	return append(getPostLikePrefix(permlink), likeUser...)
 }
 
 // PostReportPrefix format is ReportSubStore / PostKey
