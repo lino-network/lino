@@ -620,17 +620,6 @@ func TestHandlerPostDonate(t *testing.T) {
 			toAuthor:   author1,
 			toPostID:   deletedPostID,
 			expectErr:  ErrDonatePostIsDeleted(types.GetPermlink(author1, deletedPostID)).Result(),
-			// expectPostMeta:      model.PostMeta{},
-			// expectDonatorSaving: accParam.RegisterFee.Plus(types.NewCoinFromInt64(1)),
-			// expectAuthorSaving: accParam.RegisterFee.Plus(
-			// 	types.NewCoinFromInt64(191 * types.Decimals)),
-			// expectRegisteredEvent:             RewardEvent{},
-			// expectDonateTimesFromUserToAuthor: 0,
-			// expectCumulativeConsumption:       types.NewCoinFromInt64(201 * types.Decimals),
-			// expectAuthorReward: accmodel.Reward{
-			// 	TotalIncome:    types.NewCoinFromInt64(191 * types.Decimals),
-			// 	OriginalIncome: types.NewCoinFromInt64(191 * types.Decimals),
-			// },
 		},
 	}
 
@@ -644,7 +633,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		if tc.expectErr.Code == sdk.ABCICodeOK {
 			checkPostMeta(t, ctx, types.GetPermlink(tc.toAuthor, tc.toPostID), tc.expectPostMeta)
 		} else {
-			return
+			continue
 		}
 
 		authorSaving, err := am.GetSavingFromBank(ctx, tc.toAuthor)
