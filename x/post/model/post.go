@@ -51,7 +51,7 @@ type ReportOrUpvotes []ReportOrUpvote
 
 type Comment struct {
 	Author    types.AccountKey `json:"author"`
-	PostID    string           `json:"post_key"`
+	PostID    string           `json:"post_id"`
 	CreatedAt int64            `json:"created_at"`
 }
 type Comments []Comment
