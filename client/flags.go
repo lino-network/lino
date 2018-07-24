@@ -29,7 +29,6 @@ const (
 	FlagUser       = "user"
 	FlagReferrer   = "referrer"
 	FlagSeconds    = "seconds"
-	FlagTimes      = "times"
 	FlagPermission = "permission"
 
 	// Infra
@@ -49,7 +48,6 @@ const (
 	FlagSourceAuthor            = "source-author"
 	FlagSourcePostID            = "source-post-ID"
 	FlagRedistributionSplitRate = "redistribution-split-rate"
-	FlagIsMicropayment          = "is-micropayment"
 
 	// Vote
 	FlagVoter      = "voter"

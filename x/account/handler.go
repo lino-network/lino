@@ -117,7 +117,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 	}
 	if err := am.RecoverAccount(
 		ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewMicropaymentPubKey, msg.NewPostPubKey); err != nil {
+		msg.NewPostPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -138,7 +138,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 	}
 	if err := am.CreateAccount(
 		ctx, msg.Referrer, msg.NewUser, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewMicropaymentPubKey, msg.NewPostPubKey, coin); err != nil {
+		msg.NewPostPubKey, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

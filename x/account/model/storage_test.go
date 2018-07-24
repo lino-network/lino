@@ -33,12 +33,11 @@ func TestAccountInfo(t *testing.T) {
 	ctx := getContext()
 
 	accInfo := AccountInfo{
-		Username:        types.AccountKey("test"),
-		CreatedAt:       0,
-		ResetKey:        crypto.GenPrivKeySecp256k1().PubKey(),
-		TransactionKey:  crypto.GenPrivKeySecp256k1().PubKey(),
-		MicropaymentKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		PostKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+		Username:       types.AccountKey("test"),
+		CreatedAt:      0,
+		ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
+		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
+		PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -170,7 +169,7 @@ func TestAccountRewardHistory(t *testing.T) {
 func TestAccountGrantPubkey(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
-	priv := crypto.GenPrivKeyEd25519()
+	priv := crypto.GenPrivKeySecp256k1()
 
 	grantPubKey := GrantPubKey{}
 	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey(), &grantPubKey)

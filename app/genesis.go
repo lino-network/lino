@@ -50,14 +50,13 @@ type GenesisState struct {
 // genesis account will get coin to the address and register user
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
-	Name            string        `json:"name"`
-	Lino            types.LNO     `json:"lino"`
-	ResetKey        crypto.PubKey `json:"reset_key"`
-	TransactionKey  crypto.PubKey `json:"transaction_key"`
-	MicropaymentKey crypto.PubKey `json:"micropayment_key"`
-	PostKey         crypto.PubKey `json:"post_key"`
-	IsValidator     bool          `json:"is_validator"`
-	ValPubKey       crypto.PubKey `json:"validator_pub_key"`
+	Name           string        `json:"name"`
+	Lino           types.LNO     `json:"lino"`
+	ResetKey       crypto.PubKey `json:"reset_key"`
+	TransactionKey crypto.PubKey `json:"transaction_key"`
+	PostKey        crypto.PubKey `json:"post_key"`
+	IsValidator    bool          `json:"is_validator"`
+	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
 }
 
 // register developer in genesis phase
@@ -78,24 +77,21 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	transactionPriv := crypto.GenPrivKeySecp256k1()
-	micropaymentPriv := crypto.GenPrivKeySecp256k1()
 	postPriv := crypto.GenPrivKeySecp256k1()
 
 	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-	fmt.Println("micropayment private key is:", strings.ToUpper(hex.EncodeToString(micropaymentPriv.Bytes())))
 	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
 
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
-		Name:            "lino",
-		Lino:            totalLino,
-		ResetKey:        resetPriv.PubKey(),
-		TransactionKey:  transactionPriv.PubKey(),
-		MicropaymentKey: micropaymentPriv.PubKey(),
-		PostKey:         postPriv.PubKey(),
-		IsValidator:     true,
-		ValPubKey:       pk,
+		Name:           "lino",
+		Lino:           totalLino,
+		ResetKey:       resetPriv.PubKey(),
+		TransactionKey: transactionPriv.PubKey(),
+		PostKey:        postPriv.PubKey(),
+		IsValidator:    true,
+		ValPubKey:      pk,
 	}
 
 	var bz []byte

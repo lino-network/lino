@@ -102,7 +102,7 @@ func TestMsgPermission(t *testing.T) {
 		{
 			testName: "validator deposit msg",
 			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), crypto.GenPrivKeyEd25519().PubKey(), "https://lino.network"),
+				"test", types.LNO("1"), crypto.GenPrivKeySecp256k1().PubKey(), "https://lino.network"),
 			expectedPermission: types.TransactionPermission,
 		},
 		{
@@ -134,7 +134,7 @@ func TestGetSignBytes(t *testing.T) {
 		{
 			testName: "validator deposit msg",
 			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), crypto.GenPrivKeyEd25519().PubKey(), "https://lino.network"),
+				"test", types.LNO("1"), crypto.GenPrivKeySecp256k1().PubKey(), "https://lino.network"),
 		},
 		{
 			testName: "validator withdraw msg",
@@ -160,7 +160,7 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName: "validator deposit msg",
 			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), crypto.GenPrivKeyEd25519().PubKey(), "https://lino.network"),
+				"test", types.LNO("1"), crypto.GenPrivKeySecp256k1().PubKey(), "https://lino.network"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{

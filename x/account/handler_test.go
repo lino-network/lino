@@ -245,35 +245,32 @@ func TestHandleAccountRecover(t *testing.T) {
 	createTestAccount(ctx, am, user1)
 
 	testCases := map[string]struct {
-		user               string
-		newResetKey        crypto.PubKey
-		newTransactionKey  crypto.PubKey
-		newMicropaymentKey crypto.PubKey
-		newPostKey         crypto.PubKey
+		user              string
+		newResetKey       crypto.PubKey
+		newTransactionKey crypto.PubKey
+		newPostKey        crypto.PubKey
 	}{
 		"normal case": {
-			user:               user1,
-			newResetKey:        crypto.GenPrivKeyEd25519().PubKey(),
-			newTransactionKey:  crypto.GenPrivKeyEd25519().PubKey(),
-			newMicropaymentKey: crypto.GenPrivKeyEd25519().PubKey(),
-			newPostKey:         crypto.GenPrivKeyEd25519().PubKey(),
+			user:              user1,
+			newResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
+			newTransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
+			newPostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newMicropaymentKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newPostKey)
 		result := handler(ctx, msg)
 		if !assert.Equal(t, sdk.Result{}, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, sdk.Result{})
 		}
 
 		accInfo := model.AccountInfo{
-			Username:        types.AccountKey(tc.user),
-			CreatedAt:       ctx.BlockHeader().Time,
-			ResetKey:        tc.newResetKey,
-			TransactionKey:  tc.newTransactionKey,
-			MicropaymentKey: tc.newMicropaymentKey,
-			PostKey:         tc.newPostKey,
+			Username:       types.AccountKey(tc.user),
+			CreatedAt:      ctx.BlockHeader().Time,
+			ResetKey:       tc.newResetKey,
+			TransactionKey: tc.newTransactionKey,
+			PostKey:        tc.newPostKey,
 		}
 		checkAccountInfo(t, ctx, testName, types.AccountKey(tc.user), accInfo)
 
@@ -309,7 +306,6 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			expectResult:         sdk.Result{},
 			expectReferrerSaving: c100,
@@ -318,7 +314,6 @@ func TestHandleRegister(t *testing.T) {
 			testName: "account already exist",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user1", "1",
-				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
@@ -333,7 +328,6 @@ func TestHandleRegister(t *testing.T) {
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
 			),
 			expectResult:         ErrRegisterFeeInsufficient().Result(),
 			expectReferrerSaving: types.NewCoinFromInt64(9890000),
@@ -342,7 +336,6 @@ func TestHandleRegister(t *testing.T) {
 			testName: "referrer deposit insufficient",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user2", "1000",
-				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
 				crypto.GenPrivKeySecp256k1().PubKey(),
@@ -377,14 +370,6 @@ func TestHandleRegister(t *testing.T) {
 			}
 			if !txKey.Equals(tc.registerMsg.NewTransactionPubKey) {
 				t.Errorf("%s: diff transaction key, got %v, want %v", tc.testName, txKey, tc.registerMsg.NewTransactionPubKey)
-			}
-
-			micropaymentKey, err := am.GetMicropaymentKey(ctx, tc.registerMsg.NewUser)
-			if err != nil {
-				t.Errorf("%s: failed to get micropayment key, got err %v", tc.testName, err)
-			}
-			if !micropaymentKey.Equals(tc.registerMsg.NewMicropaymentPubKey) {
-				t.Errorf("%s: diff micropayment key, got %v, want %v", tc.testName, micropaymentKey, tc.registerMsg.NewMicropaymentPubKey)
 			}
 
 			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)

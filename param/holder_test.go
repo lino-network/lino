@@ -197,11 +197,10 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize:      100,
-		MaximumMicropaymentGrantTimes: 20,
-		RewardHistoryBundleSize:       100,
+		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize: 100,
+		RewardHistoryBundleSize:  100,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -292,14 +291,12 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:                types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                   types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize:      100,
-		MaximumMicropaymentGrantTimes: 20,
-		RewardHistoryBundleSize:       100,
+		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize: 100,
+		RewardHistoryBundleSize:  100,
 	}
 	postParam := PostParam{
-		MicropaymentLimitation: types.NewCoinFromInt64(10 * types.Decimals),
 		ReportOrUpvoteInterval: 24 * 3600,
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,

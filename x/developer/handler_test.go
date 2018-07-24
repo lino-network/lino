@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/x/account"
 	accstore "github.com/lino-network/lino/x/account/model"
 )
 
@@ -132,8 +131,6 @@ func TestGrantPermissionMsg(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
 	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	assert.Nil(t, err)
-	accParam, err := dm.paramHolder.GetAccountParam(ctx)
-	assert.Nil(t, err)
 
 	handler := NewHandler(dm, am, gm)
 	dm.InitGenesis(ctx)
@@ -152,28 +149,18 @@ func TestGrantPermissionMsg(t *testing.T) {
 	}{
 		{
 			testName:     "normal grant post permission",
-			msg:          NewGrantPermissionMsg("user1", "app", 10000, 1, types.PostPermission),
-			expectResult: sdk.Result{},
-		},
-		{
-			testName:     "normal grant micropayment permission",
-			msg:          NewGrantPermissionMsg("user2", "app", 10000, 1, types.MicropaymentPermission),
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.PostPermission),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "grant permission to non-exist app",
-			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, 1, types.MicropaymentPermission),
+			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.PostPermission),
 			expectResult: ErrDeveloperNotFound().Result(),
 		},
 		{
 			testName:     "grant permission to non-exist user",
-			msg:          NewGrantPermissionMsg("invalid", "app", 10000, 1, types.MicropaymentPermission),
+			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.PostPermission),
 			expectResult: ErrAccountNotFound().Result(),
-		},
-		{
-			testName:     "grant permission exceeds maximum limitation",
-			msg:          NewGrantPermissionMsg("user1", "app", 10000, 100, types.MicropaymentPermission),
-			expectResult: acc.ErrGrantTimesExceedsLimitation(accParam.MaximumMicropaymentGrantTimes).Result(),
 		},
 	}
 
@@ -198,13 +185,12 @@ func TestRevokePermissionMsg(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "user1", accParam.RegisterFee)
 	createTestAccount(ctx, am, "user2", minBalance)
-	appPriv := createTestAccount(ctx, am, "app", minBalance)
+	appRestPriv, _, appPostPriv := createTestAccount(ctx, am, "app", minBalance)
+
 	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 	err = am.AuthorizePermission(
-		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, 10, types.PostPermission)
-	err = am.AuthorizePermission(
-		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, 10, types.MicropaymentPermission)
+		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.PostPermission)
 	assert.Nil(t, err)
 
 	testCases := []struct {
@@ -214,22 +200,17 @@ func TestRevokePermissionMsg(t *testing.T) {
 	}{
 		{
 			testName:     "normal revoke post permission",
-			msg:          NewRevokePermissionMsg("user1", appPriv.Generate(2).PubKey(), types.PostPermission),
+			msg:          NewRevokePermissionMsg("user1", appPostPriv.PubKey(), types.PostPermission),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "revoke non-exist pubkey",
-			msg:          NewRevokePermissionMsg("user1", appPriv.PubKey(), types.PostPermission),
+			msg:          NewRevokePermissionMsg("user1", appRestPriv.PubKey(), types.PostPermission),
 			expectResult: accstore.ErrGrantPubKeyNotFound().Result(),
 		},
 		{
-			testName:     "revoke pubkey permission mismatch",
-			msg:          NewRevokePermissionMsg("user1", appPriv.Generate(1).PubKey(), types.PostPermission),
-			expectResult: acc.ErrRevokePermissionLevelMismatch(types.MicropaymentPermission, types.PostPermission).Result(),
-		},
-		{
 			testName:     "invalid revoke user",
-			msg:          NewRevokePermissionMsg("invalid", appPriv.Generate(1).PubKey(), types.MicropaymentPermission),
+			msg:          NewRevokePermissionMsg("invalid", appPostPriv.PubKey(), types.PostPermission),
 			expectResult: ErrAccountNotFound().Result(),
 		},
 	}

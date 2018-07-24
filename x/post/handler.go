@@ -129,15 +129,7 @@ func handleDonateMsg(
 			return ErrDeveloperNotFound(msg.FromApp).Result()
 		}
 	}
-	if msg.IsMicroPayment {
-		postParam, err := pm.paramHolder.GetPostParam(ctx)
-		if err != nil {
-			return err.Result()
-		}
-		if coin.IsGT(postParam.MicropaymentLimitation) {
-			return ErrMicropaymentExceedsLimitation().Result()
-		}
-	}
+
 	if err := am.MinusSavingCoin(
 		ctx, msg.Username, coin, msg.Author,
 		fmt.Sprintf("donate to post: %v, memo: %v", string(permlink), msg.Memo),

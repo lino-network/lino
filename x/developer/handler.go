@@ -94,7 +94,7 @@ func handleGrantPermissionMsg(
 	}
 
 	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.Times, msg.GrantLevel); err != nil {
+		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

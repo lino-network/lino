@@ -32,7 +32,6 @@ type GrantPermissionMsg struct {
 	AuthenticateApp types.AccountKey `json:"authenticate_app"`
 	ValidityPeriod  int64            `json:"validity_period"`
 	GrantLevel      types.Permission `json:"grant_level"`
-	Times           int64            `json:"times"`
 }
 
 type RevokePermissionMsg struct {
@@ -126,13 +125,12 @@ func (msg DeveloperRevokeMsg) GetSigners() []sdk.AccAddress {
 
 // Grant Msg Implementations
 func NewGrantPermissionMsg(
-	user, app string, validityPeriod int64, times int64, grantLevel types.Permission) GrantPermissionMsg {
+	user, app string, validityPeriod int64, grantLevel types.Permission) GrantPermissionMsg {
 	return GrantPermissionMsg{
 		Username:        types.AccountKey(user),
 		AuthenticateApp: types.AccountKey(app),
 		ValidityPeriod:  validityPeriod,
 		GrantLevel:      grantLevel,
-		Times:           times,
 	}
 }
 
@@ -153,13 +151,8 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidValidityPeriod()
 	}
 
-	if msg.Times < 0 {
-		return ErrInvalidGrantTimes()
-	}
-
 	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantMicropaymentPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
@@ -173,9 +166,6 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
-	if msg.GrantLevel == types.MicropaymentPermission {
-		return types.GrantMicropaymentPermission
-	}
 	return types.GrantPostPermission
 }
 
@@ -210,7 +200,6 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 
 	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantMicropaymentPermission ||
 		msg.GrantLevel == types.GrantPostPermission {
 		return ErrGrantPermissionTooHigh()
 	}
@@ -224,9 +213,6 @@ func (msg RevokePermissionMsg) String() string {
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	if msg.GrantLevel == types.MicropaymentPermission {
-		return types.GrantMicropaymentPermission
-	}
 	return types.GrantPostPermission
 }
 

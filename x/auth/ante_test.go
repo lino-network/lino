@@ -30,16 +30,15 @@ var (
 )
 
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeyEd25519,
-	crypto.PrivKeyEd25519, crypto.PrivKeyEd25519, types.AccountKey) {
-	masterKey := crypto.GenPrivKeyEd25519()
-	transactionKey := crypto.GenPrivKeyEd25519()
-	micropaymentKey := crypto.GenPrivKeyEd25519()
-	postKey := crypto.GenPrivKeyEd25519()
+	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeySecp256k1,
+	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1, types.AccountKey) {
+	resetKey := crypto.GenPrivKeySecp256k1()
+	transactionKey := crypto.GenPrivKeySecp256k1()
+	postKey := crypto.GenPrivKeySecp256k1()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		masterKey.PubKey(), transactionKey.PubKey(), micropaymentKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
-	return masterKey, transactionKey, postKey, types.AccountKey(username)
+		resetKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
+	return resetKey, transactionKey, postKey, types.AccountKey(username)
 }
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -221,7 +220,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, 10, types.PostPermission)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.PostPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant

@@ -25,7 +25,6 @@ func RevokePermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	cmd.Flags().String(client.FlagPubKey, "", "public key to revoke")
 	cmd.Flags().Int64(client.FlagSeconds, 3600, "seconds till expire")
-	cmd.Flags().Int64(client.FlagTimes, 10, "grant signing times")
 	cmd.Flags().String(client.FlagPermission, "post", "grant permission")
 	return cmd
 }
@@ -50,10 +49,8 @@ func sendRevokePermissionTx(cdc *wire.Codec) client.CommandTxCallback {
 		switch permissionStr {
 		case "post":
 			permission = types.PostPermission
-		case "micropayment":
-			permission = types.MicropaymentPermission
 		default:
-			return errors.New("only post and micropayment permission are allowed")
+			return errors.New("only post permission are allowed")
 		}
 
 		msg := dev.NewRevokePermissionMsg(username, pubKey, permission)

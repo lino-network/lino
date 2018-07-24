@@ -433,42 +433,42 @@ func TestDonationMsg(t *testing.T) {
 	}{
 		{
 			testName:      "normal case",
-			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", memo1),
 			expectedError: nil,
 		},
 		{
 			testName:      "no username",
-			donateMsg:     NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1, true),
+			donateMsg:     NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
 			expectedError: ErrNoUsername(),
 		},
 		{
 			testName:      "zero coin is less than lower bound",
-			donateMsg:     NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
 			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 		{
 			testName:      "negative coin is less than lower bound",
-			donateMsg:     NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
 			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 		{
 			testName:      "invalid target - no post id",
-			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
 			expectedError: ErrInvalidTarget(),
 		},
 		{
 			testName:      "invalid target - no author",
-			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
 			expectedError: ErrInvalidTarget(),
 		},
 		{
 			testName:      "invalid target - no author and post id",
-			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "", "", memo1, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
 			expectedError: ErrInvalidTarget(),
 		},
 		{
 			testName:      "invalid memo",
-			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo, true),
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
 			expectedError: ErrInvalidMemo(),
 		},
 	}
@@ -573,15 +573,8 @@ func TestMsgPermission(t *testing.T) {
 			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1, false),
+				"author", "postID", "", memo1),
 			expectedPermission: types.TransactionPermission,
-		},
-		{
-			testName: "micropayment donateMsg",
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", memo1, true),
-			expectedPermission: types.MicropaymentPermission,
 		},
 		{
 			testName: "create post",
@@ -653,13 +646,7 @@ func TestGetSignBytes(t *testing.T) {
 			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1, false),
-		},
-		{
-			testName: "micropayment donateMsg",
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", memo1, true),
+				"author", "postID", "", memo1),
 		},
 		{
 			testName: "create post",
@@ -723,14 +710,7 @@ func TestGetSigners(t *testing.T) {
 			testName: "donateMsg",
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
-				"author", "postID", "", memo1, false),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName: "micropayment donateMsg",
-			msg: NewDonateMsg(
-				"test", types.LNO("1"),
-				"author", "postID", "", memo1, true),
+				"author", "postID", "", memo1),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
