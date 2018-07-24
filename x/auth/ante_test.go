@@ -232,7 +232,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission, types.NewCoinFromInt64(0))
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant
@@ -254,7 +254,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
 
 	// test pre authorization permission
-	err = am.PreAuthorization(ctx, user1, user3, 3600, types.NewCoinFromInt64(100))
+	err = am.AuthorizePermission(ctx, user1, user3, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
 	assert.Nil(t, err)
 	msg.Permission = types.PreAuthorizationPermission
 	privs, seqs = []crypto.PrivKey{post3}, []int64{2}

@@ -677,14 +677,22 @@ func (accManager AccountManager) UpdateDonationRelationship(
 
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
-	validityPeriod int64, grantLevel types.Permission) sdk.Error {
+	validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error {
 
 	newGrantPubKey := model.GrantPubKey{
 		Username:   authorizedUser,
 		Permission: grantLevel,
 		CreatedAt:  ctx.BlockHeader().Time,
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
-		Amount:     types.NewCoinFromInt64(0),
+		Amount:     amount,
+	}
+
+	if grantLevel == types.PreAuthorizationPermission {
+		txKey, err := accManager.GetTransactionKey(ctx, authorizedUser)
+		if err != nil {
+			return err
+		}
+		return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
 	}
 
 	if grantLevel == types.AppPermission {
@@ -695,25 +703,6 @@ func (accManager AccountManager) AuthorizePermission(
 		return accManager.storage.SetGrantPubKey(ctx, me, appKey, &newGrantPubKey)
 	}
 	return ErrUnsupportGrantLevel()
-}
-
-func (accManager AccountManager) PreAuthorization(
-	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
-	validityPeriod int64, amount types.Coin) sdk.Error {
-
-	newGrantPubKey := model.GrantPubKey{
-		Username:   authorizedUser,
-		Permission: types.PreAuthorizationPermission,
-		CreatedAt:  ctx.BlockHeader().Time,
-		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
-		Amount:     amount,
-	}
-
-	txKey, err := accManager.GetTransactionKey(ctx, authorizedUser)
-	if err != nil {
-		return err
-	}
-	return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
 }
 
 func (accManager AccountManager) RevokePermission(

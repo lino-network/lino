@@ -126,10 +126,6 @@ func ErrPreAuthAmountInsufficient(owner types.AccountKey, balance, consume types
 		fmt.Sprintf("grant user %v doesn't have enough preauthorization balance, have %v, wanna consume %v", owner, balance, consume))
 }
 
-func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {
-	return types.NewError(types.CodeGrantTimesExceedsLimitation, fmt.Sprintf("grant times exceeds %v limitation", limitation))
-}
-
 func ErrUnsupportGrantLevel() sdk.Error {
 	return types.NewError(types.CodeUnsupportGrantLevel, fmt.Sprintf("unsupport grant level"))
 }

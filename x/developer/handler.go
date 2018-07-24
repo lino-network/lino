@@ -94,7 +94,7 @@ func handleGrantPermissionMsg(
 	}
 
 	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel); err != nil {
+		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, types.NewCoinFromInt64(0)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -126,8 +126,8 @@ func handlePreAuthorizationMsg(
 		return err.Result()
 	}
 
-	if err := am.PreAuthorization(
-		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, amount); err != nil {
+	if err := am.AuthorizePermission(
+		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.PreAuthorizationPermission, amount); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

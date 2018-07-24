@@ -190,7 +190,7 @@ func TestRevokePermissionMsg(t *testing.T) {
 	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 	err = am.AuthorizePermission(
-		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.AppPermission)
+		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.AppPermission, types.NewCoinFromInt64(0))
 	assert.Nil(t, err)
 
 	testCases := []struct {
