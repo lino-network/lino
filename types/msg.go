@@ -10,6 +10,7 @@ import (
 type Msg interface {
 	sdk.Msg
 	GetPermission() Permission
+	GetConsumeAmount() Coin
 }
 
 // Register the lino message type

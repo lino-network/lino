@@ -171,7 +171,7 @@ func TestAccountGrantPubkey(t *testing.T) {
 	ctx := getContext()
 	priv := crypto.GenPrivKeySecp256k1()
 
-	grantPubKey := GrantPubKey{}
+	grantPubKey := GrantPubKey{Amount: types.NewCoinFromInt64(0)}
 	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey(), &grantPubKey)
 	assert.Nil(t, err)
 

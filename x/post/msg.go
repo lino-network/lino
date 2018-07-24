@@ -301,7 +301,7 @@ func (msg DeletePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 func (msg DonateMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
+	return types.PreAuthorizationPermission
 }
 func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
 	return types.AppPermission
@@ -395,4 +395,24 @@ func (msg ViewMsg) String() string {
 	return fmt.Sprintf(
 		"Post.ViewMsg{from: %v, post auther:%v, post id: %v}",
 		msg.Username, msg.Author, msg.PostID)
+}
+
+func (msg CreatePostMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+func (msg UpdatePostMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+func (msg DeletePostMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+func (msg DonateMsg) GetConsumeAmount() types.Coin {
+	coin, _ := types.LinoToCoin(msg.Amount)
+	return coin
+}
+func (msg ReportOrUpvoteMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+func (msg ViewMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }

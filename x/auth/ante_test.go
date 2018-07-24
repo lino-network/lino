@@ -67,15 +67,17 @@ func setupTest() (
 }
 
 type TestMsg struct {
-	signers []types.AccountKey
+	Signers    []types.AccountKey
+	Permission types.Permission
+	Amount     types.Coin
 }
 
 var _ types.Msg = TestMsg{}
 
 func (msg TestMsg) Type() string                    { return "normal msg" }
-func (msg TestMsg) GetPermission() types.Permission { return types.AppPermission }
+func (msg TestMsg) GetPermission() types.Permission { return msg.Permission }
 func (msg TestMsg) GetSignBytes() []byte {
-	bz, err := json.Marshal(msg.signers)
+	bz, err := json.Marshal(msg.Signers)
 	if err != nil {
 		panic(err)
 	}
@@ -83,16 +85,21 @@ func (msg TestMsg) GetSignBytes() []byte {
 }
 func (msg TestMsg) ValidateBasic() sdk.Error { return nil }
 func (msg TestMsg) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, len(msg.signers))
-	for i, signer := range msg.signers {
+	addrs := make([]sdk.AccAddress, len(msg.Signers))
+	for i, signer := range msg.Signers {
 		addrs[i] = sdk.AccAddress(signer)
 	}
 	return addrs
 }
+func (msg TestMsg) GetConsumeAmount() types.Coin {
+	return msg.Amount
+}
 
 func newTestMsg(accKeys ...types.AccountKey) TestMsg {
 	return TestMsg{
-		signers: accKeys,
+		Signers:    accKeys,
+		Permission: types.AppPermission,
+		Amount:     types.NewCoinFromInt64(10),
 	}
 }
 
@@ -202,6 +209,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	// keys and username
 	_, transaction1, _, user1 := createTestAccount(ctx, am, ph, "user1")
 	_, transaction2, post2, user2 := createTestAccount(ctx, am, ph, "user2")
+	_, transaction3, post3, user3 := createTestAccount(ctx, am, ph, "user3")
 
 	// msg and signatures
 	var tx sdk.Tx
@@ -220,10 +228,18 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
+	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
+	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+
 	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant
+	privs, seqs = []crypto.PrivKey{transaction2}, []int64{1}
+	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+
 	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
@@ -236,6 +252,33 @@ func TestGrantAuthenticationTx(t *testing.T) {
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
+
+	// test pre authorization permission
+	err = am.PreAuthorization(ctx, user1, user3, 3600, types.NewCoinFromInt64(100))
+	assert.Nil(t, err)
+	msg.Permission = types.PreAuthorizationPermission
+	privs, seqs = []crypto.PrivKey{post3}, []int64{2}
+	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
+	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+
+	privs, seqs = []crypto.PrivKey{transaction3}, []int64{2}
+	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
+	checkValidTx(t, anteHandler, ctx, tx)
+	seq, err = am.GetSequence(ctx, user3)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(0))
+	seq, err = am.GetSequence(ctx, user1)
+	assert.Nil(t, err)
+	assert.Equal(t, seq, int64(3))
+
+	// test pre authorization exceeds limitation
+	msg.Amount = types.NewCoinFromInt64(100)
+	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
+	checkInvalidTx(
+		t, anteHandler, ctx, tx,
+		acc.ErrPreAuthAmountInsufficient(
+			user3, msg.Amount.Minus(types.NewCoinFromInt64(10)), msg.Amount).Result())
+
 }
 
 // Test various error cases in the AnteHandler control flow.

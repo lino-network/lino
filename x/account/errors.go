@@ -116,6 +116,16 @@ func ErrAppGrantKeyMismatch(owner types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAppGrantKeyMismatch, fmt.Sprintf("grant user %v app key can't match his own key", owner))
 }
 
+func ErrPreAuthGrantKeyMismatch(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAppGrantKeyMismatch, fmt.Sprintf("grant user %v transaction key can't match his own key", owner))
+}
+
+func ErrPreAuthAmountInsufficient(owner types.AccountKey, balance, consume types.Coin) sdk.Error {
+	return types.NewError(
+		types.CodeAppGrantKeyMismatch,
+		fmt.Sprintf("grant user %v doesn't have enough preauthorization balance, have %v, wanna consume %v", owner, balance, consume))
+}
+
 func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {
 	return types.NewError(types.CodeGrantTimesExceedsLimitation, fmt.Sprintf("grant times exceeds %v limitation", limitation))
 }

@@ -185,7 +185,7 @@ func TestRevokePermissionMsg(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "user1", accParam.RegisterFee)
 	createTestAccount(ctx, am, "user2", minBalance)
-	appResetPriv, _, appAppPriv := createTestAccount(ctx, am, "app", minBalance)
+	_, _, appAppPriv := createTestAccount(ctx, am, "app", minBalance)
 
 	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
@@ -200,17 +200,17 @@ func TestRevokePermissionMsg(t *testing.T) {
 	}{
 		{
 			testName:     "normal revoke app permission",
-			msg:          NewRevokePermissionMsg("user1", appAppPriv.PubKey(), types.AppPermission),
+			msg:          NewRevokePermissionMsg("user1", appAppPriv.PubKey()),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "revoke non-exist pubkey",
-			msg:          NewRevokePermissionMsg("user1", appResetPriv.PubKey(), types.AppPermission),
+			msg:          NewRevokePermissionMsg("user1", appAppPriv.PubKey()),
 			expectResult: accstore.ErrGrantPubKeyNotFound().Result(),
 		},
 		{
 			testName:     "invalid revoke user",
-			msg:          NewRevokePermissionMsg("invalid", appAppPriv.PubKey(), types.AppPermission),
+			msg:          NewRevokePermissionMsg("invalid", appAppPriv.PubKey()),
 			expectResult: ErrAccountNotFound().Result(),
 		},
 	}

@@ -78,8 +78,9 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			}
 			permission := msg.GetPermission()
 			msgSigners := msg.GetSigners()
+			consumeAmount := msg.GetConsumeAmount()
 			for _, msgSigner := range msgSigners {
-				_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission)
+				_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
 				if err != nil {
 					return ctx, err.Result(), true
 				}

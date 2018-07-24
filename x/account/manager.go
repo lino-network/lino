@@ -684,6 +684,7 @@ func (accManager AccountManager) AuthorizePermission(
 		Permission: grantLevel,
 		CreatedAt:  ctx.BlockHeader().Time,
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
+		Amount:     types.NewCoinFromInt64(0),
 	}
 
 	if grantLevel == types.AppPermission {
@@ -696,18 +697,30 @@ func (accManager AccountManager) AuthorizePermission(
 	return ErrUnsupportGrantLevel()
 }
 
-func (accManager AccountManager) RevokePermission(
-	ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantLevel types.Permission) sdk.Error {
-	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, pubKey)
+func (accManager AccountManager) PreAuthorization(
+	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
+	validityPeriod int64, amount types.Coin) sdk.Error {
+
+	newGrantPubKey := model.GrantPubKey{
+		Username:   authorizedUser,
+		Permission: types.PreAuthorizationPermission,
+		CreatedAt:  ctx.BlockHeader().Time,
+		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
+		Amount:     amount,
+	}
+
+	txKey, err := accManager.GetTransactionKey(ctx, authorizedUser)
 	if err != nil {
 		return err
 	}
-	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time {
-		accManager.storage.DeleteGrantPubKey(ctx, me, pubKey)
-		return nil
-	}
-	if grantLevel != grantPubKey.Permission {
-		return ErrRevokePermissionLevelMismatch(grantLevel, grantPubKey.Permission)
+	return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
+}
+
+func (accManager AccountManager) RevokePermission(
+	ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) sdk.Error {
+	_, err := accManager.storage.GetGrantPubKey(ctx, me, pubKey)
+	if err != nil {
+		return err
 	}
 	accManager.storage.DeleteGrantPubKey(ctx, me, pubKey)
 	return nil
@@ -715,7 +728,7 @@ func (accManager AccountManager) RevokePermission(
 
 func (accManager AccountManager) CheckSigningPubKeyOwner(
 	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
-	permission types.Permission) (types.AccountKey, sdk.Error) {
+	permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error) {
 	if !accManager.DoesAccountExist(ctx, me) {
 		return "", ErrAccountNotFound(me)
 	}
@@ -770,7 +783,28 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if permission != grantPubKey.Permission {
 		ErrGrantKeyMismatch(grantPubKey.Username)
 	}
-
+	if permission == types.PreAuthorizationPermission {
+		txKey, err := accManager.GetTransactionKey(ctx, grantPubKey.Username)
+		if err != nil {
+			return "", err
+		}
+		if !reflect.DeepEqual(signKey, txKey) {
+			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+			return "", ErrPreAuthGrantKeyMismatch(grantPubKey.Username)
+		}
+		if amount.IsGT(grantPubKey.Amount) {
+			return "", ErrPreAuthAmountInsufficient(grantPubKey.Username, grantPubKey.Amount, amount)
+		}
+		grantPubKey.Amount = grantPubKey.Amount.Minus(amount)
+		if grantPubKey.Amount.IsEqual(types.NewCoinFromInt64(0)) {
+			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+		} else {
+			if err := accManager.storage.SetGrantPubKey(ctx, me, signKey, grantPubKey); err != nil {
+				return "", nil
+			}
+		}
+		return grantPubKey.Username, nil
+	}
 	if permission == types.AppPermission {
 		appKey, err := accManager.GetAppKey(ctx, grantPubKey.Username)
 		if err != nil {
@@ -795,6 +829,40 @@ func (accManager AccountManager) GetDonationRelationship(
 		return 0, nil
 	}
 	return relationship.DonationTimes, nil
+}
+
+func (accManager AccountManager) UpdatePreAuthorizationAmount(
+	ctx sdk.Context, me, other types.AccountKey, amount types.Coin) sdk.Error {
+	txKey, err := accManager.GetTransactionKey(ctx, other)
+	if err != nil {
+		return err
+	}
+
+	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, txKey)
+	if err != nil {
+		return err
+	}
+	grantPubKey.Amount = amount
+	if err := accManager.storage.SetGrantPubKey(ctx, me, txKey, grantPubKey); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (accManager AccountManager) GetPreAuthorizationAmount(
+	ctx sdk.Context, me, other types.AccountKey) (types.Coin, sdk.Error) {
+	txKey, err := accManager.GetTransactionKey(ctx, other)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+
+	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, txKey)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+
+	return grantPubKey.Amount, nil
 }
 
 func (accManager AccountManager) addPendingStakeToQueue(
