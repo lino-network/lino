@@ -55,7 +55,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		Lino:           LNOPerValidator,
 		ResetKey:       priv1.PubKey(),
 		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+		AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 		IsValidator:    true,
 		ValPubKey:      priv2.PubKey(),
 	}
@@ -66,7 +66,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 			Lino:           LNOPerValidator,
 			ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
 			TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+			AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 			IsValidator:    true,
 			ValPubKey:      crypto.GenPrivKeySecp256k1().PubKey(),
 		}
@@ -95,7 +95,7 @@ func TestGenesisAcc(t *testing.T) {
 		numOfLino          types.LNO
 		resetKey           crypto.PubKey
 		transactionKey     crypto.PubKey
-		postKey            crypto.PubKey
+		appKey             crypto.PubKey
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
@@ -118,7 +118,7 @@ func TestGenesisAcc(t *testing.T) {
 			Lino:           acc.numOfLino,
 			ResetKey:       acc.resetKey,
 			TransactionKey: acc.transactionKey,
-			PostKey:        acc.postKey,
+			AppKey:         acc.appKey,
 			IsValidator:    acc.isValidator,
 			ValPubKey:      acc.valPubKey,
 		}

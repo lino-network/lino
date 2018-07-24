@@ -6,8 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/model"
 )
 
 // GetPostCmd returns a query post that will display the

@@ -34,7 +34,7 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username type
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
-	resetKey, transactionKey, postKey crypto.PubKey, registerFee types.Coin) sdk.Error {
+	resetKey, transactionKey, appKey crypto.PubKey, registerFee types.Coin) sdk.Error {
 	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
 	}
@@ -59,7 +59,7 @@ func (accManager AccountManager) CreateAccount(
 		CreatedAt:      ctx.BlockHeader().Time,
 		ResetKey:       resetKey,
 		TransactionKey: transactionKey,
-		PostKey:        postKey,
+		AppKey:         appKey,
 	}
 	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
 		return err
@@ -349,13 +349,13 @@ func (accManager AccountManager) GetTransactionKey(
 	return accountInfo.TransactionKey, nil
 }
 
-func (accManager AccountManager) GetPostKey(
+func (accManager AccountManager) GetAppKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetPostKey(username)
+		return nil, ErrGetAppKey(username)
 	}
-	return accountInfo.PostKey, nil
+	return accountInfo.AppKey, nil
 }
 
 func (accManager AccountManager) GetSavingFromBank(
@@ -686,12 +686,12 @@ func (accManager AccountManager) AuthorizePermission(
 		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
 	}
 
-	if grantLevel == types.PostPermission {
-		postKey, err := accManager.GetPostKey(ctx, authorizedUser)
+	if grantLevel == types.AppPermission {
+		appKey, err := accManager.GetAppKey(ctx, authorizedUser)
 		if err != nil {
 			return err
 		}
-		return accManager.storage.SetGrantPubKey(ctx, me, postKey, &newGrantPubKey)
+		return accManager.storage.SetGrantPubKey(ctx, me, appKey, &newGrantPubKey)
 	}
 	return ErrUnsupportGrantLevel()
 }
@@ -743,9 +743,9 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return "", ErrCheckTransactionKey()
 	}
 
-	// if all above keys not matched, check last one, post key
-	if permission == types.PostPermission || permission == types.GrantPostPermission {
-		pubKey, err = accManager.GetPostKey(ctx, me)
+	// if all above keys not matched, check last one, app key
+	if permission == types.AppPermission || permission == types.GrantAppPermission {
+		pubKey, err = accManager.GetAppKey(ctx, me)
 		if err != nil {
 			return "", err
 		}
@@ -754,8 +754,8 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 	}
 
-	if permission == types.GrantPostPermission {
-		return "", ErrCheckGrantPostKey()
+	if permission == types.GrantAppPermission {
+		return "", ErrCheckGrantAppKey()
 	}
 
 	// if user doesn't use his own key, check his grant user pubkey
@@ -771,14 +771,14 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		ErrGrantKeyMismatch(grantPubKey.Username)
 	}
 
-	if permission == types.PostPermission {
-		postKey, err := accManager.GetPostKey(ctx, grantPubKey.Username)
+	if permission == types.AppPermission {
+		appKey, err := accManager.GetAppKey(ctx, grantPubKey.Username)
 		if err != nil {
 			return "", err
 		}
-		if !reflect.DeepEqual(signKey, postKey) {
+		if !reflect.DeepEqual(signKey, appKey) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrPostGrantKeyMismatch(grantPubKey.Username)
+			return "", ErrAppGrantKeyMismatch(grantPubKey.Username)
 		}
 		return grantPubKey.Username, nil
 	}
@@ -812,7 +812,7 @@ func (accManager AccountManager) addPendingStakeToQueue(
 
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
-	newResetPubKey, newTransactionPubKey, newPostPubKey crypto.PubKey) sdk.Error {
+	newResetPubKey, newTransactionPubKey, newAppPubKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
@@ -820,7 +820,7 @@ func (accManager AccountManager) RecoverAccount(
 
 	accInfo.ResetKey = newResetPubKey
 	accInfo.TransactionKey = newTransactionPubKey
-	accInfo.PostKey = newPostPubKey
+	accInfo.AppKey = newAppPubKey
 	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {
 		return err
 	}

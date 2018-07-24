@@ -81,10 +81,10 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) (cry
 	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1) {
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	txPriv := crypto.GenPrivKeySecp256k1()
-	postPriv := crypto.GenPrivKeySecp256k1()
+	appPriv := crypto.GenPrivKeySecp256k1()
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
-		resetPriv.PubKey(), txPriv.PubKey(), postPriv.PubKey(), accParam.RegisterFee)
-	return resetPriv, txPriv, postPriv
+		resetPriv.PubKey(), txPriv.PubKey(), appPriv.PubKey(), accParam.RegisterFee)
+	return resetPriv, txPriv, appPriv
 }

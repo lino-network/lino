@@ -26,7 +26,7 @@ type RegisterMsg struct {
 	NewUser              types.AccountKey `json:"new_username"`
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
-	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
 }
 
 type FollowMsg struct {
@@ -47,7 +47,7 @@ type RecoverMsg struct {
 	Username             types.AccountKey `json:"username"`
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
-	NewPostPubKey        crypto.PubKey    `json:"new_post_public_key"`
+	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
 }
 
 // we can support to transfer to an user or an address
@@ -90,7 +90,7 @@ func (msg FollowMsg) String() string {
 
 // Implements Msg.
 func (msg FollowMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 
 func (msg FollowMsg) GetSignBytes() []byte {
@@ -131,7 +131,7 @@ func (msg UnfollowMsg) String() string {
 
 // Implements Msg.
 func (msg UnfollowMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 
 func (msg UnfollowMsg) GetSignBytes() []byte {
@@ -168,7 +168,7 @@ func (msg ClaimMsg) String() string {
 }
 
 func (msg ClaimMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 
 func (msg ClaimMsg) GetSignBytes() []byte {
@@ -237,12 +237,12 @@ func (msg TransferMsg) GetSigners() []sdk.AccAddress {
 // Recover Msg Implementations
 func NewRecoverMsg(
 	username string, resetPubkey, transactionPubkey,
-	postPubkey crypto.PubKey) RecoverMsg {
+	appPubkey crypto.PubKey) RecoverMsg {
 	return RecoverMsg{
 		Username:             types.AccountKey(username),
 		NewResetPubKey:       resetPubkey,
 		NewTransactionPubKey: transactionPubkey,
-		NewPostPubKey:        postPubkey,
+		NewAppPubKey:         appPubkey,
 	}
 }
 
@@ -258,8 +258,8 @@ func (msg RecoverMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RecoverMsg) String() string {
-	return fmt.Sprintf("RecoverMsg{user:%v, new reset key:%v, new post Key:%v, new transaction key:%v}",
-		msg.Username, msg.NewResetPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf("RecoverMsg{user:%v, new reset key:%v, new app Key:%v, new transaction key:%v}",
+		msg.Username, msg.NewResetPubKey, msg.NewAppPubKey, msg.NewTransactionPubKey)
 }
 
 func (msg RecoverMsg) GetPermission() types.Permission {
@@ -281,14 +281,14 @@ func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
 // NewRegisterMsg - construct register msg.
 func NewRegisterMsg(
 	referrer string, newUser string, registerFee types.LNO,
-	resetPubkey, transactionPubkey, postPubkey crypto.PubKey) RegisterMsg {
+	resetPubkey, transactionPubkey, appPubkey crypto.PubKey) RegisterMsg {
 	return RegisterMsg{
 		Referrer:             types.AccountKey(referrer),
 		NewUser:              types.AccountKey(newUser),
 		RegisterFee:          registerFee,
 		NewResetPubKey:       resetPubkey,
 		NewTransactionPubKey: transactionPubkey,
-		NewPostPubKey:        postPubkey,
+		NewAppPubKey:         appPubkey,
 	}
 }
 
@@ -320,8 +320,8 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg RegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{Newuser:%v, Reset Key:%v, Post Key:%v, Transaction Key:%v}",
-		msg.NewUser, msg.NewResetPubKey, msg.NewPostPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf("RegisterMsg{Newuser:%v, Reset Key:%v, App Key:%v, Transaction Key:%v}",
+		msg.NewUser, msg.NewResetPubKey, msg.NewAppPubKey, msg.NewTransactionPubKey)
 }
 
 // Implements Msg.
@@ -373,7 +373,7 @@ func (msg UpdateAccountMsg) String() string {
 
 // Implements Msg.
 func (msg UpdateAccountMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 
 // Implements Msg.

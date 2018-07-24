@@ -56,8 +56,8 @@ func ErrGetTransactionKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGetTransactionKey, fmt.Sprintf("get %v transaction key failed", accKey))
 }
 
-func ErrGetPostKey(accKey types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeGetPostKey, fmt.Sprintf("get %v post key failed", accKey))
+func ErrGetAppKey(accKey types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeGetAppKey, fmt.Sprintf("get %v app key failed", accKey))
 }
 
 func ErrGetSavingFromBank(err error) sdk.Error {
@@ -92,8 +92,8 @@ func ErrCheckTransactionKey() sdk.Error {
 	return types.NewError(types.CodeCheckTransactionKey, fmt.Sprintf("transaction needs transaction key"))
 }
 
-func ErrCheckGrantPostKey() sdk.Error {
-	return types.NewError(types.CodeCheckGrantPostKey, fmt.Sprintf("only user's own post key or above can sign grant or revoke post permission msg"))
+func ErrCheckGrantAppKey() sdk.Error {
+	return types.NewError(types.CodeCheckGrantAppKey, fmt.Sprintf("only user's own app key or above can sign grant or revoke app permission msg"))
 }
 
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
@@ -112,8 +112,8 @@ func ErrGrantKeyMismatch(owner types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGrantKeyMismatch, fmt.Sprintf("grant user %v key can't match his own key", owner))
 }
 
-func ErrPostGrantKeyMismatch(owner types.AccountKey) sdk.Error {
-	return types.NewError(types.CodePostGrantKeyMismatch, fmt.Sprintf("grant user %v post key can't match his own key", owner))
+func ErrAppGrantKeyMismatch(owner types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeAppGrantKeyMismatch, fmt.Sprintf("grant user %v app key can't match his own key", owner))
 }
 
 func ErrGrantTimesExceedsLimitation(limitation int64) sdk.Error {

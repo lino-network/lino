@@ -42,16 +42,16 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		resetPriv := crypto.GenPrivKeySecp256k1()
 		transactionPriv := crypto.GenPrivKeySecp256k1()
-		postPriv := crypto.GenPrivKeySecp256k1()
+		appPriv := crypto.GenPrivKeySecp256k1()
 
 		fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-		fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
+		fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 		// // create the message
 		msg := acc.NewRegisterMsg(
 			referrer, name, types.LNO(amount),
-			resetPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
+			resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

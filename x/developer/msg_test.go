@@ -75,8 +75,8 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 		expectError        sdk.Error
 	}{
 		{
-			testName:           "post permission",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.PostPermission),
+			testName:           "app permission",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppPermission),
 			expectError:        nil,
 		},
 		{
@@ -90,33 +90,33 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
-			testName:           "grant post permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantPostPermission),
+			testName:           "grant app permission is too high",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantAppPermission),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "invalid validity period",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.AppPermission),
 			expectError:        ErrInvalidValidityPeriod(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.AppPermission),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too short",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.AppPermission),
 			expectError:        ErrInvalidAuthenticateApp(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.AppPermission),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too long",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.PostPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission),
 			expectError:        ErrInvalidAuthenticateApp(),
 		},
 	}
@@ -136,8 +136,8 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 		expectError         sdk.Error
 	}{
 		{
-			testName:            "revoke post permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
+			testName:            "revoke app permission",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
 			expectError:         nil,
 		},
 		{
@@ -146,8 +146,8 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
-			testName:            "post permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantPostPermission),
+			testName:            "app permission is too high",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantAppPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
@@ -156,18 +156,18 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
-			testName:            "grant post permission is too high",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantPostPermission),
+			testName:            "grant app permission is too high",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey(), types.GrantAppPermission),
 			expectError:         ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:            "username is too short",
-			revokePermissionMsg: NewRevokePermissionMsg("us", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("us", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
 			expectError:         ErrInvalidUsername(),
 		},
 		{
 			testName:            "username is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
+			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
 			expectError:         ErrInvalidUsername(),
 		},
 	}
@@ -197,14 +197,14 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.TransactionPermission,
 		},
 		{
-			testName:         "grant developer post permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
-			expectPermission: types.GrantPostPermission,
+			testName:         "grant developer app permission msg",
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
+			expectPermission: types.GrantAppPermission,
 		},
 		{
-			testName:         "revoke developer post permission msg",
-			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
-			expectPermission: types.GrantPostPermission,
+			testName:         "revoke developer app permission msg",
+			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
+			expectPermission: types.GrantAppPermission,
 		},
 	}
 
@@ -235,13 +235,13 @@ func TestGetSigners(t *testing.T) {
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
-			testName:      "grant developer post permission msg",
-			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
+			testName:      "grant developer app permission msg",
+			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
-			testName:      "revoke developer post permission msg",
-			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
+			testName:      "revoke developer app permission msg",
+			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
 			expectSigners: []types.AccountKey{"test"},
 		},
 	}
@@ -274,12 +274,12 @@ func TestGetSignBytes(t *testing.T) {
 			msg:      NewDeveloperRevokeMsg("test"),
 		},
 		{
-			testName: "grant developer post permission msg",
-			msg:      NewGrantPermissionMsg("test", "app", 24*3600, types.PostPermission),
+			testName: "grant developer app permission msg",
+			msg:      NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
 		},
 		{
-			testName: "revoke developer post permission msg",
-			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.PostPermission),
+			testName: "revoke developer app permission msg",
+			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey(), types.AppPermission),
 		},
 	}
 

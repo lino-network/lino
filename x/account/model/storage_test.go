@@ -37,7 +37,7 @@ func TestAccountInfo(t *testing.T) {
 		CreatedAt:      0,
 		ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
 		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		PostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+		AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)

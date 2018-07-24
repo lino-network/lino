@@ -157,7 +157,7 @@ func TestChangeVoteParamMsg(t *testing.T) {
 			expectedError:      nil,
 		},
 		{
-			testName:           "negative voter min depost is illegal",
+			testName:           "negative voter min deposit is illegal",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2),
 			expectedError:      ErrIllegalParameter(),
 		},

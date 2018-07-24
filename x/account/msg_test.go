@@ -392,11 +392,11 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"follow": {
 			msg:              NewFollowMsg("userA", "userB"),
-			expectPermission: types.PostPermission,
+			expectPermission: types.AppPermission,
 		},
 		"unfollow": {
 			msg:              NewUnfollowMsg("userA", "userB"),
-			expectPermission: types.PostPermission,
+			expectPermission: types.AppPermission,
 		},
 		"recover": {
 			msg: NewRecoverMsg(
@@ -406,7 +406,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"claim": {
 			msg:              NewClaimMsg("test"),
-			expectPermission: types.PostPermission,
+			expectPermission: types.AppPermission,
 		},
 		"register msg": {
 			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
@@ -415,7 +415,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"update msg": {
 			msg:              NewUpdateAccountMsg("user", "{'test':'test'}"),
-			expectPermission: types.PostPermission,
+			expectPermission: types.AppPermission,
 		},
 	}
 
