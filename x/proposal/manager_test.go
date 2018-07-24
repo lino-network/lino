@@ -11,7 +11,7 @@ import (
 
 func TestUpdateProposalVotingStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
-	permlink := types.Permlink("postlink")
+	permlink := types.Permlink("permlink")
 	user1 := types.AccountKey("user1")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
@@ -96,7 +96,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 
 func TestUpdateProposalPassStatus(t *testing.T) {
 	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
-	permlink := types.Permlink("postlink")
+	permlink := types.Permlink("permlink")
 	user1 := types.AccountKey("user1")
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{

@@ -539,31 +539,31 @@ func TestMsgPermission(t *testing.T) {
 				},
 				RedistributionSplitRate: "0.5",
 			},
-			expectedPermission: types.PostPermission,
+			expectedPermission: types.AppPermission,
 		},
 		{
 			testName: "view post",
 			msg: NewViewMsg(
 				"test", "author", "postID"),
-			expectedPermission: types.PostPermission,
+			expectedPermission: types.AppPermission,
 		},
 		{
 			testName: "report post",
 			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", true),
-			expectedPermission: types.PostPermission,
+			expectedPermission: types.AppPermission,
 		},
 		{
 			testName: "upvote post",
 			msg: NewReportOrUpvoteMsg(
 				"test", "author", "postID", false),
-			expectedPermission: types.PostPermission,
+			expectedPermission: types.AppPermission,
 		},
 		{
 			testName: "update post",
 			msg: NewUpdatePostMsg(
 				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
-			expectedPermission: types.PostPermission,
+			expectedPermission: types.AppPermission,
 		},
 	}
 

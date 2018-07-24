@@ -153,7 +153,7 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 
 	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantPostPermission {
+		msg.GrantLevel == types.GrantAppPermission {
 		return ErrGrantPermissionTooHigh()
 	}
 
@@ -166,7 +166,7 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
-	return types.GrantPostPermission
+	return types.GrantAppPermission
 }
 
 func (msg GrantPermissionMsg) GetSignBytes() []byte {
@@ -200,7 +200,7 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 
 	if msg.GrantLevel == types.ResetPermission ||
 		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantPostPermission {
+		msg.GrantLevel == types.GrantAppPermission {
 		return ErrGrantPermissionTooHigh()
 	}
 
@@ -213,7 +213,7 @@ func (msg RevokePermissionMsg) String() string {
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	return types.GrantPostPermission
+	return types.GrantAppPermission
 }
 
 func (msg RevokePermissionMsg) GetSignBytes() []byte {

@@ -148,18 +148,18 @@ func TestGrantPermissionMsg(t *testing.T) {
 		expectResult sdk.Result
 	}{
 		{
-			testName:     "normal grant post permission",
-			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.PostPermission),
+			testName:     "normal grant app permission",
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.AppPermission),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "grant permission to non-exist app",
-			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.PostPermission),
+			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.AppPermission),
 			expectResult: ErrDeveloperNotFound().Result(),
 		},
 		{
 			testName:     "grant permission to non-exist user",
-			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.PostPermission),
+			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.AppPermission),
 			expectResult: ErrAccountNotFound().Result(),
 		},
 	}
@@ -185,12 +185,12 @@ func TestRevokePermissionMsg(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "user1", accParam.RegisterFee)
 	createTestAccount(ctx, am, "user2", minBalance)
-	appRestPriv, _, appPostPriv := createTestAccount(ctx, am, "app", minBalance)
+	appResetPriv, _, appAppPriv := createTestAccount(ctx, am, "app", minBalance)
 
 	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
 	assert.Nil(t, err)
 	err = am.AuthorizePermission(
-		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.PostPermission)
+		ctx, types.AccountKey("user1"), types.AccountKey("app"), 1000, types.AppPermission)
 	assert.Nil(t, err)
 
 	testCases := []struct {
@@ -199,18 +199,18 @@ func TestRevokePermissionMsg(t *testing.T) {
 		expectResult sdk.Result
 	}{
 		{
-			testName:     "normal revoke post permission",
-			msg:          NewRevokePermissionMsg("user1", appPostPriv.PubKey(), types.PostPermission),
+			testName:     "normal revoke app permission",
+			msg:          NewRevokePermissionMsg("user1", appAppPriv.PubKey(), types.AppPermission),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "revoke non-exist pubkey",
-			msg:          NewRevokePermissionMsg("user1", appRestPriv.PubKey(), types.PostPermission),
+			msg:          NewRevokePermissionMsg("user1", appResetPriv.PubKey(), types.AppPermission),
 			expectResult: accstore.ErrGrantPubKeyNotFound().Result(),
 		},
 		{
 			testName:     "invalid revoke user",
-			msg:          NewRevokePermissionMsg("invalid", appPostPriv.PubKey(), types.PostPermission),
+			msg:          NewRevokePermissionMsg("invalid", appAppPriv.PubKey(), types.AppPermission),
 			expectResult: ErrAccountNotFound().Result(),
 		},
 	}

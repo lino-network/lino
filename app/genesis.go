@@ -54,7 +54,7 @@ type GenesisAccount struct {
 	Lino           types.LNO     `json:"lino"`
 	ResetKey       crypto.PubKey `json:"reset_key"`
 	TransactionKey crypto.PubKey `json:"transaction_key"`
-	PostKey        crypto.PubKey `json:"post_key"`
+	AppKey         crypto.PubKey `json:"app_key"`
 	IsValidator    bool          `json:"is_validator"`
 	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
 }
@@ -77,11 +77,11 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	transactionPriv := crypto.GenPrivKeySecp256k1()
-	postPriv := crypto.GenPrivKeySecp256k1()
+	appPriv := crypto.GenPrivKeySecp256k1()
 
 	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-	fmt.Println("post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
+	fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
@@ -89,7 +89,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 		Lino:           totalLino,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
-		PostKey:        postPriv.PubKey(),
+		AppKey:         appPriv.PubKey(),
 		IsValidator:    true,
 		ValPubKey:      pk,
 	}

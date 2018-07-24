@@ -292,22 +292,22 @@ func (msg ViewMsg) ValidateBasic() sdk.Error {
 
 // Get implements sdk.Msg; should not be called
 func (msg CreatePostMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 func (msg UpdatePostMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 func (msg DeletePostMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 func (msg DonateMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 func (msg ViewMsg) GetPermission() types.Permission {
-	return types.PostPermission
+	return types.AppPermission
 }
 
 // GetSignBytes implements sdk.Msg

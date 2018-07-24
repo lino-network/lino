@@ -14,7 +14,7 @@ type AccountInfo struct {
 	CreatedAt      int64            `json:"created_at"`
 	ResetKey       crypto.PubKey    `json:"reset_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
-	PostKey        crypto.PubKey    `json:"post_key"`
+	AppKey         crypto.PubKey    `json:"app_key"`
 }
 
 // AccountBank uses Address as the key instead of Username

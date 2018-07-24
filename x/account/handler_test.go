@@ -248,18 +248,18 @@ func TestHandleAccountRecover(t *testing.T) {
 		user              string
 		newResetKey       crypto.PubKey
 		newTransactionKey crypto.PubKey
-		newPostKey        crypto.PubKey
+		newAppKey         crypto.PubKey
 	}{
 		"normal case": {
 			user:              user1,
 			newResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
 			newTransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			newPostKey:        crypto.GenPrivKeySecp256k1().PubKey(),
+			newAppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
 		},
 	}
 
 	for testName, tc := range testCases {
-		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newPostKey)
+		msg := NewRecoverMsg(tc.user, tc.newResetKey, tc.newTransactionKey, tc.newAppKey)
 		result := handler(ctx, msg)
 		if !assert.Equal(t, sdk.Result{}, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, sdk.Result{})
@@ -270,7 +270,7 @@ func TestHandleAccountRecover(t *testing.T) {
 			CreatedAt:      ctx.BlockHeader().Time,
 			ResetKey:       tc.newResetKey,
 			TransactionKey: tc.newTransactionKey,
-			PostKey:        tc.newPostKey,
+			AppKey:         tc.newAppKey,
 		}
 		checkAccountInfo(t, ctx, testName, types.AccountKey(tc.user), accInfo)
 
@@ -372,12 +372,12 @@ func TestHandleRegister(t *testing.T) {
 				t.Errorf("%s: diff transaction key, got %v, want %v", tc.testName, txKey, tc.registerMsg.NewTransactionPubKey)
 			}
 
-			postKey, err := am.GetPostKey(ctx, tc.registerMsg.NewUser)
+			appKey, err := am.GetAppKey(ctx, tc.registerMsg.NewUser)
 			if err != nil {
-				t.Errorf("%s: failed to get post key, got err %v", tc.testName, err)
+				t.Errorf("%s: failed to get app key, got err %v", tc.testName, err)
 			}
-			if !postKey.Equals(tc.registerMsg.NewPostPubKey) {
-				t.Errorf("%s: diff post key, got %v, want %v", tc.testName, postKey, tc.registerMsg.NewPostPubKey)
+			if !appKey.Equals(tc.registerMsg.NewAppPubKey) {
+				t.Errorf("%s: diff app key, got %v, want %v", tc.testName, appKey, tc.registerMsg.NewAppPubKey)
 			}
 		}
 

@@ -35,13 +35,13 @@ func sendRecoverTx(cdc *wire.Codec) client.CommandTxCallback {
 
 		resetPriv := crypto.GenPrivKeySecp256k1()
 		transactionPriv := crypto.GenPrivKeySecp256k1()
-		postPriv := crypto.GenPrivKeySecp256k1()
+		appPriv := crypto.GenPrivKeySecp256k1()
 		fmt.Println("new reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 		fmt.Println("new transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-		fmt.Println("new post private key is:", strings.ToUpper(hex.EncodeToString(postPriv.Bytes())))
+		fmt.Println("new app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 		// create the message
-		msg := acc.NewRecoverMsg(name, resetPriv.PubKey(), transactionPriv.PubKey(), postPriv.PubKey())
+		msg := acc.NewRecoverMsg(name, resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

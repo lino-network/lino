@@ -757,7 +757,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	txPriv := crypto.GenPrivKeySecp256k1()
-	postPriv := crypto.GenPrivKeySecp256k1()
+	appPriv := crypto.GenPrivKeySecp256k1()
 
 	accKey := types.AccountKey("accKey")
 
@@ -765,7 +765,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 	assert.False(t, am.DoesAccountExist(ctx, accKey))
 	err := am.CreateAccount(
 		ctx, accountReferrer, accKey, resetPriv.PubKey(), txPriv.PubKey(),
-		postPriv.PubKey(), accParam.RegisterFee)
+		appPriv.PubKey(), accParam.RegisterFee)
 	if err != nil {
 		t.Errorf("TestCreateAccountNormalCase: failed to create account, got err %v", err)
 	}
@@ -786,7 +786,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		CreatedAt:      ctx.BlockHeader().Time,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: txPriv.PubKey(),
-		PostKey:        postPriv.PubKey(),
+		AppKey:         appPriv.PubKey(),
 	}
 	checkAccountInfo(t, ctx, "TestCreateAccountNormalCase", accKey, accInfo)
 	accMeta := model.AccountMeta{
@@ -827,7 +827,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	txPriv := crypto.GenPrivKeySecp256k1()
-	postPriv := crypto.GenPrivKeySecp256k1()
+	appPriv := crypto.GenPrivKeySecp256k1()
 
 	accKey := types.AccountKey("accKey")
 
@@ -844,7 +844,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 	err = am.CreateAccount(
 		ctx, accountReferrer, accKey, resetPriv.PubKey(), txPriv.PubKey(),
-		postPriv.PubKey(), accParam.RegisterFee.Plus(extraRegisterFee))
+		appPriv.PubKey(), accParam.RegisterFee.Plus(extraRegisterFee))
 	if err != nil {
 		t.Errorf("%s: failed to create account, got err %v", testName, err)
 	}
@@ -876,7 +876,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		CreatedAt:      ctx.BlockHeader().Time,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: txPriv.PubKey(),
-		PostKey:        postPriv.PubKey(),
+		AppKey:         appPriv.PubKey(),
 	}
 	checkAccountInfo(t, ctx, testName, accKey, accInfo)
 
@@ -1373,22 +1373,22 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 
 	ctx, am, accParam := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
-	postPermissionUser := types.AccountKey("user2")
+	appPermissionUser := types.AccountKey("user2")
 	unauthUser := types.AccountKey("user3")
 
 	resetKey := crypto.GenPrivKeyEd25519()
 	transactionKey := crypto.GenPrivKeyEd25519()
-	postKey := crypto.GenPrivKeyEd25519()
+	appKey := crypto.GenPrivKeyEd25519()
 	am.CreateAccount(
 		ctx, accountReferrer, user1, resetKey.PubKey(), transactionKey.PubKey(),
-		postKey.PubKey(), accParam.RegisterFee)
+		appKey.PubKey(), accParam.RegisterFee)
 
-	_, _, postPriv := createTestAccount(ctx, am, string(postPermissionUser))
+	_, _, appPriv := createTestAccount(ctx, am, string(appPermissionUser))
 	_, _, unauthPriv := createTestAccount(ctx, am, string(unauthUser))
 
-	err := am.AuthorizePermission(ctx, user1, postPermissionUser, 100, types.PostPermission)
+	err := am.AuthorizePermission(ctx, user1, appPermissionUser, 100, types.AppPermission)
 	if err != nil {
-		t.Errorf("%s: failed to authorize post permission, got err %v", testName, err)
+		t.Errorf("%s: failed to authorize app permission, got err %v", testName, err)
 	}
 
 	baseTime := ctx.BlockHeader().Time
@@ -1424,31 +1424,31 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's post key",
+			testName:          "check user's app key",
 			checkUser:         user1,
-			checkPubKey:       postKey.PubKey(),
+			checkPubKey:       appKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.PostPermission,
+			permission:        types.AppPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "user's transaction key can authorize grant post permission",
+			testName:          "user's transaction key can authorize grant app permission",
 			checkUser:         user1,
 			checkPubKey:       transactionKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.GrantPostPermission,
+			permission:        types.GrantAppPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "user's transaction key can authorize post permission",
+			testName:          "user's transaction key can authorize app permission",
 			checkUser:         user1,
 			checkPubKey:       transactionKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.PostPermission,
+			permission:        types.AppPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
@@ -1464,19 +1464,19 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's post key can authorize grant post permission",
+			testName:          "check user's app key can authorize grant app permission",
 			checkUser:         user1,
-			checkPubKey:       postKey.PubKey(),
+			checkPubKey:       appKey.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.GrantPostPermission,
+			permission:        types.GrantAppPermission,
 			expectUser:        user1,
 			expectResult:      nil,
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's post key can't authorize transaction permission",
+			testName:          "check user's app key can't authorize transaction permission",
 			checkUser:         user1,
-			checkPubKey:       postKey.PubKey(),
+			checkPubKey:       appKey.PubKey(),
 			atWhen:            baseTime,
 			permission:        types.TransactionPermission,
 			expectUser:        user1,
@@ -1484,9 +1484,9 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check user's post key can't authorize reset permission",
+			testName:          "check user's app key can't authorize reset permission",
 			checkUser:         user1,
-			checkPubKey:       postKey.PubKey(),
+			checkPubKey:       appKey.PubKey(),
 			atWhen:            baseTime,
 			permission:        types.ResetPermission,
 			expectUser:        user1,
@@ -1494,48 +1494,48 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:     "check post pubkey of user with post permission",
+			testName:     "check app pubkey of user with app permission",
 			checkUser:    user1,
-			checkPubKey:  postPriv.PubKey(),
+			checkPubKey:  appPriv.PubKey(),
 			atWhen:       baseTime,
-			permission:   types.PostPermission,
-			expectUser:   postPermissionUser,
+			permission:   types.AppPermission,
+			expectUser:   appPermissionUser,
 			expectResult: nil,
 			expectGrantPubKey: &model.GrantPubKey{
-				Username:   postPermissionUser,
-				Permission: types.PostPermission,
+				Username:   appPermissionUser,
+				Permission: types.AppPermission,
 				CreatedAt:  baseTime,
 				ExpiresAt:  baseTime + 100,
 			},
 		},
 		{
-			testName:          "check unauthorized user post pubkey",
+			testName:          "check unauthorized user app pubkey",
 			checkUser:         user1,
 			checkPubKey:       unauthPriv.PubKey(),
 			atWhen:            baseTime,
-			permission:        types.PostPermission,
+			permission:        types.AppPermission,
 			expectUser:        "",
 			expectResult:      model.ErrGrantPubKeyNotFound(),
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check expired post permission",
+			testName:          "check expired app permission",
 			checkUser:         user1,
-			checkPubKey:       postPriv.PubKey(),
+			checkPubKey:       appPriv.PubKey(),
 			atWhen:            baseTime + 101,
-			permission:        types.PostPermission,
+			permission:        types.AppPermission,
 			expectUser:        "",
 			expectResult:      ErrGrantKeyExpired(user1),
 			expectGrantPubKey: nil,
 		},
 		{
-			testName:          "check grant post key can't sign grant post msg",
+			testName:          "check grant app key can't sign grant app msg",
 			checkUser:         user1,
-			checkPubKey:       postKey.Generate(1).PubKey(),
+			checkPubKey:       appKey.Generate(1).PubKey(),
 			atWhen:            baseTime,
-			permission:        types.GrantPostPermission,
-			expectUser:        postPermissionUser,
-			expectResult:      ErrCheckGrantPostKey(),
+			permission:        types.GrantAppPermission,
+			expectUser:        appPermissionUser,
+			expectResult:      ErrCheckGrantAppKey(),
 			expectGrantPubKey: nil,
 		},
 	}
@@ -1576,21 +1576,21 @@ func TestRevokePermission(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
-	userWithPostPermission := types.AccountKey("userWithPostPermission")
+	userWithAppPermission := types.AccountKey("userWithAppPermission")
 
 	createTestAccount(ctx, am, string(user1))
-	_, _, postPriv2 := createTestAccount(ctx, am, string(userWithPostPermission))
+	_, _, appPriv2 := createTestAccount(ctx, am, string(userWithAppPermission))
 
 	baseTime := ctx.BlockHeader().Time
 
-	err := am.AuthorizePermission(ctx, user1, userWithPostPermission, 100, types.PostPermission)
+	err := am.AuthorizePermission(ctx, user1, userWithAppPermission, 100, types.AppPermission)
 	if err != nil {
-		t.Errorf("%s: failed to authorize user1 post permission to user with only post permission, got err %v", testName, err)
+		t.Errorf("%s: failed to authorize user1 app permission to user with only app permission, got err %v", testName, err)
 	}
 
-	err = am.AuthorizePermission(ctx, user2, userWithPostPermission, 100, types.PostPermission)
+	err = am.AuthorizePermission(ctx, user2, userWithAppPermission, 100, types.AppPermission)
 	if err != nil {
-		t.Errorf("%s: failed to authorize user2 post permission to user with only post permission, got err %v", testName, err)
+		t.Errorf("%s: failed to authorize user2 app permission to user with only app permission, got err %v", testName, err)
 	}
 
 	testCases := []struct {
@@ -1602,27 +1602,27 @@ func TestRevokePermission(t *testing.T) {
 		expectResult sdk.Error
 	}{
 		{
-			testName:     "normal revoke post permission",
+			testName:     "normal revoke app permission",
 			user:         user1,
-			revokePubKey: postPriv2.PubKey(),
+			revokePubKey: appPriv2.PubKey(),
 			atWhen:       baseTime,
-			level:        types.PostPermission,
+			level:        types.AppPermission,
 			expectResult: nil,
 		},
 		{
 			testName:     "revoke non-exist pubkey, since it's revoked before",
 			user:         user1,
-			revokePubKey: postPriv2.PubKey(),
+			revokePubKey: appPriv2.PubKey(),
 			atWhen:       baseTime,
-			level:        types.PostPermission,
+			level:        types.AppPermission,
 			expectResult: model.ErrGrantPubKeyNotFound(),
 		},
 		{
 			testName:     "revoke expired pubkey",
 			user:         user2,
-			revokePubKey: postPriv2.PubKey(),
+			revokePubKey: appPriv2.PubKey(),
 			atWhen:       baseTime + 101,
-			level:        types.PostPermission,
+			level:        types.AppPermission,
 			expectResult: nil,
 		},
 	}
@@ -1643,7 +1643,7 @@ func TestAuthorizePermission(t *testing.T) {
 	user3 := types.AccountKey("user3")
 
 	createTestAccount(ctx, am, string(user1))
-	_, _, postPriv2 := createTestAccount(ctx, am, string(user2))
+	_, _, appPriv2 := createTestAccount(ctx, am, string(user2))
 	_, _, _ = createTestAccount(ctx, am, string(user3))
 
 	baseTime := ctx.BlockHeader().Time
@@ -1658,22 +1658,22 @@ func TestAuthorizePermission(t *testing.T) {
 		expectPubKey   crypto.PubKey
 	}{
 		{
-			testName:       "normal grant post permission",
+			testName:       "normal grant app permission",
 			user:           user1,
 			grantTo:        user2,
-			level:          types.PostPermission,
+			level:          types.AppPermission,
 			validityPeriod: 100,
 			expectResult:   nil,
-			expectPubKey:   postPriv2.PubKey(),
+			expectPubKey:   appPriv2.PubKey(),
 		},
 		{
-			testName:       "override post permission",
+			testName:       "override app permission",
 			user:           user1,
 			grantTo:        user2,
-			level:          types.PostPermission,
+			level:          types.AppPermission,
 			validityPeriod: 1000,
 			expectResult:   nil,
-			expectPubKey:   postPriv2.PubKey(),
+			expectPubKey:   appPriv2.PubKey(),
 		},
 	}
 
@@ -1781,11 +1781,11 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	newResetPrivKey := crypto.GenPrivKeySecp256k1()
 	newTransactionPrivKey := crypto.GenPrivKeySecp256k1()
-	newPostPrivKey := crypto.GenPrivKeySecp256k1()
+	newAppPrivKey := crypto.GenPrivKeySecp256k1()
 
 	err = am.RecoverAccount(
 		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
-		newPostPrivKey.PubKey())
+		newAppPrivKey.PubKey())
 	if err != nil {
 		t.Errorf("%s: failed to recover account, got err %v", testName, err)
 	}
@@ -1795,7 +1795,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 		CreatedAt:      ctx.BlockHeader().Time,
 		ResetKey:       newResetPrivKey.PubKey(),
 		TransactionKey: newTransactionPrivKey.PubKey(),
-		PostKey:        newPostPrivKey.PubKey(),
+		AppKey:         newAppPrivKey.PubKey(),
 	}
 	bank := model.AccountBank{
 		Saving:  accParam.RegisterFee,

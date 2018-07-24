@@ -34,11 +34,11 @@ func createTestAccount(
 	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1, types.AccountKey) {
 	resetKey := crypto.GenPrivKeySecp256k1()
 	transactionKey := crypto.GenPrivKeySecp256k1()
-	postKey := crypto.GenPrivKeySecp256k1()
+	appKey := crypto.GenPrivKeySecp256k1()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		resetKey.PubKey(), transactionKey.PubKey(), postKey.PubKey(), accParams.RegisterFee)
-	return resetKey, transactionKey, postKey, types.AccountKey(username)
+		resetKey.PubKey(), transactionKey.PubKey(), appKey.PubKey(), accParams.RegisterFee)
+	return resetKey, transactionKey, appKey, types.AccountKey(username)
 }
 
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -73,7 +73,7 @@ type TestMsg struct {
 var _ types.Msg = TestMsg{}
 
 func (msg TestMsg) Type() string                    { return "normal msg" }
-func (msg TestMsg) GetPermission() types.Permission { return types.PostPermission }
+func (msg TestMsg) GetPermission() types.Permission { return types.AppPermission }
 func (msg TestMsg) GetSignBytes() []byte {
 	bz, err := json.Marshal(msg.signers)
 	if err != nil {
@@ -220,7 +220,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.PostPermission)
+	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission)
 	assert.Nil(t, err)
 
 	// should pass authentication check after grant

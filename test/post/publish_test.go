@@ -14,7 +14,7 @@ import (
 // test publish a normal post
 func TestNormalPublish(t *testing.T) {
 	newAccountTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
+	newAccountAppPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID1 := "New Post 1"
 	postID2 := "New Post 2"
@@ -23,17 +23,17 @@ func TestNormalPublish(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), newAccountTransactionPriv, newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), newAccountTransactionPriv, newAccountAppPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID1, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
+		t, lb, newAccountName, postID1, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
 	test.CreateTestPost(
 		t, lb, newAccountName, postID2, 1, newAccountTransactionPriv, "", "", "", "", "0", baseTime)
 }
 
 // test publish a repost
 func TestNormalRepost(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
+	newAccountAppPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
@@ -41,19 +41,19 @@ func TestNormalRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountAppPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
+		t, lb, newAccountName, postID, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
 	test.CreateTestPost(
-		t, lb, newAccountName, repostID, 1, newAccountPostPriv,
+		t, lb, newAccountName, repostID, 1, newAccountAppPriv,
 		newAccountName, postID, "", "", "0", baseTime)
 
 }
 
 // test invalid repost if source post id doesn't exist
 func TestInvalidRepost(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
+	newAccountAppPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	repostID := "Repost"
@@ -61,7 +61,7 @@ func TestInvalidRepost(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountAppPriv, "100")
 
 	msg := post.CreatePostMsg{
 		PostID:                  postID,
@@ -71,17 +71,17 @@ func TestInvalidRepost(t *testing.T) {
 		RedistributionSplitRate: "0",
 	}
 	// reject due to stake
-	test.SignCheckDeliver(t, lb, msg, 0, true, newAccountPostPriv, baseTime)
+	test.SignCheckDeliver(t, lb, msg, 0, true, newAccountAppPriv, baseTime)
 	msg.SourceAuthor = types.AccountKey(newAccountName)
 	msg.SourcePostID = "invalid"
 	msg.PostID = repostID
 	// invalid source post id
-	test.SignCheckDeliver(t, lb, msg, 1, false, newAccountPostPriv, baseTime)
+	test.SignCheckDeliver(t, lb, msg, 1, false, newAccountAppPriv, baseTime)
 }
 
 // test publish a comment
 func TestComment(t *testing.T) {
-	newAccountPostPriv := crypto.GenPrivKeySecp256k1()
+	newAccountAppPriv := crypto.GenPrivKeySecp256k1()
 	newAccountName := "newuser"
 	postID := "New Post"
 	comment := "Comment"
@@ -89,11 +89,11 @@ func TestComment(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountPostPriv, "100")
+		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), newAccountAppPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newAccountName, postID, 0, newAccountPostPriv, "", "", "", "", "0", baseTime)
+		t, lb, newAccountName, postID, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
 	test.CreateTestPost(
-		t, lb, newAccountName, comment, 1, newAccountPostPriv,
+		t, lb, newAccountName, comment, 1, newAccountAppPriv,
 		"", "", newAccountName, postID, "0", baseTime)
 }

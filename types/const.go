@@ -27,10 +27,10 @@ const (
 
 	// Different permission level for msg
 	UnknownPermission     = Permission(0)
-	PostPermission        = Permission(1)
+	AppPermission         = Permission(1)
 	TransactionPermission = Permission(2)
 	ResetPermission       = Permission(3)
-	GrantPostPermission   = Permission(4)
+	GrantAppPermission    = Permission(4)
 
 	// Different proposal result
 	ProposalNotPass = ProposalResult(0)

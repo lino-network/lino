@@ -12,7 +12,7 @@ import (
 func TestGetGenesisJson(t *testing.T) {
 	resetPriv := crypto.GenPrivKeySecp256k1()
 	transactionPriv := crypto.GenPrivKeySecp256k1()
-	postPriv := crypto.GenPrivKeySecp256k1()
+	appPriv := crypto.GenPrivKeySecp256k1()
 	validatorPriv := crypto.GenPrivKeySecp256k1()
 
 	totalLino := "10000000000"
@@ -21,7 +21,7 @@ func TestGetGenesisJson(t *testing.T) {
 		Lino:           totalLino,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
-		PostKey:        postPriv.PubKey(),
+		AppKey:         appPriv.PubKey(),
 		IsValidator:    true,
 		ValPubKey:      validatorPriv.PubKey(),
 	}
