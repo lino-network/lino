@@ -831,40 +831,6 @@ func (accManager AccountManager) GetDonationRelationship(
 	return relationship.DonationTimes, nil
 }
 
-func (accManager AccountManager) UpdatePreAuthorizationAmount(
-	ctx sdk.Context, me, other types.AccountKey, amount types.Coin) sdk.Error {
-	txKey, err := accManager.GetTransactionKey(ctx, other)
-	if err != nil {
-		return err
-	}
-
-	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, txKey)
-	if err != nil {
-		return err
-	}
-	grantPubKey.Amount = amount
-	if err := accManager.storage.SetGrantPubKey(ctx, me, txKey, grantPubKey); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (accManager AccountManager) GetPreAuthorizationAmount(
-	ctx sdk.Context, me, other types.AccountKey) (types.Coin, sdk.Error) {
-	txKey, err := accManager.GetTransactionKey(ctx, other)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, txKey)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	return grantPubKey.Amount, nil
-}
-
 func (accManager AccountManager) addPendingStakeToQueue(
 	ctx sdk.Context, username types.AccountKey, bank *model.AccountBank,
 	pendingStake model.PendingStake) sdk.Error {
