@@ -17,10 +17,6 @@ func ErrPostMetaNotFound(key []byte) sdk.Error {
 	return types.NewError(types.CodePostMetaNotFound, fmt.Sprintf("post meta is not found for key: %s", key))
 }
 
-func ErrPostLikeNotFound(key []byte) sdk.Error {
-	return types.NewError(types.CodePostLikeNotFound, fmt.Sprintf("post like not found for key: %s", key))
-}
-
 func ErrPostReportOrUpvoteNotFound(key []byte) sdk.Error {
 	return types.NewError(types.CodePostReportOrUpvoteNotFound, fmt.Sprintf("post report or upvote not found for key: %s", key))
 }
@@ -46,10 +42,6 @@ func ErrFailedToMarshalPostMeta(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalPostMeta, fmt.Sprintf("failed to marshal post meta: %s", err.Error()))
 }
 
-func ErrFailedToMarshalPostLike(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToMarshalPostLike, fmt.Sprintf("failed to marshal post like: %s", err.Error()))
-}
-
 func ErrFailedToMarshalPostReportOrUpvote(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalPostReportOrUpvote, fmt.Sprintf("failed to marshal post report or upvote: %s", err.Error()))
 }
@@ -73,10 +65,6 @@ func ErrFailedToUnmarshalPostInfo(err error) sdk.Error {
 
 func ErrFailedToUnmarshalPostMeta(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalPostMeta, fmt.Sprintf("failed to unmarshal post meta: %s", err.Error()))
-}
-
-func ErrFailedToUnmarshalPostLike(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToUnmarshalPostLike, fmt.Sprintf("failed to unmarshal post like: %s", err.Error()))
 }
 
 func ErrFailedToUnmarshalPostReportOrUpvote(err error) sdk.Error {

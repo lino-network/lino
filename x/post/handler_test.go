@@ -322,64 +322,6 @@ func TestHandlerRepost(t *testing.T) {
 	checkPostKVStore(t, ctx, types.GetPermlink(user, postInfo.PostID), postInfo, postMeta)
 }
 
-func TestHandlerPostLike(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm)
-
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
-
-	likeMsg := NewLikeMsg(string(user), 10000, string(user), postID)
-	result := handler(ctx, likeMsg)
-	assert.Equal(t, result, sdk.Result{})
-
-	// after handler check KVStore
-	postInfo := model.PostInfo{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        nil,
-	}
-	postMeta := model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
-		AllowReplies:            true,
-		TotalLikeCount:          1,
-		TotalLikeWeight:         10000,
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
-		TotalReward:             types.NewCoinFromInt64(0),
-		TotalReportStake:        types.NewCoinFromInt64(0),
-		RedistributionSplitRate: sdk.ZeroRat(),
-	}
-	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
-
-	// test update like
-	likeMsg = NewLikeMsg(string(user), -10000, string(user), postID)
-	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, sdk.Result{})
-	postMeta.TotalDislikeWeight = 10000
-	postMeta.TotalLikeWeight = 0
-	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
-
-	// test invalid like target post
-	likeMsg = NewLikeMsg(string(user), -10000, string(user), "invalid")
-	result = handler(ctx, likeMsg)
-	assert.Equal(t, result, ErrPostNotFound(types.GetPermlink(user, "invalid")).Result())
-	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
-
-	// test invalid like username
-	likeMsg = NewLikeMsg("invalid", 10000, string(user), postID)
-	result = handler(ctx, likeMsg)
-
-	assert.Equal(t, result, ErrAccountNotFound(likeMsg.Username).Result())
-	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
-}
-
 func TestHandlerPostDonate(t *testing.T) {
 	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)

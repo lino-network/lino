@@ -76,10 +76,6 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			postcmd.LikeTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
 			postcmd.ViewTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(

@@ -369,62 +369,6 @@ func TestCommentAndRepost(t *testing.T) {
 	}
 }
 
-func TestLikeMsg(t *testing.T) {
-	testCases := []struct {
-		testName      string
-		likeMsg       LikeMsg
-		expectedError sdk.Error
-	}{
-		{
-			testName:      "normal case 1 - like",
-			likeMsg:       NewLikeMsg("test", 10000, "author", "postID"),
-			expectedError: nil,
-		},
-		{
-			testName:      "normal case 2 - dislike",
-			likeMsg:       NewLikeMsg("test", -10000, "author", "postID"),
-			expectedError: nil,
-		},
-		{
-			testName:      "like weight overflow positively",
-			likeMsg:       NewLikeMsg("test", 10001, "author", "postID"),
-			expectedError: ErrPostLikeWeightOverflow(10001),
-		},
-		{
-			testName:      "like weight overflow negatively",
-			likeMsg:       NewLikeMsg("test", -10001, "author", "postID"),
-			expectedError: ErrPostLikeWeightOverflow(-10001),
-		},
-		{
-			testName:      "no username",
-			likeMsg:       NewLikeMsg("", 10000, "author", "postID"),
-			expectedError: ErrNoUsername(),
-		},
-		{
-			testName:      "invalid target - no post author",
-			likeMsg:       NewLikeMsg("test", 10000, "", "postID"),
-			expectedError: ErrInvalidTarget(),
-		},
-		{
-			testName:      "invalid target - not post id",
-			likeMsg:       NewLikeMsg("test", 10000, "author", ""),
-			expectedError: ErrInvalidTarget(),
-		},
-		{
-			testName:      "invalid target - no post author and id",
-			likeMsg:       NewLikeMsg("test", 10000, "", ""),
-			expectedError: ErrInvalidTarget(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.likeMsg.ValidateBasic()
-		if !assert.Equal(t, tc.expectedError, result) {
-			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
 func TestDonationMsg(t *testing.T) {
 	testCases := []struct {
 		testName      string
@@ -598,12 +542,6 @@ func TestMsgPermission(t *testing.T) {
 			expectedPermission: types.PostPermission,
 		},
 		{
-			testName: "like post",
-			msg: NewLikeMsg(
-				"test", 10000, "author", "postID"),
-			expectedPermission: types.PostPermission,
-		},
-		{
 			testName: "view post",
 			msg: NewViewMsg(
 				"test", "author", "postID"),
@@ -669,11 +607,6 @@ func TestGetSignBytes(t *testing.T) {
 			},
 		},
 		{
-			testName: "like post",
-			msg: NewLikeMsg(
-				"test", 10000, "author", "postID"),
-		},
-		{
 			testName: "view post",
 			msg: NewViewMsg(
 				"test", "author", "postID"),
@@ -733,12 +666,6 @@ func TestGetSigners(t *testing.T) {
 				RedistributionSplitRate: "0.5",
 			},
 			expectSigners: []types.AccountKey{"author"},
-		},
-		{
-			testName: "like post",
-			msg: NewLikeMsg(
-				"test", 10000, "author", "postID"),
-			expectSigners: []types.AccountKey{"test"},
 		},
 		{
 			testName: "view post",

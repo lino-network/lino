@@ -60,20 +60,6 @@ func TestPostMeta(t *testing.T) {
 	})
 }
 
-func TestPostLike(t *testing.T) {
-	user := types.AccountKey("test")
-	postLike := Like{Username: user, Weight: 10000, CreatedAt: 100}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostLike(env.ctx, types.Permlink("test"), &postLike)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostLike(env.ctx, types.Permlink("test"), user)
-		assert.Nil(t, err)
-		assert.Equal(t, postLike, *resultPtr, "Post like should be equal")
-	})
-}
-
 func TestPostComment(t *testing.T) {
 	user := types.AccountKey("test")
 	postComment := Comment{Author: user, PostID: "test", CreatedAt: 100}
