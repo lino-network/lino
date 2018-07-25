@@ -28,10 +28,9 @@ type TPS struct {
 // DeveloperInflationPool inflation pool for developer
 // ValidatorInflationPool inflation pool for validator
 type InflationPool struct {
-	InfraInflationPool          types.Coin `json:"infra_inflation_pool"`
-	ContentCreatorInflationPool types.Coin `json:"content_creator_inflation_pool"`
-	DeveloperInflationPool      types.Coin `json:"developer_inflation_pool"`
-	ValidatorInflationPool      types.Coin `json:"validator_inflation_pool"`
+	InfraInflationPool     types.Coin `json:"infra_inflation_pool"`
+	DeveloperInflationPool types.Coin `json:"developer_inflation_pool"`
+	ValidatorInflationPool types.Coin `json:"validator_inflation_pool"`
 }
 
 // ConsumptionMeta

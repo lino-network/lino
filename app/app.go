@@ -411,8 +411,8 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	lb.globalManager.distributeHourlyInflation(ctx)
-	lb.distributeInflationToConsumptionRewardPool(ctx)
+	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
+	lb.globalManager.DistributeHourlyInflation(ctx, pastHoursMinusOneThisYear)
 	lb.distributeInflationToValidator(ctx)
 }
 
@@ -430,23 +430,12 @@ func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
 
 // distribute inflation to validators
 // TODO: encaptulate module event inside module
-func (lb *LinoBlockchain) distributeInflationToConsumptionRewardPool(ctx sdk.Context) {
-	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
-	if err := lb.globalManager.AddHourlyInflationToRewardPool(
-		ctx, pastHoursMinusOneThisYear); err != nil {
-		panic(err)
-	}
-}
-
-// distribute inflation to validators
-// TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
-	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
 	lst, err := lb.valManager.GetValidatorList(ctx)
 	if err != nil {
 		panic(err)
 	}
-	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx, pastHoursMinusOneThisYear)
+	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -463,8 +452,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 // distribute inflation to infra provider monthly
 // TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	pastMonthMinusOneThisYear := lb.getPastMonthMinusOneThisYear()
-	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx, pastMonthMinusOneThisYear)
+	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -492,8 +480,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 // distribute inflation to developer monthly
 // TODO: encaptulate module event inside module
 func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
-	pastMonthMinusOneThisYear := lb.getPastMonthMinusOneThisYear()
-	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx, pastMonthMinusOneThisYear)
+	inflation, err := lb.globalManager.GetDeveloperMonthlyInflation(ctx)
 	if err != nil {
 		panic(err)
 	}

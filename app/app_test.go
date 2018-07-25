@@ -18,6 +18,7 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/lino-network/lino/param"
 	globalModel "github.com/lino-network/lino/x/global/model"
 )
 
@@ -99,13 +100,19 @@ func TestGenesisAcc(t *testing.T) {
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
-		{"Lino", "9000000000", crypto.GenPrivKeySecp256k1().PubKey(),
+		{"lino", "9000000000", crypto.GenPrivKeySecp256k1().PubKey(),
 			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
 			true, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"Genesis", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
+		{"genesis", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
 			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
 			true, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"NonValidator", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
+		{"nonvalidator", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
+			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			false, crypto.GenPrivKeySecp256k1().PubKey()},
+		{"developer", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
+			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			false, crypto.GenPrivKeySecp256k1().PubKey()},
+		{"infra", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
 			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
 			false, crypto.GenPrivKeySecp256k1().PubKey()},
 	}
@@ -124,7 +131,18 @@ func TestGenesisAcc(t *testing.T) {
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
-
+	genesisAppDeveloper := GenesisAppDeveloper{
+		Name:        "developer",
+		Deposit:     "1000000",
+		Website:     "https://lino.network/",
+		Description: "",
+		AppMetaData: "",
+	}
+	genesisInfraProvider := GenesisInfraProvider{
+		Name: "infra",
+	}
+	genesisState.Developers = append(genesisState.Developers, genesisAppDeveloper)
+	genesisState.Infra = append(genesisState.Infra, genesisInfraProvider)
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
@@ -132,13 +150,17 @@ func TestGenesisAcc(t *testing.T) {
 	lb.Commit()
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 	for _, acc := range accs {
 		expectBalance, err := types.LinoToCoin(acc.numOfLino)
 		assert.Nil(t, err)
 		if acc.isValidator {
+			param, _ := lb.paramHolder.GetValidatorParam(ctx)
 			expectBalance = expectBalance.Minus(
 				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
+		}
+		if acc.genesisAccountName == "developer" {
+			param, _ := lb.paramHolder.GetDeveloperParam(ctx)
+			expectBalance = expectBalance.Minus(param.DeveloperMinDeposit)
 		}
 		saving, err :=
 			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
@@ -211,89 +233,6 @@ func TestFireByzantineValidators(t *testing.T) {
 	assert.Equal(t, 20, len(lst.OncallValidators))
 }
 
-func TestDistributeInflationToConsumptionRewardPool(t *testing.T) {
-	lb := newLinoBlockchain(t, 21)
-	cases := map[string]struct {
-		beforeDistributionRewardPool    types.Coin
-		beforeDistributionInflationPool types.Coin
-		pastMinutes                     int64
-	}{
-		"first distribution": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
-			pastMinutes:                     60,
-		},
-		"end of year distribution": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
-			pastMinutes:                     60 * types.HoursPerYear,
-		},
-		"next year first hour": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
-			pastMinutes:                     60*types.HoursPerYear + 60,
-		},
-		"end of next year": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			beforeDistributionRewardPool:    types.NewCoinFromInt64(0),
-			pastMinutes:                     60 * types.HoursPerYear * 2,
-		},
-	}
-	for testName, cs := range cases {
-		lb.pastMinutes = cs.pastMinutes
-		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
-		err := globalStore.SetConsumptionMeta(
-			ctx, &globalModel.ConsumptionMeta{
-				ConsumptionRewardPool: cs.beforeDistributionRewardPool,
-			},
-		)
-		if err != nil {
-			t.Errorf("%s: failed to set consumption meta, got err %v", testName, err)
-		}
-
-		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
-			ContentCreatorInflationPool: cs.beforeDistributionInflationPool,
-		})
-		if err != nil {
-			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
-		}
-
-		lb.distributeInflationToConsumptionRewardPool(ctx)
-		inflationPool, err := globalStore.GetInflationPool(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
-		}
-
-		consumption, err := globalStore.GetConsumptionMeta(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get consumption meta, got err %v", testName, err)
-		}
-
-		expectInflation := types.RatToCoin(
-			cs.beforeDistributionInflationPool.ToRat().Quo(
-				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
-
-		if !cs.beforeDistributionRewardPool.Plus(expectInflation).
-			IsEqual(consumption.ConsumptionRewardPool) {
-			t.Errorf(
-				"%s: diff consumption reward pool, got %v, want %v",
-				testName, consumption.ConsumptionRewardPool,
-				cs.beforeDistributionRewardPool.Plus(expectInflation))
-			return
-		}
-
-		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
-			IsEqual(inflationPool.ContentCreatorInflationPool) {
-			t.Errorf(
-				"%s: diff content creator inflation pool, got %v, want %v",
-				testName, inflationPool.ContentCreatorInflationPool,
-				cs.beforeDistributionRewardPool.Plus(expectInflation))
-			return
-		}
-	}
-}
-
 func TestDistributeInflationToValidator(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	cases := map[string]struct {
@@ -302,19 +241,19 @@ func TestDistributeInflationToValidator(t *testing.T) {
 	}{
 		"first distribution": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     60,
+			pastMinutes:                     types.MinutesPerMonth,
 		},
-		"end of year distribution": {
+		"last distribution of first year": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     60 * types.HoursPerYear,
+			pastMinutes:                     types.MinutesPerMonth * 12,
 		},
-		"next year first hour": {
+		"first distribution of second year": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     60*types.HoursPerYear + 60,
+			pastMinutes:                     types.MinutesPerMonth * 13,
 		},
-		"end of next year": {
+		"last distribution of second year": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     60 * types.HoursPerYear * 2,
+			pastMinutes:                     types.MinutesPerMonth * 24,
 		},
 	}
 	for testName, cs := range cases {
@@ -334,17 +273,11 @@ func TestDistributeInflationToValidator(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
-
-		expectInflation := types.RatToCoin(
-			cs.beforeDistributionInflationPool.ToRat().Quo(
-				sdk.NewRat(types.HoursPerYear - lb.getPastHoursMinusOneThisYear())))
-
-		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
-			IsEqual(inflationPool.ValidatorInflationPool) {
+		if !inflationPool.ValidatorInflationPool.IsZero() {
 			t.Errorf(
 				"%s: diff validator inflation pool, got %v, want %v",
 				testName, inflationPool.ValidatorInflationPool,
-				cs.beforeDistributionInflationPool.Minus(expectInflation))
+				types.NewCoinFromInt64(0))
 			return
 		}
 	}
@@ -395,15 +328,11 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation := types.RatToCoin(
-			cs.beforeDistributionInflationPool.ToRat().Quo(
-				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
-		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
-			IsEqual(inflationPool.InfraInflationPool) {
+		if !inflationPool.InfraInflationPool.IsZero() {
 			t.Errorf(
 				"%s: diff infra inflation pool, got %v, want %v",
 				testName, inflationPool.InfraInflationPool,
-				cs.beforeDistributionInflationPool.Minus(expectInflation))
+				types.NewCoinFromInt64(0))
 			return
 		}
 	}
@@ -454,16 +383,42 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
 		}
 
-		expectInflation := types.RatToCoin(
-			cs.beforeDistributionInflationPool.ToRat().Quo(
-				sdk.NewRat(12 - lb.getPastMonthMinusOneThisYear())))
-		if !cs.beforeDistributionInflationPool.Minus(expectInflation).
-			IsEqual(inflationPool.DeveloperInflationPool) {
+		if !inflationPool.DeveloperInflationPool.IsZero() {
 			t.Errorf(
 				"%s: diff developer inflation pool, got %v, want %v",
 				testName, inflationPool.DeveloperInflationPool,
-				cs.beforeDistributionInflationPool.Minus(expectInflation))
+				types.NewCoinFromInt64(0))
 			return
+		}
+	}
+}
+
+func TestIncreaseMinute(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	globalMeta, err := gs.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	globalAllocation, err := ph.GetGlobalAllocationParam(ctx)
+	assert.Nil(t, err)
+
+	inflation := globalMeta.AnnualInflation
+	expectConsumptionPool := types.NewCoinFromInt64(0)
+	for i := 0; i < types.MinutesPerMonth/10; i++ {
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		lb.increaseMinute(ctx)
+		if i > 0 && i%60 == 0 {
+			hourlyInflation :=
+				types.RatToCoin(
+					inflation.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-int64(i/60-1))))
+			inflation = inflation.Minus(hourlyInflation)
+			consumptionMeta, err := gs.GetConsumptionMeta(ctx)
+			assert.Nil(t, err)
+			expectConsumptionPool =
+				expectConsumptionPool.Plus(
+					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
 		}
 	}
 }
