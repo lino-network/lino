@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -132,6 +131,31 @@ func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Ev
 	return nil
 }
 
+func (gm GlobalManager) distributeHourlyInflation(
+	ctx sdk.Context, pastHoursMinusOneThisYear int64) sdk.Error {
+	// param will be changed in one day
+	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+	if err != nil {
+		return err
+	}
+	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
+	if err != nil {
+		return err
+	}
+	thisHourInflation :=
+		types.RatToCoin(globalMeta.AnnualInflation.ToRat().Mul(
+			sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear)))
+	globalMeta.AnnualInflation = globalMeta.AnnualInflation.Minus(thisHourInflation)
+	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
+	}
+	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // put hourly inflation to reward pool
 func (gm GlobalManager) AddHourlyInflationToRewardPool(
 	ctx sdk.Context, pastHoursMinusOneThisYear int64) sdk.Error {
@@ -171,37 +195,12 @@ func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error 
 	if err != nil {
 		return err
 	}
-	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
-	if err != nil {
-		return err
-	}
 
-	infraInflationCoin :=
+	globalMeta.AnnualInflation =
 		types.RatToCoin(
-			globalMeta.TotalLinoCoin.ToRat().Mul(
-				growthRate.Mul(allocation.InfraAllocation)))
-	contentCreatorCoin :=
-		types.RatToCoin(
-			globalMeta.TotalLinoCoin.ToRat().Mul(
-				growthRate.Mul(
-					allocation.ContentCreatorAllocation)))
-	developerCoin := types.RatToCoin(
-		globalMeta.TotalLinoCoin.ToRat().Mul(
-			growthRate.Mul(
-				allocation.DeveloperAllocation)))
-	validatorCoin := types.RatToCoin(
-		globalMeta.TotalLinoCoin.ToRat().Mul(
-			growthRate.Mul(
-				allocation.ValidatorAllocation)))
+			globalMeta.TotalLinoCoin.ToRat().Mul(growthRate))
 
-	inflationPool := &model.InflationPool{
-		InfraInflationPool:          infraInflationCoin,
-		ContentCreatorInflationPool: contentCreatorCoin,
-		DeveloperInflationPool:      developerCoin,
-		ValidatorInflationPool:      validatorCoin,
-	}
-	fmt.Println(inflationPool, growthRate)
-	if err := gm.storage.SetInflationPool(ctx, inflationPool); err != nil {
+	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
 	}
 	return nil

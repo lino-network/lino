@@ -13,6 +13,7 @@ type GlobalMeta struct {
 	GrowthRate                    sdk.Rat    `json:"growth_rate"`
 	Ceiling                       sdk.Rat    `json:"ceiling"`
 	Floor                         sdk.Rat    `json:"floor"`
+	AnnualInflation               types.Coin `json:"annual_inflation"`
 }
 
 type TPS struct {
