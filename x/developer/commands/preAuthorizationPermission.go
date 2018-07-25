@@ -21,7 +21,7 @@ func PreAuthorizationPermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	cmd.Flags().String(client.FlagDeveloper, "", "developer name to grant")
 	cmd.Flags().Int64(client.FlagSeconds, 3600, "seconds till expire")
-	cmd.Flags().String(client.FlagGrantAmount, "grant-amount", "granted amount")
+	cmd.Flags().String(client.FlagGrantAmount, "", "granted amount")
 	return cmd
 }
 
