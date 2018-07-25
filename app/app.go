@@ -527,10 +527,6 @@ func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
 	return (lb.pastMinutes/60 - 1) % types.HoursPerYear
 }
 
-func (lb *LinoBlockchain) getPastMonthMinusOneThisYear() int64 {
-	return (lb.pastMinutes/types.MinutesPerMonth - 1) % 12
-}
-
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	//ctx := lb.NewContext(true, abci.Header{})
