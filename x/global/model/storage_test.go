@@ -65,6 +65,8 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
 		Ceiling: sdk.NewRat(98, 1000),
 		Floor:   sdk.NewRat(30, 1000),
+		AnnualInflation: types.RatToCoin(
+			types.NewCoinFromInt64(10000 * types.Decimals).ToRat().Mul(sdk.NewRat(98, 1000))),
 	}
 
 	consumptionMeta := ConsumptionMeta{
@@ -73,22 +75,10 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodHr: 24 * 7,
 	}
-	infraInflationPool := types.RatToCoin(globalMeta.GrowthRate.Mul(
-		globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.InfraAllocation)))
-	contentCreatorInflationPool := types.RatToCoin(
-		globalMeta.GrowthRate.Mul(
-			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ContentCreatorAllocation)))
-	developerInflaionPool := types.RatToCoin(
-		globalMeta.GrowthRate.Mul(
-			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.DeveloperAllocation)))
-	validatorInflaionPool := types.RatToCoin(
-		globalMeta.GrowthRate.Mul(
-			globalMeta.TotalLinoCoin.ToRat().Mul(allocationParam.ValidatorAllocation)))
 	inflationPool := InflationPool{
-		InfraInflationPool:          infraInflationPool,
-		ContentCreatorInflationPool: contentCreatorInflationPool,
-		DeveloperInflationPool:      developerInflaionPool,
-		ValidatorInflationPool:      validatorInflaionPool,
+		InfraInflationPool:     types.NewCoinFromInt64(0),
+		DeveloperInflationPool: types.NewCoinFromInt64(0),
+		ValidatorInflationPool: types.NewCoinFromInt64(0),
 	}
 	checkGlobalStorage(t, ctx, gm, globalMeta, consumptionMeta, inflationPool)
 }

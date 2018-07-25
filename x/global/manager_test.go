@@ -26,10 +26,11 @@ type testEvent struct{}
 var (
 	TestGlobalKVStoreKey = sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey  = sdk.NewKVStoreKey("param")
+	totalLino            = types.NewCoinFromInt64(10000 * types.Decimals)
 )
 
 func InitGlobalManager(ctx sdk.Context, gm GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
+	return gm.InitGlobalManager(ctx, totalLino)
 }
 
 func getContext() sdk.Context {
@@ -665,31 +666,55 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 	}
 }
 
-func TestAddHourlyInflationToRewardPool(t *testing.T) {
+func TestDistributeHourlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
-	totalConsumption := types.NewCoinFromInt64(10000 * 100)
-	inflationPool := &model.InflationPool{
-		ContentCreatorInflationPool: totalConsumption,
-	}
-	err := gm.storage.SetInflationPool(ctx, inflationPool)
-	assert.Nil(t, err)
-	for i := 0; i < types.HoursPerYear; i++ {
-		pool, err := gm.storage.GetInflationPool(ctx)
-		assert.Nil(t, err)
-		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
-		assert.Nil(t, err)
-		err = gm.AddHourlyInflationToRewardPool(ctx, int64(i))
-		assert.Nil(t, err)
-		assert.Equal(t, totalConsumption,
-			consumptionMeta.ConsumptionRewardPool.Plus(pool.ContentCreatorInflationPool))
-	}
-	pool, err := gm.storage.GetInflationPool(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoinFromInt64(0), pool.ContentCreatorInflationPool)
-
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalConsumption))
+	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino)
+	assert.Equal(
+		t, globalMeta.AnnualInflation, types.RatToCoin(totalLino.ToRat().Mul(globalMeta.GrowthRate)))
+	expectInflation := globalMeta.AnnualInflation
+	expectContentCreatorInflation := types.NewCoinFromInt64(0)
+	expectValidatorInflation := types.NewCoinFromInt64(0)
+	expectDeveloperInflation := types.NewCoinFromInt64(0)
+	expectInfraInflation := types.NewCoinFromInt64(0)
+
+	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+	assert.Nil(t, err)
+	for i := 0; i < types.HoursPerYear; i++ {
+		err = gm.DistributeHourlyInflation(ctx, int64(i))
+		assert.Nil(t, err)
+
+		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
+		assert.Nil(t, err)
+
+		inflationPool, err := gm.storage.GetInflationPool(ctx)
+		assert.Nil(t, err)
+
+		hourlyInflation :=
+			types.RatToCoin(expectInflation.ToRat().Mul(sdk.NewRat(1, int64(types.HoursPerYear-i))))
+		expectInflation = expectInflation.Minus(hourlyInflation)
+		expectContentCreatorInflation =
+			expectContentCreatorInflation.Plus(
+				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+		expectValidatorInflation =
+			expectValidatorInflation.Plus(
+				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ValidatorAllocation)))
+		expectDeveloperInflation =
+			expectDeveloperInflation.Plus(
+				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.DeveloperAllocation)))
+		expectInfraInflation =
+			expectInfraInflation.Plus(
+				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
+		assert.True(t, expectContentCreatorInflation.IsEqual(consumptionMeta.ConsumptionRewardPool))
+		assert.True(t, expectInfraInflation.IsEqual(inflationPool.InfraInflationPool))
+		assert.True(t, expectDeveloperInflation.IsEqual(inflationPool.DeveloperInflationPool))
+		assert.True(t, expectValidatorInflation.IsEqual(inflationPool.ValidatorInflationPool))
+	}
+	globalMeta, err = gm.storage.GetGlobalMeta(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.AnnualInflation)
+	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino.Plus(expectContentCreatorInflation))
 }
 
 func TestRecalculateAnnuallyInflation(t *testing.T) {
@@ -755,56 +780,17 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 			t.Errorf("%s: failed to recalculate annually inflation, got err %v", tc.testName, err)
 		}
 
-		pool, err := gm.storage.GetInflationPool(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get inflation pool, got err %v", tc.testName, err)
-		}
-
-		allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get global allocation param, got err %v", tc.testName, err)
-		}
-
-		expectDeveloperInflation := types.RatToCoin(
-			allocation.DeveloperAllocation.Mul(
-				totalLino.ToRat().Mul(tc.expectGrowthRate)))
-		if !expectDeveloperInflation.IsEqual(pool.DeveloperInflationPool) {
-			t.Errorf("%s: diff developer inflation, got %v, want %v", tc.testName,
-				pool.DeveloperInflationPool, expectDeveloperInflation)
-		}
-
-		expectContentCreatorInflation := types.RatToCoin(
-			allocation.ContentCreatorAllocation.Mul(
-				totalLino.ToRat().Mul(tc.expectGrowthRate)))
-		if !expectContentCreatorInflation.IsEqual(pool.ContentCreatorInflationPool) {
-			t.Errorf("%s: diff content creator inflation, got %v, want %v", tc.testName,
-				pool.ContentCreatorInflationPool, expectContentCreatorInflation)
-		}
-
-		expectInfraInflation := types.RatToCoin(
-			allocation.InfraAllocation.Mul(
-				totalLino.ToRat().Mul(tc.expectGrowthRate)))
-		if !expectInfraInflation.IsEqual(pool.InfraInflationPool) {
-			t.Errorf("%s: diff infra inflation, got %v, want %v", tc.testName,
-				pool.InfraInflationPool, expectInfraInflation)
-		}
-
-		expectValidatorInflation := types.RatToCoin(
-			allocation.ValidatorAllocation.Mul(
-				totalLino.ToRat().Mul(tc.expectGrowthRate)))
-		if !expectValidatorInflation.IsEqual(pool.ValidatorInflationPool) {
-			t.Errorf("%s: diff validator inflation, got %v, want %v", tc.testName,
-				pool.ValidatorInflationPool, expectValidatorInflation)
-		}
-
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
 		}
-		if !expectValidatorInflation.IsEqual(pool.ValidatorInflationPool) {
-			t.Errorf("%s: diff validator inflation, got %v, want %v", tc.testName,
-				pool.ValidatorInflationPool, expectValidatorInflation)
+
+		expectAnnualInflation := types.RatToCoin(totalLino.ToRat().Mul(tc.expectGrowthRate))
+		if !expectAnnualInflation.IsEqual(globalMeta.AnnualInflation) {
+			t.Errorf("%s: expect annual inflation err, got %v, want %v", tc.testName,
+				expectAnnualInflation, globalMeta.AnnualInflation)
 		}
+
 		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
 			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
 				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
@@ -976,16 +962,10 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 	}
 	err := gm.storage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	for i := 0; i < types.HoursPerYear; i++ {
-		pool, err := gm.storage.GetInflationPool(ctx)
-		assert.Nil(t, err)
-		coin, err := gm.GetValidatorHourlyInflation(ctx, int64(i))
-		assert.Nil(t, err)
-		hourlyCoinRat := pool.ValidatorInflationPool.ToRat().Mul(sdk.NewRat(1, int64(types.HoursPerYear-i)))
-		hourlyCoin := types.RatToCoin(hourlyCoinRat)
+	coin, err := gm.GetValidatorHourlyInflation(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, totalValidatorInflation, coin)
 
-		assert.Equal(t, coin, hourlyCoin)
-	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoinFromInt64(0), pool.ValidatorInflationPool)
@@ -1002,19 +982,9 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 	}
 	err := gm.storage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	for i := 1; i <= types.HoursPerYear*60; i++ {
-		if i%types.MinutesPerMonth == 0 {
-			pool, err := gm.storage.GetInflationPool(ctx)
-			assert.Nil(t, err)
-			coin, err := gm.GetInfraMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
-			assert.Nil(t, err)
-			hourlyCoinRat :=
-				pool.InfraInflationPool.ToRat().Mul(
-					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
-			hourlyCoin := types.RatToCoin(hourlyCoinRat)
-			assert.Equal(t, coin, hourlyCoin)
-		}
-	}
+	coin, err := gm.GetInfraMonthlyInflation(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, totalInfraInflation, coin)
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoinFromInt64(0), pool.InfraInflationPool)
@@ -1031,19 +1001,9 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 	}
 	err := gm.storage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	for i := 1; i <= types.HoursPerYear*60; i++ {
-		if i%types.MinutesPerMonth == 0 {
-			pool, err := gm.storage.GetInflationPool(ctx)
-			assert.Nil(t, err)
-			coin, err := gm.GetDeveloperMonthlyInflation(ctx, int64(i/types.MinutesPerMonth-1)%12)
-			assert.Nil(t, err)
-			hourlyCoinRat :=
-				pool.DeveloperInflationPool.ToRat().Mul(
-					sdk.NewRat(1, int64(12-(i/types.MinutesPerMonth-1)%12)))
-			hourlyCoin := types.RatToCoin(hourlyCoinRat)
-			assert.Equal(t, coin, hourlyCoin)
-		}
-	}
+	coin, err := gm.GetDeveloperMonthlyInflation(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, totalDeveloperInflation, coin)
 	pool, err := gm.storage.GetInflationPool(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoinFromInt64(0), pool.DeveloperInflationPool)

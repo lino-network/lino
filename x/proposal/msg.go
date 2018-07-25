@@ -250,6 +250,12 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		Add(msg.Parameter.ValidatorAllocation).Equal(sdk.NewRat(1)) {
 		return ErrIllegalParameter()
 	}
+	if msg.Parameter.InfraAllocation.LT(sdk.ZeroRat()) ||
+		msg.Parameter.ContentCreatorAllocation.LT(sdk.ZeroRat()) ||
+		msg.Parameter.DeveloperAllocation.LT(sdk.ZeroRat()) ||
+		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroRat()) {
+		return ErrIllegalParameter()
+	}
 
 	return nil
 }
