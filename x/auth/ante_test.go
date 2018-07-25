@@ -235,11 +235,12 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission, types.NewCoinFromInt64(0))
 	assert.Nil(t, err)
 
-	// should pass authentication check after grant
+	// should still fail by using transaction key
 	privs, seqs = []crypto.PrivKey{transaction2}, []int64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
+	// should pass authentication check after grant the app permission
 	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
