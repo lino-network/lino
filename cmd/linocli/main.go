@@ -166,6 +166,10 @@ func main() {
 		client.PostCommands(
 			developercmd.RevokePermissionTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.PreAuthorizationPermissionTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(

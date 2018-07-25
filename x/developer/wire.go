@@ -10,6 +10,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(DeveloperRevokeMsg{}, "lino/devRevoke", nil)
 	cdc.RegisterConcrete(GrantPermissionMsg{}, "lino/grantPermission", nil)
 	cdc.RegisterConcrete(RevokePermissionMsg{}, "lino/revokePermission", nil)
+	cdc.RegisterConcrete(PreAuthorizationMsg{}, "lino/preAuthorizationPermission", nil)
 }
 
 var msgCdc = wire.NewCodec()
