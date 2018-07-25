@@ -518,7 +518,7 @@ func TestMsgPermission(t *testing.T) {
 			msg: NewDonateMsg(
 				"test", types.LNO("1"),
 				"author", "postID", "", memo1),
-			expectedPermission: types.TransactionPermission,
+			expectedPermission: types.PreAuthorizationPermission,
 		},
 		{
 			testName: "create post",
@@ -703,6 +703,74 @@ func TestGetSigners(t *testing.T) {
 				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
 				return
 			}
+		}
+	}
+}
+
+func TestGetConsumeAmount(t *testing.T) {
+	testCases := []struct {
+		testName     string
+		msg          types.Msg
+		expectAmount types.Coin
+	}{
+		{
+			testName: "donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1),
+			expectAmount: types.NewCoinFromInt64(1 * types.Decimals),
+		},
+		{
+			testName: "create post",
+			msg: CreatePostMsg{
+				PostID:       "test",
+				Title:        "title",
+				Content:      "content",
+				Author:       "author",
+				ParentAuthor: types.AccountKey("parentAuthor"),
+				ParentPostID: "parentPostID",
+				SourceAuthor: types.AccountKey("sourceAuthor"),
+				SourcePostID: "sourcePostID",
+				Links: []types.IDToURLMapping{
+					{
+						Identifier: "#1",
+						URL:        "https://lino.network",
+					},
+				},
+				RedistributionSplitRate: "0.5",
+			},
+			expectAmount: types.NewCoinFromInt64(0),
+		},
+		{
+			testName: "view post",
+			msg: NewViewMsg(
+				"test", "author", "postID"),
+			expectAmount: types.NewCoinFromInt64(0),
+		},
+		{
+			testName: "report post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", true),
+			expectAmount: types.NewCoinFromInt64(0),
+		},
+		{
+			testName: "upvote post",
+			msg: NewReportOrUpvoteMsg(
+				"test", "author", "postID", false),
+			expectAmount: types.NewCoinFromInt64(0),
+		},
+		{
+			testName: "update post",
+			msg: NewUpdatePostMsg(
+				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+			expectAmount: types.NewCoinFromInt64(0),
+		},
+	}
+
+	for _, tc := range testCases {
+		if !tc.expectAmount.IsEqual(tc.msg.GetConsumeAmount()) {
+			t.Errorf("%s: expect consume amount wrong, got %v, want %v", tc.testName, tc.msg.GetConsumeAmount(), tc.expectAmount)
+			return
 		}
 	}
 }

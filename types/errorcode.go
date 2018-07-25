@@ -203,7 +203,7 @@ const (
 	CodeFailedToUnmarshalDeveloperList sdk.CodeType = 904
 	CodeDeveloperAlreadyExist          sdk.CodeType = 905
 	CodeInsufficientDeveloperDeposit   sdk.CodeType = 906
-	CodeInvalidAuthenticateApp         sdk.CodeType = 907
+	CodeInvalidAuthorizedApp           sdk.CodeType = 907
 	CodeInvalidValidityPeriod          sdk.CodeType = 908
 	CodeGrantPermissionTooHigh         sdk.CodeType = 909
 

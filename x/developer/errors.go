@@ -28,8 +28,8 @@ func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
 }
 
-func ErrInvalidAuthenticateApp() sdk.Error {
-	return types.NewError(types.CodeInvalidAuthenticateApp, fmt.Sprintf("invalid authenticate app"))
+func ErrInvalidAuthorizedApp() sdk.Error {
+	return types.NewError(types.CodeInvalidAuthorizedApp, fmt.Sprintf("invalid authorized app"))
 }
 
 func ErrInvalidValidityPeriod() sdk.Error {

@@ -14,6 +14,7 @@ var _ types.Msg = DeveloperRegisterMsg{}
 var _ types.Msg = DeveloperRevokeMsg{}
 var _ types.Msg = GrantPermissionMsg{}
 var _ types.Msg = RevokePermissionMsg{}
+var _ types.Msg = PreAuthorizationMsg{}
 
 type DeveloperRegisterMsg struct {
 	Username    types.AccountKey `json:"username"`
@@ -28,16 +29,22 @@ type DeveloperRevokeMsg struct {
 }
 
 type GrantPermissionMsg struct {
-	Username        types.AccountKey `json:"username"`
-	AuthenticateApp types.AccountKey `json:"authenticate_app"`
-	ValidityPeriod  int64            `json:"validity_period"`
-	GrantLevel      types.Permission `json:"grant_level"`
+	Username          types.AccountKey `json:"username"`
+	AuthorizedApp     types.AccountKey `json:"authorized_app"`
+	ValidityPeriodSec int64            `json:"validity_period_second"`
+	GrantLevel        types.Permission `json:"grant_level"`
 }
 
 type RevokePermissionMsg struct {
-	Username   types.AccountKey `json:"username"`
-	PubKey     crypto.PubKey    `json:"public_key"`
-	GrantLevel types.Permission `json:"grant_level"`
+	Username types.AccountKey `json:"username"`
+	PubKey   crypto.PubKey    `json:"public_key"`
+}
+
+type PreAuthorizationMsg struct {
+	Username          types.AccountKey `json:"username"`
+	AuthorizedApp     types.AccountKey `json:"authorized_app"`
+	ValidityPeriodSec int64            `json:"validity_period_second"`
+	Amount            types.LNO        `json:"amount"`
 }
 
 // DeveloperRegisterMsg Msg Implementations
@@ -86,6 +93,11 @@ func (msg DeveloperRegisterMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg DeveloperRegisterMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // DeveloperRevokeMsg Msg Implementations
 func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 	return DeveloperRevokeMsg{
@@ -123,14 +135,19 @@ func (msg DeveloperRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg DeveloperRevokeMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // Grant Msg Implementations
 func NewGrantPermissionMsg(
-	user, app string, validityPeriod int64, grantLevel types.Permission) GrantPermissionMsg {
+	user, app string, validityPeriodSec int64, grantLevel types.Permission) GrantPermissionMsg {
 	return GrantPermissionMsg{
-		Username:        types.AccountKey(user),
-		AuthenticateApp: types.AccountKey(app),
-		ValidityPeriod:  validityPeriod,
-		GrantLevel:      grantLevel,
+		Username:          types.AccountKey(user),
+		AuthorizedApp:     types.AccountKey(app),
+		ValidityPeriodSec: validityPeriodSec,
+		GrantLevel:        grantLevel,
 	}
 }
 
@@ -142,12 +159,12 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if len(msg.AuthenticateApp) < types.MinimumUsernameLength ||
-		len(msg.AuthenticateApp) > types.MaximumUsernameLength {
-		return ErrInvalidAuthenticateApp()
+	if len(msg.AuthorizedApp) < types.MinimumUsernameLength ||
+		len(msg.AuthorizedApp) > types.MaximumUsernameLength {
+		return ErrInvalidAuthorizedApp()
 	}
 
-	if msg.ValidityPeriod <= 0 {
+	if msg.ValidityPeriodSec <= 0 {
 		return ErrInvalidValidityPeriod()
 	}
 
@@ -162,7 +179,7 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 
 func (msg GrantPermissionMsg) String() string {
 	return fmt.Sprintf("GrantPermissionMsg{User:%v, Grant to App:%v, validity period:%v, grant level:%v}",
-		msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel)
+		msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel)
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
@@ -181,12 +198,16 @@ func (msg GrantPermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg GrantPermissionMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // Revoke Msg Implementations
-func NewRevokePermissionMsg(user string, pubKey crypto.PubKey, grantLevel types.Permission) RevokePermissionMsg {
+func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionMsg {
 	return RevokePermissionMsg{
-		Username:   types.AccountKey(user),
-		PubKey:     pubKey,
-		GrantLevel: grantLevel,
+		Username: types.AccountKey(user),
+		PubKey:   pubKey,
 	}
 }
 
@@ -197,23 +218,16 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
-
-	if msg.GrantLevel == types.ResetPermission ||
-		msg.GrantLevel == types.TransactionPermission ||
-		msg.GrantLevel == types.GrantAppPermission {
-		return ErrGrantPermissionTooHigh()
-	}
-
 	return nil
 }
 
 func (msg RevokePermissionMsg) String() string {
-	return fmt.Sprintf("RevokePermissionMsg{User:%v, revoke key:%v, grant level:%v}",
-		msg.Username, msg.PubKey, msg.GrantLevel)
+	return fmt.Sprintf("RevokePermissionMsg{User:%v, revoke key:%v}",
+		msg.Username, msg.PubKey)
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {
-	return types.GrantAppPermission
+	return types.TransactionPermission
 }
 
 func (msg RevokePermissionMsg) GetSignBytes() []byte {
@@ -226,4 +240,69 @@ func (msg RevokePermissionMsg) GetSignBytes() []byte {
 
 func (msg RevokePermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg RevokePermissionMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
+// PreAuthorization Msg Implementations
+func NewPreAuthorizationMsg(
+	user string, authorizedApp string, validityPeriodSec int64, amount types.LNO) PreAuthorizationMsg {
+	return PreAuthorizationMsg{
+		Username:          types.AccountKey(user),
+		AuthorizedApp:     types.AccountKey(authorizedApp),
+		ValidityPeriodSec: validityPeriodSec,
+		Amount:            amount,
+	}
+}
+
+func (msg PreAuthorizationMsg) Type() string { return types.DeveloperRouterName }
+
+func (msg PreAuthorizationMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	if len(msg.AuthorizedApp) < types.MinimumUsernameLength ||
+		len(msg.AuthorizedApp) > types.MaximumUsernameLength {
+		return ErrInvalidAuthorizedApp()
+	}
+
+	if msg.ValidityPeriodSec <= 0 {
+		return ErrInvalidValidityPeriod()
+	}
+
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (msg PreAuthorizationMsg) String() string {
+	return fmt.Sprintf("PreAuthorizationMsg{User:%v, Authorized App:%v, Validate Period:%v, Amount:%v}",
+		msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.Amount)
+}
+
+func (msg PreAuthorizationMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+func (msg PreAuthorizationMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg PreAuthorizationMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg PreAuthorizationMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }

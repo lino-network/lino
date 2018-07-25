@@ -59,3 +59,8 @@ func (msg ProviderReportMsg) GetSignBytes() []byte {
 func (msg ProviderReportMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
+
+// Implements Msg.
+func (msg ProviderReportMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}

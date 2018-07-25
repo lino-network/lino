@@ -86,7 +86,7 @@ func handleDeveloperRevokeMsg(
 
 func handleGrantPermissionMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantPermissionMsg) sdk.Result {
-	if !dm.DoesDeveloperExist(ctx, msg.AuthenticateApp) {
+	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
 		return ErrDeveloperNotFound().Result()
 	}
 	if !am.DoesAccountExist(ctx, msg.Username) {
@@ -94,7 +94,7 @@ func handleGrantPermissionMsg(
 	}
 
 	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthenticateApp, msg.ValidityPeriod, msg.GrantLevel); err != nil {
+		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, types.NewCoinFromInt64(0)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -106,8 +106,28 @@ func handleRevokePermissionMsg(
 		return ErrAccountNotFound().Result()
 	}
 
-	if err := am.RevokePermission(
-		ctx, msg.Username, msg.PubKey, msg.GrantLevel); err != nil {
+	if err := am.RevokePermission(ctx, msg.Username, msg.PubKey); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handlePreAuthorizationMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg PreAuthorizationMsg) sdk.Result {
+	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
+		return ErrDeveloperNotFound().Result()
+	}
+	if !am.DoesAccountExist(ctx, msg.Username) {
+		return ErrAccountNotFound().Result()
+	}
+
+	amount, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+
+	if err := am.AuthorizePermission(
+		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.PreAuthorizationPermission, amount); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

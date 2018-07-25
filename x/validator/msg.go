@@ -75,6 +75,11 @@ func (msg ValidatorDepositMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg ValidatorDepositMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // ValidatorWithdrawMsg Msg Implementations
 func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdrawMsg {
 	return ValidatorWithdrawMsg{
@@ -117,6 +122,11 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg ValidatorWithdrawMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // ValidatorRevokeMsg Msg Implementations
 func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
@@ -152,4 +162,9 @@ func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
 
 func (msg ValidatorRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg ValidatorRevokeMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }

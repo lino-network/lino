@@ -92,6 +92,11 @@ func (msg VoterDepositMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg VoterDepositMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // VoterWithdrawMsg Msg Implementations
 func NewVoterWithdrawMsg(username string, amount types.LNO) VoterWithdrawMsg {
@@ -135,6 +140,11 @@ func (msg VoterWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
+// Implements Msg.
+func (msg VoterWithdrawMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // VoterRevokeMsg Msg Implementations
 
@@ -172,6 +182,11 @@ func (msg VoterRevokeMsg) GetSignBytes() []byte {
 
 func (msg VoterRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg VoterRevokeMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -222,6 +237,11 @@ func (msg DelegateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
+// Implements Msg.
+func (msg DelegateMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // RevokeDelegation Msg Implementations
 
@@ -263,6 +283,11 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 
 func (msg RevokeDelegationMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
+}
+
+// Implements Msg.
+func (msg RevokeDelegationMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -309,4 +334,9 @@ func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
 
 func (msg DelegatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
+}
+
+// Implements Msg.
+func (msg DelegatorWithdrawMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }

@@ -53,6 +53,7 @@ type GrantPubKey struct {
 	Permission types.Permission `json:"permission"`
 	CreatedAt  int64            `json:"created_at"`
 	ExpiresAt  int64            `json:"expires_at"`
+	Amount     types.Coin       `json:"amount"`
 }
 
 // AccountMeta stores tiny and frequently updated fields.

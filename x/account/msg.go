@@ -105,6 +105,11 @@ func (msg FollowMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
+// Implements Msg.
+func (msg FollowMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // Unfollow Msg Implementations
 func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	return UnfollowMsg{
@@ -146,6 +151,11 @@ func (msg UnfollowMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
+// Implements Msg.
+func (msg UnfollowMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // Claim Msg Implementations
 func NewClaimMsg(username string) ClaimMsg {
 	return ClaimMsg{
@@ -181,6 +191,11 @@ func (msg ClaimMsg) GetSignBytes() []byte {
 
 func (msg ClaimMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg ClaimMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 // Transfer Msg Implementations
@@ -234,6 +249,11 @@ func (msg TransferMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Sender)}
 }
 
+// Implements Msg.
+func (msg TransferMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // Recover Msg Implementations
 func NewRecoverMsg(
 	username string, resetPubkey, transactionPubkey,
@@ -276,6 +296,11 @@ func (msg RecoverMsg) GetSignBytes() []byte {
 
 func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg RecoverMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 // NewRegisterMsg - construct register msg.
@@ -342,6 +367,11 @@ func (msg RegisterMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Referrer)}
 }
 
+// Implements Msg.
+func (msg RegisterMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
 func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
 	return UpdateAccountMsg{
@@ -388,4 +418,9 @@ func (msg UpdateAccountMsg) GetSignBytes() []byte {
 // Implements Msg.
 func (msg UpdateAccountMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg UpdateAccountMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }

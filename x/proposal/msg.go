@@ -156,7 +156,6 @@ func (msg DeletePostContentMsg) String() string {
 func (msg DeletePostContentMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
-
 func (msg DeletePostContentMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -167,6 +166,11 @@ func (msg DeletePostContentMsg) GetSignBytes() []byte {
 
 func (msg DeletePostContentMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg DeletePostContentMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -213,6 +217,11 @@ func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
 
 func (msg UpgradeProtocolMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg UpgradeProtocolMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -265,6 +274,11 @@ func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
+// Implements Msg.
+func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // ChangeEvaluateOfContentValueParamMsg Msg Implementations
 
@@ -310,6 +324,11 @@ func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
 
 func (msg ChangeEvaluateOfContentValueParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg ChangeEvaluateOfContentValueParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -358,6 +377,11 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
 
 func (msg ChangeInfraInternalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg ChangeInfraInternalAllocationParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -413,6 +437,11 @@ func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
 
 func (msg ChangeVoteParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg ChangeVoteParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -482,6 +511,11 @@ func (msg ChangeProposalParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
+// Implements Msg.
+func (msg ChangeProposalParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // ChangeDeveloperParamMsg Msg Implementations
 
@@ -532,6 +566,11 @@ func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
 
 func (msg ChangeDeveloperParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg ChangeDeveloperParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -593,6 +632,11 @@ func (msg ChangeValidatorParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
+// Implements Msg.
+func (msg ChangeValidatorParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // ChangeAccountParamMsg Msg Implementations
 
@@ -640,6 +684,11 @@ func (msg ChangeAccountParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
+// Implements Msg.
+func (msg ChangeAccountParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // ChangePostParam Msg Implementations
 
@@ -681,6 +730,11 @@ func (msg ChangePostParamMsg) GetSignBytes() []byte {
 
 func (msg ChangePostParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
+}
+
+// Implements Msg.
+func (msg ChangePostParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
@@ -733,6 +787,11 @@ func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
+// Implements Msg.
+func (msg ChangeBandwidthParamMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 //----------------------------------------
 // VoteProposalMsg Msg Implementations
 
@@ -772,4 +831,9 @@ func (msg VoteProposalMsg) GetSignBytes() []byte {
 
 func (msg VoteProposalMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Voter)}
+}
+
+// Implements Msg.
+func (msg VoteProposalMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
 }
