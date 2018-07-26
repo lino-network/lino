@@ -13,6 +13,7 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 	accstore "github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/global"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -30,11 +31,11 @@ var (
 )
 
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (crypto.PrivKeySecp256k1,
-	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1, types.AccountKey) {
-	resetKey := crypto.GenPrivKeySecp256k1()
-	transactionKey := crypto.GenPrivKeySecp256k1()
-	appKey := crypto.GenPrivKeySecp256k1()
+	ctx sdk.Context, am acc.AccountManager, ph param.ParamHolder, username string) (secp256k1.PrivKeySecp256k1,
+	secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1, types.AccountKey) {
+	resetKey := secp256k1.GenPrivKey()
+	transactionKey := secp256k1.GenPrivKey()
+	appKey := secp256k1.GenPrivKey()
 	accParams, _ := ph.GetAccountParam(ctx)
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
 		resetKey.PubKey(), transactionKey.PubKey(), appKey.PubKey(), accParams.RegisterFee)

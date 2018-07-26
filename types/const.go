@@ -127,13 +127,25 @@ const (
 	MaximumLinkIdentifier = 20
 
 	// Maximum length of Links URL
-	MaximumLinkURL = 50
+	MaximumLinkURL = 100
 
 	// Maximum length of post ID
 	MaximumLengthOfPostID = 50
 
 	// Maximum number of links per post
 	MaximumNumOfLinks = 10
+
+	// Maximum length of developer website
+	MaximumLengthOfDeveloperWebsite = 100
+
+	// Maximum length of developer description
+	MaximumLengthOfDeveloperDesctiption = 1000
+
+	// Maximum length of developer App meta data
+	MaximumLengthOfAppMetadata = 1000
+
+	// Maximum length of proposal reason
+	MaximumLengthOfProposalReason = 1000
 
 	// Init account with full stake memo
 	InitAccountWithFullStakeMemo = "init register fee"

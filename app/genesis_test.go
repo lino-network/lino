@@ -6,17 +6,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/tendermint/crypto"
 )
 
 func TestGetGenesisJson(t *testing.T) {
-	resetPriv := crypto.GenPrivKeySecp256k1()
-	transactionPriv := crypto.GenPrivKeySecp256k1()
-	appPriv := crypto.GenPrivKeySecp256k1()
-	validatorPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := secp256k1.GenPrivKey()
+	transactionPriv := secp256k1.GenPrivKey()
+	appPriv := secp256k1.GenPrivKey()
+	validatorPriv := secp256k1.GenPrivKey()
 
 	totalLino := "10000000000"
 	genesisAcc := GenesisAccount{
@@ -56,7 +56,7 @@ func TestGetGenesisJson(t *testing.T) {
 
 func TestLinoBlockchainGenTx(t *testing.T) {
 	cdc := MakeCodec()
-	pk := crypto.GenPrivKeySecp256k1().PubKey()
+	pk := secp256k1.GenPrivKey().PubKey()
 	var genTxConfig config.GenTx
 	appGenTx, _, validator, err := LinoBlockchainGenTx(cdc, pk, genTxConfig)
 	assert.Nil(t, err)
@@ -77,11 +77,11 @@ func TestLinoBlockchainGenState(t *testing.T) {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
 			Lino:           LNOPerValidator,
-			ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
-			TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+			ResetKey:       secp256k1.GenPrivKey().PubKey(),
+			TransactionKey: secp256k1.GenPrivKey().PubKey(),
+			AppKey:         secp256k1.GenPrivKey().PubKey(),
 			IsValidator:    true,
-			ValPubKey:      crypto.GenPrivKeySecp256k1().PubKey(),
+			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
 		}
 		marshalJson, err := wire.MarshalJSONIndent(cdc, genesisAcc)
 		assert.Nil(t, err)

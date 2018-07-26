@@ -6,19 +6,19 @@ import (
 
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
-	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 // test normal revoke
 func TestValidatorRevoke(t *testing.T) {
-	newAccountResetPriv := crypto.GenPrivKeySecp256k1()
-	newAccountTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newAccountAppPriv := crypto.GenPrivKeySecp256k1()
+	newAccountResetPriv := secp256k1.GenPrivKey()
+	newAccountTransactionPriv := secp256k1.GenPrivKey()
+	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
-	newValidatorPriv := crypto.GenPrivKeySecp256k1()
+	newValidatorPriv := secp256k1.GenPrivKey()
 
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)

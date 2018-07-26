@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 var (
@@ -252,9 +253,9 @@ func TestHandleAccountRecover(t *testing.T) {
 	}{
 		"normal case": {
 			user:              user1,
-			newResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
-			newTransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			newAppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+			newResetKey:       secp256k1.GenPrivKey().PubKey(),
+			newTransactionKey: secp256k1.GenPrivKey().PubKey(),
+			newAppKey:         secp256k1.GenPrivKey().PubKey(),
 		},
 	}
 
@@ -303,9 +304,9 @@ func TestHandleRegister(t *testing.T) {
 			testName: "normal case",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user1", "1",
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
 			),
 			expectResult:         sdk.Result{},
 			expectReferrerSaving: c100,
@@ -314,9 +315,9 @@ func TestHandleRegister(t *testing.T) {
 			testName: "account already exist",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user1", "1",
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
 			),
 			expectResult:         ErrAccountAlreadyExists("user1").Result(),
 			expectReferrerSaving: types.NewCoinFromInt64(99 * types.Decimals),
@@ -325,9 +326,9 @@ func TestHandleRegister(t *testing.T) {
 			testName: "account register fee insufficient",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user2", "0.1",
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
 			),
 			expectResult:         ErrRegisterFeeInsufficient().Result(),
 			expectReferrerSaving: types.NewCoinFromInt64(9890000),
@@ -336,9 +337,9 @@ func TestHandleRegister(t *testing.T) {
 			testName: "referrer deposit insufficient",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user2", "1000",
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
 			),
 			expectResult:         ErrAccountSavingCoinNotEnough().Result(),
 			expectReferrerSaving: types.NewCoinFromInt64(9890000),

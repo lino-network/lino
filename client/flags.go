@@ -26,6 +26,9 @@ const (
 	// Developer
 	FlagDeveloper   = "developer"
 	FlagDeposit     = "deposit"
+	FlagWebsite     = "website"
+	FlagDescription = "description"
+	FlagAppMeta     = "appmeta"
 	FlagUser        = "user"
 	FlagReferrer    = "referrer"
 	FlagSeconds     = "seconds"

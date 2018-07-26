@@ -7,8 +7,7 @@ import (
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
-
-	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // test normal transfer to account name
@@ -18,7 +17,7 @@ func TestTransferToAccount(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), crypto.GenPrivKeySecp256k1(), "100")
+		secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
 
 	transferMsg := acc.NewTransferMsg(
 		test.GenesisUser, newAccountName, types.LNO("200"), "")

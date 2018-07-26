@@ -28,6 +28,18 @@ func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalid Username"))
 }
 
+func ErrInvalidWebsite() sdk.Error {
+	return types.NewError(types.CodeInvalidWebsite, fmt.Sprintf("Invalid website"))
+}
+
+func ErrInvalidDescription() sdk.Error {
+	return types.NewError(types.CodeInvalidDescription, fmt.Sprintf("Invalid description"))
+}
+
+func ErrInvalidAppMetadata() sdk.Error {
+	return types.NewError(types.CodeInvalidAppMetadata, fmt.Sprintf("Invalid metadata"))
+}
+
 func ErrInvalidAuthorizedApp() sdk.Error {
 	return types.NewError(types.CodeInvalidAuthorizedApp, fmt.Sprintf("invalid authorized app"))
 }

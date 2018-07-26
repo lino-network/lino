@@ -41,6 +41,7 @@ var _ ProtocolUpgradeMsg = UpgradeProtocolMsg{}
 type ChangeParamMsg interface {
 	GetParameter() param.Parameter
 	GetCreator() types.AccountKey
+	GetReason() string
 }
 
 type ContentCensorshipMsg interface {
@@ -52,6 +53,7 @@ type ContentCensorshipMsg interface {
 type ProtocolUpgradeMsg interface {
 	GetCreator() types.AccountKey
 	GetLink() string
+	GetReason() string
 }
 
 type DeletePostContentMsg struct {
@@ -63,56 +65,67 @@ type DeletePostContentMsg struct {
 type UpgradeProtocolMsg struct {
 	Creator types.AccountKey `json:"creator"`
 	Link    string           `json:"link"`
+	Reason  string           `json:"reason"`
 }
 
 type ChangeGlobalAllocationParamMsg struct {
 	Creator   types.AccountKey            `json:"creator"`
 	Parameter param.GlobalAllocationParam `json:"parameter"`
+	Reason    string                      `json:"reason"`
 }
 
 type ChangeEvaluateOfContentValueParamMsg struct {
 	Creator   types.AccountKey                  `json:"creator"`
 	Parameter param.EvaluateOfContentValueParam `json:"parameter"`
+	Reason    string                            `json:"reason"`
 }
 
 type ChangeInfraInternalAllocationParamMsg struct {
 	Creator   types.AccountKey                   `json:"creator"`
 	Parameter param.InfraInternalAllocationParam `json:"parameter"`
+	Reason    string                             `json:"reason"`
 }
 
 type ChangeVoteParamMsg struct {
 	Creator   types.AccountKey `json:"creator"`
 	Parameter param.VoteParam  `json:"parameter"`
+	Reason    string           `json:"reason"`
 }
 
 type ChangeProposalParamMsg struct {
 	Creator   types.AccountKey    `json:"creator"`
 	Parameter param.ProposalParam `json:"parameter"`
+	Reason    string              `json:"reason"`
 }
 
 type ChangeDeveloperParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.DeveloperParam `json:"parameter"`
+	Reason    string               `json:"reason"`
 }
 
 type ChangeValidatorParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.ValidatorParam `json:"parameter"`
+	Reason    string               `json:"reason"`
 }
 
 type ChangeBandwidthParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.BandwidthParam `json:"parameter"`
+	Reason    string               `json:"reason"`
 }
 
 type ChangeAccountParamMsg struct {
 	Creator   types.AccountKey   `json:"creator"`
 	Parameter param.AccountParam `json:"parameter"`
+	Reason    string             `json:"reason"`
 }
 
 type ChangePostParamMsg struct {
 	Creator   types.AccountKey `json:"creator"`
 	Parameter param.PostParam  `json:"parameter"`
+	Reason    string           `json:"reason"`
 }
 
 type VoteProposalMsg struct {
@@ -146,6 +159,9 @@ func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
 	if len(msg.GetPermlink()) == 0 {
 		return ErrInvalidPermlink()
 	}
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -177,15 +193,17 @@ func (msg DeletePostContentMsg) GetConsumeAmount() types.Coin {
 // UpgradeProtocolMsg Msg Implementations
 
 func NewUpgradeProtocolMsg(
-	creator string, link string) UpgradeProtocolMsg {
+	creator, link, reason string) UpgradeProtocolMsg {
 	return UpgradeProtocolMsg{
 		Creator: types.AccountKey(creator),
 		Link:    link,
+		Reason:  reason,
 	}
 }
 
 func (msg UpgradeProtocolMsg) GetCreator() types.AccountKey { return msg.Creator }
 func (msg UpgradeProtocolMsg) GetLink() string              { return msg.Link }
+func (msg UpgradeProtocolMsg) GetReason() string            { return msg.Reason }
 func (msg UpgradeProtocolMsg) Type() string                 { return types.ProposalRouterName }
 
 func (msg UpgradeProtocolMsg) ValidateBasic() sdk.Error {
@@ -195,6 +213,12 @@ func (msg UpgradeProtocolMsg) ValidateBasic() sdk.Error {
 	}
 	if len(msg.GetLink()) == 0 {
 		return ErrInvalidLink()
+	}
+	if len(msg.GetLink()) > types.MaximumLinkURL {
+		return ErrInvalidLink()
+	}
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
 	}
 	return nil
 }
@@ -227,15 +251,18 @@ func (msg UpgradeProtocolMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeGlobalAllocationParamMsg Msg Implementations
 
-func NewChangeGlobalAllocationParamMsg(creator string, parameter param.GlobalAllocationParam) ChangeGlobalAllocationParamMsg {
+func NewChangeGlobalAllocationParamMsg(
+	creator string, parameter param.GlobalAllocationParam, reason string) ChangeGlobalAllocationParamMsg {
 	return ChangeGlobalAllocationParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeGlobalAllocationParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeGlobalAllocationParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeGlobalAllocationParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeGlobalAllocationParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
@@ -257,6 +284,9 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -288,15 +318,18 @@ func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeEvaluateOfContentValueParamMsg Msg Implementations
 
-func NewChangeEvaluateOfContentValueParamMsg(creator string, parameter param.EvaluateOfContentValueParam) ChangeEvaluateOfContentValueParamMsg {
+func NewChangeEvaluateOfContentValueParamMsg(
+	creator string, parameter param.EvaluateOfContentValueParam, reason string) ChangeEvaluateOfContentValueParamMsg {
 	return ChangeEvaluateOfContentValueParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeEvaluateOfContentValueParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeEvaluateOfContentValueParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeEvaluateOfContentValueParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeEvaluateOfContentValueParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
@@ -309,6 +342,9 @@ func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -340,15 +376,18 @@ func (msg ChangeEvaluateOfContentValueParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeInfraInternalAllocationParamMsg Msg Implementations
 
-func NewChangeInfraInternalAllocationParamMsg(creator string, parameter param.InfraInternalAllocationParam) ChangeInfraInternalAllocationParamMsg {
+func NewChangeInfraInternalAllocationParamMsg(
+	creator string, parameter param.InfraInternalAllocationParam, reason string) ChangeInfraInternalAllocationParamMsg {
 	return ChangeInfraInternalAllocationParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeInfraInternalAllocationParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeInfraInternalAllocationParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeInfraInternalAllocationParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeInfraInternalAllocationParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
@@ -362,6 +401,9 @@ func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -393,15 +435,18 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeVoteParamMsg Msg Implementations
 
-func NewChangeVoteParamMsg(creator string, parameter param.VoteParam) ChangeVoteParamMsg {
+func NewChangeVoteParamMsg(
+	creator string, parameter param.VoteParam, reason string) ChangeVoteParamMsg {
 	return ChangeVoteParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeVoteParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeVoteParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeVoteParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeVoteParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
@@ -421,6 +466,9 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 		!msg.Parameter.VoterMinDeposit.IsPositive() ||
 		!msg.Parameter.VoterMinWithdraw.IsPositive() {
 		return ErrIllegalParameter()
+	}
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
 	}
 	return nil
 }
@@ -453,15 +501,18 @@ func (msg ChangeVoteParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeProposalParamMsg Msg Implementations
 
-func NewChangeProposalParamMsg(creator string, parameter param.ProposalParam) ChangeProposalParamMsg {
+func NewChangeProposalParamMsg(
+	creator string, parameter param.ProposalParam, reason string) ChangeProposalParamMsg {
 	return ChangeProposalParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeProposalParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeProposalParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeProposalParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeProposalParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
@@ -494,6 +545,9 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -525,15 +579,18 @@ func (msg ChangeProposalParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeDeveloperParamMsg Msg Implementations
 
-func NewChangeDeveloperParamMsg(creator string, parameter param.DeveloperParam) ChangeDeveloperParamMsg {
+func NewChangeDeveloperParamMsg(
+	creator string, parameter param.DeveloperParam, reason string) ChangeDeveloperParamMsg {
 	return ChangeDeveloperParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeDeveloperParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeDeveloperParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeDeveloperParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeDeveloperParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
@@ -551,6 +608,9 @@ func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -582,15 +642,17 @@ func (msg ChangeDeveloperParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeValidatorParamMsg Msg Implementations
 
-func NewChangeValidatorParamMsg(creator string, parameter param.ValidatorParam) ChangeValidatorParamMsg {
+func NewChangeValidatorParamMsg(creator string, parameter param.ValidatorParam, reason string) ChangeValidatorParamMsg {
 	return ChangeValidatorParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeValidatorParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeValidatorParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeValidatorParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeValidatorParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
@@ -615,6 +677,9 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -646,15 +711,18 @@ func (msg ChangeValidatorParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeAccountParamMsg Msg Implementations
 
-func NewChangeAccountParamMsg(creator string, parameter param.AccountParam) ChangeAccountParamMsg {
+func NewChangeAccountParamMsg(
+	creator string, parameter param.AccountParam, reason string) ChangeAccountParamMsg {
 	return ChangeAccountParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeAccountParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeAccountParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeAccountParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeAccountParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
@@ -666,6 +734,9 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.MinimumBalance) ||
 		types.NewCoinFromInt64(0).IsGT(msg.Parameter.RegisterFee) {
 		return ErrIllegalParameter()
+	}
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
 	}
 	return nil
 }
@@ -698,15 +769,18 @@ func (msg ChangeAccountParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangePostParam Msg Implementations
 
-func NewChangePostParamMsg(creator string, parameter param.PostParam) ChangePostParamMsg {
+func NewChangePostParamMsg(
+	creator string, parameter param.PostParam, reason string) ChangePostParamMsg {
 	return ChangePostParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangePostParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangePostParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangePostParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangePostParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
@@ -715,6 +789,9 @@ func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
+	}
 	return nil
 }
 
@@ -746,15 +823,18 @@ func (msg ChangePostParamMsg) GetConsumeAmount() types.Coin {
 //----------------------------------------
 // ChangeBandwidthParamMsg Msg Implementations
 
-func NewChangeBandwidthParamMsg(creator string, parameter param.BandwidthParam) ChangeBandwidthParamMsg {
+func NewChangeBandwidthParamMsg(
+	creator string, parameter param.BandwidthParam, reason string) ChangeBandwidthParamMsg {
 	return ChangeBandwidthParamMsg{
 		Creator:   types.AccountKey(creator),
 		Parameter: parameter,
+		Reason:    reason,
 	}
 }
 
 func (msg ChangeBandwidthParamMsg) GetParameter() param.Parameter { return msg.Parameter }
 func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
+func (msg ChangeBandwidthParamMsg) GetReason() string             { return msg.Reason }
 func (msg ChangeBandwidthParamMsg) Type() string                  { return types.ProposalRouterName }
 
 func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
@@ -769,6 +849,9 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 
 	if msg.Parameter.SecondsToRecoverBandwidth <= 0 {
 		return ErrIllegalParameter()
+	}
+	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+		return ErrReasonTooLong()
 	}
 	return nil
 }

@@ -76,3 +76,44 @@ func TestReportConsumption(t *testing.T) {
 		dm.ClearConsumption(ctx)
 	}
 }
+
+func TestUpdateDeveloper(t *testing.T) {
+	ctx, _, dm, _ := setupTest(t, 0)
+	dm.InitGenesis(ctx)
+
+	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
+	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit, "", "", "")
+	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit, "", "", "")
+
+	testCases := map[string]struct {
+		changeDeveloperName types.AccountKey
+		newWebsite          string
+		newDescription      string
+		newAppMetaData      string
+	}{
+		"test normal update": {
+			changeDeveloperName: "developer1",
+			newWebsite:          "https://lino.network",
+			newDescription:      "decentralized autonomous video content economy",
+			newAppMetaData:      "{'name':'lino'}",
+		},
+	}
+	for testName, tc := range testCases {
+		dm.UpdateDeveloper(
+			ctx, tc.changeDeveloperName, tc.newWebsite, tc.newDescription, tc.newAppMetaData)
+		developer, err := dm.storage.GetDeveloper(ctx, tc.changeDeveloperName)
+		assert.Nil(t, err)
+		if developer.Website != tc.newWebsite {
+			t.Errorf("%s: diff website, got %v, want %v", testName, developer.Website, tc.newWebsite)
+			return
+		}
+		if developer.Description != tc.newDescription {
+			t.Errorf("%s: diff description, got %v, want %v", testName, developer.Description, tc.newDescription)
+			return
+		}
+		if developer.AppMetaData != tc.newAppMetaData {
+			t.Errorf("%s: diff app metadata, got %v, want %v", testName, developer.AppMetaData, tc.newAppMetaData)
+			return
+		}
+	}
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/spf13/pflag"
 	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -75,9 +76,9 @@ type GenesisInfraProvider struct {
 
 func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
-	resetPriv := crypto.GenPrivKeySecp256k1()
-	transactionPriv := crypto.GenPrivKeySecp256k1()
-	appPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := secp256k1.GenPrivKey()
+	transactionPriv := secp256k1.GenPrivKey()
+	appPriv := secp256k1.GenPrivKey()
 
 	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))

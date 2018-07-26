@@ -47,6 +47,10 @@ func (msg ValidatorDepositMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
+	if len(msg.Link) > types.MaximumLinkURL {
+		return ErrInvalidWebsite()
+	}
+
 	_, err := types.LinoToCoin(msg.Deposit)
 	if err != nil {
 		return err

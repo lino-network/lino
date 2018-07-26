@@ -12,14 +12,14 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // test normal transfer and register
 func TestTransferAndRegisterAccount(t *testing.T) {
-	newResetPriv := crypto.GenPrivKeySecp256k1()
-	newTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newAppPriv := crypto.GenPrivKeySecp256k1()
+	newResetPriv := secp256k1.GenPrivKey()
+	newTransactionPriv := secp256k1.GenPrivKey()
+	newAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
@@ -36,9 +36,9 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 
 // register failed if register fee is insufficient
 func TestRegisterAccountFailed(t *testing.T) {
-	newResetPriv := crypto.GenPrivKeySecp256k1()
-	newTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newAppPriv := crypto.GenPrivKeySecp256k1()
+	newResetPriv := secp256k1.GenPrivKey()
+	newTransactionPriv := secp256k1.GenPrivKey()
+	newAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)

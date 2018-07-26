@@ -8,27 +8,26 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post"
-
-	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // test donate to a normal post
 func TestNormalDonation(t *testing.T) {
-	newPostUserTransactionPriv := crypto.GenPrivKeySecp256k1()
-	newPostUserAppPriv := crypto.GenPrivKeySecp256k1()
+	newPostUserTransactionPriv := secp256k1.GenPrivKey()
+	newPostUserAppPriv := secp256k1.GenPrivKey()
 	newPostUser := "poster"
 	postID := "New Post"
 
-	newDonateUserTransactionPriv := crypto.GenPrivKeySecp256k1()
+	newDonateUserTransactionPriv := secp256k1.GenPrivKey()
 	newDonateUser := "donator"
 	// recover some stake
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
 	test.CreateAccount(t, newPostUser, lb, 0,
-		crypto.GenPrivKeySecp256k1(), newPostUserTransactionPriv, newPostUserAppPriv, "100")
+		secp256k1.GenPrivKey(), newPostUserTransactionPriv, newPostUserAppPriv, "100")
 	test.CreateAccount(t, newDonateUser, lb, 1,
-		crypto.GenPrivKeySecp256k1(), newDonateUserTransactionPriv, crypto.GenPrivKeySecp256k1(), "100")
+		secp256k1.GenPrivKey(), newDonateUserTransactionPriv, secp256k1.GenPrivKey(), "100")
 
 	test.CreateTestPost(
 		t, lb, newPostUser, postID, 0, newPostUserAppPriv, "", "", "", "", "0", baseTime)

@@ -31,6 +31,10 @@ func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("Invalida Username"))
 }
 
+func ErrInvalidWebsite() sdk.Error {
+	return types.NewError(types.CodeInvalidWebsite, fmt.Sprintf("Invalida website"))
+}
+
 func ErrValidatorPubKeyAlreadyExist() sdk.Error {
 	return types.NewError(types.CodeValidatorPubKeyAlreadyExist, fmt.Sprintf("validator public key has been registered"))
 }

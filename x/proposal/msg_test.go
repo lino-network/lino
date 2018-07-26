@@ -53,18 +53,24 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	}{
 		{
 			testName:                       "normal case",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p1),
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p1, ""),
 			expectedError:                  nil,
 		},
 		{
 			testName:                       "illegal parameter",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p2),
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p2, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
 			testName:                       "empty username is illegal",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("", p1),
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("", p1, ""),
 			expectedError:                  ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -91,18 +97,24 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 	}{
 		{
 			testName: "normal case",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1),
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1, ""),
 			expectedError:                         nil,
 		},
 		{
 			testName: "illegal parameter",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2),
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
 			testName: "empty username is illegal",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1),
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1, ""),
 			expectedError:                         ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -153,48 +165,54 @@ func TestChangeVoteParamMsg(t *testing.T) {
 	}{
 		{
 			testName:           "normal case",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p1),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p1, ""),
 			expectedError:      nil,
 		},
 		{
 			testName:           "negative voter min deposit is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "zero voter min withdraw is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p3),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p3, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "zero delegator min withdraw is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p4),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p4, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "zero VoterCoinReturnIntervalHr is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p5),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p5, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "zero VoterCoinReturnTimes is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p6),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p6, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "negative DelegatorCoinReturnIntervalHr is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p7),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p7, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "zero DelegatorCoinReturnTimes is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p8),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p8, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
 			testName:           "empty username is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("", p1),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("", p1, ""),
 			expectedError:      ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -229,28 +247,34 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 	}{
 		{
 			testName:                "normal case",
-			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p1),
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p1, ""),
 			expectedError:           nil,
 		},
 		{
 			testName:                "negative DeveloperCoinReturnTimes is illegal",
-			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p2),
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p2, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "zero DeveloperCoinReturnIntervalHr is illegal",
-			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p3),
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p3, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative DeveloperMinDeposit is iilegal",
-			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p4),
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("user1", p4, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "empty username is illegal",
-			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("", p1),
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg("", p1, ""),
 			expectedError:           ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -313,63 +337,69 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	}{
 		{
 			testName:                "normal case",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p1),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p1, ""),
 			expectedError:           nil,
 		},
 		{
 			testName:                "negative ValidatorMinWithdraw is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p2),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p2, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "zero ValidatorMinVotingDeposit is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p3),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p3, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative ValidatorMinCommitingDeposit is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p4),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p4, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative ValidatorCoinReturnIntervalHr is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p5),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p5, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "zero ValidatorCoinReturnTimes is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p6),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p6, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative PenaltyMissVote is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p7),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p7, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative PenaltyByzantine is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p8),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p8, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "zero PenaltyMissCommit is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p9),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p9, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "zero AbsentCommitLimitation is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p10),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p10, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative ValidatorListSize is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p11),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p11, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "empty username is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("", p1),
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("", p1, ""),
 			expectedError:           ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -442,73 +472,79 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	}{
 		{
 			testName:               "normal case",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p1),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p1, ""),
 			expectedError:          nil,
 		},
 		{
 			testName:               "invalid username",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("", p1),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("", p1, ""),
 			expectedError:          ErrInvalidUsername(),
 		},
 		{
 			testName:               "negative ContentCensorshipDecideHr is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p2),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p2, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "ContentCensorshipPassRatio that is larger than one is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p3),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p3, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ContentCensorshipPassVotes is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p4),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p4, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ContentCensorshipMinDeposit is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p5),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p5, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ChangeParamDecideHr is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p6),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p6, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "zero ChangeParamPassRatio is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p7),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p7, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "zero ChangeParamPassVotes is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p8),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p8, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ChangeParamMinDeposit is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p9),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p9, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "zero ProtocolUpgradeDecideHr is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p10),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p10, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "zero ProtocolUpgradePassRatio is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p11),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p11, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ProtocolUpgradePassVotes is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p12),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p12, ""),
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
 			testName:               "negative ProtocolUpgradeMinDeposit is illegal",
-			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p13),
+			ChangeProposalParamMsg: NewChangeProposalParamMsg("user1", p13, ""),
 			expectedError:          ErrIllegalParameter(),
+		},
+		{
+			testName: "reason too long",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -542,33 +578,39 @@ func TestChangeAccountParamMsg(t *testing.T) {
 	}{
 		{
 			testName:              "normal case",
-			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p1),
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p1, ""),
 			expectedError:         nil,
 		},
 		{
 			testName:              "too short username is invalid",
-			changeAccountParamMsg: NewChangeAccountParamMsg("us", p1),
+			changeAccountParamMsg: NewChangeAccountParamMsg("us", p1, ""),
 			expectedError:         ErrInvalidUsername(),
 		},
 		{
 			testName:              "too long username is invalid",
-			changeAccountParamMsg: NewChangeAccountParamMsg("user1user1user1user1user1user1", p1),
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1user1user1user1user1user1", p1, ""),
 			expectedError:         ErrInvalidUsername(),
 		},
 		{
 			testName:              "zero MinimumBalance is invalid",
-			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p2),
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p2, ""),
 			expectedError:         nil,
 		},
 		{
 			testName:              "zero RegisterFee is invalid",
-			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p3),
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p3, ""),
 			expectedError:         nil,
 		},
 		{
 			testName:              "negative RegisterFee is invalid",
-			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p4),
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p4, ""),
 			expectedError:         ErrIllegalParameter(),
+		},
+		{
+			testName: "reason too long",
+			changeAccountParamMsg: NewChangeAccountParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -599,28 +641,34 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 	}{
 		{
 			testName:                "normal case",
-			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p1),
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p1, ""),
 			expectedError:           nil,
 		},
 		{
 			testName:                "too short username is illegal",
-			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("us", p1),
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("us", p1, ""),
 			expectedError:           ErrInvalidUsername(),
 		},
 		{
 			testName:                "too long username is illegal",
-			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1),
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1user1user1user1user1user1", p1, ""),
 			expectedError:           ErrInvalidUsername(),
 		},
 		{
 			testName:                "negative SecondsToRecoverBandwidth is illegal",
-			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p2),
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p2, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
 			testName:                "negative CapacityUsagePerTransaction is illegal",
-			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p3),
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p3, ""),
 			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName: "reason too long",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -655,28 +703,34 @@ func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 	}{
 		{
 			testName:              "normal case",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p1),
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p1, ""),
 			expectedError:         nil,
 		},
 		{
 			testName:              "zero ConsumptionTimeAdjustBase is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p2),
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p2, ""),
 			expectedError:         ErrIllegalParameter(),
 		},
 		{
 			testName:              "zero TotalAmountOfConsumptionBase is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p3),
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p3, ""),
 			expectedError:         ErrIllegalParameter(),
 		},
 		{
 			testName:              "too short username is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("us", p1),
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("us", p1, ""),
 			expectedError:         ErrInvalidUsername(),
 		},
 		{
 			testName:              "too long username is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1),
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1, ""),
 			expectedError:         ErrInvalidUsername(),
+		},
+		{
+			testName: "reason too long",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg(
+				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
 		},
 	}
 
@@ -714,6 +768,12 @@ func TestDeletePostContentMsg(t *testing.T) {
 			deletePostContentMsg: NewDeletePostContentMsg("user1", "", "reason"),
 			expectedError:        ErrInvalidPermlink(),
 		},
+		{
+			testName: "reason too long",
+			deletePostContentMsg: NewDeletePostContentMsg(
+				"user1", "permlink", string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -732,22 +792,22 @@ func TestUpgradeProtocolMsg(t *testing.T) {
 	}{
 		{
 			testName:           "normal case",
-			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "link"),
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "link", ""),
 			expectedError:      nil,
 		},
 		{
 			testName:           "too short username is illegal",
-			upgradeProtocolMsg: NewUpgradeProtocolMsg("us", "link"),
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("us", "link", ""),
 			expectedError:      ErrInvalidUsername(),
 		},
 		{
 			testName:           "too long username is illegal",
-			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link"),
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1user1user1user1user1user1", "link", ""),
 			expectedError:      ErrInvalidUsername(),
 		},
 		{
 			testName:           "empty link is illegal",
-			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", ""),
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "", ""),
 			expectedError:      ErrInvalidLink(),
 		},
 	}
@@ -774,67 +834,67 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "upgrade protocal msg",
-			msg:              NewUpgradeProtocolMsg("creator", "link"),
+			msg:              NewUpgradeProtocolMsg("creator", "link", ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change global allocaiton param msg",
 			msg: NewChangeGlobalAllocationParamMsg(
-				"creator", param.GlobalAllocationParam{}),
+				"creator", param.GlobalAllocationParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change evaluate of content value param msg",
 			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}),
+				"creator", param.EvaluateOfContentValueParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change vote param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change proposal param msg",
 			msg: NewChangeProposalParamMsg(
-				"creator", param.ProposalParam{}),
+				"creator", param.ProposalParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change developer param msg",
 			msg: NewChangeDeveloperParamMsg(
-				"creator", param.DeveloperParam{}),
+				"creator", param.DeveloperParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change validator param msg",
 			msg: NewChangeValidatorParamMsg(
-				"creator", param.ValidatorParam{}),
+				"creator", param.ValidatorParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change bandwidth param msg",
 			msg: NewChangeBandwidthParamMsg(
-				"creator", param.BandwidthParam{}),
+				"creator", param.BandwidthParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change account param msg",
 			msg: NewChangeAccountParamMsg(
-				"creator", param.AccountParam{}),
+				"creator", param.AccountParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
 			testName: "change post param msg",
 			msg: NewChangePostParamMsg(
-				"creator", param.PostParam{}),
+				"creator", param.PostParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
@@ -865,57 +925,57 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "upgrade protocal msg",
-			msg:      NewUpgradeProtocolMsg("creator", "link"),
+			msg:      NewUpgradeProtocolMsg("creator", "link", ""),
 		},
 		{
 			testName: "change global allocaiton param msg",
 			msg: NewChangeGlobalAllocationParamMsg(
-				"creator", param.GlobalAllocationParam{}),
+				"creator", param.GlobalAllocationParam{}, ""),
 		},
 		{
 			testName: "change evaluate of content value param msg",
 			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}),
+				"creator", param.EvaluateOfContentValueParam{}, ""),
 		},
 		{
 			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 		},
 		{
 			testName: "change vote param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 		},
 		{
 			testName: "change proposal param msg",
 			msg: NewChangeProposalParamMsg(
-				"creator", param.ProposalParam{}),
+				"creator", param.ProposalParam{}, ""),
 		},
 		{
 			testName: "change developer param msg",
 			msg: NewChangeDeveloperParamMsg(
-				"creator", param.DeveloperParam{}),
+				"creator", param.DeveloperParam{}, ""),
 		},
 		{
 			testName: "change validator param msg",
 			msg: NewChangeValidatorParamMsg(
-				"creator", param.ValidatorParam{}),
+				"creator", param.ValidatorParam{}, ""),
 		},
 		{
 			testName: "change bandwidth param msg",
 			msg: NewChangeBandwidthParamMsg(
-				"creator", param.BandwidthParam{}),
+				"creator", param.BandwidthParam{}, ""),
 		},
 		{
 			testName: "change account param msg",
 			msg: NewChangeAccountParamMsg(
-				"creator", param.AccountParam{}),
+				"creator", param.AccountParam{}, ""),
 		},
 		{
 			testName: "change post param msg",
 			msg: NewChangePostParamMsg(
-				"creator", param.PostParam{}),
+				"creator", param.PostParam{}, ""),
 		},
 		{
 			testName: "vote proposal msg",
@@ -942,67 +1002,67 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "upgrade protocal msg",
-			msg:           NewUpgradeProtocolMsg("creator", "link"),
+			msg:           NewUpgradeProtocolMsg("creator", "link", ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change global allocaiton param msg",
 			msg: NewChangeGlobalAllocationParamMsg(
-				"creator", param.GlobalAllocationParam{}),
+				"creator", param.GlobalAllocationParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change evaluate of content value param msg",
 			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}),
+				"creator", param.EvaluateOfContentValueParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change vote param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}),
+				"creator", param.InfraInternalAllocationParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change proposal param msg",
 			msg: NewChangeProposalParamMsg(
-				"creator", param.ProposalParam{}),
+				"creator", param.ProposalParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change developer param msg",
 			msg: NewChangeDeveloperParamMsg(
-				"creator", param.DeveloperParam{}),
+				"creator", param.DeveloperParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change validator param msg",
 			msg: NewChangeValidatorParamMsg(
-				"creator", param.ValidatorParam{}),
+				"creator", param.ValidatorParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change bandwidth param msg",
 			msg: NewChangeBandwidthParamMsg(
-				"creator", param.BandwidthParam{}),
+				"creator", param.BandwidthParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change account param msg",
 			msg: NewChangeAccountParamMsg(
-				"creator", param.AccountParam{}),
+				"creator", param.AccountParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
 			testName: "change post param msg",
 			msg: NewChangePostParamMsg(
-				"creator", param.PostParam{}),
+				"creator", param.PostParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
