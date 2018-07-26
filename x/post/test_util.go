@@ -12,7 +12,7 @@ import (
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,8 +93,8 @@ func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.Permlink, postMe
 func createTestAccount(
 	t *testing.T, ctx sdk.Context, am acc.AccountManager, username string) types.AccountKey {
 	err := am.CreateAccount(ctx, referrer, types.AccountKey(username),
-		crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-		crypto.GenPrivKeySecp256k1().PubKey(), initCoin)
+		secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(), initCoin)
 	assert.Nil(t, err)
 	return types.AccountKey(username)
 }

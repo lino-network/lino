@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -755,9 +756,9 @@ func TestAddBalanceHistory(t *testing.T) {
 func TestCreateAccountNormalCase(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
 
-	resetPriv := crypto.GenPrivKeySecp256k1()
-	txPriv := crypto.GenPrivKeySecp256k1()
-	appPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := secp256k1.GenPrivKey()
+	txPriv := secp256k1.GenPrivKey()
+	appPriv := secp256k1.GenPrivKey()
 
 	accKey := types.AccountKey("accKey")
 
@@ -825,9 +826,9 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 	ctx, am, accParam := setupTest(t, 1)
 
-	resetPriv := crypto.GenPrivKeySecp256k1()
-	txPriv := crypto.GenPrivKeySecp256k1()
-	appPriv := crypto.GenPrivKeySecp256k1()
+	resetPriv := secp256k1.GenPrivKey()
+	txPriv := secp256k1.GenPrivKey()
+	appPriv := secp256k1.GenPrivKey()
 
 	accKey := types.AccountKey("accKey")
 
@@ -923,8 +924,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 func TestInvalidCreateAccount(t *testing.T) {
 	ctx, am, accParam := setupTest(t, 1)
-	priv1 := crypto.GenPrivKeySecp256k1()
-	priv2 := crypto.GenPrivKeySecp256k1()
+	priv1 := secp256k1.GenPrivKey()
+	priv2 := secp256k1.GenPrivKey()
 
 	accKey1 := types.AccountKey("accKey1")
 	accKey2 := types.AccountKey("accKey2")
@@ -976,8 +977,8 @@ func TestInvalidCreateAccount(t *testing.T) {
 	for _, tc := range testCases {
 		err := am.CreateAccount(
 			ctx, accountReferrer, tc.username, tc.privKey.PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), tc.registerFee)
+			secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), tc.registerFee)
 		if !assert.Equal(t, tc.expectErr, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
@@ -1376,9 +1377,9 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	appPermissionUser := types.AccountKey("user2")
 	preAuthPermissionUser := types.AccountKey("user3")
 	unauthUser := types.AccountKey("user4")
-	resetKey := crypto.GenPrivKeyEd25519()
-	transactionKey := crypto.GenPrivKeyEd25519()
-	appKey := crypto.GenPrivKeyEd25519()
+	resetKey := secp256k1.GenPrivKey()
+	transactionKey := secp256k1.GenPrivKey()
+	appKey := secp256k1.GenPrivKey()
 	am.CreateAccount(
 		ctx, accountReferrer, user1, resetKey.PubKey(), transactionKey.PubKey(),
 		appKey.PubKey(), accParam.RegisterFee)
@@ -1937,9 +1938,9 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	createTestAccount(ctx, am, string(user1))
 
-	newResetPrivKey := crypto.GenPrivKeySecp256k1()
-	newTransactionPrivKey := crypto.GenPrivKeySecp256k1()
-	newAppPrivKey := crypto.GenPrivKeySecp256k1()
+	newResetPrivKey := secp256k1.GenPrivKey()
+	newTransactionPrivKey := secp256k1.GenPrivKey()
+	newAppPrivKey := secp256k1.GenPrivKey()
 
 	err = am.RecoverAccount(
 		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),

@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,11 +77,11 @@ func getContext(height int64) sdk.Context {
 		false, log.NewNopLogger())
 }
 
-func createTestAccount(ctx sdk.Context, am AccountManager, username string) (crypto.PrivKeySecp256k1,
-	crypto.PrivKeySecp256k1, crypto.PrivKeySecp256k1) {
-	resetPriv := crypto.GenPrivKeySecp256k1()
-	txPriv := crypto.GenPrivKeySecp256k1()
-	appPriv := crypto.GenPrivKeySecp256k1()
+func createTestAccount(ctx sdk.Context, am AccountManager, username string) (secp256k1.PrivKeySecp256k1,
+	secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1) {
+	resetPriv := secp256k1.GenPrivKey()
+	txPriv := secp256k1.GenPrivKey()
+	appPriv := secp256k1.GenPrivKey()
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),

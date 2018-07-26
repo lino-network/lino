@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
-	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -33,7 +33,7 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 func TestValidator(t *testing.T) {
 	ctx, vs := setup(t)
 
-	priv := crypto.GenPrivKeySecp256k1()
+	priv := secp256k1.GenPrivKey()
 	testCases := []struct {
 		testName string
 		power    int64

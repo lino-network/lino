@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,9 +35,9 @@ func TestAccountInfo(t *testing.T) {
 	accInfo := AccountInfo{
 		Username:       types.AccountKey("test"),
 		CreatedAt:      0,
-		ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
-		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+		ResetKey:       secp256k1.GenPrivKey().PubKey(),
+		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+		AppKey:         secp256k1.GenPrivKey().PubKey(),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -169,7 +169,7 @@ func TestAccountRewardHistory(t *testing.T) {
 func TestAccountGrantPubkey(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
-	priv := crypto.GenPrivKeySecp256k1()
+	priv := secp256k1.GenPrivKey()
 
 	grantPubKey := GrantPubKey{Amount: types.NewCoinFromInt64(0)}
 	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey(), &grantPubKey)

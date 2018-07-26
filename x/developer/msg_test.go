@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
-	crypto "github.com/tendermint/tendermint/crypto"
 )
 
 func TestDeveloperRegisterMsg(t *testing.T) {
@@ -198,17 +198,17 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 	}{
 		{
 			testName:            "revoke permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", crypto.GenPrivKeySecp256k1().PubKey()),
+			revokePermissionMsg: NewRevokePermissionMsg("user1", secp256k1.GenPrivKey().PubKey()),
 			expectError:         nil,
 		},
 		{
 			testName:            "username is too short",
-			revokePermissionMsg: NewRevokePermissionMsg("us", crypto.GenPrivKeySecp256k1().PubKey()),
+			revokePermissionMsg: NewRevokePermissionMsg("us", secp256k1.GenPrivKey().PubKey()),
 			expectError:         ErrInvalidUsername(),
 		},
 		{
 			testName:            "username is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", crypto.GenPrivKeySecp256k1().PubKey()),
+			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", secp256k1.GenPrivKey().PubKey()),
 			expectError:         ErrInvalidUsername(),
 		},
 	}
@@ -299,7 +299,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "revoke developer app permission msg",
-			msg:              NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey()),
+			msg:              NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.TransactionPermission,
 		},
 		{
@@ -347,7 +347,7 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "revoke developer post permission msg",
-			msg:           NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey()),
+			msg:           NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
@@ -394,7 +394,7 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "revoke developer post permission msg",
-			msg:      NewRevokePermissionMsg("test", crypto.GenPrivKeySecp256k1().PubKey()),
+			msg:      NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
 		},
 		{
 			testName: "preauth msg",

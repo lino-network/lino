@@ -17,6 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // SendTxCommand will create a send tx and sign it with the given key
@@ -40,9 +41,9 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		referrer := viper.GetString(client.FlagReferrer)
 		amount := viper.GetString(client.FlagAmount)
 
-		resetPriv := crypto.GenPrivKeySecp256k1()
-		transactionPriv := crypto.GenPrivKeySecp256k1()
-		appPriv := crypto.GenPrivKeySecp256k1()
+		resetPriv := secp256k1.GenPrivKey()
+		transactionPriv := secp256k1.GenPrivKey()
+		appPriv := secp256k1.GenPrivKey()
 
 		fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 		fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))

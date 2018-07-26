@@ -6,7 +6,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -201,20 +201,20 @@ func TestRecoverMsg(t *testing.T) {
 		wantCode sdk.CodeType
 	}{
 		"normal case": {
-			msg: NewRecoverMsg("test", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRecoverMsg("test", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"invalid recover - Username is too short": {
-			msg: NewRecoverMsg("te", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRecoverMsg("te", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"invalid recover - Username is too long": {
-			msg: NewRecoverMsg("testtesttesttesttesttest", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRecoverMsg("testtesttesttesttesttest", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
@@ -311,44 +311,44 @@ func TestRegisterUsername(t *testing.T) {
 		wantCode sdk.CodeType
 	}{
 		"normal case": {
-			msg: NewRegisterMsg("referrer", "newuser", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("referrer", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username minimum length": {
-			msg: NewRegisterMsg("referrer", "new", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("referrer", "new", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username maximum length": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username length exceeds requirement": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"register username length doesn't meet requirement": {
-			msg: NewRegisterMsg("referrer", "ne", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("referrer", "ne", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"referrer invalid": {
-			msg: NewRegisterMsg("", "newuser", "1", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"register fee invalid": {
-			msg: NewRegisterMsg("", "newuser", "1.", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
+			msg: NewRegisterMsg("", "newuser", "1.", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
@@ -374,8 +374,8 @@ func TestRegisterUsername(t *testing.T) {
 		"reg=ister", "register^", "register.", "reg$ister,", "Register"}
 	for _, register := range registerList {
 		msg := NewRegisterMsg(
-			"referer", register, "0", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey())
+			"referer", register, "0", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 		result := msg.ValidateBasic()
 		assert.Equal(t, result, ErrInvalidUsername("illeagle input"))
 	}
@@ -400,8 +400,8 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"recover": {
 			msg: NewRecoverMsg(
-				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.ResetPermission,
 		},
 		"claim": {
@@ -409,8 +409,8 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.AppPermission,
 		},
 		"register msg": {
-			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey()),
+			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.TransactionPermission,
 		},
 		"update msg": {
@@ -443,26 +443,26 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(
-				"userA", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
-				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 		},
 		"claim": {
 			msg: NewClaimMsg("test"),
 		},
 		"register msg with public key type Ed25519": {
-			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(), crypto.GenPrivKeyEd25519().PubKey()),
+			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 		},
 		"register msg with public key type Secp256k1": {
-			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey()),
+			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 		},
 		"update msg": {
 			msg: NewUpdateAccountMsg("user", "{'test':'test'}"),
@@ -493,16 +493,16 @@ func TestGetSigners(t *testing.T) {
 		},
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(
-				"userA", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"userA"},
 		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
-				"userA", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"userA"},
 		},
 		"claim": {
@@ -510,15 +510,15 @@ func TestGetSigners(t *testing.T) {
 			expectSigners: []types.AccountKey{"test"},
 		},
 		"register msg with public key type Ed25519": {
-			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey(),
-				crypto.GenPrivKeyEd25519().PubKey()),
+			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"referrer"},
 		},
 		"register msg with public key type Secp256k1": {
-			msg: NewRegisterMsg("referrer", "test", "0", crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey(),
-				crypto.GenPrivKeySecp256k1().PubKey()),
+			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"referrer"},
 		},
 		"update msg": {

@@ -8,8 +8,9 @@ import (
 	"github.com/lino-network/lino/client/core"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/crypto"
 
+	crypto "github.com/tendermint/tendermint/crypto"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -23,7 +24,7 @@ func NewCoreContextFromViper() core.CoreContext {
 	privKeyStr := viper.GetString(FlagPrivKey)
 	if privKeyStr != "" {
 		privKeyBytes, _ := hex.DecodeString(viper.GetString(FlagPrivKey))
-		privKey, _ = crypto.PrivKeyFromBytes(privKeyBytes)
+		privKey, _ = cryptoAmino.PrivKeyFromBytes(privKeyBytes)
 	}
 
 	return core.CoreContext{

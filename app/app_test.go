@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,9 +25,9 @@ import (
 
 var (
 	user1 = "validator0"
-	priv1 = crypto.GenPrivKeySecp256k1()
+	priv1 = secp256k1.GenPrivKey()
 	addr1 = priv1.PubKey().Address()
-	priv2 = crypto.GenPrivKeySecp256k1()
+	priv2 = secp256k1.GenPrivKey()
 	addr2 = priv2.PubKey().Address()
 
 	genesisTotalLino    types.LNO  = "10000000000"
@@ -55,8 +56,8 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		Name:           user1,
 		Lino:           LNOPerValidator,
 		ResetKey:       priv1.PubKey(),
-		TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-		AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+		AppKey:         secp256k1.GenPrivKey().PubKey(),
 		IsValidator:    true,
 		ValPubKey:      priv2.PubKey(),
 	}
@@ -65,11 +66,11 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
 			Lino:           LNOPerValidator,
-			ResetKey:       crypto.GenPrivKeySecp256k1().PubKey(),
-			TransactionKey: crypto.GenPrivKeySecp256k1().PubKey(),
-			AppKey:         crypto.GenPrivKeySecp256k1().PubKey(),
+			ResetKey:       secp256k1.GenPrivKey().PubKey(),
+			TransactionKey: secp256k1.GenPrivKey().PubKey(),
+			AppKey:         secp256k1.GenPrivKey().PubKey(),
 			IsValidator:    true,
-			ValPubKey:      crypto.GenPrivKeySecp256k1().PubKey(),
+			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -100,21 +101,21 @@ func TestGenesisAcc(t *testing.T) {
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
-		{"lino", "9000000000", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-			true, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"genesis", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-			true, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"nonvalidator", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-			false, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"developer", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-			false, crypto.GenPrivKeySecp256k1().PubKey()},
-		{"infra", "500000000", crypto.GenPrivKeySecp256k1().PubKey(),
-			crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-			false, crypto.GenPrivKeySecp256k1().PubKey()},
+		{"lino", "9000000000", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			true, secp256k1.GenPrivKey().PubKey()},
+		{"genesis", "500000000", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			true, secp256k1.GenPrivKey().PubKey()},
+		{"nonvalidator", "500000000", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			false, secp256k1.GenPrivKey().PubKey()},
+		{"developer", "500000000", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			false, secp256k1.GenPrivKey().PubKey()},
+		{"infra", "500000000", secp256k1.GenPrivKey().PubKey(),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			false, secp256k1.GenPrivKey().PubKey()},
 	}
 	genesisState := GenesisState{
 		Accounts: []GenesisAccount{},

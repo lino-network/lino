@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	crypto "github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/types"
@@ -14,6 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
 // DepositValidatorTxCmd will create a send tx and sign it with the given key
@@ -40,7 +40,7 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 			return err
 		}
 
-		pubKey, err := crypto.PubKeyFromBytes(keyBytes)
+		pubKey, err := cryptoAmino.PubKeyFromBytes(keyBytes)
 		if err != nil {
 			return err
 		}

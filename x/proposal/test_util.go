@@ -10,7 +10,7 @@ import (
 	"github.com/lino-network/lino/x/post"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -80,8 +80,8 @@ func getContext(height int64) sdk.Context {
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
 	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		crypto.GenPrivKeySecp256k1().PubKey(), crypto.GenPrivKeySecp256k1().PubKey(),
-		crypto.GenPrivKeySecp256k1().PubKey(), initCoin)
+		secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(), initCoin)
 	return types.AccountKey(username)
 }
 

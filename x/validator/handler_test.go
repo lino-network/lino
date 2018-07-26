@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +28,7 @@ func TestRegisterBasic(t *testing.T) {
 
 	// let user1 register as validator
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, sdk.Result{}, result)
@@ -62,7 +63,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 	// let user1 register as validator
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit.Minus(types.NewCoinFromInt64(1000)))
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 
 	result := handler(ctx, msg)
@@ -92,7 +93,7 @@ func TestRevokeBasic(t *testing.T) {
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -146,7 +147,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		// they will deposit min commiting deposit + 10,20,30...200, 210, 220, 230, 240
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
-		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
+		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
@@ -214,7 +215,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -257,7 +258,7 @@ func TestWithdrawBasic(t *testing.T) {
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -289,7 +290,7 @@ func TestDepositBasic(t *testing.T) {
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -326,7 +327,7 @@ func TestCommitingDepositExceedVotingDeposit(t *testing.T) {
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinVotingDeposit.Plus(types.NewCoinFromInt64(2 * types.Decimals)))
 	msg := NewValidatorDepositMsg("user1", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -339,7 +340,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 	valManager.InitGenesis(ctx)
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	msg := NewValidatorDepositMsg("qwqwndqwnd", coinToString(valParam.ValidatorMinWithdraw), valKey, "")
 	result := handler(ctx, msg)
 	assert.Equal(t, ErrAccountNotFound().Result(), result)
@@ -363,7 +364,7 @@ func TestValidatorReplacement(t *testing.T) {
 		// they will deposit min commiting deposit + 10,20,30...200, 210, 220, 230, 240
 		num := int64((i+1)*10) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
-		valKeys[i] = crypto.GenPrivKeySecp256k1().PubKey()
+		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
@@ -382,7 +383,7 @@ func TestValidatorReplacement(t *testing.T) {
 	voteManager.AddVoter(ctx, "noPowerUser", valParam.ValidatorMinVotingDeposit)
 
 	// let user1 register as validator
-	valKey := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey := secp256k1.GenPrivKey().PubKey()
 	deposit := coinToString(valParam.ValidatorMinCommitingDeposit)
 	msg := NewValidatorDepositMsg("noPowerUser", deposit, valKey, "")
 	result := handler(ctx, msg)
@@ -403,7 +404,7 @@ func TestValidatorReplacement(t *testing.T) {
 	voteManager.AddVoter(ctx, "powerfulUser", valParam.ValidatorMinVotingDeposit)
 
 	//check the user has been added to oncall validators and in the pool
-	valKey = crypto.GenPrivKeySecp256k1().PubKey()
+	valKey = secp256k1.GenPrivKey().PubKey()
 	deposit = coinToString(valParam.ValidatorMinCommitingDeposit.Plus(types.NewCoinFromInt64(88 * types.Decimals)))
 	msg = NewValidatorDepositMsg("powerfulUser", deposit, valKey, "")
 	result = handler(ctx, msg)
@@ -443,8 +444,8 @@ func TestRemoveBasic(t *testing.T) {
 	goodUser := createTestAccount(ctx, am, "goodUser", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 	createTestAccount(ctx, am, "badUser", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 
-	valKey1 := crypto.GenPrivKeySecp256k1().PubKey()
-	valKey2 := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey1 := secp256k1.GenPrivKey().PubKey()
+	valKey2 := secp256k1.GenPrivKey().PubKey()
 
 	voteManager.AddVoter(ctx, "goodUser", valParam.ValidatorMinVotingDeposit)
 	voteManager.AddVoter(ctx, "badUser", valParam.ValidatorMinVotingDeposit)
@@ -478,7 +479,7 @@ func TestRegisterWithDupKey(t *testing.T) {
 	createTestAccount(ctx, am, "user1", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 	createTestAccount(ctx, am, "user2", minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
 
-	valKey1 := crypto.GenPrivKeySecp256k1().PubKey()
+	valKey1 := secp256k1.GenPrivKey().PubKey()
 
 	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 	voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
