@@ -171,7 +171,7 @@ func TestCreatePostMsg(t *testing.T) {
 				Links: []types.IDToURLMapping{
 					{
 						Identifier: string(make([]byte, 20)),
-						URL:        string(make([]byte, 51)),
+						URL:        string(make([]byte, 101)),
 					},
 				},
 				RedistributionSplitRate: "0",

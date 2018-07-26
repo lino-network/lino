@@ -11,6 +11,7 @@ import (
 )
 
 var _ types.Msg = DeveloperRegisterMsg{}
+var _ types.Msg = DeveloperUpdateMsg{}
 var _ types.Msg = DeveloperRevokeMsg{}
 var _ types.Msg = GrantPermissionMsg{}
 var _ types.Msg = RevokePermissionMsg{}
@@ -19,6 +20,13 @@ var _ types.Msg = PreAuthorizationMsg{}
 type DeveloperRegisterMsg struct {
 	Username    types.AccountKey `json:"username"`
 	Deposit     types.LNO        `json:"deposit"`
+	Website     string           `json:"website"`
+	Description string           `json:"description"`
+	AppMetaData string           `json:"app_meta_data"`
+}
+
+type DeveloperUpdateMsg struct {
+	Username    types.AccountKey `json:"username"`
 	Website     string           `json:"website"`
 	Description string           `json:"description"`
 	AppMetaData string           `json:"app_meta_data"`
@@ -70,6 +78,18 @@ func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return err
 	}
+
+	if len(msg.Website) > types.MaximumLengthOfDeveloperWebsite {
+		return ErrInvalidWebsite()
+	}
+
+	if len(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
+		return ErrInvalidDescription()
+	}
+
+	if len(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
+		return ErrInvalidAppMetadata()
+	}
 	return nil
 }
 
@@ -95,6 +115,65 @@ func (msg DeveloperRegisterMsg) GetSigners() []sdk.AccAddress {
 
 // Implements Msg.
 func (msg DeveloperRegisterMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
+// DeveloperUpdateMsg Msg Implementations
+func NewDeveloperUpdateMsg(developer string, website string, description string, appMetaData string) DeveloperUpdateMsg {
+	return DeveloperUpdateMsg{
+		Username:    types.AccountKey(developer),
+		Website:     website,
+		Description: description,
+		AppMetaData: appMetaData,
+	}
+}
+
+func (msg DeveloperUpdateMsg) Type() string { return types.DeveloperRouterName }
+
+func (msg DeveloperUpdateMsg) ValidateBasic() sdk.Error {
+	if len(msg.Username) < types.MinimumUsernameLength ||
+		len(msg.Username) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+
+	if len(msg.Website) > types.MaximumLengthOfDeveloperWebsite {
+		return ErrInvalidWebsite()
+	}
+
+	if len(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
+		return ErrInvalidDescription()
+	}
+
+	if len(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
+		return ErrInvalidAppMetadata()
+	}
+	return nil
+}
+
+func (msg DeveloperUpdateMsg) String() string {
+	return fmt.Sprintf(
+		"DeveloperUpdateMsg{Username:%v, Website:%v, Description:%v, Metadata:%v}",
+		msg.Username, msg.Website, msg.Description, msg.AppMetaData)
+}
+
+func (msg DeveloperUpdateMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+func (msg DeveloperUpdateMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (msg DeveloperUpdateMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// Implements Msg.
+func (msg DeveloperUpdateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

@@ -55,16 +55,18 @@ func (pm ProposalManager) CreateContentCensorshipProposal(
 	}
 }
 
-func (pm ProposalManager) CreateProtocolUpgradeProposal(ctx sdk.Context, link string) model.Proposal {
+func (pm ProposalManager) CreateProtocolUpgradeProposal(ctx sdk.Context, link string, reason string) model.Proposal {
 	return &model.ProtocolUpgradeProposal{
-		Link: link,
+		Link:   link,
+		Reason: reason,
 	}
 }
 
 func (pm ProposalManager) CreateChangeParamProposal(
-	ctx sdk.Context, parameter param.Parameter) model.Proposal {
+	ctx sdk.Context, parameter param.Parameter, reason string) model.Proposal {
 	return &model.ChangeParamProposal{
-		Param: parameter,
+		Param:  parameter,
+		Reason: reason,
 	}
 }
 

@@ -43,6 +43,10 @@ func ErrInvalidPermlink() sdk.Error {
 	return types.NewError(types.CodeInvalidPermlink, fmt.Sprintf("invalid permlink"))
 }
 
+func ErrReasonTooLong() sdk.Error {
+	return types.NewError(types.CodeReasonTooLong, fmt.Sprintf("reason length is too long"))
+}
+
 func ErrInvalidLink() sdk.Error {
 	return types.NewError(types.CodeInvalidLink, fmt.Sprintf("invalid Link"))
 }

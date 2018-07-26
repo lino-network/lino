@@ -405,6 +405,7 @@ func TestIncreaseMinute(t *testing.T) {
 
 	inflation := globalMeta.AnnualInflation
 	expectConsumptionPool := types.NewCoinFromInt64(0)
+	expectInfraPool := types.NewCoinFromInt64(0)
 	for i := 0; i < types.MinutesPerMonth/10; i++ {
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
 		lb.increaseMinute(ctx)
@@ -418,7 +419,19 @@ func TestIncreaseMinute(t *testing.T) {
 			expectConsumptionPool =
 				expectConsumptionPool.Plus(
 					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+			expectInfraPool =
+				expectInfraPool.Plus(
+					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
 			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
+
+			inflationPool, err := gs.GetInflationPool(ctx)
+			assert.Equal(t, types.NewCoinFromInt64(0), inflationPool.ValidatorInflationPool)
+
+			if i%types.MinutesPerMonth == 0 {
+				expectInfraPool = types.NewCoinFromInt64(0)
+			}
+
+			assert.Equal(t, expectInfraPool, inflationPool.InfraInflationPool)
 		}
 	}
 }

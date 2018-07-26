@@ -206,6 +206,9 @@ const (
 	CodeInvalidAuthorizedApp           sdk.CodeType = 907
 	CodeInvalidValidityPeriod          sdk.CodeType = 908
 	CodeGrantPermissionTooHigh         sdk.CodeType = 909
+	CodeInvalidWebsite                 sdk.CodeType = 910
+	CodeInvalidDescription             sdk.CodeType = 911
+	CodeInvalidAppMetadata             sdk.CodeType = 912
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000
@@ -262,4 +265,5 @@ const (
 	CodeInvalidPermlink                 sdk.CodeType = 1114
 	CodeInvalidLink                     sdk.CodeType = 1115
 	CodeIllegalParameter                sdk.CodeType = 1116
+	CodeReasonTooLong                   sdk.CodeType = 1117
 )

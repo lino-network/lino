@@ -45,7 +45,7 @@ func handleChangeParamMsg(
 		return err.Result()
 	}
 
-	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter())
+	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter(), msg.GetReason())
 	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ChangeParamDecideHr)
 	if err != nil {
 		return err.Result()
@@ -87,7 +87,7 @@ func handleProtocolUpgradeMsg(
 		return err.Result()
 	}
 
-	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink())
+	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink(), msg.GetReason())
 	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ProtocolUpgradeDecideHr)
 	if err != nil {
 		return err.Result()

@@ -20,9 +20,37 @@ func TestRegistertBasic(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
 	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
-	msg := NewDeveloperRegisterMsg("developer1", deposit, "", "", "")
-	res := handler(ctx, msg)
-	assert.Equal(t, sdk.Result{}, res)
+	testCases := []struct {
+		testName     string
+		msg          DeveloperRegisterMsg
+		expectResult sdk.Result
+	}{
+		{
+			testName: "normal update",
+			msg: NewDeveloperRegisterMsg(
+				"developer1", deposit, "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName: "invalid username",
+			msg: NewDeveloperRegisterMsg(
+				"developer2", deposit, "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: ErrAccountNotFound().Result(),
+		},
+		{
+			testName: "developer doesn't exist",
+			msg: NewDeveloperRegisterMsg(
+				"developer1", deposit, "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: ErrDeveloperAlreadyExist("developer1").Result(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
+		if result.Code != tc.expectResult.Code {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
+		}
+	}
 
 	// check acc1's money has been withdrawn
 	acc1Saving, _ := am.GetSavingFromBank(ctx, types.AccountKey("developer1"))
@@ -33,7 +61,50 @@ func TestRegistertBasic(t *testing.T) {
 	lst, _ := dm.GetDeveloperList(ctx)
 	assert.Equal(t, 1, len(lst.AllDevelopers))
 	assert.Equal(t, types.AccountKey("developer1"), lst.AllDevelopers[0])
+}
 
+func TestUpdateBasic(t *testing.T) {
+	ctx, am, dm, gm := setupTest(t, 0)
+	handler := NewHandler(dm, am, gm)
+	dm.InitGenesis(ctx)
+
+	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
+	createTestAccount(ctx, am, "developer2", devParam.DeveloperMinDeposit.Plus(minBalance))
+	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit, "", "", "")
+
+	testCases := []struct {
+		testName     string
+		msg          DeveloperUpdateMsg
+		expectResult sdk.Result
+	}{
+		{
+			testName: "normal update",
+			msg: NewDeveloperUpdateMsg(
+				"developer1", "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName: "invalid username",
+			msg: NewDeveloperUpdateMsg(
+				"invalid", "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: ErrAccountNotFound().Result(),
+		},
+		{
+			testName: "developer doesn't exist",
+			msg: NewDeveloperUpdateMsg(
+				"developer2", "https://lino.network", "decentralized autonomous video content economy", "app meta data"),
+			expectResult: ErrDeveloperNotFound().Result(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
+		if result.Code != tc.expectResult.Code {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
+		}
+	}
 }
 
 func TestRevokeBasic(t *testing.T) {
@@ -60,6 +131,11 @@ func TestRevokeBasic(t *testing.T) {
 	lst, _ := dm.GetDeveloperList(ctx)
 	assert.Equal(t, 0, len(lst.AllDevelopers))
 	assert.Equal(t, false, dm.DoesDeveloperExist(ctx, "developer1"))
+
+	// revoke developer doesn't exist
+	msg3 := NewDeveloperRevokeMsg("developer2")
+	res3 := handler(ctx, msg3)
+	assert.Equal(t, ErrDeveloperNotFound().Result(), res3)
 }
 
 func TestAddFrozenMoney(t *testing.T) {
@@ -172,6 +248,50 @@ func TestGrantPermissionMsg(t *testing.T) {
 	}
 }
 
+func TestHandlePreAuthorizationMsg(t *testing.T) {
+	ctx, am, dm, gm := setupTest(t, 0)
+	param, err := dm.paramHolder.GetDeveloperParam(ctx)
+	assert.Nil(t, err)
+
+	handler := NewHandler(dm, am, gm)
+	dm.InitGenesis(ctx)
+
+	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	createTestAccount(ctx, am, "user1", minBalance)
+	createTestAccount(ctx, am, "user2", minBalance)
+	createTestAccount(ctx, am, "app", minBalance)
+	err = dm.RegisterDeveloper(ctx, types.AccountKey("app"), param.DeveloperMinDeposit, "", "", "")
+	assert.Nil(t, err)
+
+	testCases := []struct {
+		testName     string
+		msg          PreAuthorizationMsg
+		expectResult sdk.Result
+	}{
+		{
+			testName:     "normal preauthorization msg",
+			msg:          NewPreAuthorizationMsg("user1", "app", 10000, types.LNO("100")),
+			expectResult: sdk.Result{},
+		},
+		{
+			testName:     "grant permission to non-exist app",
+			msg:          NewPreAuthorizationMsg("user2", "invalidApp", 10000, types.LNO("100")),
+			expectResult: ErrDeveloperNotFound().Result(),
+		},
+		{
+			testName:     "grant permission to non-exist user",
+			msg:          NewPreAuthorizationMsg("invalid", "app", 10000, types.LNO("100")),
+			expectResult: ErrAccountNotFound().Result(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := handler(ctx, tc.msg)
+		if result.Code != tc.expectResult.Code {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
+		}
+	}
+}
 func TestRevokePermissionMsg(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
 	param, err := dm.paramHolder.GetDeveloperParam(ctx)

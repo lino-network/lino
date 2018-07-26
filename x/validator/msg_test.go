@@ -83,6 +83,12 @@ func TestValidatorDepositMsg(t *testing.T) {
 			validatorDepositMsg: NewValidatorDepositMsg("user", ".", crypto.GenPrivKeySecp256k1().PubKey(), ""),
 			expectedError:       types.ErrInvalidCoins("Illegal LNO"),
 		},
+		{
+			testName: "invalid Website",
+			validatorDepositMsg: NewValidatorDepositMsg(
+				"user", "1", crypto.GenPrivKeySecp256k1().PubKey(), string(make([]byte, types.MaximumLinkURL+1))),
+			expectedError: ErrInvalidWebsite(),
+		},
 	}
 
 	for _, tc := range testCases {

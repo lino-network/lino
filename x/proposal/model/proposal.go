@@ -22,7 +22,8 @@ type ProposalInfo struct {
 
 type ChangeParamProposal struct {
 	ProposalInfo
-	Param param.Parameter `json:"param"`
+	Param  param.Parameter `json:"param"`
+	Reason string          `json:"reason"`
 }
 
 func (p *ChangeParamProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }
@@ -39,7 +40,8 @@ func (p *ContentCensorshipProposal) SetProposalInfo(info ProposalInfo) { p.Propo
 
 type ProtocolUpgradeProposal struct {
 	ProposalInfo
-	Link string `json:"link"`
+	Link   string `json:"link"`
+	Reason string `json:"reason"`
 }
 
 func (p *ProtocolUpgradeProposal) GetProposalInfo() ProposalInfo     { return p.ProposalInfo }

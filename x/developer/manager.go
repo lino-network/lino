@@ -94,6 +94,21 @@ func (dm DeveloperManager) RemoveFromDeveloperList(
 	return nil
 }
 
+func (dm DeveloperManager) UpdateDeveloper(
+	ctx sdk.Context, username types.AccountKey, website, description, appMetadata string) sdk.Error {
+	developer, err := dm.storage.GetDeveloper(ctx, username)
+	if err != nil {
+		return err
+	}
+	developer.Website = website
+	developer.Description = description
+	developer.AppMetaData = appMetadata
+	if err := dm.storage.SetDeveloper(ctx, username, developer); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (dm DeveloperManager) ReportConsumption(
 	ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error {
 	developer, err := dm.storage.GetDeveloper(ctx, username)

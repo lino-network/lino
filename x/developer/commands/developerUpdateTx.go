@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -13,14 +12,13 @@ import (
 	developer "github.com/lino-network/lino/x/developer"
 )
 
-func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
+func DeveloperUpdateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "developer-register",
-		Short: "developer register",
-		RunE:  sendDeveloperRegisterTx(cdc),
+		Use:   "developer-update",
+		Short: "developer update",
+		RunE:  sendDeveloperUpdateTx(cdc),
 	}
 	cmd.Flags().String(client.FlagDeveloper, "", "developer name of this transaction")
-	cmd.Flags().String(client.FlagDeposit, "", "deposit of the registration")
 	cmd.Flags().String(client.FlagWebsite, "", "website of the app")
 	cmd.Flags().String(client.FlagDescription, "", "description of the app")
 	cmd.Flags().String(client.FlagAppMeta, "", "meta-data of the app")
@@ -28,14 +26,13 @@ func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 }
 
 // send register transaction to the blockchain
-func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
+func sendDeveloperUpdateTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(client.FlagDeveloper)
-		msg := developer.NewDeveloperRegisterMsg(
-			username, types.LNO(viper.GetString(client.FlagDeposit)),
-			viper.GetString(client.FlagWebsite), viper.GetString(client.FlagDescription),
-			viper.GetString(client.FlagAppMeta))
+		msg := developer.NewDeveloperUpdateMsg(
+			username, viper.GetString(client.FlagWebsite),
+			viper.GetString(client.FlagDescription), viper.GetString(client.FlagAppMeta))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

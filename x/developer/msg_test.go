@@ -32,10 +32,71 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 			developerRegisterMsg: NewDeveloperRegisterMsg("user1", "-1", "", "", ""),
 			expectError:          types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
+		{
+			testName: "invalid website",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", string(make([]byte, types.MaximumLengthOfDeveloperWebsite+1)), "", ""),
+			expectError: ErrInvalidWebsite(),
+		},
+		{
+			testName: "invalid description",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", string(make([]byte, types.MaximumLengthOfDeveloperDesctiption+1)), ""),
+			expectError: ErrInvalidDescription(),
+		},
+		{
+			testName: "invalid app metadata",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", "", string(make([]byte, types.MaximumLengthOfAppMetadata+1))),
+			expectError: ErrInvalidAppMetadata(),
+		},
 	}
 
 	for _, tc := range testCases {
 		result := tc.developerRegisterMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectError)
+		}
+	}
+}
+func TestDeveloperUpdateMsg(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		developerUpdateMsg DeveloperUpdateMsg
+		expectError        sdk.Error
+	}{
+		{
+			testName:           "normal case",
+			developerUpdateMsg: NewDeveloperUpdateMsg("user1", "", "", ""),
+			expectError:        nil,
+		},
+		{
+			testName:           "invalid username",
+			developerUpdateMsg: NewDeveloperUpdateMsg("", "", "", ""),
+			expectError:        ErrInvalidUsername(),
+		},
+		{
+			testName: "invalid website",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", string(make([]byte, types.MaximumLengthOfDeveloperWebsite+1)), "", ""),
+			expectError: ErrInvalidWebsite(),
+		},
+		{
+			testName: "invalid description",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", string(make([]byte, types.MaximumLengthOfDeveloperDesctiption+1)), ""),
+			expectError: ErrInvalidDescription(),
+		},
+		{
+			testName: "invalid app metadata",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", "", string(make([]byte, types.MaximumLengthOfAppMetadata+1))),
+			expectError: ErrInvalidAppMetadata(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := tc.developerUpdateMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectError) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectError)
 		}
@@ -222,6 +283,11 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.TransactionPermission,
 		},
 		{
+			testName:         "developer register msg",
+			msg:              NewDeveloperUpdateMsg("test", "", "", ""),
+			expectPermission: types.TransactionPermission,
+		},
+		{
 			testName:         "developer revoke msg",
 			msg:              NewDeveloperRevokeMsg("test"),
 			expectPermission: types.TransactionPermission,
@@ -262,6 +328,11 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName:      "developer register msg",
 			msg:           NewDeveloperRegisterMsg("test", types.LNO("1"), "", "", ""),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "developer update msg",
+			msg:           NewDeveloperUpdateMsg("test", "", "", ""),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
@@ -308,6 +379,10 @@ func TestGetSignBytes(t *testing.T) {
 		{
 			testName: "developer register msg",
 			msg:      NewDeveloperRegisterMsg("test", types.LNO("1"), "", "", ""),
+		},
+		{
+			testName: "developer register msg",
+			msg:      NewDeveloperUpdateMsg("test", "", "", ""),
 		},
 		{
 			testName: "developer revoke msg",

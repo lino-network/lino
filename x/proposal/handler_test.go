@@ -47,7 +47,7 @@ func TestChangeParamProposal(t *testing.T) {
 		Result:        types.ProposalNotPass,
 		CreatedAt:     curTime,
 		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
-	}, allocation}
+	}, allocation, ""}
 
 	testCases := []struct {
 		testName            string

@@ -16,8 +16,12 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalMana
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
 			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
+		case DeveloperUpdateMsg:
+			return handleDeveloperUpdateMsg(ctx, dm, am, msg)
 		case GrantPermissionMsg:
 			return handleGrantPermissionMsg(ctx, dm, am, msg)
+		case PreAuthorizationMsg:
+			return handlePreAuthorizationMsg(ctx, dm, am, msg)
 		case DeveloperRevokeMsg:
 			return handleDeveloperRevokeMsg(ctx, dm, am, gm, msg)
 		case RevokePermissionMsg:
@@ -51,6 +55,23 @@ func handleDeveloperRegisterMsg(
 	}
 	if err := dm.RegisterDeveloper(
 		ctx, msg.Username, deposit, msg.Website, msg.Description, msg.AppMetaData); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleDeveloperUpdateMsg(
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperUpdateMsg) sdk.Result {
+	if !am.DoesAccountExist(ctx, msg.Username) {
+		return ErrAccountNotFound().Result()
+	}
+
+	if !dm.DoesDeveloperExist(ctx, msg.Username) {
+		return ErrDeveloperNotFound().Result()
+	}
+
+	if err := dm.UpdateDeveloper(
+		ctx, msg.Username, msg.Website, msg.Description, msg.AppMetaData); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
