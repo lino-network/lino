@@ -1,19 +1,20 @@
 package commands
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/validator"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	cfg "github.com/tendermint/tendermint/config"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	pvm "github.com/tendermint/tendermint/privval"
 )
 
 // DepositValidatorTxCmd will create a send tx and sign it with the given key
@@ -25,7 +26,7 @@ func DepositValidatorTxCmd(cdc *wire.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
 	cmd.Flags().String(client.FlagAmount, "", "amount of the donation")
-	cmd.Flags().String(client.FlagPubKey, "", "validator pub key")
+	cmd.Flags().String(client.FlagLink, "", "link of the validator")
 	return cmd
 }
 
@@ -34,18 +35,20 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(client.FlagUser)
-		pubKeyHex := viper.GetString(client.FlagPubKey)
-		keyBytes, err := hex.DecodeString(pubKeyHex)
-		if err != nil {
-			return err
-		}
 
-		pubKey, err := cryptoAmino.PubKeyFromBytes(keyBytes)
-		if err != nil {
-			return err
-		}
+		tmConfig := cfg.DefaultConfig()
+		privValFile := tmConfig.PrivValidatorFile()
 
-		// // create the message
+		var privValidator *pvm.FilePV
+		if cmn.FileExists(privValFile) {
+			privValidator = pvm.LoadFilePV(privValFile)
+		} else {
+			privValidator = pvm.GenFilePV(privValFile)
+			privValidator.Save()
+		}
+		pubKey := privValidator.GetPubKey()
+
+		// create the message
 		msg := validator.NewValidatorDepositMsg(
 			name, types.LNO(viper.GetString(client.FlagAmount)), pubKey, viper.GetString(client.FlagLink))
 
