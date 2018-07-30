@@ -139,7 +139,7 @@ func TestRevokeBasic(t *testing.T) {
 	resultInvalid := handler(ctx, invalidMsg)
 	assert.Equal(t, model.ErrVoterNotFound().Result(), resultInvalid)
 
-	//  user1  can revoke voter candidancy now
+	// user1 can revoke voter candidancy now
 	referenceList = &model.ReferenceList{
 		AllValidators: []types.AccountKey{},
 	}
@@ -339,7 +339,7 @@ func TestDeleteVoteBasic(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 
 	// create test users
-	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
+	// createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
 	user2 := createTestAccount(ctx, am, "user2", minBalance.Plus(voteParam.VoterMinDeposit))
 
 	depositMsg := NewVoterDepositMsg("user2", coinToString(voteParam.VoterMinDeposit))
