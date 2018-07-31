@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"os/user"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +37,15 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		name := viper.GetString(client.FlagUser)
 
+		usr, err := user.Current()
+		if err != nil {
+			return err
+		}
+		root := usr.HomeDir + "/.lino/"
+
 		tmConfig := cfg.DefaultConfig()
+		tmConfig = tmConfig.SetRoot(root)
+
 		privValFile := tmConfig.PrivValidatorFile()
 
 		var privValidator *pvm.FilePV
