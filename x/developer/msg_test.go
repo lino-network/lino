@@ -11,6 +11,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	// len of 1000
+	maxLengthUTF8Str = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123`
+
+	// len of 1001
+	tooLongUTF8Str = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌1234`
+)
+
 func TestDeveloperRegisterMsg(t *testing.T) {
 	testCases := []struct {
 		testName             string
@@ -23,6 +53,18 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 			expectError:          nil,
 		},
 		{
+			testName: "utf8 description",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", maxLengthUTF8Str, ""),
+			expectError: nil,
+		},
+		{
+			testName: "utf8 app metadata",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", "", "a:bb,你:👌 。"),
+			expectError: nil,
+		},
+		{
 			testName:             "invalid username",
 			developerRegisterMsg: NewDeveloperRegisterMsg("", "10", "", "", ""),
 			expectError:          ErrInvalidUsername(),
@@ -33,21 +75,33 @@ func TestDeveloperRegisterMsg(t *testing.T) {
 			expectError:          types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 		{
-			testName: "invalid website",
+			testName: "website is too long",
 			developerRegisterMsg: NewDeveloperRegisterMsg(
 				"user1", "10", string(make([]byte, types.MaximumLengthOfDeveloperWebsite+1)), "", ""),
 			expectError: ErrInvalidWebsite(),
 		},
 		{
-			testName: "invalid description",
+			testName: "description is too long",
 			developerRegisterMsg: NewDeveloperRegisterMsg(
 				"user1", "10", "", string(make([]byte, types.MaximumLengthOfDeveloperDesctiption+1)), ""),
 			expectError: ErrInvalidDescription(),
 		},
 		{
-			testName: "invalid app metadata",
+			testName: "utf8 description is too long",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", tooLongUTF8Str, ""),
+			expectError: ErrInvalidDescription(),
+		},
+		{
+			testName: "app metadata is too long",
 			developerRegisterMsg: NewDeveloperRegisterMsg(
 				"user1", "10", "", "", string(make([]byte, types.MaximumLengthOfAppMetadata+1))),
+			expectError: ErrInvalidAppMetadata(),
+		},
+		{
+			testName: "utf8 app metadata is too long",
+			developerRegisterMsg: NewDeveloperRegisterMsg(
+				"user1", "10", "", "", tooLongUTF8Str),
 			expectError: ErrInvalidAppMetadata(),
 		},
 	}
@@ -71,26 +125,50 @@ func TestDeveloperUpdateMsg(t *testing.T) {
 			expectError:        nil,
 		},
 		{
+			testName: "utf8 description",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", maxLengthUTF8Str, ""),
+			expectError: nil,
+		},
+		{
+			testName: "uft8 app metadata",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", "", maxLengthUTF8Str),
+			expectError: nil,
+		},
+		{
 			testName:           "invalid username",
 			developerUpdateMsg: NewDeveloperUpdateMsg("", "", "", ""),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
-			testName: "invalid website",
+			testName: "website is too long",
 			developerUpdateMsg: NewDeveloperUpdateMsg(
 				"user1", string(make([]byte, types.MaximumLengthOfDeveloperWebsite+1)), "", ""),
 			expectError: ErrInvalidWebsite(),
 		},
 		{
-			testName: "invalid description",
+			testName: "description is too long",
 			developerUpdateMsg: NewDeveloperUpdateMsg(
 				"user1", "", string(make([]byte, types.MaximumLengthOfDeveloperDesctiption+1)), ""),
 			expectError: ErrInvalidDescription(),
 		},
 		{
-			testName: "invalid app metadata",
+			testName: "utf8 description is too long",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", tooLongUTF8Str, ""),
+			expectError: ErrInvalidDescription(),
+		},
+		{
+			testName: "app metadata is too long",
 			developerUpdateMsg: NewDeveloperUpdateMsg(
 				"user1", "", "", string(make([]byte, types.MaximumLengthOfAppMetadata+1))),
+			expectError: ErrInvalidAppMetadata(),
+		},
+		{
+			testName: "utf8 app metadata is too long",
+			developerUpdateMsg: NewDeveloperUpdateMsg(
+				"user1", "", "", tooLongUTF8Str),
 			expectError: ErrInvalidAppMetadata(),
 		},
 	}

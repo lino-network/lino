@@ -2,6 +2,7 @@ package post
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/lino-network/lino/types"
 
@@ -165,10 +166,10 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 		(len(msg.SourceAuthor) > 0 || len(msg.SourcePostID) > 0) {
 		return ErrCommentAndRepostConflict()
 	}
-	if len(msg.Title) > types.MaxPostTitleLength {
+	if utf8.RuneCountInString(msg.Title) > types.MaxPostTitleLength {
 		return ErrPostTitleExceedMaxLength()
 	}
-	if len(msg.Content) > types.MaxPostContentLength {
+	if utf8.RuneCountInString(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
 	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
@@ -207,10 +208,10 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.Author) == 0 {
 		return ErrNoAuthor()
 	}
-	if len(msg.Title) > types.MaxPostTitleLength {
+	if utf8.RuneCountInString(msg.Title) > types.MaxPostTitleLength {
 		return ErrPostTitleExceedMaxLength()
 	}
-	if len(msg.Content) > types.MaxPostContentLength {
+	if utf8.RuneCountInString(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
 	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
@@ -262,7 +263,7 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 		return err
 	}
 
-	if len(msg.Memo) > types.MaximumMemoLength {
+	if utf8.RuneCountInString(msg.Memo) > types.MaximumMemoLength {
 		return ErrInvalidMemo()
 	}
 	return nil

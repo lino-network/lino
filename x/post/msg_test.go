@@ -13,6 +13,43 @@ import (
 var (
 	memo1       = "memo1"
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
+
+	// len of 101
+	tooLongOfUTF8Memo = "12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345"
+
+	// len of 50
+	maxLenOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345`
+
+	// len of 51
+	tooLongOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123456`
+
+	// len of 1000
+	maxLenOfUTF8Content = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123`
+
+	// len of 1001
+	tooLongOfUTF8Content = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌1234`
 )
 
 func getCommentAndRepost(
@@ -62,6 +99,30 @@ func TestCreatePostMsg(t *testing.T) {
 			expectedResult: nil,
 		},
 		{
+			testName: "utf8 title",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   maxLenOfUTF8Title,
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "1",
+			},
+			expectedResult: nil,
+		},
+		{
+			testName: "utf8 content",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: maxLenOfUTF8Content,
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "1",
+			},
+			expectedResult: nil,
+		},
+		{
 			testName: "empty post id",
 			msg: CreatePostMsg{
 				PostID:  "",
@@ -98,11 +159,35 @@ func TestCreatePostMsg(t *testing.T) {
 			expectedResult: ErrPostTitleExceedMaxLength(),
 		},
 		{
+			testName: "post utf8 title is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   tooLongOfUTF8Title,
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrPostTitleExceedMaxLength(),
+		},
+		{
 			testName: "post content is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
 				Title:   string(make([]byte, 50)),
 				Content: string(make([]byte, 1001)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrPostContentExceedMaxLength(),
+		},
+		{
+			testName: "post utf8 content is too long",
+			msg: CreatePostMsg{
+				PostID:  "TestPostID",
+				Title:   string(make([]byte, 50)),
+				Content: tooLongOfUTF8Content,
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
 				RedistributionSplitRate: "0",
@@ -206,6 +291,18 @@ func TestUpdatePostMsg(t *testing.T) {
 			expectedResult: nil,
 		},
 		{
+			testName: "utf8 title",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", maxLenOfUTF8Title, "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: nil,
+		},
+		{
+			testName: "utf8 content",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", "title", maxLenOfUTF8Content, []types.IDToURLMapping{}, "0"),
+			expectedResult: nil,
+		},
+		{
 			testName: "no author",
 			updatePostMsg: NewUpdatePostMsg(
 				"", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
@@ -224,9 +321,22 @@ func TestUpdatePostMsg(t *testing.T) {
 			expectedResult: ErrPostTitleExceedMaxLength(),
 		},
 		{
+			testName: "post utf8 tile is too long",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", tooLongOfUTF8Title, "content", []types.IDToURLMapping{}, "0"),
+			expectedResult: ErrPostTitleExceedMaxLength(),
+		},
+		{
 			testName: "post content is too long",
 			updatePostMsg: NewUpdatePostMsg(
 				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1001)),
+				[]types.IDToURLMapping{}, "0"),
+			expectedResult: ErrPostContentExceedMaxLength(),
+		},
+		{
+			testName: "post utf8 content is too long",
+			updatePostMsg: NewUpdatePostMsg(
+				"author", "postID", string(make([]byte, 50)), tooLongOfUTF8Content,
 				[]types.IDToURLMapping{}, "0"),
 			expectedResult: ErrPostContentExceedMaxLength(),
 		},
@@ -413,6 +523,11 @@ func TestDonationMsg(t *testing.T) {
 		{
 			testName:      "invalid memo",
 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
+			expectedError: ErrInvalidMemo(),
+		},
+		{
+			testName:      "utf8 memo is too long",
+			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", tooLongOfUTF8Memo),
 			expectedError: ErrInvalidMemo(),
 		},
 	}

@@ -10,6 +10,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	// len of 1000
+	maxLenOfUTF8Reason = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123`
+
+	// len of 1001
+	tooLongOfUTF8Reason = `
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌
+	12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌1234`
+)
+
 func TestVoteProposalMsg(t *testing.T) {
 	testCases := []struct {
 		testName        string
@@ -67,9 +97,15 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 			expectedError:                  ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -111,9 +147,15 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 			expectedError:                         ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -209,9 +251,15 @@ func TestChangeVoteParamMsg(t *testing.T) {
 			expectedError:      ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -271,9 +319,15 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 			expectedError:           ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeDeveloperParamMsg: NewChangeDeveloperParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -396,9 +450,15 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 			expectedError:           ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeValidatorParamMsg: NewChangeValidatorParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeValidatorParamMsg: NewChangeValidatorParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -541,9 +601,15 @@ func TestChangeProposalParamMsg(t *testing.T) {
 			expectedError:          ErrIllegalParameter(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			ChangeProposalParamMsg: NewChangeProposalParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			ChangeProposalParamMsg: NewChangeProposalParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -607,9 +673,15 @@ func TestChangeAccountParamMsg(t *testing.T) {
 			expectedError:         ErrIllegalParameter(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			changeAccountParamMsg: NewChangeAccountParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			changeAccountParamMsg: NewChangeAccountParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -665,9 +737,15 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			changeBandwidthParamMsg: NewChangeBandwidthParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -727,9 +805,15 @@ func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 			expectedError:         ErrInvalidUsername(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg(
 				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg(
+				"user1", p1, tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -769,9 +853,15 @@ func TestDeletePostContentMsg(t *testing.T) {
 			expectedError:        ErrInvalidPermlink(),
 		},
 		{
-			testName: "reason too long",
+			testName: "reason is too long",
 			deletePostContentMsg: NewDeletePostContentMsg(
 				"user1", "permlink", string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError: ErrReasonTooLong(),
+		},
+		{
+			testName: "utf8 reason is too long",
+			deletePostContentMsg: NewDeletePostContentMsg(
+				"user1", "permlink", tooLongOfUTF8Reason),
 			expectedError: ErrReasonTooLong(),
 		},
 	}
@@ -808,6 +898,16 @@ func TestUpgradeProtocolMsg(t *testing.T) {
 		{
 			testName:           "empty link is illegal",
 			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "", ""),
+			expectedError:      ErrInvalidLink(),
+		},
+		{
+			testName:           "reason is too long",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "", string(make([]byte, types.MaximumLengthOfProposalReason+1))),
+			expectedError:      ErrInvalidLink(),
+		},
+		{
+			testName:           "utf8 reason is too long",
+			upgradeProtocolMsg: NewUpgradeProtocolMsg("user1", "", tooLongOfUTF8Reason),
 			expectedError:      ErrInvalidLink(),
 		},
 	}
