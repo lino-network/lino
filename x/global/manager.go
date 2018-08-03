@@ -172,9 +172,6 @@ func (gm GlobalManager) DistributeHourlyInflation(
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}
-	if err := gm.addTotalLinoCoin(ctx, contentCreatorInflation); err != nil {
-		return err
-	}
 
 	// distribute inflation to validator inflation pool
 	pool.InfraInflationPool = pool.InfraInflationPool.Plus(infraInflation)
@@ -262,7 +259,9 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
-
+	if err := gm.addTotalLinoCoin(ctx, reward); err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
@@ -278,6 +277,20 @@ func (gm GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Err
 	globalMeta.CumulativeConsumption = globalMeta.CumulativeConsumption.Plus(coin)
 
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
+		return err
+	}
+	return nil
+}
+
+// add consumption to global meta, which is used to compute GDP
+func (gm GlobalManager) AddToDeveloperInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
+	inflationPool, err := gm.storage.GetInflationPool(ctx)
+	if err != nil {
+		return err
+	}
+	inflationPool.DeveloperInflationPool = inflationPool.DeveloperInflationPool.Plus(coin)
+
+	if err := gm.storage.SetInflationPool(ctx, inflationPool); err != nil {
 		return err
 	}
 	return nil

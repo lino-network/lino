@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -21,8 +22,8 @@ var (
 )
 
 func TestFollow(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -41,8 +42,8 @@ func TestFollow(t *testing.T) {
 }
 
 func TestFollowUserNotExist(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	// create test user
 	createTestAccount(ctx, am, "user1")
@@ -62,8 +63,8 @@ func TestFollowUserNotExist(t *testing.T) {
 }
 
 func TestFollowAgain(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -86,8 +87,8 @@ func TestFollowAgain(t *testing.T) {
 }
 
 func TestUnfollow(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -111,8 +112,8 @@ func TestUnfollow(t *testing.T) {
 }
 
 func TestUnfollowUserNotExist(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 	// create test user
 	createTestAccount(ctx, am, "user1")
 
@@ -128,8 +129,8 @@ func TestUnfollowUserNotExist(t *testing.T) {
 }
 
 func TestInvalidUnfollow(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 	// create test user
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
@@ -159,9 +160,10 @@ func TestInvalidUnfollow(t *testing.T) {
 }
 
 func TestTransferNormal(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	// create two test users with initial deposit of 100 LNO.
 	createTestAccount(ctx, am, "user1")
 	createTestAccount(ctx, am, "user2")
@@ -205,8 +207,9 @@ func TestTransferNormal(t *testing.T) {
 }
 
 func TestSenderCoinNotEnough(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -224,8 +227,8 @@ func TestSenderCoinNotEnough(t *testing.T) {
 }
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -239,8 +242,9 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 }
 
 func TestHandleAccountRecover(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	user1 := "user1"
 
 	createTestAccount(ctx, am, user1)
@@ -285,8 +289,10 @@ func TestHandleAccountRecover(t *testing.T) {
 }
 
 func TestHandleRegister(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+
+	handler := NewHandler(am, gm)
 	referrer := "referrer"
 
 	createTestAccount(ctx, am, referrer)
@@ -295,10 +301,12 @@ func TestHandleRegister(t *testing.T) {
 		"", "", types.TransferIn)
 
 	testCases := []struct {
-		testName             string
-		registerMsg          RegisterMsg
-		expectResult         sdk.Result
-		expectReferrerSaving types.Coin
+		testName               string
+		registerMsg            RegisterMsg
+		expectResult           sdk.Result
+		expectReferrerSaving   types.Coin
+		expectNewAccountSaving types.Coin
+		expectNewAccountStake  types.Coin
 	}{
 		{
 			testName: "normal case",
@@ -308,8 +316,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:         sdk.Result{},
-			expectReferrerSaving: c100,
+			expectResult:           sdk.Result{},
+			expectReferrerSaving:   c100,
+			expectNewAccountSaving: c0,
+			expectNewAccountStake:  c0,
 		},
 		{
 			testName: "account already exist",
@@ -319,8 +329,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:         ErrAccountAlreadyExists("user1").Result(),
-			expectReferrerSaving: types.NewCoinFromInt64(99 * types.Decimals),
+			expectResult:           ErrAccountAlreadyExists("user1").Result(),
+			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving: c0,
+			expectNewAccountStake:  c0,
 		},
 		{
 			testName: "account register fee insufficient",
@@ -330,8 +342,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:         ErrRegisterFeeInsufficient().Result(),
-			expectReferrerSaving: types.NewCoinFromInt64(9890000),
+			expectResult:           ErrRegisterFeeInsufficient().Result(),
+			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving: c0,
+			expectNewAccountStake:  c0,
 		},
 		{
 			testName: "referrer deposit insufficient",
@@ -341,8 +355,36 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:         ErrAccountSavingCoinNotEnough().Result(),
-			expectReferrerSaving: types.NewCoinFromInt64(9890000),
+			expectResult:           ErrAccountSavingCoinNotEnough().Result(),
+			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving: c0,
+			expectNewAccountStake:  c0,
+		},
+		{
+			testName: "register deposit larger than register fee but less than full stake limit",
+			registerMsg: NewRegisterMsg(
+				"referrer", "user3", "1.5",
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+			),
+			expectResult:           sdk.Result{},
+			expectReferrerSaving:   types.NewCoinFromInt64(9750000),
+			expectNewAccountSaving: types.NewCoinFromInt64(50000),
+			expectNewAccountStake:  types.NewCoinFromInt64(50000),
+		},
+		{
+			testName: "register deposit larger than register fee and full stake limit",
+			registerMsg: NewRegisterMsg(
+				"referrer", "user4", "2.5",
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(),
+			),
+			expectResult:           sdk.Result{},
+			expectReferrerSaving:   types.NewCoinFromInt64(95 * types.Decimals),
+			expectNewAccountSaving: types.NewCoinFromInt64(150000),
+			expectNewAccountStake:  types.NewCoinFromInt64(1 * types.Decimals),
 		},
 	}
 
@@ -380,6 +422,30 @@ func TestHandleRegister(t *testing.T) {
 			if !appKey.Equals(tc.registerMsg.NewAppPubKey) {
 				t.Errorf("%s: diff app key, got %v, want %v", tc.testName, appKey, tc.registerMsg.NewAppPubKey)
 			}
+
+			bank, err := am.storage.GetBankFromAccountKey(ctx, tc.registerMsg.NewUser)
+			if err != nil {
+				t.Errorf("%s: failed to get bank, got err %v", tc.testName, err)
+			}
+			if !bank.Saving.IsEqual(tc.expectNewAccountSaving) {
+				t.Errorf("%s: diff saving, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
+			}
+			if !bank.Stake.IsEqual(tc.expectNewAccountStake) {
+				t.Errorf("%s: diff stake, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
+			}
+
+			accMeta, err := am.storage.GetMeta(ctx, tc.registerMsg.NewUser)
+			if !accMeta.TransactionCapacity.IsEqual(tc.expectNewAccountStake) {
+				t.Errorf("%s: diff transaction capacity, got %v, want %v", tc.testName, accMeta.TransactionCapacity, tc.expectNewAccountStake)
+			}
+			pool, err := gm.GetDeveloperMonthlyInflation(ctx)
+			if err != nil {
+				t.Errorf("%s: failed to get inflation, got err %v", tc.testName, err)
+			}
+			fmt.Println(tc.testName, pool)
+			if !pool.IsEqual(accParam.RegisterFee) {
+				t.Errorf("%s: diff developer inflation, got %v, want %v", tc.testName, pool, accParam.RegisterFee)
+			}
 		}
 
 		saving, err := am.GetSavingFromBank(ctx, tc.registerMsg.Referrer)
@@ -389,12 +455,13 @@ func TestHandleRegister(t *testing.T) {
 		if !saving.IsEqual(tc.expectReferrerSaving) {
 			t.Errorf("%s: diff saving, got %v, want %v", tc.testName, saving, tc.expectReferrerSaving)
 		}
+		gm.GetDeveloperMonthlyInflation(ctx)
 	}
 }
 
 func TesthandleUpdateAccountMsg(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	handler := NewHandler(am)
+	ctx, am, gm := setupTest(t, 1)
+	handler := NewHandler(am, gm)
 
 	createTestAccount(ctx, am, "accKey")
 

@@ -65,7 +65,7 @@ func TestForceValidatorVote(t *testing.T) {
 	changeAllocationMsg := proposal.NewChangeGlobalAllocationParamMsg(accountName, desc, "")
 	test.SignCheckDeliver(t, lb, changeAllocationMsg, 2, true, accountTransactionPriv, baseTime)
 
-	accBalance := totalCoin.Minus(depositCoin).Minus(depositCoin)
+	accBalance := totalCoin.Minus(depositCoin).Minus(depositCoin).Minus(types.NewCoinFromInt64(1 * types.Decimals))
 	test.CheckBalance(t, accountName, lb, accBalance.Minus(test.ChangeParamMinDeposit))
 	test.CheckBalance(t, accountName2, lb, accBalance)
 

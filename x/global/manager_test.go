@@ -466,9 +466,16 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		globalMeta, err := gm.storage.GetGlobalMeta(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+			return
+		}
+		totalLino := globalMeta.TotalLinoCoin
 		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get consumption meta, got err %v", tc.testName, err)
+			return
 		}
 
 		consumptionMeta.ConsumptionRewardPool = tc.initConsumptionRewardPool
@@ -477,27 +484,44 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		err = gm.storage.SetConsumptionMeta(ctx, consumptionMeta)
 		if err != nil {
 			t.Errorf("%s: failed to set consumption meta, got err %v", tc.testName, err)
+			return
 		}
 
 		reward, err := gm.GetRewardAndPopFromWindow(ctx, tc.evaluate, tc.penaltyScore)
 		if err != nil {
 			t.Errorf("%s: failed to get reward and pop from window, got err %v", tc.testName, err)
+			return
 		}
 		if !reward.IsEqual(tc.expectReward) {
 			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, reward, tc.expectReward)
+			return
 		}
 
 		consumptionMeta, err = gm.storage.GetConsumptionMeta(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get consumption meta again, got err %v", tc.testName, err)
+			return
 		}
 		if !consumptionMeta.ConsumptionRewardPool.IsEqual(tc.expectConsumptionRewardPool) {
 			t.Errorf("%s: diff consumption reward pool, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionRewardPool, tc.expectConsumptionRewardPool)
+			return
 		}
 		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectConsumptionWindow) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectConsumptionWindow)
+			return
+		}
+		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get global meta again, got err %v", tc.testName, err)
+			return
+		}
+		if !globalMeta.TotalLinoCoin.IsEqual(totalLino.Plus(tc.expectReward)) {
+			t.Errorf(
+				"%s: total lino incorrect, expect %v, got %v",
+				tc.testName, totalLino.Plus(tc.expectReward), globalMeta.TotalLinoCoin)
+			return
 		}
 	}
 }
@@ -714,7 +738,53 @@ func TestDistributeHourlyInflation(t *testing.T) {
 	globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.AnnualInflation)
-	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino.Plus(expectContentCreatorInflation))
+	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino)
+}
+
+func AddToDeveloperInflationPool(t *testing.T) {
+	ctx, gm := setupTest(t)
+	testCases := []struct {
+		testName                   string
+		initDeveloperInflationPool types.Coin
+		addAmount                  types.Coin
+	}{
+		{
+			testName:                   "add to empty pool",
+			initDeveloperInflationPool: types.NewCoinFromInt64(0 * types.Decimals),
+			addAmount:                  types.NewCoinFromInt64(1 * types.Decimals),
+		},
+		{
+			testName:                   "normal add operation",
+			initDeveloperInflationPool: types.NewCoinFromInt64(10000 * types.Decimals),
+			addAmount:                  types.NewCoinFromInt64(10 * types.Decimals),
+		},
+	}
+	for _, tc := range testCases {
+		inflationPool := &model.InflationPool{
+			DeveloperInflationPool: tc.initDeveloperInflationPool,
+		}
+		err := gm.storage.SetInflationPool(ctx, inflationPool)
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", tc.testName, err)
+			return
+		}
+		err = gm.AddToDeveloperInflationPool(ctx, tc.addAmount)
+		if err != nil {
+			t.Errorf("%s: failed to add to developer inflation pool, got err %v", tc.testName, err)
+			return
+		}
+		inflationPool, err = gm.storage.GetInflationPool(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", tc.testName, err)
+			return
+		}
+		if !tc.initDeveloperInflationPool.Plus(tc.addAmount).IsEqual(inflationPool.DeveloperInflationPool) {
+			t.Errorf(
+				"%s: failed to add inflation to developer inflation pool, expect %v, got %v",
+				tc.testName, tc.initDeveloperInflationPool.Plus(tc.addAmount), inflationPool.DeveloperInflationPool)
+			return
+		}
+	}
 }
 
 func TestRecalculateAnnuallyInflation(t *testing.T) {

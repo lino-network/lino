@@ -104,7 +104,8 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 }
 
 func TestReturnCoinEvent(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	createTestAccount(ctx, am, "user1")
 

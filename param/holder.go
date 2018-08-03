@@ -153,10 +153,11 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(0),
-		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize: 100,
-		RewardHistoryBundleSize:  100,
+		MinimumBalance:                         types.NewCoinFromInt64(0),
+		RegisterFee:                            types.NewCoinFromInt64(1 * types.Decimals),
+		BalanceHistoryBundleSize:               100,
+		RewardHistoryBundleSize:                100,
+		EmptyBalanceFirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err

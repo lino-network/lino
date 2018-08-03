@@ -6,6 +6,8 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -18,6 +20,7 @@ import (
 
 var (
 	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
 	accountReferrer = types.AccountKey("referrer")
@@ -56,19 +59,31 @@ var (
 	coin400 = types.NewCoinFromInt64(400)
 )
 
-func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, param.AccountParam) {
+func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
+}
+
+func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
 	accManager := NewAccountManager(TestAccountKVStoreKey, ph)
-	accParam, _ := accManager.paramHolder.GetAccountParam(ctx)
-	return ctx, accManager, *accParam
+	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+
+	cdc := globalManager.WireCodec()
+	cdc.RegisterInterface((*types.Event)(nil), nil)
+	cdc.RegisterConcrete(ReturnCoinEvent{}, "event/return", nil)
+
+	err := InitGlobalManager(ctx, globalManager)
+	assert.Nil(t, err)
+	return ctx, accManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 

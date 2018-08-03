@@ -29,7 +29,7 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newAppPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
-	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(100*types.Decimals))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(99*types.Decimals))
 	test.CheckBalance(t, test.GenesisUser, lb,
 		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoinFromInt64(100*types.Decimals)))
 }

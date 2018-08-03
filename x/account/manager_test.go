@@ -113,7 +113,8 @@ func TestDoesAccountExist(t *testing.T) {
 }
 
 func TestAddCoin(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
 		t.Error("TestAddCoin: failed to get coin day param")
@@ -393,7 +394,8 @@ func TestAddCoin(t *testing.T) {
 }
 
 func TestMinusCoin(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
@@ -610,7 +612,8 @@ func TestBalanceHistory(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctx, am, accParam := setupTest(t, 1)
+		ctx, am, _ := setupTest(t, 1)
+		accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 		user1 := types.AccountKey("user1")
 		createTestAccount(ctx, am, string(user1))
@@ -672,7 +675,8 @@ func TestBalanceHistory(t *testing.T) {
 }
 
 func TestAddBalanceHistory(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	testCases := []struct {
 		testName              string
@@ -754,78 +758,204 @@ func TestAddBalanceHistory(t *testing.T) {
 }
 
 func TestCreateAccountNormalCase(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+	coinDayParam, _ := am.paramHolder.GetCoinDayParam(ctx)
 
-	resetPriv := secp256k1.GenPrivKey()
-	txPriv := secp256k1.GenPrivKey()
-	appPriv := secp256k1.GenPrivKey()
-
-	accKey := types.AccountKey("accKey")
-
+	largeAmountRegisterFee := types.NewCoinFromInt64(150000 * types.Decimals)
+	testCases := []struct {
+		testName             string
+		username             types.AccountKey
+		registerFee          types.Coin
+		expectFullStakeCoin  types.Coin
+		expectNumberOfTx     int64
+		expectBalanceHistory *model.BalanceHistory
+	}{
+		{
+			testName:             "zero register fee",
+			username:             types.AccountKey("test1"),
+			registerFee:          types.NewCoinFromInt64(0),
+			expectFullStakeCoin:  types.NewCoinFromInt64(0),
+			expectNumberOfTx:     0,
+			expectBalanceHistory: nil,
+		},
+		{
+			testName:            "micro register fee",
+			username:            types.AccountKey("test2"),
+			registerFee:         types.NewCoinFromInt64(1),
+			expectFullStakeCoin: types.NewCoinFromInt64(1),
+			expectNumberOfTx:    1,
+			expectBalanceHistory: &model.BalanceHistory{
+				Details: []model.Detail{
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     types.NewCoinFromInt64(1),
+						From:       accountReferrer,
+						To:         types.AccountKey("test2"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountWithFullStakeMemo,
+					},
+				},
+			},
+		},
+		{
+			testName:            "register fee less than full stake coin limitation",
+			username:            types.AccountKey("test3"),
+			registerFee:         types.NewCoinFromInt64(1500),
+			expectFullStakeCoin: types.NewCoinFromInt64(1500),
+			expectNumberOfTx:    1,
+			expectBalanceHistory: &model.BalanceHistory{
+				Details: []model.Detail{
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     types.NewCoinFromInt64(1500),
+						From:       accountReferrer,
+						To:         types.AccountKey("test3"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountWithFullStakeMemo,
+					},
+				},
+			},
+		},
+		{
+			testName:            "register fee much than full stake coin limitation",
+			username:            types.AccountKey("test4"),
+			registerFee:         types.NewCoinFromInt64(150000),
+			expectFullStakeCoin: accParam.EmptyBalanceFirstDepositFullStakeLimit,
+			expectNumberOfTx:    2,
+			expectBalanceHistory: &model.BalanceHistory{
+				Details: []model.Detail{
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     accParam.EmptyBalanceFirstDepositFullStakeLimit,
+						From:       accountReferrer,
+						To:         types.AccountKey("test4"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountWithFullStakeMemo,
+					},
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     types.NewCoinFromInt64(50000),
+						From:       accountReferrer,
+						To:         types.AccountKey("test4"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountRegisterDepositMemo,
+					},
+				},
+			},
+		},
+		{
+			testName:            "register with large amount of coin",
+			username:            types.AccountKey("test5"),
+			registerFee:         largeAmountRegisterFee,
+			expectFullStakeCoin: accParam.EmptyBalanceFirstDepositFullStakeLimit,
+			expectNumberOfTx:    2,
+			expectBalanceHistory: &model.BalanceHistory{
+				Details: []model.Detail{
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     accParam.EmptyBalanceFirstDepositFullStakeLimit,
+						From:       accountReferrer,
+						To:         types.AccountKey("test5"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountWithFullStakeMemo,
+					},
+					model.Detail{
+						DetailType: types.TransferIn,
+						Amount:     largeAmountRegisterFee.Minus(accParam.EmptyBalanceFirstDepositFullStakeLimit),
+						From:       accountReferrer,
+						To:         types.AccountKey("test5"),
+						CreatedAt:  ctx.BlockHeader().Time,
+						Memo:       types.InitAccountRegisterDepositMemo,
+					},
+				},
+			},
+		},
+	}
 	// normal test
-	assert.False(t, am.DoesAccountExist(ctx, accKey))
-	err := am.CreateAccount(
-		ctx, accountReferrer, accKey, resetPriv.PubKey(), txPriv.PubKey(),
-		appPriv.PubKey(), accParam.RegisterFee)
-	if err != nil {
-		t.Errorf("TestCreateAccountNormalCase: failed to create account, got err %v", err)
-	}
+	for _, tc := range testCases {
+		assert.False(t, am.DoesAccountExist(ctx, tc.username))
+		resetPriv := secp256k1.GenPrivKey()
+		txPriv := secp256k1.GenPrivKey()
+		appPriv := secp256k1.GenPrivKey()
 
-	assert.True(t, am.DoesAccountExist(ctx, accKey))
-	bank := model.AccountBank{
-		Saving:  accParam.RegisterFee,
-		NumOfTx: 1,
-		Stake:   accParam.RegisterFee,
-	}
-	checkBankKVByUsername(t, ctx, "TestCreateAccountNormalCase", accKey, bank)
+		err := am.CreateAccount(
+			ctx, accountReferrer, tc.username, resetPriv.PubKey(), txPriv.PubKey(),
+			appPriv.PubKey(), tc.registerFee)
+		if err != nil {
+			t.Errorf("%v: failed to create account, got err %v", tc.testName, err)
+		}
 
-	pendingStakeQueue := model.PendingStakeQueue{StakeCoinInQueue: sdk.ZeroRat(), TotalCoin: types.NewCoinFromInt64(0)}
-	checkPendingStake(t, ctx, "TestCreateAccountNormalCase", accKey, pendingStakeQueue)
+		assert.True(t, am.DoesAccountExist(ctx, tc.username))
+		bank := model.AccountBank{
+			Saving:  tc.registerFee,
+			NumOfTx: tc.expectNumberOfTx,
+			Stake:   tc.expectFullStakeCoin,
+		}
+		checkBankKVByUsername(t, ctx, tc.testName, tc.username, bank)
 
-	accInfo := model.AccountInfo{
-		Username:       accKey,
-		CreatedAt:      ctx.BlockHeader().Time,
-		ResetKey:       resetPriv.PubKey(),
-		TransactionKey: txPriv.PubKey(),
-		AppKey:         appPriv.PubKey(),
-	}
-	checkAccountInfo(t, ctx, "TestCreateAccountNormalCase", accKey, accInfo)
-	accMeta := model.AccountMeta{
-		LastActivityAt:       ctx.BlockHeader().Time,
-		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
-		TransactionCapacity:  accParam.RegisterFee,
-	}
-	checkAccountMeta(t, ctx, "TestCreateAccountNormalCase", accKey, accMeta)
+		pendingStakeQueue :=
+			model.PendingStakeQueue{
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        types.NewCoinFromInt64(0),
+			}
+		if tc.registerFee.IsGT(tc.expectFullStakeCoin) {
+			pendingStakeQueue.TotalCoin = tc.registerFee.Minus(tc.expectFullStakeCoin)
+			pendingStakeQueue.PendingStakeList = []model.PendingStake{{
+				StartTime: ctx.BlockHeader().Time,
+				EndTime:   ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake,
+				Coin:      tc.registerFee.Minus(tc.expectFullStakeCoin),
+			}}
+			pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
+		}
 
-	reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
-	checkAccountReward(t, ctx, "TestCreateAccountNormalCase", accKey, reward)
+		checkPendingStake(t, ctx, tc.testName, tc.username, pendingStakeQueue)
+		accInfo := model.AccountInfo{
+			Username:       tc.username,
+			CreatedAt:      ctx.BlockHeader().Time,
+			ResetKey:       resetPriv.PubKey(),
+			TransactionKey: txPriv.PubKey(),
+			AppKey:         appPriv.PubKey(),
+		}
+		checkAccountInfo(t, ctx, tc.testName, tc.username, accInfo)
+		accMeta := model.AccountMeta{
+			LastActivityAt:       ctx.BlockHeader().Time,
+			LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+			TransactionCapacity:  tc.expectFullStakeCoin,
+		}
+		checkAccountMeta(t, ctx, tc.testName, tc.username, accMeta)
 
-	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
-	if err != nil {
-		t.Errorf("TestCreateAccountNormalCase: failed to get balance history, got err %v", err)
-	}
-	if len(balanceHistory.Details) != 1 {
-		t.Errorf("TestCreateAccountNormalCase: diff num of balance, got %v, want %v", len(balanceHistory.Details), 1)
-	}
+		reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
+		checkAccountReward(t, ctx, tc.testName, tc.username, reward)
 
-	wantDetail := model.Detail{
-		From:       accountReferrer,
-		To:         accKey,
-		Amount:     accParam.RegisterFee,
-		CreatedAt:  ctx.BlockHeader().Time,
-		DetailType: types.TransferIn,
-		Memo:       types.InitAccountWithFullStakeMemo,
-	}
-	if !assert.Equal(t, wantDetail, balanceHistory.Details[0]) {
-		t.Errorf("TestCreateAccountNormalCase: diff detail, got %v, want %v", balanceHistory.Details[0], wantDetail)
+		balanceHistory, err := am.storage.GetBalanceHistory(ctx, tc.username, 0)
+		if err != nil {
+			t.Errorf("%v: failed to get balance history, got err %v", tc.testName, err)
+		}
+		if tc.expectBalanceHistory == nil && balanceHistory != nil {
+			t.Errorf("%v: diff balance history, got %v, want %v", tc.testName, balanceHistory, tc.expectBalanceHistory)
+		}
+		if tc.expectBalanceHistory == nil {
+			continue
+		}
+		if len(balanceHistory.Details) != len(tc.expectBalanceHistory.Details) {
+			t.Errorf("%v: diff num of balance, got %v, want %v", tc.testName, len(balanceHistory.Details), 1)
+		}
+		for i, detail := range balanceHistory.Details {
+			if !assert.Equal(t, tc.expectBalanceHistory.Details[i], detail) {
+				t.Errorf(
+					"%v: diff detail, got %v, want %v",
+					tc.testName, tc.expectBalanceHistory.Details[i], detail)
+			}
+		}
 	}
 }
 
 func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	testName := "TestCreateAccountWithLargeRegisterFee"
 
-	ctx, am, accParam := setupTest(t, 1)
-
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	resetPriv := secp256k1.GenPrivKey()
 	txPriv := secp256k1.GenPrivKey()
 	appPriv := secp256k1.GenPrivKey()
@@ -923,62 +1053,55 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 }
 
 func TestInvalidCreateAccount(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	priv1 := secp256k1.GenPrivKey()
 	priv2 := secp256k1.GenPrivKey()
 
 	accKey1 := types.AccountKey("accKey1")
 	accKey2 := types.AccountKey("accKey2")
-	accKey3 := types.AccountKey("accKey3")
 
 	testCases := []struct {
-		testName    string
-		username    types.AccountKey
-		privKey     crypto.PrivKey
-		registerFee types.Coin
-		expectErr   sdk.Error
+		testName        string
+		username        types.AccountKey
+		privKey         crypto.PrivKey
+		registerDeposit types.Coin
+		expectErr       sdk.Error
 	}{
 		{
-			testName:    "register user with sufficient saving coin",
-			username:    accKey1,
-			privKey:     priv1,
-			registerFee: accParam.RegisterFee,
-			expectErr:   nil,
+			testName:        "register user with sufficient saving coin",
+			username:        accKey1,
+			privKey:         priv1,
+			registerDeposit: accParam.RegisterFee,
+			expectErr:       nil,
 		},
 		{
-			testName:    "username already took",
-			username:    accKey1,
-			privKey:     priv1,
-			registerFee: accParam.RegisterFee,
-			expectErr:   ErrAccountAlreadyExists(accKey1),
+			testName:        "username already took",
+			username:        accKey1,
+			privKey:         priv1,
+			registerDeposit: accParam.RegisterFee,
+			expectErr:       ErrAccountAlreadyExists(accKey1),
 		},
 		{
-			testName:    "username already took with different private key",
-			username:    accKey1,
-			privKey:     priv2,
-			registerFee: accParam.RegisterFee,
-			expectErr:   ErrAccountAlreadyExists(accKey1),
+			testName:        "username already took with different private key",
+			username:        accKey1,
+			privKey:         priv2,
+			registerDeposit: accParam.RegisterFee,
+			expectErr:       ErrAccountAlreadyExists(accKey1),
 		},
 		{
-			testName:    "register the same private key",
-			username:    accKey2,
-			privKey:     priv1,
-			registerFee: accParam.RegisterFee,
-			expectErr:   nil,
-		},
-		{
-			testName:    "insufficient register fee",
-			username:    accKey3,
-			privKey:     priv1,
-			registerFee: types.NewCoinFromInt64(1),
-			expectErr:   ErrRegisterFeeInsufficient(),
+			testName:        "register the same private key",
+			username:        accKey2,
+			privKey:         priv1,
+			registerDeposit: accParam.RegisterFee,
+			expectErr:       nil,
 		},
 	}
 	for _, tc := range testCases {
 		err := am.CreateAccount(
 			ctx, accountReferrer, tc.username, tc.privKey.PubKey(),
 			secp256k1.GenPrivKey().PubKey(),
-			secp256k1.GenPrivKey().PubKey(), tc.registerFee)
+			secp256k1.GenPrivKey().PubKey(), tc.registerDeposit)
 		if !assert.Equal(t, tc.expectErr, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
@@ -1019,7 +1142,8 @@ func TestUpdateJSONMeta(t *testing.T) {
 }
 
 func TestCoinDayByAccountKey(t *testing.T) {
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	accKey := types.AccountKey("accKey")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
@@ -1154,7 +1278,8 @@ func TestCoinDayByAccountKey(t *testing.T) {
 func TestAddIncomeAndReward(t *testing.T) {
 	testName := "TestAddIncomeAndReward"
 
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	accKey := types.AccountKey("accKey")
 
 	createTestAccount(ctx, am, string(accKey))
@@ -1372,7 +1497,8 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	testName := "TestCheckAuthenticatePubKeyOwner"
 
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	user1 := types.AccountKey("user1")
 	appPermissionUser := types.AccountKey("user2")
 	preAuthPermissionUser := types.AccountKey("user3")
@@ -1928,7 +2054,8 @@ func TestDonationRelationship(t *testing.T) {
 func TestAccountRecoverNormalCase(t *testing.T) {
 	testName := "TestAccountRecoverNormalCase"
 
-	ctx, am, accParam := setupTest(t, 1)
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	user1 := types.AccountKey("user1")
 
 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)

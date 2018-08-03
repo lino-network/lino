@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -31,10 +32,19 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username type
 	return accManager.storage.DoesAccountExist(ctx, username)
 }
 
+// get register fee
+func (accManager AccountManager) GetRegisterFee(ctx sdk.Context) (types.Coin, sdk.Error) {
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	return accParams.RegisterFee, nil
+}
+
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
-	resetKey, transactionKey, appKey crypto.PubKey, registerFee types.Coin) sdk.Error {
+	resetKey, transactionKey, appKey crypto.PubKey, registerDeposit types.Coin) sdk.Error {
 	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
 	}
@@ -42,8 +52,10 @@ func (accManager AccountManager) CreateAccount(
 	if err != nil {
 		return err
 	}
-	if accParams.RegisterFee.IsGT(registerFee) {
-		return ErrRegisterFeeInsufficient()
+
+	depositWithFullStake := registerDeposit
+	if registerDeposit.IsGT(accParams.EmptyBalanceFirstDepositFullStakeLimit) {
+		depositWithFullStake = accParams.EmptyBalanceFirstDepositFullStakeLimit
 	}
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, username, &model.PendingStakeQueue{}); err != nil {
@@ -68,7 +80,7 @@ func (accManager AccountManager) CreateAccount(
 	accountMeta := &model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
-		TransactionCapacity:  accParams.RegisterFee,
+		TransactionCapacity:  depositWithFullStake,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err
@@ -76,13 +88,15 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
 		return err
 	}
+	fmt.Println(depositWithFullStake, registerDeposit.Minus(depositWithFullStake))
 	if err := accManager.AddSavingCoinWithFullStake(
-		ctx, username, accParams.RegisterFee, referrer,
+		ctx, username, depositWithFullStake, referrer,
 		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
 		return ErrAddSavingCoinWithFullStake()
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
+		ctx, username, registerDeposit.Minus(depositWithFullStake), referrer,
+		types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
 		return ErrAddSavingCoin()
 	}
 	return nil

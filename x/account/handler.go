@@ -5,11 +5,12 @@ import (
 	"reflect"
 
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewHandler(am AccountManager) sdk.Handler {
+func NewHandler(am AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case FollowMsg:
@@ -23,7 +24,7 @@ func NewHandler(am AccountManager) sdk.Handler {
 		case RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
 		case RegisterMsg:
-			return handleRegisterMsg(ctx, am, msg)
+			return handleRegisterMsg(ctx, am, gm, msg)
 		case UpdateAccountMsg:
 			return handleUpdateAccountMsg(ctx, am, msg)
 		default:
@@ -124,7 +125,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 }
 
 // Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.Result {
+func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManager, msg RegisterMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Referrer) {
 		return ErrReferrerNotFound(msg.Referrer).Result()
 	}
@@ -132,13 +133,24 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, msg RegisterMsg) sdk.
 	if err != nil {
 		return err.Result()
 	}
+	registerFee, err := am.GetRegisterFee(ctx)
+	if err != nil {
+		return err.Result()
+	}
+	if registerFee.IsGT(coin) {
+		return ErrRegisterFeeInsufficient().Result()
+	}
 	if err := am.MinusSavingCoin(
 		ctx, msg.Referrer, coin, msg.NewUser, "", types.TransferOut); err != nil {
 		return err.Result()
 	}
+	if err := gm.AddToDeveloperInflationPool(ctx, registerFee); err != nil {
+		return err.Result()
+	}
+
 	if err := am.CreateAccount(
 		ctx, msg.Referrer, msg.NewUser, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewAppPubKey, coin); err != nil {
+		msg.NewAppPubKey, coin.Minus(registerFee)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
