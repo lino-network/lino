@@ -821,13 +821,13 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			testName:            "register fee much than full stake coin limitation",
 			username:            types.AccountKey("test4"),
 			registerFee:         types.NewCoinFromInt64(150000),
-			expectFullStakeCoin: accParam.EmptyBalanceFirstDepositFullStakeLimit,
+			expectFullStakeCoin: accParam.FirstDepositFullStakeLimit,
 			expectNumberOfTx:    2,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
 					model.Detail{
 						DetailType: types.TransferIn,
-						Amount:     accParam.EmptyBalanceFirstDepositFullStakeLimit,
+						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
 						To:         types.AccountKey("test4"),
 						CreatedAt:  ctx.BlockHeader().Time,
@@ -848,13 +848,13 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			testName:            "register with large amount of coin",
 			username:            types.AccountKey("test5"),
 			registerFee:         largeAmountRegisterFee,
-			expectFullStakeCoin: accParam.EmptyBalanceFirstDepositFullStakeLimit,
+			expectFullStakeCoin: accParam.FirstDepositFullStakeLimit,
 			expectNumberOfTx:    2,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
 					model.Detail{
 						DetailType: types.TransferIn,
-						Amount:     accParam.EmptyBalanceFirstDepositFullStakeLimit,
+						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
 						To:         types.AccountKey("test5"),
 						CreatedAt:  ctx.BlockHeader().Time,
@@ -862,7 +862,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 					},
 					model.Detail{
 						DetailType: types.TransferIn,
-						Amount:     largeAmountRegisterFee.Minus(accParam.EmptyBalanceFirstDepositFullStakeLimit),
+						Amount:     largeAmountRegisterFee.Minus(accParam.FirstDepositFullStakeLimit),
 						From:       accountReferrer,
 						To:         types.AccountKey("test5"),
 						CreatedAt:  ctx.BlockHeader().Time,

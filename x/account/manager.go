@@ -53,8 +53,8 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	depositWithFullStake := registerDeposit
-	if registerDeposit.IsGT(accParams.EmptyBalanceFirstDepositFullStakeLimit) {
-		depositWithFullStake = accParams.EmptyBalanceFirstDepositFullStakeLimit
+	if registerDeposit.IsGT(accParams.FirstDepositFullStakeLimit) {
+		depositWithFullStake = accParams.FirstDepositFullStakeLimit
 	}
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, username, &model.PendingStakeQueue{}); err != nil {
