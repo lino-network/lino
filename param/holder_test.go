@@ -291,7 +291,7 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:           types.NewCoinFromInt64(0),
 		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
 		BalanceHistoryBundleSize: 100,
 		RewardHistoryBundleSize:  100,

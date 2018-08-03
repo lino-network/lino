@@ -492,7 +492,7 @@ func TestMinusCoin(t *testing.T) {
 			fromUser:   userWithLimitSaving,
 			userPriv:   priv3,
 			expectErr:  ErrAccountSavingCoinNotEnough(),
-			amount:     coin1,
+			amount:     accParam.RegisterFee.Plus(accParam.RegisterFee),
 			atWhen:     baseTime,
 			to:         toUser,
 			memo:       "memo",
