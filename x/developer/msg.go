@@ -3,6 +3,7 @@ package developer
 // nolint
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/tendermint/crypto"
@@ -83,11 +84,11 @@ func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidWebsite()
 	}
 
-	if len(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
+	if utf8.RuneCountInString(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
 		return ErrInvalidDescription()
 	}
 
-	if len(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
+	if utf8.RuneCountInString(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
 		return ErrInvalidAppMetadata()
 	}
 	return nil
@@ -140,11 +141,11 @@ func (msg DeveloperUpdateMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidWebsite()
 	}
 
-	if len(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
+	if utf8.RuneCountInString(msg.Description) > types.MaximumLengthOfDeveloperDesctiption {
 		return ErrInvalidDescription()
 	}
 
-	if len(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
+	if utf8.RuneCountInString(msg.AppMetaData) > types.MaximumLengthOfAppMetadata {
 		return ErrInvalidAppMetadata()
 	}
 	return nil

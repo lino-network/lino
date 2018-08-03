@@ -3,6 +3,7 @@ package proposal
 import (
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
@@ -159,7 +160,7 @@ func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
 	if len(msg.GetPermlink()) == 0 {
 		return ErrInvalidPermlink()
 	}
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -217,7 +218,7 @@ func (msg UpgradeProtocolMsg) ValidateBasic() sdk.Error {
 	if len(msg.GetLink()) > types.MaximumLinkURL {
 		return ErrInvalidLink()
 	}
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -284,7 +285,7 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -342,7 +343,7 @@ func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -401,7 +402,7 @@ func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -467,7 +468,7 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 		!msg.Parameter.VoterMinWithdraw.IsPositive() {
 		return ErrIllegalParameter()
 	}
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -545,7 +546,7 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -608,7 +609,7 @@ func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -677,7 +678,7 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -735,7 +736,7 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 		types.NewCoinFromInt64(0).IsGT(msg.Parameter.RegisterFee) {
 		return ErrIllegalParameter()
 	}
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -789,7 +790,7 @@ func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
@@ -850,7 +851,7 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 	if msg.Parameter.SecondsToRecoverBandwidth <= 0 {
 		return ErrIllegalParameter()
 	}
-	if len(msg.Reason) > types.MaximumLengthOfProposalReason {
+	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
 	return nil
