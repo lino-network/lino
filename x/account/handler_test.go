@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -442,7 +441,6 @@ func TestHandleRegister(t *testing.T) {
 			if err != nil {
 				t.Errorf("%s: failed to get inflation, got err %v", tc.testName, err)
 			}
-			fmt.Println(tc.testName, pool)
 			if !pool.IsEqual(accParam.RegisterFee) {
 				t.Errorf("%s: diff developer inflation, got %v, want %v", tc.testName, pool, accParam.RegisterFee)
 			}

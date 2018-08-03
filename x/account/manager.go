@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/lino-network/lino/param"
@@ -88,7 +87,6 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
 		return err
 	}
-	fmt.Println(depositWithFullStake, registerDeposit.Minus(depositWithFullStake))
 	if err := accManager.AddSavingCoinWithFullStake(
 		ctx, username, depositWithFullStake, referrer,
 		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
