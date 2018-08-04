@@ -97,8 +97,6 @@ type BandwidthParam struct {
 type AccountParam struct {
 	MinimumBalance             types.Coin `json:"minimum_balance"`
 	RegisterFee                types.Coin `json:"register_fee"`
-	BalanceHistoryBundleSize   int64      `json:"balance_history_bundle_size"`
-	RewardHistoryBundleSize    int64      `json:"reward_history_bundle_size"`
 	FirstDepositFullStakeLimit types.Coin `json:"first_deposit_full_stake_limit"`
 }
 

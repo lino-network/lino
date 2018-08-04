@@ -309,13 +309,9 @@ func (accManager AccountManager) AddBalanceHistory(
 	ctx sdk.Context, username types.AccountKey, numOfTx int64,
 	transactionDetail model.Detail) sdk.Error {
 	// set balance history
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
 	balanceHistory, err :=
 		accManager.storage.GetBalanceHistory(
-			ctx, username, numOfTx/accParams.BalanceHistoryBundleSize)
+			ctx, username, numOfTx/types.BalanceHistoryBundleSize)
 	if err != nil {
 		return err
 	}
@@ -324,7 +320,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	}
 	balanceHistory.Details = append(balanceHistory.Details, transactionDetail)
 	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
+		ctx, username, numOfTx/types.BalanceHistoryBundleSize,
 		balanceHistory); err != nil {
 		return err
 	}
@@ -498,13 +494,8 @@ func (accManager AccountManager) AddIncomeAndReward(
 func (accManager AccountManager) AddRewardHistory(
 	ctx sdk.Context, username types.AccountKey, numOfReward int64,
 	rewardDetail model.RewardDetail) sdk.Error {
-	// set reward history
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
 
-	slotNum := numOfReward / accParams.RewardHistoryBundleSize
+	slotNum := numOfReward / types.RewardHistoryBundleSize
 
 	rewardHistory, err := accManager.storage.GetRewardHistory(ctx, username, slotNum)
 	if err != nil {
@@ -549,17 +540,12 @@ func (accManager AccountManager) ClaimReward(
 
 func (accManager AccountManager) ClearRewardHistory(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
-
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	slotNum := bank.NumOfReward / accParams.RewardHistoryBundleSize
+	slotNum := bank.NumOfReward / types.RewardHistoryBundleSize
 	for i := int64(0); i <= slotNum; i++ {
 		accManager.storage.DeleteRewardHistory(ctx, username, i)
 	}

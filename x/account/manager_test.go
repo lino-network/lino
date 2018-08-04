@@ -613,8 +613,6 @@ func TestBalanceHistory(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		ctx, am, _ := setupTest(t, 1)
-		accParam, _ := am.paramHolder.GetAccountParam(ctx)
-
 		user1 := types.AccountKey("user1")
 		createTestAccount(ctx, am, string(user1))
 
@@ -643,7 +641,7 @@ func TestBalanceHistory(t *testing.T) {
 		}
 
 		// total slot should use previous states to get expected slots
-		actualTotalSlot := (expectNumOfTx-1)/accParam.BalanceHistoryBundleSize + 1
+		actualTotalSlot := (expectNumOfTx-1)/types.BalanceHistoryBundleSize + 1
 		if tc.expectTotalSlot != actualTotalSlot {
 			t.Errorf("%s: diff total slot, got %v, want %v", tc.testName, actualTotalSlot, tc.expectTotalSlot)
 		}
@@ -676,8 +674,6 @@ func TestBalanceHistory(t *testing.T) {
 
 func TestAddBalanceHistory(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
-	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-
 	testCases := []struct {
 		testName              string
 		numOfTx               int64
@@ -743,7 +739,7 @@ func TestAddBalanceHistory(t *testing.T) {
 
 		balanceHistory, err :=
 			am.storage.GetBalanceHistory(
-				ctx, user1, tc.numOfTx/accParam.BalanceHistoryBundleSize)
+				ctx, user1, tc.numOfTx/types.BalanceHistoryBundleSize)
 		if err != nil {
 			t.Errorf("%s: failed to get balance history, got err %v", tc.testName, err)
 		}

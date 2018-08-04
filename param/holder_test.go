@@ -199,8 +199,6 @@ func TestAccountParam(t *testing.T) {
 	parameter := AccountParam{
 		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
 		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize:   100,
-		RewardHistoryBundleSize:    100,
 		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	err := ph.setAccountParam(ctx, &parameter)
@@ -294,8 +292,6 @@ func TestInitParam(t *testing.T) {
 	accountParam := AccountParam{
 		MinimumBalance:             types.NewCoinFromInt64(0),
 		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize:   100,
-		RewardHistoryBundleSize:    100,
 		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{

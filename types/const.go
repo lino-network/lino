@@ -155,4 +155,9 @@ const (
 
 	// Permlink separator
 	PermlinkSeparator = "#"
+
+	// Bundle size for balance history
+	BalanceHistoryBundleSize = 100
+	// Bundle size for reward history
+	RewardHistoryBundleSize = 100
 )
