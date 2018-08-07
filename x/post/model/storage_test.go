@@ -38,7 +38,29 @@ func TestPost(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
 	})
+}
 
+func TestUTF8(t *testing.T) {
+	postInfo := PostInfo{
+		PostID:       "Test Post",
+		Title:        "Test Post",
+		Content:      "12345 67890 你好👌12345 67890 你好👌",
+		Author:       types.AccountKey("author"),
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
+		Links:        nil,
+	}
+
+	runTest(t, func(env TestEnv) {
+		err := env.ps.SetPostInfo(env.ctx, &postInfo)
+		assert.Nil(t, err)
+
+		resultPtr, err := env.ps.GetPostInfo(env.ctx, types.GetPermlink(postInfo.Author, postInfo.PostID))
+		assert.Nil(t, err)
+		assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
+	})
 }
 
 func TestPostMeta(t *testing.T) {

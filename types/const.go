@@ -148,11 +148,16 @@ const (
 	MaximumLengthOfProposalReason = 1000
 
 	// Init account with full stake memo
-	InitAccountWithFullStakeMemo = "init register fee"
+	InitAccountWithFullStakeMemo = "init deposit"
 
 	// Init account deposit fee memo
 	InitAccountRegisterDepositMemo = "init deposit"
 
 	// Permlink separator
 	PermlinkSeparator = "#"
+
+	// Bundle size for balance history
+	BalanceHistoryBundleSize = 100
+	// Bundle size for reward history
+	RewardHistoryBundleSize = 100
 )

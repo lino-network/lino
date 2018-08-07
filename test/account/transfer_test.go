@@ -26,5 +26,5 @@ func TestTransferToAccount(t *testing.T) {
 
 	test.CheckBalance(t, test.GenesisUser, lb,
 		test.GetGenesisAccountCoin(test.DefaultNumOfVal).Minus(types.NewCoinFromInt64(300*types.Decimals)))
-	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(300*types.Decimals))
+	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(299*types.Decimals))
 }

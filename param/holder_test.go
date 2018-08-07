@@ -197,10 +197,9 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize: 100,
-		RewardHistoryBundleSize:  100,
+		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -291,10 +290,9 @@ func TestInitParam(t *testing.T) {
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:           types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:              types.NewCoinFromInt64(1 * types.Decimals),
-		BalanceHistoryBundleSize: 100,
-		RewardHistoryBundleSize:  100,
+		MinimumBalance:             types.NewCoinFromInt64(0),
+		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{
 		ReportOrUpvoteInterval: 24 * 3600,

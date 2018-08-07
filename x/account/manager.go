@@ -31,10 +31,19 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username type
 	return accManager.storage.DoesAccountExist(ctx, username)
 }
 
+// get register fee
+func (accManager AccountManager) GetRegisterFee(ctx sdk.Context) (types.Coin, sdk.Error) {
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	return accParams.RegisterFee, nil
+}
+
 // create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
-	resetKey, transactionKey, appKey crypto.PubKey, registerFee types.Coin) sdk.Error {
+	resetKey, transactionKey, appKey crypto.PubKey, registerDeposit types.Coin) sdk.Error {
 	if accManager.DoesAccountExist(ctx, username) {
 		return ErrAccountAlreadyExists(username)
 	}
@@ -42,8 +51,10 @@ func (accManager AccountManager) CreateAccount(
 	if err != nil {
 		return err
 	}
-	if accParams.RegisterFee.IsGT(registerFee) {
-		return ErrRegisterFeeInsufficient()
+
+	depositWithFullStake := registerDeposit
+	if registerDeposit.IsGT(accParams.FirstDepositFullStakeLimit) {
+		depositWithFullStake = accParams.FirstDepositFullStakeLimit
 	}
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, username, &model.PendingStakeQueue{}); err != nil {
@@ -68,7 +79,7 @@ func (accManager AccountManager) CreateAccount(
 	accountMeta := &model.AccountMeta{
 		LastActivityAt:       ctx.BlockHeader().Time,
 		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
-		TransactionCapacity:  accParams.RegisterFee,
+		TransactionCapacity:  depositWithFullStake,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err
@@ -77,12 +88,13 @@ func (accManager AccountManager) CreateAccount(
 		return err
 	}
 	if err := accManager.AddSavingCoinWithFullStake(
-		ctx, username, accParams.RegisterFee, referrer,
+		ctx, username, depositWithFullStake, referrer,
 		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
 		return ErrAddSavingCoinWithFullStake()
 	}
 	if err := accManager.AddSavingCoin(
-		ctx, username, registerFee.Minus(accParams.RegisterFee), referrer, types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
+		ctx, username, registerDeposit.Minus(depositWithFullStake), referrer,
+		types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
 		return ErrAddSavingCoin()
 	}
 	return nil
@@ -297,13 +309,9 @@ func (accManager AccountManager) AddBalanceHistory(
 	ctx sdk.Context, username types.AccountKey, numOfTx int64,
 	transactionDetail model.Detail) sdk.Error {
 	// set balance history
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
 	balanceHistory, err :=
 		accManager.storage.GetBalanceHistory(
-			ctx, username, numOfTx/accParams.BalanceHistoryBundleSize)
+			ctx, username, numOfTx/types.BalanceHistoryBundleSize)
 	if err != nil {
 		return err
 	}
@@ -312,7 +320,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	}
 	balanceHistory.Details = append(balanceHistory.Details, transactionDetail)
 	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, numOfTx/accParams.BalanceHistoryBundleSize,
+		ctx, username, numOfTx/types.BalanceHistoryBundleSize,
 		balanceHistory); err != nil {
 		return err
 	}
@@ -486,13 +494,8 @@ func (accManager AccountManager) AddIncomeAndReward(
 func (accManager AccountManager) AddRewardHistory(
 	ctx sdk.Context, username types.AccountKey, numOfReward int64,
 	rewardDetail model.RewardDetail) sdk.Error {
-	// set reward history
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
 
-	slotNum := numOfReward / accParams.RewardHistoryBundleSize
+	slotNum := numOfReward / types.RewardHistoryBundleSize
 
 	rewardHistory, err := accManager.storage.GetRewardHistory(ctx, username, slotNum)
 	if err != nil {
@@ -537,17 +540,12 @@ func (accManager AccountManager) ClaimReward(
 
 func (accManager AccountManager) ClearRewardHistory(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return err
-	}
-
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	slotNum := bank.NumOfReward / accParams.RewardHistoryBundleSize
+	slotNum := bank.NumOfReward / types.RewardHistoryBundleSize
 	for i := int64(0); i <= slotNum; i++ {
 		accManager.storage.DeleteRewardHistory(ctx, username, i)
 	}
