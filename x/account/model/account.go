@@ -124,6 +124,7 @@ type Detail struct {
 	From       types.AccountKey         `json:"from"`
 	To         types.AccountKey         `json:"to"`
 	Amount     types.Coin               `json:"amount"`
+	Balance    types.Coin               `json:"balance"`
 	CreatedAt  int64                    `json:"created_at"`
 	Memo       string                   `json:"memo"`
 }
