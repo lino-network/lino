@@ -14,6 +14,7 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
+	accModel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
 	infra "github.com/lino-network/lino/x/infra"
 	val "github.com/lino-network/lino/x/validator"
@@ -529,28 +530,37 @@ func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
 
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	//ctx := lb.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 
-	// // iterate to get the accounts
-	// accounts := []*GenesisAccount{}
-	// appendAccount := func(acc auth.Account) (stop bool) {
-	// 	account := &types.GenesisAccount{
-	// 		Address: acc.GetAddress(),
-	// 		Coins:   acc.GetCoins(),
-	// 	}
-	// 	accounts = append(accounts, account)
-	// 	return false
-	// }
-	// app.accountMapper.IterateAccounts(ctx, appendAccount)
+	// iterate to get the accounts
+	accounts := []GenesisAccount{}
+	appendAccount := func(accInfo accModel.AccountInfo, accBank accModel.AccountBank) (stop bool) {
+		saving := accBank.Saving
+		deposit, err := lb.valManager.GetValidatorDeposit(ctx, accInfo.Username)
+		if err != nil {
+			saving = saving.Plus(deposit)
+		}
+		account := GenesisAccount{
+			Name:           string(accInfo.Username),
+			ResetKey:       accInfo.ResetKey,
+			TransactionKey: accInfo.TransactionKey,
+			AppKey:         accInfo.AppKey,
+			IsValidator:    false,
+			Lino:           saving.ToRat().Quo(sdk.NewRat(types.Decimals)).FloatString(),
+		}
+		accounts = append(accounts, account)
+		return false
+	}
+	lb.accountManager.IterateAccounts(ctx, appendAccount)
 
-	// genState := types.GenesisState{
-	// 	Accounts:    accounts,
-	// 	POWGenesis:  pow.WriteGenesis(ctx, app.powKeeper),
-	// 	CoolGenesis: cool.WriteGenesis(ctx, app.coolKeeper),
-	// }
-	// appState, err = wire.MarshalJSONIndent(app.cdc, genState)
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
+	genesisState := GenesisState{
+		Accounts:   accounts,
+		Developers: []GenesisAppDeveloper{},
+		Infra:      []GenesisInfraProvider{},
+	}
+	appState, err = wire.MarshalJSONIndent(lb.cdc, genesisState)
+	if err != nil {
+		return nil, nil, err
+	}
 	return appState, validators, nil
 }

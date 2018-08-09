@@ -17,27 +17,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// // defaultOptions sets up the app_options for the
-// // default genesis file
-// func defaultAppState(args []string, addr sdk.Address, coinDenom string) (json.RawMessage, error) {
-// 	pubKey, secret, err := generateCoinKey()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	fmt.Println("Secret phrase to access coins:")
-// 	fmt.Println(secret)
-// 	fmt.Println("Init address:")
-// 	fmt.Println(pubKey.Address())
-
-// 	fmt.Println(hex.EncodeToString(privValidator.PrivKey.Bytes()))
-// 	result, err := genesis.GetDefaultGenesis(pubKey, privValidator.PubKey)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return json.RawMessage(result), nil
-// }
-
 // generate Lino application
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	return app.NewLinoBlockchain(logger, db, traceStore, baseapp.SetPruning(viper.GetString("pruning")))

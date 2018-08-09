@@ -935,6 +935,10 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 	}
 }
 
+func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
+	accManager.storage.IterateAccounts(ctx, process)
+}
+
 func min(a, b int64) int64 {
 	if a < b {
 		return a

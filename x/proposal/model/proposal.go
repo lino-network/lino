@@ -18,6 +18,7 @@ type ProposalInfo struct {
 	Result        types.ProposalResult `json:"result"`
 	CreatedAt     int64                `json:"created_at"`
 	ExpiredAt     int64                `json:"expired_at"`
+	Reason        string               `json:"reason"`
 }
 
 type ChangeParamProposal struct {
