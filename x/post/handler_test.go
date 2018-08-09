@@ -346,6 +346,11 @@ func TestHandlerPostDonate(t *testing.T) {
 		referrer, "", types.TransferIn)
 	assert.Nil(t, err)
 
+	micropaymentUser := createTestAccount(t, ctx, am, "micropaymentUser")
+	err = am.AddSavingCoin(
+		ctx, micropaymentUser, types.NewCoinFromInt64(1*types.Decimals),
+		referrer, "", types.TransferIn)
+	assert.Nil(t, err)
 	testCases := []struct {
 		testName            string
 		donateUser          types.AccountKey
@@ -492,6 +497,42 @@ func TestHandlerPostDonate(t *testing.T) {
 			},
 		},
 		{
+			testName:   "micropayment",
+			donateUser: micropaymentUser,
+			amount:     types.LNO("0.00001"),
+			toAuthor:   author,
+			toPostID:   postID,
+			expectErr:  sdk.Result{},
+			expectPostMeta: model.PostMeta{
+				CreatedAt:               ctx.BlockHeader().Time,
+				LastUpdatedAt:           ctx.BlockHeader().Time,
+				LastActivityAt:          ctx.BlockHeader().Time,
+				AllowReplies:            true,
+				TotalDonateCount:        4,
+				TotalUpvoteStake:        types.NewCoinFromInt64(0),
+				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalReward:             types.NewCoinFromInt64(19000001),
+				RedistributionSplitRate: sdk.ZeroRat(),
+			},
+			expectDonatorSaving: types.NewCoinFromInt64(199999),
+			expectAuthorSaving:  accParam.RegisterFee.Plus(types.NewCoinFromInt64(19000001)),
+			expectRegisteredEvent: RewardEvent{
+				PostAuthor: author,
+				PostID:     postID,
+				Consumer:   micropaymentUser,
+				Evaluate:   types.NewCoinFromInt64(5),
+				Original:   types.NewCoinFromInt64(1),
+				Friction:   types.NewCoinFromInt64(0),
+				FromApp:    "",
+			},
+			expectDonateTimesFromUserToAuthor: 1,
+			expectCumulativeConsumption:       types.NewCoinFromInt64(20000001),
+			expectAuthorReward: accmodel.Reward{
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
+			},
+		},
+		{
 			testName:                          "invalid target postID",
 			donateUser:                        userWithSufficientSaving,
 			amount:                            types.LNO("1"),
@@ -505,8 +546,8 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectDonateTimesFromUserToAuthor: 1,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
 			expectAuthorReward: accmodel.Reward{
-				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
-				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
 			},
 		},
 		{
@@ -523,8 +564,8 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(200 * types.Decimals),
 			expectAuthorReward: accmodel.Reward{
-				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
-				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
 			},
 		},
 		{
@@ -542,7 +583,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalDonateCount:        2,
 				TotalUpvoteStake:        types.NewCoinFromInt64(0),
 				TotalReportStake:        types.NewCoinFromInt64(0),
-				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
+				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
 			expectDonatorSaving:               accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -551,8 +592,8 @@ func TestHandlerPostDonate(t *testing.T) {
 			expectDonateTimesFromUserToAuthor: 0,
 			expectCumulativeConsumption:       types.NewCoinFromInt64(20000000),
 			expectAuthorReward: accmodel.Reward{
-				TotalIncome:    types.NewCoinFromInt64(190 * types.Decimals),
-				OriginalIncome: types.NewCoinFromInt64(190 * types.Decimals),
+				TotalIncome:    types.NewCoinFromInt64(19000001),
+				OriginalIncome: types.NewCoinFromInt64(19000001),
 			},
 		},
 		{
