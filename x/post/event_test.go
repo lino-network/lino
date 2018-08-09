@@ -1,6 +1,7 @@
 package post
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -24,6 +25,10 @@ func TestRewardEvent(t *testing.T) {
 	err = dm.RegisterDeveloper(ctx, "LinoApp2", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
 	assert.Nil(t, err)
 
+	bigString1 := "1000000000000000000000000"
+	bigString2 := "7777777777777777777777777"
+	bigStringInt1, _ := new(big.Int).SetString(bigString1, 10)
+	bigStringInt2, _ := new(big.Int).SetString(bigString2, 10)
 	testCases := []struct {
 		testName             string
 		rewardEvent          RewardEvent
@@ -188,6 +193,68 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(100),
 				UnclaimReward:   types.NewCoinFromInt64(100),
+			},
+		},
+		{
+			testName: "test big penalty score with 1.0 report",
+			rewardEvent: RewardEvent{
+				PostAuthor: user,
+				PostID:     postID,
+				Consumer:   user1,
+				Evaluate:   types.NewCoinFromInt64(50),
+				Original:   types.NewCoinFromInt64(100),
+				Friction:   types.NewCoinFromInt64(15),
+				FromApp:    types.AccountKey("LinoApp2"),
+			},
+			totalReportOfThePost: types.NewCoinFromBigInt(bigStringInt2),
+			totalUpvoteOfThePost: types.NewCoinFromBigInt(bigStringInt1),
+			initRewardPool:       types.NewCoinFromInt64(100),
+			initRewardWindow:     types.NewCoinFromInt64(100),
+			expectPostMeta: postModel.PostMeta{
+				TotalUpvoteStake:        types.NewCoinFromBigInt(bigStringInt1),
+				TotalReportStake:        types.NewCoinFromBigInt(bigStringInt2),
+				TotalDonateCount:        1,
+				TotalReward:             types.NewCoinFromInt64(0),
+				RedistributionSplitRate: sdk.ZeroRat(),
+			},
+			expectAppWeight: sdk.NewRat(100, 251),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(0),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(0),
+				UnclaimReward:   types.NewCoinFromInt64(0),
+			},
+		},
+		{
+			testName: "test big penalty score with 12.857% report",
+			rewardEvent: RewardEvent{
+				PostAuthor: user,
+				PostID:     postID,
+				Consumer:   user1,
+				Evaluate:   types.NewCoinFromInt64(33333),
+				Original:   types.NewCoinFromInt64(100),
+				Friction:   types.NewCoinFromInt64(15),
+				FromApp:    types.AccountKey("LinoApp2"),
+			},
+			totalReportOfThePost: types.NewCoinFromBigInt(bigStringInt1),
+			totalUpvoteOfThePost: types.NewCoinFromBigInt(bigStringInt2),
+			initRewardPool:       types.NewCoinFromInt64(5555),
+			initRewardWindow:     types.NewCoinFromInt64(77777),
+			expectPostMeta: postModel.PostMeta{
+				TotalUpvoteStake:        types.NewCoinFromBigInt(bigStringInt2),
+				TotalReportStake:        types.NewCoinFromBigInt(bigStringInt1),
+				TotalDonateCount:        1,
+				TotalReward:             types.NewCoinFromInt64(2075),
+				RedistributionSplitRate: sdk.ZeroRat(),
+			},
+			expectAppWeight: sdk.NewRat(2175, 2326),
+			expectAuthorReward: accModel.Reward{
+				TotalIncome:     types.NewCoinFromInt64(2075),
+				OriginalIncome:  types.NewCoinFromInt64(15),
+				FrictionIncome:  types.NewCoinFromInt64(15),
+				InflationIncome: types.NewCoinFromInt64(2075),
+				UnclaimReward:   types.NewCoinFromInt64(2075),
 			},
 		},
 	}

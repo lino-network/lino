@@ -63,14 +63,8 @@ type View struct {
 	Times      int64            `jons:"times"`
 }
 
-// Donation struct, only used in Donation
-type Donation struct {
-	Amount       types.Coin         `json:"amount"`
-	CreatedAt    int64              `json:"created_at"`
-	DonationType types.DonationType `json:"donation_type"`
-}
-
 type Donations struct {
-	Username     types.AccountKey `json:"username"`
-	DonationList []Donation       `json:"donation_list"`
+	Username types.AccountKey `json:"username"`
+	Times    int64            `json:"times"`
+	Amount   types.Coin       `json:"amount"`
 }

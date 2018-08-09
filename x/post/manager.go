@@ -232,20 +232,16 @@ func (pm PostManager) AddDonation(
 	if err != nil {
 		return err
 	}
-	donation := model.Donation{
-		Amount:       amount,
-		CreatedAt:    ctx.BlockHeader().Time,
-		DonationType: donationType,
-	}
 	donations, _ := pm.postStorage.GetPostDonations(ctx, permlink, donator)
 	if donations == nil {
-		donations = &model.Donations{Username: donator, DonationList: []model.Donation{}}
+		donations = &model.Donations{Username: donator, Amount: types.NewCoinFromInt64(0), Times: 0}
 	}
-	donations.DonationList = append(donations.DonationList, donation)
+	donations.Amount = donations.Amount.Plus(amount)
+	donations.Times = donations.Times + 1
 	if err := pm.postStorage.SetPostDonations(ctx, permlink, donations); err != nil {
 		return err
 	}
-	postMeta.TotalReward = postMeta.TotalReward.Plus(donation.Amount)
+	postMeta.TotalReward = postMeta.TotalReward.Plus(amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err

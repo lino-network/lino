@@ -1,6 +1,8 @@
 package post
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/lino-network/lino/types"
@@ -37,6 +39,7 @@ func (event RewardEvent) Execute(
 	if err != nil {
 		return err
 	}
+	fmt.Println(paneltyScore)
 	reward, err := gm.GetRewardAndPopFromWindow(ctx, event.Evaluate, paneltyScore)
 	if err != nil {
 		return err
