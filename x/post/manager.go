@@ -168,17 +168,19 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
+// add or update view from the user if view exists
+func (pm PostManager) GetReportOrUpvoteInterval(ctx sdk.Context) (int64, sdk.Error) {
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return postParam.ReportOrUpvoteInterval, nil
+}
+
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
-	stake types.Coin, isReport bool, lastReportOrUpvoteAt int64) sdk.Error {
-	postParam, err := pm.paramHolder.GetPostParam(ctx)
-	if err != nil {
-		return err
-	}
-	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteInterval > ctx.BlockHeader().Time {
-		return ErrReportOrUpvoteTooOften()
-	}
+	stake types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
 		return err
@@ -188,11 +190,14 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
 
 	if reportOrUpvote != nil {
-		return ErrReportOrUpvoteAlreadyExist(permlink)
-	} else {
-		reportOrUpvote =
-			&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
+		if reportOrUpvote.IsReport {
+			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
+		} else {
+			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
+		}
 	}
+	reportOrUpvote =
+		&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
 	if isReport {
 		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
 		reportOrUpvote.IsReport = true

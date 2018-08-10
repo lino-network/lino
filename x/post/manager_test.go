@@ -395,14 +395,12 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 }
 
 func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, ph, pm, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 	user4 := types.AccountKey("user4")
 
-	postParam, err := ph.GetPostParam(ctx)
-	assert.Nil(t, err)
 	permlink := types.GetPermlink(user1, postID1)
 
 	testCases := []struct {
@@ -410,7 +408,6 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		user                   types.AccountKey
 		stake                  types.Coin
 		isReport               bool
-		lastReportOrUpvoteAt   int64
 		expectResult           sdk.Error
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
@@ -420,7 +417,6 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			user:                   user3,
 			stake:                  types.NewCoinFromInt64(1),
 			isReport:               true,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
 			expectResult:           nil,
 			expectTotalReportStake: types.NewCoinFromInt64(1),
 			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
@@ -430,36 +426,41 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			user:                   user2,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
 			expectResult:           nil,
 			expectTotalReportStake: types.NewCoinFromInt64(1),
 			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
 		},
 		{
-			testName:               "user3 upvotes with 100 stake but already exist",
+			testName:               "user3 upvotes with 100 stake and override previous report",
 			user:                   user3,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
-			expectResult:           ErrReportOrUpvoteAlreadyExist(permlink),
-			expectTotalReportStake: types.NewCoinFromInt64(1),
-			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(0),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(200),
 		},
 		{
-			testName:               "user4 upvotes with 100 stake but is too often",
+			testName:               "user4 upvotes with 100 stake",
 			user:                   user4,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval + 1,
-			expectResult:           ErrReportOrUpvoteTooOften(),
-			expectTotalReportStake: types.NewCoinFromInt64(1),
-			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(0),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(300),
+		},
+		{
+			testName:               "user3 report with 2 stake which overrides previous upvote",
+			user:                   user4,
+			stake:                  types.NewCoinFromInt64(2),
+			isReport:               true,
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(2),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(200),
 		},
 	}
 
 	for _, tc := range testCases {
-		err := pm.ReportOrUpvoteToPost(
-			ctx, permlink, tc.user, tc.stake, tc.isReport, tc.lastReportOrUpvoteAt)
+		err := pm.ReportOrUpvoteToPost(ctx, permlink, tc.user, tc.stake, tc.isReport)
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
 		}

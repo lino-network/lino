@@ -380,7 +380,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time,
 				AllowReplies:            true,
 				TotalDonateCount:        1,
-				TotalUpvoteStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteStake:        types.NewCoinFromInt64(1 * types.Decimals),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(95 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -436,7 +436,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time,
 				AllowReplies:            true,
 				TotalDonateCount:        2,
-				TotalUpvoteStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(14250000),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -473,7 +473,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time,
 				AllowReplies:            true,
 				TotalDonateCount:        3,
-				TotalUpvoteStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -509,7 +509,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time,
 				AllowReplies:            true,
 				TotalDonateCount:        4,
-				TotalUpvoteStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteStake:        types.NewCoinFromInt64(3 * types.Decimals),
 				TotalReportStake:        types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -733,7 +733,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		AllowReplies:            true,
 		TotalDonateCount:        1,
 		TotalReward:             totalReward,
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteStake:        types.NewCoinFromInt64(1 * types.Decimals),
 		TotalReportStake:        types.NewCoinFromInt64(0),
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
@@ -756,6 +756,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	postInfo.SourceAuthor = ""
 	postInfo.SourcePostID = ""
 	postMeta.RedistributionSplitRate = sdk.NewRat(3, 20)
+	postMeta.TotalUpvoteStake = types.NewCoinFromInt64(0)
 
 	checkPostKVStore(t, ctx, types.GetPermlink(user1, postID), postInfo, postMeta)
 
@@ -793,7 +794,6 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	user4 := createTestAccount(t, ctx, am, "user4")
 
 	baseTime := ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake
-	permlink := types.GetPermlink(user1, postID)
 	invalidPermlink := types.GetPermlink("invalid", "invalid")
 
 	testCases := []struct {
@@ -847,9 +847,20 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			targetPostAuthor:       string(user1),
 			targetPostID:           postID,
 			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval,
-			expectResult:           ErrReportOrUpvoteAlreadyExist(permlink).Result(),
-			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteStake: accParam.RegisterFee,
+			expectResult:           sdk.Result{},
+			expectTotalReportStake: accParam.RegisterFee,
+			expectTotalUpvoteStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+		},
+		{
+			testName:               "user1 report too often",
+			reportOrUpvoteUser:     string(user1),
+			isReport:               false,
+			targetPostAuthor:       string(user1),
+			targetPostID:           postID,
+			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteInterval + 1,
+			expectResult:           ErrReportOrUpvoteTooOften().Result(),
+			expectTotalReportStake: accParam.RegisterFee,
+			expectTotalUpvoteStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
 		},
 		{
 			testName:               "user4 report to an invalid post",
