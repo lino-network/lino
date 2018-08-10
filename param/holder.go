@@ -97,7 +97,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
 		PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
 		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(100),
+		AbsentCommitLimitation:        int64(600), // 30min
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
 		return err

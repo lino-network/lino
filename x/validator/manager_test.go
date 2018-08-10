@@ -63,7 +63,7 @@ func TestByzantines(t *testing.T) {
 
 }
 
-func TestAbsentValidator(t *testing.T) {
+func TestAbsentValidatorWillBeFired(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, gm)
 	valManager.InitGenesis(ctx)
@@ -85,7 +85,6 @@ func TestAbsentValidator(t *testing.T) {
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
 		result := handler(ctx, msg)
 		assert.Equal(t, sdk.Result{}, result)
-
 	}
 
 	// construct signing list
@@ -138,18 +137,19 @@ func TestAbsentValidator(t *testing.T) {
 	for i := 0; i < 21; i++ {
 		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(i)))
 		if index < len(absentList) && i == absentList[index] {
-			assert.Equal(t, int64(101), validator.AbsentCommit)
+			assert.Equal(t, int64(601), validator.AbsentCommit)
 			assert.Equal(t, int64(0), validator.ProducedBlocks)
 			index++
 		} else {
 			assert.Equal(t, int64(0), validator.AbsentCommit)
-			assert.Equal(t, int64(101), validator.ProducedBlocks)
+			assert.Equal(t, int64(601), validator.ProducedBlocks)
 		}
 	}
 
 	_, err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{})
 	assert.Nil(t, err)
 	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
+
 	assert.Equal(t, 18, len(validatorList2.OncallValidators))
 	assert.Equal(t, 18, len(validatorList2.AllValidators))
 
@@ -157,7 +157,109 @@ func TestAbsentValidator(t *testing.T) {
 		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.OncallValidators))
 		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.AllValidators))
 	}
+}
 
+func TestAbsentValidatorWontBeFired(t *testing.T) {
+	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
+	handler := NewHandler(am, valManager, voteManager, gm)
+	valManager.InitGenesis(ctx)
+
+	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
+	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
+	// create 21 test users
+	users := make([]types.AccountKey, 21)
+	valKeys := make([]crypto.PubKey, 21)
+	for i := 0; i < 21; i++ {
+		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommitingDeposit))
+		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+
+		// they will deposit 1000,2000,3000...20000, 21000
+		num := int64((i+1)*1000) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
+		deposit := types.LNO(strconv.FormatInt(num, 10))
+		valKeys[i] = secp256k1.GenPrivKey().PubKey()
+		name := "user" + strconv.Itoa(i)
+		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
+		result := handler(ctx, msg)
+		assert.Equal(t, sdk.Result{}, result)
+	}
+
+	// construct signing list
+	absentList := []int{0, 1, 10}
+	index := 0
+	signingList := []abci.SigningValidator{}
+	for i := 0; i < 21; i++ {
+		signingList = append(signingList, abci.SigningValidator{
+			Validator: abci.Validator{
+				Address: valKeys[i].Address(),
+				PubKey:  tmtypes.TM2PB.PubKey(valKeys[i]),
+				Power:   1000},
+			SignedLastBlock: true,
+		})
+		if index < len(absentList) && i == absentList[index] {
+			signingList[i].SignedLastBlock = false
+			index++
+		}
+	}
+	// shuffle the signing validator array
+	destSigningList := make([]abci.SigningValidator, len(signingList))
+	perm := rand.Perm(len(signingList))
+	for i, v := range perm {
+		destSigningList[v] = signingList[i]
+	}
+	err := valManager.UpdateSigningValidator(ctx, signingList)
+	assert.Nil(t, err)
+
+	index = 0
+	for i := 0; i < 21; i++ {
+		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(i)))
+		if index < len(absentList) && i == absentList[index] {
+			assert.Equal(t, int64(1), validator.AbsentCommit)
+			assert.Equal(t, int64(0), validator.ProducedBlocks)
+			index++
+		} else {
+			assert.Equal(t, int64(0), validator.AbsentCommit)
+			assert.Equal(t, int64(1), validator.ProducedBlocks)
+		}
+	}
+
+	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
+	// absent exceeds limitation
+	for i := int64(0); i < param.AbsentCommitLimitation; i++ {
+		err := valManager.UpdateSigningValidator(ctx, signingList)
+		assert.Nil(t, err)
+	}
+
+	index = 0
+	for i := 0; i < 21; i++ {
+		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(i)))
+		if index < len(absentList) && i == absentList[index] {
+			assert.Equal(t, int64(601), validator.AbsentCommit)
+			assert.Equal(t, int64(0), validator.ProducedBlocks)
+			index++
+		} else {
+			assert.Equal(t, int64(0), validator.AbsentCommit)
+			assert.Equal(t, int64(601), validator.ProducedBlocks)
+		}
+	}
+
+	_, err = valManager.FireIncompetentValidator(ctx, []abci.Evidence{})
+	assert.Nil(t, err)
+	validatorList2, _ := valManager.storage.GetValidatorList(ctx)
+
+	assert.Equal(t, 21, len(validatorList2.OncallValidators))
+	assert.Equal(t, 21, len(validatorList2.AllValidators))
+
+	// check deposit has been deducted by 200
+	for _, v := range absentList {
+		validator, _ := valManager.storage.GetValidator(ctx, types.AccountKey("user"+strconv.Itoa(v)))
+
+		assert.Equal(t, int64(0), validator.AbsentCommit)
+
+		num := int64((v+1)*1000) + valParam.ValidatorMinCommitingDeposit.ToInt64()/types.Decimals
+		num -= 200
+		depositCoin := types.NewCoinFromInt64(num * types.Decimals)
+		assert.Equal(t, depositCoin, validator.Deposit)
+	}
 }
 
 func TestGetOncallList(t *testing.T) {
@@ -215,7 +317,7 @@ func TestPunishmentBasic(t *testing.T) {
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, true)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, types.PunishByzantine)
 	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(lst.OncallValidators))
 	assert.Equal(t, 1, len(lst.AllValidators))
@@ -225,7 +327,7 @@ func TestPunishmentBasic(t *testing.T) {
 	assert.Equal(t, true, validator.Deposit.IsZero())
 
 	// punish user1 as missing vote (wont explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), valParam.PenaltyMissVote, false)
+	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), valParam.PenaltyMissVote, types.PunishDidntVote)
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(lst2.OncallValidators))
 	assert.Equal(t, 0, len(lst2.AllValidators))
@@ -267,7 +369,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 	// punish user4 as missing vote (wont explicitly remove)
 	// user3 will become the lowest one with power (min + 3000)
-	valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), false)
+	valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), types.PunishDidntVote)
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst2.OncallValidators))
 	assert.Equal(t, 24, len(lst2.AllValidators))
