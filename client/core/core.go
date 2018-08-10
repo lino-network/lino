@@ -67,7 +67,6 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 		Height:  ctx.Height,
 		Trusted: ctx.TrustNode,
 	}
-	fmt.Println(opts)
 	result, err := node.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
 		return res, err
