@@ -185,8 +185,25 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
-	if err := lb.paramHolder.InitParam(ctx); err != nil {
-		panic(err)
+	if genesisState.GenesisParam.InitFromConfig {
+		if err := lb.paramHolder.InitParamFromConfig(
+			ctx, genesisState.GenesisParam.GlobalAllocationParam,
+			genesisState.GenesisParam.InfraInternalAllocationParam,
+			genesisState.GenesisParam.PostParam,
+			genesisState.GenesisParam.EvaluateOfContentValueParam,
+			genesisState.GenesisParam.DeveloperParam,
+			genesisState.GenesisParam.ValidatorParam,
+			genesisState.GenesisParam.VoteParam,
+			genesisState.GenesisParam.ProposalParam,
+			genesisState.GenesisParam.CoinDayParam,
+			genesisState.GenesisParam.BandwidthParam,
+			genesisState.GenesisParam.AccountParam); err != nil {
+			panic(err)
+		}
+	} else {
+		if err := lb.paramHolder.InitParam(ctx); err != nil {
+			panic(err)
+		}
 	}
 
 	totalCoin := types.NewCoinFromInt64(0)

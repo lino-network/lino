@@ -164,6 +164,63 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	return nil
 }
 
+func (ph ParamHolder) InitParamFromConfig(
+	ctx sdk.Context,
+	globalParam GlobalAllocationParam,
+	infraInternalParam InfraInternalAllocationParam,
+	postParam PostParam,
+	evaluateOfContentValueParam EvaluateOfContentValueParam,
+	developerParam DeveloperParam,
+	validatorParam ValidatorParam,
+	voteParam VoteParam,
+	proposalParam ProposalParam,
+	coinDayParam CoinDayParam,
+	bandwidthParam BandwidthParam,
+	accParam AccountParam) error {
+	if err := ph.setGlobalAllocationParam(ctx, &globalParam); err != nil {
+		return err
+	}
+
+	if err := ph.setInfraInternalAllocationParam(ctx, &infraInternalParam); err != nil {
+		return err
+	}
+
+	if err := ph.setPostParam(ctx, &postParam); err != nil {
+		return err
+	}
+
+	if err := ph.setEvaluateOfContentValueParam(ctx, &evaluateOfContentValueParam); err != nil {
+		return err
+	}
+
+	if err := ph.setDeveloperParam(ctx, &developerParam); err != nil {
+		return err
+	}
+
+	if err := ph.setValidatorParam(ctx, &validatorParam); err != nil {
+		return err
+	}
+	if err := ph.setVoteParam(ctx, &voteParam); err != nil {
+		return err
+	}
+	if err := ph.setProposalParam(ctx, &proposalParam); err != nil {
+		return err
+	}
+	if err := ph.setCoinDayParam(ctx, &coinDayParam); err != nil {
+		return err
+	}
+
+	if err := ph.setBandwidthParam(ctx, &bandwidthParam); err != nil {
+		return err
+	}
+
+	if err := ph.setAccountParam(ctx, &accParam); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ph ParamHolder) GetEvaluateOfContentValueParam(
 	ctx sdk.Context) (*EvaluateOfContentValueParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
