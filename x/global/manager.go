@@ -221,7 +221,7 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 
-		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat)
+		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
 		if growthRate.GT(globalMeta.Ceiling) {
 			growthRate = globalMeta.Ceiling
 		} else if growthRate.LT(globalMeta.Floor) {
@@ -253,7 +253,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
 	consumptionRatio :=
 		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
-			consumptionMeta.ConsumptionWindow.ToRat())
+			consumptionMeta.ConsumptionWindow.ToRat()).Round(types.PrecisionFactor)
 	// reward = (consumption reward pool) * (consumptionRatio)
 	reward := types.RatToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
@@ -401,7 +401,7 @@ func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error
 	if err != nil {
 		return sdk.ZeroRat(), err
 	}
-	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
+	return tps.CurrentTPS.Quo(tps.MaxTPS).Round(types.PrecisionFactor), nil
 }
 
 func (gm GlobalManager) EvaluateConsumption(

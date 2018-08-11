@@ -79,6 +79,8 @@ func NewCreatePostMsg(
 		PostID:       postID,
 		Title:        title,
 		Content:      content,
+		ParentAuthor: types.AccountKey(parentAuthor),
+		ParentPostID: parentPostID,
 		SourceAuthor: types.AccountKey(sourceAuthor),
 		SourcePostID: sourcePostID,
 		Links:        links,

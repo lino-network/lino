@@ -112,7 +112,9 @@ func TestPostView(t *testing.T) {
 
 func TestPostDonate(t *testing.T) {
 	user := types.AccountKey("test")
-	postDonations := Donations{Username: user, DonationList: []Donation{Donation{CreatedAt: 100, Amount: types.NewCoinFromInt64(0)}}}
+	amount, success := types.NewCoinFromString("1000000000000000000000")
+	assert.True(t, success)
+	postDonations := Donations{Username: user, Amount: amount, Times: 100}
 
 	runTest(t, func(env TestEnv) {
 		err := env.ps.SetPostDonations(env.ctx, types.Permlink("test"), &postDonations)

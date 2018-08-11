@@ -168,17 +168,19 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
+// add or update view from the user if view exists
+func (pm PostManager) GetReportOrUpvoteInterval(ctx sdk.Context) (int64, sdk.Error) {
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return postParam.ReportOrUpvoteInterval, nil
+}
+
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
-	stake types.Coin, isReport bool, lastReportOrUpvoteAt int64) sdk.Error {
-	postParam, err := pm.paramHolder.GetPostParam(ctx)
-	if err != nil {
-		return err
-	}
-	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteInterval > ctx.BlockHeader().Time {
-		return ErrReportOrUpvoteTooOften()
-	}
+	stake types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
 		return err
@@ -188,11 +190,14 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
 
 	if reportOrUpvote != nil {
-		return ErrReportOrUpvoteAlreadyExist(permlink)
-	} else {
-		reportOrUpvote =
-			&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
+		if reportOrUpvote.IsReport {
+			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
+		} else {
+			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
+		}
 	}
+	reportOrUpvote =
+		&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
 	if isReport {
 		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
 		reportOrUpvote.IsReport = true
@@ -232,20 +237,16 @@ func (pm PostManager) AddDonation(
 	if err != nil {
 		return err
 	}
-	donation := model.Donation{
-		Amount:       amount,
-		CreatedAt:    ctx.BlockHeader().Time,
-		DonationType: donationType,
-	}
 	donations, _ := pm.postStorage.GetPostDonations(ctx, permlink, donator)
 	if donations == nil {
-		donations = &model.Donations{Username: donator, DonationList: []model.Donation{}}
+		donations = &model.Donations{Username: donator, Amount: types.NewCoinFromInt64(0), Times: 0}
 	}
-	donations.DonationList = append(donations.DonationList, donation)
+	donations.Amount = donations.Amount.Plus(amount)
+	donations.Times = donations.Times + 1
 	if err := pm.postStorage.SetPostDonations(ctx, permlink, donations); err != nil {
 		return err
 	}
-	postMeta.TotalReward = postMeta.TotalReward.Plus(donation.Amount)
+	postMeta.TotalReward = postMeta.TotalReward.Plus(amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
@@ -309,7 +310,7 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) 
 	if postMeta.TotalUpvoteStake.IsZero() {
 		return sdk.OneRat(), nil
 	}
-	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
+	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()).Round(types.PrecisionFactor)
 	if penaltyScore.GT(sdk.OneRat()) {
 		return sdk.OneRat(), nil
 	}

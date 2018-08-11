@@ -122,7 +122,7 @@ func TestTPS(t *testing.T) {
 			numOfTx:             2000,
 			expectCurrentTPS:    sdk.NewRat(1000),
 			expectMaxTPS:        sdk.NewRat(1500),
-			expectCapacityRatio: sdk.NewRat(2, 3),
+			expectCapacityRatio: sdk.NewRat(6666667, 10000000),
 		},
 	}
 	for _, tc := range testCases {
@@ -454,13 +454,13 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		},
 		// issue https://github.com/lino-network/lino/issues/150
 		{
-			testName:                    "test overflow",
+			testName:                    "test large number",
 			evaluate:                    types.NewCoinFromInt64(77777777777777),
 			penaltyScore:                sdk.ZeroRat(),
-			expectReward:                types.NewCoinFromInt64(23333333),
+			expectReward:                types.NewCoinFromInt64(23333330),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(100000000),
 			initConsumptionWindow:       types.NewCoinFromInt64(333333333333333),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(76666667),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(76666670),
 			expectConsumptionWindow:     types.NewCoinFromInt64(255555555555556),
 		},
 	}
@@ -979,7 +979,7 @@ func TestGetGrowthRate(t *testing.T) {
 			lastYearConsumption: bigLastYearConsumptionCoin,
 			thisYearConsumption: bigThisYearConsumptionCoin,
 			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(71, 1000),
+			expectGrowthRate:    sdk.NewRat(357143, 5000000),
 		},
 	}
 

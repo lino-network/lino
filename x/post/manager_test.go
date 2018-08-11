@@ -395,14 +395,12 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 }
 
 func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, ph, pm, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 	user4 := types.AccountKey("user4")
 
-	postParam, err := ph.GetPostParam(ctx)
-	assert.Nil(t, err)
 	permlink := types.GetPermlink(user1, postID1)
 
 	testCases := []struct {
@@ -410,7 +408,6 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		user                   types.AccountKey
 		stake                  types.Coin
 		isReport               bool
-		lastReportOrUpvoteAt   int64
 		expectResult           sdk.Error
 		expectTotalReportStake types.Coin
 		expectTotalUpvoteStake types.Coin
@@ -420,7 +417,6 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			user:                   user3,
 			stake:                  types.NewCoinFromInt64(1),
 			isReport:               true,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
 			expectResult:           nil,
 			expectTotalReportStake: types.NewCoinFromInt64(1),
 			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
@@ -430,36 +426,41 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 			user:                   user2,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
 			expectResult:           nil,
 			expectTotalReportStake: types.NewCoinFromInt64(1),
 			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
 		},
 		{
-			testName:               "user3 upvotes with 100 stake but already exist",
+			testName:               "user3 upvotes with 100 stake and override previous report",
 			user:                   user3,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval,
-			expectResult:           ErrReportOrUpvoteAlreadyExist(permlink),
-			expectTotalReportStake: types.NewCoinFromInt64(1),
-			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(0),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(200),
 		},
 		{
-			testName:               "user4 upvotes with 100 stake but is too often",
+			testName:               "user4 upvotes with 100 stake",
 			user:                   user4,
 			stake:                  types.NewCoinFromInt64(100),
 			isReport:               false,
-			lastReportOrUpvoteAt:   ctx.BlockHeader().Time - postParam.ReportOrUpvoteInterval + 1,
-			expectResult:           ErrReportOrUpvoteTooOften(),
-			expectTotalReportStake: types.NewCoinFromInt64(1),
-			expectTotalUpvoteStake: types.NewCoinFromInt64(100),
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(0),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(300),
+		},
+		{
+			testName:               "user3 report with 2 stake which overrides previous upvote",
+			user:                   user4,
+			stake:                  types.NewCoinFromInt64(2),
+			isReport:               true,
+			expectResult:           nil,
+			expectTotalReportStake: types.NewCoinFromInt64(2),
+			expectTotalUpvoteStake: types.NewCoinFromInt64(200),
 		},
 	}
 
 	for _, tc := range testCases {
-		err := pm.ReportOrUpvoteToPost(
-			ctx, permlink, tc.user, tc.stake, tc.isReport, tc.lastReportOrUpvoteAt)
+		err := pm.ReportOrUpvoteToPost(ctx, permlink, tc.user, tc.stake, tc.isReport)
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
@@ -509,13 +510,8 @@ func TestDonation(t *testing.T) {
 			expectTotalDonation: types.NewCoinFromInt64(1),
 			expectDonationList: model.Donations{
 				Username: user3,
-				DonationList: []model.Donation{
-					{
-						Amount:       types.NewCoinFromInt64(1),
-						CreatedAt:    baseTime,
-						DonationType: types.DirectDeposit,
-					},
-				},
+				Amount:   types.NewCoinFromInt64(1),
+				Times:    1,
 			},
 		},
 		{
@@ -530,13 +526,8 @@ func TestDonation(t *testing.T) {
 			expectTotalDonation: types.NewCoinFromInt64(1),
 			expectDonationList: model.Donations{
 				Username: user3,
-				DonationList: []model.Donation{
-					{
-						Amount:       types.NewCoinFromInt64(1),
-						CreatedAt:    baseTime,
-						DonationType: types.Inflation,
-					},
-				},
+				Amount:   types.NewCoinFromInt64(1),
+				Times:    1,
 			},
 		},
 		{
@@ -551,18 +542,8 @@ func TestDonation(t *testing.T) {
 			expectTotalDonation: types.NewCoinFromInt64(21),
 			expectDonationList: model.Donations{
 				Username: user3,
-				DonationList: []model.Donation{
-					{
-						Amount:       types.NewCoinFromInt64(1),
-						CreatedAt:    baseTime,
-						DonationType: types.Inflation,
-					},
-					{
-						Amount:       types.NewCoinFromInt64(20),
-						CreatedAt:    baseTime,
-						DonationType: types.DirectDeposit,
-					},
-				},
+				Amount:   types.NewCoinFromInt64(21),
+				Times:    2,
 			},
 		},
 	}
@@ -598,54 +579,70 @@ func TestGetPenaltyScore(t *testing.T) {
 	ctx, am, _, pm, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	postKey := types.GetPermlink(user, postID)
+	bigString1 := "1000000000000000000000000"
+	bigString2 := "7777777777777777777777777"
+	bigStringInt1, _ := new(big.Int).SetString(bigString1, 10)
+	bigStringInt2, _ := new(big.Int).SetString(bigString2, 10)
 	testCases := []struct {
 		testName           string
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
-		expectPenaltyScore *big.Rat
+		expectPenaltyScore sdk.Rat
 	}{
 		{
 			testName:           "1 report and 0 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(1),
 			totalUpvoteStake:   types.NewCoinFromInt64(0),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "0 report and 1 upvote expects 0 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(0),
 			totalUpvoteStake:   types.NewCoinFromInt64(1),
-			expectPenaltyScore: big.NewRat(0, 1),
+			expectPenaltyScore: sdk.NewRat(0, 1),
 		},
 		{
 			testName:           "0 report and 0 upvote expects 0 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(0),
 			totalUpvoteStake:   types.NewCoinFromInt64(0),
-			expectPenaltyScore: big.NewRat(0, 1),
+			expectPenaltyScore: sdk.NewRat(0, 1),
 		},
 		{
 			testName:           "100 report and 100 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(100),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "1000 report and 100 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(1000),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "50 report and 100 upvote expects 1/2 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(50),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 2),
+			expectPenaltyScore: sdk.NewRat(1, 2),
 		},
 		// issue https://github.com/lino-network/lino/issues/150
 		{
 			testName:           "3333 report and 7777 upvote expects 3/7 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(3333),
 			totalUpvoteStake:   types.NewCoinFromInt64(7777),
-			expectPenaltyScore: big.NewRat(3, 7),
+			expectPenaltyScore: sdk.NewRat(2142857, 5000000),
+		},
+		{
+			testName:           "big string report and big string upvote, report is much than upvote",
+			totalReportStake:   types.NewCoinFromBigInt(bigStringInt2),
+			totalUpvoteStake:   types.NewCoinFromBigInt(bigStringInt1),
+			expectPenaltyScore: sdk.NewRat(1),
+		},
+		{
+			testName:           "big string report and big string upvote, report is less than upvote",
+			totalReportStake:   types.NewCoinFromBigInt(bigStringInt1),
+			totalUpvoteStake:   types.NewCoinFromBigInt(bigStringInt2),
+			expectPenaltyScore: sdk.NewRat(642857, 5000000),
 		},
 	}
 
@@ -668,9 +665,10 @@ func TestGetPenaltyScore(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
 		}
-		if penaltyScore.Cmp(tc.expectPenaltyScore) != 0 {
+		if !penaltyScore.Equal(tc.expectPenaltyScore) {
 			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
 		}
+		assert.Equal(t, penaltyScore, tc.expectPenaltyScore)
 	}
 }
 
@@ -685,43 +683,43 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 		testName           string
 		totalReportStake   types.Coin
 		totalUpvoteStake   types.Coin
-		expectPenaltyScore *big.Rat
+		expectPenaltyScore sdk.Rat
 	}{
 		{
 			testName:           "1 report and 0 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(1),
 			totalUpvoteStake:   types.NewCoinFromInt64(0),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "0 report and 1 upvote expects 0 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(0),
 			totalUpvoteStake:   types.NewCoinFromInt64(1),
-			expectPenaltyScore: big.NewRat(0, 1),
+			expectPenaltyScore: sdk.NewRat(0, 1),
 		},
 		{
 			testName:           "0 report and 0 upvote expects 0 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(0),
 			totalUpvoteStake:   types.NewCoinFromInt64(0),
-			expectPenaltyScore: big.NewRat(0, 1),
+			expectPenaltyScore: sdk.NewRat(0, 1),
 		},
 		{
 			testName:           "100 report and 100 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(100),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "1000 report and 100 upvote expects 1 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(1000),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 1),
+			expectPenaltyScore: sdk.NewRat(1, 1),
 		},
 		{
 			testName:           "50 report and 100 upvote expects 1/2 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(50),
 			totalUpvoteStake:   types.NewCoinFromInt64(100),
-			expectPenaltyScore: big.NewRat(1, 2),
+			expectPenaltyScore: sdk.NewRat(1, 2),
 		},
 	}
 
@@ -744,7 +742,7 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
 		}
-		if penaltyScore.Cmp(tc.expectPenaltyScore) != 0 {
+		if !penaltyScore.Equal(tc.expectPenaltyScore) {
 			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
 		}
 	}

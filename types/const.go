@@ -121,7 +121,7 @@ const (
 	MinutesPerMonth = MinutesPerYear / 12
 
 	// all decimals will around to allow at most 3 decimals
-	PrecisionFactor = 1000
+	PrecisionFactor = 10000000
 
 	// precision used in sdk NewRatFromDecimal
 	NewRatFromDecimalPrecision = 5

@@ -109,7 +109,7 @@ func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKe
 		}
 	}
 	if totalUsage == int64(0) {
-		return sdk.NewRat(1, int64(len(lst.AllInfraProviders))), nil
+		return sdk.NewRat(1, int64(len(lst.AllInfraProviders))).Round(types.PrecisionFactor), nil
 	}
 	return sdk.NewRat(myUsage, totalUsage).Round(types.PrecisionFactor), nil
 }

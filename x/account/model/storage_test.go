@@ -122,7 +122,7 @@ func TestAccountBalanceHistory(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	balanceHistory := BalanceHistory{[]Detail{Detail{Amount: types.NewCoinFromInt64(0)}}}
+	balanceHistory := BalanceHistory{[]Detail{Detail{Amount: types.NewCoinFromInt64(10), Balance: types.NewCoinFromInt64(100)}}}
 	err := as.SetBalanceHistory(ctx, types.AccountKey("test"), 0, &balanceHistory)
 	assert.Nil(t, err)
 

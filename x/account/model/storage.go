@@ -418,3 +418,28 @@ func getRewardHistoryPrefix(me types.AccountKey) []byte {
 func getRewardHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
 	return strconv.AppendInt(getRewardHistoryPrefix(me), bucketSlot, 10)
 }
+
+// GetBankFromAccountKey returns bank info of a specific account, returns error
+// if any.
+func (as AccountStorage) IterateAccounts(ctx sdk.Context, process func(AccountInfo, AccountBank) (stop bool)) {
+	store := ctx.KVStore(as.key)
+	iter := sdk.KVStorePrefixIterator(store, AccountInfoSubstore)
+	for {
+		if !iter.Valid() {
+			return
+		}
+		val := iter.Value()
+		accInfo, err := as.GetInfo(ctx, types.AccountKey(val))
+		if err != nil {
+			panic(err)
+		}
+		accBank, err := as.GetBankFromAccountKey(ctx, types.AccountKey(val))
+		if err != nil {
+			panic(err)
+		}
+		if process(*accInfo, *accBank) {
+			return
+		}
+		iter.Next()
+	}
+}

@@ -37,6 +37,9 @@ func (event RewardEvent) Execute(
 	if err != nil {
 		return err
 	}
+	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
+		paneltyScore = sdk.OneRat()
+	}
 	reward, err := gm.GetRewardAndPopFromWindow(ctx, event.Evaluate, paneltyScore)
 	if err != nil {
 		return err

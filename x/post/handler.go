@@ -118,6 +118,13 @@ func handleDonateMsg(
 		types.DonationOut); err != nil {
 		return err.Result()
 	}
+	stake, err := am.GetStake(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
+	}
+	if err := pm.ReportOrUpvoteToPost(ctx, permlink, msg.Username, stake, false); err != nil {
+		return err.Result()
+	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
 	if err != nil {
 		return err.Result()
@@ -234,8 +241,17 @@ func handleReportOrUpvoteMsg(
 		return err.Result()
 	}
 
+	reportOrUpvoteInterval, err := pm.GetReportOrUpvoteInterval(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if lastReportOrUpvoteAt+reportOrUpvoteInterval > ctx.BlockHeader().Time {
+		return ErrReportOrUpvoteTooOften().Result()
+	}
+
 	if err := pm.ReportOrUpvoteToPost(
-		ctx, permlink, msg.Username, stake, msg.IsReport, lastReportOrUpvoteAt); err != nil {
+		ctx, permlink, msg.Username, stake, msg.IsReport); err != nil {
 		return err.Result()
 	}
 	if err := am.UpdateLastReportOrUpvoteAt(ctx, msg.Username); err != nil {

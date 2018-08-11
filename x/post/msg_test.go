@@ -54,17 +54,9 @@ var (
 
 func getCommentAndRepost(
 	t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) CreatePostMsg {
-	return CreatePostMsg{
-		PostID:                  "TestPostID",
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  "author",
-		ParentAuthor:            types.AccountKey(parentAuthor),
-		ParentPostID:            parentPostID,
-		SourceAuthor:            types.AccountKey(sourceAuthor),
-		SourcePostID:            sourcePostID,
-		RedistributionSplitRate: "0",
-	}
+	return NewCreatePostMsg(
+		"author", "TestPostID", string(make([]byte, 50)), string(make([]byte, 1000)),
+		parentAuthor, parentPostID, sourceAuthor, sourcePostID, "0", nil)
 }
 
 func TestCreatePostMsg(t *testing.T) {
@@ -145,6 +137,18 @@ func TestCreatePostMsg(t *testing.T) {
 				RedistributionSplitRate: "0",
 			},
 			expectedResult: ErrNoAuthor(),
+		},
+		{
+			testName: "post id is too long",
+			msg: CreatePostMsg{
+				PostID:  string(make([]byte, types.MaximumLengthOfPostID+1)),
+				Title:   string(make([]byte, 50)),
+				Content: string(make([]byte, 1000)),
+				Author:  author,
+				Links:   []types.IDToURLMapping{},
+				RedistributionSplitRate: "0",
+			},
+			expectedResult: ErrPostIDTooLong(),
 		},
 		{
 			testName: "post title is too long",

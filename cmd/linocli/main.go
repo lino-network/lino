@@ -12,7 +12,7 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/types"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tmlibs/cli"
+	"github.com/tendermint/tendermint/libs/cli"
 
 	acccmd "github.com/lino-network/lino/x/account/commands"
 	developercmd "github.com/lino-network/lino/x/developer/commands"
@@ -39,12 +39,30 @@ func main() {
 
 	// get the codec
 	cdc := app.MakeCodec()
-
 	// add standard rpc, and tx commands
-	rpc.AddCommands(linocliCmd)
-	linocliCmd.AddCommand(client.LineBreak)
-	tx.AddCommands(linocliCmd, cdc)
-	linocliCmd.AddCommand(client.LineBreak)
+	tendermintCmd := &cobra.Command{
+		Use:   "tendermint",
+		Short: "Tendermint state querying subcommands",
+	}
+	tendermintCmd.AddCommand(
+		rpc.BlockCommand(),
+		rpc.ValidatorCommand(),
+	)
+	tx.AddCommands(tendermintCmd, cdc)
+
+	advancedCmd := &cobra.Command{
+		Use:   "advanced",
+		Short: "Advanced subcommands",
+	}
+
+	advancedCmd.AddCommand(
+		tendermintCmd,
+		lcd.ServeCommand(cdc),
+	)
+	linocliCmd.AddCommand(
+		advancedCmd,
+		client.LineBreak,
+	)
 
 	linocliCmd.AddCommand(
 		client.PostCommands(
@@ -170,6 +188,10 @@ func main() {
 		client.PostCommands(
 			developercmd.PreAuthorizationPermissionTxCmd(cdc),
 		)...)
+	linocliCmd.AddCommand(
+		client.PostCommands(
+			developercmd.DeveloperUpdateTxCmd(cdc),
+		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
@@ -217,8 +239,6 @@ func main() {
 
 	// add proxy, version and key info
 	linocliCmd.AddCommand(
-		client.LineBreak,
-		lcd.ServeCommand(cdc),
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
@@ -226,5 +246,9 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareMainCmd(linocliCmd, "BC", os.ExpandEnv("$HOME/.linocli"))
-	executor.Execute()
+	err := executor.Execute()
+	if err != nil {
+		// handle with #870
+		panic(err)
+	}
 }

@@ -49,7 +49,7 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:aa526285e4f343952adfa5df4c76799a6d69e7b40ebf752c77b2e6caad16a1ce"
+  digest = "1:1f2af011237e8f77a93ebf5a9c3b6e586034f2ae34df56ac12b29e0888479910"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -81,6 +81,7 @@
     "x/gov",
     "x/gov/client/rest",
     "x/ibc",
+    "x/ibc/client/cli",
     "x/ibc/client/rest",
     "x/mock",
     "x/slashing",
@@ -690,6 +691,7 @@
     "github.com/cosmos/cosmos-sdk/version",
     "github.com/cosmos/cosmos-sdk/wire",
     "github.com/cosmos/cosmos-sdk/x/auth",
+    "github.com/cosmos/cosmos-sdk/x/ibc/client/cli",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",

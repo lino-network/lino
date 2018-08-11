@@ -14,6 +14,7 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
+	accModel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
 	infra "github.com/lino-network/lino/x/infra"
 	val "github.com/lino-network/lino/x/validator"
@@ -441,7 +442,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
-		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
+		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i))).Round(types.PrecisionFactor)
 		coinPerValidator := types.RatToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
@@ -461,17 +462,23 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-	for _, provider := range lst.AllInfraProviders {
+	totalDistributedInflation := types.NewCoinFromInt64(0)
+	for idx, provider := range lst.AllInfraProviders {
+		if idx == (len(lst.AllInfraProviders) - 1) {
+			lb.accountManager.AddSavingCoin(
+				ctx, provider, inflation.Minus(totalDistributedInflation), "", "", types.InfraInflation)
+			break
+		}
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
 		if err != nil {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin := types.RatToCoin(myShareRat)
+		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
 	}
-
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
@@ -490,13 +497,20 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		panic(err)
 	}
 
-	for _, developer := range lst.AllDevelopers {
+	totalDistributedInflation := types.NewCoinFromInt64(0)
+	for idx, developer := range lst.AllDevelopers {
+		if idx == (len(lst.AllDevelopers) - 1) {
+			lb.accountManager.AddSavingCoin(
+				ctx, developer, inflation.Minus(totalDistributedInflation), "", "", types.DeveloperInflation)
+			break
+		}
 		percentage, err := lb.developerManager.GetConsumptionWeight(ctx, developer)
 		if err != nil {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin := types.RatToCoin(myShareRat)
+		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
 	}
@@ -529,28 +543,37 @@ func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
 
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	//ctx := lb.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 
-	// // iterate to get the accounts
-	// accounts := []*GenesisAccount{}
-	// appendAccount := func(acc auth.Account) (stop bool) {
-	// 	account := &types.GenesisAccount{
-	// 		Address: acc.GetAddress(),
-	// 		Coins:   acc.GetCoins(),
-	// 	}
-	// 	accounts = append(accounts, account)
-	// 	return false
-	// }
-	// app.accountMapper.IterateAccounts(ctx, appendAccount)
+	// iterate to get the accounts
+	accounts := []GenesisAccount{}
+	appendAccount := func(accInfo accModel.AccountInfo, accBank accModel.AccountBank) (stop bool) {
+		saving := accBank.Saving
+		deposit, err := lb.valManager.GetValidatorDeposit(ctx, accInfo.Username)
+		if err != nil {
+			saving = saving.Plus(deposit)
+		}
+		account := GenesisAccount{
+			Name:           string(accInfo.Username),
+			ResetKey:       accInfo.ResetKey,
+			TransactionKey: accInfo.TransactionKey,
+			AppKey:         accInfo.AppKey,
+			IsValidator:    false,
+			Lino:           saving.ToRat().Quo(sdk.NewRat(types.Decimals)).FloatString(),
+		}
+		accounts = append(accounts, account)
+		return false
+	}
+	lb.accountManager.IterateAccounts(ctx, appendAccount)
 
-	// genState := types.GenesisState{
-	// 	Accounts:    accounts,
-	// 	POWGenesis:  pow.WriteGenesis(ctx, app.powKeeper),
-	// 	CoolGenesis: cool.WriteGenesis(ctx, app.coolKeeper),
-	// }
-	// appState, err = wire.MarshalJSONIndent(app.cdc, genState)
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
+	genesisState := GenesisState{
+		Accounts:   accounts,
+		Developers: []GenesisAppDeveloper{},
+		Infra:      []GenesisInfraProvider{},
+	}
+	appState, err = wire.MarshalJSONIndent(lb.cdc, genesisState)
+	if err != nil {
+		return nil, nil, err
+	}
 	return appState, validators, nil
 }

@@ -143,20 +143,21 @@ func (accManager AccountManager) AddSavingCoin(
 		return err
 	}
 
+	bank.Saving = bank.Saving.Plus(coin)
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
 		model.Detail{
 			Amount:     coin,
 			DetailType: detailType,
 			To:         username,
 			From:       from,
+			Balance:    bank.Saving,
 			CreatedAt:  ctx.BlockHeader().Time,
 			Memo:       memo,
 		}); err != nil {
 		return err
 	}
-	bank.Saving = bank.Saving.Plus(coin)
-	bank.NumOfTx++
 
+	bank.NumOfTx++
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
 		return err
@@ -191,18 +192,19 @@ func (accManager AccountManager) AddSavingCoinWithFullStake(
 		return err
 	}
 
+	bank.Saving = bank.Saving.Plus(coin)
 	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
 		model.Detail{
 			Amount:     coin,
 			DetailType: detailType,
 			To:         username,
 			From:       from,
+			Balance:    bank.Saving,
 			CreatedAt:  ctx.BlockHeader().Time,
 			Memo:       memo,
 		}); err != nil {
 		return err
 	}
-	bank.Saving = bank.Saving.Plus(coin)
 	bank.Stake = bank.Stake.Plus(coin)
 	bank.NumOfTx++
 
@@ -232,6 +234,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	if coin.IsZero() {
 		return nil
 	}
+	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	if err := accManager.AddBalanceHistory(
 		ctx, username, accountBank.NumOfTx, model.Detail{
@@ -239,13 +242,13 @@ func (accManager AccountManager) MinusSavingCoin(
 			DetailType: detailType,
 			To:         to,
 			From:       username,
+			Balance:    accountBank.Saving,
 			CreatedAt:  ctx.BlockHeader().Time,
 			Memo:       memo,
 		}); err != nil {
 		return err
 	}
 	accountBank.NumOfTx++
-	accountBank.Saving = accountBank.Saving.Minus(coin)
 
 	pendingStakeQueue, err :=
 		accManager.storage.GetPendingStakeQueue(ctx, username)
@@ -933,6 +936,10 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 
 		idx += 1
 	}
+}
+
+func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
+	accManager.storage.IterateAccounts(ctx, process)
 }
 
 func min(a, b int64) int64 {
