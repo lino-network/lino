@@ -72,6 +72,12 @@ const (
 	InfraDeposit     = TransferDetailType(19)
 	ProposalDeposit  = TransferDetailType(20)
 
+	// punishment type
+	UnknownPunish      = PunishType(0)
+	PunishByzantine    = PunishType(1)
+	PunishAbsentCommit = PunishType(2)
+	PunishDidntVote    = PunishType(3)
+
 	// UsernameReCheck is used to check user registration
 	UsernameReCheck = "^[a-z0-9]([a-z0-9_-]){2,20}$"
 

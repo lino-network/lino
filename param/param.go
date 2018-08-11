@@ -69,7 +69,6 @@ type DeveloperParam struct {
 	DeveloperCoinReturnTimes      int64      `json:"developer_coin_return_times"`
 }
 
-// TODO: number of validators 20 -> 41
 type ValidatorParam struct {
 	ValidatorMinWithdraw          types.Coin `json:"validator_min_withdraw"`
 	ValidatorMinVotingDeposit     types.Coin `json:"validator_min_voting_deposit"`

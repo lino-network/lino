@@ -252,7 +252,7 @@ func TestInitParam(t *testing.T) {
 		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
 		PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
 		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(100),
+		AbsentCommitLimitation:        int64(600),
 	}
 
 	voteParam := VoteParam{

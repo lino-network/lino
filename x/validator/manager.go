@@ -174,7 +174,7 @@ func (vm ValidatorManager) UpdateSigningValidator(
 }
 
 func (vm ValidatorManager) PunishOncallValidator(
-	ctx sdk.Context, username types.AccountKey, penalty types.Coin, willFire bool) (types.Coin, sdk.Error) {
+	ctx sdk.Context, username types.AccountKey, penalty types.Coin, punishType types.PunishType) (types.Coin, sdk.Error) {
 	actualPenalty := penalty
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
@@ -188,6 +188,10 @@ func (vm ValidatorManager) PunishOncallValidator(
 		validator.Deposit = validator.Deposit.Minus(penalty)
 	}
 
+	if punishType == types.PunishAbsentCommit {
+		validator.AbsentCommit = 0
+	}
+
 	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return actualPenalty, err
@@ -196,7 +200,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 	// remove this validator if its remaining deposit is not enough
 	// OR, we explicitly want to fire this validator
 	// all deposit will be added back to inflation pool
-	if willFire || !validator.Deposit.IsGTE(param.ValidatorMinCommitingDeposit) {
+	if punishType == types.PunishByzantine || !validator.Deposit.IsGTE(param.ValidatorMinCommitingDeposit) {
 		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username); err != nil {
 			return actualPenalty, err
 		}
@@ -236,7 +240,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 		for _, evidence := range byzantineValidators {
 			if reflect.DeepEqual(validator.ABCIValidator.PubKey, evidence.Validator.PubKey) {
 				actualPenalty, err := vm.PunishOncallValidator(
-					ctx, validator.Username, param.PenaltyByzantine, true)
+					ctx, validator.Username, param.PenaltyByzantine, types.PunishByzantine)
 				if err != nil {
 					return totalPenalty, err
 				}
@@ -247,10 +251,11 @@ func (vm ValidatorManager) FireIncompetentValidator(
 
 		if validator.AbsentCommit > param.AbsentCommitLimitation {
 			actualPenalty, err := vm.PunishOncallValidator(
-				ctx, validator.Username, param.PenaltyMissCommit, true)
+				ctx, validator.Username, param.PenaltyMissCommit, types.PunishAbsentCommit)
 			if err != nil {
 				return totalPenalty, err
 			}
+
 			totalPenalty = totalPenalty.Plus(actualPenalty)
 		}
 	}
@@ -267,7 +272,7 @@ func (vm ValidatorManager) PunishValidatorsDidntVote(
 	}
 	// punish these validators who didn't vote
 	for _, validator := range penaltyList {
-		actualPenalty, err := vm.PunishOncallValidator(ctx, validator, param.PenaltyMissVote, false)
+		actualPenalty, err := vm.PunishOncallValidator(ctx, validator, param.PenaltyMissVote, types.PunishDidntVote)
 		if err != nil {
 			return totalPenalty, err
 		}

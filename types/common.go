@@ -27,6 +27,9 @@ type DonationType int
 // indicates all possible balance behavior types
 type TransferDetailType int
 
+// indicates the type of punishment for oncall validators
+type PunishType int
+
 // GetPostKey try to generate PostKey from types.AccountKey and PostID
 func GetPermlink(author AccountKey, postID string) Permlink {
 	return Permlink(string(author) + PermlinkSeparator + postID)
