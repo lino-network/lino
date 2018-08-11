@@ -189,7 +189,7 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			expectAppWeight: sdk.NewRat(100, 251),
+			expectAppWeight: sdk.NewRat(62251, 156250),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -220,7 +220,7 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			expectAppWeight: sdk.NewRat(100, 251),
+			expectAppWeight: sdk.NewRat(62251, 156250),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -251,7 +251,7 @@ func TestRewardEvent(t *testing.T) {
 				TotalReward:             types.NewCoinFromInt64(2075),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
-			expectAppWeight: sdk.NewRat(2175, 2326),
+			expectAppWeight: sdk.NewRat(9350817, 10000000),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(2075),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -283,7 +283,7 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 				IsDeleted:               true,
 			},
-			expectAppWeight: sdk.NewRat(2175, 2326),
+			expectAppWeight: sdk.NewRat(9350817, 10000000),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),

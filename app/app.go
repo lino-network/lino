@@ -462,17 +462,23 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-	for _, provider := range lst.AllInfraProviders {
+	totalDistributedInflation := types.NewCoinFromInt64(0)
+	for idx, provider := range lst.AllInfraProviders {
+		if idx == (len(lst.AllInfraProviders) - 1) {
+			lb.accountManager.AddSavingCoin(
+				ctx, provider, inflation.Minus(totalDistributedInflation), "", "", types.InfraInflation)
+			break
+		}
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
 		if err != nil {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin := types.RatToCoin(myShareRat)
+		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
 	}
-
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
@@ -491,13 +497,20 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		panic(err)
 	}
 
-	for _, developer := range lst.AllDevelopers {
+	totalDistributedInflation := types.NewCoinFromInt64(0)
+	for idx, developer := range lst.AllDevelopers {
+		if idx == (len(lst.AllDevelopers) - 1) {
+			lb.accountManager.AddSavingCoin(
+				ctx, developer, inflation.Minus(totalDistributedInflation), "", "", types.DeveloperInflation)
+			break
+		}
 		percentage, err := lb.developerManager.GetConsumptionWeight(ctx, developer)
 		if err != nil {
 			panic(err)
 		}
 		myShareRat := inflation.ToRat().Mul(percentage)
 		myShareCoin := types.RatToCoin(myShareRat)
+		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
 	}

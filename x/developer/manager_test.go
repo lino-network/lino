@@ -52,8 +52,8 @@ func TestReportConsumption(t *testing.T) {
 		"issue https://github.com/lino-network/lino/issues/150": {
 			developer1Consumption:             types.NewCoinFromInt64(3333333),
 			developer2Consumption:             types.NewCoinFromInt64(4444444),
-			expectDeveloper1ConsumptionWeight: sdk.NewRat(3, 7),
-			expectDeveloper2ConsumptionWeight: sdk.NewRat(4, 7),
+			expectDeveloper1ConsumptionWeight: sdk.NewRat(2142857, 5000000),
+			expectDeveloper2ConsumptionWeight: sdk.NewRat(2857143, 5000000),
 		},
 	}
 	for testName, tc := range testCases {

@@ -20,7 +20,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/lino-network/lino/param"
+	devModel "github.com/lino-network/lino/x/developer/model"
 	globalModel "github.com/lino-network/lino/x/global/model"
+	infraModel "github.com/lino-network/lino/x/infra/model"
 )
 
 var (
@@ -289,23 +291,105 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 	cases := map[string]struct {
 		beforeDistributionInflationPool types.Coin
 		pastMinutes                     int64
+		numberOfInfraProvider           int
+		consumptionList                 []int64
 	}{
 		"first distribution": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
 			pastMinutes:                     types.MinutesPerMonth,
+			numberOfInfraProvider:           1,
+			consumptionList:                 []int64{0},
 		},
-		"last distribution of first year": {
+		"test distribution need to be rounded case": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 12,
+			pastMinutes:                     types.MinutesPerMonth,
+			numberOfInfraProvider:           3,
+			consumptionList:                 []int64{0, 0, 0},
 		},
-		"first distribution of second year": {
+		"test distribution based on consumption": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 13,
+			pastMinutes:                     types.MinutesPerMonth,
+			numberOfInfraProvider:           3,
+			consumptionList:                 []int64{10, 0, 20},
 		},
-		"last distribution of second year": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 24,
-		},
+	}
+	for testName, cs := range cases {
+		lb := newLinoBlockchain(t, 21)
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		infraStorage := infraModel.NewInfraProviderStorage(lb.CapKeyInfraStore)
+		totalWeight := int64(0)
+		for i := 0; i < cs.numberOfInfraProvider; i++ {
+			err := lb.accountManager.CreateAccount(
+				ctx, "", types.AccountKey("infra"+strconv.Itoa(i)),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), types.NewCoinFromInt64(0))
+			if err != nil {
+				t.Errorf("%s: failed to register account, got err %v", testName, err)
+			}
+			err = lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
+			if err != nil {
+				t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
+			}
+			infra, _ := infraStorage.GetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
+			infra.Usage = cs.consumptionList[i]
+			infraStorage.SetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)), infra)
+			totalWeight = totalWeight + cs.consumptionList[i]
+		}
+		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+			InfraInflationPool: cs.beforeDistributionInflationPool,
+		})
+		if err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
+
+		lb.distributeInflationToInfraProvider(ctx)
+		inflationPool, err := globalStore.GetInflationPool(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
+		}
+
+		if !inflationPool.InfraInflationPool.IsZero() {
+			t.Errorf(
+				"%s: diff infra inflation pool, got %v, want %v",
+				testName, inflationPool.InfraInflationPool,
+				types.NewCoinFromInt64(0))
+			return
+		}
+
+		actualInflation := types.NewCoinFromInt64(0)
+		for i := 0; i < cs.numberOfInfraProvider; i++ {
+			saving, err :=
+				lb.accountManager.GetSavingFromBank(
+					ctx, types.AccountKey("infra"+strconv.Itoa(i)))
+			assert.Nil(t, err)
+			inflation := types.NewCoinFromInt64(0)
+			if totalWeight == 0 {
+				inflation =
+					types.RatToCoin(
+						sdk.NewRat(1, int64(cs.numberOfInfraProvider)).Round(types.PrecisionFactor).
+							Mul(cs.beforeDistributionInflationPool.ToRat()))
+			} else {
+				inflation =
+					types.RatToCoin(
+						sdk.NewRat(cs.consumptionList[i], totalWeight).Round(types.PrecisionFactor).
+							Mul(cs.beforeDistributionInflationPool.ToRat()))
+			}
+			if i == (cs.numberOfInfraProvider - 1) {
+				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
+			}
+			actualInflation = actualInflation.Plus(inflation)
+			if !saving.IsEqual(inflation) {
+				t.Errorf(
+					"%s: diff inflation for %v, got %v, want %v",
+					testName, "dev"+strconv.Itoa(i), inflation,
+					saving)
+				return
+			}
+			infra, err := infraStorage.GetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
+			assert.Nil(t, err)
+			assert.Equal(t, infra.Usage, int64(0))
+		}
 	}
 	for testName, cs := range cases {
 		lb.pastMinutes = cs.pastMinutes
@@ -339,39 +423,76 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 	}
 }
 
-func TestDistributeInflationToDeveloper(t *testing.T) {
-	lb := newLinoBlockchain(t, 21)
+func TestDistributeInflationToDevelopers(t *testing.T) {
 	cases := map[string]struct {
 		beforeDistributionInflationPool types.Coin
 		pastMinutes                     int64
+		numberOfDevelopers              int
+		consumptionList                 []types.Coin
 	}{
-		"first distribution": {
+		"distribute to one developer with zero consumption": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
+			numberOfDevelopers:              1,
 			pastMinutes:                     types.MinutesPerMonth,
+			consumptionList:                 []types.Coin{types.NewCoinFromInt64(0)},
 		},
-		"last distribution of first year": {
+		"distribute to five developers with zero consumption": {
 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 12,
+			numberOfDevelopers:              5,
+			pastMinutes:                     types.MinutesPerMonth,
+			consumptionList: []types.Coin{
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0)},
 		},
-		"first distribution of second year": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 13,
+		"test inflation need to be rounded case": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(100 * types.Decimals),
+			numberOfDevelopers:              3,
+			pastMinutes:                     types.MinutesPerMonth,
+			consumptionList: []types.Coin{
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0),
+				types.NewCoinFromInt64(0),
+			},
 		},
-		"last distribution of second year": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth * 24,
+		"test different consumption case": {
+			beforeDistributionInflationPool: types.NewCoinFromInt64(100 * types.Decimals),
+			numberOfDevelopers:              3,
+			pastMinutes:                     types.MinutesPerMonth,
+			consumptionList: []types.Coin{
+				types.NewCoinFromInt64(1000 * types.Decimals),
+				types.NewCoinFromInt64(2000 * types.Decimals),
+				types.NewCoinFromInt64(20),
+			},
 		},
 	}
 	for testName, cs := range cases {
-		lb.pastMinutes = cs.pastMinutes
+		lb := newLinoBlockchain(t, 21)
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		err := lb.developerManager.RegisterDeveloper(ctx, "Lino", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
-		if err != nil {
-			t.Errorf("%s: failed to register developer, got err %v", testName, err)
+		devStorage := devModel.NewDeveloperStorage(lb.CapKeyDeveloperStore)
+		totalConsumption := types.NewCoinFromInt64(0)
+		for i := 0; i < cs.numberOfDevelopers; i++ {
+			err := lb.accountManager.CreateAccount(
+				ctx, "", types.AccountKey("dev"+strconv.Itoa(i)),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), types.NewCoinFromInt64(0))
+			if err != nil {
+				t.Errorf("%s: failed to register account, got err %v", testName, err)
+			}
+			err = lb.developerManager.RegisterDeveloper(
+				ctx, types.AccountKey("dev"+strconv.Itoa(i)), types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
+			if err != nil {
+				t.Errorf("%s: failed to register developer, got err %v", testName, err)
+			}
+			developer, _ := devStorage.GetDeveloper(ctx, types.AccountKey("dev"+strconv.Itoa(i)))
+			developer.AppConsumption = cs.consumptionList[i]
+			devStorage.SetDeveloper(ctx, types.AccountKey("dev"+strconv.Itoa(i)), developer)
+			totalConsumption = totalConsumption.Plus(cs.consumptionList[i])
 		}
-
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
-		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			DeveloperInflationPool: cs.beforeDistributionInflationPool,
 		})
 		if err != nil {
@@ -390,6 +511,41 @@ func TestDistributeInflationToDeveloper(t *testing.T) {
 				testName, inflationPool.DeveloperInflationPool,
 				types.NewCoinFromInt64(0))
 			return
+		}
+
+		actualInflation := types.NewCoinFromInt64(0)
+		for i := 0; i < cs.numberOfDevelopers; i++ {
+			saving, err :=
+				lb.accountManager.GetSavingFromBank(
+					ctx, types.AccountKey("dev"+strconv.Itoa(i)))
+			assert.Nil(t, err)
+			inflation := types.NewCoinFromInt64(0)
+			if totalConsumption.IsZero() {
+				inflation =
+					types.RatToCoin(
+						sdk.NewRat(1, int64(len(cs.consumptionList))).Round(types.PrecisionFactor).
+							Mul(cs.beforeDistributionInflationPool.ToRat()))
+			} else {
+				inflation =
+					types.RatToCoin(
+						cs.consumptionList[i].ToRat().
+							Quo(totalConsumption.ToRat()).Round(types.PrecisionFactor).
+							Mul(cs.beforeDistributionInflationPool.ToRat()))
+			}
+			if i == (cs.numberOfDevelopers - 1) {
+				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
+			}
+			actualInflation = actualInflation.Plus(inflation)
+			if !saving.IsEqual(inflation) {
+				t.Errorf(
+					"%s: diff inflation for %v, got %v, want %v",
+					testName, "dev"+strconv.Itoa(i), inflation,
+					saving)
+				return
+			}
+			developer, err := devStorage.GetDeveloper(ctx, types.AccountKey("dev"+strconv.Itoa(i)))
+			assert.Nil(t, err)
+			assert.True(t, developer.AppConsumption.IsZero())
 		}
 	}
 }

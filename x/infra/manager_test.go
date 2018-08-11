@@ -76,8 +76,8 @@ func TestReportUsage(t *testing.T) {
 		"issue https://github.com/lino-network/lino/issues/150": {
 			user1Usage:             3333333,
 			user2Usage:             4444444,
-			expectUser1UsageWeight: sdk.NewRat(429, 1000),
-			expectUser2UsageWeight: sdk.NewRat(571, 1000),
+			expectUser1UsageWeight: sdk.NewRat(2142857, 5000000),
+			expectUser2UsageWeight: sdk.NewRat(2857143, 5000000),
 		},
 	}
 	for testName, tc := range testCases {

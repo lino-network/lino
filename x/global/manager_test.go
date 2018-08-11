@@ -979,7 +979,7 @@ func TestGetGrowthRate(t *testing.T) {
 			lastYearConsumption: bigLastYearConsumptionCoin,
 			thisYearConsumption: bigThisYearConsumptionCoin,
 			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(71, 1000),
+			expectGrowthRate:    sdk.NewRat(357143, 5000000),
 		},
 	}
 
