@@ -195,7 +195,7 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat()).Round(types.PrecisionFactor)
 	if ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalPass
 	} else {

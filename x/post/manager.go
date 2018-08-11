@@ -310,7 +310,7 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) 
 	if postMeta.TotalUpvoteStake.IsZero() {
 		return sdk.OneRat(), nil
 	}
-	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat())
+	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()).Round(types.PrecisionFactor)
 	if penaltyScore.GT(sdk.OneRat()) {
 		return sdk.OneRat(), nil
 	}

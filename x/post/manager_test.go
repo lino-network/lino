@@ -630,7 +630,7 @@ func TestGetPenaltyScore(t *testing.T) {
 			testName:           "3333 report and 7777 upvote expects 3/7 penalty score",
 			totalReportStake:   types.NewCoinFromInt64(3333),
 			totalUpvoteStake:   types.NewCoinFromInt64(7777),
-			expectPenaltyScore: sdk.NewRat(3333, 7777),
+			expectPenaltyScore: sdk.NewRat(2142857, 5000000),
 		},
 		{
 			testName:           "big string report and big string upvote, report is much than upvote",
@@ -642,7 +642,7 @@ func TestGetPenaltyScore(t *testing.T) {
 			testName:           "big string report and big string upvote, report is less than upvote",
 			totalReportStake:   types.NewCoinFromBigInt(bigStringInt1),
 			totalUpvoteStake:   types.NewCoinFromBigInt(bigStringInt2),
-			expectPenaltyScore: sdk.NewRatFromBigInt(bigStringInt1, bigStringInt2),
+			expectPenaltyScore: sdk.NewRat(642857, 5000000),
 		},
 	}
 
