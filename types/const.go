@@ -79,7 +79,7 @@ const (
 	PunishDidntVote    = PunishType(3)
 
 	// UsernameReCheck is used to check user registration
-	UsernameReCheck = "^[a-z0-9]([a-z0-9_-]){2,20}$"
+	UsernameReCheck = "^[a-z0-9]([a-z0-9_]){2,20}$"
 
 	// MinimumUsernameLength minimum username length
 	MinimumUsernameLength = 3
