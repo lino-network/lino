@@ -46,11 +46,11 @@ func LinoBlockchainInit() server.AppInit {
 
 // genesis state for blockchain
 type GenesisState struct {
-	Accounts      []GenesisAccount          `json:"accounts"`
-	Developers    []GenesisAppDeveloper     `json:"developers"`
-	Infra         []GenesisInfraProvider    `json:"infra"`
-	GenesisParam  GenesisParam              `json:"genesis_param"`
-	InitParamList globalModel.InitParamList `json:"init_param_list"`
+	Accounts       []GenesisAccount          `json:"accounts"`
+	Developers     []GenesisAppDeveloper     `json:"developers"`
+	Infra          []GenesisInfraProvider    `json:"infra"`
+	GenesisParam   GenesisParam              `json:"genesis_param"`
+	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
 }
 
 // genesis account will get coin to the address and register user
@@ -220,7 +220,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				ReportOrUpvoteInterval: 24 * 3600,
 			},
 		},
-		InitParamList: globalModel.InitParamList{
+		InitGlobalMeta: globalModel.InitParamList{
 			GrowthRate: sdk.NewRat(98, 1000),
 			Ceiling:    sdk.NewRat(98, 1000),
 			Floor:      sdk.NewRat(3, 100),

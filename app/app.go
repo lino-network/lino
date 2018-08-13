@@ -217,7 +217,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		totalCoin = totalCoin.Plus(coin)
 	}
 	if err := lb.globalManager.InitGlobalManagerWithConfig(
-		ctx, totalCoin, genesisState.InitParamList); err != nil {
+		ctx, totalCoin, genesisState.InitGlobalMeta); err != nil {
 		panic(err)
 	}
 	if err := lb.developerManager.InitGenesis(ctx); err != nil {

@@ -76,7 +76,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
-	genesisState.InitParamList = globalModel.InitParamList{
+	genesisState.InitGlobalMeta = globalModel.InitParamList{
 		GrowthRate: sdk.NewRat(98, 1000),
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),

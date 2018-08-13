@@ -123,7 +123,7 @@ func TestGetGenesisJson(t *testing.T) {
 				ReportOrUpvoteInterval: 24 * 3600,
 			},
 		},
-		InitParamList: globalModel.InitParamList{
+		InitGlobalMeta: globalModel.InitParamList{
 			GrowthRate: sdk.NewRat(98, 1000),
 			Ceiling:    sdk.NewRat(98, 1000),
 			Floor:      sdk.NewRat(3, 100),
