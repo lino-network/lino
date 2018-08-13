@@ -30,11 +30,12 @@ func (gm GlobalManager) WireCodec() *wire.Codec {
 }
 
 func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) sdk.Error {
-	allocationParam, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
-	if err != nil {
-		return err
-	}
-	return gm.storage.InitGlobalState(ctx, totalLino, allocationParam)
+	return gm.storage.InitGlobalState(ctx, totalLino)
+}
+
+func (gm GlobalManager) InitGlobalManagerWithConfig(
+	ctx sdk.Context, totalLino types.Coin, param model.InitParamList) sdk.Error {
+	return gm.storage.InitGlobalStateWithConfig(ctx, totalLino, param)
 }
 
 func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
@@ -116,7 +117,7 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 func (gm GlobalManager) RegisterProposalDecideEvent(
 	ctx sdk.Context, decideHr int64, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+(decideHr*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time+(decideHr), event); err != nil {
 		return err
 	}
 	return nil

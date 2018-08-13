@@ -7,6 +7,7 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	globalModel "github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -121,6 +122,14 @@ func TestGetGenesisJson(t *testing.T) {
 			param.PostParam{
 				ReportOrUpvoteInterval: 24 * 3600,
 			},
+		},
+		InitParamList: globalModel.InitParamList{
+			GrowthRate: sdk.NewRat(98, 1000),
+			Ceiling:    sdk.NewRat(98, 1000),
+			Floor:      sdk.NewRat(3, 100),
+			MaxTPS:     sdk.NewRat(1000),
+			ConsumptionFreezingPeriodHr: 7 * 24,
+			ConsumptionFrictionRate:     sdk.NewRat(5, 100),
 		},
 	}
 

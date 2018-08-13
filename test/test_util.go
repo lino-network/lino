@@ -14,6 +14,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+	globalModel "github.com/lino-network/lino/x/global/model"
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
 
@@ -91,6 +92,14 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
+	genesisState.InitParamList = globalModel.InitParamList{
+		GrowthRate: sdk.NewRat(98, 1000),
+		Ceiling:    sdk.NewRat(98, 1000),
+		Floor:      sdk.NewRat(3, 100),
+		MaxTPS:     sdk.NewRat(1000),
+		ConsumptionFreezingPeriodHr: 7 * 24,
+		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
 

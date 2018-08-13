@@ -187,7 +187,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 
 	if genesisState.GenesisParam.InitFromConfig {
 		if err := lb.paramHolder.InitParamFromConfig(
-			ctx, genesisState.GenesisParam.GlobalAllocationParam,
+			ctx,
+			genesisState.GenesisParam.GlobalAllocationParam,
 			genesisState.GenesisParam.InfraInternalAllocationParam,
 			genesisState.GenesisParam.PostParam,
 			genesisState.GenesisParam.EvaluateOfContentValueParam,
@@ -215,7 +216,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 		totalCoin = totalCoin.Plus(coin)
 	}
-	if err := lb.globalManager.InitGlobalManager(ctx, totalCoin); err != nil {
+	if err := lb.globalManager.InitGlobalManagerWithConfig(
+		ctx, totalCoin, genesisState.InitParamList); err != nil {
 		panic(err)
 	}
 	if err := lb.developerManager.InitGenesis(ctx); err != nil {

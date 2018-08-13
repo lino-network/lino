@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	globalModel "github.com/lino-network/lino/x/global/model"
 	"github.com/spf13/pflag"
 	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -45,10 +46,11 @@ func LinoBlockchainInit() server.AppInit {
 
 // genesis state for blockchain
 type GenesisState struct {
-	Accounts     []GenesisAccount       `json:"accounts"`
-	Developers   []GenesisAppDeveloper  `json:"developers"`
-	Infra        []GenesisInfraProvider `json:"infra"`
-	GenesisParam GenesisParam           `json:"genesis_param"`
+	Accounts      []GenesisAccount          `json:"accounts"`
+	Developers    []GenesisAppDeveloper     `json:"developers"`
+	Infra         []GenesisInfraProvider    `json:"infra"`
+	GenesisParam  GenesisParam              `json:"genesis_param"`
+	InitParamList globalModel.InitParamList `json:"init_param_list"`
 }
 
 // genesis account will get coin to the address and register user
@@ -217,6 +219,14 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			param.PostParam{
 				ReportOrUpvoteInterval: 24 * 3600,
 			},
+		},
+		InitParamList: globalModel.InitParamList{
+			GrowthRate: sdk.NewRat(98, 1000),
+			Ceiling:    sdk.NewRat(98, 1000),
+			Floor:      sdk.NewRat(3, 100),
+			MaxTPS:     sdk.NewRat(1000),
+			ConsumptionFreezingPeriodHr: 7 * 24,
+			ConsumptionFrictionRate:     sdk.NewRat(5, 100),
 		},
 	}
 

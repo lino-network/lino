@@ -50,16 +50,16 @@ func (gs GlobalStorage) WireCodec() *wire.Codec {
 	return gs.cdc
 }
 
-func (gs GlobalStorage) InitGlobalState(
-	ctx sdk.Context, totalLino types.Coin, param *param.GlobalAllocationParam) sdk.Error {
+func (gs GlobalStorage) InitGlobalStateWithConfig(
+	ctx sdk.Context, totalLino types.Coin, param InitParamList) sdk.Error {
 	globalMeta := &GlobalMeta{
 		TotalLinoCoin:                 totalLino,
 		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
 		CumulativeConsumption:         types.NewCoinFromInt64(0),
-		GrowthRate:                    sdk.NewRat(98, 1000),
-		Ceiling:                       sdk.NewRat(98, 1000),
-		Floor:                         sdk.NewRat(30, 1000),
-		AnnualInflation:               types.RatToCoin(totalLino.ToRat().Mul(sdk.NewRat(98, 1000))),
+		GrowthRate:                    param.GrowthRate,
+		Ceiling:                       param.Ceiling,
+		Floor:                         param.Floor,
+		AnnualInflation:               types.RatToCoin(totalLino.ToRat().Mul(param.GrowthRate)),
 	}
 
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
@@ -72,22 +72,35 @@ func (gs GlobalStorage) InitGlobalState(
 	}
 
 	consumptionMeta := &ConsumptionMeta{
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:     param.ConsumptionFrictionRate,
 		ConsumptionWindow:           types.NewCoinFromInt64(0),
 		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
-		ConsumptionFreezingPeriodHr: 24 * 7,
+		ConsumptionFreezingPeriodHr: param.ConsumptionFreezingPeriodHr,
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}
 	tps := &TPS{
 		CurrentTPS: sdk.ZeroRat(),
-		MaxTPS:     sdk.NewRat(1000),
+		MaxTPS:     param.MaxTPS,
 	}
 	if err := gs.SetTPS(ctx, tps); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (gs GlobalStorage) InitGlobalState(
+	ctx sdk.Context, totalLino types.Coin) sdk.Error {
+	initParamList := InitParamList{
+		GrowthRate: sdk.NewRat(98, 1000),
+		Ceiling:    sdk.NewRat(98, 1000),
+		Floor:      sdk.NewRat(3, 100),
+		MaxTPS:     sdk.NewRat(1000),
+		ConsumptionFreezingPeriodHr: 7 * 24,
+		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+	}
+	return gs.InitGlobalStateWithConfig(ctx, totalLino, initParamList)
 }
 
 func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {

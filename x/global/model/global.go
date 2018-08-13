@@ -43,3 +43,12 @@ type ConsumptionMeta struct {
 	ConsumptionRewardPool       types.Coin `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodHr int64      `json:"consumption_freezing_period"`
 }
+
+type InitParamList struct {
+	GrowthRate                  sdk.Rat `json:"growth_rate"`
+	Ceiling                     sdk.Rat `json:"ceiling"`
+	Floor                       sdk.Rat `json:"floor"`
+	MaxTPS                      sdk.Rat `json:"max_tps"`
+	ConsumptionFrictionRate     sdk.Rat `json:"consumption_friction_rate"`
+	ConsumptionFreezingPeriodHr int64   `json:"consumption_freezing_period"`
+}
