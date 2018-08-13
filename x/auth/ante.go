@@ -104,7 +104,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
 					return ctx, err.Result(), true
 				}
-				signBytes := auth.StdSignBytes(ctx.ChainID(), 0, sequences[idx], fee, sdkMsgs, stdTx.GetMemo())å
+				signBytes := auth.StdSignBytes(ctx.ChainID(), 0, sequences[idx], fee, sdkMsgs, stdTx.GetMemo())
 				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
 					return ctx, ErrUnverifiedBytes(
 						fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
