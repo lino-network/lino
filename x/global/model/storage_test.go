@@ -29,8 +29,8 @@ func getContext() sdk.Context {
 }
 
 func InitGlobalStorage(
-	t *testing.T, ctx sdk.Context, gm GlobalStorage, param *param.GlobalAllocationParam) sdk.Error {
-	return gm.InitGlobalState(ctx, types.NewCoinFromInt64(10000*types.Decimals), param)
+	t *testing.T, ctx sdk.Context, gm GlobalStorage) sdk.Error {
+	return gm.InitGlobalState(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func checkGlobalStorage(t *testing.T, ctx sdk.Context, gm GlobalStorage,
@@ -54,9 +54,7 @@ func TestGlobalStorageGenesis(t *testing.T) {
 
 	ph.InitParam(ctx)
 
-	allocationParam, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
-	err = InitGlobalStorage(t, ctx, gm, allocationParam)
+	err := InitGlobalStorage(t, ctx, gm)
 	assert.Nil(t, err)
 	globalMeta := GlobalMeta{
 		TotalLinoCoin:                 types.NewCoinFromInt64(10000 * types.Decimals),

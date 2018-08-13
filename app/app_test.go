@@ -76,6 +76,14 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
+	genesisState.InitGlobalMeta = globalModel.InitParamList{
+		GrowthRate: sdk.NewRat(98, 1000),
+		Ceiling:    sdk.NewRat(98, 1000),
+		Floor:      sdk.NewRat(3, 100),
+		MaxTPS:     sdk.NewRat(1000),
+		ConsumptionFreezingPeriodHr: 7 * 24,
+		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+	}
 
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
