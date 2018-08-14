@@ -138,7 +138,7 @@ func returnCoinTo(
 	times int64, interval int64, coin types.Coin) sdk.Error {
 
 	if err := am.AddFrozenMoney(
-		ctx, name, coin, ctx.BlockHeader().Time, interval, times); err != nil {
+		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {
 		return err
 	}
 

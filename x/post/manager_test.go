@@ -3,6 +3,7 @@ package post
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/post/model"
@@ -117,9 +118,9 @@ func TestCreatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: sdk.ZeroRat(),
@@ -194,9 +195,9 @@ func TestUpdatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			IsDeleted:               false,
 			RedistributionSplitRate: splitRate,
@@ -363,16 +364,16 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 
 	for _, tc := range testCases {
 		postKey := types.GetPermlink(tc.author, tc.postID)
-		ctx = ctx.WithBlockHeader(abci.Header{Time: tc.viewTime})
+		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.viewTime, 0)})
 		err := pm.AddOrUpdateViewToPost(ctx, postKey, tc.viewUser)
 		if err != nil {
 			t.Errorf("%s: failed to add or update view to post, got err %v", tc.testName, err)
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               createTime,
-			LastUpdatedAt:           createTime,
-			LastActivityAt:          createTime,
+			CreatedAt:               createTime.Unix(),
+			LastUpdatedAt:           createTime.Unix(),
+			LastActivityAt:          createTime.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalViewCount:          tc.expectTotalViewCount,
@@ -466,9 +467,9 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        tc.expectTotalReportStake,
@@ -485,7 +486,7 @@ func TestDonation(t *testing.T) {
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
 
-	baseTime := ctx.BlockHeader().Time
+	baseTime := ctx.BlockHeader().Time.Unix()
 	testCases := []struct {
 		testName            string
 		user                types.AccountKey
@@ -556,9 +557,9 @@ func TestDonation(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalDonateCount:        tc.expectDonateCount,
@@ -648,9 +649,9 @@ func TestGetPenaltyScore(t *testing.T) {
 
 	for _, tc := range testCases {
 		postMeta := &model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        tc.totalReportStake,
@@ -725,9 +726,9 @@ func TestGetRepostPenaltyScore(t *testing.T) {
 
 	for _, tc := range testCases {
 		postMeta := &model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        tc.totalReportStake,

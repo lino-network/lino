@@ -102,9 +102,9 @@ func TestHandlerUpdatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          ctx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			IsDeleted:               false,
 			TotalUpvoteStake:        types.NewCoinFromInt64(0),
@@ -201,9 +201,9 @@ func TestHandlerCreateComment(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
 		TotalUpvoteStake:        types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
@@ -217,8 +217,8 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.PostID = postID
 	postInfo.ParentAuthor = ""
 	postInfo.ParentPostID = ""
-	postMeta.CreatedAt = ctx.BlockHeader().Time
-	postMeta.LastUpdatedAt = ctx.BlockHeader().Time
+	postMeta.CreatedAt = ctx.BlockHeader().Time.Unix()
+	postMeta.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
 	// test invalid parent
@@ -284,9 +284,9 @@ func TestHandlerRepost(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
 		TotalUpvoteStake:        types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
@@ -300,7 +300,7 @@ func TestHandlerRepost(t *testing.T) {
 	msg.PostID = "repost-repost"
 	msg.SourceAuthor = user
 	msg.SourcePostID = "repost"
-	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix()})
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now()})
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -308,9 +308,9 @@ func TestHandlerRepost(t *testing.T) {
 	// check 2 depth repost
 	postInfo.PostID = "repost-repost"
 	postMeta = model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
 		TotalUpvoteStake:        types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
@@ -375,9 +375,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			toPostID:   postID,
 			expectErr:  sdk.Result{},
 			expectPostMeta: model.PostMeta{
-				CreatedAt:               ctx.BlockHeader().Time,
-				LastUpdatedAt:           ctx.BlockHeader().Time,
-				LastActivityAt:          ctx.BlockHeader().Time,
+				CreatedAt:               ctx.BlockHeader().Time.Unix(),
+				LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        1,
 				TotalUpvoteStake:        types.NewCoinFromInt64(1 * types.Decimals),
@@ -431,9 +431,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			toPostID:   postID,
 			expectErr:  sdk.Result{},
 			expectPostMeta: model.PostMeta{
-				CreatedAt:               ctx.BlockHeader().Time,
-				LastUpdatedAt:           ctx.BlockHeader().Time,
-				LastActivityAt:          ctx.BlockHeader().Time,
+				CreatedAt:               ctx.BlockHeader().Time.Unix(),
+				LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        2,
 				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
@@ -468,9 +468,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			toPostID:   postID,
 			expectErr:  sdk.Result{},
 			expectPostMeta: model.PostMeta{
-				CreatedAt:               ctx.BlockHeader().Time,
-				LastUpdatedAt:           ctx.BlockHeader().Time,
-				LastActivityAt:          ctx.BlockHeader().Time,
+				CreatedAt:               ctx.BlockHeader().Time.Unix(),
+				LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        3,
 				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
@@ -504,9 +504,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			toPostID:   postID,
 			expectErr:  sdk.Result{},
 			expectPostMeta: model.PostMeta{
-				CreatedAt:               ctx.BlockHeader().Time,
-				LastUpdatedAt:           ctx.BlockHeader().Time,
-				LastActivityAt:          ctx.BlockHeader().Time,
+				CreatedAt:               ctx.BlockHeader().Time.Unix(),
+				LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        4,
 				TotalUpvoteStake:        types.NewCoinFromInt64(3 * types.Decimals),
@@ -576,9 +576,9 @@ func TestHandlerPostDonate(t *testing.T) {
 			toPostID:   postID,
 			expectErr:  ErrCannotDonateToSelf(author).Result(),
 			expectPostMeta: model.PostMeta{
-				CreatedAt:               ctx.BlockHeader().Time,
-				LastUpdatedAt:           ctx.BlockHeader().Time,
-				LastActivityAt:          ctx.BlockHeader().Time,
+				CreatedAt:               ctx.BlockHeader().Time.Unix(),
+				LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        2,
 				TotalUpvoteStake:        types.NewCoinFromInt64(0),
@@ -638,7 +638,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		}
 
 		if tc.expectErr.Code == sdk.ABCICodeOK {
-			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
+			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600*7*24)
 			if !assert.Equal(t, tc.expectRegisteredEvent, eventList.Events[len(eventList.Events)-1]) {
 				t.Errorf("%s: diff event, got %v, want %v", tc.testName,
 					eventList.Events[len(eventList.Events)-1], tc.expectRegisteredEvent)
@@ -710,7 +710,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	result = handler(ctx, donateMsg)
 	assert.Equal(t, result, sdk.Result{})
 	eventList :=
-		gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time+3600*7*24)
+		gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600*7*24)
 
 	// after handler check KVStore
 	// check repost first
@@ -727,9 +727,9 @@ func TestHandlerRePostDonate(t *testing.T) {
 	}
 	totalReward := types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(95, 100)))
 	postMeta := model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
 		TotalDonateCount:        1,
 		TotalReward:             totalReward,
@@ -793,7 +793,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	user3 := createTestAccount(t, ctx, am, "user3")
 	user4 := createTestAccount(t, ctx, am, "user4")
 
-	baseTime := ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake
+	baseTime := ctx.BlockHeader().Time.Unix() + coinDayParam.SecondsToRecoverCoinDayStake
 	invalidPermlink := types.GetPermlink("invalid", "invalid")
 
 	testCases := []struct {
@@ -876,10 +876,10 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		lastReportOrUpvoteAtCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.lastReportOrUpvoteAt})
+		lastReportOrUpvoteAtCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.lastReportOrUpvoteAt, 0)})
 		am.UpdateLastReportOrUpvoteAt(lastReportOrUpvoteAtCtx, types.AccountKey(tc.reportOrUpvoteUser))
 
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime})
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(baseTime, 0)})
 		msg := NewReportOrUpvoteMsg(tc.reportOrUpvoteUser, tc.targetPostAuthor, tc.targetPostID, tc.isReport)
 
 		result := handler(newCtx, msg)
@@ -891,9 +891,9 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time,
-			LastUpdatedAt:           ctx.BlockHeader().Time,
-			LastActivityAt:          newCtx.BlockHeader().Time,
+			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          newCtx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalReportStake:        tc.expectTotalReportStake,
@@ -915,7 +915,7 @@ func TestHandlerView(t *testing.T) {
 	ctx, am, _, pm, gm, dm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 
-	createTime := ctx.BlockHeader().Time
+	createTime := ctx.BlockHeader().Time.Unix()
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
 	user2 := createTestAccount(t, ctx, am, "user2")
 	user3 := createTestAccount(t, ctx, am, "user3")
@@ -977,7 +977,7 @@ func TestHandlerView(t *testing.T) {
 
 	for _, tc := range testCases {
 		postKey := types.GetPermlink(tc.author, tc.postID)
-		ctx = ctx.WithBlockHeader(abci.Header{Time: tc.viewTime})
+		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.viewTime, 0)})
 		msg := NewViewMsg(string(tc.viewUser), string(tc.author), tc.postID)
 		result := handler(ctx, msg)
 		if !assert.Equal(t, result, sdk.Result{}) {

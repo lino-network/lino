@@ -123,10 +123,13 @@ func TestAddCoin(t *testing.T) {
 	fromUser1, fromUser2, testUser :=
 		types.AccountKey("fromUser1"), types.AccountKey("fromuser2"), types.AccountKey("testUser")
 
-	baseTime := time.Now().Unix()
-	baseTime1 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake/2
-	baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
-	baseTime3 := baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake + 1
+	baseTime := time.Now()
+	d1 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake/2) * time.Second
+	baseTime1 := baseTime.Add(d1)
+	d2 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake+1) * time.Second
+	baseTime2 := baseTime.Add(d2)
+	d3 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake+1) * time.Second
+	baseTime3 := baseTime2.Add(d3)
 
 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
 	createTestAccount(ctx, am, string(testUser))
@@ -137,7 +140,7 @@ func TestAddCoin(t *testing.T) {
 		from                     types.AccountKey
 		detailType               types.TransferDetailType
 		memo                     string
-		atWhen                   int64
+		atWhen                   time.Time
 		expectBank               model.AccountBank
 		expectPendingStakeQueue  model.PendingStakeQueue
 		expectBalanceHistorySlot model.BalanceHistory
@@ -155,13 +158,13 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 2,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
+				LastUpdatedAt:    baseTime.Unix(),
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        c100,
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime.Unix(),
+						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -172,7 +175,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee,
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
@@ -181,7 +184,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c100),
 						DetailType: types.TransferIn,
 						Memo:       "memo",
@@ -202,18 +205,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 3,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime1,
+				LastUpdatedAt:    baseTime1.Unix(),
 				StakeCoinInQueue: sdk.NewRat(5000000, 1),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime.Unix(),
+						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime1,
-						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1.Unix(),
+						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -224,7 +227,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee,
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
@@ -233,7 +236,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c100),
 						DetailType: types.TransferIn,
 						Memo:       "memo",
@@ -243,7 +246,7 @@ func TestAddCoin(t *testing.T) {
 						From:       fromUser2,
 						To:         testUser,
 						Balance:    accParam.RegisterFee.Plus(c200),
-						CreatedAt:  baseTime1,
+						CreatedAt:  baseTime1.Unix(),
 						DetailType: types.DonationIn,
 						Memo:       "permlink",
 					},
@@ -263,18 +266,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 4,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime2,
+				LastUpdatedAt:    baseTime2.Unix(),
 				StakeCoinInQueue: sdk.NewRat(945003125, 189),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime1,
-						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1.Unix(),
+						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime2,
-						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime2.Unix(),
+						EndTime:   baseTime2.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -285,7 +288,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee,
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
@@ -294,7 +297,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c100),
 						DetailType: types.TransferIn,
 						Memo:       "memo",
@@ -304,7 +307,7 @@ func TestAddCoin(t *testing.T) {
 						From:       fromUser2,
 						To:         testUser,
 						Balance:    accParam.RegisterFee.Plus(c200),
-						CreatedAt:  baseTime1,
+						CreatedAt:  baseTime1.Unix(),
 						DetailType: types.DonationIn,
 						Memo:       "permlink",
 					},
@@ -312,7 +315,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       "",
 						To:         testUser,
-						CreatedAt:  baseTime2,
+						CreatedAt:  baseTime2.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c300),
 						DetailType: types.ClaimReward,
 					},
@@ -332,18 +335,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 4,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime2,
+				LastUpdatedAt:    baseTime2.Unix(),
 				StakeCoinInQueue: sdk.NewRat(945003125, 189),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime1,
-						EndTime:   baseTime1 + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1.Unix(),
+						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime2,
-						EndTime:   baseTime2 + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime2.Unix(),
+						EndTime:   baseTime2.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -354,7 +357,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee,
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
@@ -363,7 +366,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       fromUser1,
 						To:         testUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c100),
 						DetailType: types.TransferIn,
 						Memo:       "memo",
@@ -373,7 +376,7 @@ func TestAddCoin(t *testing.T) {
 						From:       fromUser2,
 						To:         testUser,
 						Balance:    accParam.RegisterFee.Plus(c200),
-						CreatedAt:  baseTime1,
+						CreatedAt:  baseTime1.Unix(),
 						DetailType: types.DonationIn,
 						Memo:       "permlink",
 					},
@@ -381,7 +384,7 @@ func TestAddCoin(t *testing.T) {
 						Amount:     c100,
 						From:       "",
 						To:         testUser,
-						CreatedAt:  baseTime2,
+						CreatedAt:  baseTime2.Unix(),
 						Balance:    accParam.RegisterFee.Plus(c300),
 						DetailType: types.ClaimReward,
 					},
@@ -420,7 +423,7 @@ func TestMinusCoin(t *testing.T) {
 	fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
 
 	// Get the minimum time of this history slot
-	baseTime := time.Now().Unix()
+	baseTime := time.Now()
 	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 
@@ -440,7 +443,7 @@ func TestMinusCoin(t *testing.T) {
 		userPriv                crypto.PrivKey
 		expectErr               sdk.Error
 		amount                  types.Coin
-		atWhen                  int64
+		atWhen                  time.Time
 		to                      types.AccountKey
 		memo                    string
 		detailType              types.TransferDetailType
@@ -464,13 +467,13 @@ func TestMinusCoin(t *testing.T) {
 				Stake:   accParam.RegisterFee,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
+				LastUpdatedAt:    baseTime.Unix(),
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Minus(coin1),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime.Unix(),
+						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee.Minus(coin1),
 					}},
 			},
@@ -481,7 +484,7 @@ func TestMinusCoin(t *testing.T) {
 						From:       accountReferrer,
 						To:         userWithSufficientSaving,
 						Balance:    accParam.RegisterFee,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 					},
@@ -489,7 +492,7 @@ func TestMinusCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       fromUser,
 						To:         userWithSufficientSaving,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						DetailType: types.TransferIn,
 						Balance:    accParam.RegisterFee.Plus(accParam.RegisterFee),
 					},
@@ -497,7 +500,7 @@ func TestMinusCoin(t *testing.T) {
 						Amount:     coin1,
 						From:       userWithSufficientSaving,
 						To:         toUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						DetailType: types.TransferOut,
 						Memo:       "memo",
 						Balance:    accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
@@ -521,13 +524,13 @@ func TestMinusCoin(t *testing.T) {
 				Stake:   accParam.RegisterFee,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
+				LastUpdatedAt:    baseTime.Unix(),
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
 					model.PendingStake{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime.Unix(),
+						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee,
 					}},
 			},
@@ -537,7 +540,7 @@ func TestMinusCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         toUser,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    accParam.RegisterFee,
@@ -561,13 +564,13 @@ func TestMinusCoin(t *testing.T) {
 				Stake:   accParam.RegisterFee,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime,
+				LastUpdatedAt:    baseTime.Unix(),
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime,
-						EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime.Unix(),
+						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee,
 					}},
 			},
@@ -577,7 +580,7 @@ func TestMinusCoin(t *testing.T) {
 						Amount:     accParam.RegisterFee,
 						From:       accountReferrer,
 						To:         userWithLimitSaving,
-						CreatedAt:  baseTime,
+						CreatedAt:  baseTime.Unix(),
 						DetailType: types.TransferIn,
 						Memo:       types.InitAccountRegisterDepositMemo,
 						Balance:    accParam.RegisterFee,
@@ -810,7 +813,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     types.NewCoinFromInt64(1),
 						From:       accountReferrer,
 						To:         types.AccountKey("test2"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    types.NewCoinFromInt64(1),
 					},
@@ -830,7 +833,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     types.NewCoinFromInt64(1500),
 						From:       accountReferrer,
 						To:         types.AccountKey("test3"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    types.NewCoinFromInt64(1500),
 					},
@@ -850,7 +853,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
 						To:         types.AccountKey("test4"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    accParam.FirstDepositFullStakeLimit,
 					},
@@ -859,7 +862,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     types.NewCoinFromInt64(50000),
 						From:       accountReferrer,
 						To:         types.AccountKey("test4"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountRegisterDepositMemo,
 						Balance:    types.NewCoinFromInt64(150000),
 					},
@@ -879,7 +882,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
 						To:         types.AccountKey("test5"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    accParam.FirstDepositFullStakeLimit,
 					},
@@ -888,7 +891,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Amount:     largeAmountRegisterFee.Minus(accParam.FirstDepositFullStakeLimit),
 						From:       accountReferrer,
 						To:         types.AccountKey("test5"),
-						CreatedAt:  ctx.BlockHeader().Time,
+						CreatedAt:  ctx.BlockHeader().Time.Unix(),
 						Memo:       types.InitAccountRegisterDepositMemo,
 						Balance:    largeAmountRegisterFee,
 					},
@@ -926,25 +929,25 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		if tc.registerFee.IsGT(tc.expectFullStakeCoin) {
 			pendingStakeQueue.TotalCoin = tc.registerFee.Minus(tc.expectFullStakeCoin)
 			pendingStakeQueue.PendingStakeList = []model.PendingStake{{
-				StartTime: ctx.BlockHeader().Time,
-				EndTime:   ctx.BlockHeader().Time + coinDayParam.SecondsToRecoverCoinDayStake,
+				StartTime: ctx.BlockHeader().Time.Unix(),
+				EndTime:   ctx.BlockHeader().Time.Unix() + coinDayParam.SecondsToRecoverCoinDayStake,
 				Coin:      tc.registerFee.Minus(tc.expectFullStakeCoin),
 			}}
-			pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
+			pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 		}
 
 		checkPendingStake(t, ctx, tc.testName, tc.username, pendingStakeQueue)
 		accInfo := model.AccountInfo{
 			Username:       tc.username,
-			CreatedAt:      ctx.BlockHeader().Time,
+			CreatedAt:      ctx.BlockHeader().Time.Unix(),
 			ResetKey:       resetPriv.PubKey(),
 			TransactionKey: txPriv.PubKey(),
 			AppKey:         appPriv.PubKey(),
 		}
 		checkAccountInfo(t, ctx, tc.testName, tc.username, accInfo)
 		accMeta := model.AccountMeta{
-			LastActivityAt:       ctx.BlockHeader().Time,
-			LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+			LastActivityAt:       ctx.BlockHeader().Time.Unix(),
+			LastReportOrUpvoteAt: ctx.BlockHeader().Time.Unix(),
 			TransactionCapacity:  tc.expectFullStakeCoin,
 		}
 		checkAccountMeta(t, ctx, tc.testName, tc.username, accMeta)
@@ -1013,13 +1016,13 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
 	pendingStakeQueue := model.PendingStakeQueue{
-		LastUpdatedAt:    ctx.BlockHeader().Time,
+		LastUpdatedAt:    ctx.BlockHeader().Time.Unix(),
 		StakeCoinInQueue: sdk.ZeroRat(),
 		TotalCoin:        extraRegisterFee,
 		PendingStakeList: []model.PendingStake{
 			model.PendingStake{
-				StartTime: ctx.BlockHeader().Time,
-				EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
+				StartTime: ctx.BlockHeader().Time.Unix(),
+				EndTime:   ctx.BlockHeader().Time.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 				Coin:      extraRegisterFee,
 			},
 		},
@@ -1028,7 +1031,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 
 	accInfo := model.AccountInfo{
 		Username:       accKey,
-		CreatedAt:      ctx.BlockHeader().Time,
+		CreatedAt:      ctx.BlockHeader().Time.Unix(),
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: txPriv.PubKey(),
 		AppKey:         appPriv.PubKey(),
@@ -1036,8 +1039,8 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	checkAccountInfo(t, ctx, testName, accKey, accInfo)
 
 	accMeta := model.AccountMeta{
-		LastActivityAt:       ctx.BlockHeader().Time,
-		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time.Unix(),
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time.Unix(),
 		TransactionCapacity:  accParam.RegisterFee,
 	}
 	checkAccountMeta(t, ctx, testName, accKey, accMeta)
@@ -1058,7 +1061,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 			From:       accountReferrer,
 			To:         accKey,
 			Amount:     accParam.FirstDepositFullStakeLimit,
-			CreatedAt:  ctx.BlockHeader().Time,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
 			DetailType: types.TransferIn,
 			Balance:    accParam.FirstDepositFullStakeLimit,
 			Memo:       types.InitAccountWithFullStakeMemo,
@@ -1067,7 +1070,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 			From:       accountReferrer,
 			To:         accKey,
 			Amount:     extraRegisterFee,
-			CreatedAt:  ctx.BlockHeader().Time,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
 			DetailType: types.TransferIn,
 			Balance:    accParam.RegisterFee.Plus(extraRegisterFee),
 			Memo:       types.InitAccountRegisterDepositMemo,
@@ -1183,7 +1186,8 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	halfRegisterFee := types.NewCoinFromInt64(registerFee / 2)
 
 	baseTime := ctx.BlockHeader().Time
-	baseTime2 := baseTime + totalCoinDaysSec + (totalCoinDaysSec/registerFee)/2 + 1
+	d := time.Duration(totalCoinDaysSec+(totalCoinDaysSec/registerFee)/2+1) * time.Second
+	baseTime2 := baseTime.Add(d)
 
 	createTestAccount(ctx, am, string(accKey))
 
@@ -1191,7 +1195,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		testName            string
 		isAdd               bool
 		coin                types.Coin
-		atWhen              int64
+		atWhen              time.Time
 		expectSavingBalance types.Coin
 		expectStake         types.Coin
 		expectStakeInBank   types.Coin
@@ -1201,7 +1205,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 			testName:            "add coin before charging first coin",
 			isAdd:               true,
 			coin:                accParam.RegisterFee,
-			atWhen:              baseTime + (totalCoinDaysSec/registerFee)/2,
+			atWhen:              baseTime.Add(time.Duration((totalCoinDaysSec/registerFee)/2) * time.Second),
 			expectSavingBalance: doubleRegisterFee,
 			expectStake:         accParam.RegisterFee,
 			expectStakeInBank:   accParam.RegisterFee,
@@ -1211,7 +1215,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 			testName:            "check first coin",
 			isAdd:               true,
 			coin:                coin0,
-			atWhen:              baseTime + (totalCoinDaysSec/registerFee)/2 + 1,
+			atWhen:              baseTime.Add(time.Duration((totalCoinDaysSec/registerFee)/2+1) * time.Second),
 			expectSavingBalance: doubleRegisterFee,
 			expectStake:         accParam.RegisterFee,
 			expectStakeInBank:   accParam.RegisterFee,
@@ -1251,7 +1255,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 			testName:            "withdraw half deposit while the last transaction is still charging",
 			isAdd:               false,
 			coin:                halfRegisterFee,
-			atWhen:              baseTime2 + totalCoinDaysSec/2 + 1,
+			atWhen:              baseTime2.Add(time.Duration(totalCoinDaysSec/2+1) * time.Second),
 			expectSavingBalance: accParam.RegisterFee.Plus(halfRegisterFee),
 			expectStake:         accParam.RegisterFee.Plus(types.NewCoinFromInt64(registerFee / 4)),
 			expectStakeInBank:   accParam.RegisterFee,
@@ -1261,7 +1265,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 			testName:            "withdraw last transaction which is still charging",
 			isAdd:               false,
 			coin:                halfRegisterFee,
-			atWhen:              baseTime2 + totalCoinDaysSec/2 + 1,
+			atWhen:              baseTime2.Add(time.Duration(totalCoinDaysSec/2+1) * time.Second),
 			expectSavingBalance: accParam.RegisterFee,
 			expectStake:         accParam.RegisterFee,
 			expectStakeInBank:   accParam.RegisterFee,
@@ -1389,7 +1393,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		userStake            types.Coin
 		lastActivity         int64
 		lastCapacity         types.Coin
-		currentTime          int64
+		currentTime          time.Time
 		expectResult         sdk.Error
 		expectRemainCapacity types.Coin
 	}{
@@ -1397,7 +1401,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             "tps capacity not enough",
 			tpsCapacityRatio:     sdk.NewRat(1, 10),
 			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime,
 			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
@@ -1406,9 +1410,9 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/10 capacity ratio",
 			tpsCapacityRatio:     sdk.NewRat(1, 10),
 			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
-			currentTime:          baseTime + secondsToRecoverBandwidth,
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
 			expectRemainCapacity: types.NewCoinFromInt64(990000),
 		},
@@ -1416,9 +1420,9 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/2 capacity ratio",
 			tpsCapacityRatio:     sdk.NewRat(1, 2),
 			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
-			currentTime:          baseTime + secondsToRecoverBandwidth,
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
 			expectRemainCapacity: types.NewCoinFromInt64(950000),
 		},
@@ -1426,9 +1430,9 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/1 capacity ratio",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(10 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
-			currentTime:          baseTime + secondsToRecoverBandwidth,
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
 			expectRemainCapacity: types.NewCoinFromInt64(9 * types.Decimals),
 		},
@@ -1436,7 +1440,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/1 capacity ratio with 0 remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(10 * types.Decimals),
 			currentTime:          baseTime,
 			expectResult:         nil,
@@ -1446,7 +1450,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/1 capacity ratio with 1 remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(10),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(1 * types.Decimals),
 			currentTime:          baseTime,
 			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
@@ -1456,9 +1460,9 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/1 capacity ratio with 1 stake and 0 remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
-			currentTime:          baseTime + secondsToRecoverBandwidth/2,
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth/2) * time.Second),
 			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
 			expectRemainCapacity: types.NewCoinFromInt64(0),
 		},
@@ -1466,9 +1470,9 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			testName:             " 1/2 capacity ratio with 0 remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 2),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
-			lastActivity:         baseTime,
+			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
-			currentTime:          baseTime + secondsToRecoverBandwidth/2,
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth/2) * time.Second),
 			expectResult:         nil,
 			expectRemainCapacity: types.NewCoinFromInt64(0),
 		},
@@ -1510,7 +1514,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		}
 
 		accMeta := model.AccountMeta{
-			LastActivityAt:      ctx.BlockHeader().Time,
+			LastActivityAt:      ctx.BlockHeader().Time.Unix(),
 			TransactionCapacity: tc.expectRemainCapacity,
 		}
 		if tc.expectResult != nil {
@@ -1556,7 +1560,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		testName          string
 		checkUser         types.AccountKey
 		checkPubKey       crypto.PubKey
-		atWhen            int64
+		atWhen            time.Time
 		amount            types.Coin
 		permission        types.Permission
 		expectUser        types.AccountKey
@@ -1673,8 +1677,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: &model.GrantPubKey{
 				Username:   appPermissionUser,
 				Permission: types.AppPermission,
-				CreatedAt:  baseTime,
-				ExpiresAt:  baseTime + 100,
+				CreatedAt:  baseTime.Unix(),
+				ExpiresAt:  baseTime.Unix() + 100,
 				Amount:     types.NewCoinFromInt64(0),
 			},
 		},
@@ -1723,8 +1727,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: &model.GrantPubKey{
 				Username:   preAuthPermissionUser,
 				Permission: types.PreAuthorizationPermission,
-				CreatedAt:  baseTime,
-				ExpiresAt:  baseTime + 100,
+				CreatedAt:  baseTime.Unix(),
+				ExpiresAt:  baseTime.Unix() + 100,
 				Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
 			},
 		},
@@ -1764,8 +1768,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: &model.GrantPubKey{
 				Username:   preAuthPermissionUser,
 				Permission: types.PreAuthorizationPermission,
-				CreatedAt:  baseTime,
-				ExpiresAt:  baseTime + 100,
+				CreatedAt:  baseTime.Unix(),
+				ExpiresAt:  baseTime.Unix() + 100,
 				Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
 			},
 		},
@@ -1780,8 +1784,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectGrantPubKey: &model.GrantPubKey{
 				Username:   appPermissionUser,
 				Permission: types.AppPermission,
-				CreatedAt:  baseTime,
-				ExpiresAt:  baseTime + 100,
+				CreatedAt:  baseTime.Unix(),
+				ExpiresAt:  baseTime.Unix() + 100,
 				Amount:     types.NewCoinFromInt64(0),
 			},
 		},
@@ -1789,7 +1793,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			testName:          "check expired app permission",
 			checkUser:         user1,
 			checkPubKey:       authAppPriv.PubKey(),
-			atWhen:            baseTime + 101,
+			atWhen:            baseTime.Add(time.Duration(101) * time.Second),
 			permission:        types.AppPermission,
 			expectUser:        "",
 			expectResult:      ErrGrantKeyExpired(user1),
@@ -1799,7 +1803,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			testName:          "check expired preauth permission",
 			checkUser:         user1,
 			checkPubKey:       authTxPriv.PubKey(),
-			atWhen:            baseTime + 101,
+			atWhen:            baseTime.Add(time.Duration(101) * time.Second),
 			amount:            types.NewCoinFromInt64(100),
 			permission:        types.PreAuthorizationPermission,
 			expectUser:        "",
@@ -1871,7 +1875,7 @@ func TestRevokePermission(t *testing.T) {
 		testName     string
 		user         types.AccountKey
 		revokePubKey crypto.PubKey
-		atWhen       int64
+		atWhen       time.Time
 		expectResult sdk.Error
 	}{
 		{
@@ -1892,14 +1896,14 @@ func TestRevokePermission(t *testing.T) {
 			testName:     "revoke expired pubkey",
 			user:         user2,
 			revokePubKey: appPriv2.PubKey(),
-			atWhen:       baseTime + 101,
+			atWhen:       baseTime.Add(time.Duration(101) * time.Second),
 			expectResult: nil,
 		},
 		{
 			testName:     "normal revoke preauth permission",
 			user:         user1,
 			revokePubKey: txPriv.PubKey(),
-			atWhen:       baseTime + 101,
+			atWhen:       baseTime.Add(time.Duration(101) * time.Second),
 			expectResult: nil,
 		},
 	}
@@ -2002,8 +2006,8 @@ func TestAuthorizePermission(t *testing.T) {
 			}
 			expectGrantPubKey := model.GrantPubKey{
 				Username:   tc.grantTo,
-				ExpiresAt:  baseTime + tc.validityPeriod,
-				CreatedAt:  baseTime,
+				ExpiresAt:  baseTime.Unix() + tc.validityPeriod,
+				CreatedAt:  baseTime.Unix(),
 				Permission: tc.level,
 				Amount:     tc.amount,
 			}
@@ -2104,7 +2108,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 
 	accInfo := model.AccountInfo{
 		Username:       user1,
-		CreatedAt:      ctx.BlockHeader().Time,
+		CreatedAt:      ctx.BlockHeader().Time.Unix(),
 		ResetKey:       newResetPrivKey.PubKey(),
 		TransactionKey: newTransactionPrivKey.PubKey(),
 		AppKey:         newAppPrivKey.PubKey(),
@@ -2135,7 +2139,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	ctx = ctx.WithBlockHeader(
 		abci.Header{
 			ChainID: "Lino", Height: 1,
-			Time: ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake})
+			Time: ctx.BlockHeader().Time.Add(time.Duration(coinDayParams.SecondsToRecoverCoinDayStake) * time.Second)})
 	stake, err = am.GetStake(ctx, user1)
 	if err != nil {
 		t.Errorf("%s: failed to get stake again, got err %v", testName, err)
@@ -2242,7 +2246,7 @@ func TestAddFrozenMoney(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.startAt})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: time.Unix(tc.startAt, 0)})
 		err := am.AddFrozenMoney(ctx, user1, tc.frozenAmount, tc.startAt, tc.interval, tc.times)
 		if err != nil {
 			t.Errorf("%s: failed to add frozen money, got err %v", tc.testName, err)

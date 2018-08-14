@@ -106,8 +106,8 @@ func (pm ProposalManager) AddProposal(
 		AgreeVotes:    types.NewCoinFromInt64(0),
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
-		CreatedAt:     ctx.BlockHeader().Time,
-		ExpiredAt:     ctx.BlockHeader().Time + decideHr*3600,
+		CreatedAt:     ctx.BlockHeader().Time.Unix(),
+		ExpiredAt:     ctx.BlockHeader().Time.Unix() + decideHr*3600,
 	}
 	proposal.SetProposalInfo(info)
 

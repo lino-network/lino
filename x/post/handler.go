@@ -246,7 +246,7 @@ func handleReportOrUpvoteMsg(
 		return err.Result()
 	}
 
-	if lastReportOrUpvoteAt+reportOrUpvoteInterval > ctx.BlockHeader().Time {
+	if lastReportOrUpvoteAt+reportOrUpvoteInterval > ctx.BlockHeader().Time.Unix() {
 		return ErrReportOrUpvoteTooOften().Result()
 	}
 

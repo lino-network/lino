@@ -92,7 +92,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	lb.Commit()
 
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino"}})
+		Header: abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
@@ -303,8 +303,9 @@ func TestGenesisFromConfig(t *testing.T) {
 
 func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
+
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	baseTime := time.Now().Unix()
+	baseTime := time.Now().Unix() + 200
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
 			growthRate.Mul(validatorAllocation)))
@@ -320,7 +321,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 
 	testPastMinutes := int64(0)
 	for i := baseTime; i < baseTime+3600*1; i += 50 {
-		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: baseTime + i}})
+		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: time.Unix(baseTime+i, 0)}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
 		// simulate app
@@ -354,12 +355,12 @@ func TestFireByzantineValidators(t *testing.T) {
 
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: time.Now().Unix()},
+			ChainID: "Lino", Time: time.Unix(time.Now().Unix()+200, 0)},
 		ByzantineValidators: []abci.Evidence{
 			abci.Evidence{Validator: abci.Validator{PubKey: tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
 	lst, err := lb.valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 20, len(lst.OncallValidators))

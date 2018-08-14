@@ -199,9 +199,11 @@ func TestFireIncompetentValidator(t *testing.T) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
 			ChainID: "Lino",
-			Time:    baseTime + 100,
+			Time:    time.Unix(baseTime+100, 0),
 		},
-		Validators: signingValidators,
+		LastCommitInfo: abci.LastCommitInfo{
+			Validators: signingValidators,
+		},
 	})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
@@ -230,9 +232,11 @@ func TestFireIncompetentValidator(t *testing.T) {
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
 				ChainID: "Lino",
-				Time:    baseTime + 200 + int64(i),
+				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
-			Validators: signingValidators,
+			LastCommitInfo: abci.LastCommitInfo{
+				Validators: signingValidators,
+			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
@@ -304,9 +308,11 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
 				ChainID: "Lino",
-				Time:    baseTime + 200 + int64(i),
+				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
-			Validators: signingValidators,
+			LastCommitInfo: abci.LastCommitInfo{
+				Validators: signingValidators,
+			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
@@ -361,9 +367,11 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
 			ChainID: "Lino",
-			Time:    baseTime + 100,
+			Time:    time.Unix(baseTime+100, 0),
 		},
-		Validators: signingValidators,
+		LastCommitInfo: abci.LastCommitInfo{
+			Validators: signingValidators,
+		},
 	})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
@@ -373,9 +381,11 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
 				ChainID: "Lino",
-				Time:    baseTime + 200 + int64(i),
+				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
-			Validators: signingValidators,
+			LastCommitInfo: abci.LastCommitInfo{
+				Validators: signingValidators,
+			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()

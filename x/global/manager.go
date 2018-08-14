@@ -39,7 +39,7 @@ func (gm GlobalManager) InitGlobalManagerWithConfig(
 }
 
 func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
-	if unixTime < ctx.BlockHeader().Time {
+	if unixTime < ctx.BlockHeader().Time.Unix() {
 		return ErrRegisterExpiredEvent(unixTime)
 	}
 	eventList, err := gm.storage.GetTimeEventList(ctx, unixTime)
@@ -92,8 +92,7 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
 
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+
-			(consumptionMeta.ConsumptionFreezingPeriodHr*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodHr*3600, event); err != nil {
 		return err
 	}
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
@@ -107,7 +106,7 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 	ctx sdk.Context, events []types.Event, times int64, interval int64) sdk.Error {
 	for i := int64(0); i < times; i++ {
 		if err := gm.registerEventAtTime(
-			ctx, ctx.BlockHeader().Time+(interval*3600*(i+1)), events[i]); err != nil {
+			ctx, ctx.BlockHeader().Time.Unix()+(interval*3600*(i+1)), events[i]); err != nil {
 			return err
 		}
 	}
@@ -117,7 +116,7 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 func (gm GlobalManager) RegisterProposalDecideEvent(
 	ctx sdk.Context, decideHr int64, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+(decideHr*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+decideHr*3600, event); err != nil {
 		return err
 	}
 	return nil
@@ -125,8 +124,9 @@ func (gm GlobalManager) RegisterProposalDecideEvent(
 
 func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
 	// param will be changed in one day
+
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time+(24*3600), event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+24*3600, event); err != nil {
 		return err
 	}
 	return nil
@@ -382,10 +382,10 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Erro
 	if err != nil {
 		return err
 	}
-	if ctx.BlockHeader().Time == lastBlockTime {
+	if ctx.BlockHeader().Time.Unix() == lastBlockTime {
 		tps.CurrentTPS = sdk.ZeroRat()
 	} else {
-		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time-lastBlockTime)
+		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time.Unix()-lastBlockTime)
 	}
 	if tps.CurrentTPS.GT(tps.MaxTPS) {
 		tps.MaxTPS = tps.CurrentTPS
@@ -418,7 +418,7 @@ func (gm GlobalManager) EvaluateConsumption(
 	return types.NewCoinFromInt64(
 		int64(math.Pow(float64(coin.ToInt64()), expPara) *
 			PostTotalConsumptionAdjustment(totalReward, paras) *
-			PostTimeAdjustment(ctx.BlockHeader().Time-created, paras) *
+			PostTimeAdjustment(ctx.BlockHeader().Time.Unix()-created, paras) *
 			PostConsumptionTimesAdjustment(numOfConsumptionOnAuthor, paras))), nil
 }
 
