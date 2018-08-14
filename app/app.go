@@ -149,7 +149,7 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 
 		// StdTx.Msg is an interface. The concrete types
 		// are registered by MakeTxCodec
-		err := cdc.UnmarshalBinary(txBytes, &tx)
+		err := cdc.UnmarshalJSON(txBytes, &tx)
 		if err != nil {
 			return nil, sdk.ErrTxDecode("").TraceSDK(err.Error())
 		}
