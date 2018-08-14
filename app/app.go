@@ -78,7 +78,7 @@ func NewLinoBlockchain(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *LinoBlockchain {
 	// create your application object
 	cdc := MakeCodec()
-	bApp := bam.NewBaseApp(appName, cdc, logger, db, baseAppOptions...)
+	bApp := bam.NewBaseApp(appName, logger, db, DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
 		BaseApp:              bApp,
@@ -119,7 +119,6 @@ func NewLinoBlockchain(
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
 
-	lb.SetTxDecoder(lb.txDecoder)
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
@@ -134,25 +133,35 @@ func NewLinoBlockchain(
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
+
+	lb.Seal()
+
 	return lb
 }
 
-// custom logic for transaction decoding
-func (lb *LinoBlockchain) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-	var tx = cauth.StdTx{}
+func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
+	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+		var tx = cauth.StdTx{}
 
-	// StdTx.Msg is an interface.
-	err := lb.cdc.UnmarshalJSON(txBytes, &tx)
-	if err != nil {
-		return nil, sdk.ErrTxDecode("")
+		if len(txBytes) == 0 {
+			return nil, sdk.ErrTxDecode("txBytes are empty")
+		}
+
+		// StdTx.Msg is an interface. The concrete types
+		// are registered by MakeTxCodec
+		err := cdc.UnmarshalBinary(txBytes, &tx)
+		if err != nil {
+			return nil, sdk.ErrTxDecode("").TraceSDK(err.Error())
+		}
+		return tx, nil
 	}
-	return tx, nil
 }
 
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
 	sdk.RegisterWire(cdc)
+
 	acc.RegisterWire(cdc)
 	post.RegisterWire(cdc)
 	developer.RegisterWire(cdc)
@@ -162,6 +171,9 @@ func MakeCodec() *wire.Codec {
 	proposal.RegisterWire(cdc)
 
 	RegisterEvent(cdc)
+
+	cdc.Seal()
+
 	return cdc
 }
 
@@ -342,16 +354,16 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		panic(err)
 	}
 	if chainStartTime == 0 {
-		lb.globalManager.SetChainStartTime(ctx, ctx.BlockHeader().Time)
-		lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time)
-		chainStartTime = ctx.BlockHeader().Time
+		lb.globalManager.SetChainStartTime(ctx, ctx.BlockHeader().Time.Unix())
+		lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time.Unix())
+		chainStartTime = ctx.BlockHeader().Time.Unix()
 	}
 
 	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
 	if err != nil {
 		panic(err)
 	}
-	for (ctx.BlockHeader().Time-chainStartTime)/60 > pastMinutes {
+	for (ctx.BlockHeader().Time.Unix()-chainStartTime)/60 > pastMinutes {
 		lb.increaseMinute(ctx)
 		pastMinutes, err = lb.globalManager.GetPastMinutes(ctx)
 		if err != nil {
@@ -376,7 +388,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 // execute events between last block time and current block time
 func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
-	currentTime := ctx.BlockHeader().Time
+	currentTime := ctx.BlockHeader().Time.Unix()
 
 	lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
 	if err != nil {

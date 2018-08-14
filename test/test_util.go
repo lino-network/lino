@@ -107,14 +107,14 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	lb.Commit()
 
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino"}})
+		Header: abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
 }
 
 func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocation param.GlobalAllocationParam) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	allocation, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
@@ -122,7 +122,7 @@ func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocatio
 }
 
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
 	saving, err :=
@@ -132,7 +132,7 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 }
 
 func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	deposit, err := valManager.GetValidatorDeposit(ctx, types.AccountKey(accountName))
@@ -142,7 +142,7 @@ func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockch
 
 func CheckOncallValidatorList(
 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	lst, err := valManager.GetValidatorList(ctx)
@@ -158,7 +158,7 @@ func CheckOncallValidatorList(
 
 func CheckAllValidatorList(
 	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	lst, err := valManager.GetValidatorList(ctx)
@@ -195,8 +195,8 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
-	// Run a Check
-	res := lb.Check(tx)
+	res := lb.Simulate(tx)
+
 	if expPass {
 		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
 	} else {
@@ -206,7 +206,7 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	// Simulate a Block
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: headTime}})
+			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	res = lb.Deliver(tx)
 	if expPass {
 		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
@@ -220,7 +220,7 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: headTime}})
+			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 }
@@ -231,7 +231,6 @@ func genTx(msg sdk.Msg, seq int64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
 		PubKey:    priv.PubKey(),
 		Signature: bz,
 		Sequence:  seq}}
-	// fmt.Println("===========", string(auth.StdSignBytes("Lino", []int64{}, []int64{seq}, auth.StdFee{}, msg)))
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 

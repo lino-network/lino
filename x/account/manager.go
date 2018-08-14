@@ -2,6 +2,7 @@ package account
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -67,7 +68,7 @@ func (accManager AccountManager) CreateAccount(
 
 	accountInfo := &model.AccountInfo{
 		Username:       username,
-		CreatedAt:      ctx.BlockHeader().Time,
+		CreatedAt:      ctx.BlockHeader().Time.Unix(),
 		ResetKey:       resetKey,
 		TransactionKey: transactionKey,
 		AppKey:         appKey,
@@ -77,8 +78,8 @@ func (accManager AccountManager) CreateAccount(
 	}
 
 	accountMeta := &model.AccountMeta{
-		LastActivityAt:       ctx.BlockHeader().Time,
-		LastReportOrUpvoteAt: ctx.BlockHeader().Time,
+		LastActivityAt:       ctx.BlockHeader().Time.Unix(),
+		LastReportOrUpvoteAt: ctx.BlockHeader().Time.Unix(),
 		TransactionCapacity:  depositWithFullStake,
 	}
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
@@ -151,7 +152,7 @@ func (accManager AccountManager) AddSavingCoin(
 			To:         username,
 			From:       from,
 			Balance:    bank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
 			Memo:       memo,
 		}); err != nil {
 		return err
@@ -163,9 +164,10 @@ func (accManager AccountManager) AddSavingCoin(
 		return err
 	}
 
+	d := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake) * time.Second
 	pendingStake := model.PendingStake{
-		StartTime: ctx.BlockHeader().Time,
-		EndTime:   ctx.BlockHeader().Time + coinDayParams.SecondsToRecoverCoinDayStake,
+		StartTime: ctx.BlockHeader().Time.Unix(),
+		EndTime:   ctx.BlockHeader().Time.Add(d).Unix(),
 		Coin:      coin,
 	}
 	if err := accManager.addPendingStakeToQueue(ctx, username, bank, pendingStake); err != nil {
@@ -200,7 +202,7 @@ func (accManager AccountManager) AddSavingCoinWithFullStake(
 			To:         username,
 			From:       from,
 			Balance:    bank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
 			Memo:       memo,
 		}); err != nil {
 		return err
@@ -243,7 +245,7 @@ func (accManager AccountManager) MinusSavingCoin(
 			To:         to,
 			From:       username,
 			Balance:    accountBank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
 			Memo:       memo,
 		}); err != nil {
 		return err
@@ -404,7 +406,7 @@ func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	if err != nil {
 		return ErrUpdateLastReportOrUpvoteAt(err)
 	}
-	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time
+	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time.Unix()
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
@@ -577,7 +579,7 @@ func (accManager AccountManager) SetFollower(
 		return nil
 	}
 	meta := model.FollowerMeta{
-		CreatedAt:    ctx.BlockHeader().Time,
+		CreatedAt:    ctx.BlockHeader().Time.Unix(),
 		FollowerName: follower,
 	}
 	accManager.storage.SetFollowerMeta(ctx, me, meta)
@@ -590,7 +592,7 @@ func (accManager AccountManager) SetFollowing(
 		return nil
 	}
 	meta := model.FollowingMeta{
-		CreatedAt:     ctx.BlockHeader().Time,
+		CreatedAt:     ctx.BlockHeader().Time.Unix(),
 		FollowingName: following,
 	}
 	accManager.storage.SetFollowingMeta(ctx, me, meta)
@@ -635,7 +637,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		accountMeta.TransactionCapacity = stake
 	} else {
 		incrementRatio := sdk.NewRat(
-			ctx.BlockHeader().Time-accountMeta.LastActivityAt,
+			ctx.BlockHeader().Time.Unix()-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
 		if incrementRatio.GT(sdk.OneRat()) {
 			incrementRatio = sdk.OneRat()
@@ -651,7 +653,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		return ErrAccountTPSCapacityNotEnough(me)
 	}
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
-	accountMeta.LastActivityAt = ctx.BlockHeader().Time
+	accountMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
 		return err
 	}
@@ -680,11 +682,12 @@ func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
 	validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error {
 
+	d := time.Duration(validityPeriod) * time.Second
 	newGrantPubKey := model.GrantPubKey{
 		Username:   authorizedUser,
 		Permission: grantLevel,
-		CreatedAt:  ctx.BlockHeader().Time,
-		ExpiresAt:  ctx.BlockHeader().Time + validityPeriod,
+		CreatedAt:  ctx.BlockHeader().Time.Unix(),
+		ExpiresAt:  ctx.BlockHeader().Time.Add(d).Unix(),
 		Amount:     amount,
 	}
 
@@ -766,7 +769,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	if err != nil {
 		return "", err
 	}
-	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time {
+	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time.Unix() {
 		accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
 		return "", ErrGrantKeyExpired(me)
 	}
@@ -861,7 +864,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		pendingStake := pendingStakeQueue.PendingStakeList[0]
-		if pendingStake.EndTime < ctx.BlockHeader().Time {
+		if pendingStake.EndTime < ctx.BlockHeader().Time.Unix() {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
 			stakeRatioOfThisTransaction := sdk.NewRat(
@@ -888,7 +891,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
 		recoverRatio := sdk.NewRat(
-			ctx.BlockHeader().Time-pendingStakeQueue.LastUpdatedAt,
+			ctx.BlockHeader().Time.Unix()-pendingStakeQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 
 		if err != nil {
@@ -899,7 +902,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
 	}
 
-	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time
+	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 	return nil
 }
 
@@ -929,7 +932,7 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 	idx := 0
 	for idx < len(bank.FrozenMoneyList) {
 		frozenMoney := bank.FrozenMoneyList[idx]
-		if ctx.BlockHeader().Time > frozenMoney.StartAt+3600*frozenMoney.Interval*frozenMoney.Times {
+		if ctx.BlockHeader().Time.Unix() > frozenMoney.StartAt+3600*frozenMoney.Interval*frozenMoney.Times {
 			bank.FrozenMoneyList = append(bank.FrozenMoneyList[:idx], bank.FrozenMoneyList[idx+1:]...)
 			continue
 		}

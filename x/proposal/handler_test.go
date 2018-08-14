@@ -36,7 +36,7 @@ func TestChangeParamProposal(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1", c460000)
 	user2 := createTestAccount(ctx, am, "user2", c4600)
 
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
 	proposal1 := &model.ChangeParamProposal{model.ProposalInfo{
@@ -123,7 +123,7 @@ func TestChangeParamProposal(t *testing.T) {
 func TestContentCensorshipProposal(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, proposalManager, postManager, gm, vm)
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
 	proposalManager.InitGenesis(ctx)
@@ -324,7 +324,7 @@ func TestAddFrozenMoney(t *testing.T) {
 func TestVoteProposalBasic(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, proposalManager, postManager, gm, vm)
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 	proposalManager.InitGenesis(ctx)
 
 	user2 := types.AccountKey("user2")

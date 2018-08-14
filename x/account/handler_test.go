@@ -271,7 +271,7 @@ func TestHandleAccountRecover(t *testing.T) {
 
 		accInfo := model.AccountInfo{
 			Username:       types.AccountKey(tc.user),
-			CreatedAt:      ctx.BlockHeader().Time,
+			CreatedAt:      ctx.BlockHeader().Time.Unix(),
 			ResetKey:       tc.newResetKey,
 			TransactionKey: tc.newTransactionKey,
 			AppKey:         tc.newAppKey,

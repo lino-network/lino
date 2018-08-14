@@ -58,13 +58,13 @@ func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 
 func TestTPS(t *testing.T) {
 	ctx, gm := setupTest(t)
-	baseTime := time.Now().Unix()
+	baseTime := time.Now()
 	var initMaxTPS = sdk.NewRat(1000)
 
 	testCases := []struct {
 		testName            string
 		baseTime            int64
-		nextTime            int64
+		nextTime            time.Time
 		numOfTx             int32
 		expectCurrentTPS    sdk.Rat
 		expectMaxTPS        sdk.Rat
@@ -72,7 +72,7 @@ func TestTPS(t *testing.T) {
 	}{
 		{
 			testName:            "0 tps",
-			baseTime:            baseTime,
+			baseTime:            baseTime.Unix(),
 			nextTime:            baseTime,
 			numOfTx:             0,
 			expectCurrentTPS:    sdk.ZeroRat(),
@@ -81,8 +81,8 @@ func TestTPS(t *testing.T) {
 		},
 		{
 			testName:            "2/2 got 1 current tps",
-			baseTime:            baseTime,
-			nextTime:            baseTime + 2,
+			baseTime:            baseTime.Unix(),
+			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             2,
 			expectCurrentTPS:    sdk.OneRat(),
 			expectMaxTPS:        initMaxTPS,
@@ -90,8 +90,8 @@ func TestTPS(t *testing.T) {
 		},
 		{
 			testName:            "1000/1 got max tps",
-			baseTime:            baseTime,
-			nextTime:            baseTime + 1,
+			baseTime:            baseTime.Unix(),
+			nextTime:            baseTime.Add(time.Duration(1) * time.Second),
 			numOfTx:             1000,
 			expectCurrentTPS:    initMaxTPS,
 			expectMaxTPS:        initMaxTPS,
@@ -99,8 +99,8 @@ func TestTPS(t *testing.T) {
 		},
 		{
 			testName:            "2000/2 got max tps",
-			baseTime:            baseTime,
-			nextTime:            baseTime + 2,
+			baseTime:            baseTime.Unix(),
+			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             2000,
 			expectCurrentTPS:    initMaxTPS,
 			expectMaxTPS:        initMaxTPS,
@@ -108,8 +108,8 @@ func TestTPS(t *testing.T) {
 		},
 		{
 			testName:            "3000/2 got 1500 current tps",
-			baseTime:            baseTime,
-			nextTime:            baseTime + 2,
+			baseTime:            baseTime.Unix(),
+			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             3000,
 			expectCurrentTPS:    sdk.NewRat(1500),
 			expectMaxTPS:        sdk.NewRat(1500),
@@ -117,8 +117,8 @@ func TestTPS(t *testing.T) {
 		},
 		{
 			testName:            "2000/2 got 1000 current tps",
-			baseTime:            baseTime,
-			nextTime:            baseTime + 2,
+			baseTime:            baseTime.Unix(),
+			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             2000,
 			expectCurrentTPS:    sdk.NewRat(1000),
 			expectMaxTPS:        sdk.NewRat(1500),
@@ -157,7 +157,7 @@ func TestTPS(t *testing.T) {
 
 func TestEvaluateConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
-	baseTime := ctx.BlockHeader().Time
+	baseTime := ctx.BlockHeader().Time.Unix()
 	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
 	if err != nil {
 		t.Errorf("TestEvaluateConsumption: failed to get evaluate of content value param, got err %v", err)
@@ -273,7 +273,7 @@ func TestEvaluateConsumption(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.evaluateTime})
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.evaluateTime, 0)})
 		if PostTotalConsumptionAdjustment(tc.totalConsumption, paras) != tc.expectedTotalConsumptionAdjustment {
 			t.Errorf("%s: diff total consumption adjustment, got %v, want %v", tc.testName,
 				PostTotalConsumptionAdjustment(tc.totalConsumption, paras), tc.expectedTotalConsumptionAdjustment)
@@ -301,7 +301,7 @@ func TestEvaluateConsumption(t *testing.T) {
 
 func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
-	baseTime := ctx.BlockHeader().Time
+	baseTime := ctx.BlockHeader().Time.Unix()
 	testCases := []struct {
 		testName               string
 		frictionCoin           types.Coin
@@ -337,7 +337,7 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.registerBaseTime})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.registerBaseTime, 0)})
 		err := gm.AddFrictionAndRegisterContentRewardEvent(
 			ctx, testEvent{}, tc.frictionCoin, tc.evaluateCoin)
 		if err != nil {
@@ -532,7 +532,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 
 func TestTimeEventList(t *testing.T) {
 	ctx, gm := setupTest(t)
-	baseTime := ctx.BlockHeader().Time
+	baseTime := ctx.BlockHeader().Time.Unix()
 	regCases := []struct {
 		testName        string
 		registerAtTime  int64
@@ -611,7 +611,7 @@ func TestTimeEventList(t *testing.T) {
 
 func TestRegisterCoinReturnEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
-	baseTime := ctx.BlockHeader().Time
+	baseTime := ctx.BlockHeader().Time.Unix()
 	testCases := []struct {
 		testName               string
 		registerAtTime         int64
@@ -669,7 +669,7 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.registerAtTime})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.registerAtTime, 0)})
 		events := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
 			events = append(events, testEvent{})

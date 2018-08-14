@@ -75,7 +75,7 @@ func TestInvalidRepost(t *testing.T) {
 	msg.SourcePostID = "invalid"
 	msg.PostID = repostID
 	// invalid source post id
-	test.SignCheckDeliver(t, lb, msg, 1, false, newAccountAppPriv, baseTime)
+	test.SignCheckDeliver(t, lb, msg, 1, false, newAccountAppPriv, baseTime+200)
 }
 
 // test publish a comment

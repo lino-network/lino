@@ -55,7 +55,7 @@ func setupTest() (
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now().Unix()}, false, log.NewNopLogger())
+		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
@@ -252,7 +252,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, seq, int64(2))
 
-	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time + 3601})
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time.Add(time.Duration(3601) * time.Second)})
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
 
 	// test pre authorization permission
@@ -303,7 +303,7 @@ func TestTPSCapacity(t *testing.T) {
 	assert.Equal(t, seq, int64(1))
 
 	ctx = ctx.WithBlockHeader(
-		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
+		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now(), NumTxs: 1000})
 	gm.SetLastBlockTime(ctx, time.Now().Unix()-1)
 	gm.UpdateTPS(ctx)
 

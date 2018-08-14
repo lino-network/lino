@@ -54,7 +54,7 @@ func TestProposal(t *testing.T) {
 	user := types.AccountKey("user")
 	proposalID := types.ProposalKey("123")
 	res := types.ProposalPass
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 
 	testCases := []struct {
 		testName            string

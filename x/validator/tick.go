@@ -17,7 +17,7 @@ func BeginBlocker(
 		panic(err)
 	}
 
-	vm.UpdateSigningValidator(ctx, req.Validators)
+	vm.UpdateSigningValidator(ctx, req.LastCommitInfo.Validators)
 
 	panelty, _ = vm.FireIncompetentValidator(ctx, req.ByzantineValidators)
 	return

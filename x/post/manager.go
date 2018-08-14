@@ -104,9 +104,9 @@ func (pm PostManager) CreatePost(
 		return err
 	}
 	postMeta := &model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time,
-		LastUpdatedAt:           ctx.BlockHeader().Time,
-		LastActivityAt:          ctx.BlockHeader().Time,
+		CreatedAt:               ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
+		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
 		RedistributionSplitRate: redistributionSplitRate.Round(types.PrecisionFactor),
@@ -158,7 +158,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	}
 	postMeta.TotalViewCount += 1
 	view.Times += 1
-	view.LastViewAt = ctx.BlockHeader().Time
+	view.LastViewAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostView(ctx, permlink, view); err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 	if err != nil {
 		return err
 	}
-	postMeta.LastActivityAt = ctx.BlockHeader().Time
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 
 	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
 
@@ -197,7 +197,7 @@ func (pm PostManager) ReportOrUpvoteToPost(
 		}
 	}
 	reportOrUpvote =
-		&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time}
+		&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time.Unix()}
 	if isReport {
 		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
 		reportOrUpvote.IsReport = true
@@ -220,7 +220,7 @@ func (pm PostManager) AddComment(
 	comment := &model.Comment{
 		Author:    commentAuthor,
 		PostID:    commentPostID,
-		CreatedAt: ctx.BlockHeader().Time,
+		CreatedAt: ctx.BlockHeader().Time.Unix(),
 	}
 	if err := pm.postStorage.SetPostComment(ctx, permlink, comment); err != nil {
 		return err

@@ -20,7 +20,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 	}
 
 	pm.InitGenesis(ctx)
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 	decideHr := int64(100)
 	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
 
@@ -114,7 +114,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		Reason:   censorshipReason,
 	}
 	pm.InitGenesis(ctx)
-	curTime := ctx.BlockHeader().Time
+	curTime := ctx.BlockHeader().Time.Unix()
 	decideHr := int64(100)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)

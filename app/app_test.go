@@ -92,7 +92,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	lb.Commit()
 
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino"}})
+		Header: abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
@@ -311,6 +311,7 @@ func TestGenesisFromConfig(t *testing.T) {
 
 func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
+
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
@@ -350,12 +351,12 @@ func TestFireByzantineValidators(t *testing.T) {
 
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: time.Now().Unix()},
+			ChainID: "Lino", Time: time.Unix(time.Now().Unix()+200, 0)},
 		ByzantineValidators: []abci.Evidence{
 			abci.Evidence{Validator: abci.Validator{PubKey: tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
 	lst, err := lb.valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 20, len(lst.OncallValidators))
@@ -785,7 +786,7 @@ func TestGlobalTime(t *testing.T) {
 	for _, cs := range cases {
 		lb := NewLinoBlockchain(logger, db, nil)
 		lb.BeginBlock(abci.RequestBeginBlock{
-			Header: abci.Header{ChainID: "Lino", Time: cs.baseTime}})
+			Header: abci.Header{ChainID: "Lino", Time: time.Unix(cs.baseTime, 0)}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
