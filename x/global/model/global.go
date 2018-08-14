@@ -16,6 +16,12 @@ type GlobalMeta struct {
 	AnnualInflation               types.Coin `json:"annual_inflation"`
 }
 
+type GlobalTime struct {
+	ChainStartTime int64 `json:"chain_start_time"`
+	LastBlockTime  int64 `json:"last_block_time"`
+	PastMinutes    int64 `json:"past_minutes"`
+}
+
 type TPS struct {
 	CurrentTPS sdk.Rat `json:"current_tps"`
 	MaxTPS     sdk.Rat `json:"max_tps"`

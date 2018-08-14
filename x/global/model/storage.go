@@ -16,6 +16,7 @@ var (
 	inflationPoolSubStore   = []byte{0x02} // SubStore for allocation
 	consumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
 	tpsSubStore             = []byte{0x04} // SubStore for tps
+	timeSubStore            = []byte{0x05} // SubStore for tps
 )
 
 type GlobalStorage struct {
@@ -61,13 +62,17 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 		Floor:                         param.Floor,
 		AnnualInflation:               types.RatToCoin(totalLino.ToRat().Mul(param.GrowthRate)),
 	}
-
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
 	}
 
 	inflationPool := &InflationPool{}
 	if err := gs.SetInflationPool(ctx, inflationPool); err != nil {
+		return err
+	}
+
+	globalTime := &GlobalTime{}
+	if err := gs.SetGlobalTime(ctx, globalTime); err != nil {
 		return err
 	}
 
@@ -225,6 +230,29 @@ func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	return nil
 }
 
+func (gs GlobalStorage) GetGlobalTime(ctx sdk.Context) (*GlobalTime, sdk.Error) {
+	store := ctx.KVStore(gs.key)
+	timeBytes := store.Get(GetTimeKey())
+	if timeBytes == nil {
+		return nil, ErrGlobalTimeNotFound()
+	}
+	globalTime := new(GlobalTime)
+	if err := gs.cdc.UnmarshalJSON(timeBytes, globalTime); err != nil {
+		return nil, ErrFailedToUnmarshalTime(err)
+	}
+	return globalTime, nil
+}
+
+func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) sdk.Error {
+	store := ctx.KVStore(gs.key)
+	timeBytes, err := gs.cdc.MarshalJSON(*globalTime)
+	if err != nil {
+		return ErrFailedToMarshalTime(err)
+	}
+	store.Set(GetTimeKey(), timeBytes)
+	return nil
+}
+
 func GetTimeEventListKey(unixTime int64) []byte {
 	return append(timeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
 }
@@ -243,4 +271,8 @@ func GetConsumptionMetaKey() []byte {
 
 func GetTPSKey() []byte {
 	return tpsSubStore
+}
+
+func GetTimeKey() []byte {
+	return timeSubStore
 }

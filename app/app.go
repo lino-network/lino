@@ -72,10 +72,6 @@ type LinoBlockchain struct {
 
 	// global param
 	paramHolder param.ParamHolder
-	// time related
-	chainStartTime int64
-	lastBlockTime  int64
-	pastMinutes    int64
 }
 
 func NewLinoBlockchain(
@@ -341,16 +337,29 @@ func (lb *LinoBlockchain) toAppInfra(
 
 // init process for a block, execute time events and fire incompetent validators
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if lb.chainStartTime == 0 {
-		lb.chainStartTime = ctx.BlockHeader().Time
-		lb.lastBlockTime = ctx.BlockHeader().Time
+	chainStartTime, err := lb.globalManager.GetChainStartTime(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if chainStartTime == 0 {
+		lb.globalManager.SetChainStartTime(ctx, ctx.BlockHeader().Time)
+		lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time)
+		chainStartTime = ctx.BlockHeader().Time
 	}
 
-	for (ctx.BlockHeader().Time-lb.chainStartTime)/60 > lb.pastMinutes {
+	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+	if err != nil {
+		panic(err)
+	}
+	for (ctx.BlockHeader().Time-chainStartTime)/60 > pastMinutes {
 		lb.increaseMinute(ctx)
+		pastMinutes, err = lb.globalManager.GetPastMinutes(ctx)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	tags := global.BeginBlocker(ctx, req, lb.globalManager, lb.lastBlockTime)
+	tags := global.BeginBlocker(ctx, req, lb.globalManager)
 	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
@@ -368,13 +377,20 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 // execute events between last block time and current block time
 func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time
-	for i := lb.lastBlockTime; i < currentTime; i += 1 {
+
+	lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
+	if err != nil {
+		panic(err)
+	}
+	for i := lastBlockTime; i < currentTime; i += 1 {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, i)
 		}
 	}
-	lb.lastBlockTime = ctx.BlockHeader().Time
+	if err := lb.globalManager.SetLastBlockTime(ctx, currentTime); err != nil {
+		panic(err)
+	}
 }
 
 // execute events in list based on their type
@@ -416,14 +432,21 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 }
 
 func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
-	lb.pastMinutes += 1
-	if lb.pastMinutes%60 == 0 {
+	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+	if err != nil {
+		panic(err)
+	}
+	pastMinutes += 1
+	if err := lb.globalManager.SetPastMinutes(ctx, pastMinutes); err != nil {
+		panic(err)
+	}
+	if pastMinutes%60 == 0 {
 		lb.executeHourlyEvent(ctx)
 	}
-	if lb.pastMinutes%types.MinutesPerMonth == 0 {
+	if pastMinutes%types.MinutesPerMonth == 0 {
 		lb.executeMonthlyEvent(ctx)
 	}
-	if lb.pastMinutes%types.MinutesPerYear == 0 {
+	if pastMinutes%types.MinutesPerYear == 0 {
 		lb.executeAnnuallyEvent(ctx)
 	}
 }
@@ -431,7 +454,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear()
+	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear(ctx)
 	lb.globalManager.DistributeHourlyInflation(ctx, pastHoursMinusOneThisYear)
 	lb.distributeInflationToValidator(ctx)
 }
@@ -556,8 +579,12 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 	}
 }
 
-func (lb *LinoBlockchain) getPastHoursMinusOneThisYear() int64 {
-	return (lb.pastMinutes/60 - 1) % types.HoursPerYear
+func (lb *LinoBlockchain) getPastHoursMinusOneThisYear(ctx sdk.Context) int64 {
+	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return (pastMinutes/60 - 1) % types.HoursPerYear
 }
 
 // Custom logic for state export

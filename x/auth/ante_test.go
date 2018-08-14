@@ -304,7 +304,8 @@ func TestTPSCapacity(t *testing.T) {
 
 	ctx = ctx.WithBlockHeader(
 		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now().Unix(), NumTxs: 1000})
-	gm.UpdateTPS(ctx, time.Now().Unix()-1)
+	gm.SetLastBlockTime(ctx, time.Now().Unix()-1)
+	gm.UpdateTPS(ctx)
 
 	seqs = []int64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)

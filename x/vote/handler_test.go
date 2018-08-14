@@ -301,7 +301,8 @@ func TestAddFrozenMoney(t *testing.T) {
 			expectedFrozenListLen:  2,
 			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
 			expectedFrozenTimes:    100000,
-			expectedFrozenInterval: 20000},
+			expectedFrozenInterval: 20000,
+		},
 	}
 
 	for _, tc := range testCases {

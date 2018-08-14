@@ -169,6 +169,9 @@ const (
 	CodeFailedToUnmarshalConsumptionMeta sdk.CodeType = 616
 	CodeFailedToUnmarshalTPS             sdk.CodeType = 617
 	CodeRegisterExpiredEvent             sdk.CodeType = 618
+	CodeFailedToUnmarshalTime            sdk.CodeType = 619
+	CodeFailedToMarshalTime              sdk.CodeType = 620
+	CodeGlobalTimeNotFound               sdk.CodeType = 621
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700
