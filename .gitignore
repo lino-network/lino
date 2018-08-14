@@ -1,4 +1,5 @@
 .DS_Store
+vendor-new/
 vendor/
 cmd/lino/lino
 cmd/linocli/linocli
