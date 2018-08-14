@@ -127,7 +127,11 @@ func TestTPS(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: tc.nextTime, NumTxs: tc.numOfTx})
-		err := gm.UpdateTPS(ctx, tc.baseTime)
+		err := gm.SetLastBlockTime(ctx, tc.baseTime)
+		if err != nil {
+			t.Errorf("%s: failed to set last block time, got err %v", tc.testName, err)
+		}
+		err = gm.UpdateTPS(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to update TPS, got err %v", tc.testName, err)
 		}

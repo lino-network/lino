@@ -23,6 +23,10 @@ func ErrGlobalTPSNotFound() sdk.Error {
 	return types.NewError(types.CodeGlobalTPSNotFound, fmt.Sprintf("global tps not found"))
 }
 
+func ErrGlobalTimeNotFound() sdk.Error {
+	return types.NewError(types.CodeGlobalTimeNotFound, fmt.Sprintf("global time not found"))
+}
+
 func ErrInfraInflationCoinConversion() sdk.Error {
 	return types.NewError(types.CodeInfraInflationCoinConversion, fmt.Sprintf("failed to convert infra inflation coin"))
 }
@@ -60,6 +64,10 @@ func ErrFailedToMarshalTPS(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalTPS, fmt.Sprintf("failed to marshal tps: %s", err.Error()))
 }
 
+func ErrFailedToMarshalTime(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalTime, fmt.Sprintf("failed to marshal time: %s", err.Error()))
+}
+
 // unmarshal error
 func ErrFailedToUnmarshalTimeEventList(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalTimeEventList, fmt.Sprintf("failed to unmarshal time event list: %s", err.Error()))
@@ -79,4 +87,8 @@ func ErrFailedToUnmarshalConsumptionMeta(err error) sdk.Error {
 
 func ErrFailedToUnmarshalTPS(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalTPS, fmt.Sprintf("failed to unmarshal tps: %s", err.Error()))
+}
+
+func ErrFailedToUnmarshalTime(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalTime, fmt.Sprintf("failed to unmarshal time: %s", err.Error()))
 }
