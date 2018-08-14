@@ -41,20 +41,12 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				true
 		}
 
-		// msg, ok := sdkMsgs.(types.Msg)
-		// if !ok {
-		// 	return ctx, ErrUnknownMsgType().Result(), true
-		// }
-
 		sequences := make([]int64, len(sigs))
 		for i := 0; i < len(sigs); i++ {
 			sequences[i] = sigs[i].Sequence
 		}
-		// for i := 0; i < len(signers); i++ {
-		// 	accNums[i] = sigs[i].AccountNumber
-		// }
+
 		fee := stdTx.Fee
-		// fmt.Println("=========== auth", string(signBytes))
 
 		sdkMsgs := tx.GetMsgs()
 

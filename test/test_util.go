@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -196,10 +195,8 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
-	fmt.Println("tx: ", tx)
-	// Run a Check
-	res := lb.Check(tx)
-	fmt.Println("res: ", res)
+	res := lb.Simulate(tx)
+
 	if expPass {
 		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
 	} else {
@@ -234,7 +231,6 @@ func genTx(msg sdk.Msg, seq int64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
 		PubKey:    priv.PubKey(),
 		Signature: bz,
 		Sequence:  seq}}
-	// fmt.Println("===========", string(auth.StdSignBytes("Lino", []int64{}, []int64{seq}, auth.StdFee{}, msg)))
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 
