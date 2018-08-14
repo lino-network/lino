@@ -134,16 +134,11 @@ func (vm ValidatorManager) UpdateSigningValidator(
 		panic(err)
 	}
 
-	pkToSigningInfo := make(map[crypto.PubKey]bool)
+	pkToSigningInfo := make(map[string]bool)
 
 	// go through signing validator and update sign and absent info
 	for _, signingValidator := range signingValidators {
-		pubkey, err := tmtypes.PB2TM.PubKey(signingValidator.Validator.PubKey)
-		if err != nil {
-			panic(err)
-		}
-
-		pkToSigningInfo[pubkey] = signingValidator.SignedLastBlock
+		pkToSigningInfo[string(signingValidator.Validator.Address)] = signingValidator.SignedLastBlock
 	}
 
 	// go through oncall validator list to get all address and name mapping
@@ -152,11 +147,7 @@ func (vm ValidatorManager) UpdateSigningValidator(
 		if getErr != nil {
 			panic(getErr)
 		}
-		pubkey, err := tmtypes.PB2TM.PubKey(validator.ABCIValidator.PubKey)
-		if err != nil {
-			panic(err)
-		}
-		signedLastBlock, exist := pkToSigningInfo[pubkey]
+		signedLastBlock, exist := pkToSigningInfo[string(validator.ABCIValidator.Address)]
 		if !exist || !signedLastBlock {
 			validator.AbsentCommit++
 		} else {
