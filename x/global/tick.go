@@ -6,8 +6,7 @@ import (
 )
 
 func BeginBlocker(
-	ctx sdk.Context, req abci.RequestBeginBlock, gm GlobalManager,
-	lastBlockTime int64) (tags sdk.Tags) {
-	gm.UpdateTPS(ctx, lastBlockTime)
+	ctx sdk.Context, req abci.RequestBeginBlock, gm GlobalManager) (tags sdk.Tags) {
+	gm.UpdateTPS(ctx)
 	return
 }

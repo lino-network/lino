@@ -61,6 +61,57 @@ func (gm GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) 
 	return eventList
 }
 
+func (gm GlobalManager) GetLastBlockTime(ctx sdk.Context) (int64, sdk.Error) {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return globalTime.LastBlockTime, nil
+}
+
+func (gm GlobalManager) SetLastBlockTime(ctx sdk.Context, unixTime int64) sdk.Error {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return err
+	}
+	globalTime.LastBlockTime = unixTime
+	return gm.storage.SetGlobalTime(ctx, globalTime)
+}
+
+func (gm GlobalManager) GetChainStartTime(ctx sdk.Context) (int64, sdk.Error) {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return globalTime.ChainStartTime, nil
+}
+
+func (gm GlobalManager) SetChainStartTime(ctx sdk.Context, unixTime int64) sdk.Error {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return err
+	}
+	globalTime.ChainStartTime = unixTime
+	return gm.storage.SetGlobalTime(ctx, globalTime)
+}
+
+func (gm GlobalManager) GetPastMinutes(ctx sdk.Context) (int64, sdk.Error) {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return globalTime.PastMinutes, nil
+}
+
+func (gm GlobalManager) SetPastMinutes(ctx sdk.Context, minutes int64) sdk.Error {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return err
+	}
+	globalTime.PastMinutes = minutes
+	return gm.storage.SetGlobalTime(ctx, globalTime)
+}
+
 func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	return gm.storage.RemoveTimeEventList(ctx, unixTime)
 }
@@ -178,7 +229,6 @@ func (gm GlobalManager) DistributeHourlyInflation(
 	pool.InfraInflationPool = pool.InfraInflationPool.Plus(infraInflation)
 	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Plus(validatorInflation)
 	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Plus(developerInflation)
-
 	if err := gm.storage.SetInflationPool(ctx, pool); err != nil {
 		return err
 	}
@@ -377,11 +427,16 @@ func (gm GlobalManager) addTotalLinoCoin(ctx sdk.Context, newCoin types.Coin) sd
 }
 
 // update current tps based on current block information
-func (gm GlobalManager) UpdateTPS(ctx sdk.Context, lastBlockTime int64) sdk.Error {
+func (gm GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
 	tps, err := gm.storage.GetTPS(ctx)
 	if err != nil {
 		return err
 	}
+	lastBlockTime, err := gm.GetLastBlockTime(ctx)
+	if err != nil {
+		return err
+	}
+
 	if ctx.BlockHeader().Time.Unix() == lastBlockTime {
 		tps.CurrentTPS = sdk.ZeroRat()
 	} else {

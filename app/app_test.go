@@ -33,10 +33,10 @@ var (
 	addr2 = priv2.PubKey().Address()
 
 	genesisTotalLino    types.LNO  = "10000000000"
-	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
+	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(2100000000 * types.Decimals)
 	LNOPerValidator     types.LNO  = "100000000"
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
-	validatorAllocation sdk.Rat    = sdk.NewRat(10, 100)
+	validatorAllocation sdk.Rat    = sdk.NewRat(5, 100)
 )
 
 func loggerAndDB() (logger log.Logger, db dbm.DB) {
@@ -265,6 +265,14 @@ func TestGenesisFromConfig(t *testing.T) {
 			ReportOrUpvoteInterval: 24 * 3600,
 		},
 	}
+	genesisState.InitGlobalMeta = globalModel.InitParamList{
+		GrowthRate: sdk.NewRat(98, 1000),
+		Ceiling:    sdk.NewRat(98, 1000),
+		Floor:      sdk.NewRat(3, 100),
+		MaxTPS:     sdk.NewRat(1000),
+		ConsumptionFreezingPeriodHr: 7 * 24,
+		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+	}
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
@@ -305,7 +313,6 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	baseTime := time.Now().Unix() + 200
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
 			growthRate.Mul(validatorAllocation)))
@@ -318,35 +325,24 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	for i := 0; i < len(expectBalanceList); i++ {
 		expectBalanceList[i] = expectBaseBalance
 	}
-
-	testPastMinutes := int64(0)
-	for i := baseTime; i < baseTime+3600*1; i += 50 {
-		lb.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{ChainID: "Lino", Time: time.Unix(baseTime+i, 0)}})
-		lb.EndBlock(abci.RequestEndBlock{})
-		lb.Commit()
-		// simulate app
-		if (baseTime+int64(i)-lb.chainStartTime)/int64(60) > testPastMinutes {
-			testPastMinutes += 1
-			if testPastMinutes%60 == 0 {
-				// hourly inflation
-				inflationForValidator :=
-					types.RatToCoin(remainValidatorPool.ToRat().Mul(
-						sdk.NewRat(1, types.HoursPerYear-lb.pastMinutes/60+1)))
-				remainValidatorPool = remainValidatorPool.Minus(inflationForValidator)
-				// expectBalance for all validators
-				ctx := lb.BaseApp.NewContext(true, abci.Header{})
-				for i := 0; i < 21; i++ {
-					inflation := types.RatToCoin(
-						inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
-					expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
-					saving, err :=
-						lb.accountManager.GetSavingFromBank(
-							ctx, types.AccountKey("validator"+strconv.Itoa(i)))
-					assert.Nil(t, err)
-					assert.Equal(t, expectBalanceList[i], saving)
-				}
-			}
-		}
+	lb.globalManager.DistributeHourlyInflation(ctx, 0)
+	lb.distributeInflationToValidator(ctx)
+	// simulate app
+	// hourly inflation
+	inflationForValidator :=
+		types.RatToCoin(remainValidatorPool.ToRat().Mul(
+			sdk.NewRat(1, types.HoursPerYear)))
+	// expectBalance for all validators
+	for i := 0; i < 21; i++ {
+		inflation := types.RatToCoin(
+			inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
+		expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
+		inflationForValidator = inflationForValidator.Minus(inflation)
+		saving, err :=
+			lb.accountManager.GetSavingFromBank(
+				ctx, types.AccountKey("validator"+strconv.Itoa(i)))
+		assert.Nil(t, err)
+		assert.Equal(t, expectBalanceList[i], saving)
 	}
 }
 
@@ -390,11 +386,14 @@ func TestDistributeInflationToValidator(t *testing.T) {
 		},
 	}
 	for testName, cs := range cases {
-		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		err := lb.globalManager.SetPastMinutes(ctx, cs.pastMinutes)
+		if err != nil {
+			t.Errorf("%s: failed to set past minutes, got err %v", testName, err)
+		}
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 
-		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
+		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
 			ValidatorInflationPool: cs.beforeDistributionInflationPool,
 		})
 		if err != nil {
@@ -522,9 +521,12 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		}
 	}
 	for testName, cs := range cases {
-		lb.pastMinutes = cs.pastMinutes
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		err := lb.infraManager.RegisterInfraProvider(ctx, "Lino")
+		err := lb.globalManager.SetPastMinutes(ctx, cs.pastMinutes)
+		if err != nil {
+			t.Errorf("%s: failed to set past minutes, got err %v", testName, err)
+		}
+		err = lb.infraManager.RegisterInfraProvider(ctx, "Lino")
 		if err != nil {
 			t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
 		}
@@ -696,6 +698,12 @@ func TestIncreaseMinute(t *testing.T) {
 	for i := 0; i < types.MinutesPerMonth/10; i++ {
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
 		lb.increaseMinute(ctx)
+		ctx = lb.BaseApp.NewContext(true, abci.Header{})
+		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, pastMinutes, int64(i+1))
+		pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear(ctx)
+		assert.Equal(t, (int64(i+1)/60-1)%types.HoursPerYear, pastHoursMinusOneThisYear)
 		if i > 0 && i%60 == 0 {
 			hourlyInflation :=
 				types.RatToCoin(
@@ -720,5 +728,82 @@ func TestIncreaseMinute(t *testing.T) {
 
 			assert.Equal(t, expectInfraPool, inflationPool.InfraInflationPool)
 		}
+	}
+}
+
+func TestGlobalTime(t *testing.T) {
+	logger, db := loggerAndDB()
+	lb := NewLinoBlockchain(logger, db, nil)
+
+	genesisState := GenesisState{
+		Accounts: []GenesisAccount{},
+	}
+
+	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
+	assert.Nil(t, err)
+
+	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
+	lb.Commit()
+
+	baseTime := time.Now().Unix()
+
+	cases := []struct {
+		testName            string
+		baseTime            int64
+		expectStartTime     int64
+		expectPastMintues   int64
+		expectLastBlockTime int64
+	}{
+		{
+			testName:            "init start time",
+			baseTime:            baseTime,
+			expectStartTime:     baseTime,
+			expectPastMintues:   0,
+			expectLastBlockTime: baseTime,
+		},
+		{
+			testName:            "past minutes",
+			baseTime:            baseTime + 61,
+			expectStartTime:     baseTime,
+			expectPastMintues:   1,
+			expectLastBlockTime: baseTime + 61,
+		},
+		{
+			testName:            "past two minutes",
+			baseTime:            baseTime + 121,
+			expectStartTime:     baseTime,
+			expectPastMintues:   2,
+			expectLastBlockTime: baseTime + 121,
+		},
+		{
+			testName:            "past an hour minutes",
+			baseTime:            baseTime + 3601,
+			expectStartTime:     baseTime,
+			expectPastMintues:   60,
+			expectLastBlockTime: baseTime + 3601,
+		},
+	}
+	for _, cs := range cases {
+		lb := NewLinoBlockchain(logger, db, nil)
+		lb.BeginBlock(abci.RequestBeginBlock{
+			Header: abci.Header{ChainID: "Lino", Time: time.Unix(cs.baseTime, 0)}})
+		lb.EndBlock(abci.RequestEndBlock{})
+		lb.Commit()
+		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+		startTime, err := lb.globalManager.GetChainStartTime(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get chain start time, got err %v", cs.testName, err)
+		}
+		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+		if err != nil {
+			t.Errorf("%s:failed to get past minutes, got err %v", cs.testName, err)
+		}
+		lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
+		if err != nil {
+			t.Errorf("%s:failed to get last block time, got err %v", cs.testName, err)
+		}
+		assert.Equal(t, cs.expectStartTime, startTime)
+		assert.Equal(t, cs.expectPastMintues, pastMinutes)
+		assert.Equal(t, cs.expectLastBlockTime, lastBlockTime)
 	}
 }
