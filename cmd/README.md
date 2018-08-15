@@ -13,14 +13,6 @@ $ ./lino start
 ```
 
 # Luanch Client
-## Generate key pair
-
-```
-$ ./linocli keys add USERNAME
-```
-Enter a passphrase for this key.
-Keep the generated address(for transfer) and seed phrase(for recover)
-
 ## Transfer coin to a user
 ```
 $ ./linocli transfer --sender=<username>  --receiver=<receiver> --amount=1 --chain-id=<chain id> --sequence=<sender's sequence number>
