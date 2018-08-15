@@ -11,7 +11,7 @@ Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous conte
 
 ## Lino Blockchain Bug Bounty Rules & Guidelines
 
-We are very excited to announce the release of version 1 of Lino Core! Not all functionalities are implemented in this current version of code and Lino Core is still a work in progress. We sincerely appreciate your participation in Lino Core code contribution. Together, we can create the next generation of video/streaming platforms!
+We are very excited to announce the release of version 0.1.0 of Lino Core! Not all functionalities are implemented in this current version of code and Lino Core is still a work in progress. We sincerely appreciate your participation in Lino Core code contribution. Together, we can create the next generation of decentralized  video/streaming platforms!
 
 ### Rules
 
@@ -36,7 +36,7 @@ There will be two tiers of rewards for Lino Core bugs. Tiers will be reviewed an
 ### Submission
 Please include a clear description(test code and instructions) in your submission so that it is easier for us to reproduce the error. 
 
-There are an unlimited number of submissions available for the bug bounty program. If you find relevant bugs in our blockchain code please feel free to report.
+There are an unlimited number of submissions available for the bug bounty program. If you find relevant bugs in our blockchain code please feel free to report. You can submit an issue on this repo and we will review and reply.
 
 If you need more information about the Lino Network, please send an email to info@lin.network to request access to the whitepaper.
 
