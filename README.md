@@ -3,6 +3,7 @@
 [![API Reference](https://img.shields.io/badge/godoc-reference-blue.svg)](https://docs.google.com/document/d/1Ytd57axPfJ13TSGVU_Yykv8ijW_VuWtx1s79ny6i5M8)
 [![license](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://github.com/lino-network/lino/blob/master/LICENSE)
 [![LoC](https://tokei.rs/b1/github/lino-network/lino)](https://github.com/lino-network/lino)
+[![Build Status](https://travis-ci.com/lino-network/lino.svg?branch=master)](https://travis-ci.com/lino-network/lino)
 [![riot.im](https://img.shields.io/badge/riot.im-JOIN%20CHAT-green.svg)](https://riot.im/app/#/room/#lino-blockchain:matrix.org)
 [![Gitter](https://img.shields.io/badge/Gitter-JOIN%20CHAT-green.svg)](https://gitter.im/Lino-Blockchain/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
