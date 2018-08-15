@@ -1,6 +1,4 @@
-![banner](docs/graphics/banner.png)
-
-# Lino Blockchain
+# Lino Core
 
 [![API Reference](https://godoc.org/github.com/cosmos/cosmos-sdk?status.svg
 )](https://docs.google.com/document/d/1Ytd57axPfJ13TSGVU_Yykv8ijW_VuWtx1s79ny6i5M8)
