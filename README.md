@@ -9,6 +9,18 @@
 Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous content economy, where content value can be recognized efficiently and all contributors can be incentivized directly and effectively to promote long-term economic growth. For more information about Lino refer to our [website](https://lino.network/).
 
 
+## Resources
+
+### Library
+
+* - [lino-go](https://github.com/lino-network/lino-go)
+* - [lino-js](https://github.com/lino-network/lino-js)
+
+### Tools
+
+* - [lino wallet](https://linowallet.io)
+* - [lino tracker](https://linotracker.io)
+
 ## Lino Blockchain Bug Bounty Rules & Guidelines
 
 We are very excited to announce the release of version 0.1.0 of Lino Core! Not all functionalities are implemented in this current version of code and Lino Core is still a work in progress. We sincerely appreciate your participation in Lino Core code contribution. Together, we can create the next generation of decentralized  video/streaming platforms!
@@ -38,7 +50,4 @@ Please include a clear description(test code and instructions) in your submissio
 
 There are an unlimited number of submissions available for the bug bounty program. If you find relevant bugs in our blockchain code please feel free to report. You can submit an issue on this repo and we will review and reply.
 
-If you need more information about the Lino Network, please send an email to info@lin.network to request access to the whitepaper.
-
-
-
+If you need more information about the Lino Network, please send an email to info@lino.network to request access to the whitepaper.
