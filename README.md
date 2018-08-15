@@ -13,13 +13,13 @@ Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous conte
 
 ### Library
 
-* - [lino-go](https://github.com/lino-network/lino-go)
-* - [lino-js](https://github.com/lino-network/lino-js)
+* [lino-go](https://github.com/lino-network/lino-go)
+* [lino-js](https://github.com/lino-network/lino-js)
 
 ### Tools
 
-* - [lino wallet](https://linowallet.io)
-* - [lino tracker](https://linotracker.io)
+* [lino wallet](https://linowallet.io)
+* [lino tracker](https://linotracker.io)
 
 ## Lino Blockchain Bug Bounty Rules & Guidelines
 
