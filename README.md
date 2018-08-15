@@ -44,7 +44,7 @@ Please include a clear description(test code and instructions) in your submissio
 
 There are an unlimited number of submissions available for the bug bounty program. If you find relevant bugs in our blockchain code please feel free to report. You can submit an issue on this repo and we will review and reply.
 
-If you need more information about the Lino Network, please send an email to info@lin.network to request access to the whitepaper.
+If you need more information about the Lino Network, please send an email to whitepaper@lino.network to request access to the whitepaper.
 
 
 
