@@ -1,8 +1,9 @@
 # Lino Core
 
-[![API Reference](https://godoc.org/github.com/cosmos/cosmos-sdk?status.svg
-)](https://docs.google.com/document/d/1Ytd57axPfJ13TSGVU_Yykv8ijW_VuWtx1s79ny6i5M8)
-[![LoC](https://tokei.rs/b1/github/lino-network/lino)](https://github.com/lino-network/lino).
+[![API Reference](https://godoc.org/github.com/cosmos/cosmos-sdk?status.svg)](https://docs.google.com/document/d/1Ytd57axPfJ13TSGVU_Yykv8ijW_VuWtx1s79ny6i5M8)
+[![license](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://github.com/lino-network/lino/blob/master/LICENSE)
+[![LoC](https://tokei.rs/b1/github/lino-network/lino)](https://github.com/lino-network/lino)
+[![riot.im](https://img.shields.io/badge/riot.im-JOIN%20CHAT-green.svg)](https://riot.im/app/#/room/#lino-blockchain:matrix.org)
 
 Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous content economy, where content value can be recognized efficiently and all contributors can be incentivized directly and effectively to promote long-term economic growth. For more information about Lino refer to our [website](https://lino.network/).
 
