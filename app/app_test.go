@@ -353,7 +353,10 @@ func TestFireByzantineValidators(t *testing.T) {
 		Header: abci.Header{
 			ChainID: "Lino", Time: time.Unix(time.Now().Unix()+200, 0)},
 		ByzantineValidators: []abci.Evidence{
-			abci.Evidence{Validator: abci.Validator{PubKey: tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
+			abci.Evidence{
+				Validator: abci.Validator{
+					Address: priv2.PubKey().Address(),
+					PubKey:  tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
