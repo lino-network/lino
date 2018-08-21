@@ -210,7 +210,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 }
 
 func (vm ValidatorManager) FireIncompetentValidator(
-	ctx sdk.Context, evidences []abci.Evidence) (types.Coin, sdk.Error) {
+	ctx sdk.Context, byzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoinFromInt64(0)
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
@@ -228,7 +228,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 			return totalPenalty, err
 		}
 
-		for _, evidence := range evidences {
+		for _, evidence := range byzantineValidators {
 			if reflect.DeepEqual(validator.ABCIValidator.Address, evidence.Validator.Address) {
 				actualPenalty, err := vm.PunishOncallValidator(
 					ctx, validator.Username, param.PenaltyByzantine, types.PunishByzantine)
