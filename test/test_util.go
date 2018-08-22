@@ -36,18 +36,18 @@ var (
 	GenesisAddr            = GenesisPriv.PubKey().Address()
 
 	DefaultNumOfVal  int        = 21
-	GenesisTotalLino types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
-	LNOPerValidator  types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
+	GenesisTotalCoin types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
+	CoinPerValidator types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
 
 	PenaltyMissVote       types.Coin = types.NewCoinFromInt64(20000 * types.Decimals)
 	ChangeParamMinDeposit types.Coin = types.NewCoinFromInt64(100000 * types.Decimals)
 
-	ProposalDecideHr            int64   = 24 * 7
-	ParamChangeHr               int64   = 24
-	CoinReturnIntervalHr        int64   = 24 * 7
-	CoinReturnTimes             int64   = 7
-	ConsumptionFrictionRate     sdk.Rat = sdk.NewRat(5, 100)
-	ConsumptionFreezingPeriodHr int64   = 24 * 7
+	ProposalDecideSec            int64   = 24 * 7 * 3600
+	ParamChangeExecutionSec      int64   = 24 * 3600
+	CoinReturnIntervalSec        int64   = 24 * 7 * 3600
+	CoinReturnTimes              int64   = 7
+	ConsumptionFrictionRate      sdk.Rat = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodSec int64   = 24 * 7 * 3600
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
@@ -68,7 +68,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	for i := 0; i < numOfValidators; i++ {
 		genesisAcc := app.GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
-			Lino:           LNOPerValidator,
+			Coin:           CoinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
 			AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -78,10 +78,10 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
-	initLNO := GenesisTotalLino.ToInt64() - int64(numOfValidators)*LNOPerValidator.ToInt64()
+	initLNO := GenesisTotalCoin.ToInt64() - int64(numOfValidators)*CoinPerValidator.ToInt64()
 	genesisAcc := app.GenesisAccount{
 		Name:           GenesisUser,
-		Lino:           types.NewCoinFromInt64(initLNO),
+		Coin:           types.NewCoinFromInt64(initLNO),
 		ResetKey:       GenesisPriv.PubKey(),
 		TransactionKey: GenesisTransactionPriv.PubKey(),
 		AppKey:         GenesisAppPriv.PubKey(),
@@ -95,8 +95,8 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),
 		MaxTPS:     sdk.NewRat(1000),
-		ConsumptionFreezingPeriodHr: 7 * 24,
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
+		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
@@ -182,7 +182,7 @@ func CreateAccount(
 }
 
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
-	initLNO := GenesisTotalLino.ToInt64() - int64(numOfValidator)*LNOPerValidator.ToInt64()
+	initLNO := GenesisTotalCoin.ToInt64() - int64(numOfValidator)*CoinPerValidator.ToInt64()
 	initCoin := types.NewCoinFromInt64(initLNO)
 	return initCoin
 }

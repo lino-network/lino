@@ -32,9 +32,8 @@ var (
 	priv2 = secp256k1.GenPrivKey()
 	addr2 = priv2.PubKey().Address()
 
-	genesisTotalLino    types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(2100000000 * types.Decimals)
-	LNOPerValidator     types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
+	CoinPerValidator    types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(5, 100)
 )
@@ -56,7 +55,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	// Generate 21 validators
 	genesisAcc := GenesisAccount{
 		Name:           user1,
-		Lino:           LNOPerValidator,
+		Coin:           CoinPerValidator,
 		ResetKey:       priv1.PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 		AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -67,7 +66,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	for i := 1; i < numOfValidators; i++ {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
-			Lino:           LNOPerValidator,
+			Coin:           CoinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
 			AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -81,8 +80,8 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),
 		MaxTPS:     sdk.NewRat(1000),
-		ConsumptionFreezingPeriodHr: 7 * 24,
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
+		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
 
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
@@ -104,7 +103,7 @@ func TestGenesisAcc(t *testing.T) {
 
 	accs := []struct {
 		genesisAccountName string
-		numOfLino          types.Coin
+		coin               types.Coin
 		resetKey           crypto.PubKey
 		transactionKey     crypto.PubKey
 		appKey             crypto.PubKey
@@ -133,7 +132,7 @@ func TestGenesisAcc(t *testing.T) {
 	for _, acc := range accs {
 		genesisAcc := GenesisAccount{
 			Name:           acc.genesisAccountName,
-			Lino:           acc.numOfLino,
+			Coin:           acc.coin,
 			ResetKey:       acc.resetKey,
 			TransactionKey: acc.transactionKey,
 			AppKey:         acc.appKey,
@@ -162,7 +161,7 @@ func TestGenesisAcc(t *testing.T) {
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
-		expectBalance := acc.numOfLino
+		expectBalance := acc.coin
 		assert.Nil(t, err)
 		if acc.isValidator {
 			param, _ := lb.paramHolder.GetValidatorParam(ctx)
@@ -270,8 +269,8 @@ func TestGenesisFromConfig(t *testing.T) {
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),
 		MaxTPS:     sdk.NewRat(1000),
-		ConsumptionFreezingPeriodHr: 7 * 24,
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+		ConsumptionFreezingPeriodSec: 7 * 24,
+		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
@@ -318,7 +317,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			growthRate.Mul(validatorAllocation)))
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
-	expectBaseBalance := LNOPerValidator.Minus(
+	expectBaseBalance := CoinPerValidator.Minus(
 		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 	expectBalanceList := make([]types.Coin, 21)
 	for i := 0; i < len(expectBalanceList); i++ {

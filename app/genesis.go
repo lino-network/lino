@@ -57,7 +57,7 @@ type GenesisState struct {
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
 	Name           string        `json:"name"`
-	Lino           types.Coin    `json:"lino"`
+	Coin           types.Coin    `json:"coin"`
 	ResetKey       crypto.PubKey `json:"reset_key"`
 	TransactionKey crypto.PubKey `json:"transaction_key"`
 	AppKey         crypto.PubKey `json:"app_key"`
@@ -104,10 +104,10 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
-	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
+	totalCoin := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
 		Name:           "lino",
-		Lino:           totalLino,
+		Coin:           totalCoin,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
 		AppKey:         appPriv.PubKey(),
@@ -225,8 +225,8 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			Ceiling:    sdk.NewRat(98, 1000),
 			Floor:      sdk.NewRat(3, 100),
 			MaxTPS:     sdk.NewRat(1000),
-			ConsumptionFreezingPeriodHr: 7 * 24,
-			ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
+			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 		},
 	}
 

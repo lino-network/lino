@@ -47,6 +47,6 @@ func TestNormalDonation(t *testing.T) {
 	test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserTransactionPriv, baseTime)
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
 	test.SignCheckDeliver(
-		t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodHr*3600+1)
+		t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodSec+1)
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(1228089278362))
 }

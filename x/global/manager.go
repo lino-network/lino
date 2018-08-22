@@ -143,7 +143,7 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
 
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodHr*3600, event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodSec, event); err != nil {
 		return err
 	}
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {

@@ -218,7 +218,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	totalCoin := types.NewCoinFromInt64(0)
 
 	for _, gacc := range genesisState.Accounts {
-		totalCoin = totalCoin.Plus(gacc.Lino)
+		totalCoin = totalCoin.Plus(gacc.Coin)
 	}
 	if err := lb.globalManager.InitGlobalManagerWithConfig(
 		ctx, totalCoin, genesisState.InitGlobalMeta); err != nil {
@@ -267,7 +267,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
-		ga.ResetKey, ga.TransactionKey, ga.AppKey, ga.Lino); err != nil {
+		ga.ResetKey, ga.TransactionKey, ga.AppKey, ga.Coin); err != nil {
 		panic(err)
 	}
 
@@ -604,7 +604,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			TransactionKey: accInfo.TransactionKey,
 			AppKey:         accInfo.AppKey,
 			IsValidator:    false,
-			Lino:           saving,
+			Coin:           saving,
 		}
 		accounts = append(accounts, account)
 		return false

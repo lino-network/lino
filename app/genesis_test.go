@@ -25,7 +25,7 @@ func TestGetGenesisJson(t *testing.T) {
 	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
 		Name:           "Lino",
-		Lino:           totalLino,
+		Coin:           totalLino,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
 		AppKey:         appPriv.PubKey(),
@@ -128,8 +128,8 @@ func TestGetGenesisJson(t *testing.T) {
 			Ceiling:    sdk.NewRat(98, 1000),
 			Floor:      sdk.NewRat(3, 100),
 			MaxTPS:     sdk.NewRat(1000),
-			ConsumptionFreezingPeriodHr: 7 * 24,
-			ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
+			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 		},
 	}
 
@@ -155,7 +155,7 @@ func TestLinoBlockchainGenTx(t *testing.T) {
 	err = cdc.UnmarshalJSON(appGenTx, &genesisAcc)
 	assert.Nil(t, err)
 	assert.Equal(t, genesisAcc.Name, "lino")
-	assert.Equal(t, genesisAcc.Lino, types.NewCoinFromInt64(10000000000*types.Decimals))
+	assert.Equal(t, genesisAcc.Coin, types.NewCoinFromInt64(10000000000*types.Decimals))
 	assert.Equal(t, genesisAcc.IsValidator, true)
 	assert.Equal(t, genesisAcc.ValPubKey, pk)
 	assert.Equal(t, validator.PubKey, pk)
@@ -167,7 +167,7 @@ func TestLinoBlockchainGenState(t *testing.T) {
 	for i := 1; i < 21; i++ {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
-			Lino:           LNOPerValidator,
+			Coin:           CoinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
 			AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -187,7 +187,7 @@ func TestLinoBlockchainGenState(t *testing.T) {
 	}
 	for i, gacc := range genesisState.Accounts {
 		assert.Equal(t, gacc.Name, "validator"+strconv.Itoa(i+1))
-		assert.Equal(t, gacc.Lino, LNOPerValidator)
+		assert.Equal(t, gacc.Coin, CoinPerValidator)
 	}
 	assert.Equal(t, 1, len(genesisState.Developers))
 	assert.Equal(t, 1, len(genesisState.Infra))

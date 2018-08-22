@@ -77,10 +77,10 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 	}
 
 	consumptionMeta := &ConsumptionMeta{
-		ConsumptionFrictionRate:     param.ConsumptionFrictionRate,
-		ConsumptionWindow:           types.NewCoinFromInt64(0),
-		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
-		ConsumptionFreezingPeriodHr: param.ConsumptionFreezingPeriodHr,
+		ConsumptionFrictionRate:      param.ConsumptionFrictionRate,
+		ConsumptionWindow:            types.NewCoinFromInt64(0),
+		ConsumptionRewardPool:        types.NewCoinFromInt64(0),
+		ConsumptionFreezingPeriodSec: param.ConsumptionFreezingPeriodSec,
 	}
 	if err := gs.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
@@ -102,8 +102,8 @@ func (gs GlobalStorage) InitGlobalState(
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),
 		MaxTPS:     sdk.NewRat(1000),
-		ConsumptionFreezingPeriodHr: 7 * 24,
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
+		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
+		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
 	return gs.InitGlobalStateWithConfig(ctx, totalLino, initParamList)
 }
