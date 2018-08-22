@@ -21,8 +21,8 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 
 	pm.InitGenesis(ctx)
 	curTime := ctx.BlockHeader().Time.Unix()
-	decideHr := int64(100)
-	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
+	decideSec := int64(100)
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideSec)
 
 	testCases := []struct {
 		testName     string
@@ -38,14 +38,16 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voter:       user1,
 			voteResult:  true,
 			votingPower: types.NewCoinFromInt64(1),
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID1,
-				AgreeVotes:    types.NewCoinFromInt64(1),
-				DisagreeVotes: types.NewCoinFromInt64(0),
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID1,
+					AgreeVotes:    types.NewCoinFromInt64(1),
+					DisagreeVotes: types.NewCoinFromInt64(0),
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideSec,
+				},
+				permlink, censorshipReason},
 		},
 		{
 			testName:    "one more agree vote",
@@ -53,14 +55,16 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voter:       user1,
 			voteResult:  true,
 			votingPower: types.NewCoinFromInt64(2),
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID1,
-				AgreeVotes:    types.NewCoinFromInt64(3),
-				DisagreeVotes: types.NewCoinFromInt64(0),
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID1,
+					AgreeVotes:    types.NewCoinFromInt64(3),
+					DisagreeVotes: types.NewCoinFromInt64(0),
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideSec,
+				},
+				permlink, censorshipReason},
 		},
 		{
 			testName:    "one disagree vote",
@@ -68,14 +72,16 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voter:       user1,
 			voteResult:  false,
 			votingPower: types.NewCoinFromInt64(5),
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID1,
-				AgreeVotes:    types.NewCoinFromInt64(3),
-				DisagreeVotes: types.NewCoinFromInt64(5),
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID1,
+					AgreeVotes:    types.NewCoinFromInt64(3),
+					DisagreeVotes: types.NewCoinFromInt64(5),
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideSec,
+				},
+				permlink, censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

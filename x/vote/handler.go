@@ -85,7 +85,7 @@ func handleVoterWithdrawMsg(
 	}
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
-		param.VoterCoinReturnIntervalHr, coin, types.VoteReturnCoin); err != nil {
+		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -116,7 +116,7 @@ func handleVoterRevokeMsg(
 		}
 		if err := returnCoinTo(
 			ctx, delegator, gm, am, param.DelegatorCoinReturnTimes,
-			param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
+			param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
 			return err.Result()
 		}
 	}
@@ -129,7 +129,7 @@ func handleVoterRevokeMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
-		param.VoterCoinReturnIntervalHr, coin, types.VoteReturnCoin); err != nil {
+		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -180,7 +180,7 @@ func handleDelegatorWithdrawMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
+		param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -201,7 +201,7 @@ func handleRevokeDelegationMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalHr, coin, types.DelegationReturnCoin); err != nil {
+		param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

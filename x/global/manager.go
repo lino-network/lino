@@ -154,10 +154,10 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 
 // register coin return event with a time interval
 func (gm GlobalManager) RegisterCoinReturnEvent(
-	ctx sdk.Context, events []types.Event, times int64, interval int64) sdk.Error {
+	ctx sdk.Context, events []types.Event, times int64, intervalSec int64) sdk.Error {
 	for i := int64(0); i < times; i++ {
 		if err := gm.registerEventAtTime(
-			ctx, ctx.BlockHeader().Time.Unix()+(interval*3600*(i+1)), events[i]); err != nil {
+			ctx, ctx.BlockHeader().Time.Unix()+(intervalSec*(i+1)), events[i]); err != nil {
 			return err
 		}
 	}
@@ -165,9 +165,9 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 }
 
 func (gm GlobalManager) RegisterProposalDecideEvent(
-	ctx sdk.Context, decideHr int64, event types.Event) sdk.Error {
+	ctx sdk.Context, decideSec int64, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+decideHr*3600, event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+decideSec, event); err != nil {
 		return err
 	}
 	return nil
@@ -175,9 +175,12 @@ func (gm GlobalManager) RegisterProposalDecideEvent(
 
 func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
 	// param will be changed in one day
-
+	proposalParam, err := gm.paramHolder.GetProposalParam(ctx)
+	if err != nil {
+		return err
+	}
 	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+24*3600, event); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+proposalParam.ChangeParamExecutionSec, event); err != nil {
 		return err
 	}
 	return nil

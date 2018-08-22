@@ -57,7 +57,7 @@ type GenesisState struct {
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
 	Name           string        `json:"name"`
-	Lino           types.LNO     `json:"lino"`
+	Lino           types.Coin    `json:"lino"`
 	ResetKey       crypto.PubKey `json:"reset_key"`
 	TransactionKey crypto.PubKey `json:"transaction_key"`
 	AppKey         crypto.PubKey `json:"app_key"`
@@ -67,11 +67,11 @@ type GenesisAccount struct {
 
 // register developer in genesis phase
 type GenesisAppDeveloper struct {
-	Name        string    `json:"name"`
-	Deposit     types.LNO `json:"deposit"`
-	Website     string    `json:"web_site"`
-	Description string    `json:"description"`
-	AppMetaData string    `json:"app_meta_data"`
+	Name        string     `json:"name"`
+	Deposit     types.Coin `json:"deposit"`
+	Website     string     `json:"web_site"`
+	Description string     `json:"description"`
+	AppMetaData string     `json:"app_meta_data"`
 }
 
 // register infra provider in genesis phase
@@ -104,7 +104,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
 	fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
-	totalLino := "10000000000"
+	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
 		Name:           "lino",
 		Lino:           totalLino,
@@ -162,46 +162,46 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				CDNAllocation:     sdk.NewRat(50, 100),
 			},
 			param.VoteParam{
-				VoterMinDeposit:               types.NewCoinFromInt64(2000 * types.Decimals),
-				VoterMinWithdraw:              types.NewCoinFromInt64(2 * types.Decimals),
-				DelegatorMinWithdraw:          types.NewCoinFromInt64(2 * types.Decimals),
-				VoterCoinReturnIntervalHr:     int64(7 * 24),
-				VoterCoinReturnTimes:          int64(7),
-				DelegatorCoinReturnIntervalHr: int64(7 * 24),
-				DelegatorCoinReturnTimes:      int64(7),
+				VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
+				VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
+				DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
+				VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+				VoterCoinReturnTimes:           int64(7),
+				DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+				DelegatorCoinReturnTimes:       int64(7),
 			},
 			param.ProposalParam{
-				ContentCensorshipDecideHr:   int64(24 * 7),
+				ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
 				ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 				ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 				ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-				ChangeParamDecideHr:   int64(24 * 7),
+				ChangeParamDecideSec:  int64(24 * 7 * 3600),
 				ChangeParamPassRatio:  sdk.NewRat(70, 100),
 				ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 				ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
-				ProtocolUpgradeDecideHr:   int64(24 * 7),
+				ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
 				ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 				ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 				ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 			},
 			param.DeveloperParam{
-				DeveloperMinDeposit:           types.NewCoinFromInt64(1000000 * types.Decimals),
-				DeveloperCoinReturnIntervalHr: int64(7 * 24),
-				DeveloperCoinReturnTimes:      int64(7),
+				DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
+				DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+				DeveloperCoinReturnTimes:       int64(7),
 			},
 			param.ValidatorParam{
-				ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-				ValidatorMinVotingDeposit:     types.NewCoinFromInt64(300000 * types.Decimals),
-				ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
-				ValidatorCoinReturnIntervalHr: int64(7 * 24),
-				ValidatorCoinReturnTimes:      int64(7),
-				PenaltyMissVote:               types.NewCoinFromInt64(20000 * types.Decimals),
-				PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-				PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
-				ValidatorListSize:             int64(21),
-				AbsentCommitLimitation:        int64(600), // 30min
+				ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+				ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+				ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+				ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+				ValidatorCoinReturnTimes:       int64(7),
+				PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+				PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+				PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+				ValidatorListSize:              int64(21),
+				AbsentCommitLimitation:         int64(600), // 30min
 			},
 			param.CoinDayParam{
 				DaysToRecoverCoinDayStake:    int64(7),
@@ -217,7 +217,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 			},
 			param.PostParam{
-				ReportOrUpvoteInterval: 24 * 3600,
+				ReportOrUpvoteIntervalSec: 24 * 3600,
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
@@ -240,7 +240,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:        "lino",
-		Deposit:     "1000000",
+		Deposit:     types.NewCoinFromInt64(1000000 * types.Decimals),
 		Website:     "https://lino.network/",
 		Description: "",
 		AppMetaData: "",

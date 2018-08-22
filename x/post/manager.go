@@ -168,15 +168,6 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
-// add or update view from the user if view exists
-func (pm PostManager) GetReportOrUpvoteInterval(ctx sdk.Context) (int64, sdk.Error) {
-	postParam, err := pm.paramHolder.GetPostParam(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return postParam.ReportOrUpvoteInterval, nil
-}
-
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,

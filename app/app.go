@@ -218,11 +218,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	totalCoin := types.NewCoinFromInt64(0)
 
 	for _, gacc := range genesisState.Accounts {
-		coin, err := types.LinoToCoin(gacc.Lino)
-		if err != nil {
-			panic(err)
-		}
-		totalCoin = totalCoin.Plus(coin)
+		totalCoin = totalCoin.Plus(gacc.Lino)
 	}
 	if err := lb.globalManager.InitGlobalManagerWithConfig(
 		ctx, totalCoin, genesisState.InitGlobalMeta); err != nil {
@@ -266,17 +262,12 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 
 // convert GenesisAccount to AppAccount
 func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.Error {
-	// send coins using address (even no account bank associated with this addr)
-	coin, err := types.LinoToCoin(ga.Lino)
-	if err != nil {
-		panic(err)
-	}
 	if lb.accountManager.DoesAccountExist(ctx, types.AccountKey(ga.Name)) {
 		panic(errors.New("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
 		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
-		ga.ResetKey, ga.TransactionKey, ga.AppKey, coin); err != nil {
+		ga.ResetKey, ga.TransactionKey, ga.AppKey, ga.Lino); err != nil {
 		panic(err)
 	}
 
@@ -316,19 +307,15 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(developer.Name)) {
 		return ErrGenesisFailed("genesis developer account doesn't exist")
 	}
-	coin, err := types.LinoToCoin(types.LNO(developer.Deposit))
-	if err != nil {
-		return err
-	}
 
 	if err := lb.accountManager.MinusSavingCoin(
-		ctx, types.AccountKey(developer.Name), coin,
+		ctx, types.AccountKey(developer.Name), developer.Deposit,
 		"", "", types.DeveloperDeposit); err != nil {
 		return err
 	}
 
 	if err := lb.developerManager.RegisterDeveloper(
-		ctx, types.AccountKey(developer.Name), coin, developer.Website,
+		ctx, types.AccountKey(developer.Name), developer.Deposit, developer.Website,
 		developer.Description, developer.AppMetaData); err != nil {
 		return err
 	}
@@ -617,7 +604,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			TransactionKey: accInfo.TransactionKey,
 			AppKey:         accInfo.AppKey,
 			IsValidator:    false,
-			Lino:           saving.ToRat().Quo(sdk.NewRat(types.Decimals)).FloatString(),
+			Lino:           saving,
 		}
 		accounts = append(accounts, account)
 		return false

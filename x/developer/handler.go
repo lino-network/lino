@@ -99,7 +99,7 @@ func handleDeveloperRevokeMsg(
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalSec, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

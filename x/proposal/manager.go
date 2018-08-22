@@ -1,6 +1,7 @@
 package proposal
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/lino-network/lino/param"
@@ -94,7 +95,7 @@ func (pm ProposalManager) IncreaseNextProposalID(ctx sdk.Context) sdk.Error {
 }
 
 func (pm ProposalManager) AddProposal(
-	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideHr int64) (types.ProposalKey, sdk.Error) {
+	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideSec int64) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.GetNextProposalID(ctx)
 	if err != nil {
 		return newID, err
@@ -107,8 +108,9 @@ func (pm ProposalManager) AddProposal(
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 		CreatedAt:     ctx.BlockHeader().Time.Unix(),
-		ExpiredAt:     ctx.BlockHeader().Time.Unix() + decideHr*3600,
+		ExpiredAt:     ctx.BlockHeader().Time.Unix() + decideSec,
 	}
+	fmt.Println(ctx.BlockHeader().Time.Unix())
 	proposal.SetProposalInfo(info)
 
 	if err := pm.storage.SetProposal(ctx, newID, proposal); err != nil {

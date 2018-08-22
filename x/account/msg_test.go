@@ -377,7 +377,7 @@ func TestRegisterUsername(t *testing.T) {
 			"referer", register, "0", secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 		result := msg.ValidateBasic()
-		assert.Equal(t, result, ErrInvalidUsername("illeagle input"))
+		assert.Equal(t, result, ErrInvalidUsername("illegal input"))
 	}
 }
 

@@ -32,9 +32,9 @@ var (
 	priv2 = secp256k1.GenPrivKey()
 	addr2 = priv2.PubKey().Address()
 
-	genesisTotalLino    types.LNO  = "10000000000"
+	genesisTotalLino    types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(2100000000 * types.Decimals)
-	LNOPerValidator     types.LNO  = "100000000"
+	LNOPerValidator     types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
 	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
 	validatorAllocation sdk.Rat    = sdk.NewRat(5, 100)
 )
@@ -104,26 +104,26 @@ func TestGenesisAcc(t *testing.T) {
 
 	accs := []struct {
 		genesisAccountName string
-		numOfLino          types.LNO
+		numOfLino          types.Coin
 		resetKey           crypto.PubKey
 		transactionKey     crypto.PubKey
 		appKey             crypto.PubKey
 		isValidator        bool
 		valPubKey          crypto.PubKey
 	}{
-		{"lino", "9000000000", secp256k1.GenPrivKey().PubKey(),
+		{"lino", types.NewCoinFromInt64(9000000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			true, secp256k1.GenPrivKey().PubKey()},
-		{"genesis", "500000000", secp256k1.GenPrivKey().PubKey(),
+		{"genesis", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			true, secp256k1.GenPrivKey().PubKey()},
-		{"nonvalidator", "500000000", secp256k1.GenPrivKey().PubKey(),
+		{"nonvalidator", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			false, secp256k1.GenPrivKey().PubKey()},
-		{"developer", "500000000", secp256k1.GenPrivKey().PubKey(),
+		{"developer", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			false, secp256k1.GenPrivKey().PubKey()},
-		{"infra", "500000000", secp256k1.GenPrivKey().PubKey(),
+		{"infra", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			false, secp256k1.GenPrivKey().PubKey()},
 	}
@@ -144,7 +144,7 @@ func TestGenesisAcc(t *testing.T) {
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:        "developer",
-		Deposit:     "1000000",
+		Deposit:     types.NewCoinFromInt64(1000000 * types.Decimals),
 		Website:     "https://lino.network/",
 		Description: "",
 		AppMetaData: "",
@@ -162,7 +162,7 @@ func TestGenesisAcc(t *testing.T) {
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
-		expectBalance, err := types.LinoToCoin(acc.numOfLino)
+		expectBalance := acc.numOfLino
 		assert.Nil(t, err)
 		if acc.isValidator {
 			param, _ := lb.paramHolder.GetValidatorParam(ctx)
@@ -207,46 +207,46 @@ func TestGenesisFromConfig(t *testing.T) {
 			CDNAllocation:     sdk.NewRat(50, 100),
 		},
 		param.VoteParam{
-			VoterMinDeposit:               types.NewCoinFromInt64(2000 * types.Decimals),
-			VoterMinWithdraw:              types.NewCoinFromInt64(2 * types.Decimals),
-			DelegatorMinWithdraw:          types.NewCoinFromInt64(2 * types.Decimals),
-			VoterCoinReturnIntervalHr:     int64(7 * 24),
-			VoterCoinReturnTimes:          int64(7),
-			DelegatorCoinReturnIntervalHr: int64(7 * 24),
-			DelegatorCoinReturnTimes:      int64(7),
+			VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
+			VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
+			DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
+			VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+			VoterCoinReturnTimes:           int64(7),
+			DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+			DelegatorCoinReturnTimes:       int64(7),
 		},
 		param.ProposalParam{
-			ContentCensorshipDecideHr:   int64(24 * 7),
+			ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
 			ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 			ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 			ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-			ChangeParamDecideHr:   int64(24 * 7),
+			ChangeParamDecideSec:  int64(24 * 7 * 3600),
 			ChangeParamPassRatio:  sdk.NewRat(70, 100),
 			ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 			ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
-			ProtocolUpgradeDecideHr:   int64(24 * 7),
+			ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
 			ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 			ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 			ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 		},
 		param.DeveloperParam{
-			DeveloperMinDeposit:           types.NewCoinFromInt64(1000000 * types.Decimals),
-			DeveloperCoinReturnIntervalHr: int64(7 * 24),
-			DeveloperCoinReturnTimes:      int64(7),
+			DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
+			DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+			DeveloperCoinReturnTimes:       int64(7),
 		},
 		param.ValidatorParam{
-			ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-			ValidatorMinVotingDeposit:     types.NewCoinFromInt64(300000 * types.Decimals),
-			ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
-			ValidatorCoinReturnIntervalHr: int64(7 * 24),
-			ValidatorCoinReturnTimes:      int64(7),
-			PenaltyMissVote:               types.NewCoinFromInt64(20000 * types.Decimals),
-			PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-			PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
-			ValidatorListSize:             int64(21),
-			AbsentCommitLimitation:        int64(600), // 30min
+			ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+			ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+			ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+			ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+			ValidatorCoinReturnTimes:       int64(7),
+			PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+			PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+			PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+			ValidatorListSize:              int64(21),
+			AbsentCommitLimitation:         int64(600), // 30min
 		},
 		param.CoinDayParam{
 			DaysToRecoverCoinDayStake:    int64(7),
@@ -262,7 +262,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			FirstDepositFullStakeLimit: types.NewCoinFromInt64(0),
 		},
 		param.PostParam{
-			ReportOrUpvoteInterval: 24 * 3600,
+			ReportOrUpvoteIntervalSec: 24 * 3600,
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
@@ -316,10 +316,9 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	remainValidatorPool := types.RatToCoin(
 		genesisTotalCoin.ToRat().Mul(
 			growthRate.Mul(validatorAllocation)))
-	coinPerValidator, _ := types.LinoToCoin(LNOPerValidator)
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
-	expectBaseBalance := coinPerValidator.Minus(
+	expectBaseBalance := LNOPerValidator.Minus(
 		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
 	expectBalanceList := make([]types.Coin, 21)
 	for i := 0; i < len(expectBalanceList); i++ {

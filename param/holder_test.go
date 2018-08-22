@@ -81,9 +81,9 @@ func TestDeveloperParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := DeveloperParam{
-		DeveloperMinDeposit:           types.NewCoinFromInt64(100000 * types.Decimals),
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(7),
+		DeveloperMinDeposit:            types.NewCoinFromInt64(100000 * types.Decimals),
+		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DeveloperCoinReturnTimes:       int64(7),
 	}
 	err := ph.setDeveloperParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -97,16 +97,16 @@ func TestValidatorParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoinFromInt64(20000 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(100),
+		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		ValidatorCoinReturnTimes:       int64(7),
+		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		ValidatorListSize:              int64(21),
+		AbsentCommitLimitation:         int64(100),
 	}
 	err := ph.setValidatorParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -120,13 +120,13 @@ func TestVoteParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := VoteParam{
-		VoterMinDeposit:               types.NewCoinFromInt64(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoinFromInt64(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
+		VoterMinDeposit:                types.NewCoinFromInt64(1000 * types.Decimals),
+		VoterMinWithdraw:               types.NewCoinFromInt64(1 * types.Decimals),
+		DelegatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:           int64(7),
+		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DelegatorCoinReturnTimes:       int64(7),
 	}
 	err := ph.setVoteParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -140,17 +140,18 @@ func TestProposalParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
 		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
+		ChangeParamExecutionSec: int64(24 * 3600),
+		ChangeParamDecideSec:    int64(7 * 24 * 3600),
+		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
+		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
@@ -237,45 +238,46 @@ func TestInitParam(t *testing.T) {
 	}
 
 	developerParam := DeveloperParam{
-		DeveloperMinDeposit:           types.NewCoinFromInt64(1000000 * types.Decimals),
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(7),
+		DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
+		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DeveloperCoinReturnTimes:       int64(7),
 	}
 
 	validatorParam := ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoinFromInt64(20000 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(600),
+		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		ValidatorCoinReturnTimes:       int64(7),
+		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		ValidatorListSize:              int64(21),
+		AbsentCommitLimitation:         int64(600),
 	}
 
 	voteParam := VoteParam{
-		VoterMinDeposit:               types.NewCoinFromInt64(2000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoinFromInt64(2 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoinFromInt64(2 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
+		VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
+		VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
+		DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
+		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:           int64(7),
+		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DelegatorCoinReturnTimes:       int64(7),
 	}
 	proposalParam := ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
 		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
+		ChangeParamExecutionSec: int64(24 * 3600),
+		ChangeParamDecideSec:    int64(7 * 24 * 3600),
+		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
+		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
@@ -295,8 +297,115 @@ func TestInitParam(t *testing.T) {
 		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{
-		ReportOrUpvoteInterval: 24 * 3600,
+		ReportOrUpvoteIntervalSec: int64(24 * 3600),
 	}
+	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
+		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
+}
+
+func TestInitParamFromConfig(t *testing.T) {
+	ph := NewParamHolder(TestKVStoreKey)
+	ctx := getContext()
+	globalAllocationParam := GlobalAllocationParam{
+		InfraAllocation:          sdk.NewRat(20, 100),
+		ContentCreatorAllocation: sdk.NewRat(65, 100),
+		DeveloperAllocation:      sdk.NewRat(10, 100),
+		ValidatorAllocation:      sdk.NewRat(5, 100),
+	}
+
+	infraInternalAllocationParam := InfraInternalAllocationParam{
+		StorageAllocation: sdk.NewRat(50, 100),
+		CDNAllocation:     sdk.NewRat(50, 100),
+	}
+
+	evaluateOfContentValueParam := EvaluateOfContentValueParam{
+		ConsumptionTimeAdjustBase:      3153600,
+		ConsumptionTimeAdjustOffset:    5,
+		NumOfConsumptionOnAuthorOffset: 7,
+		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
+		TotalAmountOfConsumptionOffset: 5,
+		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
+	}
+
+	developerParam := DeveloperParam{
+		DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
+		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DeveloperCoinReturnTimes:       int64(7),
+	}
+
+	validatorParam := ValidatorParam{
+		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		ValidatorCoinReturnTimes:       int64(7),
+		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		ValidatorListSize:              int64(21),
+		AbsentCommitLimitation:         int64(600),
+	}
+
+	voteParam := VoteParam{
+		VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
+		VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
+		DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
+		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:           int64(7),
+		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DelegatorCoinReturnTimes:       int64(7),
+	}
+	proposalParam := ProposalParam{
+		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
+		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
+		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
+
+		ChangeParamExecutionSec: int64(24 * 3600),
+		ChangeParamDecideSec:    int64(7 * 24 * 3600),
+		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
+		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+
+		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
+		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
+		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
+	}
+
+	coinDayParam := CoinDayParam{
+		DaysToRecoverCoinDayStake:    int64(7),
+		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+	}
+	bandwidthParam := BandwidthParam{
+		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
+		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+	}
+	accountParam := AccountParam{
+		MinimumBalance:             types.NewCoinFromInt64(0),
+		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+	}
+	postParam := PostParam{
+		ReportOrUpvoteIntervalSec: int64(24 * 3600),
+	}
+
+	err := ph.InitParamFromConfig(
+		ctx, globalAllocationParam,
+		infraInternalAllocationParam,
+		postParam,
+		evaluateOfContentValueParam,
+		developerParam,
+		validatorParam,
+		voteParam,
+		proposalParam,
+		coinDayParam,
+		bandwidthParam,
+		accountParam,
+	)
+	assert.Nil(t, err)
+
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
