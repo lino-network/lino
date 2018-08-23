@@ -759,6 +759,58 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 	}
 }
 
+func TestChangePostParamMsg(t *testing.T) {
+	p1 := param.PostParam{
+		ReportOrUpvoteIntervalSec: 1,
+		PostIntervalSec:           1,
+	}
+
+	p2 := p1
+	p2.ReportOrUpvoteIntervalSec = int64(-1)
+
+	p3 := p1
+	p3.PostIntervalSec = int64(-1)
+
+	testCases := []struct {
+		testName           string
+		changePostParamMsg ChangePostParamMsg
+		expectedError      sdk.Error
+	}{
+		{
+			testName:           "normal case",
+			changePostParamMsg: NewChangePostParamMsg("user1", p1, ""),
+			expectedError:      nil,
+		},
+		{
+			testName:           "illegal report or upvote interval",
+			changePostParamMsg: NewChangePostParamMsg("user1", p2, ""),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "illegal post interval",
+			changePostParamMsg: NewChangePostParamMsg("user1", p3, ""),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "username too short",
+			changePostParamMsg: NewChangePostParamMsg("us", p1, ""),
+			expectedError:      ErrInvalidUsername(),
+		},
+		{
+			testName:           "username too long",
+			changePostParamMsg: NewChangePostParamMsg("user1user1user1user1user1", p1, ""),
+			expectedError:      ErrInvalidUsername(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := tc.changePostParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
+	}
+}
+
 func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 	p1 := param.EvaluateOfContentValueParam{
 		ConsumptionTimeAdjustBase:      3153600,

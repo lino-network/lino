@@ -262,6 +262,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 		param.PostParam{
 			ReportOrUpvoteIntervalSec: 24 * 3600,
+			PostIntervalSec:           600,
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
@@ -269,7 +270,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		Ceiling:    sdk.NewRat(98, 1000),
 		Floor:      sdk.NewRat(3, 100),
 		MaxTPS:     sdk.NewRat(1000),
-		ConsumptionFreezingPeriodSec: 7 * 24,
+		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)

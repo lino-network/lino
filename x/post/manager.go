@@ -216,7 +216,14 @@ func (pm PostManager) AddComment(
 	if err := pm.postStorage.SetPostComment(ctx, permlink, comment); err != nil {
 		return err
 	}
-
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
+	if err != nil {
+		return err
+	}
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
+	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -239,6 +246,7 @@ func (pm PostManager) AddDonation(
 	}
 	postMeta.TotalReward = postMeta.TotalReward.Plus(amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
 	}

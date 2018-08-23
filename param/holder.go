@@ -61,6 +61,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	postParam := &PostParam{
 		ReportOrUpvoteIntervalSec: 24 * 3600,
+		PostIntervalSec:           600,
 	}
 	if err := ph.setPostParam(ctx, postParam); err != nil {
 		return err

@@ -1,7 +1,6 @@
 package proposal
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/lino-network/lino/param"
@@ -110,7 +109,6 @@ func (pm ProposalManager) AddProposal(
 		CreatedAt:     ctx.BlockHeader().Time.Unix(),
 		ExpiredAt:     ctx.BlockHeader().Time.Unix() + decideSec,
 	}
-	fmt.Println(ctx.BlockHeader().Time.Unix())
 	proposal.SetProposalInfo(info)
 
 	if err := pm.storage.SetProposal(ctx, newID, proposal); err != nil {

@@ -794,6 +794,9 @@ func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
+	if msg.Parameter.PostIntervalSec < 0 || msg.Parameter.ReportOrUpvoteIntervalSec < 0 {
+		return ErrIllegalParameter()
+	}
 	return nil
 }
 

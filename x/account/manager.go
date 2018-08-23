@@ -27,7 +27,6 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManage
 	}
 }
 
-// check if account exist
 func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool {
 	return accManager.storage.DoesAccountExist(ctx, username)
 }
@@ -389,7 +388,6 @@ func (accManager AccountManager) GetSequence(
 	return accountMeta.Sequence, nil
 }
 
-// check if account exist
 func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -399,7 +397,6 @@ func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	return accountMeta.LastReportOrUpvoteAt, nil
 }
 
-// check if account exist
 func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -407,6 +404,25 @@ func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 		return ErrUpdateLastReportOrUpvoteAt(err)
 	}
 	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time.Unix()
+	return accManager.storage.SetMeta(ctx, username, accountMeta)
+}
+
+func (accManager AccountManager) GetLastPostAt(
+	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return 0, ErrGetLastPostAt(err)
+	}
+	return accountMeta.LastPostAt, nil
+}
+
+func (accManager AccountManager) UpdateLastPostAt(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	accountMeta, err := accManager.storage.GetMeta(ctx, username)
+	if err != nil {
+		return ErrUpdateLastPostAt(err)
+	}
+	accountMeta.LastPostAt = ctx.BlockHeader().Time.Unix()
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 

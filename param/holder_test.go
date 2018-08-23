@@ -298,6 +298,7 @@ func TestInitParam(t *testing.T) {
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
+		PostIntervalSec:           int64(600),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
@@ -389,6 +390,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
+		PostIntervalSec:           int64(600),
 	}
 
 	err := ph.InitParamFromConfig(

@@ -41,6 +41,16 @@ func TestHandlerCreatePost(t *testing.T) {
 	msg.Author = types.AccountKey("invalid")
 	result = handler(ctx, msg)
 	assert.Equal(t, result, ErrAccountNotFound(msg.Author).Result())
+
+	// test duplicate post
+	msg.Author = user
+	result = handler(ctx, msg)
+	assert.Equal(t, result, ErrPostAlreadyExist(types.GetPermlink(user, msg.PostID)).Result())
+
+	// test post too often
+	msg.PostID = "Post too often"
+	result = handler(ctx, msg)
+	assert.Equal(t, result, ErrPostTooOften(msg.Author).Result())
 }
 
 func TestHandlerUpdatePost(t *testing.T) {
@@ -166,11 +176,18 @@ func TestHandlerDeletePost(t *testing.T) {
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
+	postParam, err := ph.GetPostParam(ctx)
+	assert.Nil(t, err)
 
+	baseTime := time.Now()
+	baseTime1 := baseTime.Add(time.Duration(postParam.PostIntervalSec) * time.Second)
+	baseTime2 := baseTime1.Add(time.Duration(postParam.PostIntervalSec) * time.Second)
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime})
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
 	// test comment
 	msg := CreatePostMsg{
 		PostID:       "comment",
@@ -201,9 +218,9 @@ func TestHandlerCreateComment(t *testing.T) {
 	}
 
 	postMeta := model.PostMeta{
-		CreatedAt:               ctx.BlockHeader().Time.Unix(),
-		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
-		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
+		CreatedAt:               baseTime1.Unix(),
+		LastUpdatedAt:           baseTime1.Unix(),
+		LastActivityAt:          baseTime1.Unix(),
 		AllowReplies:            true,
 		TotalUpvoteStake:        types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
@@ -217,10 +234,17 @@ func TestHandlerCreateComment(t *testing.T) {
 	postInfo.PostID = postID
 	postInfo.ParentAuthor = ""
 	postInfo.ParentPostID = ""
-	postMeta.CreatedAt = ctx.BlockHeader().Time.Unix()
-	postMeta.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
+	postMeta.CreatedAt = baseTime.Unix()
+	postMeta.LastUpdatedAt = baseTime.Unix()
 	checkPostKVStore(t, ctx, types.GetPermlink(user, postID), postInfo, postMeta)
 
+	// test post too often
+	msg.PostID = "post too often"
+
+	result = handler(ctx, msg)
+	assert.Equal(t, result, ErrPostTooOften(user).Result())
+
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime2})
 	// test invalid parent
 	msg.PostID = "invalid post"
 	msg.ParentAuthor = user
@@ -249,9 +273,15 @@ func TestHandlerCreateComment(t *testing.T) {
 }
 
 func TestHandlerRepost(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
+	postParam, err := ph.GetPostParam(ctx)
+	assert.Nil(t, err)
 
+	baseTime := time.Now()
+	baseTime1 := baseTime.Add(time.Duration(postParam.PostIntervalSec) * time.Second)
+	baseTime2 := baseTime1.Add(time.Duration(postParam.PostIntervalSec) * time.Second)
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime})
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	// test repost
@@ -267,6 +297,7 @@ func TestHandlerRepost(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
 	result := handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 
@@ -300,7 +331,7 @@ func TestHandlerRepost(t *testing.T) {
 	msg.PostID = "repost-repost"
 	msg.SourceAuthor = user
 	msg.SourcePostID = "repost"
-	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: time.Now()})
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime2})
 	result = handler(ctx, msg)
 	assert.Equal(t, result, sdk.Result{})
 

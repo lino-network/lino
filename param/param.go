@@ -102,4 +102,5 @@ type AccountParam struct {
 
 type PostParam struct {
 	ReportOrUpvoteIntervalSec int64 `json:"report_or_upvote_interval_second"`
+	PostIntervalSec           int64 `json:"post_interval_sec"`
 }

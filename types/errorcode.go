@@ -96,6 +96,8 @@ const (
 	CodeRegisterFeeInsufficient            sdk.CodeType = 357
 	CodeFailedToMarshalRewardHistory       sdk.CodeType = 358
 	CodeFailedToUnmarshalRewardHistory     sdk.CodeType = 359
+	CodeGetLastPostAt                      sdk.CodeType = 360
+	CodeUpdateLastPostAt                   sdk.CodeType = 361
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400
@@ -138,6 +140,7 @@ const (
 	CodeInvalidTarget                        sdk.CodeType = 437
 	CodeCreatePostSourceInvalid              sdk.CodeType = 438
 	CodeGetSourcePost                        sdk.CodeType = 439
+	CodePostTooOften                         sdk.CodeType = 440
 
 	// Lino validator errors reserve 500 ~ 599
 	CodeValidatorNotFound              sdk.CodeType = 500

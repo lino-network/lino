@@ -43,6 +43,17 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if pm.DoesPostExist(ctx, permlink) {
 		return ErrPostAlreadyExist(permlink).Result()
 	}
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+	lastPostAt, err := am.GetLastPostAt(ctx, msg.Author)
+	if err != nil {
+		return err.Result()
+	}
+	if lastPostAt+postParam.PostIntervalSec > ctx.BlockHeader().Time.Unix() {
+		return ErrPostTooOften(msg.Author).Result()
+	}
 	if len(msg.ParentAuthor) > 0 || len(msg.ParentPostID) > 0 {
 		parentPostKey := types.GetPermlink(msg.ParentAuthor, msg.ParentPostID)
 		if !pm.DoesPostExist(ctx, parentPostKey) {
@@ -65,6 +76,13 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		return err.Result()
 	}
 
+	if err := am.UpdateLastPostAt(ctx, msg.Author); err != nil {
+		return err.Result()
+	}
+	lastPostAt, err = am.GetLastPostAt(ctx, msg.Author)
+	if err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 

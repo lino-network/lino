@@ -218,6 +218,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,
+				PostIntervalSec:           600,
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

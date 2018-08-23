@@ -121,6 +121,7 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,
+				PostIntervalSec:           600,
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

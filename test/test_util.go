@@ -48,6 +48,7 @@ var (
 	CoinReturnTimes              int64   = 7
 	ConsumptionFrictionRate      sdk.Rat = sdk.NewRat(5, 100)
 	ConsumptionFreezingPeriodSec int64   = 24 * 7 * 3600
+	PostIntervalSec              int64   = 600
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
@@ -192,7 +193,6 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
 	res := lb.Simulate(tx)
-
 	if expPass {
 		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
 	} else {
