@@ -672,7 +672,7 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 
 	if !msg.Parameter.ValidatorMinWithdraw.IsPositive() ||
 		!msg.Parameter.ValidatorMinVotingDeposit.IsPositive() ||
-		!msg.Parameter.ValidatorMinCommitingDeposit.IsPositive() ||
+		!msg.Parameter.ValidatorMinCommittingDeposit.IsPositive() ||
 		!msg.Parameter.PenaltyMissVote.IsPositive() ||
 		!msg.Parameter.PenaltyMissCommit.IsPositive() ||
 		!msg.Parameter.PenaltyByzantine.IsPositive() {

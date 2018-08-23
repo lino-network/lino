@@ -67,7 +67,7 @@ func (vm ValidatorManager) IsLegalWithdraw(
 	// pass if it's not in all validator list
 	// reject if the remaining coins are less than min deposit requirement
 	res := validator.Deposit.Minus(coin)
-	return res.IsGTE(param.ValidatorMinCommitingDeposit)
+	return res.IsGTE(param.ValidatorMinCommittingDeposit)
 }
 
 func (vm ValidatorManager) IsBalancedAccount(
@@ -191,7 +191,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 	// remove this validator if its remaining deposit is not enough
 	// OR, we explicitly want to fire this validator
 	// all deposit will be added back to inflation pool
-	if punishType == types.PunishByzantine || !validator.Deposit.IsGTE(param.ValidatorMinCommitingDeposit) {
+	if punishType == types.PunishByzantine || !validator.Deposit.IsGTE(param.ValidatorMinCommittingDeposit) {
 		if err := vm.RemoveValidatorFromAllLists(ctx, validator.Username); err != nil {
 			return actualPenalty, err
 		}
@@ -275,12 +275,12 @@ func (vm ValidatorManager) PunishValidatorsDidntVote(
 
 func (vm ValidatorManager) RegisterValidator(
 	ctx sdk.Context, username types.AccountKey, pubKey crypto.PubKey, coin types.Coin, link string) sdk.Error {
-	// check validator minimum commiting deposit requirement
+	// check validator minimum committing deposit requirement
 	param, err := vm.paramHolder.GetValidatorParam(ctx)
 	if err != nil {
 		return err
 	}
-	if !coin.IsGTE(param.ValidatorMinCommitingDeposit) {
+	if !coin.IsGTE(param.ValidatorMinCommittingDeposit) {
 		return ErrInsufficientDeposit()
 	}
 
@@ -370,7 +370,7 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 		return err
 	}
 	// check minimum requirements
-	if !curValidator.Deposit.IsGTE(param.ValidatorMinCommitingDeposit) {
+	if !curValidator.Deposit.IsGTE(param.ValidatorMinCommittingDeposit) {
 		return ErrInsufficientDeposit()
 	}
 

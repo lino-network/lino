@@ -194,7 +194,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			param.ValidatorParam{
 				ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
 				ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-				ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+				ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
 				ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 				ValidatorCoinReturnTimes:       int64(7),
 				PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),

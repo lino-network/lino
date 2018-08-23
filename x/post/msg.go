@@ -386,17 +386,19 @@ func (msg DeletePostMsg) String() string {
 
 func (msg DonateMsg) String() string {
 	return fmt.Sprintf(
-		"Post.DonateMsg{donation from: %v, amount: %v, post auther:%v, post id: %v}",
+		"Post.DonateMsg{donation from: %v, amount: %v, post author:%v, post id: %v}",
 		msg.Username, msg.Amount, msg.Author, msg.PostID)
 }
+
 func (msg ReportOrUpvoteMsg) String() string {
 	return fmt.Sprintf(
-		"Post.ReportOrUpvoteMsg{from: %v, post auther:%v, post id: %v}",
+		"Post.ReportOrUpvoteMsg{from: %v, post author:%v, post id: %v}",
 		msg.Username, msg.Author, msg.PostID)
 }
+
 func (msg ViewMsg) String() string {
 	return fmt.Sprintf(
-		"Post.ViewMsg{from: %v, post auther:%v, post id: %v}",
+		"Post.ViewMsg{from: %v, post author:%v, post id: %v}",
 		msg.Username, msg.Author, msg.PostID)
 }
 
