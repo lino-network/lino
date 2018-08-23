@@ -16,7 +16,7 @@ func ErrInsufficientDeposit() sdk.Error {
 }
 
 func ErrUnbalancedAccount() sdk.Error {
-	return types.NewError(types.CodeUnbalancedAccount, fmt.Sprintf("commiting deposit not enough"))
+	return types.NewError(types.CodeUnbalancedAccount, fmt.Sprintf("committing deposit not enough"))
 }
 
 func ErrIllegalWithdraw() sdk.Error {

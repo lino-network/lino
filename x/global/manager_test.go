@@ -137,7 +137,7 @@ func TestTPS(t *testing.T) {
 		}
 
 		storage := model.NewGlobalStorage(TestGlobalKVStoreKey)
-		tps, err := storage.GetTPS(ctx)
+		tps, _ := storage.GetTPS(ctx)
 		if !tc.expectCurrentTPS.Equal(tps.CurrentTPS) {
 			t.Errorf("%s: diff current tps, got %v, want %v", tc.testName, tps.CurrentTPS, tc.expectCurrentTPS)
 		}

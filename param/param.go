@@ -73,7 +73,7 @@ type DeveloperParam struct {
 type ValidatorParam struct {
 	ValidatorMinWithdraw           types.Coin `json:"validator_min_withdraw"`
 	ValidatorMinVotingDeposit      types.Coin `json:"validator_min_voting_deposit"`
-	ValidatorMinCommitingDeposit   types.Coin `json:"validator_min_commiting_deposit"`
+	ValidatorMinCommittingDeposit  types.Coin `json:"validator_min_committing_deposit"`
 	ValidatorCoinReturnIntervalSec int64      `json:"validator_coin_return_second"`
 	ValidatorCoinReturnTimes       int64      `json:"validator_coin_return_times"`
 	PenaltyMissVote                types.Coin `json:"penalty_miss_vote"`

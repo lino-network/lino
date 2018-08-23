@@ -166,7 +166,7 @@ func TestGenesisAcc(t *testing.T) {
 		if acc.isValidator {
 			param, _ := lb.paramHolder.GetValidatorParam(ctx)
 			expectBalance = expectBalance.Minus(
-				param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
+				param.ValidatorMinCommittingDeposit.Plus(param.ValidatorMinVotingDeposit))
 		}
 		if acc.genesisAccountName == "developer" {
 			param, _ := lb.paramHolder.GetDeveloperParam(ctx)
@@ -238,7 +238,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		param.ValidatorParam{
 			ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
 			ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-			ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+			ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
 			ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 			ValidatorCoinReturnTimes:       int64(7),
 			PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
@@ -319,7 +319,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
 	expectBaseBalance := CoinPerValidator.Minus(
-		param.ValidatorMinCommitingDeposit.Plus(param.ValidatorMinVotingDeposit))
+		param.ValidatorMinCommittingDeposit.Plus(param.ValidatorMinVotingDeposit))
 	expectBalanceList := make([]types.Coin, 21)
 	for i := 0; i < len(expectBalanceList); i++ {
 		expectBalanceList[i] = expectBaseBalance
@@ -494,7 +494,7 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 				lb.accountManager.GetSavingFromBank(
 					ctx, types.AccountKey("infra"+strconv.Itoa(i)))
 			assert.Nil(t, err)
-			inflation := types.NewCoinFromInt64(0)
+			var inflation types.Coin
 			if totalWeight == 0 {
 				inflation =
 					types.RatToCoin(
@@ -653,7 +653,7 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 				lb.accountManager.GetSavingFromBank(
 					ctx, types.AccountKey("dev"+strconv.Itoa(i)))
 			assert.Nil(t, err)
-			inflation := types.NewCoinFromInt64(0)
+			var inflation types.Coin
 			if totalConsumption.IsZero() {
 				inflation =
 					types.RatToCoin(
@@ -721,7 +721,7 @@ func TestIncreaseMinute(t *testing.T) {
 					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
 			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
 
-			inflationPool, err := gs.GetInflationPool(ctx)
+			inflationPool, _ := gs.GetInflationPool(ctx)
 			assert.Equal(t, types.NewCoinFromInt64(0), inflationPool.ValidatorInflationPool)
 
 			if i%types.MinutesPerMonth == 0 {

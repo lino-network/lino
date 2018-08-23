@@ -344,7 +344,7 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p1 := param.ValidatorParam{
 		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
 		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(1000 * types.Decimals),
+		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(1000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
 		PenaltyMissVote:                types.NewCoinFromInt64(200 * types.Decimals),
@@ -361,7 +361,7 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p3.ValidatorMinVotingDeposit = types.NewCoinFromInt64(0 * types.Decimals)
 
 	p4 := p1
-	p4.ValidatorMinCommitingDeposit = types.NewCoinFromInt64(-1000 * types.Decimals)
+	p4.ValidatorMinCommittingDeposit = types.NewCoinFromInt64(-1000 * types.Decimals)
 
 	p5 := p1
 	p5.ValidatorCoinReturnIntervalSec = int64(-7 * 24 * 3600)
@@ -405,7 +405,7 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
-			testName:                "negative ValidatorMinCommitingDeposit is illegal",
+			testName:                "negative ValidatorMinCommittingDeposit is illegal",
 			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p4, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
@@ -986,7 +986,7 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.TransactionPermission,
 		},
 		{
-			testName:         "upgrade protocal msg",
+			testName:         "upgrade protocol msg",
 			msg:              NewUpgradeProtocolMsg("creator", "link", ""),
 			expectPermission: types.TransactionPermission,
 		},
@@ -1077,7 +1077,7 @@ func TestGetSignBytes(t *testing.T) {
 				"creator", "perm_link", "reason"),
 		},
 		{
-			testName: "upgrade protocal msg",
+			testName: "upgrade protocol msg",
 			msg:      NewUpgradeProtocolMsg("creator", "link", ""),
 		},
 		{
@@ -1154,7 +1154,7 @@ func TestGetSigners(t *testing.T) {
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
-			testName:      "upgrade protocal msg",
+			testName:      "upgrade protocol msg",
 			msg:           NewUpgradeProtocolMsg("creator", "link", ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},

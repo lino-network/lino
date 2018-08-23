@@ -166,7 +166,7 @@ func TestVoterWithdraw(t *testing.T) {
 	// create test users
 	createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.VoterMinDeposit))
 
-	// withdraw will fail if hasn't registed as voter
+	// withdraw will fail if hasn't registered as voter
 	illegalWithdrawMsg := NewVoterWithdrawMsg("user1", coinToString(voteParam.VoterMinWithdraw))
 	res := handler(ctx, illegalWithdrawMsg)
 	assert.Equal(t, ErrIllegalWithdraw().Result(), res)

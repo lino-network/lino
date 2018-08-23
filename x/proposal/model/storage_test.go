@@ -101,7 +101,7 @@ func TestProposal(t *testing.T) {
 			t.Errorf("%s: failed to delete proposal, get err %v", tc.testName, err)
 		}
 
-		proposal, err = ps.GetProposal(ctx, proposalID)
+		_, err = ps.GetProposal(ctx, proposalID)
 		if err == nil {
 			t.Errorf("%s: failed to get proposal after deletion, get err %v", tc.testName, err)
 		}

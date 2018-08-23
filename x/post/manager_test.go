@@ -28,7 +28,7 @@ func TestCreatePost(t *testing.T) {
 		expectResult sdk.Error
 	}{
 		{
-			testName:     "creates (postID, user1) sucessfully",
+			testName:     "creates (postID, user1) successfully",
 			postID:       "postID",
 			author:       user1,
 			sourcePostID: "",
@@ -36,7 +36,7 @@ func TestCreatePost(t *testing.T) {
 			expectResult: nil,
 		},
 		{
-			testName:     "creates (postID, user2) sucessfully",
+			testName:     "creates (postID, user2) successfully",
 			postID:       "postID",
 			author:       user2,
 			sourcePostID: "",

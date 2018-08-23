@@ -433,7 +433,7 @@ func TestHandleRegister(t *testing.T) {
 				t.Errorf("%s: diff stake, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
 			}
 
-			accMeta, err := am.storage.GetMeta(ctx, tc.registerMsg.NewUser)
+			accMeta, _ := am.storage.GetMeta(ctx, tc.registerMsg.NewUser)
 			if !accMeta.TransactionCapacity.IsEqual(tc.expectNewAccountStake) {
 				t.Errorf("%s: diff transaction capacity, got %v, want %v", tc.testName, accMeta.TransactionCapacity, tc.expectNewAccountStake)
 			}

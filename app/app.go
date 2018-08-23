@@ -280,7 +280,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		// withdraw money from validator's bank
 		if err := lb.accountManager.MinusSavingCoin(
 			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommitingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
+			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
 			"", "", types.ValidatorDeposit); err != nil {
 			panic(err)
 		}
@@ -291,7 +291,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		}
 		if err := lb.valManager.RegisterValidator(
 			ctx, types.AccountKey(ga.Name), ga.ValPubKey,
-			valParam.ValidatorMinCommitingDeposit, ""); err != nil {
+			valParam.ValidatorMinCommittingDeposit, ""); err != nil {
 			panic(err)
 		}
 		if err := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); err != nil {
@@ -562,7 +562,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
-	// tell voting committe the newest validators
+	// tell voting committee the newest validators
 	validatorList, err := lb.valManager.GetValidatorList(ctx)
 	if err != nil {
 		panic(err)
