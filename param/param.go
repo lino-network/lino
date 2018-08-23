@@ -39,47 +39,48 @@ type InfraInternalAllocationParam struct {
 }
 
 type VoteParam struct {
-	VoterMinDeposit               types.Coin `json:"voter_min_deposit"`
-	VoterMinWithdraw              types.Coin `json:"voter_min_withdraw"`
-	DelegatorMinWithdraw          types.Coin `json:"delegator_min_withdraw"`
-	VoterCoinReturnIntervalHr     int64      `json:"voter_coin_return_interval"`
-	VoterCoinReturnTimes          int64      `json:"voter_coin_return_times"`
-	DelegatorCoinReturnIntervalHr int64      `json:"delegator_coin_return_interval"`
-	DelegatorCoinReturnTimes      int64      `json:"delegator_coin_return_times"`
+	VoterMinDeposit                types.Coin `json:"voter_min_deposit"`
+	VoterMinWithdraw               types.Coin `json:"voter_min_withdraw"`
+	DelegatorMinWithdraw           types.Coin `json:"delegator_min_withdraw"`
+	VoterCoinReturnIntervalSec     int64      `json:"voter_coin_return_interval_second"`
+	VoterCoinReturnTimes           int64      `json:"voter_coin_return_times"`
+	DelegatorCoinReturnIntervalSec int64      `json:"delegator_coin_return_interval_second"`
+	DelegatorCoinReturnTimes       int64      `json:"delegator_coin_return_times"`
 }
 
 type ProposalParam struct {
-	ContentCensorshipDecideHr   int64      `json:"content_censorship_decide_hr"`
+	ContentCensorshipDecideSec  int64      `json:"content_censorship_decide_second"`
 	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`
 	ContentCensorshipPassRatio  sdk.Rat    `json:"content_censorship_pass_ratio"`
 	ContentCensorshipPassVotes  types.Coin `json:"content_censorship_pass_votes"`
-	ChangeParamDecideHr         int64      `json:"change_param_decide_hr"`
+	ChangeParamDecideSec        int64      `json:"change_param_decide_second"`
+	ChangeParamExecutionSec     int64      `json:"change_param_execution_second"`
 	ChangeParamMinDeposit       types.Coin `json:"change_param_min_deposit"`
 	ChangeParamPassRatio        sdk.Rat    `json:"change_param_pass_ratio"`
 	ChangeParamPassVotes        types.Coin `json:"change_param_pass_votes"`
-	ProtocolUpgradeDecideHr     int64      `json:"protocol_upgrade_decide_hr"`
+	ProtocolUpgradeDecideSec    int64      `json:"protocol_upgrade_decide_second"`
 	ProtocolUpgradeMinDeposit   types.Coin `json:"protocol_upgrade_min_deposit"`
 	ProtocolUpgradePassRatio    sdk.Rat    `json:"protocol_upgrade_pass_ratio"`
 	ProtocolUpgradePassVotes    types.Coin `json:"protocol_upgrade_pass_votes"`
 }
 
 type DeveloperParam struct {
-	DeveloperMinDeposit           types.Coin `json:"developer_min_deposit"`
-	DeveloperCoinReturnIntervalHr int64      `json:"developer_coin_return_interval"`
-	DeveloperCoinReturnTimes      int64      `json:"developer_coin_return_times"`
+	DeveloperMinDeposit            types.Coin `json:"developer_min_deposit"`
+	DeveloperCoinReturnIntervalSec int64      `json:"developer_coin_return_interval_second"`
+	DeveloperCoinReturnTimes       int64      `json:"developer_coin_return_times"`
 }
 
 type ValidatorParam struct {
-	ValidatorMinWithdraw          types.Coin `json:"validator_min_withdraw"`
-	ValidatorMinVotingDeposit     types.Coin `json:"validator_min_voting_deposit"`
-	ValidatorMinCommitingDeposit  types.Coin `json:"validator_min_commiting_deposit"`
-	ValidatorCoinReturnIntervalHr int64      `json:"validator_coin_return_interval"`
-	ValidatorCoinReturnTimes      int64      `json:"validator_coin_return_times"`
-	PenaltyMissVote               types.Coin `json:"penalty_miss_vote"`
-	PenaltyMissCommit             types.Coin `json:"penalty_miss_commit"`
-	PenaltyByzantine              types.Coin `json:"penalty_byzantine"`
-	ValidatorListSize             int64      `json:"validator_list_size"`
-	AbsentCommitLimitation        int64      `json:"absent_commit_limitation"`
+	ValidatorMinWithdraw           types.Coin `json:"validator_min_withdraw"`
+	ValidatorMinVotingDeposit      types.Coin `json:"validator_min_voting_deposit"`
+	ValidatorMinCommitingDeposit   types.Coin `json:"validator_min_commiting_deposit"`
+	ValidatorCoinReturnIntervalSec int64      `json:"validator_coin_return_second"`
+	ValidatorCoinReturnTimes       int64      `json:"validator_coin_return_times"`
+	PenaltyMissVote                types.Coin `json:"penalty_miss_vote"`
+	PenaltyMissCommit              types.Coin `json:"penalty_miss_commit"`
+	PenaltyByzantine               types.Coin `json:"penalty_byzantine"`
+	ValidatorListSize              int64      `json:"validator_list_size"`
+	AbsentCommitLimitation         int64      `json:"absent_commit_limitation"`
 }
 
 type CoinDayParam struct {
@@ -100,5 +101,5 @@ type AccountParam struct {
 }
 
 type PostParam struct {
-	ReportOrUpvoteInterval int64 `json:"report_or_upvote_interval"`
+	ReportOrUpvoteIntervalSec int64 `json:"report_or_upvote_interval_second"`
 }

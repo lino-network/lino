@@ -44,17 +44,17 @@ type InflationPool struct {
 // ConsumptionWindow records all content related consumption within the freezing period
 // ConsumptionFreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
-	ConsumptionFrictionRate     sdk.Rat    `json:"consumption_friction_rate"`
-	ConsumptionWindow           types.Coin `json:"consumption_window"`
-	ConsumptionRewardPool       types.Coin `json:"consumption_reward_pool"`
-	ConsumptionFreezingPeriodHr int64      `json:"consumption_freezing_period"`
+	ConsumptionFrictionRate      sdk.Rat    `json:"consumption_friction_rate"`
+	ConsumptionWindow            types.Coin `json:"consumption_window"`
+	ConsumptionRewardPool        types.Coin `json:"consumption_reward_pool"`
+	ConsumptionFreezingPeriodSec int64      `json:"consumption_freezing_period_second"`
 }
 
 type InitParamList struct {
-	GrowthRate                  sdk.Rat `json:"growth_rate"`
-	Ceiling                     sdk.Rat `json:"ceiling"`
-	Floor                       sdk.Rat `json:"floor"`
-	MaxTPS                      sdk.Rat `json:"max_tps"`
-	ConsumptionFrictionRate     sdk.Rat `json:"consumption_friction_rate"`
-	ConsumptionFreezingPeriodHr int64   `json:"consumption_freezing_period"`
+	GrowthRate                   sdk.Rat `json:"growth_rate"`
+	Ceiling                      sdk.Rat `json:"ceiling"`
+	Floor                        sdk.Rat `json:"floor"`
+	MaxTPS                       sdk.Rat `json:"max_tps"`
+	ConsumptionFrictionRate      sdk.Rat `json:"consumption_friction_rate"`
+	ConsumptionFreezingPeriodSec int64   `json:"consumption_freezing_period_second"`
 }

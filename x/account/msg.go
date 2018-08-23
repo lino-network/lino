@@ -79,7 +79,7 @@ func (msg FollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 	return nil
 }
@@ -125,7 +125,7 @@ func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 		len(msg.Followee) < types.MinimumUsernameLength ||
 		len(msg.Follower) > types.MaximumUsernameLength ||
 		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 	return nil
 }
@@ -168,7 +168,7 @@ func (msg ClaimMsg) Type() string { return types.AccountRouterName }
 func (msg ClaimMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 	return nil
 }
@@ -215,7 +215,7 @@ func (msg TransferMsg) ValidateBasic() sdk.Error {
 		len(msg.Sender) > types.MaximumUsernameLength ||
 		len(msg.Receiver) < types.MinimumUsernameLength ||
 		len(msg.Receiver) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 	_, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -271,7 +271,7 @@ func (msg RecoverMsg) Type() string { return types.AccountRouterName }
 func (msg RecoverMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 
 	return nil
@@ -326,7 +326,7 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 		len(msg.NewUser) > types.MaximumUsernameLength ||
 		len(msg.Referrer) < types.MinimumUsernameLength ||
 		len(msg.Referrer) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 
 	match, err := regexp.MatchString(types.UsernameReCheck, string(msg.NewUser))
@@ -334,7 +334,7 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername("match error")
 	}
 	if !match {
-		return ErrInvalidUsername("illeagle input")
+		return ErrInvalidUsername("illegal input")
 	}
 
 	_, coinErr := types.LinoToCoin(msg.RegisterFee)
@@ -387,7 +387,7 @@ func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // 
 func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illeagle length")
+		return ErrInvalidUsername("illegal length")
 	}
 
 	if len(msg.JSONMeta) > types.MaximumJSONMetaLength {

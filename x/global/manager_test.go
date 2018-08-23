@@ -624,7 +624,7 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 			testName:               "one event with 5 times",
 			registerAtTime:         baseTime,
 			times:                  5,
-			interval:               10,
+			interval:               10 * 3600,
 			expectTimeWithTwoEvent: []int64{},
 			expectTimeWithOneEvent: []int64{
 				baseTime + 10*3600,
@@ -638,7 +638,7 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 			testName:       "two event with 2 times and one event with 3 times",
 			registerAtTime: baseTime,
 			times:          2,
-			interval:       10,
+			interval:       10 * 3600,
 			expectTimeWithTwoEvent: []int64{
 				baseTime + 10*3600,
 				baseTime + 20*3600,
@@ -653,7 +653,7 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 			testName:       "two event with 4 times and one event with 3 times",
 			registerAtTime: baseTime + 20*3600,
 			times:          4,
-			interval:       5,
+			interval:       5 * 3600,
 			expectTimeWithTwoEvent: []int64{
 				baseTime + 10*3600,
 				baseTime + 20*3600,

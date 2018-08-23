@@ -241,12 +241,12 @@ func handleReportOrUpvoteMsg(
 		return err.Result()
 	}
 
-	reportOrUpvoteInterval, err := pm.GetReportOrUpvoteInterval(ctx)
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
 
-	if lastReportOrUpvoteAt+reportOrUpvoteInterval > ctx.BlockHeader().Time.Unix() {
+	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteIntervalSec > ctx.BlockHeader().Time.Unix() {
 		return ErrReportOrUpvoteTooOften().Result()
 	}
 
