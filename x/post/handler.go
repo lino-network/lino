@@ -79,10 +79,6 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if err := am.UpdateLastPostAt(ctx, msg.Author); err != nil {
 		return err.Result()
 	}
-	lastPostAt, err = am.GetLastPostAt(ctx, msg.Author)
-	if err != nil {
-		return err.Result()
-	}
 	return sdk.Result{}
 }
 
