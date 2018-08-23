@@ -2189,6 +2189,73 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 	}
 }
 
+func TestLastReportOrUpvoteAt(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+
+	createTestAccount(ctx, am, string(user1))
+
+	testCases := []struct {
+		testName             string
+		lastReportOrUpvoteAt int64
+	}{
+		{
+			testName:             "last report or upvote at current time",
+			lastReportOrUpvoteAt: time.Now().Unix(),
+		},
+		{
+			testName:             "last report or upvote at time 0",
+			lastReportOrUpvoteAt: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.lastReportOrUpvoteAt, 0)})
+		err := am.UpdateLastReportOrUpvoteAt(newCtx, user1)
+		if err != nil {
+			t.Errorf("%s: failed to update last report or update at, got err %v", tc.testName, err)
+		}
+		lastReportOrUpdateAt, err := am.GetLastReportOrUpvoteAt(ctx, user1)
+		if err != nil {
+			t.Errorf("%s: failed to get last report or update at, got err %v", tc.testName, err)
+		}
+		assert.Equal(t, lastReportOrUpdateAt, tc.lastReportOrUpvoteAt)
+	}
+}
+
+func TestLastPostAt(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	user1 := types.AccountKey("user1")
+
+	createTestAccount(ctx, am, string(user1))
+
+	testCases := []struct {
+		testName   string
+		lastPostAt int64
+	}{
+		{
+			testName:   "last post at current time",
+			lastPostAt: time.Now().Unix(),
+		},
+		{
+			testName:   "last post at time 0",
+			lastPostAt: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.lastPostAt, 0)})
+		err := am.UpdateLastPostAt(newCtx, user1)
+		if err != nil {
+			t.Errorf("%s: failed to update last report or update at, got err %v", tc.testName, err)
+		}
+		lastPostAt, err := am.GetLastPostAt(ctx, user1)
+		if err != nil {
+			t.Errorf("%s: failed to get last report or update at, got err %v", tc.testName, err)
+		}
+		assert.Equal(t, lastPostAt, tc.lastPostAt)
+	}
+}
 func TestAddFrozenMoney(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")

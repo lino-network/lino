@@ -170,13 +170,13 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 
 func TestChangeVoteParamMsg(t *testing.T) {
 	p1 := param.VoteParam{
-		VoterMinDeposit:               types.NewCoinFromInt64(1000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoinFromInt64(1 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
+		VoterMinDeposit:                types.NewCoinFromInt64(1000 * types.Decimals),
+		VoterMinWithdraw:               types.NewCoinFromInt64(1 * types.Decimals),
+		DelegatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:           int64(7),
+		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DelegatorCoinReturnTimes:       int64(7),
 	}
 
 	p2 := p1
@@ -189,13 +189,13 @@ func TestChangeVoteParamMsg(t *testing.T) {
 	p4.DelegatorMinWithdraw = types.NewCoinFromInt64(0 * types.Decimals)
 
 	p5 := p1
-	p5.VoterCoinReturnIntervalHr = int64(0)
+	p5.VoterCoinReturnIntervalSec = int64(0)
 
 	p6 := p1
 	p6.VoterCoinReturnTimes = int64(0)
 
 	p7 := p1
-	p7.DelegatorCoinReturnIntervalHr = int64(-1)
+	p7.DelegatorCoinReturnIntervalSec = int64(-1)
 
 	p8 := p1
 	p8.DelegatorCoinReturnTimes = int64(0)
@@ -274,16 +274,16 @@ func TestChangeVoteParamMsg(t *testing.T) {
 
 func TestChangeDeveloperParamMsg(t *testing.T) {
 	p1 := param.DeveloperParam{
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(7),
-		DeveloperMinDeposit:           types.NewCoinFromInt64(1 * types.Decimals),
+		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DeveloperCoinReturnTimes:       int64(7),
+		DeveloperMinDeposit:            types.NewCoinFromInt64(1 * types.Decimals),
 	}
 
 	p2 := p1
 	p2.DeveloperCoinReturnTimes = int64(-7)
 
 	p3 := p1
-	p3.DeveloperCoinReturnIntervalHr = int64(0)
+	p3.DeveloperCoinReturnIntervalSec = int64(0)
 
 	p4 := p1
 	p4.DeveloperMinDeposit = types.NewCoinFromInt64(-1 * types.Decimals)
@@ -342,16 +342,16 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 
 func TestChangeValidatorParamMsg(t *testing.T) {
 	p1 := param.ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoinFromInt64(3000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(1000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoinFromInt64(1000 * types.Decimals),
-		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(100),
+		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(3000 * types.Decimals),
+		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(1000 * types.Decimals),
+		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		ValidatorCoinReturnTimes:       int64(7),
+		PenaltyMissVote:                types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
+		ValidatorListSize:              int64(21),
+		AbsentCommitLimitation:         int64(100),
 	}
 
 	p2 := p1
@@ -364,7 +364,7 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 	p4.ValidatorMinCommitingDeposit = types.NewCoinFromInt64(-1000 * types.Decimals)
 
 	p5 := p1
-	p5.ValidatorCoinReturnIntervalHr = int64(-7 * 24)
+	p5.ValidatorCoinReturnIntervalSec = int64(-7 * 24 * 3600)
 
 	p6 := p1
 	p6.ValidatorCoinReturnTimes = int64(0)
@@ -473,24 +473,25 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 
 func TestChangeProposalParamMsg(t *testing.T) {
 	p1 := param.ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
 		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
+		ChangeParamDecideSec:    int64(24 * 7 * 3600),
+		ChangeParamExecutionSec: int64(24 * 3600),
+		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
+		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
 
 	p2 := p1
-	p2.ContentCensorshipDecideHr = int64(-24 * 7)
+	p2.ContentCensorshipDecideSec = int64(-24 * 7 * 3600)
 
 	p3 := p1
 	p3.ContentCensorshipPassRatio = sdk.NewRat(150, 100)
@@ -502,7 +503,7 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p5.ContentCensorshipMinDeposit = types.NewCoinFromInt64(-100 * types.Decimals)
 
 	p6 := p1
-	p6.ChangeParamDecideHr = int64(-24 * 7)
+	p6.ChangeParamDecideSec = int64(-24 * 7 * 3600)
 
 	p7 := p1
 	p7.ChangeParamPassRatio = sdk.NewRat(0, 8)
@@ -514,7 +515,7 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p9.ChangeParamMinDeposit = types.NewCoinFromInt64(-100000 * types.Decimals)
 
 	p10 := p1
-	p10.ProtocolUpgradeDecideHr = int64(0)
+	p10.ProtocolUpgradeDecideSec = int64(0)
 
 	p11 := p1
 	p11.ProtocolUpgradePassRatio = sdk.NewRat(0, 100)
@@ -752,6 +753,58 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 
 	for _, tc := range testCases {
 		result := tc.changeBandwidthParamMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
+	}
+}
+
+func TestChangePostParamMsg(t *testing.T) {
+	p1 := param.PostParam{
+		ReportOrUpvoteIntervalSec: 1,
+		PostIntervalSec:           1,
+	}
+
+	p2 := p1
+	p2.ReportOrUpvoteIntervalSec = int64(-1)
+
+	p3 := p1
+	p3.PostIntervalSec = int64(-1)
+
+	testCases := []struct {
+		testName           string
+		changePostParamMsg ChangePostParamMsg
+		expectedError      sdk.Error
+	}{
+		{
+			testName:           "normal case",
+			changePostParamMsg: NewChangePostParamMsg("user1", p1, ""),
+			expectedError:      nil,
+		},
+		{
+			testName:           "illegal report or upvote interval",
+			changePostParamMsg: NewChangePostParamMsg("user1", p2, ""),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "illegal post interval",
+			changePostParamMsg: NewChangePostParamMsg("user1", p3, ""),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "username too short",
+			changePostParamMsg: NewChangePostParamMsg("us", p1, ""),
+			expectedError:      ErrInvalidUsername(),
+		},
+		{
+			testName:           "username too long",
+			changePostParamMsg: NewChangePostParamMsg("user1user1user1user1user1", p1, ""),
+			expectedError:      ErrInvalidUsername(),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := tc.changePostParamMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 		}

@@ -63,14 +63,14 @@ func TestVoterRevoke(t *testing.T) {
 	test.SignCheckDeliver(t, lb, voterRevokeMsg, 4, true, newAccountTransactionPriv, baseTime)
 
 	// check delegator withdraw first coin return
-	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600+1)
+	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec+1)
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(11428471429))
 	test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(30099*types.Decimals))
 	test.CheckBalance(t, delegator2Name, lb, types.NewCoinFromInt64(10099*types.Decimals))
 
 	// check balance after freezing period
 	for i := int64(1); i < test.CoinReturnTimes; i++ {
-		test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalHr*3600*(i+1)+1)
+		test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec*(i+1)+1)
 	}
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(499999*types.Decimals))
 	test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(210099*types.Decimals))

@@ -26,8 +26,9 @@ func TestNormalPublish(t *testing.T) {
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID1, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
+	test.SimulateOneBlock(lb, baseTime+test.PostIntervalSec)
 	test.CreateTestPost(
-		t, lb, newAccountName, postID2, 1, newAccountTransactionPriv, "", "", "", "", "0", baseTime)
+		t, lb, newAccountName, postID2, 1, newAccountTransactionPriv, "", "", "", "", "0", baseTime+test.PostIntervalSec)
 }
 
 // test publish a repost
@@ -44,10 +45,10 @@ func TestNormalRepost(t *testing.T) {
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
+	test.SimulateOneBlock(lb, baseTime+test.PostIntervalSec)
 	test.CreateTestPost(
 		t, lb, newAccountName, repostID, 1, newAccountAppPriv,
-		newAccountName, postID, "", "", "0", baseTime)
-
+		newAccountName, postID, "", "", "0", baseTime+test.PostIntervalSec)
 }
 
 // test invalid repost if source post id doesn't exist
@@ -92,7 +93,8 @@ func TestComment(t *testing.T) {
 
 	test.CreateTestPost(
 		t, lb, newAccountName, postID, 0, newAccountAppPriv, "", "", "", "", "0", baseTime)
+	test.SimulateOneBlock(lb, baseTime+test.PostIntervalSec)
 	test.CreateTestPost(
 		t, lb, newAccountName, comment, 1, newAccountAppPriv,
-		"", "", newAccountName, postID, "0", baseTime)
+		"", "", newAccountName, postID, "0", baseTime+test.PostIntervalSec)
 }

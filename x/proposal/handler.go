@@ -46,7 +46,7 @@ func handleChangeParamMsg(
 	}
 
 	proposal := pm.CreateChangeParamProposal(ctx, msg.GetParameter(), msg.GetReason())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ChangeParamDecideHr)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ChangeParamDecideSec)
 	if err != nil {
 		return err.Result()
 	}
@@ -56,7 +56,7 @@ func handleChangeParamMsg(
 		return err.Result()
 	}
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ChangeParamDecideHr, event); err != nil {
+	if err := gm.RegisterProposalDecideEvent(ctx, param.ChangeParamDecideSec, event); err != nil {
 		return err.Result()
 	}
 
@@ -69,7 +69,7 @@ func handleChangeParamMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.GetCreator(), gm, am, int64(1),
-		param.ChangeParamDecideHr, param.ChangeParamMinDeposit); err != nil {
+		param.ChangeParamDecideSec, param.ChangeParamMinDeposit); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -88,7 +88,7 @@ func handleProtocolUpgradeMsg(
 	}
 
 	proposal := pm.CreateProtocolUpgradeProposal(ctx, msg.GetLink(), msg.GetReason())
-	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ProtocolUpgradeDecideHr)
+	proposalID, err := pm.AddProposal(ctx, msg.GetCreator(), proposal, param.ProtocolUpgradeDecideSec)
 	if err != nil {
 		return err.Result()
 	}
@@ -98,7 +98,7 @@ func handleProtocolUpgradeMsg(
 		return err.Result()
 	}
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ProtocolUpgradeDecideHr, event); err != nil {
+	if err := gm.RegisterProposalDecideEvent(ctx, param.ProtocolUpgradeDecideSec, event); err != nil {
 		return err.Result()
 	}
 
@@ -111,7 +111,7 @@ func handleProtocolUpgradeMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.GetCreator(), gm, am, int64(1),
-		param.ProtocolUpgradeDecideHr, param.ProtocolUpgradeMinDeposit); err != nil {
+		param.ProtocolUpgradeDecideSec, param.ProtocolUpgradeMinDeposit); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -142,7 +142,7 @@ func handleContentCensorshipMsg(
 			ctx, msg.GetPermlink(), msg.GetReason())
 	proposalID, err :=
 		proposalManager.AddProposal(
-			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideHr)
+			ctx, msg.GetCreator(), proposal, param.ContentCensorshipDecideSec)
 	if err != nil {
 		return err.Result()
 	}
@@ -159,13 +159,13 @@ func handleContentCensorshipMsg(
 		return err.Result()
 	}
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ContentCensorshipDecideHr, event); err != nil {
+	if err := gm.RegisterProposalDecideEvent(ctx, param.ContentCensorshipDecideSec, event); err != nil {
 		return err.Result()
 	}
 
 	if err := returnCoinTo(
 		ctx, msg.GetCreator(), gm, am, int64(1),
-		param.ContentCensorshipDecideHr, param.ContentCensorshipMinDeposit); err != nil {
+		param.ContentCensorshipDecideSec, param.ContentCensorshipMinDeposit); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

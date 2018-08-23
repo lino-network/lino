@@ -456,8 +456,8 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.Parameter.DelegatorCoinReturnIntervalHr <= 0 ||
-		msg.Parameter.VoterCoinReturnIntervalHr <= 0 ||
+	if msg.Parameter.DelegatorCoinReturnIntervalSec <= 0 ||
+		msg.Parameter.VoterCoinReturnIntervalSec <= 0 ||
 		msg.Parameter.DelegatorCoinReturnTimes <= 0 ||
 		msg.Parameter.VoterCoinReturnTimes <= 0 {
 		return ErrIllegalParameter()
@@ -522,9 +522,10 @@ func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.Parameter.ContentCensorshipDecideHr <= 0 ||
-		msg.Parameter.ChangeParamDecideHr <= 0 ||
-		msg.Parameter.ProtocolUpgradeDecideHr <= 0 {
+	if msg.Parameter.ContentCensorshipDecideSec <= 0 ||
+		msg.Parameter.ChangeParamExecutionSec <= 0 ||
+		msg.Parameter.ChangeParamDecideSec <= 0 ||
+		msg.Parameter.ProtocolUpgradeDecideSec <= 0 {
 		return ErrIllegalParameter()
 	}
 
@@ -600,7 +601,7 @@ func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.Parameter.DeveloperCoinReturnIntervalHr <= 0 ||
+	if msg.Parameter.DeveloperCoinReturnIntervalSec <= 0 ||
 		msg.Parameter.DeveloperCoinReturnTimes <= 0 {
 		return ErrIllegalParameter()
 	}
@@ -662,7 +663,7 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if msg.Parameter.ValidatorCoinReturnIntervalHr <= 0 ||
+	if msg.Parameter.ValidatorCoinReturnIntervalSec <= 0 ||
 		msg.Parameter.ValidatorCoinReturnTimes <= 0 ||
 		msg.Parameter.AbsentCommitLimitation <= 0 ||
 		msg.Parameter.ValidatorListSize <= 0 {
@@ -792,6 +793,9 @@ func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
+	}
+	if msg.Parameter.PostIntervalSec < 0 || msg.Parameter.ReportOrUpvoteIntervalSec < 0 {
+		return ErrIllegalParameter()
 	}
 	return nil
 }

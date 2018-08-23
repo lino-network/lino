@@ -68,10 +68,10 @@ func TestGlobalStorageGenesis(t *testing.T) {
 	}
 
 	consumptionMeta := ConsumptionMeta{
-		ConsumptionFrictionRate:     sdk.NewRat(5, 100),
-		ConsumptionWindow:           types.NewCoinFromInt64(0),
-		ConsumptionRewardPool:       types.NewCoinFromInt64(0),
-		ConsumptionFreezingPeriodHr: 24 * 7,
+		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionWindow:            types.NewCoinFromInt64(0),
+		ConsumptionRewardPool:        types.NewCoinFromInt64(0),
+		ConsumptionFreezingPeriodSec: 24 * 7 * 3600,
 	}
 	inflationPool := InflationPool{
 		InfraInflationPool:     types.NewCoinFromInt64(0),

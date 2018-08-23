@@ -60,7 +60,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	postParam := &PostParam{
-		ReportOrUpvoteInterval: 24 * 3600,
+		ReportOrUpvoteIntervalSec: 24 * 3600,
+		PostIntervalSec:           600,
 	}
 	if err := ph.setPostParam(ctx, postParam); err != nil {
 		return err
@@ -79,55 +80,56 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	developerParam := &DeveloperParam{
-		DeveloperMinDeposit:           types.NewCoinFromInt64(1000000 * types.Decimals),
-		DeveloperCoinReturnIntervalHr: int64(7 * 24),
-		DeveloperCoinReturnTimes:      int64(7),
+		DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
+		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DeveloperCoinReturnTimes:       int64(7),
 	}
 	if err := ph.setDeveloperParam(ctx, developerParam); err != nil {
 		return err
 	}
 
 	validatorParam := &ValidatorParam{
-		ValidatorMinWithdraw:          types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:     types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommitingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
-		ValidatorCoinReturnIntervalHr: int64(7 * 24),
-		ValidatorCoinReturnTimes:      int64(7),
-		PenaltyMissVote:               types.NewCoinFromInt64(20000 * types.Decimals),
-		PenaltyMissCommit:             types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:              types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:             int64(21),
-		AbsentCommitLimitation:        int64(600), // 30min
+		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
+		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
+		ValidatorMinCommitingDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		ValidatorCoinReturnTimes:       int64(7),
+		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
+		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		ValidatorListSize:              int64(21),
+		AbsentCommitLimitation:         int64(600), // 30min
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
 		return err
 	}
 
 	voteParam := &VoteParam{
-		VoterMinDeposit:               types.NewCoinFromInt64(2000 * types.Decimals),
-		VoterMinWithdraw:              types.NewCoinFromInt64(2 * types.Decimals),
-		DelegatorMinWithdraw:          types.NewCoinFromInt64(2 * types.Decimals),
-		VoterCoinReturnIntervalHr:     int64(7 * 24),
-		VoterCoinReturnTimes:          int64(7),
-		DelegatorCoinReturnIntervalHr: int64(7 * 24),
-		DelegatorCoinReturnTimes:      int64(7),
+		VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
+		VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
+		DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
+		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:           int64(7),
+		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		DelegatorCoinReturnTimes:       int64(7),
 	}
 	if err := ph.setVoteParam(ctx, voteParam); err != nil {
 		return err
 	}
 
 	proposalParam := &ProposalParam{
-		ContentCensorshipDecideHr:   int64(24 * 7),
+		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
 		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
-		ChangeParamDecideHr:   int64(24 * 7),
-		ChangeParamPassRatio:  sdk.NewRat(70, 100),
-		ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
-		ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
+		ChangeParamExecutionSec: int64(24 * 3600),
+		ChangeParamDecideSec:    int64(7 * 24 * 3600),
+		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
+		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
-		ProtocolUpgradeDecideHr:   int64(24 * 7),
+		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
 		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),

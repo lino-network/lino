@@ -46,7 +46,7 @@ func TestChangeParamProposal(t *testing.T) {
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 		CreatedAt:     curTime,
-		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
+		ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
 	}, allocation, ""}
 
 	testCases := []struct {
@@ -143,7 +143,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		DisagreeVotes: types.NewCoinFromInt64(0),
 		Result:        types.ProposalNotPass,
 		CreatedAt:     curTime,
-		ExpiredAt:     curTime + proposalParam.ChangeParamDecideHr*3600,
+		ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
 	}, types.GetPermlink(user1, postID1), censorshipReason}
 
 	testCases := []struct {
@@ -341,8 +341,8 @@ func TestVoteProposalBasic(t *testing.T) {
 		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
-	decideHr := int64(100)
-	proposalID1, _ := proposalManager.AddProposal(ctx, user1, proposal1, decideHr)
+	decideSec := int64(100)
+	proposalID1, _ := proposalManager.AddProposal(ctx, user1, proposal1, decideSec)
 
 	testCases := []struct {
 		testName            string
@@ -370,7 +370,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					DisagreeVotes: types.NewCoinFromInt64(0),
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				}, permlink, censorshipReason},
 		},
 		{
@@ -390,7 +390,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					DisagreeVotes: types.NewCoinFromInt64(0),
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				}, permlink, censorshipReason},
 		},
 		{
@@ -411,7 +411,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					DisagreeVotes: types.NewCoinFromInt64(0),
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				}, permlink, censorshipReason},
 		},
 		{
@@ -432,7 +432,7 @@ func TestVoteProposalBasic(t *testing.T) {
 					DisagreeVotes: types.NewCoinFromInt64(0),
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				}, permlink, censorshipReason},
 		},
 	}

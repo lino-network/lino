@@ -168,15 +168,6 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
-// add or update view from the user if view exists
-func (pm PostManager) GetReportOrUpvoteInterval(ctx sdk.Context) (int64, sdk.Error) {
-	postParam, err := pm.paramHolder.GetPostParam(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return postParam.ReportOrUpvoteInterval, nil
-}
-
 // add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
@@ -225,7 +216,14 @@ func (pm PostManager) AddComment(
 	if err := pm.postStorage.SetPostComment(ctx, permlink, comment); err != nil {
 		return err
 	}
-
+	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
+	if err != nil {
+		return err
+	}
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
+	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -248,6 +246,7 @@ func (pm PostManager) AddDonation(
 	}
 	postMeta.TotalReward = postMeta.TotalReward.Plus(amount)
 	postMeta.TotalDonateCount = postMeta.TotalDonateCount + 1
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
 	}

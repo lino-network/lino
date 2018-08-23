@@ -76,6 +76,14 @@ func ErrUpdateLastReportOrUpvoteAt(err error) sdk.Error {
 	return types.NewError(types.CodeUpdateLastReportOrUpvoteAt, fmt.Sprintf("failed to update last report or upvote at: %s", err.Error()))
 }
 
+func ErrGetLastPostAt(err error) sdk.Error {
+	return types.NewError(types.CodeGetLastPostAt, fmt.Sprintf("failed to get last post at: %s", err.Error()))
+}
+
+func ErrUpdateLastPostAt(err error) sdk.Error {
+	return types.NewError(types.CodeUpdateLastPostAt, fmt.Sprintf("failed to update last post at: %s", err.Error()))
+}
+
 func ErrGetFrozenMoneyList(err error) sdk.Error {
 	return types.NewError(types.CodeGetFrozenMoneyList, fmt.Sprintf("failed to get frozen money list: %s", err.Error()))
 }

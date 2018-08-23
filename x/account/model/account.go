@@ -63,6 +63,7 @@ type AccountMeta struct {
 	TransactionCapacity  types.Coin `json:"transaction_capacity"`
 	JSONMeta             string     `json:"json_meta"`
 	LastReportOrUpvoteAt int64      `json:"last_report_or_upvote_at"`
+	LastPostAt           int64      `json:"last_post_at"`
 }
 
 // AccountInfraConsumption records infra utility consumption

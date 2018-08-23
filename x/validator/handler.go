@@ -103,7 +103,7 @@ func handleWithdrawMsg(
 
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes,
-		param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		param.ValidatorCoinReturnIntervalSec, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -127,7 +127,8 @@ func handleRevokeMsg(
 	}
 
 	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes, param.ValidatorCoinReturnIntervalHr, coin); err != nil {
+		ctx, msg.Username, gm, am, param.ValidatorCoinReturnTimes,
+		param.ValidatorCoinReturnIntervalSec, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

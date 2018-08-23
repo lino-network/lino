@@ -74,8 +74,8 @@ func TestForceValidatorVote(t *testing.T) {
 	voteProposalMsg := proposal.NewVoteProposalMsg(accountName, int64(1), true)
 	test.SignCheckDeliver(t, lb, voteProposalMsg, 3, true, accountTransactionPriv, baseTime)
 
-	test.SimulateOneBlock(lb, baseTime+test.ProposalDecideHr*3600+1)
-	test.SimulateOneBlock(lb, baseTime+(test.ProposalDecideHr+test.ParamChangeHr)*3600+2)
+	test.SimulateOneBlock(lb, baseTime+test.ProposalDecideSec+1)
+	test.SimulateOneBlock(lb, baseTime+(test.ProposalDecideSec+test.ParamChangeExecutionSec)+2)
 	test.CheckGlobalAllocation(t, lb, desc)
 
 	// check validator 2 has been punished for not voting

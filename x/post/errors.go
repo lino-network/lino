@@ -16,6 +16,10 @@ func ErrPostNotFound(permlink types.Permlink) sdk.Error {
 	return types.NewError(types.CodePostNotFound, fmt.Sprintf("post %v doesn't exist", permlink))
 }
 
+func ErrPostTooOften(author types.AccountKey) sdk.Error {
+	return types.NewError(types.CodePostTooOften, fmt.Sprintf("%v post too often", author))
+}
+
 func ErrPostAlreadyExist(permlink types.Permlink) sdk.Error {
 	return types.NewError(types.CodePostAlreadyExist, fmt.Sprintf("post %v already exist", permlink))
 }
