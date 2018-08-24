@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -724,7 +723,6 @@ func TestDistributeHourlyInflation(t *testing.T) {
 			types.RatToCoin(lastYearTotalLino.ToRat().
 				Mul(globalAllocationParam.GlobalGrowthRate).
 				Mul(sdk.NewRat(1, int64(types.HoursPerYear))))
-		fmt.Println(lastYearTotalLino, hourlyInflation)
 		expectContentCreatorInflation =
 			expectContentCreatorInflation.Plus(
 				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
