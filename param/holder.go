@@ -42,6 +42,9 @@ func (ph ParamHolder) WireCodec() *wire.Codec {
 
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -367,6 +370,30 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 		return nil, ErrFailedToUnmarshalAccountParam(err)
 	}
 	return param, nil
+}
+
+func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	allocationBytes := store.Get(GetAllocationParamKey())
+	if allocationBytes == nil {
+		return ErrGlobalAllocationParamNotFound()
+	}
+	allocation := new(GlobalAllocationParam)
+	if err := ph.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+		return ErrFailedToUnmarshalGlobalAllocationParam(err)
+	}
+	if growthRate.GT(allocation.Ceiling) {
+		growthRate = allocation.Ceiling
+	} else if growthRate.LT(allocation.Floor) {
+		growthRate = allocation.Floor
+	}
+	allocation.GlobalGrowthRate = growthRate
+	allocationBytes, err := ph.cdc.MarshalJSON(*allocation)
+	if err != nil {
+		return ErrFailedToMarshalGlobalAllocationParam(err)
+	}
+	store.Set(GetAllocationParamKey(), allocationBytes)
+	return nil
 }
 
 func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) sdk.Error {

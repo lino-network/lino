@@ -465,7 +465,7 @@ func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 }
 
 func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
-	if err := lb.globalManager.RecalculateAnnuallyInflation(ctx); err != nil {
+	if err := lb.globalManager.SetTotalLinoAndRecalculateGrowthRate(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -699,9 +699,9 @@ func TestDistributeHourlyInflation(t *testing.T) {
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino)
-	assert.Equal(
-		t, globalMeta.AnnualInflation, types.RatToCoin(totalLino.ToRat().Mul(globalMeta.GrowthRate)))
-	expectInflation := globalMeta.AnnualInflation
+	assert.Equal(t, globalMeta.TotalLinoCoin, globalMeta.LastYearTotalLinoCoin)
+	globalAllocationParam, _ := gm.paramHolder.GetGlobalAllocationParam(ctx)
+	lastYearTotalLino := globalMeta.LastYearTotalLinoCoin
 	expectContentCreatorInflation := types.NewCoinFromInt64(0)
 	expectValidatorInflation := types.NewCoinFromInt64(0)
 	expectDeveloperInflation := types.NewCoinFromInt64(0)
@@ -720,8 +720,9 @@ func TestDistributeHourlyInflation(t *testing.T) {
 		assert.Nil(t, err)
 
 		hourlyInflation :=
-			types.RatToCoin(expectInflation.ToRat().Mul(sdk.NewRat(1, int64(types.HoursPerYear-i))))
-		expectInflation = expectInflation.Minus(hourlyInflation)
+			types.RatToCoin(lastYearTotalLino.ToRat().
+				Mul(globalAllocationParam.GlobalGrowthRate).
+				Mul(sdk.NewRat(1, int64(types.HoursPerYear))))
 		expectContentCreatorInflation =
 			expectContentCreatorInflation.Plus(
 				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
@@ -741,7 +742,6 @@ func TestDistributeHourlyInflation(t *testing.T) {
 	}
 	globalMeta, err = gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoinFromInt64(0), globalMeta.AnnualInflation)
 	assert.Equal(t, globalMeta.TotalLinoCoin, totalLino)
 }
 
@@ -838,18 +838,16 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 	for _, tc := range testCases {
 		globalMeta := &model.GlobalMeta{
 			TotalLinoCoin:                 totalLino,
+			LastYearTotalLinoCoin:         totalLino,
 			LastYearCumulativeConsumption: tc.lastYearConsumption,
 			CumulativeConsumption:         tc.thisYearConsumption,
-			GrowthRate:                    ceiling,
-			Ceiling:                       ceiling,
-			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
 		if err != nil {
 			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
 		}
 
-		err = gm.RecalculateAnnuallyInflation(ctx)
+		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to recalculate annually inflation, got err %v", tc.testName, err)
 		}
@@ -858,13 +856,10 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
 		}
-
-		expectAnnualInflation := types.RatToCoin(totalLino.ToRat().Mul(tc.expectGrowthRate))
-		if !expectAnnualInflation.IsEqual(globalMeta.AnnualInflation) {
-			t.Errorf("%s: expect annual inflation err, got %v, want %v", tc.testName,
-				expectAnnualInflation, globalMeta.AnnualInflation)
+		if !globalMeta.LastYearTotalLinoCoin.IsEqual(globalMeta.TotalLinoCoin) {
+			t.Errorf("%s: diff lino coin, got %v, want %v", tc.testName,
+				globalMeta.LastYearTotalLinoCoin, globalMeta.TotalLinoCoin)
 		}
-
 		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
 			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
 				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
@@ -990,23 +985,22 @@ func TestGetGrowthRate(t *testing.T) {
 	for _, tc := range testCases {
 		globalMeta := &model.GlobalMeta{
 			TotalLinoCoin:                 totalLino,
+			LastYearTotalLinoCoin:         totalLino,
 			LastYearCumulativeConsumption: tc.lastYearConsumption,
 			CumulativeConsumption:         tc.thisYearConsumption,
-			GrowthRate:                    tc.lastYearGrowthRate,
-			Ceiling:                       ceiling,
-			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
 		if err != nil {
 			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
 		}
+		err = gm.paramHolder.UpdateGlobalGrowthRate(ctx, tc.lastYearGrowthRate)
+		if err != nil {
+			t.Errorf("%s: failed to set global growth rate, got err %v", tc.testName, err)
+		}
 
-		growthRate, err := gm.getGrowthRate(ctx)
+		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get growth rate, got err %v", tc.testName, err)
-		}
-		if !tc.expectGrowthRate.Equal(growthRate) {
-			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName, growthRate, tc.expectGrowthRate)
 		}
 
 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
@@ -1021,9 +1015,10 @@ func TestGetGrowthRate(t *testing.T) {
 			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
 				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
 		}
-		if !tc.expectGrowthRate.Equal(globalMeta.GrowthRate) {
+		globalParam, _ := gm.paramHolder.GetGlobalAllocationParam(ctx)
+		if !tc.expectGrowthRate.Equal(globalParam.GlobalGrowthRate) {
 			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName,
-				globalMeta.GrowthRate, tc.expectGrowthRate)
+				globalParam.GlobalGrowthRate, tc.expectGrowthRate)
 		}
 	}
 }
@@ -1161,6 +1156,72 @@ func TestAddConsumption(t *testing.T) {
 		if !globalMeta.CumulativeConsumption.IsEqual(tc.expect) {
 			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
 				globalMeta.CumulativeConsumption, tc.expect)
+		}
+	}
+}
+
+func TestChainStartTime(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName  string
+		startTime int64
+	}{
+		{
+			testName:  "set start time to zero",
+			startTime: 0,
+		},
+		{
+			testName:  "normal case",
+			startTime: time.Now().Unix(),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.SetChainStartTime(ctx, tc.startTime)
+		if err != nil {
+			t.Errorf("%s: failed to set chain start time, got err %v", tc.testName, err)
+		}
+		chainStartTime, err := gm.GetChainStartTime(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get chain start time, got err %v", tc.testName, err)
+		}
+		if chainStartTime != tc.startTime {
+			t.Errorf("%s: diff chain start time, got %v, want %v", tc.testName, chainStartTime, tc.startTime)
+			return
+		}
+	}
+}
+
+func TestPastMinutes(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName    string
+		pastMinutes int64
+	}{
+		{
+			testName:    "set past minutes to zero",
+			pastMinutes: 0,
+		},
+		{
+			testName:    "normal case",
+			pastMinutes: time.Now().Unix() / 60,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.SetPastMinutes(ctx, tc.pastMinutes)
+		if err != nil {
+			t.Errorf("%s: failed to set past minutes, got err %v", tc.testName, err)
+		}
+		pastMinutes, err := gm.GetPastMinutes(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get past minutes, got err %v", tc.testName, err)
+		}
+		if pastMinutes != tc.pastMinutes {
+			t.Errorf("%s: diff past minutes, got %v, want %v", tc.testName, pastMinutes, tc.pastMinutes)
+			return
 		}
 	}
 }

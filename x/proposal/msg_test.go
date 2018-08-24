@@ -68,6 +68,9 @@ func TestVoteProposalMsg(t *testing.T) {
 
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(55, 100),
 		DeveloperAllocation:      sdk.NewRat(20, 100),
@@ -75,6 +78,15 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	}
 	p2 := p1
 	p2.DeveloperAllocation = sdk.NewRat(25, 100)
+
+	p3 := p1
+	p3.Ceiling = sdk.NewRat(2, 100)
+
+	p4 := p1
+	p4.Floor = sdk.NewRat(-1, 100)
+
+	p5 := p1
+	p5.GlobalGrowthRate = sdk.NewRat(2, 100)
 
 	testCases := []struct {
 		testName                       string
@@ -89,6 +101,21 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 		{
 			testName:                       "illegal parameter",
 			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p2, ""),
+			expectedError:                  ErrIllegalParameter(),
+		},
+		{
+			testName:                       "illegal parameter",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p3, ""),
+			expectedError:                  ErrIllegalParameter(),
+		},
+		{
+			testName:                       "illegal parameter",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p4, ""),
+			expectedError:                  ErrIllegalParameter(),
+		},
+		{
+			testName:                       "illegal parameter",
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p5, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{

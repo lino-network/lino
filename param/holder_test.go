@@ -30,6 +30,9 @@ func TestGlobalAllocationParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := GlobalAllocationParam{
+		GlobalGrowthRate: sdk.NewRat(98, 1000),
+		Ceiling:          sdk.NewRat(98, 1000),
+		Floor:            sdk.NewRat(3, 100),
 		ContentCreatorAllocation: sdk.NewRat(1, 100),
 		InfraAllocation:          sdk.NewRat(1, 100),
 		DeveloperAllocation:      sdk.NewRat(1, 100),
@@ -217,6 +220,9 @@ func TestInitParam(t *testing.T) {
 	ph.InitParam(ctx)
 
 	globalAllocationParam := GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -309,6 +315,9 @@ func TestInitParamFromConfig(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -463,4 +472,52 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectPostParam, *postParam)
+}
+
+func TestUpdateGlobalGrowthRate(t *testing.T) {
+	ph := NewParamHolder(TestKVStoreKey)
+	ctx := getContext()
+
+	testCases := []struct {
+		testName         string
+		ceiling          sdk.Rat
+		floor            sdk.Rat
+		updateGrowthRate sdk.Rat
+		expectGrowthRate sdk.Rat
+	}{
+		{
+			testName:         "normal update",
+			ceiling:          sdk.NewRat(98, 1000),
+			floor:            sdk.NewRat(3, 100),
+			updateGrowthRate: sdk.NewRat(98, 1000),
+			expectGrowthRate: sdk.NewRat(98, 1000),
+		},
+		{
+			testName:         "update to ceiling",
+			ceiling:          sdk.NewRat(98, 1000),
+			floor:            sdk.NewRat(3, 100),
+			updateGrowthRate: sdk.NewRat(99, 1000),
+			expectGrowthRate: sdk.NewRat(98, 1000),
+		},
+		{
+			testName:         "update to floor",
+			ceiling:          sdk.NewRat(98, 1000),
+			floor:            sdk.NewRat(3, 100),
+			updateGrowthRate: sdk.NewRat(29, 1000),
+			expectGrowthRate: sdk.NewRat(3, 100),
+		},
+	}
+	for _, tc := range testCases {
+		globalParam := &GlobalAllocationParam{
+			Ceiling: tc.ceiling,
+			Floor:   tc.floor,
+		}
+		err := ph.setGlobalAllocationParam(ctx, globalParam)
+		assert.Nil(t, err)
+		err = ph.UpdateGlobalGrowthRate(ctx, tc.updateGrowthRate)
+		assert.Nil(t, err)
+		globalParam, err = ph.GetGlobalAllocationParam(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, globalParam.GlobalGrowthRate, tc.expectGrowthRate)
+	}
 }
