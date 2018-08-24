@@ -76,10 +76,9 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		GrowthRate: sdk.NewRat(98, 1000),
-		Ceiling:    sdk.NewRat(98, 1000),
-		Floor:      sdk.NewRat(3, 100),
-		MaxTPS:     sdk.NewRat(1000),
+		Ceiling: sdk.NewRat(98, 1000),
+		Floor:   sdk.NewRat(3, 100),
+		MaxTPS:  sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
@@ -196,6 +195,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 		},
 		param.GlobalAllocationParam{
+			GlobalGrowthRate:         sdk.NewRat(98, 1000),
 			InfraAllocation:          sdk.NewRat(20, 100),
 			ContentCreatorAllocation: sdk.NewRat(65, 100),
 			DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -266,10 +266,9 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		GrowthRate: sdk.NewRat(98, 1000),
-		Ceiling:    sdk.NewRat(98, 1000),
-		Floor:      sdk.NewRat(3, 100),
-		MaxTPS:     sdk.NewRat(1000),
+		Ceiling: sdk.NewRat(98, 1000),
+		Floor:   sdk.NewRat(3, 100),
+		MaxTPS:  sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
@@ -694,7 +693,6 @@ func TestIncreaseMinute(t *testing.T) {
 	globalAllocation, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 
-	inflation := globalMeta.AnnualInflation
 	expectConsumptionPool := types.NewCoinFromInt64(0)
 	expectInfraPool := types.NewCoinFromInt64(0)
 	for i := 0; i < types.MinutesPerMonth/10; i++ {
@@ -709,8 +707,8 @@ func TestIncreaseMinute(t *testing.T) {
 		if i > 0 && i%60 == 0 {
 			hourlyInflation :=
 				types.RatToCoin(
-					inflation.ToRat().Mul(sdk.NewRat(1, types.HoursPerYear-int64(i/60-1))))
-			inflation = inflation.Minus(hourlyInflation)
+					globalMeta.TotalLinoCoin.ToRat().
+						Mul(globalAllocation.GlobalGrowthRate).Mul(sdk.NewRat(1, types.HoursPerYear)))
 			consumptionMeta, err := gs.GetConsumptionMeta(ctx)
 			assert.Nil(t, err)
 			expectConsumptionPool =

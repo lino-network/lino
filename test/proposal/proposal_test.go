@@ -56,6 +56,7 @@ func TestForceValidatorVote(t *testing.T) {
 	test.CheckOncallValidatorList(t, accountName2, true, lb)
 
 	desc := param.GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(1, 100),
 		ContentCreatorAllocation: sdk.NewRat(1, 100),
 		DeveloperAllocation:      sdk.NewRat(1, 100),

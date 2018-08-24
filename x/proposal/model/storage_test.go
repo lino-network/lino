@@ -73,6 +73,7 @@ func TestProposal(t *testing.T) {
 					ExpiredAt:     curTime + 100,
 				},
 				Param: param.GlobalAllocationParam{
+					GlobalGrowthRate:         sdk.NewRat(98, 1000),
 					InfraAllocation:          sdk.NewRat(0),
 					ContentCreatorAllocation: sdk.NewRat(0),
 					DeveloperAllocation:      sdk.NewRat(0),

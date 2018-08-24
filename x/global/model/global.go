@@ -8,12 +8,11 @@ import (
 
 type GlobalMeta struct {
 	TotalLinoCoin                 types.Coin `json:"total_lino_coin"`
+	LastYearTotalLinoCoin         types.Coin `json:"last_year_total_lino_coin"`
 	LastYearCumulativeConsumption types.Coin `json:"last_year_cumulative_consumption"`
 	CumulativeConsumption         types.Coin `json:"cumulative_consumption"`
-	GrowthRate                    sdk.Rat    `json:"growth_rate"`
 	Ceiling                       sdk.Rat    `json:"ceiling"`
 	Floor                         sdk.Rat    `json:"floor"`
-	AnnualInflation               types.Coin `json:"annual_inflation"`
 }
 
 type GlobalTime struct {
@@ -51,7 +50,6 @@ type ConsumptionMeta struct {
 }
 
 type InitParamList struct {
-	GrowthRate                   sdk.Rat `json:"growth_rate"`
 	Ceiling                      sdk.Rat `json:"ceiling"`
 	Floor                        sdk.Rat `json:"floor"`
 	MaxTPS                       sdk.Rat `json:"max_tps"`

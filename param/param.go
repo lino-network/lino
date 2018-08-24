@@ -25,6 +25,7 @@ type EvaluateOfContentValueParam struct {
 // DeveloperAllocation percentage of inflation for developers
 // ValidatorAllocation percentage of inflation for validators
 type GlobalAllocationParam struct {
+	GlobalGrowthRate         sdk.Rat `json:"global_growth_rate"`
 	InfraAllocation          sdk.Rat `json:"infra_allocation"`
 	ContentCreatorAllocation sdk.Rat `json:"content_creator_allocation"`
 	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`

@@ -30,6 +30,7 @@ func TestGlobalAllocationParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		ContentCreatorAllocation: sdk.NewRat(1, 100),
 		InfraAllocation:          sdk.NewRat(1, 100),
 		DeveloperAllocation:      sdk.NewRat(1, 100),
@@ -217,6 +218,7 @@ func TestInitParam(t *testing.T) {
 	ph.InitParam(ctx)
 
 	globalAllocationParam := GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -309,6 +311,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),

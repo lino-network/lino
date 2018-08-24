@@ -203,9 +203,10 @@ func (gm GlobalManager) DistributeHourlyInflation(
 	}
 	// get hourly inflation
 	thisHourInflation :=
-		types.RatToCoin(globalMeta.AnnualInflation.ToRat().Mul(
-			sdk.NewRat(1, types.HoursPerYear-pastHoursMinusOneThisYear)))
-	globalMeta.AnnualInflation = globalMeta.AnnualInflation.Minus(thisHourInflation)
+		types.RatToCoin(
+			globalMeta.LastYearTotalLinoCoin.ToRat().
+				Mul(globalAllocation.GlobalGrowthRate).
+				Mul(sdk.NewRat(1, types.HoursPerYear)))
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
 	}
@@ -239,36 +240,19 @@ func (gm GlobalManager) DistributeHourlyInflation(
 }
 
 // recalculate annually inflation based on consumption growth rate
-func (gm GlobalManager) RecalculateAnnuallyInflation(ctx sdk.Context) sdk.Error {
-	growthRate, err := gm.getGrowthRate(ctx)
-	if err != nil {
-		return err
-	}
-	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-	if err != nil {
-		return err
-	}
-
-	globalMeta.AnnualInflation =
-		types.RatToCoin(
-			globalMeta.TotalLinoCoin.ToRat().Mul(growthRate))
-
-	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return err
-	}
-	return nil
-}
-
-// get growth rate based on consumption growth rate
-func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sdk.Error {
 	var growthRate sdk.Rat
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
-		return sdk.ZeroRat(), err
+		return err
+	}
+	globalAllocationParam, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
+	if err != nil {
+		return err
 	}
 	// if last year cumulative consumption is zero, we use the same growth rate as the last year
 	if globalMeta.LastYearCumulativeConsumption.IsZero() {
-		growthRate = globalMeta.GrowthRate
+		growthRate = globalAllocationParam.GlobalGrowthRate
 	} else {
 		// growthRate = (consumption this year - consumption last year) / consumption last year
 		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
@@ -285,11 +269,11 @@ func (gm GlobalManager) getGrowthRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
 	growthRate = growthRate.Round(types.PrecisionFactor)
-	globalMeta.GrowthRate = growthRate
+	globalMeta.LastYearTotalLinoCoin = globalMeta.TotalLinoCoin
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return sdk.ZeroRat(), err
+		return err
 	}
-	return growthRate, nil
+	return gm.paramHolder.UpdateGlobalGrowthRate(ctx, growthRate)
 }
 
 // after 7 days, one consumption needs to claim its reward from consumption reward pool

@@ -55,12 +55,11 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 	ctx sdk.Context, totalLino types.Coin, param InitParamList) sdk.Error {
 	globalMeta := &GlobalMeta{
 		TotalLinoCoin:                 totalLino,
+		LastYearTotalLinoCoin:         totalLino,
 		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
 		CumulativeConsumption:         types.NewCoinFromInt64(0),
-		GrowthRate:                    param.GrowthRate,
 		Ceiling:                       param.Ceiling,
 		Floor:                         param.Floor,
-		AnnualInflation:               types.RatToCoin(totalLino.ToRat().Mul(param.GrowthRate)),
 	}
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
@@ -98,10 +97,9 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
-		GrowthRate: sdk.NewRat(98, 1000),
-		Ceiling:    sdk.NewRat(98, 1000),
-		Floor:      sdk.NewRat(3, 100),
-		MaxTPS:     sdk.NewRat(1000),
+		Ceiling: sdk.NewRat(98, 1000),
+		Floor:   sdk.NewRat(3, 100),
+		MaxTPS:  sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}

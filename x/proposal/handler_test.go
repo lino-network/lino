@@ -25,6 +25,7 @@ func TestChangeParamProposal(t *testing.T) {
 	proposalManager.InitGenesis(ctx)
 
 	allocation := param.GlobalAllocationParam{
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		DeveloperAllocation:      sdk.ZeroRat(),
 		ValidatorAllocation:      sdk.ZeroRat(),
 		InfraAllocation:          sdk.ZeroRat(),

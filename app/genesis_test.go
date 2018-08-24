@@ -55,6 +55,7 @@ func TestGetGenesisJson(t *testing.T) {
 				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 			},
 			param.GlobalAllocationParam{
+				GlobalGrowthRate:         sdk.NewRat(98, 1000),
 				InfraAllocation:          sdk.NewRat(20, 100),
 				ContentCreatorAllocation: sdk.NewRat(65, 100),
 				DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -125,10 +126,9 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			GrowthRate: sdk.NewRat(98, 1000),
-			Ceiling:    sdk.NewRat(98, 1000),
-			Floor:      sdk.NewRat(3, 100),
-			MaxTPS:     sdk.NewRat(1000),
+			Ceiling: sdk.NewRat(98, 1000),
+			Floor:   sdk.NewRat(3, 100),
+			MaxTPS:  sdk.NewRat(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 		},
