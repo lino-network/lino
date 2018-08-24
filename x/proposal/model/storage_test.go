@@ -74,6 +74,8 @@ func TestProposal(t *testing.T) {
 				},
 				Param: param.GlobalAllocationParam{
 					GlobalGrowthRate:         sdk.NewRat(98, 1000),
+					Ceiling:                  sdk.NewRat(98, 1000),
+					Floor:                    sdk.NewRat(3, 100),
 					InfraAllocation:          sdk.NewRat(0),
 					ContentCreatorAllocation: sdk.NewRat(0),
 					DeveloperAllocation:      sdk.NewRat(0),

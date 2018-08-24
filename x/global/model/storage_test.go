@@ -61,8 +61,6 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		LastYearTotalLinoCoin:         types.NewCoinFromInt64(10000 * types.Decimals),
 		CumulativeConsumption:         types.NewCoinFromInt64(0),
 		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
-		Ceiling: sdk.NewRat(98, 1000),
-		Floor:   sdk.NewRat(30, 1000),
 	}
 
 	consumptionMeta := ConsumptionMeta{

@@ -11,8 +11,6 @@ type GlobalMeta struct {
 	LastYearTotalLinoCoin         types.Coin `json:"last_year_total_lino_coin"`
 	LastYearCumulativeConsumption types.Coin `json:"last_year_cumulative_consumption"`
 	CumulativeConsumption         types.Coin `json:"cumulative_consumption"`
-	Ceiling                       sdk.Rat    `json:"ceiling"`
-	Floor                         sdk.Rat    `json:"floor"`
 }
 
 type GlobalTime struct {
@@ -50,8 +48,6 @@ type ConsumptionMeta struct {
 }
 
 type InitParamList struct {
-	Ceiling                      sdk.Rat `json:"ceiling"`
-	Floor                        sdk.Rat `json:"floor"`
 	MaxTPS                       sdk.Rat `json:"max_tps"`
 	ConsumptionFrictionRate      sdk.Rat `json:"consumption_friction_rate"`
 	ConsumptionFreezingPeriodSec int64   `json:"consumption_freezing_period_second"`

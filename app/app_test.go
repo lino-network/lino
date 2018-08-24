@@ -76,9 +76,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		Ceiling: sdk.NewRat(98, 1000),
-		Floor:   sdk.NewRat(3, 100),
-		MaxTPS:  sdk.NewRat(1000),
+		MaxTPS: sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
@@ -196,6 +194,8 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 		param.GlobalAllocationParam{
 			GlobalGrowthRate:         sdk.NewRat(98, 1000),
+			Ceiling:                  sdk.NewRat(98, 1000),
+			Floor:                    sdk.NewRat(3, 100),
 			InfraAllocation:          sdk.NewRat(20, 100),
 			ContentCreatorAllocation: sdk.NewRat(65, 100),
 			DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -266,9 +266,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		Ceiling: sdk.NewRat(98, 1000),
-		Floor:   sdk.NewRat(3, 100),
-		MaxTPS:  sdk.NewRat(1000),
+		MaxTPS: sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}

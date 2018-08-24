@@ -260,15 +260,9 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 
 		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
-		if growthRate.GT(globalMeta.Ceiling) {
-			growthRate = globalMeta.Ceiling
-		} else if growthRate.LT(globalMeta.Floor) {
-			growthRate = globalMeta.Floor
-		}
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
-	growthRate = growthRate.Round(types.PrecisionFactor)
 	globalMeta.LastYearTotalLinoCoin = globalMeta.TotalLinoCoin
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err

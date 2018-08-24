@@ -57,6 +57,8 @@ func TestForceValidatorVote(t *testing.T) {
 
 	desc := param.GlobalAllocationParam{
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
 		InfraAllocation:          sdk.NewRat(1, 100),
 		ContentCreatorAllocation: sdk.NewRat(1, 100),
 		DeveloperAllocation:      sdk.NewRat(1, 100),

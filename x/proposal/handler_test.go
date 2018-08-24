@@ -26,6 +26,8 @@ func TestChangeParamProposal(t *testing.T) {
 
 	allocation := param.GlobalAllocationParam{
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
+		Ceiling:                  sdk.NewRat(98, 1000),
+		Floor:                    sdk.NewRat(3, 100),
 		DeveloperAllocation:      sdk.ZeroRat(),
 		ValidatorAllocation:      sdk.ZeroRat(),
 		InfraAllocation:          sdk.ZeroRat(),

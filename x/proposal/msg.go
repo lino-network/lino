@@ -284,6 +284,13 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroRat()) {
 		return ErrIllegalParameter()
 	}
+	if msg.Parameter.GlobalGrowthRate.LT(msg.Parameter.Floor) ||
+		msg.Parameter.GlobalGrowthRate.GT(msg.Parameter.Ceiling) ||
+		msg.Parameter.Floor.GT(msg.Parameter.Ceiling) ||
+		msg.Parameter.Ceiling.LT(sdk.ZeroRat()) ||
+		msg.Parameter.Floor.LT(sdk.ZeroRat()) {
+		return ErrIllegalParameter()
+	}
 
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()

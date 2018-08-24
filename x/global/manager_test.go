@@ -843,8 +843,6 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 			LastYearTotalLinoCoin:         totalLino,
 			LastYearCumulativeConsumption: tc.lastYearConsumption,
 			CumulativeConsumption:         tc.thisYearConsumption,
-			Ceiling:                       ceiling,
-			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
 		if err != nil {
@@ -992,8 +990,6 @@ func TestGetGrowthRate(t *testing.T) {
 			LastYearTotalLinoCoin:         totalLino,
 			LastYearCumulativeConsumption: tc.lastYearConsumption,
 			CumulativeConsumption:         tc.thisYearConsumption,
-			Ceiling:                       ceiling,
-			Floor:                         floor,
 		}
 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
 		if err != nil {
