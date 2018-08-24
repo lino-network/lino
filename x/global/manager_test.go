@@ -1161,3 +1161,69 @@ func TestAddConsumption(t *testing.T) {
 		}
 	}
 }
+
+func TestChainStartTime(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName  string
+		startTime int64
+	}{
+		{
+			testName:  "set start time to zero",
+			startTime: 0,
+		},
+		{
+			testName:  "normal case",
+			startTime: time.Now().Unix(),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.SetChainStartTime(ctx, tc.startTime)
+		if err != nil {
+			t.Errorf("%s: failed to set chain start time, got err %v", tc.testName, err)
+		}
+		chainStartTime, err := gm.GetChainStartTime(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get chain start time, got err %v", tc.testName, err)
+		}
+		if chainStartTime != tc.startTime {
+			t.Errorf("%s: diff chain start time, got %v, want %v", tc.testName, chainStartTime, tc.startTime)
+			return
+		}
+	}
+}
+
+func TestPastMinutes(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName    string
+		pastMinutes int64
+	}{
+		{
+			testName:    "set past minutes to zero",
+			pastMinutes: 0,
+		},
+		{
+			testName:    "normal case",
+			pastMinutes: time.Now().Unix() / 60,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.SetPastMinutes(ctx, tc.pastMinutes)
+		if err != nil {
+			t.Errorf("%s: failed to set past minutes, got err %v", tc.testName, err)
+		}
+		pastMinutes, err := gm.GetPastMinutes(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get past minutes, got err %v", tc.testName, err)
+		}
+		if pastMinutes != tc.pastMinutes {
+			t.Errorf("%s: diff past minutes, got %v, want %v", tc.testName, pastMinutes, tc.pastMinutes)
+			return
+		}
+	}
+}
