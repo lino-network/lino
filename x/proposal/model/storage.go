@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	proposalSubstore       = []byte{0x00}
-	proposalListSubStore   = []byte{0x01}
-	nextProposalIDSubstore = []byte{0x02}
+	nextProposalIDSubstore  = []byte{0x00}
+	ongoingProposalSubStore = []byte{0x01}
+	expiredProposalSubStore = []byte{0x02}
 )
 
 type ProposalStorage struct {
@@ -48,11 +48,6 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 }
 
 func (ps ProposalStorage) InitGenesis(ctx sdk.Context) sdk.Error {
-	proposalLst := &ProposalList{}
-	if err := ps.SetProposalList(ctx, proposalLst); err != nil {
-		return err
-	}
-
 	nextProposalID := &NextProposalID{
 		NextProposalID: 1,
 	}
@@ -64,13 +59,12 @@ func (ps ProposalStorage) InitGenesis(ctx sdk.Context) sdk.Error {
 
 func (ps ProposalStorage) DoesProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
 	store := ctx.KVStore(ps.key)
-	return store.Has(GetProposalKey(proposalID))
+	return store.Has(GetOngoingProposalKey(proposalID)) || store.Has(GetExpiredProposalKey(proposalID))
 }
 
-// only support change parameter proposal now
-func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
+func (ps ProposalStorage) GetOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
-	proposalByte := store.Get(GetProposalKey(proposalID))
+	proposalByte := store.Get(GetOngoingProposalKey(proposalID))
 	if proposalByte == nil {
 		return nil, ErrProposalNotFound()
 	}
@@ -81,44 +75,68 @@ func (ps ProposalStorage) GetProposal(ctx sdk.Context, proposalID types.Proposal
 	return *proposal, nil
 }
 
-// only support change parameter proposal now
-func (ps ProposalStorage) SetProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
+func (ps ProposalStorage) SetOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
 	proposalByte, err := ps.cdc.MarshalJSON(proposal)
 	if err != nil {
 		return ErrFailedToMarshalProposal(err)
 	}
-	store.Set(GetProposalKey(proposalID), proposalByte)
+	store.Set(GetOngoingProposalKey(proposalID), proposalByte)
 	return nil
 }
 
-func (ps ProposalStorage) DeleteProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
+func (ps ProposalStorage) DeleteOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	store.Delete(GetProposalKey(proposalID))
+	store.Delete(GetOngoingProposalKey(proposalID))
 	return nil
 }
 
-func (ps ProposalStorage) GetProposalList(ctx sdk.Context) (*ProposalList, sdk.Error) {
+func (ps ProposalStorage) GetExpiredProposal(ctx sdk.Context, proposalID types.ProposalKey) (Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
-	lstByte := store.Get(GetProposalListKey())
-	if lstByte == nil {
-		return nil, ErrProposalListNotFound()
+	proposalByte := store.Get(GetExpiredProposalKey(proposalID))
+	if proposalByte == nil {
+		return nil, ErrProposalNotFound()
 	}
-	lst := new(ProposalList)
-	if err := ps.cdc.UnmarshalJSON(lstByte, lst); err != nil {
-		return nil, ErrFailedToUnmarshalProposalList(err)
+	proposal := new(Proposal)
+	if err := ps.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
+		return nil, ErrFailedToUnmarshalProposal(err)
 	}
-	return lst, nil
+	return *proposal, nil
 }
 
-func (ps ProposalStorage) SetProposalList(ctx sdk.Context, lst *ProposalList) sdk.Error {
+func (ps ProposalStorage) SetExpiredProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	lstByte, err := ps.cdc.MarshalJSON(*lst)
+	proposalByte, err := ps.cdc.MarshalJSON(proposal)
 	if err != nil {
-		return ErrFailedToMarshalProposalList(err)
+		return ErrFailedToMarshalProposal(err)
 	}
-	store.Set(GetProposalListKey(), lstByte)
+	store.Set(GetExpiredProposalKey(proposalID), proposalByte)
 	return nil
+}
+
+func (ps ProposalStorage) DeleteExpiredProposal(ctx sdk.Context, proposalID types.ProposalKey) sdk.Error {
+	store := ctx.KVStore(ps.key)
+	store.Delete(GetExpiredProposalKey(proposalID))
+	return nil
+}
+
+func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, sdk.Error) {
+	store := ctx.KVStore(ps.key)
+	iterator := store.Iterator(subspace(ongoingProposalSubStore))
+
+	var proposalList []Proposal
+
+	for ; iterator.Valid(); iterator.Next() {
+		proposalBytes := iterator.Value()
+		var p Proposal
+		err := ps.cdc.UnmarshalJSON(proposalBytes, &p)
+		if err != nil {
+			return nil, ErrFailedToUnmarshalProposalList(err)
+		}
+		proposalList = append(proposalList, p)
+	}
+	iterator.Close()
+	return proposalList, nil
 }
 
 func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, sdk.Error) {
@@ -144,14 +162,21 @@ func (ps ProposalStorage) SetNextProposalID(ctx sdk.Context, nextProposalID *Nex
 	return nil
 }
 
-func GetProposalKey(proposalID types.ProposalKey) []byte {
-	return append(proposalSubstore, proposalID...)
+func GetOngoingProposalKey(proposalID types.ProposalKey) []byte {
+	return append(ongoingProposalSubStore, proposalID...)
 }
 
-func GetProposalListKey() []byte {
-	return proposalListSubStore
+func GetExpiredProposalKey(proposalID types.ProposalKey) []byte {
+	return append(expiredProposalSubStore, proposalID...)
 }
 
 func getNextProposalIDKey() []byte {
 	return nextProposalIDSubstore
+}
+
+func subspace(prefix []byte) (start, end []byte) {
+	end = make([]byte, len(prefix))
+	copy(end, prefix)
+	end[len(end)-1]++
+	return prefix, end
 }

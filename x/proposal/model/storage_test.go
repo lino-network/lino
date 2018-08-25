@@ -32,21 +32,41 @@ func setup(t *testing.T) (sdk.Context, ProposalStorage) {
 func TestProposalList(t *testing.T) {
 	ctx, ps := setup(t)
 
-	proposalList, err := ps.GetProposalList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, ProposalList{}, *proposalList)
-	proposalList.OngoingProposal =
-		append(proposalList.OngoingProposal, types.ProposalKey("test1"))
-	proposalList.OngoingProposal =
-		append(proposalList.OngoingProposal, types.ProposalKey("test2"))
-	proposalList.PastProposal = append(proposalList.PastProposal, types.ProposalKey("test3"))
-
-	err = ps.SetProposalList(ctx, proposalList)
+	proposalList, err := ps.GetOngoingProposalList(ctx)
 	assert.Nil(t, err)
 
-	proposalListPtr, err := ps.GetProposalList(ctx)
+	p1 := ChangeParamProposal{
+		ProposalInfo: ProposalInfo{
+			Creator:       types.AccountKey("user"),
+			ProposalID:    types.ProposalKey("123"),
+			AgreeVotes:    types.NewCoinFromInt64(0),
+			DisagreeVotes: types.NewCoinFromInt64(0),
+		},
+		Param: param.GlobalAllocationParam{
+			GlobalGrowthRate:         sdk.NewRat(98, 1000),
+			Ceiling:                  sdk.NewRat(98, 1000),
+			Floor:                    sdk.NewRat(3, 100),
+			InfraAllocation:          sdk.NewRat(0),
+			ContentCreatorAllocation: sdk.NewRat(0),
+			DeveloperAllocation:      sdk.NewRat(0),
+			ValidatorAllocation:      sdk.NewRat(0),
+		},
+	}
+
+	p2 := p1
+	p2.ProposalInfo.ProposalID = types.ProposalKey("321")
+
+	ps.SetOngoingProposal(ctx, types.ProposalKey("123"), &p1)
+	ps.SetOngoingProposal(ctx, types.ProposalKey("321"), &p2)
+
+	proposalList =
+		append(proposalList, &p1)
+	proposalList =
+		append(proposalList, &p2)
+
+	ongoingProposalList, err := ps.GetOngoingProposalList(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, proposalList, proposalListPtr)
+	assert.Equal(t, proposalList, ongoingProposalList)
 }
 
 func TestProposal(t *testing.T) {
@@ -86,12 +106,17 @@ func TestProposal(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		err := ps.SetProposal(ctx, proposalID, &tc.changeParamProposal)
+		err := ps.SetOngoingProposal(ctx, proposalID, &tc.changeParamProposal)
 		if err != nil {
 			t.Errorf("%s: failed to set proposal, get err %v", tc.testName, err)
 		}
 
-		proposal, err := ps.GetProposal(ctx, proposalID)
+		err = ps.SetExpiredProposal(ctx, proposalID, &tc.changeParamProposal)
+		if err != nil {
+			t.Errorf("%s: failed to set proposal, get err %v", tc.testName, err)
+		}
+
+		proposal, err := ps.GetOngoingProposal(ctx, proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
 		}
@@ -99,12 +124,33 @@ func TestProposal(t *testing.T) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, proposal.(*ChangeParamProposal), &tc.changeParamProposal)
 		}
 
-		err = ps.DeleteProposal(ctx, proposalID)
+		proposal, err = ps.GetExpiredProposal(ctx, proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, &tc.changeParamProposal, proposal.(*ChangeParamProposal)) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, proposal.(*ChangeParamProposal), &tc.changeParamProposal)
+		}
+
+		err = ps.DeleteOngoingProposal(ctx, proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to delete proposal, get err %v", tc.testName, err)
 		}
 
-		_, err = ps.GetProposal(ctx, proposalID)
+		err = ps.DeleteExpiredProposal(ctx, proposalID)
+		if err != nil {
+			t.Errorf("%s: failed to delete proposal, get err %v", tc.testName, err)
+		}
+
+		_, err = ps.GetOngoingProposal(ctx, proposalID)
+		if err == nil {
+			t.Errorf("%s: failed to get proposal after deletion, get err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, ErrProposalNotFound(), err) {
+			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, ErrProposalNotFound())
+		}
+
+		_, err = ps.GetExpiredProposal(ctx, proposalID)
 		if err == nil {
 			t.Errorf("%s: failed to get proposal after deletion, get err %v", tc.testName, err)
 		}
