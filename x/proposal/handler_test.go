@@ -59,7 +59,7 @@ func TestChangeParamProposal(t *testing.T) {
 		wantOK              bool
 		wantRes             sdk.Result
 		wantCreatorBalance  types.Coin
-		wantOngoingProposal []types.ProposalKey
+		wantOngoingProposal []model.Proposal
 		wantProposal        model.Proposal
 	}{
 		{
@@ -72,7 +72,7 @@ func TestChangeParamProposal(t *testing.T) {
 			wantOK:              true,
 			wantRes:             sdk.Result{},
 			wantCreatorBalance:  c460000.Minus(proposalParam.ChangeParamMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 
@@ -86,7 +86,7 @@ func TestChangeParamProposal(t *testing.T) {
 			wantOK:              false,
 			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600,
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        nil,
 		},
 	}
@@ -105,15 +105,15 @@ func TestChangeParamProposal(t *testing.T) {
 			t.Errorf("%s: diff bank balance: got %v, want %v", tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
 
-		proposalList, err := proposalManager.GetProposalList(ctx)
+		ongoingList, err := proposalManager.GetOngoingProposalList(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
 		}
-		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
-			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
+		if !assert.Equal(t, tc.wantOngoingProposal, ongoingList) {
+			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, ongoingList, tc.wantOngoingProposal)
 		}
 
-		proposal, err := proposalManager.storage.GetProposal(ctx, tc.proposalID)
+		proposal, err := proposalManager.storage.GetOngoingProposal(ctx, tc.proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
 		}
@@ -157,7 +157,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 		wantOK              bool
 		wantRes             sdk.Result
 		wantCreatorBalance  types.Coin
-		wantOngoingProposal []types.ProposalKey
+		wantOngoingProposal []model.Proposal
 		wantProposal        model.Proposal
 	}{
 		{
@@ -168,7 +168,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOK:              true,
 			wantRes:             sdk.Result{},
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 		{
@@ -179,7 +179,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOK:              false,
 			wantRes:             ErrPostNotFound().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 		{
@@ -190,7 +190,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOK:              false,
 			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermlink(user2, postID2)).Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 		{
@@ -201,7 +201,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOK:              false,
 			wantRes:             ErrAccountNotFound().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 		{
@@ -212,7 +212,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantOK:              false,
 			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
 		},
 	}
@@ -233,15 +233,15 @@ func TestContentCensorshipProposal(t *testing.T) {
 				tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
 
-		proposalList, err := proposalManager.GetProposalList(ctx)
+		ongoingList, err := proposalManager.GetOngoingProposalList(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
 		}
-		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
-			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
+		if !assert.Equal(t, tc.wantOngoingProposal, ongoingList) {
+			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, ongoingList, tc.wantOngoingProposal)
 		}
 
-		proposal, err := proposalManager.storage.GetProposal(ctx, tc.proposalID)
+		proposal, err := proposalManager.storage.GetOngoingProposal(ctx, tc.proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
 		}
@@ -249,10 +249,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			t.Errorf("%s: diff proposal, got %v, want %v", tc.testName, proposal, tc.wantProposal)
 		}
 
-		permlink, err := proposalManager.GetPermlink(ctx, tc.proposalID)
-		if err != nil {
-			t.Errorf("%s: failed to get permlink, get err %v", tc.testName, err)
-		}
+		permlink := proposal.(*model.ContentCensorshipProposal).Permlink
 		if permlink != tc.permlink {
 			t.Errorf("%s: diff permlink, got %v, want %v", tc.testName, permlink, tc.permlink)
 		}
@@ -348,12 +345,11 @@ func TestVoteProposalBasic(t *testing.T) {
 	proposalID1, _ := proposalManager.AddProposal(ctx, user1, proposal1, decideSec)
 
 	testCases := []struct {
-		testName            string
-		msg                 VoteProposalMsg
-		wantRes             sdk.Result
-		wantOK              bool
-		wantOngoingProposal []types.ProposalKey
-		wantProposal        model.Proposal
+		testName     string
+		msg          VoteProposalMsg
+		wantRes      sdk.Result
+		wantOK       bool
+		wantProposal model.Proposal
 	}{
 		{
 			testName: "Must become a voter before voting",
@@ -362,9 +358,8 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: proposalID1,
 				Result:     true,
 			},
-			wantRes:             ErrVoterNotFound().Result(),
-			wantOK:              true,
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantRes: ErrVoterNotFound().Result(),
+			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
 				model.ProposalInfo{
 					Creator:       user1,
@@ -383,8 +378,7 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: types.ProposalKey(100),
 				Result:     true,
 			},
-			wantRes:             ErrNotOngoingProposal().Result(),
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantRes: ErrNotOngoingProposal().Result(),
 			wantProposal: &model.ContentCensorshipProposal{
 				model.ProposalInfo{
 					Creator:       user1,
@@ -403,9 +397,8 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: proposalID1,
 				Result:     true,
 			},
-			wantRes:             sdk.Result{},
-			wantOK:              true,
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantRes: sdk.Result{},
+			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
 				model.ProposalInfo{
 					Creator:       user1,
@@ -424,9 +417,8 @@ func TestVoteProposalBasic(t *testing.T) {
 				ProposalID: proposalID1,
 				Result:     false,
 			},
-			wantRes:             vote.ErrVoteAlreadyExist().Result(),
-			wantOK:              true,
-			wantOngoingProposal: []types.ProposalKey{proposalID1},
+			wantRes: vote.ErrVoteAlreadyExist().Result(),
+			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
 				model.ProposalInfo{
 					Creator:       user1,
@@ -448,16 +440,7 @@ func TestVoteProposalBasic(t *testing.T) {
 		if !tc.wantOK {
 			continue
 		}
-
-		proposalList, err := proposalManager.GetProposalList(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get proposal list, get err %v", tc.testName, err)
-		}
-		if !assert.Equal(t, tc.wantOngoingProposal, proposalList.OngoingProposal) {
-			t.Errorf("%s: diff ongoing proposal, got %v, want %v", tc.testName, proposalList.OngoingProposal, tc.wantOngoingProposal)
-		}
-
-		proposal, err := proposalManager.storage.GetProposal(ctx, tc.msg.ProposalID)
+		proposal, err := proposalManager.storage.GetOngoingProposal(ctx, tc.msg.ProposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, get err %v", tc.testName, err)
 		}

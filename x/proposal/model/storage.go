@@ -139,6 +139,25 @@ func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, s
 	return proposalList, nil
 }
 
+func (ps ProposalStorage) GetExpiredProposalList(ctx sdk.Context) ([]Proposal, sdk.Error) {
+	store := ctx.KVStore(ps.key)
+	iterator := store.Iterator(subspace(expiredProposalSubStore))
+
+	var proposalList []Proposal
+
+	for ; iterator.Valid(); iterator.Next() {
+		proposalBytes := iterator.Value()
+		var p Proposal
+		err := ps.cdc.UnmarshalJSON(proposalBytes, &p)
+		if err != nil {
+			return nil, ErrFailedToUnmarshalProposalList(err)
+		}
+		proposalList = append(proposalList, p)
+	}
+	iterator.Close()
+	return proposalList, nil
+}
+
 func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	nextProposalIDByte := store.Get(getNextProposalIDKey())
