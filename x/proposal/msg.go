@@ -39,9 +39,6 @@ var _ ContentCensorshipMsg = DeletePostContentMsg{}
 
 var _ ProtocolUpgradeMsg = UpgradeProtocolMsg{}
 
-var annualInflationCeiling = sdk.NewRat(98, 1000)
-var annualInflationFloor = sdk.NewRat(3, 100)
-
 // ChangeParamMsg - change parameter msg
 type ChangeParamMsg interface {
 	GetParameter() param.Parameter
@@ -334,8 +331,8 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroRat()) {
 		return ErrIllegalParameter()
 	}
-	if msg.Parameter.GlobalGrowthRate.LT(annualInflationFloor) ||
-		msg.Parameter.GlobalGrowthRate.GT(annualInflationCeiling) {
+	if msg.Parameter.GlobalGrowthRate.LT(param.AnnualInflationFloor) ||
+		msg.Parameter.GlobalGrowthRate.GT(param.AnnualInflationCeiling) {
 		return ErrIllegalParameter()
 	}
 

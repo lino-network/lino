@@ -20,8 +20,10 @@ var (
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
 	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
 
-	annualInflationCeiling = sdk.NewRat(98, 1000)
-	annualInflationFloor   = sdk.NewRat(3, 100)
+	// AnnualInflationCeiling - annual inflation upper bound
+	AnnualInflationCeiling = sdk.NewRat(98, 1000)
+	// AnnualInflationFloor - annual inflation lower bound
+	AnnualInflationFloor = sdk.NewRat(3, 100)
 )
 
 // ParamHolder - parameter KVStore
@@ -395,10 +397,10 @@ func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat
 		return ErrFailedToUnmarshalGlobalAllocationParam(err)
 	}
 
-	if growthRate.GT(annualInflationCeiling) {
-		growthRate = annualInflationCeiling
-	} else if growthRate.LT(annualInflationFloor) {
-		growthRate = annualInflationFloor
+	if growthRate.GT(AnnualInflationCeiling) {
+		growthRate = AnnualInflationCeiling
+	} else if growthRate.LT(AnnualInflationFloor) {
+		growthRate = AnnualInflationFloor
 	}
 	allocation.GlobalGrowthRate = growthRate
 	allocationBytes, err := ph.cdc.MarshalJSON(*allocation)
