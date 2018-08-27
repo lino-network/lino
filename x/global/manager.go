@@ -11,13 +11,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GlobalManager encapsulates all basic struct
+// GlobalManager - encapsulates all basic struct
 type GlobalManager struct {
-	storage     model.GlobalStorage `json:"global_manager"`
-	paramHolder param.ParamHolder   `json:"param_holder"`
+	storage     model.GlobalStorage
+	paramHolder param.ParamHolder
 }
 
-// NewGlobalManager return the global proxy pointer
+// NewGlobalManager - return the global manager
 func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager {
 	return GlobalManager{
 		storage:     model.NewGlobalStorage(key),

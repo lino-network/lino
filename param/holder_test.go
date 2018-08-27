@@ -171,7 +171,6 @@ func TestCoinDayParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	err := ph.setCoinDayParam(ctx, &parameter)
@@ -290,7 +289,6 @@ func TestInitParam(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{
@@ -385,7 +383,6 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{

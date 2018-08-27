@@ -675,7 +675,7 @@ func TestHandlerPostDonate(t *testing.T) {
 					eventList.Events[len(eventList.Events)-1], tc.expectRegisteredEvent)
 			}
 
-			as := accmodel.NewAccountStorage(TestAccountKVStoreKey)
+			as := accmodel.NewAccountStorage(testAccountKVStoreKey)
 			reward, err := as.GetReward(ctx, tc.toAuthor)
 			if err != nil {
 				t.Errorf("%s: failed to get reward, got err %v", tc.testName, err)

@@ -72,10 +72,12 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 			msgSigners := msg.GetSigners()
 			consumeAmount := msg.GetConsumeAmount()
 			for _, msgSigner := range msgSigners {
+				// check public key is valid to sign this msg
 				_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
+				// verify sequence number
 				seq, err := am.GetSequence(ctx, types.AccountKey(msgSigner))
 				if err != nil {
 					return ctx, err.Result(), true
@@ -89,14 +91,18 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 					return ctx, err.Result(), true
 				}
 
+				// get current tps
 				tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
+				// check user tps capacity
 				if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
 					return ctx, err.Result(), true
 				}
+				// construct sign bytes
 				signBytes := auth.StdSignBytes(ctx.ChainID(), 0, sequences[idx], fee, sdkMsgs, stdTx.GetMemo())
+				// verify signature
 				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
 					return ctx, ErrUnverifiedBytes(
 						fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true

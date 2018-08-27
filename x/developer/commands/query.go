@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/developer/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/developer/model"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 )

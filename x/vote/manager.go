@@ -9,8 +9,8 @@ import (
 )
 
 type VoteManager struct {
-	storage     model.VoteStorage `json:"vote_storage"`
-	paramHolder param.ParamHolder `json:"param_holder"`
+	storage     model.VoteStorage
+	paramHolder param.ParamHolder
 }
 
 func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder) VoteManager {

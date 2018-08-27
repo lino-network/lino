@@ -9,8 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 )
 
 // GetValidatorsCmd returns all validators relative information

@@ -8,8 +8,8 @@ import (
 )
 
 type InfraManager struct {
-	storage     model.InfraProviderStorage `json:"infra_provider_storage"`
-	paramHolder param.ParamHolder          `json:"param_holder"`
+	storage     model.InfraProviderStorage
+	paramHolder param.ParamHolder
 }
 
 // create NewInfraManager

@@ -18,6 +18,7 @@ var _ types.Msg = GrantPermissionMsg{}
 var _ types.Msg = RevokePermissionMsg{}
 var _ types.Msg = PreAuthorizationMsg{}
 
+// DeveloperRegisterMsg - register developer on blockchain
 type DeveloperRegisterMsg struct {
 	Username    types.AccountKey `json:"username"`
 	Deposit     types.LNO        `json:"deposit"`
@@ -26,6 +27,7 @@ type DeveloperRegisterMsg struct {
 	AppMetaData string           `json:"app_meta_data"`
 }
 
+// DeveloperUpdateMsg - update developer info on blockchain
 type DeveloperUpdateMsg struct {
 	Username    types.AccountKey `json:"username"`
 	Website     string           `json:"website"`
@@ -33,10 +35,12 @@ type DeveloperUpdateMsg struct {
 	AppMetaData string           `json:"app_meta_data"`
 }
 
+// DeveloperRevokeMsg - revoke developer on blockchain
 type DeveloperRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
+// GrantPermissionMsg - user grant permission to app
 type GrantPermissionMsg struct {
 	Username          types.AccountKey `json:"username"`
 	AuthorizedApp     types.AccountKey `json:"authorized_app"`
@@ -44,11 +48,13 @@ type GrantPermissionMsg struct {
 	GrantLevel        types.Permission `json:"grant_level"`
 }
 
+// RevokePermissionMsg - user revoke permission from app
 type RevokePermissionMsg struct {
 	Username types.AccountKey `json:"username"`
 	PubKey   crypto.PubKey    `json:"public_key"`
 }
 
+// PreAuthorizationMsg - preauth permission to app
 type PreAuthorizationMsg struct {
 	Username          types.AccountKey `json:"username"`
 	AuthorizedApp     types.AccountKey `json:"authorized_app"`
@@ -67,8 +73,10 @@ func NewDeveloperRegisterMsg(developer string, deposit types.LNO, website string
 	}
 }
 
+// Type - Implements Msg.
 func (msg DeveloperRegisterMsg) Type() string { return types.DeveloperRouterName }
 
+// ValidateBasic - Implements Msg.
 func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -110,16 +118,16 @@ func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg DeveloperRegisterMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
 func (msg DeveloperRegisterMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// DeveloperUpdateMsg Msg Implementations
+// NewDeveloperUpdateMsg - new DeveloperUpdateMsg
 func NewDeveloperUpdateMsg(developer string, website string, description string, appMetaData string) DeveloperUpdateMsg {
 	return DeveloperUpdateMsg{
 		Username:    types.AccountKey(developer),
@@ -129,8 +137,10 @@ func NewDeveloperUpdateMsg(developer string, website string, description string,
 	}
 }
 
+// Type - Implements Msg.
 func (msg DeveloperUpdateMsg) Type() string { return types.DeveloperRouterName }
 
+// ValidateBasic - Implements Msg.
 func (msg DeveloperUpdateMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -169,6 +179,7 @@ func (msg DeveloperUpdateMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg DeveloperUpdateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -185,6 +196,7 @@ func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 	}
 }
 
+// Type - Implements Msg.
 func (msg DeveloperRevokeMsg) Type() string { return types.DeveloperRouterName }
 
 func (msg DeveloperRevokeMsg) ValidateBasic() sdk.Error {
@@ -203,6 +215,7 @@ func (msg DeveloperRevokeMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - Implements Msg.
 func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -211,6 +224,7 @@ func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg DeveloperRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -231,8 +245,10 @@ func NewGrantPermissionMsg(
 	}
 }
 
+// Type - Implements Msg.
 func (msg GrantPermissionMsg) Type() string { return types.DeveloperRouterName }
 
+// ValidateBasic - Implements Msg.
 func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -266,6 +282,7 @@ func (msg GrantPermissionMsg) GetPermission() types.Permission {
 	return types.GrantAppPermission
 }
 
+// GetSignBytes - Implements Msg.
 func (msg GrantPermissionMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -274,6 +291,7 @@ func (msg GrantPermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg GrantPermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -291,8 +309,10 @@ func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionM
 	}
 }
 
+// Type - Implements Msg.
 func (msg RevokePermissionMsg) Type() string { return types.DeveloperRouterName }
 
+// ValidateBasic - Implements Msg.
 func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -310,6 +330,7 @@ func (msg RevokePermissionMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - Implements Msg.
 func (msg RevokePermissionMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -318,6 +339,7 @@ func (msg RevokePermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg RevokePermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -338,8 +360,10 @@ func NewPreAuthorizationMsg(
 	}
 }
 
+// Type - Implements Msg.
 func (msg PreAuthorizationMsg) Type() string { return types.DeveloperRouterName }
 
+// ValidateBasic - Implements Msg.
 func (msg PreAuthorizationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -370,6 +394,7 @@ func (msg PreAuthorizationMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - Implements Msg.
 func (msg PreAuthorizationMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -378,6 +403,7 @@ func (msg PreAuthorizationMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - Implements Msg.
 func (msg PreAuthorizationMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }

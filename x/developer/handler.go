@@ -11,6 +11,7 @@ import (
 	global "github.com/lino-network/lino/x/global"
 )
 
+// NewHandler - Handle all "developer" type messages.
 func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {

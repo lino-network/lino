@@ -14,8 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const ()
-
 func ProviderReportTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "provider-report",

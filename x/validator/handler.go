@@ -11,6 +11,7 @@ import (
 	vote "github.com/lino-network/lino/x/vote"
 )
 
+// NewHandler - Handle all "validator" type messages.
 func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {

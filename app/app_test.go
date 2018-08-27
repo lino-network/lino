@@ -32,10 +32,10 @@ var (
 	priv2 = secp256k1.GenPrivKey()
 	addr2 = priv2.PubKey().Address()
 
-	genesisTotalCoin    types.Coin = types.NewCoinFromInt64(2100000000 * types.Decimals)
-	CoinPerValidator    types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
-	growthRate          sdk.Rat    = sdk.NewRat(98, 1000)
-	validatorAllocation sdk.Rat    = sdk.NewRat(5, 100)
+	genesisTotalCoin    = types.NewCoinFromInt64(2100000000 * types.Decimals)
+	coinPerValidator    = types.NewCoinFromInt64(100000000 * types.Decimals)
+	growthRate          = sdk.NewRat(98, 1000)
+	validatorAllocation = sdk.NewRat(5, 100)
 )
 
 func loggerAndDB() (logger log.Logger, db dbm.DB) {
@@ -55,7 +55,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	// Generate 21 validators
 	genesisAcc := GenesisAccount{
 		Name:           user1,
-		Coin:           CoinPerValidator,
+		Coin:           coinPerValidator,
 		ResetKey:       priv1.PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 		AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -66,7 +66,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	for i := 1; i < numOfValidators; i++ {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
-			Coin:           CoinPerValidator,
+			Coin:           coinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
 			AppKey:         secp256k1.GenPrivKey().PubKey(),
@@ -245,10 +245,9 @@ func TestGenesisFromConfig(t *testing.T) {
 			PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
 			PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
 			ValidatorListSize:              int64(21),
-			AbsentCommitLimitation:         int64(600), // 30min
+			AbsentCommitLimitation:         int64(600), // 10min
 		},
 		param.CoinDayParam{
-			DaysToRecoverCoinDayStake:    int64(7),
 			SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 		},
 		param.BandwidthParam{
@@ -315,7 +314,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 			growthRate.Mul(validatorAllocation)))
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
-	expectBaseBalance := CoinPerValidator.Minus(
+	expectBaseBalance := coinPerValidator.Minus(
 		param.ValidatorMinCommittingDeposit.Plus(param.ValidatorMinVotingDeposit))
 	expectBalanceList := make([]types.Coin, 21)
 	for i := 0; i < len(expectBalanceList); i++ {
@@ -349,7 +348,7 @@ func TestFireByzantineValidators(t *testing.T) {
 		Header: abci.Header{
 			ChainID: "Lino", Time: time.Unix(time.Now().Unix()+200, 0)},
 		ByzantineValidators: []abci.Evidence{
-			abci.Evidence{
+			{
 				Validator: abci.Validator{
 					Address: priv2.PubKey().Address(),
 					PubKey:  tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})

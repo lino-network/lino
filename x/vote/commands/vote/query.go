@@ -9,8 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
 )
 
 // GetVoterCmd returns target voter information

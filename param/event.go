@@ -4,10 +4,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// ChangeParamEvent - change parameter event.
 type ChangeParamEvent struct {
 	Param Parameter `json:"param"`
 }
 
+// Execute - execute change parameter event.
 func (cpe ChangeParamEvent) Execute(ctx sdk.Context, ph ParamHolder) sdk.Error {
 	parameter := cpe.Param
 	switch parameter := parameter.(type) {
@@ -34,5 +36,4 @@ func (cpe ChangeParamEvent) Execute(ctx sdk.Context, ph ParamHolder) sdk.Error {
 	default:
 		return ErrInvalidaParameter()
 	}
-	return nil
 }

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// NewHandler - Handle all "account" type messages.
 func NewHandler(am AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -144,6 +145,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 		ctx, msg.Referrer, coin, msg.NewUser, "", types.TransferOut); err != nil {
 		return err.Result()
 	}
+	// the open account fee will be added to developer inflation pool
 	if err := gm.AddToDeveloperInflationPool(ctx, registerFee); err != nil {
 		return err.Result()
 	}

@@ -15,8 +15,8 @@ import (
 
 func TestRewardEvent(t *testing.T) {
 	ctx, am, _, pm, gm, dm := setupTest(t, 1)
-	gs := globalModel.NewGlobalStorage(TestGlobalKVStoreKey)
-	as := accModel.NewAccountStorage(TestAccountKVStoreKey)
+	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
+	as := accModel.NewAccountStorage(testAccountKVStoreKey)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, deletedPostID := createTestPost(t, ctx, "user2", "deleted", am, pm, "0")

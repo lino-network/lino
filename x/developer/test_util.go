@@ -18,12 +18,13 @@ import (
 )
 
 var (
-	TestInfraKVStoreKey   = sdk.NewKVStoreKey("infra")
-	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
-	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
-	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
+	testInfraKVStoreKey   = sdk.NewKVStoreKey("infra")
+	testAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
 )
 
+// InitGlobalManager - init global manager
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
@@ -31,11 +32,11 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 func setupTest(t *testing.T, height int64) (
 	sdk.Context, acc.AccountManager, DeveloperManager, global.GlobalManager) {
 	ctx := getContext(height)
-	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	dm := NewDeveloperManager(TestInfraKVStoreKey, ph)
-	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	am := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	dm := NewDeveloperManager(testInfraKVStoreKey, ph)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	cdc := gm.WireCodec()
 	err := InitGlobalManager(ctx, gm)
 	assert.Nil(t, err)
@@ -47,10 +48,10 @@ func setupTest(t *testing.T, height int64) (
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestInfraKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testInfraKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(ms, abci.Header{Height: height}, false, log.NewNopLogger())

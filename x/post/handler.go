@@ -12,6 +12,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 )
 
+// NewHandler - Handle all "post" type messages.
 func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {

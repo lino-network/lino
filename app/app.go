@@ -99,7 +99,7 @@ func NewLinoBlockchain(
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
-	RegisterEvent(lb.globalManager.WireCodec())
+	registerEvent(lb.globalManager.WireCodec())
 
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
@@ -139,9 +139,15 @@ func NewLinoBlockchain(
 	return lb
 }
 
+// DefaultTxDecoder - default tx decoder, decode tx before authenticate handler.
 func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
-	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = cauth.StdTx{}
+	return func(txBytes []byte) (tx sdk.Tx, err sdk.Error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = sdk.ErrTxDecode("tx decode panic")
+			}
+		}()
+		tx = cauth.StdTx{}
 
 		if len(txBytes) == 0 {
 			return nil, sdk.ErrTxDecode("txBytes are empty")
@@ -149,14 +155,15 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 
 		// StdTx.Msg is an interface. The concrete types
 		// are registered by MakeTxCodec
-		err := cdc.UnmarshalJSON(txBytes, &tx)
-		if err != nil {
+		unmarshalErr := cdc.UnmarshalJSON(txBytes, &tx)
+		if unmarshalErr != nil {
 			return nil, sdk.ErrTxDecode("").TraceSDK(err.Error())
 		}
 		return tx, nil
 	}
 }
 
+// MackCodec - codec for application, used by command line tool and authenticate handler.
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
@@ -170,14 +177,12 @@ func MakeCodec() *wire.Codec {
 	val.RegisterWire(cdc)
 	proposal.RegisterWire(cdc)
 
-	RegisterEvent(cdc)
-
 	cdc.Seal()
 
 	return cdc
 }
 
-func RegisterEvent(cdc *wire.Codec) {
+func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(post.RewardEvent{}, "lino/eventReward", nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "lino/eventReturn", nil)
@@ -185,7 +190,7 @@ func RegisterEvent(cdc *wire.Codec) {
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
 }
 
-// custom logic for basecoin initialization
+// custom logic for lino blockchain initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 	genesisState := new(GenesisState)
@@ -193,6 +198,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
+	// init paramter holder
 	if genesisState.GenesisParam.InitFromConfig {
 		if err := lb.paramHolder.InitParamFromConfig(
 			ctx,
@@ -217,6 +223,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 
 	totalCoin := types.NewCoinFromInt64(0)
 
+	// calculate total lino coin
 	for _, gacc := range genesisState.Accounts {
 		totalCoin = totalCoin.Plus(gacc.Coin)
 	}
@@ -240,18 +247,21 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
+	// init genesis accounts
 	for _, gacc := range genesisState.Accounts {
 		if err := lb.toAppAccount(ctx, gacc); err != nil {
 			panic(err)
 		}
 	}
 
+	// init genesis developers
 	for _, developer := range genesisState.Developers {
 		if err := lb.toAppDeveloper(ctx, developer); err != nil {
 			panic(err)
 		}
 	}
 
+	// init genesis infra
 	for _, infra := range genesisState.Infra {
 		if err := lb.toAppInfra(ctx, infra); err != nil {
 			panic(err)
@@ -381,7 +391,7 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-	for i := lastBlockTime; i < currentTime; i += 1 {
+	for i := lastBlockTime; i < currentTime; i++ {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, i)
@@ -435,7 +445,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-	pastMinutes += 1
+	pastMinutes++
 	if err := lb.globalManager.SetPastMinutes(ctx, pastMinutes); err != nil {
 		panic(err)
 	}

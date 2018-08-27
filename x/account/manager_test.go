@@ -15,91 +15,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func checkBankKVByUsername(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, bank model.AccountBank) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	bankPtr, err := accStorage.GetBankFromAccountKey(ctx, username)
-	if err != nil {
-		t.Errorf("%s, failed to get bank, got err %v", testName, err)
-	}
-	if !assert.Equal(t, bank, *bankPtr) {
-		t.Errorf("%s: diff bank, got %v, want %v", testName, *bankPtr, bank)
-	}
-}
-
-func checkBalanceHistory(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey,
-	timeSlot int64, balanceHistory model.BalanceHistory) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, username, timeSlot)
-	if err != nil {
-		t.Errorf("%s, failed to get balance history, got err %v", testName, err)
-	}
-	if !assert.Equal(t, balanceHistory, *balanceHistoryPtr) {
-		t.Errorf("%s: diff balance history, got %v, want %v", testName, *balanceHistoryPtr, balanceHistory)
-	}
-}
-
-func checkPendingStake(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingStakeQueue model.PendingStakeQueue) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, username)
-	if err != nil {
-		t.Errorf("%s, failed to get pending stake queue, got err %v", testName, err)
-	}
-	if !assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr) {
-		t.Errorf("%s: diff pending stake queue, got %v, want %v", testName, *pendingStakeQueuePtr, pendingStakeQueue)
-	}
-}
-
-func checkAccountInfo(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accInfo model.AccountInfo) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	info, err := accStorage.GetInfo(ctx, accKey)
-	if err != nil {
-		t.Errorf("%s, failed to get account info, got err %v", testName, err)
-	}
-	if !assert.Equal(t, accInfo, *info) {
-		t.Errorf("%s: diff account info, got %v, want %v", testName, *info, accInfo)
-	}
-}
-
-func checkAccountMeta(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accMeta model.AccountMeta) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	metaPtr, err := accStorage.GetMeta(ctx, accKey)
-	if err != nil {
-		t.Errorf("%s, failed to get account meta, got err %v", testName, err)
-	}
-	if !assert.Equal(t, accMeta, *metaPtr) {
-		t.Errorf("%s: diff account meta, got %v, want %v", testName, *metaPtr, accMeta)
-	}
-}
-
-func checkAccountReward(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, reward model.Reward) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	rewardPtr, err := accStorage.GetReward(ctx, accKey)
-	if err != nil {
-		t.Errorf("%s, failed to get reward, got err %v", testName, err)
-	}
-	if !assert.Equal(t, reward, *rewardPtr) {
-		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
-	}
-}
-
-func checkRewardHistory(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
-	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
-	if err != nil {
-		t.Errorf("%s, failed to get reward history, got err %v", testName, err)
-	}
-	if wantNumOfReward != len(rewardHistoryPtr.Details) {
-		t.Errorf("%s: diff account rewards, got %v, want %v", testName, len(rewardHistoryPtr.Details), wantNumOfReward)
-	}
-}
-
 func TestDoesAccountExist(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	if am.DoesAccountExist(ctx, types.AccountKey("user1")) {
@@ -528,7 +443,7 @@ func TestMinusCoin(t *testing.T) {
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
-					model.PendingStake{
+					{
 						StartTime: baseTime.Unix(),
 						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee,
@@ -808,7 +723,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			expectNumberOfTx:    1,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     types.NewCoinFromInt64(1),
 						From:       accountReferrer,
@@ -828,7 +743,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			expectNumberOfTx:    1,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     types.NewCoinFromInt64(1500),
 						From:       accountReferrer,
@@ -848,7 +763,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			expectNumberOfTx:    2,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
@@ -857,7 +772,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    accParam.FirstDepositFullStakeLimit,
 					},
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     types.NewCoinFromInt64(50000),
 						From:       accountReferrer,
@@ -877,7 +792,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			expectNumberOfTx:    2,
 			expectBalanceHistory: &model.BalanceHistory{
 				Details: []model.Detail{
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     accParam.FirstDepositFullStakeLimit,
 						From:       accountReferrer,
@@ -886,7 +801,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 						Memo:       types.InitAccountWithFullStakeMemo,
 						Balance:    accParam.FirstDepositFullStakeLimit,
 					},
-					model.Detail{
+					{
 						DetailType: types.TransferIn,
 						Amount:     largeAmountRegisterFee.Minus(accParam.FirstDepositFullStakeLimit),
 						From:       accountReferrer,
@@ -1020,7 +935,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		StakeCoinInQueue: sdk.ZeroRat(),
 		TotalCoin:        extraRegisterFee,
 		PendingStakeList: []model.PendingStake{
-			model.PendingStake{
+			{
 				StartTime: ctx.BlockHeader().Time.Unix(),
 				EndTime:   ctx.BlockHeader().Time.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
 				Coin:      extraRegisterFee,
@@ -1380,7 +1295,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		t.Errorf("TestCheckUserTPSCapacity: failed to add saving coin, got err %v", err)
 	}
 
-	accStorage := model.NewAccountStorage(TestAccountKVStoreKey)
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
 	err = accStorage.SetPendingStakeQueue(
 		ctx, accKey, &model.PendingStakeQueue{})
 	if err != nil {

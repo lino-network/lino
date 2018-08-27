@@ -21,12 +21,14 @@ var (
 	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
 )
 
+// ParamHolder - parameter KVStore
 type ParamHolder struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
 	cdc *wire.Codec
 }
 
+// NewParamHolder - create a new parameter KVStore
 func NewParamHolder(key sdk.StoreKey) ParamHolder {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
@@ -36,10 +38,7 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 	}
 }
 
-func (ph ParamHolder) WireCodec() *wire.Codec {
-	return ph.cdc
-}
-
+// InitParam - init all parameters based on code
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
 		Ceiling:                  sdk.NewRat(98, 1000),
@@ -142,7 +141,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	coinDayParam := &CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	if err := ph.setCoinDayParam(ctx, coinDayParam); err != nil {
@@ -169,6 +167,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	return nil
 }
 
+// InitParamFromConfig - init all parameters based on pass in args
 func (ph ParamHolder) InitParamFromConfig(
 	ctx sdk.Context,
 	globalParam GlobalAllocationParam,
@@ -226,6 +225,7 @@ func (ph ParamHolder) InitParamFromConfig(
 	return nil
 }
 
+// GetEvaluateOfContentValueParam - get evaluate content value param
 func (ph ParamHolder) GetEvaluateOfContentValueParam(
 	ctx sdk.Context) (*EvaluateOfContentValueParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
@@ -240,6 +240,7 @@ func (ph ParamHolder) GetEvaluateOfContentValueParam(
 	return para, nil
 }
 
+// GetGlobalAllocationParam - get global allocation param
 func (ph ParamHolder) GetGlobalAllocationParam(
 	ctx sdk.Context) (*GlobalAllocationParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
@@ -254,6 +255,7 @@ func (ph ParamHolder) GetGlobalAllocationParam(
 	return allocation, nil
 }
 
+// GetInfraInternalAllocationParam - get infra internal allocation allocation param
 func (ph ParamHolder) GetInfraInternalAllocationParam(
 	ctx sdk.Context) (*InfraInternalAllocationParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
@@ -268,6 +270,7 @@ func (ph ParamHolder) GetInfraInternalAllocationParam(
 	return allocation, nil
 }
 
+// GetPostParam - get post param
 func (ph ParamHolder) GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetPostParamKey())
@@ -281,6 +284,7 @@ func (ph ParamHolder) GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error) {
 	return param, nil
 }
 
+// GetDeveloperParam - get developer param
 func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetDeveloperParamKey())
@@ -294,6 +298,7 @@ func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.E
 	return param, nil
 }
 
+// GetVoteParam - get vote param
 func (ph ParamHolder) GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetVoteParamKey())
@@ -307,6 +312,7 @@ func (ph ParamHolder) GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error) {
 	return param, nil
 }
 
+// GetProposalParam - get proposal param
 func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetProposalParamKey())
@@ -320,6 +326,7 @@ func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Err
 	return param, nil
 }
 
+// GetValidatorParam - get validator param
 func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetValidatorParamKey())
@@ -333,6 +340,7 @@ func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.E
 	return param, nil
 }
 
+// GetCoinDayParam - get coin day param
 func (ph ParamHolder) GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetCoinDayParamKey())
@@ -346,6 +354,7 @@ func (ph ParamHolder) GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error
 	return param, nil
 }
 
+// GetBandwidthParam - get bandwidth param
 func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetBandwidthParamKey())
@@ -359,6 +368,7 @@ func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.E
 	return param, nil
 }
 
+// GetAccountParam - get account param
 func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error) {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetAccountParamKey())
@@ -372,6 +382,7 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 	return param, nil
 }
 
+// UpdateGlobalGrowthRate - update global growth rate
 func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat) sdk.Error {
 	store := ctx.KVStore(ph.key)
 	allocationBytes := store.Get(GetAllocationParamKey())

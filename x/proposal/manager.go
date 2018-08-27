@@ -11,8 +11,8 @@ import (
 )
 
 type ProposalManager struct {
-	storage     model.ProposalStorage `json:"proposal_storage"`
-	paramHolder param.ParamHolder     `json:"param_holder"`
+	storage     model.ProposalStorage
+	paramHolder param.ParamHolder
 }
 
 func NewProposalManager(key sdk.StoreKey, holder param.ParamHolder) ProposalManager {

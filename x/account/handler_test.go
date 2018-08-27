@@ -457,7 +457,7 @@ func TestHandleRegister(t *testing.T) {
 	}
 }
 
-func TesthandleUpdateAccountMsg(t *testing.T) {
+func TestHandleUpdateAccountMsg(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
 	handler := NewHandler(am, gm)
 

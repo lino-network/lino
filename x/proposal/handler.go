@@ -13,6 +13,7 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 )
 
+// NewHandler - Handle all "proposal" type messages.
 func NewHandler(
 	am acc.AccountManager, proposalManager ProposalManager,
 	postManager post.PostManager, gm global.GlobalManager, vm vote.VoteManager) sdk.Handler {

@@ -8,7 +8,7 @@ import (
 
 type Parameter interface{}
 
-// parameters can be changed by proposal
+// EvaluateOfContentValueParam - parameters used to evaluate content value
 type EvaluateOfContentValueParam struct {
 	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
 	ConsumptionTimeAdjustOffset    int64   `json:"consumption_time_adjust_offset"`
@@ -18,7 +18,7 @@ type EvaluateOfContentValueParam struct {
 	AmountOfConsumptionExponent    sdk.Rat `json:"amount_of_consumption_exponent"`
 }
 
-// GlobalAllocation
+// GlobalAllocationParam
 // TotalLinoInflationPool: total Lino inflation for all community roles
 // InfraAllocation percentage for all infra related allocation
 // ContentCreatorAllocation percentage for all content creator related allocation
@@ -33,8 +33,6 @@ type GlobalAllocationParam struct {
 	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`
 	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
 }
-
-// TODO: year period
 
 type InfraInternalAllocationParam struct {
 	StorageAllocation sdk.Rat `json:"storage_allocation"`
@@ -87,7 +85,6 @@ type ValidatorParam struct {
 }
 
 type CoinDayParam struct {
-	DaysToRecoverCoinDayStake    int64 `json:"days_to_recover_coin_day_stake"`
 	SecondsToRecoverCoinDayStake int64 `json:"seconds_to_recover_coin_day_stake"`
 }
 
