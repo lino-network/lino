@@ -34,17 +34,8 @@ func (pm ProposalManager) DoesProposalExist(ctx sdk.Context, proposalID types.Pr
 }
 
 func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
-	lst, err := pm.storage.GetProposalList(ctx)
-	if err != nil {
-		return false
-	}
-
-	for _, id := range lst.OngoingProposal {
-		if id == proposalID {
-			return true
-		}
-	}
-	return false
+	_, err := pm.storage.GetOngoingProposal(ctx, proposalID)
+	return err == nil
 }
 
 func (pm ProposalManager) CreateContentCensorshipProposal(
@@ -111,16 +102,7 @@ func (pm ProposalManager) AddProposal(
 	}
 	proposal.SetProposalInfo(info)
 
-	if err := pm.storage.SetProposal(ctx, newID, proposal); err != nil {
-		return newID, err
-	}
-
-	lst, err := pm.storage.GetProposalList(ctx)
-	if err != nil {
-		return newID, err
-	}
-	lst.OngoingProposal = append(lst.OngoingProposal, newID)
-	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
+	if err := pm.storage.SetOngoingProposal(ctx, newID, proposal); err != nil {
 		return newID, err
 	}
 
@@ -151,7 +133,7 @@ func (pm ProposalManager) GetProposalPassParam(
 
 func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID types.ProposalKey,
 	voter types.AccountKey, voteResult bool, votingPower types.Coin) sdk.Error {
-	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
 	if err != nil {
 		return err
 	}
@@ -164,7 +146,7 @@ func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID
 	}
 
 	proposal.SetProposalInfo(proposalInfo)
-	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+	if err := pm.storage.SetOngoingProposal(ctx, proposalID, proposal); err != nil {
 		return err
 	}
 
@@ -174,12 +156,7 @@ func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID
 func (pm ProposalManager) UpdateProposalPassStatus(
 	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
-	lst, err := pm.storage.GetProposalList(ctx)
-	if err != nil {
-		return types.ProposalNotPass, err
-	}
-
-	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
 	if err != nil {
 		return types.ProposalNotPass, err
 	}
@@ -203,20 +180,11 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 	}
 
 	proposal.SetProposalInfo(proposalInfo)
-	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+	if err := pm.storage.SetExpiredProposal(ctx, proposalID, proposal); err != nil {
 		return types.ProposalNotPass, err
 	}
 
-	// update ongoing and past proposal list
-	for index, id := range lst.OngoingProposal {
-		if id == proposalID {
-			lst.OngoingProposal = append(lst.OngoingProposal[:index], lst.OngoingProposal[index+1:]...)
-			break
-		}
-	}
-	lst.PastProposal = append(lst.PastProposal, proposalID)
-
-	if err := pm.storage.SetProposalList(ctx, lst); err != nil {
+	if err := pm.storage.DeleteOngoingProposal(ctx, proposalID); err != nil {
 		return types.ProposalNotPass, err
 	}
 	return proposalInfo.Result, nil
@@ -233,7 +201,7 @@ func (pm ProposalManager) CreateDecideProposalEvent(
 
 func (pm ProposalManager) CreateParamChangeEvent(
 	ctx sdk.Context, proposalID types.ProposalKey) (types.Event, sdk.Error) {
-	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +218,7 @@ func (pm ProposalManager) CreateParamChangeEvent(
 }
 
 func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.ProposalKey) (types.Permlink, sdk.Error) {
-	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)
 	if err != nil {
 		return types.Permlink(""), err
 	}
@@ -262,6 +230,6 @@ func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.Proposal
 	return p.Permlink, nil
 }
 
-func (pm ProposalManager) GetProposalList(ctx sdk.Context) (*model.ProposalList, sdk.Error) {
-	return pm.storage.GetProposalList(ctx)
+func (pm ProposalManager) GetOngoingProposalList(ctx sdk.Context) ([]model.Proposal, sdk.Error) {
+	return pm.storage.GetOngoingProposalList(ctx)
 }

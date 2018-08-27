@@ -147,12 +147,12 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			proposalcmd.GetProposalCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetOngoingProposalCmd(types.VoteKVStoreKey, cdc),
 		)...)
 
 	linocliCmd.AddCommand(
 		client.GetCommands(
-			proposalcmd.GetProposalListCmd(types.VoteKVStoreKey, cdc),
+			proposalcmd.GetExpiredProposalCmd(types.VoteKVStoreKey, cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(

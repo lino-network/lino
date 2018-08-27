@@ -90,7 +90,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			t.Errorf("%s: failed to update proposal voting status, got err %v", tc.testName, err)
 		}
 
-		proposal, err := pm.storage.GetProposal(ctx, tc.proposalID)
+		proposal, err := pm.storage.GetOngoingProposal(ctx, tc.proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, got err %v", tc.testName, err)
 		}
@@ -207,7 +207,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		if tc.wantProposalRes == types.ProposalNotPass {
 			continue
 		}
-		proposal, err := pm.storage.GetProposal(ctx, tc.proposalID)
+		proposal, err := pm.storage.GetExpiredProposal(ctx, tc.proposalID)
 		if err != nil {
 			t.Errorf("%s: failed to get proposal, got err %v", tc.testName, err)
 		}

@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -182,8 +183,9 @@ func TestDecideProposal(t *testing.T) {
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
-			proposal, _ := pm.storage.GetProposal(ctx, cs.proposalID)
+			err := cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
+			assert.Nil(t, err)
+			proposal, err := pm.storage.GetExpiredProposal(ctx, cs.proposalID)
 			proposalInfo := proposal.GetProposalInfo()
 
 			assert.Equal(t, cs.expectProposalRes, proposalInfo.Result)
@@ -197,9 +199,22 @@ func TestDecideProposal(t *testing.T) {
 			assert.Nil(t, err)
 		}
 
-		lst, err := pm.storage.GetProposalList(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, cs.expectOngoingProposal, lst.OngoingProposal)
-		assert.Equal(t, cs.expectDecidedProposal, lst.PastProposal)
+		ongoingList, _ := pm.storage.GetOngoingProposalList(ctx)
+		expiredList, _ := pm.storage.GetExpiredProposalList(ctx)
+
+		var expectOngoingProposalList []model.Proposal
+		var expectExpiredProposalList []model.Proposal
+
+		for i := 0; i < len(cs.expectOngoingProposal); i++ {
+			p, _ := pm.storage.GetOngoingProposal(ctx, cs.expectOngoingProposal[i])
+			expectOngoingProposalList = append(expectOngoingProposalList, p)
+		}
+		for i := 0; i < len(cs.expectDecidedProposal); i++ {
+			p, _ := pm.storage.GetExpiredProposal(ctx, cs.expectDecidedProposal[i])
+			expectExpiredProposalList = append(expectExpiredProposalList, p)
+		}
+
+		assert.Equal(t, expectOngoingProposalList, ongoingList)
+		assert.Equal(t, expectExpiredProposalList, expiredList)
 	}
 }

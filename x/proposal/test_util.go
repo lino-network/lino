@@ -115,7 +115,7 @@ func createTestPost(
 
 func addProposalInfo(ctx sdk.Context, pm ProposalManager, proposalID types.ProposalKey,
 	agreeVotes, disagreeVotes types.Coin) sdk.Error {
-	proposal, err := pm.storage.GetProposal(ctx, proposalID)
+	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func addProposalInfo(ctx sdk.Context, pm ProposalManager, proposalID types.Propo
 
 	proposal.SetProposalInfo(proposalInfo)
 
-	if err := pm.storage.SetProposal(ctx, proposalID, proposal); err != nil {
+	if err := pm.storage.SetOngoingProposal(ctx, proposalID, proposal); err != nil {
 		return err
 	}
 	return nil
