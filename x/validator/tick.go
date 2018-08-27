@@ -6,6 +6,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
+// BeginBlocker - execute before every block, update signing info and record validator set
 func BeginBlocker(
 	ctx sdk.Context, req abci.RequestBeginBlock, vm ValidatorManager) (panelty types.Coin) {
 	validatorList, err := vm.GetValidatorList(ctx)

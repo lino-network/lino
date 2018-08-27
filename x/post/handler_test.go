@@ -68,31 +68,27 @@ func TestHandlerUpdatePost(t *testing.T) {
 		wantResult sdk.Result
 	}{
 		"normal update": {
-			msg:        NewUpdatePostMsg(string(user), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			msg:        NewUpdatePostMsg(string(user), postID, "update title", "update content", []types.IDToURLMapping(nil)),
 			wantResult: sdk.Result{},
 		},
 		"update author doesn't exist": {
-			msg:        NewUpdatePostMsg("invalid", postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			msg:        NewUpdatePostMsg("invalid", postID, "update title", "update content", []types.IDToURLMapping(nil)),
 			wantResult: ErrAccountNotFound("invalid").Result(),
 		},
 		"update post doesn't exist - invalid post ID": {
-			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			msg:        NewUpdatePostMsg(string(user), "invalid", "update title", "update content", []types.IDToURLMapping(nil)),
 			wantResult: ErrPostNotFound(types.GetPermlink(user, "invalid")).Result(),
 		},
 		"update post doesn't exist - invalid author": {
-			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			msg:        NewUpdatePostMsg(string(user2), postID, "update title", "update content", []types.IDToURLMapping(nil)),
 			wantResult: ErrPostNotFound(types.GetPermlink(user2, postID)).Result(),
 		},
 		"update deleted post": {
-			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil), "1"),
+			msg:        NewUpdatePostMsg(string(user1), postID1, "update title", "update content", []types.IDToURLMapping(nil)),
 			wantResult: ErrUpdatePostIsDeleted(types.GetPermlink(user1, postID1)).Result(),
 		},
 	}
 	for testName, tc := range testCases {
-		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-		if err != nil {
-			t.Errorf("%s: failed to convert rat from decimal, got err %v", testName, err)
-		}
 		result := handler(ctx, tc.msg)
 		if !assert.Equal(t, tc.wantResult, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, tc.wantResult)
@@ -120,7 +116,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 			TotalUpvoteStake:        types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
 			TotalReportStake:        types.NewCoinFromInt64(0),
-			RedistributionSplitRate: splitRate,
+			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)

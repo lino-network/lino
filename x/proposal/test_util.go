@@ -31,7 +31,7 @@ var (
 	TestPostKVStoreKey      = sdk.NewKVStoreKey("post")
 )
 
-func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
@@ -55,7 +55,7 @@ func setupTest(t *testing.T, height int64) (
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
-	err := InitGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, proposalManager, postManager, voteManager, valManager, globalManager
 }

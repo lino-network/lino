@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// VoteManager - vote manager
 type VoteManager struct {
 	storage     model.VoteStorage
 	paramHolder param.ParamHolder
@@ -20,6 +21,7 @@ func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder) VoteManager {
 	}
 }
 
+// InitGenesis - initialize KV Store
 func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
 	if err := vm.storage.InitGenesis(ctx); err != nil {
 		return err
@@ -27,18 +29,22 @@ func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesVoterExist - check if voter exist or not
 func (vm VoteManager) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	return vm.storage.DoesVoterExist(ctx, accKey)
 }
 
+// DoesVoterExist - check if vote exist or not
 func (vm VoteManager) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
 	return vm.storage.DoesVoteExist(ctx, proposalID, accKey)
 }
 
+// DoesVoterExist - check if delegation exist or not
 func (vm VoteManager) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
 	return vm.storage.DoesDelegationExist(ctx, voter, delegator)
 }
 
+// DoesVoterExist - check if a voter is validator or not
 func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
 	lst, err := vm.storage.GetReferenceList(ctx)
 	if err != nil {
@@ -52,6 +58,8 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 	return false
 }
 
+// IsLegalVoterWithdraw - check withdraw voter is not validator
+// and withdraw amount is much than minimum requirment
 func (vm VoteManager) IsLegalVoterWithdraw(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
@@ -79,6 +87,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	return true
 }
 
+// IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
 func (vm VoteManager) IsLegalDelegatorWithdraw(
 	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) bool {
 	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
@@ -100,6 +109,7 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 	return res.IsNotNegative()
 }
 
+// CanBecomeValidator - check if vote deposit meet requirement or not
 func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -113,7 +123,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 	return voter.Deposit.IsGTE(param.ValidatorMinVotingDeposit)
 }
 
-// only support change parameter proposal now
+// AddVote - voter vote for a proposal
 func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
 	// check if the vote exist
 	if vm.DoesVoteExist(ctx, proposalID, voter) {
@@ -137,10 +147,12 @@ func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 	return nil
 }
 
+// GetVote - get vote detail based on voter and proposal ID
 func (vm VoteManager) GetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) (*model.Vote, sdk.Error) {
 	return vm.storage.GetVote(ctx, proposalID, voter)
 }
 
+// AddDelegation - add delegation
 func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	var delegation *model.Delegation
 	var err sdk.Error
@@ -173,6 +185,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	return nil
 }
 
+// AddVoter - add voter
 func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter := &model.Voter{
 		Username: username,
@@ -195,6 +208,7 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 	return nil
 }
 
+// Deposit - voter deposit
 func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -207,7 +221,7 @@ func (vm VoteManager) Deposit(ctx sdk.Context, username types.AccountKey, coin t
 	return nil
 }
 
-// this method won't check if it is a legal withdraw, caller should check by itself
+// VoterWithdraw - this method won't check if it is a legal withdraw, caller should check by itself
 func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrInvalidCoin()
@@ -231,6 +245,7 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 	return nil
 }
 
+// VoterWithdrawAll - voter revoke
 func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
@@ -242,6 +257,7 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 	return voter.Deposit, nil
 }
 
+// DelegatorWithdraw - withdraw delegation
 func (vm VoteManager) DelegatorWithdraw(
 	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
@@ -275,6 +291,7 @@ func (vm VoteManager) DelegatorWithdraw(
 	return nil
 }
 
+// DelegatorWithdrawAll - revoke delegation
 func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey) (types.Coin, sdk.Error) {
 	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if err != nil {
@@ -286,6 +303,7 @@ func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.Acco
 	return delegation.Amount, nil
 }
 
+// GetVotingPower - get voter voting power
 func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, voterName)
 	if err != nil {
@@ -295,6 +313,7 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 	return res, nil
 }
 
+// GetPenaltyList - get penalty list if voter is also validator doesn't vote
 func (vm VoteManager) GetPenaltyList(
 	ctx sdk.Context, proposalID types.ProposalKey, proposalType types.ProposalType,
 	oncallValidators []types.AccountKey) (types.PenaltyList, sdk.Error) {
@@ -327,6 +346,7 @@ func (vm VoteManager) GetPenaltyList(
 	return penaltyList, nil
 }
 
+// GetVoterDeposit - get voter deposit
 func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
@@ -335,14 +355,17 @@ func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) 
 	return voter.Deposit, nil
 }
 
+// GetAllDelegators - get all delegators of a voter
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
 
+// GetValidatorReferenceList - get all delegatee
 func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.ReferenceList, sdk.Error) {
 	return vm.storage.GetReferenceList(ctx)
 }
 
+// SetValidatorReferenceList - set validator reference list
 func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ReferenceList) sdk.Error {
 	return vm.storage.SetReferenceList(ctx, lst)
 }

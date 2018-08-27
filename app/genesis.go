@@ -154,8 +154,6 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 			},
 			param.GlobalAllocationParam{
-				Ceiling:                  sdk.NewRat(98, 1000),
-				Floor:                    sdk.NewRat(3, 100),
 				GlobalGrowthRate:         sdk.NewRat(98, 1000),
 				InfraAllocation:          sdk.NewRat(20, 100),
 				ContentCreatorAllocation: sdk.NewRat(65, 100),

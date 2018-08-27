@@ -32,12 +32,11 @@ type CreatePostMsg struct {
 
 // UpdatePostMsg - update post
 type UpdatePostMsg struct {
-	Author                  types.AccountKey       `json:"author"`
-	PostID                  string                 `json:"post_id"`
-	Title                   string                 `json:"title"`
-	Content                 string                 `json:"content"`
-	Links                   []types.IDToURLMapping `json:"links"`
-	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
+	Author  types.AccountKey       `json:"author"`
+	PostID  string                 `json:"post_id"`
+	Title   string                 `json:"title"`
+	Content string                 `json:"content"`
+	Links   []types.IDToURLMapping `json:"links"`
 }
 
 // DeletePostMsg - sent from a user to a post
@@ -92,15 +91,13 @@ func NewCreatePostMsg(
 
 // NewUpdatePostMsg - constructs a UpdatePost msg
 func NewUpdatePostMsg(
-	author, postID, title, content string,
-	links []types.IDToURLMapping, redistributionSplitRate string) UpdatePostMsg {
+	author, postID, title, content string, links []types.IDToURLMapping) UpdatePostMsg {
 	return UpdatePostMsg{
 		Author:  types.AccountKey(author),
 		PostID:  postID,
 		Title:   title,
 		Content: content,
 		Links:   links,
-		RedistributionSplitRate: redistributionSplitRate,
 	}
 }
 
@@ -228,9 +225,6 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if utf8.RuneCountInString(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
-		return ErrRedistributionSplitRateLengthTooLong()
-	}
 
 	for _, link := range msg.Links {
 		if len(link.Identifier) > types.MaximumLinkIdentifier {
@@ -239,15 +233,6 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 		if len(link.URL) > types.MaximumLinkURL {
 			return ErrURLLengthTooLong()
 		}
-	}
-
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-	if err != nil {
-		return err
-	}
-
-	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
-		return ErrInvalidPostRedistributionSplitRate()
 	}
 	return nil
 }
@@ -307,22 +292,32 @@ func (msg ViewMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// Get implements sdk.Msg; should not be called
+// GetPermission - implements types.Msg
 func (msg CreatePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg UpdatePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg DeletePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg DonateMsg) GetPermission() types.Permission {
 	return types.PreAuthorizationPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg ViewMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
@@ -404,9 +399,8 @@ func (msg CreatePostMsg) String() string {
 }
 
 func (msg UpdatePostMsg) String() string {
-	return fmt.Sprintf("Post.UpdatePostMsg{author:%v, postID:%v, title:%v, content:%v, links:%v, redistribution split rate:%v}",
-		msg.Author, msg.PostID, msg.Title, msg.Content,
-		msg.Links, msg.RedistributionSplitRate)
+	return fmt.Sprintf("Post.UpdatePostMsg{author:%v, postID:%v, title:%v, content:%v, links:%v}",
+		msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links)
 }
 
 func (msg DeletePostMsg) String() string {

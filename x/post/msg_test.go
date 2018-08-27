@@ -285,85 +285,64 @@ func TestUpdatePostMsg(t *testing.T) {
 		{
 			testName: "normal case 1",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "1.0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectedResult: nil,
 		},
 		{
 			testName: "normal case 2",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectedResult: nil,
 		},
 		{
 			testName: "utf8 title",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", maxLenOfUTF8Title, "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", maxLenOfUTF8Title, "content", []types.IDToURLMapping{}),
 			expectedResult: nil,
 		},
 		{
 			testName: "utf8 content",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", "title", maxLenOfUTF8Content, []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", maxLenOfUTF8Content, []types.IDToURLMapping{}),
 			expectedResult: nil,
 		},
 		{
 			testName: "no author",
 			updatePostMsg: NewUpdatePostMsg(
-				"", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectedResult: ErrNoAuthor(),
 		},
 		{
 			testName: "no post id",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "", "title", "content", []types.IDToURLMapping{}),
 			expectedResult: ErrNoPostID(),
 		},
 		{
 			testName: "post tile is too long",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 51)), "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", string(make([]byte, 51)), "content", []types.IDToURLMapping{}),
 			expectedResult: ErrPostTitleExceedMaxLength(),
 		},
 		{
 			testName: "post utf8 tile is too long",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", tooLongOfUTF8Title, "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", tooLongOfUTF8Title, "content", []types.IDToURLMapping{}),
 			expectedResult: ErrPostTitleExceedMaxLength(),
 		},
 		{
 			testName: "post content is too long",
 			updatePostMsg: NewUpdatePostMsg(
 				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1001)),
-				[]types.IDToURLMapping{}, "0"),
+				[]types.IDToURLMapping{}),
 			expectedResult: ErrPostContentExceedMaxLength(),
 		},
 		{
 			testName: "post utf8 content is too long",
 			updatePostMsg: NewUpdatePostMsg(
 				"author", "postID", string(make([]byte, 50)), tooLongOfUTF8Content,
-				[]types.IDToURLMapping{}, "0"),
+				[]types.IDToURLMapping{}),
 			expectedResult: ErrPostContentExceedMaxLength(),
-		},
-		{
-			testName: "redistribution split rate can't be bigger than 1",
-			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-				[]types.IDToURLMapping{}, "1.01"),
-			expectedResult: ErrInvalidPostRedistributionSplitRate(),
-		},
-		{
-			testName: "redistribution split rate can't be negative",
-			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-				[]types.IDToURLMapping{}, "-1"),
-			expectedResult: ErrInvalidPostRedistributionSplitRate(),
-		},
-		{
-			testName: "redistruction split rate length is too long",
-			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1000)),
-				[]types.IDToURLMapping{}, "0.000000000001"),
-			expectedResult: ErrRedistributionSplitRateLengthTooLong(),
 		},
 	}
 	for _, tc := range testCases {
@@ -681,7 +660,7 @@ func TestMsgPermission(t *testing.T) {
 		{
 			testName: "update post",
 			msg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectedPermission: types.AppPermission,
 		},
 	}
@@ -743,7 +722,7 @@ func TestGetSignBytes(t *testing.T) {
 		{
 			testName: "update post",
 			msg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 		},
 	}
 
@@ -807,7 +786,7 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName: "update post",
 			msg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectSigners: []types.AccountKey{"author"},
 		},
 	}
@@ -881,7 +860,7 @@ func TestGetConsumeAmount(t *testing.T) {
 		{
 			testName: "update post",
 			msg: NewUpdatePostMsg(
-				"author", "postID", "title", "content", []types.IDToURLMapping{}, "0"),
+				"author", "postID", "title", "content", []types.IDToURLMapping{}),
 			expectAmount: types.NewCoinFromInt64(0),
 		},
 	}

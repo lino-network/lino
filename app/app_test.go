@@ -194,8 +194,6 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 		param.GlobalAllocationParam{
 			GlobalGrowthRate:         sdk.NewRat(98, 1000),
-			Ceiling:                  sdk.NewRat(98, 1000),
-			Floor:                    sdk.NewRat(3, 100),
 			InfraAllocation:          sdk.NewRat(20, 100),
 			ContentCreatorAllocation: sdk.NewRat(65, 100),
 			DeveloperAllocation:      sdk.NewRat(10, 100),

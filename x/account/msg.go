@@ -365,6 +365,14 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername("illegal input")
 	}
 
+	match, err = regexp.MatchString(types.IlligalUsernameReCheck, string(msg.NewUser))
+	if err != nil {
+		return ErrInvalidUsername("match error")
+	}
+	if match {
+		return ErrInvalidUsername("illegal input")
+	}
+
 	_, coinErr := types.LinoToCoin(msg.RegisterFee)
 	if coinErr != nil {
 		return coinErr

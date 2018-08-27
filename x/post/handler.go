@@ -288,12 +288,8 @@ func handleUpdatePostMsg(
 		return ErrUpdatePostIsDeleted(permlink).Result()
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-	if err != nil {
-		return err.Result()
-	}
 	if err := pm.UpdatePost(
-		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links, splitRate); err != nil {
+		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

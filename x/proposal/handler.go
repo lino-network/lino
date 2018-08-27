@@ -52,10 +52,7 @@ func handleChangeParamMsg(
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
-	if err != nil {
-		return err.Result()
-	}
+	event := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
 
 	if err := gm.RegisterProposalDecideEvent(ctx, param.ChangeParamDecideSec, event); err != nil {
 		return err.Result()
@@ -94,10 +91,7 @@ func handleProtocolUpgradeMsg(
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
-	if err != nil {
-		return err.Result()
-	}
+	event := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
 
 	if err := gm.RegisterProposalDecideEvent(ctx, param.ProtocolUpgradeDecideSec, event); err != nil {
 		return err.Result()
@@ -148,11 +142,7 @@ func handleContentCensorshipMsg(
 		return err.Result()
 	}
 	//  set a time event to decide the proposal
-	event, err := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
-	if err != nil {
-		return err.Result()
-	}
-
+	event := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
 	// minus coin from account and return when deciding the proposal
 	if err = am.MinusSavingCoin(
 		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit,

@@ -14,9 +14,10 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+// ValidatorManager - validator manager
 type ValidatorManager struct {
-	storage     model.ValidatorStorage `json:"validator_storage"`
-	paramHolder param.ParamHolder      `json:"param_holder"`
+	storage     model.ValidatorStorage
+	paramHolder param.ParamHolder
 }
 
 func NewValidatorManager(key sdk.StoreKey, holder param.ParamHolder) ValidatorManager {
@@ -26,6 +27,7 @@ func NewValidatorManager(key sdk.StoreKey, holder param.ParamHolder) ValidatorMa
 	}
 }
 
+// InitGenesis - initialize KVStore
 func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
 	if err := vm.storage.InitGenesis(ctx); err != nil {
 		return err
@@ -33,10 +35,12 @@ func (vm ValidatorManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesValidatorExist - check if validator exists in KVStore or not
 func (vm ValidatorManager) DoesValidatorExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	return vm.storage.DoesValidatorExist(ctx, accKey)
 }
 
+// IsLegalWithdraw - check if withdraw is legal or not
 func (vm ValidatorManager) IsLegalWithdraw(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	validator, err := vm.storage.GetValidator(ctx, username)
@@ -70,6 +74,7 @@ func (vm ValidatorManager) IsLegalWithdraw(
 	return res.IsGTE(param.ValidatorMinCommittingDeposit)
 }
 
+// IsBalancedAccount - make sure voting deposit is much than committing (validator) deposit
 func (vm ValidatorManager) IsBalancedAccount(
 	ctx sdk.Context, accKey types.AccountKey, votingDeposit types.Coin) bool {
 	commitingDeposit, err := vm.GetValidatorDeposit(ctx, accKey)
@@ -79,6 +84,8 @@ func (vm ValidatorManager) IsBalancedAccount(
 	return votingDeposit.IsGTE(commitingDeposit)
 }
 
+// GetUpdateValidatorList - after a block, compare updated validator set with
+// recorded validator set before block execution
 func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
 	validatorList, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
@@ -111,10 +118,12 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 	return ABCIValList, nil
 }
 
+// GetValidatorList - get validator list from KV Store
 func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) (*model.ValidatorList, sdk.Error) {
 	return vm.storage.GetValidatorList(ctx)
 }
 
+// GetValidatorDeposit - get validator deposit
 func (vm ValidatorManager) GetValidatorDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	validator, err := vm.storage.GetValidator(ctx, accKey)
 	if err != nil {
@@ -123,10 +132,12 @@ func (vm ValidatorManager) GetValidatorDeposit(ctx sdk.Context, accKey types.Acc
 	return validator.Deposit, nil
 }
 
+// SetValidatorList - set validator list
 func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) sdk.Error {
 	return vm.storage.SetValidatorList(ctx, lst)
 }
 
+// UpdateSigningValidator - based on info in beginBlocker, record last block singing info
 func (vm ValidatorManager) UpdateSigningValidator(
 	ctx sdk.Context, signingValidators []abci.SigningValidator) sdk.Error {
 	lst, err := vm.storage.GetValidatorList(ctx)
@@ -164,6 +175,7 @@ func (vm ValidatorManager) UpdateSigningValidator(
 	return nil
 }
 
+// PunishOncallValidator - punish oncall validator if 1) byzantine or 2) missing blocks reach limiation
 func (vm ValidatorManager) PunishOncallValidator(
 	ctx sdk.Context, username types.AccountKey, penalty types.Coin, punishType types.PunishType) (types.Coin, sdk.Error) {
 	actualPenalty := penalty
@@ -209,6 +221,7 @@ func (vm ValidatorManager) PunishOncallValidator(
 	return actualPenalty, nil
 }
 
+// FireIncompetentValidator - fire oncall validator if 1) deposit insufficient 2) byzantine
 func (vm ValidatorManager) FireIncompetentValidator(
 	ctx sdk.Context, byzantineValidators []abci.Evidence) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoinFromInt64(0)
@@ -254,6 +267,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 	return totalPenalty, nil
 }
 
+// PunishValidatorsDidntVote - validators are required to vote Protocol Upgrade and Paramter Change proposal
 func (vm ValidatorManager) PunishValidatorsDidntVote(
 	ctx sdk.Context, penaltyList []types.AccountKey) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoinFromInt64(0)
@@ -273,6 +287,7 @@ func (vm ValidatorManager) PunishValidatorsDidntVote(
 	return totalPenalty, nil
 }
 
+// RegisterValidator - register validator
 func (vm ValidatorManager) RegisterValidator(
 	ctx sdk.Context, username types.AccountKey, pubKey crypto.PubKey, coin types.Coin, link string) sdk.Error {
 	// check validator minimum committing deposit requirement
@@ -312,6 +327,7 @@ func (vm ValidatorManager) RegisterValidator(
 	return nil
 }
 
+// Deposit - deposit money to validator
 func (vm ValidatorManager) Deposit(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, link string) sdk.Error {
 	validator, err := vm.storage.GetValidator(ctx, username)
@@ -328,7 +344,7 @@ func (vm ValidatorManager) Deposit(
 	return nil
 }
 
-// this method won't check if it is a legal withdraw, caller should check by itself
+// ValidatorWithdraw - this method won't check if it is a legal withdraw, caller should check by itself
 func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrInvalidCoin()
@@ -345,6 +361,7 @@ func (vm ValidatorManager) ValidatorWithdraw(ctx sdk.Context, username types.Acc
 	return nil
 }
 
+// ValidatorWithdrawAll - revoke validator
 func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	validator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
@@ -356,9 +373,8 @@ func (vm ValidatorManager) ValidatorWithdrawAll(ctx sdk.Context, username types.
 	return validator.Deposit, nil
 }
 
-// try to join the oncall validator list, the action will success if either
-// 1. the validator list is not full
-// or 2. someone in the validator list has a lower power than current validator
+// TryBecomeOncallValidator - try to join the oncall validator list, the action will success if either
+// 1. the validator list is not full or 2. someone in the validator list has a lower power than current validator
 func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username types.AccountKey) sdk.Error {
 	curValidator, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
@@ -530,6 +546,7 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 
 }
 
+// FindAccountInList - find account in a given account list
 func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
 	for index, user := range lst {
 		if user == me {

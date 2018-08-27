@@ -39,7 +39,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voteResult:  true,
 			votingPower: types.NewCoinFromInt64(1),
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    types.NewCoinFromInt64(1),
@@ -47,7 +47,8 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
 				},
-				permlink, censorshipReason},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 		{
 			testName:    "one more agree vote",
@@ -56,7 +57,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voteResult:  true,
 			votingPower: types.NewCoinFromInt64(2),
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    types.NewCoinFromInt64(3),
@@ -64,7 +65,8 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
 				},
-				permlink, censorshipReason},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 		{
 			testName:    "one disagree vote",
@@ -73,7 +75,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 			voteResult:  false,
 			votingPower: types.NewCoinFromInt64(5),
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    types.NewCoinFromInt64(3),
@@ -81,7 +83,8 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
 				},
-				permlink, censorshipReason},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 	}
 	for _, tc := range testCases {
@@ -143,15 +146,18 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID1,
 			wantProposalRes: types.ProposalNotPass,
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID1,
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
-				Result:        types.ProposalNotPass,
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				ProposalInfo: model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID1,
+					AgreeVotes:    proposalParam.ContentCensorshipPassVotes,
+					DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
+					Result:        types.ProposalNotPass,
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideHr*3600,
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 
 		{
@@ -161,15 +167,18 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID2,
 			wantProposalRes: types.ProposalNotPass,
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID2,
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: types.NewCoinFromInt64(0),
-				Result:        types.ProposalNotPass,
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				ProposalInfo: model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID2,
+					AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Minus(types.NewCoinFromInt64(10)),
+					DisagreeVotes: types.NewCoinFromInt64(0),
+					Result:        types.ProposalNotPass,
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideHr*3600,
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 
 		{
@@ -179,15 +188,18 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			proposalType:    types.ContentCensorship,
 			proposalID:      proposalID3,
 			wantProposalRes: types.ProposalNotPass,
-			wantProposal: &model.ContentCensorshipProposal{model.ProposalInfo{
-				Creator:       user1,
-				ProposalID:    proposalID3,
-				AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
-				DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
-				Result:        types.ProposalPass,
-				CreatedAt:     curTime,
-				ExpiredAt:     curTime + decideHr*3600,
-			}, permlink, censorshipReason},
+			wantProposal: &model.ContentCensorshipProposal{
+				ProposalInfo: model.ProposalInfo{
+					Creator:       user1,
+					ProposalID:    proposalID3,
+					AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
+					DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
+					Result:        types.ProposalPass,
+					CreatedAt:     curTime,
+					ExpiredAt:     curTime + decideHr*3600,
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

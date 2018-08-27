@@ -39,96 +39,115 @@ var _ ContentCensorshipMsg = DeletePostContentMsg{}
 
 var _ ProtocolUpgradeMsg = UpgradeProtocolMsg{}
 
+var annualInflationCeiling = sdk.NewRat(98, 1000)
+var annualInflationFloor = sdk.NewRat(3, 100)
+
+// ChangeParamMsg - change parameter msg
 type ChangeParamMsg interface {
 	GetParameter() param.Parameter
 	GetCreator() types.AccountKey
 	GetReason() string
 }
 
+// ContentCensorshipMsg - content censorship msg
 type ContentCensorshipMsg interface {
 	GetCreator() types.AccountKey
 	GetPermlink() types.Permlink
 	GetReason() string
 }
 
+// ProtocolUpgradeMsg - protocol upgrade msg
 type ProtocolUpgradeMsg interface {
 	GetCreator() types.AccountKey
 	GetLink() string
 	GetReason() string
 }
 
+// DeletePostContentMsg - implement of content censorship msg
 type DeletePostContentMsg struct {
 	Creator  types.AccountKey `json:"creator"`
 	Permlink types.Permlink   `json:"permlink"`
 	Reason   string           `json:"reason"`
 }
 
+// UpgradeProtocolMsg - implement of protocol upgrade msg
 type UpgradeProtocolMsg struct {
 	Creator types.AccountKey `json:"creator"`
 	Link    string           `json:"link"`
 	Reason  string           `json:"reason"`
 }
 
+// ChangeGlobalAllocationParamMsg - implement of change parameter msg
 type ChangeGlobalAllocationParamMsg struct {
 	Creator   types.AccountKey            `json:"creator"`
 	Parameter param.GlobalAllocationParam `json:"parameter"`
 	Reason    string                      `json:"reason"`
 }
 
+// ChangeEvaluateOfContentValueParamMsg - implement of change parameter msg
 type ChangeEvaluateOfContentValueParamMsg struct {
 	Creator   types.AccountKey                  `json:"creator"`
 	Parameter param.EvaluateOfContentValueParam `json:"parameter"`
 	Reason    string                            `json:"reason"`
 }
 
+// ChangeInfraInternalAllocationParamMsg - implement of change parameter msg
 type ChangeInfraInternalAllocationParamMsg struct {
 	Creator   types.AccountKey                   `json:"creator"`
 	Parameter param.InfraInternalAllocationParam `json:"parameter"`
 	Reason    string                             `json:"reason"`
 }
 
+// ChangeVoteParamMsg - implement of change parameter msg
 type ChangeVoteParamMsg struct {
 	Creator   types.AccountKey `json:"creator"`
 	Parameter param.VoteParam  `json:"parameter"`
 	Reason    string           `json:"reason"`
 }
 
+// ChangeProposalParamMsg - implement of change parameter msg
 type ChangeProposalParamMsg struct {
 	Creator   types.AccountKey    `json:"creator"`
 	Parameter param.ProposalParam `json:"parameter"`
 	Reason    string              `json:"reason"`
 }
 
+// ChangeDeveloperParamMsg - implement of change parameter msg
 type ChangeDeveloperParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.DeveloperParam `json:"parameter"`
 	Reason    string               `json:"reason"`
 }
 
+// ChangeValidatorParamMsg - implement of change parameter msg
 type ChangeValidatorParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.ValidatorParam `json:"parameter"`
 	Reason    string               `json:"reason"`
 }
 
+// ChangeBandwidthParamMsg - implement of change parameter msg
 type ChangeBandwidthParamMsg struct {
 	Creator   types.AccountKey     `json:"creator"`
 	Parameter param.BandwidthParam `json:"parameter"`
 	Reason    string               `json:"reason"`
 }
 
+// ChangeAccountParamMsg - implement of change parameter msg
 type ChangeAccountParamMsg struct {
 	Creator   types.AccountKey   `json:"creator"`
 	Parameter param.AccountParam `json:"parameter"`
 	Reason    string             `json:"reason"`
 }
 
+// ChangePostParamMsg - implement of change parameter msg
 type ChangePostParamMsg struct {
 	Creator   types.AccountKey `json:"creator"`
 	Parameter param.PostParam  `json:"parameter"`
 	Reason    string           `json:"reason"`
 }
 
+// VoteProposalMsg - implement of change parameter msg
 type VoteProposalMsg struct {
 	Voter      types.AccountKey  `json:"voter"`
 	ProposalID types.ProposalKey `json:"proposal_id"`
@@ -147,11 +166,19 @@ func NewDeletePostContentMsg(
 	}
 }
 
-func (msg DeletePostContentMsg) GetPermlink() types.Permlink  { return msg.Permlink }
-func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creator }
-func (msg DeletePostContentMsg) GetReason() string            { return msg.Reason }
-func (msg DeletePostContentMsg) Type() string                 { return types.ProposalRouterName }
+// GetPermlink - implement DeletePostContentMsg
+func (msg DeletePostContentMsg) GetPermlink() types.Permlink { return msg.Permlink }
 
+// GetCreator - implement DeletePostContentMsg
+func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement DeletePostContentMsg
+func (msg DeletePostContentMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg DeletePostContentMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg DeletePostContentMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -170,9 +197,12 @@ func (msg DeletePostContentMsg) String() string {
 	return fmt.Sprintf("DeletePostContentMsg{Creator:%v, post:%v}", msg.Creator, msg.GetPermlink())
 }
 
+// GetPermission - implement types.Msg
 func (msg DeletePostContentMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
+
+// GetSignBytes - implement sdk.Msg
 func (msg DeletePostContentMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -181,11 +211,12 @@ func (msg DeletePostContentMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg DeletePostContentMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg DeletePostContentMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -202,11 +233,19 @@ func NewUpgradeProtocolMsg(
 	}
 }
 
+// GetCreator - implement UpgradeProtocolMsg
 func (msg UpgradeProtocolMsg) GetCreator() types.AccountKey { return msg.Creator }
-func (msg UpgradeProtocolMsg) GetLink() string              { return msg.Link }
-func (msg UpgradeProtocolMsg) GetReason() string            { return msg.Reason }
-func (msg UpgradeProtocolMsg) Type() string                 { return types.ProposalRouterName }
 
+// GetLink - implement UpgradeProtocolMsg
+func (msg UpgradeProtocolMsg) GetLink() string { return msg.Link }
+
+// GetReason - implement UpgradeProtocolMsg
+func (msg UpgradeProtocolMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg UpgradeProtocolMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg UpgradeProtocolMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -228,10 +267,12 @@ func (msg UpgradeProtocolMsg) String() string {
 	return fmt.Sprintf("UpgradeProtocolMsg{Creator:%v, Link:%v}", msg.Creator, msg.GetLink())
 }
 
+// GetPermission - implement types.Msg
 func (msg UpgradeProtocolMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -240,11 +281,12 @@ func (msg UpgradeProtocolMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg UpgradeProtocolMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg UpgradeProtocolMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -261,11 +303,19 @@ func NewChangeGlobalAllocationParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeGlobalAllocationParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeGlobalAllocationParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeGlobalAllocationParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeGlobalAllocationParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeGlobalAllocationParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeGlobalAllocationParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeGlobalAllocationParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -284,11 +334,8 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroRat()) {
 		return ErrIllegalParameter()
 	}
-	if msg.Parameter.GlobalGrowthRate.LT(msg.Parameter.Floor) ||
-		msg.Parameter.GlobalGrowthRate.GT(msg.Parameter.Ceiling) ||
-		msg.Parameter.Floor.GT(msg.Parameter.Ceiling) ||
-		msg.Parameter.Ceiling.LT(sdk.ZeroRat()) ||
-		msg.Parameter.Floor.LT(sdk.ZeroRat()) {
+	if msg.Parameter.GlobalGrowthRate.LT(annualInflationFloor) ||
+		msg.Parameter.GlobalGrowthRate.GT(annualInflationCeiling) {
 		return ErrIllegalParameter()
 	}
 
@@ -302,10 +349,12 @@ func (msg ChangeGlobalAllocationParamMsg) String() string {
 	return fmt.Sprintf("ChangeGlobalAllocationParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -314,11 +363,12 @@ func (msg ChangeGlobalAllocationParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -335,11 +385,19 @@ func NewChangeEvaluateOfContentValueParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeEvaluateOfContentValueParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeEvaluateOfContentValueParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeEvaluateOfContentValueParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeEvaluateOfContentValueParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeEvaluateOfContentValueParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeEvaluateOfContentValueParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeEvaluateOfContentValueParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -360,10 +418,12 @@ func (msg ChangeEvaluateOfContentValueParamMsg) String() string {
 	return fmt.Sprintf("ChangeEvaluateOfContentValueParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeEvaluateOfContentValueParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -372,11 +432,12 @@ func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeEvaluateOfContentValueParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeEvaluateOfContentValueParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -393,11 +454,19 @@ func NewChangeInfraInternalAllocationParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeInfraInternalAllocationParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeInfraInternalAllocationParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeInfraInternalAllocationParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeInfraInternalAllocationParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeInfraInternalAllocationParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeInfraInternalAllocationParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeInfraInternalAllocationParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -419,10 +488,12 @@ func (msg ChangeInfraInternalAllocationParamMsg) String() string {
 	return fmt.Sprintf("ChangeInfraInternalAllocationParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -431,11 +502,12 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -452,11 +524,19 @@ func NewChangeVoteParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeVoteParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeVoteParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeVoteParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeVoteParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeVoteParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeVoteParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeVoteParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -485,10 +565,12 @@ func (msg ChangeVoteParamMsg) String() string {
 	return fmt.Sprintf("ChangeVoteParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeVoteParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -497,11 +579,12 @@ func (msg ChangeVoteParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeVoteParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeVoteParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -518,11 +601,19 @@ func NewChangeProposalParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeProposalParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeProposalParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeProposalParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeProposalParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeProposalParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeProposalParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeProposalParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeProposalParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -564,10 +655,12 @@ func (msg ChangeProposalParamMsg) String() string {
 	return fmt.Sprintf("ChangeProposalParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeProposalParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeProposalParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -576,11 +669,12 @@ func (msg ChangeProposalParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeProposalParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeProposalParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -597,11 +691,19 @@ func NewChangeDeveloperParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeDeveloperParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeDeveloperParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeDeveloperParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeDeveloperParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeDeveloperParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeDeveloperParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeDeveloperParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeDeveloperParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -627,10 +729,12 @@ func (msg ChangeDeveloperParamMsg) String() string {
 	return fmt.Sprintf("ChangeDeveloperParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeDeveloperParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -639,11 +743,12 @@ func (msg ChangeDeveloperParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeDeveloperParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeDeveloperParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -659,11 +764,19 @@ func NewChangeValidatorParamMsg(creator string, parameter param.ValidatorParam, 
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeValidatorParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeValidatorParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeValidatorParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeValidatorParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeValidatorParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeValidatorParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeValidatorParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -696,10 +809,12 @@ func (msg ChangeValidatorParamMsg) String() string {
 	return fmt.Sprintf("ChangeValidatorParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeValidatorParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -708,11 +823,12 @@ func (msg ChangeValidatorParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeValidatorParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeValidatorParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -729,11 +845,19 @@ func NewChangeAccountParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeAccountParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeAccountParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeAccountParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeAccountParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeAccountParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeAccountParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeAccountParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -754,10 +878,12 @@ func (msg ChangeAccountParamMsg) String() string {
 	return fmt.Sprintf("ChangeAccountParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeAccountParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -766,11 +892,12 @@ func (msg ChangeAccountParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeAccountParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeAccountParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -787,11 +914,19 @@ func NewChangePostParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangePostParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangePostParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangePostParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangePostParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangePostParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangePostParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangePostParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangePostParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -811,10 +946,12 @@ func (msg ChangePostParamMsg) String() string {
 	return fmt.Sprintf("ChangePostParamMsg{Creator:%v, param:%v}", msg.Creator, msg.Parameter)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangePostParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangePostParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -823,11 +960,12 @@ func (msg ChangePostParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangePostParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangePostParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -844,11 +982,19 @@ func NewChangeBandwidthParamMsg(
 	}
 }
 
+// GetParameter - implement ChangeParamMsg
 func (msg ChangeBandwidthParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey  { return msg.Creator }
-func (msg ChangeBandwidthParamMsg) GetReason() string             { return msg.Reason }
-func (msg ChangeBandwidthParamMsg) Type() string                  { return types.ProposalRouterName }
 
+// GetCreator - implement ChangeParamMsg
+func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey { return msg.Creator }
+
+// GetReason - implement ChangeParamMsg
+func (msg ChangeBandwidthParamMsg) GetReason() string { return msg.Reason }
+
+// Type - implement sdk.Msg
+func (msg ChangeBandwidthParamMsg) Type() string { return types.ProposalRouterName }
+
+// ValidateBasic - implement sdk.Msg
 func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 	if len(msg.Creator) < types.MinimumUsernameLength ||
 		len(msg.Creator) > types.MaximumUsernameLength {
@@ -872,10 +1018,12 @@ func (msg ChangeBandwidthParamMsg) String() string {
 	return fmt.Sprintf("ChangeBandwidthParamMsg{Creator:%v}", msg.Creator)
 }
 
+// GetPermission - implement types.Msg
 func (msg ChangeBandwidthParamMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -884,18 +1032,18 @@ func (msg ChangeBandwidthParamMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ChangeBandwidthParamMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ChangeBandwidthParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
 //----------------------------------------
 // VoteProposalMsg Msg Implementations
-
 func NewVoteProposalMsg(voter string, proposalID int64, result bool) VoteProposalMsg {
 	return VoteProposalMsg{
 		Voter:      types.AccountKey(voter),
@@ -904,8 +1052,10 @@ func NewVoteProposalMsg(voter string, proposalID int64, result bool) VoteProposa
 	}
 }
 
+// Type - implement sdk.Msg
 func (msg VoteProposalMsg) Type() string { return types.ProposalRouterName }
 
+// ValidateBasic - implement sdk.Msg
 func (msg VoteProposalMsg) ValidateBasic() sdk.Error {
 	if len(msg.Voter) < types.MinimumUsernameLength ||
 		len(msg.Voter) > types.MaximumUsernameLength {
@@ -918,10 +1068,12 @@ func (msg VoteProposalMsg) String() string {
 	return fmt.Sprintf("VoteProposalMsg{Voter:%v, ProposalID:%v, Result:%v}", msg.Voter, msg.ProposalID, msg.Result)
 }
 
+// GetPermission - implement types.Msg
 func (msg VoteProposalMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg VoteProposalMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -930,11 +1082,12 @@ func (msg VoteProposalMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg VoteProposalMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Voter)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoteProposalMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

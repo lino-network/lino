@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// ProposalManager - proposal manager
 type ProposalManager struct {
 	storage     model.ProposalStorage
 	paramHolder param.ParamHolder
@@ -22,6 +23,7 @@ func NewProposalManager(key sdk.StoreKey, holder param.ParamHolder) ProposalMana
 	}
 }
 
+// InitGenesis - initialize proposal manager
 func (pm ProposalManager) InitGenesis(ctx sdk.Context) error {
 	if err := pm.storage.InitGenesis(ctx); err != nil {
 		return err
@@ -29,15 +31,18 @@ func (pm ProposalManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesProposalExist - check given proposal ID exists
 func (pm ProposalManager) DoesProposalExist(ctx sdk.Context, proposalID types.ProposalKey) bool {
 	return pm.storage.DoesProposalExist(ctx, proposalID)
 }
 
+// IsOngoingProposal - check given proposal ID is in ongoing proposal list
 func (pm ProposalManager) IsOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey) bool {
 	_, err := pm.storage.GetOngoingProposal(ctx, proposalID)
 	return err == nil
 }
 
+// CreateContentCensorshipProposal - create a content censorship proposal
 func (pm ProposalManager) CreateContentCensorshipProposal(
 	ctx sdk.Context, permlink types.Permlink, reason string) model.Proposal {
 	return &model.ContentCensorshipProposal{
@@ -46,6 +51,7 @@ func (pm ProposalManager) CreateContentCensorshipProposal(
 	}
 }
 
+// CreateProtocolUpgradeProposal - create a protocol upgrade proposal
 func (pm ProposalManager) CreateProtocolUpgradeProposal(ctx sdk.Context, link string, reason string) model.Proposal {
 	return &model.ProtocolUpgradeProposal{
 		Link:   link,
@@ -53,6 +59,7 @@ func (pm ProposalManager) CreateProtocolUpgradeProposal(ctx sdk.Context, link st
 	}
 }
 
+// CreateChangeParamProposal - create a change parameters proposal
 func (pm ProposalManager) CreateChangeParamProposal(
 	ctx sdk.Context, parameter param.Parameter, reason string) model.Proposal {
 	return &model.ChangeParamProposal{
@@ -61,6 +68,7 @@ func (pm ProposalManager) CreateChangeParamProposal(
 	}
 }
 
+// GetNextProposalID - get next proposal ID from KV store
 func (pm ProposalManager) GetNextProposalID(ctx sdk.Context) (types.ProposalKey, sdk.Error) {
 	nextProposalID, err := pm.storage.GetNextProposalID(ctx)
 	if err != nil {
@@ -70,13 +78,14 @@ func (pm ProposalManager) GetNextProposalID(ctx sdk.Context) (types.ProposalKey,
 	return types.ProposalKey(strconv.FormatInt(nextProposalID.NextProposalID, 10)), nil
 }
 
+// IncreaseNextProposalID - increase next propsoal ID by 1 in KV store
 func (pm ProposalManager) IncreaseNextProposalID(ctx sdk.Context) sdk.Error {
 	nextProposalID, err := pm.storage.GetNextProposalID(ctx)
 	if err != nil {
 		return err
 	}
 
-	nextProposalID.NextProposalID += 1
+	nextProposalID.NextProposalID++
 	if err := pm.storage.SetNextProposalID(ctx, nextProposalID); err != nil {
 		return err
 	}
@@ -84,6 +93,7 @@ func (pm ProposalManager) IncreaseNextProposalID(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+// AddProposal - add a new proposal to ongoing proposal list
 func (pm ProposalManager) AddProposal(
 	ctx sdk.Context, creator types.AccountKey, proposal model.Proposal, decideSec int64) (types.ProposalKey, sdk.Error) {
 	newID, err := pm.GetNextProposalID(ctx)
@@ -113,6 +123,7 @@ func (pm ProposalManager) AddProposal(
 	return newID, nil
 }
 
+// GetProposalPassParam - based on proposal type, get pass ratio and pass vote requirement
 func (pm ProposalManager) GetProposalPassParam(
 	ctx sdk.Context, proposalType types.ProposalType) (sdk.Rat, types.Coin, sdk.Error) {
 	param, err := pm.paramHolder.GetProposalParam(ctx)
@@ -131,6 +142,7 @@ func (pm ProposalManager) GetProposalPassParam(
 	}
 }
 
+// UpdateProposalVotingStatus - update proposal status after voting
 func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID types.ProposalKey,
 	voter types.AccountKey, voteResult bool, votingPower types.Coin) sdk.Error {
 	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
@@ -153,6 +165,7 @@ func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID
 	return nil
 }
 
+// UpdateProposalPassStatus - update proposal pass status when proposal change from ongoing to expired
 func (pm ProposalManager) UpdateProposalPassStatus(
 	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
@@ -190,15 +203,17 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 	return proposalInfo.Result, nil
 }
 
+// CreateDecideProposalEvent - create a decide proposal event
 func (pm ProposalManager) CreateDecideProposalEvent(
-	ctx sdk.Context, proposalType types.ProposalType, proposalID types.ProposalKey) (types.Event, sdk.Error) {
+	ctx sdk.Context, proposalType types.ProposalType, proposalID types.ProposalKey) types.Event {
 	event := DecideProposalEvent{
 		ProposalType: proposalType,
 		ProposalID:   proposalID,
 	}
-	return event, nil
+	return event
 }
 
+// CreateParamChangeEvent - create a paramter change event
 func (pm ProposalManager) CreateParamChangeEvent(
 	ctx sdk.Context, proposalID types.ProposalKey) (types.Event, sdk.Error) {
 	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)
@@ -217,6 +232,7 @@ func (pm ProposalManager) CreateParamChangeEvent(
 	return event, nil
 }
 
+// GetPermlink - get permlink from expired proposal list
 func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.ProposalKey) (types.Permlink, sdk.Error) {
 	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)
 	if err != nil {
@@ -230,6 +246,7 @@ func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.Proposal
 	return p.Permlink, nil
 }
 
+// GetPermlink - get ongoing proposal list
 func (pm ProposalManager) GetOngoingProposalList(ctx sdk.Context) ([]model.Proposal, sdk.Error) {
 	return pm.storage.GetOngoingProposalList(ctx)
 }

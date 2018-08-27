@@ -149,8 +149,7 @@ func TestUpdatePost(t *testing.T) {
 			testName: "normal update",
 			msg: NewUpdatePostMsg(
 				string(user), postID, "update to this title", "update to this content",
-				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}},
-				"0"),
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
 			expectErr:  nil,
 			updateTime: baseTime + 10,
 		},
@@ -158,8 +157,7 @@ func TestUpdatePost(t *testing.T) {
 			testName: "update with invalid post id",
 			msg: NewUpdatePostMsg(
 				"invalid", postID, "update to this title", "update to this content",
-				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}},
-				"1"),
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
 			expectErr:  model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID))),
 			updateTime: baseTime + 100,
 		},
@@ -167,8 +165,7 @@ func TestUpdatePost(t *testing.T) {
 			testName: "update with invalid author",
 			msg: NewUpdatePostMsg(
 				string(user), "invalid", "update to this title", "update to this content",
-				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}},
-				"1"),
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
 			expectErr:  model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid"))),
 			updateTime: baseTime + 1000,
 		},
@@ -176,14 +173,9 @@ func TestUpdatePost(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.updateTime, 0)})
-		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-		assert.Nil(t, err)
-		if err != nil {
-			t.Errorf("%s: failed to get rat from decimal, got err %v", tc.testName, err)
-		}
 
-		err = pm.UpdatePost(
-			ctx, tc.msg.Author, tc.msg.PostID, tc.msg.Title, tc.msg.Content, tc.msg.Links, splitRate)
+		err := pm.UpdatePost(
+			ctx, tc.msg.Author, tc.msg.PostID, tc.msg.Title, tc.msg.Content, tc.msg.Links)
 		if !assert.Equal(t, err, tc.expectErr) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
@@ -207,10 +199,10 @@ func TestUpdatePost(t *testing.T) {
 			LastActivityAt:          baseTime,
 			AllowReplies:            true,
 			IsDeleted:               false,
-			RedistributionSplitRate: splitRate,
 			TotalUpvoteStake:        types.NewCoinFromInt64(0),
 			TotalReportStake:        types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
+			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
