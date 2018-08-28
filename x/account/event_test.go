@@ -128,7 +128,7 @@ func TestReturnCoinEvent(t *testing.T) {
 			atWhen:       baseTime,
 			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
 			expectBalanceHistory: model.BalanceHistory{
-				[]model.Detail{
+				Details: []model.Detail{
 					{
 						From:       "",
 						DetailType: types.DelegationReturnCoin,
@@ -148,7 +148,7 @@ func TestReturnCoinEvent(t *testing.T) {
 			atWhen:       baseTime,
 			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
 			expectBalanceHistory: model.BalanceHistory{
-				[]model.Detail{
+				Details: []model.Detail{
 					{
 						From:       "",
 						DetailType: types.DelegationReturnCoin,

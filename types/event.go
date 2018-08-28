@@ -1,5 +1,6 @@
 package types
 
+// Event - event executed in app.go
 type Event interface{}
 
 // Minute -> TimeEventList

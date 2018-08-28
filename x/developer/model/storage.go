@@ -12,11 +12,13 @@ var (
 	developerListSubstore = []byte{0x01}
 )
 
+// DeveloperStorage - developer storage
 type DeveloperStorage struct {
 	key sdk.StoreKey
 	cdc *wire.Codec
 }
 
+// DeveloperStorage - new developer storage
 func NewDeveloperStorage(key sdk.StoreKey) DeveloperStorage {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
@@ -26,6 +28,7 @@ func NewDeveloperStorage(key sdk.StoreKey) DeveloperStorage {
 	}
 }
 
+// InitGenesis - initialize developer storage
 func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
 	if err := ds.SetDeveloperList(ctx, &DeveloperList{}); err != nil {
 		return err
@@ -33,11 +36,13 @@ func (ds DeveloperStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesDeveloperExist - check if developer in KVStore or not
 func (ds DeveloperStorage) DoesDeveloperExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(ds.key)
 	return store.Has(GetDeveloperKey(accKey))
 }
 
+// GetDeveloper - get developer from KVStore
 func (ds DeveloperStorage) GetDeveloper(
 	ctx sdk.Context, accKey types.AccountKey) (*Developer, sdk.Error) {
 	store := ctx.KVStore(ds.key)
@@ -52,6 +57,7 @@ func (ds DeveloperStorage) GetDeveloper(
 	return provider, nil
 }
 
+// SetDeveloper - set developer to KVStore
 func (ds DeveloperStorage) SetDeveloper(
 	ctx sdk.Context, accKey types.AccountKey, developer *Developer) sdk.Error {
 	store := ctx.KVStore(ds.key)
@@ -63,12 +69,14 @@ func (ds DeveloperStorage) SetDeveloper(
 	return nil
 }
 
+// DeleteDeveloper - delete developer from KVStore
 func (ds DeveloperStorage) DeleteDeveloper(ctx sdk.Context, username types.AccountKey) sdk.Error {
 	store := ctx.KVStore(ds.key)
 	store.Delete(GetDeveloperKey(username))
 	return nil
 }
 
+// GetDeveloperList - get developer list from KVStore
 func (ds DeveloperStorage) GetDeveloperList(ctx sdk.Context) (*DeveloperList, sdk.Error) {
 	store := ctx.KVStore(ds.key)
 	listByte := store.Get(GetDeveloperListKey())
@@ -82,6 +90,7 @@ func (ds DeveloperStorage) GetDeveloperList(ctx sdk.Context) (*DeveloperList, sd
 	return lst, nil
 }
 
+// SetDeveloperList - set developer list to KVStore
 func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList) sdk.Error {
 	store := ctx.KVStore(ds.key)
 	listByte, err := ds.cdc.MarshalJSON(*lst)
@@ -92,10 +101,12 @@ func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList)
 	return nil
 }
 
+// GetDeveloperKey - "developer substore" + "developer"
 func GetDeveloperKey(accKey types.AccountKey) []byte {
 	return append(developerSubstore, accKey...)
 }
 
+// GetDeveloperListKey - "developerlist substore"
 func GetDeveloperListKey() []byte {
 	return developerListSubstore
 }

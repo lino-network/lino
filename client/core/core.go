@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/pkg/errors"
@@ -15,7 +14,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-// Broadcast the transaction bytes to Tendermint
+// BroadcastTx - broadcast the transaction bytes to Tendermint
 func (ctx CoreContext) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, error) {
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -40,12 +39,12 @@ func (ctx CoreContext) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, 
 	return res, err
 }
 
-// Query from Tendermint with the provided key and storename
+// Query - query from Tendermint with the provided key and storename
 func (ctx CoreContext) Query(key cmn.HexBytes, storeName string) (res []byte, err error) {
 	return ctx.query(key, storeName, "key")
 }
 
-// Query from Tendermint with the provided storename and subspace
+// QuerySubspace - query from Tendermint with the provided storename and subspace
 func (ctx CoreContext) QuerySubspace(cdc *wire.Codec, subspace []byte, storeName string) (res []sdk.KVPair, err error) {
 	resRaw, err := ctx.query(subspace, storeName, "subspace")
 	if err != nil {
@@ -76,26 +75,6 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 		return res, errors.Errorf("Query failed: (%d) %s", resp.Code, resp.Log)
 	}
 	return resp.Value, nil
-}
-
-// Get the from address from the name flag
-func (ctx CoreContext) GetFromAddress() (from sdk.AccAddress, err error) {
-	keybase, err := keys.GetKeyBase()
-	if err != nil {
-		return nil, err
-	}
-
-	name := ctx.FromAddressName
-	if name == "" {
-		return nil, errors.Errorf("must provide a from address name")
-	}
-
-	info, err := keybase.Get(name)
-	if err != nil {
-		return nil, errors.Errorf("No key for: %s", name)
-	}
-
-	return sdk.AccAddress(info.GetPubKey().Address()), nil
 }
 
 // sign and build the transaction from the msg

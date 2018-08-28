@@ -13,6 +13,7 @@ import (
 	developer "github.com/lino-network/lino/x/developer"
 )
 
+// DeveloperRegisterTxCmd - register to be developer
 func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "developer-register",

@@ -132,7 +132,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 func (c commander) getAccountsCmd(cmd *cobra.Command, args []string) error {
 	ctx := client.NewCoreContextFromViper()
 
-	resKVs, err := ctx.QuerySubspace(c.cdc, model.AccountInfoSubstore, c.storeName)
+	resKVs, err := ctx.QuerySubspace(c.cdc, model.GetAccountInfoPrefix(), c.storeName)
 	if err != nil {
 		return err
 	}

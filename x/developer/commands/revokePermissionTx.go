@@ -14,6 +14,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 )
 
+// RevokePermissionTxCmd - user revoke granted public key permission
 func RevokePermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke-permission",

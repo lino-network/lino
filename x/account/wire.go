@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// Register concrete types on wire codec
+// RegisterWire - register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(RegisterMsg{}, "lino/register", nil)
 	cdc.RegisterConcrete(FollowMsg{}, "lino/follow", nil)

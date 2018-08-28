@@ -867,7 +867,13 @@ func TestCreateAccountNormalCase(t *testing.T) {
 		}
 		checkAccountMeta(t, ctx, tc.testName, tc.username, accMeta)
 
-		reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
+		reward := model.Reward{
+			TotalIncome:     types.NewCoinFromInt64(0),
+			OriginalIncome:  types.NewCoinFromInt64(0),
+			InflationIncome: types.NewCoinFromInt64(0),
+			FrictionIncome:  types.NewCoinFromInt64(0),
+			UnclaimReward:   types.NewCoinFromInt64(0),
+		}
 		checkAccountReward(t, ctx, tc.testName, tc.username, reward)
 
 		balanceHistory, err := am.storage.GetBalanceHistory(ctx, tc.username, 0)
@@ -960,7 +966,13 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkAccountMeta(t, ctx, testName, accKey, accMeta)
 
-	reward := model.Reward{coin0, coin0, coin0, coin0, coin0}
+	reward := model.Reward{
+		TotalIncome:     types.NewCoinFromInt64(0),
+		OriginalIncome:  types.NewCoinFromInt64(0),
+		InflationIncome: types.NewCoinFromInt64(0),
+		FrictionIncome:  types.NewCoinFromInt64(0),
+		UnclaimReward:   types.NewCoinFromInt64(0),
+	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 
 	balanceHistory, err := am.storage.GetBalanceHistory(ctx, accKey, 0)
@@ -1234,7 +1246,13 @@ func TestAddIncomeAndReward(t *testing.T) {
 		t.Errorf("%s: failed to add income and reward, got err %v", testName, err)
 	}
 
-	reward := model.Reward{c300, c200, c200, c300, c300}
+	reward := model.Reward{
+		TotalIncome:     c300,
+		OriginalIncome:  c200,
+		FrictionIncome:  c200,
+		InflationIncome: c300,
+		UnclaimReward:   c300,
+	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 1)
 
@@ -1243,7 +1261,13 @@ func TestAddIncomeAndReward(t *testing.T) {
 		t.Errorf("%s: failed to add income and reward again, got err %v", testName, err)
 	}
 
-	reward = model.Reward{c500, c500, c500, c500, c500}
+	reward = model.Reward{
+		TotalIncome:     c500,
+		OriginalIncome:  c500,
+		FrictionIncome:  c500,
+		InflationIncome: c500,
+		UnclaimReward:   c500,
+	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
 
@@ -1252,7 +1276,13 @@ func TestAddIncomeAndReward(t *testing.T) {
 		t.Errorf("%s: failed to add direct deposit, got err %v", testName, err)
 	}
 
-	reward = model.Reward{c1000, c1000, c500, c500, c500}
+	reward = model.Reward{
+		TotalIncome:     c1000,
+		OriginalIncome:  c1000,
+		FrictionIncome:  c500,
+		InflationIncome: c500,
+		UnclaimReward:   c500,
+	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
 	bank := model.AccountBank{
@@ -1273,7 +1303,13 @@ func TestAddIncomeAndReward(t *testing.T) {
 	bank.NumOfReward = 0
 	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
-	reward = model.Reward{c1000, c1000, c500, c500, c0}
+	reward = model.Reward{
+		TotalIncome:     c1000,
+		OriginalIncome:  c1000,
+		FrictionIncome:  c500,
+		InflationIncome: c500,
+		UnclaimReward:   c0,
+	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 }
 

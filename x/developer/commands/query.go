@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// GetDeveloperCmd returns target developer information
+// GetDeveloperCmd - returns target developer information
 func GetDeveloperCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	cmdr := commander{
 		storeName,
@@ -27,7 +27,7 @@ func GetDeveloperCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	}
 }
 
-// GetDevelopersCmd returns all developers relative information
+// GetDevelopersCmd - returns all developers relative information
 func GetDevelopersCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 	cmdr := commander{
 		storeName,

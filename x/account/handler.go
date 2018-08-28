@@ -134,11 +134,11 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 	if err != nil {
 		return err.Result()
 	}
-	registerFee, err := am.GetRegisterFee(ctx)
+	accParams, err := am.paramHolder.GetAccountParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
-	if registerFee.IsGT(coin) {
+	if accParams.RegisterFee.IsGT(coin) {
 		return ErrRegisterFeeInsufficient().Result()
 	}
 	if err := am.MinusSavingCoin(
@@ -146,13 +146,13 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 		return err.Result()
 	}
 	// the open account fee will be added to developer inflation pool
-	if err := gm.AddToDeveloperInflationPool(ctx, registerFee); err != nil {
+	if err := gm.AddToDeveloperInflationPool(ctx, accParams.RegisterFee); err != nil {
 		return err.Result()
 	}
 
 	if err := am.CreateAccount(
 		ctx, msg.Referrer, msg.NewUser, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewAppPubKey, coin.Minus(registerFee)); err != nil {
+		msg.NewAppPubKey, coin.Minus(accParams.RegisterFee)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

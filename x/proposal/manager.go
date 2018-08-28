@@ -16,6 +16,7 @@ type ProposalManager struct {
 	paramHolder param.ParamHolder
 }
 
+// NewProposalManager - return a proposal manager
 func NewProposalManager(key sdk.StoreKey, holder param.ParamHolder) ProposalManager {
 	return ProposalManager{
 		storage:     model.NewProposalStorage(key),
@@ -213,7 +214,7 @@ func (pm ProposalManager) CreateDecideProposalEvent(
 	return event
 }
 
-// CreateParamChangeEvent - create a paramter change event
+// CreateParamChangeEvent - create a parameter change event
 func (pm ProposalManager) CreateParamChangeEvent(
 	ctx sdk.Context, proposalID types.ProposalKey) (types.Event, sdk.Error) {
 	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)
@@ -246,7 +247,7 @@ func (pm ProposalManager) GetPermlink(ctx sdk.Context, proposalID types.Proposal
 	return p.Permlink, nil
 }
 
-// GetPermlink - get ongoing proposal list
+// GetOngoingProposalList - get ongoing proposal list
 func (pm ProposalManager) GetOngoingProposalList(ctx sdk.Context) ([]model.Proposal, sdk.Error) {
 	return pm.storage.GetOngoingProposalList(ctx)
 }

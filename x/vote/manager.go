@@ -59,7 +59,7 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 }
 
 // IsLegalVoterWithdraw - check withdraw voter is not validator
-// and withdraw amount is much than minimum requirment
+// and withdraw amount is much than minimum requirement
 func (vm VoteManager) IsLegalVoterWithdraw(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)

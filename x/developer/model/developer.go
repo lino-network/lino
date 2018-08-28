@@ -4,6 +4,7 @@ import (
 	types "github.com/lino-network/lino/types"
 )
 
+// Developer - developer is account with developer deposit, can get developer inflation
 type Developer struct {
 	Username       types.AccountKey `json:"username"`
 	Deposit        types.Coin       `json:"deposit"`
@@ -13,6 +14,7 @@ type Developer struct {
 	AppMetaData    string           `json:"app_meta_data"`
 }
 
+// DeveloperList - list of developers
 type DeveloperList struct {
 	AllDevelopers []types.AccountKey `json:"all_developers"`
 }

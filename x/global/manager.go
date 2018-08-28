@@ -25,14 +25,17 @@ func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager 
 	}
 }
 
+// WireCodec - access to global manager codec
 func (gm GlobalManager) WireCodec() *wire.Codec {
 	return gm.storage.WireCodec()
 }
 
+// InitGlobalManager - initialize global manager based on code
 func (gm GlobalManager) InitGlobalManager(ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	return gm.storage.InitGlobalState(ctx, totalLino)
 }
 
+// InitGlobalManagerWithConfig - initialize global manager based on genesis file
 func (gm GlobalManager) InitGlobalManagerWithConfig(
 	ctx sdk.Context, totalLino types.Coin, param model.InitParamList) sdk.Error {
 	return gm.storage.InitGlobalStateWithConfig(ctx, totalLino, param)
@@ -56,11 +59,13 @@ func (gm GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, eve
 	return nil
 }
 
+// GetTimeEventListAtTime - get time event list at given time
 func (gm GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) *types.TimeEventList {
 	eventList, _ := gm.storage.GetTimeEventList(ctx, unixTime)
 	return eventList
 }
 
+// GetLastBlockTime - get last block time from KVStore
 func (gm GlobalManager) GetLastBlockTime(ctx sdk.Context) (int64, sdk.Error) {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -69,6 +74,7 @@ func (gm GlobalManager) GetLastBlockTime(ctx sdk.Context) (int64, sdk.Error) {
 	return globalTime.LastBlockTime, nil
 }
 
+// SetLastBlockTime - set last block time to KVStore
 func (gm GlobalManager) SetLastBlockTime(ctx sdk.Context, unixTime int64) sdk.Error {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -78,6 +84,7 @@ func (gm GlobalManager) SetLastBlockTime(ctx sdk.Context, unixTime int64) sdk.Er
 	return gm.storage.SetGlobalTime(ctx, globalTime)
 }
 
+// GetChainStartTime - get chain start time from KVStore
 func (gm GlobalManager) GetChainStartTime(ctx sdk.Context) (int64, sdk.Error) {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -86,6 +93,7 @@ func (gm GlobalManager) GetChainStartTime(ctx sdk.Context) (int64, sdk.Error) {
 	return globalTime.ChainStartTime, nil
 }
 
+// SetChainStartTime - set chain start time to KVStore
 func (gm GlobalManager) SetChainStartTime(ctx sdk.Context, unixTime int64) sdk.Error {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -95,6 +103,7 @@ func (gm GlobalManager) SetChainStartTime(ctx sdk.Context, unixTime int64) sdk.E
 	return gm.storage.SetGlobalTime(ctx, globalTime)
 }
 
+// GetPastMinutes - get past minutes from KVStore
 func (gm GlobalManager) GetPastMinutes(ctx sdk.Context) (int64, sdk.Error) {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -103,6 +112,7 @@ func (gm GlobalManager) GetPastMinutes(ctx sdk.Context) (int64, sdk.Error) {
 	return globalTime.PastMinutes, nil
 }
 
+// SetPastMinutes - set past minutes to KVStore
 func (gm GlobalManager) SetPastMinutes(ctx sdk.Context, minutes int64) sdk.Error {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -112,10 +122,12 @@ func (gm GlobalManager) SetPastMinutes(ctx sdk.Context, minutes int64) sdk.Error
 	return gm.storage.SetGlobalTime(ctx, globalTime)
 }
 
+// RemoveTimeEventList - remove time event list from KVstore at given time
 func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	return gm.storage.RemoveTimeEventList(ctx, unixTime)
 }
 
+// GetConsumptionFrictionRate - get consumption friction rate
 func (gm GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
@@ -124,6 +136,7 @@ func (gm GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sd
 	return consumptionMeta.ConsumptionFrictionRate, nil
 }
 
+// GetConsumption - get this year consumption
 func (gm GlobalManager) GetConsumption(ctx sdk.Context) (types.Coin, sdk.Error) {
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
@@ -132,7 +145,7 @@ func (gm GlobalManager) GetConsumption(ctx sdk.Context) (types.Coin, sdk.Error) 
 	return globalMeta.CumulativeConsumption, nil
 }
 
-// register reward calculation event at 7 days later
+// AddFrictionAndRegisterContentRewardEvent - register reward calculation event at 7 days later
 func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	ctx sdk.Context, event types.Event, friction types.Coin, evaluate types.Coin) sdk.Error {
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
@@ -152,7 +165,7 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	return nil
 }
 
-// register coin return event with a time interval
+// RegisterCoinReturnEvent - register coin return event with time interval
 func (gm GlobalManager) RegisterCoinReturnEvent(
 	ctx sdk.Context, events []types.Event, times int64, intervalSec int64) sdk.Error {
 	for i := int64(0); i < times; i++ {
@@ -164,6 +177,7 @@ func (gm GlobalManager) RegisterCoinReturnEvent(
 	return nil
 }
 
+// RegisterProposalDecideEvent - register proposal decide event
 func (gm GlobalManager) RegisterProposalDecideEvent(
 	ctx sdk.Context, decideSec int64, event types.Event) sdk.Error {
 	if err := gm.registerEventAtTime(
@@ -173,6 +187,7 @@ func (gm GlobalManager) RegisterProposalDecideEvent(
 	return nil
 }
 
+// RegisterParamChangeEvent - register parameter change event
 func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
 	// param will be changed in one day
 	proposalParam, err := gm.paramHolder.GetProposalParam(ctx)
@@ -186,6 +201,7 @@ func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Ev
 	return nil
 }
 
+// DistributeHourlyInflation - distribute inflation hourly
 func (gm GlobalManager) DistributeHourlyInflation(
 	ctx sdk.Context, pastHoursMinusOneThisYear int64) sdk.Error {
 	// param will be changed in one day
@@ -239,7 +255,7 @@ func (gm GlobalManager) DistributeHourlyInflation(
 	return nil
 }
 
-// recalculate annually inflation based on consumption growth rate
+// SetTotalLinoAndRecalculateGrowthRate - recalculate annually inflation based on consumption growth rate
 func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sdk.Error {
 	var growthRate sdk.Rat
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
@@ -270,7 +286,7 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 	return gm.paramHolder.UpdateGlobalGrowthRate(ctx, growthRate)
 }
 
-// after 7 days, one consumption needs to claim its reward from consumption reward pool
+// GetRewardAndPopFromWindow - after 7 days, one consumption needs to claim its reward from consumption reward pool
 func (gm GlobalManager) GetRewardAndPopFromWindow(
 	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
 	if evaluate.IsZero() {
@@ -300,7 +316,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 	return reward, nil
 }
 
-// add consumption to global meta, which is used to compute GDP
+// AddConsumption - add consumption to global meta, which is used to compute GDP
 func (gm GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Error {
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
@@ -314,7 +330,7 @@ func (gm GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Err
 	return nil
 }
 
-// add consumption to global meta, which is used to compute GDP
+// AddToDeveloperInflationPool - add consumption to global meta, which is used to compute GDP
 func (gm GlobalManager) AddToDeveloperInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
 	inflationPool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
@@ -328,7 +344,7 @@ func (gm GlobalManager) AddToDeveloperInflationPool(ctx sdk.Context, coin types.
 	return nil
 }
 
-// add inflation to pool
+// AddToValidatorInflationPool - add validator inflation to pool
 func (gm GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
@@ -341,7 +357,7 @@ func (gm GlobalManager) AddToValidatorInflationPool(ctx sdk.Context, coin types.
 	return nil
 }
 
-// get validator hourly inflation
+// GetValidatorHourlyInflation - get validator hourly inflation
 func (gm GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
@@ -359,7 +375,7 @@ func (gm GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context) (types.Coin
 	return resCoin, nil
 }
 
-// get infra monthly inflation
+// GetInfraMonthlyInflation - get infra monthly inflation
 func (gm GlobalManager) GetInfraMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
@@ -377,7 +393,7 @@ func (gm GlobalManager) GetInfraMonthlyInflation(ctx sdk.Context) (types.Coin, s
 	return resCoin, nil
 }
 
-// get developer monthly inflation
+// GetDeveloperMonthlyInflation - get developer monthly inflation
 func (gm GlobalManager) GetDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
@@ -407,7 +423,7 @@ func (gm GlobalManager) addTotalLinoCoin(ctx sdk.Context, newCoin types.Coin) sd
 	return nil
 }
 
-// update current tps based on current block information
+// UpdateTPS - update current tps based on current block information
 func (gm GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
 	tps, err := gm.storage.GetTPS(ctx)
 	if err != nil {
@@ -433,6 +449,7 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+// GetTPSCapacityRatio - get transaction per second ratio
 func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error) {
 	tps, err := gm.storage.GetTPS(ctx)
 	if err != nil {
@@ -441,6 +458,7 @@ func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error
 	return tps.CurrentTPS.Quo(tps.MaxTPS).Round(types.PrecisionFactor), nil
 }
 
+// EvaluateConsumption - evaluate consumption
 func (gm GlobalManager) EvaluateConsumption(
 	ctx sdk.Context, coin types.Coin, numOfConsumptionOnAuthor int64, created int64,
 	totalReward types.Coin) (types.Coin, sdk.Error) {
@@ -491,7 +509,7 @@ func (gm GlobalManager) EvaluateConsumption(
 // 	return nil
 // }
 
-// total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
+// PostTotalConsumptionAdjustment - total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
 func PostTotalConsumptionAdjustment(
 	totalReward types.Coin, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0 / (1.0 + math.Exp(
@@ -499,7 +517,7 @@ func PostTotalConsumptionAdjustment(
 			float64(paras.TotalAmountOfConsumptionOffset))))) + 1.0
 }
 
-// post time adjustment = 1/(1+e^(t/base - offset))
+// PostTimeAdjustment - post time adjustment = 1/(1+e^(t/base - offset))
 func PostTimeAdjustment(
 	elapseTime int64, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0 / (1.0 + math.Exp(
@@ -507,7 +525,7 @@ func PostTimeAdjustment(
 			float64(paras.ConsumptionTimeAdjustOffset)))))
 }
 
-// consumption times adjustment = 1/(1+e^(n-offset)) + 1
+// PostConsumptionTimesAdjustment - consumption times adjustment = 1/(1+e^(n-offset)) + 1
 func PostConsumptionTimesAdjustment(
 	numOfConsumptionOnAuthor int64, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0/(1.0+math.Exp(

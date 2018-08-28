@@ -5,14 +5,14 @@ import (
 	types "github.com/lino-network/lino/types"
 )
 
-// ReturnCoin Event return a certain amount of coin to an account
+// ReturnCoinEvent - return a certain amount of coin to an account
 type ReturnCoinEvent struct {
 	Username   types.AccountKey         `json:"username"`
 	Amount     types.Coin               `json:"amount"`
 	ReturnType types.TransferDetailType `json:"return_type"`
 }
 
-// execute coin return events
+// Execute - execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
 	if !am.DoesAccountExist(ctx, event.Username) {
 		return ErrAccountNotFound(event.Username)
@@ -26,7 +26,7 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 	return nil
 }
 
-// create coin return events
+// CreateCoinReturnEvents - create coin return events
 func CreateCoinReturnEvents(
 	username types.AccountKey, times int64, interval int64, coin types.Coin,
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {

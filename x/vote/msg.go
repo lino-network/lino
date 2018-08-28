@@ -33,26 +33,27 @@ type VoterRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
+// DelegateMsg - delegator delegate money to a voter
 type DelegateMsg struct {
 	Delegator types.AccountKey `json:"delegator"`
 	Voter     types.AccountKey `json:"voter"`
 	Amount    types.LNO        `json:"amount"`
 }
 
+// DelegatorWithdrawMsg - delegator withdraw delegation from a voter
 type DelegatorWithdrawMsg struct {
 	Delegator types.AccountKey `json:"delegator"`
 	Voter     types.AccountKey `json:"voter"`
 	Amount    types.LNO        `json:"amount"`
 }
 
+// RevokeDelegationMsg - delegator revoke delegation
 type RevokeDelegationMsg struct {
 	Delegator types.AccountKey `json:"delegator"`
 	Voter     types.AccountKey `json:"voter"`
 }
 
-//----------------------------------------
-// VoterDepositMsg Msg Implementations
-
+// NewVoterDepositMsg - return a VoterDepositMsg
 func NewVoterDepositMsg(username string, deposit types.LNO) VoterDepositMsg {
 	return VoterDepositMsg{
 		Username: types.AccountKey(username),
@@ -105,8 +106,7 @@ func (msg VoterDepositMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-//----------------------------------------
-// VoterWithdrawMsg Msg Implementations
+// NewVoterWithdrawMsg - return VoterWithdrawMsg
 func NewVoterWithdrawMsg(username string, amount types.LNO) VoterWithdrawMsg {
 	return VoterWithdrawMsg{
 		Username: types.AccountKey(username),
@@ -158,9 +158,7 @@ func (msg VoterWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-//----------------------------------------
-// VoterRevokeMsg Msg Implementations
-
+// NewVoterRevokeMsg - return VoterRevokeMsg
 func NewVoterRevokeMsg(username string) VoterRevokeMsg {
 	return VoterRevokeMsg{
 		Username: types.AccountKey(username),
@@ -207,9 +205,7 @@ func (msg VoterRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-//----------------------------------------
-// DelegateMsg Msg Implementations
-
+// NewDelegateMsg - return DelegateMsg
 func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMsg {
 	return DelegateMsg{
 		Delegator: types.AccountKey(delegator),
@@ -265,9 +261,7 @@ func (msg DelegateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-//----------------------------------------
-// RevokeDelegation Msg Implementations
-
+// NewRevokeDelegationMsg - return RevokeDelegationMsg
 func NewRevokeDelegationMsg(delegator string, voter string) RevokeDelegationMsg {
 	return RevokeDelegationMsg{
 		Delegator: types.AccountKey(delegator),
@@ -318,8 +312,7 @@ func (msg RevokeDelegationMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-//----------------------------------------
-// DelegatoWithdrawMsg Msg Implementations
+// NewRevokeDelegationMsg - return NewDelegatorWithdrawMsg
 func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) DelegatorWithdrawMsg {
 	return DelegatorWithdrawMsg{
 		Delegator: types.AccountKey(delegator),

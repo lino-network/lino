@@ -41,6 +41,17 @@ type IDToURLMapping struct {
 	URL        string `json:"url"`
 }
 
+// PenaltyList - get validator who doesn't vote for proposal
 type PenaltyList struct {
 	PenaltyList []AccountKey `json:"penalty_list"`
+}
+
+// FindAccountInList - find AccountKey in given AccountKey list
+func FindAccountInList(me AccountKey, lst []AccountKey) int {
+	for index, user := range lst {
+		if user == me {
+			return index
+		}
+	}
+	return -1
 }

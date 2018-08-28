@@ -358,9 +358,9 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 		}
 
 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.registerBaseTime+24*7*3600)
-		if !assert.Equal(t, types.TimeEventList{[]types.Event{testEvent{}}}, *timeEventList) {
+		if !assert.Equal(t, types.TimeEventList{Events: []types.Event{testEvent{}}}, *timeEventList) {
 			t.Errorf("%s: diff event list, got %v, want %v", tc.testName,
-				*timeEventList, types.TimeEventList{[]types.Event{testEvent{}}})
+				*timeEventList, types.TimeEventList{Events: []types.Event{testEvent{}}})
 		}
 	}
 }
@@ -543,13 +543,13 @@ func TestTimeEventList(t *testing.T) {
 			testName:        "register one event",
 			registerAtTime:  baseTime,
 			expectResult:    nil,
-			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}}},
+			expectEventList: &types.TimeEventList{Events: []types.Event{testEvent{}}},
 		},
 		{
 			testName:        "register two events",
 			registerAtTime:  baseTime,
 			expectResult:    nil,
-			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}, testEvent{}}}},
+			expectEventList: &types.TimeEventList{Events: []types.Event{testEvent{}, testEvent{}}}},
 		{
 			testName:        "can't register expired event",
 			registerAtTime:  baseTime - 1,
@@ -560,7 +560,7 @@ func TestTimeEventList(t *testing.T) {
 			testName:        "register one event again",
 			registerAtTime:  baseTime + 1,
 			expectResult:    nil,
-			expectEventList: &types.TimeEventList{[]types.Event{testEvent{}}},
+			expectEventList: &types.TimeEventList{Events: []types.Event{testEvent{}}},
 		},
 	}
 
