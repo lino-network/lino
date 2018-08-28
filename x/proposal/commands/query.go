@@ -61,7 +61,7 @@ func (c commander) getOngoingProposalCmd(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	// print out whole vote
+	// print out proposal
 	output, err := json.MarshalIndent(proposal, "", "  ")
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (c commander) getExpiredProposalCmd(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	// print out whole vote
+	// print out proposal
 	output, err := json.MarshalIndent(proposal, "", "  ")
 	if err != nil {
 		return err
