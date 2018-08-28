@@ -214,7 +214,7 @@ func (pm ProposalManager) CreateDecideProposalEvent(
 	return event
 }
 
-// CreateParamChangeEvent - create a paramter change event
+// CreateParamChangeEvent - create a parameter change event
 func (pm ProposalManager) CreateParamChangeEvent(
 	ctx sdk.Context, proposalID types.ProposalKey) (types.Event, sdk.Error) {
 	proposal, err := pm.storage.GetExpiredProposal(ctx, proposalID)

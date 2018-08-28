@@ -199,7 +199,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
-	// init paramter holder
+	// init parameter holder
 	if genesisState.GenesisParam.InitFromConfig {
 		if err := lb.paramHolder.InitParamFromConfig(
 			ctx,

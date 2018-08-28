@@ -267,7 +267,7 @@ func (vm ValidatorManager) FireIncompetentValidator(
 	return totalPenalty, nil
 }
 
-// PunishValidatorsDidntVote - validators are required to vote Protocol Upgrade and Paramter Change proposal
+// PunishValidatorsDidntVote - validators are required to vote Protocol Upgrade and Parameter Change proposal
 func (vm ValidatorManager) PunishValidatorsDidntVote(
 	ctx sdk.Context, penaltyList []types.AccountKey) (types.Coin, sdk.Error) {
 	totalPenalty := types.NewCoinFromInt64(0)

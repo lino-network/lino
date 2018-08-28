@@ -185,7 +185,7 @@ func TestDecideProposal(t *testing.T) {
 		if cs.decideProposal {
 			err := cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
 			assert.Nil(t, err)
-			proposal, err := pm.storage.GetExpiredProposal(ctx, cs.proposalID)
+			proposal, _ := pm.storage.GetExpiredProposal(ctx, cs.proposalID)
 			proposalInfo := proposal.GetProposalInfo()
 
 			assert.Equal(t, cs.expectProposalRes, proposalInfo.Result)
