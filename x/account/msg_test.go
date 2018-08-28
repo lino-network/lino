@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -316,6 +317,12 @@ func TestRegisterUsername(t *testing.T) {
 			),
 			wantCode: sdk.CodeOK,
 		},
+		"normal case with dot": {
+			msg: NewRegisterMsg("zhimao.liu", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			),
+			wantCode: sdk.CodeOK,
+		},
 		"register username minimum length": {
 			msg: NewRegisterMsg("referrer", "new", "1", secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
@@ -369,15 +376,21 @@ func TestRegisterUsername(t *testing.T) {
 	}
 
 	// Illegel character
-	registerList := [...]string{"register#", "_register", "-register", "reg@ister",
-		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register",
-		"reg=ister", "register^", "register.", "reg$ister,", "Register", "regi-ster", "reGister"}
+	registerList := [...]string{"register#", "_register", "-register", "reg@ister", "re--gister",
+		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register", "re_-gister",
+		"reg=ister", "register^", "register.", "reg$ister,", "Register", "r__egister", "reGister",
+		"r_--gister", "re.-gister", ".re-gister", "re-gister.", "register_", "register-", "a.2.2.-.-..2"}
 	for _, register := range registerList {
 		msg := NewRegisterMsg(
-			"referer", register, "0", secp256k1.GenPrivKey().PubKey(),
+			"referer", register, "1", secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 		result := msg.ValidateBasic()
-		assert.Equal(t, result, ErrInvalidUsername("illegal input"))
+		if result == nil {
+			fmt.Println(result, register)
+			assert.Equal(t, ErrInvalidUsername("illegal input"), result)
+			return
+		}
+		assert.Equal(t, ErrInvalidUsername("illegal input"), result)
 	}
 }
 

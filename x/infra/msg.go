@@ -27,6 +27,7 @@ func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 
 func (msg ProviderReportMsg) Type() string { return types.InfraRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg ProviderReportMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -44,10 +45,12 @@ func (msg ProviderReportMsg) String() string {
 	return fmt.Sprintf("ProviderReportMsg{Username:%v, Usage:%v}", msg.Username, msg.Usage)
 }
 
+// GetPermission - implements types.Msg
 func (msg ProviderReportMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg ProviderReportMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -56,11 +59,12 @@ func (msg ProviderReportMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg ProviderReportMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg ProviderReportMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

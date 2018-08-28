@@ -6,6 +6,7 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/global"
 	"github.com/stretchr/testify/assert"
 
@@ -19,9 +20,9 @@ import (
 )
 
 var (
-	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
-	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
-	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
+	testAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
 
 	accountReferrer = types.AccountKey("referrer")
 
@@ -65,10 +66,10 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 
 func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.GlobalManager) {
 	ctx := getContext(height)
-	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := NewAccountManager(TestAccountKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	accManager := NewAccountManager(testAccountKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -82,9 +83,9 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
@@ -102,4 +103,89 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) (sec
 	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
 		resetPriv.PubKey(), txPriv.PubKey(), appPriv.PubKey(), accParam.RegisterFee)
 	return resetPriv, txPriv, appPriv
+}
+
+func checkBankKVByUsername(
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, bank model.AccountBank) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	bankPtr, err := accStorage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		t.Errorf("%s, failed to get bank, got err %v", testName, err)
+	}
+	if !assert.Equal(t, bank, *bankPtr) {
+		t.Errorf("%s: diff bank, got %v, want %v", testName, *bankPtr, bank)
+	}
+}
+
+func checkBalanceHistory(
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey,
+	timeSlot int64, balanceHistory model.BalanceHistory) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, username, timeSlot)
+	if err != nil {
+		t.Errorf("%s, failed to get balance history, got err %v", testName, err)
+	}
+	if !assert.Equal(t, balanceHistory, *balanceHistoryPtr) {
+		t.Errorf("%s: diff balance history, got %v, want %v", testName, *balanceHistoryPtr, balanceHistory)
+	}
+}
+
+func checkPendingStake(
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingStakeQueue model.PendingStakeQueue) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, username)
+	if err != nil {
+		t.Errorf("%s, failed to get pending stake queue, got err %v", testName, err)
+	}
+	if !assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr) {
+		t.Errorf("%s: diff pending stake queue, got %v, want %v", testName, *pendingStakeQueuePtr, pendingStakeQueue)
+	}
+}
+
+func checkAccountInfo(
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accInfo model.AccountInfo) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	info, err := accStorage.GetInfo(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s, failed to get account info, got err %v", testName, err)
+	}
+	if !assert.Equal(t, accInfo, *info) {
+		t.Errorf("%s: diff account info, got %v, want %v", testName, *info, accInfo)
+	}
+}
+
+func checkAccountMeta(
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accMeta model.AccountMeta) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	metaPtr, err := accStorage.GetMeta(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s, failed to get account meta, got err %v", testName, err)
+	}
+	if !assert.Equal(t, accMeta, *metaPtr) {
+		t.Errorf("%s: diff account meta, got %v, want %v", testName, *metaPtr, accMeta)
+	}
+}
+
+func checkAccountReward(
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, reward model.Reward) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	rewardPtr, err := accStorage.GetReward(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s, failed to get reward, got err %v", testName, err)
+	}
+	if !assert.Equal(t, reward, *rewardPtr) {
+		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
+	}
+}
+
+func checkRewardHistory(
+	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
+	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
+	if err != nil {
+		t.Errorf("%s, failed to get reward history, got err %v", testName, err)
+	}
+	if wantNumOfReward != len(rewardHistoryPtr.Details) {
+		t.Errorf("%s: diff account rewards, got %v, want %v", testName, len(rewardHistoryPtr.Details), wantNumOfReward)
+	}
 }

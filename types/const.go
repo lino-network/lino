@@ -1,7 +1,7 @@
 package types
 
 const (
-	// Total decimals in Lino Blockchain
+	// Decimals - Total decimals in Lino Blockchain
 	Decimals = 100000
 
 	// KVStoreKey presents store which used by app
@@ -78,92 +78,94 @@ const (
 	PunishAbsentCommit = PunishType(2)
 	PunishDidntVote    = PunishType(3)
 
-	// UsernameReCheck is used to check user registration
-	UsernameReCheck = "^[a-z0-9]([a-z0-9_]){2,20}$"
+	// UsernameReCheck - UsernameReCheck is used to check user registration
+	UsernameReCheck        = "^[a-z]([a-z0-9-\\.]){1,19}[a-z0-9]$"
+	IlligalUsernameReCheck = "^[a-z0-9\\.-]*([-\\.]){2,}[a-z0-9\\.-]*$"
 
-	// MinimumUsernameLength minimum username length
+	// MinimumUsernameLength - minimum username length
 	MinimumUsernameLength = 3
 
-	// MaximumUsernameLength maximum username length
+	// MaximumUsernameLength - maximum username length
 	MaximumUsernameLength = 20
 
-	// MaximumMemoLength denotes the maximum length of memo
+	// MaximumMemoLength - maximum length of memo
 	MaximumMemoLength = 100
 
-	// MaximumJSONMeta denotes the maximum length of account JSON meta
+	// MaximumJSONMetaLength - maximum length of account JSON meta
 	MaximumJSONMetaLength = 500
 
-	// DefaultAcitivityBurden for user when account is registered
+	// DefaultActivityBurden - for user when account is registered
 	DefaultActivityBurden = 100
 
-	// MinimumUsernameLength minimum username length
+	// MaxPostTitleLength - maximum length of post title
 	MaxPostTitleLength = 50
 
-	// MaximumUsernameLength maximum username length
+	// MaxPostContentLength - maximum length of post content
 	MaxPostContentLength = 1000
 
-	// MaxLikeWeight indicates the 100.00% maximum like weight.
+	// MaxLikeWeight - 100.00% maximum like weight.
 	MaxLikeWeight = 10000
 
-	// MinLikeWeight indicates the -100.00% maximum like weight.
+	// MinLikeWeight - -100.00% maximum like weight.
 	MinLikeWeight = -10000
 
-	// KeySeparator used to separate different key component
+	// KeySeparator - separate different key component
 	KeySeparator = "/"
 
-	// as defined by a julian year of 365.25 days
+	// HoursPerYear - as defined by a julian year of 365.25 days
 	HoursPerYear = 8766
 
-	// as defined by a julian year of 365.25 days
+	// MinutesPerYear - as defined by a julian year of 365.25 days
 	MinutesPerYear = HoursPerYear * 60
 
-	// as defined by a julian year of 365.25 days
+	// MinutesPerMonth - as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
 
-	// all decimals will around to allow at most 3 decimals
+	// PrecisionFactor - all decimals will around to allow at most 7 decimals
 	PrecisionFactor = 10000000
 
-	// precision used in sdk NewRatFromDecimal
+	// NewRatFromDecimalPrecision - precision used in sdk NewRatFromDecimal
 	NewRatFromDecimalPrecision = 5
 
-	// Maximum length of sdk.Rat can pass into blockchain
+	// MaximumSdkRatLength - maximum length of sdk.Rat can pass into blockchain
 	MaximumSdkRatLength = 10
 
-	// Maximum length of Links identifier
+	// MaximumLinkIdentifier - maximum length of Links identifier
 	MaximumLinkIdentifier = 20
 
-	// Maximum length of Links URL
+	// MaximumLinkURL - maximum length of Links URL
 	MaximumLinkURL = 100
 
-	// Maximum length of post ID
+	// MaximumLengthOfPostID - maximum length of post ID
 	MaximumLengthOfPostID = 50
 
-	// Maximum number of links per post
+	// MaximumNumOfLinks - maximum number of links per post
 	MaximumNumOfLinks = 10
 
-	// Maximum length of developer website
+	// MaximumLengthOfDeveloperWebsite - maximum length of developer website
 	MaximumLengthOfDeveloperWebsite = 100
 
-	// Maximum length of developer description
+	// MaximumLengthOfDeveloperDesctiption - maximum length of developer description
 	MaximumLengthOfDeveloperDesctiption = 1000
 
-	// Maximum length of developer App meta data
+	// MaximumLengthOfAppMetadata - maximum length of developer App meta data
 	MaximumLengthOfAppMetadata = 1000
 
-	// Maximum length of proposal reason
+	// MaximumLengthOfProposalReason - maximum length of proposal reason
 	MaximumLengthOfProposalReason = 1000
 
-	// Init account with full stake memo
-	InitAccountWithFullStakeMemo = "init deposit"
+	// InitAccountWithFullStakeMemo - init account with full stake memo
+	InitAccountWithFullStakeMemo = "open account deposit"
 
-	// Init account deposit fee memo
+	// InitAccountRegisterDepositMemo - init account deposit fee memo
 	InitAccountRegisterDepositMemo = "init deposit"
 
-	// Permlink separator
+	// PermlinkSeparator - permlink separator
 	PermlinkSeparator = "#"
 
-	// Bundle size for balance history
+	// BalanceHistoryBundleSize - bundle size for balance history
 	BalanceHistoryBundleSize = 100
-	// Bundle size for reward history
+
+	// RewardHistoryBundleSize - bundle size for reward history
 	RewardHistoryBundleSize = 100
 )

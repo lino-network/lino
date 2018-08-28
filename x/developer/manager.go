@@ -8,11 +8,11 @@ import (
 )
 
 type DeveloperManager struct {
-	storage     model.DeveloperStorage `json:"infra_developer_storage"`
-	paramHolder param.ParamHolder      `json:"param_holder"`
+	storage     model.DeveloperStorage
+	paramHolder param.ParamHolder
 }
 
-// create NewDeveloperManager
+// NewDeveloperManager - create new developer manager
 func NewDeveloperManager(key sdk.StoreKey, holder param.ParamHolder) DeveloperManager {
 	return DeveloperManager{
 		storage:     model.NewDeveloperStorage(key),
@@ -20,6 +20,7 @@ func NewDeveloperManager(key sdk.StoreKey, holder param.ParamHolder) DeveloperMa
 	}
 }
 
+// InitGenesis - init developer manager
 func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
 	if err := dm.storage.InitGenesis(ctx); err != nil {
 		return err
@@ -27,6 +28,7 @@ func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesDeveloperExist - check if given developer in the developer list or not
 func (dm DeveloperManager) DoesDeveloperExist(ctx sdk.Context, username types.AccountKey) bool {
 	return dm.storage.DoesDeveloperExist(ctx, username)
 }
@@ -122,6 +124,7 @@ func (dm DeveloperManager) ReportConsumption(
 	return nil
 }
 
+// GetConsumptionWeight - given app name, get consumption percentage report by this app
 func (dm DeveloperManager) GetConsumptionWeight(
 	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
 	lst, err := dm.storage.GetDeveloperList(ctx)
@@ -131,6 +134,7 @@ func (dm DeveloperManager) GetConsumptionWeight(
 
 	totalConsumption := types.NewCoinFromInt64(0)
 	myConsumption := types.NewCoinFromInt64(0)
+	// iterate all apps to get  total consumption
 	for _, developerName := range lst.AllDevelopers {
 		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
 		if err != nil {
@@ -205,6 +209,7 @@ func (dm DeveloperManager) WithdrawAll(
 	return developer.Deposit, nil
 }
 
+// FindAccountInList - find account name in an account list
 func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
 	for index, user := range lst {
 		if user == me {

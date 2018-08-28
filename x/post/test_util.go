@@ -22,16 +22,17 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
-	TestPostKVStoreKey      = sdk.NewKVStoreKey("post")
-	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
-	TestDeveloperKVStoreKey = sdk.NewKVStoreKey("developer")
-	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
+	testAccountKVStoreKey   = sdk.NewKVStoreKey("account")
+	testPostKVStoreKey      = sdk.NewKVStoreKey("post")
+	testGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
+	testDeveloperKVStoreKey = sdk.NewKVStoreKey("developer")
+	testParamKVStoreKey     = sdk.NewKVStoreKey("param")
 
 	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
 	referrer = types.AccountKey("referrer")
 )
 
+// InitGlobalManager - init global manager
 func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
@@ -41,12 +42,12 @@ func setupTest(
 	sdk.Context, acc.AccountManager, param.ParamHolder,
 	PostManager, global.GlobalManager, dev.DeveloperManager) {
 	ctx := getContext(height)
-	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	postManager := NewPostManager(TestPostKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
-	devManager := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	postManager := NewPostManager(testPostKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	devManager := dev.NewDeveloperManager(testDeveloperKVStoreKey, ph)
 	devManager.InitGenesis(ctx)
 
 	cdc := globalManager.WireCodec()
@@ -61,11 +62,11 @@ func setupTest(
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testPostKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
@@ -75,7 +76,7 @@ func getContext(height int64) sdk.Context {
 func checkPostKVStore(
 	t *testing.T, ctx sdk.Context, postKey types.Permlink, postInfo model.PostInfo, postMeta model.PostMeta) {
 	// check all post related structs in KVStore
-	postStorage := model.NewPostStorage(TestPostKVStoreKey)
+	postStorage := model.NewPostStorage(testPostKVStoreKey)
 	postPtr, err := postStorage.GetPostInfo(ctx, postKey)
 	assert.Nil(t, err)
 	assert.Equal(t, postInfo, *postPtr, "postInfo should be equal")
@@ -84,7 +85,7 @@ func checkPostKVStore(
 
 func checkPostMeta(t *testing.T, ctx sdk.Context, postKey types.Permlink, postMeta model.PostMeta) {
 	// check post meta structs in KVStore
-	postStorage := model.NewPostStorage(TestPostKVStoreKey)
+	postStorage := model.NewPostStorage(testPostKVStoreKey)
 	postMetaPtr, err := postStorage.GetPostMeta(ctx, postKey)
 	assert.Nil(t, err)
 	assert.Equal(t, postMeta, *postMetaPtr, "Post meta should be equal")

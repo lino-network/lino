@@ -12,7 +12,7 @@ type ReturnCoinEvent struct {
 	ReturnType types.TransferDetailType `json:"return_type"`
 }
 
-// execute return coin event
+// execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
 	if !am.DoesAccountExist(ctx, event.Username) {
 		return ErrAccountNotFound(event.Username)

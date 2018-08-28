@@ -12,6 +12,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 )
 
+// NewHandler - Handle all "post" type messages.
 func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -287,12 +288,8 @@ func handleUpdatePostMsg(
 		return ErrUpdatePostIsDeleted(permlink).Result()
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-	if err != nil {
-		return err.Result()
-	}
 	if err := pm.UpdatePost(
-		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links, splitRate); err != nil {
+		ctx, msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

@@ -65,7 +65,7 @@ type GenesisAccount struct {
 	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
 }
 
-// register developer in genesis phase
+// GenesisAppDeveloper - register developer in genesis phase
 type GenesisAppDeveloper struct {
 	Name        string     `json:"name"`
 	Deposit     types.Coin `json:"deposit"`
@@ -74,11 +74,12 @@ type GenesisAppDeveloper struct {
 	AppMetaData string     `json:"app_meta_data"`
 }
 
-// register infra provider in genesis phase
+// GenesisInfraProvider - register infra provider in genesis phase
 type GenesisInfraProvider struct {
 	Name string `json:"name"`
 }
 
+// GenesisParam - genesis parameters
 type GenesisParam struct {
 	InitFromConfig bool `json:"init_from_config"`
 	param.EvaluateOfContentValueParam
@@ -94,6 +95,7 @@ type GenesisParam struct {
 	param.PostParam
 }
 
+// LinoBlockchainGenTx - init genesis account
 func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	resetPriv := secp256k1.GenPrivKey()
@@ -129,7 +131,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.G
 	return
 }
 
-// default genesis file, only have one genesis account
+// LinoBlockchainGenState - default genesis file
 func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appState json.RawMessage, err error) {
 	if len(appGenTxs) == 0 {
 		err = errors.New("must provide at least genesis transaction")
@@ -152,8 +154,6 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 			},
 			param.GlobalAllocationParam{
-				Ceiling:                  sdk.NewRat(98, 1000),
-				Floor:                    sdk.NewRat(3, 100),
 				GlobalGrowthRate:         sdk.NewRat(98, 1000),
 				InfraAllocation:          sdk.NewRat(20, 100),
 				ContentCreatorAllocation: sdk.NewRat(65, 100),
@@ -204,10 +204,9 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
 				PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
 				ValidatorListSize:              int64(21),
-				AbsentCommitLimitation:         int64(600), // 30min
+				AbsentCommitLimitation:         int64(600), // 10min
 			},
 			param.CoinDayParam{
-				DaysToRecoverCoinDayStake:    int64(7),
 				SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 			},
 			param.BandwidthParam{

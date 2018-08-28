@@ -30,21 +30,22 @@ type CreatePostMsg struct {
 	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
 }
 
+// UpdatePostMsg - update post
 type UpdatePostMsg struct {
-	Author                  types.AccountKey       `json:"author"`
-	PostID                  string                 `json:"post_id"`
-	Title                   string                 `json:"title"`
-	Content                 string                 `json:"content"`
-	Links                   []types.IDToURLMapping `json:"links"`
-	RedistributionSplitRate string                 `json:"redistribution_split_rate"`
+	Author  types.AccountKey       `json:"author"`
+	PostID  string                 `json:"post_id"`
+	Title   string                 `json:"title"`
+	Content string                 `json:"content"`
+	Links   []types.IDToURLMapping `json:"links"`
 }
 
+// DeletePostMsg - sent from a user to a post
 type DeletePostMsg struct {
 	Author types.AccountKey `json:"author"`
 	PostID string           `json:"post_id"`
 }
 
-// DonateMsg sent from a user to a post
+// DonateMsg - sent from a user to a post
 type DonateMsg struct {
 	Username types.AccountKey `json:"username"`
 	Amount   types.LNO        `json:"amount"`
@@ -54,14 +55,14 @@ type DonateMsg struct {
 	Memo     string           `json:"memo"`
 }
 
-// ViewMsg sent from a user to a post
+// ViewMsg - sent from a user to a post
 type ViewMsg struct {
 	Username types.AccountKey `json:"username"`
 	Author   types.AccountKey `json:"author"`
 	PostID   string           `json:"post_id"`
 }
 
-// ReportOrUpvoteMsg sent from a user to a post
+// ReportOrUpvoteMsg - sent from a user to a post
 type ReportOrUpvoteMsg struct {
 	Username types.AccountKey `json:"username"`
 	Author   types.AccountKey `json:"author"`
@@ -69,7 +70,7 @@ type ReportOrUpvoteMsg struct {
 	IsReport bool             `json:"is_report"`
 }
 
-// NewCreatePostMsg constructs a post msg
+// NewCreatePostMsg - constructs a post msg
 func NewCreatePostMsg(
 	author, postID, title, content, parentAuthor, parentPostID,
 	sourceAuthor, sourcePostID, redistributionSplitRate string,
@@ -88,17 +89,15 @@ func NewCreatePostMsg(
 	}
 }
 
-// NewUpdatePostMsg constructs a UpdatePost msg
+// NewUpdatePostMsg - constructs a UpdatePost msg
 func NewUpdatePostMsg(
-	author, postID, title, content string,
-	links []types.IDToURLMapping, redistributionSplitRate string) UpdatePostMsg {
+	author, postID, title, content string, links []types.IDToURLMapping) UpdatePostMsg {
 	return UpdatePostMsg{
 		Author:  types.AccountKey(author),
 		PostID:  postID,
 		Title:   title,
 		Content: content,
 		Links:   links,
-		RedistributionSplitRate: redistributionSplitRate,
 	}
 }
 
@@ -109,7 +108,7 @@ func NewDeletePostMsg(author, postID string) DeletePostMsg {
 	}
 }
 
-// NewViewMsg constructs a view msg
+// NewViewMsg - constructs a view msg
 func NewViewMsg(user, author string, postID string) ViewMsg {
 	return ViewMsg{
 		Username: types.AccountKey(user),
@@ -118,7 +117,7 @@ func NewViewMsg(user, author string, postID string) ViewMsg {
 	}
 }
 
-// NewDonateMsg constructs a donate msg
+// NewDonateMsg - constructs a donate msg
 func NewDonateMsg(
 	user string, amount types.LNO, author string,
 	postID string, fromApp string, memo string) DonateMsg {
@@ -132,7 +131,7 @@ func NewDonateMsg(
 	}
 }
 
-// NewReportOrUpvoteMsg constructs a ReportOrUpvote msg
+// NewReportOrUpvoteMsg - constructs a ReportOrUpvote msg
 func NewReportOrUpvoteMsg(
 	user, author, postID string, isReport bool) ReportOrUpvoteMsg {
 
@@ -144,15 +143,25 @@ func NewReportOrUpvoteMsg(
 	}
 }
 
-// Type implements sdk.Msg
-func (msg CreatePostMsg) Type() string     { return types.PostRouterName }
-func (msg UpdatePostMsg) Type() string     { return types.PostRouterName }
-func (msg DeletePostMsg) Type() string     { return types.PostRouterName }
-func (msg DonateMsg) Type() string         { return types.PostRouterName }
-func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
-func (msg ViewMsg) Type() string           { return types.PostRouterName }
+// Type - implements sdk.Msg
+func (msg CreatePostMsg) Type() string { return types.PostRouterName }
 
-// ValidateBasic implements sdk.Msg
+// Type - implements sdk.Msg
+func (msg UpdatePostMsg) Type() string { return types.PostRouterName }
+
+// Type - implements sdk.Msg
+func (msg DeletePostMsg) Type() string { return types.PostRouterName }
+
+// Type - implements sdk.Msg
+func (msg DonateMsg) Type() string { return types.PostRouterName }
+
+// Type - implements sdk.Msg
+func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
+
+// Type - implements sdk.Msg
+func (msg ViewMsg) Type() string { return types.PostRouterName }
+
+// ValidateBasic - implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink exists
 	if len(msg.PostID) == 0 {
@@ -201,7 +210,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// ValidateBasic implements sdk.Msg
+// ValidateBasic - implements sdk.Msg
 func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink exists
 	if len(msg.PostID) == 0 {
@@ -216,9 +225,6 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 	if utf8.RuneCountInString(msg.Content) > types.MaxPostContentLength {
 		return ErrPostContentExceedMaxLength()
 	}
-	if len(msg.RedistributionSplitRate) > types.MaximumSdkRatLength {
-		return ErrRedistributionSplitRateLengthTooLong()
-	}
 
 	for _, link := range msg.Links {
 		if len(link.Identifier) > types.MaximumLinkIdentifier {
@@ -228,18 +234,10 @@ func (msg UpdatePostMsg) ValidateBasic() sdk.Error {
 			return ErrURLLengthTooLong()
 		}
 	}
-
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-	if err != nil {
-		return err
-	}
-
-	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
-		return ErrInvalidPostRedistributionSplitRate()
-	}
 	return nil
 }
 
+// ValidateBasic - implements sdk.Msg
 func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.PostID) == 0 {
 		return ErrNoPostID()
@@ -251,6 +249,7 @@ func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// ValidateBasic - implements sdk.Msg
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink  exists
 	if len(msg.Username) == 0 {
@@ -271,7 +270,7 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// ValidateBasic implements sdk.Msg
+// ValidateBasic - implements sdk.Msg
 func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) == 0 {
 		return ErrNoUsername()
@@ -282,7 +281,7 @@ func (msg ReportOrUpvoteMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// ValidateBasic implements sdk.Msg
+// ValidateBasic - implements sdk.Msg
 func (msg ViewMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) == 0 {
 		return ErrNoUsername()
@@ -293,47 +292,62 @@ func (msg ViewMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// Get implements sdk.Msg; should not be called
+// GetPermission - implements types.Msg
 func (msg CreatePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg UpdatePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg DeletePostMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg DonateMsg) GetPermission() types.Permission {
 	return types.PreAuthorizationPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg ReportOrUpvoteMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
+
+// GetPermission - implements types.Msg
 func (msg ViewMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 
-// GetSignBytes implements sdk.Msg
+// GetSignBytes - implements sdk.Msg
 func (msg CreatePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg UpdatePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg DeletePostMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg DonateMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg ReportOrUpvoteMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg ViewMsg) GetSignBytes() []byte {
 	return getSignBytes(msg)
 }
@@ -346,22 +360,32 @@ func getSignBytes(msg sdk.Msg) []byte {
 	return b
 }
 
-// GetSigners implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg CreatePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
+
+// GetSigners - implements sdk.Msg
 func (msg UpdatePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
+
+// GetSigners - implements sdk.Msg
 func (msg DeletePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
+
+// GetSigners - implements sdk.Msg
 func (msg DonateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
+
+// GetSigners - implements sdk.Msg
 func (msg ReportOrUpvoteMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
+
+// GetSigners - implements sdk.Msg
 func (msg ViewMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -375,9 +399,8 @@ func (msg CreatePostMsg) String() string {
 }
 
 func (msg UpdatePostMsg) String() string {
-	return fmt.Sprintf("Post.UpdatePostMsg{author:%v, postID:%v, title:%v, content:%v, links:%v, redistribution split rate:%v}",
-		msg.Author, msg.PostID, msg.Title, msg.Content,
-		msg.Links, msg.RedistributionSplitRate)
+	return fmt.Sprintf("Post.UpdatePostMsg{author:%v, postID:%v, title:%v, content:%v, links:%v}",
+		msg.Author, msg.PostID, msg.Title, msg.Content, msg.Links)
 }
 
 func (msg DeletePostMsg) String() string {
@@ -402,22 +425,33 @@ func (msg ViewMsg) String() string {
 		msg.Username, msg.Author, msg.PostID)
 }
 
+// GetConsumeAmount - implements types.Msg
 func (msg CreatePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
+
+// GetConsumeAmount - implements types.Msg
 func (msg UpdatePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
+
+// GetConsumeAmount - implements types.Msg
 func (msg DeletePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
+
+// GetConsumeAmount - implements types.Msg
 func (msg DonateMsg) GetConsumeAmount() types.Coin {
 	coin, _ := types.LinoToCoin(msg.Amount)
 	return coin
 }
+
+// GetConsumeAmount - implements types.Msg
 func (msg ReportOrUpvoteMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
+
+// GetConsumeAmount - implements types.Msg
 func (msg ViewMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

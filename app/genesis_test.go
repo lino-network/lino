@@ -55,8 +55,6 @@ func TestGetGenesisJson(t *testing.T) {
 				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 			},
 			param.GlobalAllocationParam{
-				Ceiling:                  sdk.NewRat(98, 1000),
-				Floor:                    sdk.NewRat(3, 100),
 				GlobalGrowthRate:         sdk.NewRat(98, 1000),
 				InfraAllocation:          sdk.NewRat(20, 100),
 				ContentCreatorAllocation: sdk.NewRat(65, 100),
@@ -110,7 +108,6 @@ func TestGetGenesisJson(t *testing.T) {
 				AbsentCommitLimitation:         int64(600), // 30min
 			},
 			param.CoinDayParam{
-				DaysToRecoverCoinDayStake:    int64(7),
 				SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 			},
 			param.BandwidthParam{
@@ -138,7 +135,6 @@ func TestGetGenesisJson(t *testing.T) {
 	wire.RegisterCrypto(cdc)
 	appState, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
-	//err := oldwire.UnmarshalJSON(stateJSON, genesisState)
 	appGenesisState := new(GenesisState)
 	err = cdc.UnmarshalJSON([]byte(appState), appGenesisState)
 	assert.Nil(t, err)
@@ -165,19 +161,20 @@ func TestLinoBlockchainGenTx(t *testing.T) {
 func TestLinoBlockchainGenState(t *testing.T) {
 	cdc := MakeCodec()
 	appGenTxs := []json.RawMessage{}
+	coinPerValidator := types.NewCoinFromInt64(100000000 * types.Decimals)
 	for i := 1; i < 21; i++ {
 		genesisAcc := GenesisAccount{
 			Name:           "validator" + strconv.Itoa(i),
-			Coin:           CoinPerValidator,
+			Coin:           coinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
 			AppKey:         secp256k1.GenPrivKey().PubKey(),
 			IsValidator:    true,
 			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
 		}
-		marshalJson, err := wire.MarshalJSONIndent(cdc, genesisAcc)
+		marshalResult, err := wire.MarshalJSONIndent(cdc, genesisAcc)
 		assert.Nil(t, err)
-		appGenTxs = append(appGenTxs, json.RawMessage(marshalJson))
+		appGenTxs = append(appGenTxs, json.RawMessage(marshalResult))
 	}
 	appState, err := LinoBlockchainGenState(cdc, appGenTxs)
 	assert.Nil(t, err)
@@ -188,7 +185,7 @@ func TestLinoBlockchainGenState(t *testing.T) {
 	}
 	for i, gacc := range genesisState.Accounts {
 		assert.Equal(t, gacc.Name, "validator"+strconv.Itoa(i+1))
-		assert.Equal(t, gacc.Coin, CoinPerValidator)
+		assert.Equal(t, gacc.Coin, coinPerValidator)
 	}
 	assert.Equal(t, 1, len(genesisState.Developers))
 	assert.Equal(t, 1, len(genesisState.Infra))

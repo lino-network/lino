@@ -30,9 +30,7 @@ func TestGlobalAllocationParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := GlobalAllocationParam{
-		GlobalGrowthRate: sdk.NewRat(98, 1000),
-		Ceiling:          sdk.NewRat(98, 1000),
-		Floor:            sdk.NewRat(3, 100),
+		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		ContentCreatorAllocation: sdk.NewRat(1, 100),
 		InfraAllocation:          sdk.NewRat(1, 100),
 		DeveloperAllocation:      sdk.NewRat(1, 100),
@@ -171,7 +169,6 @@ func TestCoinDayParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	err := ph.setCoinDayParam(ctx, &parameter)
@@ -221,8 +218,6 @@ func TestInitParam(t *testing.T) {
 
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		Ceiling:                  sdk.NewRat(98, 1000),
-		Floor:                    sdk.NewRat(3, 100),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -290,7 +285,6 @@ func TestInitParam(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{
@@ -316,8 +310,6 @@ func TestInitParamFromConfig(t *testing.T) {
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		Ceiling:                  sdk.NewRat(98, 1000),
-		Floor:                    sdk.NewRat(3, 100),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(65, 100),
 		DeveloperAllocation:      sdk.NewRat(10, 100),
@@ -385,7 +377,6 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		DaysToRecoverCoinDayStake:    int64(7),
 		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{
@@ -487,31 +478,22 @@ func TestUpdateGlobalGrowthRate(t *testing.T) {
 	}{
 		{
 			testName:         "normal update",
-			ceiling:          sdk.NewRat(98, 1000),
-			floor:            sdk.NewRat(3, 100),
 			updateGrowthRate: sdk.NewRat(98, 1000),
 			expectGrowthRate: sdk.NewRat(98, 1000),
 		},
 		{
 			testName:         "update to ceiling",
-			ceiling:          sdk.NewRat(98, 1000),
-			floor:            sdk.NewRat(3, 100),
 			updateGrowthRate: sdk.NewRat(99, 1000),
 			expectGrowthRate: sdk.NewRat(98, 1000),
 		},
 		{
 			testName:         "update to floor",
-			ceiling:          sdk.NewRat(98, 1000),
-			floor:            sdk.NewRat(3, 100),
 			updateGrowthRate: sdk.NewRat(29, 1000),
 			expectGrowthRate: sdk.NewRat(3, 100),
 		},
 	}
 	for _, tc := range testCases {
-		globalParam := &GlobalAllocationParam{
-			Ceiling: tc.ceiling,
-			Floor:   tc.floor,
-		}
+		globalParam := &GlobalAllocationParam{}
 		err := ph.setGlobalAllocationParam(ctx, globalParam)
 		assert.Nil(t, err)
 		err = ph.UpdateGlobalGrowthRate(ctx, tc.updateGrowthRate)

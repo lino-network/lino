@@ -19,7 +19,7 @@ var _ types.Msg = RecoverMsg{}
 var _ types.Msg = RegisterMsg{}
 var _ types.Msg = UpdateAccountMsg{}
 
-// RegisterMsg - bind username with public key, need to be referred by others (pay for it).
+// RegisterMsg - bind username with public key, need to be referred by others (pay for it)
 type RegisterMsg struct {
 	Referrer             types.AccountKey `json:"referrer"`
 	RegisterFee          types.LNO        `json:"register_fee"`
@@ -29,20 +29,24 @@ type RegisterMsg struct {
 	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
 }
 
+// FollowMsg - follower follow followee
 type FollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
 	Followee types.AccountKey `json:"followee"`
 }
 
+// UnfollowMsg - follower unfollow followee
 type UnfollowMsg struct {
 	Follower types.AccountKey `json:"follower"`
 	Followee types.AccountKey `json:"followee"`
 }
 
+// ClaimMsg - claim content reward
 type ClaimMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
+// RecoverMsg - replace three public keys
 type RecoverMsg struct {
 	Username             types.AccountKey `json:"username"`
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
@@ -50,7 +54,7 @@ type RecoverMsg struct {
 	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
 }
 
-// we can support to transfer to an user or an address
+// TransferMsg - sender transfer money to receiver
 type TransferMsg struct {
 	Sender   types.AccountKey `json:"sender"`
 	Receiver types.AccountKey `json:"receiver"`
@@ -58,7 +62,7 @@ type TransferMsg struct {
 	Memo     string           `json:"memo"`
 }
 
-// UpdateAccountMsg - update account JSON meta info.
+// UpdateAccountMsg - update account JSON meta info
 type UpdateAccountMsg struct {
 	Username types.AccountKey `json:"username"`
 	JSONMeta string           `json:"json_meta"`
@@ -72,8 +76,10 @@ func NewFollowMsg(follower string, followee string) FollowMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg FollowMsg) Type() string { return types.AccountRouterName }
 
+// ValidateBasic - implements sdk.Msg
 func (msg FollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
 		len(msg.Followee) < types.MinimumUsernameLength ||
@@ -88,11 +94,12 @@ func (msg FollowMsg) String() string {
 	return fmt.Sprintf("FollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
 }
 
-// Implements Msg.
+// GetPermission - implements types.Msg
 func (msg FollowMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg FollowMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -101,11 +108,12 @@ func (msg FollowMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg FollowMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg FollowMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -118,8 +126,10 @@ func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg UnfollowMsg) Type() string { return types.AccountRouterName }
 
+// ValidateBasic - implements sdk.Msg
 func (msg UnfollowMsg) ValidateBasic() sdk.Error {
 	if len(msg.Follower) < types.MinimumUsernameLength ||
 		len(msg.Followee) < types.MinimumUsernameLength ||
@@ -134,11 +144,12 @@ func (msg UnfollowMsg) String() string {
 	return fmt.Sprintf("UnfollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
 }
 
-// Implements Msg.
+// GetPermission - implements types.Msg
 func (msg UnfollowMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg UnfollowMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -147,11 +158,12 @@ func (msg UnfollowMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg UnfollowMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg UnfollowMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -163,8 +175,10 @@ func NewClaimMsg(username string) ClaimMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg ClaimMsg) Type() string { return types.AccountRouterName }
 
+// ValidateBasic - implements sdk.Msg
 func (msg ClaimMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -177,10 +191,12 @@ func (msg ClaimMsg) String() string {
 	return fmt.Sprintf("ClaimMsg{Username:%v}", msg.Username)
 }
 
+// GetPermission - implements types.Msg
 func (msg ClaimMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg ClaimMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -189,11 +205,12 @@ func (msg ClaimMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg ClaimMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg ClaimMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -208,8 +225,10 @@ func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) Tran
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg TransferMsg) Type() string { return types.AccountRouterName }
 
+// ValidateBasic - implements sdk.Msg
 func (msg TransferMsg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) < types.MinimumUsernameLength ||
 		len(msg.Sender) > types.MaximumUsernameLength ||
@@ -233,10 +252,12 @@ func (msg TransferMsg) String() string {
 		msg.Sender, msg.Receiver, msg.Amount, msg.Memo)
 }
 
+// GetPermission - implements types.Msg
 func (msg TransferMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg TransferMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -245,11 +266,12 @@ func (msg TransferMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg TransferMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Sender)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg TransferMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -266,8 +288,10 @@ func NewRecoverMsg(
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg RecoverMsg) Type() string { return types.AccountRouterName }
 
+// ValidateBasic - implements sdk.Msg
 func (msg RecoverMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -282,10 +306,12 @@ func (msg RecoverMsg) String() string {
 		msg.Username, msg.NewResetPubKey, msg.NewAppPubKey, msg.NewTransactionPubKey)
 }
 
+// GetPermission - implements types.Msg
 func (msg RecoverMsg) GetPermission() types.Permission {
 	return types.ResetPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg RecoverMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -294,11 +320,12 @@ func (msg RecoverMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg RecoverMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -317,10 +344,10 @@ func NewRegisterMsg(
 	}
 }
 
-// Implements Msg.
+// Type - implements sdk.Msg
 func (msg RegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
-// Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg RegisterMsg) ValidateBasic() sdk.Error {
 	if len(msg.NewUser) < types.MinimumUsernameLength ||
 		len(msg.NewUser) > types.MaximumUsernameLength ||
@@ -337,6 +364,14 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername("illegal input")
 	}
 
+	match, err = regexp.MatchString(types.IlligalUsernameReCheck, string(msg.NewUser))
+	if err != nil {
+		return ErrInvalidUsername("match error")
+	}
+	if match {
+		return ErrInvalidUsername("illegal input")
+	}
+
 	_, coinErr := types.LinoToCoin(msg.RegisterFee)
 	if coinErr != nil {
 		return coinErr
@@ -349,7 +384,7 @@ func (msg RegisterMsg) String() string {
 		msg.NewUser, msg.NewResetPubKey, msg.NewAppPubKey, msg.NewTransactionPubKey)
 }
 
-// Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg RegisterMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -358,16 +393,17 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetPermission - implements types.Msg
 func (msg RegisterMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
-// Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg RegisterMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Referrer)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg RegisterMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -380,10 +416,10 @@ func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
 	}
 }
 
-// Implements Msg.
+// Type - implements sdk.Msg
 func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
 
-// Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -401,12 +437,12 @@ func (msg UpdateAccountMsg) String() string {
 	return fmt.Sprintf("UpdateAccountMsg{User:%v, JSON meta:%v}", msg.Username, msg.JSONMeta)
 }
 
-// Implements Msg.
+// GetPermission - implements types.Msg
 func (msg UpdateAccountMsg) GetPermission() types.Permission {
 	return types.AppPermission
 }
 
-// Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg UpdateAccountMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -415,12 +451,12 @@ func (msg UpdateAccountMsg) GetSignBytes() []byte {
 	return b
 }
 
-// Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg UpdateAccountMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg UpdateAccountMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

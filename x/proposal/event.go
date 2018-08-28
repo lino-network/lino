@@ -11,11 +11,13 @@ import (
 	val "github.com/lino-network/lino/x/validator"
 )
 
+// DecideProposalEvent - a 7 days event to determine the result and status of ongoing proposal
 type DecideProposalEvent struct {
 	ProposalType types.ProposalType `json:"proposal_type"`
 	ProposalID   types.ProposalKey  `json:"proposal_id"`
 }
 
+// Execute - execute proposal event, check vote and update status
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
 	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager,
@@ -79,6 +81,7 @@ func (dpe DecideProposalEvent) Execute(
 	return nil
 }
 
+// ExecuteChangeParam - reigster parameter change event
 func (dpe DecideProposalEvent) ExecuteChangeParam(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
 	gm global.GlobalManager) sdk.Error {
@@ -92,6 +95,7 @@ func (dpe DecideProposalEvent) ExecuteChangeParam(
 	return nil
 }
 
+// ExecuteContentCensorship - delete target post
 func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
 	postManager post.PostManager) sdk.Error {
@@ -110,6 +114,7 @@ func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	return nil
 }
 
+// ExecuteProtocolUpgrade - since execute protocol upgrade engage code change, the process need to be done manually
 func (dpe DecideProposalEvent) ExecuteProtocolUpgrade(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager) sdk.Error {
 	return nil

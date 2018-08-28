@@ -135,48 +135,47 @@ func TestCreatePost(t *testing.T) {
 
 func TestUpdatePost(t *testing.T) {
 	ctx, am, _, pm, _, _ := setupTest(t, 1)
+	baseTime := time.Now().Unix()
+	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(baseTime, 0)})
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 
 	testCases := []struct {
-		testName  string
-		msg       UpdatePostMsg
-		expectErr sdk.Error
+		testName   string
+		msg        UpdatePostMsg
+		expectErr  sdk.Error
+		updateTime int64
 	}{
 		{
 			testName: "normal update",
 			msg: NewUpdatePostMsg(
 				string(user), postID, "update to this title", "update to this content",
-				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"0"),
-			expectErr: nil,
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
+			expectErr:  nil,
+			updateTime: baseTime + 10,
 		},
 		{
 			testName: "update with invalid post id",
 			msg: NewUpdatePostMsg(
 				"invalid", postID, "update to this title", "update to this content",
-				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"),
-			expectErr: model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID))),
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
+			expectErr:  model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink("invalid", postID))),
+			updateTime: baseTime + 100,
 		},
 		{
 			testName: "update with invalid author",
 			msg: NewUpdatePostMsg(
 				string(user), "invalid", "update to this title", "update to this content",
-				[]types.IDToURLMapping{types.IDToURLMapping{Identifier: "#1", URL: "https://lino.network"}},
-				"1"),
-			expectErr: model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid"))),
+				[]types.IDToURLMapping{{Identifier: "#1", URL: "https://lino.network"}}),
+			expectErr:  model.ErrPostNotFound(model.GetPostInfoKey(types.GetPermlink(user, "invalid"))),
+			updateTime: baseTime + 1000,
 		},
 	}
 
 	for _, tc := range testCases {
-		splitRate, err := sdk.NewRatFromDecimal(tc.msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
-		assert.Nil(t, err)
-		if err != nil {
-			t.Errorf("%s: failed to get rat from decimal, got err %v", tc.testName, err)
-		}
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.updateTime, 0)})
 
-		err = pm.UpdatePost(
-			ctx, tc.msg.Author, tc.msg.PostID, tc.msg.Title, tc.msg.Content, tc.msg.Links, splitRate)
+		err := pm.UpdatePost(
+			ctx, tc.msg.Author, tc.msg.PostID, tc.msg.Title, tc.msg.Content, tc.msg.Links)
 		if !assert.Equal(t, err, tc.expectErr) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
 		}
@@ -195,15 +194,15 @@ func TestUpdatePost(t *testing.T) {
 		}
 
 		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time.Unix(),
+			CreatedAt:               baseTime,
 			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
-			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
+			LastActivityAt:          baseTime,
 			AllowReplies:            true,
 			IsDeleted:               false,
-			RedistributionSplitRate: splitRate,
 			TotalUpvoteStake:        types.NewCoinFromInt64(0),
 			TotalReportStake:        types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
+			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
@@ -568,7 +567,7 @@ func TestDonation(t *testing.T) {
 			TotalReportStake:        types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
-		storage := model.NewPostStorage(TestPostKVStoreKey)
+		storage := model.NewPostStorage(testPostKVStoreKey)
 		donations, _ := storage.GetPostDonations(ctx, postKey, tc.user)
 		if !assert.Equal(t, tc.expectDonationList, *donations) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *donations, tc.expectDonationList)

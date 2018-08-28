@@ -13,6 +13,7 @@ var _ types.Msg = ValidatorDepositMsg{}
 var _ types.Msg = ValidatorWithdrawMsg{}
 var _ types.Msg = ValidatorRevokeMsg{}
 
+// ValidatorDepositMsg - deposit to become validator or add deposit
 type ValidatorDepositMsg struct {
 	Username  types.AccountKey `json:"username"`
 	Deposit   types.LNO        `json:"deposit"`
@@ -20,11 +21,13 @@ type ValidatorDepositMsg struct {
 	Link      string           `json:"link"`
 }
 
+// ValidatorWithdrawMsg - withdraw validator deposit
 type ValidatorWithdrawMsg struct {
 	Username types.AccountKey `json:"username"`
 	Amount   types.LNO        `json:"amount"`
 }
 
+// ValidatorRevokeMsg - revoke validator
 type ValidatorRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
@@ -39,8 +42,10 @@ func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.P
 	}
 }
 
+// Type - implement sdk.Msg
 func (msg ValidatorDepositMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
 
+// ValidateBasic - implement sdk.Msg
 func (msg ValidatorDepositMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -63,10 +68,12 @@ func (msg ValidatorDepositMsg) String() string {
 	return fmt.Sprintf("ValidatorDepositMsg{Username:%v, Deposit:%v, PubKey:%v}", msg.Username, msg.Deposit, msg.ValPubKey)
 }
 
+// GetPermission - implement types.Msg
 func (msg ValidatorDepositMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ValidatorDepositMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -75,11 +82,12 @@ func (msg ValidatorDepositMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ValidatorDepositMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ValidatorDepositMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -92,8 +100,10 @@ func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdr
 	}
 }
 
+// Type - implement sdk.Msg
 func (msg ValidatorWithdrawMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
 
+// ValidateBasic - implement sdk.Msg
 func (msg ValidatorWithdrawMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -110,10 +120,12 @@ func (msg ValidatorWithdrawMsg) String() string {
 	return fmt.Sprintf("ValidatorWithdrawMsg{Username:%v}", msg.Username)
 }
 
+// GetPermission - implement types.Msg
 func (msg ValidatorWithdrawMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ValidatorWithdrawMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -122,11 +134,12 @@ func (msg ValidatorWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ValidatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ValidatorWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -138,8 +151,10 @@ func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	}
 }
 
+// Type - implement sdk.Msg
 func (msg ValidatorRevokeMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
 
+// ValidateBasic - implement sdk.Msg
 func (msg ValidatorRevokeMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -152,10 +167,12 @@ func (msg ValidatorRevokeMsg) String() string {
 	return fmt.Sprintf("ValidatorRevokeMsg{Username:%v}", msg.Username)
 }
 
+// GetPermission - implement types.Msg
 func (msg ValidatorRevokeMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implement sdk.Msg
 func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -164,11 +181,12 @@ func (msg ValidatorRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implement sdk.Msg
 func (msg ValidatorRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ValidatorRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

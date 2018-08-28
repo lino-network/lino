@@ -26,8 +26,6 @@ func TestChangeParamProposal(t *testing.T) {
 
 	allocation := param.GlobalAllocationParam{
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		Ceiling:                  sdk.NewRat(98, 1000),
-		Floor:                    sdk.NewRat(3, 100),
 		DeveloperAllocation:      sdk.ZeroRat(),
 		ValidatorAllocation:      sdk.ZeroRat(),
 		InfraAllocation:          sdk.ZeroRat(),
@@ -42,15 +40,18 @@ func TestChangeParamProposal(t *testing.T) {
 	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
-	proposal1 := &model.ChangeParamProposal{model.ProposalInfo{
-		Creator:       user1,
-		ProposalID:    proposalID1,
-		AgreeVotes:    types.NewCoinFromInt64(0),
-		DisagreeVotes: types.NewCoinFromInt64(0),
-		Result:        types.ProposalNotPass,
-		CreatedAt:     curTime,
-		ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
-	}, allocation, ""}
+	proposal1 := &model.ChangeParamProposal{
+		ProposalInfo: model.ProposalInfo{
+			Creator:       user1,
+			ProposalID:    proposalID1,
+			AgreeVotes:    types.NewCoinFromInt64(0),
+			DisagreeVotes: types.NewCoinFromInt64(0),
+			Result:        types.ProposalNotPass,
+			CreatedAt:     curTime,
+			ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
+		},
+		Param:  allocation,
+		Reason: ""}
 
 	testCases := []struct {
 		testName            string
@@ -139,15 +140,18 @@ func TestContentCensorshipProposal(t *testing.T) {
 		ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoinFromInt64((1))))
 	postManager.DeletePost(ctx, types.GetPermlink(user2, postID2))
 	censorshipReason := "reason"
-	proposal1 := &model.ContentCensorshipProposal{model.ProposalInfo{
-		Creator:       user2,
-		ProposalID:    proposalID1,
-		AgreeVotes:    types.NewCoinFromInt64(0),
-		DisagreeVotes: types.NewCoinFromInt64(0),
-		Result:        types.ProposalNotPass,
-		CreatedAt:     curTime,
-		ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
-	}, types.GetPermlink(user1, postID1), censorshipReason}
+	proposal1 := &model.ContentCensorshipProposal{
+		ProposalInfo: model.ProposalInfo{
+			Creator:       user2,
+			ProposalID:    proposalID1,
+			AgreeVotes:    types.NewCoinFromInt64(0),
+			DisagreeVotes: types.NewCoinFromInt64(0),
+			Result:        types.ProposalNotPass,
+			CreatedAt:     curTime,
+			ExpiredAt:     curTime + proposalParam.ChangeParamDecideSec,
+		},
+		Permlink: types.GetPermlink(user1, postID1),
+		Reason:   censorshipReason}
 
 	testCases := []struct {
 		testName            string
@@ -361,7 +365,7 @@ func TestVoteProposalBasic(t *testing.T) {
 			wantRes: ErrVoterNotFound().Result(),
 			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    types.NewCoinFromInt64(0),
@@ -369,7 +373,8 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
-				}, permlink, censorshipReason},
+				},
+				Permlink: permlink, Reason: censorshipReason},
 		},
 		{
 			testName: "Vote on a non-exist proposal should fail",
@@ -380,7 +385,7 @@ func TestVoteProposalBasic(t *testing.T) {
 			},
 			wantRes: ErrNotOngoingProposal().Result(),
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    types.NewCoinFromInt64(0),
@@ -388,7 +393,9 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
-				}, permlink, censorshipReason},
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 		{
 			testName: "vote successfully",
@@ -400,7 +407,7 @@ func TestVoteProposalBasic(t *testing.T) {
 			wantRes: sdk.Result{},
 			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    c4600,
@@ -408,7 +415,9 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
-				}, permlink, censorshipReason},
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 		{
 			testName: "user can't double-vote",
@@ -420,7 +429,7 @@ func TestVoteProposalBasic(t *testing.T) {
 			wantRes: vote.ErrVoteAlreadyExist().Result(),
 			wantOK:  true,
 			wantProposal: &model.ContentCensorshipProposal{
-				model.ProposalInfo{
+				ProposalInfo: model.ProposalInfo{
 					Creator:       user1,
 					ProposalID:    proposalID1,
 					AgreeVotes:    c4600,
@@ -428,7 +437,9 @@ func TestVoteProposalBasic(t *testing.T) {
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
 					ExpiredAt:     curTime + decideSec,
-				}, permlink, censorshipReason},
+				},
+				Permlink: permlink,
+				Reason:   censorshipReason},
 		},
 	}
 	for _, tc := range testCases {

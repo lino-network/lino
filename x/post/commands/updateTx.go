@@ -24,7 +24,6 @@ func UpdatePostTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagPostID, "", "post id to identify this post for the author")
 	cmd.Flags().String(client.FlagTitle, "", "title for the post")
 	cmd.Flags().String(client.FlagContent, "", "content for the post")
-	cmd.Flags().String(client.FlagRedistributionSplitRate, "", "redistribution split rate")
 	return cmd
 }
 
@@ -36,7 +35,7 @@ func sendUpdatePostTx(cdc *wire.Codec) client.CommandTxCallback {
 		msg := post.NewUpdatePostMsg(
 			viper.GetString(client.FlagAuthor), viper.GetString(client.FlagPostID),
 			viper.GetString(client.FlagTitle), viper.GetString(client.FlagContent),
-			[]types.IDToURLMapping(nil), viper.GetString(client.FlagRedistributionSplitRate))
+			[]types.IDToURLMapping(nil))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

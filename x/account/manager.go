@@ -15,8 +15,8 @@ import (
 
 // linoaccount encapsulates all basic struct
 type AccountManager struct {
-	storage     model.AccountStorage `json:"account_manager"`
-	paramHolder param.ParamHolder    `json:"param_holder"`
+	storage     model.AccountStorage
+	paramHolder param.ParamHolder
 }
 
 // NewLinoAccount return the account pointer
@@ -87,6 +87,7 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
 		return err
 	}
+	// when open account, blockchain will give a certain amount lino with full stake.
 	if err := accManager.AddSavingCoinWithFullStake(
 		ctx, username, depositWithFullStake, referrer,
 		types.InitAccountWithFullStakeMemo, types.TransferIn); err != nil {
@@ -100,7 +101,7 @@ func (accManager AccountManager) CreateAccount(
 	return nil
 }
 
-// use coin to present stake to prevent overflow
+// GetStake - recalculate and get user current stake
 func (accManager AccountManager) GetStake(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
@@ -129,6 +130,7 @@ func (accManager AccountManager) GetStake(
 	return totalStake, nil
 }
 
+// AddSavingCoin - add coin to balance and pending stake
 func (accManager AccountManager) AddSavingCoin(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
@@ -179,6 +181,7 @@ func (accManager AccountManager) AddSavingCoin(
 	return nil
 }
 
+// AddSavingCoinWithFullStake - add coin to balance with full stake
 func (accManager AccountManager) AddSavingCoinWithFullStake(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
 	detailType types.TransferDetailType) (err sdk.Error) {
@@ -215,6 +218,7 @@ func (accManager AccountManager) AddSavingCoinWithFullStake(
 	return nil
 }
 
+// MinusSavingCoin - minus coin from balance, remove stake in the tail
 func (accManager AccountManager) MinusSavingCoin(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
 	memo string, detailType types.TransferDetailType) (err sdk.Error) {
@@ -309,6 +313,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	return nil
 }
 
+// AddBalanceHistory - add each balance related tx to balance history
 func (accManager AccountManager) AddBalanceHistory(
 	ctx sdk.Context, username types.AccountKey, numOfTx int64,
 	transactionDetail model.Detail) sdk.Error {
@@ -332,6 +337,7 @@ func (accManager AccountManager) AddBalanceHistory(
 	return nil
 }
 
+// UpdateJSONMeta - update user JONS meta data
 func (accManager AccountManager) UpdateJSONMeta(
 	ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -343,6 +349,7 @@ func (accManager AccountManager) UpdateJSONMeta(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
+// GetResetKey - get reset public key
 func (accManager AccountManager) GetResetKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
@@ -352,6 +359,7 @@ func (accManager AccountManager) GetResetKey(
 	return accountInfo.ResetKey, nil
 }
 
+// GetTransactionKey - get transaction public key
 func (accManager AccountManager) GetTransactionKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
@@ -361,6 +369,7 @@ func (accManager AccountManager) GetTransactionKey(
 	return accountInfo.TransactionKey, nil
 }
 
+// GetAppKey - get app public key
 func (accManager AccountManager) GetAppKey(
 	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
@@ -370,6 +379,7 @@ func (accManager AccountManager) GetAppKey(
 	return accountInfo.AppKey, nil
 }
 
+// GetSavingFromBank - get user balance
 func (accManager AccountManager) GetSavingFromBank(
 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
@@ -379,6 +389,7 @@ func (accManager AccountManager) GetSavingFromBank(
 	return accountBank.Saving, nil
 }
 
+// GetSequence - get user sequence number
 func (accManager AccountManager) GetSequence(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -388,6 +399,7 @@ func (accManager AccountManager) GetSequence(
 	return accountMeta.Sequence, nil
 }
 
+// GetLastReportOrUpvoteAt - get user last report or upvote time
 func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -397,6 +409,7 @@ func (accManager AccountManager) GetLastReportOrUpvoteAt(
 	return accountMeta.LastReportOrUpvoteAt, nil
 }
 
+// UpdateLastReportOrUpvoteAt - update user last report or upvote time to current block time
 func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -407,6 +420,7 @@ func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
+// GetLastPostAt - get user last post time
 func (accManager AccountManager) GetLastPostAt(
 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -416,6 +430,7 @@ func (accManager AccountManager) GetLastPostAt(
 	return accountMeta.LastPostAt, nil
 }
 
+// UpdateLastPostAt - update user last post time to current block time
 func (accManager AccountManager) UpdateLastPostAt(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
@@ -426,6 +441,7 @@ func (accManager AccountManager) UpdateLastPostAt(
 	return accManager.storage.SetMeta(ctx, username, accountMeta)
 }
 
+// GetFrozenMoneyList - get user frozen money list
 func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, username types.AccountKey) ([]model.FrozenMoney, sdk.Error) {
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
@@ -435,20 +451,21 @@ func (accManager AccountManager) GetFrozenMoneyList(
 	return accountBank.FrozenMoneyList, nil
 }
 
+// IncreaseSequenceByOne - increase user sequence number by one
 func (accManager AccountManager) IncreaseSequenceByOne(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
 		return ErrIncreaseSequenceByOne(err)
 	}
-	accountMeta.Sequence += 1
+	accountMeta.Sequence++
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err
 	}
 	return nil
 }
 
-// When user received the donation, the donation except friction will be added to
+// AddDirectDeposit - when user received the donation, the donation except friction will be added to
 // total income and original income
 func (accManager AccountManager) AddDirectDeposit(
 	ctx sdk.Context, username types.AccountKey, directDeposit types.Coin) sdk.Error {
@@ -461,13 +478,12 @@ func (accManager AccountManager) AddDirectDeposit(
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// After the evaluate of content value, the original friction will be added to
-// original income and friciton income. The actual inflation will be added to
-// inflation income, total income and unclaim reward
+// AddIncomeAndReward - after the evaluate of content value, the original friction
+// will be added to original income and friciton income. The actual inflation will
+// be added to inflation income, total income and unclaim reward
 func (accManager AccountManager) AddIncomeAndReward(
 	ctx sdk.Context, username types.AccountKey,
 	originalDonation, friction, actualReward types.Coin,
@@ -536,6 +552,7 @@ func (accManager AccountManager) AddRewardHistory(
 	return nil
 }
 
+// ClaimReward - add content reward to user balance
 func (accManager AccountManager) ClaimReward(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	reward, err := accManager.storage.GetReward(ctx, username)
@@ -579,16 +596,19 @@ func (accManager AccountManager) ClearRewardHistory(
 	return nil
 }
 
+// IsMyFollower - check KV store to check if user in my follower list
 func (accManager AccountManager) IsMyFollower(
 	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
 	return accManager.storage.IsMyFollower(ctx, me, follower)
 }
 
+// IsMyFollowing - check KV store to check if user in my following list
 func (accManager AccountManager) IsMyFollowing(
 	ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
 	return accManager.storage.IsMyFollowing(ctx, me, following)
 }
 
+// SetFollower - update KV store to add follower if doesn't exist
 func (accManager AccountManager) SetFollower(
 	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
 	if accManager.storage.IsMyFollower(ctx, me, follower) {
@@ -602,6 +622,7 @@ func (accManager AccountManager) SetFollower(
 	return nil
 }
 
+// SetFollowing - update KV store to add following if doesn't exist
 func (accManager AccountManager) SetFollowing(
 	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
 	if accManager.storage.IsMyFollowing(ctx, me, following) {
@@ -615,6 +636,7 @@ func (accManager AccountManager) SetFollowing(
 	return nil
 }
 
+// RemoveFollower - update KV store to remove follower if exist
 func (accManager AccountManager) RemoveFollower(
 	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
 	if !accManager.storage.IsMyFollower(ctx, me, follower) {
@@ -624,6 +646,7 @@ func (accManager AccountManager) RemoveFollower(
 	return nil
 }
 
+// RemoveFollowing - update KV store to remove following if exist
 func (accManager AccountManager) RemoveFollowing(
 	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
 	if !accManager.storage.IsMyFollowing(ctx, me, following) {
@@ -633,25 +656,30 @@ func (accManager AccountManager) RemoveFollowing(
 	return nil
 }
 
+// CheckUserTPSCapacity - to prevent user spam the chain, every user has a TPS capacity.
 func (accManager AccountManager) CheckUserTPSCapacity(
 	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, me)
 	if err != nil {
 		return err
 	}
+	// get update to date user stake
 	stake, err := accManager.GetStake(ctx, me)
 	if err != nil {
 		return err
 	}
 
+	// get bandwidth parameters
 	bandwidthParams, err := accManager.paramHolder.GetBandwidthParam(ctx)
 	if err != nil {
 		return err
 	}
 
+	// if stake less than last update transaction capacity, set to stake
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake
 	} else {
+		// otherwise try to increase user capacity
 		incrementRatio := sdk.NewRat(
 			ctx.BlockHeader().Time.Unix()-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
@@ -663,8 +691,10 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		accountMeta.TransactionCapacity =
 			accountMeta.TransactionCapacity.Plus(increaseCapacity)
 	}
+	// based on current tps, calculate current transaction cost
 	currentTxCost := types.RatToCoin(
 		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
+	// check if user current capacity is enough or not
 	if currentTxCost.IsGT(accountMeta.TransactionCapacity) {
 		return ErrAccountTPSCapacityNotEnough(me)
 	}
@@ -828,6 +858,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	return "", ErrCheckAuthenticatePubKeyOwner(me)
 }
 
+// GetDonationRelationship - get donation relationship between two user
 func (accManager AccountManager) GetDonationRelationship(
 	ctx sdk.Context, me, other types.AccountKey) (int64, sdk.Error) {
 	relationship, err := accManager.storage.GetRelationship(ctx, me, other)
@@ -853,6 +884,7 @@ func (accManager AccountManager) addPendingStakeToQueue(
 	return accManager.storage.SetPendingStakeQueue(ctx, username, pendingStakeQueue)
 }
 
+// RecoverAccount - reset three public key pairs
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username types.AccountKey,
 	newResetPubKey, newTransactionPubKey, newAppPubKey crypto.PubKey) sdk.Error {
@@ -953,7 +985,7 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 			continue
 		}
 
-		idx += 1
+		idx++
 	}
 }
 

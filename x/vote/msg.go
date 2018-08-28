@@ -16,16 +16,19 @@ var _ types.Msg = DelegateMsg{}
 var _ types.Msg = DelegatorWithdrawMsg{}
 var _ types.Msg = RevokeDelegationMsg{}
 
+// VoterDepositMsg - voter deposit
 type VoterDepositMsg struct {
 	Username types.AccountKey `json:"username"`
 	Deposit  types.LNO        `json:"deposit"`
 }
 
+// VoterWithdrawMsg - voter withdraw
 type VoterWithdrawMsg struct {
 	Username types.AccountKey `json:"username"`
 	Amount   types.LNO        `json:"amount"`
 }
 
+// VoterRevokeMsg - voter revoke
 type VoterRevokeMsg struct {
 	Username types.AccountKey `json:"username"`
 }
@@ -57,8 +60,10 @@ func NewVoterDepositMsg(username string, deposit types.LNO) VoterDepositMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg VoterDepositMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg VoterDepositMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -76,10 +81,12 @@ func (msg VoterDepositMsg) String() string {
 	return fmt.Sprintf("VoterDepositMsg{Username:%v, Deposit:%v}", msg.Username, msg.Deposit)
 }
 
+// GetPermission - implements types.Msg
 func (msg VoterDepositMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg VoterDepositMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -88,11 +95,12 @@ func (msg VoterDepositMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg VoterDepositMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterDepositMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -106,8 +114,10 @@ func NewVoterWithdrawMsg(username string, amount types.LNO) VoterWithdrawMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg VoterWithdrawMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg VoterWithdrawMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -124,10 +134,12 @@ func (msg VoterWithdrawMsg) String() string {
 	return fmt.Sprintf("VoterWithdrawMsg{Username:%v, Amount:%v}", msg.Username, msg.Amount)
 }
 
+// GetPermission - implements types.Msg
 func (msg VoterWithdrawMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg VoterWithdrawMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -136,11 +148,12 @@ func (msg VoterWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg VoterWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -154,8 +167,10 @@ func NewVoterRevokeMsg(username string) VoterRevokeMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg VoterRevokeMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg VoterRevokeMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -168,10 +183,12 @@ func (msg VoterRevokeMsg) String() string {
 	return fmt.Sprintf("VoterRevokeMsg{Username:%v}", msg.Username)
 }
 
+// GetPermission - implements types.Msg
 func (msg VoterRevokeMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg VoterRevokeMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -180,11 +197,12 @@ func (msg VoterRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg VoterRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -200,8 +218,10 @@ func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMs
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg DelegateMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg DelegateMsg) ValidateBasic() sdk.Error {
 	if len(msg.Delegator) < types.MinimumUsernameLength ||
 		len(msg.Delegator) > types.MaximumUsernameLength ||
@@ -221,10 +241,12 @@ func (msg DelegateMsg) String() string {
 	return fmt.Sprintf("DelegateMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
+// GetPermission - implements types.Msg
 func (msg DelegateMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg DelegateMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -233,11 +255,12 @@ func (msg DelegateMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg DelegateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg DelegateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -252,8 +275,10 @@ func NewRevokeDelegationMsg(delegator string, voter string) RevokeDelegationMsg 
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg RevokeDelegationMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg RevokeDelegationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Delegator) < types.MinimumUsernameLength ||
 		len(msg.Delegator) > types.MaximumUsernameLength ||
@@ -269,10 +294,12 @@ func (msg RevokeDelegationMsg) String() string {
 	return fmt.Sprintf("RevokeDelegationMsg{Delegator:%v, Voter:%v}", msg.Delegator, msg.Voter)
 }
 
+// GetPermission - implements types.Msg
 func (msg RevokeDelegationMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -281,11 +308,12 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg RevokeDelegationMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg RevokeDelegationMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -300,8 +328,10 @@ func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) D
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
 
+// ValidateBasic - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) ValidateBasic() sdk.Error {
 	if len(msg.Delegator) < types.MinimumUsernameLength ||
 		len(msg.Delegator) > types.MaximumUsernameLength ||
@@ -320,10 +350,12 @@ func (msg DelegatorWithdrawMsg) String() string {
 	return fmt.Sprintf("DelegatorWithdrawMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
 }
 
+// GetPermission - implements types.Msg
 func (msg DelegatorWithdrawMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
+// GetSignBytes - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -332,11 +364,12 @@ func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
+// GetSigners - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg DelegatorWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

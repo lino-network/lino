@@ -9,11 +9,11 @@ import (
 )
 
 type PostManager struct {
-	postStorage model.PostStorage `json:"post_storage"`
-	paramHolder param.ParamHolder `json:"param_holder"`
+	postStorage model.PostStorage
+	paramHolder param.ParamHolder
 }
 
-// create NewPostManager
+// NewPostManager - create a new post manager
 func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 	return PostManager{
 		postStorage: model.NewPostStorage(key),
@@ -21,6 +21,7 @@ func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 	}
 }
 
+// GetRedistributionSplitRate - get post redistribution split rate
 func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
@@ -29,6 +30,7 @@ func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types
 	return postMeta.RedistributionSplitRate, nil
 }
 
+// GetCreatedTimeAndReward - get post created time and reward for evaluate of content value
 func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permlink types.Permlink) (int64, types.Coin, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
@@ -37,12 +39,12 @@ func (pm PostManager) GetCreatedTimeAndReward(ctx sdk.Context, permlink types.Pe
 	return postMeta.CreatedAt, postMeta.TotalReward, nil
 }
 
-// check if post exist
+// DoesPostExist - check if post exist
 func (pm PostManager) DoesPostExist(ctx sdk.Context, permlink types.Permlink) bool {
 	return pm.postStorage.DoesPostExist(ctx, permlink)
 }
 
-// return root source post
+// GetSourcePost - return root source post
 func (pm PostManager) GetSourcePost(
 	ctx sdk.Context, permlink types.Permlink) (types.AccountKey, string, sdk.Error) {
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permlink)
@@ -117,9 +119,10 @@ func (pm PostManager) CreatePost(
 	return nil
 }
 
+// UpdatePost - update post title, content and links. Can't update a deleted post
 func (pm PostManager) UpdatePost(
 	ctx sdk.Context, author types.AccountKey, postID, title, content string,
-	links []types.IDToURLMapping, redistributionSplitRate sdk.Rat) sdk.Error {
+	links []types.IDToURLMapping) sdk.Error {
 	permlink := types.GetPermlink(author, postID)
 	postInfo, err := pm.postStorage.GetPostInfo(ctx, permlink)
 	if err != nil {
@@ -133,7 +136,8 @@ func (pm PostManager) UpdatePost(
 	postInfo.Title = title
 	postInfo.Content = content
 	postInfo.Links = links
-	postMeta.RedistributionSplitRate = redistributionSplitRate
+	// postMeta.RedistributionSplitRate = redistributionSplitRate
+	postMeta.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
 		return err
@@ -144,7 +148,7 @@ func (pm PostManager) UpdatePost(
 	return nil
 }
 
-// add or update view from the user if view exists
+// AddOrUpdateViewToPost - add or update view from the user if view exists
 func (pm PostManager) AddOrUpdateViewToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
@@ -152,12 +156,12 @@ func (pm PostManager) AddOrUpdateViewToPost(
 		return err
 	}
 	view, _ := pm.postStorage.GetPostView(ctx, permlink, user)
-	// Revoke previous
+	// override previous
 	if view == nil {
 		view = &model.View{Username: user}
 	}
-	postMeta.TotalViewCount += 1
-	view.Times += 1
+	postMeta.TotalViewCount++
+	view.Times++
 	view.LastViewAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostView(ctx, permlink, view); err != nil {
 		return err
@@ -168,7 +172,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
-// add or update report or upvote from the user if exist
+// ReportOrUpvoteToPost - add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
 	stake types.Coin, isReport bool) sdk.Error {
@@ -227,7 +231,7 @@ func (pm PostManager) AddComment(
 	return nil
 }
 
-// add donation to post donation list
+// AddDonation - add donation to post donation list
 func (pm PostManager) AddDonation(
 	ctx sdk.Context, permlink types.Permlink, donator types.AccountKey,
 	amount types.Coin, donationType types.DonationType) sdk.Error {
@@ -253,7 +257,7 @@ func (pm PostManager) AddDonation(
 	return nil
 }
 
-// DeletePost triggered by censorship proposal
+// DeletePost - delete post by author or content censorship
 func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
@@ -261,6 +265,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.E
 	}
 	postMeta.IsDeleted = true
 	postMeta.RedistributionSplitRate = sdk.OneRat()
+	postMeta.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
 	}
@@ -278,6 +283,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.E
 	return nil
 }
 
+// IsDeleted - check if a post is deleted or not
 func (pm PostManager) IsDeleted(ctx sdk.Context, permlink types.Permlink) (bool, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
@@ -286,7 +292,7 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permlink types.Permlink) (bool,
 	return postMeta.IsDeleted, nil
 }
 
-// get penalty score from report and upvote
+// GetPenaltyScore - get penalty score from report and upvote
 func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
 	if err != nil {

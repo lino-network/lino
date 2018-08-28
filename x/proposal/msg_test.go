@@ -68,8 +68,6 @@ func TestVoteProposalMsg(t *testing.T) {
 
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
-		Ceiling:                  sdk.NewRat(98, 1000),
-		Floor:                    sdk.NewRat(3, 100),
 		GlobalGrowthRate:         sdk.NewRat(98, 1000),
 		InfraAllocation:          sdk.NewRat(20, 100),
 		ContentCreatorAllocation: sdk.NewRat(55, 100),
@@ -80,13 +78,10 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p2.DeveloperAllocation = sdk.NewRat(25, 100)
 
 	p3 := p1
-	p3.Ceiling = sdk.NewRat(2, 100)
+	p3.GlobalGrowthRate = sdk.NewRat(2, 100)
 
 	p4 := p1
-	p4.Floor = sdk.NewRat(-1, 100)
-
-	p5 := p1
-	p5.GlobalGrowthRate = sdk.NewRat(2, 100)
+	p4.GlobalGrowthRate = sdk.NewRat(1, 10)
 
 	testCases := []struct {
 		testName                       string
@@ -99,23 +94,18 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 			expectedError:                  nil,
 		},
 		{
-			testName:                       "illegal parameter",
+			testName:                       "illegal allocation",
 			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p2, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
-			testName:                       "illegal parameter",
+			testName:                       "global growth rate lower than lower bound",
 			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p3, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
-			testName:                       "illegal parameter",
+			testName:                       "global growth rate exceed than higher bound",
 			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p4, ""),
-			expectedError:                  ErrIllegalParameter(),
-		},
-		{
-			testName:                       "illegal parameter",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p5, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
@@ -139,7 +129,7 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 
 	for _, tc := range testCases {
 		result := tc.ChangeGlobalAllocationParamMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
+		if !assert.Equal(t, tc.expectedError, result) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 		}
 	}
