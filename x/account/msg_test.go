@@ -317,6 +317,12 @@ func TestRegisterUsername(t *testing.T) {
 			),
 			wantCode: sdk.CodeOK,
 		},
+		"normal case with dot": {
+			msg: NewRegisterMsg("zhimao.liu", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
+			),
+			wantCode: sdk.CodeOK,
+		},
 		"register username minimum length": {
 			msg: NewRegisterMsg("referrer", "new", "1", secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
@@ -372,7 +378,8 @@ func TestRegisterUsername(t *testing.T) {
 	// Illegel character
 	registerList := [...]string{"register#", "_register", "-register", "reg@ister", "re--gister",
 		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register", "re_-gister",
-		"reg=ister", "register^", "register.", "reg$ister,", "Register", "r__egister", "reGister", "r_--gister"}
+		"reg=ister", "register^", "register.", "reg$ister,", "Register", "r__egister", "reGister",
+		"r_--gister", "re.-gister", ".re-gister", "re-gister.", "register_", "register-"}
 	for _, register := range registerList {
 		msg := NewRegisterMsg(
 			"referer", register, "1", secp256k1.GenPrivKey().PubKey(),
