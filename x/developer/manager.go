@@ -68,7 +68,7 @@ func (dm DeveloperManager) AddToDeveloperList(
 		return err
 	}
 	// already in the list
-	if FindAccountInList(username, lst.AllDevelopers) != -1 {
+	if types.FindAccountInList(username, lst.AllDevelopers) != -1 {
 		return nil
 	}
 	lst.AllDevelopers = append(lst.AllDevelopers, username)
@@ -85,7 +85,7 @@ func (dm DeveloperManager) RemoveFromDeveloperList(
 		return err
 	}
 	// not in the list
-	idx := FindAccountInList(username, lst.AllDevelopers)
+	idx := types.FindAccountInList(username, lst.AllDevelopers)
 	if idx == -1 {
 		return nil
 	}
@@ -207,14 +207,4 @@ func (dm DeveloperManager) WithdrawAll(
 		return types.NewCoinFromInt64(0), err
 	}
 	return developer.Deposit, nil
-}
-
-// FindAccountInList - find account name in an account list
-func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
-	for index, user := range lst {
-		if user == me {
-			return index
-		}
-	}
-	return -1
 }

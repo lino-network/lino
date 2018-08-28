@@ -12,6 +12,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 )
 
+// PreAuthorizationPermissionTxCmd - user pre auth a developer
 func PreAuthorizationPermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pre-authorization-permission",

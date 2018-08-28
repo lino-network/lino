@@ -12,6 +12,7 @@ import (
 	developer "github.com/lino-network/lino/x/developer"
 )
 
+// DeveloperRevokeTxCmd - revoke developer
 func DeveloperRevokeTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "developer-revoke",

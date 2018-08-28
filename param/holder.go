@@ -525,46 +525,57 @@ func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.
 	return nil
 }
 
+// GetPostParamKey - "post param substore"
 func GetPostParamKey() []byte {
 	return postParamSubStore
 }
 
+// GetEvaluateOfContentValueParamKey - "evaluate of content value param substore"
 func GetEvaluateOfContentValueParamKey() []byte {
 	return evaluateOfContentValueParamSubStore
 }
 
+// GetAllocationParamKey - "allocation param substore"
 func GetAllocationParamKey() []byte {
 	return allocationParamSubStore
 }
 
+// GetInfraInternalAllocationParamKey - "infra internal allocation param substore"
 func GetInfraInternalAllocationParamKey() []byte {
 	return infraInternalAllocationParamSubStore
 }
 
+// GetDeveloperParamKey - "developer param substore"
 func GetDeveloperParamKey() []byte {
 	return developerParamSubStore
 }
 
+// GetVoteParamKey - "vote param substore"
 func GetVoteParamKey() []byte {
 	return voteParamSubStore
 }
 
+// GetValidatorParamKey - "validator param substore"
 func GetValidatorParamKey() []byte {
 	return validatorParamSubStore
 }
 
+// GetProposalParamKey - "proposal param substore"
 func GetProposalParamKey() []byte {
 	return proposalParamSubStore
 }
 
+// GetCoinDayParamKey - "coin day param substore"
 func GetCoinDayParamKey() []byte {
 	return coinDayParamSubStore
 }
 
+// GetBandwidthParamKey - "bandwidth param substore"
 func GetBandwidthParamKey() []byte {
 	return bandwidthParamSubStore
 }
 
+// GetAccountParamKey - "account param substore"
 func GetAccountParamKey() []byte {
 	return accountParamSubstore
 }

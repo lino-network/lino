@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// GlobalMeta - global statistic information
 type GlobalMeta struct {
 	TotalLinoCoin                 types.Coin `json:"total_lino_coin"`
 	LastYearTotalLinoCoin         types.Coin `json:"last_year_total_lino_coin"`
@@ -13,12 +14,14 @@ type GlobalMeta struct {
 	CumulativeConsumption         types.Coin `json:"cumulative_consumption"`
 }
 
+// GlobalTime - global time
 type GlobalTime struct {
 	ChainStartTime int64 `json:"chain_start_time"`
 	LastBlockTime  int64 `json:"last_block_time"`
 	PastMinutes    int64 `json:"past_minutes"`
 }
 
+// TPS - transaction per section
 type TPS struct {
 	CurrentTPS sdk.Rat `json:"current_tps"`
 	MaxTPS     sdk.Rat `json:"max_tps"`
@@ -47,6 +50,7 @@ type ConsumptionMeta struct {
 	ConsumptionFreezingPeriodSec int64      `json:"consumption_freezing_period_second"`
 }
 
+// InitParamList - genesis parameters
 type InitParamList struct {
 	MaxTPS                       sdk.Rat `json:"max_tps"`
 	ConsumptionFrictionRate      sdk.Rat `json:"consumption_friction_rate"`

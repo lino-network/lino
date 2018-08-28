@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Parameter - parameter in Lino Blockchain
 type Parameter interface{}
 
 // EvaluateOfContentValueParam - parameters used to evaluate content value
@@ -18,7 +19,7 @@ type EvaluateOfContentValueParam struct {
 	AmountOfConsumptionExponent    sdk.Rat `json:"amount_of_consumption_exponent"`
 }
 
-// GlobalAllocationParam
+// GlobalAllocationParam - global allocation parameters
 // InfraAllocation - percentage for all infra related allocation
 // ContentCreatorAllocation - percentage for all content creator related allocation
 // DeveloperAllocation - percentage of inflation for developers
@@ -31,7 +32,7 @@ type GlobalAllocationParam struct {
 	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
 }
 
-// InfraInternalAllocationParam
+// InfraInternalAllocationParam - infra internal allocation parameters
 // StorageAllocation - percentage for storage provider (not in use now)
 // CDNAllocation - percentage for CDN provider (not in use now)
 type InfraInternalAllocationParam struct {
@@ -39,7 +40,7 @@ type InfraInternalAllocationParam struct {
 	CDNAllocation     sdk.Rat `json:"CDN_allocation"`
 }
 
-// VoteParam
+// VoteParam - vote paramters
 // VoterMinDeposit - minimum depost to become the voter
 // VoterMinWithdraw - minimum amount of Coin to withdraw from a voter
 // DelegatorMinWithdraw - minimum amount of Coin to withdraw from a delegation
@@ -57,7 +58,7 @@ type VoteParam struct {
 	DelegatorCoinReturnTimes       int64      `json:"delegator_coin_return_times"`
 }
 
-// ProposalParam
+// ProposalParam - proposal parameters
 // ContentCensorshipDecideSec - seconds after content censorship proposal created till expired
 // ContentCensorshipMinDeposit - minimum deposit to propose content censorship proposal
 // ContentCensorshipPassRatio - upvote and downvote ratio for content censorship proposal
@@ -87,7 +88,7 @@ type ProposalParam struct {
 	ProtocolUpgradePassVotes    types.Coin `json:"protocol_upgrade_pass_votes"`
 }
 
-// DeveloperParam
+// DeveloperParam - developer parameters
 // DeveloperMinDeposit - minimum deposit to become a developer
 // DeveloperCoinReturnIntervalSec - when withdraw or revoke, coin return to developer by coin return event
 // DeveloperCoinReturnTimes - when withdraw or revoke, coin return to developer by coin return event
@@ -97,7 +98,7 @@ type DeveloperParam struct {
 	DeveloperCoinReturnTimes       int64      `json:"developer_coin_return_times"`
 }
 
-// ValidatorParam
+// ValidatorParam - validator parameters
 // ValidatorMinWithdraw - minimum withdraw requirement
 // ValidatorMinVotingDeposit - minimum voting deposit requirement for user wanna be validator
 // ValidatorMinCommittingDeposit - minimum committing (validator) deposit requirement for user wanna be validator
@@ -123,13 +124,13 @@ type ValidatorParam struct {
 	AbsentCommitLimitation         int64      `json:"absent_commit_limitation"`
 }
 
-// CoinDayParam
+// CoinDayParam - coin day parameters
 // SecondsToRecoverCoinDayStake - seconds for each incoming balance stake fully charged
 type CoinDayParam struct {
 	SecondsToRecoverCoinDayStake int64 `json:"seconds_to_recover_coin_day_stake"`
 }
 
-// BandwidthParam
+// BandwidthParam - bandwidth parameters
 // SecondsToRecoverBandwidth - seconds for user tps capacity fully charged
 // CapacityUsagePerTransaction - capacity usage per transaction, dynamic changed based on traffic
 type BandwidthParam struct {
@@ -137,7 +138,7 @@ type BandwidthParam struct {
 	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
 }
 
-// AccountParam
+// AccountParam - account parameters
 // MinimumBalance - minimum balance each account need to maintain
 // RegisterFee - register fee need to pay to developer inflation pool for each account registration
 // FirstDepositFullStakeLimit - when register account, some of stake of register fee to newly open account will be fully charged
@@ -147,7 +148,7 @@ type AccountParam struct {
 	FirstDepositFullStakeLimit types.Coin `json:"first_deposit_full_stake_limit"`
 }
 
-// PostParam
+// PostParam - post parameters
 // ReportOrUpvoteIntervalSec - report interval second
 // PostIntervalSec - post interval second
 type PostParam struct {

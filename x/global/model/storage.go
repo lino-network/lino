@@ -19,12 +19,14 @@ var (
 	timeSubStore            = []byte{0x05} // SubStore for tps
 )
 
+// GlobalStorage - global storage
 type GlobalStorage struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
 	cdc *wire.Codec
 }
 
+// NewGlobalStorage - new global storage
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.NewCodec()
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
@@ -47,10 +49,12 @@ func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	}
 }
 
+// WireCodec - access to global storage codec
 func (gs GlobalStorage) WireCodec() *wire.Codec {
 	return gs.cdc
 }
 
+// InitGlobalStateWithConfig - initialization based on genesis config file
 func (gs GlobalStorage) InitGlobalStateWithConfig(
 	ctx sdk.Context, totalLino types.Coin, param InitParamList) sdk.Error {
 	globalMeta := &GlobalMeta{
@@ -92,6 +96,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 	return nil
 }
 
+// InitGlobalState - initialization based on code
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
@@ -102,6 +107,7 @@ func (gs GlobalStorage) InitGlobalState(
 	return gs.InitGlobalStateWithConfig(ctx, totalLino, initParamList)
 }
 
+// GetTimeEventList - get time event list at given unix time
 func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*types.TimeEventList, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	listByte := store.Get(GetTimeEventListKey(unixTime))
@@ -116,6 +122,7 @@ func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*type
 	return lst, nil
 }
 
+// SetTimeEventList - set time event list at given unix time
 func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *types.TimeEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	listByte, err := gs.cdc.MarshalJSON(*lst)
@@ -126,12 +133,14 @@ func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *t
 	return nil
 }
 
+// RemoveTimeEventList - remove time event list at given unix time
 func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	store.Delete(GetTimeEventListKey(unixTime))
 	return nil
 }
 
+// GetGlobalMeta - get global meta from KVStore
 func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes := store.Get(GetGlobalMetaKey())
@@ -145,6 +154,7 @@ func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) 
 	return globalMeta, nil
 }
 
+// SetGlobalMeta - set global meta to KVStore
 func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
@@ -155,6 +165,7 @@ func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) s
 	return nil
 }
 
+// GetInflationPool - get inflation pool from KVStore
 func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes := store.Get(GetInflationPoolKey())
@@ -168,6 +179,7 @@ func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.E
 	return inflationPool, nil
 }
 
+// SetInflationPool - set inflation pool to KVStore
 func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
@@ -178,6 +190,7 @@ func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *Inflati
 	return nil
 }
 
+// GetConsumptionMeta - get consumption meta from KVStore
 func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes := store.Get(GetConsumptionMetaKey())
@@ -191,6 +204,7 @@ func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, s
 	return consumptionMeta, nil
 }
 
+// SetConsumptionMeta - set consumption meta to KVStore
 func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
@@ -201,6 +215,7 @@ func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *Con
 	return nil
 }
 
+// GetTPS - get tps from KVStore
 func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	tpsBytes := store.Get(GetTPSKey())
@@ -214,6 +229,7 @@ func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 	return tps, nil
 }
 
+// SetTPS - set tps to KVStore
 func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	tpsBytes, err := gs.cdc.MarshalJSON(*tps)
@@ -224,6 +240,7 @@ func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	return nil
 }
 
+// GetGlobalTime - get global time from KVStore
 func (gs GlobalStorage) GetGlobalTime(ctx sdk.Context) (*GlobalTime, sdk.Error) {
 	store := ctx.KVStore(gs.key)
 	timeBytes := store.Get(GetTimeKey())
@@ -237,6 +254,7 @@ func (gs GlobalStorage) GetGlobalTime(ctx sdk.Context) (*GlobalTime, sdk.Error) 
 	return globalTime, nil
 }
 
+// SetGlobalTime - set global time to KVStore
 func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	timeBytes, err := gs.cdc.MarshalJSON(*globalTime)
@@ -247,26 +265,32 @@ func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) s
 	return nil
 }
 
+// GetTimeEventListKey - get time event list from KVStore
 func GetTimeEventListKey(unixTime int64) []byte {
 	return append(timeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
 }
 
+// GetGlobalMetaKey - "global meta substore"
 func GetGlobalMetaKey() []byte {
 	return globalMetaSubStore
 }
 
+// GetInflationPoolKey - "inflation pool substore"
 func GetInflationPoolKey() []byte {
 	return inflationPoolSubStore
 }
 
+// GetConsumptionMetaKey - "consumption meta substore"
 func GetConsumptionMetaKey() []byte {
 	return consumptionMetaSubStore
 }
 
+// GetTPSKey - "tps substore"
 func GetTPSKey() []byte {
 	return tpsSubStore
 }
 
+// GetTimeKey - "time substore"
 func GetTimeKey() []byte {
 	return timeSubStore
 }

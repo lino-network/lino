@@ -9,34 +9,41 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// LNO - exposed type
 type LNO = string
 
 var (
+	// LowerBoundRat - the lower bound of Rat
 	LowerBoundRat = big.NewRat(1, Decimals)
+	// UpperBoundRat - the upper bound of Rat
 	UpperBoundRat = big.NewRat(math.MaxInt64/Decimals, 1)
 )
 
-// Coin holds some amount of one currency
+// Coin - 10^5 Coin = 1 LNO
 type Coin struct {
 	// Amount *big.Int `json:"amount"`
 	Amount sdk.Int `json:"amount"`
 }
 
+// NewCoinFromInt64 - return int64 amount of Coin
 func NewCoinFromInt64(amount int64) Coin {
 	// return Coin{big.NewInt(amount)}
 	return Coin{sdk.NewInt(amount)}
 }
 
+// NewCoinFromBigInt - return big.Int amount of Coin
 func NewCoinFromBigInt(amount *big.Int) Coin {
 	sdkInt := sdk.NewIntFromBigInt(amount)
 	return Coin{sdkInt}
 }
 
+// NewCoinFromString - return string amount of Coin
 func NewCoinFromString(amount string) (Coin, bool) {
 	res, ok := sdk.NewIntFromString(amount)
 	return Coin{res}, ok
 }
 
+// LinoToCoin - convert 1 LNO to 10^5 Coin
 func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	num, success := new(big.Rat).SetString(lino)
 	if !success {
@@ -48,7 +55,7 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if num.Cmp(LowerBoundRat) < 0 {
 		return NewCoinFromInt64(0), ErrInvalidCoins("LNO can't be less than lower bound")
 	}
-	return RatToCoin(sdk.Rat{new(big.Rat).Mul(num, big.NewRat(Decimals, 1))}), nil
+	return RatToCoin(sdk.Rat{Rat: new(big.Rat).Mul(num, big.NewRat(Decimals, 1))}), nil
 }
 
 var (
@@ -60,6 +67,7 @@ var (
 	ten   = big.NewInt(10)
 )
 
+// RatToCoin - convert sdk.Rat to LNO coin
 func RatToCoin(rat sdk.Rat) Coin {
 	//return Coin{rat.EvaluateBig()}
 
@@ -90,10 +98,12 @@ func RatToCoin(rat sdk.Rat) Coin {
 	return NewCoinFromBigInt(rat.EvaluateBig())
 }
 
+// ToRat - convert Coin to sdk.Rat
 func (coin Coin) ToRat() sdk.Rat {
-	return sdk.Rat{new(big.Rat).SetInt(coin.Amount.BigInt())}
+	return sdk.Rat{Rat: new(big.Rat).SetInt(coin.Amount.BigInt())}
 }
 
+// ToRat - convert Coin to int64
 func (coin Coin) ToInt64() int64 {
 	return coin.Amount.BigInt().Int64()
 }
@@ -103,44 +113,44 @@ func (coin Coin) String() string {
 	return fmt.Sprintf("coin:%v", coin.Amount)
 }
 
-// IsZero returns if this represents no money
+// IsZero - returns if this represents no money
 func (coin Coin) IsZero() bool {
 	return coin.Amount.Sign() == 0
 }
 
-// IsGT returns true if the receiver is greater value
+// IsGT - returns true if the receiver is greater value
 func (coin Coin) IsGT(other Coin) bool {
 	return coin.Amount.GT(other.Amount)
 }
 
-// IsGTE returns true if they are the same type and the receiver is
+// IsGTE - returns true if they are the same type and the receiver is
 // an equal or greater value
 func (coin Coin) IsGTE(other Coin) bool {
 	return coin.Amount.GT(other.Amount) || coin.Amount.Equal(other.Amount)
 }
 
-// IsEqual returns true if the two sets of Coins have the same value
+// IsEqual - returns true if the two sets of Coins have the same value
 func (coin Coin) IsEqual(other Coin) bool {
 	return coin.Amount.Equal(other.Amount)
 }
 
-// IsPositive returns true if coin amount is positive
+// IsPositive - returns true if coin amount is positive
 func (coin Coin) IsPositive() bool {
 	return coin.Amount.Sign() > 0
 }
 
-// IsNotNegative returns true if coin amount is not negative
+// IsNotNegative - returns true if coin amount is not negative
 func (coin Coin) IsNotNegative() bool {
 	return coin.Amount.Sign() >= 0
 }
 
-// Adds amounts of two coins with same denom
+// Plus - Adds amounts of two coins with same denom
 func (coin Coin) Plus(coinB Coin) Coin {
 	r := coin.Amount.Add(coinB.Amount)
 	return Coin{r}
 }
 
-// Subtracts amounts of two coins with same denom
+// Minus - Subtracts amounts of two coins with same denom
 func (coin Coin) Minus(coinB Coin) Coin {
 	sdkInt := coin.Amount.Sub(coinB.Amount)
 	return Coin{sdkInt}

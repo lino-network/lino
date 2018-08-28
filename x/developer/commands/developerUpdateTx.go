@@ -12,6 +12,7 @@ import (
 	developer "github.com/lino-network/lino/x/developer"
 )
 
+// DeveloperUpdateTxCmd - update developer information
 func DeveloperUpdateTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "developer-update",

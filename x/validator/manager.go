@@ -64,7 +64,7 @@ func (vm ValidatorManager) IsLegalWithdraw(
 		return false
 	}
 
-	if FindAccountInList(username, lst.OncallValidators) != -1 {
+	if types.FindAccountInList(username, lst.OncallValidators) != -1 {
 		return false
 	}
 
@@ -94,7 +94,7 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 	ABCIValList := []abci.Validator{}
 	for _, preValidator := range validatorList.PreBlockValidators {
 		// set power to 0 if a previous validator not in oncall list anymore
-		if FindAccountInList(preValidator, validatorList.OncallValidators) == -1 {
+		if types.FindAccountInList(preValidator, validatorList.OncallValidators) == -1 {
 			validator, err := vm.storage.GetValidator(ctx, preValidator)
 			if err != nil {
 				return nil, err
@@ -396,12 +396,12 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	}
 	defer vm.updateLowestValidator(ctx)
 	// has alreay in the oncall validator list
-	if FindAccountInList(username, lst.OncallValidators) != -1 {
+	if types.FindAccountInList(username, lst.OncallValidators) != -1 {
 		return nil
 	}
 
 	// add to all validators list if not in the list
-	if FindAccountInList(username, lst.AllValidators) == -1 {
+	if types.FindAccountInList(username, lst.AllValidators) == -1 {
 		lst.AllValidators = append(lst.AllValidators, username)
 	}
 
@@ -431,13 +431,13 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	return nil
 }
 
-// remove the user from both oncall and allValidators lists
+// RemoveValidatorFromAllLists - remove the user from both oncall and allValidators lists
 func (vm ValidatorManager) RemoveValidatorFromAllLists(ctx sdk.Context, username types.AccountKey) sdk.Error {
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
 		return err
 	}
-	if FindAccountInList(username, lst.AllValidators) == -1 {
+	if types.FindAccountInList(username, lst.AllValidators) == -1 {
 		return nil
 	}
 
@@ -536,7 +536,7 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 			return bestCandidate, err
 		}
 		// not in the oncall list and has a larger power
-		if FindAccountInList(validatorName, lst.OncallValidators) == -1 &&
+		if types.FindAccountInList(validatorName, lst.OncallValidators) == -1 &&
 			validator.Deposit.IsGT(bestCandidatePower) {
 			bestCandidate = validator.Username
 			bestCandidatePower = validator.Deposit
@@ -544,14 +544,4 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 	}
 	return bestCandidate, nil
 
-}
-
-// FindAccountInList - find account in a given account list
-func FindAccountInList(me types.AccountKey, lst []types.AccountKey) int {
-	for index, user := range lst {
-		if user == me {
-			return index
-		}
-	}
-	return -1
 }

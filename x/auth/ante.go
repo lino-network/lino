@@ -16,6 +16,7 @@ const (
 	maxMemoCharacters = 100
 )
 
+// NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx,

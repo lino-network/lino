@@ -13,13 +13,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// linoaccount encapsulates all basic struct
+// AccountManager - account manager
 type AccountManager struct {
 	storage     model.AccountStorage
 	paramHolder param.ParamHolder
 }
 
-// NewLinoAccount return the account pointer
+// NewLinoAccount - new account manager
 func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManager {
 	return AccountManager{
 		storage:     model.NewAccountStorage(key),
@@ -27,20 +27,12 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManage
 	}
 }
 
+// DoesAccountExist - check if account exists in KVStore or not
 func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool {
 	return accManager.storage.DoesAccountExist(ctx, username)
 }
 
-// get register fee
-func (accManager AccountManager) GetRegisterFee(ctx sdk.Context) (types.Coin, sdk.Error) {
-	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return accParams.RegisterFee, nil
-}
-
-// create account, caller should make sure the register fee is valid
+// CreateAccount - create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
 	ctx sdk.Context, referrer types.AccountKey, username types.AccountKey,
 	resetKey, transactionKey, appKey crypto.PubKey, registerDeposit types.Coin) sdk.Error {
@@ -528,6 +520,7 @@ func (accManager AccountManager) AddIncomeAndReward(
 	return nil
 }
 
+// AddRewardHistory - add reward detail to user reward history
 func (accManager AccountManager) AddRewardHistory(
 	ctx sdk.Context, username types.AccountKey, numOfReward int64,
 	rewardDetail model.RewardDetail) sdk.Error {
@@ -576,6 +569,7 @@ func (accManager AccountManager) ClaimReward(
 	return nil
 }
 
+// ClearRewardHistory - clear user reward history
 func (accManager AccountManager) ClearRewardHistory(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {
 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
@@ -656,7 +650,7 @@ func (accManager AccountManager) RemoveFollowing(
 	return nil
 }
 
-// CheckUserTPSCapacity - to prevent user spam the chain, every user has a TPS capacity.
+// CheckUserTPSCapacity - to prevent user spam the chain, every user has a TPS capacity
 func (accManager AccountManager) CheckUserTPSCapacity(
 	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, me)
@@ -706,6 +700,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	return nil
 }
 
+// UpdateDonationRelationship - increase donation relationship times by 1
 func (accManager AccountManager) UpdateDonationRelationship(
 	ctx sdk.Context, me, other types.AccountKey) sdk.Error {
 	relationship, err := accManager.storage.GetRelationship(ctx, me, other)
@@ -717,17 +712,17 @@ func (accManager AccountManager) UpdateDonationRelationship(
 			DonationTimes: 0,
 		}
 	}
-	relationship.DonationTimes += 1
+	relationship.DonationTimes++
 	if err := accManager.storage.SetRelationship(ctx, me, other, relationship); err != nil {
 		return err
 	}
 	return nil
 }
 
+// AuthorizePermission - userA authorize permission to userB (currently only support auth to a developer)
 func (accManager AccountManager) AuthorizePermission(
 	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
 	validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error {
-
 	d := time.Duration(validityPeriod) * time.Second
 	newGrantPubKey := model.GrantPubKey{
 		Username:   authorizedUser,
@@ -737,6 +732,7 @@ func (accManager AccountManager) AuthorizePermission(
 		Amount:     amount,
 	}
 
+	// If grant preauth permission, grant to developer's tx key
 	if grantLevel == types.PreAuthorizationPermission {
 		txKey, err := accManager.GetTransactionKey(ctx, authorizedUser)
 		if err != nil {
@@ -745,6 +741,7 @@ func (accManager AccountManager) AuthorizePermission(
 		return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
 	}
 
+	// If grant app permission, grant to developer's app key
 	if grantLevel == types.AppPermission {
 		appKey, err := accManager.GetAppKey(ctx, authorizedUser)
 		if err != nil {
@@ -755,6 +752,7 @@ func (accManager AccountManager) AuthorizePermission(
 	return ErrUnsupportGrantLevel()
 }
 
+// RevokePermission - revoke permission from a developer
 func (accManager AccountManager) RevokePermission(
 	ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) sdk.Error {
 	_, err := accManager.storage.GetGrantPubKey(ctx, me, pubKey)
@@ -765,6 +763,7 @@ func (accManager AccountManager) RevokePermission(
 	return nil
 }
 
+// CheckSigningPubKeyOwner - given a public key, check if it is valid for given permission
 func (accManager AccountManager) CheckSigningPubKeyOwner(
 	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
 	permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error) {
@@ -954,6 +953,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	return nil
 }
 
+// AddFrozenMoney - add frozen money to user's frozen money list
 func (accManager AccountManager) AddFrozenMoney(
 	ctx sdk.Context, username types.AccountKey,
 	amount types.Coin, start, interval, times int64) sdk.Error {
@@ -989,6 +989,7 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 	}
 }
 
+// IterateAccounts - iterate accounts in KVStore
 func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
 	accManager.storage.IterateAccounts(ctx, process)
 }

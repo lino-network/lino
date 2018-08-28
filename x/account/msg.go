@@ -68,7 +68,7 @@ type UpdateAccountMsg struct {
 	JSONMeta string           `json:"json_meta"`
 }
 
-// Follow Msg Implementations
+// NewFollowMsg - return a FollowMsg
 func NewFollowMsg(follower string, followee string) FollowMsg {
 	return FollowMsg{
 		Follower: types.AccountKey(follower),
@@ -118,7 +118,7 @@ func (msg FollowMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// Unfollow Msg Implementations
+// NewUnfollowMsg - return a UnfollowMsg
 func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	return UnfollowMsg{
 		Follower: types.AccountKey(follower),
@@ -168,7 +168,7 @@ func (msg UnfollowMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// Claim Msg Implementations
+// NewClaimMsg - return a ClaimMsg
 func NewClaimMsg(username string) ClaimMsg {
 	return ClaimMsg{
 		Username: types.AccountKey(username),
@@ -215,7 +215,7 @@ func (msg ClaimMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// Transfer Msg Implementations
+// NewTransferMsg - return a TransferMsg
 func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) TransferMsg {
 	return TransferMsg{
 		Sender:   types.AccountKey(sender),
@@ -276,7 +276,7 @@ func (msg TransferMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// Recover Msg Implementations
+// NewRecoverMsg - return a recover msg
 func NewRecoverMsg(
 	username string, resetPubkey, transactionPubkey,
 	appPubkey crypto.PubKey) RecoverMsg {

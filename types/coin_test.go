@@ -267,7 +267,7 @@ func TestRatToCoin(t *testing.T) {
 			t.Errorf("%s: failed to convert input to big rat", tc.testName)
 		}
 
-		rat := sdk.Rat{bigRat}
+		rat := sdk.Rat{Rat: bigRat}
 		coin := RatToCoin(rat)
 		if !coin.IsEqual(tc.expectCoin) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)

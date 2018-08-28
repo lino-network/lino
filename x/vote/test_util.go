@@ -21,30 +21,30 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestAccountKVStoreKey = sdk.NewKVStoreKey("account")
-	TestVoteKVStoreKey    = sdk.NewKVStoreKey("vote")
-	TestGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
-	TestParamKVStoreKey   = sdk.NewKVStoreKey("param")
+	testAccountKVStoreKey = sdk.NewKVStoreKey("account")
+	testVoteKVStoreKey    = sdk.NewKVStoreKey("vote")
+	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
+	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
 )
 
-func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
 	acc.AccountManager, VoteManager, global.GlobalManager) {
 	ctx := getContext(height)
-	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	voteManager := NewVoteManager(TestVoteKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
 
-	err := InitGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, voteManager, globalManager
 }
@@ -52,10 +52,10 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testVoteKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 

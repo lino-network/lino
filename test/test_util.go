@@ -35,20 +35,20 @@ var (
 	GenesisAppPriv         = secp256k1.GenPrivKey()
 	GenesisAddr            = GenesisPriv.PubKey().Address()
 
-	DefaultNumOfVal  int        = 21
-	GenesisTotalCoin types.Coin = types.NewCoinFromInt64(10000000000 * types.Decimals)
-	CoinPerValidator types.Coin = types.NewCoinFromInt64(100000000 * types.Decimals)
+	DefaultNumOfVal  = 21
+	GenesisTotalCoin = types.NewCoinFromInt64(10000000000 * types.Decimals)
+	CoinPerValidator = types.NewCoinFromInt64(100000000 * types.Decimals)
 
-	PenaltyMissVote       types.Coin = types.NewCoinFromInt64(20000 * types.Decimals)
-	ChangeParamMinDeposit types.Coin = types.NewCoinFromInt64(100000 * types.Decimals)
+	PenaltyMissVote       = types.NewCoinFromInt64(20000 * types.Decimals)
+	ChangeParamMinDeposit = types.NewCoinFromInt64(100000 * types.Decimals)
 
-	ProposalDecideSec            int64   = 24 * 7 * 3600
-	ParamChangeExecutionSec      int64   = 24 * 3600
-	CoinReturnIntervalSec        int64   = 24 * 7 * 3600
-	CoinReturnTimes              int64   = 7
-	ConsumptionFrictionRate      sdk.Rat = sdk.NewRat(5, 100)
-	ConsumptionFreezingPeriodSec int64   = 24 * 7 * 3600
-	PostIntervalSec              int64   = 600
+	ProposalDecideSec            int64 = 24 * 7 * 3600
+	ParamChangeExecutionSec      int64 = 24 * 3600
+	CoinReturnIntervalSec        int64 = 24 * 7 * 3600
+	CoinReturnTimes              int64 = 7
+	ConsumptionFrictionRate            = sdk.NewRat(5, 100)
+	ConsumptionFreezingPeriodSec int64 = 24 * 7 * 3600
+	PostIntervalSec              int64 = 600
 )
 
 func loggerAndDB() (log.Logger, dbm.DB) {
@@ -109,6 +109,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	return lb
 }
 
+// CheckGlobalAllocation - check global allocation parameter
 func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocation param.GlobalAllocationParam) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
@@ -117,6 +118,7 @@ func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocatio
 	assert.Equal(t, expectAllocation, *allocation)
 }
 
+// CheckBalance - check account balance
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
@@ -127,6 +129,7 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	assert.Equal(t, expectBalance, saving)
 }
 
+// CheckValidatorDeposit - check validator deposit
 func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
@@ -136,6 +139,7 @@ func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockch
 	assert.Equal(t, expectDeposit, deposit)
 }
 
+// CheckOncallValidatorList - check if account is in oncall validator set or not
 func CheckOncallValidatorList(
 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
@@ -143,7 +147,7 @@ func CheckOncallValidatorList(
 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
 	lst, err := valManager.GetValidatorList(ctx)
 	assert.Nil(t, err)
-	index := val.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
+	index := types.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
 	if isInOnCallValidatorList {
 		assert.True(t, index > -1)
 	} else {
@@ -152,6 +156,7 @@ func CheckOncallValidatorList(
 
 }
 
+// CheckAllValidatorList - check if account is in all validator set or not
 func CheckAllValidatorList(
 	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
@@ -160,7 +165,7 @@ func CheckAllValidatorList(
 	lst, err := valManager.GetValidatorList(ctx)
 
 	assert.Nil(t, err)
-	index := val.FindAccountInList(types.AccountKey(accountName), lst.AllValidators)
+	index := types.FindAccountInList(types.AccountKey(accountName), lst.AllValidators)
 	if isInAllValidatorList {
 		assert.True(t, index > -1)
 	} else {
@@ -168,6 +173,7 @@ func CheckAllValidatorList(
 	}
 }
 
+// CreateAccount - register account on test blockchain
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
 	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
@@ -179,12 +185,14 @@ func CreateAccount(
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 
+// GetGenesisAccountCoin - get genesis account coin
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 	initLNO := GenesisTotalCoin.ToInt64() - int64(numOfValidator)*CoinPerValidator.ToInt64()
 	initCoin := types.NewCoinFromInt64(initLNO)
 	return initCoin
 }
 
+// SignCheckDeliver - sign transaction, simulate and commit a block
 func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int64,
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
@@ -210,6 +218,7 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 	lb.Commit()
 }
 
+// SimulateOneBlock - simulate a empty block and commit
 func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
@@ -227,6 +236,7 @@ func genTx(msg sdk.Msg, seq int64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 
+// CreateTestPost - create a test post
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
 	username, postID string, seq int64, priv secp256k1.PrivKeySecp256k1,
@@ -247,8 +257,4 @@ func CreateTestPost(
 		RedistributionSplitRate: redistributionSplitRate,
 	}
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
-}
-
-func CoinToString(coin types.Coin) string {
-	return strconv.FormatInt(coin.ToInt64()/types.Decimals, 10)
 }

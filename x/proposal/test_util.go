@@ -22,13 +22,13 @@ import (
 
 // Construct some global addrs and txs for tests.
 var (
-	TestAccountKVStoreKey   = sdk.NewKVStoreKey("account")
-	TestGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
-	TestProposalKVStoreKey  = sdk.NewKVStoreKey("proposal")
-	TestVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
-	TestParamKVStoreKey     = sdk.NewKVStoreKey("param")
-	TestValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
-	TestPostKVStoreKey      = sdk.NewKVStoreKey("post")
+	testAccountKVStoreKey   = sdk.NewKVStoreKey("account")
+	testGlobalKVStoreKey    = sdk.NewKVStoreKey("global")
+	testProposalKVStoreKey  = sdk.NewKVStoreKey("proposal")
+	testVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
+	testParamKVStoreKey     = sdk.NewKVStoreKey("param")
+	testValidatorKVStoreKey = sdk.NewKVStoreKey("validator")
+	testPostKVStoreKey      = sdk.NewKVStoreKey("post")
 )
 
 func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
@@ -39,15 +39,15 @@ func setupTest(t *testing.T, height int64) (
 	sdk.Context, acc.AccountManager, ProposalManager, post.PostManager, vote.VoteManager,
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
-	ph := param.NewParamHolder(TestParamKVStoreKey)
+	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 
-	accManager := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	proposalManager := NewProposalManager(TestProposalKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
-	voteManager := vote.NewVoteManager(TestGlobalKVStoreKey, ph)
-	valManager := val.NewValidatorManager(TestValidatorKVStoreKey, ph)
-	postManager := post.NewPostManager(TestPostKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
+	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
+	postManager := post.NewPostManager(testPostKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -63,13 +63,13 @@ func setupTest(t *testing.T, height int64) (
 func getContext(height int64) sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestProposalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testProposalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testVoteKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testPostKVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 

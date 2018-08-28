@@ -57,8 +57,8 @@ func TestByzantines(t *testing.T) {
 	assert.Equal(t, 18, len(validatorList3.AllValidators))
 
 	for _, idx := range byzantineList {
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(users[idx], validatorList3.AllValidators))
+		assert.Equal(t, -1, types.FindAccountInList(users[idx], validatorList3.OncallValidators))
+		assert.Equal(t, -1, types.FindAccountInList(users[idx], validatorList3.AllValidators))
 	}
 
 }
@@ -154,8 +154,8 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	assert.Equal(t, 18, len(validatorList2.AllValidators))
 
 	for _, idx := range absentList {
-		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.OncallValidators))
-		assert.Equal(t, -1, FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.AllValidators))
+		assert.Equal(t, -1, types.FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.OncallValidators))
+		assert.Equal(t, -1, types.FindAccountInList(types.AccountKey("user"+strconv.Itoa(idx)), validatorList2.AllValidators))
 	}
 }
 

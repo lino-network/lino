@@ -12,7 +12,7 @@ type Identifier string
 // URL used to link resources such as vedio, text or photo
 type URL string
 
-// PostInfo can also use to present comment(with parent) or repost(with source)
+// PostInfo - can also use to present comment(with parent) or repost(with source)
 type PostInfo struct {
 	PostID       string                 `json:"post_id"`
 	Title        string                 `json:"title"`
@@ -25,7 +25,7 @@ type PostInfo struct {
 	Links        []types.IDToURLMapping `json:"links"`
 }
 
-// PostMeta stores tiny and frequently updated fields.
+// PostMeta - stores tiny and frequently updated fields.
 type PostMeta struct {
 	CreatedAt               int64      `json:"created_at"`
 	LastUpdatedAt           int64      `json:"last_updated_at"`
@@ -40,29 +40,29 @@ type PostMeta struct {
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
 }
 
-// ReportOrUpvote struct, only used in ReportOrUpvotes
+// ReportOrUpvote - report or upvote from a user to a post
 type ReportOrUpvote struct {
 	Username  types.AccountKey `json:"username"`
 	Stake     types.Coin       `json:"stake"`
 	CreatedAt int64            `json:"created_at"`
 	IsReport  bool             `json:"is_report"`
 }
-type ReportOrUpvotes []ReportOrUpvote
 
+// Comment - comment list store dy a post
 type Comment struct {
 	Author    types.AccountKey `json:"author"`
 	PostID    string           `json:"post_id"`
 	CreatedAt int64            `json:"created_at"`
 }
-type Comments []Comment
 
-// View struct
+// View - from a user to a post
 type View struct {
 	Username   types.AccountKey `json:"username"`
 	LastViewAt int64            `json:"last_view_at"`
 	Times      int64            `jons:"times"`
 }
 
+// Donations - record a user donation behavior to a post
 type Donations struct {
 	Username types.AccountKey `json:"username"`
 	Times    int64            `json:"times"`

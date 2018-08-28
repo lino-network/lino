@@ -14,6 +14,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 )
 
+// GrantPermissionTxCmd - user grant permission to application
 func GrantPermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "grant-permission",

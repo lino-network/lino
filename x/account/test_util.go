@@ -60,7 +60,7 @@ var (
 	coin400 = types.NewCoinFromInt64(400)
 )
 
-func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
+func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
@@ -75,7 +75,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(ReturnCoinEvent{}, "event/return", nil)
 
-	err := InitGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, globalManager
 }

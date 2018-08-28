@@ -11,11 +11,13 @@ var (
 	infraProviderListSubstore = []byte{0x01}
 )
 
+// InfraProviderStorage - infra provider storage
 type InfraProviderStorage struct {
 	key sdk.StoreKey
 	cdc *wire.Codec
 }
 
+// NewInfraProviderStorage - create a new infra provider storage
 func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)
@@ -25,6 +27,7 @@ func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
 	}
 }
 
+// InitGenesis - initialize infra provider manager
 func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
 	if err := is.SetInfraProviderList(ctx, &InfraProviderList{}); err != nil {
 		return err
@@ -32,11 +35,13 @@ func (is InfraProviderStorage) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+// DoesInfraProviderExist - check infra provider exists in KVStore or not
 func (is InfraProviderStorage) DoesInfraProviderExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(is.key)
 	return store.Has(GetInfraProviderKey(accKey))
 }
 
+// GetInfraProvider - get infra provider from KVStore
 func (is InfraProviderStorage) GetInfraProvider(
 	ctx sdk.Context, accKey types.AccountKey) (*InfraProvider, sdk.Error) {
 	store := ctx.KVStore(is.key)
@@ -51,6 +56,7 @@ func (is InfraProviderStorage) GetInfraProvider(
 	return provider, nil
 }
 
+// SetInfraProvider - set infra provider to KVStore
 func (is InfraProviderStorage) SetInfraProvider(
 	ctx sdk.Context, accKey types.AccountKey, InfraProvider *InfraProvider) sdk.Error {
 	store := ctx.KVStore(is.key)
@@ -62,6 +68,7 @@ func (is InfraProviderStorage) SetInfraProvider(
 	return nil
 }
 
+// GetInfraProviderList - get infra provider list from KVStore
 func (is InfraProviderStorage) GetInfraProviderList(ctx sdk.Context) (*InfraProviderList, sdk.Error) {
 	store := ctx.KVStore(is.key)
 	listByte := store.Get(GetInfraProviderListKey())
@@ -75,6 +82,7 @@ func (is InfraProviderStorage) GetInfraProviderList(ctx sdk.Context) (*InfraProv
 	return lst, nil
 }
 
+// SetInfraProviderList - set infra provider list to KVStore
 func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraProviderList) sdk.Error {
 	store := ctx.KVStore(is.key)
 	listByte, err := is.cdc.MarshalJSON(*lst)
@@ -85,10 +93,12 @@ func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraP
 	return nil
 }
 
+// GetInfraProviderKey - get infra provider key in infra provider substore
 func GetInfraProviderKey(accKey types.AccountKey) []byte {
 	return append(infraProviderSubstore, accKey...)
 }
 
+// GetInfraProviderListKey - get infra provider list key in infra provider list substore
 func GetInfraProviderListKey() []byte {
 	return infraProviderListSubstore
 }

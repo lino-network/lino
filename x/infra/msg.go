@@ -10,6 +10,7 @@ import (
 
 var _ types.Msg = ProviderReportMsg{}
 
+// ProviderReportMsg - infra provider report infra usage to blockchain
 type ProviderReportMsg struct {
 	Username types.AccountKey `json:"username"`
 	Usage    int64            `json:"usage"`
@@ -17,7 +18,7 @@ type ProviderReportMsg struct {
 
 //----------------------------------------
 // ReportMsg Msg Implementations
-
+// NewProviderReportMsg - new ProviderReportMsg
 func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 	return ProviderReportMsg{
 		Username: types.AccountKey(provider),
@@ -25,6 +26,7 @@ func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 	}
 }
 
+// Type - implements sdk.Msg
 func (msg ProviderReportMsg) Type() string { return types.InfraRouterName } // TODO: "account/register"
 
 // ValidateBasic - implements sdk.Msg

@@ -42,7 +42,7 @@ var (
 	DefaultNodeHome = os.ExpandEnv("$HOME/.lino")
 )
 
-// Extended ABCI application
+// LinoBlockchain - Extended ABCI application
 type LinoBlockchain struct {
 	*bam.BaseApp
 	cdc *wire.Codec
@@ -60,7 +60,7 @@ type LinoBlockchain struct {
 	CapKeyParamStore     *sdk.KVStoreKey
 	CapKeyProposalStore  *sdk.KVStoreKey
 
-	// Manager for different KVStore
+	// manager for different KVStore
 	accountManager   acc.AccountManager
 	postManager      post.PostManager
 	valManager       val.ValidatorManager
@@ -74,6 +74,7 @@ type LinoBlockchain struct {
 	paramHolder param.ParamHolder
 }
 
+// NewLinoBlockchain - create a Lino Blockchain instance
 func NewLinoBlockchain(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *LinoBlockchain {
 	// create your application object
