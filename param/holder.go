@@ -28,7 +28,7 @@ var (
 
 // ParamHolder - parameter KVStore
 type ParamHolder struct {
-	// The (unexposed) key used to access the store from the Context.
+	// The (unexposed) key used to access the store from the Context
 	key sdk.StoreKey
 	cdc *wire.Codec
 }

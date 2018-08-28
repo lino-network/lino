@@ -139,7 +139,7 @@ func (msg ValidatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg ValidatorWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

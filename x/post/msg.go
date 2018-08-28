@@ -360,32 +360,32 @@ func getSignBytes(msg sdk.Msg) []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg CreatePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg UpdatePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg DeletePostMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg DonateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg ReportOrUpvoteMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg ViewMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -425,33 +425,33 @@ func (msg ViewMsg) String() string {
 		msg.Username, msg.Author, msg.PostID)
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg CreatePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg UpdatePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg DeletePostMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg DonateMsg) GetConsumeAmount() types.Coin {
 	coin, _ := types.LinoToCoin(msg.Amount)
 	return coin
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg ReportOrUpvoteMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// GetConsumeAmount - implements types.Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg ViewMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

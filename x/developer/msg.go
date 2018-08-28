@@ -73,10 +73,10 @@ func NewDeveloperRegisterMsg(developer string, deposit types.LNO, website string
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg DeveloperRegisterMsg) Type() string { return types.DeveloperRouterName }
 
-// ValidateBasic - Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -118,7 +118,7 @@ func (msg DeveloperRegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg DeveloperRegisterMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
@@ -137,10 +137,10 @@ func NewDeveloperUpdateMsg(developer string, website string, description string,
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg DeveloperUpdateMsg) Type() string { return types.DeveloperRouterName }
 
-// ValidateBasic - Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg DeveloperUpdateMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -179,12 +179,12 @@ func (msg DeveloperUpdateMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg DeveloperUpdateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg DeveloperUpdateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -196,7 +196,7 @@ func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg DeveloperRevokeMsg) Type() string { return types.DeveloperRouterName }
 
 func (msg DeveloperRevokeMsg) ValidateBasic() sdk.Error {
@@ -215,7 +215,7 @@ func (msg DeveloperRevokeMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
-// GetSignBytes - Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -224,12 +224,12 @@ func (msg DeveloperRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg DeveloperRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg DeveloperRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -245,10 +245,10 @@ func NewGrantPermissionMsg(
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg GrantPermissionMsg) Type() string { return types.DeveloperRouterName }
 
-// ValidateBasic - Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -282,7 +282,7 @@ func (msg GrantPermissionMsg) GetPermission() types.Permission {
 	return types.GrantAppPermission
 }
 
-// GetSignBytes - Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg GrantPermissionMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -291,12 +291,12 @@ func (msg GrantPermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg GrantPermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg GrantPermissionMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -309,10 +309,10 @@ func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionM
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg RevokePermissionMsg) Type() string { return types.DeveloperRouterName }
 
-// ValidateBasic - Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -330,7 +330,7 @@ func (msg RevokePermissionMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
-// GetSignBytes - Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg RevokePermissionMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -339,12 +339,12 @@ func (msg RevokePermissionMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg RevokePermissionMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg RevokePermissionMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -360,10 +360,10 @@ func NewPreAuthorizationMsg(
 	}
 }
 
-// Type - Implements Msg.
+// Type - implements sdk.Msg
 func (msg PreAuthorizationMsg) Type() string { return types.DeveloperRouterName }
 
-// ValidateBasic - Implements Msg.
+// ValidateBasic - implements sdk.Msg
 func (msg PreAuthorizationMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
 		len(msg.Username) > types.MaximumUsernameLength {
@@ -394,7 +394,7 @@ func (msg PreAuthorizationMsg) GetPermission() types.Permission {
 	return types.TransactionPermission
 }
 
-// GetSignBytes - Implements Msg.
+// GetSignBytes - implements sdk.Msg
 func (msg PreAuthorizationMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
 	if err != nil {
@@ -403,12 +403,12 @@ func (msg PreAuthorizationMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - Implements Msg.
+// GetSigners - implements sdk.Msg
 func (msg PreAuthorizationMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implements types.Msg
 func (msg PreAuthorizationMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

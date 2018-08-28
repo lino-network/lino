@@ -139,7 +139,7 @@ func NewLinoBlockchain(
 	return lb
 }
 
-// DefaultTxDecoder - default tx decoder, decode tx before authenticate handler.
+// DefaultTxDecoder - default tx decoder, decode tx before authenticate handler
 func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 	return func(txBytes []byte) (tx sdk.Tx, err sdk.Error) {
 		defer func() {
@@ -157,13 +157,13 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 		// are registered by MakeTxCodec
 		unmarshalErr := cdc.UnmarshalJSON(txBytes, &tx)
 		if unmarshalErr != nil {
-			return nil, sdk.ErrTxDecode("").TraceSDK(err.Error())
+			return nil, sdk.ErrTxDecode("")
 		}
 		return tx, nil
 	}
 }
 
-// MackCodec - codec for application, used by command line tool and authenticate handler.
+// MackCodec - codec for application, used by command line tool and authenticate handler
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 	wire.RegisterCrypto(cdc)

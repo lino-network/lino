@@ -95,12 +95,12 @@ func (msg VoterDepositMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg VoterDepositMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterDepositMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -148,12 +148,12 @@ func (msg VoterWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg VoterWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -197,12 +197,12 @@ func (msg VoterRevokeMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg VoterRevokeMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg VoterRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -255,12 +255,12 @@ func (msg DelegateMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg DelegateMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg DelegateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -308,12 +308,12 @@ func (msg RevokeDelegationMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg RevokeDelegationMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg RevokeDelegationMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
@@ -364,12 +364,12 @@ func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
 	return b
 }
 
-// GetSigners - implements sdk.Msg.
+// GetSigners - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
 }
 
-// Implements Msg.
+// GetConsumeAmount - implement types.Msg
 func (msg DelegatorWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
