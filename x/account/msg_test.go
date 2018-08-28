@@ -379,7 +379,7 @@ func TestRegisterUsername(t *testing.T) {
 	registerList := [...]string{"register#", "_register", "-register", "reg@ister", "re--gister",
 		"reg*ister", "register!", "register()", "reg$ister", "reg ister", " register", "re_-gister",
 		"reg=ister", "register^", "register.", "reg$ister,", "Register", "r__egister", "reGister",
-		"r_--gister", "re.-gister", ".re-gister", "re-gister.", "register_", "register-"}
+		"r_--gister", "re.-gister", ".re-gister", "re-gister.", "register_", "register-", "a.2.2.-.-..2"}
 	for _, register := range registerList {
 		msg := NewRegisterMsg(
 			"referer", register, "1", secp256k1.GenPrivKey().PubKey(),
