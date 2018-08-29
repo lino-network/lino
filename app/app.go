@@ -355,7 +355,6 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time.Unix())
 		chainStartTime = ctx.BlockHeader().Time.Unix()
 	}
-
 	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
 	if err != nil {
 		panic(err)

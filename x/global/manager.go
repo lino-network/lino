@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -142,6 +143,7 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(friction)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
 
+	fmt.Println("in gm, add evaluate:", evaluate, ", window:", consumptionMeta.ConsumptionWindow, ", reward pool:", consumptionMeta.ConsumptionRewardPool)
 	if err := gm.registerEventAtTime(
 		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodSec, event); err != nil {
 		return err
@@ -289,6 +291,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 	// reward = (consumption reward pool) * (consumptionRatio)
 	reward := types.RatToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
+	fmt.Println("in gm, calculate reward:", consumptionMeta.ConsumptionRewardPool, evaluate, consumptionMeta.ConsumptionWindow, reward)
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 	if err := gm.addTotalLinoCoin(ctx, reward); err != nil {
