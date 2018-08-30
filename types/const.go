@@ -168,4 +168,7 @@ const (
 
 	// RewardHistoryBundleSize - bundle size for reward history
 	RewardHistoryBundleSize = 100
+
+	// CoinDayRecordIntervalSec - coin day record in the same interval bucket will be merged
+	CoinDayRecordIntervalSec = 1200
 )
