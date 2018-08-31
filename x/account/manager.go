@@ -916,7 +916,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	currentTimeSlot := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		pendingStake := pendingStakeQueue.PendingStakeList[0]
-		if pendingStake.EndTime < currentTimeSlot {
+		if pendingStake.EndTime <= currentTimeSlot {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
 			stakeRatioOfThisTransaction := sdk.NewRat(

@@ -1243,7 +1243,7 @@ func TestCoinDaySize(t *testing.T) {
 	accKey := types.AccountKey("accKey")
 	createTestAccount(ctx, am, string(accKey))
 	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-	for i := baseTime; i < baseTime+coinDayParam.SecondsToRecoverCoinDayStake; i += 40 {
+	for i := baseTime; i < baseTime+coinDayParam.SecondsToRecoverCoinDayStake+types.CoinDayRecordIntervalSec*2; i += 40 {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(i, 0)})
 		err := am.AddSavingCoin(ctx, accKey, types.NewCoinFromInt64(1), accKey, "", types.TransferIn)
 		if err != nil {
