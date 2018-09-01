@@ -157,10 +157,10 @@ func (accManager AccountManager) AddSavingCoin(
 		return err
 	}
 
-	d := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake) * time.Second
+	startTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingStake := model.PendingStake{
-		StartTime: ctx.BlockHeader().Time.Unix(),
-		EndTime:   ctx.BlockHeader().Time.Add(d).Unix(),
+		StartTime: startTime,
+		EndTime:   startTime + coinDayParams.SecondsToRecoverCoinDayStake,
 		Coin:      coin,
 	}
 	if err := accManager.addPendingStakeToQueue(ctx, username, bank, pendingStake); err != nil {
@@ -878,8 +878,12 @@ func (accManager AccountManager) addPendingStakeToQueue(
 		return err
 	}
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
-	pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList, pendingStake)
-	pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Plus(pendingStake.Coin)
+	if len(pendingStakeQueue.PendingStakeList) > 0 && pendingStakeQueue.PendingStakeList[len(pendingStakeQueue.PendingStakeList)-1].StartTime == pendingStake.StartTime {
+		pendingStakeQueue.PendingStakeList[len(pendingStakeQueue.PendingStakeList)-1].Coin.Plus(pendingStake.Coin)
+	} else {
+		pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList, pendingStake)
+		pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Plus(pendingStake.Coin)
+	}
 	return accManager.storage.SetPendingStakeQueue(ctx, username, pendingStakeQueue)
 }
 
@@ -909,9 +913,10 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		return err
 	}
 
+	currentTimeSlot := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	for len(pendingStakeQueue.PendingStakeList) > 0 {
 		pendingStake := pendingStakeQueue.PendingStakeList[0]
-		if pendingStake.EndTime < ctx.BlockHeader().Time.Unix() {
+		if pendingStake.EndTime <= currentTimeSlot {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
 			stakeRatioOfThisTransaction := sdk.NewRat(
@@ -938,7 +943,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
 		recoverRatio := sdk.NewRat(
-			ctx.BlockHeader().Time.Unix()-pendingStakeQueue.LastUpdatedAt,
+			currentTimeSlot-pendingStakeQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 
 		if err != nil {
@@ -949,7 +954,7 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
 	}
 
-	pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
+	pendingStakeQueue.LastUpdatedAt = currentTimeSlot
 	return nil
 }
 

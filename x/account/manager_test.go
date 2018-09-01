@@ -39,10 +39,13 @@ func TestAddCoin(t *testing.T) {
 		types.AccountKey("fromUser1"), types.AccountKey("fromuser2"), types.AccountKey("testUser")
 
 	baseTime := time.Now()
+	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	d1 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake/2) * time.Second
 	baseTime1 := baseTime.Add(d1)
-	d2 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake+1) * time.Second
+	baseTime1Slot := baseTime1.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+	d2 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake+1+types.CoinDayRecordIntervalSec) * time.Second
 	baseTime2 := baseTime.Add(d2)
+	baseTime2Slot := baseTime2.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	d3 := time.Duration(coinDayParams.SecondsToRecoverCoinDayStake+1) * time.Second
 	baseTime3 := baseTime2.Add(d3)
 
@@ -73,13 +76,13 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 2,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime.Unix(),
+				LastUpdatedAt:    baseTimeSlot,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        c100,
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime.Unix(),
-						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -120,18 +123,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 3,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime1.Unix(),
+				LastUpdatedAt:    baseTime1Slot,
 				StakeCoinInQueue: sdk.NewRat(5000000, 1),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime.Unix(),
-						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime1.Unix(),
-						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1Slot,
+						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -181,18 +184,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 4,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime2.Unix(),
-				StakeCoinInQueue: sdk.NewRat(945003125, 189),
+				LastUpdatedAt:    baseTime2Slot,
+				StakeCoinInQueue: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime1.Unix(),
-						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1Slot,
+						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime2.Unix(),
-						EndTime:   baseTime2.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime2Slot,
+						EndTime:   baseTime2Slot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -250,18 +253,18 @@ func TestAddCoin(t *testing.T) {
 				NumOfTx: 4,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime2.Unix(),
-				StakeCoinInQueue: sdk.NewRat(945003125, 189),
+				LastUpdatedAt:    baseTime2Slot,
+				StakeCoinInQueue: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime1.Unix(),
-						EndTime:   baseTime1.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime1Slot,
+						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 					{
-						StartTime: baseTime2.Unix(),
-						EndTime:   baseTime2.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTime2Slot,
+						EndTime:   baseTime2Slot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      c100,
 					},
 				},
@@ -339,6 +342,7 @@ func TestMinusCoin(t *testing.T) {
 
 	// Get the minimum time of this history slot
 	baseTime := time.Now()
+	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
 	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
 
@@ -382,13 +386,13 @@ func TestMinusCoin(t *testing.T) {
 				Stake:   accParam.RegisterFee,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime.Unix(),
+				LastUpdatedAt:    baseTimeSlot,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Minus(coin1),
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime.Unix(),
-						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee.Minus(coin1),
 					}},
 			},
@@ -439,13 +443,13 @@ func TestMinusCoin(t *testing.T) {
 				Stake:   accParam.RegisterFee,
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
-				LastUpdatedAt:    baseTime.Unix(),
+				LastUpdatedAt:    baseTimeSlot,
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
 				PendingStakeList: []model.PendingStake{
 					{
-						StartTime: baseTime.Unix(),
-						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
 						Coin:      accParam.RegisterFee,
 					}},
 			},
@@ -841,14 +845,15 @@ func TestCreateAccountNormalCase(t *testing.T) {
 				StakeCoinInQueue: sdk.ZeroRat(),
 				TotalCoin:        types.NewCoinFromInt64(0),
 			}
+		baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 		if tc.registerFee.IsGT(tc.expectFullStakeCoin) {
 			pendingStakeQueue.TotalCoin = tc.registerFee.Minus(tc.expectFullStakeCoin)
 			pendingStakeQueue.PendingStakeList = []model.PendingStake{{
-				StartTime: ctx.BlockHeader().Time.Unix(),
-				EndTime:   ctx.BlockHeader().Time.Unix() + coinDayParam.SecondsToRecoverCoinDayStake,
+				StartTime: baseTime,
+				EndTime:   baseTime + coinDayParam.SecondsToRecoverCoinDayStake,
 				Coin:      tc.registerFee.Minus(tc.expectFullStakeCoin),
 			}}
-			pendingStakeQueue.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
+			pendingStakeQueue.LastUpdatedAt = baseTime
 		}
 
 		checkPendingStake(t, ctx, tc.testName, tc.username, pendingStakeQueue)
@@ -936,14 +941,15 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	}
 	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
+	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingStakeQueue := model.PendingStakeQueue{
-		LastUpdatedAt:    ctx.BlockHeader().Time.Unix(),
+		LastUpdatedAt:    baseTime,
 		StakeCoinInQueue: sdk.ZeroRat(),
 		TotalCoin:        extraRegisterFee,
 		PendingStakeList: []model.PendingStake{
 			{
-				StartTime: ctx.BlockHeader().Time.Unix(),
-				EndTime:   ctx.BlockHeader().Time.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
+				StartTime: baseTime,
+				EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
 				Coin:      extraRegisterFee,
 			},
 		},
@@ -1113,8 +1119,7 @@ func TestCoinDayByAccountKey(t *testing.T) {
 	halfRegisterFee := types.NewCoinFromInt64(registerFee / 2)
 
 	baseTime := ctx.BlockHeader().Time
-	d := time.Duration(totalCoinDaysSec+(totalCoinDaysSec/registerFee)/2+1) * time.Second
-	baseTime2 := baseTime.Add(d)
+	baseTime2 := baseTime.Add(time.Duration((totalCoinDaysSec)+types.CoinDayRecordIntervalSec) * time.Second)
 
 	createTestAccount(ctx, am, string(accKey))
 
@@ -1230,6 +1235,26 @@ func TestCoinDayByAccountKey(t *testing.T) {
 		}
 		checkBankKVByUsername(t, ctx, tc.testName, accKey, bank)
 	}
+}
+
+func TestCoinDaySize(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	coinDayParam, _ := am.paramHolder.GetCoinDayParam(ctx)
+	accKey := types.AccountKey("accKey")
+	createTestAccount(ctx, am, string(accKey))
+	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+	for i := baseTime; i < baseTime+coinDayParam.SecondsToRecoverCoinDayStake+types.CoinDayRecordIntervalSec*2; i += 40 {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(i, 0)})
+		err := am.AddSavingCoin(ctx, accKey, types.NewCoinFromInt64(1), accKey, "", types.TransferIn)
+		if err != nil {
+			t.Errorf("%s: failed to add coin, got err %v", "TestCoinDaySize", err)
+		}
+	}
+	pendingStakeQueue, err := am.storage.GetPendingStakeQueue(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s: failed to add coin, got err %v", "TestCoinDaySize", err)
+	}
+	assert.Equal(t, 504, len(pendingStakeQueue.PendingStakeList))
 }
 
 func TestAddIncomeAndReward(t *testing.T) {
