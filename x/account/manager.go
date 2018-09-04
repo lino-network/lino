@@ -305,6 +305,101 @@ func (accManager AccountManager) MinusSavingCoin(
 	return nil
 }
 
+// MinusSavingCoin - minus coin from balance, remove most charged stake coin
+func (accManager AccountManager) MinusSavingCoinWithFullStake(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
+	memo string, detailType types.TransferDetailType) (err sdk.Error) {
+	if coin.IsZero() {
+		return nil
+	}
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	remain := accountBank.Saving.Minus(coin)
+	if !remain.IsGTE(accountParams.MinimumBalance) {
+		return ErrAccountSavingCoinNotEnough()
+	}
+	accountBank.Saving = remain
+
+	if err := accManager.AddBalanceHistory(
+		ctx, username, accountBank.NumOfTx, model.Detail{
+			Amount:     coin,
+			DetailType: detailType,
+			To:         to,
+			From:       username,
+			Balance:    accountBank.Saving,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
+			Memo:       memo,
+		}); err != nil {
+		return err
+	}
+	accountBank.NumOfTx++
+
+	pendingStakeQueue, err :=
+		accManager.storage.GetPendingStakeQueue(ctx, username)
+	if err != nil {
+		return err
+	}
+	// update pending stake queue, remove expired transaction
+	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
+	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
+	if err != nil {
+		return err
+	}
+	if accountBank.Stake.IsGTE(coin) {
+		accountBank.Stake = accountBank.Stake.Minus(coin)
+	} else {
+		coin = coin.Minus(accountBank.Stake)
+		accountBank.Stake = types.NewCoinFromInt64(0)
+
+		for len(pendingStakeQueue.PendingStakeList) > 0 {
+			pendingStake := pendingStakeQueue.PendingStakeList[0]
+			recoverRatio := sdk.NewRat(
+				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
+				coinDayParams.SecondsToRecoverCoinDayStake)
+			if coin.IsGTE(pendingStake.Coin) {
+				// if withdraw money is much than first pending transaction, remove first transaction
+				coin = coin.Minus(pendingStake.Coin)
+
+				pendingStakeCoinWithoutLastTx :=
+					pendingStakeQueue.StakeCoinInQueue.Sub((recoverRatio.Mul(pendingStake.Coin.ToRat())))
+				pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutLastTx
+
+				pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
+				pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
+			} else {
+				// otherwise try to cut first pending transaction
+				pendingStakeCoinWithoutSpentCoin :=
+					pendingStakeQueue.StakeCoinInQueue.Sub(
+						recoverRatio.Mul(coin.ToRat()))
+				pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutSpentCoin
+
+				pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
+				pendingStakeQueue.PendingStakeList[0].Coin = pendingStakeQueue.PendingStakeList[0].Coin.Minus(coin)
+				coin = types.NewCoinFromInt64(0)
+				break
+			}
+		}
+	}
+
+	if err := accManager.storage.SetPendingStakeQueue(
+		ctx, username, pendingStakeQueue); err != nil {
+		return err
+	}
+
+	if err := accManager.storage.SetBankFromAccountKey(
+		ctx, username, accountBank); err != nil {
+		return err
+	}
+	return nil
+}
+
 // AddBalanceHistory - add each balance related tx to balance history
 func (accManager AccountManager) AddBalanceHistory(
 	ctx sdk.Context, username types.AccountKey, numOfTx int64,

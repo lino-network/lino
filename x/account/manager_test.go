@@ -523,6 +523,161 @@ func TestMinusCoin(t *testing.T) {
 	}
 }
 
+func TestMinusCoinWithFullStake(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	// accParam, _ := am.paramHolder.GetAccountParam(ctx)
+
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	if err != nil {
+		t.Error("TestMinusCoinWithFullStake: failed to get coin day param")
+	}
+
+	user := types.AccountKey("user1")
+
+	// Get the minimum time of this history slot
+	baseTime := time.Now()
+	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+	beforeFullyChargedTimeSlot := baseTimeSlot - coinDayParams.SecondsToRecoverCoinDayStake
+	afterFullyChargedTimeSlot := baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake
+	halfTimeAfterFullyChargedTimeSlot := baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake/2
+	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
+	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
+
+	createTestAccount(ctx, am, string(user))
+	testCases := []struct {
+		testName          string
+		bank              *model.AccountBank
+		pendingStakeQueue *model.PendingStakeQueue
+		minusAmount       types.Coin
+		atWhen            time.Time
+		expectStake       types.Coin
+	}{
+		{
+			testName: "minus all saving coin while pending stake is empty",
+			bank: &model.AccountBank{
+				Saving: coin1,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        coin0,
+				PendingStakeList: []model.PendingStake{},
+			},
+			minusAmount: coin1,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus all saving coin with pending stake queue",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    beforeFullyChargedTimeSlot,
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        coin1,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: beforeFullyChargedTimeSlot,
+						EndTime:   baseTimeSlot,
+						Coin:      coin1,
+					},
+				},
+			},
+			minusAmount: coin2,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus saving coin with full stake",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        coin1,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin1,
+					},
+				},
+			},
+			minusAmount: coin1,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus coin with half charged stake",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin0,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        coin2,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin2,
+					},
+				},
+			},
+			minusAmount: coin1,
+			atWhen:      time.Unix(halfTimeAfterFullyChargedTimeSlot, 0),
+			expectStake: coin0,
+		},
+		{
+			testName: "minus coin with all charged stake and half charged stake",
+			bank: &model.AccountBank{
+				Saving: coin4,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalCoin:        coin3,
+				PendingStakeList: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin3,
+					},
+				},
+			},
+			minusAmount: coin2,
+			atWhen:      time.Unix(halfTimeAfterFullyChargedTimeSlot, 0),
+			expectStake: coin1,
+		},
+	}
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.atWhen})
+		err := am.storage.SetBankFromAccountKey(ctx, user, tc.bank)
+		if err != nil {
+			t.Errorf("%s: failed to set bank", tc.testName)
+		}
+		am.storage.SetPendingStakeQueue(ctx, user, tc.pendingStakeQueue)
+		err = am.MinusSavingCoinWithFullStake(ctx, user, tc.minusAmount, user, "", types.TransferOut)
+		if err != nil {
+			t.Errorf("%s: failed to minus coin", tc.testName)
+		}
+		stake, err := am.GetStake(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get stake", tc.testName)
+		}
+		if !stake.IsEqual(tc.expectStake) {
+			t.Errorf("%s: diff stake, got %v, expect %v", tc.testName, stake, tc.expectStake)
+		}
+	}
+}
+
 func TestBalanceHistory(t *testing.T) {
 	fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
 
