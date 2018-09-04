@@ -77,9 +77,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        c100,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -124,9 +124,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime1Slot,
-				StakeCoinInQueue: sdk.NewRat(5000000, 1),
+				TotalStake: sdk.NewRat(5000000, 1),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -185,9 +185,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2Slot,
-				StakeCoinInQueue: sdk.NewRat(316250000, 63),
+				TotalStake: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime1Slot,
 						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -254,9 +254,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2Slot,
-				StakeCoinInQueue: sdk.NewRat(316250000, 63),
+				TotalStake: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime1Slot,
 						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -387,9 +387,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Minus(coin1),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -444,9 +444,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -484,9 +484,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime.Unix(),
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime.Unix(),
 						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -560,9 +560,9 @@ func TestMinusCoinWithFullStake(t *testing.T) {
 			},
 			pendingStakeQueue: &model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        coin0,
-				PendingStakeList: []model.PendingStake{},
+				PendingStakes: []model.PendingStake{},
 			},
 			minusAmount: coin1,
 			atWhen:      baseTime,
@@ -576,9 +576,9 @@ func TestMinusCoinWithFullStake(t *testing.T) {
 			},
 			pendingStakeQueue: &model.PendingStakeQueue{
 				LastUpdatedAt:    beforeFullyChargedTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        coin1,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					model.PendingStake{
 						StartTime: beforeFullyChargedTimeSlot,
 						EndTime:   baseTimeSlot,
@@ -598,9 +598,9 @@ func TestMinusCoinWithFullStake(t *testing.T) {
 			},
 			pendingStakeQueue: &model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        coin1,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					model.PendingStake{
 						StartTime: baseTimeSlot,
 						EndTime:   afterFullyChargedTimeSlot,
@@ -620,9 +620,9 @@ func TestMinusCoinWithFullStake(t *testing.T) {
 			},
 			pendingStakeQueue: &model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        coin2,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					model.PendingStake{
 						StartTime: baseTimeSlot,
 						EndTime:   afterFullyChargedTimeSlot,
@@ -642,9 +642,9 @@ func TestMinusCoinWithFullStake(t *testing.T) {
 			},
 			pendingStakeQueue: &model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        coin3,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					model.PendingStake{
 						StartTime: baseTimeSlot,
 						EndTime:   afterFullyChargedTimeSlot,
@@ -997,13 +997,13 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 		pendingStakeQueue :=
 			model.PendingStakeQueue{
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        types.NewCoinFromInt64(0),
 			}
 		baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 		if tc.registerFee.IsGT(tc.expectFullStakeCoin) {
 			pendingStakeQueue.TotalCoin = tc.registerFee.Minus(tc.expectFullStakeCoin)
-			pendingStakeQueue.PendingStakeList = []model.PendingStake{{
+			pendingStakeQueue.PendingStakes = []model.PendingStake{{
 				StartTime: baseTime,
 				EndTime:   baseTime + coinDayParam.SecondsToRecoverCoinDayStake,
 				Coin:      tc.registerFee.Minus(tc.expectFullStakeCoin),
@@ -1099,9 +1099,9 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingStakeQueue := model.PendingStakeQueue{
 		LastUpdatedAt:    baseTime,
-		StakeCoinInQueue: sdk.ZeroRat(),
+		TotalStake: sdk.ZeroRat(),
 		TotalCoin:        extraRegisterFee,
-		PendingStakeList: []model.PendingStake{
+		PendingStakes: []model.PendingStake{
 			{
 				StartTime: baseTime,
 				EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -1409,7 +1409,7 @@ func TestCoinDaySize(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s: failed to add coin, got err %v", "TestCoinDaySize", err)
 	}
-	assert.Equal(t, 504, len(pendingStakeQueue.PendingStakeList))
+	assert.Equal(t, 504, len(pendingStakeQueue.PendingStakes))
 }
 
 func TestAddIncomeAndReward(t *testing.T) {
@@ -2265,7 +2265,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	checkBankKVByUsername(t, ctx, testName, user1, bank)
 
 	pendingStakeQueue := model.PendingStakeQueue{
-		StakeCoinInQueue: sdk.ZeroRat(),
+		TotalStake: sdk.ZeroRat(),
 		TotalCoin:        types.NewCoinFromInt64(0),
 	}
 	checkPendingStake(t, ctx, testName, user1, pendingStakeQueue)
