@@ -113,6 +113,7 @@ func TestGetGenesisJson(t *testing.T) {
 			param.BandwidthParam{
 				SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 				CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+				VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 			},
 			param.AccountParam{
 				MinimumBalance:             types.NewCoinFromInt64(0),

@@ -136,6 +136,7 @@ type CoinDayParam struct {
 type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
 	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
+	VirtualCoin                 types.Coin `json:"virtual_coin"`
 }
 
 // AccountParam - account parameters

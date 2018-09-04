@@ -764,6 +764,8 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		return err
 	}
 
+	// add virtual coin as the upper limit for capacity
+	stake = stake.Plus(bandwidthParams.VirtualCoin)
 	// if stake less than last update transaction capacity, set to stake
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake

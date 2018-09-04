@@ -185,6 +185,7 @@ func TestBandwidthParam(t *testing.T) {
 	parameter := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	err := ph.setBandwidthParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -290,6 +291,7 @@ func TestInitParam(t *testing.T) {
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:             types.NewCoinFromInt64(0),
@@ -382,6 +384,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:             types.NewCoinFromInt64(0),
