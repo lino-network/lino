@@ -19,7 +19,8 @@ func TestRegistertBasic(t *testing.T) {
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
-	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
+	minDeposit, _ := devParam.DeveloperMinDeposit.ToInt64()
+	deposit := strconv.FormatInt(minDeposit/types.Decimals, 10)
 	testCases := []struct {
 		testName     string
 		msg          DeveloperRegisterMsg
@@ -115,7 +116,8 @@ func TestRevokeBasic(t *testing.T) {
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	createTestAccount(ctx, am, "developer1", devParam.DeveloperMinDeposit.Plus(minBalance))
-	deposit := strconv.FormatInt(devParam.DeveloperMinDeposit.ToInt64()/types.Decimals, 10)
+	devMinDeposit, _ := devParam.DeveloperMinDeposit.ToInt64()
+	deposit := strconv.FormatInt(devMinDeposit/types.Decimals, 10)
 	msg := NewDeveloperRegisterMsg("developer1", deposit, "", "", "")
 	handler(ctx, msg)
 

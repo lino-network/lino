@@ -274,9 +274,10 @@ func TestEvaluateConsumption(t *testing.T) {
 
 	for _, tc := range testCases {
 		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.evaluateTime, 0)})
-		if PostTotalConsumptionAdjustment(tc.totalConsumption, paras) != tc.expectedTotalConsumptionAdjustment {
+		totalConsumption, _ := tc.totalConsumption.ToInt64()
+		if PostTotalConsumptionAdjustment(totalConsumption, paras) != tc.expectedTotalConsumptionAdjustment {
 			t.Errorf("%s: diff total consumption adjustment, got %v, want %v", tc.testName,
-				PostTotalConsumptionAdjustment(tc.totalConsumption, paras), tc.expectedTotalConsumptionAdjustment)
+				PostTotalConsumptionAdjustment(totalConsumption, paras), tc.expectedTotalConsumptionAdjustment)
 		}
 		if PostTimeAdjustment(tc.evaluateTime-tc.createdTime, paras) != tc.expectedTimeAdjustment {
 			t.Errorf("%s: diff time adjustment, got %v, want %v", tc.testName,

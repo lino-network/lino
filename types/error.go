@@ -13,3 +13,8 @@ func NewError(code sdk.CodeType, msg string) sdk.Error {
 func ErrInvalidCoins(msg string) sdk.Error {
 	return NewError(CodeInvalidCoins, msg)
 }
+
+// ErrAmountOverflow - error if coin amount int64 overflow
+func ErrAmountOverflow() sdk.Error {
+	return NewError(CodeInvalidInt64Number, "coin amount can't be represented as an int64")
+}

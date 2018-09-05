@@ -19,6 +19,7 @@ const (
 	CodePostNotFound        sdk.CodeType = 107
 	CodeDeveloperNotFound   sdk.CodeType = 108
 	CodeInvalidCoins        sdk.CodeType = 109
+	CodeInvalidInt64Number  sdk.CodeType = 110
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150
@@ -153,28 +154,29 @@ const (
 	CodeValidatorPubKeyAlreadyExist    sdk.CodeType = 507
 
 	// Lino global errors reserve 600 ~ 699
-	CodeInfraInflationCoinConversion     sdk.CodeType = 600
-	CodeContentCreatorCoinConversion     sdk.CodeType = 601
-	CodeDeveloperCoinConversion          sdk.CodeType = 602
-	CodeValidatorCoinConversion          sdk.CodeType = 603
-	CodeGlobalMetaNotFound               sdk.CodeType = 604
-	CodeInflationPoolNotFound            sdk.CodeType = 605
-	CodeGlobalConsumptionMetaNotFound    sdk.CodeType = 606
-	CodeGlobalTPSNotFound                sdk.CodeType = 607
-	CodeFailedToMarshalTimeEventList     sdk.CodeType = 608
-	CodeFailedToMarshalGlobalMeta        sdk.CodeType = 609
-	CodeFailedToMarshalInflationPoll     sdk.CodeType = 610
-	CodeFailedToMarshalConsumptionMeta   sdk.CodeType = 611
-	CodeFailedToMarshalTPS               sdk.CodeType = 612
-	CodeFailedToUnmarshalTimeEventList   sdk.CodeType = 613
-	CodeFailedToUnmarshalGlobalMeta      sdk.CodeType = 614
-	CodeFailedToUnmarshalInflationPool   sdk.CodeType = 615
-	CodeFailedToUnmarshalConsumptionMeta sdk.CodeType = 616
-	CodeFailedToUnmarshalTPS             sdk.CodeType = 617
-	CodeRegisterExpiredEvent             sdk.CodeType = 618
-	CodeFailedToUnmarshalTime            sdk.CodeType = 619
-	CodeFailedToMarshalTime              sdk.CodeType = 620
-	CodeGlobalTimeNotFound               sdk.CodeType = 621
+	CodeInfraInflationCoinConversion           sdk.CodeType = 600
+	CodeContentCreatorCoinConversion           sdk.CodeType = 601
+	CodeDeveloperCoinConversion                sdk.CodeType = 602
+	CodeValidatorCoinConversion                sdk.CodeType = 603
+	CodeGlobalMetaNotFound                     sdk.CodeType = 604
+	CodeInflationPoolNotFound                  sdk.CodeType = 605
+	CodeGlobalConsumptionMetaNotFound          sdk.CodeType = 606
+	CodeGlobalTPSNotFound                      sdk.CodeType = 607
+	CodeFailedToMarshalTimeEventList           sdk.CodeType = 608
+	CodeFailedToMarshalGlobalMeta              sdk.CodeType = 609
+	CodeFailedToMarshalInflationPoll           sdk.CodeType = 610
+	CodeFailedToMarshalConsumptionMeta         sdk.CodeType = 611
+	CodeFailedToMarshalTPS                     sdk.CodeType = 612
+	CodeFailedToUnmarshalTimeEventList         sdk.CodeType = 613
+	CodeFailedToUnmarshalGlobalMeta            sdk.CodeType = 614
+	CodeFailedToUnmarshalInflationPool         sdk.CodeType = 615
+	CodeFailedToUnmarshalConsumptionMeta       sdk.CodeType = 616
+	CodeFailedToUnmarshalTPS                   sdk.CodeType = 617
+	CodeRegisterExpiredEvent                   sdk.CodeType = 618
+	CodeFailedToUnmarshalTime                  sdk.CodeType = 619
+	CodeFailedToMarshalTime                    sdk.CodeType = 620
+	CodeGlobalTimeNotFound                     sdk.CodeType = 621
+	CodeFailedToGetAmountOfConsumptionExponent sdk.CodeType = 622
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700

@@ -71,5 +71,6 @@ func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, 
 }
 
 func coinToString(coin types.Coin) string {
-	return strconv.FormatInt(coin.ToInt64()/types.Decimals, 10)
+	coinInInt64, _ := coin.ToInt64()
+	return strconv.FormatInt(coinInInt64/types.Decimals, 10)
 }

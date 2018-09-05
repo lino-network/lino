@@ -153,7 +153,7 @@ func TestLNOToCoin(t *testing.T) {
 			testName:     "less than lower bound LNO is invalid",
 			inputString:  "0.000001",
 			expectCoin:   NewCoinFromInt64(0),
-			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
+			expectResult: ErrInvalidCoins("Illegal LNO"),
 		},
 		{
 			testName:     "0 LNO is invalid",
@@ -182,6 +182,12 @@ func TestLNOToCoin(t *testing.T) {
 		{
 			testName:     "illegal coin",
 			inputString:  "1$",
+			expectCoin:   NewCoinFromInt64(0),
+			expectResult: ErrInvalidCoins("Illegal LNO"),
+		},
+		{
+			testName:     "large amount of coin",
+			inputString:  "1e9999999999999999",
 			expectCoin:   NewCoinFromInt64(0),
 			expectResult: ErrInvalidCoins("Illegal LNO"),
 		},

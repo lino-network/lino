@@ -79,10 +79,10 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
-	initLNO := GenesisTotalCoin.ToInt64() - int64(numOfValidators)*CoinPerValidator.ToInt64()
+	initLNO := GetGenesisAccountCoin(numOfValidators)
 	genesisAcc := app.GenesisAccount{
 		Name:           GenesisUser,
-		Coin:           types.NewCoinFromInt64(initLNO),
+		Coin:           initLNO,
 		ResetKey:       GenesisPriv.PubKey(),
 		TransactionKey: GenesisTransactionPriv.PubKey(),
 		AppKey:         GenesisAppPriv.PubKey(),
@@ -187,7 +187,9 @@ func CreateAccount(
 
 // GetGenesisAccountCoin - get genesis account coin
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
-	initLNO := GenesisTotalCoin.ToInt64() - int64(numOfValidator)*CoinPerValidator.ToInt64()
+	coinPerValidator, _ := CoinPerValidator.ToInt64()
+	genesisToken, _ := GenesisTotalCoin.ToInt64()
+	initLNO := genesisToken - int64(numOfValidator)*coinPerValidator
 	initCoin := types.NewCoinFromInt64(initLNO)
 	return initCoin
 }
