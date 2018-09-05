@@ -716,6 +716,7 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 	p1 := param.BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
+		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 
 	p2 := p1
@@ -723,6 +724,9 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 
 	p3 := p1
 	p3.CapacityUsagePerTransaction = types.NewCoinFromInt64(-1)
+
+	p4 := p1
+	p4.VirtualCoin = types.NewCoinFromInt64(-1)
 
 	testCases := []struct {
 		testName                string
@@ -752,6 +756,11 @@ func TestChangeBandwidthParamMsg(t *testing.T) {
 		{
 			testName:                "negative CapacityUsagePerTransaction is illegal",
 			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p3, ""),
+			expectedError:           ErrIllegalParameter(),
+		},
+		{
+			testName:                "negative VirtualCoin is illegal",
+			changeBandwidthParamMsg: NewChangeBandwidthParamMsg("user1", p4, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{

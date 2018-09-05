@@ -36,10 +36,10 @@ type FrozenMoney struct {
 
 // PendingStakeQueue - stores a list of pending stake and total number of coin waiting in list
 type PendingStakeQueue struct {
-	LastUpdatedAt    int64          `json:"last_updated_at"`
-	StakeCoinInQueue sdk.Rat        `json:"stake_coin_in_queue"`
-	TotalCoin        types.Coin     `json:"total_coin"`
-	PendingStakeList []PendingStake `json:"pending_stake_list"`
+	LastUpdatedAt int64          `json:"last_updated_at"`
+	TotalStake    sdk.Rat        `json:"total_stake"`
+	TotalCoin     types.Coin     `json:"total_coin"`
+	PendingStakes []PendingStake `json:"pending_stakes"`
 }
 
 // PendingStake - pending stake in the list

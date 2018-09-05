@@ -117,7 +117,7 @@ func (accManager AccountManager) GetStake(
 	}
 
 	stake := bank.Stake
-	stakeInQueue := types.RatToCoin(pendingStakeQueue.StakeCoinInQueue)
+	stakeInQueue := types.RatToCoin(pendingStakeQueue.TotalStake)
 	totalStake := stake.Plus(stakeInQueue)
 	return totalStake, nil
 }
@@ -260,32 +260,29 @@ func (accManager AccountManager) MinusSavingCoin(
 		return err
 	}
 
-	for len(pendingStakeQueue.PendingStakeList) > 0 {
-		lengthOfQueue := len(pendingStakeQueue.PendingStakeList)
-		pendingStake := pendingStakeQueue.PendingStakeList[lengthOfQueue-1]
+	for len(pendingStakeQueue.PendingStakes) > 0 {
+		lengthOfQueue := len(pendingStakeQueue.PendingStakes)
+		pendingStake := pendingStakeQueue.PendingStakes[lengthOfQueue-1]
 		recoverRatio := sdk.NewRat(
 			pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 			coinDayParams.SecondsToRecoverCoinDayStake)
 		if coin.IsGTE(pendingStake.Coin) {
-			// if withdraw money is much than last pending transaction, remove last transaction
+			// if withdraw money is much more than last pending transaction, remove last transaction
 			coin = coin.Minus(pendingStake.Coin)
 
-			pendingStakeCoinWithoutLastTx :=
-				pendingStakeQueue.StakeCoinInQueue.Sub((recoverRatio.Mul(pendingStake.Coin.ToRat())))
-			pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutLastTx
+			pendingStakeQueue.TotalStake =
+				pendingStakeQueue.TotalStake.Sub((recoverRatio.Mul(pendingStake.Coin.ToRat())))
 
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
-			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[:lengthOfQueue-1]
+			pendingStakeQueue.PendingStakes = pendingStakeQueue.PendingStakes[:lengthOfQueue-1]
 		} else {
 			// otherwise try to cut last pending transaction
-			pendingStakeCoinWithoutSpentCoin :=
-				pendingStakeQueue.StakeCoinInQueue.Sub(
-					recoverRatio.Mul(coin.ToRat()))
-			pendingStakeQueue.StakeCoinInQueue = pendingStakeCoinWithoutSpentCoin
+			pendingStakeQueue.TotalStake =
+				pendingStakeQueue.TotalStake.Sub(recoverRatio.Mul(coin.ToRat()))
 
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
-			pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin =
-				pendingStakeQueue.PendingStakeList[lengthOfQueue-1].Coin.Minus(coin)
+			pendingStakeQueue.PendingStakes[lengthOfQueue-1].Coin =
+				pendingStakeQueue.PendingStakes[lengthOfQueue-1].Coin.Minus(coin)
 			coin = types.NewCoinFromInt64(0)
 			break
 		}
@@ -293,6 +290,98 @@ func (accManager AccountManager) MinusSavingCoin(
 	if coin.IsPositive() {
 		accountBank.Stake = accountBank.Saving
 	}
+	if err := accManager.storage.SetPendingStakeQueue(
+		ctx, username, pendingStakeQueue); err != nil {
+		return err
+	}
+
+	if err := accManager.storage.SetBankFromAccountKey(
+		ctx, username, accountBank); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MinusSavingCoin - minus coin from balance, remove most charged stake coin
+func (accManager AccountManager) MinusSavingCoinWithFullStake(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
+	memo string, detailType types.TransferDetailType) (err sdk.Error) {
+	if coin.IsZero() {
+		return nil
+	}
+	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	remain := accountBank.Saving.Minus(coin)
+	if !remain.IsGTE(accountParams.MinimumBalance) {
+		return ErrAccountSavingCoinNotEnough()
+	}
+	accountBank.Saving = remain
+
+	if err := accManager.AddBalanceHistory(
+		ctx, username, accountBank.NumOfTx, model.Detail{
+			Amount:     coin,
+			DetailType: detailType,
+			To:         to,
+			From:       username,
+			Balance:    accountBank.Saving,
+			CreatedAt:  ctx.BlockHeader().Time.Unix(),
+			Memo:       memo,
+		}); err != nil {
+		return err
+	}
+	accountBank.NumOfTx++
+
+	pendingStakeQueue, err :=
+		accManager.storage.GetPendingStakeQueue(ctx, username)
+	if err != nil {
+		return err
+	}
+	// update pending stake queue, remove expired transaction
+	accManager.updateTXFromPendingStakeQueue(ctx, accountBank, pendingStakeQueue)
+	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
+	if err != nil {
+		return err
+	}
+	if accountBank.Stake.IsGTE(coin) {
+		accountBank.Stake = accountBank.Stake.Minus(coin)
+	} else {
+		coin = coin.Minus(accountBank.Stake)
+		accountBank.Stake = types.NewCoinFromInt64(0)
+
+		for len(pendingStakeQueue.PendingStakes) > 0 {
+			pendingStake := pendingStakeQueue.PendingStakes[0]
+			recoverRatio := sdk.NewRat(
+				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
+				coinDayParams.SecondsToRecoverCoinDayStake)
+			if coin.IsGTE(pendingStake.Coin) {
+				// if withdraw money is much than first pending transaction, remove first transaction
+				coin = coin.Minus(pendingStake.Coin)
+
+				pendingStakeQueue.TotalStake =
+					pendingStakeQueue.TotalStake.Sub((recoverRatio.Mul(pendingStake.Coin.ToRat())))
+
+				pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
+				pendingStakeQueue.PendingStakes = pendingStakeQueue.PendingStakes[1:]
+			} else {
+				// otherwise try to cut first pending transaction
+				pendingStakeQueue.TotalStake =
+					pendingStakeQueue.TotalStake.Sub(recoverRatio.Mul(coin.ToRat()))
+
+				pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(coin)
+				pendingStakeQueue.PendingStakes[0].Coin = pendingStakeQueue.PendingStakes[0].Coin.Minus(coin)
+				coin = types.NewCoinFromInt64(0)
+				break
+			}
+		}
+	}
+
 	if err := accManager.storage.SetPendingStakeQueue(
 		ctx, username, pendingStakeQueue); err != nil {
 		return err
@@ -669,6 +758,9 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		return err
 	}
 
+	// increase upper limit for capacity
+	stake = stake.Plus(bandwidthParams.VirtualCoin)
+
 	// if stake less than last update transaction capacity, set to stake
 	if accountMeta.TransactionCapacity.IsGTE(stake) {
 		accountMeta.TransactionCapacity = stake
@@ -878,10 +970,10 @@ func (accManager AccountManager) addPendingStakeToQueue(
 		return err
 	}
 	accManager.updateTXFromPendingStakeQueue(ctx, bank, pendingStakeQueue)
-	if len(pendingStakeQueue.PendingStakeList) > 0 && pendingStakeQueue.PendingStakeList[len(pendingStakeQueue.PendingStakeList)-1].StartTime == pendingStake.StartTime {
-		pendingStakeQueue.PendingStakeList[len(pendingStakeQueue.PendingStakeList)-1].Coin.Plus(pendingStake.Coin)
+	if len(pendingStakeQueue.PendingStakes) > 0 && pendingStakeQueue.PendingStakes[len(pendingStakeQueue.PendingStakes)-1].StartTime == pendingStake.StartTime {
+		pendingStakeQueue.PendingStakes[len(pendingStakeQueue.PendingStakes)-1].Coin.Plus(pendingStake.Coin)
 	} else {
-		pendingStakeQueue.PendingStakeList = append(pendingStakeQueue.PendingStakeList, pendingStake)
+		pendingStakeQueue.PendingStakes = append(pendingStakeQueue.PendingStakes, pendingStake)
 		pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Plus(pendingStake.Coin)
 	}
 	return accManager.storage.SetPendingStakeQueue(ctx, username, pendingStakeQueue)
@@ -914,8 +1006,8 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 	}
 
 	currentTimeSlot := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-	for len(pendingStakeQueue.PendingStakeList) > 0 {
-		pendingStake := pendingStakeQueue.PendingStakeList[0]
+	for len(pendingStakeQueue.PendingStakes) > 0 {
+		pendingStake := pendingStakeQueue.PendingStakes[0]
 		if pendingStake.EndTime <= currentTimeSlot {
 			// remove the transaction from queue, clean stake coin in queue and minus total coin
 			//stakeRatioOfThisTransaction means the ratio of stake of this transaction was added last time
@@ -923,22 +1015,22 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 				pendingStakeQueue.LastUpdatedAt-pendingStake.StartTime,
 				coinDayParams.SecondsToRecoverCoinDayStake)
 			// remote the stake in the queue of this transaction
-			pendingStakeQueue.StakeCoinInQueue =
-				pendingStakeQueue.StakeCoinInQueue.Sub(
+			pendingStakeQueue.TotalStake =
+				pendingStakeQueue.TotalStake.Sub(
 					stakeRatioOfThisTransaction.Mul(pendingStake.Coin.ToRat()))
 			// update bank stake
 			bank.Stake = bank.Stake.Plus(pendingStake.Coin)
 
 			pendingStakeQueue.TotalCoin = pendingStakeQueue.TotalCoin.Minus(pendingStake.Coin)
 
-			pendingStakeQueue.PendingStakeList = pendingStakeQueue.PendingStakeList[1:]
+			pendingStakeQueue.PendingStakes = pendingStakeQueue.PendingStakes[1:]
 		} else {
 			break
 		}
 	}
-	if len(pendingStakeQueue.PendingStakeList) == 0 {
+	if len(pendingStakeQueue.PendingStakes) == 0 {
 		pendingStakeQueue.TotalCoin = types.NewCoinFromInt64(0)
-		pendingStakeQueue.StakeCoinInQueue = sdk.ZeroRat()
+		pendingStakeQueue.TotalStake = sdk.ZeroRat()
 	} else {
 		// update all pending stake at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
@@ -949,8 +1041,8 @@ func (accManager AccountManager) updateTXFromPendingStakeQueue(
 		if err != nil {
 			return err
 		}
-		pendingStakeQueue.StakeCoinInQueue =
-			pendingStakeQueue.StakeCoinInQueue.Add(
+		pendingStakeQueue.TotalStake =
+			pendingStakeQueue.TotalStake.Add(
 				recoverRatio.Mul(pendingStakeQueue.TotalCoin.ToRat()))
 	}
 

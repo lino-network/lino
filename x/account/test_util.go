@@ -53,6 +53,7 @@ var (
 	coin2   = types.NewCoinFromInt64(2)
 	coin3   = types.NewCoinFromInt64(3)
 	coin4   = types.NewCoinFromInt64(4)
+	coin10  = types.NewCoinFromInt64(10)
 	coin50  = types.NewCoinFromInt64(50)
 	coin100 = types.NewCoinFromInt64(100)
 	coin200 = types.NewCoinFromInt64(200)

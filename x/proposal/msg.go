@@ -1001,7 +1001,9 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.CapacityUsagePerTransaction) {
 		return ErrIllegalParameter()
 	}
-
+	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.VirtualCoin) {
+		return ErrIllegalParameter()
+	}
 	if msg.Parameter.SecondsToRecoverBandwidth <= 0 {
 		return ErrIllegalParameter()
 	}

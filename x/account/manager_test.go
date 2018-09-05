@@ -77,9 +77,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        c100,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -124,9 +124,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime1Slot,
-				StakeCoinInQueue: sdk.NewRat(5000000, 1),
+				TotalStake: sdk.NewRat(5000000, 1),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -185,9 +185,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2Slot,
-				StakeCoinInQueue: sdk.NewRat(316250000, 63),
+				TotalStake: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime1Slot,
 						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -254,9 +254,9 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime2Slot,
-				StakeCoinInQueue: sdk.NewRat(316250000, 63),
+				TotalStake: sdk.NewRat(316250000, 63),
 				TotalCoin:        c100.Plus(c100),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime1Slot,
 						EndTime:   baseTime1Slot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -387,9 +387,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee.Minus(coin1),
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -444,9 +444,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTimeSlot,
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTimeSlot,
 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -484,9 +484,9 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingStakeQueue: model.PendingStakeQueue{
 				LastUpdatedAt:    baseTime.Unix(),
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        accParam.RegisterFee,
-				PendingStakeList: []model.PendingStake{
+				PendingStakes: []model.PendingStake{
 					{
 						StartTime: baseTime.Unix(),
 						EndTime:   baseTime.Unix() + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -519,6 +519,161 @@ func TestMinusCoin(t *testing.T) {
 			checkBankKVByUsername(t, ctx, tc.testName, tc.fromUser, tc.expectBank)
 			checkPendingStake(t, ctx, tc.testName, tc.fromUser, tc.expectPendingStakeQueue)
 			checkBalanceHistory(t, ctx, tc.testName, tc.fromUser, 0, tc.expectBalanceHistory)
+		}
+	}
+}
+
+func TestMinusCoinWithFullStake(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	// accParam, _ := am.paramHolder.GetAccountParam(ctx)
+
+	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
+	if err != nil {
+		t.Error("TestMinusCoinWithFullStake: failed to get coin day param")
+	}
+
+	user := types.AccountKey("user1")
+
+	// Get the minimum time of this history slot
+	baseTime := time.Now()
+	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+	beforeFullyChargedTimeSlot := baseTimeSlot - coinDayParams.SecondsToRecoverCoinDayStake
+	afterFullyChargedTimeSlot := baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake
+	halfTimeAfterFullyChargedTimeSlot := baseTimeSlot + coinDayParams.SecondsToRecoverCoinDayStake/2
+	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDayStake + 1
+	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
+
+	createTestAccount(ctx, am, string(user))
+	testCases := []struct {
+		testName          string
+		bank              *model.AccountBank
+		pendingStakeQueue *model.PendingStakeQueue
+		minusAmount       types.Coin
+		atWhen            time.Time
+		expectStake       types.Coin
+	}{
+		{
+			testName: "minus all saving coin while pending stake is empty",
+			bank: &model.AccountBank{
+				Saving: coin1,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				TotalStake: sdk.ZeroRat(),
+				TotalCoin:        coin0,
+				PendingStakes: []model.PendingStake{},
+			},
+			minusAmount: coin1,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus all saving coin with pending stake queue",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    beforeFullyChargedTimeSlot,
+				TotalStake: sdk.ZeroRat(),
+				TotalCoin:        coin1,
+				PendingStakes: []model.PendingStake{
+					model.PendingStake{
+						StartTime: beforeFullyChargedTimeSlot,
+						EndTime:   baseTimeSlot,
+						Coin:      coin1,
+					},
+				},
+			},
+			minusAmount: coin2,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus saving coin with full stake",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				TotalStake: sdk.ZeroRat(),
+				TotalCoin:        coin1,
+				PendingStakes: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin1,
+					},
+				},
+			},
+			minusAmount: coin1,
+			atWhen:      baseTime,
+			expectStake: coin0,
+		},
+		{
+			testName: "minus coin with half charged stake",
+			bank: &model.AccountBank{
+				Saving: coin2,
+				Stake:  coin0,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				TotalStake: sdk.ZeroRat(),
+				TotalCoin:        coin2,
+				PendingStakes: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin2,
+					},
+				},
+			},
+			minusAmount: coin1,
+			atWhen:      time.Unix(halfTimeAfterFullyChargedTimeSlot, 0),
+			expectStake: coin0,
+		},
+		{
+			testName: "minus coin with all charged stake and half charged stake",
+			bank: &model.AccountBank{
+				Saving: coin4,
+				Stake:  coin1,
+			},
+			pendingStakeQueue: &model.PendingStakeQueue{
+				LastUpdatedAt:    baseTimeSlot,
+				TotalStake: sdk.ZeroRat(),
+				TotalCoin:        coin3,
+				PendingStakes: []model.PendingStake{
+					model.PendingStake{
+						StartTime: baseTimeSlot,
+						EndTime:   afterFullyChargedTimeSlot,
+						Coin:      coin3,
+					},
+				},
+			},
+			minusAmount: coin2,
+			atWhen:      time.Unix(halfTimeAfterFullyChargedTimeSlot, 0),
+			expectStake: coin1,
+		},
+	}
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: tc.atWhen})
+		err := am.storage.SetBankFromAccountKey(ctx, user, tc.bank)
+		if err != nil {
+			t.Errorf("%s: failed to set bank", tc.testName)
+		}
+		am.storage.SetPendingStakeQueue(ctx, user, tc.pendingStakeQueue)
+		err = am.MinusSavingCoinWithFullStake(ctx, user, tc.minusAmount, user, "", types.TransferOut)
+		if err != nil {
+			t.Errorf("%s: failed to minus coin", tc.testName)
+		}
+		stake, err := am.GetStake(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get stake", tc.testName)
+		}
+		if !stake.IsEqual(tc.expectStake) {
+			t.Errorf("%s: diff stake, got %v, expect %v", tc.testName, stake, tc.expectStake)
 		}
 	}
 }
@@ -842,13 +997,13 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 		pendingStakeQueue :=
 			model.PendingStakeQueue{
-				StakeCoinInQueue: sdk.ZeroRat(),
+				TotalStake: sdk.ZeroRat(),
 				TotalCoin:        types.NewCoinFromInt64(0),
 			}
 		baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 		if tc.registerFee.IsGT(tc.expectFullStakeCoin) {
 			pendingStakeQueue.TotalCoin = tc.registerFee.Minus(tc.expectFullStakeCoin)
-			pendingStakeQueue.PendingStakeList = []model.PendingStake{{
+			pendingStakeQueue.PendingStakes = []model.PendingStake{{
 				StartTime: baseTime,
 				EndTime:   baseTime + coinDayParam.SecondsToRecoverCoinDayStake,
 				Coin:      tc.registerFee.Minus(tc.expectFullStakeCoin),
@@ -944,9 +1099,9 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingStakeQueue := model.PendingStakeQueue{
 		LastUpdatedAt:    baseTime,
-		StakeCoinInQueue: sdk.ZeroRat(),
+		TotalStake: sdk.ZeroRat(),
 		TotalCoin:        extraRegisterFee,
-		PendingStakeList: []model.PendingStake{
+		PendingStakes: []model.PendingStake{
 			{
 				StartTime: baseTime,
 				EndTime:   baseTime + coinDayParams.SecondsToRecoverCoinDayStake,
@@ -1254,7 +1409,7 @@ func TestCoinDaySize(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s: failed to add coin, got err %v", "TestCoinDaySize", err)
 	}
-	assert.Equal(t, 504, len(pendingStakeQueue.PendingStakeList))
+	assert.Equal(t, 504, len(pendingStakeQueue.PendingStakes))
 }
 
 func TestAddIncomeAndReward(t *testing.T) {
@@ -1381,7 +1536,8 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime,
 			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
-			expectRemainCapacity: types.NewCoinFromInt64(0)},
+			expectRemainCapacity: types.NewCoinFromInt64(0),
+		},
 		{
 			testName:             " 1/10 capacity ratio",
 			tpsCapacityRatio:     sdk.NewRat(1, 10),
@@ -1390,7 +1546,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(990000),
+			expectRemainCapacity: types.NewCoinFromInt64(990000).Plus(bandwidthParams.VirtualCoin),
 		},
 		{
 			testName:             " 1/2 capacity ratio",
@@ -1400,7 +1556,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(950000),
+			expectRemainCapacity: types.NewCoinFromInt64(950000).Plus(bandwidthParams.VirtualCoin),
 		},
 		{
 			testName:             " 1/1 capacity ratio",
@@ -1410,26 +1566,16 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(9 * types.Decimals),
+			expectRemainCapacity: types.NewCoinFromInt64(9 * types.Decimals).Plus(bandwidthParams.VirtualCoin),
 		},
 		{
-			testName:             " 1/1 capacity ratio with 0 remaining",
+			testName:             " 1/1 capacity ratio with virtual coin remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(10 * types.Decimals),
 			currentTime:          baseTime,
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(0),
-		},
-		{
-			testName:             " 1/1 capacity ratio with 1 remaining",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
-			userStake:            types.NewCoinFromInt64(10),
-			lastActivity:         baseTime.Unix(),
-			lastCapacity:         types.NewCoinFromInt64(1 * types.Decimals),
-			currentTime:          baseTime,
-			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
 			expectRemainCapacity: types.NewCoinFromInt64(1 * types.Decimals),
 		},
 		{
@@ -1439,28 +1585,48 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth/2) * time.Second),
-			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
-			expectRemainCapacity: types.NewCoinFromInt64(0),
+			expectResult:         nil,
+			expectRemainCapacity: coin0,
 		},
 		{
-			testName:             " 1/2 capacity ratio with 0 remaining",
+			testName:             " transaction capacity not enough",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(0 * types.Decimals),
+			lastActivity:         baseTime.Unix(),
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth/2) * time.Second),
+			expectResult:         ErrAccountTPSCapacityNotEnough(accKey),
+			expectRemainCapacity: coin0,
+		},
+		{
+			testName:             " transaction capacity without stake",
+			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			userStake:            types.NewCoinFromInt64(0 * types.Decimals),
+			lastActivity:         baseTime.Unix(),
+			lastCapacity:         types.NewCoinFromInt64(0),
+			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth) * time.Second),
+			expectResult:         nil,
+			expectRemainCapacity: coin0,
+		},
+		{
+			testName:             " 1/2 capacity ratio with half virtual coin remaining",
 			tpsCapacityRatio:     sdk.NewRat(1, 2),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime.Add(time.Duration(secondsToRecoverBandwidth/2) * time.Second),
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(0),
+			expectRemainCapacity: types.NewCoinFromInt64(bandwidthParams.VirtualCoin.ToInt64() / 2),
 		},
 		{
-			testName:             " 1/1 capacity ratio with 0 remaining and base time",
+			testName:             " 1/1 capacity ratio with virtual coin remaining and base time",
 			tpsCapacityRatio:     sdk.NewRat(1, 1),
 			userStake:            types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         0,
 			lastCapacity:         types.NewCoinFromInt64(0),
 			currentTime:          baseTime,
 			expectResult:         nil,
-			expectRemainCapacity: types.NewCoinFromInt64(0),
+			expectRemainCapacity: bandwidthParams.VirtualCoin,
 		},
 	}
 
@@ -2099,7 +2265,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	checkBankKVByUsername(t, ctx, testName, user1, bank)
 
 	pendingStakeQueue := model.PendingStakeQueue{
-		StakeCoinInQueue: sdk.ZeroRat(),
+		TotalStake: sdk.ZeroRat(),
 		TotalCoin:        types.NewCoinFromInt64(0),
 	}
 	checkPendingStake(t, ctx, testName, user1, pendingStakeQueue)
