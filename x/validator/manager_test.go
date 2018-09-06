@@ -31,7 +31,8 @@ func TestByzantines(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit 10,20,30...200, 210
-		num := int64((i+1)*10) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
@@ -78,7 +79,8 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit 10,20,30...200, 210
-		num := int64((i+1)*10) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
@@ -174,7 +176,8 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit 1000,2000,3000...20000, 21000
-		num := int64((i+1)*1000) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*1000) + validatorMinDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
@@ -255,7 +258,8 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 
 		assert.Equal(t, int64(0), validator.AbsentCommit)
 
-		num := int64((v+1)*1000) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((v+1)*1000) + validatorMinDeposit/types.Decimals
 		num -= 200
 		depositCoin := types.NewCoinFromInt64(num * types.Decimals)
 		assert.Equal(t, depositCoin, validator.Deposit)
@@ -277,7 +281,8 @@ func TestGetOncallList(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit 10,20,30...200, 210
-		num := int64((i+1)*10) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
@@ -351,7 +356,8 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
 
-		num := int64((i+1)*1000) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*1000) + validatorMinDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()

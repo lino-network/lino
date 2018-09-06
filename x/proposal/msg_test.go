@@ -143,6 +143,11 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 
 	p2 := p1
 	p2.StorageAllocation = sdk.NewRat(101, 100)
+
+	p3 := p1
+	p3.StorageAllocation = sdk.NewRat(-1, 100)
+	p3.CDNAllocation = sdk.NewRat(101, 100)
+
 	testCases := []struct {
 		testName                              string
 		ChangeInfraInternalAllocationParamMsg ChangeInfraInternalAllocationParamMsg
@@ -154,8 +159,13 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 			expectedError:                         nil,
 		},
 		{
-			testName: "illegal parameter",
+			testName: "illegal parameter (sum of allocation doesn't equal to 1)",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2, ""),
+			expectedError:                         ErrIllegalParameter(),
+		},
+		{
+			testName: "illegal parameter (negative number)",
+			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p3, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
@@ -642,8 +652,9 @@ func TestChangeProposalParamMsg(t *testing.T) {
 
 func TestChangeAccountParamMsg(t *testing.T) {
 	p1 := param.AccountParam{
-		MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 
 	p2 := p1
@@ -654,6 +665,9 @@ func TestChangeAccountParamMsg(t *testing.T) {
 
 	p4 := p1
 	p4.RegisterFee = types.NewCoinFromInt64(-1)
+
+	p5 := p1
+	p5.FirstDepositFullStakeLimit = types.NewCoinFromInt64(-1)
 
 	testCases := []struct {
 		testName              string
@@ -676,18 +690,23 @@ func TestChangeAccountParamMsg(t *testing.T) {
 			expectedError:         ErrInvalidUsername(),
 		},
 		{
-			testName:              "zero MinimumBalance is invalid",
+			testName:              "zero MinimumBalance is valid",
 			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p2, ""),
 			expectedError:         nil,
 		},
 		{
-			testName:              "zero RegisterFee is invalid",
+			testName:              "zero RegisterFee is valid",
 			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p3, ""),
 			expectedError:         nil,
 		},
 		{
 			testName:              "negative RegisterFee is invalid",
 			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p4, ""),
+			expectedError:         ErrIllegalParameter(),
+		},
+		{
+			testName:              "negative FirstDepositFullStakeLimit is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p5, ""),
 			expectedError:         ErrIllegalParameter(),
 		},
 		{

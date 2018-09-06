@@ -372,7 +372,6 @@ func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
 
 //----------------------------------------
 // ChangeEvaluateOfContentValueParamMsg Msg Implementations
-
 func NewChangeEvaluateOfContentValueParamMsg(
 	creator string, parameter param.EvaluateOfContentValueParam, reason string) ChangeEvaluateOfContentValueParamMsg {
 	return ChangeEvaluateOfContentValueParamMsg{
@@ -471,7 +470,9 @@ func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
 	}
 
 	if !msg.Parameter.CDNAllocation.
-		Add(msg.Parameter.StorageAllocation).Equal(sdk.NewRat(1)) {
+		Add(msg.Parameter.StorageAllocation).Equal(sdk.NewRat(1)) ||
+		msg.Parameter.CDNAllocation.LT(sdk.ZeroRat()) ||
+		msg.Parameter.StorageAllocation.LT(sdk.ZeroRat()) {
 		return ErrIllegalParameter()
 	}
 
@@ -861,8 +862,9 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.MinimumBalance) ||
-		types.NewCoinFromInt64(0).IsGT(msg.Parameter.RegisterFee) {
+	if !msg.Parameter.MinimumBalance.IsNotNegative() ||
+		!msg.Parameter.RegisterFee.IsNotNegative() ||
+		!msg.Parameter.FirstDepositFullStakeLimit.IsNotNegative() {
 		return ErrIllegalParameter()
 	}
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
@@ -998,10 +1000,10 @@ func (msg ChangeBandwidthParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.CapacityUsagePerTransaction) {
+	if !msg.Parameter.CapacityUsagePerTransaction.IsNotNegative() {
 		return ErrIllegalParameter()
 	}
-	if types.NewCoinFromInt64(0).IsGT(msg.Parameter.VirtualCoin) {
+	if !msg.Parameter.VirtualCoin.IsNotNegative() {
 		return ErrIllegalParameter()
 	}
 	if msg.Parameter.SecondsToRecoverBandwidth <= 0 {

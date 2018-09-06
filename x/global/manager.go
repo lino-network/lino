@@ -469,9 +469,17 @@ func (gm GlobalManager) EvaluateConsumption(
 	// evaluate result coin^0.8 * total consumption adjustment *
 	// post time adjustment * consumption times adjustment
 	expPara, _ := paras.AmountOfConsumptionExponent.Float64()
+	coinInInt64, err := coin.ToInt64()
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	totalRewardInInt64, err := totalReward.ToInt64()
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
 	return types.NewCoinFromInt64(
-		int64(math.Pow(float64(coin.ToInt64()), expPara) *
-			PostTotalConsumptionAdjustment(totalReward, paras) *
+		int64(math.Pow(float64(coinInInt64), expPara) *
+			PostTotalConsumptionAdjustment(totalRewardInInt64, paras) *
 			PostTimeAdjustment(ctx.BlockHeader().Time.Unix()-created, paras) *
 			PostConsumptionTimesAdjustment(numOfConsumptionOnAuthor, paras))), nil
 }
@@ -511,9 +519,9 @@ func (gm GlobalManager) EvaluateConsumption(
 
 // PostTotalConsumptionAdjustment - total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
 func PostTotalConsumptionAdjustment(
-	totalReward types.Coin, paras *param.EvaluateOfContentValueParam) float64 {
+	totalReward int64, paras *param.EvaluateOfContentValueParam) float64 {
 	return (1.0 / (1.0 + math.Exp(
-		(float64(totalReward.ToInt64())/float64(paras.TotalAmountOfConsumptionBase) -
+		(float64(totalReward)/float64(paras.TotalAmountOfConsumptionBase) -
 			float64(paras.TotalAmountOfConsumptionOffset))))) + 1.0
 }
 

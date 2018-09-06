@@ -86,7 +86,8 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
-			returnCoin := types.RatToCoin(sdk.NewRat(tc.returnAmount.ToInt64(), tc.times-i))
+			returnAmount, _ := tc.returnAmount.ToInt64()
+			returnCoin := types.RatToCoin(sdk.NewRat(returnAmount, tc.times-i))
 
 			event := ReturnCoinEvent{
 				Username:   tc.username,

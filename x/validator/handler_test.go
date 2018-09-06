@@ -145,7 +145,8 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit min committing deposit + 10,20,30...200, 210, 220, 230, 240
-		num := int64((i+1)*10) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		valMinCommitDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*10) + valMinCommitDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
@@ -362,7 +363,8 @@ func TestValidatorReplacement(t *testing.T) {
 		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
 
 		// they will deposit min committing deposit + 10,20,30...200, 210, 220, 230, 240
-		num := int64((i+1)*10) + valParam.ValidatorMinCommittingDeposit.ToInt64()/types.Decimals
+		valMinCommitDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
+		num := int64((i+1)*10) + valMinCommitDeposit/types.Decimals
 		deposit := types.LNO(strconv.FormatInt(num, 10))
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
