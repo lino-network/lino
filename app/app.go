@@ -167,6 +167,7 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 // MackCodec - codec for application, used by command line tool and authenticate handler
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
+	cdc.RegisterConcrete(cauth.StdTx{}, "auth/StdTx", nil)
 	wire.RegisterCrypto(cdc)
 	sdk.RegisterWire(cdc)
 

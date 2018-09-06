@@ -69,32 +69,6 @@ var (
 
 // RatToCoin - convert sdk.Rat to LNO coin
 func RatToCoin(rat sdk.Rat) Coin {
-	//return Coin{rat.EvaluateBig()}
-
-	// num := rat.Num()
-	// denom := rat.Denom()
-
-	// d, rem := new(big.Int), new(big.Int)
-	// d.QuoRem(num, denom, rem)
-	// if rem.Cmp(zero) == 0 { // is the remainder zero
-	// 	return NewCoinFromBigInt(d)
-	// }
-
-	// // evaluate the remainder using bankers rounding
-	// tenNum := new(big.Int).Mul(num, ten)
-	// tenD := new(big.Int).Mul(d, ten)
-	// remainderDigit := new(big.Int).Sub(new(big.Int).Quo(tenNum, denom), tenD) // get the first remainder digit
-	// isFinalDigit := (new(big.Int).Rem(tenNum, denom).Cmp(zero) == 0)          // is this the final digit in the remainder?
-
-	// switch {
-	// case isFinalDigit && (remainderDigit.Cmp(five) == 0 || remainderDigit.Cmp(nFive) == 0):
-	// 	dRem2 := new(big.Int).Rem(d, two)
-	// 	return NewCoinFromBigInt(new(big.Int).Add(d, dRem2)) // always rounds to the even number
-	// case remainderDigit.Cmp(five) != -1: //remainderDigit >= 5:
-	// 	d.Add(d, one)
-	// case remainderDigit.Cmp(nFive) != 1: //remainderDigit <= -5:
-	// 	d.Sub(d, one)
-	// }
 	return NewCoinFromBigInt(rat.EvaluateBig())
 }
 
