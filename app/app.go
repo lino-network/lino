@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"time"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -194,6 +195,11 @@ func registerEvent(cdc *wire.Codec) {
 
 // custom logic for lino blockchain initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	// set init time to zero
+	blockHeader := ctx.BlockHeader()
+	blockHeader.Time = time.Unix(0, 0)
+	ctx = ctx.WithBlockHeader(blockHeader)
+
 	stateJSON := req.AppStateBytes
 	genesisState := new(GenesisState)
 	if err := lb.cdc.UnmarshalJSON(stateJSON, genesisState); err != nil {
