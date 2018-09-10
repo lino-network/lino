@@ -169,7 +169,7 @@ func TestCoinDayParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := CoinDayParam{
-		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 	}
 	err := ph.setCoinDayParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -199,9 +199,9 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -286,7 +286,7 @@ func TestInitParam(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -294,9 +294,9 @@ func TestInitParam(t *testing.T) {
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(0),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:               types.NewCoinFromInt64(0),
+		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
@@ -379,7 +379,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	coinDayParam := CoinDayParam{
-		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 	}
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -387,9 +387,9 @@ func TestInitParamFromConfig(t *testing.T) {
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(0),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:               types.NewCoinFromInt64(0),
+		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),

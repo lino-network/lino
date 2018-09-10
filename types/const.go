@@ -148,8 +148,8 @@ const (
 	// MaximumLengthOfProposalReason - maximum length of proposal reason
 	MaximumLengthOfProposalReason = 1000
 
-	// InitAccountWithFullStakeMemo - init account with full stake memo
-	InitAccountWithFullStakeMemo = "open account deposit"
+	// InitAccountWithFullCoinDayMemo - init account with full coin day memo
+	InitAccountWithFullCoinDayMemo = "open account deposit"
 
 	// InitAccountRegisterDepositMemo - init account deposit fee memo
 	InitAccountRegisterDepositMemo = "init deposit"

@@ -20,7 +20,7 @@ func TestNormalDonation(t *testing.T) {
 
 	newDonateUserTransactionPriv := secp256k1.GenPrivKey()
 	newDonateUser := "donator"
-	// recover some stake
+	// recover some coin day
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 

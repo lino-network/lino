@@ -115,9 +115,9 @@ func TestHandlerUpdatePost(t *testing.T) {
 			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			IsDeleted:               false,
-			TotalUpvoteStake:        types.NewCoinFromInt64(0),
+			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
-			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 			RedistributionSplitRate: sdk.ZeroRat(),
 		}
 		checkPostKVStore(t, ctx,
@@ -220,9 +220,9 @@ func TestHandlerCreateComment(t *testing.T) {
 		LastUpdatedAt:           baseTime1.Unix(),
 		LastActivityAt:          baseTime1.Unix(),
 		AllowReplies:            true,
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
-		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 
@@ -317,9 +317,9 @@ func TestHandlerRepost(t *testing.T) {
 		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
 		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
-		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 
@@ -341,9 +341,9 @@ func TestHandlerRepost(t *testing.T) {
 		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
 		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true,
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
-		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 	postInfo.SourceAuthor = user
@@ -409,8 +409,8 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        1,
-				TotalUpvoteStake:        types.NewCoinFromInt64(1 * types.Decimals),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(1 * types.Decimals),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(95 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
@@ -465,8 +465,8 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        2,
-				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(2 * types.Decimals),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(14250000),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
@@ -502,8 +502,8 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        3,
-				TotalUpvoteStake:        types.NewCoinFromInt64(2 * types.Decimals),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(2 * types.Decimals),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
@@ -538,8 +538,8 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        4,
-				TotalUpvoteStake:        types.NewCoinFromInt64(3 * types.Decimals),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(3 * types.Decimals),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
@@ -610,8 +610,8 @@ func TestHandlerPostDonate(t *testing.T) {
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 				AllowReplies:            true,
 				TotalDonateCount:        2,
-				TotalUpvoteStake:        types.NewCoinFromInt64(0),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(19000001),
 				RedistributionSplitRate: sdk.ZeroRat(),
 			},
@@ -764,8 +764,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 		AllowReplies:            true,
 		TotalDonateCount:        1,
 		TotalReward:             totalReward,
-		TotalUpvoteStake:        types.NewCoinFromInt64(1 * types.Decimals),
-		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteCoinDay:      types.NewCoinFromInt64(1 * types.Decimals),
+		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		RedistributionSplitRate: sdk.ZeroRat(),
 	}
 	checkPostKVStore(t, ctx, types.GetPermlink(user2, "repost"), postInfo, postMeta)
@@ -789,7 +789,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	postInfo.SourceAuthor = ""
 	postInfo.SourcePostID = ""
 	postMeta.RedistributionSplitRate = sdk.NewRat(3, 20)
-	postMeta.TotalUpvoteStake = types.NewCoinFromInt64(0)
+	postMeta.TotalUpvoteCoinDay = types.NewCoinFromInt64(0)
 
 	checkPostKVStore(t, ctx, types.GetPermlink(user1, postID), postInfo, postMeta)
 
@@ -826,85 +826,85 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	user3 := createTestAccount(t, ctx, am, "user3")
 	user4 := createTestAccount(t, ctx, am, "user4")
 
-	baseTime := ctx.BlockHeader().Time.Unix() + coinDayParam.SecondsToRecoverCoinDayStake
+	baseTime := ctx.BlockHeader().Time.Unix() + coinDayParam.SecondsToRecoverCoinDay
 	invalidPermlink := types.GetPermlink("invalid", "invalid")
 
 	testCases := []struct {
-		testName               string
-		reportOrUpvoteUser     string
-		isReport               bool
-		targetPostAuthor       string
-		targetPostID           string
-		lastReportOrUpvoteAt   int64
-		expectResult           sdk.Result
-		expectTotalReportStake types.Coin
-		expectTotalUpvoteStake types.Coin
+		testName                 string
+		reportOrUpvoteUser       string
+		isReport                 bool
+		targetPostAuthor         string
+		targetPostID             string
+		lastReportOrUpvoteAt     int64
+		expectResult             sdk.Result
+		expectTotalReportCoinDay types.Coin
+		expectTotalUpvoteCoinDay types.Coin
 	}{
 		{
-			testName:               "user1 report",
-			reportOrUpvoteUser:     string(user1),
-			isReport:               true,
-			targetPostAuthor:       string(user1),
-			targetPostID:           postID,
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:           sdk.Result{},
-			expectTotalReportStake: accParam.RegisterFee,
-			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
+			testName:                 "user1 report",
+			reportOrUpvoteUser:       string(user1),
+			isReport:                 true,
+			targetPostAuthor:         string(user1),
+			targetPostID:             postID,
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:             sdk.Result{},
+			expectTotalReportCoinDay: accParam.RegisterFee,
+			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(0),
 		},
 		{
-			testName:               "user2 report",
-			reportOrUpvoteUser:     string(user2),
-			isReport:               true,
-			targetPostAuthor:       string(user1),
-			targetPostID:           postID,
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:           sdk.Result{},
-			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteStake: types.NewCoinFromInt64(0),
+			testName:                 "user2 report",
+			reportOrUpvoteUser:       string(user2),
+			isReport:                 true,
+			targetPostAuthor:         string(user1),
+			targetPostID:             postID,
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:             sdk.Result{},
+			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(0),
 		},
 		{
-			testName:               "user3 upvote",
-			reportOrUpvoteUser:     string(user3),
-			isReport:               false,
-			targetPostAuthor:       string(user1),
-			targetPostID:           postID,
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:           sdk.Result{},
-			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteStake: accParam.RegisterFee,
+			testName:                 "user3 upvote",
+			reportOrUpvoteUser:       string(user3),
+			isReport:                 false,
+			targetPostAuthor:         string(user1),
+			targetPostID:             postID,
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:             sdk.Result{},
+			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteCoinDay: accParam.RegisterFee,
 		},
 		{
-			testName:               "user1 wanna change report to upvote",
-			reportOrUpvoteUser:     string(user1),
-			isReport:               false,
-			targetPostAuthor:       string(user1),
-			targetPostID:           postID,
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:           sdk.Result{},
-			expectTotalReportStake: accParam.RegisterFee,
-			expectTotalUpvoteStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			testName:                 "user1 wanna change report to upvote",
+			reportOrUpvoteUser:       string(user1),
+			isReport:                 false,
+			targetPostAuthor:         string(user1),
+			targetPostID:             postID,
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:             sdk.Result{},
+			expectTotalReportCoinDay: accParam.RegisterFee,
+			expectTotalUpvoteCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
 		},
 		{
-			testName:               "user1 report too often",
-			reportOrUpvoteUser:     string(user1),
-			isReport:               false,
-			targetPostAuthor:       string(user1),
-			targetPostID:           postID,
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec + 1,
-			expectResult:           ErrReportOrUpvoteTooOften().Result(),
-			expectTotalReportStake: accParam.RegisterFee,
-			expectTotalUpvoteStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			testName:                 "user1 report too often",
+			reportOrUpvoteUser:       string(user1),
+			isReport:                 false,
+			targetPostAuthor:         string(user1),
+			targetPostID:             postID,
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec + 1,
+			expectResult:             ErrReportOrUpvoteTooOften().Result(),
+			expectTotalReportCoinDay: accParam.RegisterFee,
+			expectTotalUpvoteCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
 		},
 		{
-			testName:               "user4 report to an invalid post",
-			reportOrUpvoteUser:     string(user4),
-			isReport:               true,
-			targetPostAuthor:       "invalid",
-			targetPostID:           "invalid",
-			lastReportOrUpvoteAt:   baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:           ErrPostNotFound(invalidPermlink).Result(),
-			expectTotalReportStake: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteStake: accParam.RegisterFee,
+			testName:                 "user4 report to an invalid post",
+			reportOrUpvoteUser:       string(user4),
+			isReport:                 true,
+			targetPostAuthor:         "invalid",
+			targetPostID:             "invalid",
+			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:             ErrPostNotFound(invalidPermlink).Result(),
+			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			expectTotalUpvoteCoinDay: accParam.RegisterFee,
 		},
 	}
 
@@ -929,8 +929,8 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			LastActivityAt:          newCtx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportStake:        tc.expectTotalReportStake,
-			TotalUpvoteStake:        tc.expectTotalUpvoteStake,
+			TotalReportCoinDay:      tc.expectTotalReportCoinDay,
+			TotalUpvoteCoinDay:      tc.expectTotalUpvoteCoinDay,
 			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		targetPost := types.GetPermlink(types.AccountKey(tc.targetPostAuthor), tc.targetPostID)
@@ -1024,8 +1024,8 @@ func TestHandlerView(t *testing.T) {
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
 			TotalViewCount:          tc.expectTotalViewCount,
-			TotalUpvoteStake:        types.NewCoinFromInt64(0),
-			TotalReportStake:        types.NewCoinFromInt64(0),
+			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
+			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)

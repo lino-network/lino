@@ -61,8 +61,8 @@ func TestAccountBank(t *testing.T) {
 	ctx := getContext()
 
 	accBank := AccountBank{
-		Saving: types.NewCoinFromInt64(int64(123)),
-		Stake:  types.NewCoinFromInt64(0),
+		Saving:  types.NewCoinFromInt64(int64(123)),
+		CoinDay: types.NewCoinFromInt64(0),
 	}
 	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
 	assert.Nil(t, err)

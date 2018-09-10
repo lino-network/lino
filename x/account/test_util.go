@@ -131,15 +131,15 @@ func checkBalanceHistory(
 	}
 }
 
-func checkPendingStake(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingStakeQueue model.PendingStakeQueue) {
+func checkPendingCoinDay(
+	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingCoinDayQueue model.PendingCoinDayQueue) {
 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	pendingStakeQueuePtr, err := accStorage.GetPendingStakeQueue(ctx, username)
+	pendingCoinDayQueuePtr, err := accStorage.GetPendingCoinDayQueue(ctx, username)
 	if err != nil {
-		t.Errorf("%s, failed to get pending stake queue, got err %v", testName, err)
+		t.Errorf("%s, failed to get pending coin day queue, got err %v", testName, err)
 	}
-	if !assert.Equal(t, pendingStakeQueue, *pendingStakeQueuePtr) {
-		t.Errorf("%s: diff pending stake queue, got %v, want %v", testName, *pendingStakeQueuePtr, pendingStakeQueue)
+	if !assert.Equal(t, pendingCoinDayQueue, *pendingCoinDayQueuePtr) {
+		t.Errorf("%s: diff pending coin day queue, got %v, want %v", testName, *pendingCoinDayQueuePtr, pendingCoinDayQueue)
 	}
 }
 

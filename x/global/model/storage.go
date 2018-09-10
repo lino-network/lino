@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	timeEventListSubStore      = []byte{0x00} // SubStore for time event list
-	globalMetaSubStore         = []byte{0x01} // SubStore for global meta
-	inflationPoolSubStore      = []byte{0x02} // SubStore for allocation
-	consumptionMetaSubStore    = []byte{0x03} // SubStore for consumption meta
-	tpsSubStore                = []byte{0x04} // SubStore for tps
-	timeSubStore               = []byte{0x05} // SubStore for time
-	linoPowerStatisticSubStore = []byte{0x06} // SubStore for lino power statistic
+	timeEventListSubStore   = []byte{0x00} // SubStore for time event list
+	globalMetaSubStore      = []byte{0x01} // SubStore for global meta
+	inflationPoolSubStore   = []byte{0x02} // SubStore for allocation
+	consumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
+	tpsSubStore             = []byte{0x04} // SubStore for tps
+	timeSubStore            = []byte{0x05} // SubStore for time
+	linoStakeStatSubStore   = []byte{0x06} // SubStore for lino power statistic
 )
 
 // GlobalStorage - global storage
@@ -94,13 +94,13 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 	if err := gs.SetTPS(ctx, tps); err != nil {
 		return err
 	}
-	linoPowerStatistic := &LinoPowerStatistic{
+	linoStakeStat := &LinoStakeStat{
 		TotalConsumptionFriction: types.NewCoinFromInt64(0),
-		TotalLinoPower:           types.NewCoinFromInt64(0),
+		TotalLinoStake:           types.NewCoinFromInt64(0),
 		UnclaimedFriction:        types.NewCoinFromInt64(0),
-		UnclaimedLinoPower:       types.NewCoinFromInt64(0),
+		UnclaimedLinoStake:       types.NewCoinFromInt64(0),
 	}
-	if err := gs.SetLinoPowerStatistic(ctx, 0, linoPowerStatistic); err != nil {
+	if err := gs.SetLinoStakeStat(ctx, 0, linoStakeStat); err != nil {
 		return err
 	}
 	return nil
@@ -150,29 +150,29 @@ func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk
 	return nil
 }
 
-// SetLinoPowerStatistic - set lino power statistic at given day
-func (gs GlobalStorage) SetLinoPowerStatistic(ctx sdk.Context, day int64, lps *LinoPowerStatistic) sdk.Error {
+// SetLinoStakeStat - set lino power statistic at given day
+func (gs GlobalStorage) SetLinoStakeStat(ctx sdk.Context, day int64, lps *LinoStakeStat) sdk.Error {
 	store := ctx.KVStore(gs.key)
 	lpsByte, err := gs.cdc.MarshalJSON(*lps)
 	if err != nil {
 		return ErrFailedToMarshalTimeEventList(err)
 	}
-	store.Set(GetLinoPowerStatisticKey(day), lpsByte)
+	store.Set(GetLinoStakeStatKey(day), lpsByte)
 	return nil
 }
 
-// GetLinoPowerStatistic - get lino power statistic at given day
-func (gs GlobalStorage) GetLinoPowerStatistic(ctx sdk.Context, day int64) (*LinoPowerStatistic, sdk.Error) {
+// GetLinoStakeStat - get lino power statistic at given day
+func (gs GlobalStorage) GetLinoStakeStat(ctx sdk.Context, day int64) (*LinoStakeStat, sdk.Error) {
 	store := ctx.KVStore(gs.key)
-	linoPowerStatisticBytes := store.Get(GetLinoPowerStatisticKey(day))
-	if linoPowerStatisticBytes == nil {
-		return nil, ErrLinoPowerStatisticNotFound()
+	linoStakeStatBytes := store.Get(GetLinoStakeStatKey(day))
+	if linoStakeStatBytes == nil {
+		return nil, ErrLinoStakeStatisticNotFound()
 	}
-	linoPowerStatistic := new(LinoPowerStatistic)
-	if err := gs.cdc.UnmarshalJSON(linoPowerStatisticBytes, linoPowerStatistic); err != nil {
-		return nil, ErrFailedToUnmarshalLinoPowerStatistic(err)
+	linoStakeStat := new(LinoStakeStat)
+	if err := gs.cdc.UnmarshalJSON(linoStakeStatBytes, linoStakeStat); err != nil {
+		return nil, ErrFailedToUnmarshalLinoStakeStatistic(err)
 	}
-	return linoPowerStatistic, nil
+	return linoStakeStat, nil
 }
 
 // GetGlobalMeta - get global meta from KVStore
@@ -300,9 +300,9 @@ func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) s
 	return nil
 }
 
-// GetLinoPowerStatisticKey - get lino power statistic at day from KVStore
-func GetLinoPowerStatisticKey(day int64) []byte {
-	return append(linoPowerStatisticSubStore, strconv.FormatInt(day, 10)...)
+// GetLinoStakeStatKey - get lino power statistic at day from KVStore
+func GetLinoStakeStatKey(day int64) []byte {
+	return append(linoStakeStatSubStore, strconv.FormatInt(day, 10)...)
 }
 
 // GetTimeEventListKey - get time event list from KVStore

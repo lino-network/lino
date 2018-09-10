@@ -48,9 +48,9 @@ func ErrRegisterFeeInsufficient() sdk.Error {
 	return types.NewError(types.CodeRegisterFeeInsufficient, fmt.Sprintf("register fee insufficient"))
 }
 
-// ErrAddSavingCoinWithFullStake - error when register deposit with full stake failed
-func ErrAddSavingCoinWithFullStake() sdk.Error {
-	return types.NewError(types.CodeAddSavingCoinWithFullStake, fmt.Sprint("failed to add saving coin with full stake"))
+// ErrAddSavingCoinWithFullCoinDay - error when register deposit with full coin day failed
+func ErrAddSavingCoinWithFullCoinDay() sdk.Error {
+	return types.NewError(types.CodeAddSavingCoinWithFullCoinDay, fmt.Sprint("failed to add saving coin with full coin day"))
 }
 
 // ErrAddSavingCoin - error when register add deposit failed

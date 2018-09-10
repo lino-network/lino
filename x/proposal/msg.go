@@ -864,7 +864,7 @@ func (msg ChangeAccountParamMsg) ValidateBasic() sdk.Error {
 
 	if !msg.Parameter.MinimumBalance.IsNotNegative() ||
 		!msg.Parameter.RegisterFee.IsNotNegative() ||
-		!msg.Parameter.FirstDepositFullStakeLimit.IsNotNegative() {
+		!msg.Parameter.FirstDepositFullCoinDayLimit.IsNotNegative() {
 		return ErrIllegalParameter()
 	}
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {

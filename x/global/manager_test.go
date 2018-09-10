@@ -361,13 +361,13 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get past day, got err %v", tc.testName, err)
 		}
-		linoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, pastDay)
+		linoStakeStatistic, err := gm.storage.GetLinoStakeStat(ctx, pastDay)
 		if err != nil {
 			t.Errorf("%s: failed to get lino power statistic, got err %v", tc.testName, err)
 		}
-		if !linoPowerStatistic.TotalConsumptionFriction.IsEqual(tc.expectCoinInStatistic) {
+		if !linoStakeStatistic.TotalConsumptionFriction.IsEqual(tc.expectCoinInStatistic) {
 			t.Errorf("%s: diff total consumption friction, got %v, want %v", tc.testName,
-				linoPowerStatistic.TotalConsumptionFriction, tc.expectCoinInStatistic)
+				linoStakeStatistic.TotalConsumptionFriction, tc.expectCoinInStatistic)
 		}
 
 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.registerBaseTime+24*7*3600)

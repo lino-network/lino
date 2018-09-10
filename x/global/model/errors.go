@@ -12,9 +12,9 @@ func ErrGlobalMetaNotFound() sdk.Error {
 	return types.NewError(types.CodeGlobalMetaNotFound, fmt.Sprintf("global meta not found"))
 }
 
-// ErrLinoPowerStatisticNotFound - error if lino power statistic not found in KVStore
-func ErrLinoPowerStatisticNotFound() sdk.Error {
-	return types.NewError(types.CodeLinoPowerStatisticNotFound, fmt.Sprintf("lino power statistic not found"))
+// ErrLinoStakeStatisticNotFound - error if lino power statistic not found in KVStore
+func ErrLinoStakeStatisticNotFound() sdk.Error {
+	return types.NewError(types.CodeLinoStakeStatisticNotFound, fmt.Sprintf("lino power statistic not found"))
 }
 
 // ErrInflationPoolNotFound - error if inflation pool is not found in KVStore
@@ -77,9 +77,9 @@ func ErrFailedToUnmarshalGlobalMeta(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalGlobalMeta, fmt.Sprintf("failed to unmarshal global meta: %s", err.Error()))
 }
 
-// ErrFailedToUnmarshalLinoPowerStatistic - error if unmarshal lino power statistic failed
-func ErrFailedToUnmarshalLinoPowerStatistic(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToUnmarshalLinoPowerStatistic, fmt.Sprintf("failed to unmarshal lino power statistic: %s", err.Error()))
+// ErrFailedToUnmarshalLinoStakeStatistic - error if unmarshal lino power statistic failed
+func ErrFailedToUnmarshalLinoStakeStatistic(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalLinoStakeStatistic, fmt.Sprintf("failed to unmarshal lino power statistic: %s", err.Error()))
 }
 
 // ErrFailedToUnmarshalInflationPool - error if unmarshal inflation pool failed

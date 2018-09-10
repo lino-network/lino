@@ -59,8 +59,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromInt64(100),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -91,8 +91,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromInt64(100),
-				TotalReportStake:        types.NewCoinFromInt64(100),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalReportCoinDay:      types.NewCoinFromInt64(100),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -123,8 +123,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromInt64(100),
-				TotalReportStake:        types.NewCoinFromInt64(50),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalReportCoinDay:      types.NewCoinFromInt64(50),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(50),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -155,8 +155,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromInt64(100),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(1),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -187,8 +187,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromInt64(100),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -219,8 +219,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(100),
 			initRewardWindow:     types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromBigInt(bigStringInt1),
-				TotalReportStake:        types.NewCoinFromBigInt(bigStringInt2),
+				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt1),
+				TotalReportCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -251,8 +251,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(5555),
 			initRewardWindow:     types.NewCoinFromInt64(77777),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromBigInt(bigStringInt2),
-				TotalReportStake:        types.NewCoinFromBigInt(bigStringInt1),
+				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
+				TotalReportCoinDay:      types.NewCoinFromBigInt(bigStringInt1),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(2075),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -283,8 +283,8 @@ func TestRewardEvent(t *testing.T) {
 			initRewardPool:       types.NewCoinFromInt64(5555),
 			initRewardWindow:     types.NewCoinFromInt64(77777),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteStake:        types.NewCoinFromBigInt(bigStringInt2),
-				TotalReportStake:        types.NewCoinFromInt64(0),
+				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
+				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
 				RedistributionSplitRate: sdk.ZeroRat(),
@@ -309,10 +309,10 @@ func TestRewardEvent(t *testing.T) {
 		})
 		pm.postStorage.SetPostMeta(ctx, types.GetPermlink(tc.rewardEvent.PostAuthor, tc.rewardEvent.PostID),
 			&postModel.PostMeta{
-				TotalUpvoteStake: tc.totalUpvoteOfThePost,
-				TotalReportStake: tc.totalReportOfThePost,
-				TotalReward:      types.NewCoinFromInt64(0),
-				IsDeleted:        tc.expectPostMeta.IsDeleted,
+				TotalUpvoteCoinDay: tc.totalUpvoteOfThePost,
+				TotalReportCoinDay: tc.totalReportOfThePost,
+				TotalReward:        types.NewCoinFromInt64(0),
+				IsDeleted:          tc.expectPostMeta.IsDeleted,
 			})
 
 		as.SetReward(ctx, tc.rewardEvent.PostAuthor, &accModel.Reward{})

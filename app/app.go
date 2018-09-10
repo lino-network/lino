@@ -480,7 +480,7 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 
 // execute daily event, record consumption friction and lino power
 func (lb *LinoBlockchain) executeDailyEvent(ctx sdk.Context) {
-	lb.globalManager.RecordConsumptionAndLinoPower(ctx)
+	lb.globalManager.RecordConsumptionAndLinoStake(ctx)
 }
 
 // execute monthly event, distribute inflation to infra and application

@@ -281,7 +281,7 @@ func TestHandleAccountRecover(t *testing.T) {
 		newBank := model.AccountBank{
 			Saving:  accParam.RegisterFee,
 			NumOfTx: 1,
-			Stake:   accParam.RegisterFee,
+			CoinDay: accParam.RegisterFee,
 		}
 		checkBankKVByUsername(t, ctx, testName, types.AccountKey(tc.user), newBank)
 	}
@@ -300,12 +300,12 @@ func TestHandleRegister(t *testing.T) {
 		"", "", types.TransferIn)
 
 	testCases := []struct {
-		testName               string
-		registerMsg            RegisterMsg
-		expectResult           sdk.Result
-		expectReferrerSaving   types.Coin
-		expectNewAccountSaving types.Coin
-		expectNewAccountStake  types.Coin
+		testName                string
+		registerMsg             RegisterMsg
+		expectResult            sdk.Result
+		expectReferrerSaving    types.Coin
+		expectNewAccountSaving  types.Coin
+		expectNewAccountCoinDay types.Coin
 	}{
 		{
 			testName: "normal case",
@@ -315,10 +315,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           sdk.Result{},
-			expectReferrerSaving:   c100,
-			expectNewAccountSaving: c0,
-			expectNewAccountStake:  c0,
+			expectResult:            sdk.Result{},
+			expectReferrerSaving:    c100,
+			expectNewAccountSaving:  c0,
+			expectNewAccountCoinDay: c0,
 		},
 		{
 			testName: "account already exist",
@@ -328,10 +328,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           ErrAccountAlreadyExists("user1").Result(),
-			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
-			expectNewAccountSaving: c0,
-			expectNewAccountStake:  c0,
+			expectResult:            ErrAccountAlreadyExists("user1").Result(),
+			expectReferrerSaving:    types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving:  c0,
+			expectNewAccountCoinDay: c0,
 		},
 		{
 			testName: "account register fee insufficient",
@@ -341,10 +341,10 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           ErrRegisterFeeInsufficient().Result(),
-			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
-			expectNewAccountSaving: c0,
-			expectNewAccountStake:  c0,
+			expectResult:            ErrRegisterFeeInsufficient().Result(),
+			expectReferrerSaving:    types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving:  c0,
+			expectNewAccountCoinDay: c0,
 		},
 		{
 			testName: "referrer deposit insufficient",
@@ -354,36 +354,36 @@ func TestHandleRegister(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           ErrAccountSavingCoinNotEnough().Result(),
-			expectReferrerSaving:   types.NewCoinFromInt64(99 * types.Decimals),
-			expectNewAccountSaving: c0,
-			expectNewAccountStake:  c0,
+			expectResult:            ErrAccountSavingCoinNotEnough().Result(),
+			expectReferrerSaving:    types.NewCoinFromInt64(99 * types.Decimals),
+			expectNewAccountSaving:  c0,
+			expectNewAccountCoinDay: c0,
 		},
 		{
-			testName: "register deposit larger than register fee but less than full stake limit",
+			testName: "register deposit larger than register fee but less than full coin day limit",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user3", "1.5",
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           sdk.Result{},
-			expectReferrerSaving:   types.NewCoinFromInt64(9750000),
-			expectNewAccountSaving: types.NewCoinFromInt64(50000),
-			expectNewAccountStake:  types.NewCoinFromInt64(50000),
+			expectResult:            sdk.Result{},
+			expectReferrerSaving:    types.NewCoinFromInt64(9750000),
+			expectNewAccountSaving:  types.NewCoinFromInt64(50000),
+			expectNewAccountCoinDay: types.NewCoinFromInt64(50000),
 		},
 		{
-			testName: "register deposit larger than register fee and full stake limit",
+			testName: "register deposit larger than register fee and full coin day limit",
 			registerMsg: NewRegisterMsg(
 				"referrer", "user4", "2.5",
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 			),
-			expectResult:           sdk.Result{},
-			expectReferrerSaving:   types.NewCoinFromInt64(95 * types.Decimals),
-			expectNewAccountSaving: types.NewCoinFromInt64(150000),
-			expectNewAccountStake:  types.NewCoinFromInt64(1 * types.Decimals),
+			expectResult:            sdk.Result{},
+			expectReferrerSaving:    types.NewCoinFromInt64(95 * types.Decimals),
+			expectNewAccountSaving:  types.NewCoinFromInt64(150000),
+			expectNewAccountCoinDay: types.NewCoinFromInt64(1 * types.Decimals),
 		},
 	}
 
@@ -429,13 +429,13 @@ func TestHandleRegister(t *testing.T) {
 			if !bank.Saving.IsEqual(tc.expectNewAccountSaving) {
 				t.Errorf("%s: diff saving, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
 			}
-			if !bank.Stake.IsEqual(tc.expectNewAccountStake) {
-				t.Errorf("%s: diff stake, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
+			if !bank.CoinDay.IsEqual(tc.expectNewAccountCoinDay) {
+				t.Errorf("%s: diff coin day, got %v, want %v", tc.testName, bank.Saving, tc.expectNewAccountSaving)
 			}
 
 			accMeta, _ := am.storage.GetMeta(ctx, tc.registerMsg.NewUser)
-			if !accMeta.TransactionCapacity.IsEqual(tc.expectNewAccountStake) {
-				t.Errorf("%s: diff transaction capacity, got %v, want %v", tc.testName, accMeta.TransactionCapacity, tc.expectNewAccountStake)
+			if !accMeta.TransactionCapacity.IsEqual(tc.expectNewAccountCoinDay) {
+				t.Errorf("%s: diff transaction capacity, got %v, want %v", tc.testName, accMeta.TransactionCapacity, tc.expectNewAccountCoinDay)
 			}
 			pool, err := gm.GetDeveloperMonthlyInflation(ctx)
 			if err != nil {

@@ -144,7 +144,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	coinDayParam := &CoinDayParam{
-		SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 	}
 	if err := ph.setCoinDayParam(ctx, coinDayParam); err != nil {
 		return err
@@ -160,9 +160,9 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:             types.NewCoinFromInt64(0),
-		RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MinimumBalance:               types.NewCoinFromInt64(0),
+		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
+		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err
