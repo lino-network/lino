@@ -61,6 +61,7 @@ const (
 	InfraReturnCoin      = TransferDetailType(10)
 	ProposalReturnCoin   = TransferDetailType(11)
 	GenesisCoin          = TransferDetailType(12)
+	ClaimInterest        = TransferDetailType(13)
 
 	// Different possible outcomes
 	TransferOut      = TransferDetailType(13)

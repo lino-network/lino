@@ -22,6 +22,8 @@ func NewHandler(am AccountManager, gm global.GlobalManager) sdk.Handler {
 			return handleTransferMsg(ctx, am, msg)
 		case ClaimMsg:
 			return handleClaimMsg(ctx, am, msg)
+		case ClaimInterestMsg:
+			return handleClaimInterestMsg(ctx, am, msg)
 		case RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
 		case RegisterMsg:
@@ -107,6 +109,14 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 func handleClaimMsg(ctx sdk.Context, am AccountManager, msg ClaimMsg) sdk.Result {
 	// claim reward
 	if err := am.ClaimReward(ctx, msg.Username); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleClaimInterestMsg(ctx sdk.Context, am AccountManager, msg ClaimInterestMsg) sdk.Result {
+	// claim interest
+	if err := am.ClaimInterest(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
