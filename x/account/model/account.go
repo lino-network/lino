@@ -102,7 +102,7 @@ type RewardDetail struct {
 	ActualReward     types.Coin       `json:"actual_reward"`
 	Consumer         types.AccountKey `json:"consumer"`
 	PostAuthor       types.AccountKey `json:"post_author"`
-	PostID           string           `json:"post_id`
+	PostID           string           `json:"post_id"`
 }
 
 // RewardHistory - reward history
