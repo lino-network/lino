@@ -471,8 +471,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear(ctx)
-	lb.globalManager.DistributeHourlyInflation(ctx, pastHoursMinusOneThisYear)
+	lb.globalManager.DistributeHourlyInflation(ctx)
 	lb.distributeInflationToValidator(ctx)
 }
 
@@ -594,14 +593,6 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
 		panic(err)
 	}
-}
-
-func (lb *LinoBlockchain) getPastHoursMinusOneThisYear(ctx sdk.Context) int64 {
-	pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return (pastMinutes/60 - 1) % types.HoursPerYear
 }
 
 // Custom logic for state export

@@ -319,7 +319,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	for i := 0; i < len(expectBalanceList); i++ {
 		expectBalanceList[i] = expectBaseBalance
 	}
-	lb.globalManager.DistributeHourlyInflation(ctx, 0)
+	lb.globalManager.DistributeHourlyInflation(ctx)
 	lb.distributeInflationToValidator(ctx)
 	// simulate app
 	// hourly inflation
@@ -698,8 +698,6 @@ func TestIncreaseMinute(t *testing.T) {
 		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, pastMinutes, int64(i+1))
-		pastHoursMinusOneThisYear := lb.getPastHoursMinusOneThisYear(ctx)
-		assert.Equal(t, (int64(i+1)/60-1)%types.HoursPerYear, pastHoursMinusOneThisYear)
 		if i > 0 && i%60 == 0 {
 			hourlyInflation :=
 				types.RatToCoin(

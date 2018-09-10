@@ -711,7 +711,7 @@ func TestDistributeHourlyInflation(t *testing.T) {
 	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	for i := 0; i < types.HoursPerYear; i++ {
-		err = gm.DistributeHourlyInflation(ctx, int64(i))
+		err = gm.DistributeHourlyInflation(ctx)
 		assert.Nil(t, err)
 
 		consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
