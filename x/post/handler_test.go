@@ -15,11 +15,13 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
+	postParam, _ := ph.GetPostParam(ctx)
 
 	user := createTestAccount(t, ctx, am, "user1")
 
+	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})
 	// test valid post
 	msg := CreatePostMsg{
 		PostID:       "TestPostID",
@@ -706,7 +708,8 @@ func TestHandlerPostDonate(t *testing.T) {
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	postParam, _ := ph.GetPostParam(ctx)
 	handler := NewHandler(pm, am, gm, dm)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
@@ -729,13 +732,14 @@ func TestHandlerRePostDonate(t *testing.T) {
 		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
+	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})
 	result := handler(ctx, msg)
-	assert.Equal(t, result, sdk.Result{})
+	assert.Equal(t, sdk.Result{}, result)
 
 	donateMsg := NewDonateMsg(
 		string(user3), types.LNO("100"), string(user2), "repost", "", memo1)
 	result = handler(ctx, donateMsg)
-	assert.Equal(t, result, sdk.Result{})
+	assert.Equal(t, sdk.Result{}, result)
 	eventList :=
 		gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600*7*24)
 
@@ -778,6 +782,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 
 	// check source post
 	postMeta.TotalReward = types.RatToCoin(sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(95, 100)))
+	postMeta.CreatedAt = 0
+	postMeta.LastUpdatedAt = 0
 	postInfo.Author = user1
 	postInfo.PostID = postID
 	postInfo.SourceAuthor = ""
@@ -800,7 +806,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		PostAuthor: user1,
 		PostID:     postID,
 		Consumer:   user3,
-		Evaluate:   types.NewCoinFromInt64(2075784),
+		Evaluate:   types.NewCoinFromInt64(2075781),
 		Original:   types.NewCoinFromInt64(85 * types.Decimals),
 		Friction:   types.NewCoinFromInt64(425000),
 		FromApp:    "",

@@ -21,6 +21,15 @@ type GlobalTime struct {
 	PastMinutes    int64 `json:"past_minutes"`
 }
 
+// LinoPowerStatistic - records the information needed by
+// lino power deposit, update and store daily.
+type LinoPowerStatistic struct {
+	TotalConsumptionFriction types.Coin `json:"total_consumption_friction"`
+	UnclaimedFriction        types.Coin `json:"unclaimed_friction"`
+	TotalLinoPower           types.Coin `json:"total_lino_power"`
+	UnclaimedLinoPower       types.Coin `json:"unclaimed_lino_power"`
+}
+
 // TPS - transaction per section
 type TPS struct {
 	CurrentTPS sdk.Rat `json:"current_tps"`

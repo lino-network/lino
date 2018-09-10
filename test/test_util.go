@@ -103,7 +103,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	lb.Commit()
 
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)}})
+		Header: abci.Header{ChainID: "Lino", Time: time.Now()}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb

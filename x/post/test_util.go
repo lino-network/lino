@@ -70,7 +70,7 @@ func getContext(height int64) sdk.Context {
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now()}, false, log.NewNopLogger())
+		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 }
 
 func checkPostKVStore(

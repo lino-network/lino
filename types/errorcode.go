@@ -177,6 +177,9 @@ const (
 	CodeFailedToMarshalTime                    sdk.CodeType = 620
 	CodeGlobalTimeNotFound                     sdk.CodeType = 621
 	CodeFailedToGetAmountOfConsumptionExponent sdk.CodeType = 622
+	CodeLinoPowerStatisticNotFound             sdk.CodeType = 623
+	CodeFailedToUnmarshalLinoPowerStatistic    sdk.CodeType = 624
+	CodePastDayIsNegative                      sdk.CodeType = 625
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700

@@ -84,6 +84,19 @@ func (gm GlobalManager) SetLastBlockTime(ctx sdk.Context, unixTime int64) sdk.Er
 	return gm.storage.SetGlobalTime(ctx, globalTime)
 }
 
+// GetPastDay - get start time from KVStore to calculate past day
+func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) (int64, sdk.Error) {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return 0, err
+	}
+	pastDay := (ctx.BlockHeader().Time.Unix() - globalTime.ChainStartTime) / (3600 * 24)
+	if pastDay < 0 {
+		return 0, ErrGetPastDay()
+	}
+	return pastDay, nil
+}
+
 // GetChainStartTime - get chain start time from KVStore
 func (gm GlobalManager) GetChainStartTime(ctx sdk.Context) (int64, sdk.Error) {
 	globalTime, err := gm.storage.GetGlobalTime(ctx)
@@ -152,14 +165,109 @@ func (gm GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	if err != nil {
 		return err
 	}
-	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(friction)
+	pastDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	if err != nil {
+		return err
+	}
+	linoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, pastDay)
+	if err != nil {
+		return err
+	}
+	// consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(friction)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
-
+	linoPowerStatistic.TotalConsumptionFriction = linoPowerStatistic.TotalConsumptionFriction.Plus(friction)
+	linoPowerStatistic.UnclaimedFriction = linoPowerStatistic.UnclaimedFriction.Plus(friction)
 	if err := gm.registerEventAtTime(
 		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodSec, event); err != nil {
 		return err
 	}
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
+		return err
+	}
+	if err := gm.storage.SetLinoPowerStatistic(ctx, pastDay, linoPowerStatistic); err != nil {
+		return err
+	}
+	return nil
+}
+
+// AddLinoPower - add lino power to total lino power at current day
+func (gm GlobalManager) AddLinoPower(ctx sdk.Context, linoPower types.Coin) sdk.Error {
+	pastDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	if err != nil {
+		return err
+	}
+	linoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, pastDay)
+	if err != nil {
+		return err
+	}
+	linoPowerStatistic.TotalLinoPower = linoPowerStatistic.TotalLinoPower.Plus(linoPower)
+	linoPowerStatistic.UnclaimedLinoPower = linoPowerStatistic.UnclaimedLinoPower.Plus(linoPower)
+	if err := gm.storage.SetLinoPowerStatistic(ctx, pastDay, linoPowerStatistic); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MinusLinoPower - minus lino power from total lino power at current day
+func (gm GlobalManager) MinusLinoPower(ctx sdk.Context, linoPower types.Coin) sdk.Error {
+	pastDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	if err != nil {
+		return err
+	}
+	linoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, pastDay)
+	if err != nil {
+		return err
+	}
+	linoPowerStatistic.TotalLinoPower = linoPowerStatistic.TotalLinoPower.Minus(linoPower)
+	linoPowerStatistic.UnclaimedLinoPower = linoPowerStatistic.UnclaimedLinoPower.Minus(linoPower)
+	if err := gm.storage.SetLinoPowerStatistic(ctx, pastDay, linoPowerStatistic); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetInterestSince - get interest from unix time till now (exclusive)
+func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoPower types.Coin) (types.Coin, sdk.Error) {
+	startDay, err := gm.GetPastDay(ctx, unixTime)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	endDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	interest := types.NewCoinFromInt64(0)
+	for day := startDay; day < endDay; day++ {
+		linoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, day)
+		if err != nil {
+			return types.NewCoinFromInt64(0), err
+		}
+		interestPerDay :=
+			types.RatToCoin(linoPowerStatistic.TotalConsumptionFriction.ToRat().Mul(
+				linoPower.ToRat().Quo(linoPowerStatistic.UnclaimedLinoPower.ToRat())))
+		interest = interest.Plus(interestPerDay)
+		linoPowerStatistic.UnclaimedFriction = linoPowerStatistic.UnclaimedFriction.Minus(interestPerDay)
+		linoPowerStatistic.UnclaimedLinoPower = linoPowerStatistic.UnclaimedLinoPower.Minus(linoPower)
+		if err := gm.storage.SetLinoPowerStatistic(ctx, day, linoPowerStatistic); err != nil {
+			return types.NewCoinFromInt64(0), err
+		}
+	}
+	return interest, nil
+}
+
+// RecordConsumptionAndLinoPower - records consumption and lino power to LinoPowerStatistic and renew to new slot
+func (gm GlobalManager) RecordConsumptionAndLinoPower(ctx sdk.Context) sdk.Error {
+	day, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	if err != nil {
+		return err
+	}
+	lastLinoPowerStatistic, err := gm.storage.GetLinoPowerStatistic(ctx, day-1)
+	if err != nil {
+		return err
+	}
+	lastLinoPowerStatistic.TotalConsumptionFriction = types.NewCoinFromInt64(0)
+	lastLinoPowerStatistic.UnclaimedFriction = types.NewCoinFromInt64(0)
+	if err := gm.storage.SetLinoPowerStatistic(ctx, day, lastLinoPowerStatistic); err != nil {
 		return err
 	}
 	return nil

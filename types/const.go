@@ -112,6 +112,9 @@ const (
 	// MinutesPerMonth - as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
 
+	// MinutesPerDay - as defined by a julian year of 365.25 days
+	MinutesPerDay = 60 * 24
+
 	// PrecisionFactor - all decimals will around to allow at most 7 decimals
 	PrecisionFactor = 10000000
 
