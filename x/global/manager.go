@@ -202,8 +202,7 @@ func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Ev
 }
 
 // DistributeHourlyInflation - distribute inflation hourly
-func (gm GlobalManager) DistributeHourlyInflation(
-	ctx sdk.Context, pastHoursMinusOneThisYear int64) sdk.Error {
+func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	// param will be changed in one day
 	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	if err != nil {
