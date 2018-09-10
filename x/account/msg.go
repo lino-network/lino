@@ -364,7 +364,7 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername("illegal input")
 	}
 
-	match, err = regexp.MatchString(types.IlligalUsernameReCheck, string(msg.NewUser))
+	match, err = regexp.MatchString(types.IllegalUsernameReCheck, string(msg.NewUser))
 	if err != nil {
 		return ErrInvalidUsername("match error")
 	}
