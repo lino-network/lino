@@ -1527,7 +1527,7 @@ func TestAddAndClaimInterest(t *testing.T) {
 		Saving:      accParam.RegisterFee,
 		NumOfTx:     1,
 		NumOfReward: 0,
-		Stake:       accParam.RegisterFee,
+		CoinDay:     accParam.RegisterFee,
 	}
 	checkBankKVByUsername(t, ctx, testName, accKey, bank)
 
