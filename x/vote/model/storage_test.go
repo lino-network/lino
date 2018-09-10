@@ -33,7 +33,7 @@ func TestDoesVoterExist(t *testing.T) {
 	user := types.AccountKey("user")
 	voter := &Voter{
 		Username:       user,
-		Deposit:        types.NewCoinFromInt64(1000),
+		LinoPower:      types.NewCoinFromInt64(1000),
 		DelegatedPower: types.NewCoinFromInt64(10000),
 	}
 	err := vs.SetVoter(ctx, user, voter)
@@ -173,7 +173,7 @@ func TestVoter(t *testing.T) {
 	user := types.AccountKey("user")
 	voter := Voter{
 		Username:       user,
-		Deposit:        types.NewCoinFromInt64(1000),
+		LinoPower:      types.NewCoinFromInt64(1000),
 		DelegatedPower: types.NewCoinFromInt64(10000),
 	}
 	err := vs.SetVoter(ctx, user, &voter)

@@ -58,7 +58,7 @@ func handleVoterDepositMsg(
 		}
 	} else {
 		// Deposit coins
-		if err := vm.Deposit(ctx, msg.Username, coin); err != nil {
+		if err := vm.AddLinoPower(ctx, msg.Username, coin); err != nil {
 			return err.Result()
 		}
 	}
