@@ -80,7 +80,7 @@ const (
 
 	// UsernameReCheck - UsernameReCheck is used to check user registration
 	UsernameReCheck        = "^[a-z]([a-z0-9-\\.]){1,19}[a-z0-9]$"
-	IlligalUsernameReCheck = "^[a-z0-9\\.-]*([-\\.]){2,}[a-z0-9\\.-]*$"
+	IllegalUsernameReCheck = "^[a-z0-9\\.-]*([-\\.]){2,}[a-z0-9\\.-]*$"
 
 	// MinimumUsernameLength - minimum username length
 	MinimumUsernameLength = 3
