@@ -80,7 +80,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 		return false
 	}
 	//reject if the remaining coins are less than voter minimum deposit
-	remaining := voter.LinoPower.Minus(coin)
+	remaining := voter.LinoStake.Minus(coin)
 	if !remaining.IsGTE(param.VoterMinDeposit) {
 		return false
 	}
@@ -120,7 +120,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 		return false
 	}
 	// check minimum voting deposit for validator
-	return voter.LinoPower.IsGTE(param.ValidatorMinVotingDeposit)
+	return voter.LinoStake.IsGTE(param.ValidatorMinVotingDeposit)
 }
 
 // AddVote - voter vote for a proposal
@@ -189,7 +189,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter := &model.Voter{
 		Username:          username,
-		LinoPower:         coin,
+		LinoStake:         coin,
 		LastPowerChangeAt: ctx.BlockHeader().Time.Unix(),
 	}
 
@@ -209,13 +209,13 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 	return nil
 }
 
-// AddLinoPower - add lino power
-func (vm VoteManager) AddLinoPower(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+// AddLinoStake - add lino power
+func (vm VoteManager) AddLinoStake(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
 	}
-	voter.LinoPower = voter.LinoPower.Plus(coin)
+	voter.LinoStake = voter.LinoStake.Plus(coin)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
@@ -232,9 +232,9 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 	if err != nil {
 		return err
 	}
-	voter.LinoPower = voter.LinoPower.Minus(coin)
+	voter.LinoStake = voter.LinoStake.Minus(coin)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-	if voter.LinoPower.IsZero() {
+	if voter.LinoStake.IsZero() {
 		if err := vm.storage.DeleteVoter(ctx, username); err != nil {
 			return err
 		}
@@ -253,10 +253,10 @@ func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKe
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
-	if err := vm.VoterWithdraw(ctx, username, voter.LinoPower); err != nil {
+	if err := vm.VoterWithdraw(ctx, username, voter.LinoStake); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
-	return voter.LinoPower, nil
+	return voter.LinoStake, nil
 }
 
 // DelegatorWithdraw - withdraw delegation
@@ -311,7 +311,7 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 	if err != nil {
 		return types.Coin{}, err
 	}
-	res := voter.LinoPower.Plus(voter.DelegatedPower)
+	res := voter.LinoStake.Plus(voter.DelegatedPower)
 	return res, nil
 }
 
@@ -348,13 +348,22 @@ func (vm VoteManager) GetPenaltyList(
 	return penaltyList, nil
 }
 
-// GetVoterDeposit - get voter deposit
-func (vm VoteManager) GetVoterDeposit(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+// GetLinoStake - get lino stake
+func (vm VoteManager) GetLinoStake(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
-	return voter.LinoPower, nil
+	return voter.LinoStake, nil
+}
+
+// GetLinoStakeLastChangedAt - get linoStake last changed time
+func (vm VoteManager) GetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.AccountKey) (int64, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		return 0, err
+	}
+	return voter.LastPowerChangeAt, nil
 }
 
 // GetAllDelegators - get all delegators of a voter

@@ -32,7 +32,7 @@ func TestVoterDepositBasic(t *testing.T) {
 
 	// make sure the voter's account info is correct
 	voter, _ := vm.storage.GetVoter(ctx, user1)
-	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoPower)
+	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoStake)
 }
 
 func TestDelegateBasic(t *testing.T) {
@@ -59,7 +59,7 @@ func TestDelegateBasic(t *testing.T) {
 
 	// make sure the voter's voting power is correct
 	voter, _ := vm.storage.GetVoter(ctx, user1)
-	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoPower)
+	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoStake)
 	assert.Equal(t, delegatedCoin.Plus(delegatedCoin), voter.DelegatedPower)
 
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
@@ -189,7 +189,7 @@ func TestVoterWithdraw(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result3)
 
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
-	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoPower)
+	assert.Equal(t, voteParam.VoterMinDeposit, voter.LinoStake)
 }
 
 func TestDelegatorWithdraw(t *testing.T) {
