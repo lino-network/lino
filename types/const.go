@@ -94,20 +94,11 @@ const (
 	// MaximumJSONMetaLength - maximum length of account JSON meta
 	MaximumJSONMetaLength = 500
 
-	// DefaultActivityBurden - for user when account is registered
-	DefaultActivityBurden = 100
-
 	// MaxPostTitleLength - maximum length of post title
 	MaxPostTitleLength = 50
 
 	// MaxPostContentLength - maximum length of post content
 	MaxPostContentLength = 1000
-
-	// MaxLikeWeight - 100.00% maximum like weight.
-	MaxLikeWeight = 10000
-
-	// MinLikeWeight - -100.00% maximum like weight.
-	MinLikeWeight = -10000
 
 	// KeySeparator - separate different key component
 	KeySeparator = "/"
