@@ -17,7 +17,7 @@ func TestNormalPublish(t *testing.T) {
 	newAccountName := "newuser"
 	postID1 := "New Post 1"
 	postID2 := "New Post 2"
-	// recover some stake
+	// recover some coin day
 	baseTime := time.Now().Unix() + 3600
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
@@ -70,7 +70,7 @@ func TestInvalidRepost(t *testing.T) {
 		Author:                  types.AccountKey(newAccountName),
 		RedistributionSplitRate: "0",
 	}
-	// reject due to stake
+	// reject due to coin day
 	test.SignCheckDeliver(t, lb, msg, 0, true, newAccountAppPriv, baseTime)
 	msg.SourceAuthor = types.AccountKey(newAccountName)
 	msg.SourcePostID = "invalid"

@@ -108,7 +108,7 @@ func TestGetGenesisJson(t *testing.T) {
 				AbsentCommitLimitation:         int64(600), // 30min
 			},
 			param.CoinDayParam{
-				SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+				SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 			},
 			param.BandwidthParam{
 				SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -116,9 +116,9 @@ func TestGetGenesisJson(t *testing.T) {
 				VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 			},
 			param.AccountParam{
-				MinimumBalance:             types.NewCoinFromInt64(0),
-				RegisterFee:                types.NewCoinFromInt64(1 * types.Decimals),
-				FirstDepositFullStakeLimit: types.NewCoinFromInt64(1 * types.Decimals),
+				MinimumBalance:               types.NewCoinFromInt64(0),
+				RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
+				FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
 			},
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,

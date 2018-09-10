@@ -246,7 +246,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			AbsentCommitLimitation:         int64(600), // 10min
 		},
 		param.CoinDayParam{
-			SecondsToRecoverCoinDayStake: int64(7 * 24 * 3600),
+			SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
 		},
 		param.BandwidthParam{
 			SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -256,7 +256,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		param.AccountParam{
 			MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
 			RegisterFee:                types.NewCoinFromInt64(0),
-			FirstDepositFullStakeLimit: types.NewCoinFromInt64(0),
+			FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(0),
 		},
 		param.PostParam{
 			ReportOrUpvoteIntervalSec: 24 * 3600,

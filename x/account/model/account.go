@@ -20,7 +20,7 @@ type AccountInfo struct {
 // AccountBank - user balance
 type AccountBank struct {
 	Saving          types.Coin    `json:"saving"`
-	Stake           types.Coin    `json:"stake"`
+	CoinDay         types.Coin    `json:"coin_day"`
 	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
 	NumOfTx         int64         `json:"number_of_transaction"`
 	NumOfReward     int64         `json:"number_of_reward"`
@@ -34,16 +34,16 @@ type FrozenMoney struct {
 	Interval int64      `json:"interval"`
 }
 
-// PendingStakeQueue - stores a list of pending stake and total number of coin waiting in list
-type PendingStakeQueue struct {
-	LastUpdatedAt int64          `json:"last_updated_at"`
-	TotalStake    sdk.Rat        `json:"total_stake"`
-	TotalCoin     types.Coin     `json:"total_coin"`
-	PendingStakes []PendingStake `json:"pending_stakes"`
+// PendingCoinDayQueue - stores a list of pending coin day and total number of coin waiting in list
+type PendingCoinDayQueue struct {
+	LastUpdatedAt   int64            `json:"last_updated_at"`
+	TotalCoinDay    sdk.Rat          `json:"total_coin_day"`
+	TotalCoin       types.Coin       `json:"total_coin"`
+	PendingCoinDays []PendingCoinDay `json:"pending_coin_days"`
 }
 
-// PendingStake - pending stake in the list
-type PendingStake struct {
+// PendingCoinDay - pending coin day in the list
+type PendingCoinDay struct {
 	StartTime int64      `json:"start_time"`
 	EndTime   int64      `json:"end_time"`
 	Coin      types.Coin `json:"coin"`

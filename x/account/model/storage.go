@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	accountInfoSubstore              = []byte{0x00}
-	accountBankSubstore              = []byte{0x01}
-	accountMetaSubstore              = []byte{0x02}
-	accountFollowerSubstore          = []byte{0x03}
-	accountFollowingSubstore         = []byte{0x04}
-	accountRewardSubstore            = []byte{0x05}
-	accountPendingStakeQueueSubstore = []byte{0x06}
-	accountRelationshipSubstore      = []byte{0x07}
-	accountBalanceHistorySubstore    = []byte{0x08}
-	accountGrantPubKeySubstore       = []byte{0x09}
-	accountRewardHistorySubstore     = []byte{0x0a}
+	accountInfoSubstore                = []byte{0x00}
+	accountBankSubstore                = []byte{0x01}
+	accountMetaSubstore                = []byte{0x02}
+	accountFollowerSubstore            = []byte{0x03}
+	accountFollowingSubstore           = []byte{0x04}
+	accountRewardSubstore              = []byte{0x05}
+	accountPendingCoinDayQueueSubstore = []byte{0x06}
+	accountRelationshipSubstore        = []byte{0x07}
+	accountBalanceHistorySubstore      = []byte{0x08}
+	accountGrantPubKeySubstore         = []byte{0x09}
+	accountRewardHistorySubstore       = []byte{0x0a}
 )
 
 // AccountStorage - account storage
@@ -205,29 +205,29 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 	return nil
 }
 
-// GetPendingStakeQueue - returns a pending stake queue for a given address.
-func (as AccountStorage) GetPendingStakeQueue(
-	ctx sdk.Context, me types.AccountKey) (*PendingStakeQueue, sdk.Error) {
+// GetPendingCoinDayQueue - returns a pending coin day queue for a given address.
+func (as AccountStorage) GetPendingCoinDayQueue(
+	ctx sdk.Context, me types.AccountKey) (*PendingCoinDayQueue, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte := store.Get(getPendingStakeQueueKey(me))
-	if pendingStakeQueueByte == nil {
-		return nil, ErrPendingStakeQueueNotFound()
+	pendingCoinDayQueueByte := store.Get(getPendingCoinDayQueueKey(me))
+	if pendingCoinDayQueueByte == nil {
+		return nil, ErrPendingCoinDayQueueNotFound()
 	}
-	queue := new(PendingStakeQueue)
-	if err := as.cdc.UnmarshalJSON(pendingStakeQueueByte, queue); err != nil {
-		return nil, ErrFailedToUnmarshalPendingStakeQueue(err)
+	queue := new(PendingCoinDayQueue)
+	if err := as.cdc.UnmarshalJSON(pendingCoinDayQueueByte, queue); err != nil {
+		return nil, ErrFailedToUnmarshalPendingCoinDayQueue(err)
 	}
 	return queue, nil
 }
 
-// SetPendingStakeQueue - sets a pending stake queue for a given username.
-func (as AccountStorage) SetPendingStakeQueue(ctx sdk.Context, me types.AccountKey, pendingStakeQueue *PendingStakeQueue) sdk.Error {
+// SetPendingCoinDayQueue - sets a pending coin day queue for a given username.
+func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.AccountKey, pendingCoinDayQueue *PendingCoinDayQueue) sdk.Error {
 	store := ctx.KVStore(as.key)
-	pendingStakeQueueByte, err := as.cdc.MarshalJSON(*pendingStakeQueue)
+	pendingCoinDayQueueByte, err := as.cdc.MarshalJSON(*pendingCoinDayQueue)
 	if err != nil {
-		return ErrFailedToMarshalPendingStakeQueue(err)
+		return ErrFailedToMarshalPendingCoinDayQueue(err)
 	}
-	store.Set(getPendingStakeQueueKey(me), pendingStakeQueueByte)
+	store.Set(getPendingCoinDayQueueKey(me), pendingCoinDayQueueByte)
 	return nil
 }
 
@@ -398,8 +398,8 @@ func getRelationshipPrefix(me types.AccountKey) []byte {
 	return append(append(accountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
-func getPendingStakeQueueKey(accKey types.AccountKey) []byte {
-	return append(accountPendingStakeQueueSubstore, accKey...)
+func getPendingCoinDayQueueKey(accKey types.AccountKey) []byte {
+	return append(accountPendingCoinDayQueueSubstore, accKey...)
 }
 
 func getGrantPubKeyPrefix(me types.AccountKey) []byte {

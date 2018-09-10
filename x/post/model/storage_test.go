@@ -67,8 +67,8 @@ func TestPostMeta(t *testing.T) {
 	postMeta := PostMeta{
 		AllowReplies:            true,
 		RedistributionSplitRate: sdk.ZeroRat(),
-		TotalUpvoteStake:        types.NewCoinFromInt64(0),
-		TotalReportStake:        types.NewCoinFromInt64(0),
+		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
+		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
 	}
 

@@ -33,8 +33,8 @@ type PostMeta struct {
 	AllowReplies            bool       `json:"allow_replies"`
 	IsDeleted               bool       `json:"is_deleted"`
 	TotalDonateCount        int64      `json:"total_donate_count"`
-	TotalReportStake        types.Coin `json:"total_report_stake"`
-	TotalUpvoteStake        types.Coin `json:"total_upvote_stake"`
+	TotalReportCoinDay      types.Coin `json:"total_report_coin_day"`
+	TotalUpvoteCoinDay      types.Coin `json:"total_upvote_coin_day"`
 	TotalViewCount          int64      `json:"total_view_count"`
 	TotalReward             types.Coin `json:"total_reward"`
 	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
@@ -43,7 +43,7 @@ type PostMeta struct {
 // ReportOrUpvote - report or upvote from a user to a post
 type ReportOrUpvote struct {
 	Username  types.AccountKey `json:"username"`
-	Stake     types.Coin       `json:"stake"`
+	CoinDay   types.Coin       `json:"coin_day"`
 	CreatedAt int64            `json:"created_at"`
 	IsReport  bool             `json:"is_report"`
 }

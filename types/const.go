@@ -112,6 +112,9 @@ const (
 	// MinutesPerMonth - as defined by a julian year of 365.25 days
 	MinutesPerMonth = MinutesPerYear / 12
 
+	// MinutesPerDay - as defined by a julian year of 365.25 days
+	MinutesPerDay = 60 * 24
+
 	// PrecisionFactor - all decimals will around to allow at most 7 decimals
 	PrecisionFactor = 10000000
 
@@ -145,8 +148,8 @@ const (
 	// MaximumLengthOfProposalReason - maximum length of proposal reason
 	MaximumLengthOfProposalReason = 1000
 
-	// InitAccountWithFullStakeMemo - init account with full stake memo
-	InitAccountWithFullStakeMemo = "open account deposit"
+	// InitAccountWithFullCoinDayMemo - init account with full coin day memo
+	InitAccountWithFullCoinDayMemo = "open account deposit"
 
 	// InitAccountRegisterDepositMemo - init account deposit fee memo
 	InitAccountRegisterDepositMemo = "init deposit"

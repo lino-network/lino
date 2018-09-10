@@ -125,9 +125,9 @@ type ValidatorParam struct {
 }
 
 // CoinDayParam - coin day parameters
-// SecondsToRecoverCoinDayStake - seconds for each incoming balance stake fully charged
+// SecondsToRecoverCoinDay - seconds for each incoming balance coin day fully charged
 type CoinDayParam struct {
-	SecondsToRecoverCoinDayStake int64 `json:"seconds_to_recover_coin_day_stake"`
+	SecondsToRecoverCoinDay int64 `json:"seconds_to_recover_coin_day"`
 }
 
 // BandwidthParam - bandwidth parameters
@@ -142,11 +142,11 @@ type BandwidthParam struct {
 // AccountParam - account parameters
 // MinimumBalance - minimum balance each account need to maintain
 // RegisterFee - register fee need to pay to developer inflation pool for each account registration
-// FirstDepositFullStakeLimit - when register account, some of stake of register fee to newly open account will be fully charged
+// FirstDepositFullCoinDayLimit - when register account, some of coin day of register fee to newly open account will be fully charged
 type AccountParam struct {
-	MinimumBalance             types.Coin `json:"minimum_balance"`
-	RegisterFee                types.Coin `json:"register_fee"`
-	FirstDepositFullStakeLimit types.Coin `json:"first_deposit_full_stake_limit"`
+	MinimumBalance               types.Coin `json:"minimum_balance"`
+	RegisterFee                  types.Coin `json:"register_fee"`
+	FirstDepositFullCoinDayLimit types.Coin `json:"first_deposit_full_coin_day_limit"`
 }
 
 // PostParam - post parameters

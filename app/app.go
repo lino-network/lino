@@ -460,6 +460,9 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if pastMinutes%60 == 0 {
 		lb.executeHourlyEvent(ctx)
 	}
+	if pastMinutes%types.MinutesPerDay == 0 {
+		lb.executeDailyEvent(ctx)
+	}
 	if pastMinutes%types.MinutesPerMonth == 0 {
 		lb.executeMonthlyEvent(ctx)
 	}
@@ -473,6 +476,11 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.globalManager.DistributeHourlyInflation(ctx)
 	lb.distributeInflationToValidator(ctx)
+}
+
+// execute daily event, record consumption friction and lino power
+func (lb *LinoBlockchain) executeDailyEvent(ctx sdk.Context) {
+	lb.globalManager.RecordConsumptionAndLinoStake(ctx)
 }
 
 // execute monthly event, distribute inflation to infra and application

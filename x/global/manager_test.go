@@ -40,7 +40,7 @@ func getContext() sdk.Context {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 }
 
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
@@ -304,36 +304,36 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time.Unix()
 	testCases := []struct {
-		testName               string
-		frictionCoin           types.Coin
-		evaluateCoin           types.Coin
-		registerBaseTime       int64
-		expectCoinInRewardPool types.Coin
-		expectCoinInWindow     types.Coin
+		testName              string
+		frictionCoin          types.Coin
+		evaluateCoin          types.Coin
+		registerBaseTime      int64
+		expectCoinInStatistic types.Coin
+		expectCoinInWindow    types.Coin
 	}{
 		{
-			testName:               "add 1 friction",
-			frictionCoin:           types.NewCoinFromInt64(1),
-			evaluateCoin:           types.NewCoinFromInt64(1),
-			registerBaseTime:       baseTime,
-			expectCoinInRewardPool: types.NewCoinFromInt64(1),
-			expectCoinInWindow:     types.NewCoinFromInt64(1),
+			testName:              "add 1 friction",
+			frictionCoin:          types.NewCoinFromInt64(1),
+			evaluateCoin:          types.NewCoinFromInt64(1),
+			registerBaseTime:      baseTime,
+			expectCoinInStatistic: types.NewCoinFromInt64(1),
+			expectCoinInWindow:    types.NewCoinFromInt64(1),
 		},
 		{
-			testName:               "add 100 more friction",
-			frictionCoin:           types.NewCoinFromInt64(100),
-			evaluateCoin:           types.NewCoinFromInt64(1),
-			registerBaseTime:       baseTime + 100,
-			expectCoinInRewardPool: types.NewCoinFromInt64(101),
-			expectCoinInWindow:     types.NewCoinFromInt64(2),
+			testName:              "add 100 more friction",
+			frictionCoin:          types.NewCoinFromInt64(100),
+			evaluateCoin:          types.NewCoinFromInt64(1),
+			registerBaseTime:      baseTime + 100,
+			expectCoinInStatistic: types.NewCoinFromInt64(101),
+			expectCoinInWindow:    types.NewCoinFromInt64(2),
 		},
 		{
-			testName:               "add 1 more friction",
-			frictionCoin:           types.NewCoinFromInt64(1),
-			evaluateCoin:           types.NewCoinFromInt64(100),
-			registerBaseTime:       baseTime + 1001,
-			expectCoinInRewardPool: types.NewCoinFromInt64(102),
-			expectCoinInWindow:     types.NewCoinFromInt64(102),
+			testName:              "add 1 more friction",
+			frictionCoin:          types.NewCoinFromInt64(1),
+			evaluateCoin:          types.NewCoinFromInt64(100),
+			registerBaseTime:      baseTime + 1001,
+			expectCoinInStatistic: types.NewCoinFromInt64(102),
+			expectCoinInWindow:    types.NewCoinFromInt64(102),
 		},
 	}
 
@@ -349,13 +349,25 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to get consumption meta, got err %v", tc.testName, err)
 		}
-		if !consumptionMeta.ConsumptionRewardPool.IsEqual(tc.expectCoinInRewardPool) {
-			t.Errorf("%s: diff consumption reward pool, got %v, want %v", tc.testName,
-				consumptionMeta.ConsumptionRewardPool, tc.expectCoinInRewardPool)
+		if !consumptionMeta.ConsumptionRewardPool.IsZero() {
+			t.Errorf("%s: diff consumption reward pool, got %v, want zero",
+				tc.testName, consumptionMeta.ConsumptionRewardPool)
 		}
 		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectCoinInWindow) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectCoinInWindow)
+		}
+		pastDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+		if err != nil {
+			t.Errorf("%s: failed to get past day, got err %v", tc.testName, err)
+		}
+		linoStakeStatistic, err := gm.storage.GetLinoStakeStat(ctx, pastDay)
+		if err != nil {
+			t.Errorf("%s: failed to get lino power statistic, got err %v", tc.testName, err)
+		}
+		if !linoStakeStatistic.TotalConsumptionFriction.IsEqual(tc.expectCoinInStatistic) {
+			t.Errorf("%s: diff total consumption friction, got %v, want %v", tc.testName,
+				linoStakeStatistic.TotalConsumptionFriction, tc.expectCoinInStatistic)
 		}
 
 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.registerBaseTime+24*7*3600)

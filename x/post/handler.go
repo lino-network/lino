@@ -133,11 +133,11 @@ func handleDonateMsg(
 		types.DonationOut); err != nil {
 		return err.Result()
 	}
-	stake, err := am.GetStake(ctx, msg.Username)
+	coinDay, err := am.GetCoinDay(ctx, msg.Username)
 	if err != nil {
 		return err.Result()
 	}
-	if err := pm.ReportOrUpvoteToPost(ctx, permlink, msg.Username, stake, false); err != nil {
+	if err := pm.ReportOrUpvoteToPost(ctx, permlink, msg.Username, coinDay, false); err != nil {
 		return err.Result()
 	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
@@ -246,7 +246,7 @@ func handleReportOrUpvoteMsg(
 		return ErrPostNotFound(permlink).Result()
 	}
 
-	stake, err := am.GetStake(ctx, msg.Username)
+	coinDay, err := am.GetCoinDay(ctx, msg.Username)
 	if err != nil {
 		return err.Result()
 	}
@@ -266,7 +266,7 @@ func handleReportOrUpvoteMsg(
 	}
 
 	if err := pm.ReportOrUpvoteToPost(
-		ctx, permlink, msg.Username, stake, msg.IsReport); err != nil {
+		ctx, permlink, msg.Username, coinDay, msg.IsReport); err != nil {
 		return err.Result()
 	}
 	if err := am.UpdateLastReportOrUpvoteAt(ctx, msg.Username); err != nil {

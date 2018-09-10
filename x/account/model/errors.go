@@ -28,9 +28,9 @@ func ErrRewardNotFound() sdk.Error {
 	return types.NewError(types.CodeRewardNotFound, fmt.Sprintf("reward is not found"))
 }
 
-// ErrPendingStakeQueueNotFound - error if pending stake queue is not found
-func ErrPendingStakeQueueNotFound() sdk.Error {
-	return types.NewError(types.CodePendingStakeQueueNotFound, fmt.Sprintf("pending stake queue is not found"))
+// ErrPendingCoinDayQueueNotFound - error if pending coin day queue is not found
+func ErrPendingCoinDayQueueNotFound() sdk.Error {
+	return types.NewError(types.CodePendingCoinDayQueueNotFound, fmt.Sprintf("pending coin day queue is not found"))
 }
 
 // ErrGrantPubKeyNotFound - error if grant public key is not found
@@ -68,9 +68,9 @@ func ErrFailedToMarshalReward(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalReward, fmt.Sprintf("failed to marshal reward: %s", err.Error()))
 }
 
-// ErrFailedToMarshalPendingStakeQueue - error if marshal pending stake queue failed
-func ErrFailedToMarshalPendingStakeQueue(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToMarshalPendingStakeQueue, fmt.Sprintf("failed to marshal pending stake queue: %s", err.Error()))
+// ErrFailedToMarshalPendingCoinDayQueue - error if marshal pending coin day queue failed
+func ErrFailedToMarshalPendingCoinDayQueue(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalPendingCoinDayQueue, fmt.Sprintf("failed to marshal pending coin day queue: %s", err.Error()))
 }
 
 // ErrFailedToMarshalGrantPubKey - error if marshal grant public key failed
@@ -113,9 +113,9 @@ func ErrFailedToUnmarshalReward(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalReward, fmt.Sprintf("failed to unmarshal reward: %s", err.Error()))
 }
 
-// ErrFailedToUnmarshalPendingStakeQueue - error if unmarshal pending stake queue failed
-func ErrFailedToUnmarshalPendingStakeQueue(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToUnmarshalPendingStakeQueue, fmt.Sprintf("failed to unmarshal pending stake queue: %s", err.Error()))
+// ErrFailedToUnmarshalPendingCoinDayQueue - error if unmarshal pending coin day queue failed
+func ErrFailedToUnmarshalPendingCoinDayQueue(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalPendingCoinDayQueue, fmt.Sprintf("failed to unmarshal pending coin day queue: %s", err.Error()))
 }
 
 // ErrFailedToUnmarshalGrantPubKey - error if unmarshal grant public key failed

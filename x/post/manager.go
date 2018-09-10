@@ -175,7 +175,7 @@ func (pm PostManager) AddOrUpdateViewToPost(
 // ReportOrUpvoteToPost - add or update report or upvote from the user if exist
 func (pm PostManager) ReportOrUpvoteToPost(
 	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
-	stake types.Coin, isReport bool) sdk.Error {
+	coinDay types.Coin, isReport bool) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
 		return err
@@ -186,18 +186,18 @@ func (pm PostManager) ReportOrUpvoteToPost(
 
 	if reportOrUpvote != nil {
 		if reportOrUpvote.IsReport {
-			postMeta.TotalReportStake = postMeta.TotalReportStake.Minus(reportOrUpvote.Stake)
+			postMeta.TotalReportCoinDay = postMeta.TotalReportCoinDay.Minus(reportOrUpvote.CoinDay)
 		} else {
-			postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Minus(reportOrUpvote.Stake)
+			postMeta.TotalUpvoteCoinDay = postMeta.TotalUpvoteCoinDay.Minus(reportOrUpvote.CoinDay)
 		}
 	}
 	reportOrUpvote =
-		&model.ReportOrUpvote{Username: user, Stake: stake, CreatedAt: ctx.BlockHeader().Time.Unix()}
+		&model.ReportOrUpvote{Username: user, CoinDay: coinDay, CreatedAt: ctx.BlockHeader().Time.Unix()}
 	if isReport {
-		postMeta.TotalReportStake = postMeta.TotalReportStake.Plus(reportOrUpvote.Stake)
+		postMeta.TotalReportCoinDay = postMeta.TotalReportCoinDay.Plus(reportOrUpvote.CoinDay)
 		reportOrUpvote.IsReport = true
 	} else {
-		postMeta.TotalUpvoteStake = postMeta.TotalUpvoteStake.Plus(reportOrUpvote.Stake)
+		postMeta.TotalUpvoteCoinDay = postMeta.TotalUpvoteCoinDay.Plus(reportOrUpvote.CoinDay)
 		reportOrUpvote.IsReport = false
 	}
 	if err := pm.postStorage.SetPostReportOrUpvote(ctx, permlink, reportOrUpvote); err != nil {
@@ -309,13 +309,13 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) 
 	if err != nil {
 		return sdk.ZeroRat(), err
 	}
-	if postMeta.TotalReportStake.IsZero() {
+	if postMeta.TotalReportCoinDay.IsZero() {
 		return sdk.ZeroRat(), nil
 	}
-	if postMeta.TotalUpvoteStake.IsZero() {
+	if postMeta.TotalUpvoteCoinDay.IsZero() {
 		return sdk.OneRat(), nil
 	}
-	penaltyScore := postMeta.TotalReportStake.ToRat().Quo(postMeta.TotalUpvoteStake.ToRat()).Round(types.PrecisionFactor)
+	penaltyScore := postMeta.TotalReportCoinDay.ToRat().Quo(postMeta.TotalUpvoteCoinDay.ToRat()).Round(types.PrecisionFactor)
 	if penaltyScore.GT(sdk.OneRat()) {
 		return sdk.OneRat(), nil
 	}

@@ -22,7 +22,7 @@ func TestVoterRevoke(t *testing.T) {
 	delegator1Name := "delegator1"
 	delegator2Name := "delegator2"
 
-	// to recover the stake
+	// to recover the coin day
 	baseTime := time.Now().Unix() + 7200
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 
