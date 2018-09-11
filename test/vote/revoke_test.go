@@ -33,7 +33,7 @@ func TestVoterRevoke(t *testing.T) {
 	test.CreateAccount(t, delegator2Name, lb, 2,
 		secp256k1.GenPrivKey(), delegator2TransactionPriv, secp256k1.GenPrivKey(), "70100")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
@@ -52,15 +52,15 @@ func TestVoterRevoke(t *testing.T) {
 		types.LNO("70000"))
 	test.SignCheckDeliver(t, lb, delegatorWithdrawMsg, 1, true, delegator1TransactionPriv, baseTime)
 	//all validators cannot revoke voter candidancy
-	voterRevokeMsg := vote.NewVoterRevokeMsg(newAccountName)
+	RevokeStakeMsg := vote.NewRevokeStakeMsg(newAccountName)
 	test.SimulateOneBlock(lb, baseTime)
-	test.SignCheckDeliver(t, lb, voterRevokeMsg, 2, false, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, RevokeStakeMsg, 2, false, newAccountTransactionPriv, baseTime)
 
 	//validators can revoke voter candidancy after revoking validator candidancy
 	valRevokeMsg := val.NewValidatorRevokeMsg(newAccountName)
 	test.SignCheckDeliver(t, lb, valRevokeMsg, 3, true, newAccountTransactionPriv, baseTime)
 	test.SimulateOneBlock(lb, baseTime)
-	test.SignCheckDeliver(t, lb, voterRevokeMsg, 4, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, RevokeStakeMsg, 4, true, newAccountTransactionPriv, baseTime)
 
 	// check delegator withdraw first coin return
 	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec+1)

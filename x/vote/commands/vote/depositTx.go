@@ -30,7 +30,7 @@ func sendDepositVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		user := viper.GetString(client.FlagUser)
 		// create the message
-		msg := vote.NewVoterDepositMsg(user, viper.GetString(client.FlagAmount))
+		msg := vote.NewStakeInMsg(user, viper.GetString(client.FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
