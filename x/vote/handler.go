@@ -16,7 +16,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case VoterDepositMsg:
-			return handleVoterDepositMsg(ctx, vm, am, msg)
+			return handleVoterDepositMsg(ctx, vm, gm, am, msg)
 		case VoterWithdrawMsg:
 			return handleVoterWithdrawMsg(ctx, vm, gm, am, msg)
 		case VoterRevokeMsg:
@@ -35,7 +35,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 }
 
 func handleVoterDepositMsg(
-	ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound().Result()
@@ -56,12 +56,24 @@ func handleVoterDepositMsg(
 		if err := vm.AddVoter(ctx, msg.Username, coin); err != nil {
 			return err.Result()
 		}
-	} else {
-		// Deposit coins
-		if err := vm.Deposit(ctx, msg.Username, coin); err != nil {
-			return err.Result()
-		}
+		return sdk.Result{}
 	}
+
+	// calculate interests so far
+	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
+		return err.Result()
+	}
+
+	// add linoStake to voter account
+	if err := vm.AddLinoStake(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+
+	// add linoStake to global stat
+	if err := gm.AddLinoStakeToStat(ctx, coin); err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }
 
@@ -76,7 +88,18 @@ func handleVoterWithdrawMsg(
 		return ErrIllegalWithdraw().Result()
 	}
 
+	// calculate interests so far
+	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
+		return err.Result()
+	}
+
+	// withdraw linoStake from voter account
 	if err := vm.VoterWithdraw(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+
+	// minus linoStake in global stat
+	if err := gm.MinusLinoStakeFromStat(ctx, coin); err != nil {
 		return err.Result()
 	}
 
@@ -84,6 +107,7 @@ func handleVoterWithdrawMsg(
 	if err != nil {
 		return err.Result()
 	}
+
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
 		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
@@ -122,12 +146,23 @@ func handleVoterRevokeMsg(
 		}
 	}
 
-	// return coins to voter
+	// calculate interests so far
+	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
+		return err.Result()
+	}
+
+	// withdraw all linoStake
 	coin, withdrawErr := vm.VoterWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
 		return withdrawErr.Result()
 	}
 
+	// minus linoStake in global stat
+	if err := gm.MinusLinoStakeFromStat(ctx, coin); err != nil {
+		return err.Result()
+	}
+
+	// return coins to voter
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
 		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
@@ -206,6 +241,30 @@ func handleRevokeDelegationMsg(
 		return err.Result()
 	}
 	return sdk.Result{}
+}
+
+func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
+	am acc.AccountManager, name types.AccountKey) sdk.Error {
+	userLinoStake, err := vm.GetLinoStake(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	LSLastChangedAt, err := vm.GetLinoStakeLastChangedAt(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	interest, err := gm.GetInterestSince(ctx, LSLastChangedAt, userLinoStake)
+	if err != nil {
+		return err
+	}
+
+	if err := am.AddInterest(ctx, name, interest); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func returnCoinTo(

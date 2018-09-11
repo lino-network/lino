@@ -681,6 +681,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			tc.expectAuthorReward.FrictionIncome = types.NewCoinFromInt64(0)
 			tc.expectAuthorReward.InflationIncome = types.NewCoinFromInt64(0)
 			tc.expectAuthorReward.UnclaimReward = types.NewCoinFromInt64(0)
+			tc.expectAuthorReward.Interest = types.NewCoinFromInt64(0)
 			if !assert.Equal(t, tc.expectAuthorReward, *reward) {
 				t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)
 			}

@@ -59,7 +59,7 @@ func getContext(height int64) sdk.Context {
 
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height, Time: time.Now()}, false, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{Height: height, Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 }
 
 // helper function to create an account for testing purpose
