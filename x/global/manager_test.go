@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -1234,6 +1235,297 @@ func TestPastMinutes(t *testing.T) {
 		}
 		if pastMinutes != tc.pastMinutes {
 			t.Errorf("%s: diff past minutes, got %v, want %v", tc.testName, pastMinutes, tc.pastMinutes)
+			return
+		}
+	}
+}
+
+func TestGetConsumptionFrictionRate(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName        string
+		consumptionMeta model.ConsumptionMeta
+	}{
+		{
+			testName: "normal friction rate",
+			consumptionMeta: model.ConsumptionMeta{
+				ConsumptionFrictionRate: sdk.NewRat(5, 100),
+			},
+		},
+		{
+			testName: "10% friction rate",
+			consumptionMeta: model.ConsumptionMeta{
+				ConsumptionFrictionRate: sdk.NewRat(1, 10),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetConsumptionMeta(ctx, &tc.consumptionMeta)
+		assert.Nil(t, err)
+		frictionRate, err := gm.GetConsumptionFrictionRate(ctx)
+		assert.Nil(t, err)
+
+		if !frictionRate.Equal(tc.consumptionMeta.ConsumptionFrictionRate) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, frictionRate, tc.consumptionMeta.ConsumptionFrictionRate)
+			return
+		}
+	}
+}
+
+func TestGetConsumption(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName   string
+		globalMeta model.GlobalMeta
+	}{
+		{
+			testName: "zero consumption",
+			globalMeta: model.GlobalMeta{
+				CumulativeConsumption: types.NewCoinFromInt64(0),
+			},
+		},
+		{
+			testName: "10000 LNO consumption",
+			globalMeta: model.GlobalMeta{
+				CumulativeConsumption: types.NewCoinFromInt64(10000 * types.Decimals),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetGlobalMeta(ctx, &tc.globalMeta)
+		assert.Nil(t, err)
+		consumption, err := gm.GetConsumption(ctx)
+		assert.Nil(t, err)
+
+		if !consumption.IsEqual(tc.globalMeta.CumulativeConsumption) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, consumption, tc.globalMeta.CumulativeConsumption)
+			return
+		}
+	}
+}
+
+func TestAddLinoStakeToStat(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName string
+		day      int64
+		stat     model.LinoStakeStat
+		addStake types.Coin
+	}{
+		{
+			testName: "add 10 stake to empty stat",
+			day:      0,
+			stat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(0),
+				TotalLinoStake:           types.NewCoinFromInt64(0),
+				UnclaimedFriction:        types.NewCoinFromInt64(0),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+			},
+			addStake: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+		{
+			testName: "add 10 stake to stat with 20 stake",
+			day:      0,
+			stat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(0),
+				TotalLinoStake:           types.NewCoinFromInt64(20 * types.Decimals),
+				UnclaimedFriction:        types.NewCoinFromInt64(0),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(20 * types.Decimals),
+			},
+			addStake: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetLinoStakeStat(ctx, tc.day, &tc.stat)
+		assert.Nil(t, err)
+		err = gm.AddLinoStakeToStat(ctx, tc.addStake)
+		assert.Nil(t, err)
+
+		stats, err := gm.storage.GetLinoStakeStat(ctx, tc.day)
+		assert.Nil(t, err)
+		if !stats.TotalLinoStake.IsEqual(
+			tc.stat.TotalLinoStake.Plus(tc.addStake)) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, stats.TotalLinoStake,
+				tc.stat.TotalLinoStake.Plus(tc.addStake))
+			return
+		}
+		if !stats.UnclaimedLinoStake.IsEqual(
+			tc.stat.UnclaimedLinoStake.Plus(tc.addStake)) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, stats.UnclaimedLinoStake,
+				tc.stat.UnclaimedLinoStake.Plus(tc.addStake))
+			return
+		}
+	}
+}
+
+func TestMinusLinoStakeFromStat(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName   string
+		day        int64
+		stat       model.LinoStakeStat
+		minusStake types.Coin
+	}{
+		{
+			testName: "minus 10 stake to from stat with 10 stake",
+			day:      0,
+			stat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(0),
+				TotalLinoStake:           types.NewCoinFromInt64(0),
+				UnclaimedFriction:        types.NewCoinFromInt64(0),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+			},
+			minusStake: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+		{
+			testName: "minus 10 stake to stat with more than 10 stake",
+			day:      0,
+			stat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(0),
+				TotalLinoStake:           types.NewCoinFromInt64(10000 * types.Decimals),
+				UnclaimedFriction:        types.NewCoinFromInt64(0),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(10000 * types.Decimals),
+			},
+			minusStake: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetLinoStakeStat(ctx, tc.day, &tc.stat)
+		assert.Nil(t, err)
+		err = gm.MinusLinoStakeFromStat(ctx, tc.minusStake)
+		assert.Nil(t, err)
+
+		stats, err := gm.storage.GetLinoStakeStat(ctx, tc.day)
+		assert.Nil(t, err)
+		if !stats.TotalLinoStake.IsEqual(
+			tc.stat.TotalLinoStake.Minus(tc.minusStake)) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, stats.TotalLinoStake,
+				tc.stat.TotalLinoStake.Minus(tc.minusStake))
+			return
+		}
+		if !stats.UnclaimedLinoStake.IsEqual(
+			tc.stat.UnclaimedLinoStake.Minus(tc.minusStake)) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, stats.UnclaimedLinoStake,
+				tc.stat.UnclaimedLinoStake.Minus(tc.minusStake))
+			return
+		}
+	}
+}
+
+func TestAddToDeveloperInflationPool(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName      string
+		inflationPool model.InflationPool
+		addCoin       types.Coin
+	}{
+		{
+			testName: "add 10 LNO to empty inflation pool",
+			inflationPool: model.InflationPool{
+				DeveloperInflationPool: types.NewCoinFromInt64(0),
+			},
+			addCoin: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+		{
+			testName: "add 10 LNO to a pool with 10000 LNO",
+			inflationPool: model.InflationPool{
+				DeveloperInflationPool: types.NewCoinFromInt64(10000 * types.Decimals),
+			},
+			addCoin: types.NewCoinFromInt64(10 * types.Decimals),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetInflationPool(ctx, &tc.inflationPool)
+		assert.Nil(t, err)
+		err = gm.AddToDeveloperInflationPool(ctx, tc.addCoin)
+		assert.Nil(t, err)
+
+		inflationPool, err := gm.storage.GetInflationPool(ctx)
+		assert.Nil(t, err)
+		if !inflationPool.DeveloperInflationPool.IsEqual(
+			tc.inflationPool.DeveloperInflationPool.Plus(tc.addCoin)) {
+			t.Errorf("%s: diff friction rate, got %v, want %v",
+				tc.testName, inflationPool.DeveloperInflationPool,
+				tc.inflationPool.DeveloperInflationPool.Plus(tc.addCoin))
+			return
+		}
+	}
+}
+
+func TestRecordConsumptionAndLinoStake(t *testing.T) {
+	ctx, gm := setupTest(t)
+
+	testCases := []struct {
+		testName     string
+		atDay        int64
+		previousStat model.LinoStakeStat
+	}{
+		{
+			testName: "record consumption and empty lino stake at day 0",
+			atDay:    1,
+			previousStat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(0),
+				TotalLinoStake:           types.NewCoinFromInt64(0),
+				UnclaimedFriction:        types.NewCoinFromInt64(0),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+			},
+		},
+		{
+			testName: "record consumption and normal lino stake at day 0",
+			atDay:    1,
+			previousStat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(10000 * types.Decimals),
+				TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
+				UnclaimedFriction:        types.NewCoinFromInt64(10000 * types.Decimals),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := gm.storage.SetLinoStakeStat(ctx, tc.atDay-1, &tc.previousStat)
+		assert.Nil(t, err)
+		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atDay*3600*24, 0)})
+		err = gm.RecordConsumptionAndLinoStake(ctx)
+		fmt.Println(err)
+		assert.Nil(t, err)
+
+		linoStat, err := gm.storage.GetLinoStakeStat(ctx, tc.atDay)
+		assert.Nil(t, err)
+		if !linoStat.TotalConsumptionFriction.IsZero() {
+			t.Errorf("%s: diff total consumption friction rate, got %v, want zero",
+				tc.testName, linoStat.TotalConsumptionFriction)
+			return
+		}
+		if !linoStat.UnclaimedFriction.IsZero() {
+			t.Errorf("%s: diff unclaimed friction, got %v, want zero",
+				tc.testName, linoStat.TotalConsumptionFriction)
+			return
+		}
+		if !linoStat.UnclaimedLinoStake.IsEqual(tc.previousStat.UnclaimedLinoStake) {
+			t.Errorf("%s: diff unclaim lino stake, got %v, want %v",
+				tc.testName, linoStat.UnclaimedLinoStake, tc.previousStat.UnclaimedLinoStake)
+			return
+		}
+		if !linoStat.TotalLinoStake.IsEqual(tc.previousStat.TotalLinoStake) {
+			t.Errorf("%s: diff unclaim lino stake, got %v, want %v",
+				tc.testName, linoStat.TotalLinoStake, tc.previousStat.TotalLinoStake)
 			return
 		}
 	}
