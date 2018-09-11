@@ -30,7 +30,7 @@ func TestValidatorDeposit(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	// deposit the lowest requirement
@@ -70,7 +70,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 		test.CreateAccount(t, newAccountName, lb, int64(seq),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-		voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := val.NewValidatorDepositMsg(
@@ -107,7 +107,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, int64(seq),
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
@@ -146,7 +146,7 @@ func TestRemoveTheSameLowestDepositValidator(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
@@ -268,7 +268,7 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 		test.CreateAccount(t, newAccountName, lb, int64(i),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-		voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := val.NewValidatorDepositMsg(
@@ -407,7 +407,7 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewVoterDepositMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(

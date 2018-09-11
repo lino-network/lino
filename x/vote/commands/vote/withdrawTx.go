@@ -30,7 +30,7 @@ func sendWithdrawVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		user := viper.GetString(client.FlagUser)
 		// create the message
-		msg := vote.NewVoterWithdrawMsg(user, viper.GetString(client.FlagAmount))
+		msg := vote.NewStakeOutMsg(user, viper.GetString(client.FlagAmount))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

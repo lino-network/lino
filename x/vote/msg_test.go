@@ -9,88 +9,88 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestVoterDepositMsg(t *testing.T) {
+func TestStakeInMsg(t *testing.T) {
 	testCases := []struct {
-		testName        string
-		voterDepositMsg VoterDepositMsg
-		expectedError   sdk.Error
+		testName      string
+		StakeInMsg    StakeInMsg
+		expectedError sdk.Error
 	}{
 		{
-			testName:        "normal case",
-			voterDepositMsg: NewVoterDepositMsg("user1", "1"),
-			expectedError:   nil,
+			testName:      "normal case",
+			StakeInMsg:    NewStakeInMsg("user1", "1"),
+			expectedError: nil,
 		},
 		{
-			testName:        "invalid username",
-			voterDepositMsg: NewVoterDepositMsg("", "1"),
-			expectedError:   ErrInvalidUsername(),
+			testName:      "invalid username",
+			StakeInMsg:    NewStakeInMsg("", "1"),
+			expectedError: ErrInvalidUsername(),
 		},
 		{
-			testName:        "invalid deposit amount",
-			voterDepositMsg: NewVoterDepositMsg("user1", "-1"),
-			expectedError:   types.ErrInvalidCoins("LNO can't be less than lower bound"),
+			testName:      "invalid deposit amount",
+			StakeInMsg:    NewStakeInMsg("user1", "-1"),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 	}
 
 	for _, tc := range testCases {
-		result := tc.voterDepositMsg.ValidateBasic()
+		result := tc.StakeInMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
 		}
 	}
 }
 
-func TestVoterWithdrawMsg(t *testing.T) {
+func TestStakeOutMsg(t *testing.T) {
 	testCases := []struct {
-		testName         string
-		voterWithdrawMsg VoterWithdrawMsg
-		expectedError    sdk.Error
+		testName      string
+		StakeOutMsg   StakeOutMsg
+		expectedError sdk.Error
 	}{
 		{
-			testName:         "normal case",
-			voterWithdrawMsg: NewVoterWithdrawMsg("user1", "1"),
-			expectedError:    nil,
+			testName:      "normal case",
+			StakeOutMsg:   NewStakeOutMsg("user1", "1"),
+			expectedError: nil,
 		},
 		{
-			testName:         "invalid username",
-			voterWithdrawMsg: NewVoterWithdrawMsg("", "1"),
-			expectedError:    ErrInvalidUsername(),
+			testName:      "invalid username",
+			StakeOutMsg:   NewStakeOutMsg("", "1"),
+			expectedError: ErrInvalidUsername(),
 		},
 		{
-			testName:         "invalid withdraw amount",
-			voterWithdrawMsg: NewVoterWithdrawMsg("user1", "-1"),
-			expectedError:    types.ErrInvalidCoins("LNO can't be less than lower bound"),
+			testName:      "invalid withdraw amount",
+			StakeOutMsg:   NewStakeOutMsg("user1", "-1"),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 	}
 
 	for _, tc := range testCases {
-		result := tc.voterWithdrawMsg.ValidateBasic()
+		result := tc.StakeOutMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
 		}
 	}
 }
 
-func TestVoterRevokeMsg(t *testing.T) {
+func TestRevokeStakeMsg(t *testing.T) {
 	testCases := []struct {
 		testName       string
-		voterRevokeMsg VoterRevokeMsg
+		RevokeStakeMsg RevokeStakeMsg
 		expectedError  sdk.Error
 	}{
 		{
 			testName:       "normal case",
-			voterRevokeMsg: NewVoterRevokeMsg("user1"),
+			RevokeStakeMsg: NewRevokeStakeMsg("user1"),
 			expectedError:  nil,
 		},
 		{
 			testName:       "invalid username",
-			voterRevokeMsg: NewVoterRevokeMsg(""),
+			RevokeStakeMsg: NewRevokeStakeMsg(""),
 			expectedError:  ErrInvalidUsername(),
 		},
 	}
 
 	for _, tc := range testCases {
-		result := tc.voterRevokeMsg.ValidateBasic()
+		result := tc.RevokeStakeMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
 		}
@@ -213,17 +213,17 @@ func TestMsgPermission(t *testing.T) {
 	}{
 		{
 			testName:           "vote deposit",
-			msg:                NewVoterDepositMsg("test", types.LNO("1")),
+			msg:                NewStakeInMsg("test", types.LNO("1")),
 			expectedPermission: types.TransactionPermission,
 		},
 		{
 			testName:           "vote withdraw",
-			msg:                NewVoterWithdrawMsg("test", types.LNO("1")),
+			msg:                NewStakeOutMsg("test", types.LNO("1")),
 			expectedPermission: types.TransactionPermission,
 		},
 		{
 			testName:           "vote revoke",
-			msg:                NewVoterRevokeMsg("test"),
+			msg:                NewRevokeStakeMsg("test"),
 			expectedPermission: types.TransactionPermission,
 		},
 		{
@@ -258,15 +258,15 @@ func TestGetSignBytes(t *testing.T) {
 	}{
 		{
 			testName: "vote deposit",
-			msg:      NewVoterDepositMsg("test", types.LNO("1")),
+			msg:      NewStakeInMsg("test", types.LNO("1")),
 		},
 		{
 			testName: "vote withdraw",
-			msg:      NewVoterWithdrawMsg("test", types.LNO("1")),
+			msg:      NewStakeOutMsg("test", types.LNO("1")),
 		},
 		{
 			testName: "vote revoke",
-			msg:      NewVoterRevokeMsg("test"),
+			msg:      NewRevokeStakeMsg("test"),
 		},
 		{
 			testName: "delegate to voter",
@@ -295,17 +295,17 @@ func TestGetSigners(t *testing.T) {
 	}{
 		{
 			testName:      "vote deposit",
-			msg:           NewVoterDepositMsg("test", types.LNO("1")),
+			msg:           NewStakeInMsg("test", types.LNO("1")),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
 			testName:      "vote withdraw",
-			msg:           NewVoterWithdrawMsg("test", types.LNO("1")),
+			msg:           NewStakeOutMsg("test", types.LNO("1")),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
 			testName:      "vote revoke",
-			msg:           NewVoterRevokeMsg("test"),
+			msg:           NewRevokeStakeMsg("test"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{

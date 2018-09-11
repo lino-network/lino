@@ -15,12 +15,12 @@ import (
 func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case VoterDepositMsg:
-			return handleVoterDepositMsg(ctx, vm, gm, am, msg)
-		case VoterWithdrawMsg:
-			return handleVoterWithdrawMsg(ctx, vm, gm, am, msg)
-		case VoterRevokeMsg:
-			return handleVoterRevokeMsg(ctx, vm, gm, am, msg)
+		case StakeInMsg:
+			return handleStakeInMsg(ctx, vm, gm, am, msg)
+		case StakeOutMsg:
+			return handleStakeOutMsg(ctx, vm, gm, am, msg)
+		case RevokeStakeMsg:
+			return handleRevokeStakeMsg(ctx, vm, gm, am, msg)
 		case DelegateMsg:
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case DelegatorWithdrawMsg:
@@ -34,8 +34,8 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 	}
 }
 
-func handleVoterDepositMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg VoterDepositMsg) sdk.Result {
+func handleStakeInMsg(
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg StakeInMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound().Result()
@@ -77,8 +77,8 @@ func handleVoterDepositMsg(
 	return sdk.Result{}
 }
 
-func handleVoterWithdrawMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg VoterWithdrawMsg) sdk.Result {
+func handleStakeOutMsg(
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg StakeOutMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -116,9 +116,9 @@ func handleVoterWithdrawMsg(
 	return sdk.Result{}
 }
 
-func handleVoterRevokeMsg(
+func handleRevokeStakeMsg(
 	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
-	am acc.AccountManager, msg VoterRevokeMsg) sdk.Result {
+	am acc.AccountManager, msg RevokeStakeMsg) sdk.Result {
 	// reject if this is a validator
 	if vm.IsInValidatorList(ctx, msg.Username) {
 		return ErrValidatorCannotRevoke().Result()
