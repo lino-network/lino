@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -91,7 +90,6 @@ func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) (int64, sdk.
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println(unixTime, globalTime.ChainStartTime)
 	pastDay := (unixTime - globalTime.ChainStartTime) / (3600 * 24)
 	if pastDay < 0 {
 		return 0, nil
@@ -263,15 +261,12 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	if err != nil {
 		return err
 	}
-	fmt.Println("get lino stake stat at day:", day-1, ctx.BlockHeader().Time.Unix())
 	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, day-1)
 	if err != nil {
 		return err
 	}
-	fmt.Println(lastLinoStakeStat)
 	lastLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
 	lastLinoStakeStat.UnclaimedFriction = types.NewCoinFromInt64(0)
-	fmt.Println("set lino stake stat at day:", day)
 	if err := gm.storage.SetLinoStakeStat(ctx, day, lastLinoStakeStat); err != nil {
 		return err
 	}

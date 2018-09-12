@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -1636,7 +1635,6 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 		assert.Nil(t, err)
 		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atDay*3600*24, 0)})
 		err = gm.RecordConsumptionAndLinoStake(ctx)
-		fmt.Println(err)
 		assert.Nil(t, err)
 
 		linoStat, err := gm.storage.GetLinoStakeStat(ctx, tc.atDay)

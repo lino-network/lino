@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -762,7 +761,6 @@ func TestIncreaseMinute(t *testing.T) {
 		assert.Equal(t, pastMinutes, int64(i))
 		if i%(60*24) == 0 {
 			linoStakeStat, err := gs.GetLinoStakeStat(ctx, int64(i/(60*24)))
-			fmt.Println(expectLinoStakeStat, linoStakeStat)
 			assert.Nil(t, err)
 			assert.Equal(t, linoStakeStat.TotalConsumptionFriction, types.NewCoinFromInt64(0))
 			assert.Equal(t, linoStakeStat.UnclaimedFriction, types.NewCoinFromInt64(0))
