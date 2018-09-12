@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -23,6 +24,7 @@ import (
 	devModel "github.com/lino-network/lino/x/developer/model"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	infraModel "github.com/lino-network/lino/x/infra/model"
+	"github.com/lino-network/lino/x/post"
 )
 
 var (
@@ -254,8 +256,8 @@ func TestGenesisFromConfig(t *testing.T) {
 			VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
 		},
 		param.AccountParam{
-			MinimumBalance:             types.NewCoinFromInt64(1 * types.Decimals),
-			RegisterFee:                types.NewCoinFromInt64(0),
+			MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
+			RegisterFee:                  types.NewCoinFromInt64(0),
 			FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(0),
 		},
 		param.PostParam{
@@ -679,7 +681,7 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 	}
 }
 
-func TestIncreaseMinute(t *testing.T) {
+func TestHourlyEvent(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
@@ -691,14 +693,15 @@ func TestIncreaseMinute(t *testing.T) {
 
 	expectConsumptionPool := types.NewCoinFromInt64(0)
 	expectInfraPool := types.NewCoinFromInt64(0)
-	for i := 0; i < types.MinutesPerMonth/10; i++ {
-		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	for i := 1; i < types.MinutesPerMonth/10; i++ {
+		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
 		lb.increaseMinute(ctx)
-		ctx = lb.BaseApp.NewContext(true, abci.Header{})
+
+		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
 		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
 		assert.Nil(t, err)
-		assert.Equal(t, pastMinutes, int64(i+1))
-		if i > 0 && i%60 == 0 {
+		assert.Equal(t, pastMinutes, int64(i))
+		if i%60 == 0 {
 			hourlyInflation :=
 				types.RatToCoin(
 					globalMeta.TotalLinoCoin.ToRat().
@@ -721,6 +724,59 @@ func TestIncreaseMinute(t *testing.T) {
 			}
 
 			assert.Equal(t, expectInfraPool, inflationPool.InfraInflationPool)
+		}
+	}
+}
+
+func TestIncreaseMinute(t *testing.T) {
+	lb := newLinoBlockchain(t, 21)
+	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
+	expectLinoStakeStat := globalModel.LinoStakeStat{
+		TotalConsumptionFriction: types.NewCoinFromInt64(0),
+		TotalLinoStake:           types.NewCoinFromInt64(0),
+		UnclaimedFriction:        types.NewCoinFromInt64(0),
+		UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+	}
+	for i := 1; i < types.MinutesPerMonth/10; i++ {
+		// simulate add lino stake and friction at previous block
+		ctx := lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64((i-1)*60), 0)})
+		lb.globalManager.AddLinoStakeToStat(ctx, types.NewCoinFromInt64(1))
+		lb.globalManager.AddFrictionAndRegisterContentRewardEvent(
+			ctx, post.RewardEvent{}, types.NewCoinFromInt64(2), types.NewCoinFromInt64(1))
+		expectLinoStakeStat.TotalConsumptionFriction =
+			expectLinoStakeStat.TotalConsumptionFriction.Plus(types.NewCoinFromInt64(2))
+		expectLinoStakeStat.UnclaimedFriction =
+			expectLinoStakeStat.UnclaimedFriction.Plus(types.NewCoinFromInt64(2))
+		expectLinoStakeStat.TotalLinoStake =
+			expectLinoStakeStat.TotalLinoStake.Plus(types.NewCoinFromInt64(1))
+		expectLinoStakeStat.UnclaimedLinoStake =
+			expectLinoStakeStat.UnclaimedLinoStake.Plus(types.NewCoinFromInt64(1))
+
+		// increase minutes after previous block finished
+		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
+		lb.increaseMinute(ctx)
+
+		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
+		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, pastMinutes, int64(i))
+		if i%(60*24) == 0 {
+			linoStakeStat, err := gs.GetLinoStakeStat(ctx, int64(i/(60*24)))
+			fmt.Println(expectLinoStakeStat, linoStakeStat)
+			assert.Nil(t, err)
+			assert.Equal(t, linoStakeStat.TotalConsumptionFriction, types.NewCoinFromInt64(0))
+			assert.Equal(t, linoStakeStat.UnclaimedFriction, types.NewCoinFromInt64(0))
+			assert.Equal(t, linoStakeStat.TotalLinoStake, expectLinoStakeStat.TotalLinoStake)
+			assert.Equal(t, linoStakeStat.UnclaimedLinoStake, expectLinoStakeStat.UnclaimedLinoStake)
+			linoStakeStat, err = gs.GetLinoStakeStat(ctx, int64(i/(60*24)-1))
+			assert.Nil(t, err)
+			assert.Equal(t, linoStakeStat.TotalConsumptionFriction, expectLinoStakeStat.TotalConsumptionFriction)
+			assert.Equal(t, linoStakeStat.UnclaimedFriction, expectLinoStakeStat.UnclaimedFriction)
+			assert.Equal(t, linoStakeStat.TotalLinoStake, expectLinoStakeStat.TotalLinoStake)
+			assert.Equal(t, linoStakeStat.UnclaimedLinoStake, expectLinoStakeStat.UnclaimedLinoStake)
+			expectLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
+			expectLinoStakeStat.UnclaimedFriction = types.NewCoinFromInt64(0)
+
 		}
 	}
 }
