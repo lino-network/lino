@@ -71,32 +71,6 @@ func TestStakeOutMsg(t *testing.T) {
 	}
 }
 
-func TestRevokeStakeMsg(t *testing.T) {
-	testCases := []struct {
-		testName       string
-		RevokeStakeMsg RevokeStakeMsg
-		expectedError  sdk.Error
-	}{
-		{
-			testName:       "normal case",
-			RevokeStakeMsg: NewRevokeStakeMsg("user1"),
-			expectedError:  nil,
-		},
-		{
-			testName:       "invalid username",
-			RevokeStakeMsg: NewRevokeStakeMsg(""),
-			expectedError:  ErrInvalidUsername(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.RevokeStakeMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
-			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
 func TestDelegateMsg(t *testing.T) {
 	testCases := []struct {
 		testName      string
@@ -222,11 +196,6 @@ func TestMsgPermission(t *testing.T) {
 			expectedPermission: types.TransactionPermission,
 		},
 		{
-			testName:           "vote revoke",
-			msg:                NewRevokeStakeMsg("test"),
-			expectedPermission: types.TransactionPermission,
-		},
-		{
 			testName:           "delegate to voter",
 			msg:                NewDelegateMsg("delegator", "voter", types.LNO("1")),
 			expectedPermission: types.TransactionPermission,
@@ -265,10 +234,6 @@ func TestGetSignBytes(t *testing.T) {
 			msg:      NewStakeOutMsg("test", types.LNO("1")),
 		},
 		{
-			testName: "vote revoke",
-			msg:      NewRevokeStakeMsg("test"),
-		},
-		{
 			testName: "delegate to voter",
 			msg:      NewDelegateMsg("delegator", "voter", types.LNO("1")),
 		},
@@ -301,11 +266,6 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName:      "vote withdraw",
 			msg:           NewStakeOutMsg("test", types.LNO("1")),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "vote revoke",
-			msg:           NewRevokeStakeMsg("test"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
