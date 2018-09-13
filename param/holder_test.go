@@ -121,7 +121,6 @@ func TestVoteParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := VoteParam{
-		VoterMinDeposit:                types.NewCoinFromInt64(1000 * types.Decimals),
 		VoterMinWithdraw:               types.NewCoinFromInt64(1 * types.Decimals),
 		DelegatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
@@ -259,7 +258,6 @@ func TestInitParam(t *testing.T) {
 	}
 
 	voteParam := VoteParam{
-		VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
 		VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
 		DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
@@ -352,7 +350,6 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	voteParam := VoteParam{
-		VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
 		VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
 		DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),

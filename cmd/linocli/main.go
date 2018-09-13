@@ -135,10 +135,6 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			votecmd.RevokeVoterTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
 			votecmd.WithdrawVoterTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(

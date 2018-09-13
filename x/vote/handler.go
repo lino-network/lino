@@ -86,6 +86,30 @@ func handleStakeOutMsg(
 		return ErrIllegalWithdraw().Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if vm.IsRevoke(ctx, msg.Username, coin) {
+		delegators, err := vm.GetAllDelegators(ctx, msg.Username)
+		if err != nil {
+			return err.Result()
+		}
+		// return coins to all delegators
+		for _, delegator := range delegators {
+			coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Username, delegator)
+			if withdrawErr != nil {
+				return withdrawErr.Result()
+			}
+			if err := returnCoinTo(
+				ctx, delegator, gm, am, param.DelegatorCoinReturnTimes,
+				param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
+				return err.Result()
+			}
+		}
+	}
+
 	// calculate interests so far
 	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
 		return err.Result()
@@ -98,11 +122,6 @@ func handleStakeOutMsg(
 
 	// minus linoStake in global stat
 	if err := gm.MinusLinoStakeFromStat(ctx, coin); err != nil {
-		return err.Result()
-	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
 		return err.Result()
 	}
 

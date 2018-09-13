@@ -66,7 +66,6 @@ func TestGetGenesisJson(t *testing.T) {
 				CDNAllocation:     sdk.NewRat(50, 100),
 			},
 			param.VoteParam{
-				VoterMinDeposit:                types.NewCoinFromInt64(2000 * types.Decimals),
 				VoterMinWithdraw:               types.NewCoinFromInt64(2 * types.Decimals),
 				DelegatorMinWithdraw:           types.NewCoinFromInt64(2 * types.Decimals),
 				VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
