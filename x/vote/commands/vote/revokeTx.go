@@ -30,7 +30,7 @@ func sendRevokeVoterTx(cdc *wire.Codec) client.CommandTxCallback {
 		user := viper.GetString(client.FlagUser)
 
 		// create the message
-		msg := vote.NewVoterRevokeMsg(user)
+		msg := vote.NewRevokeStakeMsg(user)
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

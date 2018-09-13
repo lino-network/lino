@@ -73,6 +73,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(100),
 				UnclaimReward:   types.NewCoinFromInt64(100),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -105,6 +106,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -137,6 +139,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(50),
 				UnclaimReward:   types.NewCoinFromInt64(50),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -169,6 +172,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(1),
 				UnclaimReward:   types.NewCoinFromInt64(1),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -201,6 +205,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(100),
 				UnclaimReward:   types.NewCoinFromInt64(100),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -233,6 +238,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(0),
 				UnclaimReward:   types.NewCoinFromInt64(0),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -265,6 +271,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(2075),
 				UnclaimReward:   types.NewCoinFromInt64(2075),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -298,6 +305,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				InflationIncome: types.NewCoinFromInt64(0),
 				UnclaimReward:   types.NewCoinFromInt64(0),
+				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
 	}

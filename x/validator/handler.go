@@ -64,12 +64,12 @@ func handleDepositMsg(
 	}
 
 	// Deposit must be balanced
-	votingDeposit, err := voteManager.GetVoterDeposit(ctx, msg.Username)
+	linoStake, err := voteManager.GetLinoStake(ctx, msg.Username)
 	if err != nil {
 		return err.Result()
 	}
 
-	if !valManager.IsBalancedAccount(ctx, msg.Username, votingDeposit) {
+	if !valManager.IsBalancedAccount(ctx, msg.Username, linoStake) {
 		return ErrUnbalancedAccount().Result()
 	}
 

@@ -658,6 +658,38 @@ func (accManager AccountManager) ClaimReward(
 	return nil
 }
 
+// ClaimInterest - add lino power interst to user balance
+func (accManager AccountManager) ClaimInterest(
+	ctx sdk.Context, username types.AccountKey) sdk.Error {
+	reward, err := accManager.storage.GetReward(ctx, username)
+	if err != nil {
+		return err
+	}
+	if err := accManager.AddSavingCoin(
+		ctx, username, reward.Interest, "", "", types.ClaimInterest); err != nil {
+		return err
+	}
+	reward.Interest = types.NewCoinFromInt64(0)
+	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
+		return err
+	}
+	return nil
+}
+
+// AddInterest - add interst
+func (accManager AccountManager) AddInterest(
+	ctx sdk.Context, username types.AccountKey, interest types.Coin) sdk.Error {
+	reward, err := accManager.storage.GetReward(ctx, username)
+	if err != nil {
+		return err
+	}
+	reward.Interest = reward.Interest.Plus(interest)
+	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
+		return err
+	}
+	return nil
+}
+
 // ClearRewardHistory - clear user reward history
 func (accManager AccountManager) ClearRewardHistory(
 	ctx sdk.Context, username types.AccountKey) sdk.Error {

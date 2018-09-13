@@ -1033,6 +1033,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 			InflationIncome: types.NewCoinFromInt64(0),
 			FrictionIncome:  types.NewCoinFromInt64(0),
 			UnclaimReward:   types.NewCoinFromInt64(0),
+			Interest:        types.NewCoinFromInt64(0),
 		}
 		checkAccountReward(t, ctx, tc.testName, tc.username, reward)
 
@@ -1133,6 +1134,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 		InflationIncome: types.NewCoinFromInt64(0),
 		FrictionIncome:  types.NewCoinFromInt64(0),
 		UnclaimReward:   types.NewCoinFromInt64(0),
+		Interest:        types.NewCoinFromInt64(0),
 	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 
@@ -1432,6 +1434,7 @@ func TestAddIncomeAndReward(t *testing.T) {
 		FrictionIncome:  c200,
 		InflationIncome: c300,
 		UnclaimReward:   c300,
+		Interest:        c0,
 	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 1)
@@ -1447,6 +1450,7 @@ func TestAddIncomeAndReward(t *testing.T) {
 		FrictionIncome:  c500,
 		InflationIncome: c500,
 		UnclaimReward:   c500,
+		Interest:        c0,
 	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
@@ -1462,6 +1466,7 @@ func TestAddIncomeAndReward(t *testing.T) {
 		FrictionIncome:  c500,
 		InflationIncome: c500,
 		UnclaimReward:   c500,
+		Interest:        c0,
 	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 	checkRewardHistory(t, ctx, testName, accKey, 0, 2)
@@ -1489,6 +1494,59 @@ func TestAddIncomeAndReward(t *testing.T) {
 		FrictionIncome:  c500,
 		InflationIncome: c500,
 		UnclaimReward:   c0,
+		Interest:        c0,
+	}
+	checkAccountReward(t, ctx, testName, accKey, reward)
+}
+
+func TestAddAndClaimInterest(t *testing.T) {
+	testName := "TestAddAndClaimInterest"
+
+	ctx, am, _ := setupTest(t, 1)
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+	accKey := types.AccountKey("accKey")
+
+	createTestAccount(ctx, am, string(accKey))
+
+	err := am.AddInterest(ctx, accKey, c500)
+	if err != nil {
+		t.Errorf("%s: failed to add interest, got err %v", testName, err)
+	}
+
+	reward := model.Reward{
+		TotalIncome:     c0,
+		OriginalIncome:  c0,
+		FrictionIncome:  c0,
+		InflationIncome: c0,
+		UnclaimReward:   c0,
+		Interest:        c500,
+	}
+	checkAccountReward(t, ctx, testName, accKey, reward)
+
+	bank := model.AccountBank{
+		Saving:      accParam.RegisterFee,
+		NumOfTx:     1,
+		NumOfReward: 0,
+		CoinDay:     accParam.RegisterFee,
+	}
+	checkBankKVByUsername(t, ctx, testName, accKey, bank)
+
+	err = am.ClaimInterest(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s: failed to add claim interest, got err %v", testName, err)
+	}
+
+	bank.Saving = accParam.RegisterFee.Plus(c500)
+	bank.NumOfTx += 1
+	checkBankKVByUsername(t, ctx, testName, accKey, bank)
+
+	reward = model.Reward{
+		TotalIncome:     c0,
+		OriginalIncome:  c0,
+		FrictionIncome:  c0,
+		InflationIncome: c0,
+		UnclaimReward:   c0,
+		Interest:        c0,
 	}
 	checkAccountReward(t, ctx, testName, accKey, reward)
 }

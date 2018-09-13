@@ -6,9 +6,10 @@ import (
 
 // Voter - a voter in blockchain is account with voter deposit, who can vote for a proposal
 type Voter struct {
-	Username       types.AccountKey `json:"username"`
-	Deposit        types.Coin       `json:"deposit"`
-	DelegatedPower types.Coin       `json:"delegated_power"`
+	Username          types.AccountKey `json:"username"`
+	LinoStake         types.Coin       `json:"lino_stake"`
+	DelegatedPower    types.Coin       `json:"delegated_power"`
+	LastPowerChangeAt int64            `json:"last_power_change_at"`
 }
 
 // Vote - a vote is created by a voter to a proposal

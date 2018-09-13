@@ -40,13 +40,13 @@ func TestForceValidatorVote(t *testing.T) {
 	test.CreateAccount(t, accountName2, lb, 1,
 		secp256k1.GenPrivKey(), accountTransactionPriv2, accountAppPriv2, totalLNO)
 
-	voteDepositMsg := vote.NewVoterDepositMsg(accountName, depositLNO)
+	voteDepositMsg := vote.NewStakeInMsg(accountName, depositLNO)
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, accountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(accountName, depositLNO, validatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, accountTransactionPriv, baseTime)
 
-	voteDepositMsg2 := vote.NewVoterDepositMsg(accountName2, depositLNO)
+	voteDepositMsg2 := vote.NewStakeInMsg(accountName2, depositLNO)
 	test.SignCheckDeliver(t, lb, voteDepositMsg2, 0, true, accountTransactionPriv2, baseTime)
 
 	valDepositMsg2 := val.NewValidatorDepositMsg(accountName2, depositLNO, validatorPriv2.PubKey(), "")
