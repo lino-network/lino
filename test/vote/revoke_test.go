@@ -51,16 +51,13 @@ func TestVoterRevoke(t *testing.T) {
 	delegatorWithdrawMsg := vote.NewDelegatorWithdrawMsg(delegator1Name, newAccountName,
 		types.LNO("70000"))
 	test.SignCheckDeliver(t, lb, delegatorWithdrawMsg, 1, true, delegator1TransactionPriv, baseTime)
-	//all validators cannot revoke voter candidancy
-	RevokeStakeMsg := vote.NewRevokeStakeMsg(newAccountName)
-	test.SimulateOneBlock(lb, baseTime)
-	test.SignCheckDeliver(t, lb, RevokeStakeMsg, 2, false, newAccountTransactionPriv, baseTime)
 
-	//validators can revoke voter candidancy after revoking validator candidancy
+	//validators can stake out after revoking validator candidancy
+	stakeOutMsg := vote.NewStakeOutMsg(newAccountName, types.LNO("300000"))
 	valRevokeMsg := val.NewValidatorRevokeMsg(newAccountName)
-	test.SignCheckDeliver(t, lb, valRevokeMsg, 3, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valRevokeMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.SimulateOneBlock(lb, baseTime)
-	test.SignCheckDeliver(t, lb, RevokeStakeMsg, 4, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, stakeOutMsg, 3, true, newAccountTransactionPriv, baseTime)
 
 	// check delegator withdraw first coin return
 	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec+1)

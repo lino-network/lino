@@ -127,20 +127,12 @@ func TestRevokeBasic(t *testing.T) {
 
 	// user1 can revoke voter candidancy now
 	referenceList := &model.ReferenceList{
-		AllValidators: []types.AccountKey{user1},
-	}
-	vm.storage.SetReferenceList(ctx, referenceList)
-	msg5 := NewRevokeStakeMsg("user1")
-	result2 := handler(ctx, msg5)
-	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
-	// invalid user cannot revoke
-	invalidMsg := NewRevokeStakeMsg("wqwdqwdasdsa")
-	resultInvalid := handler(ctx, invalidMsg)
-	assert.Equal(t, model.ErrVoterNotFound().Result(), resultInvalid)
-	// user1 can revoke voter candidancy now
-	referenceList = &model.ReferenceList{
 		AllValidators: []types.AccountKey{},
 	}
+	vm.storage.SetReferenceList(ctx, referenceList)
+	msg5 := NewStakeOutMsg("user1", coinToString(voteParam.VoterMinDeposit))
+	result2 := handler(ctx, msg5)
+	assert.Equal(t, ErrValidatorCannotRevoke().Result(), result2)
 
 	vm.storage.SetReferenceList(ctx, referenceList)
 	result3 := handler(ctx, msg5)
