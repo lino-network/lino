@@ -92,7 +92,7 @@ func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) (int64, sdk.
 	}
 	pastDay := (unixTime - globalTime.ChainStartTime) / (3600 * 24)
 	if pastDay < 0 {
-		return 0, ErrGetPastDay()
+		return 0, nil
 	}
 	return pastDay, nil
 }
@@ -243,7 +243,7 @@ func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoSt
 			return types.NewCoinFromInt64(0), err
 		}
 		interest :=
-			types.RatToCoin(linoStakeStat.TotalConsumptionFriction.ToRat().Mul(
+			types.RatToCoin(linoStakeStat.UnclaimedFriction.ToRat().Mul(
 				linoStake.ToRat().Quo(linoStakeStat.UnclaimedLinoStake.ToRat())))
 		totalInterest = totalInterest.Plus(interest)
 		linoStakeStat.UnclaimedFriction = linoStakeStat.UnclaimedFriction.Minus(interest)
@@ -437,7 +437,7 @@ func (gm GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Err
 	return nil
 }
 
-// AddToDeveloperInflationPool - add consumption to global meta, which is used to compute GDP
+// AddToDeveloperInflationPool - add coin to developer inflation pool
 func (gm GlobalManager) AddToDeveloperInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error {
 	inflationPool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
