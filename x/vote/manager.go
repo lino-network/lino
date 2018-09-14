@@ -82,16 +82,6 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	return voter.LinoStake.IsGTE(coin)
 }
 
-// check if this will withdraw all coins
-func (vm VoteManager) IsRevoke(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
-	voter, err := vm.storage.GetVoter(ctx, username)
-	if err != nil {
-		return false
-	}
-	return voter.LinoStake.IsEqual(coin)
-}
-
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
 func (vm VoteManager) IsLegalDelegatorWithdraw(
 	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) bool {
@@ -229,14 +219,9 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 	}
 	voter.LinoStake = voter.LinoStake.Minus(coin)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-	if voter.LinoStake.IsZero() {
-		if err := vm.storage.DeleteVoter(ctx, username); err != nil {
-			return err
-		}
-	} else {
-		if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
-			return err
-		}
+
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return err
 	}
 
 	return nil

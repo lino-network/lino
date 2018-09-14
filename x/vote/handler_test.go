@@ -143,11 +143,9 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
-	_, err2 := vm.storage.GetVoter(ctx, "user1")
 	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
 	assert.Equal(t, model.ErrDelegationNotFound(), err)
-	assert.Equal(t, model.ErrVoterNotFound(), err2)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
 
