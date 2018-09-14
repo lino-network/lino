@@ -15,7 +15,7 @@ import (
 )
 
 func TestHandlerCreatePost(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 	postParam, _ := ph.GetPostParam(ctx)
 
@@ -56,7 +56,7 @@ func TestHandlerCreatePost(t *testing.T) {
 }
 
 func TestHandlerUpdatePost(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, _, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -126,7 +126,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 }
 
 func TestHandlerDeletePost(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, _, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -174,7 +174,7 @@ func TestHandlerDeletePost(t *testing.T) {
 }
 
 func TestHandlerCreateComment(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
@@ -271,7 +271,7 @@ func TestHandlerCreateComment(t *testing.T) {
 }
 
 func TestHandlerRepost(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
@@ -352,7 +352,7 @@ func TestHandlerRepost(t *testing.T) {
 }
 
 func TestHandlerPostDonate(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 
 	accParam, err := ph.GetAccountParam(ctx)
@@ -709,7 +709,7 @@ func TestHandlerPostDonate(t *testing.T) {
 }
 
 func TestHandlerRePostDonate(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	postParam, _ := ph.GetPostParam(ctx)
 	handler := NewHandler(pm, am, gm, dm)
 
@@ -816,7 +816,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 }
 
 func TestHandlerReportOrUpvote(t *testing.T) {
-	ctx, am, ph, pm, gm, dm := setupTest(t, 1)
+	ctx, am, ph, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 	coinDayParam, _ := ph.GetCoinDayParam(ctx)
 	accParam, _ := ph.GetAccountParam(ctx)
@@ -946,7 +946,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 }
 
 func TestHandlerView(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, _, pm, gm, dm, _ := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm)
 
 	createTime := ctx.BlockHeader().Time.Unix()

@@ -14,7 +14,7 @@ import (
 )
 
 func TestRewardEvent(t *testing.T) {
-	ctx, am, _, pm, gm, dm := setupTest(t, 1)
+	ctx, am, _, pm, gm, dm, vm := setupTest(t, 1)
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	as := accModel.NewAccountStorage(testAccountKVStoreKey)
 
@@ -68,11 +68,11 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(100),
+				TotalIncome:     types.NewCoinFromInt64(50),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(100),
-				UnclaimReward:   types.NewCoinFromInt64(100),
+				InflationIncome: types.NewCoinFromInt64(50),
+				UnclaimReward:   types.NewCoinFromInt64(50),
 				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
@@ -134,11 +134,11 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(50),
+				TotalIncome:     types.NewCoinFromInt64(25),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(50),
-				UnclaimReward:   types.NewCoinFromInt64(50),
+				InflationIncome: types.NewCoinFromInt64(25),
+				UnclaimReward:   types.NewCoinFromInt64(25),
 				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
@@ -200,11 +200,11 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.NewRat(62251, 156250),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(100),
+				TotalIncome:     types.NewCoinFromInt64(50),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(100),
-				UnclaimReward:   types.NewCoinFromInt64(100),
+				InflationIncome: types.NewCoinFromInt64(50),
+				UnclaimReward:   types.NewCoinFromInt64(50),
 				Interest:        types.NewCoinFromInt64(0),
 			},
 		},
@@ -325,7 +325,7 @@ func TestRewardEvent(t *testing.T) {
 
 		as.SetReward(ctx, tc.rewardEvent.PostAuthor, &accModel.Reward{})
 
-		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm)
+		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm, vm)
 		if err != nil {
 			t.Errorf("%s: failed to execute, got err %v", tc.testName, err)
 		}
