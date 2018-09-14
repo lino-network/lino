@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -420,7 +419,6 @@ func TestRegisterUsername(t *testing.T) {
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 		result := msg.ValidateBasic()
 		if result == nil {
-			fmt.Println(result, register)
 			assert.Equal(t, ErrInvalidUsername("illegal input"), result)
 			return
 		}
