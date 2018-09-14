@@ -257,6 +257,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
 			RegisterFee:                  types.NewCoinFromInt64(0),
 			FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(0),
+			MaxNumFrozenMoney:            200,
 		},
 		param.PostParam{
 			ReportOrUpvoteIntervalSec: 24 * 3600,

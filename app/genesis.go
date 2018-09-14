@@ -217,6 +217,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				MinimumBalance:               types.NewCoinFromInt64(0),
 				RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 				FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+				MaxNumFrozenMoney:            200,
 			},
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,

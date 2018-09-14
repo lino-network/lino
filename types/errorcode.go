@@ -99,6 +99,7 @@ const (
 	CodeFailedToUnmarshalRewardHistory       sdk.CodeType = 359
 	CodeGetLastPostAt                        sdk.CodeType = 360
 	CodeUpdateLastPostAt                     sdk.CodeType = 361
+	CodeFrozenMoneyListTooLong               sdk.CodeType = 362
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400

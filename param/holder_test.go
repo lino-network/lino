@@ -201,6 +201,7 @@ func TestAccountParam(t *testing.T) {
 		MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney:            200,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -295,6 +296,7 @@ func TestInitParam(t *testing.T) {
 		MinimumBalance:               types.NewCoinFromInt64(0),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney:            200,
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
@@ -387,6 +389,7 @@ func TestInitParamFromConfig(t *testing.T) {
 		MinimumBalance:               types.NewCoinFromInt64(0),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney:            200,
 	}
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),

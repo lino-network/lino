@@ -1097,8 +1097,17 @@ func (accManager AccountManager) AddFrozenMoney(
 		Interval: interval,
 		Times:    times,
 	}
-	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
 
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	if int64(len(accountBank.FrozenMoneyList)) >= accParams.MaxNumFrozenMoney {
+		return ErrFrozenMoneyListTooLong()
+	}
+
+	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, accountBank); err != nil {
 		return err
 	}

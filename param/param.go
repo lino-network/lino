@@ -141,10 +141,12 @@ type BandwidthParam struct {
 // MinimumBalance - minimum balance each account need to maintain
 // RegisterFee - register fee need to pay to developer inflation pool for each account registration
 // FirstDepositFullCoinDayLimit - when register account, some of coin day of register fee to newly open account will be fully charged
+// MaxNumFrozenMoney - the upper limit for each person's ongoing frozen money
 type AccountParam struct {
 	MinimumBalance               types.Coin `json:"minimum_balance"`
 	RegisterFee                  types.Coin `json:"register_fee"`
 	FirstDepositFullCoinDayLimit types.Coin `json:"first_deposit_full_coin_day_limit"`
+	MaxNumFrozenMoney            int64      `json:"max_num_frozen_money"`
 }
 
 // PostParam - post parameters

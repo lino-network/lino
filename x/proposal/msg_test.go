@@ -646,6 +646,7 @@ func TestChangeAccountParamMsg(t *testing.T) {
 		MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney:            200,
 	}
 
 	p2 := p1
@@ -659,6 +660,9 @@ func TestChangeAccountParamMsg(t *testing.T) {
 
 	p5 := p1
 	p5.FirstDepositFullCoinDayLimit = types.NewCoinFromInt64(-1)
+
+	p6 := p1
+	p6.MaxNumFrozenMoney = -1
 
 	testCases := []struct {
 		testName              string
@@ -698,6 +702,11 @@ func TestChangeAccountParamMsg(t *testing.T) {
 		{
 			testName:              "negative FirstDepositFullCoinDayLimit is invalid",
 			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p5, ""),
+			expectedError:         ErrIllegalParameter(),
+		},
+		{
+			testName:              "negative MaxNumFrozenMoney is invalid",
+			changeAccountParamMsg: NewChangeAccountParamMsg("user1", p6, ""),
 			expectedError:         ErrIllegalParameter(),
 		},
 		{
