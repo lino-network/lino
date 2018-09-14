@@ -118,7 +118,7 @@ func TestGetGenesisJson(t *testing.T) {
 				MinimumBalance:               types.NewCoinFromInt64(0),
 				RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 				FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-				MaxNumFrozenMoney:            200,
+				MaxNumFrozenMoney:            10,
 			},
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,

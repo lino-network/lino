@@ -646,7 +646,7 @@ func TestChangeAccountParamMsg(t *testing.T) {
 		MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney:            200,
+		MaxNumFrozenMoney:            10,
 	}
 
 	p2 := p1
