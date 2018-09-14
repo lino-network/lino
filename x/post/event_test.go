@@ -42,6 +42,7 @@ func TestRewardEvent(t *testing.T) {
 		expectPostMeta       postModel.PostMeta
 		expectAppWeight      sdk.Rat
 		expectAuthorReward   accModel.Reward
+		expectVoterDeposit   types.Coin
 	}{
 		{
 			testName: "normal event",
@@ -75,6 +76,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(50),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(50),
 		},
 		{
 			testName: "100% panelty reward post",
@@ -108,6 +110,7 @@ func TestRewardEvent(t *testing.T) {
 				FrictionIncome:  types.NewCoinFromInt64(15),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(0),
 		},
 		{
 			testName: "50% panelty reward post",
@@ -141,6 +144,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(25),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(25),
 		},
 		{
 			testName: "evaluate as 1% of total window",
@@ -167,13 +171,14 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(1),
+				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(1),
-				UnclaimReward:   types.NewCoinFromInt64(1),
+				InflationIncome: types.NewCoinFromInt64(0),
+				UnclaimReward:   types.NewCoinFromInt64(0),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(1),
 		},
 		{
 			testName: "reward from different app",
@@ -207,6 +212,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(50),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(50),
 		},
 		{
 			testName: "test big penalty score with 1.0 report",
@@ -240,6 +246,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(0),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(0),
 		},
 		{
 			testName: "test big penalty score with 12.857% report",
@@ -266,13 +273,14 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.NewRat(9350817, 10000000),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(2075),
+				TotalIncome:     types.NewCoinFromInt64(1038),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(2075),
-				UnclaimReward:   types.NewCoinFromInt64(2075),
+				InflationIncome: types.NewCoinFromInt64(1038),
+				UnclaimReward:   types.NewCoinFromInt64(1038),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(1037),
 		},
 		{
 			testName: "deleted post can't get any inflation",
@@ -307,6 +315,7 @@ func TestRewardEvent(t *testing.T) {
 				UnclaimReward:   types.NewCoinFromInt64(0),
 				Interest:        types.NewCoinFromInt64(0),
 			},
+			expectVoterDeposit: types.NewCoinFromInt64(0),
 		},
 	}
 
@@ -324,7 +333,7 @@ func TestRewardEvent(t *testing.T) {
 			})
 
 		as.SetReward(ctx, tc.rewardEvent.PostAuthor, &accModel.Reward{})
-
+		vm.AddVoter(ctx, tc.rewardEvent.PostAuthor, types.NewCoinFromInt64(0))
 		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm, vm)
 		if err != nil {
 			t.Errorf("%s: failed to execute, got err %v", tc.testName, err)
@@ -345,6 +354,13 @@ func TestRewardEvent(t *testing.T) {
 		}
 		if !assert.Equal(t, tc.expectAuthorReward, *reward) {
 			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)
+		}
+		deposit, err := vm.GetVotingPower(ctx, tc.rewardEvent.PostAuthor)
+		if err != nil {
+			t.Errorf("%s: failed to get voting deposit, got err %v", tc.testName, err)
+		}
+		if !deposit.IsEqual(tc.expectVoterDeposit) {
+			t.Errorf("%s: diff deposit, got %v, want %v", tc.testName, deposit, tc.expectVoterDeposit)
 		}
 	}
 }

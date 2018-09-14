@@ -1,6 +1,8 @@
 package post
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/lino-network/lino/types"
@@ -65,19 +67,17 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	// add half reward to user
+	fmt.Println(reward)
 	addToReward := types.RatToCoin(reward.ToRat().Mul(sdk.NewRat(1, 2)))
 	addToStake := reward.Minus(addToReward)
 	if err := am.AddIncomeAndReward(
 		ctx, event.PostAuthor, event.Original, event.Friction, addToReward, event.Consumer, event.PostAuthor, event.PostID); err != nil {
 		return err
 	}
-	// Register the user if this name has not been registered
-	if !vm.DoesVoterExist(ctx, event.PostAuthor) {
-		if err := vm.AddVoter(ctx, event.PostAuthor, addToStake); err != nil {
+	if !addToStake.IsZero() {
+		if err := vote.AddStake(ctx, event.PostAuthor, addToStake, vm, gm, am); err != nil {
 			return err
 		}
-	} else {
-		// Deposit coins
 	}
 	return nil
 }

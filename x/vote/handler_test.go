@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/lino-network/lino/types"
+	globalModel "github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/x/vote/model"
 	"github.com/stretchr/testify/assert"
 
@@ -30,6 +31,12 @@ func TestVoterDepositBasic(t *testing.T) {
 	// make sure the voter's account info is correct
 	voter, _ := vm.storage.GetVoter(ctx, user1)
 	assert.Equal(t, deposit, voter.LinoStake)
+
+	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
+	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
+	assert.Equal(t, linoStat.TotalLinoStake, voter.LinoStake)
+	assert.Equal(t, linoStat.UnclaimedLinoStake, voter.LinoStake)
 }
 
 func TestDelegateBasic(t *testing.T) {
@@ -143,6 +150,12 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, model.ErrVoterNotFound(), err2)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
+
+	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
+	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
+	assert.Equal(t, linoStat.TotalLinoStake, types.NewCoinFromInt64(0))
+	assert.Equal(t, linoStat.UnclaimedLinoStake, types.NewCoinFromInt64(0))
 }
 
 func TestVoterWithdraw(t *testing.T) {
@@ -164,6 +177,12 @@ func TestVoterWithdraw(t *testing.T) {
 	msg := NewStakeInMsg("user1", coinToString(deposit.Plus(voteParam.VoterMinWithdraw)))
 	handler(ctx, msg)
 
+	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
+	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
+	assert.Equal(t, linoStat.TotalLinoStake, deposit.Plus(voteParam.VoterMinWithdraw))
+	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit.Plus(voteParam.VoterMinWithdraw))
+
 	// invalid deposit
 	invalidDepositMsg := NewStakeInMsg("1du1i2bdi12bud", coinToString(deposit))
 	res = handler(ctx, invalidDepositMsg)
@@ -179,6 +198,10 @@ func TestVoterWithdraw(t *testing.T) {
 
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
 	assert.Equal(t, deposit, voter.LinoStake)
+
+	linoStat, _ = gs.GetLinoStakeStat(ctx, day)
+	assert.Equal(t, linoStat.TotalLinoStake, deposit)
+	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit)
 }
 
 func TestDelegatorWithdraw(t *testing.T) {

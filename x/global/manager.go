@@ -257,17 +257,17 @@ func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoSt
 
 // RecordConsumptionAndLinoStake - records consumption and lino power to LinoStakeStat and renew to new slot
 func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error {
-	day, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
+	pastMinutes, err := gm.GetPastMinutes(ctx)
 	if err != nil {
 		return err
 	}
-	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, day-1)
+	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, pastMinutes/types.MinutesPerDay-1)
 	if err != nil {
 		return err
 	}
 	lastLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
 	lastLinoStakeStat.UnclaimedFriction = types.NewCoinFromInt64(0)
-	if err := gm.storage.SetLinoStakeStat(ctx, day, lastLinoStakeStat); err != nil {
+	if err := gm.storage.SetLinoStakeStat(ctx, pastMinutes/types.MinutesPerDay, lastLinoStakeStat); err != nil {
 		return err
 	}
 	return nil
