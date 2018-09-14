@@ -11,7 +11,6 @@ import (
 
 var _ types.Msg = StakeInMsg{}
 var _ types.Msg = StakeOutMsg{}
-var _ types.Msg = RevokeStakeMsg{}
 var _ types.Msg = DelegateMsg{}
 var _ types.Msg = DelegatorWithdrawMsg{}
 var _ types.Msg = RevokeDelegationMsg{}
@@ -26,11 +25,6 @@ type StakeInMsg struct {
 type StakeOutMsg struct {
 	Username types.AccountKey `json:"username"`
 	Amount   types.LNO        `json:"amount"`
-}
-
-// RevokeStakeMsg - voter revoke
-type RevokeStakeMsg struct {
-	Username types.AccountKey `json:"username"`
 }
 
 // DelegateMsg - delegator delegate money to a voter
@@ -155,53 +149,6 @@ func (msg StakeOutMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implement types.Msg
 func (msg StakeOutMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewRevokeStakeMsg - return RevokeStakeMsg
-func NewRevokeStakeMsg(username string) RevokeStakeMsg {
-	return RevokeStakeMsg{
-		Username: types.AccountKey(username),
-	}
-}
-
-// Type - implements sdk.Msg
-func (msg RevokeStakeMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
-
-// ValidateBasic - implements sdk.Msg
-func (msg RevokeStakeMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-	return nil
-}
-
-func (msg RevokeStakeMsg) String() string {
-	return fmt.Sprintf("RevokeStakeMsg{Username:%v}", msg.Username)
-}
-
-// GetPermission - implements types.Msg
-func (msg RevokeStakeMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg RevokeStakeMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg RevokeStakeMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg RevokeStakeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

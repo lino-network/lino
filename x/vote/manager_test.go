@@ -14,7 +14,6 @@ func TestAddVoter(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
-	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	testCases := []struct {
 		testName       string
@@ -23,15 +22,9 @@ func TestAddVoter(t *testing.T) {
 		expectedResult sdk.Error
 	}{
 		{
-			testName:       "insufficient deposit",
-			username:       user1,
-			coin:           types.NewCoinFromInt64(100 * types.Decimals),
-			expectedResult: ErrInsufficientDeposit(),
-		},
-		{
 			testName:       "normal case",
 			username:       user1,
-			coin:           param.VoterMinDeposit,
+			coin:           types.NewCoinFromInt64(100 * types.Decimals),
 			expectedResult: nil,
 		},
 	}
@@ -48,7 +41,6 @@ func TestCanBecomeValidator(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
-	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
 
 	testCases := []struct {
@@ -63,13 +55,6 @@ func TestCanBecomeValidator(t *testing.T) {
 			addVoter:       false,
 			username:       user1,
 			coin:           types.NewCoinFromInt64(0),
-			expectedResult: false,
-		},
-		{
-			testName:       "validator has reached min deposit",
-			addVoter:       true,
-			username:       user1,
-			coin:           voteParam.VoterMinDeposit,
 			expectedResult: false,
 		},
 		{
@@ -149,7 +134,7 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
-	vm.AddVoter(ctx, user1, param.VoterMinDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)))
+	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(100*types.Decimals))
 
 	testCases := []struct {
 		testName       string
@@ -183,7 +168,7 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 			testName:       "illegal withdraw",
 			allValidators:  []types.AccountKey{},
 			username:       user1,
-			withdraw:       types.NewCoinFromInt64(100),
+			withdraw:       types.NewCoinFromInt64(101),
 			expectedResult: false,
 		},
 	}
@@ -212,7 +197,7 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
-	vm.AddVoter(ctx, user1, param.VoterMinDeposit)
+	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(101*types.Decimals))
 
 	testCases := []struct {
 		testName       string

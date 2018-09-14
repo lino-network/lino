@@ -549,7 +549,6 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 	}
 
 	if !msg.Parameter.DelegatorMinWithdraw.IsPositive() ||
-		!msg.Parameter.VoterMinDeposit.IsPositive() ||
 		!msg.Parameter.VoterMinWithdraw.IsPositive() {
 		return ErrIllegalParameter()
 	}

@@ -59,7 +59,6 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 }
 
 // IsLegalVoterWithdraw - check withdraw voter is not validator
-// and withdraw amount is much than minimum requirement
 func (vm VoteManager) IsLegalVoterWithdraw(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
@@ -79,12 +78,18 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	if !coin.IsGTE(param.VoterMinWithdraw) {
 		return false
 	}
-	//reject if the remaining coins are less than voter minimum deposit
-	remaining := voter.LinoStake.Minus(coin)
-	if !remaining.IsGTE(param.VoterMinDeposit) {
+	//reject if the remaining coins are not enough
+	return voter.LinoStake.IsGTE(coin)
+}
+
+// check if this will withdraw all coins
+func (vm VoteManager) IsRevoke(
+	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
 		return false
 	}
-	return true
+	return voter.LinoStake.IsEqual(coin)
 }
 
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
@@ -193,16 +198,6 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 		LastPowerChangeAt: ctx.BlockHeader().Time.Unix(),
 	}
 
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err
-	}
-
-	// check minimum requirements for registering as a voter
-	if !coin.IsGTE(param.VoterMinDeposit) {
-		return ErrInsufficientDeposit()
-	}
-
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
 	}
@@ -245,18 +240,6 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 	}
 
 	return nil
-}
-
-// VoterWithdrawAll - voter revoke
-func (vm VoteManager) VoterWithdrawAll(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
-	voter, err := vm.storage.GetVoter(ctx, username)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	if err := vm.VoterWithdraw(ctx, username, voter.LinoStake); err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return voter.LinoStake, nil
 }
 
 // DelegatorWithdraw - withdraw delegation

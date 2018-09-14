@@ -19,8 +19,6 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleStakeInMsg(ctx, vm, gm, am, msg)
 		case StakeOutMsg:
 			return handleStakeOutMsg(ctx, vm, gm, am, msg)
-		case RevokeStakeMsg:
-			return handleRevokeStakeMsg(ctx, vm, gm, am, msg)
 		case DelegateMsg:
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case DelegatorWithdrawMsg:
@@ -88,6 +86,30 @@ func handleStakeOutMsg(
 		return ErrIllegalWithdraw().Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if vm.IsRevoke(ctx, msg.Username, coin) {
+		delegators, err := vm.GetAllDelegators(ctx, msg.Username)
+		if err != nil {
+			return err.Result()
+		}
+		// return coins to all delegators
+		for _, delegator := range delegators {
+			coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Username, delegator)
+			if withdrawErr != nil {
+				return withdrawErr.Result()
+			}
+			if err := returnCoinTo(
+				ctx, delegator, gm, am, param.DelegatorCoinReturnTimes,
+				param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
+				return err.Result()
+			}
+		}
+	}
+
 	// calculate interests so far
 	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
 		return err.Result()
@@ -103,66 +125,6 @@ func handleStakeOutMsg(
 		return err.Result()
 	}
 
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
-	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
-		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleRevokeStakeMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
-	am acc.AccountManager, msg RevokeStakeMsg) sdk.Result {
-	// reject if this is a validator
-	if vm.IsInValidatorList(ctx, msg.Username) {
-		return ErrValidatorCannotRevoke().Result()
-	}
-
-	delegators, err := vm.GetAllDelegators(ctx, msg.Username)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-	// return coins to all delegators
-	for _, delegator := range delegators {
-		coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Username, delegator)
-		if withdrawErr != nil {
-			return withdrawErr.Result()
-		}
-		if err := returnCoinTo(
-			ctx, delegator, gm, am, param.DelegatorCoinReturnTimes,
-			param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
-			return err.Result()
-		}
-	}
-
-	// calculate interests so far
-	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
-		return err.Result()
-	}
-
-	// withdraw all linoStake
-	coin, withdrawErr := vm.VoterWithdrawAll(ctx, msg.Username)
-	if withdrawErr != nil {
-		return withdrawErr.Result()
-	}
-
-	// minus linoStake in global stat
-	if err := gm.MinusLinoStakeFromStat(ctx, coin); err != nil {
-		return err.Result()
-	}
-
-	// return coins to voter
 	if err := returnCoinTo(
 		ctx, msg.Username, gm, am, param.VoterCoinReturnTimes,
 		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
