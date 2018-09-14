@@ -162,6 +162,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		MinimumBalance:               types.NewCoinFromInt64(0),
 		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
 		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney:            200,
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err
