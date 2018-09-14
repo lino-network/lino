@@ -1,8 +1,6 @@
 package post
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/lino-network/lino/types"
@@ -67,7 +65,6 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	// add half reward to user
-	fmt.Println(reward)
 	addToReward := types.RatToCoin(reward.ToRat().Mul(sdk.NewRat(1, 2)))
 	addToStake := reward.Minus(addToReward)
 	if err := am.AddIncomeAndReward(
