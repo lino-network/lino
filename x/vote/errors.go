@@ -27,6 +27,11 @@ func ErrVoteAlreadyExist() sdk.Error {
 	return types.NewError(types.CodeVoteAlreadyExist, fmt.Sprintf("Vote exist"))
 }
 
+// ErrVoteNotFound - error if voter is not found
+func ErrVoterNotFound() sdk.Error {
+	return types.NewError(types.CodeVoterNotFound, fmt.Sprintf("voter not found"))
+}
+
 // ErrInvalidCoin - error if coin is invalid
 func ErrInvalidCoin() sdk.Error {
 	return types.NewError(types.CodeInvalidCoin, fmt.Sprintf("can't withdraw 0 coin"))

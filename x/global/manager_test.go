@@ -1633,6 +1633,8 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 	for _, tc := range testCases {
 		err := gm.storage.SetLinoStakeStat(ctx, tc.atDay-1, &tc.previousStat)
 		assert.Nil(t, err)
+		err = gm.SetPastMinutes(ctx, tc.atDay*24*60)
+		assert.Nil(t, err)
 		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atDay*3600*24, 0)})
 		err = gm.RecordConsumptionAndLinoStake(ctx)
 		assert.Nil(t, err)

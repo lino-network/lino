@@ -416,7 +416,8 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		switch e := event.(type) {
 		case post.RewardEvent:
 			if err := e.Execute(
-				ctx, lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager); err != nil {
+				ctx, lb.postManager, lb.accountManager, lb.globalManager,
+				lb.developerManager, lb.voteManager); err != nil {
 				panic(err)
 			}
 		case acc.ReturnCoinEvent:

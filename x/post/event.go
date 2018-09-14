@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 func init() {
@@ -34,7 +35,7 @@ type RewardEvent struct {
 // Execute - execute reward event after 7 days
 func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Error {
+	gm global.GlobalManager, dm dev.DeveloperManager, vm vote.VoteManager) sdk.Error {
 
 	permlink := types.GetPermlink(event.PostAuthor, event.PostID)
 	paneltyScore, err := pm.GetPenaltyScore(ctx, permlink)
@@ -63,10 +64,17 @@ func (event RewardEvent) Execute(
 	if err := pm.AddDonation(ctx, permlink, event.Consumer, reward, types.Inflation); err != nil {
 		return err
 	}
-	// add reward to user
+	// add half reward to user
+	addToReward := types.RatToCoin(reward.ToRat().Mul(sdk.NewRat(1, 2)))
+	addToStake := reward.Minus(addToReward)
 	if err := am.AddIncomeAndReward(
-		ctx, event.PostAuthor, event.Original, event.Friction, reward, event.Consumer, event.PostAuthor, event.PostID); err != nil {
+		ctx, event.PostAuthor, event.Original, event.Friction, addToReward, event.Consumer, event.PostAuthor, event.PostID); err != nil {
 		return err
+	}
+	if !addToStake.IsZero() {
+		if err := vote.AddStake(ctx, event.PostAuthor, addToStake, vm, gm, am); err != nil {
+			return err
+		}
 	}
 	return nil
 }

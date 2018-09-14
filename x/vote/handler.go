@@ -49,26 +49,7 @@ func handleStakeInMsg(
 		return err.Result()
 	}
 
-	// Register the user if this name has not been registered
-	if !vm.DoesVoterExist(ctx, msg.Username) {
-		if err := vm.AddVoter(ctx, msg.Username, coin); err != nil {
-			return err.Result()
-		}
-		return sdk.Result{}
-	}
-
-	// calculate interests so far
-	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
-		return err.Result()
-	}
-
-	// add linoStake to voter account
-	if err := vm.AddLinoStake(ctx, msg.Username, coin); err != nil {
-		return err.Result()
-	}
-
-	// add linoStake to global stat
-	if err := gm.AddLinoStakeToStat(ctx, coin); err != nil {
+	if err := AddStake(ctx, msg.Username, coin, vm, gm, am); err != nil {
 		return err.Result()
 	}
 
@@ -203,6 +184,46 @@ func handleRevokeDelegationMsg(
 		return err.Result()
 	}
 	return sdk.Result{}
+}
+
+func AddStake(
+	ctx sdk.Context, username types.AccountKey, stake types.Coin, vm VoteManager,
+	gm global.GlobalManager, am acc.AccountManager) sdk.Error {
+	// Register the user if this name has not been registered
+	if !vm.DoesVoterExist(ctx, username) {
+		if err := vm.AddVoter(ctx, username, types.NewCoinFromInt64(0)); err != nil {
+			return err
+		}
+	}
+	userLinoStake, err := vm.GetLinoStake(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	LSLastChangedAt, err := vm.GetLinoStakeLastChangedAt(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	interest, err := gm.GetInterestSince(ctx, LSLastChangedAt, userLinoStake)
+	if err != nil {
+		return err
+	}
+
+	if err := am.AddInterest(ctx, username, interest); err != nil {
+		return err
+	}
+
+	// add linoStake to voter account
+	if err := vm.AddLinoStake(ctx, username, stake); err != nil {
+		return err
+	}
+
+	// add linoStake to global stat
+	if err := gm.AddLinoStakeToStat(ctx, stake); err != nil {
+		return err
+	}
+	return nil
 }
 
 func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
