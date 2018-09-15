@@ -18,6 +18,7 @@ import (
 	accModel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
 	infra "github.com/lino-network/lino/x/infra"
+	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
 
@@ -49,27 +50,29 @@ type LinoBlockchain struct {
 	cdc *wire.Codec
 
 	// keys to access the KVStore
-	CapKeyMainStore      *sdk.KVStoreKey
-	CapKeyAccountStore   *sdk.KVStoreKey
-	CapKeyPostStore      *sdk.KVStoreKey
-	CapKeyValStore       *sdk.KVStoreKey
-	CapKeyVoteStore      *sdk.KVStoreKey
-	CapKeyInfraStore     *sdk.KVStoreKey
-	CapKeyDeveloperStore *sdk.KVStoreKey
-	CapKeyIBCStore       *sdk.KVStoreKey
-	CapKeyGlobalStore    *sdk.KVStoreKey
-	CapKeyParamStore     *sdk.KVStoreKey
-	CapKeyProposalStore  *sdk.KVStoreKey
+	CapKeyMainStore       *sdk.KVStoreKey
+	CapKeyAccountStore    *sdk.KVStoreKey
+	CapKeyPostStore       *sdk.KVStoreKey
+	CapKeyValStore        *sdk.KVStoreKey
+	CapKeyVoteStore       *sdk.KVStoreKey
+	CapKeyInfraStore      *sdk.KVStoreKey
+	CapKeyDeveloperStore  *sdk.KVStoreKey
+	CapKeyIBCStore        *sdk.KVStoreKey
+	CapKeyGlobalStore     *sdk.KVStoreKey
+	CapKeyParamStore      *sdk.KVStoreKey
+	CapKeyProposalStore   *sdk.KVStoreKey
+	CapKeyReputationStore *sdk.KVStoreKey
 
 	// manager for different KVStore
-	accountManager   acc.AccountManager
-	postManager      post.PostManager
-	valManager       val.ValidatorManager
-	globalManager    global.GlobalManager
-	voteManager      vote.VoteManager
-	infraManager     infra.InfraManager
-	developerManager developer.DeveloperManager
-	proposalManager  proposal.ProposalManager
+	accountManager    acc.AccountManager
+	postManager       post.PostManager
+	valManager        val.ValidatorManager
+	globalManager     global.GlobalManager
+	voteManager       vote.VoteManager
+	infraManager      infra.InfraManager
+	developerManager  developer.DeveloperManager
+	proposalManager   proposal.ProposalManager
+	reputationManager rep.ReputationManager
 
 	// global param
 	paramHolder param.ParamHolder
@@ -83,24 +86,26 @@ func NewLinoBlockchain(
 	bApp := bam.NewBaseApp(appName, logger, db, DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
-		BaseApp:              bApp,
-		cdc:                  cdc,
-		CapKeyMainStore:      sdk.NewKVStoreKey(types.MainKVStoreKey),
-		CapKeyAccountStore:   sdk.NewKVStoreKey(types.AccountKVStoreKey),
-		CapKeyPostStore:      sdk.NewKVStoreKey(types.PostKVStoreKey),
-		CapKeyValStore:       sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
-		CapKeyVoteStore:      sdk.NewKVStoreKey(types.VoteKVStoreKey),
-		CapKeyInfraStore:     sdk.NewKVStoreKey(types.InfraKVStoreKey),
-		CapKeyDeveloperStore: sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
-		CapKeyGlobalStore:    sdk.NewKVStoreKey(types.GlobalKVStoreKey),
-		CapKeyParamStore:     sdk.NewKVStoreKey(types.ParamKVStoreKey),
-		CapKeyProposalStore:  sdk.NewKVStoreKey(types.ProposalKVStoreKey),
+		BaseApp:               bApp,
+		cdc:                   cdc,
+		CapKeyMainStore:       sdk.NewKVStoreKey(types.MainKVStoreKey),
+		CapKeyAccountStore:    sdk.NewKVStoreKey(types.AccountKVStoreKey),
+		CapKeyPostStore:       sdk.NewKVStoreKey(types.PostKVStoreKey),
+		CapKeyValStore:        sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		CapKeyVoteStore:       sdk.NewKVStoreKey(types.VoteKVStoreKey),
+		CapKeyInfraStore:      sdk.NewKVStoreKey(types.InfraKVStoreKey),
+		CapKeyDeveloperStore:  sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
+		CapKeyGlobalStore:     sdk.NewKVStoreKey(types.GlobalKVStoreKey),
+		CapKeyParamStore:      sdk.NewKVStoreKey(types.ParamKVStoreKey),
+		CapKeyProposalStore:   sdk.NewKVStoreKey(types.ProposalKVStoreKey),
+		CapKeyReputationStore: sdk.NewKVStoreKey(types.ReputationKVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
+	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
@@ -131,7 +136,7 @@ func NewLinoBlockchain(
 	lb.MountStoresIAVL(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -220,7 +225,8 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			genesisState.GenesisParam.ProposalParam,
 			genesisState.GenesisParam.CoinDayParam,
 			genesisState.GenesisParam.BandwidthParam,
-			genesisState.GenesisParam.AccountParam); err != nil {
+			genesisState.GenesisParam.AccountParam,
+			genesisState.GenesisParam.ReputationParam); err != nil {
 			panic(err)
 		}
 	} else {

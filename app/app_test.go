@@ -262,6 +262,9 @@ func TestGenesisFromConfig(t *testing.T) {
 			ReportOrUpvoteIntervalSec: 24 * 3600,
 			PostIntervalSec:           600,
 		},
+		param.ReputationParam{
+			BestContentIndexN: 10,
+		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
 		MaxTPS: sdk.NewRat(1000),

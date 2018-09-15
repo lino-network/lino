@@ -19,6 +19,7 @@ var (
 	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
 	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
+	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
 	AnnualInflationCeiling = sdk.NewRat(98, 1000)
@@ -167,6 +168,13 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		return err
 	}
 
+	reputationParam := &ReputationParam{
+		BestContentIndexN: 10,
+	}
+	if err := ph.setReputationParam(ctx, reputationParam); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -183,7 +191,8 @@ func (ph ParamHolder) InitParamFromConfig(
 	proposalParam ProposalParam,
 	coinDayParam CoinDayParam,
 	bandwidthParam BandwidthParam,
-	accParam AccountParam) error {
+	accParam AccountParam,
+	repParam ReputationParam) error {
 	if err := ph.setGlobalAllocationParam(ctx, &globalParam); err != nil {
 		return err
 	}
@@ -222,6 +231,10 @@ func (ph ParamHolder) InitParamFromConfig(
 	}
 
 	if err := ph.setAccountParam(ctx, &accParam); err != nil {
+		return err
+	}
+
+	if err := ph.setReputationParam(ctx, &repParam); err != nil {
 		return err
 	}
 
@@ -385,6 +398,20 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 	return param, nil
 }
 
+// GetReputationParam - get reputation param
+func (ph ParamHolder) GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk.Error) {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetReputationParamKey())
+	if paramBytes == nil {
+		return nil, ErrReputationParamNotFound()
+	}
+	param := new(ReputationParam)
+	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+		return nil, ErrFailedToUnmarshalReputationParam(err)
+	}
+	return param, nil
+}
+
 // UpdateGlobalGrowthRate - update global growth rate
 func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat) sdk.Error {
 	store := ctx.KVStore(ph.key)
@@ -525,6 +552,16 @@ func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.
 	return nil
 }
 
+func (ph ParamHolder) setReputationParam(ctx sdk.Context, param *ReputationParam) sdk.Error {
+	store := ctx.KVStore(ph.key)
+	reputationBytes, err := ph.cdc.MarshalJSON(*param)
+	if err != nil {
+		return ErrFailedToMarshalReputationParam(err)
+	}
+	store.Set(GetReputationParamKey(), reputationBytes)
+	return nil
+}
+
 // GetPostParamKey - "post param substore"
 func GetPostParamKey() []byte {
 	return postParamSubStore
@@ -578,4 +615,9 @@ func GetBandwidthParamKey() []byte {
 // GetAccountParamKey - "account param substore"
 func GetAccountParamKey() []byte {
 	return accountParamSubstore
+}
+
+// GetAccountParamKey - "account param substore"
+func GetReputationParamKey() []byte {
+	return reputationParamSubStore
 }

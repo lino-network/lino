@@ -93,6 +93,7 @@ type GenesisParam struct {
 	param.BandwidthParam
 	param.AccountParam
 	param.PostParam
+	param.ReputationParam
 }
 
 // LinoBlockchainGenTx - init genesis account
@@ -221,6 +222,9 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			param.PostParam{
 				ReportOrUpvoteIntervalSec: 24 * 3600,
 				PostIntervalSec:           600,
+			},
+			param.ReputationParam{
+				BestContentIndexN: 10,
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

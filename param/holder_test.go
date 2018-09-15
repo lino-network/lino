@@ -392,6 +392,9 @@ func TestInitParamFromConfig(t *testing.T) {
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
 		PostIntervalSec:           int64(600),
 	}
+	repParam := ReputationParam{
+		BestContentIndexN: 10,
+	}
 
 	err := ph.InitParamFromConfig(
 		ctx, globalAllocationParam,
@@ -405,6 +408,7 @@ func TestInitParamFromConfig(t *testing.T) {
 		coinDayParam,
 		bandwidthParam,
 		accountParam,
+		repParam,
 	)
 	assert.Nil(t, err)
 
