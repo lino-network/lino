@@ -64,14 +64,14 @@ const (
 	ClaimInterest        = TransferDetailType(13)
 
 	// Different possible outcomes
-	TransferOut      = TransferDetailType(13)
-	DonationOut      = TransferDetailType(14)
-	Delegate         = TransferDetailType(15)
-	VoterDeposit     = TransferDetailType(16)
-	ValidatorDeposit = TransferDetailType(17)
-	DeveloperDeposit = TransferDetailType(18)
-	InfraDeposit     = TransferDetailType(19)
-	ProposalDeposit  = TransferDetailType(20)
+	TransferOut      = TransferDetailType(20)
+	DonationOut      = TransferDetailType(21)
+	Delegate         = TransferDetailType(22)
+	VoterDeposit     = TransferDetailType(23)
+	ValidatorDeposit = TransferDetailType(24)
+	DeveloperDeposit = TransferDetailType(25)
+	InfraDeposit     = TransferDetailType(26)
+	ProposalDeposit  = TransferDetailType(27)
 
 	// punishment type
 	UnknownPunish      = PunishType(0)
