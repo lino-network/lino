@@ -11,6 +11,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(UnfollowMsg{}, "lino/unfollow", nil)
 	cdc.RegisterConcrete(TransferMsg{}, "lino/transfer", nil)
 	cdc.RegisterConcrete(ClaimMsg{}, "lino/claim", nil)
+	cdc.RegisterConcrete(ClaimInterestMsg{}, "lino/claimInterest", nil)
 	cdc.RegisterConcrete(RecoverMsg{}, "lino/recover", nil)
 	cdc.RegisterConcrete(UpdateAccountMsg{}, "lino/updateAcc", nil)
 }
