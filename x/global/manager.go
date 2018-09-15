@@ -242,6 +242,9 @@ func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoSt
 		if err != nil {
 			return types.NewCoinFromInt64(0), err
 		}
+		if linoStakeStat.UnclaimedLinoStake.IsZero() {
+			continue
+		}
 		interest :=
 			types.RatToCoin(linoStakeStat.UnclaimedFriction.ToRat().Mul(
 				linoStake.ToRat().Quo(linoStakeStat.UnclaimedLinoStake.ToRat())))
@@ -261,12 +264,15 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	if err != nil {
 		return err
 	}
-	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, pastMinutes/types.MinutesPerDay-1)
+	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, (pastMinutes/types.MinutesPerDay)-1)
 	if err != nil {
 		return err
 	}
-	lastLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
-	lastLinoStakeStat.UnclaimedFriction = types.NewCoinFromInt64(0)
+	// If lino stake exist last day, the consumption will keep for lino stake holder that day
+	if !lastLinoStakeStat.TotalLinoStake.IsZero() {
+		lastLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
+		lastLinoStakeStat.UnclaimedFriction = types.NewCoinFromInt64(0)
+	}
 	if err := gm.storage.SetLinoStakeStat(ctx, pastMinutes/types.MinutesPerDay, lastLinoStakeStat); err != nil {
 		return err
 	}
