@@ -1530,7 +1530,34 @@ func TestGetInterestSince(t *testing.T) {
 			since:          3600 * 24 * 1,
 			current:        3600 * 24 * 3,
 			stake:          types.NewCoinFromInt64(77 * types.Decimals),
-			expectInterest: types.NewCoinFromInt64(61600000 + 0 + 59823077),
+			expectInterest: types.NewCoinFromInt64(61600000 + 59823077),
+		},
+		{
+			testName: "get one of days doesn't have stake",
+			pastRecord: []model.LinoStakeStat{
+				model.LinoStakeStat{
+					TotalConsumptionFriction: types.NewCoinFromInt64(10000 * types.Decimals),
+					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
+					UnclaimedFriction:        types.NewCoinFromInt64(10000 * types.Decimals),
+					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
+				},
+				model.LinoStakeStat{
+					TotalConsumptionFriction: types.NewCoinFromInt64(1000 * types.Decimals),
+					TotalLinoStake:           types.NewCoinFromInt64(0 * types.Decimals),
+					UnclaimedFriction:        types.NewCoinFromInt64(1000 * types.Decimals),
+					UnclaimedLinoStake:       types.NewCoinFromInt64(0 * types.Decimals),
+				},
+				model.LinoStakeStat{
+					TotalConsumptionFriction: types.NewCoinFromInt64(7777 * types.Decimals),
+					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
+					UnclaimedFriction:        types.NewCoinFromInt64(1111 * types.Decimals),
+					UnclaimedLinoStake:       types.NewCoinFromInt64(143 * types.Decimals),
+				},
+			},
+			since:          3600 * 24 * 1,
+			current:        3600 * 24 * 3,
+			stake:          types.NewCoinFromInt64(0),
+			expectInterest: types.NewCoinFromInt64(0),
 		},
 	}
 
@@ -1578,9 +1605,12 @@ func TestGetInterestSince(t *testing.T) {
 					tc.testName, stat.UnclaimedLinoStake, tc.pastRecord[i].UnclaimedLinoStake.Minus(tc.stake))
 				return
 			}
-			interest :=
-				types.RatToCoin(tc.pastRecord[i].UnclaimedFriction.ToRat().Mul(
-					tc.stake.ToRat().Quo(tc.pastRecord[i].UnclaimedLinoStake.ToRat())))
+			interest := types.NewCoinFromInt64(0)
+			if !tc.pastRecord[i].UnclaimedLinoStake.IsZero() {
+				interest =
+					types.RatToCoin(tc.pastRecord[i].UnclaimedFriction.ToRat().Mul(
+						tc.stake.ToRat().Quo(tc.pastRecord[i].UnclaimedLinoStake.ToRat())))
+			}
 			if !stat.UnclaimedFriction.IsEqual(tc.pastRecord[i].UnclaimedFriction.Minus(interest)) {
 				t.Errorf("%s: diff total consumption friction, got %v, want %v",
 					tc.testName, stat.UnclaimedFriction, tc.pastRecord[i].UnclaimedFriction.Minus(interest))
@@ -1628,6 +1658,16 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 				UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 			},
 		},
+		{
+			testName: "previous day no stake in stat",
+			atDay:    1000,
+			previousStat: model.LinoStakeStat{
+				TotalConsumptionFriction: types.NewCoinFromInt64(9 * types.Decimals),
+				TotalLinoStake:           types.NewCoinFromInt64(0),
+				UnclaimedFriction:        types.NewCoinFromInt64(9 * types.Decimals),
+				UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1641,15 +1681,31 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 
 		linoStat, err := gm.storage.GetLinoStakeStat(ctx, tc.atDay)
 		assert.Nil(t, err)
-		if !linoStat.TotalConsumptionFriction.IsZero() {
-			t.Errorf("%s: diff total consumption friction rate, got %v, want zero",
-				tc.testName, linoStat.TotalConsumptionFriction)
-			return
+		if tc.previousStat.TotalLinoStake.IsZero() {
+			if !linoStat.TotalConsumptionFriction.IsEqual(tc.previousStat.TotalConsumptionFriction) {
+				t.Errorf("%s: diff total consumption friction rate, got %v, want %v",
+					tc.testName, linoStat.TotalConsumptionFriction, tc.previousStat.TotalConsumptionFriction)
+				return
+			}
+		} else {
+			if !linoStat.TotalConsumptionFriction.IsZero() {
+				t.Errorf("%s: diff total consumption friction rate, got %v, want zero",
+					tc.testName, linoStat.TotalConsumptionFriction)
+				return
+			}
 		}
-		if !linoStat.UnclaimedFriction.IsZero() {
-			t.Errorf("%s: diff unclaimed friction, got %v, want zero",
-				tc.testName, linoStat.TotalConsumptionFriction)
-			return
+		if tc.previousStat.TotalLinoStake.IsZero() {
+			if !linoStat.UnclaimedFriction.IsEqual(tc.previousStat.UnclaimedFriction) {
+				t.Errorf("%s: diff unclaimed friction, got %v, want %v",
+					tc.testName, linoStat.UnclaimedFriction, tc.previousStat.UnclaimedFriction)
+				return
+			}
+		} else {
+			if !linoStat.UnclaimedFriction.IsZero() {
+				t.Errorf("%s: diff unclaimed friction, got %v, want zero",
+					tc.testName, linoStat.UnclaimedFriction)
+				return
+			}
 		}
 		if !linoStat.UnclaimedLinoStake.IsEqual(tc.previousStat.UnclaimedLinoStake) {
 			t.Errorf("%s: diff unclaim lino stake, got %v, want %v",
