@@ -26,7 +26,6 @@ func NewReputation(s ReputationStore) *ReputationImpl {
 	return &ReputationImpl{store: s}
 }
 
-// XXX(yumin): customerScore is at least one lino. 10^5 coins?
 func (rep ReputationImpl) GetReputation(u Uid) Rep {
 	customerScore := rep.GetSettledCustomerScore(u)
 	freeScore := rep.store.GetFreeScore(u)
