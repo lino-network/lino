@@ -261,18 +261,6 @@ func (vm VoteManager) DelegatorWithdraw(
 	return nil
 }
 
-// DelegatorWithdrawAll - revoke delegation
-func (vm VoteManager) DelegatorWithdrawAll(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey) (types.Coin, sdk.Error) {
-	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	if err := vm.DelegatorWithdraw(ctx, voterName, delegatorName, delegation.Amount); err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return delegation.Amount, nil
-}
-
 // GetVotingPower - get voter voting power
 func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, voterName)

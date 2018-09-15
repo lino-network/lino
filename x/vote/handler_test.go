@@ -119,7 +119,7 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Nil(t, res)
 
 	// let user3 reovke delegation
-	msg4 := NewRevokeDelegationMsg("user3", "user1")
+	msg4 := NewDelegatorWithdrawMsg("user3", "user1", coinToString(delegatedCoin))
 	result := handler(ctx, msg4)
 	assert.Equal(t, sdk.Result{}, result)
 

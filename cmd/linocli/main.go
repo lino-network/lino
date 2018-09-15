@@ -114,10 +114,6 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			delegationcmd.RevokeDelegateTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
 			delegationcmd.DelegateTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
