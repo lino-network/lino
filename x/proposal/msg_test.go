@@ -197,6 +197,7 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 
 func TestChangeVoteParamMsg(t *testing.T) {
 	p1 := param.VoteParam{
+		MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
 		VoterCoinReturnTimes:           int64(7),
 		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
@@ -204,16 +205,19 @@ func TestChangeVoteParamMsg(t *testing.T) {
 	}
 
 	p2 := p1
-	p2.VoterCoinReturnIntervalSec = int64(0)
+	p2.MinStakeIn = types.NewCoinFromInt64(-1 * types.Decimals)
 
 	p3 := p1
-	p3.VoterCoinReturnTimes = int64(0)
+	p3.VoterCoinReturnIntervalSec = int64(0)
 
 	p4 := p1
-	p4.DelegatorCoinReturnIntervalSec = int64(-1)
+	p4.VoterCoinReturnTimes = int64(0)
 
 	p5 := p1
-	p5.DelegatorCoinReturnTimes = int64(0)
+	p5.DelegatorCoinReturnIntervalSec = int64(-1)
+
+	p6 := p1
+	p6.DelegatorCoinReturnTimes = int64(0)
 
 	testCases := []struct {
 		testName           string
@@ -226,8 +230,13 @@ func TestChangeVoteParamMsg(t *testing.T) {
 			expectedError:      nil,
 		},
 		{
-			testName:           "zero VoterCoinReturnIntervalHr is illegal",
+			testName:           "negative voter min stake in is illegal",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2, ""),
+			expectedError:      ErrIllegalParameter(),
+		},
+		{
+			testName:           "zero VoterCoinReturnIntervalHr is illegal",
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p6, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{

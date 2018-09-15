@@ -69,6 +69,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	if vm.IsInValidatorList(ctx, username) {
 		return false
 	}
+
 	//reject if the remaining coins are not enough
 	return voter.LinoStake.IsGTE(coin) && coin.IsPositive()
 }

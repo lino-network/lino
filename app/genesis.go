@@ -165,6 +165,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				CDNAllocation:     sdk.NewRat(50, 100),
 			},
 			param.VoteParam{
+				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
 				VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
 				VoterCoinReturnTimes:           int64(7),
 				DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),

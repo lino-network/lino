@@ -42,6 +42,15 @@ func handleStakeInMsg(
 		return err.Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if param.MinStakeIn.IsGT(coin) {
+		return ErrInsufficientDeposit().Result()
+	}
+
 	// withdraw money from voter's bank
 	if err := am.MinusSavingCoin(ctx, msg.Username, coin, "", "", types.VoterDeposit); err != nil {
 		return err.Result()
