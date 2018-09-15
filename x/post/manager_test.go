@@ -15,7 +15,7 @@ import (
 
 // test create post
 func TestCreatePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1 := createTestAccount(t, ctx, am, "user1")
 	user2 := createTestAccount(t, ctx, am, "user2")
 
@@ -134,7 +134,7 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	baseTime := time.Now().Unix()
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(baseTime, 0)})
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -211,7 +211,7 @@ func TestUpdatePost(t *testing.T) {
 
 // test get source post
 func TestGetSourcePost(t *testing.T) {
-	ctx, _, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, _, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user3")
@@ -299,7 +299,7 @@ func TestGetSourcePost(t *testing.T) {
 }
 
 func TestAddOrUpdateViewToPost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	createTime := ctx.BlockHeader().Time
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
@@ -395,7 +395,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 }
 
 func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -480,7 +480,7 @@ func TestReportOrUpvoteToPost(t *testing.T) {
 }
 
 func TestDonation(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -576,7 +576,7 @@ func TestDonation(t *testing.T) {
 }
 
 func TestGetPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	postKey := types.GetPermlink(user, postID)
 	bigString1 := "1000000000000000000000000"
@@ -673,7 +673,7 @@ func TestGetPenaltyScore(t *testing.T) {
 }
 
 func TestGetRepostPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 
@@ -759,7 +759,7 @@ func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permlink types
 }
 
 func TestDeletePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 

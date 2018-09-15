@@ -105,9 +105,9 @@ func NewLinoBlockchain(
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
-	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
+	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
@@ -116,7 +116,7 @@ func NewLinoBlockchain(
 	lb.Router().
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager, lb.globalManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(
-			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager)).
+			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager, lb.reputationManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(lb.voteManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
 			lb.developerManager, lb.accountManager, lb.globalManager)).

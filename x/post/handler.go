@@ -10,18 +10,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
+	rep "github.com/lino-network/lino/x/reputation"
 )
 
 // NewHandler - Handle all "post" type messages.
-func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager) sdk.Handler {
+func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
 			return handleCreatePostMsg(ctx, msg, pm, am, gm)
 		case DonateMsg:
-			return handleDonateMsg(ctx, msg, pm, am, gm, dm)
+			return handleDonateMsg(ctx, msg, pm, am, gm, dm, rm)
 		case ReportOrUpvoteMsg:
-			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm)
+			return handleReportOrUpvoteMsg(ctx, msg, pm, am, gm, rm)
 		case ViewMsg:
 			return handleViewMsg(ctx, msg, pm, am, gm)
 		case UpdatePostMsg:
@@ -127,12 +128,25 @@ func handleDonateMsg(
 		}
 	}
 
+	coinDayBeforeDonate, err := am.GetCoinDay(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
+	}
+
 	if err := am.MinusSavingCoin(
 		ctx, msg.Username, coin, msg.Author,
 		fmt.Sprintf("donate to post: %v, memo: %v", string(permlink), msg.Memo),
 		types.DonationOut); err != nil {
 		return err.Result()
 	}
+
+	coinDayAfterDonate, err := am.GetCoinDay(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
+	}
+
+	totalCoinDayDonated := coinDayBeforeDonate.Minus(coinDayAfterDonate)
+
 	coinDay, err := am.GetCoinDay(ctx, msg.Username)
 	if err != nil {
 		return err.Result()
@@ -153,22 +167,24 @@ func handleDonateMsg(
 		}
 		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
+		sourceCoinDayGained := types.RatToCoin(totalCoinDayDonated.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
+		totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
 		if err := processDonationFriction(
-			ctx, msg.Username, sourceIncome, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm); err != nil {
+			ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {
 			return ErrProcessSourceDonation(sourcePermlink).Result()
 		}
 	}
 	if err := processDonationFriction(
-		ctx, msg.Username, coin, msg.Author, msg.PostID, msg.FromApp, am, pm, gm); err != nil {
+		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, am, pm, gm, rm); err != nil {
 		return ErrProcessDonation(permlink).Result()
 	}
 	return sdk.Result{}
 }
 
 func processDonationFriction(
-	ctx sdk.Context, consumer types.AccountKey, coin types.Coin,
-	postAuthor types.AccountKey, postID string, fromApp types.AccountKey,
-	am acc.AccountManager, pm PostManager, gm global.GlobalManager) sdk.Error {
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, coinDayDonated types.Coin
+	postAuthor types.AccountKey, postID string, fromApp types.AccountKey, am acc.AccountManager,
+	pm PostManager, gm global.GlobalManager, rm rep.ReputationManager) sdk.Error {
 	postKey := types.GetPermlink(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
@@ -182,7 +198,11 @@ func processDonationFriction(
 	}
 	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
-	evaluateResult, err := evaluateConsumption(ctx, consumer, coin, postAuthor, postID, am, pm, gm)
+	dp, err := rm.DonateAt(ctx, consumer, postKey, coinDayDonated)
+	if err != nil {
+		return err
+	}
+	evaluateResult, err := evaluateConsumption(ctx, consumer, dp, postAuthor, postID, am, pm, gm)
 	if err != nil {
 		return err
 	}
