@@ -261,7 +261,7 @@ func handleReportOrUpvoteMsg(
 		return ErrPostNotFound(permlink).Result()
 	}
 
-	coinDay, err := am.GetCoinDay(ctx, msg.Username)
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
 	if err != nil {
 		return err.Result()
 	}
@@ -271,19 +271,18 @@ func handleReportOrUpvoteMsg(
 		return err.Result()
 	}
 
-	postParam, err := pm.paramHolder.GetPostParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
 	if lastReportOrUpvoteAt+postParam.ReportOrUpvoteIntervalSec > ctx.BlockHeader().Time.Unix() {
 		return ErrReportOrUpvoteTooOften().Result()
 	}
-
-	if err := pm.ReportOrUpvoteToPost(
-		ctx, permlink, msg.Username, coinDay, msg.IsReport); err != nil {
+	if msg.IsReport {
+		if _, err := rm.ReportAt(ctx, msg.Username, permlink); err != nil {
+			return err.Result()
+		}
+	}
+	if err := pm.UpdateLastActivityAt(ctx, permlink); err != nil {
 		return err.Result()
 	}
+
 	if err := am.UpdateLastReportOrUpvoteAt(ctx, msg.Username); err != nil {
 		return err.Result()
 	}

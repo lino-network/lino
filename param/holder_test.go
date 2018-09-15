@@ -299,6 +299,7 @@ func TestInitParam(t *testing.T) {
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
 		PostIntervalSec:           int64(600),
+		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
@@ -391,6 +392,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	postParam := PostParam{
 		ReportOrUpvoteIntervalSec: int64(24 * 3600),
 		PostIntervalSec:           int64(600),
+		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	repParam := ReputationParam{
 		BestContentIndexN: 10,

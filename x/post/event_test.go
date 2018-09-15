@@ -1,7 +1,6 @@
 package post
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/lino-network/lino/types"
@@ -28,21 +27,15 @@ func TestRewardEvent(t *testing.T) {
 	err = dm.RegisterDeveloper(ctx, "LinoApp2", types.NewCoinFromInt64(1000000*types.Decimals), "", "", "")
 	assert.Nil(t, err)
 
-	bigString1 := "1000000000000000000000000"
-	bigString2 := "7777777777777777777777777"
-	bigStringInt1, _ := new(big.Int).SetString(bigString1, 10)
-	bigStringInt2, _ := new(big.Int).SetString(bigString2, 10)
 	testCases := []struct {
-		testName             string
-		rewardEvent          RewardEvent
-		totalReportOfThePost types.Coin
-		totalUpvoteOfThePost types.Coin
-		initRewardPool       types.Coin
-		initRewardWindow     types.Coin
-		expectPostMeta       postModel.PostMeta
-		expectAppWeight      sdk.Rat
-		expectAuthorReward   accModel.Reward
-		expectVoterDeposit   types.Coin
+		testName           string
+		rewardEvent        RewardEvent
+		initRewardPool     types.Coin
+		initRewardWindow   types.Coin
+		expectPostMeta     postModel.PostMeta
+		expectAppWeight    sdk.Rat
+		expectAuthorReward accModel.Reward
+		expectVoterDeposit types.Coin
 	}{
 		{
 			testName: "normal event",
@@ -55,12 +48,10 @@ func TestRewardEvent(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
 			},
-			totalReportOfThePost: types.NewCoinFromInt64(0),
-			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
+			initRewardPool:   types.NewCoinFromInt64(100),
+			initRewardWindow: types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
@@ -79,74 +70,6 @@ func TestRewardEvent(t *testing.T) {
 			expectVoterDeposit: types.NewCoinFromInt64(50),
 		},
 		{
-			testName: "100% panelty reward post",
-			rewardEvent: RewardEvent{
-				PostAuthor: user,
-				PostID:     postID,
-				Consumer:   user1,
-				Evaluate:   types.NewCoinFromInt64(100),
-				Original:   types.NewCoinFromInt64(100),
-				Friction:   types.NewCoinFromInt64(15),
-				FromApp:    types.AccountKey("LinoApp1"),
-			},
-			totalReportOfThePost: types.NewCoinFromInt64(100),
-			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
-			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
-				TotalReportCoinDay:      types.NewCoinFromInt64(100),
-				TotalDonateCount:        1,
-				TotalReward:             types.NewCoinFromInt64(0),
-				RedistributionSplitRate: sdk.ZeroRat(),
-				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			},
-			expectAppWeight: sdk.OneRat(),
-			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(0),
-				InflationIncome: types.NewCoinFromInt64(0),
-				UnclaimReward:   types.NewCoinFromInt64(0),
-				OriginalIncome:  types.NewCoinFromInt64(15),
-				FrictionIncome:  types.NewCoinFromInt64(15),
-				Interest:        types.NewCoinFromInt64(0),
-			},
-			expectVoterDeposit: types.NewCoinFromInt64(0),
-		},
-		{
-			testName: "50% panelty reward post",
-			rewardEvent: RewardEvent{
-				PostAuthor: user,
-				PostID:     postID,
-				Consumer:   user1,
-				Evaluate:   types.NewCoinFromInt64(100),
-				Original:   types.NewCoinFromInt64(100),
-				Friction:   types.NewCoinFromInt64(15),
-				FromApp:    types.AccountKey("LinoApp1"),
-			},
-			totalReportOfThePost: types.NewCoinFromInt64(50),
-			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
-			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
-				TotalReportCoinDay:      types.NewCoinFromInt64(50),
-				TotalDonateCount:        1,
-				TotalReward:             types.NewCoinFromInt64(50),
-				RedistributionSplitRate: sdk.ZeroRat(),
-				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			},
-			expectAppWeight: sdk.OneRat(),
-			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(25),
-				OriginalIncome:  types.NewCoinFromInt64(15),
-				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(25),
-				UnclaimReward:   types.NewCoinFromInt64(25),
-				Interest:        types.NewCoinFromInt64(0),
-			},
-			expectVoterDeposit: types.NewCoinFromInt64(25),
-		},
-		{
 			testName: "evaluate as 1% of total window",
 			rewardEvent: RewardEvent{
 				PostAuthor: user,
@@ -157,12 +80,10 @@ func TestRewardEvent(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp1"),
 			},
-			totalReportOfThePost: types.NewCoinFromInt64(0),
-			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
+			initRewardPool:   types.NewCoinFromInt64(100),
+			initRewardWindow: types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(1),
@@ -191,19 +112,17 @@ func TestRewardEvent(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp2"),
 			},
-			totalReportOfThePost: types.NewCoinFromInt64(0),
-			totalUpvoteOfThePost: types.NewCoinFromInt64(100),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
+			initRewardPool:   types.NewCoinFromInt64(100),
+			initRewardWindow: types.NewCoinFromInt64(100),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromInt64(100),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
 				RedistributionSplitRate: sdk.ZeroRat(),
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(62251, 156250),
+			expectAppWeight: sdk.NewRat(1243781, 2500000),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(50),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -213,74 +132,6 @@ func TestRewardEvent(t *testing.T) {
 				Interest:        types.NewCoinFromInt64(0),
 			},
 			expectVoterDeposit: types.NewCoinFromInt64(50),
-		},
-		{
-			testName: "test big penalty score with 1.0 report",
-			rewardEvent: RewardEvent{
-				PostAuthor: user,
-				PostID:     postID,
-				Consumer:   user1,
-				Evaluate:   types.NewCoinFromInt64(50),
-				Original:   types.NewCoinFromInt64(100),
-				Friction:   types.NewCoinFromInt64(15),
-				FromApp:    types.AccountKey("LinoApp2"),
-			},
-			totalReportOfThePost: types.NewCoinFromBigInt(bigStringInt2),
-			totalUpvoteOfThePost: types.NewCoinFromBigInt(bigStringInt1),
-			initRewardPool:       types.NewCoinFromInt64(100),
-			initRewardWindow:     types.NewCoinFromInt64(100),
-			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt1),
-				TotalReportCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
-				TotalDonateCount:        1,
-				TotalReward:             types.NewCoinFromInt64(0),
-				RedistributionSplitRate: sdk.ZeroRat(),
-				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			},
-			expectAppWeight: sdk.NewRat(62251, 156250),
-			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(0),
-				OriginalIncome:  types.NewCoinFromInt64(15),
-				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(0),
-				UnclaimReward:   types.NewCoinFromInt64(0),
-				Interest:        types.NewCoinFromInt64(0),
-			},
-			expectVoterDeposit: types.NewCoinFromInt64(0),
-		},
-		{
-			testName: "test big penalty score with 12.857% report",
-			rewardEvent: RewardEvent{
-				PostAuthor: user,
-				PostID:     postID,
-				Consumer:   user1,
-				Evaluate:   types.NewCoinFromInt64(33333),
-				Original:   types.NewCoinFromInt64(100),
-				Friction:   types.NewCoinFromInt64(15),
-				FromApp:    types.AccountKey("LinoApp2"),
-			},
-			totalReportOfThePost: types.NewCoinFromBigInt(bigStringInt1),
-			totalUpvoteOfThePost: types.NewCoinFromBigInt(bigStringInt2),
-			initRewardPool:       types.NewCoinFromInt64(5555),
-			initRewardWindow:     types.NewCoinFromInt64(77777),
-			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
-				TotalReportCoinDay:      types.NewCoinFromBigInt(bigStringInt1),
-				TotalDonateCount:        1,
-				TotalReward:             types.NewCoinFromInt64(2075),
-				RedistributionSplitRate: sdk.ZeroRat(),
-				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			},
-			expectAppWeight: sdk.NewRat(9350817, 10000000),
-			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(1038),
-				OriginalIncome:  types.NewCoinFromInt64(15),
-				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(1038),
-				UnclaimReward:   types.NewCoinFromInt64(1038),
-				Interest:        types.NewCoinFromInt64(0),
-			},
-			expectVoterDeposit: types.NewCoinFromInt64(1037),
 		},
 		{
 			testName: "deleted post can't get any inflation",
@@ -293,12 +144,10 @@ func TestRewardEvent(t *testing.T) {
 				Friction:   types.NewCoinFromInt64(15),
 				FromApp:    types.AccountKey("LinoApp2"),
 			},
-			totalReportOfThePost: types.NewCoinFromInt64(0),
-			totalUpvoteOfThePost: types.NewCoinFromBigInt(bigStringInt2),
-			initRewardPool:       types.NewCoinFromInt64(5555),
-			initRewardWindow:     types.NewCoinFromInt64(77777),
+			initRewardPool:   types.NewCoinFromInt64(5555),
+			initRewardWindow: types.NewCoinFromInt64(77777),
 			expectPostMeta: postModel.PostMeta{
-				TotalUpvoteCoinDay:      types.NewCoinFromBigInt(bigStringInt2),
+				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
@@ -306,7 +155,7 @@ func TestRewardEvent(t *testing.T) {
 				IsDeleted:               true,
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(9350817, 10000000),
+			expectAppWeight: sdk.NewRat(1243781, 2500000),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -326,8 +175,8 @@ func TestRewardEvent(t *testing.T) {
 		})
 		pm.postStorage.SetPostMeta(ctx, types.GetPermlink(tc.rewardEvent.PostAuthor, tc.rewardEvent.PostID),
 			&postModel.PostMeta{
-				TotalUpvoteCoinDay: tc.totalUpvoteOfThePost,
-				TotalReportCoinDay: tc.totalReportOfThePost,
+				TotalUpvoteCoinDay: types.NewCoinFromInt64(0),
+				TotalReportCoinDay: types.NewCoinFromInt64(0),
 				TotalReward:        types.NewCoinFromInt64(0),
 				IsDeleted:          tc.expectPostMeta.IsDeleted,
 			})

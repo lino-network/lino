@@ -172,43 +172,6 @@ func (pm PostManager) AddOrUpdateViewToPost(
 	return nil
 }
 
-// ReportOrUpvoteToPost - add or update report or upvote from the user if exist
-func (pm PostManager) ReportOrUpvoteToPost(
-	ctx sdk.Context, permlink types.Permlink, user types.AccountKey,
-	coinDay types.Coin, isReport bool) sdk.Error {
-	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
-	if err != nil {
-		return err
-	}
-	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
-
-	reportOrUpvote, _ := pm.postStorage.GetPostReportOrUpvote(ctx, permlink, user)
-
-	if reportOrUpvote != nil {
-		if reportOrUpvote.IsReport {
-			postMeta.TotalReportCoinDay = postMeta.TotalReportCoinDay.Minus(reportOrUpvote.CoinDay)
-		} else {
-			postMeta.TotalUpvoteCoinDay = postMeta.TotalUpvoteCoinDay.Minus(reportOrUpvote.CoinDay)
-		}
-	}
-	reportOrUpvote =
-		&model.ReportOrUpvote{Username: user, CoinDay: coinDay, CreatedAt: ctx.BlockHeader().Time.Unix()}
-	if isReport {
-		postMeta.TotalReportCoinDay = postMeta.TotalReportCoinDay.Plus(reportOrUpvote.CoinDay)
-		reportOrUpvote.IsReport = true
-	} else {
-		postMeta.TotalUpvoteCoinDay = postMeta.TotalUpvoteCoinDay.Plus(reportOrUpvote.CoinDay)
-		reportOrUpvote.IsReport = false
-	}
-	if err := pm.postStorage.SetPostReportOrUpvote(ctx, permlink, reportOrUpvote); err != nil {
-		return err
-	}
-	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
-		return err
-	}
-	return nil
-}
-
 // add comment to post comment list
 func (pm PostManager) AddComment(
 	ctx sdk.Context, permlink types.Permlink, commentAuthor types.AccountKey, commentPostID string) sdk.Error {
@@ -292,30 +255,37 @@ func (pm PostManager) IsDeleted(ctx sdk.Context, permlink types.Permlink) (bool,
 	return postMeta.IsDeleted, nil
 }
 
-// GetPenaltyScore - get penalty score from report and upvote
-func (pm PostManager) GetPenaltyScore(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
-	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
-	if err != nil {
-		return sdk.ZeroRat(), err
-	}
-	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		paneltyScore, err := pm.GetPenaltyScore(ctx, types.GetPermlink(sourceAuthor, sourcePostID))
-		if err != nil {
-			return sdk.ZeroRat(), err
-		}
-		return paneltyScore, nil
-	}
+// UpdateLastActivityAt - update post last activity at
+func (pm PostManager) UpdateLastActivityAt(ctx sdk.Context, permlink types.Permlink) sdk.Error {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return sdk.ZeroRat(), err
+		return err
 	}
-	if postMeta.TotalReportCoinDay.IsZero() {
+	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
+	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetPenaltyScore - get penalty score from report and upvote
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, reputation types.Coin) (sdk.Rat, sdk.Error) {
+	if reputation.IsNotNegative() {
 		return sdk.ZeroRat(), nil
 	}
-	if postMeta.TotalUpvoteCoinDay.IsZero() {
+	reputation = types.NewCoinFromInt64(0).Minus(reputation)
+	postParam, err := pm.paramHolder.GetPostParam(ctx)
+	if err != nil {
+		return sdk.OneRat(), err
+	}
+	// if max report reputation is zero, any negative reputation should result in max penalty score
+	if postParam.MaxReportReputation.IsZero() {
 		return sdk.OneRat(), nil
 	}
-	penaltyScore := postMeta.TotalReportCoinDay.ToRat().Quo(postMeta.TotalUpvoteCoinDay.ToRat()).Round(types.PrecisionFactor)
+	if reputation.IsGTE(postParam.MaxReportReputation) {
+		return sdk.OneRat(), nil
+	}
+	penaltyScore := reputation.ToRat().Quo(postParam.MaxReportReputation.ToRat()).Round(types.PrecisionFactor)
 	if penaltyScore.GT(sdk.OneRat()) {
 		return sdk.OneRat(), nil
 	}

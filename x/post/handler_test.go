@@ -815,11 +815,11 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Equal(t, sourceRewardEvent, eventList.Events[0])
 }
 
+// reputation check should be added later
 func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
 	handler := NewHandler(pm, am, gm, dm, rm)
 	coinDayParam, _ := ph.GetCoinDayParam(ctx)
-	accParam, _ := ph.GetAccountParam(ctx)
 	postParam, _ := ph.GetPostParam(ctx)
 
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")
@@ -831,81 +831,67 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 	invalidPermlink := types.GetPermlink("invalid", "invalid")
 
 	testCases := []struct {
-		testName                 string
-		reportOrUpvoteUser       string
-		isReport                 bool
-		targetPostAuthor         string
-		targetPostID             string
-		lastReportOrUpvoteAt     int64
-		expectResult             sdk.Result
-		expectTotalReportCoinDay types.Coin
-		expectTotalUpvoteCoinDay types.Coin
+		testName             string
+		reportOrUpvoteUser   string
+		isReport             bool
+		targetPostAuthor     string
+		targetPostID         string
+		lastReportOrUpvoteAt int64
+		expectResult         sdk.Result
 	}{
 		{
-			testName:                 "user1 report",
-			reportOrUpvoteUser:       string(user1),
-			isReport:                 true,
-			targetPostAuthor:         string(user1),
-			targetPostID:             postID,
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:             sdk.Result{},
-			expectTotalReportCoinDay: accParam.RegisterFee,
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(0),
+			testName:             "user1 report",
+			reportOrUpvoteUser:   string(user1),
+			isReport:             true,
+			targetPostAuthor:     string(user1),
+			targetPostID:         postID,
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:         sdk.Result{},
 		},
 		{
-			testName:                 "user2 report",
-			reportOrUpvoteUser:       string(user2),
-			isReport:                 true,
-			targetPostAuthor:         string(user1),
-			targetPostID:             postID,
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:             sdk.Result{},
-			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(0),
+			testName:             "user2 report",
+			reportOrUpvoteUser:   string(user2),
+			isReport:             true,
+			targetPostAuthor:     string(user1),
+			targetPostID:         postID,
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:         sdk.Result{},
 		},
 		{
-			testName:                 "user3 upvote",
-			reportOrUpvoteUser:       string(user3),
-			isReport:                 false,
-			targetPostAuthor:         string(user1),
-			targetPostID:             postID,
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:             sdk.Result{},
-			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteCoinDay: accParam.RegisterFee,
+			testName:             "user3 upvote",
+			reportOrUpvoteUser:   string(user3),
+			isReport:             false,
+			targetPostAuthor:     string(user1),
+			targetPostID:         postID,
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:         sdk.Result{},
 		},
 		{
-			testName:                 "user1 wanna change report to upvote",
-			reportOrUpvoteUser:       string(user1),
-			isReport:                 false,
-			targetPostAuthor:         string(user1),
-			targetPostID:             postID,
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:             sdk.Result{},
-			expectTotalReportCoinDay: accParam.RegisterFee,
-			expectTotalUpvoteCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			testName:             "user1 wanna change report to upvote",
+			reportOrUpvoteUser:   string(user1),
+			isReport:             false,
+			targetPostAuthor:     string(user1),
+			targetPostID:         postID,
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:         sdk.Result{},
 		},
 		{
-			testName:                 "user1 report too often",
-			reportOrUpvoteUser:       string(user1),
-			isReport:                 false,
-			targetPostAuthor:         string(user1),
-			targetPostID:             postID,
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec + 1,
-			expectResult:             ErrReportOrUpvoteTooOften().Result(),
-			expectTotalReportCoinDay: accParam.RegisterFee,
-			expectTotalUpvoteCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
+			testName:             "user1 report too often",
+			reportOrUpvoteUser:   string(user1),
+			isReport:             false,
+			targetPostAuthor:     string(user1),
+			targetPostID:         postID,
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec + 1,
+			expectResult:         ErrReportOrUpvoteTooOften().Result(),
 		},
 		{
-			testName:                 "user4 report to an invalid post",
-			reportOrUpvoteUser:       string(user4),
-			isReport:                 true,
-			targetPostAuthor:         "invalid",
-			targetPostID:             "invalid",
-			lastReportOrUpvoteAt:     baseTime - postParam.ReportOrUpvoteIntervalSec,
-			expectResult:             ErrPostNotFound(invalidPermlink).Result(),
-			expectTotalReportCoinDay: accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectTotalUpvoteCoinDay: accParam.RegisterFee,
+			testName:             "user4 report to an invalid post",
+			reportOrUpvoteUser:   string(user4),
+			isReport:             true,
+			targetPostAuthor:     "invalid",
+			targetPostID:         "invalid",
+			lastReportOrUpvoteAt: baseTime - postParam.ReportOrUpvoteIntervalSec,
+			expectResult:         ErrPostNotFound(invalidPermlink).Result(),
 		},
 	}
 
@@ -930,8 +916,8 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			LastActivityAt:          newCtx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportCoinDay:      tc.expectTotalReportCoinDay,
-			TotalUpvoteCoinDay:      tc.expectTotalUpvoteCoinDay,
+			TotalReportCoinDay:      types.NewCoinFromInt64(0),
+			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
 		}
 		targetPost := types.GetPermlink(types.AccountKey(tc.targetPostAuthor), tc.targetPostID)

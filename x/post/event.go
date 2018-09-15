@@ -40,11 +40,15 @@ func (event RewardEvent) Execute(
 	vm vote.VoteManager, rm rep.ReputationManager) sdk.Error {
 
 	permlink := types.GetPermlink(event.PostAuthor, event.PostID)
-	paneltyScore, err := pm.GetPenaltyScore(ctx, permlink)
+	// check if post is deleted
+	rep, err := rm.GetSumRep(ctx, permlink)
 	if err != nil {
 		return err
 	}
-	// check if post is deleted
+	paneltyScore, err := pm.GetPenaltyScore(ctx, rep)
+	if err != nil {
+		return err
+	}
 	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
 		paneltyScore = sdk.OneRat()
 	}
