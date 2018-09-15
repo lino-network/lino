@@ -197,8 +197,6 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 
 func TestChangeVoteParamMsg(t *testing.T) {
 	p1 := param.VoteParam{
-		VoterMinWithdraw:               types.NewCoinFromInt64(1 * types.Decimals),
-		DelegatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
 		VoterCoinReturnTimes:           int64(7),
 		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
@@ -206,22 +204,16 @@ func TestChangeVoteParamMsg(t *testing.T) {
 	}
 
 	p2 := p1
-	p2.VoterMinWithdraw = types.NewCoinFromInt64(0 * types.Decimals)
+	p2.VoterCoinReturnIntervalSec = int64(0)
 
 	p3 := p1
-	p3.DelegatorMinWithdraw = types.NewCoinFromInt64(0 * types.Decimals)
+	p3.VoterCoinReturnTimes = int64(0)
 
 	p4 := p1
-	p4.VoterCoinReturnIntervalSec = int64(0)
+	p4.DelegatorCoinReturnIntervalSec = int64(-1)
 
 	p5 := p1
-	p5.VoterCoinReturnTimes = int64(0)
-
-	p6 := p1
-	p6.DelegatorCoinReturnIntervalSec = int64(-1)
-
-	p7 := p1
-	p7.DelegatorCoinReturnTimes = int64(0)
+	p5.DelegatorCoinReturnTimes = int64(0)
 
 	testCases := []struct {
 		testName           string
@@ -234,33 +226,23 @@ func TestChangeVoteParamMsg(t *testing.T) {
 			expectedError:      nil,
 		},
 		{
-			testName:           "zero voter min withdraw is illegal",
+			testName:           "zero VoterCoinReturnIntervalHr is illegal",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p2, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
-			testName:           "zero delegator min withdraw is illegal",
+			testName:           "zero VoterCoinReturnTimes is illegal",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p3, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
-			testName:           "zero VoterCoinReturnIntervalHr is illegal",
+			testName:           "negative DelegatorCoinReturnIntervalHr is illegal",
 			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p4, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{
-			testName:           "zero VoterCoinReturnTimes is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p5, ""),
-			expectedError:      ErrIllegalParameter(),
-		},
-		{
-			testName:           "negative DelegatorCoinReturnIntervalHr is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p6, ""),
-			expectedError:      ErrIllegalParameter(),
-		},
-		{
 			testName:           "zero DelegatorCoinReturnTimes is illegal",
-			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p7, ""),
+			ChangeVoteParamMsg: NewChangeVoteParamMsg("user1", p5, ""),
 			expectedError:      ErrIllegalParameter(),
 		},
 		{

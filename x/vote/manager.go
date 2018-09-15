@@ -69,17 +69,8 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	if vm.IsInValidatorList(ctx, username) {
 		return false
 	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return false
-	}
-	// reject if withdraw is less than minimum voter withdraw
-	if !coin.IsGTE(param.VoterMinWithdraw) {
-		return false
-	}
 	//reject if the remaining coins are not enough
-	return voter.LinoStake.IsGTE(coin)
+	return voter.LinoStake.IsGTE(coin) && coin.IsPositive()
 }
 
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
@@ -90,18 +81,8 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 		return false
 	}
 
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return false
-	}
-
-	// reject if withdraw is less than minimum delegator withdraw
-	if !coin.IsGTE(param.DelegatorMinWithdraw) {
-		return false
-	}
 	//reject if the remaining delegation are less than zero
-	res := delegation.Amount.Minus(coin)
-	return res.IsNotNegative()
+	return delegation.Amount.IsGTE(coin) && coin.IsPositive()
 }
 
 // CanBecomeValidator - check if vote deposit meet requirement or not

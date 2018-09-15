@@ -132,7 +132,6 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
-	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(100*types.Decimals))
 
@@ -144,31 +143,24 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 		expectedResult bool
 	}{
 		{
-			testName:       "illegal withdraw that less than minimum withdraw",
-			allValidators:  []types.AccountKey{},
-			username:       user1,
-			withdraw:       param.VoterMinWithdraw.Minus(types.NewCoinFromInt64(1 * types.Decimals)),
-			expectedResult: false,
-		},
-		{
 			testName:       "normal case",
 			allValidators:  []types.AccountKey{},
 			username:       user1,
-			withdraw:       param.VoterMinWithdraw,
+			withdraw:       types.NewCoinFromInt64(1),
 			expectedResult: true,
 		},
 		{
 			testName:       "validator can't withdraw",
 			allValidators:  []types.AccountKey{user1},
 			username:       user1,
-			withdraw:       param.VoterMinWithdraw,
+			withdraw:       types.NewCoinFromInt64(1),
 			expectedResult: false,
 		},
 		{
 			testName:       "illegal withdraw",
 			allValidators:  []types.AccountKey{},
 			username:       user1,
-			withdraw:       types.NewCoinFromInt64(101),
+			withdraw:       types.NewCoinFromInt64(101 * types.Decimals),
 			expectedResult: false,
 		},
 	}
@@ -193,9 +185,9 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	ctx, am, vm, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+	withdraw := types.NewCoinFromInt64(10 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
-	param, _ := vm.paramHolder.GetVoteParam(ctx)
 
 	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(101*types.Decimals))
 
@@ -214,7 +206,7 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,
 			voter:          user1,
-			withdraw:       param.DelegatorMinWithdraw,
+			withdraw:       withdraw,
 			expectedResult: false,
 		},
 		{
@@ -223,11 +215,11 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 			delegatedCoin:  types.NewCoinFromInt64(100 * types.Decimals),
 			delegator:      user2,
 			voter:          user1,
-			withdraw:       param.DelegatorMinWithdraw,
+			withdraw:       withdraw,
 			expectedResult: true,
 		},
 		{
-			testName:       "no delegation exist, can't withdraw 0",
+			testName:       "can't withdraw 0",
 			addDelegation:  false,
 			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,
@@ -236,7 +228,7 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			testName:       "no delegation exist, can't withdraw 101",
+			testName:       "can't withdraw 101",
 			addDelegation:  false,
 			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,

@@ -548,10 +548,6 @@ func (msg ChangeVoteParamMsg) ValidateBasic() sdk.Error {
 		return ErrIllegalParameter()
 	}
 
-	if !msg.Parameter.DelegatorMinWithdraw.IsPositive() ||
-		!msg.Parameter.VoterMinWithdraw.IsPositive() {
-		return ErrIllegalParameter()
-	}
 	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
 		return ErrReasonTooLong()
 	}
