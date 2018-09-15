@@ -264,7 +264,7 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	if err != nil {
 		return err
 	}
-	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, pastMinutes/types.MinutesPerDay-1)
+	lastLinoStakeStat, err := gm.storage.GetLinoStakeStat(ctx, (pastMinutes/types.MinutesPerDay)-1)
 	if err != nil {
 		return err
 	}
