@@ -13,7 +13,6 @@ var _ types.Msg = StakeInMsg{}
 var _ types.Msg = StakeOutMsg{}
 var _ types.Msg = DelegateMsg{}
 var _ types.Msg = DelegatorWithdrawMsg{}
-var _ types.Msg = RevokeDelegationMsg{}
 
 // StakeInMsg - voter deposit
 type StakeInMsg struct {
@@ -39,12 +38,6 @@ type DelegatorWithdrawMsg struct {
 	Delegator types.AccountKey `json:"delegator"`
 	Voter     types.AccountKey `json:"voter"`
 	Amount    types.LNO        `json:"amount"`
-}
-
-// RevokeDelegationMsg - delegator revoke delegation
-type RevokeDelegationMsg struct {
-	Delegator types.AccountKey `json:"delegator"`
-	Voter     types.AccountKey `json:"voter"`
 }
 
 // NewStakeInMsg - return a StakeInMsg
@@ -208,58 +201,7 @@ func (msg DelegateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
-// NewRevokeDelegationMsg - return RevokeDelegationMsg
-func NewRevokeDelegationMsg(delegator string, voter string) RevokeDelegationMsg {
-	return RevokeDelegationMsg{
-		Delegator: types.AccountKey(delegator),
-		Voter:     types.AccountKey(voter),
-	}
-}
-
-// Type - implements sdk.Msg
-func (msg RevokeDelegationMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
-
-// ValidateBasic - implements sdk.Msg
-func (msg RevokeDelegationMsg) ValidateBasic() sdk.Error {
-	if len(msg.Delegator) < types.MinimumUsernameLength ||
-		len(msg.Delegator) > types.MaximumUsernameLength ||
-		len(msg.Voter) < types.MinimumUsernameLength ||
-		len(msg.Voter) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-
-	return nil
-}
-
-func (msg RevokeDelegationMsg) String() string {
-	return fmt.Sprintf("RevokeDelegationMsg{Delegator:%v, Voter:%v}", msg.Delegator, msg.Voter)
-}
-
-// GetPermission - implements types.Msg
-func (msg RevokeDelegationMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg RevokeDelegationMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg RevokeDelegationMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg RevokeDelegationMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewRevokeDelegationMsg - return NewDelegatorWithdrawMsg
+// NewDelegatorWithdrawMsg - return NewDelegatorWithdrawMsg
 func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) DelegatorWithdrawMsg {
 	return DelegatorWithdrawMsg{
 		Delegator: types.AccountKey(delegator),

@@ -112,42 +112,6 @@ func TestDelegateMsg(t *testing.T) {
 	}
 }
 
-func TestRevokeDelegationMsg(t *testing.T) {
-	testCases := []struct {
-		testName            string
-		revokeDelegationMsg RevokeDelegationMsg
-		expectedError       sdk.Error
-	}{
-		{
-			testName:            "normal case",
-			revokeDelegationMsg: NewRevokeDelegationMsg("user1", "user2"),
-			expectedError:       nil,
-		},
-		{
-			testName:            "invalid delegator",
-			revokeDelegationMsg: NewRevokeDelegationMsg("", "user2"),
-			expectedError:       ErrInvalidUsername(),
-		},
-		{
-			testName:            "invalid voter",
-			revokeDelegationMsg: NewRevokeDelegationMsg("user1", ""),
-			expectedError:       ErrInvalidUsername(),
-		},
-		{
-			testName:            "both delegator and voter are invalid",
-			revokeDelegationMsg: NewRevokeDelegationMsg("", ""),
-			expectedError:       ErrInvalidUsername(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.revokeDelegationMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
-			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
 func TestDelegatorWithdrawMsg(t *testing.T) {
 	testCases := []struct {
 		testName             string
@@ -205,11 +169,6 @@ func TestMsgPermission(t *testing.T) {
 			msg:                NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
 			expectedPermission: types.TransactionPermission,
 		},
-		{
-			testName:           "revoke delegation",
-			msg:                NewRevokeDelegationMsg("delegator", "voter"),
-			expectedPermission: types.TransactionPermission,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -240,10 +199,6 @@ func TestGetSignBytes(t *testing.T) {
 		{
 			testName: "delegate withdraw",
 			msg:      NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-		},
-		{
-			testName: "revoke delegation",
-			msg:      NewRevokeDelegationMsg("delegator", "voter"),
 		},
 	}
 
@@ -276,11 +231,6 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName:      "delegate withdraw",
 			msg:           NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-			expectSigners: []types.AccountKey{"delegator"},
-		},
-		{
-			testName:      "revoke delegation",
-			msg:           NewRevokeDelegationMsg("delegator", "voter"),
 			expectSigners: []types.AccountKey{"delegator"},
 		},
 	}

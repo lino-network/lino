@@ -119,7 +119,7 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Nil(t, res)
 
 	// let user3 reovke delegation
-	msg4 := NewRevokeDelegationMsg("user3", "user1")
+	msg4 := NewDelegatorWithdrawMsg("user3", "user1", coinToString(delegatedCoin))
 	result := handler(ctx, msg4)
 	assert.Equal(t, sdk.Result{}, result)
 
@@ -159,47 +159,43 @@ func TestRevokeBasic(t *testing.T) {
 func TestVoterWithdraw(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
 	handler := NewHandler(vm, am, gm)
-	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(30 * types.Decimals)
 	deposit := types.NewCoinFromInt64(10 * types.Decimals)
+	withdraw := types.NewCoinFromInt64(1 * types.Decimals)
 
 	// create test users
 	createTestAccount(ctx, am, "user1", minBalance.Plus(deposit))
 
 	// withdraw will fail if hasn't registered as voter
-	illegalWithdrawMsg := NewStakeOutMsg("user1", coinToString(voteParam.VoterMinWithdraw))
+	illegalWithdrawMsg := NewStakeOutMsg("user1", coinToString(deposit))
 	res := handler(ctx, illegalWithdrawMsg)
 	assert.Equal(t, ErrIllegalWithdraw().Result(), res)
 
 	// let user1 register as voter
-	msg := NewStakeInMsg("user1", coinToString(deposit.Plus(voteParam.VoterMinWithdraw)))
+	msg := NewStakeInMsg("user1", coinToString(deposit))
 	handler(ctx, msg)
 
 	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
-	assert.Equal(t, linoStat.TotalLinoStake, deposit.Plus(voteParam.VoterMinWithdraw))
-	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit.Plus(voteParam.VoterMinWithdraw))
+	assert.Equal(t, linoStat.TotalLinoStake, deposit)
+	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit)
 
 	// invalid deposit
 	invalidDepositMsg := NewStakeInMsg("1du1i2bdi12bud", coinToString(deposit))
 	res = handler(ctx, invalidDepositMsg)
 	assert.Equal(t, ErrAccountNotFound().Result(), res)
 
-	msg2 := NewStakeOutMsg("user1", coinToString(minBalance.Plus(voteParam.VoterMinWithdraw)))
+	msg2 := NewStakeOutMsg("user1", coinToString(withdraw))
 	result2 := handler(ctx, msg2)
-	assert.Equal(t, ErrIllegalWithdraw().Result(), result2)
-
-	msg3 := NewStakeOutMsg("user1", coinToString(voteParam.VoterMinWithdraw))
-	result3 := handler(ctx, msg3)
-	assert.Equal(t, sdk.Result{}, result3)
+	assert.Equal(t, sdk.Result{}, result2)
 
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
-	assert.Equal(t, deposit, voter.LinoStake)
+	assert.Equal(t, deposit.Minus(withdraw), voter.LinoStake)
 
 	linoStat, _ = gs.GetLinoStakeStat(ctx, day)
-	assert.Equal(t, linoStat.TotalLinoStake, deposit)
-	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit)
+	assert.Equal(t, linoStat.TotalLinoStake, deposit.Minus(withdraw))
+	assert.Equal(t, linoStat.UnclaimedLinoStake, deposit.Minus(withdraw))
 }
 
 func TestDelegatorWithdraw(t *testing.T) {
@@ -209,7 +205,6 @@ func TestDelegatorWithdraw(t *testing.T) {
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	handler := NewHandler(vm, am, gm)
 
-	param, _ := vm.paramHolder.GetVoteParam(ctx)
 	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
 	deposit := types.NewCoinFromInt64(10 * types.Decimals)
@@ -230,29 +225,20 @@ func TestDelegatorWithdraw(t *testing.T) {
 			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,
 			voter:          user1,
-			withdraw:       param.DelegatorMinWithdraw,
+			withdraw:       delta,
 			expectedResult: ErrIllegalWithdraw().Result(),
 		},
 		{
-			testName:       "withdraw amount is less than minimum requirement",
+			testName:       "can't withdraw delegatedCoin+delta",
 			addDelegation:  true,
 			delegatedCoin:  delegatedCoin,
-			delegator:      user2,
-			voter:          user1,
-			withdraw:       param.DelegatorMinWithdraw.Minus(delta),
-			expectedResult: ErrIllegalWithdraw().Result(),
-		},
-		{
-			testName:       "no delegation exist, can't withdraw delegatedCoin+delta",
-			addDelegation:  false,
-			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,
 			voter:          user1,
 			withdraw:       delegatedCoin.Plus(delta),
 			expectedResult: ErrIllegalWithdraw().Result(),
 		},
 		{
-			testName:       "no delegation exist, can't withdraw delegatedCoin-delta",
+			testName:       "normal withdraw",
 			addDelegation:  false,
 			delegatedCoin:  types.NewCoinFromInt64(0),
 			delegator:      user2,

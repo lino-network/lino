@@ -23,8 +23,6 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 			return handleDelegateMsg(ctx, vm, am, msg)
 		case DelegatorWithdrawMsg:
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
-		case RevokeDelegationMsg:
-			return handleRevokeDelegationMsg(ctx, vm, gm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -131,27 +129,6 @@ func handleDelegatorWithdrawMsg(
 
 	if err := vm.DelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin); err != nil {
 		return err.Result()
-	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
-	if err := returnCoinTo(
-		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleRevokeDelegationMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
-	am acc.AccountManager, msg RevokeDelegationMsg) sdk.Result {
-	coin, withdrawErr := vm.DelegatorWithdrawAll(ctx, msg.Voter, msg.Delegator)
-	if withdrawErr != nil {
-		return withdrawErr.Result()
 	}
 
 	param, err := vm.paramHolder.GetVoteParam(ctx)
