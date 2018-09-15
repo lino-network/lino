@@ -43,6 +43,11 @@ func TestMockStore(t *testing.T) {
 	}
 }
 
+// use this if you want to test internal reputationImpl method.
+func NewTestReputationImpl(s ReputationStore) *ReputationImpl {
+	return &ReputationImpl{store: s}
+}
+
 func TestFirstBlock(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
@@ -74,7 +79,7 @@ func TestIncFreeScore(t *testing.T) {
 func TestNumKeysCanBuy(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 
 	nCanBuy := rep.numKeysCanBuy(big.NewInt(0), big.NewInt(1))
 	assert.Equal(big.NewInt(0), nCanBuy)
@@ -102,7 +107,7 @@ func TestNumKeysCanBuy(t *testing.T) {
 
 func BenchmarkNumKeysCanBuy(b *testing.B) {
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	for n := 0; n < b.N; n++ {
 		rep.numKeysCanBuy(big.NewInt(0), big.NewInt(100*OneLinoCoin))
 	}
@@ -111,7 +116,7 @@ func BenchmarkNumKeysCanBuy(b *testing.B) {
 func TestBuyKey(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	user1 := "user1"
 	post1 := "post1"
 
@@ -123,7 +128,7 @@ func TestBuyKey(t *testing.T) {
 func TestReportAt(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	user1 := "user1"
 	post1 := "post1"
 
@@ -135,7 +140,7 @@ func TestReportAt(t *testing.T) {
 func TestDonationNoLessThanInit(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t3 := time.Date(1995, time.February, 7, 11, 11, 0, 0, time.UTC)
 	user1 := "user1"
@@ -152,7 +157,7 @@ func TestDonationNoLessThanInit(t *testing.T) {
 func TestDonationZeroStake(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t2 := time.Date(1995, time.February, 7, 11, 11, 0, 0, time.UTC)
 	user1 := "user1"
@@ -169,7 +174,7 @@ func TestDonationZeroStake(t *testing.T) {
 func TestDonationReturnDp1(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	user1 := "user1"
 	post1 := "post1"
 	post2 := "post2"
@@ -186,7 +191,7 @@ func TestDonationReturnDp1(t *testing.T) {
 func TestDonationReturnDp2(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t2 := time.Date(1995, time.February, 7, 11, 11, 0, 0, time.UTC)
 	user1 := "user1"
@@ -208,7 +213,7 @@ func TestDonationReturnDp2(t *testing.T) {
 func TestDonationBasic(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
 	user1 := "user1"
@@ -232,7 +237,7 @@ func TestDonationBasic(t *testing.T) {
 func TestDonationCase1(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
 	t4 := time.Date(1995, time.February, 7, 13, 11, 1, 0, time.UTC)
@@ -265,7 +270,7 @@ func TestDonationCase1(t *testing.T) {
 func TestDonationCase2(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
-	rep := NewReputation(store)
+	rep := NewTestReputationImpl(store)
 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
 	t4 := time.Date(1995, time.February, 7, 13, 11, 1, 0, time.UTC)

@@ -22,7 +22,7 @@ type ReputationImpl struct {
 	store ReputationStore
 }
 
-func NewReputation(s ReputationStore) *ReputationImpl {
+func NewReputation(s ReputationStore) Reputation {
 	return &ReputationImpl{store: s}
 }
 
