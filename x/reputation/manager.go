@@ -6,8 +6,9 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 
-	model "github.com/lino-network/lino/x/reputation/internal"
 	"math/big"
+
+	model "github.com/lino-network/lino/x/reputation/internal"
 )
 
 type ReputationManager struct {

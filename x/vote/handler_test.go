@@ -12,8 +12,8 @@ import (
 )
 
 func TestVoterDepositBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
+	handler := NewHandler(vm, am, gm, rm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -41,8 +41,8 @@ func TestVoterDepositBasic(t *testing.T) {
 }
 
 func TestDelegateBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
+	handler := NewHandler(vm, am, gm, rm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
@@ -93,10 +93,9 @@ func TestDelegateBasic(t *testing.T) {
 }
 
 func TestRevokeBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
+	handler := NewHandler(vm, am, gm, rm)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-
 	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
 
 	// create test users
@@ -159,8 +158,8 @@ func TestRevokeBasic(t *testing.T) {
 }
 
 func TestVoterWithdraw(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
-	handler := NewHandler(vm, am, gm)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
+	handler := NewHandler(vm, am, gm, rm)
 	minBalance := types.NewCoinFromInt64(30 * types.Decimals)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	withdraw := types.NewCoinFromInt64(10 * types.Decimals)
@@ -208,11 +207,11 @@ func TestVoterWithdraw(t *testing.T) {
 }
 
 func TestDelegatorWithdraw(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
-	handler := NewHandler(vm, am, gm)
+	handler := NewHandler(vm, am, gm, rm)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 	delegatedCoin := param.MinStakeIn
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
@@ -274,7 +273,7 @@ func TestDelegatorWithdraw(t *testing.T) {
 }
 
 func TestAddFrozenMoney(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, gm, _ := setupTest(t, 0)
 	vm.InitGenesis(ctx)
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -338,9 +337,9 @@ func TestAddFrozenMoney(t *testing.T) {
 }
 
 func TestDeleteVoteBasic(t *testing.T) {
-	ctx, am, vm, gm := setupTest(t, 0)
+	ctx, am, vm, gm, rm := setupTest(t, 0)
 	vm.InitGenesis(ctx)
-	handler := NewHandler(vm, am, gm)
+	handler := NewHandler(vm, am, gm, rm)
 
 	proposalID1 := types.ProposalKey("1")
 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)

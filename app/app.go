@@ -117,7 +117,8 @@ func NewLinoBlockchain(
 		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager, lb.globalManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(
 			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager, lb.reputationManager)).
-		AddRoute(types.VoteRouterName, vote.NewHandler(lb.voteManager, lb.accountManager, lb.globalManager)).
+		AddRoute(types.VoteRouterName, vote.NewHandler(
+			lb.voteManager, lb.accountManager, lb.globalManager, lb.reputationManager)).
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
 			lb.developerManager, lb.accountManager, lb.globalManager)).
 		AddRoute(types.ProposalRouterName, proposal.NewHandler(
@@ -423,7 +424,7 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		case post.RewardEvent:
 			if err := e.Execute(
 				ctx, lb.postManager, lb.accountManager, lb.globalManager,
-				lb.developerManager, lb.voteManager); err != nil {
+				lb.developerManager, lb.voteManager, lb.reputationManager); err != nil {
 				panic(err)
 			}
 		case acc.ReturnCoinEvent:
@@ -445,12 +446,13 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 	return nil
 }
 
-// udpate validator set
+// udpate validator set and renew reputation round
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
 	if err != nil {
 		panic(err)
 	}
+	rep.EndBlocker(ctx, req, lb.reputationManager)
 
 	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
 }

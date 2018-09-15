@@ -14,7 +14,7 @@ import (
 )
 
 func TestRewardEvent(t *testing.T) {
-	ctx, am, _, pm, gm, dm, vm := setupTest(t, 1)
+	ctx, am, _, pm, gm, dm, vm, rm := setupTest(t, 1)
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	as := accModel.NewAccountStorage(testAccountKVStoreKey)
 
@@ -334,7 +334,7 @@ func TestRewardEvent(t *testing.T) {
 
 		as.SetReward(ctx, tc.rewardEvent.PostAuthor, &accModel.Reward{})
 		vm.AddVoter(ctx, tc.rewardEvent.PostAuthor, types.NewCoinFromInt64(0))
-		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm, vm)
+		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm, vm, rm)
 		if err != nil {
 			t.Errorf("%s: failed to execute, got err %v", tc.testName, err)
 		}

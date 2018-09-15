@@ -14,7 +14,9 @@ import (
 )
 
 // NewHandler - Handle all "post" type messages.
-func NewHandler(pm PostManager, am acc.AccountManager, gm global.GlobalManager, dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Handler {
+func NewHandler(
+	pm PostManager, am acc.AccountManager, gm global.GlobalManager,
+	dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case CreatePostMsg:
@@ -103,7 +105,7 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 // Handle DonateMsg
 func handleDonateMsg(
 	ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, dm dev.DeveloperManager) sdk.Result {
+	gm global.GlobalManager, dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Result {
 	permlink := types.GetPermlink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -133,7 +135,7 @@ func handleDonateMsg(
 		return err.Result()
 	}
 
-	if err := am.MinusSavingCoin(
+	if err := am.MinusSavingCoinWithFullCoinDay(
 		ctx, msg.Username, coin, msg.Author,
 		fmt.Sprintf("donate to post: %v, memo: %v", string(permlink), msg.Memo),
 		types.DonationOut); err != nil {
@@ -146,14 +148,6 @@ func handleDonateMsg(
 	}
 
 	totalCoinDayDonated := coinDayBeforeDonate.Minus(coinDayAfterDonate)
-
-	coinDay, err := am.GetCoinDay(ctx, msg.Username)
-	if err != nil {
-		return err.Result()
-	}
-	if err := pm.ReportOrUpvoteToPost(ctx, permlink, msg.Username, coinDay, false); err != nil {
-		return err.Result()
-	}
 	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
 	if err != nil {
 		return err.Result()
@@ -182,7 +176,7 @@ func handleDonateMsg(
 }
 
 func processDonationFriction(
-	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, coinDayDonated types.Coin
+	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, coinDayDonated types.Coin,
 	postAuthor types.AccountKey, postID string, fromApp types.AccountKey, am acc.AccountManager,
 	pm PostManager, gm global.GlobalManager, rm rep.ReputationManager) sdk.Error {
 	postKey := types.GetPermlink(postAuthor, postID)
@@ -256,7 +250,8 @@ func evaluateConsumption(
 
 // Handle ReportMsgOrUpvoteMsg
 func handleReportOrUpvoteMsg(
-	ctx sdk.Context, msg ReportOrUpvoteMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+	ctx sdk.Context, msg ReportOrUpvoteMsg, pm PostManager, am acc.AccountManager,
+	gm global.GlobalManager, rm rep.ReputationManager) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound(msg.Username).Result()
 	}

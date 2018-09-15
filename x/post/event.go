@@ -5,6 +5,7 @@ import (
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
+	rep "github.com/lino-network/lino/x/reputation"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -35,7 +36,8 @@ type RewardEvent struct {
 // Execute - execute reward event after 7 days
 func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, dm dev.DeveloperManager, vm vote.VoteManager) sdk.Error {
+	gm global.GlobalManager, dm dev.DeveloperManager,
+	vm vote.VoteManager, rm rep.ReputationManager) sdk.Error {
 
 	permlink := types.GetPermlink(event.PostAuthor, event.PostID)
 	paneltyScore, err := pm.GetPenaltyScore(ctx, permlink)
@@ -72,7 +74,7 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	if !addToStake.IsZero() {
-		if err := vote.AddStake(ctx, event.PostAuthor, addToStake, vm, gm, am); err != nil {
+		if err := vote.AddStake(ctx, event.PostAuthor, addToStake, vm, gm, am, rm); err != nil {
 			return err
 		}
 	}
