@@ -113,6 +113,15 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 		return err.Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if param.MinStakeIn.IsGT(coin) {
+		return ErrInsufficientDeposit().Result()
+	}
+
 	// withdraw money from delegator's bank
 	if err := am.MinusSavingCoin(
 		ctx, msg.Delegator, coin, msg.Voter, "", types.Delegate); err != nil {

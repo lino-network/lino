@@ -45,18 +45,18 @@ func TestDelegateBasic(t *testing.T) {
 	handler := NewHandler(vm, am, gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
-	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.MinStakeIn))
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	user3 := createTestAccount(ctx, am, "user3", minBalance)
 
-	// let user1 register as vote
+	// let user1 register as voter
 	msg := NewStakeInMsg("user1", coinToString(voteParam.MinStakeIn))
 	handler(ctx, msg)
 
-	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
+	delegatedCoin := voteParam.MinStakeIn
 	// let user2 delegate power to user1 twice
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
 	handler(ctx, msg2)
@@ -71,6 +71,7 @@ func TestDelegateBasic(t *testing.T) {
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(voteParam.MinStakeIn.Plus(delegatedCoin).Plus(delegatedCoin)))
 	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
+
 	assert.Equal(t, minBalance.Minus(delegatedCoin).Minus(delegatedCoin), acc2Balance)
 
 	// let user3 delegate power to user1
@@ -96,7 +97,7 @@ func TestRevokeBasic(t *testing.T) {
 	handler := NewHandler(vm, am, gm)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 
-	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
+	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
 
 	// create test users
 	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.MinStakeIn))
@@ -107,7 +108,7 @@ func TestRevokeBasic(t *testing.T) {
 	msg := NewStakeInMsg("user1", coinToString(voteParam.MinStakeIn))
 	handler(ctx, msg)
 
-	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
+	delegatedCoin := voteParam.MinStakeIn
 	// let user2 delegate power to user1
 	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
 	handler(ctx, msg2)
