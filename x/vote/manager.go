@@ -69,6 +69,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 	if vm.IsInValidatorList(ctx, username) {
 		return false
 	}
+
 	//reject if the remaining coins are not enough
 	return voter.LinoStake.IsGTE(coin) && coin.IsPositive()
 }
@@ -145,17 +146,28 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 		}
 	}
 
+	// add delegatedPower for voter
 	voter, err := vm.storage.GetVoter(ctx, voterName)
 	if err != nil {
 		return err
 	}
 	voter.DelegatedPower = voter.DelegatedPower.Plus(coin)
+	// add delegateToOthers for delegator
+	delegator, err := vm.storage.GetVoter(ctx, delegatorName)
+	if err != nil {
+		return err
+	}
+	delegator.DelegateToOthers = delegator.DelegateToOthers.Plus(coin)
+
 	delegation.Amount = delegation.Amount.Plus(coin)
 
 	if err := vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation); err != nil {
 		return err
 	}
 	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
+		return err
+	}
+	if err := vm.storage.SetVoter(ctx, delegatorName, delegator); err != nil {
 		return err
 	}
 	return nil
@@ -189,8 +201,8 @@ func (vm VoteManager) AddLinoStake(ctx sdk.Context, username types.AccountKey, c
 	return nil
 }
 
-// VoterWithdraw - this method won't check if it is a legal withdraw, caller should check by itself
-func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+// MinusLinoStake - this method won't check if it is a legal withdraw, caller should check by itself
+func (vm VoteManager) MinusLinoStake(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrInvalidCoin()
 	}
@@ -200,11 +212,9 @@ func (vm VoteManager) VoterWithdraw(ctx sdk.Context, username types.AccountKey, 
 	}
 	voter.LinoStake = voter.LinoStake.Minus(coin)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -221,6 +231,16 @@ func (vm VoteManager) DelegatorWithdraw(
 	}
 	voter.DelegatedPower = voter.DelegatedPower.Minus(coin)
 	if err := vm.storage.SetVoter(ctx, voterName, voter); err != nil {
+		return err
+	}
+
+	// change delegator's delegateToOthers
+	delegator, err := vm.storage.GetVoter(ctx, delegatorName)
+	if err != nil {
+		return err
+	}
+	delegator.DelegateToOthers = delegator.DelegateToOthers.Minus(coin)
+	if err := vm.storage.SetVoter(ctx, delegatorName, delegator); err != nil {
 		return err
 	}
 
@@ -248,7 +268,7 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 	if err != nil {
 		return types.Coin{}, err
 	}
-	res := voter.LinoStake.Plus(voter.DelegatedPower)
+	res := voter.LinoStake.Plus(voter.DelegatedPower).Minus(voter.DelegateToOthers)
 	return res, nil
 }
 

@@ -20,7 +20,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager) 
 		case StakeOutMsg:
 			return handleStakeOutMsg(ctx, vm, gm, am, msg)
 		case DelegateMsg:
-			return handleDelegateMsg(ctx, vm, am, msg)
+			return handleDelegateMsg(ctx, vm, gm, am, msg)
 		case DelegatorWithdrawMsg:
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
 		default:
@@ -40,6 +40,15 @@ func handleStakeInMsg(
 	coin, err := types.LinoToCoin(msg.Deposit)
 	if err != nil {
 		return err.Result()
+	}
+
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if param.MinStakeIn.IsGT(coin) {
+		return ErrInsufficientDeposit().Result()
 	}
 
 	// withdraw money from voter's bank
@@ -70,18 +79,7 @@ func handleStakeOutMsg(
 		return err.Result()
 	}
 
-	// calculate interests so far
-	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
-		return err.Result()
-	}
-
-	// withdraw linoStake from voter account
-	if err := vm.VoterWithdraw(ctx, msg.Username, coin); err != nil {
-		return err.Result()
-	}
-
-	// minus linoStake in global stat
-	if err := gm.MinusLinoStakeFromStat(ctx, coin); err != nil {
+	if err := MinusStake(ctx, msg.Username, coin, vm, gm, am); err != nil {
 		return err.Result()
 	}
 
@@ -93,7 +91,8 @@ func handleStakeOutMsg(
 	return sdk.Result{}
 }
 
-func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
+func handleDelegateMsg(
+	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Voter) {
 		return ErrAccountNotFound().Result()
@@ -104,11 +103,25 @@ func handleDelegateMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, m
 		return err.Result()
 	}
 
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err.Result()
+	}
+
+	if param.MinStakeIn.IsGT(coin) {
+		return ErrInsufficientDeposit().Result()
+	}
+
 	// withdraw money from delegator's bank
 	if err := am.MinusSavingCoin(
 		ctx, msg.Delegator, coin, msg.Voter, "", types.Delegate); err != nil {
 		return err.Result()
 	}
+
+	if err := AddStake(ctx, msg.Delegator, coin, vm, gm, am); err != nil {
+		return err.Result()
+	}
+
 	// add delegation relation
 	if addErr := vm.AddDelegation(ctx, msg.Voter, msg.Delegator, coin); addErr != nil {
 		return addErr.Result()
@@ -127,12 +140,14 @@ func handleDelegatorWithdrawMsg(
 		return ErrIllegalWithdraw().Result()
 	}
 
-	if err := vm.DelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin); err != nil {
-		return err.Result()
-	}
-
 	param, err := vm.paramHolder.GetVoteParam(ctx)
 	if err != nil {
+		return err.Result()
+	}
+	if err := MinusStake(ctx, msg.Delegator, coin, vm, gm, am); err != nil {
+		return err.Result()
+	}
+	if err := vm.DelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin); err != nil {
 		return err.Result()
 	}
 
@@ -153,22 +168,7 @@ func AddStake(
 			return err
 		}
 	}
-	userLinoStake, err := vm.GetLinoStake(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	LSLastChangedAt, err := vm.GetLinoStakeLastChangedAt(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	interest, err := gm.GetInterestSince(ctx, LSLastChangedAt, userLinoStake)
-	if err != nil {
-		return err
-	}
-
-	if err := am.AddInterest(ctx, username, interest); err != nil {
+	if err := calculateAndAddInterest(ctx, vm, gm, am, username); err != nil {
 		return err
 	}
 
@@ -179,6 +179,25 @@ func AddStake(
 
 	// add linoStake to global stat
 	if err := gm.AddLinoStakeToStat(ctx, stake); err != nil {
+		return err
+	}
+	return nil
+}
+
+func MinusStake(
+	ctx sdk.Context, username types.AccountKey, stake types.Coin, vm VoteManager,
+	gm global.GlobalManager, am acc.AccountManager) sdk.Error {
+	if err := calculateAndAddInterest(ctx, vm, gm, am, username); err != nil {
+		return err
+	}
+
+	// minus linoStake to voter account
+	if err := vm.MinusLinoStake(ctx, username, stake); err != nil {
+		return err
+	}
+
+	// minus linoStake from global stat
+	if err := gm.MinusLinoStakeFromStat(ctx, stake); err != nil {
 		return err
 	}
 	return nil

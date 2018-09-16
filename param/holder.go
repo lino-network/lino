@@ -110,6 +110,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	voteParam := &VoteParam{
+		MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
 		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
 		VoterCoinReturnTimes:           int64(7),
 		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),

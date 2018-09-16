@@ -41,15 +41,17 @@ type InfraInternalAllocationParam struct {
 }
 
 // VoteParam - vote paramters
+// MinStakeIn - minimum stake for stake in msg
 // VoterCoinReturnIntervalSec - when withdraw or revoke, the deposit return to voter by return event
 // VoterCoinReturnTimes - when withdraw or revoke, the deposit return to voter by return event
 // DelegatorCoinReturnIntervalSec - when withdraw or revoke, the deposit return to delegator by return event
 // DelegatorCoinReturnTimes - when withdraw or revoke, the deposit return to delegator by return event
 type VoteParam struct {
-	VoterCoinReturnIntervalSec     int64 `json:"voter_coin_return_interval_second"`
-	VoterCoinReturnTimes           int64 `json:"voter_coin_return_times"`
-	DelegatorCoinReturnIntervalSec int64 `json:"delegator_coin_return_interval_second"`
-	DelegatorCoinReturnTimes       int64 `json:"delegator_coin_return_times"`
+	MinStakeIn                     types.Coin `json:"min_stake_in"`
+	VoterCoinReturnIntervalSec     int64      `json:"voter_coin_return_interval_second"`
+	VoterCoinReturnTimes           int64      `json:"voter_coin_return_times"`
+	DelegatorCoinReturnIntervalSec int64      `json:"delegator_coin_return_interval_second"`
+	DelegatorCoinReturnTimes       int64      `json:"delegator_coin_return_times"`
 }
 
 // ProposalParam - proposal parameters
