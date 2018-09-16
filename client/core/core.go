@@ -120,6 +120,7 @@ func (ctx CoreContext) SignBuildBroadcast(
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("tx bytes:", string(txBytes))
 	return ctx.BroadcastTx(txBytes)
 }
 
