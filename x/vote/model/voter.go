@@ -9,6 +9,7 @@ type Voter struct {
 	Username          types.AccountKey `json:"username"`
 	LinoStake         types.Coin       `json:"lino_stake"`
 	DelegatedPower    types.Coin       `json:"delegated_power"`
+	DelegateToOthers  types.Coin       `json:"delegate_to_others"`
 	LastPowerChangeAt int64            `json:"last_power_change_at"`
 }
 

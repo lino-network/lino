@@ -154,8 +154,8 @@ func TestRevokeBasic(t *testing.T) {
 	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
-	assert.Equal(t, linoStat.TotalLinoStake, types.NewCoinFromInt64(0))
-	assert.Equal(t, linoStat.UnclaimedLinoStake, types.NewCoinFromInt64(0))
+	assert.Equal(t, linoStat.TotalLinoStake, delegatedCoin)
+	assert.Equal(t, linoStat.UnclaimedLinoStake, delegatedCoin)
 }
 
 func TestVoterWithdraw(t *testing.T) {
@@ -214,7 +214,7 @@ func TestDelegatorWithdraw(t *testing.T) {
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 	handler := NewHandler(vm, am, gm)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
-	delegatedCoin := types.NewCoinFromInt64(100 * types.Decimals)
+	delegatedCoin := param.MinStakeIn
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
 
 	vm.AddVoter(ctx, user1, param.MinStakeIn)
@@ -259,9 +259,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 
 	for _, tc := range testCases {
 		if tc.addDelegation {
-			err := vm.AddDelegation(ctx, tc.voter, tc.delegator, tc.delegatedCoin)
-			if err != nil {
-				t.Errorf("%s: failed to add delegation, got err %v", tc.testName, err)
+			msg := NewDelegateMsg(string(tc.delegator), string(tc.voter), coinToString(tc.delegatedCoin))
+			res := handler(ctx, msg)
+			if !assert.Equal(t, sdk.Result{}, res) {
+				t.Errorf("failed to add delegation")
 			}
 		}
 		msg := NewDelegatorWithdrawMsg(string(tc.delegator), string(tc.voter), coinToString(tc.withdraw))

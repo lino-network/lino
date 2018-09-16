@@ -240,7 +240,12 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 
 	for _, tc := range testCases {
 		if tc.addDelegation {
-			err := vm.AddDelegation(ctx, tc.voter, tc.delegator, tc.delegatedCoin)
+			err := vm.AddVoter(ctx, tc.delegator, types.NewCoinFromInt64(0))
+			if err != nil {
+				t.Errorf("%s: failed to add voter, got err %v", tc.testName, err)
+			}
+
+			err = vm.AddDelegation(ctx, tc.voter, tc.delegator, tc.delegatedCoin)
 			if err != nil {
 				t.Errorf("%s: failed to add delegation, got err %v", tc.testName, err)
 			}
