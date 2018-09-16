@@ -11,7 +11,7 @@ import (
 )
 
 func TestAddVoter(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
+	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 
@@ -38,7 +38,7 @@ func TestAddVoter(t *testing.T) {
 }
 
 func TestCanBecomeValidator(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
+	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	valParam, _ := vm.paramHolder.GetValidatorParam(ctx)
@@ -81,7 +81,7 @@ func TestCanBecomeValidator(t *testing.T) {
 }
 
 func TestIsInValidatorList(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
+	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
@@ -129,7 +129,7 @@ func TestIsInValidatorList(t *testing.T) {
 }
 
 func TestIsLegalVoterWithdraw(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
+	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 
@@ -183,7 +183,7 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 }
 
 func TestIsLegalDelegatorWithdraw(t *testing.T) {
-	ctx, am, vm, _ := setupTest(t, 0)
+	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	withdraw := types.NewCoinFromInt64(10 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)

@@ -73,6 +73,11 @@ func ErrEvaluateOfContentValueParamNotFound() sdk.Error {
 	return types.NewError(types.CodeEvaluateOfContentValueParamNotFound, fmt.Sprintf("evaluate of content value param not found"))
 }
 
+// ErrReputationParamNotFound - error when reputation param is empty.
+func ErrReputationParamNotFound() sdk.Error {
+	return types.NewError(types.CodeReputationParamNotFound, fmt.Sprintf("reputation param not found"))
+}
+
 // ErrFailedToUnmarshalGlobalAllocationParam - error when unmarshal global allocation param failed.
 func ErrFailedToUnmarshalGlobalAllocationParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalGlobalAllocationParam, fmt.Sprintf("failed to unmarshal global allocation param: %s", err.Error()))
@@ -128,6 +133,11 @@ func ErrFailedToUnmarshalAccountParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalAccountParam, fmt.Sprintf("failed to unmarshal account param: %s", err.Error()))
 }
 
+// ErrFailedToUnmarshalReputationParam - error when unmarshal reputation param failed.
+func ErrFailedToUnmarshalReputationParam(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalReputationParam, fmt.Sprintf("failed to unmarshal account param: %s", err.Error()))
+}
+
 // ErrFailedToUnmarshalAccountParam - error when marshal global allocation param failed.
 func ErrFailedToMarshalGlobalAllocationParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalGlobalAllocationParam, fmt.Sprintf("failed to marshal global allocation param: %s", err.Error()))
@@ -181,4 +191,9 @@ func ErrFailedToMarshalBandwidthParam(err error) sdk.Error {
 // ErrFailedToMarshalAccountParam - error when marshal account param failed.
 func ErrFailedToMarshalAccountParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalAccountParam, fmt.Sprintf("failed to marshal account param: %s", err.Error()))
+}
+
+// ErrFailedToMarshalReputationParam - error when marshal reputation failed.
+func ErrFailedToMarshalReputationParam(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalReputationParam, fmt.Sprintf("failed to marshal reputation param: %s", err.Error()))
 }

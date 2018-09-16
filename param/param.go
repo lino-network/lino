@@ -151,6 +151,12 @@ type AccountParam struct {
 // ReportOrUpvoteIntervalSec - report interval second
 // PostIntervalSec - post interval second
 type PostParam struct {
-	ReportOrUpvoteIntervalSec int64 `json:"report_or_upvote_interval_second"`
-	PostIntervalSec           int64 `json:"post_interval_sec"`
+	ReportOrUpvoteIntervalSec int64      `json:"report_or_upvote_interval_second"`
+	PostIntervalSec           int64      `json:"post_interval_sec"`
+	MaxReportReputation       types.Coin `json:"max_report_reputation"`
+}
+
+// BestContentIndexN - hard cap of how many content can be indexed every round.
+type ReputationParam struct {
+	BestContentIndexN int `json:"best_content_index_n"`
 }

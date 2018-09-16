@@ -15,7 +15,7 @@ import (
 
 // test create post
 func TestCreatePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1 := createTestAccount(t, ctx, am, "user1")
 	user2 := createTestAccount(t, ctx, am, "user2")
 
@@ -134,7 +134,7 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	baseTime := time.Now().Unix()
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(baseTime, 0)})
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
@@ -211,7 +211,7 @@ func TestUpdatePost(t *testing.T) {
 
 // test get source post
 func TestGetSourcePost(t *testing.T) {
-	ctx, _, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, _, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user3")
@@ -299,7 +299,7 @@ func TestGetSourcePost(t *testing.T) {
 }
 
 func TestAddOrUpdateViewToPost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	createTime := ctx.BlockHeader().Time
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
@@ -394,93 +394,8 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 	}
 }
 
-func TestReportOrUpvoteToPost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
-	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
-	user2, _ := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
-	user3 := types.AccountKey("user3")
-	user4 := types.AccountKey("user4")
-
-	permlink := types.GetPermlink(user1, postID1)
-
-	testCases := []struct {
-		testName                 string
-		user                     types.AccountKey
-		coinDay                  types.Coin
-		isReport                 bool
-		expectResult             sdk.Error
-		expectTotalReportCoinDay types.Coin
-		expectTotalUpvoteCoinDay types.Coin
-	}{
-		{
-			testName:                 "user3 reports with 1 coin day",
-			user:                     user3,
-			coinDay:                  types.NewCoinFromInt64(1),
-			isReport:                 true,
-			expectResult:             nil,
-			expectTotalReportCoinDay: types.NewCoinFromInt64(1),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(0),
-		},
-		{
-			testName:                 "user2 upvotes with 100 coin day",
-			user:                     user2,
-			coinDay:                  types.NewCoinFromInt64(100),
-			isReport:                 false,
-			expectResult:             nil,
-			expectTotalReportCoinDay: types.NewCoinFromInt64(1),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(100),
-		},
-		{
-			testName:                 "user3 upvotes with 100 coin day and override previous report",
-			user:                     user3,
-			coinDay:                  types.NewCoinFromInt64(100),
-			isReport:                 false,
-			expectResult:             nil,
-			expectTotalReportCoinDay: types.NewCoinFromInt64(0),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(200),
-		},
-		{
-			testName:                 "user4 upvotes with 100 coin day",
-			user:                     user4,
-			coinDay:                  types.NewCoinFromInt64(100),
-			isReport:                 false,
-			expectResult:             nil,
-			expectTotalReportCoinDay: types.NewCoinFromInt64(0),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(300),
-		},
-		{
-			testName:                 "user3 report with 2 coin day which overrides previous upvote",
-			user:                     user4,
-			coinDay:                  types.NewCoinFromInt64(2),
-			isReport:                 true,
-			expectResult:             nil,
-			expectTotalReportCoinDay: types.NewCoinFromInt64(2),
-			expectTotalUpvoteCoinDay: types.NewCoinFromInt64(200),
-		},
-	}
-
-	for _, tc := range testCases {
-		err := pm.ReportOrUpvoteToPost(ctx, permlink, tc.user, tc.coinDay, tc.isReport)
-		if !assert.Equal(t, tc.expectResult, err) {
-			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
-		}
-
-		postMeta := model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time.Unix(),
-			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
-			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportCoinDay:      tc.expectTotalReportCoinDay,
-			TotalUpvoteCoinDay:      tc.expectTotalUpvoteCoinDay,
-			TotalReward:             types.NewCoinFromInt64(0),
-		}
-		checkPostMeta(t, ctx, permlink, postMeta)
-	}
-}
-
 func TestDonation(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID2", am, pm, "0")
 	user3 := types.AccountKey("user3")
@@ -576,92 +491,47 @@ func TestDonation(t *testing.T) {
 }
 
 func TestGetPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
-	postKey := types.GetPermlink(user, postID)
+	ctx, _, ph, pm, _, _, _, _ := setupTest(t, 1)
 	bigString1 := "1000000000000000000000000"
-	bigString2 := "7777777777777777777777777"
+	bigString2 := "-7777777777777777777777777"
 	bigStringInt1, _ := new(big.Int).SetString(bigString1, 10)
 	bigStringInt2, _ := new(big.Int).SetString(bigString2, 10)
+	postParam, _ := ph.GetPostParam(ctx)
+	maxReportReputation, _ := postParam.MaxReportReputation.ToInt64()
 	testCases := []struct {
 		testName           string
-		totalReportCoinDay types.Coin
-		totalUpvoteCoinDay types.Coin
+		reputation         types.Coin
 		expectPenaltyScore sdk.Rat
 	}{
 		{
-			testName:           "1 report and 0 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(1),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(0),
-			expectPenaltyScore: sdk.NewRat(1, 1),
+			testName:           "positive reputation",
+			reputation:         types.NewCoinFromInt64(1),
+			expectPenaltyScore: sdk.ZeroRat(),
 		},
 		{
-			testName:           "0 report and 1 upvote expects 0 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(0),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(1),
-			expectPenaltyScore: sdk.NewRat(0, 1),
+			testName:           "zero reputation",
+			reputation:         types.NewCoinFromInt64(0),
+			expectPenaltyScore: sdk.ZeroRat(),
 		},
 		{
-			testName:           "0 report and 0 upvote expects 0 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(0),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(0),
-			expectPenaltyScore: sdk.NewRat(0, 1),
+			testName:           "big positive reputation",
+			reputation:         types.NewCoinFromBigInt(bigStringInt1),
+			expectPenaltyScore: sdk.ZeroRat(),
 		},
 		{
-			testName:           "100 report and 100 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(100),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 1),
+			testName:           "negative reputation",
+			reputation:         types.NewCoinFromInt64(-1),
+			expectPenaltyScore: sdk.NewRat(1, maxReportReputation),
 		},
 		{
-			testName:           "1000 report and 100 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(1000),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 1),
-		},
-		{
-			testName:           "50 report and 100 upvote expects 1/2 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(50),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 2),
-		},
-		// issue https://github.com/lino-network/lino/issues/150
-		{
-			testName:           "3333 report and 7777 upvote expects 3/7 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(3333),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(7777),
-			expectPenaltyScore: sdk.NewRat(2142857, 5000000),
-		},
-		{
-			testName:           "big string report and big string upvote, report is much than upvote",
-			totalReportCoinDay: types.NewCoinFromBigInt(bigStringInt2),
-			totalUpvoteCoinDay: types.NewCoinFromBigInt(bigStringInt1),
-			expectPenaltyScore: sdk.NewRat(1),
-		},
-		{
-			testName:           "big string report and big string upvote, report is less than upvote",
-			totalReportCoinDay: types.NewCoinFromBigInt(bigStringInt1),
-			totalUpvoteCoinDay: types.NewCoinFromBigInt(bigStringInt2),
-			expectPenaltyScore: sdk.NewRat(642857, 5000000),
+			testName:           "big negative reputation",
+			reputation:         types.NewCoinFromBigInt(bigStringInt2),
+			expectPenaltyScore: sdk.OneRat(),
 		},
 	}
 
 	for _, tc := range testCases {
-		postMeta := &model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time.Unix(),
-			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
-			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportCoinDay:      tc.totalReportCoinDay,
-			TotalUpvoteCoinDay:      tc.totalUpvoteCoinDay,
-		}
-		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
-		if err != nil {
-			t.Errorf("%s: failed to set post meta, got err %v", tc.testName, err)
-		}
-
-		penaltyScore, err := pm.GetPenaltyScore(ctx, postKey)
+		penaltyScore, err := pm.GetPenaltyScore(ctx, tc.reputation)
 		if err != nil {
 			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
 		}
@@ -669,82 +539,6 @@ func TestGetPenaltyScore(t *testing.T) {
 			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
 		}
 		assert.Equal(t, penaltyScore, tc.expectPenaltyScore)
-	}
-}
-
-func TestGetRepostPenaltyScore(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
-	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
-	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
-
-	postKey := types.GetPermlink(user, postID)
-	repostKey := types.GetPermlink(user2, postID2)
-	testCases := []struct {
-		testName           string
-		totalReportCoinDay types.Coin
-		totalUpvoteCoinDay types.Coin
-		expectPenaltyScore sdk.Rat
-	}{
-		{
-			testName:           "1 report and 0 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(1),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(0),
-			expectPenaltyScore: sdk.NewRat(1, 1),
-		},
-		{
-			testName:           "0 report and 1 upvote expects 0 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(0),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(1),
-			expectPenaltyScore: sdk.NewRat(0, 1),
-		},
-		{
-			testName:           "0 report and 0 upvote expects 0 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(0),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(0),
-			expectPenaltyScore: sdk.NewRat(0, 1),
-		},
-		{
-			testName:           "100 report and 100 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(100),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 1),
-		},
-		{
-			testName:           "1000 report and 100 upvote expects 1 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(1000),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 1),
-		},
-		{
-			testName:           "50 report and 100 upvote expects 1/2 penalty score",
-			totalReportCoinDay: types.NewCoinFromInt64(50),
-			totalUpvoteCoinDay: types.NewCoinFromInt64(100),
-			expectPenaltyScore: sdk.NewRat(1, 2),
-		},
-	}
-
-	for _, tc := range testCases {
-		postMeta := &model.PostMeta{
-			CreatedAt:               ctx.BlockHeader().Time.Unix(),
-			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
-			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
-			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
-			TotalReportCoinDay:      tc.totalReportCoinDay,
-			TotalUpvoteCoinDay:      tc.totalUpvoteCoinDay,
-		}
-		err := pm.postStorage.SetPostMeta(ctx, postKey, postMeta)
-		if err != nil {
-			t.Errorf("%s: failed to set post meta, got err %v", tc.testName, err)
-		}
-
-		penaltyScore, err := pm.GetPenaltyScore(ctx, repostKey)
-		if err != nil {
-			t.Errorf("%s: failed to get penalty score, got err %v", tc.testName, err)
-		}
-		if !penaltyScore.Equal(tc.expectPenaltyScore) {
-			t.Errorf("%s: diff penalty score, got %v, want %v", tc.testName, penaltyScore, tc.expectPenaltyScore)
-		}
 	}
 }
 
@@ -759,7 +553,7 @@ func checkIsDelete(t *testing.T, ctx sdk.Context, pm PostManager, permlink types
 }
 
 func TestDeletePost(t *testing.T) {
-	ctx, am, _, pm, _, _, _ := setupTest(t, 1)
+	ctx, am, _, pm, _, _, _, _ := setupTest(t, 1)
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user2, postID2 := createTestRepost(t, ctx, "user2", "repost", am, pm, user, postID)
 

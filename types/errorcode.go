@@ -258,6 +258,9 @@ const (
 	CodeFailedToMarshalCoinDayParam                   sdk.CodeType = 1032
 	CodeFailedToMarshalBandwidthParam                 sdk.CodeType = 1033
 	CodeFailedToMarshalAccountParam                   sdk.CodeType = 1034
+	CodeFailedToMarshalReputationParam                sdk.CodeType = 1035
+	CodeFailedToUnmarshalReputationParam              sdk.CodeType = 1036
+	CodeReputationParamNotFound                       sdk.CodeType = 1037
 
 	// Proposal errors reserve 1100 ~ 1199
 	CodeOngoingProposalNotFound         sdk.CodeType = 1100

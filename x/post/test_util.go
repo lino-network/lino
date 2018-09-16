@@ -11,6 +11,7 @@ import (
 	dev "github.com/lino-network/lino/x/developer"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post/model"
+	rep "github.com/lino-network/lino/x/reputation"
 	vote "github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -29,6 +30,7 @@ var (
 	testDeveloperKVStoreKey = sdk.NewKVStoreKey("developer")
 	testVoteKVStoreKey      = sdk.NewKVStoreKey("vote")
 	testParamKVStoreKey     = sdk.NewKVStoreKey("param")
+	testRepKVStoreKey       = sdk.NewKVStoreKey("reputation")
 
 	initCoin = types.NewCoinFromInt64(1 * types.Decimals)
 	referrer = types.AccountKey("referrer")
@@ -41,8 +43,8 @@ func InitGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 
 func setupTest(
 	t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, param.ParamHolder,
-	PostManager, global.GlobalManager, dev.DeveloperManager, vote.VoteManager) {
+	sdk.Context, acc.AccountManager, param.ParamHolder, PostManager,
+	global.GlobalManager, dev.DeveloperManager, vote.VoteManager, rep.ReputationManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
@@ -53,6 +55,7 @@ func setupTest(
 	devManager.InitGenesis(ctx)
 	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph)
 	voteManager.InitGenesis(ctx)
+	repManager := rep.NewReputationManager(testRepKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -60,7 +63,7 @@ func setupTest(
 
 	err := InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, ph, postManager, globalManager, devManager, voteManager
+	return ctx, accManager, ph, postManager, globalManager, devManager, voteManager, repManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -72,6 +75,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testVoteKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testRepKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 
 	return sdk.NewContext(

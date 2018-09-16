@@ -261,6 +261,10 @@ func TestGenesisFromConfig(t *testing.T) {
 		param.PostParam{
 			ReportOrUpvoteIntervalSec: 24 * 3600,
 			PostIntervalSec:           600,
+			MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
+		},
+		param.ReputationParam{
+			BestContentIndexN: 10,
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
