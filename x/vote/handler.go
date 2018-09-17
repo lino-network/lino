@@ -24,6 +24,8 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager, 
 			return handleDelegateMsg(ctx, vm, gm, am, rm, msg)
 		case DelegatorWithdrawMsg:
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, rm, msg)
+		case ClaimInterestMsg:
+			return handleClaimInterestMsg(ctx, vm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -162,6 +164,19 @@ func handleDelegatorWithdrawMsg(
 	return sdk.Result{}
 }
 
+func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg ClaimInterestMsg) sdk.Result {
+	// claim interest
+	interest, err := vm.ClaimInterest(ctx, msg.Username)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.AddSavingCoin(
+		ctx, msg.Username, interest, "", "", types.ClaimInterest); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
 func AddStake(
 	ctx sdk.Context, username types.AccountKey, stake types.Coin, vm VoteManager,
 	gm global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager) sdk.Error {
@@ -224,7 +239,7 @@ func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalMa
 		return err
 	}
 
-	if err := am.AddInterest(ctx, name, interest); err != nil {
+	if err := vm.AddInterest(ctx, name, interest); err != nil {
 		return err
 	}
 

@@ -90,7 +90,6 @@ func TestAccountReward(t *testing.T) {
 	ctx := getContext()
 
 	reward := Reward{
-		Interest:        types.NewCoinFromInt64(0),
 		TotalIncome:     types.NewCoinFromInt64(0),
 		OriginalIncome:  types.NewCoinFromInt64(0),
 		FrictionIncome:  types.NewCoinFromInt64(0),

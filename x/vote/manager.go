@@ -262,6 +262,35 @@ func (vm VoteManager) DelegatorWithdraw(
 	return nil
 }
 
+// ClaimInterest - add lino power interst to user balance
+func (vm VoteManager) ClaimInterest(
+	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	claimedInterest := voter.Interest
+	voter.Interest = types.NewCoinFromInt64(0)
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return types.NewCoinFromInt64(0), err
+	}
+	return claimedInterest, nil
+}
+
+// AddInterest - add interst
+func (vm VoteManager) AddInterest(
+	ctx sdk.Context, username types.AccountKey, interest types.Coin) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return err
+	}
+	voter.Interest = voter.Interest.Plus(interest)
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetVotingPower - get voter voting power
 func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, voterName)
