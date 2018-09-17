@@ -62,8 +62,8 @@ func TestStakeInterest(t *testing.T) {
 	test.SignCheckDeliver(t, lb, u1ClaimInterestMsg, 1, true, u1Priv, baseTime)
 	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 1, true, u2Priv, baseTime)
 
-	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((89999+20)*types.Decimals))
-	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+80)*types.Decimals))
+	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((89999+0.15748)*types.Decimals))
+	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+0.62992)*types.Decimals))
 
 	u1StakeInMsg = vote.NewStakeInMsg(u1Name, types.LNO("20000"))
 	u2StakeOutMsg := vote.NewStakeOutMsg(u2Name, types.LNO("10000"))
@@ -95,7 +95,7 @@ func TestStakeInterest(t *testing.T) {
 	test.SignCheckDeliver(t, lb, u1ClaimInterestMsg, 4, true, u1Priv, baseTime)
 	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 4, true, u2Priv, baseTime)
 
-	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((69999+120)*types.Decimals))
-	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+180)*types.Decimals))
+	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((69999+1.10088)*types.Decimals))
+	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+1.57332)*types.Decimals))
 
 }
