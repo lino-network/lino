@@ -14,7 +14,6 @@ import (
 var _ types.Msg = FollowMsg{}
 var _ types.Msg = UnfollowMsg{}
 var _ types.Msg = ClaimMsg{}
-var _ types.Msg = ClaimInterestMsg{}
 var _ types.Msg = TransferMsg{}
 var _ types.Msg = RecoverMsg{}
 var _ types.Msg = RegisterMsg{}
@@ -44,11 +43,6 @@ type UnfollowMsg struct {
 
 // ClaimMsg - claim content reward
 type ClaimMsg struct {
-	Username types.AccountKey `json:"username"`
-}
-
-// ClaimInterestMsg - claim interest generated from lino power
-type ClaimInterestMsg struct {
 	Username types.AccountKey `json:"username"`
 }
 
@@ -218,53 +212,6 @@ func (msg ClaimMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implements types.Msg
 func (msg ClaimMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewClaimInterestMsg - return a ClaimInterestMsg
-func NewClaimInterestMsg(username string) ClaimInterestMsg {
-	return ClaimInterestMsg{
-		Username: types.AccountKey(username),
-	}
-}
-
-// Type - implements sdk.Msg
-func (msg ClaimInterestMsg) Type() string { return types.AccountRouterName }
-
-// ValidateBasic - implements sdk.Msg
-func (msg ClaimInterestMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
-	}
-	return nil
-}
-
-func (msg ClaimInterestMsg) String() string {
-	return fmt.Sprintf("ClaimInterestMsg{Username:%v}", msg.Username)
-}
-
-// GetPermission - implements types.Msg
-func (msg ClaimInterestMsg) GetPermission() types.Permission {
-	return types.AppPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg ClaimInterestMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg ClaimInterestMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
-}
-
-// GetConsumeAmount - implements types.Msg
-func (msg ClaimInterestMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

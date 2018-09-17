@@ -80,6 +80,48 @@ func TestCanBecomeValidator(t *testing.T) {
 	}
 }
 
+func TestAddAndClaimInterest(t *testing.T) {
+	testName := "TestAddAndClaimInterest"
+	ctx, am, vm, _, _ := setupTest(t, 0)
+
+	accKey := types.AccountKey("accKey")
+	minBalance := types.NewCoinFromInt64(1000 * types.Decimals)
+	createTestAccount(ctx, am, "user1", minBalance)
+
+	err := vm.AddVoter(ctx, accKey, c100)
+	if err != nil {
+		t.Errorf("%s: failed to add voter, got err %v", testName, err)
+	}
+
+	err = vm.AddInterest(ctx, accKey, c500)
+	if err != nil {
+		t.Errorf("%s: failed to add interest, got err %v", testName, err)
+	}
+
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s: failed to get voter, got err %v", testName, err)
+	}
+
+	if !assert.Equal(t, c500, voter.Interest) {
+		t.Errorf("%s: diff interest", testName)
+	}
+
+	_, err = vm.ClaimInterest(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s: failed to add claim interest, got err %v", testName, err)
+	}
+	voter, err = vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		t.Errorf("%s: failed to get voter, got err %v", testName, err)
+	}
+
+	if !assert.Equal(t, true, voter.Interest.IsZero()) {
+		t.Errorf("%s: diff interest", testName)
+	}
+
+}
+
 func TestIsInValidatorList(t *testing.T) {
 	ctx, am, vm, _, _ := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)

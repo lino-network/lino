@@ -11,6 +11,7 @@ type Voter struct {
 	DelegatedPower    types.Coin       `json:"delegated_power"`
 	DelegateToOthers  types.Coin       `json:"delegate_to_others"`
 	LastPowerChangeAt int64            `json:"last_power_change_at"`
+	Interest          types.Coin       `json:"interest"`
 }
 
 // Vote - a vote is created by a voter to a proposal

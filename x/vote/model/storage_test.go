@@ -173,10 +173,12 @@ func TestVoter(t *testing.T) {
 
 	user := types.AccountKey("user")
 	voter := Voter{
-		Username:         user,
-		LinoStake:        types.NewCoinFromInt64(1000),
-		DelegatedPower:   types.NewCoinFromInt64(10000),
-		DelegateToOthers: types.NewCoinFromInt64(10000),
+		Username:          user,
+		LinoStake:         types.NewCoinFromInt64(1000),
+		DelegatedPower:    types.NewCoinFromInt64(10000),
+		DelegateToOthers:  types.NewCoinFromInt64(10000),
+		LastPowerChangeAt: 0,
+		Interest:          types.NewCoinFromInt64(0),
 	}
 	err := vs.SetVoter(ctx, user, &voter)
 	assert.Nil(t, err)
