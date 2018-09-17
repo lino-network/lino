@@ -97,7 +97,7 @@ const (
 	MaximumJSONMetaLength = 500
 
 	// MaxPostTitleLength - maximum length of post title
-	MaxPostTitleLength = 50
+	MaxPostTitleLength = 100
 
 	// MaxPostContentLength - maximum length of post content
 	MaxPostContentLength = 1000

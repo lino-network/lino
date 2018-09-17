@@ -17,11 +17,11 @@ var (
 	// len of 101
 	tooLongOfUTF8Memo = "12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345 12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345"
 
-	// len of 50
-	maxLenOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345`
+	// len of 100
+	maxLenOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌1234512345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345`
 
-	// len of 51
-	tooLongOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123456`
+	// len of 101
+	tooLongOfUTF8Title = `12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌123456 12345 67890 你好👌12345 67890 你好👌12345 67890 你好👌12345`
 
 	// len of 1000
 	maxLenOfUTF8Content = `
@@ -55,7 +55,7 @@ var (
 func getCommentAndRepost(
 	t *testing.T, parentAuthor, parentPostID, sourceAuthor, sourcePostID string) CreatePostMsg {
 	return NewCreatePostMsg(
-		"author", "TestPostID", string(make([]byte, 50)), string(make([]byte, 1000)),
+		"author", "TestPostID", string(make([]byte, 100)), string(make([]byte, 1000)),
 		parentAuthor, parentPostID, sourceAuthor, sourcePostID, "0", nil)
 }
 
@@ -70,7 +70,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "normal case 1",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -82,7 +82,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "normal case 2",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -106,7 +106,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "utf8 content",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: maxLenOfUTF8Content,
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -118,7 +118,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "empty post id",
 			msg: CreatePostMsg{
 				PostID:  "",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -130,7 +130,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "no author",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  "",
 				Links:   []types.IDToURLMapping{},
@@ -142,7 +142,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "post id is too long",
 			msg: CreatePostMsg{
 				PostID:  string(make([]byte, types.MaximumLengthOfPostID+1)),
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -154,7 +154,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "post title is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 51)),
+				Title:   string(make([]byte, 101)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -178,7 +178,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "post content is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1001)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -190,7 +190,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "post utf8 content is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: tooLongOfUTF8Content,
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -202,7 +202,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "negative redistribution split rate is invalid",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -214,7 +214,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "redistribution split rate can't be bigger than 1",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -226,7 +226,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "redistribution split rate length is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links:   []types.IDToURLMapping{},
@@ -238,13 +238,13 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "identifier length is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links: []types.IDToURLMapping{
 					{
 						Identifier: string(make([]byte, 21)),
-						URL:        string(make([]byte, 50)),
+						URL:        string(make([]byte, 100)),
 					},
 				},
 				RedistributionSplitRate: "0",
@@ -254,7 +254,7 @@ func TestCreatePostMsg(t *testing.T) {
 			testName: "url length is too long",
 			msg: CreatePostMsg{
 				PostID:  "TestPostID",
-				Title:   string(make([]byte, 50)),
+				Title:   string(make([]byte, 100)),
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 				Links: []types.IDToURLMapping{
@@ -321,7 +321,7 @@ func TestUpdatePostMsg(t *testing.T) {
 		{
 			testName: "post tile is too long",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 51)), "content", []types.IDToURLMapping{}),
+				"author", "postID", string(make([]byte, 101)), "content", []types.IDToURLMapping{}),
 			expectedResult: ErrPostTitleExceedMaxLength(),
 		},
 		{
@@ -333,14 +333,14 @@ func TestUpdatePostMsg(t *testing.T) {
 		{
 			testName: "post content is too long",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 50)), string(make([]byte, 1001)),
+				"author", "postID", string(make([]byte, 100)), string(make([]byte, 1001)),
 				[]types.IDToURLMapping{}),
 			expectedResult: ErrPostContentExceedMaxLength(),
 		},
 		{
 			testName: "post utf8 content is too long",
 			updatePostMsg: NewUpdatePostMsg(
-				"author", "postID", string(make([]byte, 50)), tooLongOfUTF8Content,
+				"author", "postID", string(make([]byte, 100)), tooLongOfUTF8Content,
 				[]types.IDToURLMapping{}),
 			expectedResult: ErrPostContentExceedMaxLength(),
 		},
