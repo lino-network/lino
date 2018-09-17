@@ -732,12 +732,16 @@ func TestHourlyEvent(t *testing.T) {
 
 func TestIncreaseMinute(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
+	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	validatorParam, _ := lb.paramHolder.GetValidatorParam(ctx)
+	minVotingDeposit, _ := validatorParam.ValidatorMinVotingDeposit.ToInt64()
+	initStake := minVotingDeposit * 21
 	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 	expectLinoStakeStat := globalModel.LinoStakeStat{
 		TotalConsumptionFriction: types.NewCoinFromInt64(0),
-		TotalLinoStake:           types.NewCoinFromInt64(0),
+		TotalLinoStake:           types.NewCoinFromInt64(initStake),
 		UnclaimedFriction:        types.NewCoinFromInt64(0),
-		UnclaimedLinoStake:       types.NewCoinFromInt64(0),
+		UnclaimedLinoStake:       types.NewCoinFromInt64(initStake),
 	}
 	for i := 1; i < types.MinutesPerMonth/10; i++ {
 		// simulate add lino stake and friction at previous block

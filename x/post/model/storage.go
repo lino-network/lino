@@ -202,6 +202,11 @@ func (ps PostStorage) SetPostDonations(
 	return nil
 }
 
+// GetPostInfoPrefix - "post info substore" + "author"
+func GetPostInfoPrefix(author types.AccountKey) []byte {
+	return append(postInfoSubStore, author...)
+}
+
 // GetPostInfoKey - "post info substore" + "permlink"
 func GetPostInfoKey(permlink types.Permlink) []byte {
 	return append(postInfoSubStore, permlink...)

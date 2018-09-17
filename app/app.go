@@ -309,7 +309,12 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 			"", "", types.ValidatorDeposit); err != nil {
 			panic(err)
 		}
-
+		if err := vote.AddStake(
+			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
+			lb.voteManager, lb.globalManager, lb.accountManager,
+			lb.reputationManager); err != nil {
+			panic(err)
+		}
 		if err := lb.voteManager.AddVoter(
 			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit); err != nil {
 			panic(err)
