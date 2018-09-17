@@ -269,40 +269,6 @@ func TestClaimMsg(t *testing.T) {
 	}
 }
 
-func TestClaimInterestMsg(t *testing.T) {
-	testCases := map[string]struct {
-		msg      ClaimInterestMsg
-		wantCode sdk.CodeType
-	}{
-		"normal case": {
-			msg:      NewClaimInterestMsg("test"),
-			wantCode: sdk.CodeOK,
-		},
-		"invalid claim interest - Username is too short": {
-			msg:      NewClaimInterestMsg("te"),
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid claim interest - Username is too long": {
-			msg:      NewClaimInterestMsg("testtesttesttesttesttest"),
-			wantCode: types.CodeInvalidUsername,
-		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: diff error: got %v, want %v", testName, tc.wantCode, tc.wantCode)
-			}
-			continue
-		}
-		if got.Code() != tc.wantCode {
-			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
-		}
-	}
-}
-
 func TestUpdateAccountMsg(t *testing.T) {
 	testCases := map[string]struct {
 		msg      UpdateAccountMsg

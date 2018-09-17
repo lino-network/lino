@@ -25,7 +25,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager, 
 		case DelegatorWithdrawMsg:
 			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, rm, msg)
 		case ClaimInterestMsg:
-			return handleClaimInterestMsg(ctx, vm, am, msg)
+			return handleClaimInterestMsg(ctx, vm, gm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -164,7 +164,10 @@ func handleDelegatorWithdrawMsg(
 	return sdk.Result{}
 }
 
-func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, am acc.AccountManager, msg ClaimInterestMsg) sdk.Result {
+func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg ClaimInterestMsg) sdk.Result {
+	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
+		return err.Result()
+	}
 	// claim interest
 	interest, err := vm.ClaimInterest(ctx, msg.Username)
 	if err != nil {
@@ -240,6 +243,10 @@ func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalMa
 	}
 
 	if err := vm.AddInterest(ctx, name, interest); err != nil {
+		return err
+	}
+
+	if err := vm.SetLinoStakeLastChangedAt(ctx, name, ctx.BlockHeader().Time.Unix()); err != nil {
 		return err
 	}
 

@@ -27,6 +27,9 @@ var (
 	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
 	testRepKVStoreKey     = sdk.NewKVStoreKey("reputation")
+
+	c100 = types.NewCoinFromInt64(100 * types.Decimals)
+	c500 = types.NewCoinFromInt64(500 * types.Decimals)
 )
 
 func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {

@@ -270,7 +270,7 @@ func NewClaimInterestMsg(username string) ClaimInterestMsg {
 }
 
 // Type - implements sdk.Msg
-func (msg ClaimInterestMsg) Type() string { return types.AccountRouterName }
+func (msg ClaimInterestMsg) Type() string { return types.VoteRouterName }
 
 // ValidateBasic - implements sdk.Msg
 func (msg ClaimInterestMsg) ValidateBasic() sdk.Error {

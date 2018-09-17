@@ -8,7 +8,6 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/post"
 	vote "github.com/lino-network/lino/x/vote"
 )
@@ -53,17 +52,50 @@ func TestStakeInterest(t *testing.T) {
 	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64(89999*types.Decimals))
 	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64(59999*types.Decimals))
 
-	// 3 days
+	// 3rd day
 	baseTime += 3600 * 24 * 3
 	test.SimulateOneBlock(lb, baseTime)
 
-	u1ClaimInterestMsg := acc.NewClaimInterestMsg(u1Name)
-	u2ClaimInterestMsg := acc.NewClaimInterestMsg(u2Name)
+	u1ClaimInterestMsg := vote.NewClaimInterestMsg(u1Name)
+	u2ClaimInterestMsg := vote.NewClaimInterestMsg(u2Name)
 
 	test.SignCheckDeliver(t, lb, u1ClaimInterestMsg, 1, true, u1Priv, baseTime)
 	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 1, true, u2Priv, baseTime)
 
-	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((89999+40)*types.Decimals))
-	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+160)*types.Decimals))
+	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((89999+20)*types.Decimals))
+	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+80)*types.Decimals))
+
+	u1StakeInMsg = vote.NewStakeInMsg(u1Name, types.LNO("20000"))
+	u2StakeOutMsg := vote.NewStakeOutMsg(u2Name, types.LNO("10000"))
+
+	test.SignCheckDeliver(t, lb, u1StakeInMsg, 2, true, u1Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2StakeOutMsg, 2, true, u2Priv, baseTime)
+	test.SignCheckDeliver(t, lb, donateMsg, 1, true, donatorPriv, baseTime)
+
+	// 4th day
+	baseTime += 3600 * 24 * 1
+	test.SimulateOneBlock(lb, baseTime)
+	test.SignCheckDeliver(t, lb, donateMsg, 2, true, donatorPriv, baseTime)
+
+	// 5th day
+	baseTime += 3600 * 24 * 1
+	test.SimulateOneBlock(lb, baseTime)
+	test.SignCheckDeliver(t, lb, donateMsg, 3, true, donatorPriv, baseTime)
+
+	u1StakeOutMsg := vote.NewStakeOutMsg(u1Name, types.LNO("30000"))
+	u2StakeOutMsg = vote.NewStakeOutMsg(u2Name, types.LNO("30000"))
+
+	test.SignCheckDeliver(t, lb, u1StakeOutMsg, 3, true, u1Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2StakeOutMsg, 3, true, u2Priv, baseTime)
+
+	// 6th day
+	baseTime += 3600 * 24 * 1
+	test.SimulateOneBlock(lb, baseTime)
+
+	test.SignCheckDeliver(t, lb, u1ClaimInterestMsg, 4, true, u1Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 4, true, u2Priv, baseTime)
+
+	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((69999+120)*types.Decimals))
+	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+180)*types.Decimals))
 
 }

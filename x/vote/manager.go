@@ -352,6 +352,19 @@ func (vm VoteManager) GetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.Ac
 	return voter.LastPowerChangeAt, nil
 }
 
+// SetLinoStakeLastChangedAt - set linoStake last changed time
+func (vm VoteManager) SetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.AccountKey, lastChangedAt int64) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		return err
+	}
+	voter.LastPowerChangeAt = lastChangedAt
+	if err := vm.storage.SetVoter(ctx, accKey, voter); err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetAllDelegators - get all delegators of a voter
 func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
