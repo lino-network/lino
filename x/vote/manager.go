@@ -146,6 +146,13 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 		}
 	}
 
+	// add voter if not exist
+	if !vm.DoesVoterExist(ctx, voterName) {
+		if err := vm.AddVoter(ctx, voterName, types.NewCoinFromInt64(0)); err != nil {
+			return err
+		}
+	}
+
 	// add delegatedPower for voter
 	voter, err := vm.storage.GetVoter(ctx, voterName)
 	if err != nil {
