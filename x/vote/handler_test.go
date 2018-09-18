@@ -92,6 +92,38 @@ func TestDelegateBasic(t *testing.T) {
 	assert.Equal(t, delegatedCoin, delegation2.Amount)
 }
 
+func TestVotingPowerAndStake(t *testing.T) {
+	ctx, am, vm, gm, rm := setupTest(t, 0)
+	handler := NewHandler(vm, am, gm, rm)
+
+	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
+	minBalance := types.NewCoinFromInt64(5000 * types.Decimals)
+
+	// create test users
+	user1 := createTestAccount(ctx, am, "user1", minBalance.Plus(voteParam.MinStakeIn))
+	createTestAccount(ctx, am, "user2", minBalance)
+
+	// let user1 stake in
+	msg := NewStakeInMsg("user1", coinToString(voteParam.MinStakeIn))
+	handler(ctx, msg)
+
+	delegatedCoin := types.NewCoinFromInt64(1300 * types.Decimals)
+	// let user2 delegate power to user1
+	msg2 := NewDelegateMsg("user2", "user1", coinToString(delegatedCoin))
+	handler(ctx, msg2)
+
+	// let user1 delegate power to user2
+	msg3 := NewDelegateMsg("user1", "user2", coinToString(delegatedCoin))
+	handler(ctx, msg3)
+
+	votingPower, _ := vm.GetVotingPower(ctx, "user1")
+	assert.Equal(t, true, votingPower.IsEqual(voteParam.MinStakeIn.Plus(delegatedCoin)))
+
+	voter, _ := vm.storage.GetVoter(ctx, user1)
+	assert.Equal(t, true, voter.LinoStake.IsEqual(voteParam.MinStakeIn.Plus(delegatedCoin)))
+
+}
+
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, vm, gm, rm := setupTest(t, 0)
 	handler := NewHandler(vm, am, gm, rm)

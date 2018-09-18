@@ -70,8 +70,9 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 		return false
 	}
 
+	availableStakes := voter.LinoStake.Minus(voter.DelegateToOthers)
 	//reject if the remaining coins are not enough
-	return voter.LinoStake.IsGTE(coin) && coin.IsPositive()
+	return availableStakes.IsGTE(coin) && coin.IsPositive()
 }
 
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
@@ -142,6 +143,13 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 	} else {
 		delegation, err = vm.storage.GetDelegation(ctx, voterName, delegatorName)
 		if err != nil {
+			return err
+		}
+	}
+
+	// add voter if not exist
+	if !vm.DoesVoterExist(ctx, voterName) {
+		if err := vm.AddVoter(ctx, voterName, types.NewCoinFromInt64(0)); err != nil {
 			return err
 		}
 	}
