@@ -67,9 +67,11 @@ func TestDelegateInterest(t *testing.T) {
 
 	u1DelegateMsg = vote.NewDelegateMsg(u1Name, u2Name, types.LNO("20000"))
 	u2StakeOutMsg := vote.NewStakeOutMsg(u2Name, types.LNO("10000"))
+	u2DelegatorWithdrawMsg := vote.NewDelegatorWithdrawMsg(u2Name, u1Name, types.LNO("10000"))
 
 	test.SignCheckDeliver(t, lb, u1DelegateMsg, 2, true, u1Priv, baseTime)
-	test.SignCheckDeliver(t, lb, u2StakeOutMsg, 2, true, u2Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2StakeOutMsg, 2, false, u2Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2DelegatorWithdrawMsg, 3, true, u2Priv, baseTime)
 	test.SignCheckDeliver(t, lb, donateMsg, 1, true, donatorPriv, baseTime)
 
 	// 4th day
@@ -82,18 +84,18 @@ func TestDelegateInterest(t *testing.T) {
 	test.SimulateOneBlock(lb, baseTime)
 	test.SignCheckDeliver(t, lb, donateMsg, 3, true, donatorPriv, baseTime)
 
-	u1StakeOutMsg := vote.NewStakeOutMsg(u1Name, types.LNO("30000"))
-	u2StakeOutMsg = vote.NewStakeOutMsg(u2Name, types.LNO("30000"))
+	u1DelegatorWithdrawMsg := vote.NewDelegatorWithdrawMsg(u1Name, u2Name, types.LNO("30000"))
+	u2DelegatorWithdrawMsg = vote.NewDelegatorWithdrawMsg(u2Name, u1Name, types.LNO("30000"))
 
-	test.SignCheckDeliver(t, lb, u1StakeOutMsg, 3, true, u1Priv, baseTime)
-	test.SignCheckDeliver(t, lb, u2StakeOutMsg, 3, true, u2Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u1DelegatorWithdrawMsg, 3, true, u1Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2DelegatorWithdrawMsg, 4, true, u2Priv, baseTime)
 
 	// 6th day
 	baseTime += 3600 * 24 * 1
 	test.SimulateOneBlock(lb, baseTime)
 
 	test.SignCheckDeliver(t, lb, u1ClaimInterestMsg, 4, true, u1Priv, baseTime)
-	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 4, true, u2Priv, baseTime)
+	test.SignCheckDeliver(t, lb, u2ClaimInterestMsg, 5, true, u2Priv, baseTime)
 
 	test.CheckBalance(t, u1Name, lb, types.NewCoinFromInt64((69999+1.10088)*types.Decimals))
 	test.CheckBalance(t, u2Name, lb, types.NewCoinFromInt64((59999+1.57332)*types.Decimals))

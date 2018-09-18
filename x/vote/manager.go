@@ -70,8 +70,9 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 		return false
 	}
 
+	availableStakes := voter.LinoStake.Minus(voter.DelegateToOthers)
 	//reject if the remaining coins are not enough
-	return voter.LinoStake.IsGTE(coin) && coin.IsPositive()
+	return availableStakes.IsGTE(coin) && coin.IsPositive()
 }
 
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
