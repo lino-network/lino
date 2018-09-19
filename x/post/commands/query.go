@@ -18,7 +18,7 @@ func GetPostCmd(storeName string, cdc *wire.Codec) *cobra.Command {
 		cdc,
 	}
 	return &cobra.Command{
-		Use:   "post <author> <postID>",
+		Use:   "getpost <author> <postID>",
 		Short: "Query a post",
 		RunE:  cmdr.getPostCmd,
 	}
