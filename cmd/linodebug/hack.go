@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -137,7 +138,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		val := iter.Value()
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
 		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), string(iter.Value()))
+		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
 		storeResult += string(val)
 		// fmt.Println(string(val))
 		iter.Next()
@@ -152,7 +153,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
 		storeResult += string(val)
 		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), string(iter.Value()))
+		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
 		// fmt.Println(string(val))
 		iter.Next()
 	}
@@ -166,7 +167,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
 		storeResult += string(val)
 		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), string(iter.Value()))
+		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
 		// fmt.Println(string(val))
 		iter.Next()
 	}
