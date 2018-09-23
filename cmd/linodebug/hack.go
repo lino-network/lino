@@ -138,6 +138,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
 		dec.Decode(rst)
 		fmt.Println(rst)
+		storeResult += string(val)
 		// fmt.Println(string(val))
 		iter.Next()
 	}
@@ -149,6 +150,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		rst := &postMeta{}
 		val := iter.Value()
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
+		storeResult += string(val)
 		dec.Decode(rst)
 		fmt.Println(rst)
 		// fmt.Println(string(val))
@@ -162,6 +164,7 @@ func iterateStore(store sdk.KVStore) [32]byte {
 		rst := &roundMeta{}
 		val := iter.Value()
 		dec := gob.NewDecoder(bytes.NewBuffer(val))
+		storeResult += string(val)
 		dec.Decode(rst)
 		fmt.Println(rst)
 		// fmt.Println(string(val))
