@@ -202,6 +202,7 @@ func AddStake(
 	if err := gm.AddLinoStakeToStat(ctx, stake); err != nil {
 		return err
 	}
+	rm.OnStakeIn(ctx, username, stake)
 	return nil
 }
 
@@ -216,8 +217,7 @@ func MinusStake(
 	if err := vm.MinusLinoStake(ctx, username, stake); err != nil {
 		return err
 	}
-	rm.OnStakeIn(ctx, username, stake)
-
+	rm.OnStakeOut(ctx, username, stake)
 	// add linoStake to global stat
 	if err := gm.MinusLinoStakeFromStat(ctx, stake); err != nil {
 		return err
