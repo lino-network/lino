@@ -1,15 +1,19 @@
 #!/usr/bin/env python
+
 import sys
+
+# Though this file is called GobCodeGen, but we found some un-deterministic spots in
+# gob, so we abandon it. As you can see, now it's a json marshal/unmarshal warpper.
+
 template = """
 func decode$TYPE(data []byte) *TYPE {
 	if data == nil {
 		return nil
 	}
 	rst := &TYPE{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode TYPE" + err.Error())
+		panic("error in json decode TYPE" + err.Error())
 	}
 	return rst
 }
@@ -18,13 +22,11 @@ func encode$TYPE(dt *TYPE) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 """
 

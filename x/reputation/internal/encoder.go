@@ -1,8 +1,7 @@
 package internal
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
 )
 
 // ------ following codes are generated from codegen/genGobCode.py --------
@@ -12,10 +11,9 @@ func decodeUserMeta(data []byte) *userMeta {
 		return nil
 	}
 	rst := &userMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode userMeta" + err.Error())
+		panic("error in json decode userMeta" + err.Error())
 	}
 	return rst
 }
@@ -24,13 +22,11 @@ func encodeUserMeta(dt *userMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodePostMeta(data []byte) *postMeta {
@@ -38,10 +34,9 @@ func decodePostMeta(data []byte) *postMeta {
 		return nil
 	}
 	rst := &postMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode postMeta" + err.Error())
+		panic("error in json decode postMeta" + err.Error())
 	}
 	return rst
 }
@@ -50,13 +45,11 @@ func encodePostMeta(dt *postMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodeRoundMeta(data []byte) *roundMeta {
@@ -64,10 +57,9 @@ func decodeRoundMeta(data []byte) *roundMeta {
 		return nil
 	}
 	rst := &roundMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode roundMeta" + err.Error())
+		panic("error in json decode roundMeta" + err.Error())
 	}
 	return rst
 }
@@ -76,13 +68,11 @@ func encodeRoundMeta(dt *roundMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodeUserPostMeta(data []byte) *userPostMeta {
@@ -90,10 +80,9 @@ func decodeUserPostMeta(data []byte) *userPostMeta {
 		return nil
 	}
 	rst := &userPostMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode userPostMeta" + err.Error())
+		panic("error in json decode userPostMeta" + err.Error())
 	}
 	return rst
 }
@@ -102,13 +91,11 @@ func encodeUserPostMeta(dt *userPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodeRoundPostMeta(data []byte) *roundPostMeta {
@@ -116,10 +103,9 @@ func decodeRoundPostMeta(data []byte) *roundPostMeta {
 		return nil
 	}
 	rst := &roundPostMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode roundPostMeta" + err.Error())
+		panic("error in json decode roundPostMeta" + err.Error())
 	}
 	return rst
 }
@@ -128,13 +114,11 @@ func encodeRoundPostMeta(dt *roundPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodeRoundUserPostMeta(data []byte) *roundUserPostMeta {
@@ -142,10 +126,9 @@ func decodeRoundUserPostMeta(data []byte) *roundUserPostMeta {
 		return nil
 	}
 	rst := &roundUserPostMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode roundUserPostMeta" + err.Error())
+		panic("error in json decode roundUserPostMeta" + err.Error())
 	}
 	return rst
 }
@@ -154,13 +137,11 @@ func encodeRoundUserPostMeta(dt *roundUserPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
 
 func decodeGameMeta(data []byte) *gameMeta {
@@ -168,10 +149,9 @@ func decodeGameMeta(data []byte) *gameMeta {
 		return nil
 	}
 	rst := &gameMeta{}
-	dec := gob.NewDecoder(bytes.NewBuffer(data))
-	err := dec.Decode(rst)
+        err := json.Unmarshal(data, &rst)
 	if err != nil {
-		panic("error in gob decode gameMeta" + err.Error())
+		panic("error in json decode gameMeta" + err.Error())
 	}
 	return rst
 }
@@ -180,11 +160,9 @@ func encodeGameMeta(dt *gameMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(dt)
+        rst, err := json.Marshal(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
-	return buf.Bytes()
+	return []byte(rst)
 }
