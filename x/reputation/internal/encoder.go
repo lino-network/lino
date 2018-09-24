@@ -1,8 +1,10 @@
 package internal
 
 import (
-	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
+
+var cdc = wire.NewCodec()
 
 // ------ following codes are generated from codegen/genGobCode.py --------
 // ------------------------- DO NOT CHANGE --------------------------------
@@ -11,7 +13,7 @@ func decodeUserMeta(data []byte) *userMeta {
 		return nil
 	}
 	rst := &userMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode userMeta" + err.Error())
 	}
@@ -22,7 +24,7 @@ func encodeUserMeta(dt *userMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -34,7 +36,7 @@ func decodePostMeta(data []byte) *postMeta {
 		return nil
 	}
 	rst := &postMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode postMeta" + err.Error())
 	}
@@ -45,7 +47,7 @@ func encodePostMeta(dt *postMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -57,7 +59,7 @@ func decodeRoundMeta(data []byte) *roundMeta {
 		return nil
 	}
 	rst := &roundMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode roundMeta" + err.Error())
 	}
@@ -68,7 +70,7 @@ func encodeRoundMeta(dt *roundMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -80,7 +82,7 @@ func decodeUserPostMeta(data []byte) *userPostMeta {
 		return nil
 	}
 	rst := &userPostMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode userPostMeta" + err.Error())
 	}
@@ -91,7 +93,7 @@ func encodeUserPostMeta(dt *userPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -103,7 +105,7 @@ func decodeRoundPostMeta(data []byte) *roundPostMeta {
 		return nil
 	}
 	rst := &roundPostMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode roundPostMeta" + err.Error())
 	}
@@ -114,7 +116,7 @@ func encodeRoundPostMeta(dt *roundPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -126,7 +128,7 @@ func decodeRoundUserPostMeta(data []byte) *roundUserPostMeta {
 		return nil
 	}
 	rst := &roundUserPostMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode roundUserPostMeta" + err.Error())
 	}
@@ -137,7 +139,7 @@ func encodeRoundUserPostMeta(dt *roundUserPostMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -149,7 +151,7 @@ func decodeGameMeta(data []byte) *gameMeta {
 		return nil
 	}
 	rst := &gameMeta{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode gameMeta" + err.Error())
 	}
@@ -160,7 +162,7 @@ func encodeGameMeta(dt *gameMeta) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}

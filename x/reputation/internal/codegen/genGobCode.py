@@ -3,7 +3,7 @@
 import sys
 
 # Though this file is called GobCodeGen, but we found some un-deterministic spots in
-# gob, so we abandon it. As you can see, now it's a json marshal/unmarshal warpper.
+# gob, so we abandon it. As you can see, now it's a amigo(cdc) marshal/unmarshal warpper.
 
 template = """
 func decode$TYPE(data []byte) *TYPE {
@@ -11,7 +11,7 @@ func decode$TYPE(data []byte) *TYPE {
 		return nil
 	}
 	rst := &TYPE{}
-        err := json.Unmarshal(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode TYPE" + err.Error())
 	}
@@ -22,7 +22,7 @@ func encode$TYPE(dt *TYPE) []byte {
 	if dt == nil {
 		return nil
 	}
-        rst, err := json.Marshal(dt)
+	rst, err := cdc.MarshalJSON(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
@@ -30,12 +30,17 @@ func encode$TYPE(dt *TYPE) []byte {
 }
 """
 
+structs = ['userMeta', 'postMeta', 'roundMeta', 'userPostMeta', 'roundPostMeta',
+           'roundUserPostMeta', 'gameMeta']
+
 def cap(word):
     return word[0].upper() + word[1:];
 
 def main():
     if len(sys.argv) < 2:
-        print "missing type name"
+        for type_name in structs:
+            tmp = template.replace("$TYPE", cap(type_name))
+            print tmp.replace("TYPE", type_name)
     else:
         type_name = sys.argv[1]
         tmp = template.replace("$TYPE", cap(type_name))

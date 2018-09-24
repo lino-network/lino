@@ -48,7 +48,20 @@ func NewTestReputationImpl(s ReputationStore) *ReputationImpl {
 	return &ReputationImpl{store: s}
 }
 
-func TestFirstBlock(t *testing.T) {
+func TestFirstBlock1(t *testing.T) {
+	assert := assert.New(t)
+	store := newReputationStoreOnMock()
+	rep := NewReputation(store)
+	newBlockTime := int64(0)
+	rep.Update(0)
+	rid, startAt := rep.GetCurrentRound()
+	assert.Equal(int64(1), rid)
+	assert.Equal(newBlockTime, startAt)
+	rep.IncFreeScore("me", big.NewInt(100))
+	assert.Equal(rep.GetReputation("me"), big.NewInt(OneLinoCoin+100))
+}
+
+func TestFirstBlock2(t *testing.T) {
 	assert := assert.New(t)
 	store := newReputationStoreOnMock()
 	rep := NewReputation(store)
