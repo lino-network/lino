@@ -35,7 +35,6 @@ func TestRewardEvent(t *testing.T) {
 		expectPostMeta     postModel.PostMeta
 		expectAppWeight    sdk.Rat
 		expectAuthorReward accModel.Reward
-		expectVoterDeposit types.Coin
 	}{
 		{
 			testName: "normal event",
@@ -60,13 +59,12 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(50),
+				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(50),
-				UnclaimReward:   types.NewCoinFromInt64(50),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
 			},
-			expectVoterDeposit: types.NewCoinFromInt64(50),
 		},
 		{
 			testName: "evaluate as 1% of total window",
@@ -91,13 +89,12 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.OneRat(),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(0),
+				TotalIncome:     types.NewCoinFromInt64(1),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(0),
-				UnclaimReward:   types.NewCoinFromInt64(0),
+				InflationIncome: types.NewCoinFromInt64(1),
+				UnclaimReward:   types.NewCoinFromInt64(1),
 			},
-			expectVoterDeposit: types.NewCoinFromInt64(1),
 		},
 		{
 			testName: "reward from different app",
@@ -122,13 +119,12 @@ func TestRewardEvent(t *testing.T) {
 			},
 			expectAppWeight: sdk.NewRat(1243781, 2500000),
 			expectAuthorReward: accModel.Reward{
-				TotalIncome:     types.NewCoinFromInt64(50),
+				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
 				FrictionIncome:  types.NewCoinFromInt64(15),
-				InflationIncome: types.NewCoinFromInt64(50),
-				UnclaimReward:   types.NewCoinFromInt64(50),
+				InflationIncome: types.NewCoinFromInt64(100),
+				UnclaimReward:   types.NewCoinFromInt64(100),
 			},
-			expectVoterDeposit: types.NewCoinFromInt64(50),
 		},
 		{
 			testName: "deleted post can't get any inflation",
@@ -160,7 +156,6 @@ func TestRewardEvent(t *testing.T) {
 				InflationIncome: types.NewCoinFromInt64(0),
 				UnclaimReward:   types.NewCoinFromInt64(0),
 			},
-			expectVoterDeposit: types.NewCoinFromInt64(0),
 		},
 	}
 
@@ -199,13 +194,6 @@ func TestRewardEvent(t *testing.T) {
 		}
 		if !assert.Equal(t, tc.expectAuthorReward, *reward) {
 			t.Errorf("%s: diff reward, got %v, want %v", tc.testName, *reward, tc.expectAuthorReward)
-		}
-		deposit, err := vm.GetVotingPower(ctx, tc.rewardEvent.PostAuthor)
-		if err != nil {
-			t.Errorf("%s: failed to get voting deposit, got err %v", tc.testName, err)
-		}
-		if !deposit.IsEqual(tc.expectVoterDeposit) {
-			t.Errorf("%s: diff deposit, got %v, want %v", tc.testName, deposit, tc.expectVoterDeposit)
 		}
 	}
 }
