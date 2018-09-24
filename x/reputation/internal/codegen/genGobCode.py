@@ -11,7 +11,7 @@ func decode$TYPE(data []byte) *TYPE {
 		return nil
 	}
 	rst := &TYPE{}
-	err := cdc.UnmarshalJSON(data, &rst)
+	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
 		panic("error in json decode TYPE" + err.Error())
 	}
