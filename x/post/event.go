@@ -70,17 +70,10 @@ func (event RewardEvent) Execute(
 	if err := pm.AddDonation(ctx, permlink, event.Consumer, reward, types.Inflation); err != nil {
 		return err
 	}
-	// add half reward to user
-	addToReward := types.RatToCoin(reward.ToRat().Mul(sdk.NewRat(1, 2)))
-	addToStake := reward.Minus(addToReward)
+
 	if err := am.AddIncomeAndReward(
-		ctx, event.PostAuthor, event.Original, event.Friction, addToReward, event.Consumer, event.PostAuthor, event.PostID); err != nil {
+		ctx, event.PostAuthor, event.Original, event.Friction, reward, event.Consumer, event.PostAuthor, event.PostID); err != nil {
 		return err
-	}
-	if !addToStake.IsZero() {
-		if err := vote.AddStake(ctx, event.PostAuthor, addToStake, vm, gm, am, rm); err != nil {
-			return err
-		}
 	}
 	return nil
 }
