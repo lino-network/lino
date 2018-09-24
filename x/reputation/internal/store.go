@@ -98,7 +98,9 @@ type ReputationStore interface {
 // data necessary for reputation system. Also, it takes the problem, that the underlying
 // kv store may be an iavl, so the number of keys will have a large impact on performance
 // into account, by trying to minimize the number of keys.
-// we choosed gob as serializer because:
+// we choosed json as serializer because:
+// IT IS deterministic for struct.
+// Though gob is good in following aspects, but it's not deterministic for big.Int.
 // 1. official package, dependency-free.
 // 2. much faster(~4 times), much smaller(..)
 // 3. reflection-based, do not need a protocol compiler.
