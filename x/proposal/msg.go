@@ -331,8 +331,7 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroRat()) {
 		return ErrIllegalParameter()
 	}
-	if msg.Parameter.GlobalGrowthRate.LT(param.AnnualInflationFloor) ||
-		msg.Parameter.GlobalGrowthRate.GT(param.AnnualInflationCeiling) {
+	if msg.Parameter.GlobalGrowthRate.GT(param.AnnualInflationCeiling) {
 		return ErrIllegalParameter()
 	}
 

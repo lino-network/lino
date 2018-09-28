@@ -78,10 +78,7 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p2.DeveloperAllocation = sdk.NewRat(25, 100)
 
 	p3 := p1
-	p3.GlobalGrowthRate = sdk.NewRat(2, 100)
-
-	p4 := p1
-	p4.GlobalGrowthRate = sdk.NewRat(1, 10)
+	p3.GlobalGrowthRate = sdk.NewRat(1, 10)
 
 	testCases := []struct {
 		testName                       string
@@ -99,13 +96,8 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
-			testName:                       "global growth rate lower than lower bound",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p3, ""),
-			expectedError:                  ErrIllegalParameter(),
-		},
-		{
 			testName:                       "global growth rate exceed than higher bound",
-			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p4, ""),
+			ChangeGlobalAllocationParamMsg: NewChangeGlobalAllocationParamMsg("user1", p3, ""),
 			expectedError:                  ErrIllegalParameter(),
 		},
 		{
