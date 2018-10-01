@@ -117,7 +117,7 @@ func TestRewardEvent(t *testing.T) {
 				RedistributionSplitRate: sdk.ZeroRat(),
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(1243781, 2500000),
+			expectAppWeight: sdk.NewRat(100, 201),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -148,7 +148,7 @@ func TestRewardEvent(t *testing.T) {
 				IsDeleted:               true,
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(1243781, 2500000),
+			expectAppWeight: sdk.NewRat(100, 201),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),

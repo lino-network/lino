@@ -144,7 +144,7 @@ func returnCoinTo(
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.ValidatorReturnCoin)
+	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ValidatorReturnCoin)
 	if err != nil {
 		return err
 	}

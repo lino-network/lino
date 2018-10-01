@@ -196,7 +196,7 @@ func returnCoinTo(
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(name, times, interval, coin, types.ProposalReturnCoin)
+	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ProposalReturnCoin)
 	if err != nil {
 		return err
 	}

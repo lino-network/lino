@@ -522,7 +522,12 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
-		ratPerValidator := coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i))).Round(types.PrecisionFactor)
+		var ratPerValidator sdk.Rat
+		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
+		} else {
+			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i))).Round(types.PrecisionFactor)
+		}
 		coinPerValidator := types.RatToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)

@@ -28,11 +28,16 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 
 // CreateCoinReturnEvents - create coin return events
 func CreateCoinReturnEvents(
-	username types.AccountKey, times int64, interval int64, coin types.Coin,
+	ctx sdk.Context, username types.AccountKey, times int64, interval int64, coin types.Coin,
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
-		pieceRat := coin.ToRat().Quo(sdk.NewRat(times - i)).Round(types.PrecisionFactor)
+		var pieceRat sdk.Rat
+		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i))
+		} else {
+			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i)).Round(types.PrecisionFactor)
+		}
 		piece := types.RatToCoin(pieceRat)
 		coin = coin.Minus(piece)
 

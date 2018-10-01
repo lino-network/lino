@@ -167,4 +167,7 @@ const (
 
 	// CoinDayRecordIntervalSec - coin day record in the same interval bucket will be merged
 	CoinDayRecordIntervalSec = 1200
+
+	// LinoBlockchainFirstUpdateHeight - first blockchain update
+	LinoBlockchainFirstUpdateHeight = 156000
 )
