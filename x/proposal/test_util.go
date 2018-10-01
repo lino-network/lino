@@ -2,6 +2,7 @@ package proposal
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
@@ -73,7 +74,7 @@ func getContext(height int64) sdk.Context {
 
 	ms.LoadLatestVersion()
 
-	return sdk.NewContext(ms, abci.Header{Height: height}, false, log.NewNopLogger())
+	return sdk.NewContext(ms, abci.Header{Height: height, Time: time.Now()}, false, log.NewNopLogger())
 }
 
 // helper function to create an account for testing purpose

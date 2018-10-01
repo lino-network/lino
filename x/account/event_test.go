@@ -11,6 +11,7 @@ import (
 )
 
 func TestCreateCoinReturnEvents(t *testing.T) {
+	ctx, _, _ := setupTest(t, 1)
 	testCases := []struct {
 		testName     string
 		username     types.AccountKey
@@ -79,7 +80,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 
 	for _, tc := range testCases {
 		events, err := CreateCoinReturnEvents(
-			tc.username, tc.times, tc.interval, tc.returnAmount, tc.returnType)
+			ctx, tc.username, tc.times, tc.interval, tc.returnAmount, tc.returnType)
 		if err != nil {
 			t.Errorf("%s: failed to create coin return events, got err %v", tc.testName, err)
 		}

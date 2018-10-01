@@ -285,7 +285,7 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, reputation types.Coin) (s
 	if reputation.IsGTE(postParam.MaxReportReputation) {
 		return sdk.OneRat(), nil
 	}
-	penaltyScore := reputation.ToRat().Quo(postParam.MaxReportReputation.ToRat()).Round(types.PrecisionFactor)
+	penaltyScore := reputation.ToRat().Quo(postParam.MaxReportReputation.ToRat())
 	if penaltyScore.GT(sdk.OneRat()) {
 		return sdk.OneRat(), nil
 	}

@@ -170,6 +170,9 @@ func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID
 func (pm ProposalManager) UpdateProposalPassStatus(
 	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
+	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+		return pm.UpdateProposalStatus(ctx, proposalType, proposalID)
+	}
 	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
 	if err != nil {
 		return types.ProposalNotPass, err
@@ -191,6 +194,42 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 		proposalInfo.Result = types.ProposalPass
 	} else {
 		proposalInfo.Result = types.ProposalNotPass
+	}
+
+	proposal.SetProposalInfo(proposalInfo)
+	if err := pm.storage.SetExpiredProposal(ctx, proposalID, proposal); err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	if err := pm.storage.DeleteOngoingProposal(ctx, proposalID); err != nil {
+		return types.ProposalNotPass, err
+	}
+	return proposalInfo.Result, nil
+}
+
+// UpdateProposalStatus - update proposal pass status when proposal change from ongoing to expired
+func (pm ProposalManager) UpdateProposalStatus(
+	ctx sdk.Context, proposalType types.ProposalType,
+	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
+	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+
+	proposalInfo := proposal.GetProposalInfo()
+
+	// calculate if agree votes meet minimum pass requirement
+	ratio, minVotes, err := pm.GetProposalPassParam(ctx, proposalType)
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+	totalVotes := proposalInfo.AgreeVotes.Plus(proposalInfo.DisagreeVotes)
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat()).Round(types.PrecisionFactor)
+
+	if !totalVotes.IsGT(minVotes) || !ratio.LT(actualRatio) {
+		proposalInfo.Result = types.ProposalNotPass
+	} else {
+		proposalInfo.Result = types.ProposalPass
 	}
 
 	proposal.SetProposalInfo(proposalInfo)

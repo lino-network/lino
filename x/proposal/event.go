@@ -57,7 +57,6 @@ func (dpe DecideProposalEvent) Execute(
 	if err != nil {
 		return err
 	}
-
 	// majority disagree this proposal
 	if proposalRes == types.ProposalNotPass {
 		return nil

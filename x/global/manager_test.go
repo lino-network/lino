@@ -474,10 +474,10 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 			testName:                    "test large number",
 			evaluate:                    types.NewCoinFromInt64(77777777777777),
 			penaltyScore:                sdk.ZeroRat(),
-			expectReward:                types.NewCoinFromInt64(23333330),
+			expectReward:                types.NewCoinFromInt64(23333333),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(100000000),
 			initConsumptionWindow:       types.NewCoinFromInt64(333333333333333),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(76666670),
+			expectConsumptionRewardPool: types.NewCoinFromInt64(76666667),
 			expectConsumptionWindow:     types.NewCoinFromInt64(255555555555556),
 		},
 	}

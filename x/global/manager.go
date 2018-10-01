@@ -308,9 +308,16 @@ func (gm GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Ev
 	if err != nil {
 		return err
 	}
-	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+proposalParam.ChangeParamExecutionSec, event); err != nil {
-		return err
+	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+		if err := gm.registerEventAtTime(
+			ctx, ctx.BlockHeader().Time.Unix()+3600, event); err != nil {
+			return err
+		}
+	} else {
+		if err := gm.registerEventAtTime(
+			ctx, ctx.BlockHeader().Time.Unix()+proposalParam.ChangeParamExecutionSec, event); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -321,6 +328,10 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	if err != nil {
 		return err
+	}
+	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+		globalAllocation.DeveloperAllocation = sdk.NewRat(35, 100)
+		globalAllocation.ContentCreatorAllocation = sdk.NewRat(40, 100)
 	}
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
@@ -387,8 +398,11 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
 		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
-
-		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
+		if consumptionIncrement.GTE(lastYearConsumptionRat) {
+			growthRate = sdk.OneRat()
+		} else {
+			growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
+		}
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
@@ -414,7 +428,7 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
 	consumptionRatio :=
 		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
-			consumptionMeta.ConsumptionWindow.ToRat()).Round(types.PrecisionFactor)
+			consumptionMeta.ConsumptionWindow.ToRat())
 	// reward = (consumption reward pool) * (consumptionRatio)
 	reward := types.RatToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
