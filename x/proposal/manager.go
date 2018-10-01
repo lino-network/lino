@@ -170,7 +170,7 @@ func (pm ProposalManager) UpdateProposalVotingStatus(ctx sdk.Context, proposalID
 func (pm ProposalManager) UpdateProposalPassStatus(
 	ctx sdk.Context, proposalType types.ProposalType,
 	proposalID types.ProposalKey) (types.ProposalResult, sdk.Error) {
-	if ctx.BlockHeader().Height > 100000 {
+	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
 		return pm.UpdateProposalStatus(ctx, proposalType, proposalID)
 	}
 	proposal, err := pm.storage.GetOngoingProposal(ctx, proposalID)
