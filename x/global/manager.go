@@ -400,8 +400,9 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 		if consumptionIncrement.GTE(lastYearConsumptionRat) {
 			growthRate = sdk.OneRat()
+		} else {
+			growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
 		}
-		growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
 	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
