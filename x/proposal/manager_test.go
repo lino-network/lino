@@ -104,7 +104,7 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 }
 
 func TestUpdateProposalPassStatus(t *testing.T) {
-	ctx, _, pm, _, _, _, _ := setupTest(t, 0)
+	ctx, _, pm, _, _, _, _ := setupTest(t, 100000000)
 	permlink := types.Permlink("permlink")
 	user1 := types.AccountKey("user1")
 	censorshipReason := "reason"
@@ -124,11 +124,12 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 	}
 	pm.InitGenesis(ctx)
 	curTime := ctx.BlockHeader().Time.Unix()
-	decideHr := int64(100)
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
-	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideHr)
-	proposalID2, _ := pm.AddProposal(ctx, user1, proposal2, decideHr)
-	proposalID3, _ := pm.AddProposal(ctx, user1, proposal3, decideHr)
+	decideSec := proposalParam.ContentCensorshipDecideSec
+
+	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideSec)
+	proposalID2, _ := pm.AddProposal(ctx, user1, proposal2, decideSec)
+	proposalID3, _ := pm.AddProposal(ctx, user1, proposal3, decideSec)
 
 	testCases := []struct {
 		testName        string
@@ -154,7 +155,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 					DisagreeVotes: proposalParam.ContentCensorshipPassVotes,
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				},
 				Permlink: permlink,
 				Reason:   censorshipReason},
@@ -175,7 +176,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 					DisagreeVotes: types.NewCoinFromInt64(0),
 					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				},
 				Permlink: permlink,
 				Reason:   censorshipReason},
@@ -194,9 +195,9 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 					ProposalID:    proposalID3,
 					AgreeVotes:    proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(10)),
 					DisagreeVotes: proposalParam.ContentCensorshipPassVotes.Plus(types.NewCoinFromInt64(11)),
-					Result:        types.ProposalPass,
+					Result:        types.ProposalNotPass,
 					CreatedAt:     curTime,
-					ExpiredAt:     curTime + decideHr*3600,
+					ExpiredAt:     curTime + decideSec,
 				},
 				Permlink: permlink,
 				Reason:   censorshipReason},
@@ -216,8 +217,10 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 			t.Errorf("%s: test failed, got %v, want %v", tc.testName, res, tc.wantProposalRes)
 			return
 		}
-		if tc.wantProposalRes == types.ProposalNotPass {
-			continue
+
+		ongoingProposal, err := pm.storage.GetOngoingProposal(ctx, tc.proposalID)
+		if !assert.Equal(t, nil, ongoingProposal) {
+			t.Errorf("%s: didn't remove ongoing proposal", tc.testName)
 		}
 		proposal, err := pm.storage.GetExpiredProposal(ctx, tc.proposalID)
 		if err != nil {
