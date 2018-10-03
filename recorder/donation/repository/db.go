@@ -42,7 +42,7 @@ func NewDonationDB(conn *sql.DB) (DonationRepository, errors.Error) {
 	}, nil
 }
 
-func scanDonation(s dbutils.RowScanner) (*donation.Donation, error) {
+func scanDonation(s dbutils.RowScanner) (*donation.Donation, errors.Error) {
 	var (
 		username       string
 		seq            int64
@@ -53,7 +53,10 @@ func scanDonation(s dbutils.RowScanner) (*donation.Donation, error) {
 		coinDayDonated int64
 	)
 	if err := s.Scan(&username, &seq, &dp, &permlink, &amount, &fromApp, &coinDayDonated); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, errors.NewErrorf(errors.CodeUserNotFound, "user not found: %s", err)
+		}
+		return nil, errors.NewErrorf(errors.CodeFailedToScan, "failed to scan %s", err)
 	}
 
 	return &donation.Donation{

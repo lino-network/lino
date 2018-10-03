@@ -2,6 +2,7 @@ package post
 
 import (
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/post/model"
 
@@ -11,13 +12,15 @@ import (
 type PostManager struct {
 	postStorage model.PostStorage
 	paramHolder param.ParamHolder
+	recorder    recorder.Recorder
 }
 
 // NewPostManager - create a new post manager
-func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
+func NewPostManager(key sdk.StoreKey, holder param.ParamHolder, recorder recorder.Recorder) PostManager {
 	return PostManager{
 		postStorage: model.NewPostStorage(key),
 		paramHolder: holder,
+		recorder:    recorder,
 	}
 }
 
