@@ -1,0 +1,1 @@
+ALTER TABLE reward ADD INDEX reward_idx1 (username, createdAt);
