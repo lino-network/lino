@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/lino-network/lino-wallet-registration-server/errors"
+	"github.com/lino-network/lino/recorder/errors"
 )
 
 // ExecAffectingOneRow executes a given statement, expecting one row to be affected.
