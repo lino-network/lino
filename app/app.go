@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/auth"
 	"github.com/lino-network/lino/x/global"
@@ -76,6 +77,9 @@ type LinoBlockchain struct {
 
 	// global param
 	paramHolder param.ParamHolder
+
+	// recorder
+	recorder recorder.Recorder
 }
 
 // NewLinoBlockchain - create a Lino Blockchain instance
@@ -100,9 +104,10 @@ func NewLinoBlockchain(
 		CapKeyProposalStore:   sdk.NewKVStoreKey(types.ProposalKVStoreKey),
 		CapKeyReputationStore: sdk.NewKVStoreKey(types.ReputationKVStoreKey),
 	}
+	lb.recorder = recorder.NewRecorder()
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
-	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
+	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder, lb.recorder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())

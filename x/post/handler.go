@@ -7,6 +7,8 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 
+	"github.com/lino-network/lino/recorder/donation"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
@@ -172,6 +174,18 @@ func handleDonateMsg(
 		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, am, pm, gm, rm); err != nil {
 		return ErrProcessDonation(permlink).Result()
 	}
+
+	// record
+	donation := &donation.Donation{
+		Username:       "yahaha",
+		Seq:            0,
+		Dp:             1000,
+		Permlink:       "p1",
+		Amount:         2000,
+		FromApp:        "live",
+		CoinDayDonated: 3000,
+	}
+	pm.recorder.DonationRepo.Add(donation)
 	return sdk.Result{}
 }
 

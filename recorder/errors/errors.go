@@ -30,6 +30,8 @@ const (
 	CodeFailedToSendEmail
 	CodeFailedToSendCashout
 	CodeInvalidInstantCashout
+	CodeUserNotFound
+	CodeFailedToScan
 )
 
 // NOTE: Don't stringer this, we'll put better messages in later.
@@ -179,6 +181,11 @@ type Error interface {
 // NewError creates a new Error
 func NewError(code CodeType, msg string) Error {
 	return newError(code, msg)
+}
+
+// NewErrorf creates a new formatted Error
+func NewErrorf(code CodeType, format string, args ...interface{}) Error {
+	return newError(code, fmt.Sprintf(format, args...))
 }
 
 type traceItem struct {
