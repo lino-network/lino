@@ -174,18 +174,6 @@ func handleDonateMsg(
 		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, am, pm, gm, rm); err != nil {
 		return ErrProcessDonation(permlink).Result()
 	}
-
-	// record
-	donation := &donation.Donation{
-		Username:       "yahaha",
-		Seq:            0,
-		Dp:             1000,
-		Permlink:       "p1",
-		Amount:         2000,
-		FromApp:        "live",
-		CoinDayDonated: 3000,
-	}
-	pm.recorder.DonationRepo.Add(donation)
 	return sdk.Result{}
 }
 
@@ -245,6 +233,29 @@ func processDonationFriction(
 	if err := am.UpdateDonationRelationship(ctx, postAuthor, consumer); err != nil {
 		return err
 	}
+
+	// record
+	coinDayDonatedInt, _ := coinDayDonated.ToInt64()
+	coinInt, _ := coin.ToInt64()
+	dpInt, _ := dp.ToInt64()
+	// rep, _ := rm.GetReputation(ctx, consumer)
+	// repInt, _ := rep.ToInt64()
+	evaluateResultInt, _ := evaluateResult.ToInt64()
+
+	donation := &donation.Donation{
+		Username:       (string)(consumer),
+		Seq:            ctx.Value("seq").(int64),
+		Dp:             dpInt,
+		Permlink:       (string)(postKey),
+		Amount:         coinInt,
+		FromApp:        (string)(fromApp),
+		CoinDayDonated: coinDayDonatedInt,
+		Reputation:     0,
+		Timestamp:      ctx.BlockHeader().Time.Unix(),
+		EvaluateResult: evaluateResultInt,
+	}
+	pm.recorder.DonationRepo.Add(donation)
+
 	return nil
 }
 

@@ -51,8 +51,11 @@ func scanDonation(s dbutils.RowScanner) (*donation.Donation, errors.Error) {
 		amount         int64
 		fromApp        string
 		coinDayDonated int64
+		reputation     int64
+		timestamp      int64
+		evaluateResult int64
 	)
-	if err := s.Scan(&username, &seq, &dp, &permlink, &amount, &fromApp, &coinDayDonated); err != nil {
+	if err := s.Scan(&username, &seq, &dp, &permlink, &amount, &fromApp, &coinDayDonated, &reputation, &timestamp, &evaluateResult); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "user not found: %s", err)
 		}
@@ -67,6 +70,9 @@ func scanDonation(s dbutils.RowScanner) (*donation.Donation, errors.Error) {
 		Amount:         amount,
 		FromApp:        fromApp,
 		CoinDayDonated: coinDayDonated,
+		Reputation:     reputation,
+		Timestamp:      timestamp,
+		EvaluateResult: evaluateResult,
 	}, nil
 }
 
@@ -83,6 +89,9 @@ func (db *donationDB) Add(donation *donation.Donation) errors.Error {
 		donation.Amount,
 		donation.FromApp,
 		donation.CoinDayDonated,
+		donation.Reputation,
+		donation.Timestamp,
+		donation.EvaluateResult,
 	)
 	return err
 }
