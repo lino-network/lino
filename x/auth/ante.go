@@ -83,6 +83,10 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				if err != nil {
 					return ctx, err.Result(), true
 				}
+
+				// add seq to ctx
+				ctx.WithValue("seq", seq)
+
 				if seq != sigs[idx].Sequence {
 					return ctx, ErrInvalidSequence(
 						fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d",

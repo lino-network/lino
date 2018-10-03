@@ -1,10 +1,10 @@
-CREATE TABLE `kycs` (
-  `username`  VARCHAR(191) NOT NULL,
-  `status`    INT NOT NULL,
-  `txId`      VARCHAR(40) NOT NULL,
-  `url`       TEXT NOT NULL,
-  `hasFailed` INT NOT NULL,
-  `response`  TEXT NOT NULL,
+CREATE TABLE `donation` (
+  `username`  VARCHAR(32) NOT NULL,
+  `seq`       INT NOT NULL,
+  `dp`        INT NOT NULL,
+  `permlink`  VARCHAR(32) NOT NULL,
+  `amount`    INT NOT NULL,
+  `fromApp`   VARCHAR(32) NOT NULL,
+  `coinDayDonated`   INT NOT NULL,
   PRIMARY KEY (`username`),
-  INDEX (txId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
