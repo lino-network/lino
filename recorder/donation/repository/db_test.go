@@ -5,16 +5,16 @@ import (
 	"testing"
 
 	"github.com/lino-network/lino/recorder/donation"
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/lino-network/lino/recorder/dbtestutil"
 	"github.com/lino-network/lino/recorder/donation/repository"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
-	donation := &donation.Donation{
+	d1 := &donation.Donation{
 		Username:       "user1",
 		Seq:            0,
 		Dp:             1000,
@@ -22,19 +22,22 @@ func TestAddnGet(t *testing.T) {
 		Amount:         2000,
 		FromApp:        "live",
 		CoinDayDonated: 3000,
+		Reputation:     4000,
+		Timestamp:      1538606755,
+		EvaluateResult: 5000,
 	}
 
 	runTest(t, func(env TestEnv) {
-		err := env.coRepo.Add(donation)
+		err := env.coRepo.Add(d1)
 		if err != nil {
-			t.Errorf("TestAddnGet: failed to add %v, got err %v", donation, err)
+			t.Errorf("TestAddnGet: failed to add %v, got err %v", d1, err)
 		}
 		res, err := env.coRepo.Get("user1")
 
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to get Donation with %s, got err %v", "user1", err)
 		}
-		assert.Equal(donation, res)
+		assert.Equal(d1, res)
 	})
 }
 

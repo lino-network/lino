@@ -9,16 +9,19 @@ SELECT
     permlink,
     amount,
     fromApp,
-    coinDayDonated
+    coinDayDonated,
+    reputation,
+    timestamp,
+    evaluateResult
 FROM
     donation
 WHERE
     username = ?
 `
 	insertDonationStmt = `
-REPLACE INTO
-donation(username, seq, dp, permlink, amount, fromApp, coinDayDonated)
+INSERT INTO
+donation(username, seq, dp, permlink, amount, fromApp, coinDayDonated, reputation, timestamp, evaluateResult)
 VALUES
-   (?, ?, ?, ?, ?, ?, ?)
+   (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 )
