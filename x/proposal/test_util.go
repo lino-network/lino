@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
@@ -43,12 +44,13 @@ func setupTest(t *testing.T, height int64) (
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 
+	recorder := recorder.NewRecorder()
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
-	postManager := post.NewPostManager(testPostKVStoreKey, ph)
+	postManager := post.NewPostManager(testPostKVStoreKey, ph, recorder)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

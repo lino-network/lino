@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
@@ -47,9 +48,10 @@ func setupTest(
 	global.GlobalManager, dev.DeveloperManager, vote.VoteManager, rep.ReputationManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
+	recorder := recorder.NewRecorder()
 	ph.InitParam(ctx)
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
-	postManager := NewPostManager(testPostKVStoreKey, ph)
+	postManager := NewPostManager(testPostKVStoreKey, ph, recorder)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	devManager := dev.NewDeveloperManager(testDeveloperKVStoreKey, ph)
 	devManager.InitGenesis(ctx)
