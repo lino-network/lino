@@ -1,0 +1,10 @@
+CREATE TABLE `kycs` (
+  `username`  VARCHAR(191) NOT NULL,
+  `status`    INT NOT NULL,
+  `txId`      VARCHAR(40) NOT NULL,
+  `url`       TEXT NOT NULL,
+  `hasFailed` INT NOT NULL,
+  `response`  TEXT NOT NULL,
+  PRIMARY KEY (`username`),
+  INDEX (txId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
