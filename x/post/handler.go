@@ -238,19 +238,20 @@ func processDonationFriction(
 	coinDayDonatedInt, _ := coinDayDonated.ToInt64()
 	coinInt, _ := coin.ToInt64()
 	dpInt, _ := dp.ToInt64()
-	// rep, _ := rm.GetReputation(ctx, consumer)
-	// repInt, _ := rep.ToInt64()
+	rep, _ := rm.GetReputation(ctx, consumer)
+	repInt, _ := rep.ToInt64()
 	evaluateResultInt, _ := evaluateResult.ToInt64()
+	seq, _ := am.GetSequence(ctx, consumer)
 
 	donation := &donation.Donation{
 		Username:       (string)(consumer),
-		Seq:            ctx.Value("seq").(int64),
+		Seq:            seq,
 		Dp:             dpInt,
 		Permlink:       (string)(postKey),
 		Amount:         coinInt,
 		FromApp:        (string)(fromApp),
 		CoinDayDonated: coinDayDonatedInt,
-		Reputation:     0,
+		Reputation:     repInt,
 		Timestamp:      ctx.BlockHeader().Time.Unix(),
 		EvaluateResult: evaluateResultInt,
 	}
