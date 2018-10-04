@@ -17,152 +17,29 @@ func (code CodeType) IsOK() bool {
 // Code types.
 const (
 	CodeOK CodeType = iota // 0
-	CodeUnknown
-	CodeAlreadyExists
-	CodeFailedPrecondition
-	CodeInternal // used by db operation
-	CodeInvalidArgument
-	CodeNotFound
-	CodePermissionDenied
-	CodeAPIError
-	CodeUnavailable
-	CodeUnablePrepareStatement // used by db sql prepare statement
-	CodeFailedToSendEmail
-	CodeFailedToSendCashout
-	CodeInvalidInstantCashout
 	CodeUserNotFound
 	CodeFailedToScan
+	CodeUnablePrepareStatement // used by db sql prepare statement
+	CodeInternal               // used by db operation
+	CodeUnavailable
 )
 
 // NOTE: Don't stringer this, we'll put better messages in later.
 func CodeToDefaultMsg(code CodeType) string {
 	switch code {
-	case CodeUnknown:
-		return "Unknown request"
-	case CodeAlreadyExists:
-		return "Alreay exists"
-	case CodeFailedPrecondition:
-		return "Failed precondition error"
-	case CodeInternal:
-		return "Internal error"
-	case CodeInvalidArgument:
-		return "Invalid argument"
-	case CodeNotFound:
-		return "Not found"
-	case CodePermissionDenied:
-		return "Permission denied"
-	case CodeAPIError:
-		return "API error"
+	case CodeFailedToScan:
+		return "Failed to scan"
+	case CodeUserNotFound:
+		return "User not found"
 	case CodeUnavailable:
 		return "Unavailable"
+	case CodeInternal:
+		return "Internal error"
 	case CodeUnablePrepareStatement:
 		return "Unable prepare sql statement"
-	case CodeFailedToSendEmail:
-		return "Failed to send email"
-	case CodeFailedToSendCashout:
-		return "Failed to send cashout"
-	case CodeInvalidInstantCashout:
-		return "Invalid instant cashout"
 	default:
 		return fmt.Sprintf("Unknown code %d", code)
 	}
-}
-
-//--------------------------------------------------------------------------------
-func AlreadyExists(msg string) Error {
-	return newError(CodeAlreadyExists, msg)
-}
-
-func AlreadyExistsf(format string, args ...interface{}) Error {
-	return newError(CodeAlreadyExists, fmt.Sprintf(format, args...))
-}
-
-func FailedPrecondition(msg string) Error {
-	return newError(CodeFailedPrecondition, msg)
-}
-
-func FailedPreconditionf(format string, args ...interface{}) Error {
-	return newError(CodeFailedPrecondition, fmt.Sprintf(format, args...))
-}
-
-func Internal(msg string) Error {
-	return newError(CodeInternal, msg)
-}
-
-func Internalf(format string, args ...interface{}) Error {
-	return newError(CodeInternal, fmt.Sprintf(format, args...))
-}
-
-func InvalidArgument(msg string) Error {
-	return newError(CodeInvalidArgument, msg)
-}
-
-func InvalidArgumentf(format string, args ...interface{}) Error {
-	return newError(CodeInvalidArgument, fmt.Sprintf(format, args...))
-}
-
-func NotFound(msg string) Error {
-	return newError(CodeNotFound, msg)
-}
-
-func NotFoundf(format string, args ...interface{}) Error {
-	return newError(CodeNotFound, fmt.Sprintf(format, args...))
-}
-
-func PermissionDenied(msg string) Error {
-	return newError(CodePermissionDenied, msg)
-}
-
-func PermissionDeniedf(format string, args ...interface{}) Error {
-	return newError(CodePermissionDenied, fmt.Sprintf(format, args...))
-}
-
-func APIError(msg string) Error {
-	return newError(CodeAPIError, msg)
-}
-
-func APIErrorf(format string, args ...interface{}) Error {
-	return newError(CodeAPIError, fmt.Sprintf(format, args...))
-}
-
-func Unavailable(msg string) Error {
-	return newError(CodeUnavailable, msg)
-}
-
-func Unavailablef(format string, args ...interface{}) Error {
-	return newError(CodeUnavailable, fmt.Sprintf(format, args...))
-}
-
-func UnablePrepareStatement(msg string) Error {
-	return newError(CodeUnablePrepareStatement, msg)
-}
-
-func UnablePrepareStatementf(format string, args ...interface{}) Error {
-	return newError(CodeUnablePrepareStatement, fmt.Sprintf(format, args...))
-}
-
-func FailedToSendEmail(msg string) Error {
-	return newError(CodeFailedToSendEmail, msg)
-}
-
-func FailedToSendEmailf(format string, args ...interface{}) Error {
-	return newError(CodeFailedToSendEmail, fmt.Sprintf(format, args...))
-}
-
-func FailedToSendCashout(msg string) Error {
-	return newError(CodeFailedToSendCashout, msg)
-}
-
-func FailedToSendCashoutf(format string, args ...interface{}) Error {
-	return newError(CodeFailedToSendCashout, fmt.Sprintf(format, args...))
-}
-
-func InvalidInstantCashout(msg string) Error {
-	return newError(CodeInvalidInstantCashout, msg)
-}
-
-func InvalidInstantCashoutf(format string, args ...interface{}) Error {
-	return newError(CodeInvalidInstantCashout, fmt.Sprintf(format, args...))
 }
 
 //----------------------------------------
@@ -217,6 +94,18 @@ func newError(code CodeType, msg string) *serverError {
 		cause:  nil,
 		traces: nil,
 	}
+}
+
+func Internalf(format string, args ...interface{}) Error {
+	return newError(CodeInternal, fmt.Sprintf(format, args...))
+}
+
+func UnablePrepareStatement(format string, args ...interface{}) Error {
+	return newError(CodeUnablePrepareStatement, fmt.Sprintf(format, args...))
+}
+
+func Unavailable(msg string) Error {
+	return newError(CodeUnavailable, msg)
 }
 
 // Error returns error details.
