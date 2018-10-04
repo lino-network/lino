@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/global"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -69,8 +69,9 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
+	recorder := recorder.NewRecorder()
 	accManager := NewAccountManager(testAccountKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

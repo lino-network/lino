@@ -5,6 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
+	"github.com/lino-network/lino/recorder/inflation"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
 
@@ -15,13 +17,15 @@ import (
 type GlobalManager struct {
 	storage     model.GlobalStorage
 	paramHolder param.ParamHolder
+	recorder    recorder.Recorder
 }
 
 // NewGlobalManager - return the global manager
-func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager {
+func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder, recorder recorder.Recorder) GlobalManager {
 	return GlobalManager{
 		storage:     model.NewGlobalStorage(key),
 		paramHolder: holder,
+		recorder:    recorder,
 	}
 }
 
@@ -376,6 +380,31 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	if err := gm.storage.SetInflationPool(ctx, pool); err != nil {
 		return err
 	}
+
+	// record
+	infraInflationPoolInt, _ := pool.InfraInflationPool.ToInt64()
+	devInflationPoolInt, _ := pool.DeveloperInflationPool.ToInt64()
+	creatorInflationPoolInt, _ := consumptionMeta.ConsumptionRewardPool.ToInt64()
+	validatorInflationPoolInt, _ := pool.ValidatorInflationPool.ToInt64()
+
+	infraInflationInt, _ := infraInflation.ToInt64()
+	devInflationInt, _ := developerInflation.ToInt64()
+	creatorInflationInt, _ := contentCreatorInflation.ToInt64()
+	validatorInflationInt, _ := validatorInflation.ToInt64()
+
+	inflation := &inflation.Inflation{
+		InfraPool:          infraInflationPoolInt,
+		DevPool:            devInflationPoolInt,
+		CreatorPool:        creatorInflationPoolInt,
+		ValidatorPool:      validatorInflationPoolInt,
+		InfraInflation:     infraInflationInt,
+		DevInflation:       devInflationInt,
+		CreatorInflation:   creatorInflationInt,
+		ValidatorInflation: validatorInflationInt,
+		Timestamp:          ctx.BlockHeader().Time.Unix(),
+	}
+	gm.recorder.InflationRepo.Add(inflation)
+
 	return nil
 }
 

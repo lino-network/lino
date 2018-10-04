@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -34,9 +35,10 @@ func setupTest(t *testing.T, height int64) (
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
+	recorder := recorder.NewRecorder()
 	am := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	dm := NewDeveloperManager(testInfraKVStoreKey, ph)
-	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	cdc := gm.WireCodec()
 	err := InitGlobalManager(ctx, gm)
 	assert.Nil(t, err)

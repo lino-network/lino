@@ -44,13 +44,17 @@ func NewinflationDB(conn *sql.DB) (InflationRepository, errors.Error) {
 
 func scaninflation(s dbutils.RowScanner) (*inflation.Inflation, errors.Error) {
 	var (
-		infraPool     int64
-		devPool       int64
-		creatorPool   int64
-		validatorPool int64
-		timestamp     int64
+		infraPool          int64
+		devPool            int64
+		creatorPool        int64
+		validatorPool      int64
+		infraInflation     int64
+		devInflation       int64
+		creatorInflation   int64
+		validatorInflation int64
+		timestamp          int64
 	)
-	if err := s.Scan(&infraPool, &devPool, &creatorPool, &validatorPool, &timestamp); err != nil {
+	if err := s.Scan(&infraPool, &devPool, &creatorPool, &validatorPool, &infraInflation, &devInflation, &creatorInflation, &validatorInflation, &timestamp); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "user not found: %s", err)
 		}
@@ -58,11 +62,15 @@ func scaninflation(s dbutils.RowScanner) (*inflation.Inflation, errors.Error) {
 	}
 
 	return &inflation.Inflation{
-		InfraPool:     infraPool,
-		DevPool:       devPool,
-		CreatorPool:   creatorPool,
-		ValidatorPool: validatorPool,
-		Timestamp:     timestamp,
+		InfraPool:          infraPool,
+		DevPool:            devPool,
+		CreatorPool:        creatorPool,
+		ValidatorPool:      validatorPool,
+		InfraInflation:     infraInflation,
+		DevInflation:       devInflation,
+		CreatorInflation:   creatorInflation,
+		ValidatorInflation: validatorInflation,
+		Timestamp:          timestamp,
 	}, nil
 }
 
@@ -76,6 +84,10 @@ func (db *inflationDB) Add(inflation *inflation.Inflation) errors.Error {
 		inflation.DevPool,
 		inflation.CreatorPool,
 		inflation.ValidatorPool,
+		inflation.InfraInflation,
+		inflation.DevInflation,
+		inflation.CreatorInflation,
+		inflation.ValidatorInflation,
 		inflation.Timestamp,
 	)
 	return err
