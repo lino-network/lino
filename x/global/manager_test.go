@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,8 @@ func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 	ctx := getContext()
 	holder := param.NewParamHolder(TestParamKVStoreKey)
 	holder.InitParam(ctx)
-	globalManager := NewGlobalManager(TestGlobalKVStoreKey, holder)
+	recorder := recorder.NewRecorder()
+	globalManager := NewGlobalManager(TestGlobalKVStoreKey, holder, recorder)
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(testEvent{}, "test", nil)

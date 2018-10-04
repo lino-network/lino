@@ -7,6 +7,10 @@ SELECT
     devPool,
     creatorPool,
     validatorPool,
+    infraInflation,
+    devInflation,
+    creatorInflation,
+    validatorInflation,
     timestamp
 FROM
     inflation
@@ -15,8 +19,8 @@ WHERE
 `
 	insertInflationStmt = `
 INSERT INTO
-inflation(infraPool, devPool, creatorPool, validatorPool, timestamp)
+inflation(infraPool, devPool, creatorPool, validatorPool,infraInflation, devInflation, creatorInflation, validatorInflation, timestamp)
 VALUES
-   (?, ?, ?, ?, ?)
+   (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 )

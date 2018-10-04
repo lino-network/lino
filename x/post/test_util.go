@@ -52,7 +52,7 @@ func setupTest(
 	ph.InitParam(ctx)
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	postManager := NewPostManager(testPostKVStoreKey, ph, recorder)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	devManager := dev.NewDeveloperManager(testDeveloperKVStoreKey, ph)
 	devManager.InitGenesis(ctx)
 	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph)

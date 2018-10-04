@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	accstore "github.com/lino-network/lino/x/account/model"
@@ -56,11 +57,11 @@ func setupTest() (
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
-
+	recorder := recorder.NewRecorder()
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
 	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
-	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph, recorder)
 	InitGlobalManager(ctx, gm)
 	anteHandler := NewAnteHandler(am, gm)
 
