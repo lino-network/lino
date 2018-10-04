@@ -15,11 +15,15 @@ import (
 func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
 	d1 := &inflation.Inflation{
-		InfraPool:     1,
-		DevPool:       2,
-		CreatorPool:   3,
-		ValidatorPool: 4,
-		Timestamp:     1538606755,
+		InfraPool:          1,
+		DevPool:            2,
+		CreatorPool:        3,
+		ValidatorPool:      4,
+		InfraInflation:     5,
+		DevInflation:       6,
+		CreatorInflation:   7,
+		ValidatorInflation: 8,
+		Timestamp:          1538606755,
 	}
 
 	runTest(t, func(env TestEnv) {
