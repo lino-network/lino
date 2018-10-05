@@ -31,5 +31,5 @@ After the evaluate result added to the window, after 7 days, this evaluate resul
 ``` 
 Where w is total amount in seven-days window and p is the penalty score. The penalty score is calculated as:
 ```
- p = 1 - min(report/upvote, 1) 
+ p = 1 - min(report/upvote, 1)
 ```
