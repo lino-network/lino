@@ -10,12 +10,22 @@
 
 Welcome to Lino Blockchain. Lino aims to create a decentralized autonomous content economy, where content value can be recognized efficiently and all contributors can be incentivized directly and effectively to promote long-term economic growth. For more information about Lino refer to our [website](https://lino.network/).
 
-## Resources
+## Documentation
 
-### Library
+- [Docs](./docs/README.md)
+
+## Library
 
 * [lino-go](https://github.com/lino-network/lino-go)
 * [lino-js](https://github.com/lino-network/lino-js)
+
+## Resources
+
+- [Discord](https://discord.gg/TUxp3ww)
+- [Join the testnet](https://github.com/lino-network/testnets)
+- [Lino Testnet Tracker](https://tracker.lino.network/#/)
+- [Lino Account](https://account.lino.network/dashboard)
+- First DApp on Lino Blockchain: [DLive](https://dlive.tv/)
 
 ## Lino Blockchain Bug Bounty Rules & Guidelines
 
