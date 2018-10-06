@@ -7,6 +7,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/recorder/inflation"
+	"github.com/lino-network/lino/recorder/stakeStat"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
 )
@@ -270,6 +271,22 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	if err != nil {
 		return err
 	}
+
+	// record
+	unclaimedLinoStakeInt, _ := lastLinoStakeStat.UnclaimedLinoStake.ToInt64()
+	unclaimedFrictionInt, _ := lastLinoStakeStat.UnclaimedFriction.ToInt64()
+	totalConsumptionFrictionInt, _ := lastLinoStakeStat.TotalConsumptionFriction.ToInt64()
+	totalLinoStakeInt, _ := lastLinoStakeStat.TotalLinoStake.ToInt64()
+
+	stakeStat := &stakeStat.StakeStat{
+		UnclaimedLinoStake:       unclaimedLinoStakeInt,
+		UnclaimedFriction:        unclaimedFrictionInt,
+		TotalConsumptionFriction: totalConsumptionFrictionInt,
+		TotalLinoStake:           totalLinoStakeInt,
+		Timestamp:                ctx.BlockHeader().Time.Unix(),
+	}
+	gm.recorder.StakeStatRepository.Add(stakeStat)
+
 	// If lino stake exist last day, the consumption will keep for lino stake holder that day
 	if !lastLinoStakeStat.TotalLinoStake.IsZero() {
 		lastLinoStakeStat.TotalConsumptionFriction = types.NewCoinFromInt64(0)
