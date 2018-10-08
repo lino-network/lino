@@ -6,7 +6,7 @@ The account on blockchain can publish a post with title and content. The post on
 
 ## repost
 
-To help distribute the content, the content creator can set redistribution split rate to encourage user redistribute the content. Lino blockchain encourage people to share and distribute the content. If people make donation to a repost, the donation will be splitted by source post’s redistribution split rate. For example, if source post’s redistribution split rate set to 5%, the donation to the repost will send 95% of the donation to the source post and repost can keep 5% of the donation. The donation to the source post still go to source post author’s account. The repost of a repost will assign the source post to the original source post. For example, If B repost A then we have the structure A -> B. If C repost B then in blockchain the struct will be changed from A -> B -> C to A -> C.
+To help distribute the content, the content creator can set redistribution split rate to encourage user redistribute the content. Lino blockchain encourages people to share and distribute the content. If people make donation to a repost, the donation will be splitted by source post’s redistribution split rate. For example, if source post’s redistribution split rate set to 5%, the donation to the repost will send 95% of the donation to the source post and repost can keep 5% of the donation. The donation to the source post still go to source post author’s account. The repost of a repost will assign the source post to the original source post. For example, If B repost A then we have the structure A -> B. If C repost B then in blockchain the struct will be changed from A -> B -> C to A -> C.
 
 ## donation
 
