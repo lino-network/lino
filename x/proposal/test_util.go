@@ -48,7 +48,7 @@ func setupTest(t *testing.T, height int64) (
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
-	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
+	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph, recorder)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
 	postManager := post.NewPostManager(testPostKVStoreKey, ph, recorder)
 

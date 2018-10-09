@@ -4,23 +4,19 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/lino-network/lino/recorder/stakestat"
-
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/lino-network/lino/recorder/dbtestutil"
-	"github.com/lino-network/lino/recorder/stakeStat/repository"
+	"github.com/lino-network/lino/recorder/topcontent"
+	"github.com/lino-network/lino/recorder/topcontent/repository"
 )
 
 func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
-	d1 := &stakestat.StakeStat{
-		TotalConsumptionFriction: 1,
-		UnclaimedFriction:        12,
-		TotalLinoStake:           13,
-		UnclaimedLinoStake:       14,
-		Timestamp:                1538606755,
+	d1 := &topcontent.TopContent{
+		Permlink:  "p1",
+		Timestamp: 15535,
 	}
 
 	runTest(t, func(env TestEnv) {
@@ -28,10 +24,10 @@ func TestAddnGet(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to add %v, got err %v", d1, err)
 		}
-		res, err := env.coRepo.Get(1538606755)
+		res, err := env.coRepo.Get(15535)
 
 		if err != nil {
-			t.Errorf("TestAddnGet: failed to get stakeStat with %s, got err %v", "user1", err)
+			t.Errorf("TestAddnGet: failed to get TopContent with %s, got err %v ", "user1", err)
 		}
 		assert.Equal(d1, res)
 	})
@@ -42,28 +38,28 @@ func TestAddnGet(t *testing.T) {
 //
 
 type TestEnv struct {
-	coRepo repository.StakeStatRepository
+	coRepo repository.TopContentRepository
 }
 
 func runTest(t *testing.T, fc func(env TestEnv)) {
-	conn, coinflation, err := setup()
+	conn, coTopContent, err := setup()
 	if err != nil {
-		t.Errorf("Failed to create stakeStat DB : %v", err)
+		t.Errorf("Failed to create TopContent DB : %v", err)
 	}
 	defer teardown(conn)
 
 	env := TestEnv{
-		coRepo: coinflation,
+		coRepo: coTopContent,
 	}
 	fc(env)
 }
 
-func setup() (*sql.DB, repository.StakeStatRepository, error) {
+func setup() (*sql.DB, repository.TopContentRepository, error) {
 	db, err := dbtestutil.NewDBConn()
 	if err != nil {
 		return nil, nil, err
 	}
-	coRepo, err := dbtestutil.NewStakeStatDB(db)
+	coRepo, err := dbtestutil.NewTopContentDB(db)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,5 +68,5 @@ func setup() (*sql.DB, repository.StakeStatRepository, error) {
 }
 
 func teardown(db *sql.DB) {
-	dbtestutil.StakeStatDBCleanUp(db)
+	dbtestutil.TopContentDBCleanUp(db)
 }

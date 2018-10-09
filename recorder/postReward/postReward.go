@@ -1,4 +1,4 @@
-package postReward
+package postreward
 
 type PostReward struct {
 	Permlink     string `json:"permlink"`

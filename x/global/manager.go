@@ -7,7 +7,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/recorder/inflation"
-	"github.com/lino-network/lino/recorder/stakeStat"
+	"github.com/lino-network/lino/recorder/stakestat"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
 )
@@ -278,7 +278,7 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	totalConsumptionFrictionInt, _ := lastLinoStakeStat.TotalConsumptionFriction.ToInt64()
 	totalLinoStakeInt, _ := lastLinoStakeStat.TotalLinoStake.ToInt64()
 
-	stakeStat := &stakeStat.StakeStat{
+	stakeStat := &stakestat.StakeStat{
 		UnclaimedLinoStake:       unclaimedLinoStakeInt,
 		UnclaimedFriction:        unclaimedFrictionInt,
 		TotalConsumptionFriction: totalConsumptionFrictionInt,

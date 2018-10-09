@@ -2,6 +2,7 @@ package vote
 
 import (
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/vote/model"
 
@@ -12,12 +13,14 @@ import (
 type VoteManager struct {
 	storage     model.VoteStorage
 	paramHolder param.ParamHolder
+	recorder    recorder.Recorder
 }
 
-func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder) VoteManager {
+func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder, recorder recorder.Recorder) VoteManager {
 	return VoteManager{
 		storage:     model.NewVoteStorage(key),
 		paramHolder: holder,
+		recorder:    recorder,
 	}
 }
 

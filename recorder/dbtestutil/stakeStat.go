@@ -3,7 +3,7 @@ package dbtestutil
 import (
 	"database/sql"
 
-	"github.com/lino-network/lino/recorder/stakeStat/repository"
+	"github.com/lino-network/lino/recorder/stakestat/repository"
 )
 
 func NewStakeStatDB(db *sql.DB) (repository.StakeStatRepository, error) {
