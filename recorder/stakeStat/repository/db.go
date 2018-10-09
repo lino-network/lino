@@ -5,7 +5,7 @@ import (
 
 	"github.com/lino-network/lino/recorder/dbutils"
 	errors "github.com/lino-network/lino/recorder/errors"
-	"github.com/lino-network/lino/recorder/stakeStat"
+	"github.com/lino-network/lino/recorder/stakestat"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -42,7 +42,7 @@ func NewStakeStatDB(conn *sql.DB) (StakeStatRepository, errors.Error) {
 	}, nil
 }
 
-func scanstakeStat(s dbutils.RowScanner) (*stakeStat.StakeStat, errors.Error) {
+func scanstakeStat(s dbutils.RowScanner) (*stakestat.StakeStat, errors.Error) {
 	var (
 		totalConsumptionFriction int64
 		unclaimedFriction        int64
@@ -57,7 +57,7 @@ func scanstakeStat(s dbutils.RowScanner) (*stakeStat.StakeStat, errors.Error) {
 		return nil, errors.NewErrorf(errors.CodeFailedToScan, "failed to scan %s", err)
 	}
 
-	return &stakeStat.StakeStat{
+	return &stakestat.StakeStat{
 		TotalConsumptionFriction: totalConsumptionFriction,
 		UnclaimedFriction:        unclaimedFriction,
 		TotalLinoStake:           totalLinoStake,
@@ -66,11 +66,11 @@ func scanstakeStat(s dbutils.RowScanner) (*stakeStat.StakeStat, errors.Error) {
 	}, nil
 }
 
-func (db *stakeStatDB) Get(timestamp int64) (*stakeStat.StakeStat, errors.Error) {
+func (db *stakeStatDB) Get(timestamp int64) (*stakestat.StakeStat, errors.Error) {
 	return scanstakeStat(db.stmts[getStakeStat].QueryRow(timestamp))
 }
 
-func (db *stakeStatDB) Add(stakeStat *stakeStat.StakeStat) errors.Error {
+func (db *stakeStatDB) Add(stakeStat *stakestat.StakeStat) errors.Error {
 	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertStakeStat],
 		stakeStat.TotalConsumptionFriction,
 		stakeStat.UnclaimedFriction,

@@ -3,7 +3,7 @@ package dbtestutil
 import (
 	"database/sql"
 
-	"github.com/lino-network/lino/recorder/postReward/repository"
+	"github.com/lino-network/lino/recorder/postreward/repository"
 )
 
 func NewPostRewardDB(db *sql.DB) (repository.PostRewardRepository, error) {
