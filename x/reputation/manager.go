@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
+	"github.com/lino-network/lino/recorder/topcontent"
 	"github.com/lino-network/lino/types"
 
 	"math/big"
@@ -14,12 +16,14 @@ import (
 type ReputationManager struct {
 	storeKey    sdk.StoreKey
 	paramHolder param.ParamHolder
+	recorder    recorder.Recorder
 }
 
-func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) ReputationManager {
+func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder, recorder recorder.Recorder) ReputationManager {
 	return ReputationManager{
 		storeKey:    key,
 		paramHolder: holder,
+		recorder:    recorder,
 	}
 }
 
@@ -135,7 +139,21 @@ func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
+	roundBefore, _ := handler.GetCurrentRound()
 	handler.Update(ctx.BlockHeader().Time.Unix())
+	roundAfter, _ := handler.GetCurrentRound()
+
+	if roundBefore != roundAfter {
+		// record
+		permlinks, _ := rep.GetRoundResult(ctx, roundBefore)
+		for _, permlink := range permlinks {
+			content := &topcontent.TopContent{
+				Permlink:  permlink,
+				Timestamp: ctx.BlockHeader().Time.Unix(),
+			}
+			rep.recorder.TopContentRepository.Add(content)
+		}
+	}
 	return nil
 }
 
@@ -177,4 +195,15 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 	_, ts := handler.GetCurrentRound()
 	return ts, nil
+}
+
+func (rep ReputationManager) GetRoundResult(ctx sdk.Context, roundId int64) ([]string, sdk.Error) {
+	store := ctx.KVStore(rep.storeKey)
+	param, err := rep.paramHolder.GetReputationParam(ctx)
+	if err != nil {
+		return nil, err
+	}
+	repStore := model.NewReputationStore(store, param.BestContentIndexN)
+	result := repStore.GetRoundResult(roundId)
+	return result, nil
 }

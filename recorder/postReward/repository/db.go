@@ -5,7 +5,7 @@ import (
 
 	"github.com/lino-network/lino/recorder/dbutils"
 	errors "github.com/lino-network/lino/recorder/errors"
-	"github.com/lino-network/lino/recorder/postReward"
+	"github.com/lino-network/lino/recorder/postreward"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -42,7 +42,7 @@ func NewPostRewardDB(conn *sql.DB) (PostRewardRepository, errors.Error) {
 	}, nil
 }
 
-func scanPostReward(s dbutils.RowScanner) (*postReward.PostReward, errors.Error) {
+func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error) {
 	var (
 		permlink     string
 		reward       int64
@@ -59,7 +59,7 @@ func scanPostReward(s dbutils.RowScanner) (*postReward.PostReward, errors.Error)
 		return nil, errors.NewErrorf(errors.CodeFailedToScan, "failed to scan %s", err)
 	}
 
-	return &postReward.PostReward{
+	return &postreward.PostReward{
 		Permlink:     permlink,
 		Reward:       reward,
 		PenaltyScore: penaltyScore,
@@ -70,11 +70,11 @@ func scanPostReward(s dbutils.RowScanner) (*postReward.PostReward, errors.Error)
 	}, nil
 }
 
-func (db *postRewardDB) Get(timestamp int64) (*postReward.PostReward, errors.Error) {
+func (db *postRewardDB) Get(timestamp int64) (*postreward.PostReward, errors.Error) {
 	return scanPostReward(db.stmts[getPostReward].QueryRow(timestamp))
 }
 
-func (db *postRewardDB) Add(postReward *postReward.PostReward) errors.Error {
+func (db *postRewardDB) Add(postReward *postreward.PostReward) errors.Error {
 	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertPostReward],
 		postReward.Permlink,
 		postReward.Reward,

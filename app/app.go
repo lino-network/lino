@@ -112,8 +112,8 @@ func NewLinoBlockchain(
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder, lb.recorder)
 	registerEvent(lb.globalManager.WireCodec())
 
-	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
-	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
+	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder, lb.recorder)
+	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.recorder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)

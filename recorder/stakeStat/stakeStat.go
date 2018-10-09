@@ -1,4 +1,4 @@
-package stakeStat
+package stakestat
 
 type StakeStat struct {
 	TotalConsumptionFriction int64 `json:"totalConsumptionFriction"`

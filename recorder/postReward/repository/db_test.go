@@ -8,13 +8,13 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/lino-network/lino/recorder/dbtestutil"
-	"github.com/lino-network/lino/recorder/postReward"
-	"github.com/lino-network/lino/recorder/postReward/repository"
+	"github.com/lino-network/lino/recorder/postreward"
+	"github.com/lino-network/lino/recorder/postreward/repository"
 )
 
 func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
-	d1 := &postReward.PostReward{
+	d1 := &postreward.PostReward{
 		Permlink:     "p1",
 		Reward:       10,
 		PenaltyScore: "1.5",

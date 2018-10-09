@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	recorderStake "github.com/lino-network/lino/recorder/stake"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 
@@ -64,6 +65,17 @@ func handleStakeInMsg(
 		return err.Result()
 	}
 
+	// record
+	stakeInt, _ := coin.ToInt64()
+
+	stake := &recorderStake.Stake{
+		Username:  (string)(msg.Username),
+		Amount:    stakeInt,
+		Timestamp: ctx.BlockHeader().Time.Unix(),
+		Op:        "IN",
+	}
+	vm.recorder.StakeRepository.Add(stake)
+
 	return sdk.Result{}
 }
 
@@ -93,6 +105,18 @@ func handleStakeOutMsg(
 		param.VoterCoinReturnIntervalSec, coin, types.VoteReturnCoin); err != nil {
 		return err.Result()
 	}
+
+	// record
+	stakeInt, _ := coin.ToInt64()
+
+	stake := &recorderStake.Stake{
+		Username:  (string)(msg.Username),
+		Amount:    stakeInt,
+		Timestamp: ctx.BlockHeader().Time.Unix(),
+		Op:        "OUT",
+	}
+	vm.recorder.StakeRepository.Add(stake)
+
 	return sdk.Result{}
 }
 

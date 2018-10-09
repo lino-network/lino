@@ -41,7 +41,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	postManager := NewValidatorManager(testValidatorKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
-	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph)
+	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph, recorder)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

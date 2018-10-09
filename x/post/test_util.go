@@ -55,9 +55,9 @@ func setupTest(
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	devManager := dev.NewDeveloperManager(testDeveloperKVStoreKey, ph)
 	devManager.InitGenesis(ctx)
-	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph)
+	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph, recorder)
 	voteManager.InitGenesis(ctx)
-	repManager := rep.NewReputationManager(testRepKVStoreKey, ph)
+	repManager := rep.NewReputationManager(testRepKVStoreKey, ph, recorder)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
