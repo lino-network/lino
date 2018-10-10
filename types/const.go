@@ -172,5 +172,5 @@ const (
 	LinoBlockchainFirstUpdateHeight = 156000
 
 	// LinoBlockchainSecondUpdateHeight - second blockchain update
-	LinoBlockchainSecondUpdateHeight = 345000
+	LinoBlockchainSecondUpdateHeight = 356000
 )
