@@ -104,7 +104,6 @@ func (accManager AccountManager) GetCoinDay(
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
-
 	accManager.updateTXFromPendingCoinDayQueue(ctx, bank, pendingCoinDayQueue)
 
 	if err := accManager.storage.SetPendingCoinDayQueue(
@@ -970,8 +969,14 @@ func (accManager AccountManager) addPendingCoinDayToQueue(
 		return err
 	}
 	accManager.updateTXFromPendingCoinDayQueue(ctx, bank, pendingCoinDayQueue)
-	if len(pendingCoinDayQueue.PendingCoinDays) > 0 && pendingCoinDayQueue.PendingCoinDays[len(pendingCoinDayQueue.PendingCoinDays)-1].StartTime == pendingCoinDay.StartTime {
-		pendingCoinDayQueue.PendingCoinDays[len(pendingCoinDayQueue.PendingCoinDays)-1].Coin.Plus(pendingCoinDay.Coin)
+	idx := len(pendingCoinDayQueue.PendingCoinDays) - 1
+	if len(pendingCoinDayQueue.PendingCoinDays) > 0 && pendingCoinDayQueue.PendingCoinDays[idx].StartTime == pendingCoinDay.StartTime {
+		if ctx.BlockHeader().Height > types.LinoBlockchainSecondUpdateHeight {
+			pendingCoinDayQueue.PendingCoinDays[idx].Coin = pendingCoinDayQueue.PendingCoinDays[idx].Coin.Plus(pendingCoinDay.Coin)
+			pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Plus(pendingCoinDay.Coin)
+		} else {
+			pendingCoinDayQueue.PendingCoinDays[idx].Coin.Plus(pendingCoinDay.Coin)
+		}
 	} else {
 		pendingCoinDayQueue.PendingCoinDays = append(pendingCoinDayQueue.PendingCoinDays, pendingCoinDay)
 		pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Plus(pendingCoinDay.Coin)

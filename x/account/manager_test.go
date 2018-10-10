@@ -27,6 +27,113 @@ func TestDoesAccountExist(t *testing.T) {
 	}
 }
 
+// https://github.com/lino-network/lino/issues/297
+func TestAddCoinBundle(t *testing.T) {
+	ctx, am, _ := setupTest(t, 1)
+	testUser := types.AccountKey("testUser")
+	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+	coinDayParams, _ := am.paramHolder.GetCoinDayParam(ctx)
+
+	baseTime := time.Now()
+	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+	baseTime = time.Unix(baseTimeSlot, 0)
+	d1 := time.Duration(types.CoinDayRecordIntervalSec/10) * time.Second
+	baseTime1 := baseTime.Add(d1)
+	baseTime2 := baseTime1.Add(d1)
+	baseTime3 := baseTime2.Add(d1)
+
+	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime, Height: types.LinoBlockchainSecondUpdateHeight + 1})
+	createTestAccount(ctx, am, string(testUser))
+
+	testCases := []struct {
+		testName                  string
+		amount                    types.Coin
+		atWhen                    time.Time
+		expectBank                model.AccountBank
+		expectPendingCoinDayQueue model.PendingCoinDayQueue
+	}{
+		{
+			testName: "add coin to account's saving",
+			amount:   c100,
+			atWhen:   baseTime,
+			expectBank: model.AccountBank{
+				Saving:  accParam.RegisterFee.Plus(c100),
+				CoinDay: accParam.RegisterFee,
+				NumOfTx: 2,
+			},
+			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
+				LastUpdatedAt: baseTimeSlot,
+				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoin:     c100,
+				PendingCoinDays: []model.PendingCoinDay{
+					{
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
+						Coin:      c100,
+					},
+				},
+			},
+		},
+		{
+			testName: "add coin to same bucket at time 2",
+			amount:   c100,
+			atWhen:   baseTime2,
+			expectBank: model.AccountBank{
+				Saving:  accParam.RegisterFee.Plus(c200),
+				CoinDay: accParam.RegisterFee,
+				NumOfTx: 3,
+			},
+			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
+				LastUpdatedAt: baseTimeSlot,
+				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoin:     c200,
+				PendingCoinDays: []model.PendingCoinDay{
+					{
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
+						Coin:      c200,
+					},
+				},
+			},
+		},
+		{
+			testName: "add coin to same bucket at time 3",
+			amount:   c100,
+			atWhen:   baseTime3,
+			expectBank: model.AccountBank{
+				Saving:  accParam.RegisterFee.Plus(c300),
+				CoinDay: accParam.RegisterFee,
+				NumOfTx: 4,
+			},
+			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
+				LastUpdatedAt: baseTimeSlot,
+				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoin:     c300,
+				PendingCoinDays: []model.PendingCoinDay{
+					{
+						StartTime: baseTimeSlot,
+						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
+						Coin:      c300,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: types.LinoBlockchainSecondUpdateHeight + 1, Time: tc.atWhen})
+		err := am.AddSavingCoin(
+			ctx, testUser, tc.amount, "", "", types.TransferIn)
+
+		if err != nil {
+			t.Errorf("%s: failed to add coin, got err: %v", tc.testName, err)
+			return
+		}
+		checkBankKVByUsername(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectBank)
+		checkPendingCoinDay(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectPendingCoinDayQueue)
+	}
+}
+
 func TestAddCoin(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
