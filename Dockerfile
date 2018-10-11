@@ -15,8 +15,8 @@ RUN go get -u github.com/golang/dep/cmd/dep
 RUN dep ensure
 
 # replace customize file
-COPY docker/fullnode/http_server.go ./vendor/github.com/tendermint/tendermint/rpc/lib/server/http_server.go
-COPY docker/fullnode/iavlstore.go ./vendor/github.com/cosmos/cosmos-sdk/store/iavlstore.go
+COPY docker/fullnode/http_server ./vendor/github.com/tendermint/tendermint/rpc/lib/server/http_server.go
+COPY docker/fullnode/iavlstore ./vendor/github.com/cosmos/cosmos-sdk/store/iavlstore.go
 WORKDIR cmd/lino
 RUN go build
 RUN ./lino init
