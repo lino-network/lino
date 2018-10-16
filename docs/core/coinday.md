@@ -1,6 +1,6 @@
 # Coin day
 
-In Lion Blockchain, each account will have a coin day. It is used to evaluate the donation and allocate bandwidth to user. If someone transfers a certain amount of LINO to you, the coin day for that amount of LINO is 0 when you received them. During 7 days refill window the coin day for that LINO will gradually grow till full. The detail is as following:
+In Lino Blockchain, each account will have a coin day. It is used to evaluate the donation and allocate bandwidth to user. If someone transfers a certain amount of LINO to you, the coin day for that amount of LINO is 0 when you received them. During 7 days refill window the coin day for that LINO will gradually grow till full. The detail is as following:
 
 When new coin transferred or added to your balance, the coin will be added to your balance immediately, and your pending coin day queue will generate a new pending coin day about this record, which records the start time, end time and amount of LINO. Then your coin day will be refreshed.
 
