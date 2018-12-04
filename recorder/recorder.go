@@ -20,14 +20,34 @@ type Recorder struct {
 }
 
 func NewRecorder() Recorder {
-	db, _ := dbtestutil.NewDBConn()
-	donationRepo, _ := dbtestutil.NewDonationDB(db)
-	inflationRepo, _ := dbtestutil.NewInflationDB(db)
-	stakeStatRepo, _ := dbtestutil.NewStakeStatDB(db)
-	postRewardStatRepo, _ := dbtestutil.NewPostRewardDB(db)
-	stakeRepo, _ := dbtestutil.NewStakeDB(db)
-	topContentRepo, _ := dbtestutil.NewTopContentDB(db)
-
+	db, err := dbtestutil.NewDBConn()
+	if err != nil {
+		panic(err)
+	}
+	donationRepo, err := dbtestutil.NewDonationDB(db)
+	if err != nil {
+		panic(err)
+	}
+	inflationRepo, err := dbtestutil.NewInflationDB(db)
+	if err != nil {
+		panic(err)
+	}
+	stakeStatRepo, err := dbtestutil.NewStakeStatDB(db)
+	if err != nil {
+		panic(err)
+	}
+	postRewardStatRepo, err := dbtestutil.NewPostRewardDB(db)
+	if err != nil {
+		panic(err)
+	}
+	stakeRepo, err := dbtestutil.NewStakeDB(db)
+	if err != nil {
+		panic(err)
+	}
+	topContentRepo, err := dbtestutil.NewTopContentDB(db)
+	if err != nil {
+		panic(err)
+	}
 	dbtestutil.NewDonationDB(db)
 	return Recorder{
 		DonationRepo:         donationRepo,
