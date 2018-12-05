@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -86,7 +85,14 @@ func runHackCmd(cmd *cobra.Command, args []string) error {
 	// check for the powerkey and the validator from the store
 	fmt.Println("last commit ID:", app.LastCommitID(), ", last block height:", app.LastBlockHeight())
 	keyList := map[string]*sdk.KVStoreKey{
-		"reputation": app.CapKeyReputationStore}
+		"main":       app.CapKeyMainStore,
+		"account":    app.CapKeyAccountStore,
+		"post":       app.CapKeyPostStore,
+		"validator":  app.CapKeyValStore,
+		"developer":  app.CapKeyDeveloperStore,
+		"global":     app.CapKeyGlobalStore,
+		"reputation": app.CapKeyReputationStore,
+	}
 	// resultArray := [][32]byte{}
 	for name, key := range keyList {
 		store := ctx.KVStore(key)
@@ -129,48 +135,51 @@ type roundMeta struct {
 
 func iterateStore(store sdk.KVStore) [32]byte {
 	storeResult := ""
-	iter := sdk.KVStorePrefixIterator(store, []byte{0x00})
-	for {
-		if !iter.Valid() {
-			break
+	for i := 0; i < 20; i++ {
+		iter := sdk.KVStorePrefixIterator(store, []byte{byte(i)})
+		for {
+			if !iter.Valid() {
+				break
+			}
+			rst := &userMeta{}
+			val := iter.Value()
+			dec := gob.NewDecoder(bytes.NewBuffer(val))
+			dec.Decode(rst)
+			// fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
+			storeResult += string(val)
+			// fmt.Println(string(val))
+			iter.Next()
 		}
-		rst := &userMeta{}
-		val := iter.Value()
-		dec := gob.NewDecoder(bytes.NewBuffer(val))
-		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
-		storeResult += string(val)
-		// fmt.Println(string(val))
-		iter.Next()
 	}
-	iter = sdk.KVStorePrefixIterator(store, []byte{0x01})
-	for {
-		if !iter.Valid() {
-			break
-		}
-		rst := &postMeta{}
-		val := iter.Value()
-		dec := gob.NewDecoder(bytes.NewBuffer(val))
-		storeResult += string(val)
-		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
-		// fmt.Println(string(val))
-		iter.Next()
-	}
-	iter = sdk.KVStorePrefixIterator(store, []byte{0x03})
-	for {
-		if !iter.Valid() {
-			break
-		}
-		rst := &roundMeta{}
-		val := iter.Value()
-		dec := gob.NewDecoder(bytes.NewBuffer(val))
-		storeResult += string(val)
-		dec.Decode(rst)
-		fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
-		// fmt.Println(string(val))
-		iter.Next()
-	}
+
+	// iter = sdk.KVStorePrefixIterator(store, []byte{0x01})
+	// for {
+	// 	if !iter.Valid() {
+	// 		break
+	// 	}
+	// 	rst := &postMeta{}
+	// 	val := iter.Value()
+	// 	dec := gob.NewDecoder(bytes.NewBuffer(val))
+	// 	storeResult += string(val)
+	// 	dec.Decode(rst)
+	// 	// fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
+	// 	// fmt.Println(string(val))
+	// 	iter.Next()
+	// }
+	// iter = sdk.KVStorePrefixIterator(store, []byte{0x03})
+	// for {
+	// 	if !iter.Valid() {
+	// 		break
+	// 	}
+	// 	rst := &roundMeta{}
+	// 	val := iter.Value()
+	// 	dec := gob.NewDecoder(bytes.NewBuffer(val))
+	// 	storeResult += string(val)
+	// 	dec.Decode(rst)
+	// 	// fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
+	// 	// fmt.Println(string(val))
+	// 	iter.Next()
+	// }
 	return sha256.Sum256([]byte(storeResult))
 }
 
