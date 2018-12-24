@@ -757,6 +757,7 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	if err != nil {
 		return err
 	}
+	bandwidthParams.CapacityUsagePerTransaction = types.NewCoinFromInt64(1)
 
 	// increase upper limit for capacity
 	coinDay = coinDay.Plus(bandwidthParams.VirtualCoin)

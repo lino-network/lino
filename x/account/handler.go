@@ -138,6 +138,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 	if err != nil {
 		return err.Result()
 	}
+	accParams.RegisterFee = types.NewCoinFromInt64(100 * types.Decimals)
 	if accParams.RegisterFee.IsGT(coin) {
 		return ErrRegisterFeeInsufficient().Result()
 	}
