@@ -16,7 +16,8 @@ RUN mkdir -p src/github.com/lino-network
 WORKDIR src/github.com/lino-network
 RUN git clone https://github.com/lino-network/lino.git
 WORKDIR lino
-RUN git checkout v0.1.5
+RUN git fetch
+RUN git checkout staging
 
 # golang dep
 RUN go get -u github.com/golang/dep/cmd/dep
@@ -29,11 +30,10 @@ WORKDIR cmd/lino
 RUN go build
 RUN ./lino init
 
-COPY docker/fullnode/genesis.json /root/.lino/config/genesis.json
-COPY docker/fullnode/config.toml ./config.toml
+COPY docker/fullnode/genesis_staging.json /root/.lino/config/genesis.json
+COPY docker/fullnode/config_staging.toml /root/.lino/config/config.toml
 
-RUN sed -i "11s/.*/moniker=\"$(openssl rand -base64 6)\"/" config.toml
-RUN mv config.toml /root/.lino/config/config.toml
+RUN ./lino unsafe_reset_all
 
 EXPOSE 26656
 EXPOSE 26657

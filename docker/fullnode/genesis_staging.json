@@ -1,0 +1,226 @@
+{
+  "genesis_time": "2018-10-03T00:01:06.215856236Z",
+  "chain_id": "lino-staging",
+  "consensus_params": {
+    "block_size_params": {
+      "max_bytes": "22020096",
+      "max_txs": "10000",
+      "max_gas": "-1"
+    },
+    "tx_size_params": {
+      "max_bytes": "10240",
+      "max_gas": "-1"
+    },
+    "block_gossip_params": {
+      "block_part_size_bytes": "65536"
+    },
+    "evidence_params": {
+      "max_age": "100000"
+    }
+  },
+  "validators": [
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "LJi5Vw0fr9IJAKR4XzUuWO2nMiZ+6wASxE8kdC2IREk="
+      },
+      "power": "1000",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [
+      {
+        "name": "lino",
+        "coin": {
+          "amount": "500000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A17jaYBuY6LyFr0qAhtiCCm2/dD0iSUBab7kJJVg4NmV"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A6nE19NXXEnsK69C+UOTqKhNq64pcnCFjVmchAfjsNSE"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A5g6UNoCt3W6tndrqjfXyb3rPYQqcN34bYPvEm0BDLOp"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "LJi5Vw0fr9IJAKR4XzUuWO2nMiZ+6wASxE8kdC2IREk="
+        }
+      },
+      {
+        "name": "dlivetv",
+        "coin": {
+          "amount": "500000000000000"
+        },
+	"reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A17jaYBuY6LyFr0qAhtiCCm2/dD0iSUBab7kJJVg4NmV"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A6nE19NXXEnsK69C+UOTqKhNq64pcnCFjVmchAfjsNSE"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A5g6UNoCt3W6tndrqjfXyb3rPYQqcN34bYPvEm0BDLOp"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      }
+    ],
+    "developers": [
+      {
+        "name": "dlivetv",
+        "deposit": {
+          "amount": "100000000000"
+        },
+        "web_site": "https://lino.network/",
+        "description": "",
+        "app_meta_data": ""
+      }
+    ],
+    "infra": [
+      {
+        "name": "lino"
+      }
+    ],
+    "genesis_param": {
+      "init_from_config": true,
+      "EvaluateOfContentValueParam": {
+        "consumption_time_adjust_base": "3153600",
+        "consumption_time_adjust_offset": "5",
+        "num_of_consumption_on_author_offset": "7",
+        "total_amount_of_consumption_base": "100000000",
+        "total_amount_of_consumption_offset": "5",
+        "amount_of_consumption_exponent": "4/5"
+      },
+      "GlobalAllocationParam": {
+        "global_growth_rate": "49/500",
+        "infra_allocation": "1/5",
+        "content_creator_allocation": "13/20",
+        "developer_allocation": "1/10",
+        "validator_allocation": "1/20"
+      },
+      "InfraInternalAllocationParam": {
+        "storage_allocation": "1/2",
+        "CDN_allocation": "1/2"
+      },
+      "VoteParam": {
+        "min_stake_in": {
+          "amount": "100000000"
+        },
+        "voter_coin_return_interval_second": "604800",
+        "voter_coin_return_times": "7",
+        "delegator_coin_return_interval_second": "604800",
+        "delegator_coin_return_times": "7"
+      },
+      "ProposalParam": {
+        "content_censorship_decide_second": "604800",
+        "content_censorship_min_deposit": {
+          "amount": "10000000"
+        },
+        "content_censorship_pass_ratio": "1/2",
+        "content_censorship_pass_votes": {
+          "amount": "1000000000"
+        },
+        "change_param_decide_second": "604800",
+        "change_param_execution_second": "0",
+        "change_param_min_deposit": {
+          "amount": "10000000000"
+        },
+        "change_param_pass_ratio": "7/10",
+        "change_param_pass_votes": {
+          "amount": "100000000000"
+        },
+        "protocol_upgrade_decide_second": "604800",
+        "protocol_upgrade_min_deposit": {
+          "amount": "100000000000"
+        },
+        "protocol_upgrade_pass_ratio": "4/5",
+        "protocol_upgrade_pass_votes": {
+          "amount": "1000000000000"
+        }
+      },
+      "DeveloperParam": {
+        "developer_min_deposit": {
+          "amount": "100000000000"
+        },
+        "developer_coin_return_interval_second": "604800",
+        "developer_coin_return_times": "7"
+      },
+      "ValidatorParam": {
+        "validator_min_withdraw": {
+          "amount": "100000"
+        },
+        "validator_min_voting_deposit": {
+          "amount": "30000000000"
+        },
+        "validator_min_committing_deposit": {
+          "amount": "10000000000"
+        },
+        "validator_coin_return_second": "604800",
+        "validator_coin_return_times": "7",
+        "penalty_miss_vote": {
+          "amount": "2000000000"
+        },
+        "penalty_miss_commit": {
+          "amount": "20000000"
+        },
+        "penalty_byzantine": {
+          "amount": "100000000000"
+        },
+        "validator_list_size": "21",
+        "absent_commit_limitation": "600"
+      },
+      "CoinDayParam": {
+        "seconds_to_recover_coin_day": "604800"
+      },
+      "BandwidthParam": {
+        "seconds_to_recover_bandwidth": "604800",
+        "capacity_usage_per_transaction": {
+          "amount": "100000"
+        },
+        "virtual_coin": {
+          "amount": "100000"
+        }
+      },
+      "AccountParam": {
+        "minimum_balance": {
+          "amount": "0"
+        },
+        "register_fee": {
+          "amount": "100000"
+        },
+        "first_deposit_full_coin_day_limit": {
+          "amount": "100000"
+        },
+        "max_num_frozen_money": "10"
+      },
+      "PostParam": {
+        "report_or_upvote_interval_second": "86400",
+        "post_interval_sec": "600",
+        "max_report_reputation": {
+          "amount": "10000000"
+        }
+      },
+      "ReputationParam": {
+        "best_content_index_n": "10"
+      }
+    },
+    "init_global_meta": {
+      "max_tps": "1000",
+      "consumption_friction_rate": "1/20",
+      "consumption_freezing_period_second": "604800"
+    }
+  }
+}

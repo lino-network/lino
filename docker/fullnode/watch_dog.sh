@@ -1,15 +1,16 @@
 #!/bin/bash
-/root/.local/bin/aws s3 cp s3://lino-blockchain-data/data.tar.gz data.tar.gz
-RUN rm -rf /root/.lino/data
-mkdir -p /root/.lino/data/
-tar -xzvf data.tar.gz -C /root/.lino/data/
-rm -rf data.tar.gz
-./lino start --log_level=error &
+sed -i "11s/.*/moniker=\"$(openssl rand -base64 6)\"/" ~/.lino/config/config.toml
+./lino start --log_level=info &
 pid=$!
 last_height=0
 while true
  do
     sleep 30s
+    catching_up=$(curl --max-time 10 http://localhost:26657/status | jq '. | .result.sync_info.catching_up')
+    if [ "$catching_up" = true ] ; then
+      echo 'still catching up!'
+      continue
+    fi
     status=$(curl --max-time 10 -s -o /dev/null -w "%{http_code}" http://localhost:26657)
     height=$(curl --max-time 10 http://localhost:26657/status | jq '. | .result.sync_info.latest_block_height')
     echo "running at height $height"
