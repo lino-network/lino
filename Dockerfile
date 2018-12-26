@@ -28,12 +28,9 @@ COPY docker/fullnode/http_server ./vendor/github.com/tendermint/tendermint/rpc/l
 COPY docker/fullnode/iavlstore ./vendor/github.com/cosmos/cosmos-sdk/store/iavlstore.go
 WORKDIR cmd/lino
 RUN go build
-RUN ./lino init
 
-COPY docker/fullnode/genesis_staging.json /root/.lino/config/genesis.json
-COPY docker/fullnode/config_staging.toml /root/.lino/config/config.toml
-
-RUN ./lino unsafe_reset_all
+COPY docker/fullnode/genesis_staging.json genesis.json
+COPY docker/fullnode/config_staging.toml config.toml
 
 EXPOSE 26656
 EXPOSE 26657
