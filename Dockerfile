@@ -26,6 +26,7 @@ RUN dep ensure
 # replace customize file
 COPY docker/fullnode/http_server ./vendor/github.com/tendermint/tendermint/rpc/lib/server/http_server.go
 COPY docker/fullnode/iavlstore ./vendor/github.com/cosmos/cosmos-sdk/store/iavlstore.go
+COPY docker/fullnode/baseapp ./vendor/github.com/cosmos/cosmos-sdk/baseapp/baseapp.go
 WORKDIR cmd/lino
 RUN go build
 
@@ -38,4 +39,4 @@ EXPOSE 26657
 COPY docker/fullnode/watch_dog.sh watch_dog.sh
 RUN chmod +x watch_dog.sh
 
-ENTRYPOINT ["./watch_dog.sh"]
+ENTRYPOINT ["./lino", "start", "--log_level=error"]
