@@ -41,7 +41,7 @@ while true
           numOfFile=$(ls /backup | wc -l)
           if [ "$numOfFile" -gt 3 ]
           then
-            rm /backup/$(ls -1 /backup | head -n 1)
+            rm -rf /backup/$(ls -1 /backup | head -n 1)
           fi
         fi
         if [ "$healthy" = false ]
