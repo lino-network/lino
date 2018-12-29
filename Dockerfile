@@ -16,8 +16,7 @@ RUN mkdir -p src/github.com/lino-network
 WORKDIR src/github.com/lino-network
 RUN git clone https://github.com/lino-network/lino.git
 WORKDIR lino
-RUN git fetch
-RUN git checkout staging
+RUN git checkout v0.1.5
 
 # golang dep
 RUN go get -u github.com/golang/dep/cmd/dep
