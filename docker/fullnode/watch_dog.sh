@@ -1,5 +1,4 @@
 #!/bin/bash
-sed -i "11s/.*/moniker=\"$(openssl rand -base64 6)\"/" ~/.lino/config/config.toml
 ./lino start --log_level=info &
 pid=$!
 last_height=0
