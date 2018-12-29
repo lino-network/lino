@@ -34,11 +34,11 @@ while true
           counter=0
           kill -INT $pid
           tar -czvf data.tar.gz -C ~/.lino/data .
-          mv data.tar.gz /backup/data_$(date +%F-%H:%M).tar.gz
+          cp -R ~/.lino/data /backup/data_$(date +%F-%H:%M)
           numOfFile=$(ls /backup | wc -l)
           if [ "$numOfFile" -gt 3 ]
           then
-            rm /backup/$(ls -1 /backup | head -n 1)
+            rm -rf /backup/$(ls -1 /backup | head -n 1)
           fi
         fi
         if [ "$healthy" = false ]
