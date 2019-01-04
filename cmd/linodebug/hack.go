@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/gob"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -62,7 +61,7 @@ func runHackCmd(cmd *cobra.Command, args []string) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	app := NewLinoBlockchain(logger, db, os.Stdout)
+	app := NewLinoBlockchain(logger, db, nil)
 
 	// print some info
 	id := app.LastCommitID()
@@ -97,7 +96,7 @@ func runHackCmd(cmd *cobra.Command, args []string) error {
 	for name, key := range keyList {
 		store := ctx.KVStore(key)
 		result := iterateStore(store)
-		fmt.Println(name, result)
+		fmt.Println(name, hex.EncodeToString(result[:]))
 	}
 	return nil
 }
@@ -141,12 +140,9 @@ func iterateStore(store sdk.KVStore) [32]byte {
 			if !iter.Valid() {
 				break
 			}
-			rst := &userMeta{}
 			val := iter.Value()
-			dec := gob.NewDecoder(bytes.NewBuffer(val))
-			dec.Decode(rst)
-			// fmt.Println(rst, iter.Key(), hex.EncodeToString(iter.Value()))
-			storeResult += string(val)
+			valueHash := sha256.Sum256(append([]byte(storeResult), val...))
+			storeResult = string(valueHash[:])
 			// fmt.Println(string(val))
 			iter.Next()
 		}
