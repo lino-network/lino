@@ -32,9 +32,9 @@ while true
         last_height=$height
         counter=$((counter+1))
         echo "counter is $counter"
-        if [ "$counter" = 6 ]
+        if [ "$counter" = 2 ]
         then
-          echo "counter reach 6! $counter"
+          echo "counter reach 2! $counter"
           counter=0
           kill -INT $pid
           cp -R ~/.lino/data /backup/data_$(date +%F-%H:%M)
@@ -43,6 +43,7 @@ while true
           then
             rm -rf /backup/$(ls -1 /backup | head -n 1)
           fi
+          touch /backup/$(ls -1 /backup | tail -n 1)/complete
         fi
         if [ "$healthy" = false ]
         then
