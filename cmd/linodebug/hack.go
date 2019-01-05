@@ -84,13 +84,7 @@ func runHackCmd(cmd *cobra.Command, args []string) error {
 	// check for the powerkey and the validator from the store
 	fmt.Println("last commit ID:", app.LastCommitID(), ", last block height:", app.LastBlockHeight())
 	keyList := map[string]*sdk.KVStoreKey{
-		"main":       app.CapKeyMainStore,
-		"account":    app.CapKeyAccountStore,
-		"post":       app.CapKeyPostStore,
-		"validator":  app.CapKeyValStore,
-		"developer":  app.CapKeyDeveloperStore,
-		"global":     app.CapKeyGlobalStore,
-		"reputation": app.CapKeyReputationStore,
+		"account": app.CapKeyAccountStore,
 	}
 	// resultArray := [][32]byte{}
 	for name, key := range keyList {
@@ -135,17 +129,23 @@ type roundMeta struct {
 func iterateStore(store sdk.KVStore) [32]byte {
 	storeResult := ""
 	for i := 0; i < 20; i++ {
+		counter := 0
 		iter := sdk.KVStorePrefixIterator(store, []byte{byte(i)})
 		for {
 			if !iter.Valid() {
 				break
 			}
+			counter++
 			val := iter.Value()
 			valueHash := sha256.Sum256(append([]byte(storeResult), val...))
 			storeResult = string(valueHash[:])
 			// fmt.Println(string(val))
 			iter.Next()
+			if counter%10000 == 0 {
+				fmt.Println(i, counter, hex.EncodeToString([]byte(storeResult)))
+			}
 		}
+		fmt.Println(i, counter, hex.EncodeToString([]byte(storeResult)))
 	}
 
 	// iter = sdk.KVStorePrefixIterator(store, []byte{0x01})
