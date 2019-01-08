@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	parameter "github.com/lino-network/lino-potato/parameters"
 	bhRepo "github.com/lino-network/lino/recorder/balancehistory/repository"
 	dRepo "github.com/lino-network/lino/recorder/donation/repository"
 	iRepo "github.com/lino-network/lino/recorder/inflation/repository"
@@ -50,7 +49,7 @@ func NewDBConn(dbUsername, dbPassword, dbHost, dbPort, dbName string) (*sql.DB, 
 
 func NewRecorder() Recorder {
 	configPath = fs.String("config.file", "", "Config file path.")
-	configs, e := parameter.NewConfig(*configPath)
+	configs, e := NewConfig(*configPath)
 	if e != nil {
 		log.Fatal().Err(e).Msg("Failed to create config.")
 	}
