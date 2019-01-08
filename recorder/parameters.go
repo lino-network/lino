@@ -3,6 +3,7 @@ package recorder
 import (
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/lino-network/lino-service-discovery/pkg/k8s"
@@ -100,11 +101,11 @@ func (c *Configs) DBHost() string {
 
 // DBPort returns MySQL port; default to 3306
 func (c *Configs) DBPort() int {
-	// if port, ok := c.store[dbPortKey]; ok {
-	// 	if port, err := strconv.Atoi(port); err == nil {
-	// 		return port
-	// 	}
-	// }
+	if port, ok := c.store[dbPortKey]; ok {
+		if port, err := strconv.Atoi(port); err == nil {
+			return port
+		}
+	}
 	return 3306
 }
 

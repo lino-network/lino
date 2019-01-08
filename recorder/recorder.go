@@ -42,6 +42,7 @@ func NewDBConn(dbUsername, dbPassword, dbHost string, dbPort int, dbName string)
 		dbPort,
 		dbName,
 	)
+	fmt.Println("dsn:", dsn)
 	conn, err := sql.Open("mysql", dsn)
 	return conn, err
 }

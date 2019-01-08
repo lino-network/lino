@@ -1,6 +1,7 @@
 package account
 
 import (
+	"encoding/hex"
 	"reflect"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/recorder/balancehistory"
 	rreward "github.com/lino-network/lino/recorder/reward"
+	"github.com/lino-network/lino/recorder/user"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 
@@ -84,6 +86,20 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
 		return err
 	}
+
+	user := &user.User{
+		Username:          string(username),
+		CreatedAt:         ctx.BlockHeader().Time,
+		Referrer:          string(referrer),
+		ResetPubKey:       hex.EncodeToString(resetKey.Bytes()),
+		TransactionPubKey: hex.EncodeToString(transactionKey.Bytes()),
+		AppPubKey:         hex.EncodeToString(appKey.Bytes()),
+		Saving:            registerDeposit.Amount.String(),
+	}
+	addErr := accManager.recorder.UserRepository.Add(user)
+	if addErr != nil {
+		panic(addErr)
+	}
 	// when open account, blockchain will give a certain amount lino with full coin day.
 	if err := accManager.AddSavingCoinWithFullCoinDay(
 		ctx, username, depositWithFullCoinDay, referrer,
@@ -95,6 +111,7 @@ func (accManager AccountManager) CreateAccount(
 		types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
 		return ErrAddSavingCoin()
 	}
+
 	return nil
 }
 
@@ -352,7 +369,7 @@ func (accManager AccountManager) MinusSavingCoin(
 		FromUser:   string(username),
 		ToUser:     string(to),
 		Amount:     amount,
-		Balance:    accountBank.Saving.String(),
+		Balance:    accountBank.Saving.Amount.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
@@ -362,7 +379,7 @@ func (accManager AccountManager) MinusSavingCoin(
 		panic(insertErr)
 	}
 	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), accountBank.Saving.String())
+		string(username), accountBank.Saving.Amount.String())
 	if updateErr != nil {
 		panic(updateErr)
 	}
@@ -464,7 +481,7 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		FromUser:   string(username),
 		ToUser:     string(to),
 		Amount:     amount,
-		Balance:    accountBank.Saving.String(),
+		Balance:    accountBank.Saving.Amount.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
@@ -474,7 +491,7 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		panic(insertErr)
 	}
 	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), accountBank.Saving.String())
+		string(username), accountBank.Saving.Amount.String())
 	if updateErr != nil {
 		panic(updateErr)
 	}

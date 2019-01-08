@@ -115,5 +115,5 @@ func setup() (*sql.DB, repository.PostRepository, error) {
 }
 
 func teardown(db *sql.DB) {
-	dbtestutil.DonationDBCleanUp(db)
+	dbtestutil.PostDBCleanUp(db)
 }

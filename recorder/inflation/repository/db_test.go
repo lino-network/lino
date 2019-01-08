@@ -75,5 +75,5 @@ func setup() (*sql.DB, repository.InflationRepository, error) {
 }
 
 func teardown(db *sql.DB) {
-	// dbtestutil.InflationDBCleanUp(db)
+	dbtestutil.InflationDBCleanUp(db)
 }

@@ -41,6 +41,38 @@ func TestAddnGet(t *testing.T) {
 	})
 }
 
+func TestUpdateBalance(t *testing.T) {
+	assert := assert.New(t)
+	r1 := &user.User{
+		Username:          "user1",
+		CreatedAt:         time.Unix(time.Now().Unix(), 0).UTC(),
+		ResetPubKey:       hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
+		TransactionPubKey: hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
+		AppPubKey:         hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
+		Saving:            "100000",
+		Sequence:          1,
+	}
+
+	runTest(t, func(env TestEnv) {
+		err := env.uRepo.Add(r1)
+		if err != nil {
+			t.Errorf("TestAddnGet: failed to add %v, got err %v", r1, err)
+		}
+
+		err = env.uRepo.UpdateBalance("user1", "100000000")
+		if err != nil {
+			t.Errorf("TestAddnGet: failed to update balance %v, got err %v", r1, err)
+		}
+		r1.Saving = "100000000"
+		res, err := env.uRepo.Get("user1")
+
+		if err != nil {
+			t.Errorf("TestAddnGet: failed to get User with %s, got err %v", "user1", err)
+		}
+		assert.Equal(r1, res)
+	})
+}
+
 //
 // Test Environment setup
 //
