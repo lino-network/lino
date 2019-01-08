@@ -3,6 +3,7 @@ package post
 import (
 	"github.com/cosmos/cosmos-sdk/wire"
 
+	"github.com/lino-network/lino/recorder/postreward"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	rep "github.com/lino-network/lino/x/reputation"
@@ -81,7 +82,7 @@ func (event RewardEvent) Execute(
 	evaluateInt, _ := event.Evaluate.ToInt64()
 	originalInt, _ := event.Original.ToInt64()
 
-	postReward := &postReward.PostReward{
+	postReward := &postreward.PostReward{
 		Permlink:     (string)(permlink),
 		Reward:       rewardInt,
 		PenaltyScore: paneltyScore.FloatString(),
