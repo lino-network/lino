@@ -285,7 +285,9 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 		TotalLinoStake:           totalLinoStakeInt,
 		Timestamp:                ctx.BlockHeader().Time.Unix(),
 	}
-	gm.recorder.StakeStatRepository.Add(stakeStat)
+	if !gm.recorder.NewVersionOnly {
+		gm.recorder.StakeStatRepository.Add(stakeStat)
+	}
 
 	// If lino stake exist last day, the consumption will keep for lino stake holder that day
 	if !lastLinoStakeStat.TotalLinoStake.IsZero() {
@@ -418,8 +420,9 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		ValidatorInflation: validatorInflationInt,
 		Timestamp:          ctx.BlockHeader().Time.Unix(),
 	}
-	gm.recorder.InflationRepo.Add(inflation)
-
+	if !gm.recorder.NewVersionOnly {
+		gm.recorder.InflationRepo.Add(inflation)
+	}
 	return nil
 }
 

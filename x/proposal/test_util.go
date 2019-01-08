@@ -45,7 +45,7 @@ func setupTest(t *testing.T, height int64) (
 	ph.InitParam(ctx)
 
 	recorder := recorder.NewRecorder()
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph, recorder)
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph, recorder)

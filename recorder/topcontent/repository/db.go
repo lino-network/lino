@@ -44,10 +44,11 @@ func NewTopContentDB(conn *sql.DB) (TopContentRepository, errors.Error) {
 
 func scanTopContent(s dbutils.RowScanner) (*topcontent.TopContent, errors.Error) {
 	var (
+		id        int64
 		permlink  string
 		timestamp int64
 	)
-	if err := s.Scan(&permlink, &timestamp); err != nil {
+	if err := s.Scan(&id, &permlink, &timestamp); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "TopContent not found: %s", err)
 		}
@@ -55,13 +56,14 @@ func scanTopContent(s dbutils.RowScanner) (*topcontent.TopContent, errors.Error)
 	}
 
 	return &topcontent.TopContent{
+		ID:        id,
 		Permlink:  permlink,
 		Timestamp: timestamp,
 	}, nil
 }
 
-func (db *topContentDB) Get(timestamp int64) (*topcontent.TopContent, errors.Error) {
-	return scanTopContent(db.stmts[getTopContent].QueryRow(timestamp))
+func (db *topContentDB) Get(permlink string) (*topcontent.TopContent, errors.Error) {
+	return scanTopContent(db.stmts[getTopContent].QueryRow(permlink))
 }
 
 func (db *topContentDB) Add(topContent *topcontent.TopContent) errors.Error {

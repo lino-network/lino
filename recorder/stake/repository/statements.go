@@ -3,11 +3,11 @@ package repository
 const (
 	getStakeStmt = `
 SELECT
+    id,
     username,
     amount,
     timestamp,
     op
-    
 FROM
     stake
 WHERE

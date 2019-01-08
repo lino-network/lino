@@ -24,11 +24,12 @@ func TestAddnGet(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to add %v, got err %v", d1, err)
 		}
-		res, err := env.coRepo.Get(15535)
+		res, err := env.coRepo.Get("p1")
 
 		if err != nil {
-			t.Errorf("TestAddnGet: failed to get TopContent with %s, got err %v ", "user1", err)
+			t.Errorf("TestAddnGet: failed to get TopContent with %s, got err %v ", "p1", err)
 		}
+		d1.ID = res.ID
 		assert.Equal(d1, res)
 	})
 }

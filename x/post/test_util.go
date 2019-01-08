@@ -50,7 +50,7 @@ func setupTest(
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	recorder := recorder.NewRecorder()
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph, recorder)
 	postManager := NewPostManager(testPostKVStoreKey, ph, recorder)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	devManager := dev.NewDeveloperManager(testDeveloperKVStoreKey, ph)

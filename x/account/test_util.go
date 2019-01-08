@@ -70,7 +70,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 	recorder := recorder.NewRecorder()
-	accManager := NewAccountManager(testAccountKVStoreKey, ph)
+	accManager := NewAccountManager(testAccountKVStoreKey, ph, recorder)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 
 	cdc := globalManager.WireCodec()

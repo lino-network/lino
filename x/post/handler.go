@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/x/global"
 
 	"github.com/lino-network/lino/recorder/donation"
+	"github.com/lino-network/lino/recorder/post"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -85,6 +86,19 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 	if err := am.UpdateLastPostAt(ctx, msg.Author); err != nil {
 		return err.Result()
 	}
+
+	post := &post.Post{
+		Author:       string(msg.Author),
+		PostID:       msg.PostID,
+		Title:        msg.Title,
+		Content:      msg.Content,
+		ParentAuthor: string(msg.ParentAuthor),
+		ParentPostID: msg.ParentPostID,
+		SourceAuthor: string(msg.SourceAuthor),
+		SourcePostID: msg.SourcePostID,
+		CreatedAt:    ctx.BlockHeader().Time,
+	}
+	pm.recorder.PostRepository.Add(post)
 	return sdk.Result{}
 }
 
@@ -255,8 +269,9 @@ func processDonationFriction(
 		Timestamp:      ctx.BlockHeader().Time.Unix(),
 		EvaluateResult: evaluateResultInt,
 	}
-	pm.recorder.DonationRepo.Add(donation)
-
+	if !pm.recorder.NewVersionOnly {
+		pm.recorder.DonationRepo.Add(donation)
+	}
 	return nil
 }
 

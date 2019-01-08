@@ -38,7 +38,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 	recorder := recorder.NewRecorder()
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph, recorder)
 	postManager := NewValidatorManager(testValidatorKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph, recorder)

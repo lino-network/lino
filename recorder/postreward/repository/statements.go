@@ -3,6 +3,7 @@ package repository
 const (
 	getPostRewardStmt = `
 SELECT
+    id,
     permlink,
     reward,
     penaltyScore,
@@ -13,7 +14,7 @@ SELECT
 FROM
     postReward
 WHERE
-    timestamp = ?
+    permlink = ?
 `
 	insertPostRewardStmt = `
 INSERT INTO

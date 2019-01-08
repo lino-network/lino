@@ -10,10 +10,10 @@ var conn *sql.DB
 // DB constants for testing
 const (
 	DBUsername = "root"
-	DBPassword = "123456"
+	DBPassword = "my-secret"
 	DBHost     = "localhost"
-	DBPort     = "3306"
-	DBName     = "mydb"
+	DBPort     = "3308"
+	DBName     = "lino_db"
 )
 
 // NewDBConn returns a new sql db connection
