@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/lino-network/lino/recorder/dbtestutil"
-	"github.com/lino-network/lino/recorder/stakeStat/repository"
+	"github.com/lino-network/lino/recorder/stakestat/repository"
 )
 
 func TestAddnGet(t *testing.T) {

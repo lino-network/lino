@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/recorder"
+	"github.com/lino-network/lino/recorder/balancehistory"
+	rreward "github.com/lino-network/lino/recorder/reward"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 
@@ -17,13 +20,15 @@ import (
 type AccountManager struct {
 	storage     model.AccountStorage
 	paramHolder param.ParamHolder
+	recorder    recorder.Recorder
 }
 
 // NewLinoAccount - new account manager
-func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManager {
+func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder, recorder recorder.Recorder) AccountManager {
 	return AccountManager{
 		storage:     model.NewAccountStorage(key),
 		paramHolder: holder,
+		recorder:    recorder,
 	}
 }
 
@@ -169,6 +174,22 @@ func (accManager AccountManager) AddSavingCoin(
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return err
 	}
+
+	amount, _ := coin.ToInt64()
+	balance, _ := bank.Saving.ToInt64()
+	balancehistory := &balancehistory.BalanceHistory{
+		Username:   string(username),
+		FromUser:   string(from),
+		ToUser:     string(username),
+		Amount:     amount,
+		Balance:    balance,
+		DetailType: detailType,
+		CreatedAt:  ctx.BlockHeader().Time,
+		Memo:       memo,
+	}
+	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	accManager.recorder.UserRepository.UpdateBalance(
+		string(username), balance)
 	return nil
 }
 
@@ -206,6 +227,22 @@ func (accManager AccountManager) AddSavingCoinWithFullCoinDay(
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return err
 	}
+
+	amount, _ := coin.ToInt64()
+	balance, _ := bank.Saving.ToInt64()
+	balancehistory := &balancehistory.BalanceHistory{
+		Username:   string(username),
+		FromUser:   string(from),
+		ToUser:     string(username),
+		Amount:     amount,
+		Balance:    balance,
+		DetailType: detailType,
+		CreatedAt:  ctx.BlockHeader().Time,
+		Memo:       memo,
+	}
+	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	accManager.recorder.UserRepository.UpdateBalance(
+		string(username), balance)
 	return nil
 }
 
@@ -298,6 +335,22 @@ func (accManager AccountManager) MinusSavingCoin(
 		ctx, username, accountBank); err != nil {
 		return err
 	}
+
+	amount, _ := coin.ToInt64()
+	balance, _ := accountBank.Saving.ToInt64()
+	balancehistory := &balancehistory.BalanceHistory{
+		Username:   string(username),
+		FromUser:   string(username),
+		ToUser:     string(to),
+		Amount:     amount,
+		Balance:    balance,
+		DetailType: detailType,
+		CreatedAt:  ctx.BlockHeader().Time,
+		Memo:       memo,
+	}
+	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	accManager.recorder.UserRepository.UpdateBalance(
+		string(username), balance)
 	return nil
 }
 
@@ -390,6 +443,21 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		ctx, username, accountBank); err != nil {
 		return err
 	}
+	amount, _ := coin.ToInt64()
+	balance, _ := accountBank.Saving.ToInt64()
+	balancehistory := &balancehistory.BalanceHistory{
+		Username:   string(username),
+		FromUser:   string(username),
+		ToUser:     string(to),
+		Amount:     amount,
+		Balance:    balance,
+		DetailType: detailType,
+		CreatedAt:  ctx.BlockHeader().Time,
+		Memo:       memo,
+	}
+	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	accManager.recorder.UserRepository.UpdateBalance(
+		string(username), balance)
 	return nil
 }
 
@@ -600,6 +668,21 @@ func (accManager AccountManager) AddIncomeAndReward(
 		return err
 	}
 
+	totalIncome, _ := reward.TotalIncome.ToInt64()
+	originalIncome, _ := reward.OriginalIncome.ToInt64()
+	frictionIncome, _ := reward.FrictionIncome.ToInt64()
+	inflationIncome, _ := reward.InflationIncome.ToInt64()
+	unclaimReward, _ := reward.UnclaimReward.ToInt64()
+	rewardstruc := &rreward.Reward{
+		Username:        string(username),
+		TotalIncome:     totalIncome,
+		OriginalIncome:  originalIncome,
+		FrictionIncome:  frictionIncome,
+		InflationIncome: inflationIncome,
+		UnclaimReward:   unclaimReward,
+		CreatedAt:       ctx.BlockHeader().Time,
+	}
+	accManager.recorder.RewardRepository.Add(rewardstruc)
 	bank.NumOfReward++
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return err
@@ -654,6 +737,21 @@ func (accManager AccountManager) ClaimReward(
 		return err
 	}
 
+	totalIncome, _ := reward.TotalIncome.ToInt64()
+	originalIncome, _ := reward.OriginalIncome.ToInt64()
+	frictionIncome, _ := reward.FrictionIncome.ToInt64()
+	inflationIncome, _ := reward.InflationIncome.ToInt64()
+	unclaimReward, _ := reward.UnclaimReward.ToInt64()
+	rewardstruc := &rreward.Reward{
+		Username:        string(username),
+		TotalIncome:     totalIncome,
+		OriginalIncome:  originalIncome,
+		FrictionIncome:  frictionIncome,
+		InflationIncome: inflationIncome,
+		UnclaimReward:   unclaimReward,
+		CreatedAt:       ctx.BlockHeader().Time,
+	}
+	accManager.recorder.RewardRepository.Add(rewardstruc)
 	return nil
 }
 

@@ -6,6 +6,6 @@ import (
 )
 
 type TopContentRepository interface {
-	Get(timestamp int64) (*topcontent.TopContent, errors.Error)
+	Get(permlink string) (*topcontent.TopContent, errors.Error)
 	Add(info *topcontent.TopContent) errors.Error
 }

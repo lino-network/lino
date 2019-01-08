@@ -74,7 +74,9 @@ func handleStakeInMsg(
 		Timestamp: ctx.BlockHeader().Time.Unix(),
 		Op:        "IN",
 	}
-	vm.recorder.StakeRepository.Add(stake)
+	if !vm.recorder.NewVersionOnly {
+		vm.recorder.StakeRepository.Add(stake)
+	}
 
 	return sdk.Result{}
 }
@@ -115,8 +117,10 @@ func handleStakeOutMsg(
 		Timestamp: ctx.BlockHeader().Time.Unix(),
 		Op:        "OUT",
 	}
-	vm.recorder.StakeRepository.Add(stake)
 
+	if !vm.recorder.NewVersionOnly {
+		vm.recorder.StakeRepository.Add(stake)
+	}
 	return sdk.Result{}
 }
 

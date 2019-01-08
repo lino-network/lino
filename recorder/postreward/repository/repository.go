@@ -6,6 +6,6 @@ import (
 )
 
 type PostRewardRepository interface {
-	Get(timestamp int64) (*postreward.PostReward, errors.Error)
+	Get(permlink string) (*postreward.PostReward, errors.Error)
 	Add(info *postreward.PostReward) errors.Error
 }

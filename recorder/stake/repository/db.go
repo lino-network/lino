@@ -44,12 +44,13 @@ func NewStakeDB(conn *sql.DB) (StakeRepository, errors.Error) {
 
 func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	var (
+		id        int64
 		username  string
 		amount    int64
 		timestamp int64
 		op        string
 	)
-	if err := s.Scan(&username, &amount, &timestamp, &op); err != nil {
+	if err := s.Scan(&id, &username, &amount, &timestamp, &op); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "stake not found: %s", err)
 		}
@@ -57,6 +58,7 @@ func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	}
 
 	return &stake.Stake{
+		ID:        id,
 		Username:  username,
 		Amount:    amount,
 		Timestamp: timestamp,
@@ -64,8 +66,8 @@ func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	}, nil
 }
 
-func (db *stakeDB) Get(timestamp string) (*stake.Stake, errors.Error) {
-	return scanstake(db.stmts[getStake].QueryRow(timestamp))
+func (db *stakeDB) Get(username string) (*stake.Stake, errors.Error) {
+	return scanstake(db.stmts[getStake].QueryRow(username))
 }
 
 func (db *stakeDB) Add(stake *stake.Stake) errors.Error {

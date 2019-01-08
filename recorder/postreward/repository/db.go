@@ -44,6 +44,7 @@ func NewPostRewardDB(conn *sql.DB) (PostRewardRepository, errors.Error) {
 
 func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error) {
 	var (
+		id           int64
 		permlink     string
 		reward       int64
 		penaltyScore string
@@ -52,7 +53,7 @@ func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error)
 		original     int64
 		consumer     string
 	)
-	if err := s.Scan(&permlink, &reward, &penaltyScore, &timestamp); err != nil {
+	if err := s.Scan(&id, &permlink, &reward, &penaltyScore, &timestamp, &evaluate, &original, &consumer); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "post not found: %s", err)
 		}
@@ -60,6 +61,7 @@ func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error)
 	}
 
 	return &postreward.PostReward{
+		ID:           id,
 		Permlink:     permlink,
 		Reward:       reward,
 		PenaltyScore: penaltyScore,
@@ -70,8 +72,8 @@ func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error)
 	}, nil
 }
 
-func (db *postRewardDB) Get(timestamp int64) (*postreward.PostReward, errors.Error) {
-	return scanPostReward(db.stmts[getPostReward].QueryRow(timestamp))
+func (db *postRewardDB) Get(permlink string) (*postreward.PostReward, errors.Error) {
+	return scanPostReward(db.stmts[getPostReward].QueryRow(permlink))
 }
 
 func (db *postRewardDB) Add(postReward *postreward.PostReward) errors.Error {
