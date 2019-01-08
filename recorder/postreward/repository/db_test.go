@@ -29,11 +29,12 @@ func TestAddnGet(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to add %v, got err %v", d1, err)
 		}
-		res, err := env.coRepo.Get(1538606755)
+		res, err := env.coRepo.Get("p1")
 
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to get PostReward with %s, got err %v", "user1", err)
 		}
+		d1.ID = res.ID
 		assert.Equal(d1, res)
 	})
 }

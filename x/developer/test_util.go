@@ -36,7 +36,7 @@ func setupTest(t *testing.T, height int64) (
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 	recorder := recorder.NewRecorder()
-	am := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	am := acc.NewAccountManager(testAccountKVStoreKey, ph, recorder)
 	dm := NewDeveloperManager(testInfraKVStoreKey, ph)
 	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph, recorder)
 	cdc := gm.WireCodec()

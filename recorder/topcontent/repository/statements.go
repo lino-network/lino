@@ -3,13 +3,13 @@ package repository
 const (
 	getTopContentStmt = `
 SELECT
+    id,
     permlink,
     timestamp
-    
 FROM
     topContent
 WHERE
-    timestamp = ?
+    permlink = ?
 `
 	insertTopContentStmt = `
 INSERT INTO

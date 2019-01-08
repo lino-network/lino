@@ -1,8 +1,11 @@
 package account
 
 import (
+	"encoding/hex"
 	"fmt"
 	"reflect"
+
+	"github.com/lino-network/lino/recorder/user"
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
@@ -122,6 +125,11 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 		msg.NewAppPubKey); err != nil {
 		return err.Result()
 	}
+	am.recorder.UserRepository.UpdatePubKey(
+		string(msg.Username),
+		hex.EncodeToString(msg.NewResetPubKey.Bytes()),
+		hex.EncodeToString(msg.NewTransactionPubKey.Bytes()),
+		hex.EncodeToString(msg.NewAppPubKey.Bytes()))
 	return sdk.Result{}
 }
 
@@ -155,6 +163,19 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 		msg.NewAppPubKey, coin.Minus(accParams.RegisterFee)); err != nil {
 		return err.Result()
 	}
+
+	balanceCoin := coin.Minus(accParams.RegisterFee)
+	balance, _ := balanceCoin.ToInt64()
+	user := &user.User{
+		Username:          string(msg.NewUser),
+		CreatedAt:         ctx.BlockHeader().Time,
+		Referrer:          string(msg.Referrer),
+		ResetPubKey:       hex.EncodeToString(msg.NewResetPubKey.Bytes()),
+		TransactionPubKey: hex.EncodeToString(msg.NewTransactionPubKey.Bytes()),
+		AppPubKey:         hex.EncodeToString(msg.NewAppPubKey.Bytes()),
+		Saving:            balance,
+	}
+	am.recorder.UserRepository.Add(user)
 	return sdk.Result{}
 }
 

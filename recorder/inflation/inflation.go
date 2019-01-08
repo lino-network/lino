@@ -1,6 +1,7 @@
 package inflation
 
 type Inflation struct {
+	ID                 int64 `json:"id"`
 	InfraPool          int64 `json:"infraPool"`
 	DevPool            int64 `json:"devPool"`
 	CreatorPool        int64 `json:"creatorPool"`

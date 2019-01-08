@@ -106,7 +106,7 @@ func NewLinoBlockchain(
 	}
 	lb.recorder = recorder.NewRecorder()
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
-	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
+	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, lb.recorder)
 	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder, lb.recorder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder, lb.recorder)

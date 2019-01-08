@@ -1,0 +1,550 @@
+{
+  "genesis_time": "2018-09-24T17:57:48.763446905Z",
+  "chain_id": "lino-testnet",
+  "consensus_params": {
+    "block_size_params": {
+      "max_bytes": "22020096",
+      "max_txs": "10000",
+      "max_gas": "-1"
+    },
+    "tx_size_params": {
+      "max_bytes": "10240",
+      "max_gas": "-1"
+    },
+    "block_gossip_params": {
+      "block_part_size_bytes": "65536"
+    },
+    "evidence_params": {
+      "max_age": "100000"
+    }
+  },
+  "validators": [
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "4rgh/IbevTzo/2s3YJip1F/ih0gm153mLrIkKZTrNhI="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "gYLzAxZNiLOUml0O066bY7HpRgQkSKRiR3rvkRNdnw8="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "je8jVbrXVq+ZR39ejYzKOj/Jyt8t4ogGLsEg2qeg6jk="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "2bKbCW6DTZ3CxJ+tXwwNljqIok7S8u+D5sN00eweCvk="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "UHJlLZNsQbTviL+Qnu8IDzrW6enS/lEv6f2Lj64q5uI="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "rPJuxQl/74EMSyP9X+m/KRuDRf2tacwn52Fus6owljo="
+      },
+      "power": "1000",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "xzHwkFeJ9BeHDNN1WFUF91MREvr31UM9qVnIwqEHwBw="
+      },
+      "power": "1000",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [
+      {
+        "name": "validator1",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A0ke1siaWowVK5FQmXyE6KwOUt0bBMvD8tcVCeWSgNLO"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AjNSl8TiOLj/+GqZfbJxeT3XeT0u4Q5bgywj45tzYagp"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AqEk/6emta6AoXnJ0oe9Mm74zFf8lWIty4J0PX0KYab+"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "4rgh/IbevTzo/2s3YJip1F/ih0gm153mLrIkKZTrNhI="
+        }
+      },
+      {
+        "name": "validator2",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "An+Cz4o8r7fK8gj6XCRV8Xw8mtl8qhbUlyhfENUASaol"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aot9ULPNf1zolAIyR0qz9MLfFEfEYVPdV+OR5L6TnneU"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Ahe9whdWmoTwW1+jV6mvGXaDUVXuRaQcGSOGxu3goJAg"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "gYLzAxZNiLOUml0O066bY7HpRgQkSKRiR3rvkRNdnw8="
+        }
+      },
+      {
+        "name": "validator3",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aga4w5v08rW0r+lGCJbwJiuLPZtylVEosid8NZ47i3cZ"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AgYUdL/SLMA0syJhvcxBeVOm/hdRLH799wwGtJJkTcPQ"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A+4ASdOHQtRHKYSIp1JVl2P4ErLuJljhqOTPPiftNbyP"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "je8jVbrXVq+ZR39ejYzKOj/Jyt8t4ogGLsEg2qeg6jk="
+        }
+      },
+      {
+        "name": "validator4",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aoc13B11/7AsTnuabvs8dzFpzdiao5WYjJMlYIiFPua5"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A00zvA/2C3vqXwQm3iXmsBp/fAj7DZ9jXgbVhuBv6v/k"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Agqs0mk2m8s8td0G1OOMmzYkQs1CNtER6vQ6XIazVY0Z"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "2bKbCW6DTZ3CxJ+tXwwNljqIok7S8u+D5sN00eweCvk="
+        }
+      },
+      {
+        "name": "validator5",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AgdZF41scAVZZYTT9WeMVtAklNsK/nbn+LtQfgA9LP9Q"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A4yjTNjYuXNzMSr6fC3pN1TOZ0Zia/0M7qOzx2N/5TWh"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A64pwb3o/Lsk4oq1BX/OC5PzcOHuriW5grxvCTVHKt1Q"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "UHJlLZNsQbTviL+Qnu8IDzrW6enS/lEv6f2Lj64q5uI="
+        }
+      },
+      {
+        "name": "validator6",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AlTbo6Flpp6SxVG2vk94LtcmIV4soc4UECF/C3F9+oSC"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AwOCFTwDHHrBNlpqDCn5hW9lyfZrDG7jFOo6vXAbnCCY"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A2wd7veVwnXPRrU+BeaerJhdbA+Qq7pdkDgMMmKXTqOT"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "rPJuxQl/74EMSyP9X+m/KRuDRf2tacwn52Fus6owljo="
+        }
+      },
+      {
+        "name": "validator7",
+        "coin": {
+          "amount": "10000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AsDRlnX3/sXbOdVVyQsvGpYbURrHm+37+pNLFiD6TD1x"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Av2r5NmLHAgKK3PBbbr4XkEg0KDH8jq6xijWS92qxKTE"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A1epkTYJWu1PyiCGmEHfoihenF6eGhyNToH/5NQaLcdp"
+        },
+        "is_validator": true,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "xzHwkFeJ9BeHDNN1WFUF91MREvr31UM9qVnIwqEHwBw="
+        }
+      },
+      {
+        "name": "dlivetv",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A32nANbg5R836tUDi5auQ5NS6dyhZvtHtmNY5YF2pCAA"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AqmrBwP8QGUvAX7AXjFX0dFwRkmU3MkPpJOa6jcj9PqB"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Asjm552k2c5JZJQ1tucTe/lemKd21wjSCr54ALOcmFOV"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "linowallet",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AibdT4yMQ5+N/VO0/IN6SIPcx2bCLbqH60xoSH1n/UE/"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Am/mMC93iEA95uRmpJnYysMpAdczFw1byAdAW/iPqyxX"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AlH+bNKqCJmo2JI+AAdeHjEtqFrEOoxyNnf3SNV5Hdfm"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "admin",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AqBLNkxp/97KiGe22khyGcLvAaydlhEokSi4tN1lOQW/"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AybOkNtxTzQXle7rkQQMMKoQJw5AP/qFRsmS6VMzEpy7"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AxHooJd3pyccRH3B3XZKIYH9pDDaAuSeJuUhsTcjzTVJ"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "dev",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AlLomINbxyVK45WE7/dvzz9qjT9kePSJV9rT89R74HV2"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AxavwzwBX9fAopKZSvpUUk9cn7PQr4iqoqSdrhoylJjP"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Avuas8jTd3IaTs6cvelWbxzqpPHTG/VcIkjBT7v7SKQD"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "bounty",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A5v/HJwA2Ad0GoTIsHM3eEoG9by/axdiUtekEOy06kQJ"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AsUdfC1oYi2oRi7yjAT/THW34WRptIVPtiBfJeDjCMOU"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A3s8Tn2+IsRkvLkaO6s/TUO5cvZxXulg4Ag/KE37uFwB"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "contentmining",
+        "coin": {
+          "amount": "100000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A1Yorhrl9lsQ/xGUVYfSIVQEk7BS8YJphP5azzMSVGjR"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AruxqhEW7gDRTUhSY2+o7c2EGvgLbjYGs7MdCsVUrJ1U"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A4aZPCx70wv3Xq54CvvpNBbE3hagLop7uJnBfPZ0sJbV"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      },
+      {
+        "name": "lino",
+        "coin": {
+          "amount": "330000000000000"
+        },
+        "reset_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A7jjlgk/0xGm+psyt88xpoC7LrCTrRYJWl7gfUqs0+s/"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Ak3p+L2G4/89+ZyS9N/HI49ppDgOV/Wn5dhNXheIRHHM"
+        },
+        "app_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AvL01tiYYfX3k4JtCKk957LC8ZWL0KLMihiJojPqUiWY"
+        },
+        "is_validator": false,
+        "validator_pub_key": {
+          "type": "tendermint/PubKeyEd25519",
+          "value": "3uX1ZgfR0W8TxiilxeatJnB/RP6c8BctWMGHKyA6mhI="
+        }
+      }
+    ],
+    "developers": [
+      {
+        "name": "dlivetv",
+        "deposit": {
+          "amount": "100000000000"
+        },
+        "web_site": "https://dlive.tv/",
+        "description": "",
+        "app_meta_data": "{\"login_callback\":\"https://dlive.tv\"}"
+      }
+    ],
+    "infra": [
+      {
+        "name": "lino"
+      }
+    ],
+    "genesis_param": {
+      "init_from_config": true,
+      "EvaluateOfContentValueParam": {
+        "consumption_time_adjust_base": "3153600",
+        "consumption_time_adjust_offset": "5",
+        "num_of_consumption_on_author_offset": "10000",
+        "total_amount_of_consumption_base": "100000000",
+        "total_amount_of_consumption_offset": "5",
+        "amount_of_consumption_exponent": "4/5"
+      },
+      "GlobalAllocationParam": {
+        "global_growth_rate": "5/1000",
+        "infra_allocation": "1/5",
+        "content_creator_allocation": "13/20",
+        "developer_allocation": "1/10",
+        "validator_allocation": "1/20"
+      },
+      "InfraInternalAllocationParam": {
+        "storage_allocation": "1/2",
+        "CDN_allocation": "1/2"
+      },
+      "VoteParam": {
+        "voter_coin_return_interval_second": "604800",
+        "voter_coin_return_times": "12",
+        "delegator_coin_return_interval_second": "604800",
+        "delegator_coin_return_times": "12",
+        "min_stake_in": {
+          "amount": "100000000"
+        }
+      },
+      "ProposalParam": {
+        "content_censorship_decide_second": "259200",
+        "content_censorship_min_deposit": {
+          "amount": "10000000"
+        },
+        "content_censorship_pass_ratio": "1/2",
+        "content_censorship_pass_votes": {
+          "amount": "1000000000"
+        },
+        "change_param_decide_second": "259200",
+        "change_param_execution_second": "0",
+        "change_param_min_deposit": {
+          "amount": "1000000000000"
+        },
+        "change_param_pass_ratio": "7/10",
+        "change_param_pass_votes": {
+          "amount": "10000000000000"
+        },
+        "protocol_upgrade_decide_second": "259200",
+        "protocol_upgrade_min_deposit": {
+          "amount": "10000000000000"
+        },
+        "protocol_upgrade_pass_ratio": "4/5",
+        "protocol_upgrade_pass_votes": {
+          "amount": "100000000000000"
+        }
+      },
+      "DeveloperParam": {
+        "developer_min_deposit": {
+          "amount": "100000000000"
+        },
+        "developer_coin_return_interval_second": "604800",
+        "developer_coin_return_times": "12"
+      },
+      "ValidatorParam": {
+        "validator_min_withdraw": {
+          "amount": "100000"
+        },
+        "validator_min_voting_deposit": {
+          "amount": "20000000000"
+        },
+        "validator_min_committing_deposit": {
+          "amount": "20000000000"
+        },
+        "validator_coin_return_second": "604800",
+        "validator_coin_return_times": "12",
+        "penalty_miss_vote": {
+          "amount": "2000000000"
+        },
+        "penalty_miss_commit": {
+          "amount": "20000000"
+        },
+        "penalty_byzantine": {
+          "amount": "100000000000"
+        },
+        "validator_list_size": "22",
+        "absent_commit_limitation": "600"
+      },
+      "CoinDayParam": {
+        "seconds_to_recover_coin_day": "604800"
+      },
+      "BandwidthParam": {
+        "seconds_to_recover_bandwidth": "604800",
+        "capacity_usage_per_transaction": {
+          "amount": "1"
+        },
+        "virtual_coin": {
+          "amount": "100000"
+        }
+      },
+      "AccountParam": {
+        "minimum_balance": {
+          "amount": "0"
+        },
+        "register_fee": {
+          "amount": "10000000"
+        },
+        "first_deposit_full_coin_day_limit": {
+          "amount": "100000"
+        },
+        "max_num_frozen_money": "10"
+      },
+      "PostParam": {
+        "report_or_upvote_interval_second": "60",
+        "post_interval_sec": "0",
+        "max_report_reputation": {
+          "amount": "1000000000"
+        }
+      },
+      "ReputationParam": {
+        "best_content_index_n": "10"
+      }
+    },
+    "init_global_meta": {
+      "max_tps": "500",
+      "consumption_friction_rate": "99/1000",
+      "consumption_freezing_period_second": "604800"
+    }
+  }
+}

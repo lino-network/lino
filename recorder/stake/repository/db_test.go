@@ -31,6 +31,7 @@ func TestAddnGet(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to get stake with %s, got err %v", "user1", err)
 		}
+		d1.ID = res.ID
 		assert.Equal(d1, res)
 	})
 }

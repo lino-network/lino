@@ -1,6 +1,7 @@
 package postreward
 
 type PostReward struct {
+	ID           int64  `json:"id"`
 	Permlink     string `json:"permlink"`
 	Reward       int64  `json:"reward"`
 	PenaltyScore string `json:"penaltyScore"`

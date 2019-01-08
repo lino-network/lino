@@ -91,7 +91,8 @@ func (event RewardEvent) Execute(
 		Original:     originalInt,
 		Consumer:     (string)(event.Consumer),
 	}
-	pm.recorder.PostRewardRepository.Add(postReward)
-
+	if !pm.recorder.NewVersionOnly {
+		pm.recorder.PostRewardRepository.Add(postReward)
+	}
 	return nil
 }

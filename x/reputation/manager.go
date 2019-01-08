@@ -151,7 +151,9 @@ func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 				Permlink:  permlink,
 				Timestamp: ctx.BlockHeader().Time.Unix(),
 			}
-			rep.recorder.TopContentRepository.Add(content)
+			if !rep.recorder.NewVersionOnly {
+				rep.recorder.TopContentRepository.Add(content)
+			}
 		}
 	}
 	return nil

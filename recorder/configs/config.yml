@@ -1,0 +1,11 @@
+db_username: root
+db_password: my-secret
+db_host: 127.0.0.1
+db_port: 3308
+db_name: lino_db
+# sqs_posturl:  https://sqs.us-east-1.amazonaws.com/726332586568/Lino_app_post_queue
+# sqs_postupdateurl:  https://sqs.us-east-1.amazonaws.com/726332586568/Lino_app_post_update_queue
+# sqs_transcodeurl:  https://sqs.us-east-1.amazonaws.com/726332586568/lino_original_video_file_aws_s3_bucket_put_event_queue
+#es_addr: https://vpc-lino-app-a3tu77hlfsapakzlv7ova4rkby.us-east-1.es.amazonaws.com/
+# redis_host: lino-app-backend.gm7uns.clustercfg.usw2.cache.amazonaws.com
+# redis_port: 6379
