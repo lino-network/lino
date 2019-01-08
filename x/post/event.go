@@ -4,6 +4,7 @@ import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/lino-network/lino/recorder/postreward"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
@@ -80,7 +81,7 @@ func (event RewardEvent) Execute(
 	evaluateInt, _ := event.Evaluate.ToInt64()
 	originalInt, _ := event.Original.ToInt64()
 
-	postReward := &postReward.PostReward{
+	postReward := &postreward.PostReward{
 		Permlink:     (string)(permlink),
 		Reward:       rewardInt,
 		PenaltyScore: paneltyScore.FloatString(),
