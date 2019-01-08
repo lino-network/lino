@@ -16,7 +16,7 @@ func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
 	d1 := &stake.Stake{
 		Username:  "user1",
-		Amount:    2000,
+		Amount:    "2000",
 		Timestamp: 1538606755,
 		Op:        "IN",
 	}

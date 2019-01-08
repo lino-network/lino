@@ -26,4 +26,10 @@ post(author, postID, title, content, parentAuthor, parentPostID, sourceAuthor, s
 VALUES
    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
+	setRewardStmt = `
+    UPDATE post
+    SET
+      totalReward = ?
+    WHERE author = ? AND postID = ?
+    `
 )

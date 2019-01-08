@@ -21,7 +21,7 @@ func TestAddnGet(t *testing.T) {
 		FromUser:   "user1",
 		ToUser:     "user2",
 		Amount:     100,
-		Balance:    10000,
+		Balance:    "10000",
 		DetailType: types.TransferIn,
 		CreatedAt:  time.Unix(time.Now().Unix(), 0).UTC(),
 		Memo:       "transfer",

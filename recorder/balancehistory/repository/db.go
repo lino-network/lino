@@ -52,7 +52,7 @@ func scanBalanceHistory(s dbutils.RowScanner) (*balancehistory.BalanceHistory, e
 		fromUser   string
 		toUser     string
 		amount     int64
-		balance    int64
+		balance    string
 		detailType int64
 		createdAt  time.Time
 		memo       string
@@ -70,7 +70,7 @@ func scanBalanceHistory(s dbutils.RowScanner) (*balancehistory.BalanceHistory, e
 		FromUser:   username,
 		ToUser:     toUser,
 		Amount:     amount,
-		Balance:    balance,
+		Balance:    dbutils.TrimPaddedZeroFromNumber(balance),
 		DetailType: types.TransferDetailType(detailType),
 		CreatedAt:  createdAt,
 		Memo:       memo,
@@ -81,12 +81,17 @@ func (db *balanceHistoryDB) Get(username string) (*balancehistory.BalanceHistory
 	return scanBalanceHistory(db.stmts[getBalanceHistory].QueryRow(username))
 }
 func (db *balanceHistoryDB) Add(balanceHistory *balancehistory.BalanceHistory) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertBalanceHistory],
+
+	paddedBalance, err := dbutils.PadNumberStrWithZero(balanceHistory.Balance)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertBalanceHistory],
 		balanceHistory.Username,
 		balanceHistory.FromUser,
 		balanceHistory.ToUser,
 		balanceHistory.Amount,
-		balanceHistory.Balance,
+		paddedBalance,
 		balanceHistory.DetailType,
 		balanceHistory.CreatedAt,
 		balanceHistory.Memo,

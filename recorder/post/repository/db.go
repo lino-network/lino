@@ -14,6 +14,7 @@ import (
 const (
 	getPost       = "get-post"
 	insertPost    = "insert-post"
+	setReward     = "set-reward"
 	postTableName = "post"
 )
 
@@ -32,6 +33,7 @@ func NewPostDB(conn *sql.DB) (PostRepository, errors.Error) {
 	unprepared := map[string]string{
 		getPost:    getPostStmt,
 		insertPost: insertPostStmt,
+		setReward:  setRewardStmt,
 	}
 	stmts, err := dbutils.PrepareStmts(postTableName, conn, unprepared)
 	if err != nil {
@@ -56,7 +58,7 @@ func scanPost(s dbutils.RowScanner) (*post.Post, errors.Error) {
 		links            string
 		createdAt        time.Time
 		totalDonateCount int64
-		totalReward      int64
+		totalReward      string
 	)
 	if err := s.Scan(&author, &postID, &title, &content, &parentAuthor, &parentPostID, &sourceAuthor, &sourcePostID, &links, &createdAt, &totalDonateCount, &totalReward); err != nil {
 		if err == sql.ErrNoRows {
@@ -77,7 +79,7 @@ func scanPost(s dbutils.RowScanner) (*post.Post, errors.Error) {
 		Links:            links,
 		CreatedAt:        createdAt,
 		TotalDonateCount: totalDonateCount,
-		TotalReward:      totalReward,
+		TotalReward:      dbutils.TrimPaddedZeroFromNumber(totalReward),
 	}, nil
 }
 
@@ -86,7 +88,11 @@ func (db *postDB) Get(author string) (*post.Post, errors.Error) {
 }
 
 func (db *postDB) Add(post *post.Post) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertPost],
+	totalReward, err := dbutils.PadNumberStrWithZero(post.TotalReward)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertPost],
 		post.Author,
 		post.PostID,
 		post.Title,
@@ -98,7 +104,18 @@ func (db *postDB) Add(post *post.Post) errors.Error {
 		post.Links,
 		post.CreatedAt,
 		post.TotalDonateCount,
-		post.TotalReward,
+		totalReward,
+	)
+	return err
+}
+
+func (db *postDB) SetReward(author, postID string, amount string) errors.Error {
+	paddingAmount, err := dbutils.PadNumberStrWithZero(amount)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[setReward],
+		paddingAmount, author, postID,
 	)
 	return err
 }

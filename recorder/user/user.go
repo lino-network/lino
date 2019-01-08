@@ -9,6 +9,6 @@ type User struct {
 	ResetPubKey       string    `json:"reset_public_key"`
 	TransactionPubKey string    `json:"transaction_public_key"`
 	AppPubKey         string    `json:"app_public_key"`
-	Saving            int64     `json:"saving"`
+	Saving            string    `json:"saving"`
 	Sequence          int64     `json:"sequence"`
 }

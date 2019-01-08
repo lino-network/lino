@@ -176,20 +176,25 @@ func (accManager AccountManager) AddSavingCoin(
 	}
 
 	amount, _ := coin.ToInt64()
-	balance, _ := bank.Saving.ToInt64()
 	balancehistory := &balancehistory.BalanceHistory{
 		Username:   string(username),
 		FromUser:   string(from),
 		ToUser:     string(username),
 		Amount:     amount,
-		Balance:    balance,
+		Balance:    bank.Saving.Amount.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
 	}
-	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	accManager.recorder.UserRepository.UpdateBalance(
-		string(username), balance)
+	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	if insertErr != nil {
+		panic(insertErr)
+	}
+	updateErr := accManager.recorder.UserRepository.UpdateBalance(
+		string(username), bank.Saving.Amount.String())
+	if updateErr != nil {
+		panic(updateErr)
+	}
 	return nil
 }
 
@@ -229,20 +234,25 @@ func (accManager AccountManager) AddSavingCoinWithFullCoinDay(
 	}
 
 	amount, _ := coin.ToInt64()
-	balance, _ := bank.Saving.ToInt64()
 	balancehistory := &balancehistory.BalanceHistory{
 		Username:   string(username),
 		FromUser:   string(from),
 		ToUser:     string(username),
 		Amount:     amount,
-		Balance:    balance,
+		Balance:    bank.Saving.Amount.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
 	}
-	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	accManager.recorder.UserRepository.UpdateBalance(
-		string(username), balance)
+	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	if insertErr != nil {
+		panic(insertErr)
+	}
+	updateErr := accManager.recorder.UserRepository.UpdateBalance(
+		string(username), bank.Saving.Amount.String())
+	if updateErr != nil {
+		panic(updateErr)
+	}
 	return nil
 }
 
@@ -337,20 +347,25 @@ func (accManager AccountManager) MinusSavingCoin(
 	}
 
 	amount, _ := coin.ToInt64()
-	balance, _ := accountBank.Saving.ToInt64()
 	balancehistory := &balancehistory.BalanceHistory{
 		Username:   string(username),
 		FromUser:   string(username),
 		ToUser:     string(to),
 		Amount:     amount,
-		Balance:    balance,
+		Balance:    accountBank.Saving.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
 	}
-	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	accManager.recorder.UserRepository.UpdateBalance(
-		string(username), balance)
+	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	if insertErr != nil {
+		panic(insertErr)
+	}
+	updateErr := accManager.recorder.UserRepository.UpdateBalance(
+		string(username), accountBank.Saving.String())
+	if updateErr != nil {
+		panic(updateErr)
+	}
 	return nil
 }
 
@@ -444,20 +459,25 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		return err
 	}
 	amount, _ := coin.ToInt64()
-	balance, _ := accountBank.Saving.ToInt64()
 	balancehistory := &balancehistory.BalanceHistory{
 		Username:   string(username),
 		FromUser:   string(username),
 		ToUser:     string(to),
 		Amount:     amount,
-		Balance:    balance,
+		Balance:    accountBank.Saving.String(),
 		DetailType: detailType,
 		CreatedAt:  ctx.BlockHeader().Time,
 		Memo:       memo,
 	}
-	accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	accManager.recorder.UserRepository.UpdateBalance(
-		string(username), balance)
+	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
+	if insertErr != nil {
+		panic(insertErr)
+	}
+	updateErr := accManager.recorder.UserRepository.UpdateBalance(
+		string(username), accountBank.Saving.String())
+	if updateErr != nil {
+		panic(updateErr)
+	}
 	return nil
 }
 
@@ -668,18 +688,13 @@ func (accManager AccountManager) AddIncomeAndReward(
 		return err
 	}
 
-	totalIncome, _ := reward.TotalIncome.ToInt64()
-	originalIncome, _ := reward.OriginalIncome.ToInt64()
-	frictionIncome, _ := reward.FrictionIncome.ToInt64()
-	inflationIncome, _ := reward.InflationIncome.ToInt64()
-	unclaimReward, _ := reward.UnclaimReward.ToInt64()
 	rewardstruc := &rreward.Reward{
 		Username:        string(username),
-		TotalIncome:     totalIncome,
-		OriginalIncome:  originalIncome,
-		FrictionIncome:  frictionIncome,
-		InflationIncome: inflationIncome,
-		UnclaimReward:   unclaimReward,
+		TotalIncome:     reward.TotalIncome.Amount.String(),
+		OriginalIncome:  reward.OriginalIncome.Amount.String(),
+		FrictionIncome:  reward.FrictionIncome.Amount.String(),
+		InflationIncome: reward.InflationIncome.Amount.String(),
+		UnclaimReward:   reward.UnclaimReward.Amount.String(),
 		CreatedAt:       ctx.BlockHeader().Time,
 	}
 	accManager.recorder.RewardRepository.Add(rewardstruc)
@@ -737,18 +752,13 @@ func (accManager AccountManager) ClaimReward(
 		return err
 	}
 
-	totalIncome, _ := reward.TotalIncome.ToInt64()
-	originalIncome, _ := reward.OriginalIncome.ToInt64()
-	frictionIncome, _ := reward.FrictionIncome.ToInt64()
-	inflationIncome, _ := reward.InflationIncome.ToInt64()
-	unclaimReward, _ := reward.UnclaimReward.ToInt64()
 	rewardstruc := &rreward.Reward{
 		Username:        string(username),
-		TotalIncome:     totalIncome,
-		OriginalIncome:  originalIncome,
-		FrictionIncome:  frictionIncome,
-		InflationIncome: inflationIncome,
-		UnclaimReward:   unclaimReward,
+		TotalIncome:     reward.TotalIncome.String(),
+		OriginalIncome:  reward.OriginalIncome.String(),
+		FrictionIncome:  reward.FrictionIncome.String(),
+		InflationIncome: reward.InflationIncome.String(),
+		UnclaimReward:   reward.UnclaimReward.String(),
 		CreatedAt:       ctx.BlockHeader().Time,
 	}
 	accManager.recorder.RewardRepository.Add(rewardstruc)

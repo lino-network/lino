@@ -18,8 +18,8 @@ func TestAddnGet(t *testing.T) {
 	d1 := &stakestat.StakeStat{
 		TotalConsumptionFriction: 1,
 		UnclaimedFriction:        12,
-		TotalLinoStake:           13,
-		UnclaimedLinoStake:       14,
+		TotalLinoStake:           "13",
+		UnclaimedLinoStake:       "14",
 		Timestamp:                1538606755,
 	}
 

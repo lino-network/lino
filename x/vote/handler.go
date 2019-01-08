@@ -66,11 +66,9 @@ func handleStakeInMsg(
 	}
 
 	// record
-	stakeInt, _ := coin.ToInt64()
-
 	stake := &recorderStake.Stake{
 		Username:  (string)(msg.Username),
-		Amount:    stakeInt,
+		Amount:    coin.Amount.String(),
 		Timestamp: ctx.BlockHeader().Time.Unix(),
 		Op:        "IN",
 	}
@@ -109,11 +107,9 @@ func handleStakeOutMsg(
 	}
 
 	// record
-	stakeInt, _ := coin.ToInt64()
-
 	stake := &recorderStake.Stake{
 		Username:  (string)(msg.Username),
-		Amount:    stakeInt,
+		Amount:    coin.Amount.String(),
 		Timestamp: ctx.BlockHeader().Time.Unix(),
 		Op:        "OUT",
 	}

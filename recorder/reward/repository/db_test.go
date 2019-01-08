@@ -17,11 +17,11 @@ func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
 	r1 := &reward.Reward{
 		Username:        "user1",
-		TotalIncome:     10000,
-		OriginalIncome:  20000,
-		FrictionIncome:  30000,
-		InflationIncome: 40000,
-		UnclaimReward:   50000,
+		TotalIncome:     "10000",
+		OriginalIncome:  "20000",
+		FrictionIncome:  "30000",
+		InflationIncome: "40000",
+		UnclaimReward:   "50000",
 		CreatedAt:       time.Unix(time.Now().Unix(), 0).UTC(),
 	}
 

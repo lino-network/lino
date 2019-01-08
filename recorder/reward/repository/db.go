@@ -48,11 +48,11 @@ func scanReward(s dbutils.RowScanner) (*reward.Reward, errors.Error) {
 	var (
 		id              int64
 		username        string
-		totalIncome     int64
-		originalIncome  int64
-		frictionIncome  int64
-		inflationIncome int64
-		unclaimReward   int64
+		totalIncome     string
+		originalIncome  string
+		frictionIncome  string
+		inflationIncome string
+		unclaimReward   string
 		createdAt       time.Time
 	)
 	if err := s.Scan(&id, &username, &totalIncome, &originalIncome, &frictionIncome, &inflationIncome, &unclaimReward, &createdAt); err != nil {
@@ -65,11 +65,11 @@ func scanReward(s dbutils.RowScanner) (*reward.Reward, errors.Error) {
 	return &reward.Reward{
 		ID:              id,
 		Username:        username,
-		TotalIncome:     totalIncome,
-		OriginalIncome:  originalIncome,
-		FrictionIncome:  frictionIncome,
-		InflationIncome: inflationIncome,
-		UnclaimReward:   unclaimReward,
+		TotalIncome:     dbutils.TrimPaddedZeroFromNumber(totalIncome),
+		OriginalIncome:  dbutils.TrimPaddedZeroFromNumber(originalIncome),
+		FrictionIncome:  dbutils.TrimPaddedZeroFromNumber(frictionIncome),
+		InflationIncome: dbutils.TrimPaddedZeroFromNumber(inflationIncome),
+		UnclaimReward:   dbutils.TrimPaddedZeroFromNumber(unclaimReward),
 		CreatedAt:       createdAt,
 	}, nil
 }
@@ -78,13 +78,33 @@ func (db *rewardDB) Get(username string) (*reward.Reward, errors.Error) {
 	return scanReward(db.stmts[getReward].QueryRow(username))
 }
 func (db *rewardDB) Add(reward *reward.Reward) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertReward],
+	totalIncome, err := dbutils.PadNumberStrWithZero(reward.TotalIncome)
+	if err != nil {
+		return err
+	}
+	originalIncome, err := dbutils.PadNumberStrWithZero(reward.OriginalIncome)
+	if err != nil {
+		return err
+	}
+	frictionIncome, err := dbutils.PadNumberStrWithZero(reward.FrictionIncome)
+	if err != nil {
+		return err
+	}
+	inflationIncome, err := dbutils.PadNumberStrWithZero(reward.InflationIncome)
+	if err != nil {
+		return err
+	}
+	unclaimReward, err := dbutils.PadNumberStrWithZero(reward.UnclaimReward)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertReward],
 		reward.Username,
-		reward.TotalIncome,
-		reward.OriginalIncome,
-		reward.FrictionIncome,
-		reward.InflationIncome,
-		reward.UnclaimReward,
+		totalIncome,
+		originalIncome,
+		frictionIncome,
+		inflationIncome,
+		unclaimReward,
 		reward.CreatedAt,
 	)
 	return err

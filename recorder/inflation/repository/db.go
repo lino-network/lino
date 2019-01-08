@@ -44,17 +44,18 @@ func NewinflationDB(conn *sql.DB) (InflationRepository, errors.Error) {
 
 func scaninflation(s dbutils.RowScanner) (*inflation.Inflation, errors.Error) {
 	var (
-		infraPool          int64
-		devPool            int64
-		creatorPool        int64
-		validatorPool      int64
-		infraInflation     int64
-		devInflation       int64
-		creatorInflation   int64
-		validatorInflation int64
+		id                 int64
+		infraPool          string
+		devPool            string
+		creatorPool        string
+		validatorPool      string
+		infraInflation     string
+		devInflation       string
+		creatorInflation   string
+		validatorInflation string
 		timestamp          int64
 	)
-	if err := s.Scan(&infraPool, &devPool, &creatorPool, &validatorPool, &infraInflation, &devInflation, &creatorInflation, &validatorInflation, &timestamp); err != nil {
+	if err := s.Scan(&id, &infraPool, &devPool, &creatorPool, &validatorPool, &infraInflation, &devInflation, &creatorInflation, &validatorInflation, &timestamp); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "user not found: %s", err)
 		}
@@ -62,14 +63,14 @@ func scaninflation(s dbutils.RowScanner) (*inflation.Inflation, errors.Error) {
 	}
 
 	return &inflation.Inflation{
-		InfraPool:          infraPool,
-		DevPool:            devPool,
-		CreatorPool:        creatorPool,
-		ValidatorPool:      validatorPool,
-		InfraInflation:     infraInflation,
-		DevInflation:       devInflation,
-		CreatorInflation:   creatorInflation,
-		ValidatorInflation: validatorInflation,
+		InfraPool:          dbutils.TrimPaddedZeroFromNumber(infraPool),
+		DevPool:            dbutils.TrimPaddedZeroFromNumber(devPool),
+		CreatorPool:        dbutils.TrimPaddedZeroFromNumber(creatorPool),
+		ValidatorPool:      dbutils.TrimPaddedZeroFromNumber(validatorPool),
+		InfraInflation:     dbutils.TrimPaddedZeroFromNumber(infraInflation),
+		DevInflation:       dbutils.TrimPaddedZeroFromNumber(devInflation),
+		CreatorInflation:   dbutils.TrimPaddedZeroFromNumber(creatorInflation),
+		ValidatorInflation: dbutils.TrimPaddedZeroFromNumber(validatorInflation),
 		Timestamp:          timestamp,
 	}, nil
 }
@@ -79,15 +80,47 @@ func (db *inflationDB) Get(timestamp int64) (*inflation.Inflation, errors.Error)
 }
 
 func (db *inflationDB) Add(inflation *inflation.Inflation) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertInflation],
-		inflation.InfraPool,
-		inflation.DevPool,
-		inflation.CreatorPool,
-		inflation.ValidatorPool,
-		inflation.InfraInflation,
-		inflation.DevInflation,
-		inflation.CreatorInflation,
-		inflation.ValidatorInflation,
+	infraPool, err := dbutils.PadNumberStrWithZero(inflation.InfraPool)
+	if err != nil {
+		return err
+	}
+	devPool, err := dbutils.PadNumberStrWithZero(inflation.DevPool)
+	if err != nil {
+		return err
+	}
+	creatorPool, err := dbutils.PadNumberStrWithZero(inflation.CreatorPool)
+	if err != nil {
+		return err
+	}
+	validatorPool, err := dbutils.PadNumberStrWithZero(inflation.ValidatorPool)
+	if err != nil {
+		return err
+	}
+	infraInflation, err := dbutils.PadNumberStrWithZero(inflation.InfraInflation)
+	if err != nil {
+		return err
+	}
+	devInflation, err := dbutils.PadNumberStrWithZero(inflation.DevInflation)
+	if err != nil {
+		return err
+	}
+	creatorInflation, err := dbutils.PadNumberStrWithZero(inflation.CreatorInflation)
+	if err != nil {
+		return err
+	}
+	validatorInflation, err := dbutils.PadNumberStrWithZero(inflation.ValidatorInflation)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertInflation],
+		infraPool,
+		devPool,
+		creatorPool,
+		validatorPool,
+		infraInflation,
+		devInflation,
+		creatorInflation,
+		validatorInflation,
 		inflation.Timestamp,
 	)
 	return err

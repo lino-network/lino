@@ -97,6 +97,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		SourceAuthor: string(msg.SourceAuthor),
 		SourcePostID: msg.SourcePostID,
 		CreatedAt:    ctx.BlockHeader().Time,
+		TotalReward:  "0",
 	}
 	pm.recorder.PostRepository.Add(post)
 	return sdk.Result{}

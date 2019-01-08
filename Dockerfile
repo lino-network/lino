@@ -1,10 +1,10 @@
 FROM golang:1.10
 
 RUN apt-get update && \
-    apt-get -y install wget curl sudo make && \
-    apt-get install -y git && \
-    apt-get install -y jq && \
-    apt install -y python3 \
+        apt-get -y install wget curl sudo make && \
+        apt-get install -y git && \
+        apt-get install -y jq && \
+        apt install -y python3 \
         python3-pip \
         python3-setuptools && \
         pip3 install --upgrade pip && \
@@ -17,10 +17,7 @@ WORKDIR src/github.com/lino-network
 RUN git clone https://github.com/lino-network/lino.git
 WORKDIR lino
 RUN git checkout origin/zl/recorder
-
-# golang dep
-RUN go get -u github.com/golang/dep/cmd/dep
-RUN dep ensure
+COPY vendor vendor
 
 # replace customize file
 WORKDIR cmd/lino

@@ -46,7 +46,7 @@ func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	var (
 		id        int64
 		username  string
-		amount    int64
+		amount    string
 		timestamp int64
 		op        string
 	)
@@ -60,7 +60,7 @@ func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	return &stake.Stake{
 		ID:        id,
 		Username:  username,
-		Amount:    amount,
+		Amount:    dbutils.TrimPaddedZeroFromNumber(amount),
 		Timestamp: timestamp,
 		Op:        op,
 	}, nil
@@ -71,9 +71,13 @@ func (db *stakeDB) Get(username string) (*stake.Stake, errors.Error) {
 }
 
 func (db *stakeDB) Add(stake *stake.Stake) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertStake],
+	amount, err := dbutils.PadNumberStrWithZero(stake.Amount)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertStake],
 		stake.Username,
-		stake.Amount,
+		amount,
 		stake.Timestamp,
 		stake.Op,
 	)

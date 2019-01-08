@@ -275,16 +275,14 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 	}
 
 	// record
-	unclaimedLinoStakeInt, _ := lastLinoStakeStat.UnclaimedLinoStake.ToInt64()
 	unclaimedFrictionInt, _ := lastLinoStakeStat.UnclaimedFriction.ToInt64()
 	totalConsumptionFrictionInt, _ := lastLinoStakeStat.TotalConsumptionFriction.ToInt64()
-	totalLinoStakeInt, _ := lastLinoStakeStat.TotalLinoStake.ToInt64()
 
 	stakeStat := &stakestat.StakeStat{
-		UnclaimedLinoStake:       unclaimedLinoStakeInt,
+		UnclaimedLinoStake:       lastLinoStakeStat.UnclaimedLinoStake.Amount.String(),
 		UnclaimedFriction:        unclaimedFrictionInt,
 		TotalConsumptionFriction: totalConsumptionFrictionInt,
-		TotalLinoStake:           totalLinoStakeInt,
+		TotalLinoStake:           lastLinoStakeStat.TotalLinoStake.String(),
 		Timestamp:                ctx.BlockHeader().Time.Unix(),
 	}
 	if !gm.recorder.NewVersionOnly {
@@ -401,25 +399,15 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	}
 
 	// record
-	infraInflationPoolInt, _ := pool.InfraInflationPool.ToInt64()
-	devInflationPoolInt, _ := pool.DeveloperInflationPool.ToInt64()
-	creatorInflationPoolInt, _ := consumptionMeta.ConsumptionRewardPool.ToInt64()
-	validatorInflationPoolInt, _ := pool.ValidatorInflationPool.ToInt64()
-
-	infraInflationInt, _ := infraInflation.ToInt64()
-	devInflationInt, _ := developerInflation.ToInt64()
-	creatorInflationInt, _ := contentCreatorInflation.ToInt64()
-	validatorInflationInt, _ := validatorInflation.ToInt64()
-
 	inflation := &inflation.Inflation{
-		InfraPool:          infraInflationPoolInt,
-		DevPool:            devInflationPoolInt,
-		CreatorPool:        creatorInflationPoolInt,
-		ValidatorPool:      validatorInflationPoolInt,
-		InfraInflation:     infraInflationInt,
-		DevInflation:       devInflationInt,
-		CreatorInflation:   creatorInflationInt,
-		ValidatorInflation: validatorInflationInt,
+		InfraPool:          pool.InfraInflationPool.String(),
+		DevPool:            pool.DeveloperInflationPool.String(),
+		CreatorPool:        consumptionMeta.ConsumptionRewardPool.String(),
+		ValidatorPool:      pool.ValidatorInflationPool.String(),
+		InfraInflation:     infraInflation.String(),
+		DevInflation:       developerInflation.String(),
+		CreatorInflation:   contentCreatorInflation.String(),
+		ValidatorInflation: validatorInflation.String(),
 		Timestamp:          ctx.BlockHeader().Time.Unix(),
 	}
 	if !gm.recorder.NewVersionOnly {
