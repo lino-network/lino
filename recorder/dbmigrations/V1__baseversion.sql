@@ -36,7 +36,8 @@ CREATE TABLE `postReward`
   `penaltyScore` varchar(45) NOT NULL,
   `evaluate` BIGINT NOT NULL,
   `original` BIGINT NOT NULL,
-  `consumer` varchar(45) NOT NULL
+  `consumer` varchar(45) NOT NULL,
+  INDEX ('permlink', 'reward')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `stake`
