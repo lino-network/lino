@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lino-network/lino-app-backend/pkg/lino-app/errors"
 	"github.com/lino-network/lino-service-discovery/pkg/k8s"
 	"github.com/rs/zerolog/log"
 	yaml "gopkg.in/yaml.v2"
@@ -19,17 +18,17 @@ type Configs struct {
 	serviceAddrs k8s.ServiceAddr
 }
 
-func readKeys(c *Configs, path string, store []configKey) errors.Error {
+func readKeys(c *Configs, path string, store []configKey) error {
 	if path != "" {
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
-			return errors.NewErrorf(errors.CodeFailedToReadConfigYaml, "failed to read config: %s", err)
+			return err
 		}
 
 		m := make(map[string]string)
 		err = yaml.Unmarshal(yamlFile, &m)
 		if err != nil {
-			return errors.NewErrorf(errors.CodeFailedToReadConfigYaml, "failed to parse yaml file: %s", err)
+			return err
 		}
 		for _, key := range store {
 			v, ok := m[key]
@@ -50,7 +49,7 @@ func readKeys(c *Configs, path string, store []configKey) errors.Error {
 	return nil
 }
 
-func NewConfig(configPath string) (*Configs, errors.Error) {
+func NewConfig(configPath string) (*Configs, err) {
 	var c = &Configs{}
 	c.store = make(map[configKey]string)
 	if err := readKeys(c, configPath, configKeys); err != nil {
