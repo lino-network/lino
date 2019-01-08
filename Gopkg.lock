@@ -222,13 +222,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
+  digest = "1:ea40c24cdbacd054a6ae9de03e62c5f252479b96c716375aace5c120d68647c8"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
     "hcl/ast",
     "hcl/parser",
-    "hcl/printer",
     "hcl/scanner",
     "hcl/strconv",
     "hcl/token",
@@ -263,6 +262,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
+
+[[projects]]
+  digest = "1:db604848a13d263381387edb3d5c349d7b2926d0edb93a6b5a931a19565e17ca"
+  name = "github.com/lino-network/lino-service-discovery"
+  packages = ["pkg/k8s"]
+  pruneopts = "UT"
+  revision = "0d497a0faec870563e3ed05d2e98a41ea6710d61"
+  version = "v0.1.9"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -369,6 +376,19 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+
+[[projects]]
+  digest = "1:a073c2dd83aa92060bd5b551e3a19a40f8e24d4aaa7e7da767ee9c69f07b533a"
+  name = "github.com/rs/zerolog"
+  packages = [
+    ".",
+    "internal/cbor",
+    "internal/json",
+    "log",
+  ]
+  pruneopts = "UT"
+  revision = "8747b7b3a51b5d08ee7ac50eaf4869edaf9f714a"
+  version = "v1.11.0"
 
 [[projects]]
   digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
@@ -715,7 +735,9 @@
     "github.com/cosmos/cosmos-sdk/wire",
     "github.com/cosmos/cosmos-sdk/x/auth",
     "github.com/go-sql-driver/mysql",
+    "github.com/lino-network/lino-service-discovery/pkg/k8s",
     "github.com/pkg/errors",
+    "github.com/rs/zerolog/log",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "github.com/spf13/viper",
@@ -735,6 +757,7 @@
     "github.com/tendermint/tendermint/rpc/core/types",
     "github.com/tendermint/tendermint/types",
     "github.com/tendermint/tmlibs/common",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

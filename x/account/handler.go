@@ -165,7 +165,6 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 	}
 
 	balanceCoin := coin.Minus(accParams.RegisterFee)
-	balance, _ := balanceCoin.ToInt64()
 	user := &user.User{
 		Username:          string(msg.NewUser),
 		CreatedAt:         ctx.BlockHeader().Time,
@@ -173,7 +172,7 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 		ResetPubKey:       hex.EncodeToString(msg.NewResetPubKey.Bytes()),
 		TransactionPubKey: hex.EncodeToString(msg.NewTransactionPubKey.Bytes()),
 		AppPubKey:         hex.EncodeToString(msg.NewAppPubKey.Bytes()),
-		Saving:            balance,
+		Saving:            balanceCoin.Amount.String(),
 	}
 	am.recorder.UserRepository.Add(user)
 	return sdk.Result{}

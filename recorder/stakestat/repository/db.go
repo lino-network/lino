@@ -46,8 +46,8 @@ func scanstakeStat(s dbutils.RowScanner) (*stakestat.StakeStat, errors.Error) {
 	var (
 		totalConsumptionFriction int64
 		unclaimedFriction        int64
-		totalLinoStake           int64
-		unclaimedLinoStake       int64
+		totalLinoStake           string
+		unclaimedLinoStake       string
 		timestamp                int64
 	)
 	if err := s.Scan(&totalConsumptionFriction, &unclaimedFriction, &totalLinoStake, &unclaimedLinoStake, &timestamp); err != nil {
@@ -60,8 +60,8 @@ func scanstakeStat(s dbutils.RowScanner) (*stakestat.StakeStat, errors.Error) {
 	return &stakestat.StakeStat{
 		TotalConsumptionFriction: totalConsumptionFriction,
 		UnclaimedFriction:        unclaimedFriction,
-		TotalLinoStake:           totalLinoStake,
-		UnclaimedLinoStake:       unclaimedLinoStake,
+		TotalLinoStake:           dbutils.TrimPaddedZeroFromNumber(totalLinoStake),
+		UnclaimedLinoStake:       dbutils.TrimPaddedZeroFromNumber(unclaimedLinoStake),
 		Timestamp:                timestamp,
 	}, nil
 }
@@ -71,11 +71,19 @@ func (db *stakeStatDB) Get(timestamp int64) (*stakestat.StakeStat, errors.Error)
 }
 
 func (db *stakeStatDB) Add(stakeStat *stakestat.StakeStat) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertStakeStat],
+	totalLinoStake, err := dbutils.PadNumberStrWithZero(stakeStat.TotalLinoStake)
+	if err != nil {
+		return err
+	}
+	unclaimedLinoStake, err := dbutils.PadNumberStrWithZero(stakeStat.UnclaimedLinoStake)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertStakeStat],
 		stakeStat.TotalConsumptionFriction,
 		stakeStat.UnclaimedFriction,
-		stakeStat.TotalLinoStake,
-		stakeStat.UnclaimedLinoStake,
+		totalLinoStake,
+		unclaimedLinoStake,
 		stakeStat.Timestamp,
 	)
 	return err

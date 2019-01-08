@@ -1,6 +1,8 @@
 package post
 
 import (
+	"strings"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
@@ -219,6 +221,12 @@ func (pm PostManager) AddDonation(
 	postMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
+	}
+
+	res := strings.Split(string(permlink), types.PermlinkSeparator)
+	setErr := pm.recorder.PostRepository.SetReward(res[0], res[1], postMeta.TotalReward.Amount.String())
+	if setErr != nil {
+		panic(setErr)
 	}
 	return nil
 }

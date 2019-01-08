@@ -49,13 +49,13 @@ func readKeys(c *Configs, path string, store []configKey) error {
 	return nil
 }
 
-func NewConfig(configPath string) (*Configs, err) {
+func NewConfig(configPath string) (*Configs, error) {
 	var c = &Configs{}
 	c.store = make(map[configKey]string)
 	if err := readKeys(c, configPath, configKeys); err != nil {
 		return nil, err
 	}
-	c.serviceAddrs = k8s.NewServiceAddrs()
+	c.serviceAddrs = k8s.NewServiceAddrs(k8s.DefaultVals{})
 	log.Debug().Msgf("Configs:%+v", c.store)
 	return c, nil
 }
@@ -95,7 +95,7 @@ func (c *Configs) DBHost() string {
 	if os.Getenv("GO_ENV") == "" {
 		return c.store[dbHostKey]
 	}
-	return c.serviceAddrs.GetAddr(k8s.RdsRecoder)
+	return c.serviceAddrs.GetAddr(k8s.RdsRecorder)
 }
 
 // DBPort returns MySQL port; default to 3306

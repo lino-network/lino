@@ -3,6 +3,7 @@ package repository
 const (
 	getInflationStmt = `
 SELECT
+    id,
     infraPool,
     devPool,
     creatorPool,
@@ -19,7 +20,7 @@ WHERE
 `
 	insertInflationStmt = `
 INSERT INTO
-inflation(infraPool, devPool, creatorPool, validatorPool,infraInflation, devInflation, creatorInflation, validatorInflation, timestamp)
+inflation(infraPool, devPool, creatorPool, validatorPool, infraInflation, devInflation, creatorInflation, validatorInflation, timestamp)
 VALUES
    (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `

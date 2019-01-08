@@ -3,8 +3,15 @@ package dbutils
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/lino-network/lino/recorder/errors"
+)
+
+const (
+	// CoinStrLength is the length of the coin string
+	CoinStrLength = 64
 )
 
 // ExecAffectingOneRow executes a given statement, expecting one row to be affected.
@@ -50,4 +57,36 @@ func PrepareStmts(service string, db *sql.DB, unprepared map[string]string) (map
 	}
 
 	return prepared, nil
+}
+
+// PadNumberStrWithZero pad a number string with zero
+func PadNumberStrWithZero(number string) (string, errors.Error) {
+	if len(number) == 0 {
+		return "", errors.NewError(errors.CodeUnablePrepareStatement, "util.PadNumberStrWithZero: found number with zero")
+	}
+	if len(number) > CoinStrLength {
+		return "", errors.NewErrorf(errors.CodeUnablePrepareStatement, "util.PadNumberStrWithZero: cannot pad number larger than %d length", CoinStrLength)
+	}
+	if checkNumberStrIsValid(number) == false {
+		return "", errors.NewErrorf(errors.CodeUnablePrepareStatement, "util.PadNumberStrWithZero: found none number char in number str [%s]", number)
+	}
+	paddedNumber := fmt.Sprintf("%064s", number)
+	return paddedNumber, nil
+}
+
+func checkNumberStrIsValid(number string) bool {
+	for _, c := range number {
+		if !unicode.IsDigit(c) {
+			return false
+		}
+	}
+	return true
+}
+
+func TrimPaddedZeroFromNumber(number string) string {
+	trimmedNumber := strings.TrimLeft(number, "0")
+	if len(trimmedNumber) == 0 {
+		return "0"
+	}
+	return trimmedNumber
 }

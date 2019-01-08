@@ -3,7 +3,6 @@ package recorder
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	bhRepo "github.com/lino-network/lino/recorder/balancehistory/repository"
 	dRepo "github.com/lino-network/lino/recorder/donation/repository"
@@ -34,9 +33,9 @@ type Recorder struct {
 var conn *sql.DB
 
 // NewDBConn returns a new sql db connection
-func NewDBConn(dbUsername, dbPassword, dbHost, dbPort, dbName string) (*sql.DB, error) {
+func NewDBConn(dbUsername, dbPassword, dbHost string, dbPort int, dbName string) (*sql.DB, error) {
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true",
+		"%s:%s@tcp(%s:%v)/%s?charset=utf8mb4&parseTime=true",
 		dbUsername,
 		dbPassword,
 		dbHost,
@@ -48,10 +47,9 @@ func NewDBConn(dbUsername, dbPassword, dbHost, dbPort, dbName string) (*sql.DB, 
 }
 
 func NewRecorder() Recorder {
-	configPath = fs.String("config.file", "", "Config file path.")
-	configs, e := NewConfig(*configPath)
+	configs, e := NewConfig("")
 	if e != nil {
-		log.Fatal().Err(e).Msg("Failed to create config.")
+		panic(e)
 	}
 	db, err := NewDBConn(configs.DBUsername(), configs.DBPassword(), configs.DBHost(), configs.DBPort(), configs.DBName())
 	if err != nil {

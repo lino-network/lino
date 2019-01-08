@@ -23,7 +23,7 @@ func TestAddnGet(t *testing.T) {
 		ResetPubKey:       hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
 		TransactionPubKey: hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
 		AppPubKey:         hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
-		Saving:            100000,
+		Saving:            "100000",
 		Sequence:          1,
 	}
 

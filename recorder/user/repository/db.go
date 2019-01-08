@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/lino-network/lino/recorder/dbutils"
@@ -58,7 +57,7 @@ func scanUser(s dbutils.RowScanner) (*user.User, errors.Error) {
 		resetPubKey       string
 		transactionPubKey string
 		appPubKey         string
-		saving            int64
+		saving            string
 		sequence          int64
 	)
 	if err := s.Scan(&username, &createdAt, &resetPubKey, &transactionPubKey, &appPubKey, &saving, &sequence); err != nil {
@@ -74,7 +73,7 @@ func scanUser(s dbutils.RowScanner) (*user.User, errors.Error) {
 		ResetPubKey:       resetPubKey,
 		TransactionPubKey: transactionPubKey,
 		AppPubKey:         appPubKey,
-		Saving:            saving,
+		Saving:            dbutils.TrimPaddedZeroFromNumber(saving),
 		Sequence:          sequence,
 	}, nil
 }
@@ -83,13 +82,17 @@ func (db *userDB) Get(username string) (*user.User, errors.Error) {
 	return scanUser(db.stmts[getUser].QueryRow(username))
 }
 func (db *userDB) Add(user *user.User) errors.Error {
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertUser],
+	paddingSaving, err := dbutils.PadNumberStrWithZero(user.Saving)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[insertUser],
 		user.Username,
 		user.CreatedAt,
 		user.ResetPubKey,
 		user.TransactionPubKey,
 		user.AppPubKey,
-		user.Saving,
+		paddingSaving,
 		user.Sequence,
 	)
 	return err
@@ -112,10 +115,13 @@ func (db *userDB) UpdatePubKey(username, resetPubKey, txPubKey, appPubKey string
 	return err
 }
 
-func (db *userDB) UpdateBalance(username string, balance int64) errors.Error {
-	fmt.Println(username, balance)
-	_, err := dbutils.ExecAffectingOneRow(db.stmts[updateBalance],
-		balance,
+func (db *userDB) UpdateBalance(username string, balance string) errors.Error {
+	paddingBalance, err := dbutils.PadNumberStrWithZero(balance)
+	if err != nil {
+		return err
+	}
+	_, err = dbutils.ExecAffectingOneRow(db.stmts[updateBalance],
+		paddingBalance,
 		username,
 	)
 	return err

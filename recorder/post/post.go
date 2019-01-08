@@ -14,5 +14,5 @@ type Post struct {
 	Links            string    `json:"links"`
 	CreatedAt        time.Time `json:"createdAt"`
 	TotalDonateCount int64     `json:"totalDonateCount"`
-	TotalReward      int64     `json:"totalReward"`
+	TotalReward      string    `json:"totalReward"`
 }

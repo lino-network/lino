@@ -10,5 +10,5 @@ type UserRepository interface {
 	Get(username string) (*user.User, errors.Error)
 	IncreaseSequenceNumber(username string) errors.Error
 	UpdatePubKey(username, resetPubKey, TxPubKey, appPubKey string) errors.Error
-	UpdateBalance(username string, balance int64) errors.Error
+	UpdateBalance(username string, balance string) errors.Error
 }
