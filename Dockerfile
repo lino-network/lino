@@ -23,15 +23,12 @@ COPY vendor vendor
 WORKDIR cmd/lino
 RUN go build
 
-RUN ./lino init
-
 COPY recorder/watch_dog.sh watch_dog.sh
-COPY recorder/genesis.json /root/.lino/genesis.json
-COPY recorder/config.toml /root/.lino/config.toml
+COPY recorder/genesis.json genesis.json
+COPY recorder/config.toml config.toml
 
-RUN ./lino unsafe_reset_all
 EXPOSE 26656
 EXPOSE 26657
 
 
-ENTRYPOINT ["./watch_dog.sh"]
+ENTRYPOINT ["./lino", "start"]

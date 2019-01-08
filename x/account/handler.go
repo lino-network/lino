@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/lino-network/lino/recorder/user"
-
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 
@@ -163,18 +161,6 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManag
 		msg.NewAppPubKey, coin.Minus(accParams.RegisterFee)); err != nil {
 		return err.Result()
 	}
-
-	balanceCoin := coin.Minus(accParams.RegisterFee)
-	user := &user.User{
-		Username:          string(msg.NewUser),
-		CreatedAt:         ctx.BlockHeader().Time,
-		Referrer:          string(msg.Referrer),
-		ResetPubKey:       hex.EncodeToString(msg.NewResetPubKey.Bytes()),
-		TransactionPubKey: hex.EncodeToString(msg.NewTransactionPubKey.Bytes()),
-		AppPubKey:         hex.EncodeToString(msg.NewAppPubKey.Bytes()),
-		Saving:            balanceCoin.Amount.String(),
-	}
-	am.recorder.UserRepository.Add(user)
 	return sdk.Result{}
 }
 

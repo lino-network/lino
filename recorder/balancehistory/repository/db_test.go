@@ -76,6 +76,6 @@ func setup() (*sql.DB, repository.BalanceHistoryRepository, error) {
 	return db, bhRepo, nil
 }
 
-// func teardown(db *sql.DB) {
-// 	dbtestutil.BalanceHistoryDBCleanUp(db)
-// }
+func teardown(db *sql.DB) {
+	dbtestutil.BalanceHistoryDBCleanUp(db)
+}

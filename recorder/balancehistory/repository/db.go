@@ -81,7 +81,6 @@ func (db *balanceHistoryDB) Get(username string) (*balancehistory.BalanceHistory
 	return scanBalanceHistory(db.stmts[getBalanceHistory].QueryRow(username))
 }
 func (db *balanceHistoryDB) Add(balanceHistory *balancehistory.BalanceHistory) errors.Error {
-
 	paddedBalance, err := dbutils.PadNumberStrWithZero(balanceHistory.Balance)
 	if err != nil {
 		return err
