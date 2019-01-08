@@ -16,7 +16,7 @@ RUN mkdir -p src/github.com/lino-network
 WORKDIR src/github.com/lino-network
 RUN git clone https://github.com/lino-network/lino.git
 WORKDIR lino
-RUN git checkout zl/recorder
+RUN git checkout origin/zl/recorder
 
 # golang dep
 RUN go get -u github.com/golang/dep/cmd/dep
