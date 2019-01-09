@@ -31,4 +31,4 @@ EXPOSE 26656
 EXPOSE 26657
 
 
-ENTRYPOINT ["./lino", "start"]
+ENTRYPOINT ["./lino", "start", "--log_level=error"]

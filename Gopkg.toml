@@ -29,6 +29,10 @@
   name = "github.com/cosmos/cosmos-sdk"
   version = "v0.24.0-rc1"
 
+[[constraint]]
+  name = "github.com/lino-network/lino-service-discovery"
+  branch = "master"
+
 [[override]]
   name = "github.com/golang/protobuf"
   version = "=1.1.0"
