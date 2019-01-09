@@ -17,8 +17,9 @@ const (
 )
 
 type topContentDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ TopContentRepository = &topContentDB{}
@@ -37,8 +38,9 @@ func NewTopContentDB(conn *sql.DB) (TopContentRepository, errors.Error) {
 		return nil, err
 	}
 	return &topContentDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -62,6 +64,9 @@ func scanTopContent(s dbutils.RowScanner) (*topcontent.TopContent, errors.Error)
 	}, nil
 }
 
+func (db *topContentDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *topContentDB) Get(permlink string) (*topcontent.TopContent, errors.Error) {
 	return scanTopContent(db.stmts[getTopContent].QueryRow(permlink))
 }

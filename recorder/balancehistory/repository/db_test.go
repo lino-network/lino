@@ -20,7 +20,7 @@ func TestAddnGet(t *testing.T) {
 		Username:   "user1",
 		FromUser:   "user1",
 		ToUser:     "user2",
-		Amount:     100,
+		Amount:     "100",
 		Balance:    "10000",
 		DetailType: types.TransferIn,
 		CreatedAt:  time.Unix(time.Now().Unix(), 0).UTC(),
@@ -51,11 +51,11 @@ type TestEnv struct {
 }
 
 func runTest(t *testing.T, fc func(env TestEnv)) {
-	_, bhRepo, err := setup()
+	conn, bhRepo, err := setup()
 	if err != nil {
 		t.Errorf("Failed to create balancehistory DB : %v", err)
 	}
-	// defer teardown(conn)
+	defer teardown(conn)
 
 	env := TestEnv{
 		bhRepo: bhRepo,

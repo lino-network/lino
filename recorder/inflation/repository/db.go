@@ -17,8 +17,9 @@ const (
 )
 
 type inflationDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ InflationRepository = &inflationDB{}
@@ -37,8 +38,9 @@ func NewinflationDB(conn *sql.DB) (InflationRepository, errors.Error) {
 		return nil, err
 	}
 	return &inflationDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -75,6 +77,9 @@ func scaninflation(s dbutils.RowScanner) (*inflation.Inflation, errors.Error) {
 	}, nil
 }
 
+func (db *inflationDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *inflationDB) Get(timestamp int64) (*inflation.Inflation, errors.Error) {
 	return scaninflation(db.stmts[getInflation].QueryRow(timestamp))
 }

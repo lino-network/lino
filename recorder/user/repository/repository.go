@@ -11,4 +11,5 @@ type UserRepository interface {
 	IncreaseSequenceNumber(username string) errors.Error
 	UpdatePubKey(username, resetPubKey, TxPubKey, appPubKey string) errors.Error
 	UpdateBalance(username string, balance string) errors.Error
+	IsEnable() bool
 }

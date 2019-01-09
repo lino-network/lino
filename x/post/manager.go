@@ -1,10 +1,13 @@
 package post
 
 import (
+	"strings"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/post/model"
+	"github.com/rs/zerolog/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -221,11 +224,11 @@ func (pm PostManager) AddDonation(
 		return err
 	}
 
-	// res := strings.Split(string(permlink), types.PermlinkSeparator)
-	// setErr := pm.recorder.PostRepository.SetReward(res[0], res[1], postMeta.TotalReward.Amount.String())
-	// if setErr != nil {
-	// 	panic(setErr)
-	// }
+	res := strings.Split(string(permlink), types.PermlinkSeparator)
+	setErr := pm.recorder.PostRepository.SetReward(res[0], res[1], postMeta.TotalReward.Amount.String())
+	if setErr != nil {
+		log.Error().Msgf("failed to set reward %v for author %v and post %v", postMeta.TotalReward.Amount.String(), res[0], res[1])
+	}
 	return nil
 }
 

@@ -20,8 +20,9 @@ const (
 )
 
 type balanceHistoryDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ BalanceHistoryRepository = &balanceHistoryDB{}
@@ -40,8 +41,9 @@ func NewBalanceHistoryDB(conn *sql.DB) (BalanceHistoryRepository, errors.Error) 
 		return nil, err
 	}
 	return &balanceHistoryDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -51,7 +53,7 @@ func scanBalanceHistory(s dbutils.RowScanner) (*balancehistory.BalanceHistory, e
 		username   string
 		fromUser   string
 		toUser     string
-		amount     int64
+		amount     string
 		balance    string
 		detailType int64
 		createdAt  time.Time
@@ -69,7 +71,7 @@ func scanBalanceHistory(s dbutils.RowScanner) (*balancehistory.BalanceHistory, e
 		Username:   username,
 		FromUser:   username,
 		ToUser:     toUser,
-		Amount:     amount,
+		Amount:     dbutils.TrimPaddedZeroFromNumber(amount),
 		Balance:    dbutils.TrimPaddedZeroFromNumber(balance),
 		DetailType: types.TransferDetailType(detailType),
 		CreatedAt:  createdAt,
@@ -80,7 +82,14 @@ func scanBalanceHistory(s dbutils.RowScanner) (*balancehistory.BalanceHistory, e
 func (db *balanceHistoryDB) Get(username string) (*balancehistory.BalanceHistory, errors.Error) {
 	return scanBalanceHistory(db.stmts[getBalanceHistory].QueryRow(username))
 }
+func (db *balanceHistoryDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *balanceHistoryDB) Add(balanceHistory *balancehistory.BalanceHistory) errors.Error {
+	paddedAmount, err := dbutils.PadNumberStrWithZero(balanceHistory.Amount)
+	if err != nil {
+		return err
+	}
 	paddedBalance, err := dbutils.PadNumberStrWithZero(balanceHistory.Balance)
 	if err != nil {
 		return err
@@ -89,7 +98,7 @@ func (db *balanceHistoryDB) Add(balanceHistory *balancehistory.BalanceHistory) e
 		balanceHistory.Username,
 		balanceHistory.FromUser,
 		balanceHistory.ToUser,
-		balanceHistory.Amount,
+		paddedAmount,
 		paddedBalance,
 		balanceHistory.DetailType,
 		balanceHistory.CreatedAt,

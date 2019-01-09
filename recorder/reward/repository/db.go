@@ -19,8 +19,9 @@ const (
 )
 
 type rewardDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ RewardRepository = &rewardDB{}
@@ -39,8 +40,9 @@ func NewRewardDB(conn *sql.DB) (RewardRepository, errors.Error) {
 		return nil, err
 	}
 	return &rewardDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -74,6 +76,9 @@ func scanReward(s dbutils.RowScanner) (*reward.Reward, errors.Error) {
 	}, nil
 }
 
+func (db *rewardDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *rewardDB) Get(username string) (*reward.Reward, errors.Error) {
 	return scanReward(db.stmts[getReward].QueryRow(username))
 }

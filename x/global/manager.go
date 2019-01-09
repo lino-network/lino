@@ -280,11 +280,14 @@ func (gm GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Error
 		UnclaimedLinoStake:       lastLinoStakeStat.UnclaimedLinoStake.Amount.String(),
 		UnclaimedFriction:        unclaimedFrictionInt,
 		TotalConsumptionFriction: totalConsumptionFrictionInt,
-		TotalLinoStake:           lastLinoStakeStat.TotalLinoStake.String(),
+		TotalLinoStake:           lastLinoStakeStat.TotalLinoStake.Amount.String(),
 		Timestamp:                ctx.BlockHeader().Time.Unix(),
 	}
 	if !gm.recorder.NewVersionOnly {
-		gm.recorder.StakeStatRepository.Add(stakeStat)
+		err := gm.recorder.StakeStatRepository.Add(stakeStat)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// If lino stake exist last day, the consumption will keep for lino stake holder that day

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/lino-network/lino/recorder/donation"
+	"github.com/lino-network/lino/recorder/post"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
-
-	"github.com/lino-network/lino/recorder/post"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -248,30 +248,30 @@ func processDonationFriction(
 		return err
 	}
 
-	// record
-	// coinDayDonatedInt, _ := coinDayDonated.ToInt64()
-	// coinInt, _ := coin.ToInt64()
-	// dpInt, _ := dp.ToInt64()
-	// rep, _ := rm.GetReputation(ctx, consumer)
-	// repInt, _ := rep.ToInt64()
-	// evaluateResultInt, _ := evaluateResult.ToInt64()
-	// seq, _ := am.GetSequence(ctx, consumer)
+	//record
+	coinDayDonatedInt, _ := coinDayDonated.ToInt64()
+	coinInt, _ := coin.ToInt64()
+	dpInt, _ := dp.ToInt64()
+	rep, _ := rm.GetReputation(ctx, consumer)
+	repInt, _ := rep.ToInt64()
+	evaluateResultInt, _ := evaluateResult.ToInt64()
+	seq, _ := am.GetSequence(ctx, consumer)
 
-	// donation := &donation.Donation{
-	// 	Username:       (string)(consumer),
-	// 	Seq:            seq,
-	// 	Dp:             dpInt,
-	// 	Permlink:       (string)(postKey),
-	// 	Amount:         coinInt,
-	// 	FromApp:        (string)(fromApp),
-	// 	CoinDayDonated: coinDayDonatedInt,
-	// 	Reputation:     repInt,
-	// 	Timestamp:      ctx.BlockHeader().Time.Unix(),
-	// 	EvaluateResult: evaluateResultInt,
-	// }
-	// if !pm.recorder.NewVersionOnly {
-	// 	pm.recorder.DonationRepo.Add(donation)
-	// }
+	donation := &donation.Donation{
+		Username:       (string)(consumer),
+		Seq:            seq,
+		Dp:             dpInt,
+		Permlink:       (string)(postKey),
+		Amount:         coinInt,
+		FromApp:        (string)(fromApp),
+		CoinDayDonated: coinDayDonatedInt,
+		Reputation:     repInt,
+		Timestamp:      ctx.BlockHeader().Time.Unix(),
+		EvaluateResult: evaluateResultInt,
+	}
+	if !pm.recorder.NewVersionOnly {
+		pm.recorder.DonationRepo.Add(donation)
+	}
 	return nil
 }
 

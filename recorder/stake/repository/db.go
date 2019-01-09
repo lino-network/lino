@@ -17,8 +17,9 @@ const (
 )
 
 type stakeDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ StakeRepository = &stakeDB{}
@@ -37,8 +38,9 @@ func NewStakeDB(conn *sql.DB) (StakeRepository, errors.Error) {
 		return nil, err
 	}
 	return &stakeDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -66,6 +68,9 @@ func scanstake(s dbutils.RowScanner) (*stake.Stake, errors.Error) {
 	}, nil
 }
 
+func (db *stakeDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *stakeDB) Get(username string) (*stake.Stake, errors.Error) {
 	return scanstake(db.stmts[getStake].QueryRow(username))
 }

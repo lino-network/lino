@@ -3,13 +3,14 @@ package repository
 const (
 	insertUserStmt = `
 INSERT INTO
-user(username, createdAt, resetPubKey, transactionPubKey, appPubKey, saving, sequence)
+user(username, referrer, createdAt, resetPubKey, transactionPubKey, appPubKey, saving, sequence)
 VALUES
-   (?, ?, ?, ?, ?, ?, ?)
+   (?, ?, ?, ?, ?, ?, ?, ?)
 `
 	getUserStmt = `
     SELECT
         username,
+        referrer,
         createdAt,
         resetPubKey,
         transactionPubKey,

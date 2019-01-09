@@ -8,4 +8,5 @@ import (
 type RewardRepository interface {
 	Add(detail *reward.Reward) errors.Error
 	Get(username string) (*reward.Reward, errors.Error)
+	IsEnable() bool
 }

@@ -17,8 +17,9 @@ const (
 )
 
 type postRewardDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ PostRewardRepository = &postRewardDB{}
@@ -37,8 +38,9 @@ func NewPostRewardDB(conn *sql.DB) (PostRewardRepository, errors.Error) {
 		return nil, err
 	}
 	return &postRewardDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -72,6 +74,9 @@ func scanPostReward(s dbutils.RowScanner) (*postreward.PostReward, errors.Error)
 	}, nil
 }
 
+func (db *postRewardDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *postRewardDB) Get(permlink string) (*postreward.PostReward, errors.Error) {
 	return scanPostReward(db.stmts[getPostReward].QueryRow(permlink))
 }
