@@ -783,11 +783,11 @@ func (accManager AccountManager) ClaimReward(
 	if accManager.recorder.RewardRepository.IsEnable() {
 		rewardstruc := &rreward.Reward{
 			Username:        string(username),
-			TotalIncome:     reward.TotalIncome.String(),
-			OriginalIncome:  reward.OriginalIncome.String(),
-			FrictionIncome:  reward.FrictionIncome.String(),
-			InflationIncome: reward.InflationIncome.String(),
-			UnclaimReward:   reward.UnclaimReward.String(),
+			TotalIncome:     reward.TotalIncome.Amount.String(),
+			OriginalIncome:  reward.OriginalIncome.Amount.String(),
+			FrictionIncome:  reward.FrictionIncome.Amount.String(),
+			InflationIncome: reward.InflationIncome.Amount.String(),
+			UnclaimReward:   reward.UnclaimReward.Amount.String(),
 			CreatedAt:       ctx.BlockHeader().Time,
 		}
 		addErr := accManager.recorder.RewardRepository.Add(rewardstruc)
