@@ -8,4 +8,5 @@ import (
 type TopContentRepository interface {
 	Get(permlink string) (*topcontent.TopContent, errors.Error)
 	Add(info *topcontent.TopContent) errors.Error
+	IsEnable() bool
 }

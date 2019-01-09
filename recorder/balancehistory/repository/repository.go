@@ -8,4 +8,5 @@ import (
 type BalanceHistoryRepository interface {
 	Add(detail *balancehistory.BalanceHistory) errors.Error
 	Get(username string) (*balancehistory.BalanceHistory, errors.Error)
+	IsEnable() bool
 }

@@ -19,6 +19,7 @@ func TestAddnGet(t *testing.T) {
 	assert := assert.New(t)
 	r1 := &user.User{
 		Username:          "user1",
+		Referrer:          "referrer",
 		CreatedAt:         time.Unix(time.Now().Unix(), 0).UTC(),
 		ResetPubKey:       hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
 		TransactionPubKey: hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
@@ -44,7 +45,8 @@ func TestAddnGet(t *testing.T) {
 func TestUpdateBalance(t *testing.T) {
 	assert := assert.New(t)
 	r1 := &user.User{
-		Username:          "user1",
+		Username:          "user-1",
+		Referrer:          "referrer",
 		CreatedAt:         time.Unix(time.Now().Unix(), 0).UTC(),
 		ResetPubKey:       hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
 		TransactionPubKey: hex.EncodeToString(secp256k1.GenPrivKey().PubKey().Bytes()),
@@ -59,12 +61,12 @@ func TestUpdateBalance(t *testing.T) {
 			t.Errorf("TestAddnGet: failed to add %v, got err %v", r1, err)
 		}
 
-		err = env.uRepo.UpdateBalance("user1", "100000000")
+		err = env.uRepo.UpdateBalance("user-1", "100000000")
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to update balance %v, got err %v", r1, err)
 		}
 		r1.Saving = "100000000"
-		res, err := env.uRepo.Get("user1")
+		res, err := env.uRepo.Get("user-1")
 
 		if err != nil {
 			t.Errorf("TestAddnGet: failed to get User with %s, got err %v", "user1", err)

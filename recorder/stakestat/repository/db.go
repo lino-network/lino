@@ -17,8 +17,9 @@ const (
 )
 
 type stakeStatDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ StakeStatRepository = &stakeStatDB{}
@@ -37,8 +38,9 @@ func NewStakeStatDB(conn *sql.DB) (StakeStatRepository, errors.Error) {
 		return nil, err
 	}
 	return &stakeStatDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -66,6 +68,9 @@ func scanstakeStat(s dbutils.RowScanner) (*stakestat.StakeStat, errors.Error) {
 	}, nil
 }
 
+func (db *stakeStatDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *stakeStatDB) Get(timestamp int64) (*stakestat.StakeStat, errors.Error) {
 	return scanstakeStat(db.stmts[getStakeStat].QueryRow(timestamp))
 }

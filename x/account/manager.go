@@ -12,6 +12,7 @@ import (
 	"github.com/lino-network/lino/recorder/user"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
+	"github.com/rs/zerolog/log"
 
 	"github.com/tendermint/tendermint/crypto"
 
@@ -87,18 +88,20 @@ func (accManager AccountManager) CreateAccount(
 		return err
 	}
 
-	user := &user.User{
-		Username:          string(username),
-		CreatedAt:         ctx.BlockHeader().Time,
-		Referrer:          string(referrer),
-		ResetPubKey:       hex.EncodeToString(resetKey.Bytes()),
-		TransactionPubKey: hex.EncodeToString(transactionKey.Bytes()),
-		AppPubKey:         hex.EncodeToString(appKey.Bytes()),
-		Saving:            registerDeposit.Amount.String(),
-	}
-	addErr := accManager.recorder.UserRepository.Add(user)
-	if addErr != nil {
-		panic(addErr)
+	if accManager.recorder.UserRepository.IsEnable() {
+		user := &user.User{
+			Username:          string(username),
+			CreatedAt:         ctx.BlockHeader().Time,
+			Referrer:          string(referrer),
+			ResetPubKey:       hex.EncodeToString(resetKey.Bytes()),
+			TransactionPubKey: hex.EncodeToString(transactionKey.Bytes()),
+			AppPubKey:         hex.EncodeToString(appKey.Bytes()),
+			Saving:            "0",
+		}
+		addErr := accManager.recorder.UserRepository.Add(user)
+		if addErr != nil {
+			log.Error().Msgf("failed to add user %v", user)
+		}
 	}
 	// when open account, blockchain will give a certain amount lino with full coin day.
 	if err := accManager.AddSavingCoinWithFullCoinDay(
@@ -192,25 +195,26 @@ func (accManager AccountManager) AddSavingCoin(
 		return err
 	}
 
-	amount, _ := coin.ToInt64()
-	balancehistory := &balancehistory.BalanceHistory{
-		Username:   string(username),
-		FromUser:   string(from),
-		ToUser:     string(username),
-		Amount:     amount,
-		Balance:    bank.Saving.Amount.String(),
-		DetailType: detailType,
-		CreatedAt:  ctx.BlockHeader().Time,
-		Memo:       memo,
-	}
-	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	if insertErr != nil {
-		panic(insertErr)
-	}
-	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), bank.Saving.Amount.String())
-	if updateErr != nil {
-		panic(updateErr)
+	if accManager.recorder.BalanceHistoryRepository.IsEnable() {
+		balanceHistory := &balancehistory.BalanceHistory{
+			Username:   string(username),
+			FromUser:   string(from),
+			ToUser:     string(username),
+			Amount:     coin.Amount.String(),
+			Balance:    bank.Saving.Amount.String(),
+			DetailType: detailType,
+			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
+		}
+		insertErr := accManager.recorder.BalanceHistoryRepository.Add(balanceHistory)
+		if insertErr != nil {
+			log.Error().Msgf("failed to insert balance history:%v, err: %v", balanceHistory, insertErr)
+		}
+		updateErr := accManager.recorder.UserRepository.UpdateBalance(
+			string(username), bank.Saving.Amount.String())
+		if updateErr != nil {
+			log.Error().Msgf("failed to update user %v balance %v", username, bank.Saving.Amount.String())
+		}
 	}
 	return nil
 }
@@ -250,25 +254,26 @@ func (accManager AccountManager) AddSavingCoinWithFullCoinDay(
 		return err
 	}
 
-	amount, _ := coin.ToInt64()
-	balancehistory := &balancehistory.BalanceHistory{
-		Username:   string(username),
-		FromUser:   string(from),
-		ToUser:     string(username),
-		Amount:     amount,
-		Balance:    bank.Saving.Amount.String(),
-		DetailType: detailType,
-		CreatedAt:  ctx.BlockHeader().Time,
-		Memo:       memo,
-	}
-	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	if insertErr != nil {
-		panic(insertErr)
-	}
-	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), bank.Saving.Amount.String())
-	if updateErr != nil {
-		panic(updateErr)
+	if accManager.recorder.BalanceHistoryRepository.IsEnable() {
+		balanceHistory := &balancehistory.BalanceHistory{
+			Username:   string(username),
+			FromUser:   string(from),
+			ToUser:     string(username),
+			Amount:     coin.Amount.String(),
+			Balance:    bank.Saving.Amount.String(),
+			DetailType: detailType,
+			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
+		}
+		insertErr := accManager.recorder.BalanceHistoryRepository.Add(balanceHistory)
+		if insertErr != nil {
+			log.Error().Msgf("failed to insert balance history:%v, err: %v", balanceHistory, insertErr)
+		}
+		updateErr := accManager.recorder.UserRepository.UpdateBalance(
+			string(username), bank.Saving.Amount.String())
+		if updateErr != nil {
+			log.Error().Msgf("failed to update user %v balance %v", username, bank.Saving.Amount.String())
+		}
 	}
 	return nil
 }
@@ -363,25 +368,26 @@ func (accManager AccountManager) MinusSavingCoin(
 		return err
 	}
 
-	amount, _ := coin.ToInt64()
-	balancehistory := &balancehistory.BalanceHistory{
-		Username:   string(username),
-		FromUser:   string(username),
-		ToUser:     string(to),
-		Amount:     amount,
-		Balance:    accountBank.Saving.Amount.String(),
-		DetailType: detailType,
-		CreatedAt:  ctx.BlockHeader().Time,
-		Memo:       memo,
-	}
-	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	if insertErr != nil {
-		panic(insertErr)
-	}
-	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), accountBank.Saving.Amount.String())
-	if updateErr != nil {
-		panic(updateErr)
+	if accManager.recorder.BalanceHistoryRepository.IsEnable() {
+		balanceHistory := &balancehistory.BalanceHistory{
+			Username:   string(username),
+			FromUser:   string(username),
+			ToUser:     string(to),
+			Amount:     coin.Amount.String(),
+			Balance:    accountBank.Saving.Amount.String(),
+			DetailType: detailType,
+			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
+		}
+		insertErr := accManager.recorder.BalanceHistoryRepository.Add(balanceHistory)
+		if insertErr != nil {
+			log.Error().Msgf("failed to insert balance history:%v, err: %v", balanceHistory, insertErr)
+		}
+		updateErr := accManager.recorder.UserRepository.UpdateBalance(
+			string(username), accountBank.Saving.Amount.String())
+		if updateErr != nil {
+			log.Error().Msgf("failed to update user %v balance %v", username, accountBank.Saving.Amount.String())
+		}
 	}
 	return nil
 }
@@ -475,25 +481,26 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		ctx, username, accountBank); err != nil {
 		return err
 	}
-	amount, _ := coin.ToInt64()
-	balancehistory := &balancehistory.BalanceHistory{
-		Username:   string(username),
-		FromUser:   string(username),
-		ToUser:     string(to),
-		Amount:     amount,
-		Balance:    accountBank.Saving.Amount.String(),
-		DetailType: detailType,
-		CreatedAt:  ctx.BlockHeader().Time,
-		Memo:       memo,
-	}
-	insertErr := accManager.recorder.BalanceHistoryRepository.Add(balancehistory)
-	if insertErr != nil {
-		panic(insertErr)
-	}
-	updateErr := accManager.recorder.UserRepository.UpdateBalance(
-		string(username), accountBank.Saving.Amount.String())
-	if updateErr != nil {
-		panic(updateErr)
+	if accManager.recorder.BalanceHistoryRepository.IsEnable() {
+		balanceHistory := &balancehistory.BalanceHistory{
+			Username:   string(username),
+			FromUser:   string(username),
+			ToUser:     string(to),
+			Amount:     coin.Amount.String(),
+			Balance:    accountBank.Saving.Amount.String(),
+			DetailType: detailType,
+			CreatedAt:  ctx.BlockHeader().Time,
+			Memo:       memo,
+		}
+		insertErr := accManager.recorder.BalanceHistoryRepository.Add(balanceHistory)
+		if insertErr != nil {
+			log.Error().Msgf("failed to insert balance history:%v, err: %v", balanceHistory, insertErr)
+		}
+		updateErr := accManager.recorder.UserRepository.UpdateBalance(
+			string(username), accountBank.Saving.Amount.String())
+		if updateErr != nil {
+			log.Error().Msgf("failed to update user %v balance %v", username, accountBank.Saving.Amount.String())
+		}
 	}
 	return nil
 }
@@ -704,17 +711,21 @@ func (accManager AccountManager) AddIncomeAndReward(
 		rewardDetail); err != nil {
 		return err
 	}
-
-	rewardstruc := &rreward.Reward{
-		Username:        string(username),
-		TotalIncome:     reward.TotalIncome.Amount.String(),
-		OriginalIncome:  reward.OriginalIncome.Amount.String(),
-		FrictionIncome:  reward.FrictionIncome.Amount.String(),
-		InflationIncome: reward.InflationIncome.Amount.String(),
-		UnclaimReward:   reward.UnclaimReward.Amount.String(),
-		CreatedAt:       ctx.BlockHeader().Time,
+	if accManager.recorder.RewardRepository.IsEnable() {
+		rewardstruc := &rreward.Reward{
+			Username:        string(username),
+			TotalIncome:     reward.TotalIncome.Amount.String(),
+			OriginalIncome:  reward.OriginalIncome.Amount.String(),
+			FrictionIncome:  reward.FrictionIncome.Amount.String(),
+			InflationIncome: reward.InflationIncome.Amount.String(),
+			UnclaimReward:   reward.UnclaimReward.Amount.String(),
+			CreatedAt:       ctx.BlockHeader().Time,
+		}
+		addErr := accManager.recorder.RewardRepository.Add(rewardstruc)
+		if addErr != nil {
+			log.Error().Msgf("failed to add reward %v for user %v", rewardstruc, username)
+		}
 	}
-	accManager.recorder.RewardRepository.Add(rewardstruc)
 	bank.NumOfReward++
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return err
@@ -769,16 +780,21 @@ func (accManager AccountManager) ClaimReward(
 		return err
 	}
 
-	rewardstruc := &rreward.Reward{
-		Username:        string(username),
-		TotalIncome:     reward.TotalIncome.String(),
-		OriginalIncome:  reward.OriginalIncome.String(),
-		FrictionIncome:  reward.FrictionIncome.String(),
-		InflationIncome: reward.InflationIncome.String(),
-		UnclaimReward:   reward.UnclaimReward.String(),
-		CreatedAt:       ctx.BlockHeader().Time,
+	if accManager.recorder.RewardRepository.IsEnable() {
+		rewardstruc := &rreward.Reward{
+			Username:        string(username),
+			TotalIncome:     reward.TotalIncome.String(),
+			OriginalIncome:  reward.OriginalIncome.String(),
+			FrictionIncome:  reward.FrictionIncome.String(),
+			InflationIncome: reward.InflationIncome.String(),
+			UnclaimReward:   reward.UnclaimReward.String(),
+			CreatedAt:       ctx.BlockHeader().Time,
+		}
+		addErr := accManager.recorder.RewardRepository.Add(rewardstruc)
+		if addErr != nil {
+			log.Error().Msgf("failed to add reward %v for user %v", rewardstruc, username)
+		}
 	}
-	accManager.recorder.RewardRepository.Add(rewardstruc)
 	return nil
 }
 

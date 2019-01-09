@@ -17,8 +17,9 @@ const (
 )
 
 type donationDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ DonationRepository = &donationDB{}
@@ -37,8 +38,9 @@ func NewDonationDB(conn *sql.DB) (DonationRepository, errors.Error) {
 		return nil, err
 	}
 	return &donationDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -80,6 +82,9 @@ func (db *donationDB) Get(username string) (*donation.Donation, errors.Error) {
 	return scanDonation(db.stmts[getDonation].QueryRow(username))
 }
 
+func (db *donationDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *donationDB) Add(donation *donation.Donation) errors.Error {
 	_, err := dbutils.ExecAffectingOneRow(db.stmts[insertDonation],
 		donation.Username,

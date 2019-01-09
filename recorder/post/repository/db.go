@@ -19,8 +19,9 @@ const (
 )
 
 type postDB struct {
-	conn  *sql.DB
-	stmts map[string]*sql.Stmt
+	conn     *sql.DB
+	stmts    map[string]*sql.Stmt
+	EnableDB bool
 }
 
 var _ PostRepository = &postDB{}
@@ -40,8 +41,9 @@ func NewPostDB(conn *sql.DB) (PostRepository, errors.Error) {
 		return nil, err
 	}
 	return &postDB{
-		conn:  conn,
-		stmts: stmts,
+		conn:     conn,
+		stmts:    stmts,
+		EnableDB: true,
 	}, nil
 }
 
@@ -83,6 +85,9 @@ func scanPost(s dbutils.RowScanner) (*post.Post, errors.Error) {
 	}, nil
 }
 
+func (db *postDB) IsEnable() bool {
+	return db.EnableDB
+}
 func (db *postDB) Get(author string) (*post.Post, errors.Error) {
 	return scanPost(db.stmts[getPost].QueryRow(author))
 }
@@ -114,7 +119,7 @@ func (db *postDB) SetReward(author, postID string, amount string) errors.Error {
 	if err != nil {
 		return err
 	}
-	_, err = dbutils.ExecAffectingOneRow(db.stmts[setReward],
+	_, err = dbutils.Exec(db.stmts[setReward],
 		paddingAmount, author, postID,
 	)
 	return err

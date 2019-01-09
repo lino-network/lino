@@ -67,9 +67,6 @@ func PadNumberStrWithZero(number string) (string, errors.Error) {
 	if len(number) > CoinStrLength {
 		return "", errors.NewErrorf(errors.CodeUnablePrepareStatement, "util.PadNumberStrWithZero: cannot pad number larger than %d length", CoinStrLength)
 	}
-	if checkNumberStrIsValid(number) == false {
-		return "", errors.NewErrorf(errors.CodeUnablePrepareStatement, "util.PadNumberStrWithZero: found none number char in number str [%s]", number)
-	}
 	paddedNumber := fmt.Sprintf("%064s", number)
 	return paddedNumber, nil
 }

@@ -11,7 +11,7 @@ type BalanceHistory struct {
 	Username   string                   `json:"username"`
 	FromUser   string                   `json:"from_user"`
 	ToUser     string                   `json:"to_user"`
-	Amount     int64                    `json:"amount"`
+	Amount     string                   `json:"amount"`
 	Balance    string                   `json:"balance"`
 	DetailType types.TransferDetailType `json:"detail_type"`
 	CreatedAt  time.Time                `json:"created_at"`

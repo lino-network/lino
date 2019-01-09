@@ -8,4 +8,5 @@ import (
 type PostRewardRepository interface {
 	Get(permlink string) (*postreward.PostReward, errors.Error)
 	Add(info *postreward.PostReward) errors.Error
+	IsEnable() bool
 }

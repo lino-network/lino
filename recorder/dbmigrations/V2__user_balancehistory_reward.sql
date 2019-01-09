@@ -4,12 +4,12 @@ CREATE TABLE `balancehistory`
   `username` varchar(45) NOT NULL,
   `fromUser` varchar(45) NOT NULL,
   `toUser` varchar(45) NOT NULL,
-  `amount` BIGINT NOT NULL,
+  `amount` char(64) NOT NULL DEFAULT "0000000000000000000000000000000000000000000000000000000000000000",
   `balance` char(64) NOT NULL DEFAULT "0000000000000000000000000000000000000000000000000000000000000000",
   `detailType` int(11) NOT NULL,
   `createdAt` datetime NOT NULL,
-  `memo` varchar(45) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `memo` varchar(200) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `reward`
 (
@@ -26,6 +26,7 @@ CREATE TABLE `reward`
 CREATE TABLE `user`
 (
   `username` varchar(45) NOT NULL PRIMARY KEY,
+  `referrer` varchar(45) NOT NULL,
   `createdAt` datetime NOT NULL,
   `resetPubKey` varchar(76) NOT NULL,
   `transactionPubKey` varchar(76) NOT NULL,

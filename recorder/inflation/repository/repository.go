@@ -8,4 +8,5 @@ import (
 type InflationRepository interface {
 	Get(timestamp int64) (*inflation.Inflation, errors.Error)
 	Add(info *inflation.Inflation) errors.Error
+	IsEnable() bool
 }
