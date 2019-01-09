@@ -96,7 +96,7 @@ func (c *Configs) DBHost() string {
 	if os.Getenv("GO_ENV") == "" {
 		return c.store[dbHostKey]
 	}
-	return c.serviceAddrs.GetAddr(k8s.RdsRecorder)
+	return c.serviceAddrs.GetAddr(k8s.RdsRecorderV2)
 }
 
 // DBPort returns MySQL port; default to 3306

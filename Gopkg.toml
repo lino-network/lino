@@ -29,6 +29,10 @@
   name = "github.com/cosmos/cosmos-sdk"
   version = "=0.32.0"
 
+[[constraint]]
+  name = "github.com/lino-network/lino-service-discovery"
+  branch = "master"
+
 [[override]]
   name = "github.com/tendermint/tendermint"
   revision = "v0.30.0"
