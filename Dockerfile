@@ -35,7 +35,7 @@ COPY docker/fullnode/config.toml config.toml
 EXPOSE 26656
 EXPOSE 26657
 
-COPY docker/fullnode/backup_watch_dog.sh watch_dog.sh
+COPY docker/fullnode/watch_dog.sh watch_dog.sh
 RUN chmod +x watch_dog.sh
 
 ENTRYPOINT ["./watch_dog.sh"]
