@@ -255,6 +255,11 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.E
 	if err := pm.postStorage.SetPostInfo(ctx, postInfo); err != nil {
 		return err
 	}
+	res := strings.Split(string(permlink), types.PermlinkSeparator)
+	setErr := pm.recorder.PostRepository.DeletePost(res[0], res[1])
+	if setErr != nil {
+		log.Error().Msgf("failed to delete post %v", permlink)
+	}
 	return nil
 }
 

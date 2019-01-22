@@ -13,7 +13,7 @@ const (
 	DBPassword = "my-secret"
 	DBHost     = "localhost"
 	DBPort     = "3308"
-	DBName     = "lino_db"
+	DBName     = "recorder"
 )
 
 // NewDBConn returns a new sql db connection

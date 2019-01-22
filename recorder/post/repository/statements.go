@@ -14,7 +14,8 @@ SELECT
     links,
     createdAt,
     totalDonateCount,
-    totalReward
+    totalReward,
+    isDeleted
 FROM
     post
 WHERE
@@ -22,14 +23,20 @@ WHERE
 `
 	insertPostStmt = `
 INSERT INTO
-post(author, postID, title, content, parentAuthor, parentPostID, sourceAuthor, sourcePostID, links, createdAt, totalDonateCount, totalReward)
+post(author, postID, title, content, parentAuthor, parentPostID, sourceAuthor, sourcePostID, links, createdAt, totalDonateCount, totalReward, isDeleted)
 VALUES
-   (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+   (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
 `
 	setRewardStmt = `
     UPDATE post
     SET
       totalReward = ?
+    WHERE author = ? AND postID = ?
+    `
+	deletePostStmt = `
+    UPDATE post
+    SET
+      isDeleted = 1
     WHERE author = ? AND postID = ?
     `
 )

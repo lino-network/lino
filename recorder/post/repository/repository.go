@@ -9,5 +9,6 @@ type PostRepository interface {
 	Get(author string) (*post.Post, errors.Error)
 	Add(info *post.Post) errors.Error
 	SetReward(author, postID string, amount string) errors.Error
+	DeletePost(author, postID string) errors.Error
 	IsEnable() bool
 }

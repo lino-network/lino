@@ -6,6 +6,7 @@ import (
 
 	bhRepo "github.com/lino-network/lino/recorder/balancehistory/repository"
 	dRepo "github.com/lino-network/lino/recorder/donation/repository"
+	gRepo "github.com/lino-network/lino/recorder/grantpermission/repository"
 	iRepo "github.com/lino-network/lino/recorder/inflation/repository"
 	postRepo "github.com/lino-network/lino/recorder/post/repository"
 	pRepo "github.com/lino-network/lino/recorder/postreward/repository"
@@ -17,17 +18,18 @@ import (
 )
 
 type Recorder struct {
-	NewVersionOnly           bool
-	DonationRepo             dRepo.DonationRepository
-	InflationRepo            iRepo.InflationRepository
-	StakeStatRepository      sRepo.StakeStatRepository
-	PostRewardRepository     pRepo.PostRewardRepository
-	StakeRepository          stakeRepo.StakeRepository
-	TopContentRepository     tRepo.TopContentRepository
-	UserRepository           uRepo.UserRepository
-	BalanceHistoryRepository bhRepo.BalanceHistoryRepository
-	RewardRepository         rRepo.RewardRepository
-	PostRepository           postRepo.PostRepository
+	NewVersionOnly            bool
+	DonationRepo              dRepo.DonationRepository
+	InflationRepo             iRepo.InflationRepository
+	StakeStatRepository       sRepo.StakeStatRepository
+	PostRewardRepository      pRepo.PostRewardRepository
+	StakeRepository           stakeRepo.StakeRepository
+	TopContentRepository      tRepo.TopContentRepository
+	UserRepository            uRepo.UserRepository
+	BalanceHistoryRepository  bhRepo.BalanceHistoryRepository
+	RewardRepository          rRepo.RewardRepository
+	PostRepository            postRepo.PostRepository
+	GrantPermissionRepository gRepo.GrantPermissionRepository
 }
 
 var conn *sql.DB
@@ -95,16 +97,21 @@ func NewRecorder() Recorder {
 	if err != nil {
 		panic(err)
 	}
+	gRepo, err := gRepo.NewGrantPermissionDB(db)
+	if err != nil {
+		panic(err)
+	}
 	return Recorder{
-		DonationRepo:             donationRepo,
-		InflationRepo:            inflationRepo,
-		StakeStatRepository:      stakeStatRepo,
-		PostRewardRepository:     postRewardStatRepo,
-		StakeRepository:          stakeRepo,
-		TopContentRepository:     topContentRepo,
-		UserRepository:           userRepo,
-		BalanceHistoryRepository: balanceHistoryRepo,
-		RewardRepository:         rewardRepo,
-		PostRepository:           postRepo,
+		DonationRepo:              donationRepo,
+		InflationRepo:             inflationRepo,
+		StakeStatRepository:       stakeStatRepo,
+		PostRewardRepository:      postRewardStatRepo,
+		StakeRepository:           stakeRepo,
+		TopContentRepository:      topContentRepo,
+		UserRepository:            userRepo,
+		BalanceHistoryRepository:  balanceHistoryRepo,
+		RewardRepository:          rewardRepo,
+		PostRepository:            postRepo,
+		GrantPermissionRepository: gRepo,
 	}
 }
