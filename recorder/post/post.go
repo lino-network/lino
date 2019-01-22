@@ -15,4 +15,5 @@ type Post struct {
 	CreatedAt        time.Time `json:"createdAt"`
 	TotalDonateCount int64     `json:"totalDonateCount"`
 	TotalReward      string    `json:"totalReward"`
+	IsDeleted        bool      `json:"is_deleted"`
 }

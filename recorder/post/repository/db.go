@@ -15,6 +15,7 @@ const (
 	getPost       = "get-post"
 	insertPost    = "insert-post"
 	setReward     = "set-reward"
+	deletePost    = "delete-post"
 	postTableName = "post"
 )
 
@@ -35,6 +36,7 @@ func NewPostDB(conn *sql.DB) (PostRepository, errors.Error) {
 		getPost:    getPostStmt,
 		insertPost: insertPostStmt,
 		setReward:  setRewardStmt,
+		deletePost: deletePostStmt,
 	}
 	stmts, err := dbutils.PrepareStmts(postTableName, conn, unprepared)
 	if err != nil {
@@ -61,8 +63,9 @@ func scanPost(s dbutils.RowScanner) (*post.Post, errors.Error) {
 		createdAt        time.Time
 		totalDonateCount int64
 		totalReward      string
+		isDeleted        bool
 	)
-	if err := s.Scan(&author, &postID, &title, &content, &parentAuthor, &parentPostID, &sourceAuthor, &sourcePostID, &links, &createdAt, &totalDonateCount, &totalReward); err != nil {
+	if err := s.Scan(&author, &postID, &title, &content, &parentAuthor, &parentPostID, &sourceAuthor, &sourcePostID, &links, &createdAt, &totalDonateCount, &totalReward, &isDeleted); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewErrorf(errors.CodeUserNotFound, "post not found: %s", err)
 		}
@@ -82,6 +85,7 @@ func scanPost(s dbutils.RowScanner) (*post.Post, errors.Error) {
 		CreatedAt:        createdAt,
 		TotalDonateCount: totalDonateCount,
 		TotalReward:      dbutils.TrimPaddedZeroFromNumber(totalReward),
+		IsDeleted:        isDeleted,
 	}, nil
 }
 
@@ -122,5 +126,10 @@ func (db *postDB) SetReward(author, postID string, amount string) errors.Error {
 	_, err = dbutils.Exec(db.stmts[setReward],
 		paddingAmount, author, postID,
 	)
+	return err
+}
+
+func (db *postDB) DeletePost(author, postID string) errors.Error {
+	_, err := dbutils.Exec(db.stmts[deletePost], author, postID)
 	return err
 }

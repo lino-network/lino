@@ -8,6 +8,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/recorder"
 	"github.com/lino-network/lino/recorder/balancehistory"
+	gp "github.com/lino-network/lino/recorder/grantpermission"
 	rreward "github.com/lino-network/lino/recorder/reward"
 	"github.com/lino-network/lino/recorder/user"
 	"github.com/lino-network/lino/types"
@@ -654,6 +655,11 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err
 	}
+
+	addErr := accManager.recorder.UserRepository.IncreaseSequenceNumber(string(username))
+	if addErr != nil {
+		log.Error().Msgf("failed increase sequence number for user %v", username)
+	}
 	return nil
 }
 
@@ -970,6 +976,28 @@ func (accManager AccountManager) AuthorizePermission(
 		if err != nil {
 			return err
 		}
+		if accManager.recorder.GrantPermissionRepository.IsEnable() {
+			_, getErr := accManager.recorder.GrantPermissionRepository.Get(string(me), hex.EncodeToString(txKey.Bytes()))
+			grantPubKey := &gp.GrantPubKey{
+				Username:   string(me),
+				AuthTo:     hex.EncodeToString(txKey.Bytes()),
+				Permission: grantLevel,
+				CreatedAt:  ctx.BlockHeader().Time,
+				ExpiresAt:  ctx.BlockHeader().Time.Add(d),
+				Amount:     amount.Amount.String(),
+			}
+			if getErr != nil {
+				addErr := accManager.recorder.GrantPermissionRepository.Add(grantPubKey)
+				if addErr != nil {
+					log.Error().Msgf("failed to add pubkey %v for user %v", grantPubKey, me)
+				}
+			} else {
+				updateErr := accManager.recorder.GrantPermissionRepository.Update(grantPubKey)
+				if updateErr != nil {
+					log.Error().Msgf("failed to update pubkey %v for user %v", grantPubKey, me)
+				}
+			}
+		}
 		return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
 	}
 
@@ -978,6 +1006,28 @@ func (accManager AccountManager) AuthorizePermission(
 		appKey, err := accManager.GetAppKey(ctx, authorizedUser)
 		if err != nil {
 			return err
+		}
+		if accManager.recorder.GrantPermissionRepository.IsEnable() {
+			_, getErr := accManager.recorder.GrantPermissionRepository.Get(string(me), hex.EncodeToString(appKey.Bytes()))
+			grantPubKey := &gp.GrantPubKey{
+				Username:   string(me),
+				AuthTo:     hex.EncodeToString(appKey.Bytes()),
+				Permission: grantLevel,
+				CreatedAt:  ctx.BlockHeader().Time,
+				ExpiresAt:  ctx.BlockHeader().Time.Add(d),
+				Amount:     amount.Amount.String(),
+			}
+			if getErr != nil {
+				addErr := accManager.recorder.GrantPermissionRepository.Add(grantPubKey)
+				if addErr != nil {
+					log.Error().Msgf("failed to add pubkey %v for user %v", grantPubKey, me)
+				}
+			} else {
+				updateErr := accManager.recorder.GrantPermissionRepository.Update(grantPubKey)
+				if updateErr != nil {
+					log.Error().Msgf("failed to update pubkey %v for user %v", grantPubKey, me)
+				}
+			}
 		}
 		return accManager.storage.SetGrantPubKey(ctx, me, appKey, &newGrantPubKey)
 	}
@@ -992,6 +1042,12 @@ func (accManager AccountManager) RevokePermission(
 		return err
 	}
 	accManager.storage.DeleteGrantPubKey(ctx, me, pubKey)
+	if accManager.recorder.GrantPermissionRepository.IsEnable() {
+		dErr := accManager.recorder.GrantPermissionRepository.Delete(string(me), hex.EncodeToString(pubKey.Bytes()))
+		if dErr != nil {
+			log.Error().Msgf("failed to delete pubkey %v for user %v", pubKey, me)
+		}
+	}
 	return nil
 }
 
@@ -1048,6 +1104,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	}
 	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time.Unix() {
 		accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+		if accManager.recorder.GrantPermissionRepository.IsEnable() {
+			dErr := accManager.recorder.GrantPermissionRepository.Delete(string(me), hex.EncodeToString(signKey.Bytes()))
+			if dErr != nil {
+				log.Error().Msgf("failed to delete signKey %v for user %v", signKey, me)
+			}
+		}
 		return "", ErrGrantKeyExpired(me)
 	}
 	if permission != grantPubKey.Permission {
@@ -1060,6 +1122,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		if !reflect.DeepEqual(signKey, txKey) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+			if accManager.recorder.GrantPermissionRepository.IsEnable() {
+				dErr := accManager.recorder.GrantPermissionRepository.Delete(string(me), hex.EncodeToString(signKey.Bytes()))
+				if dErr != nil {
+					log.Error().Msgf("failed to delete signKey %v for user %v", signKey, me)
+				}
+			}
 			return "", ErrPreAuthGrantKeyMismatch(grantPubKey.Username)
 		}
 		if amount.IsGT(grantPubKey.Amount) {
@@ -1068,9 +1136,28 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		grantPubKey.Amount = grantPubKey.Amount.Minus(amount)
 		if grantPubKey.Amount.IsEqual(types.NewCoinFromInt64(0)) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+			if accManager.recorder.GrantPermissionRepository.IsEnable() {
+				dErr := accManager.recorder.GrantPermissionRepository.Delete(string(me), hex.EncodeToString(signKey.Bytes()))
+				if dErr != nil {
+					log.Error().Msgf("failed to delete signKey %v for user %v", signKey, me)
+				}
+			}
 		} else {
 			if err := accManager.storage.SetGrantPubKey(ctx, me, signKey, grantPubKey); err != nil {
 				return "", nil
+			}
+			if accManager.recorder.GrantPermissionRepository.IsEnable() {
+				permission, getErr := accManager.recorder.GrantPermissionRepository.Get(string(me), hex.EncodeToString(signKey.Bytes()))
+				if getErr != nil {
+					log.Error().Msgf("failed to get pubkey, err: %v", getErr)
+				}
+				if permission != nil {
+					permission.Amount = grantPubKey.Amount.Amount.String()
+					updateErr := accManager.recorder.GrantPermissionRepository.Update(permission)
+					if updateErr != nil {
+						log.Error().Msgf("failed to update pubkey, err: %v", updateErr)
+					}
+				}
 			}
 		}
 		return grantPubKey.Username, nil
@@ -1082,6 +1169,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		if !reflect.DeepEqual(signKey, appKey) {
 			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
+			if accManager.recorder.GrantPermissionRepository.IsEnable() {
+				dErr := accManager.recorder.GrantPermissionRepository.Delete(string(me), hex.EncodeToString(signKey.Bytes()))
+				if dErr != nil {
+					log.Error().Msgf("failed to delete signKey %v for user %v", signKey, me)
+				}
+			}
 			return "", ErrAppGrantKeyMismatch(grantPubKey.Username)
 		}
 		return grantPubKey.Username, nil
