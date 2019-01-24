@@ -14,6 +14,7 @@ package pubsub
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -162,6 +163,7 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 		s.mtx.Unlock()
 		return nil
 	case <-ctx.Done():
+		fmt.Println("num of jobs in queue:", len(s.cmds))
 		return ctx.Err()
 	case <-s.Quit():
 		return nil

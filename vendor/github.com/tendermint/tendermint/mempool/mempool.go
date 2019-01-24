@@ -274,7 +274,6 @@ func (mem *Mempool) CheckTx(tx types.Tx, cb func(*abci.Response)) (err error) {
 
 // ABCI callback function
 func (mem *Mempool) resCb(req *abci.Request, res *abci.Response) {
-	fmt.Println("call back")
 	if mem.recheckCursor == nil {
 		mem.resCbNormal(req, res)
 	} else {
@@ -284,7 +283,6 @@ func (mem *Mempool) resCb(req *abci.Request, res *abci.Response) {
 }
 
 func (mem *Mempool) resCbNormal(req *abci.Request, res *abci.Response) {
-	fmt.Println("res normal call back")
 	switch r := res.Value.(type) {
 	case *abci.Response_CheckTx:
 		tx := req.GetCheckTx().Tx
