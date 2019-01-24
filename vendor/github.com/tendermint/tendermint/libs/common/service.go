@@ -147,6 +147,7 @@ func (bs *BaseService) OnStart() error { return nil }
 // Stop implements Service by calling OnStop (if defined) and closing quit
 // channel. An error will be returned if the service is already stopped.
 func (bs *BaseService) Stop() error {
+	fmt.Println("base service stop", bs.name)
 	if atomic.CompareAndSwapUint32(&bs.stopped, 0, 1) {
 		bs.Logger.Info(Fmt("Stopping %v", bs.name), "impl", bs.impl)
 		bs.impl.OnStop()

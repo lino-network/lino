@@ -49,6 +49,7 @@ func (b *EventBus) OnStart() error {
 }
 
 func (b *EventBus) OnStop() {
+	fmt.Println("on stop event bus")
 	b.pubsub.Stop()
 }
 
