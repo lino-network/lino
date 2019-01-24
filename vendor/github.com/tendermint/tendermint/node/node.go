@@ -480,6 +480,7 @@ func (n *Node) OnStop() {
 	fmt.Println("on stop")
 	n.BaseService.OnStop()
 
+	fmt.Println("before stopping event bus")
 	n.Logger.Info("Stopping Node")
 
 	// first stop the non-reactor services
