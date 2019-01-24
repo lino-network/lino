@@ -153,9 +153,7 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 
 	select {
 	case s.cmds <- cmd{op: sub, clientID: clientID, query: query, ch: out}:
-		fmt.Println("before lock")
 		s.mtx.Lock()
-		fmt.Println("after lock")
 		if _, ok = s.subscriptions[clientID]; !ok {
 			s.subscriptions[clientID] = make(map[string]Query)
 		}
@@ -163,7 +161,6 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 		// see Unsubscribe
 		s.subscriptions[clientID][query.String()] = query
 		s.mtx.Unlock()
-		fmt.Println("unlock")
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -274,6 +271,7 @@ func (s *Server) OnReset() error {
 func (s *Server) loop(state state) {
 loop:
 	for cmd := range s.cmds {
+		fmt.Println("cmd get from cmd ch", cmd)
 		switch cmd.op {
 		case unsub:
 			if cmd.query != nil {
