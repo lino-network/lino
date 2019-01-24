@@ -232,7 +232,6 @@ func (mem *Mempool) TxsWaitChan() <-chan struct{} {
 //     It gets called from another goroutine.
 // CONTRACT: Either cb will get called, or err returned.
 func (mem *Mempool) CheckTx(tx types.Tx, cb func(*abci.Response)) (err error) {
-	fmt.Println("mem pool check tx!!!!!!")
 	mem.proxyMtx.Lock()
 	defer mem.proxyMtx.Unlock()
 

@@ -153,7 +153,9 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 
 	select {
 	case s.cmds <- cmd{op: sub, clientID: clientID, query: query, ch: out}:
+		fmt.Println("before lock")
 		s.mtx.Lock()
+		fmt.Println("after lock")
 		if _, ok = s.subscriptions[clientID]; !ok {
 			s.subscriptions[clientID] = make(map[string]Query)
 		}
@@ -161,9 +163,9 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 		// see Unsubscribe
 		s.subscriptions[clientID][query.String()] = query
 		s.mtx.Unlock()
+		fmt.Println("unlock")
 		return nil
 	case <-ctx.Done():
-		fmt.Println("num of jobs in queue:", len(s.cmds))
 		return ctx.Err()
 	case <-s.Quit():
 		return nil
