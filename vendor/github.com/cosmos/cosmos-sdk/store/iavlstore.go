@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -243,6 +244,16 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 		}
 		iterator.Close()
 		res.Value = cdc.MustMarshalBinary(KVs)
+	case "/subspace-js":
+		subspace := req.Data
+		res.Key = subspace
+		var KVs []KVPair
+		iterator := sdk.KVStorePrefixIterator(st, subspace)
+		for ; iterator.Valid(); iterator.Next() {
+			KVs = append(KVs, KVPair{iterator.Key(), iterator.Value()})
+		}
+		iterator.Close()
+		res.Value, _ = json.Marshal(KVs)
 	default:
 		msg := fmt.Sprintf("Unexpected Query path: %v", req.Path)
 		return sdk.ErrUnknownRequest(msg).QueryResult()

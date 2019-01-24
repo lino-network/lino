@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/netutil"
 
-	types "github.com/tendermint/tendermint/rpc/lib/types"
 	"github.com/tendermint/tendermint/libs/log"
+	types "github.com/tendermint/tendermint/rpc/lib/types"
 )
 
 // Config is an RPC server configuration.
@@ -150,12 +150,12 @@ func RecoverAndLogHandler(handler http.Handler, logger log.Logger) http.Handler 
 		rww := &ResponseWriterWrapper{-1, w}
 		begin := time.Now()
 
-		// Common headers
-		origin := r.Header.Get("Origin")
-		rww.Header().Set("Access-Control-Allow-Origin", origin)
-		rww.Header().Set("Access-Control-Allow-Credentials", "true")
 		rww.Header().Set("Access-Control-Expose-Headers", "X-Server-Time")
 		rww.Header().Set("X-Server-Time", fmt.Sprintf("%v", begin.Unix()))
+		rww.Header().Set("Access-Control-Allow-Origin", "*")
+		rww.Header().Set("Access-Control-Allow-Credentials", "true")
+		rww.Header().Set("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT")
+		rww.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
 
 		defer func() {
 			// Send a 500 error if a panic happens during a handler.

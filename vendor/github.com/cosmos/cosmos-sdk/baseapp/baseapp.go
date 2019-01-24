@@ -379,7 +379,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	} else {
 		// In the first block, app.deliverState.ctx will already be initialized
 		// by InitChain. Context is now updated with Header information.
-		app.deliverState.ctx = app.deliverState.ctx.WithBlockHeader(req.Header).WithBlockHeight(req.Header.Height)
+		app.deliverState.ctx = app.deliverState.ctx.WithBlockHeader(req.Header)
 	}
 
 	if app.beginBlocker != nil {
@@ -490,9 +490,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (re
 
 		var msgResult sdk.Result
 		// Skip actual execution for CheckTx
-		if mode != runTxModeCheck {
-			msgResult = handler(ctx, msg)
-		}
+		msgResult = handler(ctx, msg)
 
 		// NOTE: GasWanted is determined by ante handler and
 		// GasUsed by the GasMeter
