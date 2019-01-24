@@ -477,18 +477,21 @@ func (n *Node) OnStart() error {
 
 // OnStop stops the Node. It implements cmn.Service.
 func (n *Node) OnStop() {
+	fmt.Println("on stop")
 	n.BaseService.OnStop()
 
 	n.Logger.Info("Stopping Node")
 
 	// first stop the non-reactor services
 	n.eventBus.Stop()
+	fmt.Println("stop event bus")
 	n.indexerService.Stop()
+	fmt.Println("stop indexer serveice")
 
 	// now stop the reactors
 	// TODO: gracefully disconnect from peers.
 	n.sw.Stop()
-
+	fmt.Println("stop reactor")
 	// finally stop the listeners / external services
 	for _, l := range n.rpcListeners {
 		n.Logger.Info("Closing rpc listener", "listener", l)
@@ -496,12 +499,14 @@ func (n *Node) OnStop() {
 			n.Logger.Error("Error closing listener", "listener", l, "err", err)
 		}
 	}
+	fmt.Println("stop listeners")
 
 	if pvsc, ok := n.privValidator.(*privval.SocketPV); ok {
 		if err := pvsc.Stop(); err != nil {
 			n.Logger.Error("Error stopping priv validator socket client", "err", err)
 		}
 	}
+	fmt.Println("stop privValidator")
 
 	if n.prometheusSrv != nil {
 		if err := n.prometheusSrv.Shutdown(context.Background()); err != nil {
