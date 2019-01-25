@@ -173,7 +173,6 @@ func (s *Server) Subscribe(ctx context.Context, clientID string, query Query, ou
 // returned to the caller if the context is canceled or if subscription does
 // not exist.
 func (s *Server) Unsubscribe(ctx context.Context, clientID string, query Query) error {
-	fmt.Println("unsubscribe:", clientID, query)
 	var origQuery Query
 	s.mtx.RLock()
 	clientSubscriptions, ok := s.subscriptions[clientID]
