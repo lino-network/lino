@@ -1,0 +1,13 @@
+--- ../../vendor/github.com/cosmos/cosmos-sdk/baseapp/baseapp.go	2018-09-14 22:28:20.627875893 -0700
++++ ./baseapp	2019-02-18 11:08:28.640149680 -0800
+@@ -490,9 +490,7 @@
+ 
+ 		var msgResult sdk.Result
+ 		// Skip actual execution for CheckTx
+-		if mode != runTxModeCheck {
+-			msgResult = handler(ctx, msg)
+-		}
++		msgResult = handler(ctx, msg)
+ 
+ 		// NOTE: GasWanted is determined by ante handler and
+ 		// GasUsed by the GasMeter
