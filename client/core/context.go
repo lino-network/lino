@@ -13,7 +13,7 @@ type CoreContext struct {
 	TrustNode       bool
 	NodeURI         string
 	FromAddressName string
-	Sequence        int64
+	Sequence        uint64
 	Memo            string
 	Client          rpcclient.Client
 	PrivKey         crypto.PrivKey
@@ -50,7 +50,7 @@ func (c CoreContext) WithFromAddressName(fromAddressName string) CoreContext {
 }
 
 // WithSequence - mount sequence number on context
-func (c CoreContext) WithSequence(sequence int64) CoreContext {
+func (c CoreContext) WithSequence(sequence uint64) CoreContext {
 	c.Sequence = sequence
 	return c
 }
