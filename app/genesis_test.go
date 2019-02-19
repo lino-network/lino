@@ -13,7 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 func TestGetGenesisJson(t *testing.T) {

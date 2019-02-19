@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // RegisterWire - register concrete types on wire codec

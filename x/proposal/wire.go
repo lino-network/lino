@@ -1,7 +1,7 @@
 package proposal
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Register concrete types on wire codec

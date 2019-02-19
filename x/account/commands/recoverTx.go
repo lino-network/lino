@@ -12,7 +12,7 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 

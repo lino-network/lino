@@ -11,7 +11,7 @@ import (
 	infra "github.com/lino-network/lino/x/infra"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 func ProviderReportTxCmd(cdc *wire.Codec) *cobra.Command {

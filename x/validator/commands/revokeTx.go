@@ -10,7 +10,7 @@ import (
 	"github.com/lino-network/lino/x/validator"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // RevokeTxCmd will create a revoke tx and sign it with the given key

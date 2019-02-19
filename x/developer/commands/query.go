@@ -11,7 +11,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/developer/model"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // GetDeveloperCmd - returns target developer information

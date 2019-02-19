@@ -1,7 +1,7 @@
 package post
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"

@@ -11,7 +11,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/vote/model"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // GetDelegationCmd returns the delegator's delegation

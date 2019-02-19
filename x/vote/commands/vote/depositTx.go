@@ -10,7 +10,7 @@ import (
 	"github.com/lino-network/lino/x/vote"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // DepositVoterTxCmd will create a deposit tx and sign it with the given key

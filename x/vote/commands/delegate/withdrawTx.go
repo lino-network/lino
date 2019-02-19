@@ -10,7 +10,7 @@ import (
 	"github.com/lino-network/lino/x/vote"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // WithdrawDelegateTxCmd will create a send tx and sign it with the given key
