@@ -1,0 +1,27 @@
+--- ../../vendor/github.com/cosmos/cosmos-sdk/store/iavlstore.go	2018-09-14 22:28:20.779879250 -0700
++++ ./iavlstore	2019-02-18 11:16:37.685022592 -0800
+@@ -1,6 +1,7 @@
+ package store
+ 
+ import (
++	"encoding/json"
+ 	"fmt"
+ 	"io"
+ 	"sync"
+@@ -243,6 +244,16 @@
+ 		}
+ 		iterator.Close()
+ 		res.Value = cdc.MustMarshalBinary(KVs)
++	case "/subspace-js":
++		subspace := req.Data
++		res.Key = subspace
++		var KVs []KVPair
++		iterator := sdk.KVStorePrefixIterator(st, subspace)
++		for ; iterator.Valid(); iterator.Next() {
++			KVs = append(KVs, KVPair{iterator.Key(), iterator.Value()})
++		}
++		iterator.Close()
++		res.Value, _ = json.Marshal(KVs)
+ 	default:
+ 		msg := fmt.Sprintf("Unexpected Query path: %v", req.Path)
+ 		return sdk.ErrUnknownRequest(msg).QueryResult()
