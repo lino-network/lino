@@ -27,23 +27,11 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "v0.24.0-rc1"
-
-[[override]]
-  name = "github.com/golang/protobuf"
-  version = "=1.1.0"
-
-[[override]]
-  name = "github.com/tendermint/go-amino"
-  version = "=0.10.1"
-
-[[override]]
-  name = "github.com/tendermint/iavl"
-  version = "=v0.9.2"
+  version = "=0.32.0"
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  version = "=v0.23.0"
+  revision = "v0.30.0"
 
 [prune]
   go-tests = true
