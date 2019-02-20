@@ -37,7 +37,7 @@ type PostMeta struct {
 	TotalUpvoteCoinDay      types.Coin `json:"total_upvote_coin_day"`
 	TotalViewCount          int64      `json:"total_view_count"`
 	TotalReward             types.Coin `json:"total_reward"`
-	RedistributionSplitRate sdk.Rat    `json:"redistribution_split_rate"`
+	RedistributionSplitRate sdk.Dec    `json:"redistribution_split_rate"`
 }
 
 // ReportOrUpvote - report or upvote from a user to a post

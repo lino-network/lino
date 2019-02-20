@@ -28,7 +28,7 @@ type PostStorage struct {
 // NewPostStorage - returns a new PostStorage that
 // uses codec to (binary) encode and decode concrete Post
 func NewPostStorage(key sdk.StoreKey) PostStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 
 	return PostStorage{

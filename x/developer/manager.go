@@ -126,10 +126,10 @@ func (dm DeveloperManager) ReportConsumption(
 
 // GetConsumptionWeight - given app name, get consumption percentage report by this app
 func (dm DeveloperManager) GetConsumptionWeight(
-	ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
+	ctx sdk.Context, username types.AccountKey) (sdk.Dec, sdk.Error) {
 	lst, err := dm.storage.GetDeveloperList(ctx)
 	if err != nil {
-		return sdk.ZeroRat(), err
+		return sdk.ZeroDec(), err
 	}
 
 	totalConsumption := types.NewCoinFromInt64(0)
@@ -138,7 +138,7 @@ func (dm DeveloperManager) GetConsumptionWeight(
 	for _, developerName := range lst.AllDevelopers {
 		curDeveloper, err := dm.storage.GetDeveloper(ctx, developerName)
 		if err != nil {
-			return sdk.ZeroRat(), err
+			return sdk.ZeroDec(), err
 		}
 		totalConsumption = totalConsumption.Plus(curDeveloper.AppConsumption)
 		if curDeveloper.Username == username {
@@ -147,10 +147,9 @@ func (dm DeveloperManager) GetConsumptionWeight(
 	}
 	// if not any consumption here, we evenly distribute all inflation
 	if totalConsumption.ToRat().IsZero() {
-
-		return sdk.NewRat(1, int64(len(lst.AllDevelopers))).Round(types.PrecisionFactor), nil
+		return types.NewDecFromRat(1, int64(len(lst.AllDevelopers))), nil
 	}
-	return myConsumption.ToRat().Quo(totalConsumption.ToRat()).Round(types.PrecisionFactor), nil
+	return myConsumption.ToRat().Quo(totalConsumption.ToRat()), nil
 }
 
 func (dm DeveloperManager) GetDeveloperList(ctx sdk.Context) (*model.DeveloperList, sdk.Error) {

@@ -173,10 +173,10 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 
 // MackCodec - codec for application, used by command line tool and authenticate handler
 func MakeCodec() *wire.Codec {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	cdc.RegisterConcrete(cauth.StdTx{}, "auth/StdTx", nil)
 	wire.RegisterCrypto(cdc)
-	sdk.RegisterWire(cdc)
+	sdk.RegisterCodec(cdc)
 
 	acc.RegisterWire(cdc)
 	post.RegisterWire(cdc)
@@ -522,12 +522,11 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
-		var ratPerValidator sdk.Rat
-		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
-		} else {
-			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i))).Round(types.PrecisionFactor)
-		}
+		var ratPerValidator sdk.Dec
+		// XXX(yumin): why in the previous version, it's guarged with
+		// if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+		// though only differs in round?
+		ratPerValidator = coin.ToRat().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
 		coinPerValidator := types.RatToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)

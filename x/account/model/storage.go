@@ -36,7 +36,7 @@ type AccountStorage struct {
 
 // NewLinoAccountStorage - creates and returns a account manager
 func NewAccountStorage(key sdk.StoreKey) AccountStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 
 	return AccountStorage{

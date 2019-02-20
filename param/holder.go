@@ -22,9 +22,9 @@ var (
 	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
-	AnnualInflationCeiling = sdk.NewRat(98, 1000)
+	AnnualInflationCeiling = sdk.MustNewDecFromStr("0.098")
 	// AnnualInflationFloor - annual inflation lower bound
-	AnnualInflationFloor = sdk.NewRat(3, 100)
+	AnnualInflationFloor = sdk.MustNewDecFromStr("0.03")
 )
 
 // ParamHolder - parameter KVStore
@@ -36,7 +36,7 @@ type ParamHolder struct {
 
 // NewParamHolder - create a new parameter KVStore
 func NewParamHolder(key sdk.StoreKey) ParamHolder {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return ParamHolder{
 		key: key,
@@ -47,19 +47,19 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 // InitParam - init all parameters based on code
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(65, 100),
-		DeveloperAllocation:      sdk.NewRat(10, 100),
-		ValidatorAllocation:      sdk.NewRat(5, 100),
+		GlobalGrowthRate:         sdk.MustNewDecFromStr("0.098"),
+		InfraAllocation:          sdk.MustNewDecFromStr("0.2"),
+		ContentCreatorAllocation: sdk.MustNewDecFromStr("0.65"),
+		DeveloperAllocation:      sdk.MustNewDecFromStr("0.1"),
+		ValidatorAllocation:      sdk.MustNewDecFromStr("0.05"),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
 		return err
 	}
 
 	infraInternalAllocationParam := &InfraInternalAllocationParam{
-		StorageAllocation: sdk.NewRat(50, 100),
-		CDNAllocation:     sdk.NewRat(50, 100),
+		StorageAllocation: sdk.MustNewDecFromStr("0.5"),
+		CDNAllocation:     sdk.MustNewDecFromStr("0.5"),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
 		return err
@@ -80,7 +80,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		NumOfConsumptionOnAuthorOffset: 7,
 		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
 		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 	}
 	if err := ph.setEvaluateOfContentValueParam(ctx, evaluateOfContentValueParam); err != nil {
 		return err
@@ -124,18 +123,18 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	proposalParam := &ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  sdk.MustNewDecFromStr("0.5"),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    sdk.MustNewDecFromStr("0.7"),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  sdk.MustNewDecFromStr("0.8"),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -414,7 +413,7 @@ func (ph ParamHolder) GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk
 }
 
 // UpdateGlobalGrowthRate - update global growth rate
-func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat) sdk.Error {
+func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec) sdk.Error {
 	store := ctx.KVStore(ph.key)
 	allocationBytes := store.Get(GetAllocationParamKey())
 	if allocationBytes == nil {

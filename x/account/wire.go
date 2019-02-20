@@ -15,7 +15,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(UpdateAccountMsg{}, "lino/updateAcc", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

@@ -32,11 +32,9 @@ func CreateCoinReturnEvents(
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
-		var pieceRat sdk.Rat
+		var pieceRat sdk.Dec
 		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i))
-		} else {
-			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i)).Round(types.PrecisionFactor)
+			pieceRat = coin.ToRat().Quo(sdk.NewDec(times - i))
 		}
 		piece := types.RatToCoin(pieceRat)
 		coin = coin.Minus(piece)

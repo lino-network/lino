@@ -68,7 +68,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 
 // Get the public key from the name flag
 func GetPubKey() (pubKey crypto.PubKey, err error) {
-	keybase, err := keys.GetKeyBase()
+	keybase, err := keys.NewKeyBaseFromHomeFlag()
 	if err != nil {
 		return nil, err
 	}

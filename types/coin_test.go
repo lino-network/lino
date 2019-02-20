@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -640,7 +640,7 @@ func TestMinusCoin(t *testing.T) {
 	}
 }
 
-var cdc = wire.NewCodec() //var jsonCdc JSONCodec // TODO wire.Codec
+var cdc = wire.New() //var jsonCdc JSONCodec // TODO wire.Codec
 
 func TestSerializationGoWire(t *testing.T) {
 	r := bigCoin

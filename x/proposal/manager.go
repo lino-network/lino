@@ -126,10 +126,10 @@ func (pm ProposalManager) AddProposal(
 
 // GetProposalPassParam - based on proposal type, get pass ratio and pass vote requirement
 func (pm ProposalManager) GetProposalPassParam(
-	ctx sdk.Context, proposalType types.ProposalType) (sdk.Rat, types.Coin, sdk.Error) {
+	ctx sdk.Context, proposalType types.ProposalType) (sdk.Dec, types.Coin, sdk.Error) {
 	param, err := pm.paramHolder.GetProposalParam(ctx)
 	if err != nil {
-		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), err
+		return sdk.NewDec(1), types.NewCoinFromInt64(0), err
 	}
 	switch proposalType {
 	case types.ChangeParam:
@@ -139,7 +139,7 @@ func (pm ProposalManager) GetProposalPassParam(
 	case types.ProtocolUpgrade:
 		return param.ProtocolUpgradePassRatio, param.ProtocolUpgradePassVotes, nil
 	default:
-		return sdk.NewRat(1, 1), types.NewCoinFromInt64(0), ErrIncorrectProposalType()
+		return sdk.NewDec(1), types.NewCoinFromInt64(0), ErrIncorrectProposalType()
 	}
 }
 
@@ -189,7 +189,7 @@ func (pm ProposalManager) UpdateProposalPassStatus(
 	if !totalVotes.IsGT(minVotes) {
 		return types.ProposalNotPass, nil
 	}
-	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat()).Round(types.PrecisionFactor)
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
 	if ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalPass
 	} else {
@@ -224,7 +224,7 @@ func (pm ProposalManager) UpdateProposalStatus(
 		return types.ProposalNotPass, err
 	}
 	totalVotes := proposalInfo.AgreeVotes.Plus(proposalInfo.DisagreeVotes)
-	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat()).Round(types.PrecisionFactor)
+	actualRatio := proposalInfo.AgreeVotes.ToRat().Quo(totalVotes.ToRat())
 
 	if !totalVotes.IsGT(minVotes) || !ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalNotPass

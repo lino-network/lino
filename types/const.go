@@ -117,12 +117,6 @@ const (
 	// MinutesPerDay - as defined by a julian year of 365.25 days
 	MinutesPerDay = 60 * 24
 
-	// PrecisionFactor - all decimals will around to allow at most 7 decimals
-	PrecisionFactor = 10000000
-
-	// NewRatFromDecimalPrecision - precision used in sdk NewRatFromDecimal
-	NewRatFromDecimalPrecision = 5
-
 	// MaximumSdkRatLength - maximum length of sdk.Rat can pass into blockchain
 	MaximumSdkRatLength = 10
 

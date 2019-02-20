@@ -11,7 +11,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ValidatorRevokeMsg{}, "lino/valRevoke", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

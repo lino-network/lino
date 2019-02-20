@@ -37,7 +37,7 @@ type FrozenMoney struct {
 // PendingCoinDayQueue - stores a list of pending coin day and total number of coin waiting in list
 type PendingCoinDayQueue struct {
 	LastUpdatedAt   int64            `json:"last_updated_at"`
-	TotalCoinDay    sdk.Rat          `json:"total_coin_day"`
+	TotalCoinDay    sdk.Dec          `json:"total_coin_day"`
 	TotalCoin       types.Coin       `json:"total_coin"`
 	PendingCoinDays []PendingCoinDay `json:"pending_coin_days"`
 }
@@ -60,7 +60,7 @@ type GrantPubKey struct {
 
 // AccountMeta - stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence             int64      `json:"sequence"`
+	Sequence             uint64     `json:"sequence"`
 	LastActivityAt       int64      `json:"last_activity_at"`
 	TransactionCapacity  types.Coin `json:"transaction_capacity"`
 	JSONMeta             string     `json:"json_meta"`

@@ -21,7 +21,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ChangePostParamMsg{}, "lino/changePostParam", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

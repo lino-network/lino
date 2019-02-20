@@ -23,7 +23,7 @@ type VoteStorage struct {
 
 // NewVoteStorage - new vote storage
 func NewVoteStorage(key sdk.StoreKey) VoteStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	vs := VoteStorage{
 		key: key,

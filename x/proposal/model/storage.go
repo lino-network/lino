@@ -20,7 +20,7 @@ type ProposalStorage struct {
 }
 
 func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 
 	cdc.RegisterInterface((*Proposal)(nil), nil)
 	cdc.RegisterConcrete(&ChangeParamProposal{}, "changeParam", nil)

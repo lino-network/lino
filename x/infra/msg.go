@@ -26,8 +26,11 @@ func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg ProviderReportMsg) Route() string { return types.InfraRouterName }
+
 // Type - implements sdk.Msg
-func (msg ProviderReportMsg) Type() string { return types.InfraRouterName } // TODO: "account/register"
+func (msg ProviderReportMsg) Type() string { return "ProviderReportMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg ProviderReportMsg) ValidateBasic() sdk.Error {

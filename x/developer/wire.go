@@ -14,7 +14,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(PreAuthorizationMsg{}, "lino/preAuthorizationPermission", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

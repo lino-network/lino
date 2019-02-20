@@ -262,7 +262,7 @@ func (accManager AccountManager) MinusSavingCoin(
 	for len(pendingCoinDayQueue.PendingCoinDays) > 0 {
 		lengthOfQueue := len(pendingCoinDayQueue.PendingCoinDays)
 		pendingCoinDay := pendingCoinDayQueue.PendingCoinDays[lengthOfQueue-1]
-		recoverRatio := sdk.NewRat(
+		recoverRatio := types.NewDecFromRat(
 			pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
 			coinDayParams.SecondsToRecoverCoinDay)
 		if coin.IsGTE(pendingCoinDay.Coin) {
@@ -356,7 +356,7 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 
 		for len(pendingCoinDayQueue.PendingCoinDays) > 0 {
 			pendingCoinDay := pendingCoinDayQueue.PendingCoinDays[0]
-			recoverRatio := sdk.NewRat(
+			recoverRatio := types.NewDecFromRat(
 				pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
 				coinDayParams.SecondsToRecoverCoinDay)
 			if coin.IsGTE(pendingCoinDay.Coin) {
@@ -471,7 +471,7 @@ func (accManager AccountManager) GetSavingFromBank(
 
 // GetSequence - get user sequence number
 func (accManager AccountManager) GetSequence(
-	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+	ctx sdk.Context, username types.AccountKey) (uint64, sdk.Error) {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
 		return 0, ErrGetSequence(err)
@@ -740,7 +740,7 @@ func (accManager AccountManager) RemoveFollowing(
 
 // CheckUserTPSCapacity - to prevent user spam the chain, every user has a TPS capacity
 func (accManager AccountManager) CheckUserTPSCapacity(
-	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Rat) sdk.Error {
+	ctx sdk.Context, me types.AccountKey, tpsCapacityRatio sdk.Dec) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, me)
 	if err != nil {
 		return err
@@ -765,11 +765,11 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 		accountMeta.TransactionCapacity = coinDay
 	} else {
 		// otherwise try to increase user capacity
-		incrementRatio := sdk.NewRat(
+		incrementRatio := types.NewDecFromRat(
 			ctx.BlockHeader().Time.Unix()-accountMeta.LastActivityAt,
 			bandwidthParams.SecondsToRecoverBandwidth)
-		if incrementRatio.GT(sdk.OneRat()) {
-			incrementRatio = sdk.OneRat()
+		if incrementRatio.GT(sdk.OneDec()) {
+			incrementRatio = sdk.OneDec()
 		}
 		capacityTillCoinDay := coinDay.Minus(accountMeta.TransactionCapacity)
 		increaseCapacity := types.RatToCoin(capacityTillCoinDay.ToRat().Mul(incrementRatio))
@@ -1016,7 +1016,7 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 		if pendingCoinDay.EndTime <= currentTimeSlot {
 			// remove the transaction from queue, clean coin day coin in queue and minus total coin
 			// coinDayRatioOfThisTransaction means the ratio of coin day of this transaction was added last time
-			coinDayRatioOfThisTransaction := sdk.NewRat(
+			coinDayRatioOfThisTransaction := types.NewDecFromRat(
 				pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
 				coinDayParams.SecondsToRecoverCoinDay)
 			// remote the coin day in the queue of this transaction
@@ -1035,11 +1035,11 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 	}
 	if len(pendingCoinDayQueue.PendingCoinDays) == 0 {
 		pendingCoinDayQueue.TotalCoin = types.NewCoinFromInt64(0)
-		pendingCoinDayQueue.TotalCoinDay = sdk.ZeroRat()
+		pendingCoinDayQueue.TotalCoinDay = sdk.ZeroDec()
 	} else {
 		// update all pending coin day at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
-		recoverRatio := sdk.NewRat(
+		recoverRatio := types.NewDecFromRat(
 			currentTimeSlot-pendingCoinDayQueue.LastUpdatedAt,
 			coinDayParams.SecondsToRecoverCoinDay)
 

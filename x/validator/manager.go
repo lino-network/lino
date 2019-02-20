@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // ValidatorManager - validator manager
@@ -139,7 +138,7 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.Validato
 
 // UpdateSigningValidator - based on info in beginBlocker, record last block singing info
 func (vm ValidatorManager) UpdateSigningValidator(
-	ctx sdk.Context, signingValidators []abci.SigningValidator) sdk.Error {
+	ctx sdk.Context, signingValidators []abci.VoteInfo) sdk.Error {
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
 		panic(err)
@@ -310,12 +309,14 @@ func (vm ValidatorManager) RegisterValidator(
 		if err != nil {
 			return err
 		}
-		if reflect.DeepEqual(validator.ABCIValidator.PubKey, tmtypes.TM2PB.PubKey(pubKey)) {
+		// XXX(yumin): ABCIValidator no longer has pubkey, changed to address
+		if reflect.DeepEqual(validator.ABCIValidator.Address, pubKey.Address()) {
 			return ErrValidatorPubKeyAlreadyExist()
 		}
 	}
+	// XXX(yumin): const power?
 	curValidator := &model.Validator{
-		ABCIValidator: abci.Validator{Address: pubKey.Address(), PubKey: tmtypes.TM2PB.PubKey(pubKey), Power: 1000},
+		ABCIValidator: abci.Validator{Address: pubKey.Address(), Power: 1000},
 		Username:      username,
 		Deposit:       coin,
 		Link:          link,

@@ -20,7 +20,7 @@ type DeveloperStorage struct {
 
 // DeveloperStorage - new developer storage
 func NewDeveloperStorage(key sdk.StoreKey) DeveloperStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return DeveloperStorage{
 		key: key,

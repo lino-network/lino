@@ -102,7 +102,7 @@ func createTestPost(
 		Links:        []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
-	splitRate, err := sdk.NewRatFromDecimal(redistributionRate, types.NewRatFromDecimalPrecision)
+	splitRate, err := sdk.NewDecFromStr(redistributionRate)
 	assert.Nil(t, err)
 
 	err = pm.CreatePost(

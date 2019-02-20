@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
@@ -50,7 +50,7 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
-		paneltyScore = sdk.OneRat()
+		paneltyScore = sdk.OneDec()
 	}
 	reward, err := gm.GetRewardAndPopFromWindow(ctx, event.Evaluate, paneltyScore)
 	if err != nil {

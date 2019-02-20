@@ -135,7 +135,7 @@ func TestGetGenesisJson(t *testing.T) {
 		},
 	}
 
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	appState, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)

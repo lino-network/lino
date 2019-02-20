@@ -76,8 +76,10 @@ func NewFollowMsg(follower string, followee string) FollowMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg FollowMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg FollowMsg) Type() string { return types.AccountRouterName }
+func (msg FollowMsg) Type() string { return "FollowMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg FollowMsg) ValidateBasic() sdk.Error {
@@ -126,8 +128,10 @@ func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg UnfollowMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg UnfollowMsg) Type() string { return types.AccountRouterName }
+func (msg UnfollowMsg) Type() string { return "UnfollowMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg UnfollowMsg) ValidateBasic() sdk.Error {
@@ -175,8 +179,10 @@ func NewClaimMsg(username string) ClaimMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg ClaimMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg ClaimMsg) Type() string { return types.AccountRouterName }
+func (msg ClaimMsg) Type() string { return "ClaimMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg ClaimMsg) ValidateBasic() sdk.Error {
@@ -225,8 +231,10 @@ func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) Tran
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg TransferMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg TransferMsg) Type() string { return types.AccountRouterName }
+func (msg TransferMsg) Type() string { return "TransferMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg TransferMsg) ValidateBasic() sdk.Error {
@@ -288,8 +296,10 @@ func NewRecoverMsg(
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg RecoverMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg RecoverMsg) Type() string { return types.AccountRouterName }
+func (msg RecoverMsg) Type() string { return "RecoverMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RecoverMsg) ValidateBasic() sdk.Error {
@@ -344,8 +354,10 @@ func NewRegisterMsg(
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg RegisterMsg) Route() string { return types.AccountRouterName }
 // Type - implements sdk.Msg
-func (msg RegisterMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg RegisterMsg) Type() string { return "RegisterMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RegisterMsg) ValidateBasic() sdk.Error {
@@ -417,7 +429,9 @@ func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
 }
 
 // Type - implements sdk.Msg
-func (msg UpdateAccountMsg) Type() string { return types.AccountRouterName } // TODO: "account/register"
+func (msg UpdateAccountMsg) Route() string { return types.AccountRouterName }
+// Type - implements sdk.Msg
+func (msg UpdateAccountMsg) Type() string { return "UpdateAccountMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {

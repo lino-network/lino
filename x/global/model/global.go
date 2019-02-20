@@ -32,8 +32,8 @@ type LinoStakeStat struct {
 
 // TPS - transaction per section
 type TPS struct {
-	CurrentTPS sdk.Rat `json:"current_tps"`
-	MaxTPS     sdk.Rat `json:"max_tps"`
+	CurrentTPS sdk.Dec `json:"current_tps"`
+	MaxTPS     sdk.Dec `json:"max_tps"`
 }
 
 // InflationPool, determined by GlobalAllocation
@@ -53,7 +53,7 @@ type InflationPool struct {
 // ConsumptionWindow records all content related consumption within the freezing period
 // ConsumptionFreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
-	ConsumptionFrictionRate      sdk.Rat    `json:"consumption_friction_rate"`
+	ConsumptionFrictionRate      sdk.Dec    `json:"consumption_friction_rate"`
 	ConsumptionWindow            types.Coin `json:"consumption_window"`
 	ConsumptionRewardPool        types.Coin `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodSec int64      `json:"consumption_freezing_period_second"`
@@ -61,7 +61,7 @@ type ConsumptionMeta struct {
 
 // InitParamList - genesis parameters
 type InitParamList struct {
-	MaxTPS                       sdk.Rat `json:"max_tps"`
-	ConsumptionFrictionRate      sdk.Rat `json:"consumption_friction_rate"`
+	MaxTPS                       sdk.Dec `json:"max_tps"`
+	ConsumptionFrictionRate      sdk.Dec `json:"consumption_friction_rate"`
 	ConsumptionFreezingPeriodSec int64   `json:"consumption_freezing_period_second"`
 }

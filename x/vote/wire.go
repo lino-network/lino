@@ -13,7 +13,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ClaimInterestMsg{}, "lino/claimInterest", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

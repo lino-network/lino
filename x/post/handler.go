@@ -68,7 +68,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
+	splitRate, err := sdk.NewDecFromStr(msg.RedistributionSplitRate)
 	if err != nil {
 		return ErrInvalidPostRedistributionSplitRate().Result()
 	}
@@ -159,9 +159,9 @@ func handleDonateMsg(
 		if err != nil {
 			return err.Result()
 		}
-		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
+		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
-		sourceCoinDayGained := types.RatToCoin(totalCoinDayDonated.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
+		sourceCoinDayGained := types.RatToCoin(totalCoinDayDonated.ToRat().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {

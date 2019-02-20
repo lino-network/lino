@@ -42,8 +42,10 @@ func NewValidatorDepositMsg(validator string, deposit types.LNO, pubKey crypto.P
 	}
 }
 
+// Route - implement sdk.Msg
+func (msg ValidatorDepositMsg) Route() string { return types.ValidatorRouterName }
 // Type - implement sdk.Msg
-func (msg ValidatorDepositMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
+func (msg ValidatorDepositMsg) Type() string { return "ValidatorDepositMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorDepositMsg) ValidateBasic() sdk.Error {
@@ -100,8 +102,10 @@ func NewValidatorWithdrawMsg(validator string, amount types.LNO) ValidatorWithdr
 	}
 }
 
+// Route - implement sdk.Msg
+func (msg ValidatorWithdrawMsg) Route() string { return types.ValidatorRouterName }
 // Type - implement sdk.Msg
-func (msg ValidatorWithdrawMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
+func (msg ValidatorWithdrawMsg) Type() string { return "ValidatorWithdrawMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorWithdrawMsg) ValidateBasic() sdk.Error {
@@ -151,8 +155,10 @@ func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	}
 }
 
+// Route - implement sdk.Msg
+func (msg ValidatorRevokeMsg) Route() string { return types.ValidatorRouterName }
 // Type - implement sdk.Msg
-func (msg ValidatorRevokeMsg) Type() string { return types.ValidatorRouterName } // TODO: "account/register"
+func (msg ValidatorRevokeMsg) Type() string { return "ValidatorRevokeMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorRevokeMsg) ValidateBasic() sdk.Error {

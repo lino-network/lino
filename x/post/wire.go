@@ -14,7 +14,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ReportOrUpvoteMsg{}, "lino/reportOrUpvote", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

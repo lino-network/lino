@@ -54,8 +54,10 @@ func NewStakeInMsg(username string, deposit types.LNO) StakeInMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg StakeInMsg) Route() string { return types.VoteRouterName }
 // Type - implements sdk.Msg
-func (msg StakeInMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg StakeInMsg) Type() string { return "StakeInMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg StakeInMsg) ValidateBasic() sdk.Error {
@@ -107,8 +109,10 @@ func NewStakeOutMsg(username string, amount types.LNO) StakeOutMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg StakeOutMsg) Route() string { return types.VoteRouterName }
 // Type - implements sdk.Msg
-func (msg StakeOutMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg StakeOutMsg) Type() string { return "StakeOutMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg StakeOutMsg) ValidateBasic() sdk.Error {
@@ -160,8 +164,10 @@ func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMs
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg DelegateMsg) Route() string { return types.VoteRouterName }
 // Type - implements sdk.Msg
-func (msg DelegateMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg DelegateMsg) Type() string { return "DelegateMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg DelegateMsg) ValidateBasic() sdk.Error {
@@ -216,8 +222,10 @@ func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) D
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg DelegatorWithdrawMsg) Route() string { return types.VoteRouterName }
 // Type - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) Type() string { return types.VoteRouterName } // TODO: "account/register"
+func (msg DelegatorWithdrawMsg) Type() string { return "DelegatorWithdrawMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) ValidateBasic() sdk.Error {
@@ -269,8 +277,10 @@ func NewClaimInterestMsg(username string) ClaimInterestMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg ClaimInterestMsg) Route() string { return types.VoteRouterName }
 // Type - implements sdk.Msg
-func (msg ClaimInterestMsg) Type() string { return types.VoteRouterName }
+func (msg ClaimInterestMsg) Type() string { return "ClaimInterestMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg ClaimInterestMsg) ValidateBasic() sdk.Error {
