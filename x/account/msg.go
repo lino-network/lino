@@ -78,6 +78,7 @@ func NewFollowMsg(follower string, followee string) FollowMsg {
 
 // Route - implements sdk.Msg
 func (msg FollowMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg FollowMsg) Type() string { return "FollowMsg" }
 
@@ -130,6 +131,7 @@ func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
 
 // Route - implements sdk.Msg
 func (msg UnfollowMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg UnfollowMsg) Type() string { return "UnfollowMsg" }
 
@@ -181,6 +183,7 @@ func NewClaimMsg(username string) ClaimMsg {
 
 // Route - implements sdk.Msg
 func (msg ClaimMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg ClaimMsg) Type() string { return "ClaimMsg" }
 
@@ -233,6 +236,7 @@ func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) Tran
 
 // Route - implements sdk.Msg
 func (msg TransferMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg TransferMsg) Type() string { return "TransferMsg" }
 
@@ -298,6 +302,7 @@ func NewRecoverMsg(
 
 // Route - implements sdk.Msg
 func (msg RecoverMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg RecoverMsg) Type() string { return "RecoverMsg" }
 
@@ -356,6 +361,7 @@ func NewRegisterMsg(
 
 // Route - implements sdk.Msg
 func (msg RegisterMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg RegisterMsg) Type() string { return "RegisterMsg" }
 
@@ -430,6 +436,7 @@ func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
 
 // Type - implements sdk.Msg
 func (msg UpdateAccountMsg) Route() string { return types.AccountRouterName }
+
 // Type - implements sdk.Msg
 func (msg UpdateAccountMsg) Type() string { return "UpdateAccountMsg" }
 

@@ -27,7 +27,7 @@ func NewCoreContextFromViper() core.CoreContext {
 		privKey, _ = cryptoAmino.PrivKeyFromBytes(privKeyBytes)
 	}
 
-	if (viper.GetInt64(FlagSequence) < 0) {
+	if viper.GetInt64(FlagSequence) < 0 {
 		panic("Error on Sequence < 0, Sequence = " + fmt.Sprintf("%d", viper.GetInt64(FlagSequence)))
 	}
 

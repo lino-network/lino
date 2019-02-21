@@ -11,11 +11,11 @@ type Parameter interface{}
 
 // EvaluateOfContentValueParam - parameters used to evaluate content value
 type EvaluateOfContentValueParam struct {
-	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
-	ConsumptionTimeAdjustOffset    int64   `json:"consumption_time_adjust_offset"`
-	NumOfConsumptionOnAuthorOffset int64   `json:"num_of_consumption_on_author_offset"`
-	TotalAmountOfConsumptionBase   int64   `json:"total_amount_of_consumption_base"`
-	TotalAmountOfConsumptionOffset int64   `json:"total_amount_of_consumption_offset"`
+	ConsumptionTimeAdjustBase      int64 `json:"consumption_time_adjust_base"`
+	ConsumptionTimeAdjustOffset    int64 `json:"consumption_time_adjust_offset"`
+	NumOfConsumptionOnAuthorOffset int64 `json:"num_of_consumption_on_author_offset"`
+	TotalAmountOfConsumptionBase   int64 `json:"total_amount_of_consumption_base"`
+	TotalAmountOfConsumptionOffset int64 `json:"total_amount_of_consumption_offset"`
 }
 
 // GlobalAllocationParam - global allocation parameters

@@ -43,11 +43,11 @@ func TestProposalList(t *testing.T) {
 			DisagreeVotes: types.NewCoinFromInt64(0),
 		},
 		Param: param.GlobalAllocationParam{
-			GlobalGrowthRate:         sdk.NewRat(98, 1000),
-			InfraAllocation:          sdk.NewRat(0),
-			ContentCreatorAllocation: sdk.NewRat(0),
-			DeveloperAllocation:      sdk.NewRat(0),
-			ValidatorAllocation:      sdk.NewRat(0),
+			GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+			InfraAllocation:          sdk.NewDec(0),
+			ContentCreatorAllocation: sdk.NewDec(0),
+			DeveloperAllocation:      sdk.NewDec(0),
+			ValidatorAllocation:      sdk.NewDec(0),
 		},
 	}
 
@@ -91,11 +91,11 @@ func TestProposal(t *testing.T) {
 					ExpiredAt:     curTime + 100,
 				},
 				Param: param.GlobalAllocationParam{
-					GlobalGrowthRate:         sdk.NewRat(98, 1000),
-					InfraAllocation:          sdk.NewRat(0),
-					ContentCreatorAllocation: sdk.NewRat(0),
-					DeveloperAllocation:      sdk.NewRat(0),
-					ValidatorAllocation:      sdk.NewRat(0),
+					GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+					InfraAllocation:          sdk.NewDec(0),
+					ContentCreatorAllocation: sdk.NewDec(0),
+					DeveloperAllocation:      sdk.NewDec(0),
+					ValidatorAllocation:      sdk.NewDec(0),
 				},
 			},
 		},

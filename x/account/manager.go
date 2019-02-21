@@ -1019,7 +1019,7 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 			coinDayRatioOfThisTransaction := types.NewDecFromRat(
 				pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
 				coinDayParams.SecondsToRecoverCoinDay)
-			// remote the coin day in the queue of this transaction
+			// remove the coin day in the queue of this transaction
 			pendingCoinDayQueue.TotalCoinDay =
 				pendingCoinDayQueue.TotalCoinDay.Sub(
 					coinDayRatioOfThisTransaction.Mul(pendingCoinDay.Coin.ToRat()))
@@ -1039,16 +1039,15 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 	} else {
 		// update all pending coin day at the same time
 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
-		recoverRatio := types.NewDecFromRat(
-			currentTimeSlot-pendingCoinDayQueue.LastUpdatedAt,
-			coinDayParams.SecondsToRecoverCoinDay)
+		// totalCoinDay += recoverRatio * totalCoin
 
-		if err != nil {
-			return err
-		}
+		// XXX(yumin): @mul-first-form transform to
+		// totalcoin * (currentTime - lastUpdateTime)/totalRecoverSeconds
 		pendingCoinDayQueue.TotalCoinDay =
 			pendingCoinDayQueue.TotalCoinDay.Add(
-				recoverRatio.Mul(pendingCoinDayQueue.TotalCoin.ToRat()))
+				pendingCoinDayQueue.TotalCoin.ToRat().Mul(
+					sdk.NewDec(currentTimeSlot - pendingCoinDayQueue.LastUpdatedAt)).Quo(
+					sdk.NewDec(coinDayParams.SecondsToRecoverCoinDay)))
 	}
 
 	pendingCoinDayQueue.LastUpdatedAt = currentTimeSlot

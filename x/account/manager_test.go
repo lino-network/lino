@@ -63,7 +63,7 @@ func TestAddCoinBundle(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     c100,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -85,7 +85,7 @@ func TestAddCoinBundle(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     c200,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -107,7 +107,7 @@ func TestAddCoinBundle(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     c300,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -184,7 +184,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     c100,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -231,7 +231,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTime1Slot,
-				TotalCoinDay:  sdk.NewRat(5000000, 1),
+				TotalCoinDay:  sdk.NewDec(5000000),
 				TotalCoin:     c100.Plus(c100),
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -292,7 +292,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTime2Slot,
-				TotalCoinDay:  sdk.NewRat(316250000, 63),
+				TotalCoinDay:  types.NewDecFromRat(316250000, 63),
 				TotalCoin:     c100.Plus(c100),
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -361,7 +361,7 @@ func TestAddCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTime2Slot,
-				TotalCoinDay:  sdk.NewRat(316250000, 63),
+				TotalCoinDay:  types.NewDecFromRat(316250000, 63),
 				TotalCoin:     c100.Plus(c100),
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -494,7 +494,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     accParam.RegisterFee.Minus(coin1),
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -551,7 +551,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     accParam.RegisterFee,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -591,7 +591,7 @@ func TestMinusCoin(t *testing.T) {
 			},
 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTime.Unix(),
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     accParam.RegisterFee,
 				PendingCoinDays: []model.PendingCoinDay{
 					{
@@ -667,7 +667,7 @@ func TestMinusCoinWithFullCoinDay(t *testing.T) {
 			},
 			pendingCoinDayQueue: &model.PendingCoinDayQueue{
 				LastUpdatedAt:   baseTimeSlot,
-				TotalCoinDay:    sdk.ZeroRat(),
+				TotalCoinDay:    sdk.ZeroDec(),
 				TotalCoin:       coin0,
 				PendingCoinDays: []model.PendingCoinDay{},
 			},
@@ -683,7 +683,7 @@ func TestMinusCoinWithFullCoinDay(t *testing.T) {
 			},
 			pendingCoinDayQueue: &model.PendingCoinDayQueue{
 				LastUpdatedAt: beforeFullyChargedTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     coin1,
 				PendingCoinDays: []model.PendingCoinDay{
 					model.PendingCoinDay{
@@ -705,7 +705,7 @@ func TestMinusCoinWithFullCoinDay(t *testing.T) {
 			},
 			pendingCoinDayQueue: &model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     coin1,
 				PendingCoinDays: []model.PendingCoinDay{
 					model.PendingCoinDay{
@@ -727,7 +727,7 @@ func TestMinusCoinWithFullCoinDay(t *testing.T) {
 			},
 			pendingCoinDayQueue: &model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     coin2,
 				PendingCoinDays: []model.PendingCoinDay{
 					model.PendingCoinDay{
@@ -749,7 +749,7 @@ func TestMinusCoinWithFullCoinDay(t *testing.T) {
 			},
 			pendingCoinDayQueue: &model.PendingCoinDayQueue{
 				LastUpdatedAt: baseTimeSlot,
-				TotalCoinDay:  sdk.ZeroRat(),
+				TotalCoinDay:  sdk.ZeroDec(),
 				TotalCoin:     coin3,
 				PendingCoinDays: []model.PendingCoinDay{
 					model.PendingCoinDay{
@@ -1104,7 +1104,7 @@ func TestCreateAccountNormalCase(t *testing.T) {
 
 		pendingCoinDayQueue :=
 			model.PendingCoinDayQueue{
-				TotalCoinDay: sdk.ZeroRat(),
+				TotalCoinDay: sdk.ZeroDec(),
 				TotalCoin:    types.NewCoinFromInt64(0),
 			}
 		baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
@@ -1206,7 +1206,7 @@ func TestCreateAccountWithLargeRegisterFee(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingCoinDayQueue := model.PendingCoinDayQueue{
 		LastUpdatedAt: baseTime,
-		TotalCoinDay:  sdk.ZeroRat(),
+		TotalCoinDay:  sdk.ZeroDec(),
 		TotalCoin:     extraRegisterFee,
 		PendingCoinDays: []model.PendingCoinDay{
 			{
@@ -1628,7 +1628,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 
 	testCases := []struct {
 		testName             string
-		tpsCapacityRatio     sdk.Rat
+		tpsCapacityRatio     sdk.Dec
 		userCoinDay          types.Coin
 		lastActivity         int64
 		lastCapacity         types.Coin
@@ -1638,7 +1638,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 	}{
 		{
 			testName:             "tps capacity not enough",
-			tpsCapacityRatio:     sdk.NewRat(1, 10),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 10),
 			userCoinDay:          types.NewCoinFromInt64(10 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1648,7 +1648,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/10 capacity ratio",
-			tpsCapacityRatio:     sdk.NewRat(1, 10),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 10),
 			userCoinDay:          types.NewCoinFromInt64(10 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1658,7 +1658,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/2 capacity ratio",
-			tpsCapacityRatio:     sdk.NewRat(1, 2),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 2),
 			userCoinDay:          types.NewCoinFromInt64(10 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1668,7 +1668,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/1 capacity ratio",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(10 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1678,7 +1678,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/1 capacity ratio with virtual coin remaining",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(10 * types.Decimals),
@@ -1688,7 +1688,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/1 capacity ratio with 1 coin day and 0 remaining",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1698,7 +1698,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " transaction capacity not enough",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(0 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1708,7 +1708,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " transaction capacity without coin day",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(0 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1718,7 +1718,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/2 capacity ratio with half virtual coin remaining",
-			tpsCapacityRatio:     sdk.NewRat(1, 2),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 2),
 			userCoinDay:          types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         baseTime.Unix(),
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -1728,7 +1728,7 @@ func TestCheckUserTPSCapacity(t *testing.T) {
 		},
 		{
 			testName:             " 1/1 capacity ratio with virtual coin remaining and base time",
-			tpsCapacityRatio:     sdk.NewRat(1, 1),
+			tpsCapacityRatio:     types.NewDecFromRat(1, 1),
 			userCoinDay:          types.NewCoinFromInt64(1 * types.Decimals),
 			lastActivity:         0,
 			lastCapacity:         types.NewCoinFromInt64(0),
@@ -2373,7 +2373,7 @@ func TestAccountRecoverNormalCase(t *testing.T) {
 	checkBankKVByUsername(t, ctx, testName, user1, bank)
 
 	pendingCoinDayQueue := model.PendingCoinDayQueue{
-		TotalCoinDay: sdk.ZeroRat(),
+		TotalCoinDay: sdk.ZeroDec(),
 		TotalCoin:    types.NewCoinFromInt64(0),
 	}
 	checkPendingCoinDay(t, ctx, testName, user1, pendingCoinDayQueue)
@@ -2409,7 +2409,7 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 		testName       string
 		user           types.AccountKey
 		increaseTimes  int
-		expectSequence int64
+		expectSequence uint64
 	}{
 		{
 			testName:       "increase seq once",
@@ -2521,43 +2521,43 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectNumOfFrozenAmount int
 	}{
 		{
-			testName:     "add the first 100 frozen money",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1000000,
-			interval:     10,
-			times:        5,
+			testName:                "add the first 100 frozen money",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1000000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		},
 		{
-			testName:     "add the second 100 frozen money, clear the first one",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1200000,
-			interval:     10,
-			times:        5,
+			testName:                "add the second 100 frozen money, clear the first one",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1200000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		},
 		{
-			testName:     "add the third 100 frozen money",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1300000,
-			interval:     10,
-			times:        5,
+			testName:                "add the third 100 frozen money",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1300000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 2,
 		},
 		{
-			testName:     "add the fourth 100 frozen money, clear the second one",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1400000,
-			interval:     10,
-			times:        5,
+			testName:                "add the fourth 100 frozen money, clear the second one",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1400000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 2,
 		},
 		{
-			testName:     "add the fifth 100 frozen money, clear the third and fourth ones",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1600000,
-			interval:     10,
-			times:        5,
+			testName:                "add the fifth 100 frozen money, clear the third and fourth ones",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1600000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		}, // this one is used to re-produce the out-of-bound bug.
 	}

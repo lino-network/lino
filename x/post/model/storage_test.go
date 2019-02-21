@@ -66,7 +66,7 @@ func TestUTF8(t *testing.T) {
 func TestPostMeta(t *testing.T) {
 	postMeta := PostMeta{
 		AllowReplies:            true,
-		RedistributionSplitRate: sdk.ZeroRat(),
+		RedistributionSplitRate: sdk.ZeroDec(),
 		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),

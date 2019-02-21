@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateCoinReturnEvents(t *testing.T) {
+	assert := assert.New(t)
 	ctx, _, _ := setupTest(t, 1)
 	testCases := []struct {
 		testName     string
@@ -88,7 +89,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 		expectEvents := []types.Event{}
 		for i := int64(0); i < tc.times; i++ {
 			returnAmount, _ := tc.returnAmount.ToInt64()
-			returnCoin := types.RatToCoin(sdk.NewRat(returnAmount, tc.times-i))
+			returnCoin := types.RatToCoin(types.NewDecFromRat(returnAmount, tc.times-i))
 
 			event := ReturnCoinEvent{
 				Username:   tc.username,
@@ -99,7 +100,7 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 			expectEvents = append(expectEvents, event)
 		}
 
-		if !assert.Equal(t, expectEvents, events) {
+		if !assert.Equal(expectEvents, events) {
 			t.Errorf("%s: diff events, got %v, want %v", tc.testName, events, expectEvents)
 		}
 	}

@@ -10,8 +10,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	crypto "github.com/tendermint/tendermint/crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // ValidatorManager - validator manager
@@ -104,7 +104,7 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 			}
 			updates = append(updates, abci.ValidatorUpdate{
 				PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
-				Power: 0,
+				Power:  0,
 			})
 		}
 	}
@@ -116,7 +116,7 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 		}
 		updates = append(updates, abci.ValidatorUpdate{
 			PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
-			Power: validator.ABCIValidator.Power,
+			Power:  validator.ABCIValidator.Power,
 		})
 	}
 	return updates, nil
@@ -314,7 +314,7 @@ func (vm ValidatorManager) RegisterValidator(
 			return err
 		}
 		// XXX(yumin): ABCIValidator no longer has pubkey, changed to address
-		if reflect.DeepEqual(validator.ABCIValidator.Address, pubKey.Address()) {
+		if reflect.DeepEqual(validator.ABCIValidator.Address, pubKey.Address().Bytes()) {
 			return ErrValidatorPubKeyAlreadyExist()
 		}
 	}

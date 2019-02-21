@@ -2,8 +2,8 @@ package types
 
 // nolint
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Transactions messages must fulfill the Msg

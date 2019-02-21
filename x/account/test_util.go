@@ -135,12 +135,8 @@ func checkPendingCoinDay(
 	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingCoinDayQueue model.PendingCoinDayQueue) {
 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
 	pendingCoinDayQueuePtr, err := accStorage.GetPendingCoinDayQueue(ctx, username)
-	if err != nil {
-		t.Errorf("%s, failed to get pending coin day queue, got err %v", testName, err)
-	}
-	if !assert.Equal(t, pendingCoinDayQueue, *pendingCoinDayQueuePtr) {
-		t.Errorf("%s: diff pending coin day queue, got %v, want %v", testName, *pendingCoinDayQueuePtr, pendingCoinDayQueue)
-	}
+	assert.Nil(t, err, "%s, failed to get pending coin day queue, got err %v", testName, err)
+	assert.Equal(t, pendingCoinDayQueue, *pendingCoinDayQueuePtr, "%s: diff pending coin day queue, got %v, want %v", testName, *pendingCoinDayQueuePtr, pendingCoinDayQueue)
 }
 
 func checkAccountInfo(

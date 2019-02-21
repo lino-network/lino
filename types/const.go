@@ -117,7 +117,7 @@ const (
 	// MinutesPerDay - as defined by a julian year of 365.25 days
 	MinutesPerDay = 60 * 24
 
-	// MaximumSdkRatLength - maximum length of sdk.Rat can pass into blockchain
+	// MaximumSdkRatLength - maximum length of sdk.Dec can pass into blockchain
 	MaximumSdkRatLength = 10
 
 	// MaximumLinkIdentifier - maximum length of Links identifier

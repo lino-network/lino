@@ -586,15 +586,18 @@ func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Error
 // EvaluateConsumption - evaluate consumption
 // XXX(yumin): deprecated, now just return @p coin, need @refactor.
 func (gm GlobalManager) EvaluateConsumption(
-	ctx sdk.Context, coin types.Coin, numOfConsumptionOnAuthor int64, created int64,
-	totalReward types.Coin) (types.Coin, sdk.Error) {
+	coin types.Coin,
+	// ctx sdk.Context, coin types.Coin,
+	// numOfConsumptionOnAuthor int64, created int64,
+	// totalReward types.Coin
+) (types.Coin, sdk.Error) {
 	return coin, nil
 }
 
 // get and set params
 // TODO add more change methods
-// func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Rat,
-// 	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
+// func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Dec,
+// 	ContentCreatorAllocation sdk.Dec, DeveloperAllocation sdk.Dec, ValidatorAllocation sdk.Dec) sdk.Error {
 // 	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 // 	if err != nil {
 // 		return err
@@ -611,7 +614,7 @@ func (gm GlobalManager) EvaluateConsumption(
 // }
 //
 // func (gm GlobalManager) ChangeInfraInternalInflationParam(
-// 	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
+// 	ctx sdk.Context, StorageAllocation sdk.Dec, CDNAllocation sdk.Dec) sdk.Error {
 // 	allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
 // 	if err != nil {
 // 		return err

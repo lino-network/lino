@@ -1,7 +1,6 @@
 package developer
 
 import (
-	"math/big"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,40 +19,40 @@ func TestReportConsumption(t *testing.T) {
 	con1 := types.NewCoinFromInt64(100)
 	dm.ReportConsumption(ctx, "developer1", con1)
 	p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.True(t, p1.Cmp(big.NewRat(1, 1)) == 0)
+	assert.True(t, p1.Equal(types.NewDecFromRat(1, 1)))
 
 	con2 := types.NewCoinFromInt64(100)
 	dm.ReportConsumption(ctx, "developer2", con2)
 	p2, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.True(t, p2.Cmp(big.NewRat(1, 2)) == 0)
+	assert.True(t, p2.Equal(types.NewDecFromRat(1, 2)))
 
 	dm.ClearConsumption(ctx)
 	p3, _ := dm.GetConsumptionWeight(ctx, "developer1")
-	assert.True(t, p3.Cmp(big.NewRat(1, 2)) == 0)
+	assert.True(t, p3.Equal(types.NewDecFromRat(1, 2)))
 
 	testCases := map[string]struct {
 		developer1Consumption             types.Coin
 		developer2Consumption             types.Coin
-		expectDeveloper1ConsumptionWeight sdk.Rat
-		expectDeveloper2ConsumptionWeight sdk.Rat
+		expectDeveloper1ConsumptionWeight sdk.Dec
+		expectDeveloper2ConsumptionWeight sdk.Dec
 	}{
 		"test normal consumption": {
 			developer1Consumption:             types.NewCoinFromInt64(2500 * types.Decimals),
 			developer2Consumption:             types.NewCoinFromInt64(7500 * types.Decimals),
-			expectDeveloper1ConsumptionWeight: sdk.NewRat(1, 4),
-			expectDeveloper2ConsumptionWeight: sdk.NewRat(3, 4),
+			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(1, 4),
+			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(3, 4),
 		},
 		"test empty consumption": {
 			developer1Consumption:             types.NewCoinFromInt64(0),
 			developer2Consumption:             types.NewCoinFromInt64(0),
-			expectDeveloper1ConsumptionWeight: sdk.NewRat(1, 2),
-			expectDeveloper2ConsumptionWeight: sdk.NewRat(1, 2),
+			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(1, 2),
+			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(1, 2),
 		},
-		"issue https://github.com/lino-network/lino/issues/150": {
+		"large numbers": {
 			developer1Consumption:             types.NewCoinFromInt64(3333333),
 			developer2Consumption:             types.NewCoinFromInt64(4444444),
-			expectDeveloper1ConsumptionWeight: sdk.NewRat(2142857, 5000000),
-			expectDeveloper2ConsumptionWeight: sdk.NewRat(2857143, 5000000),
+			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(3333333, 7777777),
+			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(4444444, 7777777),
 		},
 	}
 	for testName, tc := range testCases {

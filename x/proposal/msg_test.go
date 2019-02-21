@@ -68,17 +68,17 @@ func TestVoteProposalMsg(t *testing.T) {
 
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(55, 100),
-		DeveloperAllocation:      sdk.NewRat(20, 100),
-		ValidatorAllocation:      sdk.NewRat(5, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(20, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(55, 100),
+		DeveloperAllocation:      types.NewDecFromRat(20, 100),
+		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 	p2 := p1
-	p2.DeveloperAllocation = sdk.NewRat(25, 100)
+	p2.DeveloperAllocation = types.NewDecFromRat(25, 100)
 
 	p3 := p1
-	p3.GlobalGrowthRate = sdk.NewRat(1, 10)
+	p3.GlobalGrowthRate = types.NewDecFromRat(1, 10)
 
 	testCases := []struct {
 		testName                       string
@@ -129,16 +129,16 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 
 func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 	p1 := param.InfraInternalAllocationParam{
-		CDNAllocation:     sdk.NewRat(20, 100),
-		StorageAllocation: sdk.NewRat(80, 100),
+		CDNAllocation:     types.NewDecFromRat(20, 100),
+		StorageAllocation: types.NewDecFromRat(80, 100),
 	}
 
 	p2 := p1
-	p2.StorageAllocation = sdk.NewRat(101, 100)
+	p2.StorageAllocation = types.NewDecFromRat(101, 100)
 
 	p3 := p1
-	p3.StorageAllocation = sdk.NewRat(-1, 100)
-	p3.CDNAllocation = sdk.NewRat(101, 100)
+	p3.StorageAllocation = types.NewDecFromRat(-1, 100)
+	p3.CDNAllocation = types.NewDecFromRat(101, 100)
 
 	testCases := []struct {
 		testName                              string
@@ -146,22 +146,22 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 		expectedError                         sdk.Error
 	}{
 		{
-			testName: "normal case",
+			testName:                              "normal case",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1, ""),
 			expectedError:                         nil,
 		},
 		{
-			testName: "illegal parameter (sum of allocation doesn't equal to 1)",
+			testName:                              "illegal parameter (sum of allocation doesn't equal to 1)",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
-			testName: "illegal parameter (negative number)",
+			testName:                              "illegal parameter (negative number)",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p3, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
-			testName: "empty username is illegal",
+			testName:                              "empty username is illegal",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1, ""),
 			expectedError:                         ErrInvalidUsername(),
 		},
@@ -475,18 +475,18 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 func TestChangeProposalParamMsg(t *testing.T) {
 	p1 := param.ProposalParam{
 		ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamDecideSec:    int64(24 * 7 * 3600),
 		ChangeParamExecutionSec: int64(24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -495,7 +495,7 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p2.ContentCensorshipDecideSec = int64(-24 * 7 * 3600)
 
 	p3 := p1
-	p3.ContentCensorshipPassRatio = sdk.NewRat(150, 100)
+	p3.ContentCensorshipPassRatio = types.NewDecFromRat(150, 100)
 
 	p4 := p1
 	p4.ContentCensorshipPassVotes = types.NewCoinFromInt64(-10000 * types.Decimals)
@@ -507,7 +507,7 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p6.ChangeParamDecideSec = int64(-24 * 7 * 3600)
 
 	p7 := p1
-	p7.ChangeParamPassRatio = sdk.NewRat(0, 8)
+	p7.ChangeParamPassRatio = types.NewDecFromRat(0, 8)
 
 	p8 := p1
 	p8.ChangeParamPassVotes = types.NewCoinFromInt64(0 * types.Decimals)
@@ -519,7 +519,7 @@ func TestChangeProposalParamMsg(t *testing.T) {
 	p10.ProtocolUpgradeDecideSec = int64(0)
 
 	p11 := p1
-	p11.ProtocolUpgradePassRatio = sdk.NewRat(0, 100)
+	p11.ProtocolUpgradePassRatio = types.NewDecFromRat(0, 100)
 
 	p12 := p1
 	p12.ProtocolUpgradePassVotes = types.NewCoinFromInt64(-10000000 * types.Decimals)
@@ -846,7 +846,6 @@ func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
 		NumOfConsumptionOnAuthorOffset: 7,
 		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
 		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
 	}
 
 	p2 := p1

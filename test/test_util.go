@@ -18,8 +18,8 @@ import (
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -46,7 +46,7 @@ var (
 	ParamChangeExecutionSec      int64 = 24 * 3600
 	CoinReturnIntervalSec        int64 = 24 * 7 * 3600
 	CoinReturnTimes              int64 = 7
-	ConsumptionFrictionRate            = sdk.NewRat(5, 100)
+	ConsumptionFrictionRate            = types.NewDecFromRat(5, 100)
 	ConsumptionFreezingPeriodSec int64 = 24 * 7 * 3600
 	PostIntervalSec              int64 = 600
 )
@@ -92,9 +92,9 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
@@ -247,15 +247,15 @@ func CreateTestPost(
 	redistributionSplitRate string, publishTime int64) {
 
 	msg := post.CreatePostMsg{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       types.AccountKey(username),
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
+		PostID:                  postID,
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  types.AccountKey(username),
+		ParentAuthor:            types.AccountKey(parentAuthor),
+		ParentPostID:            parentPostID,
+		SourceAuthor:            types.AccountKey(sourceAuthor),
+		SourcePostID:            sourcePostID,
+		Links:                   []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionSplitRate,
 	}
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)

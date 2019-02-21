@@ -3,7 +3,6 @@ package proposal
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/proposal/model"
@@ -34,10 +33,10 @@ func TestDecideProposal(t *testing.T) {
 	voteManager.AddVoter(ctx, user4, c4)
 
 	param1 := param.GlobalAllocationParam{
-		InfraAllocation: sdk.NewRat(50, 100),
+		InfraAllocation: types.NewDecFromRat(50, 100),
 	}
 	param2 := param.GlobalAllocationParam{
-		InfraAllocation: sdk.NewRat(80, 100),
+		InfraAllocation: types.NewDecFromRat(80, 100),
 	}
 
 	p1 := pm.CreateChangeParamProposal(ctx, param1, "")

@@ -14,7 +14,7 @@ type LNO = string
 
 var (
 	// LowerBoundRat - the lower bound of Rat
-	LowerBoundRat = sdk.NewDec(Decimals)
+	LowerBoundRat = NewDecFromRat(1, Decimals)
 	// UpperBoundRat - the upper bound of Rat
 	UpperBoundRat = sdk.NewDec(math.MaxInt64 / Decimals)
 )
@@ -67,12 +67,14 @@ var (
 	ten   = big.NewInt(10)
 )
 
-// RatToCoin - convert sdk.Rat to LNO coin
+// RatToCoin - convert sdk.Dec to LNO coin
+// XXX(yumin): the unit of @p rat must be coin.
 func RatToCoin(rat sdk.Dec) Coin {
 	return NewCoinFromBigInt(rat.RoundInt().BigInt())
 }
 
-// ToRat - convert Coin to sdk.Rat
+// ToRat - convert Coin to sdk.Dec
+// XXX(yumin): the unit of @p rat must be coin.
 func (coin Coin) ToRat() sdk.Dec {
 	return sdk.NewDecFromBigInt(coin.Amount.BigInt())
 }

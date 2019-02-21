@@ -11,7 +11,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 var (
@@ -64,7 +63,6 @@ func TestValidator(t *testing.T) {
 		validator := Validator{
 			ABCIValidator: abci.Validator{
 				Address: priv.PubKey().Address(),
-				PubKey:  tmtypes.TM2PB.PubKey(priv.PubKey()),
 				Power:   1000},
 			Username: tc.user,
 			Deposit:  tc.deposit,

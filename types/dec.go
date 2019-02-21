@@ -8,7 +8,7 @@ const (
 	// PrecHoudreds prec of rat(xxx, 10)
 	PrecTenths = 1
 	// PrecHoudreds prec of rat(xxx, 100)
-	PrecHoudreds  = 2
+	PrecHoudreds = 2
 	// PrecThousands prec of rat(xxx, 1000)
 	PrecThousands = 3
 )

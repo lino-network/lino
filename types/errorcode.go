@@ -6,7 +6,7 @@ import (
 
 const (
 	// updated from int to string.
-    // https://github.com/cosmos/cosmos-sdk/pull/2821
+	// https://github.com/cosmos/cosmos-sdk/pull/2821
 	LinoErrorCodeSpace = "lino"
 
 	// Lino common errors reserve 100 ~ 149

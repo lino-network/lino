@@ -2,14 +2,13 @@ package post
 
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global"
-	rep "github.com/lino-network/lino/x/reputation"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
+	"github.com/lino-network/lino/x/global"
+	rep "github.com/lino-network/lino/x/reputation"
 	vote "github.com/lino-network/lino/x/vote"
 )
 

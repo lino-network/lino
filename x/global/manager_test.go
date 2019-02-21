@@ -59,34 +59,34 @@ func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 func TestTPS(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := time.Now()
-	var initMaxTPS = sdk.NewRat(1000)
+	var initMaxTPS = sdk.NewDec(1000)
 
 	testCases := []struct {
 		testName            string
 		baseTime            int64
 		nextTime            time.Time
-		numOfTx             int32
-		expectCurrentTPS    sdk.Rat
-		expectMaxTPS        sdk.Rat
-		expectCapacityRatio sdk.Rat
+		numOfTx             int64
+		expectCurrentTPS    sdk.Dec
+		expectMaxTPS        sdk.Dec
+		expectCapacityRatio sdk.Dec
 	}{
 		{
 			testName:            "0 tps",
 			baseTime:            baseTime.Unix(),
 			nextTime:            baseTime,
 			numOfTx:             0,
-			expectCurrentTPS:    sdk.ZeroRat(),
+			expectCurrentTPS:    sdk.ZeroDec(),
 			expectMaxTPS:        initMaxTPS,
-			expectCapacityRatio: sdk.ZeroRat(),
+			expectCapacityRatio: sdk.ZeroDec(),
 		},
 		{
 			testName:            "2/2 got 1 current tps",
 			baseTime:            baseTime.Unix(),
 			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             2,
-			expectCurrentTPS:    sdk.OneRat(),
+			expectCurrentTPS:    sdk.OneDec(),
 			expectMaxTPS:        initMaxTPS,
-			expectCapacityRatio: sdk.NewRat(1, 1000),
+			expectCapacityRatio: types.NewDecFromRat(1, 1000),
 		},
 		{
 			testName:            "1000/1 got max tps",
@@ -95,7 +95,7 @@ func TestTPS(t *testing.T) {
 			numOfTx:             1000,
 			expectCurrentTPS:    initMaxTPS,
 			expectMaxTPS:        initMaxTPS,
-			expectCapacityRatio: sdk.OneRat(),
+			expectCapacityRatio: sdk.OneDec(),
 		},
 		{
 			testName:            "2000/2 got max tps",
@@ -104,25 +104,25 @@ func TestTPS(t *testing.T) {
 			numOfTx:             2000,
 			expectCurrentTPS:    initMaxTPS,
 			expectMaxTPS:        initMaxTPS,
-			expectCapacityRatio: sdk.OneRat(),
+			expectCapacityRatio: sdk.OneDec(),
 		},
 		{
 			testName:            "3000/2 got 1500 current tps",
 			baseTime:            baseTime.Unix(),
 			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             3000,
-			expectCurrentTPS:    sdk.NewRat(1500),
-			expectMaxTPS:        sdk.NewRat(1500),
-			expectCapacityRatio: sdk.OneRat(),
+			expectCurrentTPS:    sdk.NewDec(1500),
+			expectMaxTPS:        sdk.NewDec(1500),
+			expectCapacityRatio: sdk.OneDec(),
 		},
 		{
 			testName:            "2000/2 got 1000 current tps",
 			baseTime:            baseTime.Unix(),
 			nextTime:            baseTime.Add(time.Duration(2) * time.Second),
 			numOfTx:             2000,
-			expectCurrentTPS:    sdk.NewRat(1000),
-			expectMaxTPS:        sdk.NewRat(1500),
-			expectCapacityRatio: sdk.NewRat(6666667, 10000000),
+			expectCurrentTPS:    sdk.NewDec(1000),
+			expectMaxTPS:        sdk.NewDec(1500),
+			expectCapacityRatio: types.NewDecFromRat(2, 3),
 		},
 	}
 	for _, tc := range testCases {
@@ -155,10 +155,12 @@ func TestTPS(t *testing.T) {
 	}
 }
 
+// TODO(yumin): after upgrade-1, evaluate of consumption is removed, so this test case shall
+// be removed, if it's testing nothing..
 func TestEvaluateConsumption(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := ctx.BlockHeader().Time.Unix()
-	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
+	_, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
 	if err != nil {
 		t.Errorf("TestEvaluateConsumption: failed to get evaluate of content value param, got err %v", err)
 	}
@@ -185,7 +187,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1000),
-			expectEvaluateResult:               types.NewCoinFromInt64(470),
+			expectEvaluateResult:               types.NewCoinFromInt64(1000),
 		},
 		{
 			testName:                           "evaluate immediately",
@@ -197,7 +199,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1000),
-			expectEvaluateResult:               types.NewCoinFromInt64(1243),
+			expectEvaluateResult:               types.NewCoinFromInt64(1000),
 		},
 		{
 			testName:                           "evaluate in 360 days",
@@ -209,7 +211,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1000),
-			expectEvaluateResult:               types.NewCoinFromInt64(9),
+			expectEvaluateResult:               types.NewCoinFromInt64(1000),
 		},
 		{
 			testName:                           "evaluate in 1 day with 5 consumption",
@@ -221,7 +223,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(5 * types.Decimals),
-			expectEvaluateResult:               types.NewCoinFromInt64(179346),
+			expectEvaluateResult:               types.NewCoinFromInt64(5 * types.Decimals),
 		},
 		{
 			testName:                           "evaluate in 1 day with 1 consumption",
@@ -233,7 +235,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
-			expectEvaluateResult:               types.NewCoinFromInt64(49489),
+			expectEvaluateResult:               types.NewCoinFromInt64(1 * types.Decimals),
 		},
 		{
 			testName:                           "evaluate in 1 day with 1000 total consumption",
@@ -245,7 +247,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
-			expectEvaluateResult:               types.NewCoinFromInt64(49209)},
+			expectEvaluateResult:               types.NewCoinFromInt64(1 * types.Decimals)},
 		{
 			testName:                           "evaluate in 1 day with 5000 total consumption",
 			createdTime:                        baseTime,
@@ -256,7 +258,7 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           7,
 			expectedConsumptionTimesAdjustment: 2.5,
 			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
-			expectEvaluateResult:               types.NewCoinFromInt64(37242),
+			expectEvaluateResult:               types.NewCoinFromInt64(1 * types.Decimals),
 		},
 		{
 			testName:                           "evaluate in 1 day with 5000 total consumption and 100 consumption on author",
@@ -268,29 +270,12 @@ func TestEvaluateConsumption(t *testing.T) {
 			numOfConsumptionOnAuthor:           100,
 			expectedConsumptionTimesAdjustment: 2,
 			consumption:                        types.NewCoinFromInt64(1 * types.Decimals),
-			expectEvaluateResult:               types.NewCoinFromInt64(29793),
+			expectEvaluateResult:               types.NewCoinFromInt64(1 * types.Decimals),
 		},
 	}
 
 	for _, tc := range testCases {
-		newCtx := ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.evaluateTime, 0)})
-		totalConsumption, _ := tc.totalConsumption.ToInt64()
-		if PostTotalConsumptionAdjustment(totalConsumption, paras) != tc.expectedTotalConsumptionAdjustment {
-			t.Errorf("%s: diff total consumption adjustment, got %v, want %v", tc.testName,
-				PostTotalConsumptionAdjustment(totalConsumption, paras), tc.expectedTotalConsumptionAdjustment)
-		}
-		if PostTimeAdjustment(tc.evaluateTime-tc.createdTime, paras) != tc.expectedTimeAdjustment {
-			t.Errorf("%s: diff time adjustment, got %v, want %v", tc.testName,
-				PostTimeAdjustment(tc.evaluateTime-tc.createdTime, paras), tc.expectedTimeAdjustment)
-		}
-		if PostConsumptionTimesAdjustment(tc.numOfConsumptionOnAuthor, paras) != tc.expectedConsumptionTimesAdjustment {
-			t.Errorf("%s: diff consumption times adjustment, got %v, want %v", tc.testName,
-				PostConsumptionTimesAdjustment(tc.numOfConsumptionOnAuthor, paras), tc.expectedConsumptionTimesAdjustment)
-		}
-
-		evaluateResult, err := gm.EvaluateConsumption(
-			newCtx, tc.consumption, tc.numOfConsumptionOnAuthor,
-			tc.createdTime, tc.totalConsumption)
+		evaluateResult, err := gm.EvaluateConsumption(tc.consumption)
 		if err != nil {
 			t.Errorf("%s: failed to evaluate consumption, got err %v", tc.testName, err)
 		}
@@ -383,7 +368,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 	testCases := []struct {
 		testName                    string
 		evaluate                    types.Coin
-		penaltyScore                sdk.Rat
+		penaltyScore                sdk.Dec
 		expectReward                types.Coin
 		initConsumptionRewardPool   types.Coin
 		initConsumptionWindow       types.Coin
@@ -393,7 +378,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "1 evaluate, 0 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.ZeroRat(),
+			penaltyScore:                sdk.ZeroDec(),
 			expectReward:                types.NewCoinFromInt64(100),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -403,7 +388,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "1/1000 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.NewRat(1, 1000),
+			penaltyScore:                types.NewDecFromRat(1, 1000),
 			expectReward:                types.NewCoinFromInt64(100),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -413,7 +398,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "6/1000 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.NewRat(6, 1000),
+			penaltyScore:                types.NewDecFromRat(6, 1000),
 			expectReward:                types.NewCoinFromInt64(99),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -422,7 +407,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "1/10 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.NewRat(1, 10),
+			penaltyScore:                types.NewDecFromRat(1, 10),
 			expectReward:                types.NewCoinFromInt64(90),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -432,7 +417,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "5/10 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.NewRat(5, 10),
+			penaltyScore:                types.NewDecFromRat(5, 10),
 			expectReward:                types.NewCoinFromInt64(50),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -442,7 +427,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "1/1 penalty",
 			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.NewRat(1, 1),
+			penaltyScore:                types.NewDecFromRat(1, 1),
 			expectReward:                types.NewCoinFromInt64(0),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -452,7 +437,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "6/1000 penalty",
 			evaluate:                    types.NewCoinFromInt64(0),
-			penaltyScore:                sdk.ZeroRat(),
+			penaltyScore:                sdk.ZeroDec(),
 			expectReward:                types.NewCoinFromInt64(0),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -462,7 +447,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "0 evaluate, 0 penalty",
 			evaluate:                    types.NewCoinFromInt64(0),
-			penaltyScore:                sdk.OneRat(),
+			penaltyScore:                sdk.OneDec(),
 			expectReward:                types.NewCoinFromInt64(0),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
 			initConsumptionWindow:       types.NewCoinFromInt64(10),
@@ -473,7 +458,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 		{
 			testName:                    "test large number",
 			evaluate:                    types.NewCoinFromInt64(77777777777777),
-			penaltyScore:                sdk.ZeroRat(),
+			penaltyScore:                sdk.ZeroDec(),
 			expectReward:                types.NewCoinFromInt64(23333333),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(100000000),
 			initConsumptionWindow:       types.NewCoinFromInt64(333333333333333),
@@ -735,7 +720,7 @@ func TestDistributeHourlyInflation(t *testing.T) {
 		hourlyInflation :=
 			types.RatToCoin(lastYearTotalLino.ToRat().
 				Mul(globalAllocationParam.GlobalGrowthRate).
-				Mul(sdk.NewRat(1, int64(types.HoursPerYear))))
+				Mul(types.NewDecFromRat(1, int64(types.HoursPerYear))))
 		expectContentCreatorInflation =
 			expectContentCreatorInflation.Plus(
 				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
@@ -807,14 +792,14 @@ func AddToDeveloperInflationPool(t *testing.T) {
 func TestRecalculateAnnuallyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
 	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
-	ceiling := sdk.NewRat(98, 1000)
-	floor := sdk.NewRat(30, 1000)
+	ceiling := types.NewDecFromRat(98, 1000)
+	floor := types.NewDecFromRat(30, 1000)
 
 	testCases := []struct {
 		testName            string
 		lastYearConsumption types.Coin
 		thisYearConsumption types.Coin
-		expectGrowthRate    sdk.Rat
+		expectGrowthRate    sdk.Dec
 	}{
 		{
 			testName:            "same consumption of last year and this year, get floor growth rate",
@@ -887,111 +872,113 @@ func TestRecalculateAnnuallyInflation(t *testing.T) {
 func TestGetGrowthRate(t *testing.T) {
 	ctx, gm := setupTest(t)
 	totalLino := types.NewCoinFromInt64(1000000)
-	ceiling := sdk.NewRat(98, 1000)
-	floor := sdk.NewRat(30, 1000)
+	ceiling := types.NewDecFromRat(98, 1000)
+	floor := types.NewDecFromRat(30, 1000)
 	bigLastYearConsumption, _ := new(big.Int).SetString("77777777777777777777", 10)
 	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
 	bigLastYearConsumptionCoin := types.NewCoinFromBigInt(bigLastYearConsumption)
 	bigThisYearConsumptionCoin := types.NewCoinFromBigInt(bigThisYearConsumption)
+	bigGrowth := bigThisYearConsumptionCoin.Minus(bigLastYearConsumptionCoin)
+	bigExpectedGrowth := sdk.NewDecFromBigInt(bigGrowth.Amount.BigInt()).Quo(sdk.NewDecFromBigInt(bigLastYearConsumptionCoin.Amount.BigInt()))
 
 	testCases := []struct {
 		testName            string
 		lastYearConsumption types.Coin
 		thisYearConsumption types.Coin
-		lastYearGrowthRate  sdk.Rat
-		expectGrowthRate    sdk.Rat
+		lastYearGrowthRate  sdk.Dec
+		expectGrowthRate    sdk.Dec
 	}{
 		{
 			testName:            "floor growth rate, 0 thisYearConsumption",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    floor,
 		},
 		{
 			testName:            "ceiling growth rate, 0 lastYearConsumption",
 			lastYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    types.NewDecFromRat(98, 1000),
 		},
 		{
 			testName:            "floor growth rate, thisYearConsumption = lastYearConsumption",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    floor,
 		},
 		{
 			testName:            "ceiling growth rate, 0 lastYearConsumption",
 			lastYearConsumption: types.NewCoinFromInt64(0),
 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    types.NewDecFromRat(98, 1000),
 		},
 		{
 			testName:            "less than floor will be rounded to floor growth rate 1",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(100010000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    floor,
 		},
 		{
 			testName:            "less than floor will be rounded to floor growth rate 2",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(102900000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    floor,
 		},
 		{
 			testName:            "less than floor will be rounded to floor growth rate 3",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    floor,
 		},
 		{
 			testName:            "growth rate between floor and ceiling 1",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(103100000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(31, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    types.NewDecFromRat(31, 1000),
 		},
 		{
 			testName:            "right equal to ceiling growth rate",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(109800000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    ceiling,
 		},
 		{
 			testName:            "higher than ceiling will be rouned to ceiling growth rate",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(109900000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
 			expectGrowthRate:    ceiling,
 		},
 		{
 			testName:            "growth rate between floor and ceiling 2",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(109700000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(97, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    types.NewDecFromRat(97, 1000),
 		},
 		{
 			testName:            "growth rate between floor and ceiling 3",
 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
 			thisYearConsumption: types.NewCoinFromInt64(104700000 * types.Decimals),
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(47, 1000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    types.NewDecFromRat(47, 1000),
 		},
 		// issue https://github.com/lino-network/lino/issues/150
 		{
 			testName:            "overflow testing",
 			lastYearConsumption: bigLastYearConsumptionCoin,
 			thisYearConsumption: bigThisYearConsumptionCoin,
-			lastYearGrowthRate:  sdk.NewRat(98, 1000),
-			expectGrowthRate:    sdk.NewRat(357143, 5000000),
+			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+			expectGrowthRate:    bigExpectedGrowth,
 		},
 	}
 
@@ -1249,13 +1236,13 @@ func TestGetConsumptionFrictionRate(t *testing.T) {
 		{
 			testName: "normal friction rate",
 			consumptionMeta: model.ConsumptionMeta{
-				ConsumptionFrictionRate: sdk.NewRat(5, 100),
+				ConsumptionFrictionRate: types.NewDecFromRat(5, 100),
 			},
 		},
 		{
 			testName: "10% friction rate",
 			consumptionMeta: model.ConsumptionMeta{
-				ConsumptionFrictionRate: sdk.NewRat(1, 10),
+				ConsumptionFrictionRate: types.NewDecFromRat(1, 10),
 			},
 		},
 	}

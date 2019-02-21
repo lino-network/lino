@@ -196,7 +196,7 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	evaluateResult, err := evaluateConsumption(ctx, consumer, dp, postAuthor, postID, am, pm, gm)
+	evaluateResult, err := evaluateConsumption(dp, gm)
 	if err != nil {
 		return err
 	}
@@ -234,18 +234,14 @@ func processDonationFriction(
 	return nil
 }
 
+// XXX(yumin): deprecated, chained on gm.EvaluateConsumption
 func evaluateConsumption(
-	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
-	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) (types.Coin, sdk.Error) {
-	numOfConsumptionOnAuthor, err := am.GetDonationRelationship(ctx, consumer, postAuthor)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermlink(postAuthor, postID))
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
+	coin types.Coin,
+	gm global.GlobalManager,
+	// ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
+	// postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager,
+) (types.Coin, sdk.Error) {
+	return gm.EvaluateConsumption(coin)
 }
 
 // Handle ReportMsgOrUpvoteMsg
