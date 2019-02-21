@@ -134,7 +134,7 @@ func NewLinoBlockchain(
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
-	lb.MountStoresIAVL(
+	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
 		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore)
@@ -453,13 +453,15 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 
 // udpate validator set and renew reputation round
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
+	// XXX(yumin): reputation updates, will not change any tendermint.
+	rep.EndBlocker(ctx, req, lb.reputationManager)
+
+	// update validator set.
+	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
 		panic(err)
 	}
-	rep.EndBlocker(ctx, req, lb.reputationManager)
-
-	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
+	return abci.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
 
 func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {

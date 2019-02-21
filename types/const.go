@@ -167,4 +167,7 @@ const (
 
 	// LinoBlockchainSecondUpdateHeight - second blockchain update
 	LinoBlockchainSecondUpdateHeight = 356000
+
+	// TendermintValidatorPower - every validator has const power in tendermint engine.
+	TendermintValidatorPower = 1000
 )
