@@ -309,8 +309,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	remainValidatorPool := types.RatToCoin(
-		genesisTotalCoin.ToRat().Mul(
+	remainValidatorPool := types.DecToCoin(
+		genesisTotalCoin.ToDec().Mul(
 			growthRate.Mul(validatorAllocation)))
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
@@ -325,12 +325,12 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	// simulate app
 	// hourly inflation
 	inflationForValidator :=
-		types.RatToCoin(remainValidatorPool.ToRat().Mul(
+		types.DecToCoin(remainValidatorPool.ToDec().Mul(
 			types.NewDecFromRat(1, types.HoursPerYear)))
 	// expectBalance for all validators
 	for i := 0; i < 21; i++ {
-		inflation := types.RatToCoin(
-			inflationForValidator.ToRat().Quo(sdk.NewDec(int64(21 - i))))
+		inflation := types.DecToCoin(
+			inflationForValidator.ToDec().Quo(sdk.NewDec(int64(21 - i))))
 		expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 		inflationForValidator = inflationForValidator.Minus(inflation)
 		saving, err :=
@@ -497,14 +497,14 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			var inflation types.Coin
 			if totalWeight == 0 {
 				inflation =
-					types.RatToCoin(
+					types.DecToCoin(
 						types.NewDecFromRat(1, int64(cs.numberOfInfraProvider)).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			} else {
 				inflation =
-					types.RatToCoin(
+					types.DecToCoin(
 						types.NewDecFromRat(cs.consumptionList[i], totalWeight).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			}
 			if i == (cs.numberOfInfraProvider - 1) {
 				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
@@ -656,15 +656,15 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 			var inflation types.Coin
 			if totalConsumption.IsZero() {
 				inflation =
-					types.RatToCoin(
+					types.DecToCoin(
 						types.NewDecFromRat(1, int64(len(cs.consumptionList))).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			} else {
 				inflation =
-					types.RatToCoin(
-						cs.consumptionList[i].ToRat().
-							Quo(totalConsumption.ToRat()).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+					types.DecToCoin(
+						cs.consumptionList[i].ToDec().
+							Quo(totalConsumption.ToDec()).
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			}
 			if i == (cs.numberOfDevelopers - 1) {
 				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
@@ -706,17 +706,17 @@ func TestHourlyEvent(t *testing.T) {
 		assert.Equal(t, pastMinutes, int64(i))
 		if i%60 == 0 {
 			hourlyInflation :=
-				types.RatToCoin(
-					globalMeta.TotalLinoCoin.ToRat().
+				types.DecToCoin(
+					globalMeta.TotalLinoCoin.ToDec().
 						Mul(globalAllocation.GlobalGrowthRate).Mul(types.NewDecFromRat(1, types.HoursPerYear)))
 			consumptionMeta, err := gs.GetConsumptionMeta(ctx)
 			assert.Nil(t, err)
 			expectConsumptionPool =
 				expectConsumptionPool.Plus(
-					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation)))
 			expectInfraPool =
 				expectInfraPool.Plus(
-					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
+					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.InfraAllocation)))
 			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
 
 			inflationPool, _ := gs.GetInflationPool(ctx)

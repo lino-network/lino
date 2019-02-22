@@ -55,7 +55,7 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	if rat.LT(LowerBoundRat) {
 		return NewCoinFromInt64(0), ErrInvalidCoins("LNO can't be less than lower bound")
 	}
-	return RatToCoin(rat.Mul(sdk.NewDec(Decimals))), nil
+	return DecToCoin(rat.Mul(sdk.NewDec(Decimals))), nil
 }
 
 var (
@@ -67,15 +67,14 @@ var (
 	ten   = big.NewInt(10)
 )
 
-// RatToCoin - convert sdk.Dec to LNO coin
+// DecToCoin - convert sdk.Dec to LNO coin
 // XXX(yumin): the unit of @p rat must be coin.
-func RatToCoin(rat sdk.Dec) Coin {
+func DecToCoin(rat sdk.Dec) Coin {
 	return NewCoinFromBigInt(rat.RoundInt().BigInt())
 }
 
-// ToRat - convert Coin to sdk.Dec
-// XXX(yumin): the unit of @p rat must be coin.
-func (coin Coin) ToRat() sdk.Dec {
+// ToDec - convert Coin to sdk.Dec
+func (coin Coin) ToDec() sdk.Dec {
 	return sdk.NewDecFromBigInt(coin.Amount.BigInt())
 }
 

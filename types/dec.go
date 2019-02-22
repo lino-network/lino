@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	// PrecHoudreds prec of rat(xxx, 10)
+	// PrecTenths prec of rat(xxx, 10)
 	PrecTenths = 1
 	// PrecHoudreds prec of rat(xxx, 100)
 	PrecHoudreds = 2

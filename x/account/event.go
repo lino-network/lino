@@ -33,8 +33,8 @@ func CreateCoinReturnEvents(
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
-		pieceRat := coin.ToRat().Quo(sdk.NewDec(times - i))
-		piece := types.RatToCoin(pieceRat)
+		pieceRat := coin.ToDec().Quo(sdk.NewDec(times - i))
+		piece := types.DecToCoin(pieceRat)
 		coin = coin.Minus(piece)
 
 		event := ReturnCoinEvent{

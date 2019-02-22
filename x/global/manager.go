@@ -244,8 +244,8 @@ func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoSt
 			continue
 		}
 		interest :=
-			types.RatToCoin(linoStakeStat.UnclaimedFriction.ToRat().Mul(
-				linoStake.ToRat().Quo(linoStakeStat.UnclaimedLinoStake.ToRat())))
+			types.DecToCoin(linoStakeStat.UnclaimedFriction.ToDec().Mul(
+				linoStake.ToDec().Quo(linoStakeStat.UnclaimedLinoStake.ToDec())))
 		totalInterest = totalInterest.Plus(interest)
 		linoStakeStat.UnclaimedFriction = linoStakeStat.UnclaimedFriction.Minus(interest)
 		linoStakeStat.UnclaimedLinoStake = linoStakeStat.UnclaimedLinoStake.Minus(linoStake)
@@ -341,8 +341,8 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	}
 	// get hourly inflation
 	thisHourInflation :=
-		types.RatToCoin(
-			globalMeta.LastYearTotalLinoCoin.ToRat().
+		types.DecToCoin(
+			globalMeta.LastYearTotalLinoCoin.ToDec().
 				Mul(globalAllocation.GlobalGrowthRate).
 				Mul(types.NewDecFromRat(1, types.HoursPerYear)))
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
@@ -355,11 +355,11 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	contentCreatorInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation))
 	validatorInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.ValidatorAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ValidatorAllocation))
 	infraInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.InfraAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.InfraAllocation))
 	developerInflation :=
 		thisHourInflation.Minus(contentCreatorInflation).Minus(validatorInflation).Minus(infraInflation)
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(contentCreatorInflation)
@@ -393,8 +393,8 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 		growthRate = globalAllocationParam.GlobalGrowthRate
 	} else {
 		// growthRate = (consumption this year - consumption last year) / consumption last year
-		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
-		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
+		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToDec()
+		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToDec()
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 		if consumptionIncrement.GTE(lastYearConsumptionRat) {
 			growthRate = sdk.OneDec()
@@ -425,11 +425,11 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 
 	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
 	consumptionRatio :=
-		evaluate.ToRat().Mul(sdk.OneDec().Sub(penaltyScore)).Quo(
-			consumptionMeta.ConsumptionWindow.ToRat())
+		evaluate.ToDec().Mul(sdk.OneDec().Sub(penaltyScore)).Quo(
+			consumptionMeta.ConsumptionWindow.ToDec())
 	// reward = (consumption reward pool) * (consumptionRatio)
-	reward := types.RatToCoin(
-		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
+	reward := types.DecToCoin(
+		consumptionMeta.ConsumptionRewardPool.ToDec().Mul(consumptionRatio))
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 	if err := gm.addTotalLinoCoin(ctx, reward); err != nil {

@@ -116,7 +116,7 @@ func (accManager AccountManager) GetCoinDay(
 	}
 
 	coinDay := bank.CoinDay
-	coinDayInQueue := types.RatToCoin(pendingCoinDayQueue.TotalCoinDay)
+	coinDayInQueue := types.DecToCoin(pendingCoinDayQueue.TotalCoinDay)
 	totalCoinDay := coinDay.Plus(coinDayInQueue)
 	return totalCoinDay, nil
 }
@@ -270,14 +270,14 @@ func (accManager AccountManager) MinusSavingCoin(
 			coin = coin.Minus(pendingCoinDay.Coin)
 
 			pendingCoinDayQueue.TotalCoinDay =
-				pendingCoinDayQueue.TotalCoinDay.Sub((recoverRatio.Mul(pendingCoinDay.Coin.ToRat())))
+				pendingCoinDayQueue.TotalCoinDay.Sub((recoverRatio.Mul(pendingCoinDay.Coin.ToDec())))
 
 			pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Minus(pendingCoinDay.Coin)
 			pendingCoinDayQueue.PendingCoinDays = pendingCoinDayQueue.PendingCoinDays[:lengthOfQueue-1]
 		} else {
 			// otherwise try to cut last pending transaction
 			pendingCoinDayQueue.TotalCoinDay =
-				pendingCoinDayQueue.TotalCoinDay.Sub(recoverRatio.Mul(coin.ToRat()))
+				pendingCoinDayQueue.TotalCoinDay.Sub(recoverRatio.Mul(coin.ToDec()))
 
 			pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Minus(coin)
 			pendingCoinDayQueue.PendingCoinDays[lengthOfQueue-1].Coin =
@@ -364,14 +364,14 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 				coin = coin.Minus(pendingCoinDay.Coin)
 
 				pendingCoinDayQueue.TotalCoinDay =
-					pendingCoinDayQueue.TotalCoinDay.Sub((recoverRatio.Mul(pendingCoinDay.Coin.ToRat())))
+					pendingCoinDayQueue.TotalCoinDay.Sub((recoverRatio.Mul(pendingCoinDay.Coin.ToDec())))
 
 				pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Minus(pendingCoinDay.Coin)
 				pendingCoinDayQueue.PendingCoinDays = pendingCoinDayQueue.PendingCoinDays[1:]
 			} else {
 				// otherwise try to cut first pending transaction
 				pendingCoinDayQueue.TotalCoinDay =
-					pendingCoinDayQueue.TotalCoinDay.Sub(recoverRatio.Mul(coin.ToRat()))
+					pendingCoinDayQueue.TotalCoinDay.Sub(recoverRatio.Mul(coin.ToDec()))
 
 				pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Minus(coin)
 				pendingCoinDayQueue.PendingCoinDays[0].Coin = pendingCoinDayQueue.PendingCoinDays[0].Coin.Minus(coin)
@@ -772,13 +772,13 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 			incrementRatio = sdk.OneDec()
 		}
 		capacityTillCoinDay := coinDay.Minus(accountMeta.TransactionCapacity)
-		increaseCapacity := types.RatToCoin(capacityTillCoinDay.ToRat().Mul(incrementRatio))
+		increaseCapacity := types.DecToCoin(capacityTillCoinDay.ToDec().Mul(incrementRatio))
 		accountMeta.TransactionCapacity =
 			accountMeta.TransactionCapacity.Plus(increaseCapacity)
 	}
 	// based on current tps, calculate current transaction cost
-	currentTxCost := types.RatToCoin(
-		bandwidthParams.CapacityUsagePerTransaction.ToRat().Mul(tpsCapacityRatio))
+	currentTxCost := types.DecToCoin(
+		bandwidthParams.CapacityUsagePerTransaction.ToDec().Mul(tpsCapacityRatio))
 	// check if user current capacity is enough or not
 	if currentTxCost.IsGT(accountMeta.TransactionCapacity) {
 		return ErrAccountTPSCapacityNotEnough(me)
@@ -1022,7 +1022,7 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 			// remove the coin day in the queue of this transaction
 			pendingCoinDayQueue.TotalCoinDay =
 				pendingCoinDayQueue.TotalCoinDay.Sub(
-					coinDayRatioOfThisTransaction.Mul(pendingCoinDay.Coin.ToRat()))
+					coinDayRatioOfThisTransaction.Mul(pendingCoinDay.Coin.ToDec()))
 			// update bank coin day
 			bank.CoinDay = bank.CoinDay.Plus(pendingCoinDay.Coin)
 
@@ -1045,7 +1045,7 @@ func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
 		// totalcoin * (currentTime - lastUpdateTime)/totalRecoverSeconds
 		pendingCoinDayQueue.TotalCoinDay =
 			pendingCoinDayQueue.TotalCoinDay.Add(
-				pendingCoinDayQueue.TotalCoin.ToRat().Mul(
+				pendingCoinDayQueue.TotalCoin.ToDec().Mul(
 					sdk.NewDec(currentTimeSlot - pendingCoinDayQueue.LastUpdatedAt)).Quo(
 					sdk.NewDec(coinDayParams.SecondsToRecoverCoinDay)))
 	}

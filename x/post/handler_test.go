@@ -756,7 +756,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		SourcePostID: msg.SourcePostID,
 		Links:        msg.Links,
 	}
-	totalReward := types.RatToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
+	totalReward := types.DecToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	postMeta := model.PostMeta{
 		CreatedAt:               ctx.BlockHeader().Time.Unix(),
 		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
@@ -782,7 +782,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Equal(t, repostRewardEvent, eventList.Events[1])
 
 	// check source post
-	postMeta.TotalReward = types.RatToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
+	postMeta.TotalReward = types.DecToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	postMeta.CreatedAt = 0
 	postMeta.LastUpdatedAt = 0
 	postInfo.Author = user1
@@ -797,8 +797,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 	acc1Saving, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Saving, _ := am.GetSavingFromBank(ctx, user2)
 	acc3Saving, _ := am.GetSavingFromBank(ctx, user3)
-	acc1SavingCoin := types.RatToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
-	acc2SavingCoin := types.RatToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
+	acc1SavingCoin := types.DecToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
+	acc2SavingCoin := types.DecToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	assert.Equal(t, acc1Saving, initCoin.Plus(acc1SavingCoin))
 	assert.Equal(t, acc2Saving, initCoin.Plus(acc2SavingCoin))
 	assert.Equal(t, acc3Saving, initCoin.Plus(types.NewCoinFromInt64(23*types.Decimals)))

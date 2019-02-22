@@ -528,8 +528,8 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		// XXX(yumin): why in the previous version, it's guarged with
 		// if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
 		// though only differs in round?
-		ratPerValidator = coin.ToRat().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
-		coinPerValidator := types.RatToCoin(ratPerValidator)
+		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
+		coinPerValidator := types.DecToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
@@ -559,8 +559,8 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin := types.RatToCoin(myShareRat)
+		myShareRat := inflation.ToDec().Mul(percentage)
+		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
@@ -594,8 +594,8 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin := types.RatToCoin(myShareRat)
+		myShareRat := inflation.ToDec().Mul(percentage)
+		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)

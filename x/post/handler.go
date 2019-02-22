@@ -159,9 +159,9 @@ func handleDonateMsg(
 		if err != nil {
 			return err.Result()
 		}
-		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
+		sourceIncome := types.DecToCoin(coin.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
-		sourceCoinDayGained := types.RatToCoin(totalCoinDayDonated.ToRat().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
+		sourceCoinDayGained := types.DecToCoin(totalCoinDayDonated.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {
@@ -190,7 +190,7 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
+	frictionCoin := types.DecToCoin(coin.ToDec().Mul(consumptionFrictionRate))
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
 	dp, err := rm.DonateAt(ctx, consumer, postKey, coinDayDonated)
 	if err != nil {

@@ -718,21 +718,21 @@ func TestDistributeHourlyInflation(t *testing.T) {
 		assert.Nil(t, err)
 
 		hourlyInflation :=
-			types.RatToCoin(lastYearTotalLino.ToRat().
+			types.DecToCoin(lastYearTotalLino.ToDec().
 				Mul(globalAllocationParam.GlobalGrowthRate).
 				Mul(types.NewDecFromRat(1, int64(types.HoursPerYear))))
 		expectContentCreatorInflation =
 			expectContentCreatorInflation.Plus(
-				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation)))
 		expectValidatorInflation =
 			expectValidatorInflation.Plus(
-				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ValidatorAllocation)))
+				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.ValidatorAllocation)))
 		expectDeveloperInflation =
 			expectDeveloperInflation.Plus(
-				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.DeveloperAllocation)))
+				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.DeveloperAllocation)))
 		expectInfraInflation =
 			expectInfraInflation.Plus(
-				types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
+				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.InfraAllocation)))
 		assert.True(t, expectContentCreatorInflation.IsEqual(consumptionMeta.ConsumptionRewardPool))
 		assert.True(t, expectInfraInflation.IsEqual(inflationPool.InfraInflationPool))
 		assert.True(t, expectDeveloperInflation.IsEqual(inflationPool.DeveloperInflationPool))
@@ -1595,8 +1595,8 @@ func TestGetInterestSince(t *testing.T) {
 			interest := types.NewCoinFromInt64(0)
 			if !tc.pastRecord[i].UnclaimedLinoStake.IsZero() {
 				interest =
-					types.RatToCoin(tc.pastRecord[i].UnclaimedFriction.ToRat().Mul(
-						tc.stake.ToRat().Quo(tc.pastRecord[i].UnclaimedLinoStake.ToRat())))
+					types.DecToCoin(tc.pastRecord[i].UnclaimedFriction.ToDec().Mul(
+						tc.stake.ToDec().Quo(tc.pastRecord[i].UnclaimedLinoStake.ToDec())))
 			}
 			if !stat.UnclaimedFriction.IsEqual(tc.pastRecord[i].UnclaimedFriction.Minus(interest)) {
 				t.Errorf("%s: diff total consumption friction, got %v, want %v",
