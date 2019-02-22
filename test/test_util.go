@@ -175,7 +175,7 @@ func CheckAllValidatorList(
 
 // CreateAccount - register account on test blockchain
 func CreateAccount(
-	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
+	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
 	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
@@ -195,15 +195,17 @@ func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 }
 
 // SignCheckDeliver - sign transaction, simulate and commit a block
-func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int64,
+func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
-	res := lb.Simulate(tx)
+	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
+	// about what is the right way..
+	res := lb.Simulate(nil, tx)
 	if expPass {
-		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.True(t, res.IsOK(), res.Log)
 	} else {
-		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.False(t, res.IsOK(), res.Log)
 	}
 
 	// Simulate a Block
@@ -212,9 +214,9 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	res = lb.Deliver(tx)
 	if expPass {
-		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.True(t, res.IsOK(), res.Log)
 	} else {
-		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.False(t, res.IsOK(), res.Log)
 	}
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
@@ -229,19 +231,19 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.Commit()
 }
 
-func genTx(msg sdk.Msg, seq int64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
+func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
 	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),
 		Signature: bz,
-		Sequence:  seq}}
+	}}
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 
 // CreateTestPost - create a test post
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
-	username, postID string, seq int64, priv secp256k1.PrivKeySecp256k1,
+	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1,
 	sourceAuthor, sourcePostID string,
 	parentAuthor, parentPostID string,
 	redistributionSplitRate string, publishTime int64) {

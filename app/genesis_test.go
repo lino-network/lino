@@ -12,7 +12,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -52,7 +51,6 @@ func TestGetGenesisJson(t *testing.T) {
 				NumOfConsumptionOnAuthorOffset: 7,
 				TotalAmountOfConsumptionBase:   1000 * types.Decimals,
 				TotalAmountOfConsumptionOffset: 5,
-				AmountOfConsumptionExponent:    types.NewDecFromRat(8, 10),
 			},
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
@@ -149,8 +147,7 @@ func TestGetGenesisJson(t *testing.T) {
 func TestLinoBlockchainGenTx(t *testing.T) {
 	cdc := MakeCodec()
 	pk := secp256k1.GenPrivKey().PubKey()
-	var genTxConfig config.GenTx
-	appGenTx, _, validator, err := LinoBlockchainGenTx(cdc, pk, genTxConfig)
+	appGenTx, _, validator, err := LinoBlockchainGenTx(cdc, pk)
 	assert.Nil(t, err)
 	var genesisAcc GenesisAccount
 	err = cdc.UnmarshalJSON(appGenTx, &genesisAcc)

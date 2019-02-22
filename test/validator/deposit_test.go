@@ -67,7 +67,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 		newAccountName := "validator"
 		newAccountName += strconv.Itoa(seq + 1)
 
-		test.CreateAccount(t, newAccountName, lb, int64(seq),
+		test.CreateAccount(t, newAccountName, lb, uint64(seq),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
 		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
@@ -104,7 +104,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	newValidatorPriv := secp256k1.GenPrivKey()
 
 	newAccountName := "validatorx"
-	test.CreateAccount(t, newAccountName, lb, int64(seq),
+	test.CreateAccount(t, newAccountName, lb, uint64(seq),
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
 	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
@@ -176,7 +176,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 	assert.Nil(t, err)
 
 	// set validator0 fails to commit
-	var signingValidators []abci.SigningValidator
+	var signingValidators []abci.VoteInfo
 	for _, val := range lst.OncallValidators {
 		validator, err := valStore.GetValidator(ctx, val)
 		if err != nil {
@@ -186,7 +186,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 			t.Errorf("%s: expect 1 absent commit for %s, got %v", testName, val, validator.AbsentCommit)
 		}
 
-		abciVal := abci.SigningValidator{
+		abciVal := abci.VoteInfo{
 			Validator:       validator.ABCIValidator,
 			SignedLastBlock: true,
 		}
@@ -202,7 +202,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 			Time:    time.Unix(baseTime+100, 0),
 		},
 		LastCommitInfo: abci.LastCommitInfo{
-			Validators: signingValidators,
+			Votes: signingValidators,
 		},
 	})
 	lb.EndBlock(abci.RequestEndBlock{})
@@ -235,7 +235,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
 			LastCommitInfo: abci.LastCommitInfo{
-				Validators: signingValidators,
+				Votes: signingValidators,
 			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
@@ -265,7 +265,7 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 		newAccountName := "altval"
 		newAccountName += strconv.Itoa(i)
 
-		test.CreateAccount(t, newAccountName, lb, int64(i),
+		test.CreateAccount(t, newAccountName, lb, uint64(i),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
 		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
@@ -287,14 +287,14 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 	assert.Nil(t, err)
 
 	// set validator0 fails to commit
-	var signingValidators []abci.SigningValidator
+	var signingValidators []abci.VoteInfo
 	for _, val := range lst.OncallValidators {
 		validator, err := valStore.GetValidator(ctx, val)
 		if err != nil {
 			t.Errorf("%s: failed to get validator, got err %v", testName, err)
 		}
 
-		abciVal := abci.SigningValidator{
+		abciVal := abci.VoteInfo{
 			Validator:       validator.ABCIValidator,
 			SignedLastBlock: true,
 		}
@@ -311,7 +311,7 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
 			LastCommitInfo: abci.LastCommitInfo{
-				Validators: signingValidators,
+				Votes: signingValidators,
 			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
@@ -347,14 +347,14 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	assert.Nil(t, err)
 
 	// set validator0 fails to commit
-	var signingValidators []abci.SigningValidator
+	var signingValidators []abci.VoteInfo
 	for _, val := range lst.OncallValidators {
 		validator, err := valStore.GetValidator(ctx, val)
 		if err != nil {
 			t.Errorf("%s: failed to get validator, got err %v", testName, err)
 		}
 
-		abciVal := abci.SigningValidator{
+		abciVal := abci.VoteInfo{
 			Validator:       validator.ABCIValidator,
 			SignedLastBlock: true,
 		}
@@ -370,7 +370,7 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 			Time:    time.Unix(baseTime+100, 0),
 		},
 		LastCommitInfo: abci.LastCommitInfo{
-			Validators: signingValidators,
+			Votes: signingValidators,
 		},
 	})
 	lb.EndBlock(abci.RequestEndBlock{})
@@ -384,7 +384,7 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
 			LastCommitInfo: abci.LastCommitInfo{
-				Validators: signingValidators,
+				Votes: signingValidators,
 			},
 		})
 		lb.EndBlock(abci.RequestEndBlock{})
