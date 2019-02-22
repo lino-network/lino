@@ -25,14 +25,18 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 }
 
 func main() {
+	cobra.EnableCommandSorting = false
+
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
-	cobra.EnableCommandSorting = false
+
 	rootCmd := &cobra.Command{
 		Use:               "lino",
 		Short:             "Lino Blockchain (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
+
+	rootCmd.AddCommand(app.InitCmd(ctx, cdc))
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
