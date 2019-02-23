@@ -11,11 +11,13 @@ import (
 	model "github.com/lino-network/lino/x/reputation/internal"
 )
 
+// ReputationManager - adaptor for reputation math model and cosmos application.
 type ReputationManager struct {
 	storeKey    sdk.StoreKey
 	paramHolder param.ParamHolder
 }
 
+// NewReputationManager - require holder for BestContentIndexN
 func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) ReputationManager {
 	return ReputationManager{
 		storeKey:    key,
@@ -23,6 +25,7 @@ func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) Reputation
 	}
 }
 
+// construct a handler.
 func (rep ReputationManager) getHandler(ctx sdk.Context) (model.Reputation, sdk.Error) {
 	store := ctx.KVStore(rep.storeKey)
 	param, err := rep.paramHolder.GetReputationParam(ctx)
@@ -57,7 +60,8 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 	return err
 }
 
-// It's caller's responsibility that parameters are all correct, although we do have some checks.
+// DonateAt - It's caller's responsibility that parameters are all correct,
+// although we do have some checks.
 func (rep ReputationManager) DonateAt(ctx sdk.Context,
 	username types.AccountKey, post types.Permlink, coinDay types.Coin) (types.Coin, sdk.Error) {
 	handler, err := rep.getHandler(ctx)
@@ -76,6 +80,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 	return types.NewCoinFromBigInt(dp), nil
 }
 
+// ReportAt - @p username report @p post.
 func (rep ReputationManager) ReportAt(ctx sdk.Context,
 	username types.AccountKey, post types.Permlink) (types.Coin, sdk.Error) {
 	handler, err := rep.getHandler(ctx)
@@ -100,12 +105,14 @@ func (rep ReputationManager) calcFreeScore(amount types.Coin) *big.Int {
 	return score
 }
 
+// OnStakeIn - on @p username stakein @p amount.
 func (rep ReputationManager) OnStakeIn(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
 	incAmount := rep.calcFreeScore(amount)
 	rep.incFreeScore(ctx, username, incAmount)
 }
 
+// OnStakeOut - on @p username stakeout @p amount
 func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
 	incAmount := rep.calcFreeScore(amount)
@@ -129,6 +136,7 @@ func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 	return nil
 }
 
+// Update - on blocker end, update reputation time related information.
 func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
@@ -139,6 +147,7 @@ func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+// GetRepution - return reputation of @p username, costomnerScore + freeScore.
 func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
@@ -154,6 +163,7 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 	return types.NewCoinFromBigInt(handler.GetReputation(uid)), nil
 }
 
+// GetSumRep of @p post
 func (rep ReputationManager) GetSumRep(ctx sdk.Context, post types.Permlink) (types.Coin, sdk.Error) {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
@@ -169,6 +179,7 @@ func (rep ReputationManager) GetSumRep(ctx sdk.Context, post types.Permlink) (ty
 	return types.NewCoinFromBigInt(handler.GetSumRep(pid)), nil
 }
 
+// GetCurrentRound of now
 func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error) {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
@@ -177,4 +188,22 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 	_, ts := handler.GetCurrentRound()
 	return ts, nil
+}
+
+// Import reputation system.
+func (rep ReputationManager) Import(ctx sdk.Context, dt []byte) error {
+	handler, err := rep.getHandler(ctx)
+	if err != nil {
+		return err
+	}
+	return handler.Import(dt)
+}
+
+// Export state of reputation system.
+func (rep ReputationManager) Export(ctx sdk.Context) ([]byte, error) {
+	handler, err := rep.getHandler(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return handler.Export()
 }

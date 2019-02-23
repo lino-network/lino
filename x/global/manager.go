@@ -23,6 +23,11 @@ func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager 
 	}
 }
 
+// Export state
+func (gm GlobalManager) Export(ctx sdk.Context) *model.GlobalTables {
+	return gm.storage.Export(ctx)
+}
+
 // WireCodec - access to global manager codec
 func (gm GlobalManager) WireCodec() *wire.Codec {
 	return gm.storage.WireCodec()

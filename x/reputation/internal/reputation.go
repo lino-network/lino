@@ -16,6 +16,10 @@ type Reputation interface {
 	GetReputation(u Uid) Rep
 	GetSumRep(p Pid) Rep
 	GetCurrentRound() (RoundId, Time) // current round and its start time.
+
+	// ExportImporter
+	Export() ([]byte, error)
+	Import(dt []byte) error
 }
 
 type ReputationImpl struct {
@@ -24,6 +28,16 @@ type ReputationImpl struct {
 
 func NewReputation(s ReputationStore) Reputation {
 	return &ReputationImpl{store: s}
+}
+
+// Export - implementing ExporteImporter
+func (rep ReputationImpl) Export() ([]byte, error) {
+	return rep.store.Export()
+}
+
+// Import - implementing ExporteImporter
+func (rep ReputationImpl) Import(dt []byte) error {
+	return rep.store.Import(dt)
 }
 
 func (rep ReputationImpl) GetReputation(u Uid) Rep {

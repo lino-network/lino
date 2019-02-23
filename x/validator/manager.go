@@ -554,3 +554,8 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 	return bestCandidate, nil
 
 }
+
+// Export storage state.
+func (vm ValidatorManager) Export(ctx sdk.Context) *model.ValidatorTables {
+	return vm.storage.Export(ctx)
+}

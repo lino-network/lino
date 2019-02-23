@@ -19,7 +19,27 @@ type Validator struct {
 	Link            string           `json:"link"`
 }
 
-// Validator list
+// ToIR -
+func (v Validator) ToIR() ValidatorIR {
+	return ValidatorIR{
+		ABCIValidator: ABCIValidatorIR{
+			Address: v.ABCIValidator.Address,
+			PubKey: ABCIPubKeyIR{
+				Type: v.ABCIValidator.PubKey.Type,
+				Data: v.ABCIValidator.PubKey.Data,
+			},
+			Power: v.ABCIValidator.Power,
+		},
+		Username:        v.Username,
+		Deposit:         v.Deposit,
+		AbsentCommit:    v.AbsentCommit,
+		ByzantineCommit: v.ByzantineCommit,
+		ProducedBlocks:  v.ProducedBlocks,
+		Link:            v.Link,
+	}
+}
+
+// ValidatorList -
 type ValidatorList struct {
 	OncallValidators   []types.AccountKey `json:"oncall_validators"`
 	AllValidators      []types.AccountKey `json:"all_validators"`

@@ -207,6 +207,7 @@ func getNextProposalIDKey() []byte {
 	return nextProposalIDSubstore
 }
 
+// XXX(yumin): a overflow bug if end = 255
 func subspace(prefix []byte) (start, end []byte) {
 	end = make([]byte, len(prefix))
 	copy(end, prefix)

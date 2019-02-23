@@ -1100,6 +1100,11 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 }
 
 // IterateAccounts - iterate accounts in KVStore
+func (accManager AccountManager) Export(ctx sdk.Context) *model.AccountTables {
+	return accManager.storage.Export(ctx)
+}
+
+// IterateAccounts - iterate accounts in KVStore
 func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
 	accManager.storage.IterateAccounts(ctx, process)
 }

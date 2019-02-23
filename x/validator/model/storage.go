@@ -94,6 +94,39 @@ func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList)
 	return nil
 }
 
+// Export state of validators.
+func (vs ValidatorStorage) Export(ctx sdk.Context) *ValidatorTables {
+	tables := &ValidatorTables{}
+	store := ctx.KVStore(vs.key)
+	// export table.validators
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, validatorSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			username := types.AccountKey(k[1:])
+			val, err := vs.GetValidator(ctx, username)
+			if err != nil {
+				panic("failed to read validator: " + err.Error())
+			}
+			row := ValidatorRow{
+				Username:  username,
+				Validator: *val,
+			}
+			tables.Validators = append(tables.Validators, row)
+		}
+	}()
+	// export table.validatorList
+	list, err := vs.GetValidatorList(ctx)
+	if err != nil {
+		panic("failed to get validator list: " + err.Error())
+	}
+	tables.ValidatorList = ValidatorListRow{
+		List: *list,
+	}
+	return tables
+}
+
 func GetValidatorKey(accKey types.AccountKey) []byte {
 	return append(validatorSubstore, accKey...)
 }

@@ -40,6 +40,23 @@ type PostMeta struct {
 	RedistributionSplitRate sdk.Dec    `json:"redistribution_split_rate"`
 }
 
+// ToIR -
+func (pm PostMeta) ToIR() PostMetaIR {
+	return PostMetaIR{
+		CreatedAt:               pm.CreatedAt,
+		LastUpdatedAt:           pm.LastUpdatedAt,
+		LastActivityAt:          pm.LastActivityAt,
+		AllowReplies:            pm.AllowReplies,
+		IsDeleted:               pm.IsDeleted,
+		TotalDonateCount:        pm.TotalDonateCount,
+		TotalReportCoinDay:      pm.TotalReportCoinDay,
+		TotalUpvoteCoinDay:      pm.TotalUpvoteCoinDay,
+		TotalViewCount:          pm.TotalViewCount,
+		TotalReward:             pm.TotalReward,
+		RedistributionSplitRate: pm.RedistributionSplitRate.FloatString(),
+	}
+}
+
 // ReportOrUpvote - report or upvote from a user to a post
 type ReportOrUpvote struct {
 	Username  types.AccountKey `json:"username"`
