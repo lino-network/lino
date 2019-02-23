@@ -774,10 +774,10 @@ func TestHandlerRePostDonate(t *testing.T) {
 		PostID:     "repost",
 		Consumer:   user3,
 		// XXX(yumin): rep is 1, while donation is 100, final dp is 1/100.
-		Evaluate:   types.NewCoinFromInt64(15 * types.Decimals / 100),
-		Original:   types.NewCoinFromInt64(15 * types.Decimals),
-		Friction:   types.NewCoinFromInt64(75000),
-		FromApp:    "",
+		Evaluate: types.NewCoinFromInt64(15 * types.Decimals / 100),
+		Original: types.NewCoinFromInt64(15 * types.Decimals),
+		Friction: types.NewCoinFromInt64(75000),
+		FromApp:  "",
 	}
 	assert.Equal(t, repostRewardEvent, eventList.Events[1])
 

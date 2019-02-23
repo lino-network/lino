@@ -59,24 +59,6 @@ func TestInfraInternalAllocationParam(t *testing.T) {
 	assert.Equal(t, parameter, *resultPtr, "Infra internal allocation param should be equal")
 }
 
-func TestEvaluateOfContenValueParam(t *testing.T) {
-	ph := NewParamHolder(TestKVStoreKey)
-	ctx := getContext()
-	parameter := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-	}
-	err := ph.setEvaluateOfContentValueParam(ctx, &parameter)
-	assert.Nil(t, err)
-
-	resultPtr, err := ph.GetEvaluateOfContentValueParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Evaluate of content value param should be equal")
-}
-
 func TestDeveloperParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
@@ -228,14 +210,6 @@ func TestInitParam(t *testing.T) {
 		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 
-	evaluateOfContentValueParam := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-	}
-
 	developerParam := DeveloperParam{
 		DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
 		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
@@ -300,7 +274,7 @@ func TestInitParam(t *testing.T) {
 		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
-		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
@@ -318,14 +292,6 @@ func TestInitParamFromConfig(t *testing.T) {
 	infraInternalAllocationParam := InfraInternalAllocationParam{
 		StorageAllocation: types.NewDecFromRat(50, 100),
 		CDNAllocation:     types.NewDecFromRat(50, 100),
-	}
-
-	evaluateOfContentValueParam := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
 	}
 
 	developerParam := DeveloperParam{
@@ -399,7 +365,6 @@ func TestInitParamFromConfig(t *testing.T) {
 		ctx, globalAllocationParam,
 		infraInternalAllocationParam,
 		postParam,
-		evaluateOfContentValueParam,
 		developerParam,
 		validatorParam,
 		voteParam,
@@ -412,21 +377,17 @@ func TestInitParamFromConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
-		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
 	expectInfraInternalAllocationParam InfraInternalAllocationParam,
-	expectEvaluateOfContentValueParam EvaluateOfContentValueParam, expectDeveloperParam DeveloperParam,
+	expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
 	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
 	expectPostParam PostParam) {
-	evaluateOfContentValueParam, err := ph.GetEvaluateOfContentValueParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectEvaluateOfContentValueParam, *evaluateOfContentValueParam)
-
 	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalAllocationParam, *globalAllocationParam)

@@ -839,73 +839,6 @@ func TestChangePostParamMsg(t *testing.T) {
 	}
 }
 
-func TestChangeEvaluateOfContentValueParamMsg(t *testing.T) {
-	p1 := param.EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-	}
-
-	p2 := p1
-	p2.ConsumptionTimeAdjustBase = 0
-
-	p3 := p1
-	p3.TotalAmountOfConsumptionBase = 0
-
-	testCases := []struct {
-		testName              string
-		changeAccountParamMsg ChangeEvaluateOfContentValueParamMsg
-		expectedError         sdk.Error
-	}{
-		{
-			testName:              "normal case",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p1, ""),
-			expectedError:         nil,
-		},
-		{
-			testName:              "zero ConsumptionTimeAdjustBase is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p2, ""),
-			expectedError:         ErrIllegalParameter(),
-		},
-		{
-			testName:              "zero TotalAmountOfConsumptionBase is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1", p3, ""),
-			expectedError:         ErrIllegalParameter(),
-		},
-		{
-			testName:              "too short username is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("us", p1, ""),
-			expectedError:         ErrInvalidUsername(),
-		},
-		{
-			testName:              "too long username is illegal",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg("user1user1user1user1user1", p1, ""),
-			expectedError:         ErrInvalidUsername(),
-		},
-		{
-			testName: "reason is too long",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg(
-				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
-			expectedError: ErrReasonTooLong(),
-		},
-		{
-			testName: "utf8 reason is too long",
-			changeAccountParamMsg: NewChangeEvaluateOfContentValueParamMsg(
-				"user1", p1, tooLongOfUTF8Reason),
-			expectedError: ErrReasonTooLong(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.changeAccountParamMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
-			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
 func TestDeletePostContentMsg(t *testing.T) {
 	testCases := []struct {
 		testName             string
@@ -1024,12 +957,6 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.TransactionPermission,
 		},
 		{
-			testName: "change evaluate of content value param msg",
-			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}, ""),
-			expectPermission: types.TransactionPermission,
-		},
-		{
 			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
 				"creator", param.InfraInternalAllocationParam{}, ""),
@@ -1113,11 +1040,6 @@ func TestGetSignBytes(t *testing.T) {
 				"creator", param.GlobalAllocationParam{}, ""),
 		},
 		{
-			testName: "change evaluate of content value param msg",
-			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}, ""),
-		},
-		{
 			testName: "change infra internal allocation param msg",
 			msg: NewChangeInfraInternalAllocationParamMsg(
 				"creator", param.InfraInternalAllocationParam{}, ""),
@@ -1189,12 +1111,6 @@ func TestGetSigners(t *testing.T) {
 			testName: "change global allocaiton param msg",
 			msg: NewChangeGlobalAllocationParamMsg(
 				"creator", param.GlobalAllocationParam{}, ""),
-			expectSigners: []types.AccountKey{"creator"},
-		},
-		{
-			testName: "change evaluate of content value param msg",
-			msg: NewChangeEvaluateOfContentValueParamMsg(
-				"creator", param.EvaluateOfContentValueParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{

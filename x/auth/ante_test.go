@@ -191,7 +191,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, ErrUnverifiedBytes(
-		"signature verification failed, chain-id:Lino").Result())
+		"signature verification failed, chain-id:Lino, seq:1").Result())
 
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}

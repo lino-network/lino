@@ -45,13 +45,6 @@ func TestGetGenesisJson(t *testing.T) {
 		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 		GenesisParam: GenesisParam{
 			true,
-			param.EvaluateOfContentValueParam{
-				ConsumptionTimeAdjustBase:      3153600,
-				ConsumptionTimeAdjustOffset:    5,
-				NumOfConsumptionOnAuthorOffset: 7,
-				TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-				TotalAmountOfConsumptionOffset: 5,
-			},
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
 				InfraAllocation:          types.NewDecFromRat(20, 100),

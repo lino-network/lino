@@ -415,7 +415,7 @@ func TestGetValidatorUpdates(t *testing.T) {
 
 	val2NoPower := abci.ValidatorUpdate{
 		PubKey: tmtypes.TM2PB.PubKey(valKey2),
-		Power:   0,
+		Power:  0,
 	}
 
 	testCases := []struct {

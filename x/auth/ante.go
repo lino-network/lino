@@ -91,7 +91,8 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				// verify signature
 				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
 					return ctx, ErrUnverifiedBytes(
-						fmt.Sprintf("signature verification failed, chain-id:%v", ctx.ChainID())).Result(), true
+						fmt.Sprintf("signature verification failed, chain-id:%v, seq:%d",
+							ctx.ChainID(), seq)).Result(), true
 				}
 				// succ
 				if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(msgSigner)); err != nil {
