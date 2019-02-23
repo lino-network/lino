@@ -22,9 +22,9 @@ var (
 	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
-	AnnualInflationCeiling = sdk.MustNewDecFromStr("0.098")
+	AnnualInflationCeiling = types.NewDecFromRat(98, 1000)
 	// AnnualInflationFloor - annual inflation lower bound
-	AnnualInflationFloor = sdk.MustNewDecFromStr("0.03")
+	AnnualInflationFloor = types.NewDecFromRat(3, 100)
 )
 
 // ParamHolder - parameter KVStore
@@ -47,19 +47,19 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 // InitParam - init all parameters based on code
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.MustNewDecFromStr("0.098"),
-		InfraAllocation:          sdk.MustNewDecFromStr("0.2"),
-		ContentCreatorAllocation: sdk.MustNewDecFromStr("0.65"),
-		DeveloperAllocation:      sdk.MustNewDecFromStr("0.1"),
-		ValidatorAllocation:      sdk.MustNewDecFromStr("0.05"),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(20, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		DeveloperAllocation:      types.NewDecFromRat(10, 100),
+		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
 		return err
 	}
 
 	infraInternalAllocationParam := &InfraInternalAllocationParam{
-		StorageAllocation: sdk.MustNewDecFromStr("0.5"),
-		CDNAllocation:     sdk.MustNewDecFromStr("0.5"),
+		StorageAllocation: types.NewDecFromRat(50, 100),
+		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
 		return err
@@ -112,18 +112,18 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	proposalParam := &ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.MustNewDecFromStr("0.5"),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.MustNewDecFromStr("0.7"),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.MustNewDecFromStr("0.8"),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}

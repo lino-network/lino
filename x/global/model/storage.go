@@ -111,7 +111,7 @@ func (gs GlobalStorage) InitGlobalState(
 	initParamList := InitParamList{
 		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.MustNewDecFromStr("0.05"),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 	return gs.InitGlobalStateWithConfig(ctx, totalLino, initParamList)
 }
