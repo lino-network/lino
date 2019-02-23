@@ -219,7 +219,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			genesisState.GenesisParam.GlobalAllocationParam,
 			genesisState.GenesisParam.InfraInternalAllocationParam,
 			genesisState.GenesisParam.PostParam,
-			genesisState.GenesisParam.EvaluateOfContentValueParam,
 			genesisState.GenesisParam.DeveloperParam,
 			genesisState.GenesisParam.ValidatorParam,
 			genesisState.GenesisParam.VoteParam,

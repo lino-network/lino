@@ -13,7 +13,6 @@ import (
 var _ types.Msg = DeletePostContentMsg{}
 var _ types.Msg = UpgradeProtocolMsg{}
 var _ types.Msg = ChangeGlobalAllocationParamMsg{}
-var _ types.Msg = ChangeEvaluateOfContentValueParamMsg{}
 var _ types.Msg = ChangeInfraInternalAllocationParamMsg{}
 var _ types.Msg = ChangeVoteParamMsg{}
 var _ types.Msg = ChangeProposalParamMsg{}
@@ -25,7 +24,6 @@ var _ types.Msg = ChangePostParamMsg{}
 var _ types.Msg = VoteProposalMsg{}
 
 var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
-var _ ChangeParamMsg = ChangeEvaluateOfContentValueParamMsg{}
 var _ ChangeParamMsg = ChangeInfraInternalAllocationParamMsg{}
 var _ ChangeParamMsg = ChangeVoteParamMsg{}
 var _ ChangeParamMsg = ChangeProposalParamMsg{}
@@ -79,13 +77,6 @@ type ChangeGlobalAllocationParamMsg struct {
 	Creator   types.AccountKey            `json:"creator"`
 	Parameter param.GlobalAllocationParam `json:"parameter"`
 	Reason    string                      `json:"reason"`
-}
-
-// ChangeEvaluateOfContentValueParamMsg - implement of change parameter msg
-type ChangeEvaluateOfContentValueParamMsg struct {
-	Creator   types.AccountKey                  `json:"creator"`
-	Parameter param.EvaluateOfContentValueParam `json:"parameter"`
-	Reason    string                            `json:"reason"`
 }
 
 // ChangeInfraInternalAllocationParamMsg - implement of change parameter msg
@@ -375,79 +366,6 @@ func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implement types.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-//----------------------------------------
-// ChangeEvaluateOfContentValueParamMsg Msg Implementations
-func NewChangeEvaluateOfContentValueParamMsg(
-	creator string, parameter param.EvaluateOfContentValueParam, reason string) ChangeEvaluateOfContentValueParamMsg {
-	return ChangeEvaluateOfContentValueParamMsg{
-		Creator:   types.AccountKey(creator),
-		Parameter: parameter,
-		Reason:    reason,
-	}
-}
-
-// GetParameter - implement ChangeParamMsg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-
-// GetCreator - implement ChangeParamMsg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetCreator() types.AccountKey { return msg.Creator }
-
-// GetReason - implement ChangeParamMsg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetReason() string { return msg.Reason }
-
-// Route - implement sdk.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) Route() string { return types.ProposalRouterName }
-
-// Type - implement sdk.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) Type() string {
-	return "ChangeEvaluateOfContentValueParamMsg"
-}
-
-// ValidateBasic - implement sdk.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) ValidateBasic() sdk.Error {
-	if len(msg.Creator) < types.MinimumUsernameLength ||
-		len(msg.Creator) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-	if msg.Parameter.ConsumptionTimeAdjustBase <= 0 ||
-		msg.Parameter.TotalAmountOfConsumptionBase <= 0 {
-		return ErrIllegalParameter()
-	}
-
-	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
-		return ErrReasonTooLong()
-	}
-	return nil
-}
-
-func (msg ChangeEvaluateOfContentValueParamMsg) String() string {
-	return fmt.Sprintf("ChangeEvaluateOfContentValueParamMsg{Creator:%v}", msg.Creator)
-}
-
-// GetPermission - implement types.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implement sdk.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implement sdk.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg ChangeEvaluateOfContentValueParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

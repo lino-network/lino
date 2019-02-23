@@ -271,7 +271,7 @@ func TestRatToCoin(t *testing.T) {
 	for _, tc := range testCases {
 		dec, err := sdk.NewDecFromStr(tc.inputString)
 		assert.Nil(err)
-		coin := RatToCoin(dec)
+		coin := DecToCoin(dec)
 		if !coin.IsEqual(tc.expectCoin) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)
 		}

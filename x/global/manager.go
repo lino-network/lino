@@ -328,8 +328,8 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-		globalAllocation.DeveloperAllocation = sdk.NewDecWithPrec(35, types.PrecHoudreds)
-		globalAllocation.ContentCreatorAllocation = sdk.NewDecWithPrec(40, types.PrecThousands)
+		globalAllocation.DeveloperAllocation = types.NewDecFromRat(35, 100)
+		globalAllocation.ContentCreatorAllocation = types.NewDecFromRat(40, 1000)
 	}
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {

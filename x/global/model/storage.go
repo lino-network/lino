@@ -31,7 +31,6 @@ type GlobalStorage struct {
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.New()
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
-	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "param/contentValue", nil)
 	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
 	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)

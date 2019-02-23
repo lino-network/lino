@@ -15,8 +15,6 @@ func (cpe ChangeParamEvent) Execute(ctx sdk.Context, ph ParamHolder) sdk.Error {
 	switch parameter := parameter.(type) {
 	case GlobalAllocationParam:
 		return ph.setGlobalAllocationParam(ctx, &parameter)
-	case EvaluateOfContentValueParam:
-		return ph.setEvaluateOfContentValueParam(ctx, &parameter)
 	case InfraInternalAllocationParam:
 		return ph.setInfraInternalAllocationParam(ctx, &parameter)
 	case VoteParam:

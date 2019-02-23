@@ -61,7 +61,6 @@ type GenesisInfraProvider struct {
 // GenesisParam - genesis parameters
 type GenesisParam struct {
 	InitFromConfig bool `json:"init_from_config"`
-	param.EvaluateOfContentValueParam
 	param.GlobalAllocationParam
 	param.InfraInternalAllocationParam
 	param.VoteParam
@@ -125,23 +124,16 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		Infra:      []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
 			true,
-			param.EvaluateOfContentValueParam{
-				ConsumptionTimeAdjustBase:      3153600,
-				ConsumptionTimeAdjustOffset:    5,
-				NumOfConsumptionOnAuthorOffset: 7,
-				TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-				TotalAmountOfConsumptionOffset: 5,
-			},
 			param.GlobalAllocationParam{
-				GlobalGrowthRate:         types.NewDecFromRat(98, types.PrecThousands),
-				InfraAllocation:          types.NewDecFromRat(20, types.PrecHoudreds),
-				ContentCreatorAllocation: types.NewDecFromRat(65, types.PrecHoudreds),
-				DeveloperAllocation:      types.NewDecFromRat(10, types.PrecHoudreds),
-				ValidatorAllocation:      types.NewDecFromRat(5, types.PrecHoudreds),
+				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+				InfraAllocation:          types.NewDecFromRat(20, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+				DeveloperAllocation:      types.NewDecFromRat(10, 100),
+				ValidatorAllocation:      types.NewDecFromRat(5, 100),
 			},
 			param.InfraInternalAllocationParam{
-				StorageAllocation: types.NewDecFromRat(50, types.PrecHoudreds),
-				CDNAllocation:     types.NewDecFromRat(50, types.PrecHoudreds),
+				StorageAllocation: types.NewDecFromRat(50, 100),
+				CDNAllocation:     types.NewDecFromRat(50, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -152,17 +144,17 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 			param.ProposalParam{
 				ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
-				ContentCensorshipPassRatio:  types.NewDecFromRat(50, types.PrecHoudreds),
+				ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 				ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 				ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 				ChangeParamDecideSec:  int64(24 * 7 * 3600),
-				ChangeParamPassRatio:  types.NewDecFromRat(70, types.PrecHoudreds),
+				ChangeParamPassRatio:  types.NewDecFromRat(70, 100),
 				ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 				ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
 				ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
-				ProtocolUpgradePassRatio:  types.NewDecFromRat(80, types.PrecHoudreds),
+				ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 				ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 				ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 			},
@@ -209,7 +201,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		InitGlobalMeta: globalModel.InitParamList{
 			MaxTPS:                       sdk.NewDec(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-			ConsumptionFrictionRate:      types.NewDecFromRat(5, types.PrecHoudreds),
+			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},
 	}
 

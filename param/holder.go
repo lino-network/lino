@@ -74,17 +74,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		return err
 	}
 
-	evaluateOfContentValueParam := &EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-	}
-	if err := ph.setEvaluateOfContentValueParam(ctx, evaluateOfContentValueParam); err != nil {
-		return err
-	}
-
 	developerParam := &DeveloperParam{
 		DeveloperMinDeposit:            types.NewCoinFromInt64(1000000 * types.Decimals),
 		DeveloperCoinReturnIntervalSec: int64(7 * 24 * 3600),
@@ -184,7 +173,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	globalParam GlobalAllocationParam,
 	infraInternalParam InfraInternalAllocationParam,
 	postParam PostParam,
-	evaluateOfContentValueParam EvaluateOfContentValueParam,
 	developerParam DeveloperParam,
 	validatorParam ValidatorParam,
 	voteParam VoteParam,
@@ -202,10 +190,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	}
 
 	if err := ph.setPostParam(ctx, &postParam); err != nil {
-		return err
-	}
-
-	if err := ph.setEvaluateOfContentValueParam(ctx, &evaluateOfContentValueParam); err != nil {
 		return err
 	}
 
@@ -239,21 +223,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	}
 
 	return nil
-}
-
-// GetEvaluateOfContentValueParam - get evaluate content value param
-func (ph ParamHolder) GetEvaluateOfContentValueParam(
-	ctx sdk.Context) (*EvaluateOfContentValueParam, sdk.Error) {
-	store := ctx.KVStore(ph.key)
-	paraBytes := store.Get(GetEvaluateOfContentValueParamKey())
-	if paraBytes == nil {
-		return nil, ErrEvaluateOfContentValueParamNotFound()
-	}
-	para := new(EvaluateOfContentValueParam)
-	if err := ph.cdc.UnmarshalJSON(paraBytes, para); err != nil {
-		return nil, ErrFailedToUnmarshalEvaluateOfContentValueParam(err)
-	}
-	return para, nil
 }
 
 // GetGlobalAllocationParam - get global allocation param
@@ -445,17 +414,6 @@ func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) 
 		return ErrFailedToMarshalValidatorParam(err)
 	}
 	store.Set(GetValidatorParamKey(), paramBytes)
-	return nil
-}
-
-func (ph ParamHolder) setEvaluateOfContentValueParam(
-	ctx sdk.Context, para *EvaluateOfContentValueParam) sdk.Error {
-	store := ctx.KVStore(ph.key)
-	paraBytes, err := ph.cdc.MarshalJSON(*para)
-	if err != nil {
-		return ErrFailedToMarshalEvaluateOfContentValueParam(err)
-	}
-	store.Set(GetEvaluateOfContentValueParamKey(), paraBytes)
 	return nil
 }
 
