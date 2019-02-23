@@ -1,10 +1,30 @@
 package internal
 
 import (
+	"errors"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 var cdc = wire.NewCodec()
+
+func encodeReputationStoreState(dt *reputationStoreState) ([]byte, error) {
+	if dt == nil {
+		return nil, errors.New("nil reputationStoreState")
+	}
+	return cdc.MarshalBinaryBare(dt)
+}
+
+func decodeReputationStoreState(data []byte) (*reputationStoreState, error) {
+	if data == nil {
+		return nil, errors.New("nil data in decodeReputationStoreState")
+	}
+	rst := &reputationStoreState{}
+	err := cdc.UnmarshalBinaryBare(data, rst)
+	if err != nil {
+		return nil, err
+	}
+	return rst, nil
+}
 
 // ------ following codes are generated from codegen/genGobCode.py --------
 // ------------------------- DO NOT CHANGE --------------------------------

@@ -209,3 +209,8 @@ func (dm DeveloperManager) WithdrawAll(
 	}
 	return developer.Deposit, nil
 }
+
+// Export state of storage
+func (dm DeveloperManager) Export(ctx sdk.Context) *model.DeveloperTables {
+	return dm.storage.Export(ctx)
+}

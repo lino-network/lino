@@ -51,6 +51,7 @@ type GenesisState struct {
 	Infra          []GenesisInfraProvider    `json:"infra"`
 	GenesisParam   GenesisParam              `json:"genesis_param"`
 	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
+	Reputation     []byte                    `json:"reputation"`
 }
 
 // genesis account will get coin to the address and register user
@@ -229,7 +230,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS: sdk.NewRat(1000),
+			MaxTPS:                       sdk.NewRat(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 		},

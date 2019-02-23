@@ -2,8 +2,8 @@ package reputation
 
 import (
 	"fmt"
-	"github.com/lino-network/lino/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 )
 
 // ErrAccountNotFound - error when account is not found

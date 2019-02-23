@@ -30,6 +30,19 @@ func (s *mockStore) Get(key []byte) []byte {
 	}
 }
 
+func (s *mockStore) Has(key []byte) bool {
+	_, ok := s.store[string(key)]
+	return ok
+}
+
+func (s *mockStore) Delete(key []byte) {
+	delete(s.store, string(key))
+}
+
+func (s *mockStore) Iterator(start, end []byte) Iterator {
+	panic("not implemented")
+}
+
 var _ Store = &mockStore{}
 
 func TestMockStore(t *testing.T) {

@@ -146,22 +146,22 @@ func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
 		expectedError                         sdk.Error
 	}{
 		{
-			testName: "normal case",
+			testName:                              "normal case",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1, ""),
 			expectedError:                         nil,
 		},
 		{
-			testName: "illegal parameter (sum of allocation doesn't equal to 1)",
+			testName:                              "illegal parameter (sum of allocation doesn't equal to 1)",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
-			testName: "illegal parameter (negative number)",
+			testName:                              "illegal parameter (negative number)",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p3, ""),
 			expectedError:                         ErrIllegalParameter(),
 		},
 		{
-			testName: "empty username is illegal",
+			testName:                              "empty username is illegal",
 			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1, ""),
 			expectedError:                         ErrInvalidUsername(),
 		},

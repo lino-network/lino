@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -15,7 +16,7 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
-	accModel "github.com/lino-network/lino/x/account/model"
+	// accModel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
 	infra "github.com/lino-network/lino/x/infra"
 	rep "github.com/lino-network/lino/x/reputation"
@@ -185,6 +186,7 @@ func MakeCodec() *wire.Codec {
 	vote.RegisterWire(cdc)
 	val.RegisterWire(cdc)
 	proposal.RegisterWire(cdc)
+	registerEvent(cdc)
 
 	cdc.Seal()
 
@@ -624,34 +626,50 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.NewContext(true, abci.Header{})
 
-	// iterate to get the accounts
-	accounts := []GenesisAccount{}
-	appendAccount := func(accInfo accModel.AccountInfo, accBank accModel.AccountBank) (stop bool) {
-		saving := accBank.Saving
-		deposit, err := lb.valManager.GetValidatorDeposit(ctx, accInfo.Username)
+	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
+		f, err := os.Create("./" + filename)
 		if err != nil {
-			saving = saving.Plus(deposit)
+			panic("failed to create account")
 		}
-		account := GenesisAccount{
-			Name:           string(accInfo.Username),
-			ResetKey:       accInfo.ResetKey,
-			TransactionKey: accInfo.TransactionKey,
-			AppKey:         accInfo.AppKey,
-			IsValidator:    false,
-			Coin:           saving,
+		defer f.Close()
+		n, err := lb.cdc.MarshalBinaryWriter(f, exporter(ctx))
+		if err != nil {
+			panic("failed to marshal binary for " + filename + " due to " + err.Error())
 		}
-		accounts = append(accounts, account)
-		return false
+		fmt.Printf("export for %s done: %d bytes\n", filename, n)
+		f.Sync()
 	}
-	lb.accountManager.IterateAccounts(ctx, appendAccount)
 
-	genesisState := GenesisState{
-		Accounts:   accounts,
-		Developers: []GenesisAppDeveloper{},
-		Infra:      []GenesisInfraProvider{},
-	}
+	exportToFile("account", func(ctx sdk.Context) interface{} {
+		return lb.accountManager.Export(ctx).ToIR()
+	})
+	exportToFile("developer", func(ctx sdk.Context) interface{} {
+		return lb.developerManager.Export(ctx).ToIR()
+	})
+	exportToFile("post", func(ctx sdk.Context) interface{} {
+		return lb.postManager.Export(ctx).ToIR()
+	})
+	exportToFile("global", func(ctx sdk.Context) interface{} {
+		return lb.globalManager.Export(ctx).ToIR()
+	})
+	exportToFile("infra", func(ctx sdk.Context) interface{} {
+		return lb.infraManager.Export(ctx).ToIR()
+	})
+	exportToFile("validator", func(ctx sdk.Context) interface{} {
+		return lb.valManager.Export(ctx).ToIR()
+	})
+	exportToFile("reputation", func(ctx sdk.Context) interface{} {
+		rep, err := lb.reputationManager.Export(ctx)
+		if err != nil {
+			panic(err)
+		}
+		return rep
+	})
+
+	genesisState := GenesisState{}
+
 	appState, err = wire.MarshalJSONIndent(lb.cdc, genesisState)
 	if err != nil {
 		return nil, nil, err

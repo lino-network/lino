@@ -91,15 +91,15 @@ func createTestPost(
 	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
 	msg := &post.CreatePostMsg{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{},
+		PostID:                  postID,
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  user,
+		ParentAuthor:            "",
+		ParentPostID:            "",
+		SourceAuthor:            "",
+		SourcePostID:            "",
+		Links:                   []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionRate,
 	}
 	splitRate, err := sdk.NewRatFromDecimal(redistributionRate, types.NewRatFromDecimalPrecision)

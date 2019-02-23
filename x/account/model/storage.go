@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/hex"
 	"strconv"
+	"strings"
 
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/tendermint/crypto"
@@ -426,15 +427,96 @@ func getRewardHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
 	return strconv.AppendInt(getRewardHistoryPrefix(me), bucketSlot, 10)
 }
 
+// Export to table representation.
+func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
+	tables := &AccountTables{}
+	store := ctx.KVStore(as.key)
+	// export tables.account
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k, _ := itr.Key(), itr.Value()
+			username := types.AccountKey(k[1:])
+
+			accInfo, err := as.GetInfo(ctx, username)
+			if err != nil {
+				panic(err)
+			}
+
+			accBank, err := as.GetBankFromAccountKey(ctx, username)
+			if err != nil {
+				panic(err)
+			}
+
+			accMeta, err := as.GetMeta(ctx, username)
+			if err != nil {
+				panic(err)
+			}
+
+			accPending, err := as.GetPendingCoinDayQueue(ctx, username)
+			if err != nil {
+				panic(err)
+			}
+
+			// set all states
+			// TODO(yumin): check the key is correct.
+			accRow := AccountRow{
+				Username:            username,
+				Info:                *accInfo,
+				Bank:                *accBank,
+				Meta:                *accMeta,
+				PendingCoinDayQueue: *accPending,
+			}
+			tables.Accounts = append(tables.Accounts, accRow)
+		}
+	}()
+	// export tables.GrantPubKeys
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			usernamePubKey := string(itr.Key()[1:])
+			strs := strings.Split(usernamePubKey, types.KeySeparator)
+			if len(strs) != 2 {
+				panic("illegat usernamePubkey: " + usernamePubKey)
+			}
+			username, pubKeyHex := types.AccountKey(strs[0]), strs[1]
+			pubKeyBytes, err := hex.DecodeString(pubKeyHex)
+			if err != nil {
+				panic("Failed to decode pubkeyHex: " + pubKeyHex + " " + err.Error())
+			}
+			var pubKey crypto.PubKey
+			err = as.cdc.UnmarshalBinaryBare(pubKeyBytes, &pubKey)
+			if err != nil {
+				panic("Faield to decode pubkeyBytes to pubkey interface: " + err.Error())
+			}
+
+			info, err := as.GetGrantPubKey(ctx, username, pubKey)
+			if err != nil {
+				panic("failed GetGrantPubKey: " + err.Error())
+			}
+			row := GrantPubKeyRow{
+				Username:    username,
+				PubKey:      pubKey,
+				GrantPubKey: *info,
+			}
+			tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
+		}
+	}()
+	return tables
+}
+
 // IterateAccounts - iterate accounts in KVStore
 func (as AccountStorage) IterateAccounts(ctx sdk.Context, process func(AccountInfo, AccountBank) (stop bool)) {
 	store := ctx.KVStore(as.key)
 	iter := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
+	defer iter.Close()
 	for {
 		if !iter.Valid() {
 			return
 		}
-		val := iter.Value()
+		val := iter.Value() // TODO(yumin): why value not key?
 		accInfo, err := as.GetInfo(ctx, types.AccountKey(val))
 		if err != nil {
 			panic(err)

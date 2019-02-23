@@ -101,6 +101,39 @@ func (ds DeveloperStorage) SetDeveloperList(ctx sdk.Context, lst *DeveloperList)
 	return nil
 }
 
+// Export developer storage state
+func (ds DeveloperStorage) Export(ctx sdk.Context) *DeveloperTables {
+	tables := &DeveloperTables{}
+	store := ctx.KVStore(ds.key)
+	// export table.Developers
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, developerSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			username := types.AccountKey(k[1:])
+			dev, err := ds.GetDeveloper(ctx, username)
+			if err != nil {
+				panic("failed to read developer: " + err.Error())
+			}
+			row := DeveloperRow{
+				Username:  username,
+				Developer: *dev,
+			}
+			tables.Developers = append(tables.Developers, row)
+		}
+	}()
+	// export table.DeveloperList
+	list, err := ds.GetDeveloperList(ctx)
+	if err != nil {
+		panic("failed to get developer list: " + err.Error())
+	}
+	tables.DeveloperList = DeveloperListTable{
+		List: *list,
+	}
+	return tables
+}
+
 // GetDeveloperKey - "developer substore" + "developer"
 func GetDeveloperKey(accKey types.AccountKey) []byte {
 	return append(developerSubstore, accKey...)

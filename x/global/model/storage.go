@@ -110,7 +110,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewRat(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 	}
@@ -298,6 +298,86 @@ func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) s
 	}
 	store.Set(GetTimeKey(), timeBytes)
 	return nil
+}
+
+// Export - export global tables.
+func (gs GlobalStorage) Export(ctx sdk.Context) *GlobalTables {
+	tables := &GlobalTables{}
+	store := ctx.KVStore(gs.key)
+	// export table.TimeEventLists
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, timeEventListSubStore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			timestr := string(k[1:])
+			unixTime, err := strconv.ParseInt(timestr, 10, 64)
+			if err != nil {
+				panic("failed to parse int: " + err.Error())
+			}
+			eventlist, err := gs.GetTimeEventList(ctx, unixTime)
+			if err != nil {
+				panic("failed to read eventlist: " + err.Error())
+			}
+			row := GlobalTimeEventTimeRow{
+				UnixTime:      unixTime,
+				TimeEventList: *eventlist,
+			}
+			tables.GlobalTimeEventLists = append(tables.GlobalTimeEventLists, row)
+		}
+	}()
+	// export tables.StakeStats
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, linoStakeStatSubStore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			daystr := string(k[1:])
+			day, err := strconv.ParseInt(daystr, 10, 64)
+			if err != nil {
+				panic("failed to parse int: " + err.Error())
+			}
+			stats, err := gs.GetLinoStakeStat(ctx, day)
+			if err != nil {
+				panic("failed to read stake stat: " + err.Error())
+			}
+			row := GlobalStakeStatDayRow{
+				Day:       day,
+				StakeStat: *stats,
+			}
+			tables.GlobalStakeStats = append(tables.GlobalStakeStats, row)
+		}
+	}()
+	// global miscs
+	meta, err := gs.GetGlobalMeta(ctx)
+	if err != nil {
+		panic("failed to get global meta")
+	}
+	pool, err := gs.GetInflationPool(ctx)
+	if err != nil {
+		panic("failed to global inf poll")
+	}
+	consumptionMeta, err := gs.GetConsumptionMeta(ctx)
+	if err != nil {
+		panic("failed to get consumption meta")
+	}
+	tps, err := gs.GetTPS(ctx)
+	if err != nil {
+		panic("failed to get tps")
+	}
+	time, err := gs.GetGlobalTime(ctx)
+	if err != nil {
+		panic("failed to get global time")
+	}
+	misc := GlobalMisc{
+		Meta:            *meta,
+		InflationPool:   *pool,
+		ConsumptionMeta: *consumptionMeta,
+		TPS:             *tps,
+		Time:            *time,
+	}
+	tables.GlobalMisc = misc
+	return tables
 }
 
 // GetLinoStakeStatKey - get lino power statistic at day from KVStore

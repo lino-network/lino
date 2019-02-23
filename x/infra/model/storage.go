@@ -93,6 +93,39 @@ func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraP
 	return nil
 }
 
+// Export - infra state
+func (is InfraProviderStorage) Export(ctx sdk.Context) *InfraTables {
+	tables := &InfraTables{}
+	store := ctx.KVStore(is.key)
+	// export table.providers
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, infraProviderSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			username := types.AccountKey(k[1:])
+			provider, err := is.GetInfraProvider(ctx, username)
+			if err != nil {
+				panic("failed to read developer: " + err.Error())
+			}
+			row := InfraProviderRow{
+				App:      username,
+				Provider: *provider,
+			}
+			tables.InfraProviders = append(tables.InfraProviders, row)
+		}
+	}()
+	// export table.DeveloperList
+	list, err := is.GetInfraProviderList(ctx)
+	if err != nil {
+		panic("failed to get developer list: " + err.Error())
+	}
+	tables.InfraProviderList = InfraProviderListRow{
+		List: *list,
+	}
+	return tables
+}
+
 // GetInfraProviderKey - get infra provider key in infra provider substore
 func GetInfraProviderKey(accKey types.AccountKey) []byte {
 	return append(infraProviderSubstore, accKey...)

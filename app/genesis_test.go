@@ -129,7 +129,7 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS: sdk.NewRat(1000),
+			MaxTPS:                       sdk.NewRat(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
 		},
