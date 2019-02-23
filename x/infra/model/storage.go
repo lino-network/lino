@@ -1,8 +1,8 @@
 package model
 
 import (
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 )
 
@@ -19,7 +19,7 @@ type InfraProviderStorage struct {
 
 // NewInfraProviderStorage - create a new infra provider storage
 func NewInfraProviderStorage(key sdk.StoreKey) InfraProviderStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return InfraProviderStorage{
 		key: key,

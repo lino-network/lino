@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/config"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	globalModel "github.com/lino-network/lino/x/global/model"
-	"github.com/spf13/pflag"
 	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -25,24 +22,6 @@ var (
 	flagClientHome = "home-client"
 	flagOWK        = "owk"
 )
-
-// get app init parameters for server init command
-func LinoBlockchainInit() server.AppInit {
-	fsAppGenState := pflag.NewFlagSet("", pflag.ContinueOnError)
-
-	fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
-	fsAppGenTx.String(flagName, "", "validator moniker, required")
-	fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-		"home directory for the client, used for key generation")
-	fsAppGenTx.Bool(flagOWK, false, "overwrite the accounts created")
-
-	return server.AppInit{
-		FlagsAppGenState: fsAppGenState,
-		FlagsAppGenTx:    fsAppGenTx,
-		AppGenTx:         LinoBlockchainGenTx,
-		AppGenState:      LinoBlockchainGenState,
-	}
-}
 
 // genesis state for blockchain
 type GenesisState struct {
@@ -82,7 +61,6 @@ type GenesisInfraProvider struct {
 // GenesisParam - genesis parameters
 type GenesisParam struct {
 	InitFromConfig bool `json:"init_from_config"`
-	param.EvaluateOfContentValueParam
 	param.GlobalAllocationParam
 	param.InfraInternalAllocationParam
 	param.VoteParam
@@ -97,7 +75,7 @@ type GenesisParam struct {
 }
 
 // LinoBlockchainGenTx - init genesis account
-func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
+func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	resetPriv := secp256k1.GenPrivKey()
 	transactionPriv := secp256k1.GenPrivKey()
@@ -146,24 +124,16 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		Infra:      []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
 			true,
-			param.EvaluateOfContentValueParam{
-				ConsumptionTimeAdjustBase:      3153600,
-				ConsumptionTimeAdjustOffset:    5,
-				NumOfConsumptionOnAuthorOffset: 7,
-				TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-				TotalAmountOfConsumptionOffset: 5,
-				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
-			},
 			param.GlobalAllocationParam{
-				GlobalGrowthRate:         sdk.NewRat(98, 1000),
-				InfraAllocation:          sdk.NewRat(20, 100),
-				ContentCreatorAllocation: sdk.NewRat(65, 100),
-				DeveloperAllocation:      sdk.NewRat(10, 100),
-				ValidatorAllocation:      sdk.NewRat(5, 100),
+				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+				InfraAllocation:          types.NewDecFromRat(20, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+				DeveloperAllocation:      types.NewDecFromRat(10, 100),
+				ValidatorAllocation:      types.NewDecFromRat(5, 100),
 			},
 			param.InfraInternalAllocationParam{
-				StorageAllocation: sdk.NewRat(50, 100),
-				CDNAllocation:     sdk.NewRat(50, 100),
+				StorageAllocation: types.NewDecFromRat(50, 100),
+				CDNAllocation:     types.NewDecFromRat(50, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -174,17 +144,17 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 			param.ProposalParam{
 				ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
-				ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+				ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 				ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 				ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 				ChangeParamDecideSec:  int64(24 * 7 * 3600),
-				ChangeParamPassRatio:  sdk.NewRat(70, 100),
+				ChangeParamPassRatio:  types.NewDecFromRat(70, 100),
 				ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 				ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
 				ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
-				ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+				ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 				ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 				ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 			},
@@ -229,9 +199,9 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS: sdk.NewRat(1000),
+			MaxTPS:                       sdk.NewDec(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},
 	}
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
@@ -56,11 +55,11 @@ func TestForceValidatorVote(t *testing.T) {
 	test.CheckOncallValidatorList(t, accountName2, true, lb)
 
 	desc := param.GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(1, 100),
-		ContentCreatorAllocation: sdk.NewRat(1, 100),
-		DeveloperAllocation:      sdk.NewRat(1, 100),
-		ValidatorAllocation:      sdk.NewRat(97, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(1, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(1, 100),
+		DeveloperAllocation:      types.NewDecFromRat(1, 100),
+		ValidatorAllocation:      types.NewDecFromRat(97, 100),
 	}
 
 	changeAllocationMsg := proposal.NewChangeGlobalAllocationParamMsg(accountName, desc, "")

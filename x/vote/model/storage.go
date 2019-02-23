@@ -3,8 +3,8 @@ package model
 import (
 	"github.com/lino-network/lino/types"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 var (
@@ -23,7 +23,7 @@ type VoteStorage struct {
 
 // NewVoteStorage - new vote storage
 func NewVoteStorage(key sdk.StoreKey) VoteStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	vs := VoteStorage{
 		key: key,

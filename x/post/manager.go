@@ -22,10 +22,10 @@ func NewPostManager(key sdk.StoreKey, holder param.ParamHolder) PostManager {
 }
 
 // GetRedistributionSplitRate - get post redistribution split rate
-func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types.Permlink) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetRedistributionSplitRate(ctx sdk.Context, permlink types.Permlink) (sdk.Dec, sdk.Error) {
 	postMeta, err := pm.postStorage.GetPostMeta(ctx, permlink)
 	if err != nil {
-		return sdk.ZeroRat(), err
+		return sdk.ZeroDec(), err
 	}
 	return postMeta.RedistributionSplitRate, nil
 }
@@ -82,7 +82,7 @@ func (pm PostManager) CreatePost(
 	ctx sdk.Context, author types.AccountKey, postID string,
 	sourceAuthor types.AccountKey, sourcePostID string,
 	parentAuthor types.AccountKey, parentPostID string,
-	content string, title string, redistributionSplitRate sdk.Rat,
+	content string, title string, redistributionSplitRate sdk.Dec,
 	links []types.IDToURLMapping) sdk.Error {
 	postInfo := &model.PostInfo{
 		PostID:       postID,
@@ -111,7 +111,7 @@ func (pm PostManager) CreatePost(
 		LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 		AllowReplies:            true, // Default
 		IsDeleted:               false,
-		RedistributionSplitRate: redistributionSplitRate.Round(types.PrecisionFactor),
+		RedistributionSplitRate: redistributionSplitRate,
 	}
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
@@ -227,7 +227,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink types.Permlink) sdk.E
 		return err
 	}
 	postMeta.IsDeleted = true
-	postMeta.RedistributionSplitRate = sdk.OneRat()
+	postMeta.RedistributionSplitRate = sdk.OneDec()
 	postMeta.LastUpdatedAt = ctx.BlockHeader().Time.Unix()
 	if err := pm.postStorage.SetPostMeta(ctx, permlink, postMeta); err != nil {
 		return err
@@ -269,25 +269,25 @@ func (pm PostManager) UpdateLastActivityAt(ctx sdk.Context, permlink types.Perml
 }
 
 // GetPenaltyScore - get penalty score from report and upvote
-func (pm PostManager) GetPenaltyScore(ctx sdk.Context, reputation types.Coin) (sdk.Rat, sdk.Error) {
+func (pm PostManager) GetPenaltyScore(ctx sdk.Context, reputation types.Coin) (sdk.Dec, sdk.Error) {
 	if reputation.IsNotNegative() {
-		return sdk.ZeroRat(), nil
+		return sdk.ZeroDec(), nil
 	}
 	reputation = types.NewCoinFromInt64(0).Minus(reputation)
 	postParam, err := pm.paramHolder.GetPostParam(ctx)
 	if err != nil {
-		return sdk.OneRat(), err
+		return sdk.OneDec(), err
 	}
 	// if max report reputation is zero, any negative reputation should result in max penalty score
 	if postParam.MaxReportReputation.IsZero() {
-		return sdk.OneRat(), nil
+		return sdk.OneDec(), nil
 	}
 	if reputation.IsGTE(postParam.MaxReportReputation) {
-		return sdk.OneRat(), nil
+		return sdk.OneDec(), nil
 	}
-	penaltyScore := reputation.ToRat().Quo(postParam.MaxReportReputation.ToRat())
-	if penaltyScore.GT(sdk.OneRat()) {
-		return sdk.OneRat(), nil
+	penaltyScore := reputation.ToDec().Quo(postParam.MaxReportReputation.ToDec())
+	if penaltyScore.GT(sdk.OneDec()) {
+		return sdk.OneDec(), nil
 	}
 	return penaltyScore, nil
 }

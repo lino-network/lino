@@ -98,10 +98,10 @@ func (im *InfraManager) ReportUsage(ctx sdk.Context, username types.AccountKey, 
 }
 
 // GetUsageWeight - get the usage percentage of given infra provider
-func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKey) (sdk.Rat, sdk.Error) {
+func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKey) (sdk.Dec, sdk.Error) {
 	lst, err := im.storage.GetInfraProviderList(ctx)
 	if err != nil {
-		return sdk.NewRat(0), err
+		return sdk.NewDec(0), err
 	}
 
 	totalUsage := int64(0)
@@ -109,7 +109,7 @@ func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKe
 	for _, providerName := range lst.AllInfraProviders {
 		curProvider, err := im.storage.GetInfraProvider(ctx, providerName)
 		if err != nil {
-			return sdk.NewRat(0), err
+			return sdk.NewDec(0), err
 		}
 		totalUsage += curProvider.Usage
 		if curProvider.Username == username {
@@ -117,9 +117,9 @@ func (im *InfraManager) GetUsageWeight(ctx sdk.Context, username types.AccountKe
 		}
 	}
 	if totalUsage == int64(0) {
-		return sdk.NewRat(1, int64(len(lst.AllInfraProviders))).Round(types.PrecisionFactor), nil
+		return types.NewDecFromRat(1, int64(len(lst.AllInfraProviders))), nil
 	}
-	return sdk.NewRat(myUsage, totalUsage).Round(types.PrecisionFactor), nil
+	return types.NewDecFromRat(myUsage, totalUsage), nil
 }
 
 // GetInfraProviderList - get the infra provider list

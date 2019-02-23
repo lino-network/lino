@@ -7,8 +7,8 @@ import (
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 var (
@@ -36,7 +36,7 @@ type AccountStorage struct {
 
 // NewLinoAccountStorage - creates and returns a account manager
 func NewAccountStorage(key sdk.StoreKey) AccountStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 
 	return AccountStorage{

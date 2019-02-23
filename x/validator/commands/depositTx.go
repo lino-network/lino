@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/validator"
@@ -46,13 +46,17 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		tmConfig := cfg.DefaultConfig()
 		tmConfig = tmConfig.SetRoot(root)
 
-		privValFile := tmConfig.PrivValidatorFile()
+		// TODO(yumin): use new file: PrivValidatorKeyFile, priv_validator_key.json
+		// also, the state file is not correct here, need to update.
+		// MUST revisit this part.
+		privValFile := tmConfig.OldPrivValidatorFile()
+		privValStateFile := tmConfig.PrivValidatorStateFile()
 
 		var privValidator *pvm.FilePV
 		if cmn.FileExists(privValFile) {
-			privValidator = pvm.LoadFilePV(privValFile)
+			privValidator = pvm.LoadFilePV(privValFile, privValStateFile)
 		} else {
-			privValidator = pvm.GenFilePV(privValFile)
+			privValidator = pvm.GenFilePV(privValFile, privValStateFile)
 			privValidator.Save()
 		}
 		pubKey := privValidator.GetPubKey()

@@ -73,8 +73,11 @@ func NewDeveloperRegisterMsg(developer string, deposit types.LNO, website string
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg DeveloperRegisterMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg DeveloperRegisterMsg) Type() string { return types.DeveloperRouterName }
+func (msg DeveloperRegisterMsg) Type() string { return "DeveloperRegisterMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg DeveloperRegisterMsg) ValidateBasic() sdk.Error {
@@ -137,8 +140,11 @@ func NewDeveloperUpdateMsg(developer string, website string, description string,
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg DeveloperUpdateMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg DeveloperUpdateMsg) Type() string { return types.DeveloperRouterName }
+func (msg DeveloperUpdateMsg) Type() string { return "DeveloperUpdateMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg DeveloperUpdateMsg) ValidateBasic() sdk.Error {
@@ -196,8 +202,11 @@ func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg DeveloperRevokeMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg DeveloperRevokeMsg) Type() string { return types.DeveloperRouterName }
+func (msg DeveloperRevokeMsg) Type() string { return "DeveloperRevokeMsg" }
 
 func (msg DeveloperRevokeMsg) ValidateBasic() sdk.Error {
 	if len(msg.Username) < types.MinimumUsernameLength ||
@@ -245,8 +254,11 @@ func NewGrantPermissionMsg(
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg GrantPermissionMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg GrantPermissionMsg) Type() string { return types.DeveloperRouterName }
+func (msg GrantPermissionMsg) Type() string { return "GrantPermissionMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
@@ -309,8 +321,11 @@ func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionM
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg RevokePermissionMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg RevokePermissionMsg) Type() string { return types.DeveloperRouterName }
+func (msg RevokePermissionMsg) Type() string { return "RevokePermissionMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
@@ -360,8 +375,11 @@ func NewPreAuthorizationMsg(
 	}
 }
 
+// Route - implements sdk.Msg
+func (msg PreAuthorizationMsg) Route() string { return types.DeveloperRouterName }
+
 // Type - implements sdk.Msg
-func (msg PreAuthorizationMsg) Type() string { return types.DeveloperRouterName }
+func (msg PreAuthorizationMsg) Type() string { return "PreAuthorizationMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg PreAuthorizationMsg) ValidateBasic() sdk.Error {

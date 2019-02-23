@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -46,19 +45,27 @@ func main() {
 	}
 	tendermintCmd.AddCommand(
 		rpc.BlockCommand(),
-		rpc.ValidatorCommand(),
+		rpc.ValidatorCommand(cdc),
 	)
-	tx.AddCommands(tendermintCmd, cdc)
+
+	// XXX(yumin): before major-update-1, it's tx.AddCommands.
+	tendermintCmd.AddCommand(
+		tx.SearchTxCmd(cdc),
+		tx.QueryTxCmd(cdc),
+	)
 
 	advancedCmd := &cobra.Command{
 		Use:   "advanced",
 		Short: "Advanced subcommands",
 	}
 
-	advancedCmd.AddCommand(
-		tendermintCmd,
-		lcd.ServeCommand(cdc),
-	)
+	// TODO(yumin): ServeCommand now requires a callback func to register all routes
+	// do we use this lcd or not?
+	// advancedCmd.AddCommand(
+	// 	tendermintCmd,
+	// 	lcd.ServeCommand(cdc),
+	// )
+
 	linocliCmd.AddCommand(
 		advancedCmd,
 		client.LineBreak,

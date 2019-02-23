@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
 var (
@@ -153,7 +153,7 @@ func TestLNOToCoin(t *testing.T) {
 			testName:     "less than lower bound LNO is invalid",
 			inputString:  "0.000001",
 			expectCoin:   NewCoinFromInt64(0),
-			expectResult: ErrInvalidCoins("Illegal LNO"),
+			expectResult: ErrInvalidCoins("LNO can't be less than lower bound"),
 		},
 		{
 			testName:     "0 LNO is invalid",
@@ -205,6 +205,7 @@ func TestLNOToCoin(t *testing.T) {
 }
 
 func TestRatToCoin(t *testing.T) {
+	assert := assert.New(t)
 	testCases := []struct {
 		testName    string
 		inputString string
@@ -268,13 +269,9 @@ func TestRatToCoin(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		bigRat, success := new(big.Rat).SetString(tc.inputString)
-		if !success {
-			t.Errorf("%s: failed to convert input to big rat", tc.testName)
-		}
-
-		rat := sdk.Rat{Rat: bigRat}
-		coin := RatToCoin(rat)
+		dec, err := sdk.NewDecFromStr(tc.inputString)
+		assert.Nil(err)
+		coin := DecToCoin(dec)
 		if !coin.IsEqual(tc.expectCoin) {
 			t.Errorf("%s: diff coin, got %v, want %v", tc.testName, coin, tc.expectCoin)
 		}
@@ -640,7 +637,7 @@ func TestMinusCoin(t *testing.T) {
 	}
 }
 
-var cdc = wire.NewCodec() //var jsonCdc JSONCodec // TODO wire.Codec
+var cdc = wire.New() //var jsonCdc JSONCodec // TODO wire.Codec
 
 func TestSerializationGoWire(t *testing.T) {
 	r := bigCoin

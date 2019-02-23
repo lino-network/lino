@@ -58,26 +58,26 @@ func TestReportUsage(t *testing.T) {
 	testCases := map[string]struct {
 		user1Usage             int64
 		user2Usage             int64
-		expectUser1UsageWeight sdk.Rat
-		expectUser2UsageWeight sdk.Rat
+		expectUser1UsageWeight sdk.Dec
+		expectUser2UsageWeight sdk.Dec
 	}{
 		"test normal report": {
 			user1Usage:             25,
 			user2Usage:             75,
-			expectUser1UsageWeight: sdk.NewRat(1, 4),
-			expectUser2UsageWeight: sdk.NewRat(3, 4),
+			expectUser1UsageWeight: types.NewDecFromRat(1, 4),
+			expectUser2UsageWeight: types.NewDecFromRat(3, 4),
 		},
 		"test empty report": {
 			user1Usage:             0,
 			user2Usage:             0,
-			expectUser1UsageWeight: sdk.NewRat(1, 2),
-			expectUser2UsageWeight: sdk.NewRat(1, 2),
+			expectUser1UsageWeight: types.NewDecFromRat(1, 2),
+			expectUser2UsageWeight: types.NewDecFromRat(1, 2),
 		},
 		"issue https://github.com/lino-network/lino/issues/150": {
 			user1Usage:             3333333,
 			user2Usage:             4444444,
-			expectUser1UsageWeight: sdk.NewRat(2142857, 5000000),
-			expectUser2UsageWeight: sdk.NewRat(2857143, 5000000),
+			expectUser1UsageWeight: types.NewDecFromRat(3333333, 7777777),
+			expectUser2UsageWeight: types.NewDecFromRat(4444444, 7777777),
 		},
 	}
 	for testName, tc := range testCases {

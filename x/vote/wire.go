@@ -1,7 +1,7 @@
 package vote
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Register concrete types on wire codec
@@ -13,7 +13,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ClaimInterestMsg{}, "lino/claimInterest", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

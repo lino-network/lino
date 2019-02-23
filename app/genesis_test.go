@@ -11,9 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	"github.com/cosmos/cosmos-sdk/server/config"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 func TestGetGenesisJson(t *testing.T) {
@@ -46,24 +45,16 @@ func TestGetGenesisJson(t *testing.T) {
 		Infra:      []GenesisInfraProvider{genesisInfraProvider},
 		GenesisParam: GenesisParam{
 			true,
-			param.EvaluateOfContentValueParam{
-				ConsumptionTimeAdjustBase:      3153600,
-				ConsumptionTimeAdjustOffset:    5,
-				NumOfConsumptionOnAuthorOffset: 7,
-				TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-				TotalAmountOfConsumptionOffset: 5,
-				AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
-			},
 			param.GlobalAllocationParam{
-				GlobalGrowthRate:         sdk.NewRat(98, 1000),
-				InfraAllocation:          sdk.NewRat(20, 100),
-				ContentCreatorAllocation: sdk.NewRat(65, 100),
-				DeveloperAllocation:      sdk.NewRat(10, 100),
-				ValidatorAllocation:      sdk.NewRat(5, 100),
+				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+				InfraAllocation:          types.NewDecFromRat(20, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+				DeveloperAllocation:      types.NewDecFromRat(10, 100),
+				ValidatorAllocation:      types.NewDecFromRat(5, 100),
 			},
 			param.InfraInternalAllocationParam{
-				StorageAllocation: sdk.NewRat(50, 100),
-				CDNAllocation:     sdk.NewRat(50, 100),
+				StorageAllocation: types.NewDecFromRat(50, 100),
+				CDNAllocation:     types.NewDecFromRat(50, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -74,17 +65,17 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 			param.ProposalParam{
 				ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
-				ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+				ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 				ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 				ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 				ChangeParamDecideSec:  int64(24 * 7 * 3600),
-				ChangeParamPassRatio:  sdk.NewRat(70, 100),
+				ChangeParamPassRatio:  types.NewDecFromRat(70, 100),
 				ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 				ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
 				ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
-				ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+				ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 				ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 				ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 			},
@@ -129,13 +120,13 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS: sdk.NewRat(1000),
+			MaxTPS:                       sdk.NewDec(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-			ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},
 	}
 
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	appState, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
@@ -149,8 +140,7 @@ func TestGetGenesisJson(t *testing.T) {
 func TestLinoBlockchainGenTx(t *testing.T) {
 	cdc := MakeCodec()
 	pk := secp256k1.GenPrivKey().PubKey()
-	var genTxConfig config.GenTx
-	appGenTx, _, validator, err := LinoBlockchainGenTx(cdc, pk, genTxConfig)
+	appGenTx, _, validator, err := LinoBlockchainGenTx(cdc, pk)
 	assert.Nil(t, err)
 	var genesisAcc GenesisAccount
 	err = cdc.UnmarshalJSON(appGenTx, &genesisAcc)

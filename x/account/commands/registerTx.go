@@ -14,8 +14,8 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
@@ -68,7 +68,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 
 // Get the public key from the name flag
 func GetPubKey() (pubKey crypto.PubKey, err error) {
-	keybase, err := keys.GetKeyBase()
+	keybase, err := keys.NewKeyBaseFromHomeFlag()
 	if err != nil {
 		return nil, err
 	}

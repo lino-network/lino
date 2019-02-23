@@ -18,8 +18,8 @@ import (
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -46,7 +46,7 @@ var (
 	ParamChangeExecutionSec      int64 = 24 * 3600
 	CoinReturnIntervalSec        int64 = 24 * 7 * 3600
 	CoinReturnTimes              int64 = 7
-	ConsumptionFrictionRate            = sdk.NewRat(5, 100)
+	ConsumptionFrictionRate            = types.NewDecFromRat(5, 100)
 	ConsumptionFreezingPeriodSec int64 = 24 * 7 * 3600
 	PostIntervalSec              int64 = 600
 )
@@ -92,9 +92,9 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
@@ -175,7 +175,7 @@ func CheckAllValidatorList(
 
 // CreateAccount - register account on test blockchain
 func CreateAccount(
-	t *testing.T, accountName string, lb *app.LinoBlockchain, seq int64,
+	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
 	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
@@ -195,15 +195,17 @@ func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 }
 
 // SignCheckDeliver - sign transaction, simulate and commit a block
-func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int64,
+func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
-	res := lb.Simulate(tx)
+	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
+	// about what is the right way..
+	res := lb.Simulate(nil, tx)
 	if expPass {
-		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.True(t, res.IsOK(), res.Log)
 	} else {
-		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.False(t, res.IsOK(), res.Log)
 	}
 
 	// Simulate a Block
@@ -212,9 +214,9 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq int
 			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	res = lb.Deliver(tx)
 	if expPass {
-		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.True(t, res.IsOK(), res.Log)
 	} else {
-		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
+		require.False(t, res.IsOK(), res.Log)
 	}
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
@@ -229,33 +231,33 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.Commit()
 }
 
-func genTx(msg sdk.Msg, seq int64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
+func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
 	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),
 		Signature: bz,
-		Sequence:  seq}}
+	}}
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
 }
 
 // CreateTestPost - create a test post
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
-	username, postID string, seq int64, priv secp256k1.PrivKeySecp256k1,
+	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1,
 	sourceAuthor, sourcePostID string,
 	parentAuthor, parentPostID string,
 	redistributionSplitRate string, publishTime int64) {
 
 	msg := post.CreatePostMsg{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       types.AccountKey(username),
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
+		PostID:                  postID,
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  types.AccountKey(username),
+		ParentAuthor:            types.AccountKey(parentAuthor),
+		ParentPostID:            parentPostID,
+		SourceAuthor:            types.AccountKey(sourceAuthor),
+		SourcePostID:            sourcePostID,
+		Links:                   []types.IDToURLMapping{},
 		RedistributionSplitRate: redistributionSplitRate,
 	}
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)

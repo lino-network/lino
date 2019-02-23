@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

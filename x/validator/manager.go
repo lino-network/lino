@@ -86,12 +86,12 @@ func (vm ValidatorManager) IsBalancedAccount(
 
 // GetUpdateValidatorList - after a block, compare updated validator set with
 // recorded validator set before block execution
-func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Validator, sdk.Error) {
+func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error) {
 	validatorList, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ABCIValList := []abci.Validator{}
+	updates := []abci.ValidatorUpdate{}
 	for _, preValidator := range validatorList.PreBlockValidators {
 		// set power to 0 if a previous validator not in oncall list anymore
 		if types.FindAccountInList(preValidator, validatorList.OncallValidators) == -1 {
@@ -102,9 +102,10 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 			if validator.Deposit.IsZero() {
 				vm.storage.DeleteValidator(ctx, validator.Username)
 			}
-
-			validator.ABCIValidator.Power = 0
-			ABCIValList = append(ABCIValList, validator.ABCIValidator)
+			updates = append(updates, abci.ValidatorUpdate{
+				PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
+				Power:  0,
+			})
 		}
 	}
 
@@ -113,9 +114,12 @@ func (vm ValidatorManager) GetUpdateValidatorList(ctx sdk.Context) ([]abci.Valid
 		if err != nil {
 			return nil, err
 		}
-		ABCIValList = append(ABCIValList, validator.ABCIValidator)
+		updates = append(updates, abci.ValidatorUpdate{
+			PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
+			Power:  validator.ABCIValidator.Power,
+		})
 	}
-	return ABCIValList, nil
+	return updates, nil
 }
 
 // GetValidatorList - get validator list from KV Store
@@ -137,29 +141,28 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.Validato
 	return vm.storage.SetValidatorList(ctx, lst)
 }
 
-// UpdateSigningValidator - based on info in beginBlocker, record last block singing info
-func (vm ValidatorManager) UpdateSigningValidator(
-	ctx sdk.Context, signingValidators []abci.SigningValidator) sdk.Error {
+// UpdateSigningStats - based on info in beginBlocker, record last block singing info
+func (vm ValidatorManager) UpdateSigningStats(
+	ctx sdk.Context, voteInfos []abci.VoteInfo) sdk.Error {
 	lst, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	pkToSigningInfo := make(map[string]bool)
-
-	// go through signing validator and update sign and absent info
-	for _, signingValidator := range signingValidators {
-		pkToSigningInfo[string(signingValidator.Validator.Address)] = signingValidator.SignedLastBlock
+	// map address to whether that validator has signed.
+	addressSigned := make(map[string]bool)
+	for _, voteInfo := range voteInfos {
+		addressSigned[string(voteInfo.Validator.Address)] = voteInfo.SignedLastBlock
 	}
 
 	// go through oncall validator list to get all address and name mapping
 	for _, curValidator := range lst.OncallValidators {
 		validator, getErr := vm.storage.GetValidator(ctx, curValidator)
 		if getErr != nil {
-			panic(getErr)
+			return err
 		}
-		signedLastBlock, exist := pkToSigningInfo[string(validator.ABCIValidator.Address)]
-		if !exist || !signedLastBlock {
+		signed, exist := addressSigned[string(validator.ABCIValidator.Address)]
+		if !exist || !signed {
 			validator.AbsentCommit++
 		} else {
 			validator.ProducedBlocks++
@@ -168,7 +171,7 @@ func (vm ValidatorManager) UpdateSigningValidator(
 			}
 		}
 		if err := vm.storage.SetValidator(ctx, curValidator, validator); err != nil {
-			panic(err)
+			return err
 		}
 	}
 
@@ -310,15 +313,21 @@ func (vm ValidatorManager) RegisterValidator(
 		if err != nil {
 			return err
 		}
-		if reflect.DeepEqual(validator.ABCIValidator.PubKey, tmtypes.TM2PB.PubKey(pubKey)) {
+		// XXX(yumin): ABCIValidator no longer has pubkey, changed to address
+		if reflect.DeepEqual(validator.ABCIValidator.Address, pubKey.Address().Bytes()) {
 			return ErrValidatorPubKeyAlreadyExist()
 		}
 	}
+	// XXX(yumin): const power?
 	curValidator := &model.Validator{
-		ABCIValidator: abci.Validator{Address: pubKey.Address(), PubKey: tmtypes.TM2PB.PubKey(pubKey), Power: 1000},
-		Username:      username,
-		Deposit:       coin,
-		Link:          link,
+		ABCIValidator: abci.Validator{
+			Address: pubKey.Address(),
+			Power:   types.TendermintValidatorPower,
+		},
+		PubKey:   pubKey,
+		Username: username,
+		Deposit:  coin,
+		Link:     link,
 	}
 
 	if err := vm.storage.SetValidator(ctx, username, curValidator); err != nil {

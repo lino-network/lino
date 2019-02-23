@@ -393,7 +393,7 @@ func TestHandleRegister(t *testing.T) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
 		}
 
-		if result.Code == sdk.ABCICodeOK {
+		if result.Code.IsOK() {
 			if !am.DoesAccountExist(ctx, tc.registerMsg.NewUser) {
 				t.Errorf("%s: account %s doesn't exist", tc.testName, tc.registerMsg.NewUser)
 			}

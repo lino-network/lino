@@ -6,42 +6,46 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/lino-network/lino/app"
+	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/lino-network/lino/app"
 )
 
 // generate Lino application
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewLinoBlockchain(logger, db, traceStore, baseapp.SetPruning(viper.GetString("pruning")))
+	return app.NewLinoBlockchain(logger, db, traceStore,
+		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
 func main() {
+	cobra.EnableCommandSorting = false
+
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
-	cobra.EnableCommandSorting = false
+
 	rootCmd := &cobra.Command{
 		Use:               "lino",
 		Short:             "Lino Blockchain (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
-	server.AddCommands(ctx, cdc, rootCmd, app.LinoBlockchainInit(),
-		server.ConstructAppCreator(newApp, "lino"),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, "lino"))
+	rootCmd.AddCommand(app.InitCmd(ctx, cdc))
+
+	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	executor := cli.PrepareBaseCmd(rootCmd, "BC", app.DefaultNodeHome)
 	executor.Execute()
 }
 
-func exportAppStateAndTMValidators(
-	logger log.Logger, db dbm.DB, traceStore io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, traceStore io.Writer,
+	_ int64, _ bool, _ []string) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 	lb := app.NewLinoBlockchain(logger, db, traceStore)
 	return lb.ExportAppStateAndValidators()
 }

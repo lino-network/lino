@@ -11,8 +11,8 @@ import (
 	"github.com/lino-network/lino/client"
 	acc "github.com/lino-network/lino/x/account"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 

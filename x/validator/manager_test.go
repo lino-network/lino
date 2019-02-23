@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/validator/model"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/validator/model"
 )
 
 func TestByzantines(t *testing.T) {
@@ -47,7 +47,6 @@ func TestByzantines(t *testing.T) {
 	for _, idx := range byzantineList {
 		byzantines = append(byzantines, abci.Evidence{Validator: abci.Validator{
 			Address: valKeys[idx].Address(),
-			PubKey:  tmtypes.TM2PB.PubKey(valKeys[idx]),
 			Power:   1000}})
 	}
 	_, err := valManager.FireIncompetentValidator(ctx, byzantines)
@@ -92,12 +91,11 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	// construct signing list
 	absentList := []int{0, 1, 10}
 	index := 0
-	signingList := []abci.SigningValidator{}
+	signingList := []abci.VoteInfo{}
 	for i := 0; i < 21; i++ {
-		signingList = append(signingList, abci.SigningValidator{
+		signingList = append(signingList, abci.VoteInfo{
 			Validator: abci.Validator{
 				Address: valKeys[i].Address(),
-				PubKey:  tmtypes.TM2PB.PubKey(valKeys[i]),
 				Power:   1000},
 			SignedLastBlock: true,
 		})
@@ -107,12 +105,12 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 		}
 	}
 	// shuffle the signing validator array
-	destSigningList := make([]abci.SigningValidator, len(signingList))
+	destSigningList := make([]abci.VoteInfo, len(signingList))
 	perm := rand.Perm(len(signingList))
 	for i, v := range perm {
 		destSigningList[v] = signingList[i]
 	}
-	err := valManager.UpdateSigningValidator(ctx, signingList)
+	err := valManager.UpdateSigningStats(ctx, signingList)
 	assert.Nil(t, err)
 
 	index = 0
@@ -131,7 +129,7 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	// absent exceeds limitation
 	for i := int64(0); i < param.AbsentCommitLimitation; i++ {
-		err := valManager.UpdateSigningValidator(ctx, signingList)
+		err := valManager.UpdateSigningStats(ctx, signingList)
 		assert.Nil(t, err)
 	}
 
@@ -189,12 +187,11 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 	// construct signing list
 	absentList := []int{0, 1, 10}
 	index := 0
-	signingList := []abci.SigningValidator{}
+	signingList := []abci.VoteInfo{}
 	for i := 0; i < 21; i++ {
-		signingList = append(signingList, abci.SigningValidator{
+		signingList = append(signingList, abci.VoteInfo{
 			Validator: abci.Validator{
 				Address: valKeys[i].Address(),
-				PubKey:  tmtypes.TM2PB.PubKey(valKeys[i]),
 				Power:   1000},
 			SignedLastBlock: true,
 		})
@@ -204,12 +201,12 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 		}
 	}
 	// shuffle the signing validator array
-	destSigningList := make([]abci.SigningValidator, len(signingList))
+	destSigningList := make([]abci.VoteInfo, len(signingList))
 	perm := rand.Perm(len(signingList))
 	for i, v := range perm {
 		destSigningList[v] = signingList[i]
 	}
-	err := valManager.UpdateSigningValidator(ctx, signingList)
+	err := valManager.UpdateSigningStats(ctx, signingList)
 	assert.Nil(t, err)
 
 	index = 0
@@ -228,7 +225,7 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	// absent exceeds limitation
 	for i := int64(0); i < param.AbsentCommitLimitation; i++ {
-		err := valManager.UpdateSigningValidator(ctx, signingList)
+		err := valManager.UpdateSigningStats(ctx, signingList)
 		assert.Nil(t, err)
 	}
 
@@ -384,7 +381,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 }
 
-func TestGetUpdateValidatorList(t *testing.T) {
+func TestGetValidatorUpdates(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	valManager.InitGenesis(ctx)
 
@@ -401,56 +398,61 @@ func TestGetUpdateValidatorList(t *testing.T) {
 	valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
 	valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
 
-	val1, _ := valManager.storage.GetValidator(ctx, user1)
-	val2, _ := valManager.storage.GetValidator(ctx, user2)
-
-	val1NoPower := abci.Validator{
-		Address: valKey1.Address(),
-		Power:   0,
-		PubKey:  val1.ABCIValidator.GetPubKey(),
+	val1 := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey1),
+		Power:  types.TendermintValidatorPower,
 	}
 
-	val2NoPower := abci.Validator{
-		Address: valKey2.Address(),
-		Power:   0,
-		PubKey:  val2.ABCIValidator.GetPubKey(),
+	val2 := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey2),
+		Power:  types.TendermintValidatorPower,
+	}
+
+	val1NoPower := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey1),
+		Power:  0,
+	}
+
+	val2NoPower := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey2),
+		Power:  0,
 	}
 
 	testCases := []struct {
 		testName            string
 		oncallValidators    []types.AccountKey
 		preBlockValidators  []types.AccountKey
-		expectedUpdatedList []abci.Validator
+		expectedUpdatedList []abci.ValidatorUpdate
 	}{
 		{
 			testName:            "only one oncall validator",
 			oncallValidators:    []types.AccountKey{user1},
 			preBlockValidators:  []types.AccountKey{},
-			expectedUpdatedList: []abci.Validator{val1.ABCIValidator},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1},
 		},
 		{
 			testName:            "two oncall validators and one pre block validator",
 			oncallValidators:    []types.AccountKey{user1, user2},
 			preBlockValidators:  []types.AccountKey{user1},
-			expectedUpdatedList: []abci.Validator{val1.ABCIValidator, val2.ABCIValidator},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1, val2},
 		},
 		{
 			testName:            "two oncall validatos and two pre block validators",
 			oncallValidators:    []types.AccountKey{user1, user2},
 			preBlockValidators:  []types.AccountKey{user1, user2},
-			expectedUpdatedList: []abci.Validator{val1.ABCIValidator, val2.ABCIValidator},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1, val2},
 		},
 		{
 			testName:            "one oncall validator and two pre block validators",
 			oncallValidators:    []types.AccountKey{user2},
 			preBlockValidators:  []types.AccountKey{user1, user2},
-			expectedUpdatedList: []abci.Validator{val1NoPower, val2.ABCIValidator},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1NoPower, val2},
 		},
 		{
 			testName:            "only one pre block validator",
 			oncallValidators:    []types.AccountKey{},
 			preBlockValidators:  []types.AccountKey{user2},
-			expectedUpdatedList: []abci.Validator{val2NoPower},
+			expectedUpdatedList: []abci.ValidatorUpdate{val2NoPower},
 		},
 	}
 
@@ -464,7 +466,7 @@ func TestGetUpdateValidatorList(t *testing.T) {
 			t.Errorf("%s: failed to set validator list, got err %v", tc.testName, err)
 		}
 
-		actualList, err := valManager.GetUpdateValidatorList(ctx)
+		actualList, err := valManager.GetValidatorUpdates(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get validator list, got err %v", tc.testName, err)
 		}

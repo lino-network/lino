@@ -24,15 +24,15 @@ func TestHandlerCreatePost(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})
 	// test valid post
 	msg := CreatePostMsg{
-		PostID:       "TestPostID",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        nil,
+		PostID:                  "TestPostID",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  user,
+		ParentAuthor:            "",
+		ParentPostID:            "",
+		SourceAuthor:            "",
+		SourcePostID:            "",
+		Links:                   nil,
 		RedistributionSplitRate: "0",
 	}
 	result := handler(ctx, msg)
@@ -95,7 +95,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 		if !assert.Equal(t, tc.wantResult, result) {
 			t.Errorf("%s: diff result, got %v, want %v", testName, result, tc.wantResult)
 		}
-		if tc.wantResult.Code != sdk.ABCICodeOK {
+		if !tc.wantResult.IsOK() {
 			continue
 		}
 
@@ -118,7 +118,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
@@ -188,15 +188,15 @@ func TestHandlerCreateComment(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
 	// test comment
 	msg := CreatePostMsg{
-		PostID:       "comment",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: user,
-		ParentPostID: postID,
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        nil,
+		PostID:                  "comment",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  user,
+		ParentAuthor:            user,
+		ParentPostID:            postID,
+		SourceAuthor:            "",
+		SourcePostID:            "",
+		Links:                   nil,
 		RedistributionSplitRate: "0",
 	}
 	result := handler(ctx, msg)
@@ -223,7 +223,7 @@ func TestHandlerCreateComment(t *testing.T) {
 		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
 		TotalReportCoinDay:      types.NewCoinFromInt64(0),
-		RedistributionSplitRate: sdk.ZeroRat(),
+		RedistributionSplitRate: sdk.ZeroDec(),
 	}
 
 	checkPostKVStore(t, ctx, types.GetPermlink(user, "comment"), postInfo, postMeta)
@@ -284,15 +284,15 @@ func TestHandlerRepost(t *testing.T) {
 
 	// test repost
 	msg := CreatePostMsg{
-		PostID:       "repost",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: user,
-		SourcePostID: postID,
-		Links:        nil,
+		PostID:                  "repost",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  user,
+		ParentAuthor:            "",
+		ParentPostID:            "",
+		SourceAuthor:            user,
+		SourcePostID:            postID,
+		Links:                   nil,
 		RedistributionSplitRate: "0",
 	}
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
@@ -320,7 +320,7 @@ func TestHandlerRepost(t *testing.T) {
 		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
 		TotalReportCoinDay:      types.NewCoinFromInt64(0),
-		RedistributionSplitRate: sdk.ZeroRat(),
+		RedistributionSplitRate: sdk.ZeroDec(),
 	}
 
 	checkPostKVStore(t, ctx, types.GetPermlink(user, "repost"), postInfo, postMeta)
@@ -344,7 +344,7 @@ func TestHandlerRepost(t *testing.T) {
 		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReward:             types.NewCoinFromInt64(0),
 		TotalReportCoinDay:      types.NewCoinFromInt64(0),
-		RedistributionSplitRate: sdk.ZeroRat(),
+		RedistributionSplitRate: sdk.ZeroDec(),
 	}
 	postInfo.SourceAuthor = user
 	postInfo.SourcePostID = postID
@@ -412,7 +412,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(95 * types.Decimals),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 			},
 			expectDonatorSaving: accParam.RegisterFee,
 			expectAuthorSaving: accParam.RegisterFee.Plus(
@@ -421,7 +421,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   userWithSufficientSaving,
-				Evaluate:   types.NewCoinFromInt64(59380),
+				Evaluate:   types.NewCoinFromInt64(1 * types.Decimals), // only 1, reputation
 				Original:   types.NewCoinFromInt64(100 * types.Decimals),
 				Friction:   types.NewCoinFromInt64(5 * types.Decimals),
 				FromApp:    "",
@@ -468,7 +468,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(14250000),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 			},
 			expectDonatorSaving: accParam.RegisterFee.Plus(
 				types.NewCoinFromInt64(50 * types.Decimals)),
@@ -477,7 +477,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   secondUserWithSufficientSaving,
-				Evaluate:   types.NewCoinFromInt64(59361),
+				Evaluate:   types.NewCoinFromInt64(1 * types.Decimals),
 				Original:   types.NewCoinFromInt64(50 * types.Decimals),
 				Friction:   types.NewCoinFromInt64(250000),
 				FromApp:    "",
@@ -505,7 +505,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(190 * types.Decimals),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 			},
 			expectDonatorSaving: accParam.RegisterFee,
 			expectAuthorSaving:  accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -541,7 +541,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(19000001),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 			},
 			expectDonatorSaving: types.NewCoinFromInt64(199999),
 			expectAuthorSaving:  accParam.RegisterFee.Plus(types.NewCoinFromInt64(19000001)),
@@ -549,7 +549,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				PostAuthor: author,
 				PostID:     postID,
 				Consumer:   micropaymentUser,
-				Evaluate:   types.NewCoinFromInt64(5),
+				Evaluate:   types.NewCoinFromInt64(1),
 				Original:   types.NewCoinFromInt64(1),
 				Friction:   types.NewCoinFromInt64(0),
 				FromApp:    "",
@@ -613,7 +613,7 @@ func TestHandlerPostDonate(t *testing.T) {
 				TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalReward:             types.NewCoinFromInt64(19000001),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 			},
 			expectDonatorSaving:               accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
 			expectAuthorSaving:                accParam.RegisterFee.Plus(types.NewCoinFromInt64(190 * types.Decimals)),
@@ -642,7 +642,7 @@ func TestHandlerPostDonate(t *testing.T) {
 		if !assert.Equal(t, tc.expectErr, result) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectErr)
 		}
-		if tc.expectErr.Code == sdk.ABCICodeOK {
+		if tc.expectErr.Code.IsOK() {
 			checkPostMeta(t, ctx, types.GetPermlink(tc.toAuthor, tc.toPostID), tc.expectPostMeta)
 		} else {
 			continue
@@ -666,7 +666,7 @@ func TestHandlerPostDonate(t *testing.T) {
 			return
 		}
 
-		if tc.expectErr.Code == sdk.ABCICodeOK {
+		if tc.expectErr.IsOK() {
 			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600*7*24)
 			if !assert.Equal(t, tc.expectRegisteredEvent, eventList.Events[len(eventList.Events)-1]) {
 				t.Errorf("%s: diff event, got %v, want %v", tc.testName,
@@ -721,15 +721,15 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Nil(t, err)
 	// repost
 	msg := CreatePostMsg{
-		PostID:       "repost",
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       user2,
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: user1,
-		SourcePostID: postID,
-		Links:        nil,
+		PostID:                  "repost",
+		Title:                   string(make([]byte, 50)),
+		Content:                 string(make([]byte, 1000)),
+		Author:                  user2,
+		ParentAuthor:            "",
+		ParentPostID:            "",
+		SourceAuthor:            user1,
+		SourcePostID:            postID,
+		Links:                   nil,
 		RedistributionSplitRate: "0",
 	}
 	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})
@@ -756,7 +756,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		SourcePostID: msg.SourcePostID,
 		Links:        msg.Links,
 	}
-	totalReward := types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(95, 100)))
+	totalReward := types.DecToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	postMeta := model.PostMeta{
 		CreatedAt:               ctx.BlockHeader().Time.Unix(),
 		LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
@@ -766,29 +766,30 @@ func TestHandlerRePostDonate(t *testing.T) {
 		TotalReward:             totalReward,
 		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 		TotalReportCoinDay:      types.NewCoinFromInt64(0),
-		RedistributionSplitRate: sdk.ZeroRat(),
+		RedistributionSplitRate: sdk.ZeroDec(),
 	}
 	checkPostKVStore(t, ctx, types.GetPermlink(user2, "repost"), postInfo, postMeta)
 	repostRewardEvent := RewardEvent{
 		PostAuthor: user2,
 		PostID:     "repost",
 		Consumer:   user3,
-		Evaluate:   types.NewCoinFromInt64(13017),
-		Original:   types.NewCoinFromInt64(15 * types.Decimals),
-		Friction:   types.NewCoinFromInt64(75000),
-		FromApp:    "",
+		// XXX(yumin): rep is 1, while donation is 100, final dp is 1/100.
+		Evaluate: types.NewCoinFromInt64(15 * types.Decimals / 100),
+		Original: types.NewCoinFromInt64(15 * types.Decimals),
+		Friction: types.NewCoinFromInt64(75000),
+		FromApp:  "",
 	}
 	assert.Equal(t, repostRewardEvent, eventList.Events[1])
 
 	// check source post
-	postMeta.TotalReward = types.RatToCoin(sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(95, 100)))
+	postMeta.TotalReward = types.DecToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	postMeta.CreatedAt = 0
 	postMeta.LastUpdatedAt = 0
 	postInfo.Author = user1
 	postInfo.PostID = postID
 	postInfo.SourceAuthor = ""
 	postInfo.SourcePostID = ""
-	postMeta.RedistributionSplitRate = sdk.NewRat(3, 20)
+	postMeta.RedistributionSplitRate = types.NewDecFromRat(3, 20)
 	postMeta.TotalUpvoteCoinDay = types.NewCoinFromInt64(0)
 
 	checkPostKVStore(t, ctx, types.GetPermlink(user1, postID), postInfo, postMeta)
@@ -796,8 +797,8 @@ func TestHandlerRePostDonate(t *testing.T) {
 	acc1Saving, _ := am.GetSavingFromBank(ctx, user1)
 	acc2Saving, _ := am.GetSavingFromBank(ctx, user2)
 	acc3Saving, _ := am.GetSavingFromBank(ctx, user3)
-	acc1SavingCoin := types.RatToCoin(sdk.NewRat(85 * types.Decimals).Mul(sdk.NewRat(95, 100)))
-	acc2SavingCoin := types.RatToCoin(sdk.NewRat(15 * types.Decimals).Mul(sdk.NewRat(95, 100)))
+	acc1SavingCoin := types.DecToCoin(sdk.NewDec(85 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
+	acc2SavingCoin := types.DecToCoin(sdk.NewDec(15 * types.Decimals).Mul(types.NewDecFromRat(95, 100)))
 	assert.Equal(t, acc1Saving, initCoin.Plus(acc1SavingCoin))
 	assert.Equal(t, acc2Saving, initCoin.Plus(acc2SavingCoin))
 	assert.Equal(t, acc3Saving, initCoin.Plus(types.NewCoinFromInt64(23*types.Decimals)))
@@ -806,7 +807,7 @@ func TestHandlerRePostDonate(t *testing.T) {
 		PostAuthor: user1,
 		PostID:     postID,
 		Consumer:   user3,
-		Evaluate:   types.NewCoinFromInt64(52141),
+		Evaluate:   types.NewCoinFromInt64(85 * types.Decimals / 100),
 		Original:   types.NewCoinFromInt64(85 * types.Decimals),
 		Friction:   types.NewCoinFromInt64(425000),
 		FromApp:    "",
@@ -905,7 +906,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 		if !assert.Equal(t, tc.expectResult, result) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectResult)
 		}
-		if tc.expectResult.Code != sdk.ABCICodeOK {
+		if !tc.expectResult.IsOK() {
 			continue
 		}
 
@@ -914,7 +915,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
 			LastActivityAt:          newCtx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
@@ -1008,7 +1009,7 @@ func TestHandlerView(t *testing.T) {
 			LastUpdatedAt:           createTime,
 			LastActivityAt:          createTime,
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 			TotalViewCount:          tc.expectTotalViewCount,
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),

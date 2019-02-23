@@ -3,7 +3,7 @@ package model
 import (
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 
@@ -29,9 +29,8 @@ type GlobalStorage struct {
 
 // NewGlobalStorage - new global storage
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
-	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "param/contentValue", nil)
 	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
 	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
@@ -88,7 +87,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 		return err
 	}
 	tps := &TPS{
-		CurrentTPS: sdk.ZeroRat(),
+		CurrentTPS: sdk.ZeroDec(),
 		MaxTPS:     param.MaxTPS,
 	}
 	if err := gs.SetTPS(ctx, tps); err != nil {
@@ -110,9 +109,9 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 	return gs.InitGlobalStateWithConfig(ctx, totalLino, initParamList)
 }

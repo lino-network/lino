@@ -9,7 +9,7 @@ import (
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/x/proposal"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

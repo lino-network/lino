@@ -30,11 +30,11 @@ func TestGlobalAllocationParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		ContentCreatorAllocation: sdk.NewRat(1, 100),
-		InfraAllocation:          sdk.NewRat(1, 100),
-		DeveloperAllocation:      sdk.NewRat(1, 100),
-		ValidatorAllocation:      sdk.NewRat(97, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		ContentCreatorAllocation: types.NewDecFromRat(1, 100),
+		InfraAllocation:          types.NewDecFromRat(1, 100),
+		DeveloperAllocation:      types.NewDecFromRat(1, 100),
+		ValidatorAllocation:      types.NewDecFromRat(97, 100),
 	}
 	err := ph.setGlobalAllocationParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -48,8 +48,8 @@ func TestInfraInternalAllocationParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := InfraInternalAllocationParam{
-		StorageAllocation: sdk.NewRat(50, 100),
-		CDNAllocation:     sdk.NewRat(50, 100),
+		StorageAllocation: types.NewDecFromRat(50, 100),
+		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 	err := ph.setInfraInternalAllocationParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -57,25 +57,6 @@ func TestInfraInternalAllocationParam(t *testing.T) {
 	resultPtr, err := ph.GetInfraInternalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, parameter, *resultPtr, "Infra internal allocation param should be equal")
-}
-
-func TestEvaluateOfContenValueParam(t *testing.T) {
-	ph := NewParamHolder(TestKVStoreKey)
-	ctx := getContext()
-	parameter := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
-	}
-	err := ph.setEvaluateOfContentValueParam(ctx, &parameter)
-	assert.Nil(t, err)
-
-	resultPtr, err := ph.GetEvaluateOfContentValueParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Evaluate of content value param should be equal")
 }
 
 func TestDeveloperParam(t *testing.T) {
@@ -140,18 +121,18 @@ func TestProposalParam(t *testing.T) {
 	ctx := getContext()
 	parameter := ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -217,25 +198,16 @@ func TestInitParam(t *testing.T) {
 	ph.InitParam(ctx)
 
 	globalAllocationParam := GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(65, 100),
-		DeveloperAllocation:      sdk.NewRat(10, 100),
-		ValidatorAllocation:      sdk.NewRat(5, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(20, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		DeveloperAllocation:      types.NewDecFromRat(10, 100),
+		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 
 	infraInternalAllocationParam := InfraInternalAllocationParam{
-		StorageAllocation: sdk.NewRat(50, 100),
-		CDNAllocation:     sdk.NewRat(50, 100),
-	}
-
-	evaluateOfContentValueParam := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
+		StorageAllocation: types.NewDecFromRat(50, 100),
+		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 
 	developerParam := DeveloperParam{
@@ -266,18 +238,18 @@ func TestInitParam(t *testing.T) {
 	}
 	proposalParam := ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -302,7 +274,7 @@ func TestInitParam(t *testing.T) {
 		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
-		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
@@ -310,25 +282,16 @@ func TestInitParamFromConfig(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(65, 100),
-		DeveloperAllocation:      sdk.NewRat(10, 100),
-		ValidatorAllocation:      sdk.NewRat(5, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(20, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		DeveloperAllocation:      types.NewDecFromRat(10, 100),
+		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 
 	infraInternalAllocationParam := InfraInternalAllocationParam{
-		StorageAllocation: sdk.NewRat(50, 100),
-		CDNAllocation:     sdk.NewRat(50, 100),
-	}
-
-	evaluateOfContentValueParam := EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
+		StorageAllocation: types.NewDecFromRat(50, 100),
+		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 
 	developerParam := DeveloperParam{
@@ -359,18 +322,18 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 	proposalParam := ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -402,7 +365,6 @@ func TestInitParamFromConfig(t *testing.T) {
 		ctx, globalAllocationParam,
 		infraInternalAllocationParam,
 		postParam,
-		evaluateOfContentValueParam,
 		developerParam,
 		validatorParam,
 		voteParam,
@@ -415,21 +377,17 @@ func TestInitParamFromConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
-		evaluateOfContentValueParam, developerParam, validatorParam, voteParam,
+		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
 	expectInfraInternalAllocationParam InfraInternalAllocationParam,
-	expectEvaluateOfContentValueParam EvaluateOfContentValueParam, expectDeveloperParam DeveloperParam,
+	expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
 	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
 	expectPostParam PostParam) {
-	evaluateOfContentValueParam, err := ph.GetEvaluateOfContentValueParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectEvaluateOfContentValueParam, *evaluateOfContentValueParam)
-
 	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalAllocationParam, *globalAllocationParam)
@@ -477,25 +435,25 @@ func TestUpdateGlobalGrowthRate(t *testing.T) {
 
 	testCases := []struct {
 		testName         string
-		ceiling          sdk.Rat
-		floor            sdk.Rat
-		updateGrowthRate sdk.Rat
-		expectGrowthRate sdk.Rat
+		ceiling          sdk.Dec
+		floor            sdk.Dec
+		updateGrowthRate sdk.Dec
+		expectGrowthRate sdk.Dec
 	}{
 		{
 			testName:         "normal update",
-			updateGrowthRate: sdk.NewRat(98, 1000),
-			expectGrowthRate: sdk.NewRat(98, 1000),
+			updateGrowthRate: types.NewDecFromRat(98, 1000),
+			expectGrowthRate: types.NewDecFromRat(98, 1000),
 		},
 		{
 			testName:         "update to ceiling",
-			updateGrowthRate: sdk.NewRat(99, 1000),
-			expectGrowthRate: sdk.NewRat(98, 1000),
+			updateGrowthRate: types.NewDecFromRat(99, 1000),
+			expectGrowthRate: types.NewDecFromRat(98, 1000),
 		},
 		{
 			testName:         "update to floor",
-			updateGrowthRate: sdk.NewRat(29, 1000),
-			expectGrowthRate: sdk.NewRat(3, 100),
+			updateGrowthRate: types.NewDecFromRat(29, 1000),
+			expectGrowthRate: types.NewDecFromRat(3, 100),
 		},
 	}
 	for _, tc := range testCases {

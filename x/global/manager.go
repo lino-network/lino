@@ -1,14 +1,12 @@
 package global
 
 import (
-	"math"
+	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global/model"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GlobalManager - encapsulates all basic struct
@@ -141,10 +139,10 @@ func (gm GlobalManager) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk
 }
 
 // GetConsumptionFrictionRate - get consumption friction rate
-func (gm GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+func (gm GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
-		return sdk.Rat{}, err
+		return sdk.Dec{}, err
 	}
 	return consumptionMeta.ConsumptionFrictionRate, nil
 }
@@ -246,8 +244,8 @@ func (gm GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoSt
 			continue
 		}
 		interest :=
-			types.RatToCoin(linoStakeStat.UnclaimedFriction.ToRat().Mul(
-				linoStake.ToRat().Quo(linoStakeStat.UnclaimedLinoStake.ToRat())))
+			types.DecToCoin(linoStakeStat.UnclaimedFriction.ToDec().Mul(
+				linoStake.ToDec().Quo(linoStakeStat.UnclaimedLinoStake.ToDec())))
 		totalInterest = totalInterest.Plus(interest)
 		linoStakeStat.UnclaimedFriction = linoStakeStat.UnclaimedFriction.Minus(interest)
 		linoStakeStat.UnclaimedLinoStake = linoStakeStat.UnclaimedLinoStake.Minus(linoStake)
@@ -330,8 +328,8 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-		globalAllocation.DeveloperAllocation = sdk.NewRat(35, 100)
-		globalAllocation.ContentCreatorAllocation = sdk.NewRat(40, 100)
+		globalAllocation.DeveloperAllocation = types.NewDecFromRat(35, 100)
+		globalAllocation.ContentCreatorAllocation = types.NewDecFromRat(40, 1000)
 	}
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
@@ -343,10 +341,10 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	}
 	// get hourly inflation
 	thisHourInflation :=
-		types.RatToCoin(
-			globalMeta.LastYearTotalLinoCoin.ToRat().
+		types.DecToCoin(
+			globalMeta.LastYearTotalLinoCoin.ToDec().
 				Mul(globalAllocation.GlobalGrowthRate).
-				Mul(sdk.NewRat(1, types.HoursPerYear)))
+				Mul(types.NewDecFromRat(1, types.HoursPerYear)))
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
 	}
@@ -357,11 +355,11 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	contentCreatorInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation))
 	validatorInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.ValidatorAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ValidatorAllocation))
 	infraInflation :=
-		types.RatToCoin(thisHourInflation.ToRat().Mul(globalAllocation.InfraAllocation))
+		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.InfraAllocation))
 	developerInflation :=
 		thisHourInflation.Minus(contentCreatorInflation).Minus(validatorInflation).Minus(infraInflation)
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(contentCreatorInflation)
@@ -381,7 +379,7 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 
 // SetTotalLinoAndRecalculateGrowthRate - recalculate annually inflation based on consumption growth rate
 func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sdk.Error {
-	var growthRate sdk.Rat
+	var growthRate sdk.Dec
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {
 		return err
@@ -395,13 +393,13 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 		growthRate = globalAllocationParam.GlobalGrowthRate
 	} else {
 		// growthRate = (consumption this year - consumption last year) / consumption last year
-		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToRat()
-		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToRat()
+		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToDec()
+		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToDec()
 		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
 		if consumptionIncrement.GTE(lastYearConsumptionRat) {
-			growthRate = sdk.OneRat()
+			growthRate = sdk.OneDec()
 		} else {
-			growthRate = consumptionIncrement.Quo(lastYearConsumptionRat).Round(types.PrecisionFactor)
+			growthRate = consumptionIncrement.Quo(lastYearConsumptionRat)
 		}
 	}
 	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
@@ -415,7 +413,7 @@ func (gm GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) sd
 
 // GetRewardAndPopFromWindow - after 7 days, one consumption needs to claim its reward from consumption reward pool
 func (gm GlobalManager) GetRewardAndPopFromWindow(
-	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Rat) (types.Coin, sdk.Error) {
+	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Dec) (types.Coin, sdk.Error) {
 	if evaluate.IsZero() {
 		return types.NewCoinFromInt64(0), nil
 	}
@@ -427,11 +425,11 @@ func (gm GlobalManager) GetRewardAndPopFromWindow(
 
 	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
 	consumptionRatio :=
-		evaluate.ToRat().Mul(sdk.OneRat().Sub(penaltyScore)).Quo(
-			consumptionMeta.ConsumptionWindow.ToRat())
+		evaluate.ToDec().Mul(sdk.OneDec().Sub(penaltyScore)).Quo(
+			consumptionMeta.ConsumptionWindow.ToDec())
 	// reward = (consumption reward pool) * (consumptionRatio)
-	reward := types.RatToCoin(
-		consumptionMeta.ConsumptionRewardPool.ToRat().Mul(consumptionRatio))
+	reward := types.DecToCoin(
+		consumptionMeta.ConsumptionRewardPool.ToDec().Mul(consumptionRatio))
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
 	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
 	if err := gm.addTotalLinoCoin(ctx, reward); err != nil {
@@ -562,9 +560,9 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
 	}
 
 	if ctx.BlockHeader().Time.Unix() == lastBlockTime {
-		tps.CurrentTPS = sdk.ZeroRat()
+		tps.CurrentTPS = sdk.ZeroDec()
 	} else {
-		tps.CurrentTPS = sdk.NewRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time.Unix()-lastBlockTime)
+		tps.CurrentTPS = types.NewDecFromRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time.Unix()-lastBlockTime)
 	}
 	if tps.CurrentTPS.GT(tps.MaxTPS) {
 		tps.MaxTPS = tps.CurrentTPS
@@ -577,44 +575,29 @@ func (gm GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
 }
 
 // GetTPSCapacityRatio - get transaction per second ratio
-func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Rat, sdk.Error) {
+func (gm GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	tps, err := gm.storage.GetTPS(ctx)
 	if err != nil {
-		return sdk.ZeroRat(), err
+		return sdk.ZeroDec(), err
 	}
-	return tps.CurrentTPS.Quo(tps.MaxTPS).Round(types.PrecisionFactor), nil
+	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
 }
 
 // EvaluateConsumption - evaluate consumption
+// XXX(yumin): deprecated, now just return @p coin, need @refactor.
 func (gm GlobalManager) EvaluateConsumption(
-	ctx sdk.Context, coin types.Coin, numOfConsumptionOnAuthor int64, created int64,
-	totalReward types.Coin) (types.Coin, sdk.Error) {
-	paras, err := gm.paramHolder.GetEvaluateOfContentValueParam(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	// evaluate result coin^0.8 * total consumption adjustment *
-	// post time adjustment * consumption times adjustment
-	expPara, _ := paras.AmountOfConsumptionExponent.Float64()
-	coinInInt64, err := coin.ToInt64()
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	totalRewardInInt64, err := totalReward.ToInt64()
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return types.NewCoinFromInt64(
-		int64(math.Pow(float64(coinInInt64), expPara) *
-			PostTotalConsumptionAdjustment(totalRewardInInt64, paras) *
-			PostTimeAdjustment(ctx.BlockHeader().Time.Unix()-created, paras) *
-			PostConsumptionTimesAdjustment(numOfConsumptionOnAuthor, paras))), nil
+	coin types.Coin,
+	// ctx sdk.Context, coin types.Coin,
+	// numOfConsumptionOnAuthor int64, created int64,
+	// totalReward types.Coin
+) (types.Coin, sdk.Error) {
+	return coin, nil
 }
 
 // get and set params
 // TODO add more change methods
-// func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Rat,
-// 	ContentCreatorAllocation sdk.Rat, DeveloperAllocation sdk.Rat, ValidatorAllocation sdk.Rat) sdk.Error {
+// func (gm GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Dec,
+// 	ContentCreatorAllocation sdk.Dec, DeveloperAllocation sdk.Dec, ValidatorAllocation sdk.Dec) sdk.Error {
 // 	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 // 	if err != nil {
 // 		return err
@@ -631,7 +614,7 @@ func (gm GlobalManager) EvaluateConsumption(
 // }
 //
 // func (gm GlobalManager) ChangeInfraInternalInflationParam(
-// 	ctx sdk.Context, StorageAllocation sdk.Rat, CDNAllocation sdk.Rat) sdk.Error {
+// 	ctx sdk.Context, StorageAllocation sdk.Dec, CDNAllocation sdk.Dec) sdk.Error {
 // 	allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
 // 	if err != nil {
 // 		return err
@@ -643,26 +626,3 @@ func (gm GlobalManager) EvaluateConsumption(
 // 	}
 // 	return nil
 // }
-
-// PostTotalConsumptionAdjustment - total consumption adjustment = 1/(1+e^(c/base - offset)) + 1
-func PostTotalConsumptionAdjustment(
-	totalReward int64, paras *param.EvaluateOfContentValueParam) float64 {
-	return (1.0 / (1.0 + math.Exp(
-		(float64(totalReward)/float64(paras.TotalAmountOfConsumptionBase) -
-			float64(paras.TotalAmountOfConsumptionOffset))))) + 1.0
-}
-
-// PostTimeAdjustment - post time adjustment = 1/(1+e^(t/base - offset))
-func PostTimeAdjustment(
-	elapseTime int64, paras *param.EvaluateOfContentValueParam) float64 {
-	return (1.0 / (1.0 + math.Exp(
-		(float64(elapseTime)/float64(paras.ConsumptionTimeAdjustBase) -
-			float64(paras.ConsumptionTimeAdjustOffset)))))
-}
-
-// PostConsumptionTimesAdjustment - consumption times adjustment = 1/(1+e^(n-offset)) + 1
-func PostConsumptionTimesAdjustment(
-	numOfConsumptionOnAuthor int64, paras *param.EvaluateOfContentValueParam) float64 {
-	return (1.0/(1.0+math.Exp(
-		(float64(numOfConsumptionOnAuthor)-float64(paras.NumOfConsumptionOnAuthorOffset)))) + 1.0) + 1.0
-}

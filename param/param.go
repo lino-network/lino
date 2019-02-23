@@ -9,35 +9,25 @@ import (
 // Parameter - parameter in Lino Blockchain
 type Parameter interface{}
 
-// EvaluateOfContentValueParam - parameters used to evaluate content value
-type EvaluateOfContentValueParam struct {
-	ConsumptionTimeAdjustBase      int64   `json:"consumption_time_adjust_base"`
-	ConsumptionTimeAdjustOffset    int64   `json:"consumption_time_adjust_offset"`
-	NumOfConsumptionOnAuthorOffset int64   `json:"num_of_consumption_on_author_offset"`
-	TotalAmountOfConsumptionBase   int64   `json:"total_amount_of_consumption_base"`
-	TotalAmountOfConsumptionOffset int64   `json:"total_amount_of_consumption_offset"`
-	AmountOfConsumptionExponent    sdk.Rat `json:"amount_of_consumption_exponent"`
-}
-
 // GlobalAllocationParam - global allocation parameters
 // InfraAllocation - percentage for all infra related allocation
 // ContentCreatorAllocation - percentage for all content creator related allocation
 // DeveloperAllocation - percentage of inflation for developers
 // ValidatorAllocation - percentage of inflation for validators
 type GlobalAllocationParam struct {
-	GlobalGrowthRate         sdk.Rat `json:"global_growth_rate"`
-	InfraAllocation          sdk.Rat `json:"infra_allocation"`
-	ContentCreatorAllocation sdk.Rat `json:"content_creator_allocation"`
-	DeveloperAllocation      sdk.Rat `json:"developer_allocation"`
-	ValidatorAllocation      sdk.Rat `json:"validator_allocation"`
+	GlobalGrowthRate         sdk.Dec `json:"global_growth_rate"`
+	InfraAllocation          sdk.Dec `json:"infra_allocation"`
+	ContentCreatorAllocation sdk.Dec `json:"content_creator_allocation"`
+	DeveloperAllocation      sdk.Dec `json:"developer_allocation"`
+	ValidatorAllocation      sdk.Dec `json:"validator_allocation"`
 }
 
 // InfraInternalAllocationParam - infra internal allocation parameters
 // StorageAllocation - percentage for storage provider (not in use now)
 // CDNAllocation - percentage for CDN provider (not in use now)
 type InfraInternalAllocationParam struct {
-	StorageAllocation sdk.Rat `json:"storage_allocation"`
-	CDNAllocation     sdk.Rat `json:"CDN_allocation"`
+	StorageAllocation sdk.Dec `json:"storage_allocation"`
+	CDNAllocation     sdk.Dec `json:"CDN_allocation"`
 }
 
 // VoteParam - vote paramters
@@ -71,16 +61,16 @@ type VoteParam struct {
 type ProposalParam struct {
 	ContentCensorshipDecideSec  int64      `json:"content_censorship_decide_second"`
 	ContentCensorshipMinDeposit types.Coin `json:"content_censorship_min_deposit"`
-	ContentCensorshipPassRatio  sdk.Rat    `json:"content_censorship_pass_ratio"`
+	ContentCensorshipPassRatio  sdk.Dec    `json:"content_censorship_pass_ratio"`
 	ContentCensorshipPassVotes  types.Coin `json:"content_censorship_pass_votes"`
 	ChangeParamDecideSec        int64      `json:"change_param_decide_second"`
 	ChangeParamExecutionSec     int64      `json:"change_param_execution_second"`
 	ChangeParamMinDeposit       types.Coin `json:"change_param_min_deposit"`
-	ChangeParamPassRatio        sdk.Rat    `json:"change_param_pass_ratio"`
+	ChangeParamPassRatio        sdk.Dec    `json:"change_param_pass_ratio"`
 	ChangeParamPassVotes        types.Coin `json:"change_param_pass_votes"`
 	ProtocolUpgradeDecideSec    int64      `json:"protocol_upgrade_decide_second"`
 	ProtocolUpgradeMinDeposit   types.Coin `json:"protocol_upgrade_min_deposit"`
-	ProtocolUpgradePassRatio    sdk.Rat    `json:"protocol_upgrade_pass_ratio"`
+	ProtocolUpgradePassRatio    sdk.Dec    `json:"protocol_upgrade_pass_ratio"`
 	ProtocolUpgradePassVotes    types.Coin `json:"protocol_upgrade_pass_votes"`
 }
 

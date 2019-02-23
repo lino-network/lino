@@ -1,7 +1,7 @@
 package proposal
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Register concrete types on wire codec
@@ -10,7 +10,6 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(DeletePostContentMsg{}, "lino/deletePostContent", nil)
 	cdc.RegisterConcrete(UpgradeProtocolMsg{}, "lino/upgradeProtocol", nil)
 	cdc.RegisterConcrete(ChangeGlobalAllocationParamMsg{}, "lino/changeGlobalAllocation", nil)
-	cdc.RegisterConcrete(ChangeEvaluateOfContentValueParamMsg{}, "lino/changeEvaluation", nil)
 	cdc.RegisterConcrete(ChangeInfraInternalAllocationParamMsg{}, "lino/changeInfraAllocation", nil)
 	cdc.RegisterConcrete(ChangeVoteParamMsg{}, "lino/changeVoteParam", nil)
 	cdc.RegisterConcrete(ChangeProposalParamMsg{}, "lino/changeProposalParam", nil)
@@ -21,7 +20,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(ChangePostParamMsg{}, "lino/changePostParam", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)

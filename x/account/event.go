@@ -2,6 +2,7 @@ package account
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	types "github.com/lino-network/lino/types"
 )
 
@@ -32,13 +33,8 @@ func CreateCoinReturnEvents(
 	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
 	events := []types.Event{}
 	for i := int64(0); i < times; i++ {
-		var pieceRat sdk.Rat
-		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i))
-		} else {
-			pieceRat = coin.ToRat().Quo(sdk.NewRat(times - i)).Round(types.PrecisionFactor)
-		}
-		piece := types.RatToCoin(pieceRat)
+		pieceRat := coin.ToDec().Quo(sdk.NewDec(times - i))
+		piece := types.DecToCoin(pieceRat)
 		coin = coin.Minus(piece)
 
 		event := ReturnCoinEvent{

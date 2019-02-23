@@ -25,11 +25,11 @@ func TestChangeParamProposal(t *testing.T) {
 	proposalManager.InitGenesis(ctx)
 
 	allocation := param.GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		DeveloperAllocation:      sdk.ZeroRat(),
-		ValidatorAllocation:      sdk.ZeroRat(),
-		InfraAllocation:          sdk.ZeroRat(),
-		ContentCreatorAllocation: sdk.NewRat(5, 10),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		DeveloperAllocation:      sdk.ZeroDec(),
+		ValidatorAllocation:      sdk.ZeroDec(),
+		InfraAllocation:          sdk.ZeroDec(),
+		ContentCreatorAllocation: types.NewDecFromRat(5, 10),
 	}
 	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
 	proposalID2 := types.ProposalKey(strconv.FormatInt(int64(2), 10))

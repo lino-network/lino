@@ -1,7 +1,7 @@
 package param
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,9 +22,9 @@ var (
 	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
-	AnnualInflationCeiling = sdk.NewRat(98, 1000)
+	AnnualInflationCeiling = types.NewDecFromRat(98, 1000)
 	// AnnualInflationFloor - annual inflation lower bound
-	AnnualInflationFloor = sdk.NewRat(3, 100)
+	AnnualInflationFloor = types.NewDecFromRat(3, 100)
 )
 
 // ParamHolder - parameter KVStore
@@ -36,7 +36,7 @@ type ParamHolder struct {
 
 // NewParamHolder - create a new parameter KVStore
 func NewParamHolder(key sdk.StoreKey) ParamHolder {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return ParamHolder{
 		key: key,
@@ -47,19 +47,19 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 // InitParam - init all parameters based on code
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
-		GlobalGrowthRate:         sdk.NewRat(98, 1000),
-		InfraAllocation:          sdk.NewRat(20, 100),
-		ContentCreatorAllocation: sdk.NewRat(65, 100),
-		DeveloperAllocation:      sdk.NewRat(10, 100),
-		ValidatorAllocation:      sdk.NewRat(5, 100),
+		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+		InfraAllocation:          types.NewDecFromRat(20, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		DeveloperAllocation:      types.NewDecFromRat(10, 100),
+		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
 		return err
 	}
 
 	infraInternalAllocationParam := &InfraInternalAllocationParam{
-		StorageAllocation: sdk.NewRat(50, 100),
-		CDNAllocation:     sdk.NewRat(50, 100),
+		StorageAllocation: types.NewDecFromRat(50, 100),
+		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
 		return err
@@ -71,18 +71,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	if err := ph.setPostParam(ctx, postParam); err != nil {
-		return err
-	}
-
-	evaluateOfContentValueParam := &EvaluateOfContentValueParam{
-		ConsumptionTimeAdjustBase:      3153600,
-		ConsumptionTimeAdjustOffset:    5,
-		NumOfConsumptionOnAuthorOffset: 7,
-		TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-		TotalAmountOfConsumptionOffset: 5,
-		AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
-	}
-	if err := ph.setEvaluateOfContentValueParam(ctx, evaluateOfContentValueParam); err != nil {
 		return err
 	}
 
@@ -124,18 +112,18 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	proposalParam := &ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
-		ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+		ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 		ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 		ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 		ChangeParamExecutionSec: int64(24 * 3600),
 		ChangeParamDecideSec:    int64(7 * 24 * 3600),
-		ChangeParamPassRatio:    sdk.NewRat(70, 100),
+		ChangeParamPassRatio:    types.NewDecFromRat(70, 100),
 		ChangeParamPassVotes:    types.NewCoinFromInt64(1000000 * types.Decimals),
 		ChangeParamMinDeposit:   types.NewCoinFromInt64(100000 * types.Decimals),
 
 		ProtocolUpgradeDecideSec:  int64(7 * 24 * 3600),
-		ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+		ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 		ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
@@ -185,7 +173,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	globalParam GlobalAllocationParam,
 	infraInternalParam InfraInternalAllocationParam,
 	postParam PostParam,
-	evaluateOfContentValueParam EvaluateOfContentValueParam,
 	developerParam DeveloperParam,
 	validatorParam ValidatorParam,
 	voteParam VoteParam,
@@ -203,10 +190,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	}
 
 	if err := ph.setPostParam(ctx, &postParam); err != nil {
-		return err
-	}
-
-	if err := ph.setEvaluateOfContentValueParam(ctx, &evaluateOfContentValueParam); err != nil {
 		return err
 	}
 
@@ -240,21 +223,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	}
 
 	return nil
-}
-
-// GetEvaluateOfContentValueParam - get evaluate content value param
-func (ph ParamHolder) GetEvaluateOfContentValueParam(
-	ctx sdk.Context) (*EvaluateOfContentValueParam, sdk.Error) {
-	store := ctx.KVStore(ph.key)
-	paraBytes := store.Get(GetEvaluateOfContentValueParamKey())
-	if paraBytes == nil {
-		return nil, ErrEvaluateOfContentValueParamNotFound()
-	}
-	para := new(EvaluateOfContentValueParam)
-	if err := ph.cdc.UnmarshalJSON(paraBytes, para); err != nil {
-		return nil, ErrFailedToUnmarshalEvaluateOfContentValueParam(err)
-	}
-	return para, nil
 }
 
 // GetGlobalAllocationParam - get global allocation param
@@ -414,7 +382,7 @@ func (ph ParamHolder) GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk
 }
 
 // UpdateGlobalGrowthRate - update global growth rate
-func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Rat) sdk.Error {
+func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec) sdk.Error {
 	store := ctx.KVStore(ph.key)
 	allocationBytes := store.Get(GetAllocationParamKey())
 	if allocationBytes == nil {
@@ -446,17 +414,6 @@ func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) 
 		return ErrFailedToMarshalValidatorParam(err)
 	}
 	store.Set(GetValidatorParamKey(), paramBytes)
-	return nil
-}
-
-func (ph ParamHolder) setEvaluateOfContentValueParam(
-	ctx sdk.Context, para *EvaluateOfContentValueParam) sdk.Error {
-	store := ctx.KVStore(ph.key)
-	paraBytes, err := ph.cdc.MarshalJSON(*para)
-	if err != nil {
-		return ErrFailedToMarshalEvaluateOfContentValueParam(err)
-	}
-	store.Set(GetEvaluateOfContentValueParamKey(), paraBytes)
 	return nil
 }
 

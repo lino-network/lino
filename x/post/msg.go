@@ -76,15 +76,15 @@ func NewCreatePostMsg(
 	sourceAuthor, sourcePostID, redistributionSplitRate string,
 	links []types.IDToURLMapping) CreatePostMsg {
 	return CreatePostMsg{
-		Author:       types.AccountKey(author),
-		PostID:       postID,
-		Title:        title,
-		Content:      content,
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
-		Links:        links,
+		Author:                  types.AccountKey(author),
+		PostID:                  postID,
+		Title:                   title,
+		Content:                 content,
+		ParentAuthor:            types.AccountKey(parentAuthor),
+		ParentPostID:            parentPostID,
+		SourceAuthor:            types.AccountKey(sourceAuthor),
+		SourcePostID:            sourcePostID,
+		Links:                   links,
 		RedistributionSplitRate: redistributionSplitRate,
 	}
 }
@@ -143,23 +143,41 @@ func NewReportOrUpvoteMsg(
 	}
 }
 
-// Type - implements sdk.Msg
-func (msg CreatePostMsg) Type() string { return types.PostRouterName }
+// Route - implements sdk.Msg
+func (msg CreatePostMsg) Route() string { return types.PostRouterName }
 
 // Type - implements sdk.Msg
-func (msg UpdatePostMsg) Type() string { return types.PostRouterName }
+func (msg CreatePostMsg) Type() string { return "CreatePostMsg" }
+
+// Route - implements sdk.Msg
+func (msg UpdatePostMsg) Route() string { return types.PostRouterName }
 
 // Type - implements sdk.Msg
-func (msg DeletePostMsg) Type() string { return types.PostRouterName }
+func (msg UpdatePostMsg) Type() string { return "UpdatePostMsg" }
+
+// Route - implements sdk.Msg
+func (msg DeletePostMsg) Route() string { return types.PostRouterName }
 
 // Type - implements sdk.Msg
-func (msg DonateMsg) Type() string { return types.PostRouterName }
+func (msg DeletePostMsg) Type() string { return "DeletePostMsg" }
+
+// Route - implements sdk.Msg
+func (msg DonateMsg) Route() string { return types.PostRouterName }
 
 // Type - implements sdk.Msg
-func (msg ReportOrUpvoteMsg) Type() string { return types.PostRouterName }
+func (msg DonateMsg) Type() string { return "DonateMsg" }
+
+// Route - implements sdk.Msg
+func (msg ReportOrUpvoteMsg) Route() string { return types.PostRouterName }
 
 // Type - implements sdk.Msg
-func (msg ViewMsg) Type() string { return types.PostRouterName }
+func (msg ReportOrUpvoteMsg) Type() string { return "ReportOrUpvoteMsg" }
+
+// Route - implements sdk.Msg
+func (msg ViewMsg) Route() string { return types.PostRouterName }
+
+// Type - implements sdk.Msg
+func (msg ViewMsg) Type() string { return "ViewMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg CreatePostMsg) ValidateBasic() sdk.Error {
@@ -200,11 +218,11 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
+	splitRate, err := sdk.NewDecFromStr(msg.RedistributionSplitRate)
 	if err != nil {
 		return err
 	}
-	if splitRate.LT(sdk.ZeroRat()) || splitRate.GT(sdk.OneRat()) {
+	if splitRate.LT(sdk.ZeroDec()) || splitRate.GT(sdk.OneDec()) {
 		return ErrInvalidPostRedistributionSplitRate()
 	}
 	return nil

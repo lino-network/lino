@@ -114,7 +114,7 @@ func createTestPost(
 	am acc.AccountManager, pm PostManager, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(t, ctx, am, username)
 
-	splitRate, err := sdk.NewRatFromDecimal(redistributionRate, types.NewRatFromDecimalPrecision)
+	splitRate, err := sdk.NewDecFromStr(redistributionRate)
 	assert.Nil(t, err)
 	err = pm.CreatePost(
 		ctx, types.AccountKey(user), postID, "", "", "", "",
@@ -133,7 +133,7 @@ func createTestRepost(
 	err := pm.CreatePost(
 		ctx, types.AccountKey(user), postID, sourceUser, sourcePostID, "", "",
 		string(make([]byte, 1000)), string(make([]byte, 50)),
-		sdk.ZeroRat(), []types.IDToURLMapping{})
+		sdk.ZeroDec(), []types.IDToURLMapping{})
 	assert.Nil(t, err)
 	return user, postID
 }

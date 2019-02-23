@@ -7,19 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
 	devModel "github.com/lino-network/lino/x/developer/model"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	infraModel "github.com/lino-network/lino/x/infra/model"
@@ -35,8 +33,8 @@ var (
 
 	genesisTotalCoin    = types.NewCoinFromInt64(2100000000 * types.Decimals)
 	coinPerValidator    = types.NewCoinFromInt64(100000000 * types.Decimals)
-	growthRate          = sdk.NewRat(98, 1000)
-	validatorAllocation = sdk.NewRat(5, 100)
+	growthRate          = types.NewDecFromRat(98, 1000)
+	validatorAllocation = types.NewDecFromRat(5, 100)
 )
 
 func loggerAndDB() (logger log.Logger, db dbm.DB) {
@@ -77,9 +75,9 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
@@ -185,24 +183,16 @@ func TestGenesisFromConfig(t *testing.T) {
 	}
 	genesisState.GenesisParam = GenesisParam{
 		true,
-		param.EvaluateOfContentValueParam{
-			ConsumptionTimeAdjustBase:      3153600,
-			ConsumptionTimeAdjustOffset:    5,
-			NumOfConsumptionOnAuthorOffset: 7,
-			TotalAmountOfConsumptionBase:   1000 * types.Decimals,
-			TotalAmountOfConsumptionOffset: 5,
-			AmountOfConsumptionExponent:    sdk.NewRat(8, 10),
-		},
 		param.GlobalAllocationParam{
-			GlobalGrowthRate:         sdk.NewRat(98, 1000),
-			InfraAllocation:          sdk.NewRat(20, 100),
-			ContentCreatorAllocation: sdk.NewRat(65, 100),
-			DeveloperAllocation:      sdk.NewRat(10, 100),
-			ValidatorAllocation:      sdk.NewRat(5, 100),
+			GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
+			InfraAllocation:          types.NewDecFromRat(20, 100),
+			ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+			DeveloperAllocation:      types.NewDecFromRat(10, 100),
+			ValidatorAllocation:      types.NewDecFromRat(5, 100),
 		},
 		param.InfraInternalAllocationParam{
-			StorageAllocation: sdk.NewRat(50, 100),
-			CDNAllocation:     sdk.NewRat(50, 100),
+			StorageAllocation: types.NewDecFromRat(50, 100),
+			CDNAllocation:     types.NewDecFromRat(50, 100),
 		},
 		param.VoteParam{
 			MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -213,17 +203,17 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 		param.ProposalParam{
 			ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
-			ContentCensorshipPassRatio:  sdk.NewRat(50, 100),
+			ContentCensorshipPassRatio:  types.NewDecFromRat(50, 100),
 			ContentCensorshipPassVotes:  types.NewCoinFromInt64(10000 * types.Decimals),
 			ContentCensorshipMinDeposit: types.NewCoinFromInt64(100 * types.Decimals),
 
 			ChangeParamDecideSec:  int64(24 * 7 * 3600),
-			ChangeParamPassRatio:  sdk.NewRat(70, 100),
+			ChangeParamPassRatio:  types.NewDecFromRat(70, 100),
 			ChangeParamPassVotes:  types.NewCoinFromInt64(1000000 * types.Decimals),
 			ChangeParamMinDeposit: types.NewCoinFromInt64(100000 * types.Decimals),
 
 			ProtocolUpgradeDecideSec:  int64(24 * 7 * 3600),
-			ProtocolUpgradePassRatio:  sdk.NewRat(80, 100),
+			ProtocolUpgradePassRatio:  types.NewDecFromRat(80, 100),
 			ProtocolUpgradePassVotes:  types.NewCoinFromInt64(10000000 * types.Decimals),
 			ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 		},
@@ -268,9 +258,9 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewRat(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      sdk.NewRat(5, 100),
+		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
@@ -312,8 +302,8 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	remainValidatorPool := types.RatToCoin(
-		genesisTotalCoin.ToRat().Mul(
+	remainValidatorPool := types.DecToCoin(
+		genesisTotalCoin.ToDec().Mul(
 			growthRate.Mul(validatorAllocation)))
 	param, _ := lb.paramHolder.GetValidatorParam(ctx)
 
@@ -328,12 +318,12 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	// simulate app
 	// hourly inflation
 	inflationForValidator :=
-		types.RatToCoin(remainValidatorPool.ToRat().Mul(
-			sdk.NewRat(1, types.HoursPerYear)))
+		types.DecToCoin(remainValidatorPool.ToDec().Mul(
+			types.NewDecFromRat(1, types.HoursPerYear)))
 	// expectBalance for all validators
 	for i := 0; i < 21; i++ {
-		inflation := types.RatToCoin(
-			inflationForValidator.ToRat().Quo(sdk.NewRat(int64(21 - i))))
+		inflation := types.DecToCoin(
+			inflationForValidator.ToDec().Quo(sdk.NewDec(int64(21 - i))))
 		expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 		inflationForValidator = inflationForValidator.Minus(inflation)
 		saving, err :=
@@ -354,7 +344,11 @@ func TestFireByzantineValidators(t *testing.T) {
 			{
 				Validator: abci.Validator{
 					Address: priv2.PubKey().Address(),
-					PubKey:  tmtypes.TM2PB.PubKey(priv2.PubKey())}}}})
+					Power:   1000,
+				},
+			},
+		},
+	})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
@@ -496,14 +490,14 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			var inflation types.Coin
 			if totalWeight == 0 {
 				inflation =
-					types.RatToCoin(
-						sdk.NewRat(1, int64(cs.numberOfInfraProvider)).Round(types.PrecisionFactor).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+					types.DecToCoin(
+						types.NewDecFromRat(1, int64(cs.numberOfInfraProvider)).
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			} else {
 				inflation =
-					types.RatToCoin(
-						sdk.NewRat(cs.consumptionList[i], totalWeight).Round(types.PrecisionFactor).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+					types.DecToCoin(
+						types.NewDecFromRat(cs.consumptionList[i], totalWeight).
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			}
 			if i == (cs.numberOfInfraProvider - 1) {
 				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
@@ -655,15 +649,15 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 			var inflation types.Coin
 			if totalConsumption.IsZero() {
 				inflation =
-					types.RatToCoin(
-						sdk.NewRat(1, int64(len(cs.consumptionList))).Round(types.PrecisionFactor).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+					types.DecToCoin(
+						types.NewDecFromRat(1, int64(len(cs.consumptionList))).
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			} else {
 				inflation =
-					types.RatToCoin(
-						cs.consumptionList[i].ToRat().
-							Quo(totalConsumption.ToRat()).Round(types.PrecisionFactor).
-							Mul(cs.beforeDistributionInflationPool.ToRat()))
+					types.DecToCoin(
+						cs.consumptionList[i].ToDec().
+							Quo(totalConsumption.ToDec()).
+							Mul(cs.beforeDistributionInflationPool.ToDec()))
 			}
 			if i == (cs.numberOfDevelopers - 1) {
 				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
@@ -705,17 +699,17 @@ func TestHourlyEvent(t *testing.T) {
 		assert.Equal(t, pastMinutes, int64(i))
 		if i%60 == 0 {
 			hourlyInflation :=
-				types.RatToCoin(
-					globalMeta.TotalLinoCoin.ToRat().
-						Mul(globalAllocation.GlobalGrowthRate).Mul(sdk.NewRat(1, types.HoursPerYear)))
+				types.DecToCoin(
+					globalMeta.TotalLinoCoin.ToDec().
+						Mul(globalAllocation.GlobalGrowthRate).Mul(types.NewDecFromRat(1, types.HoursPerYear)))
 			consumptionMeta, err := gs.GetConsumptionMeta(ctx)
 			assert.Nil(t, err)
 			expectConsumptionPool =
 				expectConsumptionPool.Plus(
-					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.ContentCreatorAllocation)))
+					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation)))
 			expectInfraPool =
 				expectInfraPool.Plus(
-					types.RatToCoin(hourlyInflation.ToRat().Mul(globalAllocation.InfraAllocation)))
+					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.InfraAllocation)))
 			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
 
 			inflationPool, _ := gs.GetInflationPool(ctx)

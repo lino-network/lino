@@ -27,13 +27,17 @@ func NewCoreContextFromViper() core.CoreContext {
 		privKey, _ = cryptoAmino.PrivKeyFromBytes(privKeyBytes)
 	}
 
+	if viper.GetInt64(FlagSequence) < 0 {
+		panic("Error on Sequence < 0, Sequence = " + fmt.Sprintf("%d", viper.GetInt64(FlagSequence)))
+	}
+
 	return core.CoreContext{
 		ChainID:         viper.GetString(FlagChainID),
 		Height:          viper.GetInt64(FlagHeight),
 		TrustNode:       viper.GetBool(FlagTrustNode),
 		FromAddressName: viper.GetString(FlagName),
 		NodeURI:         nodeURI,
-		Sequence:        viper.GetInt64(FlagSequence),
+		Sequence:        uint64(viper.GetInt64(FlagSequence)), // XXX(yumin): dangerous, but ok.
 		Client:          rpc,
 		PrivKey:         privKey,
 	}

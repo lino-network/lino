@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,7 +28,7 @@ type PostStorage struct {
 // NewPostStorage - returns a new PostStorage that
 // uses codec to (binary) encode and decode concrete Post
 func NewPostStorage(key sdk.StoreKey) PostStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 
 	return PostStorage{

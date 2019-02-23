@@ -22,7 +22,7 @@ import (
 	val "github.com/lino-network/lino/x/validator"
 	vote "github.com/lino-network/lino/x/vote"
 
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -134,7 +134,7 @@ func NewLinoBlockchain(
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
-	lb.MountStoresIAVL(
+	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
 		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore)
@@ -173,10 +173,10 @@ func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
 
 // MackCodec - codec for application, used by command line tool and authenticate handler
 func MakeCodec() *wire.Codec {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	cdc.RegisterConcrete(cauth.StdTx{}, "auth/StdTx", nil)
 	wire.RegisterCrypto(cdc)
-	sdk.RegisterWire(cdc)
+	sdk.RegisterCodec(cdc)
 
 	acc.RegisterWire(cdc)
 	post.RegisterWire(cdc)
@@ -219,7 +219,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			genesisState.GenesisParam.GlobalAllocationParam,
 			genesisState.GenesisParam.InfraInternalAllocationParam,
 			genesisState.GenesisParam.PostParam,
-			genesisState.GenesisParam.EvaluateOfContentValueParam,
 			genesisState.GenesisParam.DeveloperParam,
 			genesisState.GenesisParam.ValidatorParam,
 			genesisState.GenesisParam.VoteParam,
@@ -453,13 +452,15 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 
 // udpate validator set and renew reputation round
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	ABCIValList, err := lb.valManager.GetUpdateValidatorList(ctx)
+	// XXX(yumin): reputation updates, will not change any tendermint.
+	rep.EndBlocker(ctx, req, lb.reputationManager)
+
+	// update validator set.
+	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
 		panic(err)
 	}
-	rep.EndBlocker(ctx, req, lb.reputationManager)
-
-	return abci.ResponseEndBlock{ValidatorUpdates: ABCIValList}
+	return abci.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
 
 func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
@@ -522,13 +523,12 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 	}
 	// give inflation to each validator evenly
 	for i, validator := range lst.OncallValidators {
-		var ratPerValidator sdk.Rat
-		if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i)))
-		} else {
-			ratPerValidator = coin.ToRat().Quo(sdk.NewRat(int64(len(lst.OncallValidators) - i))).Round(types.PrecisionFactor)
-		}
-		coinPerValidator := types.RatToCoin(ratPerValidator)
+		var ratPerValidator sdk.Dec
+		// XXX(yumin): why in the previous version, it's guarged with
+		// if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
+		// though only differs in round?
+		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
+		coinPerValidator := types.DecToCoin(ratPerValidator)
 		lb.accountManager.AddSavingCoin(
 			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
 		coin = coin.Minus(coinPerValidator)
@@ -558,8 +558,8 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin := types.RatToCoin(myShareRat)
+		myShareRat := inflation.ToDec().Mul(percentage)
+		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, provider, myShareCoin, "", "", types.InfraInflation)
@@ -593,8 +593,8 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		if err != nil {
 			panic(err)
 		}
-		myShareRat := inflation.ToRat().Mul(percentage)
-		myShareCoin := types.RatToCoin(myShareRat)
+		myShareRat := inflation.ToDec().Mul(percentage)
+		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
 		lb.accountManager.AddSavingCoin(
 			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)

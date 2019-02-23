@@ -117,13 +117,7 @@ const (
 	// MinutesPerDay - as defined by a julian year of 365.25 days
 	MinutesPerDay = 60 * 24
 
-	// PrecisionFactor - all decimals will around to allow at most 7 decimals
-	PrecisionFactor = 10000000
-
-	// NewRatFromDecimalPrecision - precision used in sdk NewRatFromDecimal
-	NewRatFromDecimalPrecision = 5
-
-	// MaximumSdkRatLength - maximum length of sdk.Rat can pass into blockchain
+	// MaximumSdkRatLength - maximum length of sdk.Dec can pass into blockchain
 	MaximumSdkRatLength = 10
 
 	// MaximumLinkIdentifier - maximum length of Links identifier
@@ -173,4 +167,7 @@ const (
 
 	// LinoBlockchainSecondUpdateHeight - second blockchain update
 	LinoBlockchainSecondUpdateHeight = 356000
+
+	// TendermintValidatorPower - every validator has const power in tendermint engine.
+	TendermintValidatorPower = 1000
 )

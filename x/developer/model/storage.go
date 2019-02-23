@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +20,7 @@ type DeveloperStorage struct {
 
 // DeveloperStorage - new developer storage
 func NewDeveloperStorage(key sdk.StoreKey) DeveloperStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return DeveloperStorage{
 		key: key,

@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	txbuilder "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	"github.com/pkg/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +51,7 @@ func (ctx CoreContext) QuerySubspace(cdc *wire.Codec, subspace []byte, storeName
 	if err != nil {
 		return res, err
 	}
-	cdc.MustUnmarshalBinary(resRaw, &res)
+	cdc.MustUnmarshalBinaryLengthPrefixed(resRaw, &res)
 	return
 }
 
@@ -63,8 +64,8 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 	}
 
 	opts := rpcclient.ABCIQueryOptions{
-		Height:  ctx.Height,
-		Trusted: ctx.TrustNode,
+		Height: ctx.Height,
+		Prove:  !ctx.TrustNode,
 	}
 	result, err := node.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
@@ -86,7 +87,7 @@ func (ctx CoreContext) SignAndBuild(msgs []sdk.Msg, cdc *wire.Codec) ([]byte, er
 	}
 	sequence := ctx.Sequence
 	memo := ctx.Memo
-	signMsg := auth.StdSignMsg{
+	signMsg := txbuilder.StdSignMsg{
 		ChainID:       chainID,
 		AccountNumber: 0,
 		Sequence:      sequence,
@@ -105,7 +106,9 @@ func (ctx CoreContext) SignAndBuild(msgs []sdk.Msg, cdc *wire.Codec) ([]byte, er
 	sigs := []auth.StdSignature{{
 		PubKey:    ctx.PrivKey.PubKey(),
 		Signature: sig,
-		Sequence:  sequence,
+		// XXX(yumin): client core may be broken now. we need to revisit this part
+		// and probably remove all these and use cosmos's build-in support functions.
+		// Sequence:  sequence,
 	}}
 
 	// marshal bytes

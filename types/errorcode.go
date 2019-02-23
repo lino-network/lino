@@ -5,8 +5,9 @@ import (
 )
 
 const (
-	// See https://github.com/cosmos/cosmos-sdk/issues/766
-	LinoErrorCodeSpace = 11
+	// updated from int to string.
+	// https://github.com/cosmos/cosmos-sdk/pull/2821
+	LinoErrorCodeSpace = "lino"
 
 	// Lino common errors reserve 100 ~ 149
 	CodeInvalidUsername     sdk.CodeType = 100

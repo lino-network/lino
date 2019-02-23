@@ -68,7 +68,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 		}
 	}
 
-	splitRate, err := sdk.NewRatFromDecimal(msg.RedistributionSplitRate, types.NewRatFromDecimalPrecision)
+	splitRate, err := sdk.NewDecFromStr(msg.RedistributionSplitRate)
 	if err != nil {
 		return ErrInvalidPostRedistributionSplitRate().Result()
 	}
@@ -159,9 +159,9 @@ func handleDonateMsg(
 		if err != nil {
 			return err.Result()
 		}
-		sourceIncome := types.RatToCoin(coin.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
+		sourceIncome := types.DecToCoin(coin.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		coin = coin.Minus(sourceIncome)
-		sourceCoinDayGained := types.RatToCoin(totalCoinDayDonated.ToRat().Mul(sdk.OneRat().Sub(redistributionSplitRate)))
+		sourceCoinDayGained := types.DecToCoin(totalCoinDayDonated.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
 		totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
 		if err := processDonationFriction(
 			ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {
@@ -190,13 +190,13 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	frictionCoin := types.RatToCoin(coin.ToRat().Mul(consumptionFrictionRate))
+	frictionCoin := types.DecToCoin(coin.ToDec().Mul(consumptionFrictionRate))
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
 	dp, err := rm.DonateAt(ctx, consumer, postKey, coinDayDonated)
 	if err != nil {
 		return err
 	}
-	evaluateResult, err := evaluateConsumption(ctx, consumer, dp, postAuthor, postID, am, pm, gm)
+	evaluateResult, err := evaluateConsumption(dp, gm)
 	if err != nil {
 		return err
 	}
@@ -234,18 +234,14 @@ func processDonationFriction(
 	return nil
 }
 
+// XXX(yumin): deprecated, chained on gm.EvaluateConsumption
 func evaluateConsumption(
-	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
-	postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager) (types.Coin, sdk.Error) {
-	numOfConsumptionOnAuthor, err := am.GetDonationRelationship(ctx, consumer, postAuthor)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	created, totalReward, err := pm.GetCreatedTimeAndReward(ctx, types.GetPermlink(postAuthor, postID))
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return gm.EvaluateConsumption(ctx, coin, numOfConsumptionOnAuthor, created, totalReward)
+	coin types.Coin,
+	gm global.GlobalManager,
+	// ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
+	// postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager,
+) (types.Coin, sdk.Error) {
+	return gm.EvaluateConsumption(coin)
 }
 
 // Handle ReportMsgOrUpvoteMsg

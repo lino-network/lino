@@ -1,13 +1,16 @@
 package model
 
 import (
-	types "github.com/lino-network/lino/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+
+	types "github.com/lino-network/lino/types"
 )
 
 // Validator is basic structure records all validator information
 type Validator struct {
 	ABCIValidator   abci.Validator
+	PubKey          crypto.PubKey    `json:"pubkey"`
 	Username        types.AccountKey `json:"username"`
 	Deposit         types.Coin       `json:"deposit"`
 	AbsentCommit    int64            `json:"absent_commit"`

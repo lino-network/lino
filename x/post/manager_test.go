@@ -99,7 +99,7 @@ func TestCreatePost(t *testing.T) {
 		err := pm.CreatePost(
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
-			msg.Title, sdk.ZeroRat(), msg.Links)
+			msg.Title, sdk.ZeroDec(), msg.Links)
 		if !assert.Equal(t, err, tc.expectResult) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
@@ -123,7 +123,7 @@ func TestCreatePost(t *testing.T) {
 			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
 			IsDeleted:               false,
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
@@ -202,7 +202,7 @@ func TestUpdatePost(t *testing.T) {
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 			TotalReward:             types.NewCoinFromInt64(0),
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 		}
 		checkPostKVStore(t, ctx,
 			types.GetPermlink(tc.msg.Author, tc.msg.PostID), postInfo, postMeta)
@@ -265,21 +265,21 @@ func TestGetSourcePost(t *testing.T) {
 
 	for _, tc := range testCases {
 		msg := CreatePostMsg{
-			PostID:       tc.postID,
-			Title:        string(make([]byte, 50)),
-			Content:      string(make([]byte, 1000)),
-			Author:       tc.author,
-			ParentAuthor: "",
-			ParentPostID: "",
-			SourceAuthor: tc.sourceAuthor,
-			SourcePostID: tc.sourcePostID,
-			Links:        nil,
+			PostID:                  tc.postID,
+			Title:                   string(make([]byte, 50)),
+			Content:                 string(make([]byte, 1000)),
+			Author:                  tc.author,
+			ParentAuthor:            "",
+			ParentPostID:            "",
+			SourceAuthor:            tc.sourceAuthor,
+			SourcePostID:            tc.sourcePostID,
+			Links:                   nil,
 			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(
 			ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
 			msg.ParentAuthor, msg.ParentPostID, msg.Content,
-			msg.Title, sdk.ZeroRat(), msg.Links)
+			msg.Title, sdk.ZeroDec(), msg.Links)
 		if err != nil {
 			t.Errorf("%s: failed to create post, got err %v", tc.testName, err)
 		}
@@ -374,7 +374,7 @@ func TestAddOrUpdateViewToPost(t *testing.T) {
 			LastUpdatedAt:           createTime.Unix(),
 			LastActivityAt:          createTime.Unix(),
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 			TotalViewCount:          tc.expectTotalViewCount,
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
@@ -475,7 +475,7 @@ func TestDonation(t *testing.T) {
 			LastUpdatedAt:           ctx.BlockHeader().Time.Unix(),
 			LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			AllowReplies:            true,
-			RedistributionSplitRate: sdk.ZeroRat(),
+			RedistributionSplitRate: sdk.ZeroDec(),
 			TotalDonateCount:        tc.expectDonateCount,
 			TotalReward:             tc.expectTotalDonation,
 			TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
@@ -501,32 +501,32 @@ func TestGetPenaltyScore(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		reputation         types.Coin
-		expectPenaltyScore sdk.Rat
+		expectPenaltyScore sdk.Dec
 	}{
 		{
 			testName:           "positive reputation",
 			reputation:         types.NewCoinFromInt64(1),
-			expectPenaltyScore: sdk.ZeroRat(),
+			expectPenaltyScore: sdk.ZeroDec(),
 		},
 		{
 			testName:           "zero reputation",
 			reputation:         types.NewCoinFromInt64(0),
-			expectPenaltyScore: sdk.ZeroRat(),
+			expectPenaltyScore: sdk.ZeroDec(),
 		},
 		{
 			testName:           "big positive reputation",
 			reputation:         types.NewCoinFromBigInt(bigStringInt1),
-			expectPenaltyScore: sdk.ZeroRat(),
+			expectPenaltyScore: sdk.ZeroDec(),
 		},
 		{
 			testName:           "negative reputation",
 			reputation:         types.NewCoinFromInt64(-1),
-			expectPenaltyScore: sdk.NewRat(1, maxReportReputation),
+			expectPenaltyScore: types.NewDecFromRat(1, maxReportReputation),
 		},
 		{
 			testName:           "big negative reputation",
 			reputation:         types.NewCoinFromBigInt(bigStringInt2),
-			expectPenaltyScore: sdk.OneRat(),
+			expectPenaltyScore: sdk.OneDec(),
 		},
 	}
 

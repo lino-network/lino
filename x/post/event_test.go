@@ -33,7 +33,7 @@ func TestRewardEvent(t *testing.T) {
 		initRewardPool     types.Coin
 		initRewardWindow   types.Coin
 		expectPostMeta     postModel.PostMeta
-		expectAppWeight    sdk.Rat
+		expectAppWeight    sdk.Dec
 		expectAuthorReward accModel.Reward
 	}{
 		{
@@ -54,10 +54,10 @@ func TestRewardEvent(t *testing.T) {
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.OneRat(),
+			expectAppWeight: sdk.OneDec(),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -84,10 +84,10 @@ func TestRewardEvent(t *testing.T) {
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(1),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.OneRat(),
+			expectAppWeight: sdk.OneDec(),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(1),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -114,10 +114,10 @@ func TestRewardEvent(t *testing.T) {
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(100),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(1243781, 2500000),
+			expectAppWeight: types.NewDecFromRat(100, 201),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(100),
 				OriginalIncome:  types.NewCoinFromInt64(15),
@@ -144,11 +144,11 @@ func TestRewardEvent(t *testing.T) {
 				TotalReportCoinDay:      types.NewCoinFromInt64(0),
 				TotalDonateCount:        1,
 				TotalReward:             types.NewCoinFromInt64(0),
-				RedistributionSplitRate: sdk.ZeroRat(),
+				RedistributionSplitRate: sdk.ZeroDec(),
 				IsDeleted:               true,
 				LastActivityAt:          ctx.BlockHeader().Time.Unix(),
 			},
-			expectAppWeight: sdk.NewRat(1243781, 2500000),
+			expectAppWeight: types.NewDecFromRat(100, 201),
 			expectAuthorReward: accModel.Reward{
 				TotalIncome:     types.NewCoinFromInt64(0),
 				OriginalIncome:  types.NewCoinFromInt64(15),

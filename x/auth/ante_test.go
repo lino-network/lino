@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -75,6 +74,7 @@ type TestMsg struct {
 
 var _ types.Msg = TestMsg{}
 
+func (msg TestMsg) Route() string                   { return "normal msg" }
 func (msg TestMsg) Type() string                    { return "normal msg" }
 func (msg TestMsg) GetPermission() types.Permission { return msg.Permission }
 func (msg TestMsg) GetSignBytes() []byte {
@@ -106,29 +106,29 @@ func newTestMsg(accKeys ...types.AccountKey) TestMsg {
 
 // run the tx through the anteHandler and ensure its valid
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx) {
-	_, result, abort := anteHandler(ctx, tx)
+	_, result, abort := anteHandler(ctx, tx, false)
 	assert.False(t, abort)
-	assert.Equal(t, sdk.ABCICodeOK, result.Code)
+	assert.True(t, result.Code.IsOK()) // redundent
 	assert.True(t, result.IsOK())
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
 func checkInvalidTx(
 	t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, result sdk.Result) {
-	_, r, abort := anteHandler(ctx, tx)
+	_, r, abort := anteHandler(ctx, tx, false)
 	assert.True(t, abort)
 	assert.Equal(t, result, r)
 }
 
 func newTestTx(
-	ctx sdk.Context, msgs []sdk.Msg, privs []crypto.PrivKey, seqs []int64) sdk.Tx {
+	ctx sdk.Context, msgs []sdk.Msg, privs []crypto.PrivKey, seqs []uint64) sdk.Tx {
 	sigs := make([]auth.StdSignature, len(privs))
 
 	for i, priv := range privs {
 		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{}, msgs, "")
 		bz, _ := priv.Sign(signBytes)
 		sigs[i] = auth.StdSignature{
-			PubKey: priv.PubKey(), Signature: bz, Sequence: seqs[i]}
+			PubKey: priv.PubKey(), Signature: bz}
 	}
 	tx := auth.NewStdTx(msgs, auth.StdFee{}, sigs, "")
 	return tx
@@ -147,18 +147,18 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	msg := newTestMsg(user1, user2)
 
 	// test no signatures
-	privs, seqs := []crypto.PrivKey{}, []int64{}
+	privs, seqs := []crypto.PrivKey{}, []uint64{}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, ErrNoSignatures().Result())
 
 	// test num sigs less than GetSigners
-	privs, seqs = []crypto.PrivKey{transaction1}, []int64{0}
+	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(
 		t, anteHandler, ctx, tx, ErrWrongNumberOfSigners().Result())
 
 	// test sig user mismatch
-	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []int64{0, 0}
+	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{0, 0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 }
@@ -175,31 +175,31 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	msg := newTestMsg(user1)
 
 	// test valid transaction
-	privs, seqs := []crypto.PrivKey{transaction1}, []int64{0}
+	privs, seqs := []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err := am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(1))
+	assert.Equal(t, seq, uint64(1))
 
 	// test no signatures
-	privs, seqs = []crypto.PrivKey{}, []int64{}
+	privs, seqs = []crypto.PrivKey{}, []uint64{}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, ErrNoSignatures().Result())
 
-	// test wrong sequence number
-	privs, seqs = []crypto.PrivKey{transaction1}, []int64{0}
+	// test wrong sequence number, now we return signature failed even it's seq number error.
+	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, ErrInvalidSequence(
-		fmt.Sprintf("Invalid sequence for signer %v. Got %d, expected %d", user1, 0, 1)).Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, ErrUnverifiedBytes(
+		"signature verification failed, chain-id:Lino, seq:1").Result())
 
 	// test wrong priv key
-	privs, seqs = []crypto.PrivKey{transaction2}, []int64{1}
+	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
 	// test wrong sig number
-	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []int64{2, 0}
+	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{2, 0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, ErrWrongNumberOfSigners().Result())
 }
@@ -217,19 +217,19 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	msg := newTestMsg(user1)
 
 	// test valid transaction
-	privs, seqs := []crypto.PrivKey{transaction1}, []int64{0}
+	privs, seqs := []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err := am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(1))
+	assert.Equal(t, seq, uint64(1))
 
 	// test wrong priv key
-	privs, seqs = []crypto.PrivKey{transaction2}, []int64{1}
+	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
+	privs, seqs = []crypto.PrivKey{post2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
@@ -237,20 +237,20 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	assert.Nil(t, err)
 
 	// should still fail by using transaction key
-	privs, seqs = []crypto.PrivKey{transaction2}, []int64{1}
+	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
 	// should pass authentication check after grant the app permission
-	privs, seqs = []crypto.PrivKey{post2}, []int64{1}
+	privs, seqs = []crypto.PrivKey{post2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err = am.GetSequence(ctx, user2)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(0))
+	assert.Equal(t, seq, uint64(0))
 	seq, err = am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(2))
+	assert.Equal(t, seq, uint64(2))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time.Add(time.Duration(3601) * time.Second)})
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
@@ -259,19 +259,19 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	err = am.AuthorizePermission(ctx, user1, user3, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
 	assert.Nil(t, err)
 	msg.Permission = types.PreAuthorizationPermission
-	privs, seqs = []crypto.PrivKey{post3}, []int64{2}
+	privs, seqs = []crypto.PrivKey{post3}, []uint64{2}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
 
-	privs, seqs = []crypto.PrivKey{transaction3}, []int64{2}
+	privs, seqs = []crypto.PrivKey{transaction3}, []uint64{2}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 	seq, err = am.GetSequence(ctx, user3)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(0))
+	assert.Equal(t, seq, uint64(0))
 	seq, err = am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(3))
+	assert.Equal(t, seq, uint64(3))
 
 	// test pre authorization exceeds limitation
 	msg.Amount = types.NewCoinFromInt64(100)
@@ -294,23 +294,23 @@ func TestTPSCapacity(t *testing.T) {
 	msg := newTestMsg(user1)
 
 	// test valid transaction
-	privs, seqs := []crypto.PrivKey{transaction1}, []int64{0}
+	privs, seqs := []crypto.PrivKey{transaction1}, []uint64{0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
 
 	seq, err := am.GetSequence(ctx, user1)
 	assert.Nil(t, err)
-	assert.Equal(t, seq, int64(1))
+	assert.Equal(t, seq, uint64(1))
 
 	ctx = ctx.WithBlockHeader(
 		abci.Header{ChainID: "Lino", Height: 2, Time: time.Now(), NumTxs: 1000})
 	gm.SetLastBlockTime(ctx, time.Now().Unix()-1)
 	gm.UpdateTPS(ctx)
 
-	seqs = []int64{1}
+	seqs = []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkValidTx(t, anteHandler, ctx, tx)
-	seqs = []int64{2}
+	seqs = []uint64{2}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
 	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
 }

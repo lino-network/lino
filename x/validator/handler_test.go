@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -49,7 +48,7 @@ func TestRegisterBasic(t *testing.T) {
 	// make sure the validator's account info (power&pubKey) is correct
 	verifyAccount, _ := valManager.storage.GetValidator(ctx, user1)
 	assert.Equal(t, valParam.ValidatorMinCommittingDeposit, verifyAccount.Deposit)
-	assert.Equal(t, tmtypes.TM2PB.PubKey(valKey), verifyAccount.ABCIValidator.GetPubKey())
+	assert.Equal(t, valKey, verifyAccount.PubKey)
 }
 
 func TestRegisterFeeNotEnough(t *testing.T) {

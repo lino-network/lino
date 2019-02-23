@@ -240,7 +240,7 @@ func TestGetProposalPassParam(t *testing.T) {
 		testName      string
 		proposalType  types.ProposalType
 		wantError     sdk.Error
-		wantPassRatio sdk.Rat
+		wantPassRatio sdk.Dec
 		wantPassVotes types.Coin
 	}{
 		{

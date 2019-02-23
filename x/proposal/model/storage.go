@@ -1,8 +1,8 @@
 package model
 
 import (
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 )
@@ -20,7 +20,7 @@ type ProposalStorage struct {
 }
 
 func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 
 	cdc.RegisterInterface((*Proposal)(nil), nil)
 	cdc.RegisterConcrete(&ChangeParamProposal{}, "changeParam", nil)
@@ -30,7 +30,6 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
 	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "allocation", nil)
 	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "infraAllocation", nil)
-	cdc.RegisterConcrete(param.EvaluateOfContentValueParam{}, "contentValue", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
 	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)

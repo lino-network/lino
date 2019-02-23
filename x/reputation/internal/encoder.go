@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
-var cdc = wire.NewCodec()
+var cdc = wire.New()
 
 // ------ following codes are generated from codegen/genGobCode.py --------
 // ------------------------- DO NOT CHANGE --------------------------------

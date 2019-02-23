@@ -1,20 +1,19 @@
 package post
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global"
-	rep "github.com/lino-network/lino/x/reputation"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	dev "github.com/lino-network/lino/x/developer"
+	"github.com/lino-network/lino/x/global"
+	rep "github.com/lino-network/lino/x/reputation"
 	vote "github.com/lino-network/lino/x/vote"
 )
 
 func init() {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
@@ -50,7 +49,7 @@ func (event RewardEvent) Execute(
 		return err
 	}
 	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
-		paneltyScore = sdk.OneRat()
+		paneltyScore = sdk.OneDec()
 	}
 	reward, err := gm.GetRewardAndPopFromWindow(ctx, event.Evaluate, paneltyScore)
 	if err != nil {

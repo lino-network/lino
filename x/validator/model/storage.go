@@ -1,8 +1,8 @@
 package model
 
 import (
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/lino-network/lino/types"
 )
 
@@ -17,7 +17,7 @@ type ValidatorStorage struct {
 }
 
 func NewValidatorStorage(key sdk.StoreKey) ValidatorStorage {
-	cdc := wire.NewCodec()
+	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	vs := ValidatorStorage{
 		key: key,

@@ -1,7 +1,7 @@
 package developer
 
 import (
-	"github.com/cosmos/cosmos-sdk/wire"
+	wire "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Register concrete types on wire codec
@@ -14,7 +14,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(PreAuthorizationMsg{}, "lino/preAuthorizationPermission", nil)
 }
 
-var msgCdc = wire.NewCodec()
+var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)
