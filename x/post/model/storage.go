@@ -15,7 +15,8 @@ var (
 	postReportOrUpvoteSubStore = []byte{0x02} // SubStore for all report or upvote to post
 	postCommentSubStore        = []byte{0x03} // SubStore for all comments
 	postViewsSubStore          = []byte{0x04} // SubStore for all views
-	postDonationsSubStore      = []byte{0x05} // SubStore for all donations
+	// XXX(yukai): deprecated.
+	// postDonationsSubStore      = []byte{0x05} // SubStore for all donations
 )
 
 // PostStorage - post storage
@@ -177,33 +178,6 @@ func (ps PostStorage) SetPostView(ctx sdk.Context, permlink types.Permlink, post
 	return nil
 }
 
-// GetPostDonations - get post donations from KVStore
-func (ps PostStorage) GetPostDonations(
-	ctx sdk.Context, permlink types.Permlink, donateUser types.AccountKey) (*Donations, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	donateBytes := store.Get(getPostDonationKey(permlink, donateUser))
-	if donateBytes == nil {
-		return nil, ErrPostDonationNotFound(getPostDonationKey(permlink, donateUser))
-	}
-	postDonations := new(Donations)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(donateBytes, postDonations); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostDonations(unmarshalErr)
-	}
-	return postDonations, nil
-}
-
-// SetPostDonations - set post donations to KVStore
-func (ps PostStorage) SetPostDonations(
-	ctx sdk.Context, permlink types.Permlink, postDonations *Donations) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	postDonationsByte, err := ps.cdc.MarshalJSON(*postDonations)
-	if err != nil {
-		return ErrFailedToMarshalPostDonations(err)
-	}
-	store.Set(getPostDonationKey(permlink, postDonations.Username), postDonationsByte)
-	return nil
-}
-
 // Export post storage state.
 func (ps PostStorage) Export(ctx sdk.Context) *PostTables {
 	tables := &PostTables{}
@@ -337,15 +311,4 @@ func getPostCommentPrefix(permlink types.Permlink) []byte {
 // PostCommentPrefix - "comment substore" + "permlink" + "comment permlink"
 func getPostCommentKey(permlink types.Permlink, commentPermlink types.Permlink) []byte {
 	return append(getPostCommentPrefix(permlink), commentPermlink...)
-}
-
-// PostCommentPrefix - "donation substore" + "permlink"
-// which can be used to access all donations belong to this post
-func getPostDonationsPrefix(permlink types.Permlink) []byte {
-	return append(append(postDonationsSubStore, permlink...), types.KeySeparator...)
-}
-
-// getPostDonationKey - "donation substore" + "permlink" + "donator"
-func getPostDonationKey(permlink types.Permlink, donateUser types.AccountKey) []byte {
-	return append(getPostDonationsPrefix(permlink), donateUser...)
 }

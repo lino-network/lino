@@ -228,9 +228,6 @@ func processDonationFriction(
 	if err := gm.AddConsumption(ctx, coin); err != nil {
 		return err
 	}
-	if err := am.UpdateDonationRelationship(ctx, postAuthor, consumer); err != nil {
-		return err
-	}
 	return nil
 }
 

@@ -22,8 +22,6 @@ type AccountBank struct {
 	Saving          types.Coin    `json:"saving"`
 	CoinDay         types.Coin    `json:"coin_day"`
 	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
-	NumOfTx         int64         `json:"number_of_transaction"`
-	NumOfReward     int64         `json:"number_of_reward"`
 }
 
 // FrozenMoney - frozen money
@@ -84,18 +82,6 @@ type AccountMeta struct {
 // 	Bandwidth int64 `json:"bandwidth"`
 // }
 
-// FollowerMeta - record all meta info about this relation
-type FollowerMeta struct {
-	CreatedAt    int64            `json:"created_at"`
-	FollowerName types.AccountKey `json:"follower_name"`
-}
-
-// FollowingMeta - record all meta info about this relation
-type FollowingMeta struct {
-	CreatedAt     int64            `json:"created_at"`
-	FollowingName types.AccountKey `json:"following_name"`
-}
-
 // Reward - get from the inflation pool
 type Reward struct {
 	TotalIncome     types.Coin `json:"total_income"`
@@ -103,44 +89,4 @@ type Reward struct {
 	FrictionIncome  types.Coin `json:"friction_income"`
 	InflationIncome types.Coin `json:"inflation_income"`
 	UnclaimReward   types.Coin `json:"unclaim_reward"`
-}
-
-// RewardDetail - reward detail
-type RewardDetail struct {
-	OriginalDonation types.Coin       `json:"original_donation"`
-	FrictionDonation types.Coin       `json:"friction_donation"`
-	ActualReward     types.Coin       `json:"actual_reward"`
-	Consumer         types.AccountKey `json:"consumer"`
-	PostAuthor       types.AccountKey `json:"post_author"`
-	PostID           string           `json:"post_id"`
-}
-
-// RewardHistory - reward history
-type RewardHistory struct {
-	Details []RewardDetail `json:"details"`
-}
-
-// Relationship - relation between two users
-type Relationship struct {
-	DonationTimes int64 `json:"donation_times"`
-}
-
-// BalanceHistory - records all transactions belong to the user
-// Currently one balance history bundle can store at most 1000 transactions
-// If number of transaction exceeds the limitation, a new bundle will be
-// generated in KVStore
-// Total number of history bundle is defined in metadata
-type BalanceHistory struct {
-	Details []Detail `json:"details"`
-}
-
-// Detail - detail of each income and outcome
-type Detail struct {
-	DetailType types.TransferDetailType `json:"detail_type"`
-	From       types.AccountKey         `json:"from"`
-	To         types.AccountKey         `json:"to"`
-	Amount     types.Coin               `json:"amount"`
-	Balance    types.Coin               `json:"balance"`
-	CreatedAt  int64                    `json:"created_at"`
-	Memo       string                   `json:"memo"`
 }

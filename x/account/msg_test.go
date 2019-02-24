@@ -19,116 +19,6 @@ var (
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
 )
 
-func TestFollowMsg(t *testing.T) {
-	testCases := map[string]struct {
-		msg      FollowMsg
-		wantCode sdk.CodeType
-	}{
-		"normal case": {
-			msg: FollowMsg{
-				Follower: userA,
-				Followee: userB,
-			},
-			wantCode: sdk.CodeOK,
-		},
-		"invalid follower - Username is too short": {
-			msg: FollowMsg{
-				Follower: "re",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid follower - Username is too long": {
-			msg: FollowMsg{
-				Follower: "registerregisterregis",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid followee - Username is too short": {
-			msg: FollowMsg{
-				Follower: userA,
-				Followee: "re",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid followee - Username is too long": {
-			msg: FollowMsg{
-				Follower: userA,
-				Followee: "registerregisterregis",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
-			}
-			continue
-		}
-		if got.Code() != tc.wantCode {
-			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
-		}
-	}
-}
-
-func TestUnfollowMsg(t *testing.T) {
-	testCases := map[string]struct {
-		msg      UnfollowMsg
-		wantCode sdk.CodeType
-	}{
-		"normal case": {
-			msg: UnfollowMsg{
-				Follower: userA,
-				Followee: userB,
-			},
-			wantCode: sdk.CodeOK,
-		},
-		"invalid follower - Username is too short": {
-			msg: UnfollowMsg{
-				Follower: "re",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid follower - Username is too long": {
-			msg: UnfollowMsg{
-				Follower: "registerregisterregis",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid followee - Username is too short": {
-			msg: UnfollowMsg{
-				Follower: userA,
-				Followee: "re",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid followee - Username is too long": {
-			msg: UnfollowMsg{
-				Follower: userA,
-				Followee: "registerregisterregis",
-			},
-			wantCode: types.CodeInvalidUsername,
-		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
-			}
-			continue
-		}
-		if got.Code() != tc.wantCode {
-			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
-		}
-	}
-}
-
 func TestTransferMsg(t *testing.T) {
 	testCases := map[string]struct {
 		msg      TransferMsg
@@ -401,14 +291,6 @@ func TestMsgPermission(t *testing.T) {
 			msg:              NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
 			expectPermission: types.TransactionPermission,
 		},
-		"follow": {
-			msg:              NewFollowMsg("userA", "userB"),
-			expectPermission: types.AppPermission,
-		},
-		"unfollow": {
-			msg:              NewUnfollowMsg("userA", "userB"),
-			expectPermission: types.AppPermission,
-		},
 		"recover": {
 			msg: NewRecoverMsg(
 				"userA", secp256k1.GenPrivKey().PubKey(),
@@ -445,12 +327,6 @@ func TestGetSignBytes(t *testing.T) {
 	}{
 		"transfer to user": {
 			msg: NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
-		},
-		"follow": {
-			msg: NewFollowMsg("userA", "userB"),
-		},
-		"unfollow": {
-			msg: NewUnfollowMsg("userA", "userB"),
 		},
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(
@@ -493,14 +369,6 @@ func TestGetSigners(t *testing.T) {
 		"transfer to user": {
 			msg:           NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
 			expectSigners: []types.AccountKey{"test"},
-		},
-		"follow": {
-			msg:           NewFollowMsg("userA", "userB"),
-			expectSigners: []types.AccountKey{"userA"},
-		},
-		"unfollow": {
-			msg:           NewUnfollowMsg("userA", "userB"),
-			expectSigners: []types.AccountKey{"userA"},
 		},
 		"recover msg with public key type Ed25519": {
 			msg: NewRecoverMsg(

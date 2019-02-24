@@ -265,15 +265,15 @@ func TestGetSourcePost(t *testing.T) {
 
 	for _, tc := range testCases {
 		msg := CreatePostMsg{
-			PostID:                  tc.postID,
-			Title:                   string(make([]byte, 50)),
-			Content:                 string(make([]byte, 1000)),
-			Author:                  tc.author,
-			ParentAuthor:            "",
-			ParentPostID:            "",
-			SourceAuthor:            tc.sourceAuthor,
-			SourcePostID:            tc.sourcePostID,
-			Links:                   nil,
+			PostID:       tc.postID,
+			Title:        string(make([]byte, 50)),
+			Content:      string(make([]byte, 1000)),
+			Author:       tc.author,
+			ParentAuthor: "",
+			ParentPostID: "",
+			SourceAuthor: tc.sourceAuthor,
+			SourcePostID: tc.sourcePostID,
+			Links:        nil,
 			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(
@@ -411,7 +411,6 @@ func TestDonation(t *testing.T) {
 		author              types.AccountKey
 		expectDonateCount   int64
 		expectTotalDonation types.Coin
-		expectDonationList  model.Donations
 	}{
 		{
 			testName:            "user3 donates to (postID1, user1)",
@@ -423,11 +422,6 @@ func TestDonation(t *testing.T) {
 			author:              user1,
 			expectDonateCount:   1,
 			expectTotalDonation: types.NewCoinFromInt64(1),
-			expectDonationList: model.Donations{
-				Username: user3,
-				Amount:   types.NewCoinFromInt64(1),
-				Times:    1,
-			},
 		},
 		{
 			testName:            "user3 donates to (postID2, user2)",
@@ -439,11 +433,6 @@ func TestDonation(t *testing.T) {
 			author:              user2,
 			expectDonateCount:   1,
 			expectTotalDonation: types.NewCoinFromInt64(1),
-			expectDonationList: model.Donations{
-				Username: user3,
-				Amount:   types.NewCoinFromInt64(1),
-				Times:    1,
-			},
 		},
 		{
 			testName:            "user3 donates to (postID2, user2) again",
@@ -455,11 +444,6 @@ func TestDonation(t *testing.T) {
 			author:              user2,
 			expectDonateCount:   2,
 			expectTotalDonation: types.NewCoinFromInt64(21),
-			expectDonationList: model.Donations{
-				Username: user3,
-				Amount:   types.NewCoinFromInt64(21),
-				Times:    2,
-			},
 		},
 	}
 
@@ -482,11 +466,6 @@ func TestDonation(t *testing.T) {
 			TotalReportCoinDay:      types.NewCoinFromInt64(0),
 		}
 		checkPostMeta(t, ctx, postKey, postMeta)
-		storage := model.NewPostStorage(testPostKVStoreKey)
-		donations, _ := storage.GetPostDonations(ctx, postKey, tc.user)
-		if !assert.Equal(t, tc.expectDonationList, *donations) {
-			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *donations, tc.expectDonationList)
-		}
 	}
 }
 

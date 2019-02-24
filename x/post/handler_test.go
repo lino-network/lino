@@ -24,15 +24,15 @@ func TestHandlerCreatePost(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})
 	// test valid post
 	msg := CreatePostMsg{
-		PostID:                  "TestPostID",
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user,
-		ParentAuthor:            "",
-		ParentPostID:            "",
-		SourceAuthor:            "",
-		SourcePostID:            "",
-		Links:                   nil,
+		PostID:       "TestPostID",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: "",
+		SourcePostID: "",
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	result := handler(ctx, msg)
@@ -188,15 +188,15 @@ func TestHandlerCreateComment(t *testing.T) {
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
 	// test comment
 	msg := CreatePostMsg{
-		PostID:                  "comment",
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user,
-		ParentAuthor:            user,
-		ParentPostID:            postID,
-		SourceAuthor:            "",
-		SourcePostID:            "",
-		Links:                   nil,
+		PostID:       "comment",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: user,
+		ParentPostID: postID,
+		SourceAuthor: "",
+		SourcePostID: "",
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	result := handler(ctx, msg)
@@ -284,15 +284,15 @@ func TestHandlerRepost(t *testing.T) {
 
 	// test repost
 	msg := CreatePostMsg{
-		PostID:                  "repost",
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user,
-		ParentAuthor:            "",
-		ParentPostID:            "",
-		SourceAuthor:            user,
-		SourcePostID:            postID,
-		Links:                   nil,
+		PostID:       "repost",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: user,
+		SourcePostID: postID,
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: baseTime1})
@@ -686,15 +686,6 @@ func TestHandlerPostDonate(t *testing.T) {
 			}
 		}
 
-		times, err := am.GetDonationRelationship(ctx, tc.toAuthor, tc.donateUser)
-		if err != nil {
-			t.Errorf("%s: failed to get donation relationship, got err %v", tc.testName, err)
-		}
-		if tc.expectDonateTimesFromUserToAuthor != times {
-			t.Errorf("%s: diff donate times, got %v, want %v", tc.testName, times, tc.expectDonateTimesFromUserToAuthor)
-			return
-		}
-
 		cumulativeConsumption, err := gm.GetConsumption(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get consumption, got err %v", tc.testName, err)
@@ -721,15 +712,15 @@ func TestHandlerRePostDonate(t *testing.T) {
 	assert.Nil(t, err)
 	// repost
 	msg := CreatePostMsg{
-		PostID:                  "repost",
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user2,
-		ParentAuthor:            "",
-		ParentPostID:            "",
-		SourceAuthor:            user1,
-		SourcePostID:            postID,
-		Links:                   nil,
+		PostID:       "repost",
+		Title:        string(make([]byte, 50)),
+		Content:      string(make([]byte, 1000)),
+		Author:       user2,
+		ParentAuthor: "",
+		ParentPostID: "",
+		SourceAuthor: user1,
+		SourcePostID: postID,
+		Links:        nil,
 		RedistributionSplitRate: "0",
 	}
 	ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(postParam.PostIntervalSec, 0)})

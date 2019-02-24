@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/account/model"
 )
 
 func TestCreateCoinReturnEvents(t *testing.T) {
@@ -115,11 +114,10 @@ func TestReturnCoinEvent(t *testing.T) {
 	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
 	testCases := []struct {
-		testName             string
-		event                ReturnCoinEvent
-		atWhen               int64
-		expectSaving         types.Coin
-		expectBalanceHistory model.BalanceHistory
+		testName     string
+		event        ReturnCoinEvent
+		atWhen       int64
+		expectSaving types.Coin
 	}{
 		{
 			testName: "normal return case",
@@ -130,16 +128,6 @@ func TestReturnCoinEvent(t *testing.T) {
 			},
 			atWhen:       baseTime,
 			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
-			expectBalanceHistory: model.BalanceHistory{
-				Details: []model.Detail{
-					{
-						From:       "",
-						DetailType: types.DelegationReturnCoin,
-						Amount:     types.NewCoinFromInt64(100),
-						CreatedAt:  baseTime,
-					},
-				},
-			},
 		},
 		{
 			testName: "return zero coin",
@@ -150,22 +138,6 @@ func TestReturnCoinEvent(t *testing.T) {
 			},
 			atWhen:       baseTime,
 			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
-			expectBalanceHistory: model.BalanceHistory{
-				Details: []model.Detail{
-					{
-						From:       "",
-						DetailType: types.DelegationReturnCoin,
-						Amount:     types.NewCoinFromInt64(100),
-						CreatedAt:  baseTime,
-					},
-					{
-						From:       "",
-						DetailType: types.VoteReturnCoin,
-						Amount:     types.NewCoinFromInt64(0),
-						CreatedAt:  baseTime,
-					},
-				},
-			},
 		},
 	}
 

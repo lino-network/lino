@@ -118,19 +118,6 @@ func checkBankKVByUsername(
 	}
 }
 
-func checkBalanceHistory(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey,
-	timeSlot int64, balanceHistory model.BalanceHistory) {
-	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	balanceHistoryPtr, err := accStorage.GetBalanceHistory(ctx, username, timeSlot)
-	if err != nil {
-		t.Errorf("%s, failed to get balance history, got err %v", testName, err)
-	}
-	if !assert.Equal(t, balanceHistory, *balanceHistoryPtr) {
-		t.Errorf("%s: diff balance history, got %v, want %v", testName, *balanceHistoryPtr, balanceHistory)
-	}
-}
-
 func checkPendingCoinDay(
 	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingCoinDayQueue model.PendingCoinDayQueue) {
 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
@@ -172,17 +159,5 @@ func checkAccountReward(
 	}
 	if !assert.Equal(t, reward, *rewardPtr) {
 		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
-	}
-}
-
-func checkRewardHistory(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, bucketSlot int64, wantNumOfReward int) {
-	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	rewardHistoryPtr, err := accStorage.GetRewardHistory(ctx, accKey, bucketSlot)
-	if err != nil {
-		t.Errorf("%s, failed to get reward history, got err %v", testName, err)
-	}
-	if wantNumOfReward != len(rewardHistoryPtr.Details) {
-		t.Errorf("%s: diff account rewards, got %v, want %v", testName, len(rewardHistoryPtr.Details), wantNumOfReward)
 	}
 }

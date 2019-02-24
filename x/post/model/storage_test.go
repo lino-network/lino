@@ -110,22 +110,6 @@ func TestPostView(t *testing.T) {
 	})
 }
 
-func TestPostDonate(t *testing.T) {
-	user := types.AccountKey("test")
-	amount, success := types.NewCoinFromString("1000000000000000000000")
-	assert.True(t, success)
-	postDonations := Donations{Username: user, Amount: amount, Times: 100}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostDonations(env.ctx, types.Permlink("test"), &postDonations)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostDonations(env.ctx, types.Permlink("test"), user)
-		assert.Nil(t, err)
-		assert.Equal(t, postDonations, *resultPtr, "Post donation should be equal")
-	})
-}
-
 //
 // Test Environment setup
 //
