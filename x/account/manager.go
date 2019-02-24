@@ -656,7 +656,7 @@ func (accManager AccountManager) IncreaseSequenceByOne(
 		return err
 	}
 
-	addErr := accManager.recorder.UserRepository.IncreaseSequenceNumber(string(username))
+	addErr := accManager.recorder.UserRepository.UpdateSequenceNumber(string(username), accountMeta.Sequence)
 	if addErr != nil {
 		log.Error().Msgf("failed increase sequence number for user %v", username)
 	}

@@ -401,14 +401,14 @@ func (gm GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 
 	// record
 	inflation := &inflation.Inflation{
-		InfraPool:          pool.InfraInflationPool.String(),
-		DevPool:            pool.DeveloperInflationPool.String(),
-		CreatorPool:        consumptionMeta.ConsumptionRewardPool.String(),
-		ValidatorPool:      pool.ValidatorInflationPool.String(),
-		InfraInflation:     infraInflation.String(),
-		DevInflation:       developerInflation.String(),
-		CreatorInflation:   contentCreatorInflation.String(),
-		ValidatorInflation: validatorInflation.String(),
+		InfraPool:          pool.InfraInflationPool.Amount.String(),
+		DevPool:            pool.DeveloperInflationPool.Amount.String(),
+		CreatorPool:        consumptionMeta.ConsumptionRewardPool.Amount.String(),
+		ValidatorPool:      pool.ValidatorInflationPool.Amount.String(),
+		InfraInflation:     infraInflation.Amount.String(),
+		DevInflation:       developerInflation.Amount.String(),
+		CreatorInflation:   contentCreatorInflation.Amount.String(),
+		ValidatorInflation: validatorInflation.Amount.String(),
 		Timestamp:          ctx.BlockHeader().Time.Unix(),
 	}
 	if !gm.recorder.NewVersionOnly {

@@ -44,4 +44,12 @@ VALUES
     WHERE
         username = ?
     `
+
+	updateSequenceNumberStmt = `
+    UPDATE user
+    SET
+        sequence=?
+    WHERE
+        username = ?
+    `
 )

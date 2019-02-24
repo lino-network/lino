@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	insertUser       = "insert-user"
-	getUser          = "get-user"
-	increaseSeqByOne = "increase-sequence-by-one"
-	updatePubKey     = "update-pub-key"
-	updateBalance    = "update-balance"
+	insertUser           = "insert-user"
+	getUser              = "get-user"
+	increaseSeqByOne     = "increase-sequence-by-one"
+	updateSequenceNumber = "update-sequence-number"
+	updatePubKey         = "update-pub-key"
+	updateBalance        = "update-balance"
 
 	userTableName = "user"
 )
@@ -35,11 +36,12 @@ func NewUserDB(conn *sql.DB) (UserRepository, errors.Error) {
 		return nil, errors.Unavailable("Balance history db conn is unavaiable").TraceCause(err, "")
 	}
 	unprepared := map[string]string{
-		insertUser:       insertUserStmt,
-		getUser:          getUserStmt,
-		increaseSeqByOne: increaseSeqByOneStmt,
-		updatePubKey:     updatePubKeyStmt,
-		updateBalance:    updateBalanceStmt,
+		insertUser:           insertUserStmt,
+		getUser:              getUserStmt,
+		increaseSeqByOne:     increaseSeqByOneStmt,
+		updatePubKey:         updatePubKeyStmt,
+		updateBalance:        updateBalanceStmt,
+		updateSequenceNumber: updateSequenceNumberStmt,
 	}
 	stmts, err := dbutils.PrepareStmts(userTableName, conn, unprepared)
 	if err != nil {
@@ -130,6 +132,14 @@ func (db *userDB) UpdateBalance(username string, balance string) errors.Error {
 	}
 	_, err = dbutils.Exec(db.stmts[updateBalance],
 		paddingBalance,
+		username,
+	)
+	return err
+}
+
+func (db *userDB) UpdateSequenceNumber(username string, sequence uint64) errors.Error {
+	_, err := dbutils.Exec(db.stmts[updateSequenceNumber],
+		sequence,
 		username,
 	)
 	return err
