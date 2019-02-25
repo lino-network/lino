@@ -115,9 +115,36 @@ func handleGrantPermissionMsg(
 		return ErrAccountNotFound().Result()
 	}
 
-	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, types.NewCoinFromInt64(0)); err != nil {
-		return err.Result()
+	switch msg.GrantLevel {
+	case types.AppPermission:
+		if err := am.AuthorizePermission(
+			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, types.NewCoinFromInt64(0)); err != nil {
+			return err.Result()
+		}
+	case types.PreAuthorizationPermission:
+		amount, err := types.LinoToCoin(msg.Amount)
+		if err != nil {
+			return err.Result()
+		}
+		if err := am.AuthorizePermission(
+			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, amount); err != nil {
+			return err.Result()
+		}
+	case types.AppAndPreAuthorizationPermission:
+		if err := am.AuthorizePermission(
+			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.AppPermission, types.NewCoinFromInt64(0)); err != nil {
+			return err.Result()
+		}
+		amount, err := types.LinoToCoin(msg.Amount)
+		if err != nil {
+			return err.Result()
+		}
+		if err := am.AuthorizePermission(
+			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.PreAuthorizationPermission, amount); err != nil {
+			return err.Result()
+		}
+	default:
+		return ErrInvalidGrantPermission().Result()
 	}
 	return sdk.Result{}
 }

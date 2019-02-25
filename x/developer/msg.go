@@ -46,6 +46,7 @@ type GrantPermissionMsg struct {
 	AuthorizedApp     types.AccountKey `json:"authorized_app"`
 	ValidityPeriodSec int64            `json:"validity_period_second"`
 	GrantLevel        types.Permission `json:"grant_level"`
+	Amount            types.LNO        `json:"amount"`
 }
 
 // RevokePermissionMsg - user revoke permission from app
@@ -245,12 +246,13 @@ func (msg DeveloperRevokeMsg) GetConsumeAmount() types.Coin {
 
 // Grant Msg Implementations
 func NewGrantPermissionMsg(
-	user, app string, validityPeriodSec int64, grantLevel types.Permission) GrantPermissionMsg {
+	user, app string, validityPeriodSec int64, grantLevel types.Permission, amount types.LNO) GrantPermissionMsg {
 	return GrantPermissionMsg{
 		Username:          types.AccountKey(user),
 		AuthorizedApp:     types.AccountKey(app),
 		ValidityPeriodSec: validityPeriodSec,
 		GrantLevel:        grantLevel,
+		Amount:            amount,
 	}
 }
 
@@ -282,6 +284,14 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrGrantPermissionTooHigh()
 	}
 
+	if msg.GrantLevel == types.PreAuthorizationPermission ||
+		msg.GrantLevel == types.AppAndPreAuthorizationPermission {
+		_, err := types.LinoToCoin(msg.Amount)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -291,6 +301,10 @@ func (msg GrantPermissionMsg) String() string {
 }
 
 func (msg GrantPermissionMsg) GetPermission() types.Permission {
+	if msg.GrantLevel == types.PreAuthorizationPermission ||
+		msg.GrantLevel == types.AppAndPreAuthorizationPermission {
+		return types.TransactionPermission
+	}
 	return types.GrantAppPermission
 }
 
