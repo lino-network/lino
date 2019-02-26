@@ -227,18 +227,23 @@ func TestGrantPermissionMsg(t *testing.T) {
 	}{
 		{
 			testName:     "normal grant app permission",
-			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.AppPermission),
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.AppPermission, "0"),
 			expectResult: sdk.Result{},
 		},
 		{
 			testName:     "grant permission to non-exist app",
-			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.AppPermission),
+			msg:          NewGrantPermissionMsg("user2", "invalidApp", 10000, types.AppPermission, "0"),
 			expectResult: ErrDeveloperNotFound().Result(),
 		},
 		{
 			testName:     "grant permission to non-exist user",
-			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.AppPermission),
+			msg:          NewGrantPermissionMsg("invalid", "app", 10000, types.AppPermission, "0"),
 			expectResult: ErrAccountNotFound().Result(),
+		},
+		{
+			testName:     "grant permission with invalid amount",
+			msg:          NewGrantPermissionMsg("user1", "app", 10000, types.PreAuthorizationPermission, "-1"),
+			expectResult: types.ErrInvalidCoins("LNO can't be less than lower bound").Result(),
 		},
 	}
 

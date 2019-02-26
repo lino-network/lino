@@ -222,6 +222,7 @@ const (
 	CodeInvalidWebsite                 sdk.CodeType = 910
 	CodeInvalidDescription             sdk.CodeType = 911
 	CodeInvalidAppMetadata             sdk.CodeType = 912
+	CodeInvalidGrantPermission         sdk.CodeType = 913
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000

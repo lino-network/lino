@@ -215,47 +215,62 @@ func TestGrantPermissionMsgMsg(t *testing.T) {
 	}{
 		{
 			testName:           "app permission",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppPermission, "1"),
 			expectError:        nil,
 		},
 		{
 			testName:           "reset permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.ResetPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.ResetPermission, "1"),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "transaction permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission, "1"),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
 			testName:           "grant app permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantAppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantAppPermission, "1"),
 			expectError:        ErrGrantPermissionTooHigh(),
 		},
 		{
+			testName:           "grant pre-auth permission with invalid coin",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.PreAuthorizationPermission, "0"),
+			expectError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName:           "grant both app and pre-auth permission with invalid coin",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppAndPreAuthorizationPermission, "0"),
+			expectError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
 			testName:           "invalid validity period",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.AppPermission, "0"),
 			expectError:        ErrInvalidValidityPeriod(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.AppPermission, "0"),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too short",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.AppPermission, "0"),
 			expectError:        ErrInvalidAuthorizedApp(),
 		},
 		{
 			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.AppPermission, "0"),
 			expectError:        ErrInvalidUsername(),
 		},
 		{
 			testName:           "invalid authenticate app, app name is too long",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission),
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission, "0"),
+			expectError:        ErrInvalidAuthorizedApp(),
+		},
+		{
+			testName:           "invalid authenticate app, app name is too long",
+			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission, "0"),
 			expectError:        ErrInvalidAuthorizedApp(),
 		},
 	}
@@ -372,7 +387,22 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "grant developer app permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
+			expectPermission: types.GrantAppPermission,
+		},
+		{
+			testName:         "grant developer pre-auth permission msg",
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.PreAuthorizationPermission, "1"),
+			expectPermission: types.TransactionPermission,
+		},
+		{
+			testName:         "grant developer both app and pre-auth permission msg",
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppAndPreAuthorizationPermission, "1"),
+			expectPermission: types.TransactionPermission,
+		},
+		{
+			testName:         "grant developer app permission msg",
+			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
 			expectPermission: types.GrantAppPermission,
 		},
 		{
@@ -420,7 +450,7 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "grant developer app permission msg",
-			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
+			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
@@ -468,7 +498,7 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "grant developer app permission msg",
-			msg:      NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission),
+			msg:      NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
 		},
 		{
 			testName: "revoke developer post permission msg",

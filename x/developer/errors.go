@@ -61,3 +61,8 @@ func ErrInvalidValidityPeriod() sdk.Error {
 func ErrGrantPermissionTooHigh() sdk.Error {
 	return types.NewError(types.CodeGrantPermissionTooHigh, fmt.Sprintf("grant permission is too high"))
 }
+
+// ErrInvalidGrantPermission - error if grant permission is not supported
+func ErrInvalidGrantPermission() sdk.Error {
+	return types.NewError(types.CodeInvalidGrantPermission, fmt.Sprintf("grant permission is invalid"))
+}
