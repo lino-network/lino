@@ -44,6 +44,7 @@ func sendGrantDeveloperTx(cdc *wire.Codec) client.CommandTxCallback {
 			return errors.New("only app permission are allowed")
 		}
 
+		// XXX(ytu): cli cmd not support AppAndPreAuthorizationPermission for now.
 		msg := dev.NewGrantPermissionMsg(username, developer, seconds, permission, "0")
 
 		// build and sign the transaction, then broadcast to Tendermint
