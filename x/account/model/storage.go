@@ -507,6 +507,42 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 	return tables
 }
 
+// Import from tablesIR.
+func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
+	// import table.accounts
+	for _, v := range tb.Accounts {
+		err := as.SetInfo(ctx, v.Username, &v.Info)
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+		err = as.SetBankFromAccountKey(ctx, v.Username, &v.Bank)
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+		err = as.SetMeta(ctx, v.Username, &v.Meta)
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+		q := &PendingCoinDayQueue{
+			LastUpdatedAt:   v.PendingCoinDayQueue.LastUpdatedAt,
+			TotalCoinDay:    sdk.MustNewDecFromStr(v.PendingCoinDayQueue.TotalCoinDay),
+			TotalCoin:       v.PendingCoinDayQueue.TotalCoin,
+			PendingCoinDays: v.PendingCoinDayQueue.PendingCoinDays,
+		}
+		err = as.SetPendingCoinDayQueue(ctx, v.Username, q)
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+	}
+	// import AccountGrantPubKeys
+	for _, v := range tb.AccountGrantPubKeys {
+		err := as.SetGrantPubKey(ctx, v.Username, v.PubKey, &v.GrantPubKey)
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+	}
+}
+
 // IterateAccounts - iterate accounts in KVStore
 func (as AccountStorage) IterateAccounts(ctx sdk.Context, process func(AccountInfo, AccountBank) (stop bool)) {
 	store := ctx.KVStore(as.key)

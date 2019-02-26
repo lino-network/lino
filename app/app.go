@@ -16,7 +16,7 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
-	// accModel "github.com/lino-network/lino/x/account/model"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
 	infra "github.com/lino-network/lino/x/infra"
 	rep "github.com/lino-network/lino/x/reputation"
@@ -283,6 +283,10 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			panic(err)
 		}
 	}
+
+	// import state from last testnet.
+	lb.ImportFromFiles(ctx)
+
 	return abci.ResponseInitChain{}
 }
 
@@ -675,4 +679,36 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		return nil, nil, err
 	}
 	return appState, validators, nil
+}
+
+// ImportFromFiles Custom logic for state export
+func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
+	importFromFile := func(filename string, importer func(dt interface{})) {
+		f, err := os.Open("./" + filename)
+		if err != nil {
+			panic("failed to open " + err.Error())
+		}
+		switch filename {
+		case "account":
+			rst := &accmodel.AccountTablesIR{}
+			n, err := lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, rst, 0)
+			if err != nil {
+				panic("failed to unmarshal " + err.Error())
+			}
+			fmt.Printf("%s state parsed: %T\n", filename, rst)
+			importer(rst)
+			fmt.Printf("%s loaded, total %d bytes\n", filename, n)
+		}
+	}
+
+	callImporter := func(dt interface{}) {
+		switch v := dt.(type) {
+		case *accmodel.AccountTablesIR:
+			lb.accountManager.Import(ctx, v)
+		default:
+			panic("unknown type")
+		}
+	}
+
+	importFromFile("account", callImporter)
 }
