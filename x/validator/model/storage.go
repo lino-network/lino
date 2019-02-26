@@ -3,6 +3,9 @@ package model
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/lino-network/lino/types"
 )
 
@@ -125,6 +128,40 @@ func (vs ValidatorStorage) Export(ctx sdk.Context) *ValidatorTables {
 		List: *list,
 	}
 	return tables
+}
+
+// Import from tablesIR.
+func (vs ValidatorStorage) Import(ctx sdk.Context, tb *ValidatorTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[vs] Failed to import: " + e.Error())
+		}
+	}
+	// import table.Validators
+	for _, v := range tb.Validators {
+		pubkey, err := tmtypes.PB2TM.PubKey(abci.PubKey{
+			Type: v.Validator.ABCIValidator.PubKey.Type,
+			Data: v.Validator.ABCIValidator.PubKey.Data,
+		})
+		check(err)
+		err = vs.SetValidator(ctx, v.Username, &Validator{
+			ABCIValidator: abci.Validator{
+				Address: v.Validator.ABCIValidator.Address,
+				Power:   v.Validator.ABCIValidator.Power,
+			},
+			PubKey:          pubkey,
+			Username:        v.Validator.Username,
+			Deposit:         v.Validator.Deposit,
+			AbsentCommit:    v.Validator.AbsentCommit,
+			ByzantineCommit: v.Validator.ByzantineCommit,
+			ProducedBlocks:  v.Validator.ProducedBlocks,
+			Link:            v.Validator.Link,
+		})
+		check(err)
+	}
+	// import ValidatorList
+	err := vs.SetValidatorList(ctx, &tb.ValidatorList.List)
+	check(err)
 }
 
 func GetValidatorKey(accKey types.AccountKey) []byte {

@@ -258,6 +258,39 @@ func (ps PostStorage) Export(ctx sdk.Context) *PostTables {
 	return tables
 }
 
+// Import from tablesIR.
+func (ps PostStorage) Import(ctx sdk.Context, tb *PostTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[ps] Failed to import: " + e.Error())
+		}
+	}
+	// import table.developers
+	for _, v := range tb.Posts {
+		err := ps.SetPostInfo(ctx, &v.Info)
+		check(err)
+		err = ps.SetPostMeta(ctx, v.Permlink, &PostMeta{
+			CreatedAt:               v.Meta.CreatedAt,
+			LastUpdatedAt:           v.Meta.LastUpdatedAt,
+			LastActivityAt:          v.Meta.LastActivityAt,
+			AllowReplies:            v.Meta.AllowReplies,
+			IsDeleted:               v.Meta.IsDeleted,
+			TotalDonateCount:        v.Meta.TotalDonateCount,
+			TotalReportCoinDay:      v.Meta.TotalReportCoinDay,
+			TotalUpvoteCoinDay:      v.Meta.TotalUpvoteCoinDay,
+			TotalViewCount:          v.Meta.TotalViewCount,
+			TotalReward:             v.Meta.TotalReward,
+			RedistributionSplitRate: sdk.MustNewDecFromStr(v.Meta.RedistributionSplitRate),
+		})
+		check(err)
+	}
+	// import PostUsers
+	for _, v := range tb.PostUsers {
+		err := ps.SetPostReportOrUpvote(ctx, v.Permlink, &v.ReportOrUpvote)
+		check(err)
+	}
+}
+
 // GetPostInfoPrefix - "post info substore" + "author"
 func GetPostInfoPrefix(author types.AccountKey) []byte {
 	return append(postInfoSubStore, author...)
