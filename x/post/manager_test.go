@@ -265,15 +265,15 @@ func TestGetSourcePost(t *testing.T) {
 
 	for _, tc := range testCases {
 		msg := CreatePostMsg{
-			PostID:       tc.postID,
-			Title:        string(make([]byte, 50)),
-			Content:      string(make([]byte, 1000)),
-			Author:       tc.author,
-			ParentAuthor: "",
-			ParentPostID: "",
-			SourceAuthor: tc.sourceAuthor,
-			SourcePostID: tc.sourcePostID,
-			Links:        nil,
+			PostID:                  tc.postID,
+			Title:                   string(make([]byte, 50)),
+			Content:                 string(make([]byte, 1000)),
+			Author:                  tc.author,
+			ParentAuthor:            "",
+			ParentPostID:            "",
+			SourceAuthor:            tc.sourceAuthor,
+			SourcePostID:            tc.sourcePostID,
+			Links:                   nil,
 			RedistributionSplitRate: "0",
 		}
 		err := pm.CreatePost(
