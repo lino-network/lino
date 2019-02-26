@@ -1,10 +1,12 @@
 package internal
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	db "github.com/tendermint/tendermint/libs/db"
 )
 
 // A mock store for testing.
@@ -39,7 +41,7 @@ func (s *mockStore) Delete(key []byte) {
 	delete(s.store, string(key))
 }
 
-func (s *mockStore) Iterator(start, end []byte) Iterator {
+func (s *mockStore) Iterator(start, end []byte) db.Iterator {
 	panic("not implemented")
 }
 

@@ -44,6 +44,8 @@ const (
 	appName = "LinoBlockchain"
 
 	// state files
+	prevStateFolder     = "prevstates/"
+	currStateFolder     = "currstates/"
 	accountStateFile    = "account"
 	developerStateFile  = "developer"
 	postStateFile       = "post"
@@ -91,6 +93,9 @@ type LinoBlockchain struct {
 
 	// global param
 	paramHolder param.ParamHolder
+
+	// start from previous exported state
+	importRequired bool
 }
 
 // NewLinoBlockchain - create a Lino Blockchain instance
@@ -215,6 +220,12 @@ func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
 }
 
+// SetImportRequired - set whether import is required in initchainer.
+// This can be done even after seal().
+func (lb *LinoBlockchain) SetImportRequired(v bool) {
+	lb.importRequired = v
+}
+
 // custom logic for lino blockchain initialization
 func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	// set init time to zero
@@ -298,8 +309,10 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 	}
 
-	// import state from last testnet.
-	lb.ImportFromFiles(ctx)
+	// import from prev state.
+	if lb.importRequired {
+		lb.ImportFromFiles(ctx)
+	}
 
 	return abci.ResponseInitChain{}
 }
@@ -660,25 +673,25 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		f.Sync()
 	}
 
-	exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+accountStateFile, func(ctx sdk.Context) interface{} {
 		return lb.accountManager.Export(ctx).ToIR()
 	})
-	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+developerStateFile, func(ctx sdk.Context) interface{} {
 		return lb.developerManager.Export(ctx).ToIR()
 	})
-	exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+postStateFile, func(ctx sdk.Context) interface{} {
 		return lb.postManager.Export(ctx).ToIR()
 	})
-	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+globalStateFile, func(ctx sdk.Context) interface{} {
 		return lb.globalManager.Export(ctx).ToIR()
 	})
-	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+infraStateFile, func(ctx sdk.Context) interface{} {
 		return lb.infraManager.Export(ctx).ToIR()
 	})
-	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
-	exportToFile(reputationStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(currStateFolder+reputationStateFile, func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
 		if err != nil {
 			panic(err)
@@ -750,11 +763,11 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		fmt.Printf("%s loaded, total %d bytes\n", filename, n)
 	}
 
-	importFromFile(accountStateFile, &accmodel.AccountTablesIR{})
-	importFromFile(developerStateFile, &devmodel.DeveloperTablesIR{})
-	importFromFile(postStateFile, &postmodel.PostTablesIR{})
-	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
-	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
-	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
-	importFromFile(reputationStateFile, &[]byte{})
+	importFromFile(prevStateFolder+accountStateFile, &accmodel.AccountTablesIR{})
+	importFromFile(prevStateFolder+developerStateFile, &devmodel.DeveloperTablesIR{})
+	importFromFile(prevStateFolder+postStateFile, &postmodel.PostTablesIR{})
+	importFromFile(prevStateFolder+globalStateFile, &globalmodel.GlobalTablesIR{})
+	importFromFile(prevStateFolder+infraStateFile, &inframodel.InfraTablesIR{})
+	importFromFile(prevStateFolder+validatorStateFile, &valmodel.ValidatorTablesIR{})
+	importFromFile(prevStateFolder+reputationStateFile, &[]byte{})
 }
