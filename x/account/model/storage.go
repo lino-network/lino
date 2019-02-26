@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/hex"
-	"strconv"
 	"strings"
 
 	"github.com/lino-network/lino/types"
