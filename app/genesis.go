@@ -30,6 +30,7 @@ type GenesisState struct {
 	Infra          []GenesisInfraProvider    `json:"infra"`
 	GenesisParam   GenesisParam              `json:"genesis_param"`
 	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
+	Reputation     []byte                    `json:"reputation"`
 }
 
 // genesis account will get coin to the address and register user

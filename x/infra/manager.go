@@ -147,4 +147,7 @@ func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
-// ClearUsage - clear all infra provider report usage
+// Export state of infra.
+func (im *InfraManager) Export(ctx sdk.Context) *model.InfraTables {
+	return im.storage.Export(ctx)
+}

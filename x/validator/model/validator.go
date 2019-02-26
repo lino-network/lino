@@ -3,6 +3,7 @@ package model
 import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	types "github.com/lino-network/lino/types"
 )
@@ -19,7 +20,28 @@ type Validator struct {
 	Link            string           `json:"link"`
 }
 
-// Validator list
+// ToIR -
+func (v Validator) ToIR() ValidatorIR {
+	abciPubKey := tmtypes.TM2PB.PubKey(v.PubKey)
+	return ValidatorIR{
+		ABCIValidator: ABCIValidatorIR{
+			Address: v.ABCIValidator.Address,
+			PubKey: ABCIPubKeyIR{
+				Type: abciPubKey.Type,
+				Data: abciPubKey.Data,
+			},
+			Power: v.ABCIValidator.Power,
+		},
+		Username:        v.Username,
+		Deposit:         v.Deposit,
+		AbsentCommit:    v.AbsentCommit,
+		ByzantineCommit: v.ByzantineCommit,
+		ProducedBlocks:  v.ProducedBlocks,
+		Link:            v.Link,
+	}
+}
+
+// ValidatorList -
 type ValidatorList struct {
 	OncallValidators   []types.AccountKey `json:"oncall_validators"`
 	AllValidators      []types.AccountKey `json:"all_validators"`

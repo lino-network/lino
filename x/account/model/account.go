@@ -42,6 +42,16 @@ type PendingCoinDayQueue struct {
 	PendingCoinDays []PendingCoinDay `json:"pending_coin_days"`
 }
 
+// ToIR coin.
+func (p PendingCoinDayQueue) ToIR() PendingCoinDayQueueIR {
+	return PendingCoinDayQueueIR{
+		LastUpdatedAt:   p.LastUpdatedAt,
+		TotalCoinDay:    p.TotalCoinDay.String(),
+		TotalCoin:       p.TotalCoin,
+		PendingCoinDays: p.PendingCoinDays,
+	}
+}
+
 // PendingCoinDay - pending coin day in the list
 type PendingCoinDay struct {
 	StartTime int64      `json:"start_time"`

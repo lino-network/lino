@@ -1,10 +1,12 @@
 package model
 
 import (
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/types"
+	"strings"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
 )
 
 var (
@@ -200,6 +202,60 @@ func (ps PostStorage) SetPostDonations(
 	}
 	store.Set(getPostDonationKey(permlink, postDonations.Username), postDonationsByte)
 	return nil
+}
+
+// Export post storage state.
+func (ps PostStorage) Export(ctx sdk.Context) *PostTables {
+	tables := &PostTables{}
+	store := ctx.KVStore(ps.key)
+	// export table.Posts
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, postInfoSubStore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			permlink := types.Permlink(k[1:])
+			info, err := ps.GetPostInfo(ctx, permlink)
+			if err != nil {
+				panic("failed to read post info: " + err.Error())
+			}
+			meta, err := ps.GetPostMeta(ctx, permlink)
+			if err != nil {
+				panic("failed to read post meta: " + err.Error())
+			}
+			row := PostRow{
+				Permlink: permlink,
+				Info:     *info,
+				Meta:     *meta,
+			}
+			tables.Posts = append(tables.Posts, row)
+		}
+	}()
+	// export tables.PostUser
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, postReportOrUpvoteSubStore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			permlinkAccount := string(k[1:])
+			strs := strings.Split(permlinkAccount, types.KeySeparator)
+			if len(strs) != 2 {
+				panic("failed to split out permlink account: " + permlinkAccount)
+			}
+			permlink, username := types.Permlink(strs[0]), types.AccountKey(strs[1])
+			ru, err := ps.GetPostReportOrUpvote(ctx, permlink, username)
+			if err != nil {
+				panic("failed to get report or upvote: " + err.Error())
+			}
+			row := PostUserRow{
+				Permlink:       permlink,
+				User:           username,
+				ReportOrUpvote: *ru,
+			}
+			tables.PostUsers = append(tables.PostUsers, row)
+		}
+	}()
+	return tables
 }
 
 // GetPostInfoPrefix - "post info substore" + "author"

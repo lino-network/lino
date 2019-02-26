@@ -1,21 +1,43 @@
 package internal
 
 import (
+	// XXX(yumin): hmm, seems that golang can not recursively check assignability
+	// of interfaces. so we have to import an Iterator type here, because
+	// the exact same one we defined is not assignable.
+	db "github.com/tendermint/tendermint/libs/db"
+
 	"encoding/binary"
 	"math/big"
 	"sort"
 )
 
+// Store - store.
 type Store interface {
 	Set(key []byte, val []byte)
 	Get(key []byte) []byte
+	Has(key []byte) bool
+	Delete(key []byte)
+	// Iterator over a domain of keys in ascending order. End is exclusive.
+	// Start must be less than end, or the Iterator is invalid.
+	// Iterator must be closed by caller.
+	// To iterate over entire domain, use store.Iterator(nil, nil)
+	// CONTRACT: No writes may happen within a domain while an iterator exists over it.
+	Iterator(start, end []byte) db.Iterator
 }
 
+// ReputationStore - xx
 // a simple wrapper around kv-store. It does not handle any reputation computation logic,
 // except for init value for some field, like customer score.
 // This interface should only be used by the reputation system implementation.
 // This store needs to be merkelized to support fast rollback.
 type ReputationStore interface {
+	// TODO(yumin): these two are all in memory, which is extremely bad if state is large.
+	// should changed to io.Write/Reader.
+	// Export all state to deterministic bytes
+	Export() ([]byte, error)
+	// Import state from bytes
+	Import(bytes []byte) error
+
 	// Note that, this value may not be the exact customer score of the user
 	// due to there might be unsettled keys remaining.
 	// Also, because that user can get free reputation when they lockdown coins, this value
@@ -204,6 +226,37 @@ func NewReputationStoreDefaultN(s Store) ReputationStore {
 
 func NewReputationStore(s Store, n int) ReputationStore {
 	return &reputationStoreImpl{store: s, BestContentIndexN: n}
+}
+
+type repKV struct {
+	Key   []byte
+	Value []byte
+}
+
+type reputationStoreState struct {
+	KVs []repKV `json:"kvs"`
+}
+
+func (impl reputationStoreImpl) Export() ([]byte, error) {
+	rst := reputationStoreState{}
+	itr := impl.store.Iterator(nil, nil)
+	defer itr.Close()
+	for itr.Valid() {
+		rst.KVs = append(rst.KVs, repKV{Key: itr.Key(), Value: itr.Value()})
+		itr.Next()
+	}
+	return encodeReputationStoreState(&rst)
+}
+
+func (impl reputationStoreImpl) Import(bytes []byte) error {
+	state, err := decodeReputationStoreState(bytes)
+	if err != nil {
+		return err
+	}
+	for _, v := range state.KVs {
+		impl.store.Set(v.Key, v.Value)
+	}
+	return nil
 }
 
 // TODO(yumin): a cache can help to make it faster.
