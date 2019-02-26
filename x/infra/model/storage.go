@@ -126,6 +126,23 @@ func (is InfraProviderStorage) Export(ctx sdk.Context) *InfraTables {
 	return tables
 }
 
+// Import from tablesIR.
+func (is InfraProviderStorage) Import(ctx sdk.Context, tb *InfraTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[is] Failed to import: " + e.Error())
+		}
+	}
+	// import table.Providers
+	for _, v := range tb.InfraProviders {
+		err := is.SetInfraProvider(ctx, v.App, &v.Provider)
+		check(err)
+	}
+	// import ProviderList
+	err := is.SetInfraProviderList(ctx, &tb.InfraProviderList.List)
+	check(err)
+}
+
 // GetInfraProviderKey - get infra provider key in infra provider substore
 func GetInfraProviderKey(accKey types.AccountKey) []byte {
 	return append(infraProviderSubstore, accKey...)

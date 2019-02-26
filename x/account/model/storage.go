@@ -509,20 +509,19 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 
 // Import from tablesIR.
 func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
+	check := func(err error) {
+		if err != nil {
+			panic("[as] Failed to import: " + err.Error())
+		}
+	}
 	// import table.accounts
 	for _, v := range tb.Accounts {
 		err := as.SetInfo(ctx, v.Username, &v.Info)
-		if err != nil {
-			panic("[as] Failed to import: " + err.Error())
-		}
+		check(err)
 		err = as.SetBankFromAccountKey(ctx, v.Username, &v.Bank)
-		if err != nil {
-			panic("[as] Failed to import: " + err.Error())
-		}
+		check(err)
 		err = as.SetMeta(ctx, v.Username, &v.Meta)
-		if err != nil {
-			panic("[as] Failed to import: " + err.Error())
-		}
+		check(err)
 		q := &PendingCoinDayQueue{
 			LastUpdatedAt:   v.PendingCoinDayQueue.LastUpdatedAt,
 			TotalCoinDay:    sdk.MustNewDecFromStr(v.PendingCoinDayQueue.TotalCoinDay),
@@ -530,16 +529,12 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 			PendingCoinDays: v.PendingCoinDayQueue.PendingCoinDays,
 		}
 		err = as.SetPendingCoinDayQueue(ctx, v.Username, q)
-		if err != nil {
-			panic("[as] Failed to import: " + err.Error())
-		}
+		check(err)
 	}
 	// import AccountGrantPubKeys
 	for _, v := range tb.AccountGrantPubKeys {
 		err := as.SetGrantPubKey(ctx, v.Username, v.PubKey, &v.GrantPubKey)
-		if err != nil {
-			panic("[as] Failed to import: " + err.Error())
-		}
+		check(err)
 	}
 }
 

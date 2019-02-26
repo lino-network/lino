@@ -296,3 +296,8 @@ func (pm PostManager) GetPenaltyScore(ctx sdk.Context, reputation types.Coin) (s
 func (pm PostManager) Export(ctx sdk.Context) *model.PostTables {
 	return pm.postStorage.Export(ctx)
 }
+
+// Import - adaptor to storage Export.
+func (pm PostManager) Import(ctx sdk.Context, tb *model.PostTablesIR) {
+	pm.postStorage.Import(ctx, tb)
+}

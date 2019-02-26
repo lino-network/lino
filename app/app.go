@@ -18,9 +18,14 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 	accmodel "github.com/lino-network/lino/x/account/model"
 	developer "github.com/lino-network/lino/x/developer"
+	devmodel "github.com/lino-network/lino/x/developer/model"
+	globalmodel "github.com/lino-network/lino/x/global/model"
 	infra "github.com/lino-network/lino/x/infra"
+	inframodel "github.com/lino-network/lino/x/infra/model"
+	postmodel "github.com/lino-network/lino/x/post/model"
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
+	valmodel "github.com/lino-network/lino/x/validator/model"
 	vote "github.com/lino-network/lino/x/vote"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
@@ -37,6 +42,15 @@ import (
 
 const (
 	appName = "LinoBlockchain"
+
+	// state files
+	accountStateFile    = "account"
+	developerStateFile  = "developer"
+	postStateFile       = "post"
+	globalStateFile     = "global"
+	infraStateFile      = "infra"
+	validatorStateFile  = "validator"
+	reputationStateFile = "reputation"
 )
 
 // default home directories for expected binaries
@@ -646,25 +660,25 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		f.Sync()
 	}
 
-	exportToFile("account", func(ctx sdk.Context) interface{} {
+	exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
 		return lb.accountManager.Export(ctx).ToIR()
 	})
-	exportToFile("developer", func(ctx sdk.Context) interface{} {
+	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
 		return lb.developerManager.Export(ctx).ToIR()
 	})
-	exportToFile("post", func(ctx sdk.Context) interface{} {
+	exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
 		return lb.postManager.Export(ctx).ToIR()
 	})
-	exportToFile("global", func(ctx sdk.Context) interface{} {
+	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
 		return lb.globalManager.Export(ctx).ToIR()
 	})
-	exportToFile("infra", func(ctx sdk.Context) interface{} {
+	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
 		return lb.infraManager.Export(ctx).ToIR()
 	})
-	exportToFile("validator", func(ctx sdk.Context) interface{} {
+	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
-	exportToFile("reputation", func(ctx sdk.Context) interface{} {
+	exportToFile(reputationStateFile, func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
 		if err != nil {
 			panic(err)
@@ -683,32 +697,64 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 // ImportFromFiles Custom logic for state export
 func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
-	importFromFile := func(filename string, importer func(dt interface{})) {
+	check := func(err error) {
+		if err != nil {
+			panic("failed to unmarshal " + err.Error())
+		}
+	}
+	importFromFile := func(filename string, tables interface{}) {
 		f, err := os.Open("./" + filename)
 		if err != nil {
 			panic("failed to open " + err.Error())
 		}
-		switch filename {
-		case "account":
-			rst := &accmodel.AccountTablesIR{}
-			n, err := lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, rst, 0)
-			if err != nil {
-				panic("failed to unmarshal " + err.Error())
-			}
-			fmt.Printf("%s state parsed: %T\n", filename, rst)
-			importer(rst)
-			fmt.Printf("%s loaded, total %d bytes\n", filename, n)
-		}
-	}
-
-	callImporter := func(dt interface{}) {
-		switch v := dt.(type) {
+		defer f.Close()
+		// XXX(yumin): ugly, trying found a better way.
+		var n int64
+		switch t := tables.(type) {
 		case *accmodel.AccountTablesIR:
-			lb.accountManager.Import(ctx, v)
-		default:
-			panic("unknown type")
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.accountManager.Import(ctx, t)
+		case *devmodel.DeveloperTablesIR:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.developerManager.Import(ctx, t)
+		case *globalmodel.GlobalTablesIR:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.globalManager.Import(ctx, t)
+		case *inframodel.InfraTablesIR:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.infraManager.Import(ctx, t)
+		case *postmodel.PostTablesIR:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.postManager.Import(ctx, t)
+		case *valmodel.ValidatorTablesIR:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.valManager.Import(ctx, t)
+		case *[]byte:
+			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.reputationManager.Import(ctx, *t)
 		}
+		fmt.Printf("%s loaded, total %d bytes\n", filename, n)
 	}
 
-	importFromFile("account", callImporter)
+	importFromFile(accountStateFile, &accmodel.AccountTablesIR{})
+	importFromFile(developerStateFile, &devmodel.DeveloperTablesIR{})
+	importFromFile(postStateFile, &postmodel.PostTablesIR{})
+	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
+	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
+	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
+	importFromFile(reputationStateFile, &[]byte{})
 }

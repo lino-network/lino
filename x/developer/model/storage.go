@@ -134,6 +134,23 @@ func (ds DeveloperStorage) Export(ctx sdk.Context) *DeveloperTables {
 	return tables
 }
 
+// Import from tablesIR.
+func (ds DeveloperStorage) Import(ctx sdk.Context, tb *DeveloperTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[ds] Failed to import: " + e.Error())
+		}
+	}
+	// import table.developers
+	for _, v := range tb.Developers {
+		err := ds.SetDeveloper(ctx, v.Username, &v.Developer)
+		check(err)
+	}
+	// import DeveloperList
+	err := ds.SetDeveloperList(ctx, &tb.DeveloperList.List)
+	check(err)
+}
+
 // GetDeveloperKey - "developer substore" + "developer"
 func GetDeveloperKey(accKey types.AccountKey) []byte {
 	return append(developerSubstore, accKey...)

@@ -28,6 +28,11 @@ func (gm GlobalManager) Export(ctx sdk.Context) *model.GlobalTables {
 	return gm.storage.Export(ctx)
 }
 
+// Import state
+func (gm GlobalManager) Import(ctx sdk.Context, tb *model.GlobalTablesIR) {
+	gm.storage.Import(ctx, tb)
+}
+
 // WireCodec - access to global manager codec
 func (gm GlobalManager) WireCodec() *wire.Codec {
 	return gm.storage.WireCodec()

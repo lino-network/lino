@@ -213,3 +213,8 @@ func (dm DeveloperManager) WithdrawAll(
 func (dm DeveloperManager) Export(ctx sdk.Context) *model.DeveloperTables {
 	return dm.storage.Export(ctx)
 }
+
+// Import state of storage
+func (dm DeveloperManager) Import(ctx sdk.Context, tb *model.DeveloperTablesIR) {
+	dm.storage.Import(ctx, tb)
+}

@@ -379,6 +379,51 @@ func (gs GlobalStorage) Export(ctx sdk.Context) *GlobalTables {
 	return tables
 }
 
+// Import from tablesIR.
+func (gs GlobalStorage) Import(ctx sdk.Context, tb *GlobalTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[gs] Failed to import: " + e.Error())
+		}
+	}
+	// import table.TimeEventLists
+	for _, v := range tb.GlobalTimeEventLists {
+		err := gs.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
+		check(err)
+	}
+	// import table.GlobalStakeStats
+	for _, v := range tb.GlobalStakeStats {
+		err := gs.SetLinoStakeStat(ctx, v.Day, &v.StakeStat)
+		check(err)
+	}
+	// import table.Misc
+	misc := tb.GlobalMisc
+	err := gs.SetGlobalMeta(ctx, &misc.Meta)
+	check(err)
+
+	err = gs.SetInflationPool(ctx, &misc.InflationPool)
+	check(err)
+
+	err = gs.SetGlobalTime(ctx, &misc.Time)
+	check(err)
+
+	// type diff in IR
+	err = gs.SetConsumptionMeta(ctx, &ConsumptionMeta{
+		ConsumptionFrictionRate: sdk.MustNewDecFromStr(
+			misc.ConsumptionMeta.ConsumptionFrictionRate),
+		ConsumptionWindow:            misc.ConsumptionMeta.ConsumptionWindow,
+		ConsumptionRewardPool:        misc.ConsumptionMeta.ConsumptionRewardPool,
+		ConsumptionFreezingPeriodSec: misc.ConsumptionMeta.ConsumptionFreezingPeriodSec,
+	})
+	check(err)
+
+	err = gs.SetTPS(ctx, &TPS{
+		CurrentTPS: sdk.MustNewDecFromStr(misc.TPS.CurrentTPS),
+		MaxTPS:     sdk.MustNewDecFromStr(misc.TPS.MaxTPS),
+	})
+	check(err)
+}
+
 // GetLinoStakeStatKey - get lino power statistic at day from KVStore
 func GetLinoStakeStatKey(day int64) []byte {
 	return append(linoStakeStatSubStore, strconv.FormatInt(day, 10)...)

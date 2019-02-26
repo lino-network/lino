@@ -559,3 +559,8 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 func (vm ValidatorManager) Export(ctx sdk.Context) *model.ValidatorTables {
 	return vm.storage.Export(ctx)
 }
+
+// Import storage state.
+func (vm ValidatorManager) Import(ctx sdk.Context, tb *model.ValidatorTablesIR) {
+	vm.storage.Import(ctx, tb)
+}

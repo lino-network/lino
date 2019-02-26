@@ -151,3 +151,8 @@ func (im *InfraManager) ClearUsage(ctx sdk.Context) sdk.Error {
 func (im *InfraManager) Export(ctx sdk.Context) *model.InfraTables {
 	return im.storage.Export(ctx)
 }
+
+// Import state of infra.
+func (im *InfraManager) Import(ctx sdk.Context, tb *model.InfraTablesIR) {
+	im.storage.Import(ctx, tb)
+}
