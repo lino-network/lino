@@ -137,20 +137,7 @@ func (accManager AccountManager) AddSavingCoin(
 	}
 
 	bank.Saving = bank.Saving.Plus(coin)
-	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
-		model.Detail{
-			Amount:     coin,
-			DetailType: detailType,
-			To:         username,
-			From:       from,
-			Balance:    bank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time.Unix(),
-			Memo:       memo,
-		}); err != nil {
-		return err
-	}
 
-	bank.NumOfTx++
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
 		return err
@@ -188,21 +175,7 @@ func (accManager AccountManager) AddSavingCoinWithFullCoinDay(
 	}
 
 	bank.Saving = bank.Saving.Plus(coin)
-	if err := accManager.AddBalanceHistory(ctx, username, bank.NumOfTx,
-		model.Detail{
-			Amount:     coin,
-			DetailType: detailType,
-			To:         username,
-			From:       from,
-			Balance:    bank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time.Unix(),
-			Memo:       memo,
-		}); err != nil {
-		return err
-	}
 	bank.CoinDay = bank.CoinDay.Plus(coin)
-	bank.NumOfTx++
-
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
 		return err
 	}
@@ -231,21 +204,6 @@ func (accManager AccountManager) MinusSavingCoin(
 		return nil
 	}
 	accountBank.Saving = accountBank.Saving.Minus(coin)
-
-	if err := accManager.AddBalanceHistory(
-		ctx, username, accountBank.NumOfTx, model.Detail{
-			Amount:     coin,
-			DetailType: detailType,
-			To:         to,
-			From:       username,
-			Balance:    accountBank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time.Unix(),
-			Memo:       memo,
-		}); err != nil {
-		return err
-	}
-	accountBank.NumOfTx++
-
 	pendingCoinDayQueue, err :=
 		accManager.storage.GetPendingCoinDayQueue(ctx, username)
 	if err != nil {
@@ -323,20 +281,6 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 	}
 	accountBank.Saving = remain
 
-	if err := accManager.AddBalanceHistory(
-		ctx, username, accountBank.NumOfTx, model.Detail{
-			Amount:     coin,
-			DetailType: detailType,
-			To:         to,
-			From:       username,
-			Balance:    accountBank.Saving,
-			CreatedAt:  ctx.BlockHeader().Time.Unix(),
-			Memo:       memo,
-		}); err != nil {
-		return err
-	}
-	accountBank.NumOfTx++
-
 	pendingCoinDayQueue, err :=
 		accManager.storage.GetPendingCoinDayQueue(ctx, username)
 	if err != nil {
@@ -390,30 +334,6 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 		ctx, username, accountBank); err != nil {
 		return err
 	}
-	return nil
-}
-
-// AddBalanceHistory - add each balance related tx to balance history
-func (accManager AccountManager) AddBalanceHistory(
-	ctx sdk.Context, username types.AccountKey, numOfTx int64,
-	transactionDetail model.Detail) sdk.Error {
-	// set balance history
-	balanceHistory, err :=
-		accManager.storage.GetBalanceHistory(
-			ctx, username, numOfTx/types.BalanceHistoryBundleSize)
-	if err != nil {
-		return err
-	}
-	if balanceHistory == nil {
-		balanceHistory = &model.BalanceHistory{Details: []model.Detail{}}
-	}
-	balanceHistory.Details = append(balanceHistory.Details, transactionDetail)
-	if err := accManager.storage.SetBalanceHistory(
-		ctx, username, numOfTx/types.BalanceHistoryBundleSize,
-		balanceHistory); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -587,46 +507,7 @@ func (accManager AccountManager) AddIncomeAndReward(
 		return err
 	}
 
-	rewardDetail := model.RewardDetail{
-		OriginalDonation: originalDonation,
-		FrictionDonation: friction,
-		ActualReward:     actualReward,
-		Consumer:         consumer,
-		PostAuthor:       postAuthor,
-		PostID:           postID,
-	}
-	if err := accManager.AddRewardHistory(ctx, username, bank.NumOfReward,
-		rewardDetail); err != nil {
-		return err
-	}
-
-	bank.NumOfReward++
 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AddRewardHistory - add reward detail to user reward history
-func (accManager AccountManager) AddRewardHistory(
-	ctx sdk.Context, username types.AccountKey, numOfReward int64,
-	rewardDetail model.RewardDetail) sdk.Error {
-
-	slotNum := numOfReward / types.RewardHistoryBundleSize
-
-	rewardHistory, err := accManager.storage.GetRewardHistory(ctx, username, slotNum)
-	if err != nil {
-		return err
-	}
-	if rewardHistory == nil {
-		rewardHistory = &model.RewardHistory{Details: []model.RewardDetail{}}
-	}
-
-	rewardHistory.Details = append(rewardHistory.Details, rewardDetail)
-
-	if err := accManager.storage.SetRewardHistory(
-		ctx, username, slotNum, rewardHistory); err != nil {
 		return err
 	}
 
@@ -649,92 +530,6 @@ func (accManager AccountManager) ClaimReward(
 		return err
 	}
 
-	// clear reward history
-	if err := accManager.ClearRewardHistory(ctx, username); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ClearRewardHistory - clear user reward history
-func (accManager AccountManager) ClearRewardHistory(
-	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	slotNum := bank.NumOfReward / types.RewardHistoryBundleSize
-	for i := int64(0); i <= slotNum; i++ {
-		accManager.storage.DeleteRewardHistory(ctx, username, i)
-	}
-
-	bank.NumOfReward = 0
-	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// IsMyFollower - check KV store to check if user in my follower list
-func (accManager AccountManager) IsMyFollower(
-	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
-	return accManager.storage.IsMyFollower(ctx, me, follower)
-}
-
-// IsMyFollowing - check KV store to check if user in my following list
-func (accManager AccountManager) IsMyFollowing(
-	ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
-	return accManager.storage.IsMyFollowing(ctx, me, following)
-}
-
-// SetFollower - update KV store to add follower if doesn't exist
-func (accManager AccountManager) SetFollower(
-	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
-	if accManager.storage.IsMyFollower(ctx, me, follower) {
-		return nil
-	}
-	meta := model.FollowerMeta{
-		CreatedAt:    ctx.BlockHeader().Time.Unix(),
-		FollowerName: follower,
-	}
-	accManager.storage.SetFollowerMeta(ctx, me, meta)
-	return nil
-}
-
-// SetFollowing - update KV store to add following if doesn't exist
-func (accManager AccountManager) SetFollowing(
-	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
-	if accManager.storage.IsMyFollowing(ctx, me, following) {
-		return nil
-	}
-	meta := model.FollowingMeta{
-		CreatedAt:     ctx.BlockHeader().Time.Unix(),
-		FollowingName: following,
-	}
-	accManager.storage.SetFollowingMeta(ctx, me, meta)
-	return nil
-}
-
-// RemoveFollower - update KV store to remove follower if exist
-func (accManager AccountManager) RemoveFollower(
-	ctx sdk.Context, me types.AccountKey, follower types.AccountKey) sdk.Error {
-	if !accManager.storage.IsMyFollower(ctx, me, follower) {
-		return nil
-	}
-	accManager.storage.RemoveFollowerMeta(ctx, me, follower)
-	return nil
-}
-
-// RemoveFollowing - update KV store to remove following if exist
-func (accManager AccountManager) RemoveFollowing(
-	ctx sdk.Context, me types.AccountKey, following types.AccountKey) sdk.Error {
-	if !accManager.storage.IsMyFollowing(ctx, me, following) {
-		return nil
-	}
-	accManager.storage.RemoveFollowingMeta(ctx, me, following)
 	return nil
 }
 
@@ -786,25 +581,6 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 	accountMeta.TransactionCapacity = accountMeta.TransactionCapacity.Minus(currentTxCost)
 	accountMeta.LastActivityAt = ctx.BlockHeader().Time.Unix()
 	if err := accManager.storage.SetMeta(ctx, me, accountMeta); err != nil {
-		return err
-	}
-	return nil
-}
-
-// UpdateDonationRelationship - increase donation relationship times by 1
-func (accManager AccountManager) UpdateDonationRelationship(
-	ctx sdk.Context, me, other types.AccountKey) sdk.Error {
-	relationship, err := accManager.storage.GetRelationship(ctx, me, other)
-	if err != nil {
-		return err
-	}
-	if relationship == nil {
-		relationship = &model.Relationship{
-			DonationTimes: 0,
-		}
-	}
-	relationship.DonationTimes++
-	if err := accManager.storage.SetRelationship(ctx, me, other, relationship); err != nil {
 		return err
 	}
 	return nil
@@ -946,19 +722,6 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return grantPubKey.Username, nil
 	}
 	return "", ErrCheckAuthenticatePubKeyOwner(me)
-}
-
-// GetDonationRelationship - get donation relationship between two user
-func (accManager AccountManager) GetDonationRelationship(
-	ctx sdk.Context, me, other types.AccountKey) (int64, sdk.Error) {
-	relationship, err := accManager.storage.GetRelationship(ctx, me, other)
-	if err != nil {
-		return 0, err
-	}
-	if relationship == nil {
-		return 0, nil
-	}
-	return relationship.DonationTimes, nil
 }
 
 func (accManager AccountManager) addPendingCoinDayToQueue(

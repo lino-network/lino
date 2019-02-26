@@ -11,8 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ types.Msg = FollowMsg{}
-var _ types.Msg = UnfollowMsg{}
 var _ types.Msg = ClaimMsg{}
 var _ types.Msg = TransferMsg{}
 var _ types.Msg = RecoverMsg{}
@@ -27,18 +25,6 @@ type RegisterMsg struct {
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
-}
-
-// FollowMsg - follower follow followee
-type FollowMsg struct {
-	Follower types.AccountKey `json:"follower"`
-	Followee types.AccountKey `json:"followee"`
-}
-
-// UnfollowMsg - follower unfollow followee
-type UnfollowMsg struct {
-	Follower types.AccountKey `json:"follower"`
-	Followee types.AccountKey `json:"followee"`
 }
 
 // ClaimMsg - claim content reward
@@ -66,112 +52,6 @@ type TransferMsg struct {
 type UpdateAccountMsg struct {
 	Username types.AccountKey `json:"username"`
 	JSONMeta string           `json:"json_meta"`
-}
-
-// NewFollowMsg - return a FollowMsg
-func NewFollowMsg(follower string, followee string) FollowMsg {
-	return FollowMsg{
-		Follower: types.AccountKey(follower),
-		Followee: types.AccountKey(followee),
-	}
-}
-
-// Route - implements sdk.Msg
-func (msg FollowMsg) Route() string { return types.AccountRouterName }
-
-// Type - implements sdk.Msg
-func (msg FollowMsg) Type() string { return "FollowMsg" }
-
-// ValidateBasic - implements sdk.Msg
-func (msg FollowMsg) ValidateBasic() sdk.Error {
-	if len(msg.Follower) < types.MinimumUsernameLength ||
-		len(msg.Followee) < types.MinimumUsernameLength ||
-		len(msg.Follower) > types.MaximumUsernameLength ||
-		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
-	}
-	return nil
-}
-
-func (msg FollowMsg) String() string {
-	return fmt.Sprintf("FollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
-}
-
-// GetPermission - implements types.Msg
-func (msg FollowMsg) GetPermission() types.Permission {
-	return types.AppPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg FollowMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg FollowMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
-}
-
-// GetConsumeAmount - implements types.Msg
-func (msg FollowMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewUnfollowMsg - return a UnfollowMsg
-func NewUnfollowMsg(follower string, followee string) UnfollowMsg {
-	return UnfollowMsg{
-		Follower: types.AccountKey(follower),
-		Followee: types.AccountKey(followee),
-	}
-}
-
-// Route - implements sdk.Msg
-func (msg UnfollowMsg) Route() string { return types.AccountRouterName }
-
-// Type - implements sdk.Msg
-func (msg UnfollowMsg) Type() string { return "UnfollowMsg" }
-
-// ValidateBasic - implements sdk.Msg
-func (msg UnfollowMsg) ValidateBasic() sdk.Error {
-	if len(msg.Follower) < types.MinimumUsernameLength ||
-		len(msg.Followee) < types.MinimumUsernameLength ||
-		len(msg.Follower) > types.MaximumUsernameLength ||
-		len(msg.Followee) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
-	}
-	return nil
-}
-
-func (msg UnfollowMsg) String() string {
-	return fmt.Sprintf("UnfollowMsg{Follower:%v, Followee:%v}", msg.Follower, msg.Followee)
-}
-
-// GetPermission - implements types.Msg
-func (msg UnfollowMsg) GetPermission() types.Permission {
-	return types.AppPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg UnfollowMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg UnfollowMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Follower)}
-}
-
-// GetConsumeAmount - implements types.Msg
-func (msg UnfollowMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
 }
 
 // NewClaimMsg - return a ClaimMsg

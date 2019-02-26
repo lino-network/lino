@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/hex"
-	"strconv"
 	"strings"
 
 	"github.com/lino-network/lino/types"
@@ -16,14 +15,18 @@ var (
 	accountInfoSubstore                = []byte{0x00}
 	accountBankSubstore                = []byte{0x01}
 	accountMetaSubstore                = []byte{0x02}
-	accountFollowerSubstore            = []byte{0x03}
-	accountFollowingSubstore           = []byte{0x04}
-	accountRewardSubstore              = []byte{0x05}
-	accountPendingCoinDayQueueSubstore = []byte{0x06}
-	accountRelationshipSubstore        = []byte{0x07}
-	accountBalanceHistorySubstore      = []byte{0x08}
-	accountGrantPubKeySubstore         = []byte{0x09}
-	accountRewardHistorySubstore       = []byte{0x0a}
+	accountRewardSubstore              = []byte{0x03}
+	accountPendingCoinDayQueueSubstore = []byte{0x04}
+	accountGrantPubKeySubstore         = []byte{0x05}
+	// XXX(yukai): deprecated.
+	// accountFollowerSubstore            = []byte{0x03}
+	// accountFollowingSubstore           = []byte{0x04}
+	// XXX(yukai): deprecated.
+	// accountRelationshipSubstore        = []byte{0x07}
+	// XXX(yukai): deprecated.
+	// accountBalanceHistorySubstore      = []byte{0x08}
+	// XXX(yukai): deprecated.
+	// accountRewardHistorySubstore = []byte{0x0a}
 )
 
 // AccountStorage - account storage
@@ -130,57 +133,6 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMe
 	return nil
 }
 
-// IsMyfollower - returns true if `follower` follows `me`.
-func (as AccountStorage) IsMyFollower(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) bool {
-	store := ctx.KVStore(as.key)
-	key := getFollowerKey(me, follower)
-	return store.Has(key)
-}
-
-// SetFollowerMeta - sets follower meta info for a given account which includes time and follower name.
-func (as AccountStorage) SetFollowerMeta(ctx sdk.Context, me types.AccountKey, meta FollowerMeta) sdk.Error {
-	store := ctx.KVStore(as.key)
-	metaByte, err := as.cdc.MarshalJSON(meta)
-	if err != nil {
-		return ErrFailedToMarshalFollowerMeta(err)
-	}
-	store.Set(getFollowerKey(me, meta.FollowerName), metaByte)
-	return nil
-}
-
-// RemoveFollowerMeta removes follower meta info of a relationship.
-func (as AccountStorage) RemoveFollowerMeta(ctx sdk.Context, me types.AccountKey, follower types.AccountKey) {
-	store := ctx.KVStore(as.key)
-	store.Delete(getFollowerKey(me, follower))
-	return
-}
-
-// IsMyFollowing - returns true if `me` follows `following`
-func (as AccountStorage) IsMyFollowing(ctx sdk.Context, me types.AccountKey, following types.AccountKey) bool {
-	store := ctx.KVStore(as.key)
-	key := getFollowingKey(me, following)
-	return store.Has(key)
-}
-
-// SetFollowerMeta - sets following meta info for a given account which includes
-// time and following name.
-func (as AccountStorage) SetFollowingMeta(ctx sdk.Context, me types.AccountKey, meta FollowingMeta) sdk.Error {
-	store := ctx.KVStore(as.key)
-	metaByte, err := as.cdc.MarshalJSON(meta)
-	if err != nil {
-		return ErrFailedToMarshalFollowingMeta(err)
-	}
-	store.Set(getFollowingKey(me, meta.FollowingName), metaByte)
-	return nil
-}
-
-// RemoveFollowingMeta - removes following meta info of a relationship.
-func (as AccountStorage) RemoveFollowingMeta(ctx sdk.Context, me types.AccountKey, following types.AccountKey) {
-	store := ctx.KVStore(as.key)
-	store.Delete(getFollowingKey(me, following))
-	return
-}
-
 // GetReward - returns reward info of a given account, returns error if any.
 func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*Reward, sdk.Error) {
 	store := ctx.KVStore(as.key)
@@ -264,92 +216,6 @@ func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 	return nil
 }
 
-// GetRelationship - returns the relationship between two accounts
-func (as AccountStorage) GetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey) (*Relationship, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	relationshipByte := store.Get(getRelationshipKey(me, other))
-	if relationshipByte == nil {
-		return nil, nil
-	}
-	queue := new(Relationship)
-	if err := as.cdc.UnmarshalJSON(relationshipByte, queue); err != nil {
-		return nil, ErrFailedToUnmarshalRelationship(err)
-	}
-	return queue, nil
-}
-
-// SetRelationship - sets relationship for two accounts
-func (as AccountStorage) SetRelationship(ctx sdk.Context, me types.AccountKey, other types.AccountKey, relationship *Relationship) sdk.Error {
-	store := ctx.KVStore(as.key)
-	relationshipByte, err := as.cdc.MarshalJSON(*relationship)
-	if err != nil {
-		return ErrFailedToMarshalRelationship(err)
-	}
-	store.Set(getRelationshipKey(me, other), relationshipByte)
-	return nil
-}
-
-// GetRelationship - returns the relationship between two accounts
-func (as AccountStorage) GetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, bucketSlot int64) (*BalanceHistory, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	balanceHistoryBytes := store.Get(getBalanceHistoryKey(me, bucketSlot))
-	if balanceHistoryBytes == nil {
-		return nil, nil
-	}
-	history := new(BalanceHistory)
-	if err := as.cdc.UnmarshalJSON(balanceHistoryBytes, history); err != nil {
-		return nil, ErrFailedToUnmarshalBalanceHistory(err)
-	}
-	return history, nil
-}
-
-// SetBalanceHistory - sets balance history
-func (as AccountStorage) SetBalanceHistory(
-	ctx sdk.Context, me types.AccountKey, bucketSlot int64, history *BalanceHistory) sdk.Error {
-	store := ctx.KVStore(as.key)
-	historyBytes, err := as.cdc.MarshalJSON(*history)
-	if err != nil {
-		return ErrFailedToMarshalBalanceHistory(err)
-	}
-	store.Set(getBalanceHistoryKey(me, bucketSlot), historyBytes)
-	return nil
-}
-
-// GetRewardHistory - returns the history of rewards that a user received
-func (as AccountStorage) GetRewardHistory(
-	ctx sdk.Context, me types.AccountKey, bucketSlot int64) (*RewardHistory, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	rewardHistoryBytes := store.Get(getRewardHistoryKey(me, bucketSlot))
-	if rewardHistoryBytes == nil {
-		return nil, nil
-	}
-	history := new(RewardHistory)
-	if err := as.cdc.UnmarshalJSON(rewardHistoryBytes, history); err != nil {
-		return nil, ErrFailedToUnmarshalRewardHistory(err)
-	}
-	return history, nil
-}
-
-// SetRewardHistory - sets reward history
-func (as AccountStorage) SetRewardHistory(
-	ctx sdk.Context, me types.AccountKey, bucketSlot int64, history *RewardHistory) sdk.Error {
-	store := ctx.KVStore(as.key)
-	historyBytes, err := as.cdc.MarshalJSON(*history)
-	if err != nil {
-		return ErrFailedToMarshalRewardHistory(err)
-	}
-	store.Set(getRewardHistoryKey(me, bucketSlot), historyBytes)
-	return nil
-}
-
-// DeleteRewardHistory - delete reward history from KVStore
-func (as AccountStorage) DeleteRewardHistory(ctx sdk.Context, me types.AccountKey, bucketSlot int64) {
-	store := ctx.KVStore(as.key)
-	store.Delete(getRewardHistoryKey(me, bucketSlot))
-	return
-}
-
 // GetAccountInfoPrefix - "account info substore"
 func GetAccountInfoPrefix() []byte {
 	return accountInfoSubstore
@@ -370,33 +236,8 @@ func GetAccountMetaKey(accKey types.AccountKey) []byte {
 	return append(accountMetaSubstore, accKey...)
 }
 
-func getFollowerKey(me types.AccountKey, myFollower types.AccountKey) []byte {
-	return append(getFollowerPrefix(me), myFollower...)
-}
-
-func getFollowerPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowerSubstore, me...), types.KeySeparator...)
-}
-
-// "following substore" + "me" + "my following"
-func getFollowingKey(me types.AccountKey, myFollowing types.AccountKey) []byte {
-	return append(getFollowingPrefix(me), myFollowing...)
-}
-
-func getFollowingPrefix(me types.AccountKey) []byte {
-	return append(append(accountFollowingSubstore, me...), types.KeySeparator...)
-}
-
 func getRewardKey(accKey types.AccountKey) []byte {
 	return append(accountRewardSubstore, accKey...)
-}
-
-func getRelationshipKey(me types.AccountKey, other types.AccountKey) []byte {
-	return append(getRelationshipPrefix(me), other...)
-}
-
-func getRelationshipPrefix(me types.AccountKey) []byte {
-	return append(append(accountRelationshipSubstore, me...), types.KeySeparator...)
 }
 
 func getPendingCoinDayQueueKey(accKey types.AccountKey) []byte {
@@ -409,22 +250,6 @@ func getGrantPubKeyPrefix(me types.AccountKey) []byte {
 
 func getGrantPubKeyKey(me types.AccountKey, pubKey crypto.PubKey) []byte {
 	return append(getGrantPubKeyPrefix(me), hex.EncodeToString(pubKey.Bytes())...)
-}
-
-func getBalanceHistoryPrefix(me types.AccountKey) []byte {
-	return append(append(accountBalanceHistorySubstore, me...), types.KeySeparator...)
-}
-
-func getBalanceHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
-	return strconv.AppendInt(getBalanceHistoryPrefix(me), bucketSlot, 10)
-}
-
-func getRewardHistoryPrefix(me types.AccountKey) []byte {
-	return append(append(accountRewardHistorySubstore, me...), types.KeySeparator...)
-}
-
-func getRewardHistoryKey(me types.AccountKey, bucketSlot int64) []byte {
-	return strconv.AppendInt(getRewardHistoryPrefix(me), bucketSlot, 10)
 }
 
 // Export to table representation.

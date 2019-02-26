@@ -78,10 +78,3 @@ type View struct {
 	LastViewAt int64            `json:"last_view_at"`
 	Times      int64            `jons:"times"`
 }
-
-// Donations - record a user donation behavior to a post
-type Donations struct {
-	Username types.AccountKey `json:"username"`
-	Times    int64            `json:"times"`
-	Amount   types.Coin       `json:"amount"`
-}

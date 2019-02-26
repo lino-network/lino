@@ -686,15 +686,6 @@ func TestHandlerPostDonate(t *testing.T) {
 			}
 		}
 
-		times, err := am.GetDonationRelationship(ctx, tc.toAuthor, tc.donateUser)
-		if err != nil {
-			t.Errorf("%s: failed to get donation relationship, got err %v", tc.testName, err)
-		}
-		if tc.expectDonateTimesFromUserToAuthor != times {
-			t.Errorf("%s: diff donate times, got %v, want %v", tc.testName, times, tc.expectDonateTimesFromUserToAuthor)
-			return
-		}
-
 		cumulativeConsumption, err := gm.GetConsumption(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get consumption, got err %v", tc.testName, err)
