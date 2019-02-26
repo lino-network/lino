@@ -634,7 +634,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			panic("failed to create account")
 		}
 		defer f.Close()
-		n, err := lb.cdc.MarshalBinaryWriter(f, exporter(ctx))
+		n, err := lb.cdc.MarshalBinaryLengthPrefixedWriter(f, exporter(ctx))
 		if err != nil {
 			panic("failed to marshal binary for " + filename + " due to " + err.Error())
 		}

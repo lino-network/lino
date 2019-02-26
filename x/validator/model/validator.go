@@ -3,6 +3,7 @@ package model
 import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	types "github.com/lino-network/lino/types"
 )
@@ -21,12 +22,13 @@ type Validator struct {
 
 // ToIR -
 func (v Validator) ToIR() ValidatorIR {
+	abciPubKey := tmtypes.TM2PB.PubKey(v.PubKey)
 	return ValidatorIR{
 		ABCIValidator: ABCIValidatorIR{
 			Address: v.ABCIValidator.Address,
 			PubKey: ABCIPubKeyIR{
-				Type: v.ABCIValidator.PubKey.Type,
-				Data: v.ABCIValidator.PubKey.Data,
+				Type: abciPubKey.Type,
+				Data: abciPubKey.Data,
 			},
 			Power: v.ABCIValidator.Power,
 		},

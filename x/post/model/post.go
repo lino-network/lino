@@ -53,7 +53,7 @@ func (pm PostMeta) ToIR() PostMetaIR {
 		TotalUpvoteCoinDay:      pm.TotalUpvoteCoinDay,
 		TotalViewCount:          pm.TotalViewCount,
 		TotalReward:             pm.TotalReward,
-		RedistributionSplitRate: pm.RedistributionSplitRate.FloatString(),
+		RedistributionSplitRate: pm.RedistributionSplitRate.String(), // XXX(yumin): rat to dec
 	}
 }
 

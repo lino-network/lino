@@ -39,8 +39,8 @@ type TPS struct {
 // ToIR -
 func (t *TPS) ToIR() TPSIR {
 	return TPSIR{
-		CurrentTPS: t.CurrentTPS.FloatString(),
-		MaxTPS:     t.MaxTPS.FloatString(),
+		CurrentTPS: t.CurrentTPS.String(),
+		MaxTPS:     t.MaxTPS.String(),
 	}
 }
 
@@ -70,7 +70,7 @@ type ConsumptionMeta struct {
 // ToIR -
 func (c *ConsumptionMeta) ToIR() ConsumptionMetaIR {
 	return ConsumptionMetaIR{
-		ConsumptionFrictionRate:      c.ConsumptionFrictionRate.FloatString(),
+		ConsumptionFrictionRate:      c.ConsumptionFrictionRate.String(),
 		ConsumptionWindow:            c.ConsumptionWindow,
 		ConsumptionRewardPool:        c.ConsumptionRewardPool,
 		ConsumptionFreezingPeriodSec: c.ConsumptionFreezingPeriodSec,

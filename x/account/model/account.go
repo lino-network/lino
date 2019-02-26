@@ -46,7 +46,7 @@ type PendingCoinDayQueue struct {
 func (p PendingCoinDayQueue) ToIR() PendingCoinDayQueueIR {
 	return PendingCoinDayQueueIR{
 		LastUpdatedAt:   p.LastUpdatedAt,
-		TotalCoinDay:    p.TotalCoinDay.FloatString(),
+		TotalCoinDay:    p.TotalCoinDay.String(),
 		TotalCoin:       p.TotalCoin,
 		PendingCoinDays: p.PendingCoinDays,
 	}
