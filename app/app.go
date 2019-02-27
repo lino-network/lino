@@ -288,30 +288,30 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 
-	// init genesis accounts
-	for _, gacc := range genesisState.Accounts {
-		if err := lb.toAppAccount(ctx, gacc); err != nil {
-			panic(err)
-		}
-	}
-
-	// init genesis developers
-	for _, developer := range genesisState.Developers {
-		if err := lb.toAppDeveloper(ctx, developer); err != nil {
-			panic(err)
-		}
-	}
-
-	// init genesis infra
-	for _, infra := range genesisState.Infra {
-		if err := lb.toAppInfra(ctx, infra); err != nil {
-			panic(err)
-		}
-	}
-
-	// import from prev state.
+	// import from prev state, do not read from genesis.
 	if lb.importRequired {
 		lb.ImportFromFiles(ctx)
+	} else {
+		// init genesis accounts
+		for _, gacc := range genesisState.Accounts {
+			if err := lb.toAppAccount(ctx, gacc); err != nil {
+				panic(err)
+			}
+		}
+
+		// init genesis developers
+		for _, developer := range genesisState.Developers {
+			if err := lb.toAppDeveloper(ctx, developer); err != nil {
+				panic(err)
+			}
+		}
+
+		// init genesis infra
+		for _, infra := range genesisState.Infra {
+			if err := lb.toAppInfra(ctx, infra); err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	return abci.ResponseInitChain{}
