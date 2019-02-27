@@ -84,7 +84,29 @@ func (vm ValidatorManager) IsBalancedAccount(
 	return votingDeposit.IsGTE(commitingDeposit)
 }
 
-// GetUpdateValidatorList - after a block, compare updated validator set with
+// GetInitValidators return all validators in state.
+// XXX(yumin): This is intended to be used only in initChainer
+// TODO(yumin): add test coverage.
+func (vm ValidatorManager) GetInitValidators(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error) {
+	validatorList, err := vm.storage.GetValidatorList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	updates := []abci.ValidatorUpdate{}
+	for _, curValidator := range validatorList.OncallValidators {
+		validator, err := vm.storage.GetValidator(ctx, curValidator)
+		if err != nil {
+			return nil, err
+		}
+		updates = append(updates, abci.ValidatorUpdate{
+			PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
+			Power:  validator.ABCIValidator.Power,
+		})
+	}
+	return updates, nil
+}
+
+// GetValidatorUpdates - after a block, compare updated validator set with
 // recorded validator set before block execution
 func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error) {
 	validatorList, err := vm.storage.GetValidatorList(ctx)
