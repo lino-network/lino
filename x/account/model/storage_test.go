@@ -72,6 +72,22 @@ func TestAccountBank(t *testing.T) {
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
 }
 
+func TestAccountBankZeroValue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	accBank := AccountBank{
+		Saving:  types.NewCoinFromInt64(0),
+		CoinDay: types.NewCoinFromInt64(0),
+	}
+	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetBankFromAccountKey(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
+}
+
 func TestAccountMeta(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
@@ -121,4 +137,33 @@ func TestAccountGrantPubkey(t *testing.T) {
 	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
 	assert.NotNil(t, err)
 	assert.Nil(t, resultPtr)
+}
+
+func TestPendingCoinDayQueueZeroValue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	pendingCoinDayQueue := &PendingCoinDayQueue{TotalCoinDay: sdk.ZeroDec(), TotalCoin: types.NewCoinFromInt64(0)}
+	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
+}
+
+func TestPendingCoinDayQueue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	pendingCoinDayQueue := &PendingCoinDayQueue{
+		TotalCoinDay:    sdk.OneDec(),
+		TotalCoin:       types.NewCoinFromInt64(1000),
+		PendingCoinDays: []PendingCoinDay{PendingCoinDay{Coin: types.NewCoinFromInt64(0)}}}
+	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
 }
