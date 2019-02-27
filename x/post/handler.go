@@ -179,21 +179,21 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	evaluateResult, err := evaluateConsumption(dp, gm)
-	if err != nil {
-		return err
-	}
+	// evaluateResult, err := evaluateConsumption(dp, gm)
+	// if err != nil {
+	// 	return err
+	// }
 	rewardEvent := RewardEvent{
 		PostAuthor: postAuthor,
 		PostID:     postID,
 		Consumer:   consumer,
-		Evaluate:   evaluateResult,
+		Evaluate:   dp,
 		Original:   coin,
 		Friction:   frictionCoin,
 		FromApp:    fromApp,
 	}
 	if err := gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
+		ctx, rewardEvent, frictionCoin, dp); err != nil {
 		return err
 	}
 
