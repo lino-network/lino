@@ -50,7 +50,7 @@ func (is InfraProviderStorage) GetInfraProvider(
 		return nil, ErrInfraProviderNotFound()
 	}
 	provider := new(InfraProvider)
-	if err := is.cdc.UnmarshalJSON(providerByte, provider); err != nil {
+	if err := is.cdc.UnmarshalBinaryLengthPrefixed(providerByte, provider); err != nil {
 		return nil, ErrFailedToUnmarshalInfraProvider(err)
 	}
 	return provider, nil
@@ -60,7 +60,7 @@ func (is InfraProviderStorage) GetInfraProvider(
 func (is InfraProviderStorage) SetInfraProvider(
 	ctx sdk.Context, accKey types.AccountKey, InfraProvider *InfraProvider) sdk.Error {
 	store := ctx.KVStore(is.key)
-	InfraProviderByte, err := is.cdc.MarshalJSON(*InfraProvider)
+	InfraProviderByte, err := is.cdc.MarshalBinaryLengthPrefixed(*InfraProvider)
 	if err != nil {
 		return ErrFailedToMarshalInfraProvider(err)
 	}
@@ -76,7 +76,7 @@ func (is InfraProviderStorage) GetInfraProviderList(ctx sdk.Context) (*InfraProv
 		return nil, ErrInfraProviderListNotFound()
 	}
 	lst := new(InfraProviderList)
-	if err := is.cdc.UnmarshalJSON(listByte, lst); err != nil {
+	if err := is.cdc.UnmarshalBinaryLengthPrefixed(listByte, lst); err != nil {
 		return nil, ErrFailedToUnmarshalInfraProviderList(err)
 	}
 	return lst, nil
@@ -85,7 +85,7 @@ func (is InfraProviderStorage) GetInfraProviderList(ctx sdk.Context) (*InfraProv
 // SetInfraProviderList - set infra provider list to KVStore
 func (is InfraProviderStorage) SetInfraProviderList(ctx sdk.Context, lst *InfraProviderList) sdk.Error {
 	store := ctx.KVStore(is.key)
-	listByte, err := is.cdc.MarshalJSON(*lst)
+	listByte, err := is.cdc.MarshalBinaryLengthPrefixed(*lst)
 	if err != nil {
 		return ErrFailedToMarshalInfraProviderList(err)
 	}
