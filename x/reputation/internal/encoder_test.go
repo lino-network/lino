@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -18,7 +17,6 @@ func TestEncodeDecode(t *testing.T) {
 	}
 
 	bytes := encodeUserMeta(dt)
-	fmt.Println(bytes)
 	rst := decodeUserMeta(bytes)
 	assert.Equal(dt, rst)
 }
