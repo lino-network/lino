@@ -45,7 +45,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	postInfo := new(model.PostInfo)
-	if err := c.cdc.UnmarshalJSON(res, postInfo); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, postInfo); err != nil {
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	postMeta := new(model.PostMeta)
-	if err := c.cdc.UnmarshalJSON(res, postMeta); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, postMeta); err != nil {
 		return err
 	}
 
@@ -96,7 +96,7 @@ func (c commander) getPostsCmd(cmd *cobra.Command, args []string) error {
 	var posts []model.PostInfo
 	for _, KV := range resKVs {
 		var info model.PostInfo
-		if err := c.cdc.UnmarshalJSON(KV.Value, &info); err != nil {
+		if err := c.cdc.UnmarshalBinaryLengthPrefixed(KV.Value, &info); err != nil {
 			return err
 		}
 		posts = append(posts, info)

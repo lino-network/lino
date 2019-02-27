@@ -72,6 +72,22 @@ func TestAccountBank(t *testing.T) {
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
 }
 
+func TestAccountBankZeroValue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	accBank := AccountBank{
+		Saving:  types.NewCoinFromInt64(0),
+		CoinDay: types.NewCoinFromInt64(0),
+	}
+	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetBankFromAccountKey(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
+}
+
 func TestAccountMeta(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
@@ -90,11 +106,11 @@ func TestAccountReward(t *testing.T) {
 	ctx := getContext()
 
 	reward := Reward{
-		TotalIncome:     types.NewCoinFromInt64(0),
-		OriginalIncome:  types.NewCoinFromInt64(0),
-		FrictionIncome:  types.NewCoinFromInt64(0),
-		InflationIncome: types.NewCoinFromInt64(0),
-		UnclaimReward:   types.NewCoinFromInt64(0),
+		TotalIncome:     types.NewCoinFromInt64(5),
+		OriginalIncome:  types.NewCoinFromInt64(4),
+		FrictionIncome:  types.NewCoinFromInt64(3),
+		InflationIncome: types.NewCoinFromInt64(2),
+		UnclaimReward:   types.NewCoinFromInt64(1),
 	}
 	err := as.SetReward(ctx, types.AccountKey("test"), &reward)
 	assert.Nil(t, err)
@@ -121,4 +137,33 @@ func TestAccountGrantPubkey(t *testing.T) {
 	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
 	assert.NotNil(t, err)
 	assert.Nil(t, resultPtr)
+}
+
+func TestPendingCoinDayQueueZeroValue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	pendingCoinDayQueue := &PendingCoinDayQueue{TotalCoinDay: sdk.ZeroDec(), TotalCoin: types.NewCoinFromInt64(0)}
+	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
+}
+
+func TestPendingCoinDayQueue(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	pendingCoinDayQueue := &PendingCoinDayQueue{
+		TotalCoinDay:    sdk.OneDec(),
+		TotalCoin:       types.NewCoinFromInt64(1000),
+		PendingCoinDays: []PendingCoinDay{PendingCoinDay{Coin: types.NewCoinFromInt64(0)}}}
+	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
 }

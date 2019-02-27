@@ -21,7 +21,7 @@ var (
 
 func TestChangeParamProposal(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
-	handler := NewHandler(am, proposalManager, postManager, gm, vm)
+	handler := NewHandler(am, proposalManager, postManager, &gm, vm)
 	proposalManager.InitGenesis(ctx)
 
 	allocation := param.GlobalAllocationParam{
@@ -126,7 +126,7 @@ func TestChangeParamProposal(t *testing.T) {
 
 func TestContentCensorshipProposal(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
-	handler := NewHandler(am, proposalManager, postManager, gm, vm)
+	handler := NewHandler(am, proposalManager, postManager, &gm, vm)
 	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
@@ -301,7 +301,7 @@ func TestAddFrozenMoney(t *testing.T) {
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
-			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+			ctx, "user", &gm, am, tc.times, tc.interval, tc.returnedCoin)
 		if err != nil {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
@@ -327,7 +327,7 @@ func TestAddFrozenMoney(t *testing.T) {
 
 func TestVoteProposalBasic(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
-	handler := NewHandler(am, proposalManager, postManager, gm, vm)
+	handler := NewHandler(am, proposalManager, postManager, &gm, vm)
 	curTime := ctx.BlockHeader().Time.Unix()
 	proposalManager.InitGenesis(ctx)
 

@@ -27,7 +27,7 @@ func TestPost(t *testing.T) {
 		ParentPostID: "",
 		SourceAuthor: "",
 		SourcePostID: "",
-		Links:        nil,
+		Links:        []types.IDToURLMapping{types.IDToURLMapping{Identifier: "test", URL: "https://lino.network"}},
 	}
 
 	runTest(t, func(env TestEnv) {

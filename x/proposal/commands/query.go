@@ -57,7 +57,7 @@ func (c commander) getOngoingProposalCmd(cmd *cobra.Command, args []string) erro
 		return err
 	}
 	proposal := new(model.Proposal)
-	if err := c.cdc.UnmarshalJSON(res, proposal); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, proposal); err != nil {
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (c commander) getExpiredProposalCmd(cmd *cobra.Command, args []string) erro
 		return err
 	}
 	proposal := new(model.Proposal)
-	if err := c.cdc.UnmarshalJSON(res, proposal); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, proposal); err != nil {
 		return err
 	}
 

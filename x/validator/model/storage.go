@@ -52,7 +52,7 @@ func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey types.AccountKey
 		return nil, ErrValidatorNotFound()
 	}
 	validator := new(Validator)
-	if err := vs.cdc.UnmarshalJSON(validatorByte, validator); err != nil {
+	if err := vs.cdc.UnmarshalBinaryLengthPrefixed(validatorByte, validator); err != nil {
 		return nil, ErrFailedToUnmarshalValidator(err)
 	}
 	return validator, nil
@@ -60,7 +60,7 @@ func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey types.AccountKey
 
 func (vs ValidatorStorage) SetValidator(ctx sdk.Context, accKey types.AccountKey, validator *Validator) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	validatorByte, err := vs.cdc.MarshalJSON(*validator)
+	validatorByte, err := vs.cdc.MarshalBinaryLengthPrefixed(*validator)
 	if err != nil {
 		return ErrFailedToMarshalValidator(err)
 	}
@@ -81,7 +81,7 @@ func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) (*ValidatorList, sd
 		return nil, ErrValidatorListNotFound()
 	}
 	lst := new(ValidatorList)
-	if err := vs.cdc.UnmarshalJSON(listByte, lst); err != nil {
+	if err := vs.cdc.UnmarshalBinaryLengthPrefixed(listByte, lst); err != nil {
 		return nil, ErrFailedToUnmarshalValidatorList(err)
 	}
 	return lst, nil
@@ -89,7 +89,7 @@ func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) (*ValidatorList, sd
 
 func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	listByte, err := vs.cdc.MarshalJSON(*lst)
+	listByte, err := vs.cdc.MarshalBinaryLengthPrefixed(*lst)
 	if err != nil {
 		return ErrFailedToMarshalValidatorList(err)
 	}

@@ -109,7 +109,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
-		MaxTPS:                       sdk.NewDec(1000),
+		MaxTPS: sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
@@ -125,7 +125,7 @@ func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*type
 		return nil, nil
 	}
 	lst := new(types.TimeEventList)
-	if err := gs.cdc.UnmarshalJSON(listByte, lst); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(listByte, lst); err != nil {
 		return nil, ErrFailedToUnmarshalTimeEventList(err)
 	}
 	return lst, nil
@@ -134,7 +134,7 @@ func (gs GlobalStorage) GetTimeEventList(ctx sdk.Context, unixTime int64) (*type
 // SetTimeEventList - set time event list at given unix time
 func (gs GlobalStorage) SetTimeEventList(ctx sdk.Context, unixTime int64, lst *types.TimeEventList) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	listByte, err := gs.cdc.MarshalJSON(*lst)
+	listByte, err := gs.cdc.MarshalBinaryLengthPrefixed(*lst)
 	if err != nil {
 		return ErrFailedToMarshalTimeEventList(err)
 	}
@@ -152,7 +152,7 @@ func (gs GlobalStorage) RemoveTimeEventList(ctx sdk.Context, unixTime int64) sdk
 // SetLinoStakeStat - set lino power statistic at given day
 func (gs GlobalStorage) SetLinoStakeStat(ctx sdk.Context, day int64, lps *LinoStakeStat) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	lpsByte, err := gs.cdc.MarshalJSON(*lps)
+	lpsByte, err := gs.cdc.MarshalBinaryLengthPrefixed(*lps)
 	if err != nil {
 		return ErrFailedToMarshalTimeEventList(err)
 	}
@@ -168,7 +168,7 @@ func (gs GlobalStorage) GetLinoStakeStat(ctx sdk.Context, day int64) (*LinoStake
 		return nil, ErrLinoStakeStatisticNotFound()
 	}
 	linoStakeStat := new(LinoStakeStat)
-	if err := gs.cdc.UnmarshalJSON(linoStakeStatBytes, linoStakeStat); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(linoStakeStatBytes, linoStakeStat); err != nil {
 		return nil, ErrFailedToUnmarshalLinoStakeStatistic(err)
 	}
 	return linoStakeStat, nil
@@ -182,7 +182,7 @@ func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) 
 		return nil, ErrGlobalMetaNotFound()
 	}
 	globalMeta := new(GlobalMeta)
-	if err := gs.cdc.UnmarshalJSON(globalMetaBytes, globalMeta); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(globalMetaBytes, globalMeta); err != nil {
 		return nil, ErrFailedToUnmarshalGlobalMeta(err)
 	}
 	return globalMeta, nil
@@ -191,7 +191,7 @@ func (gs GlobalStorage) GetGlobalMeta(ctx sdk.Context) (*GlobalMeta, sdk.Error) 
 // SetGlobalMeta - set global meta to KVStore
 func (gs GlobalStorage) SetGlobalMeta(ctx sdk.Context, globalMeta *GlobalMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	globalMetaBytes, err := gs.cdc.MarshalJSON(*globalMeta)
+	globalMetaBytes, err := gs.cdc.MarshalBinaryLengthPrefixed(*globalMeta)
 	if err != nil {
 		return ErrFailedToMarshalGlobalMeta(err)
 	}
@@ -207,7 +207,7 @@ func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.E
 		return nil, ErrInflationPoolNotFound()
 	}
 	inflationPool := new(InflationPool)
-	if err := gs.cdc.UnmarshalJSON(inflationPoolBytes, inflationPool); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(inflationPoolBytes, inflationPool); err != nil {
 		return nil, ErrFailedToUnmarshalInflationPool(err)
 	}
 	return inflationPool, nil
@@ -216,7 +216,7 @@ func (gs GlobalStorage) GetInflationPool(ctx sdk.Context) (*InflationPool, sdk.E
 // SetInflationPool - set inflation pool to KVStore
 func (gs GlobalStorage) SetInflationPool(ctx sdk.Context, inflationPool *InflationPool) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	inflationPoolBytes, err := gs.cdc.MarshalJSON(*inflationPool)
+	inflationPoolBytes, err := gs.cdc.MarshalBinaryLengthPrefixed(*inflationPool)
 	if err != nil {
 		return ErrFailedToMarshalInflationPool(err)
 	}
@@ -232,7 +232,7 @@ func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, s
 		return nil, ErrGlobalConsumptionMetaNotFound()
 	}
 	consumptionMeta := new(ConsumptionMeta)
-	if err := gs.cdc.UnmarshalJSON(consumptionMetaBytes, consumptionMeta); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(consumptionMetaBytes, consumptionMeta); err != nil {
 		return nil, ErrFailedToUnmarshalConsumptionMeta(err)
 	}
 	return consumptionMeta, nil
@@ -241,7 +241,7 @@ func (gs GlobalStorage) GetConsumptionMeta(ctx sdk.Context) (*ConsumptionMeta, s
 // SetConsumptionMeta - set consumption meta to KVStore
 func (gs GlobalStorage) SetConsumptionMeta(ctx sdk.Context, consumptionMeta *ConsumptionMeta) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	consumptionMetaBytes, err := gs.cdc.MarshalJSON(*consumptionMeta)
+	consumptionMetaBytes, err := gs.cdc.MarshalBinaryLengthPrefixed(*consumptionMeta)
 	if err != nil {
 		return ErrFailedToMarshalConsumptionMeta(err)
 	}
@@ -257,7 +257,7 @@ func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 		return nil, ErrGlobalTPSNotFound()
 	}
 	tps := new(TPS)
-	if err := gs.cdc.UnmarshalJSON(tpsBytes, tps); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(tpsBytes, tps); err != nil {
 		return nil, ErrFailedToUnmarshalTPS(err)
 	}
 	return tps, nil
@@ -266,7 +266,7 @@ func (gs GlobalStorage) GetTPS(ctx sdk.Context) (*TPS, sdk.Error) {
 // SetTPS - set tps to KVStore
 func (gs GlobalStorage) SetTPS(ctx sdk.Context, tps *TPS) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	tpsBytes, err := gs.cdc.MarshalJSON(*tps)
+	tpsBytes, err := gs.cdc.MarshalBinaryLengthPrefixed(*tps)
 	if err != nil {
 		return ErrFailedToMarshalTPS(err)
 	}
@@ -282,7 +282,7 @@ func (gs GlobalStorage) GetGlobalTime(ctx sdk.Context) (*GlobalTime, sdk.Error) 
 		return nil, ErrGlobalTimeNotFound()
 	}
 	globalTime := new(GlobalTime)
-	if err := gs.cdc.UnmarshalJSON(timeBytes, globalTime); err != nil {
+	if err := gs.cdc.UnmarshalBinaryLengthPrefixed(timeBytes, globalTime); err != nil {
 		return nil, ErrFailedToUnmarshalTime(err)
 	}
 	return globalTime, nil
@@ -291,7 +291,7 @@ func (gs GlobalStorage) GetGlobalTime(ctx sdk.Context) (*GlobalTime, sdk.Error) 
 // SetGlobalTime - set global time to KVStore
 func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) sdk.Error {
 	store := ctx.KVStore(gs.key)
-	timeBytes, err := gs.cdc.MarshalJSON(*globalTime)
+	timeBytes, err := gs.cdc.MarshalBinaryLengthPrefixed(*globalTime)
 	if err != nil {
 		return ErrFailedToMarshalTime(err)
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 // NewHandler - Handle all "developer" type messages.
-func NewHandler(dm DeveloperManager, am acc.AccountManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(dm DeveloperManager, am acc.AccountManager, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
@@ -80,7 +80,7 @@ func handleDeveloperUpdateMsg(
 
 func handleDeveloperRevokeMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager,
-	gm global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
+	gm *global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
 	if !dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -183,7 +183,7 @@ func handlePreAuthorizationMsg(
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager,
 	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {

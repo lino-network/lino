@@ -16,7 +16,7 @@ import (
 // NewHandler - Handle all "proposal" type messages.
 func NewHandler(
 	am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm global.GlobalManager, vm vote.VoteManager) sdk.Handler {
+	postManager post.PostManager, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -35,7 +35,7 @@ func NewHandler(
 }
 
 func handleChangeParamMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
+	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
 	msg ChangeParamMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -74,7 +74,7 @@ func handleChangeParamMsg(
 }
 
 func handleProtocolUpgradeMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm global.GlobalManager,
+	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
 	msg ProtocolUpgradeMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -114,7 +114,7 @@ func handleProtocolUpgradeMsg(
 
 func handleContentCensorshipMsg(
 	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
+	postManager post.PostManager, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
 	}
@@ -189,7 +189,7 @@ func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm 
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin) sdk.Error {
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {

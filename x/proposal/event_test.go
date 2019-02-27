@@ -182,7 +182,7 @@ func TestDecideProposal(t *testing.T) {
 
 	for _, cs := range cases {
 		if cs.decideProposal {
-			err := cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, gm)
+			err := cs.event.Execute(ctx, voteManager, valManager, am, pm, postManager, &gm)
 			assert.Nil(t, err)
 			proposal, _ := pm.storage.GetExpiredProposal(ctx, cs.proposalID)
 			proposalInfo := proposal.GetProposalInfo()

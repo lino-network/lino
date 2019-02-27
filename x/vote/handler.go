@@ -13,7 +13,7 @@ import (
 )
 
 // NewHandler - Handle all "vote" type messages.
-func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager, rm rep.ReputationManager) sdk.Handler {
+func NewHandler(vm VoteManager, am acc.AccountManager, gm *global.GlobalManager, rm rep.ReputationManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case StakeInMsg:
@@ -34,7 +34,7 @@ func NewHandler(vm VoteManager, am acc.AccountManager, gm global.GlobalManager, 
 }
 
 func handleStakeInMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
+	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
 	am acc.AccountManager, rm rep.ReputationManager, msg StakeInMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
@@ -68,7 +68,7 @@ func handleStakeInMsg(
 }
 
 func handleStakeOutMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
+	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
 	am acc.AccountManager, rm rep.ReputationManager, msg StakeOutMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -97,7 +97,7 @@ func handleStakeOutMsg(
 }
 
 func handleDelegateMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager, msg DelegateMsg) sdk.Result {
+	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager, msg DelegateMsg) sdk.Result {
 	// Must have an normal acount
 	if !am.DoesAccountExist(ctx, msg.Voter) {
 		return ErrAccountNotFound().Result()
@@ -135,7 +135,7 @@ func handleDelegateMsg(
 }
 
 func handleDelegatorWithdrawMsg(
-	ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
+	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
 	am acc.AccountManager, rm rep.ReputationManager, msg DelegatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -164,7 +164,7 @@ func handleDelegatorWithdrawMsg(
 	return sdk.Result{}
 }
 
-func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalManager, am acc.AccountManager, msg ClaimInterestMsg) sdk.Result {
+func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm *global.GlobalManager, am acc.AccountManager, msg ClaimInterestMsg) sdk.Result {
 	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
 		return err.Result()
 	}
@@ -182,7 +182,7 @@ func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm global.GlobalMan
 
 func AddStake(
 	ctx sdk.Context, username types.AccountKey, stake types.Coin, vm VoteManager,
-	gm global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager) sdk.Error {
+	gm *global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager) sdk.Error {
 	// Register the user if this name has not been registered
 	if !vm.DoesVoterExist(ctx, username) {
 		if err := vm.AddVoter(ctx, username, types.NewCoinFromInt64(0)); err != nil {
@@ -208,7 +208,7 @@ func AddStake(
 
 func MinusStake(
 	ctx sdk.Context, username types.AccountKey, stake types.Coin, vm VoteManager,
-	gm global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager) sdk.Error {
+	gm *global.GlobalManager, am acc.AccountManager, rm rep.ReputationManager) sdk.Error {
 	if err := calculateAndAddInterest(ctx, vm, gm, am, username); err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func MinusStake(
 	return nil
 }
 
-func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalManager,
+func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
 	am acc.AccountManager, name types.AccountKey) sdk.Error {
 	userLinoStake, err := vm.GetLinoStake(ctx, name)
 	if err != nil {
@@ -254,7 +254,7 @@ func calculateAndAddInterest(ctx sdk.Context, vm VoteManager, gm global.GlobalMa
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin, returnType types.TransferDetailType) sdk.Error {
 
 	if err := am.AddFrozenMoney(

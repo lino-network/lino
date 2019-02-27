@@ -3,8 +3,10 @@ package account
 import (
 	"testing"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
+	"github.com/lino-network/lino/x/global"
 
 	"github.com/stretchr/testify/assert"
 
@@ -22,7 +24,7 @@ var (
 
 func TestTransferNormal(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	// create two test users with initial deposit of 100 LNO.
@@ -67,9 +69,30 @@ func TestTransferNormal(t *testing.T) {
 	}
 }
 
+func BenchmarkNumTransfer(b *testing.B) {
+	ctx := getContext(0)
+	ph := param.NewParamHolder(testParamKVStoreKey)
+	ph.InitParam(ctx)
+	accManager := NewAccountManager(testAccountKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	handler := NewHandler(accManager, &globalManager)
+
+	// create two test users with initial deposit of 100 LNO.
+	createTestAccount(ctx, accManager, "user1")
+	createTestAccount(ctx, accManager, "user2")
+
+	accManager.AddSavingCoin(
+		ctx, types.AccountKey("user1"), types.NewCoinFromInt64(100000*int64(b.N)),
+		"", "", types.TransferIn)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		handler(ctx, NewTransferMsg("user1", "user2", "1", ""))
+	}
+}
+
 func TestSenderCoinNotEnough(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	// create two test users
@@ -89,7 +112,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -104,7 +127,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 func TestHandleAccountRecover(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	user1 := "user1"
 
@@ -152,7 +175,7 @@ func TestHandleRegister(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	referrer := "referrer"
 
 	createTestAccount(ctx, am, referrer)
@@ -320,7 +343,7 @@ func TestHandleRegister(t *testing.T) {
 
 func TestHandleUpdateAccountMsg(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	createTestAccount(ctx, am, "accKey")
 

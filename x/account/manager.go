@@ -142,7 +142,6 @@ func (accManager AccountManager) AddSavingCoin(
 	if err != nil {
 		return err
 	}
-
 	startTime := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
 	pendingCoinDay := model.PendingCoinDay{
 		StartTime: startTime,
@@ -262,40 +261,43 @@ func (accManager AccountManager) MinusSavingCoin(
 // MinusSavingCoin - minus coin from balance, remove most charged coin day coin
 func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 	ctx sdk.Context, username types.AccountKey, coin types.Coin, to types.AccountKey,
-	memo string, detailType types.TransferDetailType) (err sdk.Error) {
+	memo string, detailType types.TransferDetailType) (types.Coin, sdk.Error) {
 	if coin.IsZero() {
-		return nil
+		return types.NewCoinFromInt64(0), nil
 	}
+	coinDayLost := types.NewCoinFromInt64(0)
 	accountBank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
 	if err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
 
 	accountParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
 	remain := accountBank.Saving.Minus(coin)
 	if !remain.IsGTE(accountParams.MinimumBalance) {
-		return ErrAccountSavingCoinNotEnough()
+		return types.NewCoinFromInt64(0), ErrAccountSavingCoinNotEnough()
 	}
 	accountBank.Saving = remain
 
 	pendingCoinDayQueue, err :=
 		accManager.storage.GetPendingCoinDayQueue(ctx, username)
 	if err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
 	// update pending coin day queue, remove expired transaction
 	accManager.updateTXFromPendingCoinDayQueue(ctx, accountBank, pendingCoinDayQueue)
 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
 	if err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
 	if accountBank.CoinDay.IsGTE(coin) {
 		accountBank.CoinDay = accountBank.CoinDay.Minus(coin)
+		coinDayLost = coin
 	} else {
 		coin = coin.Minus(accountBank.CoinDay)
+		coinDayLost = accountBank.CoinDay
 		accountBank.CoinDay = types.NewCoinFromInt64(0)
 
 		for len(pendingCoinDayQueue.PendingCoinDays) > 0 {
@@ -327,14 +329,14 @@ func (accManager AccountManager) MinusSavingCoinWithFullCoinDay(
 
 	if err := accManager.storage.SetPendingCoinDayQueue(
 		ctx, username, pendingCoinDayQueue); err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
 
 	if err := accManager.storage.SetBankFromAccountKey(
 		ctx, username, accountBank); err != nil {
-		return err
+		return types.NewCoinFromInt64(0), err
 	}
-	return nil
+	return coinDayLost, nil
 }
 
 // UpdateJSONMeta - update user JONS meta data
@@ -734,12 +736,8 @@ func (accManager AccountManager) addPendingCoinDayToQueue(
 	accManager.updateTXFromPendingCoinDayQueue(ctx, bank, pendingCoinDayQueue)
 	idx := len(pendingCoinDayQueue.PendingCoinDays) - 1
 	if len(pendingCoinDayQueue.PendingCoinDays) > 0 && pendingCoinDayQueue.PendingCoinDays[idx].StartTime == pendingCoinDay.StartTime {
-		if ctx.BlockHeader().Height > types.LinoBlockchainSecondUpdateHeight {
-			pendingCoinDayQueue.PendingCoinDays[idx].Coin = pendingCoinDayQueue.PendingCoinDays[idx].Coin.Plus(pendingCoinDay.Coin)
-			pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Plus(pendingCoinDay.Coin)
-		} else {
-			pendingCoinDayQueue.PendingCoinDays[idx].Coin.Plus(pendingCoinDay.Coin)
-		}
+		pendingCoinDayQueue.PendingCoinDays[idx].Coin = pendingCoinDayQueue.PendingCoinDays[idx].Coin.Plus(pendingCoinDay.Coin)
+		pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Plus(pendingCoinDay.Coin)
 	} else {
 		pendingCoinDayQueue.PendingCoinDays = append(pendingCoinDayQueue.PendingCoinDays, pendingCoinDay)
 		pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Plus(pendingCoinDay.Coin)

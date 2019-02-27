@@ -72,7 +72,7 @@ func (ps ProposalStorage) GetOngoingProposal(ctx sdk.Context, proposalID types.P
 		return nil, ErrProposalNotFound()
 	}
 	proposal := new(Proposal)
-	if err := ps.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
+	if err := ps.cdc.UnmarshalBinaryLengthPrefixed(proposalByte, proposal); err != nil {
 		return nil, ErrFailedToUnmarshalProposal(err)
 	}
 	return *proposal, nil
@@ -81,7 +81,7 @@ func (ps ProposalStorage) GetOngoingProposal(ctx sdk.Context, proposalID types.P
 // SetOngoingProposal - set proposal to ongoing proposal KVStore
 func (ps ProposalStorage) SetOngoingProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	proposalByte, err := ps.cdc.MarshalJSON(proposal)
+	proposalByte, err := ps.cdc.MarshalBinaryLengthPrefixed(proposal)
 	if err != nil {
 		return ErrFailedToMarshalProposal(err)
 	}
@@ -104,7 +104,7 @@ func (ps ProposalStorage) GetExpiredProposal(ctx sdk.Context, proposalID types.P
 		return nil, ErrProposalNotFound()
 	}
 	proposal := new(Proposal)
-	if err := ps.cdc.UnmarshalJSON(proposalByte, proposal); err != nil {
+	if err := ps.cdc.UnmarshalBinaryLengthPrefixed(proposalByte, proposal); err != nil {
 		return nil, ErrFailedToUnmarshalProposal(err)
 	}
 	return *proposal, nil
@@ -113,7 +113,7 @@ func (ps ProposalStorage) GetExpiredProposal(ctx sdk.Context, proposalID types.P
 // SetExpiredProposal - set proposal to expired proposal KVStore
 func (ps ProposalStorage) SetExpiredProposal(ctx sdk.Context, proposalID types.ProposalKey, proposal Proposal) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	proposalByte, err := ps.cdc.MarshalJSON(proposal)
+	proposalByte, err := ps.cdc.MarshalBinaryLengthPrefixed(proposal)
 	if err != nil {
 		return ErrFailedToMarshalProposal(err)
 	}
@@ -138,7 +138,7 @@ func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, s
 	for ; iterator.Valid(); iterator.Next() {
 		proposalBytes := iterator.Value()
 		var p Proposal
-		err := ps.cdc.UnmarshalJSON(proposalBytes, &p)
+		err := ps.cdc.UnmarshalBinaryLengthPrefixed(proposalBytes, &p)
 		if err != nil {
 			return nil, ErrFailedToMarshalProposal(err)
 		}
@@ -158,7 +158,7 @@ func (ps ProposalStorage) GetExpiredProposalList(ctx sdk.Context) ([]Proposal, s
 	for ; iterator.Valid(); iterator.Next() {
 		proposalBytes := iterator.Value()
 		var p Proposal
-		err := ps.cdc.UnmarshalJSON(proposalBytes, &p)
+		err := ps.cdc.UnmarshalBinaryLengthPrefixed(proposalBytes, &p)
 		if err != nil {
 			return nil, ErrFailedToUnmarshalProposal(err)
 		}
@@ -176,7 +176,7 @@ func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, s
 		return nil, ErrNextProposalIDNotFound()
 	}
 	nextProposalID := new(NextProposalID)
-	if err := ps.cdc.UnmarshalJSON(nextProposalIDByte, nextProposalID); err != nil {
+	if err := ps.cdc.UnmarshalBinaryLengthPrefixed(nextProposalIDByte, nextProposalID); err != nil {
 		return nil, ErrFailedToUnmarshalNextProposalID(err)
 	}
 	return nextProposalID, nil
@@ -185,7 +185,7 @@ func (ps ProposalStorage) GetNextProposalID(ctx sdk.Context) (*NextProposalID, s
 // SetNextProposalID - set next proposal ID to KVStore
 func (ps ProposalStorage) SetNextProposalID(ctx sdk.Context, nextProposalID *NextProposalID) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	nextProposalIDByte, err := ps.cdc.MarshalJSON(*nextProposalID)
+	nextProposalIDByte, err := ps.cdc.MarshalBinaryLengthPrefixed(*nextProposalID)
 	if err != nil {
 		return ErrFailedToMarshalNextProposalID(err)
 	}

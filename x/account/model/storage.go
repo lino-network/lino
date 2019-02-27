@@ -63,7 +63,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 		return nil, ErrAccountInfoNotFound()
 	}
 	info := new(AccountInfo)
-	if err := as.cdc.UnmarshalJSON(infoByte, info); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(infoByte, info); err != nil {
 		return nil, ErrFailedToUnmarshalAccountInfo(err)
 	}
 	return info, nil
@@ -72,7 +72,7 @@ func (as AccountStorage) GetInfo(ctx sdk.Context, accKey types.AccountKey) (*Acc
 // SetInfo - sets general account info to a specific account, returns error if any.
 func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accInfo *AccountInfo) sdk.Error {
 	store := ctx.KVStore(as.key)
-	infoByte, err := as.cdc.MarshalJSON(*accInfo)
+	infoByte, err := as.cdc.MarshalBinaryLengthPrefixed(*accInfo)
 	if err != nil {
 		return ErrFailedToMarshalAccountInfo(err)
 	}
@@ -90,7 +90,7 @@ func (as AccountStorage) GetBankFromAccountKey(
 		return nil, ErrAccountBankNotFound()
 	}
 	bank := new(AccountBank)
-	if err := as.cdc.UnmarshalJSON(bankByte, bank); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(bankByte, bank); err != nil {
 		return nil, ErrFailedToUnmarshalAccountBank(err)
 	}
 	return bank, nil
@@ -100,7 +100,7 @@ func (as AccountStorage) GetBankFromAccountKey(
 // returns error if any.
 func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, username types.AccountKey, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
-	bankByte, err := as.cdc.MarshalJSON(*accBank)
+	bankByte, err := as.cdc.MarshalBinaryLengthPrefixed(*accBank)
 	if err != nil {
 		return ErrFailedToMarshalAccountBank(err)
 	}
@@ -116,7 +116,7 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 		return nil, ErrAccountMetaNotFound()
 	}
 	meta := new(AccountMeta)
-	if err := as.cdc.UnmarshalJSON(metaByte, meta); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(metaByte, meta); err != nil {
 		return nil, ErrFailedToUnmarshalAccountMeta(err)
 	}
 	return meta, nil
@@ -125,7 +125,7 @@ func (as AccountStorage) GetMeta(ctx sdk.Context, accKey types.AccountKey) (*Acc
 // SetMeta - sets meta for a given account, returns error if any.
 func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMeta *AccountMeta) sdk.Error {
 	store := ctx.KVStore(as.key)
-	metaByte, err := as.cdc.MarshalJSON(*accMeta)
+	metaByte, err := as.cdc.MarshalBinaryLengthPrefixed(*accMeta)
 	if err != nil {
 		return ErrFailedToMarshalAccountMeta(err)
 	}
@@ -141,7 +141,7 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 		return nil, ErrRewardNotFound()
 	}
 	reward := new(Reward)
-	if err := as.cdc.UnmarshalJSON(rewardByte, reward); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(rewardByte, reward); err != nil {
 		return nil, ErrFailedToUnmarshalReward(err)
 	}
 	return reward, nil
@@ -150,7 +150,7 @@ func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*R
 // SetReward - sets the rewards info of a given account, returns error if any.
 func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
 	store := ctx.KVStore(as.key)
-	rewardByte, err := as.cdc.MarshalJSON(*reward)
+	rewardByte, err := as.cdc.MarshalBinaryLengthPrefixed(*reward)
 	if err != nil {
 		return ErrFailedToMarshalReward(err)
 	}
@@ -167,7 +167,7 @@ func (as AccountStorage) GetPendingCoinDayQueue(
 		return nil, ErrPendingCoinDayQueueNotFound()
 	}
 	queue := new(PendingCoinDayQueue)
-	if err := as.cdc.UnmarshalJSON(pendingCoinDayQueueByte, queue); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(pendingCoinDayQueueByte, queue); err != nil {
 		return nil, ErrFailedToUnmarshalPendingCoinDayQueue(err)
 	}
 	return queue, nil
@@ -176,7 +176,7 @@ func (as AccountStorage) GetPendingCoinDayQueue(
 // SetPendingCoinDayQueue - sets a pending coin day queue for a given username.
 func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.AccountKey, pendingCoinDayQueue *PendingCoinDayQueue) sdk.Error {
 	store := ctx.KVStore(as.key)
-	pendingCoinDayQueueByte, err := as.cdc.MarshalJSON(*pendingCoinDayQueue)
+	pendingCoinDayQueueByte, err := as.cdc.MarshalBinaryLengthPrefixed(*pendingCoinDayQueue)
 	if err != nil {
 		return ErrFailedToMarshalPendingCoinDayQueue(err)
 	}
@@ -199,7 +199,7 @@ func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 		return nil, ErrGrantPubKeyNotFound()
 	}
 	grantPubKey := new(GrantPubKey)
-	if err := as.cdc.UnmarshalJSON(grantPubKeyByte, grantPubKey); err != nil {
+	if err := as.cdc.UnmarshalBinaryLengthPrefixed(grantPubKeyByte, grantPubKey); err != nil {
 		return nil, ErrFailedToUnmarshalGrantPubKey(err)
 	}
 	return grantPubKey, nil
@@ -208,7 +208,7 @@ func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 // SetGrantPubKey - sets a grant user to KV. Key is pubkey and value is grant user info
 func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantPubKey *GrantPubKey) sdk.Error {
 	store := ctx.KVStore(as.key)
-	grantPubKeyByte, err := as.cdc.MarshalJSON(*grantPubKey)
+	grantPubKeyByte, err := as.cdc.MarshalBinaryLengthPrefixed(*grantPubKey)
 	if err != nil {
 		return ErrFailedToMarshalGrantPubKey(err)
 	}
@@ -312,7 +312,7 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 				panic("Failed to decode pubkeyHex: " + pubKeyHex + " " + err.Error())
 			}
 			var pubKey crypto.PubKey
-			err = as.cdc.UnmarshalBinaryBare(pubKeyBytes, &pubKey)
+			err = as.cdc.UnmarshalBinaryLengthPrefixed(pubKeyBytes, &pubKey)
 			if err != nil {
 				panic("Faield to decode pubkeyBytes to pubkey interface: " + err.Error())
 			}

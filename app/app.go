@@ -134,18 +134,18 @@ func NewLinoBlockchain(
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
 	lb.Router().
-		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager, lb.globalManager)).
+		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager, &lb.globalManager)).
 		AddRoute(types.PostRouterName, post.NewHandler(
-			lb.postManager, lb.accountManager, lb.globalManager, lb.developerManager, lb.reputationManager)).
+			lb.postManager, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager)).
 		AddRoute(types.VoteRouterName, vote.NewHandler(
-			lb.voteManager, lb.accountManager, lb.globalManager, lb.reputationManager)).
+			lb.voteManager, lb.accountManager, &lb.globalManager, lb.reputationManager)).
 		AddRoute(types.DeveloperRouterName, developer.NewHandler(
-			lb.developerManager, lb.accountManager, lb.globalManager)).
+			lb.developerManager, lb.accountManager, &lb.globalManager)).
 		AddRoute(types.ProposalRouterName, proposal.NewHandler(
-			lb.accountManager, lb.proposalManager, lb.postManager, lb.globalManager, lb.voteManager)).
+			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
 		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
-			lb.accountManager, lb.valManager, lb.voteManager, lb.globalManager))
+			lb.accountManager, lb.valManager, lb.voteManager, &lb.globalManager))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
@@ -343,7 +343,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		}
 		if err := vote.AddStake(
 			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
-			lb.voteManager, lb.globalManager, lb.accountManager,
+			lb.voteManager, &lb.globalManager, lb.accountManager,
 			lb.reputationManager); err != nil {
 			panic(err)
 		}
@@ -420,7 +420,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		}
 	}
 
-	tags := global.BeginBlocker(ctx, req, lb.globalManager)
+	global.BeginBlocker(ctx, req, &lb.globalManager)
 	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
@@ -430,9 +430,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 	lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
-	return abci.ResponseBeginBlock{
-		Tags: tags.ToKVPairs(),
-	}
+	return abci.ResponseBeginBlock{}
 }
 
 // execute events between last block time and current block time
@@ -460,7 +458,7 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		switch e := event.(type) {
 		case post.RewardEvent:
 			if err := e.Execute(
-				ctx, lb.postManager, lb.accountManager, lb.globalManager,
+				ctx, lb.postManager, lb.accountManager, &lb.globalManager,
 				lb.developerManager, lb.voteManager, lb.reputationManager); err != nil {
 				panic(err)
 			}
@@ -471,7 +469,7 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 		case proposal.DecideProposalEvent:
 			if err := e.Execute(
 				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager,
-				lb.postManager, lb.globalManager); err != nil {
+				lb.postManager, &lb.globalManager); err != nil {
 				panic(err)
 			}
 		case param.ChangeParamEvent:
@@ -488,12 +486,15 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	// XXX(yumin): reputation updates, will not change any tendermint.
 	rep.EndBlocker(ctx, req, lb.reputationManager)
 
+	global.EndBlocker(ctx, req, &lb.globalManager)
 	// update validator set.
 	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return abci.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
+	return abci.ResponseEndBlock{
+		ValidatorUpdates: validatorUpdates,
+	}
 }
 
 func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
