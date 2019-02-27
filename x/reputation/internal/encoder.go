@@ -12,7 +12,7 @@ func encodeReputationStoreState(dt *reputationStoreState) ([]byte, error) {
 	if dt == nil {
 		return nil, errors.New("nil reputationStoreState")
 	}
-	return cdc.MarshalBinaryBare(dt)
+	return cdc.MarshalBinaryLengthPrefixed(dt)
 }
 
 func decodeReputationStoreState(data []byte) (*reputationStoreState, error) {
@@ -20,7 +20,7 @@ func decodeReputationStoreState(data []byte) (*reputationStoreState, error) {
 		return nil, errors.New("nil data in decodeReputationStoreState")
 	}
 	rst := &reputationStoreState{}
-	err := cdc.UnmarshalBinaryBare(data, rst)
+	err := cdc.UnmarshalBinaryLengthPrefixed(data, rst)
 	if err != nil {
 		return nil, err
 	}
