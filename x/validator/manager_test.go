@@ -381,6 +381,78 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 }
 
+func TestInitValidators(t *testing.T) {
+	ctx, am, valManager, _, _ := setupTest(t, 0)
+	valManager.InitGenesis(ctx)
+
+	minBalance := types.NewCoinFromInt64(100 * types.Decimals)
+
+	user1 := createTestAccount(ctx, am, "user1", minBalance)
+	user2 := createTestAccount(ctx, am, "user2", minBalance)
+
+	valKey1 := secp256k1.GenPrivKey().PubKey()
+	valKey2 := secp256k1.GenPrivKey().PubKey()
+
+	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
+
+	valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
+	valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
+
+	val1 := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey1),
+		Power:  types.TendermintValidatorPower,
+	}
+
+	val2 := abci.ValidatorUpdate{
+		PubKey: tmtypes.TM2PB.PubKey(valKey2),
+		Power:  types.TendermintValidatorPower,
+	}
+
+	testCases := []struct {
+		testName            string
+		oncallValidators    []types.AccountKey
+		expectedUpdatedList []abci.ValidatorUpdate
+	}{
+		{
+			testName:            "only one oncall validator",
+			oncallValidators:    []types.AccountKey{user1},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1},
+		},
+		{
+			testName:            "two oncall validators",
+			oncallValidators:    []types.AccountKey{user1, user2},
+			expectedUpdatedList: []abci.ValidatorUpdate{val1, val2},
+		},
+		{
+			testName:            "another one",
+			oncallValidators:    []types.AccountKey{user2},
+			expectedUpdatedList: []abci.ValidatorUpdate{val2},
+		},
+		{
+			testName:            "no validators exists",
+			oncallValidators:    []types.AccountKey{},
+			expectedUpdatedList: []abci.ValidatorUpdate{},
+		},
+	}
+
+	for _, tc := range testCases {
+		lst := &model.ValidatorList{
+			OncallValidators: tc.oncallValidators,
+		}
+		err := valManager.storage.SetValidatorList(ctx, lst)
+		if err != nil {
+			t.Errorf("%s: failed to set validator list, got err %v", tc.testName, err)
+		}
+		actualList, err := valManager.GetInitValidators(ctx)
+		if err != nil {
+			t.Errorf("%s: failed to get validator list, got err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.expectedUpdatedList, actualList) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, actualList, tc.expectedUpdatedList)
+		}
+	}
+}
+
 func TestGetValidatorUpdates(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
 	valManager.InitGenesis(ctx)

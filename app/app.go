@@ -262,16 +262,18 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 	}
 
-	totalCoin := types.NewCoinFromInt64(0)
-
 	// calculate total lino coin
+	totalCoin := types.NewCoinFromInt64(0)
 	for _, gacc := range genesisState.Accounts {
 		totalCoin = totalCoin.Plus(gacc.Coin)
 	}
+	// global state will then be override if during importing.
 	if err := lb.globalManager.InitGlobalManagerWithConfig(
 		ctx, totalCoin, genesisState.InitGlobalMeta); err != nil {
 		panic(err)
 	}
+
+	// set up init state, like empty lists in state.
 	if err := lb.developerManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
@@ -314,7 +316,16 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		}
 	}
 
-	return abci.ResponseInitChain{}
+	// generate respoinse init message.
+	validators, err := lb.valManager.GetInitValidators(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return abci.ResponseInitChain{
+		ConsensusParams: req.ConsensusParams,
+		Validators:      validators,
+	}
 }
 
 // convert GenesisAccount to AppAccount
