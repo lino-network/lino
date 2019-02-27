@@ -17,15 +17,6 @@ const (
 	ProposalKVStoreKey   = "proposal"
 	ReputationKVStoreKey = "reputation"
 
-	// RouterName for msg routing in app
-	AccountRouterName   = "account"
-	PostRouterName      = "post"
-	ValidatorRouterName = "validator"
-	VoteRouterName      = "vote"
-	InfraRouterName     = "infra"
-	DeveloperRouterName = "developer"
-	ProposalRouterName  = "proposal"
-
 	// Different permission level for msg
 	UnknownPermission                = Permission(0)
 	AppPermission                    = Permission(1)

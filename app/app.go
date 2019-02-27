@@ -147,6 +147,8 @@ func NewLinoBlockchain(
 		AddRoute(types.ValidatorRouterName, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, &lb.globalManager))
 
+	lb.QueryRouter().AddRoute(acc.QuerierRoute, acc.NewQuerier(lb.accountManager))
+
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
