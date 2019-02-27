@@ -59,7 +59,7 @@ func (c commander) getInfraProviderCmd(cmd *cobra.Command, args []string) error 
 		return err
 	}
 	provider := new(model.InfraProvider)
-	if err := c.cdc.UnmarshalJSON(res, provider); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, provider); err != nil {
 		return err
 	}
 
@@ -80,7 +80,7 @@ func (c commander) getInfraProvidersCmd(cmd *cobra.Command, args []string) error
 	}
 
 	providerList := new(model.InfraProviderList)
-	if err := c.cdc.UnmarshalJSON(res, providerList); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, providerList); err != nil {
 		return err
 	}
 

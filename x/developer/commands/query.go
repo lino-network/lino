@@ -57,7 +57,7 @@ func (c commander) getDeveloperCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	developer := new(model.Developer)
-	if err := c.cdc.UnmarshalJSON(res, developer); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, developer); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (c commander) getDevelopersCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	developerList := new(model.DeveloperList)
-	if err := c.cdc.UnmarshalJSON(res, developerList); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, developerList); err != nil {
 		return err
 	}
 

@@ -52,7 +52,7 @@ func (c commander) getValidatorsCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	validatorList := new(model.ValidatorList)
-	if err := c.cdc.UnmarshalJSON(res, validatorList); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, validatorList); err != nil {
 		return err
 	}
 
@@ -79,7 +79,7 @@ func (c commander) getValidatorCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	validator := new(model.Validator)
-	if err := c.cdc.UnmarshalJSON(res, validator); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, validator); err != nil {
 		return err
 	}
 

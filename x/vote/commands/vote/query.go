@@ -58,7 +58,7 @@ func (c commander) getVoterCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	voter := new(model.Voter)
-	if err := c.cdc.UnmarshalJSON(res, voter); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, voter); err != nil {
 		return err
 	}
 

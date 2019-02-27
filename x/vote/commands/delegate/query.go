@@ -46,7 +46,7 @@ func (c commander) getDelegationCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	delegation := new(model.Delegation)
-	if err := c.cdc.UnmarshalJSON(res, delegation); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, delegation); err != nil {
 		return err
 	}
 

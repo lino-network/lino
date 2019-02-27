@@ -74,7 +74,7 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, bank); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	info := new(model.AccountInfo)
-	if err := c.cdc.UnmarshalJSON(res, info); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, info); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	bank := new(model.AccountBank)
-	if err := c.cdc.UnmarshalJSON(res, bank); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, bank); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	meta := new(model.AccountMeta)
-	if err := c.cdc.UnmarshalJSON(res, meta); err != nil {
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, meta); err != nil {
 		return err
 	}
 
@@ -139,7 +139,7 @@ func (c commander) getAccountsCmd(cmd *cobra.Command, args []string) error {
 	var accounts []model.AccountInfo
 	for _, KV := range resKVs {
 		var info model.AccountInfo
-		if err := c.cdc.UnmarshalJSON(KV.Value, &info); err != nil {
+		if err := c.cdc.UnmarshalBinaryLengthPrefixed(KV.Value, &info); err != nil {
 			return err
 		}
 		accounts = append(accounts, info)
