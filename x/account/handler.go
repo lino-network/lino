@@ -11,7 +11,7 @@ import (
 )
 
 // NewHandler - Handle all "account" type messages.
-func NewHandler(am AccountManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(am AccountManager, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case TransferMsg:
@@ -79,7 +79,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Re
 }
 
 // Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm global.GlobalManager, msg RegisterMsg) sdk.Result {
+func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm *global.GlobalManager, msg RegisterMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Referrer) {
 		return ErrReferrerNotFound(msg.Referrer).Result()
 	}

@@ -225,6 +225,10 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 				linoStakeStatistic.TotalConsumptionFriction, tc.expectCoinInStatistic)
 		}
 
+		if err = gm.CommitEventCache(ctx); err != nil {
+			t.Errorf("%s: failed to commit event cache, %v", tc.testName, err)
+		}
+
 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.registerBaseTime+24*7*3600)
 		if !assert.Equal(t, types.TimeEventList{Events: []types.Event{testEvent{}}}, *timeEventList) {
 			t.Errorf("%s: diff event list, got %v, want %v", tc.testName,
@@ -437,6 +441,11 @@ func TestTimeEventList(t *testing.T) {
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff err result, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
+
+		if err = gm.CommitEventCache(ctx); err != nil {
+			t.Errorf("%s: failed to commit event cache, %v", tc.testName, err)
+		}
+
 		eventList := gm.GetTimeEventListAtTime(ctx, tc.registerAtTime)
 		if !assert.Equal(t, tc.expectEventList, eventList) {
 			t.Errorf("%s: diff event list, got %v, want %v", tc.testName, eventList, tc.expectEventList)
@@ -545,6 +554,10 @@ func TestRegisterCoinReturnEvent(t *testing.T) {
 		err := gm.RegisterCoinReturnEvent(ctx, events, tc.times, tc.interval)
 		if err != nil {
 			t.Errorf("%s: failed to register coin return event, got err %v", tc.testName, err)
+		}
+
+		if err = gm.CommitEventCache(ctx); err != nil {
+			t.Errorf("%s: failed to commit event cache, %v", tc.testName, err)
 		}
 
 		for _, time := range tc.expectTimeWithOneEvent {
@@ -1609,6 +1622,10 @@ func TestRegisterParamChangeEvent(t *testing.T) {
 		err := gm.RegisterParamChangeEvent(ctx, testEvent{})
 		if err != nil {
 			t.Errorf("%s: failed to register parameter change event, got err %v", tc.testName, err)
+		}
+
+		if err = gm.CommitEventCache(ctx); err != nil {
+			t.Errorf("%s: failed to commit event cache, %v", tc.testName, err)
 		}
 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.atTime+proposalParam.ChangeParamExecutionSec)
 		assert.Equal(t, timeEventList.Events, tc.expectEventList)

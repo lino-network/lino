@@ -83,3 +83,8 @@ type InitParamList struct {
 	ConsumptionFrictionRate      sdk.Dec `json:"consumption_friction_rate"`
 	ConsumptionFreezingPeriodSec int64   `json:"consumption_freezing_period_second"`
 }
+
+type EventCache struct {
+	UnixTime  int64         `json:"unix_time"`
+	EventList []types.Event `json:"event_list"`
+}

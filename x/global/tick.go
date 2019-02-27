@@ -11,3 +11,9 @@ func BeginBlocker(
 	gm.UpdateTPS(ctx)
 	return
 }
+
+func EndBlocker(
+	ctx sdk.Context, req abci.RequestEndBlock, gm *GlobalManager) (tags sdk.Tags) {
+	gm.CommitEventCache(ctx)
+	return
+}

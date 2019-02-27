@@ -35,7 +35,7 @@ type RewardEvent struct {
 // Execute - execute reward event after 7 days
 func (event RewardEvent) Execute(
 	ctx sdk.Context, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, dm dev.DeveloperManager,
+	gm *global.GlobalManager, dm dev.DeveloperManager,
 	vm vote.VoteManager, rm rep.ReputationManager) sdk.Error {
 
 	permlink := types.GetPermlink(event.PostAuthor, event.PostID)

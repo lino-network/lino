@@ -21,7 +21,7 @@ type DecideProposalEvent struct {
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
 	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager,
-	gm global.GlobalManager) sdk.Error {
+	gm *global.GlobalManager) sdk.Error {
 	// check it is ongoing proposal
 	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {
 		return ErrOngoingProposalNotFound()
@@ -83,7 +83,7 @@ func (dpe DecideProposalEvent) Execute(
 // ExecuteChangeParam - reigster parameter change event
 func (dpe DecideProposalEvent) ExecuteChangeParam(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
-	gm global.GlobalManager) sdk.Error {
+	gm *global.GlobalManager) sdk.Error {
 	event, err := proposalManager.CreateParamChangeEvent(ctx, curID)
 	if err != nil {
 		return err

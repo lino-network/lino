@@ -24,7 +24,7 @@ var (
 
 func TestTransferNormal(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	// create two test users with initial deposit of 100 LNO.
@@ -75,7 +75,7 @@ func BenchmarkNumTransfer(b *testing.B) {
 	ph.InitParam(ctx)
 	accManager := NewAccountManager(testAccountKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	handler := NewHandler(accManager, globalManager)
+	handler := NewHandler(accManager, &globalManager)
 
 	// create two test users with initial deposit of 100 LNO.
 	createTestAccount(ctx, accManager, "user1")
@@ -92,7 +92,7 @@ func BenchmarkNumTransfer(b *testing.B) {
 
 func TestSenderCoinNotEnough(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
 	// create two test users
@@ -112,7 +112,7 @@ func TestSenderCoinNotEnough(t *testing.T) {
 
 func TestReceiverUsernameIncorrect(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	// create two test users
 	createTestAccount(ctx, am, "user1")
@@ -127,7 +127,7 @@ func TestReceiverUsernameIncorrect(t *testing.T) {
 
 func TestHandleAccountRecover(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	user1 := "user1"
 
@@ -175,7 +175,7 @@ func TestHandleRegister(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 	referrer := "referrer"
 
 	createTestAccount(ctx, am, referrer)
@@ -343,7 +343,7 @@ func TestHandleRegister(t *testing.T) {
 
 func TestHandleUpdateAccountMsg(t *testing.T) {
 	ctx, am, gm := setupTest(t, 1)
-	handler := NewHandler(am, gm)
+	handler := NewHandler(am, &gm)
 
 	createTestAccount(ctx, am, "accKey")
 

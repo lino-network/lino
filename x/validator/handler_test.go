@@ -15,7 +15,7 @@ import (
 
 func TestRegisterBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -53,7 +53,7 @@ func TestRegisterBasic(t *testing.T) {
 
 func TestRegisterFeeNotEnough(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -81,7 +81,7 @@ func TestRegisterFeeNotEnough(t *testing.T) {
 
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -116,7 +116,7 @@ func TestRevokeBasic(t *testing.T) {
 
 func TestRevokeNonExistUser(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	// let user1(not exists) revoke candidancy
@@ -128,7 +128,7 @@ func TestRevokeNonExistUser(t *testing.T) {
 // this is the same situation as we find Byzantine and replace the Byzantine
 func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -204,7 +204,7 @@ func TestRevokeOncallValidatorAndSubstitutionExists(t *testing.T) {
 
 func TestRevokeAndDepositAgain(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -247,7 +247,7 @@ func TestRevokeAndDepositAgain(t *testing.T) {
 
 func TestWithdrawBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -278,7 +278,7 @@ func TestWithdrawBasic(t *testing.T) {
 
 func TestDepositBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	// create test user
@@ -315,7 +315,7 @@ func TestDepositBasic(t *testing.T) {
 
 func TestCommittingDepositExceedVotingDeposit(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	// create test user
@@ -336,7 +336,7 @@ func TestCommittingDepositExceedVotingDeposit(t *testing.T) {
 
 func TestDepositWithoutLinoAccount(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
@@ -348,7 +348,7 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 
 func TestValidatorReplacement(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -435,7 +435,7 @@ func TestValidatorReplacement(t *testing.T) {
 
 func TestRemoveBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	// create two test users
@@ -471,7 +471,7 @@ func TestRemoveBasic(t *testing.T) {
 
 func TestRegisterWithDupKey(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -536,7 +536,7 @@ func TestAddFrozenMoney(t *testing.T) {
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
-			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+			ctx, "user", &gm, am, tc.times, tc.interval, tc.returnedCoin)
 		if err != nil {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}

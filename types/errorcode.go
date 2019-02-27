@@ -182,6 +182,7 @@ const (
 	CodeLinoStakeStatisticNotFound             sdk.CodeType = 623
 	CodeFailedToUnmarshalLinoStakeStatistic    sdk.CodeType = 624
 	CodePastDayIsNegative                      sdk.CodeType = 625
+	CodeFailedToParseEventCacheList            sdk.CodeType = 626
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700

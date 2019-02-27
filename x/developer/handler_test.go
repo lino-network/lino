@@ -13,7 +13,7 @@ import (
 
 func TestRegistertBasic(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
@@ -66,7 +66,7 @@ func TestRegistertBasic(t *testing.T) {
 
 func TestUpdateBasic(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
@@ -110,7 +110,7 @@ func TestUpdateBasic(t *testing.T) {
 
 func TestRevokeBasic(t *testing.T) {
 	ctx, am, dm, gm := setupTest(t, 0)
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
@@ -169,19 +169,19 @@ func TestAddFrozenMoney(t *testing.T) {
 		},
 		{
 			testName:               "return coin to user again",
-			times:                  100000,
+			times:                  1000,
 			interval:               20000,
 			returnedCoin:           types.NewCoinFromInt64(100000),
 			expectedFrozenListLen:  2,
 			expectedFrozenMoney:    types.NewCoinFromInt64(100000),
-			expectedFrozenTimes:    100000,
+			expectedFrozenTimes:    1000,
 			expectedFrozenInterval: 20000,
 		},
 	}
 
 	for _, tc := range testCases {
 		err := returnCoinTo(
-			ctx, "user", gm, am, tc.times, tc.interval, tc.returnedCoin)
+			ctx, "user", &gm, am, tc.times, tc.interval, tc.returnedCoin)
 		if err != nil {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
@@ -210,7 +210,7 @@ func TestGrantPermissionMsg(t *testing.T) {
 	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	assert.Nil(t, err)
 
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -260,7 +260,7 @@ func TestHandlePreAuthorizationMsg(t *testing.T) {
 	param, err := dm.paramHolder.GetDeveloperParam(ctx)
 	assert.Nil(t, err)
 
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -306,7 +306,7 @@ func TestRevokePermissionMsg(t *testing.T) {
 	accParam, err := dm.paramHolder.GetAccountParam(ctx)
 	assert.Nil(t, err)
 
-	handler := NewHandler(dm, am, gm)
+	handler := NewHandler(dm, am, &gm)
 	dm.InitGenesis(ctx)
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)

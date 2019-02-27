@@ -18,7 +18,7 @@ import (
 
 func TestByzantines(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -65,7 +65,7 @@ func TestByzantines(t *testing.T) {
 
 func TestAbsentValidatorWillBeFired(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -161,7 +161,7 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 
 func TestAbsentValidatorWontBeFired(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -265,7 +265,7 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 
 func TestGetOncallList(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -297,7 +297,7 @@ func TestGetOncallList(t *testing.T) {
 
 func TestPunishmentBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -340,7 +340,7 @@ func TestPunishmentBasic(t *testing.T) {
 
 func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
-	handler := NewHandler(am, valManager, voteManager, gm)
+	handler := NewHandler(am, valManager, voteManager, &gm)
 	valManager.InitGenesis(ctx)
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)

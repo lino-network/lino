@@ -174,7 +174,7 @@ func TestRewardEvent(t *testing.T) {
 
 		as.SetReward(ctx, tc.rewardEvent.PostAuthor, &accModel.Reward{})
 		vm.AddVoter(ctx, tc.rewardEvent.PostAuthor, types.NewCoinFromInt64(0))
-		err := tc.rewardEvent.Execute(ctx, pm, am, gm, dm, vm, rm)
+		err := tc.rewardEvent.Execute(ctx, pm, am, &gm, dm, vm, rm)
 		if err != nil {
 			t.Errorf("%s: failed to execute, got err %v", tc.testName, err)
 		}

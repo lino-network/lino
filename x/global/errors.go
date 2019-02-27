@@ -16,3 +16,8 @@ func ErrRegisterExpiredEvent(unixTime int64) sdk.Error {
 func ErrGetPastDay() sdk.Error {
 	return types.NewError(types.CodeFailedToGetAmountOfConsumptionExponent, "get past day failed")
 }
+
+// ErrParseEventCacheList - error if parse event cache list failed
+func ErrParseEventCacheList() sdk.Error {
+	return types.NewError(types.CodeFailedToParseEventCacheList, "parse event list failed")
+}

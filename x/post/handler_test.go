@@ -22,7 +22,7 @@ import (
 
 func TestHandlerCreatePost(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 	postParam, _ := ph.GetPostParam(ctx)
 
 	user := createTestAccount(t, ctx, am, "user1")
@@ -63,7 +63,7 @@ func TestHandlerCreatePost(t *testing.T) {
 
 func TestHandlerUpdatePost(t *testing.T) {
 	ctx, am, _, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1, postID1 := createTestPost(t, ctx, "user1", "postID1", am, pm, "0")
@@ -133,7 +133,7 @@ func TestHandlerUpdatePost(t *testing.T) {
 
 func TestHandlerDeletePost(t *testing.T) {
 	ctx, am, _, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 
 	user, postID := createTestPost(t, ctx, "user", "postID", am, pm, "0")
 	user1 := createTestAccount(t, ctx, am, "user1")
@@ -181,7 +181,7 @@ func TestHandlerDeletePost(t *testing.T) {
 
 func TestHandlerCreateComment(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
 
@@ -278,7 +278,7 @@ func TestHandlerCreateComment(t *testing.T) {
 
 func TestHandlerRepost(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
 
@@ -359,7 +359,7 @@ func TestHandlerRepost(t *testing.T) {
 
 func TestHandlerPostDonate(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 
 	accParam, err := ph.GetAccountParam(ctx)
 	assert.Nil(t, err)
@@ -673,6 +673,10 @@ func TestHandlerPostDonate(t *testing.T) {
 		}
 
 		if tc.expectErr.IsOK() {
+			err := gm.CommitEventCache(ctx)
+			if err != nil {
+				t.Errorf("%s: failed to commit event, got err %v", tc.testName, err)
+			}
 			eventList := gm.GetTimeEventListAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600*7*24)
 			if !assert.Equal(t, tc.expectRegisteredEvent, eventList.Events[len(eventList.Events)-1]) {
 				t.Errorf("%s: diff event, got %v, want %v", tc.testName,
@@ -722,7 +726,7 @@ func BenchmarkNumDonate(b *testing.B) {
 	cdc.RegisterConcrete(RewardEvent{}, "event/reward", nil)
 
 	InitGlobalManager(ctx, globalManager)
-	handler := NewHandler(postManager, accManager, globalManager, devManager, repManager)
+	handler := NewHandler(postManager, accManager, &globalManager, devManager, repManager)
 	splitRate, _ := sdk.NewDecFromStr("0")
 
 	resetPriv := secp256k1.GenPrivKey()
@@ -741,15 +745,14 @@ func BenchmarkNumDonate(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		handler(ctx, NewDonateMsg(
-			"user2", "1", "user1", "postID", "", ""))
+		handler(ctx, NewDonateMsg("user2", "1", "user1", "postID", "", ""))
 	}
 }
 
 // func TestHandlerRePostDonate(t *testing.T) {
 // 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
 // 	postParam, _ := ph.GetPostParam(ctx)
-// 	handler := NewHandler(pm, am, gm, dm, rm)
+// 	handler := NewHandler(pm, am, &gm, dm, rm)
 
 // 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0.15")
 // 	user2 := createTestAccount(t, ctx, am, "user2")
@@ -857,7 +860,7 @@ func BenchmarkNumDonate(b *testing.B) {
 // reputation check should be added later
 func TestHandlerReportOrUpvote(t *testing.T) {
 	ctx, am, ph, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 	coinDayParam, _ := ph.GetCoinDayParam(ctx)
 	postParam, _ := ph.GetPostParam(ctx)
 
@@ -972,7 +975,7 @@ func TestHandlerReportOrUpvote(t *testing.T) {
 
 func TestHandlerView(t *testing.T) {
 	ctx, am, _, pm, gm, dm, _, rm := setupTest(t, 1)
-	handler := NewHandler(pm, am, gm, dm, rm)
+	handler := NewHandler(pm, am, &gm, dm, rm)
 
 	createTime := ctx.BlockHeader().Time.Unix()
 	user1, postID := createTestPost(t, ctx, "user1", "postID", am, pm, "0")

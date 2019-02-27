@@ -15,7 +15,7 @@ import (
 
 // NewHandler - Handle all "post" type messages.
 func NewHandler(
-	pm PostManager, am acc.AccountManager, gm global.GlobalManager,
+	pm PostManager, am acc.AccountManager, gm *global.GlobalManager,
 	dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -39,7 +39,7 @@ func NewHandler(
 }
 
 // Handle RegisterMsg
-func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am acc.AccountManager, gm *global.GlobalManager) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Author) {
 		return ErrAccountNotFound(msg.Author).Result()
 	}
@@ -87,7 +87,7 @@ func handleCreatePostMsg(ctx sdk.Context, msg CreatePostMsg, pm PostManager, am 
 }
 
 // Handle ViewMsg
-func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountManager, gm global.GlobalManager) sdk.Result {
+func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountManager, gm *global.GlobalManager) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound(msg.Username).Result()
 	}
@@ -105,7 +105,7 @@ func handleViewMsg(ctx sdk.Context, msg ViewMsg, pm PostManager, am acc.AccountM
 // Handle DonateMsg
 func handleDonateMsg(
 	ctx sdk.Context, msg DonateMsg, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Result {
+	gm *global.GlobalManager, dm dev.DeveloperManager, rm rep.ReputationManager) sdk.Result {
 	permlink := types.GetPermlink(msg.Author, msg.PostID)
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -155,7 +155,7 @@ func handleDonateMsg(
 	// 	}
 	// }
 	if err := processDonationFriction(
-		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, am, pm, gm, rm); err != nil {
+		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, msg.Memo, am, pm, gm, rm); err != nil {
 		return ErrProcessDonation(permlink).Result()
 	}
 	return sdk.Result{}
@@ -163,8 +163,8 @@ func handleDonateMsg(
 
 func processDonationFriction(
 	ctx sdk.Context, consumer types.AccountKey, coin types.Coin, coinDayDonated types.Coin,
-	postAuthor types.AccountKey, postID string, fromApp types.AccountKey, am acc.AccountManager,
-	pm PostManager, gm global.GlobalManager, rm rep.ReputationManager) sdk.Error {
+	postAuthor types.AccountKey, postID string, fromApp types.AccountKey, memo string, am acc.AccountManager,
+	pm PostManager, gm *global.GlobalManager, rm rep.ReputationManager) sdk.Error {
 	postKey := types.GetPermlink(postAuthor, postID)
 	if coin.IsZero() {
 		return nil
@@ -179,21 +179,21 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	// evaluateResult, err := evaluateConsumption(dp, gm)
-	// if err != nil {
-	// 	return err
-	// }
+	evaluateResult, err := evaluateConsumption(dp, gm)
+	if err != nil {
+		return err
+	}
 	rewardEvent := RewardEvent{
 		PostAuthor: postAuthor,
 		PostID:     postID,
 		Consumer:   consumer,
-		Evaluate:   dp,
+		Evaluate:   evaluateResult,
 		Original:   coin,
 		Friction:   frictionCoin,
 		FromApp:    fromApp,
 	}
 	if err := gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, frictionCoin, dp); err != nil {
+		ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
 		return err
 	}
 
@@ -202,7 +202,7 @@ func processDonationFriction(
 		return err
 	}
 	if err := am.AddSavingCoin(
-		ctx, postAuthor, directDeposit, consumer, string(postKey), types.DonationIn); err != nil {
+		ctx, postAuthor, directDeposit, consumer, memo, types.DonationIn); err != nil {
 		return err
 	}
 	if err := am.AddDirectDeposit(ctx, postAuthor, directDeposit); err != nil {
@@ -215,19 +215,14 @@ func processDonationFriction(
 }
 
 // XXX(yumin): deprecated, chained on gm.EvaluateConsumption
-func evaluateConsumption(
-	coin types.Coin,
-	gm global.GlobalManager,
-	// ctx sdk.Context, consumer types.AccountKey, coin types.Coin, postAuthor types.AccountKey,
-	// postID string, am acc.AccountManager, pm PostManager, gm global.GlobalManager,
-) (types.Coin, sdk.Error) {
+func evaluateConsumption(coin types.Coin, gm *global.GlobalManager) (types.Coin, sdk.Error) {
 	return gm.EvaluateConsumption(coin)
 }
 
 // Handle ReportMsgOrUpvoteMsg
 func handleReportOrUpvoteMsg(
 	ctx sdk.Context, msg ReportOrUpvoteMsg, pm PostManager, am acc.AccountManager,
-	gm global.GlobalManager, rm rep.ReputationManager) sdk.Result {
+	gm *global.GlobalManager, rm rep.ReputationManager) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound(msg.Username).Result()
 	}

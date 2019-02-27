@@ -12,7 +12,7 @@ import (
 )
 
 // NewHandler - Handle all "validator" type messages.
-func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm global.GlobalManager) sdk.Handler {
+func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
@@ -82,7 +82,7 @@ func handleDepositMsg(
 
 // Handle Withdraw Msg
 func handleWithdrawMsg(
-	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountManager,
 	msg ValidatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -111,7 +111,7 @@ func handleWithdrawMsg(
 }
 
 func handleRevokeMsg(
-	ctx sdk.Context, vm ValidatorManager, gm global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountManager,
 	msg ValidatorRevokeMsg) sdk.Result {
 	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
@@ -136,7 +136,7 @@ func handleRevokeMsg(
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
 	times int64, interval int64, coin types.Coin) sdk.Error {
 
 	if err := am.AddFrozenMoney(
