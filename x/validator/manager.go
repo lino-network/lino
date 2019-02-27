@@ -86,7 +86,6 @@ func (vm ValidatorManager) IsBalancedAccount(
 
 // GetInitValidators return all validators in state.
 // XXX(yumin): This is intended to be used only in initChainer
-// TODO(yumin): add test coverage.
 func (vm ValidatorManager) GetInitValidators(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error) {
 	validatorList, err := vm.storage.GetValidatorList(ctx)
 	if err != nil {
