@@ -420,7 +420,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		}
 	}
 
-	tags := global.BeginBlocker(ctx, req, lb.globalManager)
+	global.BeginBlocker(ctx, req, &lb.globalManager)
 	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
@@ -430,9 +430,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 	lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
-	return abci.ResponseBeginBlock{
-		Tags: tags.ToKVPairs(),
-	}
+	return abci.ResponseBeginBlock{}
 }
 
 // execute events between last block time and current block time
@@ -488,7 +486,7 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	// XXX(yumin): reputation updates, will not change any tendermint.
 	rep.EndBlocker(ctx, req, lb.reputationManager)
 
-	tags := global.EndBlocker(ctx, req, &lb.globalManager)
+	global.EndBlocker(ctx, req, &lb.globalManager)
 	// update validator set.
 	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
@@ -496,7 +494,6 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	}
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
-		Tags:             tags.ToKVPairs(),
 	}
 }
 

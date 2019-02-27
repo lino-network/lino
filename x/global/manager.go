@@ -629,6 +629,13 @@ func (gm *GlobalManager) CommitEventCache(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+// ClearEventCache - clear event cache
+// clear event cache will only be committed at the beginblocker
+func (gm *GlobalManager) ClearEventCache(ctx sdk.Context) sdk.Error {
+	gm.deliverTxEventCacheList = []*model.EventCache{}
+	return nil
+}
+
 // get and set params
 // TODO add more change methods
 // func (gm *GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Dec,
