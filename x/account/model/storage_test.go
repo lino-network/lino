@@ -90,11 +90,11 @@ func TestAccountReward(t *testing.T) {
 	ctx := getContext()
 
 	reward := Reward{
-		TotalIncome:     types.NewCoinFromInt64(0),
-		OriginalIncome:  types.NewCoinFromInt64(0),
-		FrictionIncome:  types.NewCoinFromInt64(0),
-		InflationIncome: types.NewCoinFromInt64(0),
-		UnclaimReward:   types.NewCoinFromInt64(0),
+		TotalIncome:     types.NewCoinFromInt64(5),
+		OriginalIncome:  types.NewCoinFromInt64(4),
+		FrictionIncome:  types.NewCoinFromInt64(3),
+		InflationIncome: types.NewCoinFromInt64(2),
+		UnclaimReward:   types.NewCoinFromInt64(1),
 	}
 	err := as.SetReward(ctx, types.AccountKey("test"), &reward)
 	assert.Nil(t, err)

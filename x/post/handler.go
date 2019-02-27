@@ -111,9 +111,6 @@ func handleDonateMsg(
 	if err != nil {
 		return err.Result()
 	}
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound(msg.Username).Result()
-	}
 	if !pm.DoesPostExist(ctx, permlink) {
 		return ErrPostNotFound(permlink).Result()
 	}
@@ -130,44 +127,33 @@ func handleDonateMsg(
 		}
 	}
 
-	coinDayBeforeDonate, err := am.GetCoinDay(ctx, msg.Username)
+	totalCoinDayDonated, err := am.MinusSavingCoinWithFullCoinDay(
+		ctx, msg.Username, coin, msg.Author, msg.Memo,
+		types.DonationOut)
 	if err != nil {
 		return err.Result()
 	}
 
-	if err := am.MinusSavingCoinWithFullCoinDay(
-		ctx, msg.Username, coin, msg.Author,
-		fmt.Sprintf("donate to post: %v, memo: %v", string(permlink), msg.Memo),
-		types.DonationOut); err != nil {
-		return err.Result()
-	}
+	// sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
+	// if err != nil {
+	// 	return err.Result()
+	// }
+	// if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
+	// 	sourcePermlink := types.GetPermlink(sourceAuthor, sourcePostID)
 
-	coinDayAfterDonate, err := am.GetCoinDay(ctx, msg.Username)
-	if err != nil {
-		return err.Result()
-	}
-
-	totalCoinDayDonated := coinDayBeforeDonate.Minus(coinDayAfterDonate)
-	sourceAuthor, sourcePostID, err := pm.GetSourcePost(ctx, permlink)
-	if err != nil {
-		return err.Result()
-	}
-	if sourceAuthor != types.AccountKey("") && sourcePostID != "" {
-		sourcePermlink := types.GetPermlink(sourceAuthor, sourcePostID)
-
-		redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermlink)
-		if err != nil {
-			return err.Result()
-		}
-		sourceIncome := types.DecToCoin(coin.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
-		coin = coin.Minus(sourceIncome)
-		sourceCoinDayGained := types.DecToCoin(totalCoinDayDonated.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
-		totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
-		if err := processDonationFriction(
-			ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {
-			return ErrProcessSourceDonation(sourcePermlink).Result()
-		}
-	}
+	// 	redistributionSplitRate, err := pm.GetRedistributionSplitRate(ctx, sourcePermlink)
+	// 	if err != nil {
+	// 		return err.Result()
+	// 	}
+	// 	sourceIncome := types.DecToCoin(coin.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
+	// 	coin = coin.Minus(sourceIncome)
+	// 	sourceCoinDayGained := types.DecToCoin(totalCoinDayDonated.ToDec().Mul(sdk.OneDec().Sub(redistributionSplitRate)))
+	// 	totalCoinDayDonated = totalCoinDayDonated.Minus(sourceCoinDayGained)
+	// 	if err := processDonationFriction(
+	// 		ctx, msg.Username, sourceIncome, sourceCoinDayGained, sourceAuthor, sourcePostID, msg.FromApp, am, pm, gm, rm); err != nil {
+	// 		return ErrProcessSourceDonation(sourcePermlink).Result()
+	// 	}
+	// }
 	if err := processDonationFriction(
 		ctx, msg.Username, coin, totalCoinDayDonated, msg.Author, msg.PostID, msg.FromApp, am, pm, gm, rm); err != nil {
 		return ErrProcessDonation(permlink).Result()
@@ -183,9 +169,6 @@ func processDonationFriction(
 	if coin.IsZero() {
 		return nil
 	}
-	if !am.DoesAccountExist(ctx, postAuthor) {
-		return ErrAccountNotFound(postAuthor)
-	}
 	consumptionFrictionRate, err := gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
 		return err
@@ -196,21 +179,21 @@ func processDonationFriction(
 	if err != nil {
 		return err
 	}
-	evaluateResult, err := evaluateConsumption(dp, gm)
-	if err != nil {
-		return err
-	}
+	// evaluateResult, err := evaluateConsumption(dp, gm)
+	// if err != nil {
+	// 	return err
+	// }
 	rewardEvent := RewardEvent{
 		PostAuthor: postAuthor,
 		PostID:     postID,
 		Consumer:   consumer,
-		Evaluate:   evaluateResult,
+		Evaluate:   dp,
 		Original:   coin,
 		Friction:   frictionCoin,
 		FromApp:    fromApp,
 	}
 	if err := gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, frictionCoin, evaluateResult); err != nil {
+		ctx, rewardEvent, frictionCoin, dp); err != nil {
 		return err
 	}
 

@@ -68,7 +68,7 @@ func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter
 		return nil, ErrVoterNotFound()
 	}
 	voter := new(Voter)
-	if err := vs.cdc.UnmarshalJSON(voterByte, voter); err != nil {
+	if err := vs.cdc.UnmarshalBinaryBare(voterByte, voter); err != nil {
 		return nil, ErrFailedToUnmarshalVoter(err)
 	}
 	return voter, nil
@@ -77,7 +77,7 @@ func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey types.AccountKey) (*Voter
 // SetVoter - set voter to KVStore
 func (vs VoteStorage) SetVoter(ctx sdk.Context, accKey types.AccountKey, voter *Voter) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	voterByte, err := vs.cdc.MarshalJSON(*voter)
+	voterByte, err := vs.cdc.MarshalBinaryBare(*voter)
 	if err != nil {
 		return ErrFailedToMarshalVoter(err)
 	}
@@ -100,7 +100,7 @@ func (vs VoteStorage) GetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 		return nil, ErrVoteNotFound()
 	}
 	vote := new(Vote)
-	if err := vs.cdc.UnmarshalJSON(voteByte, vote); err != nil {
+	if err := vs.cdc.UnmarshalBinaryBare(voteByte, vote); err != nil {
 		return nil, ErrFailedToUnmarshalVote(err)
 	}
 	return vote, nil
@@ -109,7 +109,7 @@ func (vs VoteStorage) GetVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 // SetVote - set vote to KVStore
 func (vs VoteStorage) SetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, vote *Vote) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	voteByte, err := vs.cdc.MarshalJSON(*vote)
+	voteByte, err := vs.cdc.MarshalBinaryBare(*vote)
 	if err != nil {
 		return ErrFailedToMarshalVote(err)
 	}
@@ -132,7 +132,7 @@ func (vs VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, del
 		return nil, ErrDelegationNotFound()
 	}
 	delegation := new(Delegation)
-	if err := vs.cdc.UnmarshalJSON(delegationByte, delegation); err != nil {
+	if err := vs.cdc.UnmarshalBinaryBare(delegationByte, delegation); err != nil {
 		return nil, ErrFailedToUnmarshalDelegation(err)
 	}
 	return delegation, nil
@@ -141,7 +141,7 @@ func (vs VoteStorage) GetDelegation(ctx sdk.Context, voter types.AccountKey, del
 // SetDelegation - set delegation to KVStore
 func (vs VoteStorage) SetDelegation(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey, delegation *Delegation) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	delegationByte, err := vs.cdc.MarshalJSON(*delegation)
+	delegationByte, err := vs.cdc.MarshalBinaryBare(*delegation)
 	if err != nil {
 		return ErrFailedToMarshalDelegation(err)
 	}
@@ -168,7 +168,7 @@ func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 	for ; iterator.Valid(); iterator.Next() {
 		delegationBytes := iterator.Value()
 		var delegation Delegation
-		err := vs.cdc.UnmarshalJSON(delegationBytes, &delegation)
+		err := vs.cdc.UnmarshalBinaryBare(delegationBytes, &delegation)
 		if err != nil {
 			return nil, ErrFailedToUnmarshalDelegation(err)
 		}
@@ -188,7 +188,7 @@ func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 	for ; iterator.Valid(); iterator.Next() {
 		voteBytes := iterator.Value()
 		var vote Vote
-		err := vs.cdc.UnmarshalJSON(voteBytes, &vote)
+		err := vs.cdc.UnmarshalBinaryBare(voteBytes, &vote)
 		if err != nil {
 			return nil, ErrFailedToUnmarshalVote(err)
 		}
@@ -206,7 +206,7 @@ func (vs VoteStorage) GetReferenceList(ctx sdk.Context) (*ReferenceList, sdk.Err
 		return nil, ErrReferenceListNotFound()
 	}
 	lst := new(ReferenceList)
-	if err := vs.cdc.UnmarshalJSON(lstByte, lst); err != nil {
+	if err := vs.cdc.UnmarshalBinaryLengthPrefixed(lstByte, lst); err != nil {
 		return nil, ErrFailedToUnmarshalReferenceList(err)
 	}
 	return lst, nil
@@ -215,7 +215,7 @@ func (vs VoteStorage) GetReferenceList(ctx sdk.Context) (*ReferenceList, sdk.Err
 // SetReferenceList - set reference list to KVStore
 func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.Error {
 	store := ctx.KVStore(vs.key)
-	lstByte, err := vs.cdc.MarshalJSON(*lst)
+	lstByte, err := vs.cdc.MarshalBinaryLengthPrefixed(*lst)
 	if err != nil {
 		return ErrFailedToMarshalReferenceList(err)
 	}

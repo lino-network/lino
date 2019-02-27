@@ -3,8 +3,10 @@ package account
 import (
 	"testing"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
+	"github.com/lino-network/lino/x/global"
 
 	"github.com/stretchr/testify/assert"
 
@@ -64,6 +66,27 @@ func TestTransferNormal(t *testing.T) {
 		if !receiverSaving.IsEqual(tc.wantReceiverBalance) {
 			t.Errorf("%s: diff receiver saving, got %v, want %v", tc.testName, receiverSaving, tc.wantReceiverBalance)
 		}
+	}
+}
+
+func BenchmarkNumTransfer(b *testing.B) {
+	ctx := getContext(0)
+	ph := param.NewParamHolder(testParamKVStoreKey)
+	ph.InitParam(ctx)
+	accManager := NewAccountManager(testAccountKVStoreKey, ph)
+	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	handler := NewHandler(accManager, globalManager)
+
+	// create two test users with initial deposit of 100 LNO.
+	createTestAccount(ctx, accManager, "user1")
+	createTestAccount(ctx, accManager, "user2")
+
+	accManager.AddSavingCoin(
+		ctx, types.AccountKey("user1"), types.NewCoinFromInt64(100000*int64(b.N)),
+		"", "", types.TransferIn)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		handler(ctx, NewTransferMsg("user1", "user2", "1", ""))
 	}
 }
 

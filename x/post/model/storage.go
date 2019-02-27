@@ -54,7 +54,7 @@ func (ps PostStorage) GetPostInfo(ctx sdk.Context, permlink types.Permlink) (*Po
 		return nil, ErrPostNotFound(GetPostInfoKey(permlink))
 	}
 	postInfo := new(PostInfo)
-	if err := ps.cdc.UnmarshalJSON(infoByte, postInfo); err != nil {
+	if err := ps.cdc.UnmarshalBinaryBare(infoByte, postInfo); err != nil {
 		return nil, ErrFailedToUnmarshalPostInfo(err)
 	}
 	return postInfo, nil
@@ -63,7 +63,7 @@ func (ps PostStorage) GetPostInfo(ctx sdk.Context, permlink types.Permlink) (*Po
 // SetPostInfo - set post info to KVStore
 func (ps PostStorage) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	infoByte, err := ps.cdc.MarshalJSON(*postInfo)
+	infoByte, err := ps.cdc.MarshalBinaryBare(*postInfo)
 	if err != nil {
 		return ErrFailedToMarshalPostInfo(err)
 	}
@@ -79,7 +79,7 @@ func (ps PostStorage) GetPostMeta(ctx sdk.Context, permlink types.Permlink) (*Po
 		return nil, ErrPostMetaNotFound(GetPostMetaKey(permlink))
 	}
 	postMeta := new(PostMeta)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(metaBytes, postMeta); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalBinaryBare(metaBytes, postMeta); unmarshalErr != nil {
 		return nil, ErrFailedToUnmarshalPostMeta(unmarshalErr)
 	}
 	return postMeta, nil
@@ -88,7 +88,7 @@ func (ps PostStorage) GetPostMeta(ctx sdk.Context, permlink types.Permlink) (*Po
 // SetPostMeta - set post meta to KVStore
 func (ps PostStorage) SetPostMeta(ctx sdk.Context, permlink types.Permlink, postMeta *PostMeta) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	metaBytes, err := ps.cdc.MarshalJSON(*postMeta)
+	metaBytes, err := ps.cdc.MarshalBinaryBare(*postMeta)
 	if err != nil {
 		return ErrFailedToMarshalPostMeta(err)
 	}
@@ -105,7 +105,7 @@ func (ps PostStorage) GetPostReportOrUpvote(
 		return nil, ErrPostReportOrUpvoteNotFound(getPostReportOrUpvoteKey(permlink, user))
 	}
 	reportOrUpvote := new(ReportOrUpvote)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(reportOrUpvoteBytes, reportOrUpvote); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalBinaryBare(reportOrUpvoteBytes, reportOrUpvote); unmarshalErr != nil {
 		return nil, ErrFailedToUnmarshalPostReportOrUpvote(unmarshalErr)
 	}
 	return reportOrUpvote, nil
@@ -115,7 +115,7 @@ func (ps PostStorage) GetPostReportOrUpvote(
 func (ps PostStorage) SetPostReportOrUpvote(
 	ctx sdk.Context, permlink types.Permlink, reportOrUpvote *ReportOrUpvote) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	reportOrUpvoteByte, err := ps.cdc.MarshalJSON(*reportOrUpvote)
+	reportOrUpvoteByte, err := ps.cdc.MarshalBinaryBare(*reportOrUpvote)
 	if err != nil {
 		return ErrFailedToMarshalPostReportOrUpvote(err)
 	}
@@ -132,7 +132,7 @@ func (ps PostStorage) GetPostComment(
 		return nil, ErrPostCommentNotFound(getPostCommentKey(permlink, commentPermlink))
 	}
 	postComment := new(Comment)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(commentBytes, postComment); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalBinaryBare(commentBytes, postComment); unmarshalErr != nil {
 		return nil, ErrFailedToUnmarshalPostComment(unmarshalErr)
 	}
 	return postComment, nil
@@ -142,7 +142,7 @@ func (ps PostStorage) GetPostComment(
 func (ps PostStorage) SetPostComment(
 	ctx sdk.Context, permlink types.Permlink, postComment *Comment) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	postCommentByte, err := ps.cdc.MarshalJSON(*postComment)
+	postCommentByte, err := ps.cdc.MarshalBinaryBare(*postComment)
 	if err != nil {
 		return ErrFailedToMarshalPostComment(err)
 	}
@@ -161,7 +161,7 @@ func (ps PostStorage) GetPostView(
 		return nil, ErrPostViewNotFound(getPostViewKey(permlink, viewUser))
 	}
 	postView := new(View)
-	if unmarshalErr := ps.cdc.UnmarshalJSON(viewBytes, postView); unmarshalErr != nil {
+	if unmarshalErr := ps.cdc.UnmarshalBinaryBare(viewBytes, postView); unmarshalErr != nil {
 		return nil, ErrFailedToUnmarshalPostView(unmarshalErr)
 	}
 	return postView, nil
@@ -170,7 +170,7 @@ func (ps PostStorage) GetPostView(
 // SetPostView - set post view to KVStore
 func (ps PostStorage) SetPostView(ctx sdk.Context, permlink types.Permlink, postView *View) sdk.Error {
 	store := ctx.KVStore(ps.key)
-	postViewByte, err := ps.cdc.MarshalJSON(*postView)
+	postViewByte, err := ps.cdc.MarshalBinaryBare(*postView)
 	if err != nil {
 		return ErrFailedToMarshalPostView(err)
 	}

@@ -234,7 +234,7 @@ func (ph ParamHolder) GetGlobalAllocationParam(
 		return nil, ErrGlobalAllocationParamNotFound()
 	}
 	allocation := new(GlobalAllocationParam)
-	if err := ph.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
 		return nil, ErrFailedToUnmarshalGlobalAllocationParam(err)
 	}
 	return allocation, nil
@@ -249,7 +249,7 @@ func (ph ParamHolder) GetInfraInternalAllocationParam(
 		return nil, ErrInfraAllocationParamNotFound()
 	}
 	allocation := new(InfraInternalAllocationParam)
-	if err := ph.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
 		return nil, ErrFailedToUnmarshalInfraInternalAllocationParam(err)
 	}
 	return allocation, nil
@@ -263,7 +263,7 @@ func (ph ParamHolder) GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error) {
 		return nil, ErrPostParamNotFound()
 	}
 	param := new(PostParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalPostParam(err)
 	}
 	return param, nil
@@ -277,7 +277,7 @@ func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.E
 		return nil, ErrDeveloperParamNotFound()
 	}
 	param := new(DeveloperParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalDeveloperParam(err)
 	}
 	return param, nil
@@ -291,7 +291,7 @@ func (ph ParamHolder) GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error) {
 		return nil, ErrVoteParamNotFound()
 	}
 	param := new(VoteParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalVoteParam(err)
 	}
 	return param, nil
@@ -305,7 +305,7 @@ func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Err
 		return nil, ErrProposalParamNotFound()
 	}
 	param := new(ProposalParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalProposalParam(err)
 	}
 	return param, nil
@@ -319,7 +319,7 @@ func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.E
 		return nil, ErrValidatorParamNotFound()
 	}
 	param := new(ValidatorParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalValidatorParam(err)
 	}
 	return param, nil
@@ -333,7 +333,7 @@ func (ph ParamHolder) GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error
 		return nil, ErrCoinDayParamNotFound()
 	}
 	param := new(CoinDayParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalCoinDayParam(err)
 	}
 	return param, nil
@@ -347,7 +347,7 @@ func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.E
 		return nil, ErrBandwidthParamNotFound()
 	}
 	param := new(BandwidthParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalBandwidthParam(err)
 	}
 	return param, nil
@@ -361,7 +361,7 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 		return nil, ErrAccountParamNotFound()
 	}
 	param := new(AccountParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalAccountParam(err)
 	}
 	return param, nil
@@ -375,7 +375,7 @@ func (ph ParamHolder) GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk
 		return nil, ErrReputationParamNotFound()
 	}
 	param := new(ReputationParam)
-	if err := ph.cdc.UnmarshalJSON(paramBytes, param); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
 		return nil, ErrFailedToUnmarshalReputationParam(err)
 	}
 	return param, nil
@@ -389,7 +389,7 @@ func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec
 		return ErrGlobalAllocationParamNotFound()
 	}
 	allocation := new(GlobalAllocationParam)
-	if err := ph.cdc.UnmarshalJSON(allocationBytes, allocation); err != nil {
+	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
 		return ErrFailedToUnmarshalGlobalAllocationParam(err)
 	}
 
@@ -399,7 +399,7 @@ func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec
 		growthRate = AnnualInflationFloor
 	}
 	allocation.GlobalGrowthRate = growthRate
-	allocationBytes, err := ph.cdc.MarshalJSON(*allocation)
+	allocationBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*allocation)
 	if err != nil {
 		return ErrFailedToMarshalGlobalAllocationParam(err)
 	}
@@ -409,7 +409,7 @@ func (ph ParamHolder) UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec
 
 func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	paramBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalValidatorParam(err)
 	}
@@ -420,7 +420,7 @@ func (ph ParamHolder) setValidatorParam(ctx sdk.Context, param *ValidatorParam) 
 func (ph ParamHolder) setGlobalAllocationParam(
 	ctx sdk.Context, allocation *GlobalAllocationParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	allocationBytes, err := ph.cdc.MarshalJSON(*allocation)
+	allocationBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*allocation)
 	if err != nil {
 		return ErrFailedToMarshalGlobalAllocationParam(err)
 	}
@@ -431,7 +431,7 @@ func (ph ParamHolder) setGlobalAllocationParam(
 func (ph ParamHolder) setInfraInternalAllocationParam(
 	ctx sdk.Context, allocation *InfraInternalAllocationParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	allocationBytes, err := ph.cdc.MarshalJSON(*allocation)
+	allocationBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*allocation)
 	if err != nil {
 		return ErrFailedToMarshalInfraInternalAllocationParam(err)
 	}
@@ -442,7 +442,7 @@ func (ph ParamHolder) setInfraInternalAllocationParam(
 func (ph ParamHolder) setPostParam(
 	ctx sdk.Context, para *PostParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paraBytes, err := ph.cdc.MarshalJSON(*para)
+	paraBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*para)
 	if err != nil {
 		return ErrFailedToMarshalPostParam(err)
 	}
@@ -452,7 +452,7 @@ func (ph ParamHolder) setPostParam(
 
 func (ph ParamHolder) setDeveloperParam(ctx sdk.Context, param *DeveloperParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	paramBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalDeveloperParam(err)
 	}
@@ -462,7 +462,7 @@ func (ph ParamHolder) setDeveloperParam(ctx sdk.Context, param *DeveloperParam) 
 
 func (ph ParamHolder) setVoteParam(ctx sdk.Context, param *VoteParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	paramBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalVoteParam(err)
 	}
@@ -472,7 +472,7 @@ func (ph ParamHolder) setVoteParam(ctx sdk.Context, param *VoteParam) sdk.Error 
 
 func (ph ParamHolder) setProposalParam(ctx sdk.Context, param *ProposalParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	paramBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalProposalParam(err)
 	}
@@ -482,7 +482,7 @@ func (ph ParamHolder) setProposalParam(ctx sdk.Context, param *ProposalParam) sd
 
 func (ph ParamHolder) setCoinDayParam(ctx sdk.Context, param *CoinDayParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	paramBytes, err := ph.cdc.MarshalJSON(*param)
+	paramBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalCoinDayParam(err)
 	}
@@ -492,7 +492,7 @@ func (ph ParamHolder) setCoinDayParam(ctx sdk.Context, param *CoinDayParam) sdk.
 
 func (ph ParamHolder) setBandwidthParam(ctx sdk.Context, param *BandwidthParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	bandwidthBytes, err := ph.cdc.MarshalJSON(*param)
+	bandwidthBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalBandwidthParam(err)
 	}
@@ -502,7 +502,7 @@ func (ph ParamHolder) setBandwidthParam(ctx sdk.Context, param *BandwidthParam) 
 
 func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	accountBytes, err := ph.cdc.MarshalJSON(*param)
+	accountBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalAccountParam(err)
 	}
@@ -512,7 +512,7 @@ func (ph ParamHolder) setAccountParam(ctx sdk.Context, param *AccountParam) sdk.
 
 func (ph ParamHolder) setReputationParam(ctx sdk.Context, param *ReputationParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
-	reputationBytes, err := ph.cdc.MarshalJSON(*param)
+	reputationBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*param)
 	if err != nil {
 		return ErrFailedToMarshalReputationParam(err)
 	}

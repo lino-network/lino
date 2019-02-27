@@ -1,9 +1,11 @@
 package internal
 
 import (
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEncodeDecode(t *testing.T) {
@@ -16,6 +18,7 @@ func TestEncodeDecode(t *testing.T) {
 	}
 
 	bytes := encodeUserMeta(dt)
+	fmt.Println(bytes)
 	rst := decodeUserMeta(bytes)
 	assert.Equal(dt, rst)
 }
