@@ -90,7 +90,6 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				signBytes := auth.StdSignBytes(ctx.ChainID(), uint64(0), uint64(seq), fee, sdkMsgs, stdTx.GetMemo())
 				// verify signature
 				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
-					fmt.Println("verifiy sign bytes failed", seq)
 					return ctx, ErrUnverifiedBytes(
 						fmt.Sprintf("signature verification failed, chain-id:%v, seq:%d",
 							ctx.ChainID(), seq)).Result(), true
