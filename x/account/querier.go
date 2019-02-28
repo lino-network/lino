@@ -2,7 +2,6 @@ package account
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,7 +34,6 @@ func NewQuerier(am AccountManager) sdk.Querier {
 	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
-		fmt.Println("path:", path, req)
 		switch path[0] {
 		case QueryAccountInfo:
 			return queryAccountInfo(ctx, cdc, path[1:], req, am)
