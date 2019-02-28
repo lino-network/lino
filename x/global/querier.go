@@ -22,6 +22,7 @@ const (
 	QueryConsumptionMeta = "consumptionMeta"
 	QueryTPS             = "tps"
 	QueryLinoStakeStat   = "linoStakeStat"
+	QueryGlobalTime      = "globalTime"
 )
 
 // creates a querier for global REST endpoints
@@ -38,6 +39,8 @@ func NewQuerier(gm GlobalManager) sdk.Querier {
 			return queryConsumptionMeta(ctx, cdc, path[1:], req, gm)
 		case QueryTPS:
 			return queryTPS(ctx, cdc, path[1:], req, gm)
+		case QueryGlobalTime:
+			return queryGlobalTime(ctx, cdc, path[1:], req, gm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown global query endpoint")
 		}
@@ -109,4 +112,17 @@ func queryTPS(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQ
 		return nil, ErrQueryFailed()
 	}
 	return res, nil
+}
+
+func queryGlobalTime(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, gm GlobalManager) ([]byte, sdk.Error) {
+	globalTime, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(globalTime)
+	if marshalErr != nil {
+		return nil, ErrQueryFailed()
+	}
+	return res, nil
+
 }
