@@ -5,7 +5,7 @@
 GOSOURCE=https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz
 GOTARGET=/usr/local
 GOPATH=\$HOME/go
-PROFILE=/home/vagrant/.profile
+PROFILE=/home/ubuntu/.profile
 
 curl -sSL $GOSOURCE -o /tmp/go.tar.gz
 tar -xzf /tmp/go.tar.gz -C $GOTARGET
@@ -24,7 +24,7 @@ go version
 
 # install snappy & cleveldb
 sudo apt-get update
-sudo apt-get install -y build-essential
+sudo apt-get install -y build-essential gcc g++ make
 
 sudo apt-get install -y libsnappy-dev
 homedir="$PWD"
