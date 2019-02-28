@@ -1,0 +1,11 @@
+--- ../../vendor/github.com/cosmos/cosmos-sdk/server/constructors.go	2019-02-27 14:38:01.534324194 -0800
++++ ./constructors	2019-02-27 14:39:09.298777452 -0800
+@@ -24,7 +24,7 @@
+ 
+ func openDB(rootDir string) (dbm.DB, error) {
+ 	dataDir := filepath.Join(rootDir, "data")
+-	db, err := dbm.NewGoLevelDB("application", dataDir)
++	db, err := dbm.NewCLevelDB("application", dataDir)
+ 	return db, err
+ }
+ 

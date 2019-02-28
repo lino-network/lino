@@ -7,9 +7,12 @@ get_tools:
 	go get github.com/golang/dep/cmd/dep
 build:
 	go build -o bin/linocli cmd/linocli/main.go && go build -o bin/linod cmd/lino/main.go
-build_prd:
+
+build_prd: get_vendor_deps
+	cp ./patches/general/constructors ./vendor/github.com/cosmos/cosmos-sdk/server/constructors.go
 	CGO_LDFLAGS="-lsnappy" CGO_ENABLED=1 go build -ldflags "-X github.com/tendermint/tendermint/version.GitCommit=`git rev-parse --short=8 HEAD`" -tags "tendermint gcc cgo"  -o bin/linod cmd/lino/main.go
 	CGO_LDFLAGS="-lsnappy" CGO_ENABLED=1 go build -ldflags "-X github.com/tendermint/tendermint/version.GitCommit=`git rev-parse --short=8 HEAD`" -tags "tendermint gcc cgo"  -o bin/linocli cmd/linocli/main.go
+
 install:
 	go install ./cmd/lino
 	go install ./cmd/linocli
