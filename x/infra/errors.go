@@ -21,3 +21,8 @@ func ErrInvalidUsername() sdk.Error {
 func ErrInvalidUsage() sdk.Error {
 	return types.NewError(types.CodeInvalidUsage, fmt.Sprintf("invalid Usage"))
 }
+
+// ErrQueryFailed - error when query infra store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeInfraQueryFailed, fmt.Sprintf("query infra store failed"))
+}

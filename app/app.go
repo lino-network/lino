@@ -134,20 +134,28 @@ func NewLinoBlockchain(
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
 	lb.Router().
-		AddRoute(types.AccountRouterName, acc.NewHandler(lb.accountManager, &lb.globalManager)).
-		AddRoute(types.PostRouterName, post.NewHandler(
+		AddRoute(acc.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
+		AddRoute(post.RouterKey, post.NewHandler(
 			lb.postManager, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager)).
-		AddRoute(types.VoteRouterName, vote.NewHandler(
+		AddRoute(vote.RouterKey, vote.NewHandler(
 			lb.voteManager, lb.accountManager, &lb.globalManager, lb.reputationManager)).
-		AddRoute(types.DeveloperRouterName, developer.NewHandler(
+		AddRoute(developer.RouterKey, developer.NewHandler(
 			lb.developerManager, lb.accountManager, &lb.globalManager)).
-		AddRoute(types.ProposalRouterName, proposal.NewHandler(
+		AddRoute(proposal.RouterKey, proposal.NewHandler(
 			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
-		AddRoute(types.InfraRouterName, infra.NewHandler(lb.infraManager)).
-		AddRoute(types.ValidatorRouterName, val.NewHandler(
+		AddRoute(infra.RouterKey, infra.NewHandler(lb.infraManager)).
+		AddRoute(val.RouterKey, val.NewHandler(
 			lb.accountManager, lb.valManager, lb.voteManager, &lb.globalManager))
 
-	lb.QueryRouter().AddRoute(acc.QuerierRoute, acc.NewQuerier(lb.accountManager))
+	lb.QueryRouter().
+		AddRoute(acc.QuerierRoute, acc.NewQuerier(lb.accountManager)).
+		AddRoute(post.QuerierRoute, post.NewQuerier(lb.postManager)).
+		AddRoute(vote.QuerierRoute, vote.NewQuerier(lb.voteManager)).
+		AddRoute(developer.QuerierRoute, developer.NewQuerier(lb.developerManager)).
+		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
+		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
+		AddRoute(infra.QuerierRoute, infra.NewQuerier(lb.infraManager)).
+		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)

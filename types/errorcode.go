@@ -21,6 +21,7 @@ const (
 	CodeDeveloperNotFound   sdk.CodeType = 108
 	CodeInvalidCoins        sdk.CodeType = 109
 	CodeInvalidInt64Number  sdk.CodeType = 110
+	CodeInvalidQueryPath    sdk.CodeType = 111
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150
@@ -101,6 +102,7 @@ const (
 	CodeGetLastPostAt                        sdk.CodeType = 360
 	CodeUpdateLastPostAt                     sdk.CodeType = 361
 	CodeFrozenMoneyListTooLong               sdk.CodeType = 362
+	CodeAccountQueryFailed                   sdk.CodeType = 363
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400
@@ -144,6 +146,7 @@ const (
 	CodeCreatePostSourceInvalid              sdk.CodeType = 438
 	CodeGetSourcePost                        sdk.CodeType = 439
 	CodePostTooOften                         sdk.CodeType = 440
+	CodePostQueryFailed                      sdk.CodeType = 441
 
 	// Lino validator errors reserve 500 ~ 599
 	CodeValidatorNotFound              sdk.CodeType = 500
@@ -154,6 +157,7 @@ const (
 	CodeFailedToUnmarshalValidatorList sdk.CodeType = 505
 	CodeUnbalancedAccount              sdk.CodeType = 506
 	CodeValidatorPubKeyAlreadyExist    sdk.CodeType = 507
+	CodeValidatorQueryFailed           sdk.CodeType = 508
 
 	// Lino global errors reserve 600 ~ 699
 	CodeInfraInflationCoinConversion           sdk.CodeType = 600
@@ -183,6 +187,7 @@ const (
 	CodeFailedToUnmarshalLinoStakeStatistic    sdk.CodeType = 624
 	CodePastDayIsNegative                      sdk.CodeType = 625
 	CodeFailedToParseEventCacheList            sdk.CodeType = 626
+	CodeGlobalQueryFailed                      sdk.CodeType = 627
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700
@@ -199,6 +204,7 @@ const (
 	CodeFailedToUnmarshalReferenceList sdk.CodeType = 711
 	CodeValidatorCannotRevoke          sdk.CodeType = 712
 	CodeVoteAlreadyExist               sdk.CodeType = 713
+	CodeVoteQueryFailed                sdk.CodeType = 714
 
 	// Lino infra errors reserve 800 ~ 899
 	CodeInfraProviderNotFound              sdk.CodeType = 800
@@ -208,6 +214,7 @@ const (
 	CodeFailedToUnmarshalInfraProvider     sdk.CodeType = 804
 	CodeFailedToUnmarshalInfraProviderList sdk.CodeType = 805
 	CodeInvalidUsage                       sdk.CodeType = 806
+	CodeInfraQueryFailed                   sdk.CodeType = 807
 
 	// Lino developer errors reserve 900 ~ 999
 	CodeDeveloperListNotFound          sdk.CodeType = 900
@@ -224,6 +231,7 @@ const (
 	CodeInvalidDescription             sdk.CodeType = 911
 	CodeInvalidAppMetadata             sdk.CodeType = 912
 	CodeInvalidGrantPermission         sdk.CodeType = 913
+	CodeDeveloperQueryFailed           sdk.CodeType = 914
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000
@@ -264,6 +272,7 @@ const (
 	CodeFailedToMarshalReputationParam                sdk.CodeType = 1035
 	CodeFailedToUnmarshalReputationParam              sdk.CodeType = 1036
 	CodeReputationParamNotFound                       sdk.CodeType = 1037
+	CodeParamQueryFailed                              sdk.CodeType = 1038
 
 	// Proposal errors reserve 1100 ~ 1199
 	CodeOngoingProposalNotFound         sdk.CodeType = 1100
@@ -284,4 +293,5 @@ const (
 	CodeInvalidLink                     sdk.CodeType = 1115
 	CodeIllegalParameter                sdk.CodeType = 1116
 	CodeReasonTooLong                   sdk.CodeType = 1117
+	CodeProposalQueryFailed             sdk.CodeType = 1118
 )

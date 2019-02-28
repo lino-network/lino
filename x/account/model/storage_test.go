@@ -1,12 +1,14 @@
 package model
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/stretchr/testify/assert"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -137,6 +139,37 @@ func TestAccountGrantPubkey(t *testing.T) {
 	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), priv.PubKey())
 	assert.NotNil(t, err)
 	assert.Nil(t, resultPtr)
+}
+
+func TestGetAllAccountGrantPubkey(t *testing.T) {
+	as := NewAccountStorage(TestKVStoreKey)
+	ctx := getContext()
+	keyBytes1, err := hex.DecodeString("eb5ae9872102784cc1ef24ee1f28e5a5f2dcc97a19c5b5b4025e2b1703d02ac994b4d72dea2e")
+	assert.Nil(t, err)
+
+	pubKey1, err := cryptoAmino.PubKeyFromBytes(keyBytes1)
+	assert.Nil(t, err)
+
+	keyBytes2, err := hex.DecodeString("eb5ae98721032bf6fec37b4fb17481a8843b7203b99eec68574220d147bb16ad3ec701f208ab")
+	assert.Nil(t, err)
+
+	pubKey2, err := cryptoAmino.PubKeyFromBytes(keyBytes2)
+	assert.Nil(t, err)
+
+	grantPubKey1 := GrantPubKey{Amount: types.NewCoinFromInt64(10)}
+	err = as.SetGrantPubKey(ctx, types.AccountKey("test"), pubKey1, &grantPubKey1)
+	assert.Nil(t, err)
+	grantPubKey2 := GrantPubKey{Amount: types.NewCoinFromInt64(20)}
+	err = as.SetGrantPubKey(ctx, types.AccountKey("test"), pubKey2, &grantPubKey2)
+	assert.Nil(t, err)
+
+	resultPtr, err := as.GetAllGrantPubKey(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+
+	assert.Equal(t, len(resultPtr), 2, "Account grant key should be 2")
+	assert.Equal(t, grantPubKey1, *resultPtr["eb5ae9872102784cc1ef24ee1f28e5a5f2dcc97a19c5b5b4025e2b1703d02ac994b4d72dea2e"], "Account grant pubkey should be equal")
+
+	assert.Equal(t, grantPubKey2, *resultPtr["eb5ae98721032bf6fec37b4fb17481a8843b7203b99eec68574220d147bb16ad3ec701f208ab"], "Account grant pubkey should be equal")
 }
 
 func TestPendingCoinDayQueueZeroValue(t *testing.T) {

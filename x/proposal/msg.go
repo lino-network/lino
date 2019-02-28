@@ -164,7 +164,7 @@ func (msg DeletePostContentMsg) GetCreator() types.AccountKey { return msg.Creat
 func (msg DeletePostContentMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg DeletePostContentMsg) Route() string { return types.ProposalRouterName }
+func (msg DeletePostContentMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg DeletePostContentMsg) Type() string { return "DeletePostContentMsg" }
@@ -234,7 +234,7 @@ func (msg UpgradeProtocolMsg) GetLink() string { return msg.Link }
 func (msg UpgradeProtocolMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg UpgradeProtocolMsg) Route() string { return types.ProposalRouterName }
+func (msg UpgradeProtocolMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg UpgradeProtocolMsg) Type() string { return "UpgradeProtocolMsg" }
@@ -307,7 +307,7 @@ func (msg ChangeGlobalAllocationParamMsg) GetCreator() types.AccountKey { return
 func (msg ChangeGlobalAllocationParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeGlobalAllocationParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeGlobalAllocationParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeGlobalAllocationParamMsg) Type() string { return "ChangeGlobalAllocationParamMsg" }
@@ -391,7 +391,7 @@ func (msg ChangeInfraInternalAllocationParamMsg) GetCreator() types.AccountKey {
 func (msg ChangeInfraInternalAllocationParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeInfraInternalAllocationParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeInfraInternalAllocationParamMsg) Type() string {
@@ -468,7 +468,7 @@ func (msg ChangeVoteParamMsg) GetCreator() types.AccountKey { return msg.Creator
 func (msg ChangeVoteParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeVoteParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeVoteParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeVoteParamMsg) Type() string { return "ChangeVoteParamMsg" }
@@ -547,7 +547,7 @@ func (msg ChangeProposalParamMsg) GetCreator() types.AccountKey { return msg.Cre
 func (msg ChangeProposalParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeProposalParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeProposalParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeProposalParamMsg) Type() string { return "ChangeProposalParamMsg" }
@@ -640,7 +640,7 @@ func (msg ChangeDeveloperParamMsg) GetCreator() types.AccountKey { return msg.Cr
 func (msg ChangeDeveloperParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeDeveloperParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeDeveloperParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeDeveloperParamMsg) Type() string { return "ChangeDeveloperParamMsg" }
@@ -716,7 +716,7 @@ func (msg ChangeValidatorParamMsg) GetCreator() types.AccountKey { return msg.Cr
 func (msg ChangeValidatorParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeValidatorParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeValidatorParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeValidatorParamMsg) Type() string { return "ChangeValidatorParamMsg" }
@@ -800,7 +800,7 @@ func (msg ChangeAccountParamMsg) GetCreator() types.AccountKey { return msg.Crea
 func (msg ChangeAccountParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeAccountParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeAccountParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeAccountParamMsg) Type() string { return "ChangeAccountParamMsg" }
@@ -874,7 +874,7 @@ func (msg ChangePostParamMsg) GetCreator() types.AccountKey { return msg.Creator
 func (msg ChangePostParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangePostParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangePostParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangePostParamMsg) Type() string { return "ChangePostParamMsg" }
@@ -945,7 +945,7 @@ func (msg ChangeBandwidthParamMsg) GetCreator() types.AccountKey { return msg.Cr
 func (msg ChangeBandwidthParamMsg) GetReason() string { return msg.Reason }
 
 // Route - implement sdk.Msg
-func (msg ChangeBandwidthParamMsg) Route() string { return types.ProposalRouterName }
+func (msg ChangeBandwidthParamMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg ChangeBandwidthParamMsg) Type() string { return "ChangeBandwidthParamMsg" }
@@ -1011,7 +1011,7 @@ func NewVoteProposalMsg(voter string, proposalID int64, result bool) VoteProposa
 }
 
 // Route - implement sdk.Msg
-func (msg VoteProposalMsg) Route() string { return types.ProposalRouterName }
+func (msg VoteProposalMsg) Route() string { return RouterKey }
 
 // Type - implement sdk.Msg
 func (msg VoteProposalMsg) Type() string { return "VoteProposalMsg" }

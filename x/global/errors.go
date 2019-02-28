@@ -21,3 +21,8 @@ func ErrGetPastDay() sdk.Error {
 func ErrParseEventCacheList() sdk.Error {
 	return types.NewError(types.CodeFailedToParseEventCacheList, "parse event list failed")
 }
+
+// ErrQueryFailed - error when query global store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeGlobalQueryFailed, fmt.Sprintf("query global store failed"))
+}

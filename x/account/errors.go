@@ -200,7 +200,12 @@ func ErrInvalidMemo() sdk.Error {
 	return types.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo"))
 }
 
-// ErrInvalidMemo - error when JSON meta is invalid (length too long)
+// ErrInvalidJSONMeta - error when JSON meta is invalid (length too long)
 func ErrInvalidJSONMeta() sdk.Error {
 	return types.NewError(types.CodeInvalidJSONMeta, fmt.Sprintf("invalid account JSON meta"))
+}
+
+// ErrQueryFailed - error when query account store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeAccountQueryFailed, fmt.Sprintf("query account store failed"))
 }

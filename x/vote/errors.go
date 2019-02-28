@@ -46,3 +46,8 @@ func ErrInsufficientDeposit() sdk.Error {
 func ErrInvalidUsername() sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, fmt.Sprintf("invalid username"))
 }
+
+// ErrQueryFailed - error when query vote store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeVoteQueryFailed, fmt.Sprintf("query vote store failed"))
+}

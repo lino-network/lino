@@ -71,3 +71,8 @@ func ErrCensorshipPostNotFound() sdk.Error {
 func ErrIllegalParameter() sdk.Error {
 	return types.NewError(types.CodeIllegalParameter, fmt.Sprintf("invalid parameter"))
 }
+
+// ErrQueryFailed - error when query proposal store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeProposalQueryFailed, fmt.Sprintf("query proposal store failed"))
+}

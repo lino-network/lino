@@ -147,3 +147,8 @@ func ErrNoUsername() sdk.Error {
 func ErrInvalidMemo() sdk.Error {
 	return types.NewError(types.CodeInvalidMemo, fmt.Sprintf("invalid memo"))
 }
+
+// ErrQueryFailed - error when query post store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodePostQueryFailed, fmt.Sprintf("query post store failed"))
+}

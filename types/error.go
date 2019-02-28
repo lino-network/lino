@@ -18,3 +18,8 @@ func ErrInvalidCoins(msg string) sdk.Error {
 func ErrAmountOverflow() sdk.Error {
 	return NewError(CodeInvalidInt64Number, "coin amount can't be represented as an int64")
 }
+
+// ErrInvalidQueryPath - error if query path length is incorrect or content is invalid
+func ErrInvalidQueryPath() sdk.Error {
+	return NewError(CodeInvalidQueryPath, "query path is invalid")
+}
