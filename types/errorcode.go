@@ -294,4 +294,7 @@ const (
 	CodeIllegalParameter                sdk.CodeType = 1116
 	CodeReasonTooLong                   sdk.CodeType = 1117
 	CodeProposalQueryFailed             sdk.CodeType = 1118
+
+	// reputation errors reserve 1200 ~ 1299
+	CodeReputationQueryFailed sdk.CodeType = 1200
 )
