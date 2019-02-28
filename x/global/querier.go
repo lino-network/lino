@@ -41,6 +41,8 @@ func NewQuerier(gm GlobalManager) sdk.Querier {
 			return queryTPS(ctx, cdc, path[1:], req, gm)
 		case QueryGlobalTime:
 			return queryGlobalTime(ctx, cdc, path[1:], req, gm)
+		case QueryLinoStakeStat:
+			return queryLinoStakeStat(ctx, cdc, path[1:], req, gm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown global query endpoint")
 		}
@@ -124,5 +126,23 @@ func queryGlobalTime(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.R
 		return nil, ErrQueryFailed()
 	}
 	return res, nil
+}
 
+func queryLinoStakeStat(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, gm GlobalManager) ([]byte, sdk.Error) {
+	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
+		return nil, err
+	}
+	day, convertErr := strconv.ParseInt(path[0], 10, 64)
+	if convertErr == nil {
+		return nil, ErrQueryFailed()
+	}
+	globalTime, err := gm.storage.GetLinoStakeStat(ctx, day)
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(globalTime)
+	if marshalErr != nil {
+		return nil, ErrQueryFailed()
+	}
+	return res, nil
 }
