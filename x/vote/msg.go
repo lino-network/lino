@@ -55,7 +55,7 @@ func NewStakeInMsg(username string, deposit types.LNO) StakeInMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg StakeInMsg) Route() string { return types.VoteRouterName }
+func (msg StakeInMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg StakeInMsg) Type() string { return "StakeInMsg" }
@@ -111,7 +111,7 @@ func NewStakeOutMsg(username string, amount types.LNO) StakeOutMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg StakeOutMsg) Route() string { return types.VoteRouterName }
+func (msg StakeOutMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg StakeOutMsg) Type() string { return "StakeOutMsg" }
@@ -167,7 +167,7 @@ func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMs
 }
 
 // Route - implements sdk.Msg
-func (msg DelegateMsg) Route() string { return types.VoteRouterName }
+func (msg DelegateMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg DelegateMsg) Type() string { return "DelegateMsg" }
@@ -226,7 +226,7 @@ func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) D
 }
 
 // Route - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) Route() string { return types.VoteRouterName }
+func (msg DelegatorWithdrawMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg DelegatorWithdrawMsg) Type() string { return "DelegatorWithdrawMsg" }
@@ -282,7 +282,7 @@ func NewClaimInterestMsg(username string) ClaimInterestMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg ClaimInterestMsg) Route() string { return types.VoteRouterName }
+func (msg ClaimInterestMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg ClaimInterestMsg) Type() string { return "ClaimInterestMsg" }

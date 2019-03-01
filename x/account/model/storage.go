@@ -205,6 +205,29 @@ func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 	return grantPubKey, nil
 }
 
+// GetAllGrantPubKey - returns grant user info keyed with pubkey (only used in query).
+func (as AccountStorage) GetAllGrantPubKey(ctx sdk.Context, me types.AccountKey) (map[string]*GrantPubKey, sdk.Error) {
+	grantPubKeyMap := make(map[string]*GrantPubKey)
+	store := ctx.KVStore(as.key)
+	iter := sdk.KVStorePrefixIterator(store, getGrantPubKeyPrefix(me))
+	defer iter.Close()
+	for {
+		if !iter.Valid() {
+			return grantPubKeyMap, nil
+		}
+		key := iter.Key()
+		// fmt.Println(string(key[len(getGrantPubKeyPrefix(me)):]))
+		val := iter.Value()
+		grantPubKey := new(GrantPubKey)
+		if err := as.cdc.UnmarshalBinaryLengthPrefixed(val, grantPubKey); err != nil {
+			return nil, ErrFailedToUnmarshalGrantPubKey(err)
+		}
+		grantPubKeyMap[string(key[len(getGrantPubKeyPrefix(me)):])] = grantPubKey
+		iter.Next()
+	}
+	return grantPubKeyMap, nil
+}
+
 // SetGrantPubKey - sets a grant user to KV. Key is pubkey and value is grant user info
 func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantPubKey *GrantPubKey) sdk.Error {
 	store := ctx.KVStore(as.key)

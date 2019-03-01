@@ -75,7 +75,7 @@ func NewDeveloperRegisterMsg(developer string, deposit types.LNO, website string
 }
 
 // Route - implements sdk.Msg
-func (msg DeveloperRegisterMsg) Route() string { return types.DeveloperRouterName }
+func (msg DeveloperRegisterMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg DeveloperRegisterMsg) Type() string { return "DeveloperRegisterMsg" }
@@ -142,7 +142,7 @@ func NewDeveloperUpdateMsg(developer string, website string, description string,
 }
 
 // Route - implements sdk.Msg
-func (msg DeveloperUpdateMsg) Route() string { return types.DeveloperRouterName }
+func (msg DeveloperUpdateMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg DeveloperUpdateMsg) Type() string { return "DeveloperUpdateMsg" }
@@ -204,7 +204,7 @@ func NewDeveloperRevokeMsg(developer string) DeveloperRevokeMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg DeveloperRevokeMsg) Route() string { return types.DeveloperRouterName }
+func (msg DeveloperRevokeMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg DeveloperRevokeMsg) Type() string { return "DeveloperRevokeMsg" }
@@ -257,7 +257,7 @@ func NewGrantPermissionMsg(
 }
 
 // Route - implements sdk.Msg
-func (msg GrantPermissionMsg) Route() string { return types.DeveloperRouterName }
+func (msg GrantPermissionMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg GrantPermissionMsg) Type() string { return "GrantPermissionMsg" }
@@ -336,7 +336,7 @@ func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionM
 }
 
 // Route - implements sdk.Msg
-func (msg RevokePermissionMsg) Route() string { return types.DeveloperRouterName }
+func (msg RevokePermissionMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg RevokePermissionMsg) Type() string { return "RevokePermissionMsg" }
@@ -390,7 +390,7 @@ func NewPreAuthorizationMsg(
 }
 
 // Route - implements sdk.Msg
-func (msg PreAuthorizationMsg) Route() string { return types.DeveloperRouterName }
+func (msg PreAuthorizationMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg PreAuthorizationMsg) Type() string { return "PreAuthorizationMsg" }

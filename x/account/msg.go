@@ -62,7 +62,7 @@ func NewClaimMsg(username string) ClaimMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg ClaimMsg) Route() string { return types.AccountRouterName }
+func (msg ClaimMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg ClaimMsg) Type() string { return "ClaimMsg" }
@@ -115,7 +115,7 @@ func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) Tran
 }
 
 // Route - implements sdk.Msg
-func (msg TransferMsg) Route() string { return types.AccountRouterName }
+func (msg TransferMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg TransferMsg) Type() string { return "TransferMsg" }
@@ -181,7 +181,7 @@ func NewRecoverMsg(
 }
 
 // Route - implements sdk.Msg
-func (msg RecoverMsg) Route() string { return types.AccountRouterName }
+func (msg RecoverMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg RecoverMsg) Type() string { return "RecoverMsg" }
@@ -240,7 +240,7 @@ func NewRegisterMsg(
 }
 
 // Route - implements sdk.Msg
-func (msg RegisterMsg) Route() string { return types.AccountRouterName }
+func (msg RegisterMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg RegisterMsg) Type() string { return "RegisterMsg" }
@@ -315,7 +315,7 @@ func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
 }
 
 // Type - implements sdk.Msg
-func (msg UpdateAccountMsg) Route() string { return types.AccountRouterName }
+func (msg UpdateAccountMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg UpdateAccountMsg) Type() string { return "UpdateAccountMsg" }

@@ -66,3 +66,8 @@ func ErrGrantPermissionTooHigh() sdk.Error {
 func ErrInvalidGrantPermission() sdk.Error {
 	return types.NewError(types.CodeInvalidGrantPermission, fmt.Sprintf("grant permission is invalid"))
 }
+
+// ErrQueryFailed - error when query developer store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeDeveloperQueryFailed, fmt.Sprintf("query developer store failed"))
+}

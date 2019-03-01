@@ -46,3 +46,8 @@ func ErrInvalidWebsite() sdk.Error {
 func ErrValidatorPubKeyAlreadyExist() sdk.Error {
 	return types.NewError(types.CodeValidatorPubKeyAlreadyExist, fmt.Sprintf("validator public key has been registered"))
 }
+
+// ErrQueryFailed - error when query validator store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeValidatorQueryFailed, fmt.Sprintf("query validator store failed"))
+}

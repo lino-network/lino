@@ -27,7 +27,7 @@ func NewProviderReportMsg(provider string, usage int64) ProviderReportMsg {
 }
 
 // Route - implements sdk.Msg
-func (msg ProviderReportMsg) Route() string { return types.InfraRouterName }
+func (msg ProviderReportMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
 func (msg ProviderReportMsg) Type() string { return "ProviderReportMsg" }
