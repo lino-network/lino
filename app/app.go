@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"time"
+	"io/ioutil"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -744,46 +745,47 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			panic("failed to open " + err.Error())
 		}
 		defer f.Close()
+		bytes, err := ioutil.ReadAll(f)
+		check(err)
 		// XXX(yumin): ugly, trying found a better way.
-		var n int64
 		switch t := tables.(type) {
 		case *accmodel.AccountTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.accountManager.Import(ctx, t)
 		case *devmodel.DeveloperTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.developerManager.Import(ctx, t)
 		case *globalmodel.GlobalTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.globalManager.Import(ctx, t)
 		case *inframodel.InfraTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.infraManager.Import(ctx, t)
 		case *postmodel.PostTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.postManager.Import(ctx, t)
 		case *valmodel.ValidatorTablesIR:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.valManager.Import(ctx, t)
 		case *[]byte:
-			n, err = lb.cdc.UnmarshalBinaryLengthPrefixedReader(f, t, 0)
+			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.reputationManager.Import(ctx, *t)
 		}
-		fmt.Printf("%s loaded, total %d bytes\n", filename, n)
+		fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
 	}
 
 	importFromFile(prevStateFolder+accountStateFile, &accmodel.AccountTablesIR{})
