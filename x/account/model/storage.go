@@ -307,13 +307,18 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 				panic(err)
 			}
 
+			reward, err := as.GetReward(ctx, username)
+			if err != nil {
+				panic(err)
+			}
+
 			// set all states
-			// TODO(yumin): check the key is correct.
 			accRow := AccountRow{
 				Username:            username,
 				Info:                *accInfo,
 				Bank:                *accBank,
 				Meta:                *accMeta,
+				Reward:              *reward,
 				PendingCoinDayQueue: *accPending,
 			}
 			tables.Accounts = append(tables.Accounts, accRow)
@@ -369,6 +374,8 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 		err = as.SetBankFromAccountKey(ctx, v.Username, &v.Bank)
 		check(err)
 		err = as.SetMeta(ctx, v.Username, &v.Meta)
+		check(err)
+		err = as.SetReward(ctx, v.Username, &v.Reward)
 		check(err)
 		q := &PendingCoinDayQueue{
 			LastUpdatedAt:   v.PendingCoinDayQueue.LastUpdatedAt,

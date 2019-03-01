@@ -18,6 +18,7 @@ type AccountRowIR struct {
 	Info                AccountInfo           `json:"info"`
 	Bank                AccountBank           `json:"bank"`
 	Meta                AccountMeta           `json:"meta"`
+	Reward              Reward                `json:"reward"`
 	PendingCoinDayQueue PendingCoinDayQueueIR `json:"pending_coin_day_queue"`
 }
 
