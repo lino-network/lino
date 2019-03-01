@@ -146,11 +146,11 @@ func queryAccountGrantPubKey(ctx sdk.Context, cdc *wire.Codec, path []string, re
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
-	pendingCoinDay, err := am.storage.GetGrantPubKey(ctx, types.AccountKey(path[0]), pubKey)
+	grantPubKey, err := am.storage.GetGrantPubKey(ctx, types.AccountKey(path[0]), pubKey)
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
-	res, marshalErr := cdc.MarshalJSON(pendingCoinDay)
+	res, marshalErr := cdc.MarshalJSON(grantPubKey)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}

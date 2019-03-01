@@ -197,3 +197,8 @@ func ErrFailedToMarshalAccountParam(err error) sdk.Error {
 func ErrFailedToMarshalReputationParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalReputationParam, fmt.Sprintf("failed to marshal reputation param: %s", err.Error()))
 }
+
+// ErrQueryFailed - error when query paramter store failed
+func ErrQueryFailed() sdk.Error {
+	return types.NewError(types.CodeParamQueryFailed, fmt.Sprintf("query paramter store failed"))
+}

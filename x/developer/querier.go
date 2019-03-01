@@ -4,6 +4,7 @@ import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/developer/model"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -57,7 +58,15 @@ func queryDeveloperList(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 	if err != nil {
 		return nil, err
 	}
-	res, marshalErr := cdc.MarshalJSON(developerList)
+	developers := make(map[string]*model.Developer)
+	for _, username := range developerList.AllDevelopers {
+		developer, err := dm.storage.GetDeveloper(ctx, username)
+		if err != nil {
+			return nil, err
+		}
+		developers[string(username)] = developer
+	}
+	res, marshalErr := cdc.MarshalJSON(developers)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
