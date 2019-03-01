@@ -12,6 +12,7 @@ type AccountRow struct {
 	Info                AccountInfo         `json:"info"`
 	Bank                AccountBank         `json:"bank"`
 	Meta                AccountMeta         `json:"meta"`
+	Reward              Reward              `json:"reward"`
 	PendingCoinDayQueue PendingCoinDayQueue `json:"pending_coin_day_queue"`
 }
 
@@ -22,6 +23,7 @@ func (a AccountRow) ToIR() AccountRowIR {
 		Info:                a.Info,
 		Bank:                a.Bank,
 		Meta:                a.Meta,
+		Reward:              a.Reward,
 		PendingCoinDayQueue: a.PendingCoinDayQueue.ToIR(),
 	}
 }
