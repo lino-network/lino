@@ -153,10 +153,11 @@ func NewLinoBlockchain(
 		AddRoute(post.QuerierRoute, post.NewQuerier(lb.postManager)).
 		AddRoute(vote.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(developer.QuerierRoute, developer.NewQuerier(lb.developerManager)).
-		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
 		AddRoute(infra.QuerierRoute, infra.NewQuerier(lb.infraManager)).
-		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager))
+		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
+		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
+		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)

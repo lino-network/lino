@@ -18,7 +18,7 @@ const (
 	QuerierRoute = ModuleName
 
 	QueryValidator     = "validator"
-	QueryValidatorList = "validatorList"
+	QueryValidatorList = "valList"
 )
 
 // creates a querier for validator REST endpoints
