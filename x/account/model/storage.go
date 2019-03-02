@@ -1,11 +1,10 @@
 package model
 
 import (
-	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"github.com/lino-network/lino/types"
-	crypto "github.com/tendermint/tendermint/crypto"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -185,16 +184,16 @@ func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.Accoun
 }
 
 // DeleteGrantPubKey - deletes given pubkey in KV.
-func (as AccountStorage) DeleteGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) {
+func (as AccountStorage) DeleteGrantPubKey(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, permission types.Permission) {
 	store := ctx.KVStore(as.key)
-	store.Delete(getGrantPubKeyKey(me, pubKey))
+	store.Delete(getGrantPubKeyKey(me, grantTo, permission))
 	return
 }
 
 // GetGrantPubKey - returns grant user info keyed with pubkey.
-func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) (*GrantPubKey, sdk.Error) {
+func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, permission types.Permission) (*GrantPubKey, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	grantPubKeyByte := store.Get(getGrantPubKeyKey(me, pubKey))
+	grantPubKeyByte := store.Get(getGrantPubKeyKey(me, grantTo, permission))
 	if grantPubKeyByte == nil {
 		return nil, ErrGrantPubKeyNotFound()
 	}
@@ -205,37 +204,36 @@ func (as AccountStorage) GetGrantPubKey(ctx sdk.Context, me types.AccountKey, pu
 	return grantPubKey, nil
 }
 
-// GetAllGrantPubKey - returns grant user info keyed with pubkey (only used in query).
-func (as AccountStorage) GetAllGrantPubKey(ctx sdk.Context, me types.AccountKey) (map[string]*GrantPubKey, sdk.Error) {
-	grantPubKeyMap := make(map[string]*GrantPubKey)
+// GetAllGrantPubKeys - returns grant user info keyed with pubkey.
+func (as AccountStorage) GetAllGrantPubKeys(ctx sdk.Context, me types.AccountKey) ([]*GrantPubKey, sdk.Error) {
+	grantPubKeys := make([]*GrantPubKey, 0)
 	store := ctx.KVStore(as.key)
 	iter := sdk.KVStorePrefixIterator(store, getGrantPubKeyPrefix(me))
 	defer iter.Close()
 	for {
 		if !iter.Valid() {
-			return grantPubKeyMap, nil
+			return grantPubKeys, nil
 		}
-		key := iter.Key()
 		// fmt.Println(string(key[len(getGrantPubKeyPrefix(me)):]))
 		val := iter.Value()
 		grantPubKey := new(GrantPubKey)
 		if err := as.cdc.UnmarshalBinaryLengthPrefixed(val, grantPubKey); err != nil {
 			return nil, ErrFailedToUnmarshalGrantPubKey(err)
 		}
-		grantPubKeyMap[string(key[len(getGrantPubKeyPrefix(me)):])] = grantPubKey
+		grantPubKeys = append(grantPubKeys, grantPubKey)
 		iter.Next()
 	}
-	return grantPubKeyMap, nil
+	return grantPubKeys, nil
 }
 
 // SetGrantPubKey - sets a grant user to KV. Key is pubkey and value is grant user info
-func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey, grantPubKey *GrantPubKey) sdk.Error {
+func (as AccountStorage) SetGrantPubKey(ctx sdk.Context, me types.AccountKey, grantPubKey *GrantPubKey) sdk.Error {
 	store := ctx.KVStore(as.key)
 	grantPubKeyByte, err := as.cdc.MarshalBinaryLengthPrefixed(*grantPubKey)
 	if err != nil {
 		return ErrFailedToMarshalGrantPubKey(err)
 	}
-	store.Set(getGrantPubKeyKey(me, pubKey), grantPubKeyByte)
+	store.Set(getGrantPubKeyKey(me, grantPubKey.GrantTo, grantPubKey.Permission), grantPubKeyByte)
 	return nil
 }
 
@@ -271,8 +269,12 @@ func getGrantPubKeyPrefix(me types.AccountKey) []byte {
 	return append(append(accountGrantPubKeySubstore, me...), types.KeySeparator...)
 }
 
-func getGrantPubKeyKey(me types.AccountKey, pubKey crypto.PubKey) []byte {
-	return append(getGrantPubKeyPrefix(me), hex.EncodeToString(pubKey.Bytes())...)
+func getGrantPubKeyGrantToPrefix(me types.AccountKey, grantTo types.AccountKey) []byte {
+	return append(append(getGrantPubKeyPrefix(me), grantTo...), types.KeySeparator...)
+}
+
+func getGrantPubKeyKey(me types.AccountKey, grantTo types.AccountKey, permission types.Permission) []byte {
+	return append(getGrantPubKeyGrantToPrefix(me, grantTo), strconv.Itoa(int(permission))...)
 }
 
 // Export to table representation.
@@ -329,32 +331,33 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
 		defer itr.Close()
 		for ; itr.Valid(); itr.Next() {
-			usernamePubKey := string(itr.Key()[1:])
-			strs := strings.Split(usernamePubKey, types.KeySeparator)
-			if len(strs) != 2 {
-				panic("illegat usernamePubkey: " + usernamePubKey)
+			usernamePubKeyPermission := string(itr.Key()[1:])
+			strs := strings.Split(usernamePubKeyPermission, types.KeySeparator)
+			if len(strs) != 3 {
+				panic("illegat usernamePubkeyAndPermission: " + usernamePubKeyPermission)
 			}
-			username, pubKeyHex := types.AccountKey(strs[0]), strs[1]
-			pubKeyBytes, err := hex.DecodeString(pubKeyHex)
-			if err != nil {
-				panic("Failed to decode pubkeyHex: " + pubKeyHex + " " + err.Error())
-			}
-			var pubKey crypto.PubKey
-			err = as.cdc.UnmarshalBinaryLengthPrefixed(pubKeyBytes, &pubKey)
-			if err != nil {
-				panic("Faield to decode pubkeyBytes to pubkey interface: " + err.Error())
-			}
+			// username, grantTo, permission := types.AccountKey(strs[0]), types.AccountKey(strs[1]), types.Permission(strs[2])
+			// pubKeyBytes, err := hex.DecodeString(pubKeyHex)
+			// if err != nil {
+			// 	panic("Failed to decode pubkeyHex: " + pubKeyHex + " " + err.Error())
+			// }
+			// var pubKey crypto.PubKey
+			// err = as.cdc.UnmarshalBinaryLengthPrefixed(pubKeyBytes, &pubKey)
+			// if err != nil {
+			// 	panic("Faield to decode pubkeyBytes to pubkey interface: " + err.Error())
+			// }
 
-			info, err := as.GetGrantPubKey(ctx, username, pubKey)
-			if err != nil {
-				panic("failed GetGrantPubKey: " + err.Error())
-			}
-			row := GrantPubKeyRow{
-				Username:    username,
-				PubKey:      pubKey,
-				GrantPubKey: *info,
-			}
-			tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
+			// xxx(yukai): need update
+			// info, err := as.GetGrantPubKey(ctx, username, grantTo, permission)
+			// if err != nil {
+			// 	panic("failed GetGrantPubKey: " + err.Error())
+			// }
+			// row := GrantPubKeyRow{
+			// 	Username:    username,
+			// 	PubKey:      pubKey,
+			// 	GrantPubKey: *info,
+			// }
+			// tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
 		}
 	}()
 	return tables
@@ -388,7 +391,7 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 	}
 	// import AccountGrantPubKeys
 	for _, v := range tb.AccountGrantPubKeys {
-		err := as.SetGrantPubKey(ctx, v.Username, v.PubKey, &v.GrantPubKey)
+		err := as.SetGrantPubKey(ctx, v.Username, &v.GrantPubKey)
 		check(err)
 	}
 }

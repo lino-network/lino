@@ -57,9 +57,9 @@ type PendingCoinDay struct {
 	Coin      types.Coin `json:"coin"`
 }
 
-// GrantPubKey - user grant permission to a public key with a certain permission
+// GrantPubKey - user grant permission to a user with a certain permission
 type GrantPubKey struct {
-	Username   types.AccountKey `json:"username"`
+	GrantTo    types.AccountKey `json:"grant_to"`
 	Permission types.Permission `json:"permission"`
 	CreatedAt  int64            `json:"created_at"`
 	ExpiresAt  int64            `json:"expires_at"`

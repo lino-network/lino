@@ -1,13 +1,12 @@
 package account
 
 import (
-	"encoding/hex"
+	"strconv"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
 const (
@@ -131,22 +130,14 @@ func queryAccountPendingCoinDay(ctx sdk.Context, cdc *wire.Codec, path []string,
 }
 
 func queryAccountGrantPubKey(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
-	if err := types.CheckPathContentAndMinLength(path, 2); err != nil {
+	if err := types.CheckPathContentAndMinLength(path, 3); err != nil {
 		return nil, err
 	}
-	keyBytes, err := hex.DecodeString(path[1])
-	if err != nil {
+	permission, convertErr := strconv.Atoi(path[2])
+	if convertErr == nil {
 		return nil, ErrQueryFailed()
 	}
-
-	if keyBytes == nil || len(keyBytes) == 0 {
-		return nil, ErrQueryFailed()
-	}
-	pubKey, err := cryptoAmino.PubKeyFromBytes(keyBytes)
-	if err != nil {
-		return nil, ErrQueryFailed()
-	}
-	grantPubKey, err := am.storage.GetGrantPubKey(ctx, types.AccountKey(path[0]), pubKey)
+	grantPubKey, err := am.storage.GetGrantPubKey(ctx, types.AccountKey(path[0]), types.AccountKey(path[1]), types.Permission(permission))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
@@ -161,7 +152,7 @@ func queryAccountAllGrantPubKey(ctx sdk.Context, cdc *wire.Codec, path []string,
 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	pubKeys, err := am.storage.GetAllGrantPubKey(ctx, types.AccountKey(path[0]))
+	pubKeys, err := am.storage.GetAllGrantPubKeys(ctx, types.AccountKey(path[0]))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
