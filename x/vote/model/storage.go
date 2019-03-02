@@ -162,6 +162,7 @@ func (vs VoteStorage) DeleteDelegation(ctx sdk.Context, voter types.AccountKey, 
 func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	iterator := store.Iterator(subspace(getDelegationPrefix(voterName)))
+	defer iterator.Close()
 
 	var delegators []types.AccountKey
 
@@ -174,7 +175,6 @@ func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 		}
 		delegators = append(delegators, delegation.Delegator)
 	}
-	iterator.Close()
 	return delegators, nil
 }
 
@@ -182,6 +182,7 @@ func (vs VoteStorage) GetAllDelegators(ctx sdk.Context, voterName types.AccountK
 func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey) ([]Vote, sdk.Error) {
 	store := ctx.KVStore(vs.key)
 	iterator := store.Iterator(subspace(getVotePrefix(proposalID)))
+	defer iterator.Close()
 
 	var votes []Vote
 
@@ -194,7 +195,6 @@ func (vs VoteStorage) GetAllVotes(ctx sdk.Context, proposalID types.ProposalKey)
 		}
 		votes = append(votes, vote)
 	}
-	iterator.Close()
 	return votes, nil
 }
 
