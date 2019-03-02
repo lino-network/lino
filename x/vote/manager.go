@@ -394,6 +394,6 @@ func (vm VoteManager) Export(ctx sdk.Context) *model.VoterTables {
 }
 
 // Import storage state.
-func (vm VoteManager) Import(ctx sdk.Context, voter *model.VoterTablesIR)  {
+func (vm VoteManager) Import(ctx sdk.Context, voter *model.VoterTablesIR) {
 	vm.storage.Import(ctx, voter)
 }
