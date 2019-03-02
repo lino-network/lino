@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
-	"io/ioutil"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -54,6 +54,7 @@ const (
 	infraStateFile      = "infra"
 	validatorStateFile  = "validator"
 	reputationStateFile = "reputation"
+	voterStateFile      = "voter"
 )
 
 // default home directories for expected binaries
@@ -714,6 +715,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	})
 	exportToFile(currStateFolder+validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
+	})
+	exportToFile(currStateFolder+voterStateFile, func(ctx sdk.Context) interface{} {
+		return lb.voteManager.Export(ctx).ToIR()
 	})
 	exportToFile(currStateFolder+reputationStateFile, func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
