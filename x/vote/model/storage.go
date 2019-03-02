@@ -1,6 +1,8 @@
 package model
 
 import (
+	"strings"
+
 	"github.com/lino-network/lino/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -210,6 +212,63 @@ func (vs VoteStorage) GetReferenceList(ctx sdk.Context) (*ReferenceList, sdk.Err
 		return nil, ErrFailedToUnmarshalReferenceList(err)
 	}
 	return lst, nil
+}
+
+// Export - Export voter state
+func (vs VoteStorage) Export(ctx sdk.Context) *VoterTables {
+	tables := &VoterTables{}
+	store := ctx.KVStore(vs.key)
+	// export table.voters
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, voterSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			username := types.AccountKey(k[1:])
+			val, err := vs.GetVoter(ctx, username)
+			if err != nil {
+				panic("failed to read voter: " + err.Error())
+			}
+			row := VoterRow{
+				Username: username,
+				Voter:    *val,
+			}
+			tables.Voters = append(tables.Voters, row)
+		}
+	}()
+	// export table.Delegations
+	func() {
+		itr := sdk.KVStorePrefixIterator(store, delegationSubstore)
+		defer itr.Close()
+		for ; itr.Valid(); itr.Next() {
+			k := itr.Key()
+			meDelegator := string(k[1:])
+			strs := strings.Split(meDelegator, types.KeySeparator)
+			if len(strs) != 2 {
+				panic("failed to split out meDelegator: " + meDelegator)
+			}
+			voter, delegator := types.AccountKey(strs[0]), types.AccountKey(strs[1])
+			val, err := vs.GetDelegation(ctx, voter, delegator)
+			if err != nil {
+				panic("failed to read delegation: " + err.Error())
+			}
+			row := DelegationRow{
+				Voter:      voter,
+				Delegator:  delegator,
+				Delegation: *val,
+			}
+			tables.Delegations = append(tables.Delegations, row)
+		}
+	}()
+
+	list, err := vs.GetReferenceList(ctx)
+	if err != nil {
+		panic("failed to get Reference List: " + err.Error())
+	}
+	tables.ReferenceList = ReferenceListTable{
+		List: *list,
+	}
+	return tables
 }
 
 // SetReferenceList - set reference list to KVStore

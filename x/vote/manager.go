@@ -387,3 +387,8 @@ func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.Referen
 func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ReferenceList) sdk.Error {
 	return vm.storage.SetReferenceList(ctx, lst)
 }
+
+// Export storage state.
+func (vm VoteManager) Export(ctx sdk.Context) *model.VoterTables {
+	return vm.storage.Export(ctx)
+}

@@ -20,7 +20,10 @@ type AppState struct {
 	// PostComments         []PostComment
 
 	// proposal is skipped
-	// vote is skipped
+
+	// Voters        []VoterRow         `json:"voters"`
+	// Delegations   []DelegationRow    `json:"delegations"`
+	// ReferenceList ReferenceListTable `json:"reference_list"`
 
 	// Validators    []Validator
 	// ValidatorList ValidatorList

@@ -661,6 +661,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile("validator", func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
+	exportToFile("voter", func(ctx sdk.Context) interface{} {
+		return lb.voteManager.Export(ctx).ToIR()
+	})
 	exportToFile("reputation", func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
 		if err != nil {
