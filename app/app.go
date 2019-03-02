@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
-	"io/ioutil"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -28,6 +28,7 @@ import (
 	val "github.com/lino-network/lino/x/validator"
 	valmodel "github.com/lino-network/lino/x/validator/model"
 	vote "github.com/lino-network/lino/x/vote"
+	votemodel "github.com/lino-network/lino/x/vote/model"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
@@ -54,6 +55,7 @@ const (
 	infraStateFile      = "infra"
 	validatorStateFile  = "validator"
 	reputationStateFile = "reputation"
+	voterStateFile      = "voter"
 )
 
 // default home directories for expected binaries
@@ -715,6 +717,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(currStateFolder+validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
+	exportToFile(currStateFolder+voterStateFile, func(ctx sdk.Context) interface{} {
+		return lb.voteManager.Export(ctx).ToIR()
+	})
 	exportToFile(currStateFolder+reputationStateFile, func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
 		if err != nil {
@@ -779,6 +784,11 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.valManager.Import(ctx, t)
+		case *votemodel.VoterTablesIR:
+			err = lb.cdc.UnmarshalJSON(bytes, t)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.voteManager.Import(ctx, t)
 		case *[]byte:
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
@@ -795,4 +805,5 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	importFromFile(prevStateFolder+infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(prevStateFolder+validatorStateFile, &valmodel.ValidatorTablesIR{})
 	importFromFile(prevStateFolder+reputationStateFile, &[]byte{})
+	importFromFile(prevStateFolder+voterStateFile, &votemodel.VoterTablesIR{})
 }

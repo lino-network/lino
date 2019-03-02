@@ -132,9 +132,9 @@ func (ps ProposalStorage) DeleteExpiredProposal(ctx sdk.Context, proposalID type
 func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	iterator := store.Iterator(subspace(ongoingProposalSubStore))
+	defer iterator.Close()
 
 	var proposalList []Proposal
-
 	for ; iterator.Valid(); iterator.Next() {
 		proposalBytes := iterator.Value()
 		var p Proposal
@@ -144,7 +144,7 @@ func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, s
 		}
 		proposalList = append(proposalList, p)
 	}
-	iterator.Close()
+
 	return proposalList, nil
 }
 
@@ -152,9 +152,9 @@ func (ps ProposalStorage) GetOngoingProposalList(ctx sdk.Context) ([]Proposal, s
 func (ps ProposalStorage) GetExpiredProposalList(ctx sdk.Context) ([]Proposal, sdk.Error) {
 	store := ctx.KVStore(ps.key)
 	iterator := store.Iterator(subspace(expiredProposalSubStore))
+	defer iterator.Close()
 
 	var proposalList []Proposal
-
 	for ; iterator.Valid(); iterator.Next() {
 		proposalBytes := iterator.Value()
 		var p Proposal
@@ -164,7 +164,7 @@ func (ps ProposalStorage) GetExpiredProposalList(ctx sdk.Context) ([]Proposal, s
 		}
 		proposalList = append(proposalList, p)
 	}
-	iterator.Close()
+
 	return proposalList, nil
 }
 
