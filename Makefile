@@ -25,9 +25,10 @@ get_vendor_deps:
 	@rm -rf vendor/
 	@dep ensure
 
-test:
+test:get_vendor_deps apply_patch
 	CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go test -ldflags $(LD_FLAGS) -tags $(GO_TAGS) ./...
 
 benchmark:
 	@go test -bench=. $(PACKAGES)
+
 .PHONY: all get_tools get_vendor_deps install build test
