@@ -271,6 +271,28 @@ func (vs VoteStorage) Export(ctx sdk.Context) *VoterTables {
 	return tables
 }
 
+// Import - Import voter state
+func (vs VoteStorage) Import(ctx sdk.Context, ir *VoterTablesIR) {
+	check := func(e error) {
+		if e != nil {
+			panic("[vote] Failed to import: " + e.Error())
+		}
+	}
+	// import table.Voters
+	for _, v := range ir.Voters {
+		err := vs.SetVoter(ctx, v.Username, &v.Voter)
+		check(err)
+	}
+	// import table.Delegations
+	for _, v := range ir.Delegations {
+		err := vs.SetDelegation(ctx, v.Voter, v.Delegator, &v.Delegation)
+		check(err)
+	}
+	// import table.ReferenceList
+	err := vs.SetReferenceList(ctx, &ir.ReferenceList.List)
+	check(err)
+}
+
 // SetReferenceList - set reference list to KVStore
 func (vs VoteStorage) SetReferenceList(ctx sdk.Context, lst *ReferenceList) sdk.Error {
 	store := ctx.KVStore(vs.key)

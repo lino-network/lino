@@ -392,3 +392,8 @@ func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.Refe
 func (vm VoteManager) Export(ctx sdk.Context) *model.VoterTables {
 	return vm.storage.Export(ctx)
 }
+
+// Import storage state.
+func (vm VoteManager) Import(ctx sdk.Context, voter *model.VoterTablesIR)  {
+	vm.storage.Import(ctx, voter)
+}

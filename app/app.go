@@ -28,6 +28,7 @@ import (
 	val "github.com/lino-network/lino/x/validator"
 	valmodel "github.com/lino-network/lino/x/validator/model"
 	vote "github.com/lino-network/lino/x/vote"
+	votemodel "github.com/lino-network/lino/x/vote/model"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
@@ -783,6 +784,11 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.valManager.Import(ctx, t)
+		case *votemodel.VoterTablesIR:
+			err = lb.cdc.UnmarshalJSON(bytes, t)
+			check(err)
+			fmt.Printf("%s state parsed: %T\n", filename, t)
+			lb.voteManager.Import(ctx, t)
 		case *[]byte:
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
@@ -799,4 +805,5 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	importFromFile(prevStateFolder+infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(prevStateFolder+validatorStateFile, &valmodel.ValidatorTablesIR{})
 	importFromFile(prevStateFolder+reputationStateFile, &[]byte{})
+	importFromFile(prevStateFolder+voterStateFile, &votemodel.VoterTablesIR{})
 }
