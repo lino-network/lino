@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/lino-network/lino/types"
-	crypto "github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -51,8 +50,9 @@ type GrantPermissionMsg struct {
 
 // RevokePermissionMsg - user revoke permission from app
 type RevokePermissionMsg struct {
-	Username types.AccountKey `json:"username"`
-	PubKey   crypto.PubKey    `json:"public_key"`
+	Username   types.AccountKey `json:"username"`
+	RevokeFrom types.AccountKey `json:"revoke_from"`
+	Permission types.Permission `json:"permission"`
 }
 
 // PreAuthorizationMsg - preauth permission to app
@@ -328,10 +328,11 @@ func (msg GrantPermissionMsg) GetConsumeAmount() types.Coin {
 }
 
 // Revoke Msg Implementations
-func NewRevokePermissionMsg(user string, pubKey crypto.PubKey) RevokePermissionMsg {
+func NewRevokePermissionMsg(user string, revokeFrom string, permission int) RevokePermissionMsg {
 	return RevokePermissionMsg{
-		Username: types.AccountKey(user),
-		PubKey:   pubKey,
+		Username:   types.AccountKey(user),
+		RevokeFrom: types.AccountKey(revokeFrom),
+		Permission: types.Permission(permission),
 	}
 }
 
@@ -347,12 +348,21 @@ func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
 		len(msg.Username) > types.MaximumUsernameLength {
 		return ErrInvalidUsername()
 	}
+	if len(msg.RevokeFrom) < types.MinimumUsernameLength ||
+		len(msg.RevokeFrom) > types.MaximumUsernameLength {
+		return ErrInvalidUsername()
+	}
+	if msg.Permission == types.ResetPermission ||
+		msg.Permission == types.TransactionPermission ||
+		msg.Permission == types.GrantAppPermission {
+		return ErrInvalidGrantPermission()
+	}
 	return nil
 }
 
 func (msg RevokePermissionMsg) String() string {
-	return fmt.Sprintf("RevokePermissionMsg{User:%v, revoke key:%v}",
-		msg.Username, msg.PubKey)
+	return fmt.Sprintf("RevokePermissionMsg{User:%v, revoke from:%v, permission:%v}",
+		msg.Username, msg.RevokeFrom, msg.Permission)
 }
 
 func (msg RevokePermissionMsg) GetPermission() types.Permission {

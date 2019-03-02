@@ -155,7 +155,7 @@ func handleRevokePermissionMsg(
 		return ErrAccountNotFound().Result()
 	}
 
-	if err := am.RevokePermission(ctx, msg.Username, msg.PubKey); err != nil {
+	if err := am.RevokePermission(ctx, msg.Username, msg.RevokeFrom, msg.Permission); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

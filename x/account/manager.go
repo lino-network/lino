@@ -590,11 +590,14 @@ func (accManager AccountManager) CheckUserTPSCapacity(
 
 // AuthorizePermission - userA authorize permission to userB (currently only support auth to a developer)
 func (accManager AccountManager) AuthorizePermission(
-	ctx sdk.Context, me types.AccountKey, authorizedUser types.AccountKey,
+	ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey,
 	validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error {
+	if !accManager.DoesAccountExist(ctx, grantTo) {
+		return ErrAccountNotFound(grantTo)
+	}
 	d := time.Duration(validityPeriod) * time.Second
 	newGrantPubKey := model.GrantPubKey{
-		Username:   authorizedUser,
+		GrantTo:    grantTo,
 		Permission: grantLevel,
 		CreatedAt:  ctx.BlockHeader().Time.Unix(),
 		ExpiresAt:  ctx.BlockHeader().Time.Add(d).Unix(),
@@ -602,33 +605,21 @@ func (accManager AccountManager) AuthorizePermission(
 	}
 
 	// If grant preauth permission, grant to developer's tx key
-	if grantLevel == types.PreAuthorizationPermission {
-		txKey, err := accManager.GetTransactionKey(ctx, authorizedUser)
-		if err != nil {
-			return err
-		}
-		return accManager.storage.SetGrantPubKey(ctx, me, txKey, &newGrantPubKey)
+	if grantLevel == types.PreAuthorizationPermission || grantLevel == types.AppPermission {
+		return accManager.storage.SetGrantPubKey(ctx, me, &newGrantPubKey)
 	}
 
-	// If grant app permission, grant to developer's app key
-	if grantLevel == types.AppPermission {
-		appKey, err := accManager.GetAppKey(ctx, authorizedUser)
-		if err != nil {
-			return err
-		}
-		return accManager.storage.SetGrantPubKey(ctx, me, appKey, &newGrantPubKey)
-	}
 	return ErrUnsupportGrantLevel()
 }
 
 // RevokePermission - revoke permission from a developer
 func (accManager AccountManager) RevokePermission(
-	ctx sdk.Context, me types.AccountKey, pubKey crypto.PubKey) sdk.Error {
-	_, err := accManager.storage.GetGrantPubKey(ctx, me, pubKey)
+	ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, permission types.Permission) sdk.Error {
+	_, err := accManager.storage.GetGrantPubKey(ctx, me, grantTo, permission)
 	if err != nil {
 		return err
 	}
-	accManager.storage.DeleteGrantPubKey(ctx, me, pubKey)
+	accManager.storage.DeleteGrantPubKey(ctx, me, grantTo, permission)
 	return nil
 }
 
@@ -679,49 +670,51 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	}
 
 	// if user doesn't use his own key, check his grant user pubkey
-	grantPubKey, err := accManager.storage.GetGrantPubKey(ctx, me, signKey)
+	grantPubKeys, err := accManager.storage.GetAllGrantPubKeys(ctx, me)
 	if err != nil {
 		return "", err
 	}
-	if grantPubKey.ExpiresAt < ctx.BlockHeader().Time.Unix() {
-		accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-		return "", ErrGrantKeyExpired(me)
-	}
-	if permission != grantPubKey.Permission {
-		ErrGrantKeyMismatch(grantPubKey.Username)
-	}
-	if permission == types.PreAuthorizationPermission {
-		txKey, err := accManager.GetTransactionKey(ctx, grantPubKey.Username)
-		if err != nil {
-			return "", err
+
+	for _, pubKey := range grantPubKeys {
+		if pubKey.ExpiresAt < ctx.BlockHeader().Time.Unix() {
+			accManager.storage.DeleteGrantPubKey(ctx, me, pubKey.GrantTo, pubKey.Permission)
+			continue
 		}
-		if !reflect.DeepEqual(signKey, txKey) {
-			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrPreAuthGrantKeyMismatch(grantPubKey.Username)
+		if permission != pubKey.Permission {
+			continue
 		}
-		if amount.IsGT(grantPubKey.Amount) {
-			return "", ErrPreAuthAmountInsufficient(grantPubKey.Username, grantPubKey.Amount, amount)
-		}
-		grantPubKey.Amount = grantPubKey.Amount.Minus(amount)
-		if grantPubKey.Amount.IsEqual(types.NewCoinFromInt64(0)) {
-			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-		} else {
-			if err := accManager.storage.SetGrantPubKey(ctx, me, signKey, grantPubKey); err != nil {
-				return "", nil
+		if permission == types.PreAuthorizationPermission {
+			txKey, err := accManager.GetTransactionKey(ctx, pubKey.GrantTo)
+			if err != nil {
+				return "", err
 			}
+			if !reflect.DeepEqual(signKey, txKey) {
+				continue
+			}
+			if amount.IsGT(pubKey.Amount) {
+				return "", ErrPreAuthAmountInsufficient(pubKey.GrantTo, pubKey.Amount, amount)
+			}
+			pubKey.Amount = pubKey.Amount.Minus(amount)
+			if pubKey.Amount.IsZero() {
+				accManager.storage.DeleteGrantPubKey(ctx, me, pubKey.GrantTo, pubKey.Permission)
+			} else {
+				if err := accManager.storage.SetGrantPubKey(ctx, me, pubKey); err != nil {
+					return "", nil
+				}
+			}
+			return pubKey.GrantTo, nil
 		}
-		return grantPubKey.Username, nil
-	}
-	if permission == types.AppPermission {
-		appKey, err := accManager.GetAppKey(ctx, grantPubKey.Username)
-		if err != nil {
-			return "", err
+
+		if permission == types.AppPermission {
+			appKey, err := accManager.GetAppKey(ctx, pubKey.GrantTo)
+			if err != nil {
+				return "", err
+			}
+			if !reflect.DeepEqual(signKey, appKey) {
+				continue
+			}
+			return pubKey.GrantTo, nil
 		}
-		if !reflect.DeepEqual(signKey, appKey) {
-			accManager.storage.DeleteGrantPubKey(ctx, me, signKey)
-			return "", ErrAppGrantKeyMismatch(grantPubKey.Username)
-		}
-		return grantPubKey.Username, nil
 	}
 	return "", ErrCheckAuthenticatePubKeyOwner(me)
 }

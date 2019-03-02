@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
@@ -290,19 +289,44 @@ func TestRevokePermissionMsgMsg(t *testing.T) {
 		expectError         sdk.Error
 	}{
 		{
-			testName:            "revoke permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", secp256k1.GenPrivKey().PubKey()),
+			testName:            "revoke app permission",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.AppPermission)),
 			expectError:         nil,
 		},
 		{
 			testName:            "username is too short",
-			revokePermissionMsg: NewRevokePermissionMsg("us", secp256k1.GenPrivKey().PubKey()),
+			revokePermissionMsg: NewRevokePermissionMsg("us", "app", int(types.AppPermission)),
 			expectError:         ErrInvalidUsername(),
 		},
 		{
 			testName:            "username is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", secp256k1.GenPrivKey().PubKey()),
+			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", "app", int(types.AppPermission)),
 			expectError:         ErrInvalidUsername(),
+		},
+		{
+			testName:            "app name is too long",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "ap", int(types.AppPermission)),
+			expectError:         ErrInvalidUsername(),
+		},
+		{
+			testName:            "app name is too long",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "appappappappappappappapp", int(types.AppPermission)),
+			expectError:         ErrInvalidUsername(),
+		},
+		{
+			testName:            "reset permission is invalid",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.ResetPermission)),
+			expectError:         ErrInvalidGrantPermission(),
+		},
+		{
+			testName:            "tx permission is invalid",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.TransactionPermission)),
+			expectError:         ErrInvalidGrantPermission(),
+		},
+		{
+			testName:            "grant app permission is invalid",
+			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.GrantAppPermission)),
+			expectError:         ErrInvalidGrantPermission(),
 		},
 	}
 
@@ -407,7 +431,12 @@ func TestMsgPermission(t *testing.T) {
 		},
 		{
 			testName:         "revoke developer app permission msg",
-			msg:              NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
+			msg:              NewRevokePermissionMsg("test", "app", int(types.AppPermission)),
+			expectPermission: types.TransactionPermission,
+		},
+		{
+			testName:         "revoke developer tx permission msg",
+			msg:              NewRevokePermissionMsg("test", "app", int(types.TransactionPermission)),
 			expectPermission: types.TransactionPermission,
 		},
 		{
@@ -455,7 +484,7 @@ func TestGetSigners(t *testing.T) {
 		},
 		{
 			testName:      "revoke developer post permission msg",
-			msg:           NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
+			msg:           NewRevokePermissionMsg("test", "app", int(types.AppPermission)),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
@@ -502,7 +531,7 @@ func TestGetSignBytes(t *testing.T) {
 		},
 		{
 			testName: "revoke developer post permission msg",
-			msg:      NewRevokePermissionMsg("test", secp256k1.GenPrivKey().PubKey()),
+			msg:      NewRevokePermissionMsg("test", "app", int(types.AppPermission)),
 		},
 		{
 			testName: "preauth msg",

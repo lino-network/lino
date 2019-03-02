@@ -30,6 +30,7 @@ const (
 	FlagDescription = "description"
 	FlagAppMeta     = "appmeta"
 	FlagUser        = "user"
+	FlagRevokeFrom  = "revoke-from"
 	FlagReferrer    = "referrer"
 	FlagSeconds     = "seconds"
 	FlagPermission  = "permission"

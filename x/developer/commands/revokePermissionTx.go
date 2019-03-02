@@ -1,14 +1,14 @@
 package commands
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/lino-network/lino/client"
+	"github.com/lino-network/lino/types"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	dev "github.com/lino-network/lino/x/developer"
@@ -21,8 +21,8 @@ func RevokePermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "revoke permission",
 		RunE:  sendRevokePermissionTx(cdc),
 	}
+	cmd.Flags().String(client.FlagRevokeFrom, "", "revoke from app")
 	cmd.Flags().String(client.FlagUser, "", "user of this transaction")
-	cmd.Flags().String(client.FlagPubKey, "", "public key to revoke")
 	cmd.Flags().Int64(client.FlagSeconds, 3600, "seconds till expire")
 	return cmd
 }
@@ -31,16 +31,19 @@ func RevokePermissionTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendRevokePermissionTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
+		revokeFrom := viper.GetString(client.FlagRevokeFrom)
+		permissionStr := viper.GetString(client.FlagPermission)
+		var permission types.Permission
+		switch permissionStr {
+		case "app":
+			permission = types.AppPermission
+		case "preauth":
+			permission = types.PreAuthorizationPermission
+		default:
+			return errors.New("only app permission are allowed")
+		}
 		username := viper.GetString(client.FlagUser)
-		pubKeyBytes, err := hex.DecodeString(viper.GetString(client.FlagPubKey))
-		if err != nil {
-			return err
-		}
-		pubKey, err := cryptoAmino.PubKeyFromBytes(pubKeyBytes)
-		if err != nil {
-			return err
-		}
-		msg := dev.NewRevokePermissionMsg(username, pubKey)
+		msg := dev.NewRevokePermissionMsg(username, revokeFrom, int(permission))
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)
