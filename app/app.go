@@ -685,8 +685,14 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := lb.NewContext(true, abci.Header{})
 
+	exportPath := DefaultNodeHome + "/" + currStateFolder
+	err = os.MkdirAll(exportPath, os.ModePerm)
+	if err != nil {
+		panic("failed to create export dir due to: " + err.Error())
+	}
+
 	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
-		f, err := os.Create("./" + filename)
+		f, err := os.Create(exportPath + filename)
 		if err != nil {
 			panic("failed to create account")
 		}
@@ -700,28 +706,28 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		f.Sync()
 	}
 
-	exportToFile(currStateFolder+accountStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
 		return lb.accountManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+developerStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
 		return lb.developerManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+postStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
 		return lb.postManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+globalStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
 		return lb.globalManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+infraStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
 		return lb.infraManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+validatorStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+voterStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
 		return lb.voteManager.Export(ctx).ToIR()
 	})
-	exportToFile(currStateFolder+reputationStateFile, func(ctx sdk.Context) interface{} {
+	exportToFile(reputationStateFile, func(ctx sdk.Context) interface{} {
 		rep, err := lb.reputationManager.Export(ctx)
 		if err != nil {
 			panic(err)
@@ -746,7 +752,8 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		}
 	}
 	importFromFile := func(filename string, tables interface{}) {
-		f, err := os.Open("./" + filename)
+		// XXX(yumin): does not support customized node home import.
+		f, err := os.Open(DefaultNodeHome + "/" + prevStateFolder + filename)
 		if err != nil {
 			panic("failed to open " + err.Error())
 		}
@@ -799,12 +806,12 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
 	}
 
-	importFromFile(prevStateFolder+accountStateFile, &accmodel.AccountTablesIR{})
-	importFromFile(prevStateFolder+developerStateFile, &devmodel.DeveloperTablesIR{})
-	importFromFile(prevStateFolder+postStateFile, &postmodel.PostTablesIR{})
-	importFromFile(prevStateFolder+globalStateFile, &globalmodel.GlobalTablesIR{})
-	importFromFile(prevStateFolder+infraStateFile, &inframodel.InfraTablesIR{})
-	importFromFile(prevStateFolder+validatorStateFile, &valmodel.ValidatorTablesIR{})
-	importFromFile(prevStateFolder+reputationStateFile, &[]byte{})
-	importFromFile(prevStateFolder+voterStateFile, &votemodel.VoterTablesIR{})
+	importFromFile(accountStateFile, &accmodel.AccountTablesIR{})
+	importFromFile(developerStateFile, &devmodel.DeveloperTablesIR{})
+	importFromFile(postStateFile, &postmodel.PostTablesIR{})
+	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
+	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
+	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
+	importFromFile(reputationStateFile, &[]byte{})
+	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
 }
