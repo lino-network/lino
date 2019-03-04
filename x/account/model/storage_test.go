@@ -125,37 +125,22 @@ func TestAccountGrantPubkey(t *testing.T) {
 	ctx := getContext()
 
 	grantPubKey := GrantPubKey{GrantTo: types.AccountKey("grantTo"), Permission: types.AppPermission, Amount: types.NewCoinFromInt64(0)}
-	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), &grantPubKey)
-	assert.Nil(t, err)
-
-	resultPtr, err := as.GetGrantPubKey(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), types.AppPermission)
-	assert.Nil(t, err)
-	assert.Equal(t, grantPubKey, *resultPtr, "Account grant user should be equal")
-
-	as.DeleteGrantPubKey(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), types.AppPermission)
-	resultPtr, err = as.GetGrantPubKey(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), types.AppPermission)
-	assert.NotNil(t, err)
-	assert.Nil(t, resultPtr)
-}
-
-func TestGetAllAccountGrantPubkey(t *testing.T) {
-	as := NewAccountStorage(TestKVStoreKey)
-	ctx := getContext()
-
-	grantPubKey1 := GrantPubKey{GrantTo: types.AccountKey("grantTo"), Permission: types.AppPermission, Amount: types.NewCoinFromInt64(10)}
-	err := as.SetGrantPubKey(ctx, types.AccountKey("test"), &grantPubKey1)
-	assert.Nil(t, err)
 	grantPubKey2 := GrantPubKey{GrantTo: types.AccountKey("grantTo"), Permission: types.PreAuthorizationPermission, Amount: types.NewCoinFromInt64(10)}
-	err = as.SetGrantPubKey(ctx, types.AccountKey("test"), &grantPubKey2)
+	err := as.SetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), []*GrantPubKey{&grantPubKey, &grantPubKey2})
 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetAllGrantPubKeys(ctx, types.AccountKey("test"))
+	resultList, err := as.GetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
 	assert.Nil(t, err)
+	assert.Equal(t, []*GrantPubKey{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
 
-	assert.Equal(t, 2, len(resultPtr), "Account grant key should be 2")
-	assert.Equal(t, grantPubKey1, *resultPtr[0], "Account grant pubkey should be equal")
+	resultList, err = as.GetAllGrantPubKeys(ctx, types.AccountKey("test"))
+	assert.Nil(t, err)
+	assert.Equal(t, []*GrantPubKey{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
 
-	assert.Equal(t, grantPubKey2, *resultPtr[1], "Account grant pubkey should be equal")
+	as.DeleteAllGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
+	resultList, err = as.GetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
+	assert.NotNil(t, err)
+	assert.Nil(t, resultList)
 }
 
 func TestPendingCoinDayQueueZeroValue(t *testing.T) {
