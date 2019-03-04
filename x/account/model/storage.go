@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/lino-network/lino/types"
@@ -214,7 +213,6 @@ func (as AccountStorage) GetAllGrantPubKeys(ctx sdk.Context, me types.AccountKey
 		if !iter.Valid() {
 			return grantPubKeys, nil
 		}
-		// fmt.Println(string(key[len(getGrantPubKeyPrefix(me)):]))
 		val := iter.Value()
 		grantPubKeyList := new([]*GrantPubKey)
 		if err := as.cdc.UnmarshalBinaryLengthPrefixed(val, grantPubKeyList); err != nil {
@@ -228,7 +226,6 @@ func (as AccountStorage) GetAllGrantPubKeys(ctx sdk.Context, me types.AccountKey
 
 // SetGrantPubKey - sets a grant user to KV. Key is pubkey and value is grant user info
 func (as AccountStorage) SetGrantPubKeys(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, grantPubKeys []*GrantPubKey) sdk.Error {
-	fmt.Println("===> grant permission", me, grantTo, grantPubKeys)
 	store := ctx.KVStore(as.key)
 	grantPubKeyByte, err := as.cdc.MarshalBinaryLengthPrefixed(grantPubKeys)
 	if err != nil {
