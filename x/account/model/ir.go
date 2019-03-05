@@ -1,6 +1,8 @@
 package model
 
 import (
+	crypto "github.com/tendermint/tendermint/crypto"
+
 	"github.com/lino-network/lino/types"
 )
 
@@ -22,8 +24,36 @@ type AccountRowIR struct {
 	PendingCoinDayQueue PendingCoinDayQueueIR `json:"pending_coin_day_queue"`
 }
 
+// GrantPermissionIR - user grant permission to a user with a certain permission
+// XXX(yumin): note that there is a field name change during upgrade-1.
+type GrantPermissionIR struct {
+	Username   types.AccountKey `json:"username"`
+	Permission types.Permission `json:"permission"`
+	CreatedAt  int64            `json:"created_at"`
+	ExpiresAt  int64            `json:"expires_at"`
+	Amount     types.Coin       `json:"amount"`
+}
+
+// ToState - convert IR back to state.
+func (g GrantPermissionIR) ToState() *GrantPermission {
+	return &GrantPermission{
+		GrantTo:    g.Username,
+		Permission: g.Permission,
+		CreatedAt:  g.CreatedAt,
+		ExpiresAt:  g.ExpiresAt,
+		Amount:     g.Amount,
+	}
+}
+
+// GrantPubKeyRowIR also in account, pk: (Username, pubKey)
+type GrantPubKeyRowIR struct {
+	Username    types.AccountKey  `json:"username"`
+	PubKey      crypto.PubKey     `json:"pub_key"`
+	GrantPubKey GrantPermissionIR `json:"grant_pub_key"`
+}
+
 // AccountTablesIR -
 type AccountTablesIR struct {
-	Accounts            []AccountRowIR   `json:"accounts"`
-	AccountGrantPubKeys []GrantPubKeyRow `json:"account_grant_pub_keys"`
+	Accounts            []AccountRowIR     `json:"accounts"`
+	AccountGrantPubKeys []GrantPubKeyRowIR `json:"account_grant_pub_keys"`
 }
