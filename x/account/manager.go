@@ -886,7 +886,9 @@ func (accManager AccountManager) Import(ctx sdk.Context, dt *model.AccountTables
 		grant := v.GrantPubKey
 		remainingTime := grant.ExpiresAt - ctx.BlockHeader().Time.Unix()
 		if remainingTime > 0 {
-			accManager.AuthorizePermission(ctx, v.Username, grant.GrantTo,
+			// fmt.Printf("%s %s %d %d %d", v.Username, grant.Username,
+			// 	remainingTime, grant.Permission, grant.Amount)
+			accManager.AuthorizePermission(ctx, v.Username, grant.Username,
 				remainingTime, grant.Permission, grant.Amount)
 		}
 	}

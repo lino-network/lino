@@ -66,6 +66,17 @@ type GrantPermission struct {
 	Amount     types.Coin       `json:"amount"`
 }
 
+// ToIR - name change, username -> GrantTo
+func (g GrantPermission) ToIR() GrantPermissionIR {
+	return GrantPermissionIR{
+		Username:   g.GrantTo,
+		Permission: g.Permission,
+		CreatedAt:  g.CreatedAt,
+		ExpiresAt:  g.ExpiresAt,
+		Amount:     g.Amount,
+	}
+}
+
 // AccountMeta - stores tiny and frequently updated fields.
 type AccountMeta struct {
 	Sequence             uint64     `json:"sequence"`

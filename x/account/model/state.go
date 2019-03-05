@@ -35,6 +35,15 @@ type GrantPubKeyRow struct {
 	GrantPubKey GrantPermission  `json:"grant_pub_key"`
 }
 
+// ToIR -
+func (g GrantPubKeyRow) ToIR() GrantPubKeyRowIR {
+	return GrantPubKeyRowIR{
+		Username:    g.Username,
+		PubKey:      g.PubKey,
+		GrantPubKey: g.GrantPubKey.ToIR(),
+	}
+}
+
 // AccountTables is the state of account storage, organized as a table.
 type AccountTables struct {
 	Accounts            []AccountRow     `json:"accounts"`
@@ -47,6 +56,8 @@ func (a AccountTables) ToIR() *AccountTablesIR {
 	for _, v := range a.Accounts {
 		tables.Accounts = append(tables.Accounts, v.ToIR())
 	}
-	tables.AccountGrantPubKeys = a.AccountGrantPubKeys
+	for _, v := range a.AccountGrantPubKeys {
+		tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, v.ToIR())
+	}
 	return tables
 }
