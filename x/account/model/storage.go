@@ -182,56 +182,52 @@ func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.Accoun
 	return nil
 }
 
-// DeleteAllGrantPubKeys - deletes all grant pubkeys from a granted user in KV.
-func (as AccountStorage) DeleteAllGrantPubKeys(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) {
+// DeleteAllGrantPermissions - deletes all grant pubkeys from a granted user in KV.
+func (as AccountStorage) DeleteAllGrantPermissions(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) {
 	store := ctx.KVStore(as.key)
-	store.Delete(getGrantPubKeysKey(me, grantTo))
+	store.Delete(getGrantPermKey(me, grantTo))
 	return
 }
 
-// GetGrantPubKey - returns grant user info keyed with pubkey.
-func (as AccountStorage) GetGrantPubKeys(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) ([]*GrantPubKey, sdk.Error) {
+// GetGrantPermissions - returns grant user info keyed with pubkey.
+func (as AccountStorage) GetGrantPermissions(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) ([]*GrantPermission, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	grantPubKeyByte := store.Get(getGrantPubKeysKey(me, grantTo))
+	grantPubKeyByte := store.Get(getGrantPermKey(me, grantTo))
 	if grantPubKeyByte == nil {
 		return nil, ErrGrantPubKeyNotFound()
 	}
-	grantPubKeys := new([]*GrantPubKey)
+	grantPubKeys := new([]*GrantPermission)
 	if err := as.cdc.UnmarshalBinaryLengthPrefixed(grantPubKeyByte, grantPubKeys); err != nil {
 		return nil, ErrFailedToUnmarshalGrantPubKey(err)
 	}
 	return *grantPubKeys, nil
 }
 
-// GetAllGrantPubKeys - returns grant user info keyed with pubkey.
-func (as AccountStorage) GetAllGrantPubKeys(ctx sdk.Context, me types.AccountKey) ([]*GrantPubKey, sdk.Error) {
-	grantPubKeys := make([]*GrantPubKey, 0)
+// GetAllGrantPermissions - returns grant user info keyed with pubkey.
+func (as AccountStorage) GetAllGrantPermissions(ctx sdk.Context, me types.AccountKey) ([]*GrantPermission, sdk.Error) {
+	grantPermissions := make([]*GrantPermission, 0)
 	store := ctx.KVStore(as.key)
-	iter := sdk.KVStorePrefixIterator(store, getGrantPubKeyPrefix(me))
+	iter := sdk.KVStorePrefixIterator(store, getGrantPermPrefix(me))
 	defer iter.Close()
-	for {
-		if !iter.Valid() {
-			return grantPubKeys, nil
-		}
+	for ; iter.Valid(); iter.Next() {
 		val := iter.Value()
-		grantPubKeyList := new([]*GrantPubKey)
-		if err := as.cdc.UnmarshalBinaryLengthPrefixed(val, grantPubKeyList); err != nil {
+		grantPermList := new([]*GrantPermission)
+		if err := as.cdc.UnmarshalBinaryLengthPrefixed(val, grantPermList); err != nil {
 			return nil, ErrFailedToUnmarshalGrantPubKey(err)
 		}
-		grantPubKeys = append(grantPubKeys, *grantPubKeyList...)
-		iter.Next()
+		grantPermissions = append(grantPermissions, *grantPermList...)
 	}
-	return grantPubKeys, nil
+	return grantPermissions, nil
 }
 
-// SetGrantPubKey - sets a grant user to KV. Key is pubkey and value is grant user info
-func (as AccountStorage) SetGrantPubKeys(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, grantPubKeys []*GrantPubKey) sdk.Error {
+// SetGrantPermissions - sets a grant user to KV. Key is pubkey and value is grant user info
+func (as AccountStorage) SetGrantPermissions(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, grantPubKeys []*GrantPermission) sdk.Error {
 	store := ctx.KVStore(as.key)
-	grantPubKeyByte, err := as.cdc.MarshalBinaryLengthPrefixed(grantPubKeys)
+	grantPermByte, err := as.cdc.MarshalBinaryLengthPrefixed(grantPubKeys)
 	if err != nil {
 		return ErrFailedToMarshalGrantPubKey(err)
 	}
-	store.Set(getGrantPubKeysKey(me, grantTo), grantPubKeyByte)
+	store.Set(getGrantPermKey(me, grantTo), grantPermByte)
 	return nil
 }
 
@@ -263,12 +259,12 @@ func getPendingCoinDayQueueKey(accKey types.AccountKey) []byte {
 	return append(accountPendingCoinDayQueueSubstore, accKey...)
 }
 
-func getGrantPubKeyPrefix(me types.AccountKey) []byte {
+func getGrantPermPrefix(me types.AccountKey) []byte {
 	return append(append(accountGrantPubKeySubstore, me...), types.KeySeparator...)
 }
 
-func getGrantPubKeysKey(me types.AccountKey, grantTo types.AccountKey) []byte {
-	return append(append(getGrantPubKeyPrefix(me), grantTo...), types.KeySeparator...)
+func getGrantPermKey(me types.AccountKey, grantTo types.AccountKey) []byte {
+	return append(append(getGrantPermPrefix(me), grantTo...), types.KeySeparator...)
 }
 
 // Export to table representation.

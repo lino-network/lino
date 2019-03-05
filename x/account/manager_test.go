@@ -1306,7 +1306,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 		permission         types.Permission
 		expectUser         types.AccountKey
 		expectResult       sdk.Error
-		expectGrantPubKeys []*model.GrantPubKey
+		expectGrantPubKeys []*model.GrantPermission
 	}{
 		{
 			testName:           "check user's reset key",
@@ -1415,8 +1415,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.AppPermission,
 			expectUser:   appPermissionUser,
 			expectResult: nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    appPermissionUser,
 					Permission: types.AppPermission,
 					CreatedAt:  baseTime.Unix(),
@@ -1467,8 +1467,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.PreAuthorizationPermission,
 			expectUser:   preAuthPermissionUser,
 			expectResult: nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    preAuthPermissionUser,
 					Permission: types.PreAuthorizationPermission,
 					CreatedAt:  baseTime.Unix(),
@@ -1486,8 +1486,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.AppPermission,
 			expectUser:   preAuthPermissionUser,
 			expectResult: ErrCheckAuthenticatePubKeyOwner(user1),
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    preAuthPermissionUser,
 					Permission: types.PreAuthorizationPermission,
 					CreatedAt:  baseTime.Unix(),
@@ -1507,8 +1507,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			expectResult: ErrPreAuthAmountInsufficient(
 				preAuthPermissionUser, preAuthAmount.Minus(types.NewCoinFromInt64(10)),
 				preAuthAmount),
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    preAuthPermissionUser,
 					Permission: types.PreAuthorizationPermission,
 					CreatedAt:  baseTime.Unix(),
@@ -1525,8 +1525,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.GrantAppPermission,
 			expectUser:   appPermissionUser,
 			expectResult: ErrCheckGrantAppKey(),
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    appPermissionUser,
 					Permission: types.AppPermission,
 					CreatedAt:  baseTime.Unix(),
@@ -1573,7 +1573,7 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			}
 		}
 
-		grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, tc.checkUser, tc.expectUser)
+		grantPubKeys, err := am.storage.GetGrantPermissions(ctx, tc.checkUser, tc.expectUser)
 		if tc.expectGrantPubKeys == nil {
 			if err == nil {
 				t.Errorf("%s: got nil err", tc.testName)
@@ -1682,7 +1682,7 @@ func TestAuthorizePermission(t *testing.T) {
 		amount             types.Coin
 		validityPeriod     int64
 		expectResult       sdk.Error
-		expectGrantPubKeys []*model.GrantPubKey
+		expectGrantPubKeys []*model.GrantPermission
 	}{
 		{
 			testName:       "normal grant app permission",
@@ -1692,8 +1692,8 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 100,
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 100,
@@ -1710,8 +1710,8 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,
@@ -1728,8 +1728,8 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   ErrAccountNotFound(nonExistUser),
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,
@@ -1746,8 +1746,8 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 100,
 			amount:         types.NewCoinFromInt64(1000),
 			expectResult:   nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    user3,
 					Permission: types.PreAuthorizationPermission,
 					ExpiresAt:  baseTime.Unix() + 100,
@@ -1764,8 +1764,8 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(10000),
 			expectResult:   nil,
-			expectGrantPubKeys: []*model.GrantPubKey{
-				&model.GrantPubKey{
+			expectGrantPubKeys: []*model.GrantPermission{
+				&model.GrantPermission{
 					GrantTo:    user3,
 					Permission: types.PreAuthorizationPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,
@@ -1785,7 +1785,7 @@ func TestAuthorizePermission(t *testing.T) {
 		}
 
 		if tc.expectResult == nil {
-			grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, tc.user, tc.grantTo)
+			grantPubKeys, err := am.storage.GetGrantPermissions(ctx, tc.user, tc.grantTo)
 			if err != nil {
 				t.Errorf("%s: failed to get grant pub key, got err %v", tc.testName, err)
 			}
@@ -1985,43 +1985,43 @@ func TestAddFrozenMoney(t *testing.T) {
 		expectNumOfFrozenAmount int
 	}{
 		{
-			testName:     "add the first 100 frozen money",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1000000,
-			interval:     10,
-			times:        5,
+			testName:                "add the first 100 frozen money",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1000000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		},
 		{
-			testName:     "add the second 100 frozen money, clear the first one",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1200000,
-			interval:     10,
-			times:        5,
+			testName:                "add the second 100 frozen money, clear the first one",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1200000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		},
 		{
-			testName:     "add the third 100 frozen money",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1300000,
-			interval:     10,
-			times:        5,
+			testName:                "add the third 100 frozen money",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1300000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 2,
 		},
 		{
-			testName:     "add the fourth 100 frozen money, clear the second one",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1400000,
-			interval:     10,
-			times:        5,
+			testName:                "add the fourth 100 frozen money, clear the second one",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1400000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 2,
 		},
 		{
-			testName:     "add the fifth 100 frozen money, clear the third and fourth ones",
-			frozenAmount: types.NewCoinFromInt64(100),
-			startAt:      1600000,
-			interval:     10,
-			times:        5,
+			testName:                "add the fifth 100 frozen money, clear the third and fourth ones",
+			frozenAmount:            types.NewCoinFromInt64(100),
+			startAt:                 1600000,
+			interval:                10,
+			times:                   5,
 			expectNumOfFrozenAmount: 1,
 		}, // this one is used to re-produce the out-of-bound bug.
 	}

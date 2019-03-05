@@ -32,7 +32,7 @@ func (a AccountRow) ToIR() AccountRowIR {
 type GrantPubKeyRow struct {
 	Username    types.AccountKey `json:"username"`
 	PubKey      crypto.PubKey    `json:"pub_key"`
-	GrantPubKey GrantPubKey      `json:"grant_pub_key"`
+	GrantPubKey GrantPermission  `json:"grant_pub_key"`
 }
 
 // AccountTables is the state of account storage, organized as a table.

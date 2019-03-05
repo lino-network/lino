@@ -131,7 +131,7 @@ func queryAccountGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, r
 	if err := types.CheckPathContentAndMinLength(path, 2); err != nil {
 		return nil, err
 	}
-	grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, types.AccountKey(path[0]), types.AccountKey(path[1]))
+	grantPubKeys, err := am.storage.GetGrantPermissions(ctx, types.AccountKey(path[0]), types.AccountKey(path[1]))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
@@ -146,7 +146,7 @@ func queryAccountAllGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string
 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	pubKeys, err := am.storage.GetAllGrantPubKeys(ctx, types.AccountKey(path[0]))
+	pubKeys, err := am.storage.GetAllGrantPermissions(ctx, types.AccountKey(path[0]))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
