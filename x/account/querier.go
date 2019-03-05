@@ -1,13 +1,10 @@
 package account
 
 import (
-	"encoding/hex"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
 const (
@@ -20,13 +17,13 @@ const (
 	// QuerierRoute is the querier route for gov
 	QuerierRoute = ModuleName
 
-	QueryAccountInfo           = "info"
-	QueryAccountBank           = "bank"
-	QueryAccountMeta           = "meta"
-	QueryAccountReward         = "reward"
-	QueryAccountPendingCoinDay = "pendingCoinDay"
-	QueryAccountGrantPubKey    = "grantPubKey"
-	QueryAccountAllGrantPubKey = "allGrantPubKey"
+	QueryAccountInfo            = "info"
+	QueryAccountBank            = "bank"
+	QueryAccountMeta            = "meta"
+	QueryAccountReward          = "reward"
+	QueryAccountPendingCoinDay  = "pendingCoinDay"
+	QueryAccountGrantPubKeys    = "grantPubKey"
+	QueryAccountAllGrantPubKeys = "allGrantPubKey"
 )
 
 // creates a querier for account REST endpoints
@@ -45,10 +42,10 @@ func NewQuerier(am AccountManager) sdk.Querier {
 			return queryAccountReward(ctx, cdc, path[1:], req, am)
 		case QueryAccountPendingCoinDay:
 			return queryAccountPendingCoinDay(ctx, cdc, path[1:], req, am)
-		case QueryAccountGrantPubKey:
-			return queryAccountGrantPubKey(ctx, cdc, path[1:], req, am)
-		case QueryAccountAllGrantPubKey:
-			return queryAccountAllGrantPubKey(ctx, cdc, path[1:], req, am)
+		case QueryAccountGrantPubKeys:
+			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
+		case QueryAccountAllGrantPubKeys:
+			return queryAccountAllGrantPubKeys(ctx, cdc, path[1:], req, am)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown account query endpoint")
 		}
@@ -130,38 +127,26 @@ func queryAccountPendingCoinDay(ctx sdk.Context, cdc *wire.Codec, path []string,
 	return res, nil
 }
 
-func queryAccountGrantPubKey(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
+func queryAccountGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
 	if err := types.CheckPathContentAndMinLength(path, 2); err != nil {
 		return nil, err
 	}
-	keyBytes, err := hex.DecodeString(path[1])
+	grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, types.AccountKey(path[0]), types.AccountKey(path[1]))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}
-
-	if keyBytes == nil || len(keyBytes) == 0 {
-		return nil, ErrQueryFailed()
-	}
-	pubKey, err := cryptoAmino.PubKeyFromBytes(keyBytes)
-	if err != nil {
-		return nil, ErrQueryFailed()
-	}
-	grantPubKey, err := am.storage.GetGrantPubKey(ctx, types.AccountKey(path[0]), pubKey)
-	if err != nil {
-		return nil, ErrQueryFailed()
-	}
-	res, marshalErr := cdc.MarshalJSON(grantPubKey)
+	res, marshalErr := cdc.MarshalJSON(grantPubKeys)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
 	return res, nil
 }
 
-func queryAccountAllGrantPubKey(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
+func queryAccountAllGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	pubKeys, err := am.storage.GetAllGrantPubKey(ctx, types.AccountKey(path[0]))
+	pubKeys, err := am.storage.GetAllGrantPubKeys(ctx, types.AccountKey(path[0]))
 	if err != nil {
 		return nil, ErrQueryFailed()
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
-	accstore "github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/global"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/log"
@@ -160,7 +159,7 @@ func TestAnteHandlerSigErrors(t *testing.T) {
 	// test sig user mismatch
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{0, 0}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.
@@ -196,7 +195,7 @@ func TestAnteHandlerNormalTx(t *testing.T) {
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test wrong sig number
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{2, 0}
@@ -227,11 +226,11 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	privs, seqs = []crypto.PrivKey{post2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	err = am.AuthorizePermission(ctx, user1, user2, 3600, types.AppPermission, types.NewCoinFromInt64(0))
 	assert.Nil(t, err)
@@ -239,7 +238,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	// should still fail by using transaction key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// should pass authentication check after grant the app permission
 	privs, seqs = []crypto.PrivKey{post2}, []uint64{1}
@@ -253,7 +252,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	assert.Equal(t, seq, uint64(2))
 
 	ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2, Time: ctx.BlockHeader().Time.Add(time.Duration(3601) * time.Second)})
-	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrGrantKeyExpired(user1).Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test pre authorization permission
 	err = am.AuthorizePermission(ctx, user1, user3, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
@@ -261,7 +260,7 @@ func TestGrantAuthenticationTx(t *testing.T) {
 	msg.Permission = types.PreAuthorizationPermission
 	privs, seqs = []crypto.PrivKey{post3}, []uint64{2}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)
-	checkInvalidTx(t, anteHandler, ctx, tx, accstore.ErrGrantPubKeyNotFound().Result())
+	checkInvalidTx(t, anteHandler, ctx, tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	privs, seqs = []crypto.PrivKey{transaction3}, []uint64{2}
 	tx = newTestTx(ctx, []sdk.Msg{msg}, privs, seqs)

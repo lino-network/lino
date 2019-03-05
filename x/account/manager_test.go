@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -1297,113 +1298,113 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 	baseTime := ctx.BlockHeader().Time
 
 	testCases := []struct {
-		testName          string
-		checkUser         types.AccountKey
-		checkPubKey       crypto.PubKey
-		atWhen            time.Time
-		amount            types.Coin
-		permission        types.Permission
-		expectUser        types.AccountKey
-		expectResult      sdk.Error
-		expectGrantPubKey *model.GrantPubKey
+		testName           string
+		checkUser          types.AccountKey
+		checkPubKey        crypto.PubKey
+		atWhen             time.Time
+		amount             types.Coin
+		permission         types.Permission
+		expectUser         types.AccountKey
+		expectResult       sdk.Error
+		expectGrantPubKeys []*model.GrantPubKey
 	}{
 		{
-			testName:          "check user's reset key",
-			checkUser:         user1,
-			checkPubKey:       resetKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.ResetPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "check user's reset key",
+			checkUser:          user1,
+			checkPubKey:        resetKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.ResetPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's transaction key",
-			checkUser:         user1,
-			checkPubKey:       transactionKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.TransactionPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "check user's transaction key",
+			checkUser:          user1,
+			checkPubKey:        transactionKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.TransactionPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's app key",
-			checkUser:         user1,
-			checkPubKey:       appKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.AppPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "check user's app key",
+			checkUser:          user1,
+			checkPubKey:        appKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.AppPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "user's transaction key can authorize grant app permission",
-			checkUser:         user1,
-			checkPubKey:       transactionKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.GrantAppPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "user's transaction key can authorize grant app permission",
+			checkUser:          user1,
+			checkPubKey:        transactionKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.GrantAppPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "user's transaction key can authorize app permission",
-			checkUser:         user1,
-			checkPubKey:       transactionKey.PubKey(),
-			atWhen:            baseTime,
-			permission:        types.AppPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "user's transaction key can authorize app permission",
+			checkUser:          user1,
+			checkPubKey:        transactionKey.PubKey(),
+			atWhen:             baseTime,
+			permission:         types.AppPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's transaction key can't authorize reset permission",
-			checkUser:         user1,
-			checkPubKey:       transactionKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.ResetPermission,
-			expectUser:        user1,
-			expectResult:      ErrCheckResetKey(),
-			expectGrantPubKey: nil,
+			testName:           "check user's transaction key can't authorize reset permission",
+			checkUser:          user1,
+			checkPubKey:        transactionKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.ResetPermission,
+			expectUser:         user1,
+			expectResult:       ErrCheckResetKey(),
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's app key can authorize grant app permission",
-			checkUser:         user1,
-			checkPubKey:       appKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.GrantAppPermission,
-			expectUser:        user1,
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "check user's app key can authorize grant app permission",
+			checkUser:          user1,
+			checkPubKey:        appKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.GrantAppPermission,
+			expectUser:         user1,
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's app key can't authorize transaction permission",
-			checkUser:         user1,
-			checkPubKey:       appKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.TransactionPermission,
-			expectUser:        user1,
-			expectResult:      ErrCheckTransactionKey(),
-			expectGrantPubKey: nil,
+			testName:           "check user's app key can't authorize transaction permission",
+			checkUser:          user1,
+			checkPubKey:        appKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.TransactionPermission,
+			expectUser:         user1,
+			expectResult:       ErrCheckTransactionKey(),
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check user's app key can't authorize reset permission",
-			checkUser:         user1,
-			checkPubKey:       appKey.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.ResetPermission,
-			expectUser:        user1,
-			expectResult:      ErrCheckResetKey(),
-			expectGrantPubKey: nil,
+			testName:           "check user's app key can't authorize reset permission",
+			checkUser:          user1,
+			checkPubKey:        appKey.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.ResetPermission,
+			expectUser:         user1,
+			expectResult:       ErrCheckResetKey(),
+			expectGrantPubKeys: nil,
 		},
 		{
 			testName:     "check app pubkey of user with app permission",
@@ -1414,46 +1415,48 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.AppPermission,
 			expectUser:   appPermissionUser,
 			expectResult: nil,
-			expectGrantPubKey: &model.GrantPubKey{
-				Username:   appPermissionUser,
-				Permission: types.AppPermission,
-				CreatedAt:  baseTime.Unix(),
-				ExpiresAt:  baseTime.Unix() + 100,
-				Amount:     types.NewCoinFromInt64(0),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    appPermissionUser,
+					Permission: types.AppPermission,
+					CreatedAt:  baseTime.Unix(),
+					ExpiresAt:  baseTime.Unix() + 100,
+					Amount:     types.NewCoinFromInt64(0),
+				},
 			},
 		},
 		{
-			testName:          "check transaction pubkey of user with app permission",
-			checkUser:         user1,
-			checkPubKey:       unauthTxPriv.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(0),
-			permission:        types.PreAuthorizationPermission,
-			expectUser:        "",
-			expectResult:      nil,
-			expectGrantPubKey: nil,
+			testName:           "check transaction pubkey of user with app permission",
+			checkUser:          user1,
+			checkPubKey:        unauthTxPriv.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(0),
+			permission:         types.PreAuthorizationPermission,
+			expectUser:         "",
+			expectResult:       nil,
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check unauthorized user app pubkey",
-			checkUser:         user1,
-			checkPubKey:       unauthPriv2.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(10),
-			permission:        types.AppPermission,
-			expectUser:        "",
-			expectResult:      model.ErrGrantPubKeyNotFound(),
-			expectGrantPubKey: nil,
+			testName:           "check unauthorized user app pubkey",
+			checkUser:          user1,
+			checkPubKey:        unauthPriv2.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(10),
+			permission:         types.AppPermission,
+			expectUser:         "",
+			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check unauthorized user transaction pubkey",
-			checkUser:         user1,
-			checkPubKey:       unauthPriv1.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(10),
-			permission:        types.PreAuthorizationPermission,
-			expectUser:        "",
-			expectResult:      model.ErrGrantPubKeyNotFound(),
-			expectGrantPubKey: nil,
+			testName:           "check unauthorized user transaction pubkey",
+			checkUser:          user1,
+			checkPubKey:        unauthPriv1.PubKey(),
+			atWhen:             baseTime,
+			amount:             types.NewCoinFromInt64(10),
+			permission:         types.PreAuthorizationPermission,
+			expectUser:         "",
+			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
+			expectGrantPubKeys: nil,
 		},
 		{
 			testName:     "check transaction pubkey of user with preauthorization permission",
@@ -1464,35 +1467,34 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			permission:   types.PreAuthorizationPermission,
 			expectUser:   preAuthPermissionUser,
 			expectResult: nil,
-			expectGrantPubKey: &model.GrantPubKey{
-				Username:   preAuthPermissionUser,
-				Permission: types.PreAuthorizationPermission,
-				CreatedAt:  baseTime.Unix(),
-				ExpiresAt:  baseTime.Unix() + 100,
-				Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    preAuthPermissionUser,
+					Permission: types.PreAuthorizationPermission,
+					CreatedAt:  baseTime.Unix(),
+					ExpiresAt:  baseTime.Unix() + 100,
+					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
+				},
 			},
 		},
 		{
-			testName:          "check app pubkey of user with preauthorization permission",
-			checkUser:         user1,
-			checkPubKey:       unauthAppPriv.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(10),
-			permission:        types.AppPermission,
-			expectUser:        preAuthPermissionUser,
-			expectResult:      model.ErrGrantPubKeyNotFound(),
-			expectGrantPubKey: nil,
-		},
-		{
-			testName:          "check app pubkey of user with preauthorization permission",
-			checkUser:         user1,
-			checkPubKey:       unauthAppPriv.PubKey(),
-			atWhen:            baseTime,
-			amount:            types.NewCoinFromInt64(10),
-			permission:        types.AppPermission,
-			expectUser:        preAuthPermissionUser,
-			expectResult:      model.ErrGrantPubKeyNotFound(),
-			expectGrantPubKey: nil,
+			testName:     "check app pubkey of user with preauthorization permission",
+			checkUser:    user1,
+			checkPubKey:  unauthAppPriv.PubKey(),
+			atWhen:       baseTime,
+			amount:       types.NewCoinFromInt64(10),
+			permission:   types.AppPermission,
+			expectUser:   preAuthPermissionUser,
+			expectResult: ErrCheckAuthenticatePubKeyOwner(user1),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    preAuthPermissionUser,
+					Permission: types.PreAuthorizationPermission,
+					CreatedAt:  baseTime.Unix(),
+					ExpiresAt:  baseTime.Unix() + 100,
+					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
+				},
+			},
 		},
 		{
 			testName:    "check amount exceeds preauthorization limitation",
@@ -1501,16 +1503,18 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			atWhen:      baseTime,
 			amount:      preAuthAmount,
 			permission:  types.PreAuthorizationPermission,
-			expectUser:  "",
+			expectUser:  preAuthPermissionUser,
 			expectResult: ErrPreAuthAmountInsufficient(
 				preAuthPermissionUser, preAuthAmount.Minus(types.NewCoinFromInt64(10)),
 				preAuthAmount),
-			expectGrantPubKey: &model.GrantPubKey{
-				Username:   preAuthPermissionUser,
-				Permission: types.PreAuthorizationPermission,
-				CreatedAt:  baseTime.Unix(),
-				ExpiresAt:  baseTime.Unix() + 100,
-				Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    preAuthPermissionUser,
+					Permission: types.PreAuthorizationPermission,
+					CreatedAt:  baseTime.Unix(),
+					ExpiresAt:  baseTime.Unix() + 100,
+					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
+				},
 			},
 		},
 		{
@@ -1519,55 +1523,58 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			checkPubKey:  authAppPriv.PubKey(),
 			atWhen:       baseTime,
 			permission:   types.GrantAppPermission,
-			expectUser:   "",
-			expectResult: nil,
-			expectGrantPubKey: &model.GrantPubKey{
-				Username:   appPermissionUser,
-				Permission: types.AppPermission,
-				CreatedAt:  baseTime.Unix(),
-				ExpiresAt:  baseTime.Unix() + 100,
-				Amount:     types.NewCoinFromInt64(0),
+			expectUser:   appPermissionUser,
+			expectResult: ErrCheckGrantAppKey(),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    appPermissionUser,
+					Permission: types.AppPermission,
+					CreatedAt:  baseTime.Unix(),
+					ExpiresAt:  baseTime.Unix() + 100,
+					Amount:     types.NewCoinFromInt64(0),
+				},
 			},
 		},
 		{
-			testName:          "check expired app permission",
-			checkUser:         user1,
-			checkPubKey:       authAppPriv.PubKey(),
-			atWhen:            baseTime.Add(time.Duration(101) * time.Second),
-			permission:        types.AppPermission,
-			expectUser:        "",
-			expectResult:      ErrGrantKeyExpired(user1),
-			expectGrantPubKey: nil,
+			testName:           "check expired app permission",
+			checkUser:          user1,
+			checkPubKey:        authAppPriv.PubKey(),
+			atWhen:             baseTime.Add(time.Duration(101) * time.Second),
+			permission:         types.AppPermission,
+			expectUser:         "",
+			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
+			expectGrantPubKeys: nil,
 		},
 		{
-			testName:          "check expired preauth permission",
-			checkUser:         user1,
-			checkPubKey:       authTxPriv.PubKey(),
-			atWhen:            baseTime.Add(time.Duration(101) * time.Second),
-			amount:            types.NewCoinFromInt64(100),
-			permission:        types.PreAuthorizationPermission,
-			expectUser:        "",
-			expectResult:      ErrGrantKeyExpired(user1),
-			expectGrantPubKey: nil,
+			testName:           "check expired preauth permission",
+			checkUser:          user1,
+			checkPubKey:        authTxPriv.PubKey(),
+			atWhen:             baseTime.Add(time.Duration(101) * time.Second),
+			amount:             types.NewCoinFromInt64(100),
+			permission:         types.PreAuthorizationPermission,
+			expectUser:         "",
+			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
+			expectGrantPubKeys: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
-		grantPubKey, err := am.CheckSigningPubKeyOwner(ctx, tc.checkUser, tc.checkPubKey, tc.permission, tc.amount)
+		keyOwner, err := am.CheckSigningPubKeyOwner(ctx, tc.checkUser, tc.checkPubKey, tc.permission, tc.amount)
 		if tc.expectResult == nil {
-			if tc.expectUser != grantPubKey {
-				t.Errorf("%s: diff key owner,  got %v, want %v", tc.testName, grantPubKey, tc.expectUser)
+			if tc.expectUser != keyOwner {
+				t.Errorf("%s: diff key owner,  got %v, want %v", tc.testName, keyOwner, tc.expectUser)
 				return
 			}
 		} else {
+			fmt.Println(tc.testName, tc.expectResult.Result(), err)
 			if !assert.Equal(t, tc.expectResult.Result(), err.Result()) {
 				t.Errorf("%s: diff result,  got %v, want %v", tc.testName, err.Result(), tc.expectResult.Result())
 			}
 		}
 
-		grantPubKeyInfo, err := am.storage.GetGrantPubKey(ctx, tc.checkUser, tc.checkPubKey)
-		if tc.expectGrantPubKey == nil {
+		grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, tc.checkUser, tc.expectUser)
+		if tc.expectGrantPubKeys == nil {
 			if err == nil {
 				t.Errorf("%s: got nil err", tc.testName)
 			}
@@ -1575,8 +1582,8 @@ func TestCheckAuthenticatePubKeyOwner(t *testing.T) {
 			if err != nil {
 				t.Errorf("%s: got non-empty err %v", tc.testName, err)
 			}
-			if !assert.Equal(t, *tc.expectGrantPubKey, *grantPubKeyInfo) {
-				t.Errorf("%s: diff grant key,  got %v, want %v", tc.testName, *grantPubKeyInfo, *tc.expectGrantPubKey)
+			if len(tc.expectGrantPubKeys) != len(grantPubKeys) {
+				t.Errorf("%s: expect grant pubkey length is different,  got %v, want %v", tc.testName, len(grantPubKeys), len(tc.expectGrantPubKeys))
 			}
 		}
 	}
@@ -1592,8 +1599,8 @@ func TestRevokePermission(t *testing.T) {
 	userWithPreAuthPermission := types.AccountKey("userWithPreAuthPermission")
 
 	createTestAccount(ctx, am, string(user1))
-	_, _, appPriv2 := createTestAccount(ctx, am, string(userWithAppPermission))
-	_, txPriv, _ := createTestAccount(ctx, am, string(userWithPreAuthPermission))
+	createTestAccount(ctx, am, string(userWithAppPermission))
+	createTestAccount(ctx, am, string(userWithPreAuthPermission))
 
 	baseTime := ctx.BlockHeader().Time
 
@@ -1614,35 +1621,32 @@ func TestRevokePermission(t *testing.T) {
 	testCases := []struct {
 		testName     string
 		user         types.AccountKey
-		revokePubKey crypto.PubKey
+		revokeFrom   types.AccountKey
+		permission   types.Permission
 		atWhen       time.Time
 		expectResult sdk.Error
 	}{
 		{
 			testName:     "normal revoke app permission",
 			user:         user1,
-			revokePubKey: appPriv2.PubKey(),
+			revokeFrom:   userWithAppPermission,
+			permission:   types.AppPermission,
 			atWhen:       baseTime,
 			expectResult: nil,
 		},
 		{
-			testName:     "revoke non-exist pubkey, since it's revoked before",
+			testName:     "revoke non-exist permission, since it's revoked before",
 			user:         user1,
-			revokePubKey: appPriv2.PubKey(),
+			revokeFrom:   userWithAppPermission,
+			permission:   types.AppPermission,
 			atWhen:       baseTime,
 			expectResult: model.ErrGrantPubKeyNotFound(),
 		},
 		{
-			testName:     "revoke expired pubkey",
-			user:         user2,
-			revokePubKey: appPriv2.PubKey(),
-			atWhen:       baseTime.Add(time.Duration(101) * time.Second),
-			expectResult: nil,
-		},
-		{
 			testName:     "normal revoke preauth permission",
 			user:         user1,
-			revokePubKey: txPriv.PubKey(),
+			revokeFrom:   userWithPreAuthPermission,
+			permission:   types.PreAuthorizationPermission,
 			atWhen:       baseTime.Add(time.Duration(101) * time.Second),
 			expectResult: nil,
 		},
@@ -1650,7 +1654,7 @@ func TestRevokePermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
-		err := am.RevokePermission(ctx, tc.user, tc.revokePubKey)
+		err := am.RevokePermission(ctx, tc.user, tc.revokeFrom, tc.permission)
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
@@ -1665,20 +1669,20 @@ func TestAuthorizePermission(t *testing.T) {
 	nonExistUser := types.AccountKey("nonExistUser")
 
 	createTestAccount(ctx, am, string(user1))
-	_, _, appPriv1 := createTestAccount(ctx, am, string(user2))
-	_, txPriv1, _ := createTestAccount(ctx, am, string(user3))
+	createTestAccount(ctx, am, string(user2))
+	createTestAccount(ctx, am, string(user3))
 
 	baseTime := ctx.BlockHeader().Time
 
 	testCases := []struct {
-		testName       string
-		user           types.AccountKey
-		grantTo        types.AccountKey
-		level          types.Permission
-		amount         types.Coin
-		validityPeriod int64
-		expectResult   sdk.Error
-		expectPubKey   crypto.PubKey
+		testName           string
+		user               types.AccountKey
+		grantTo            types.AccountKey
+		level              types.Permission
+		amount             types.Coin
+		validityPeriod     int64
+		expectResult       sdk.Error
+		expectGrantPubKeys []*model.GrantPubKey
 	}{
 		{
 			testName:       "normal grant app permission",
@@ -1688,7 +1692,15 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 100,
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
-			expectPubKey:   appPriv1.PubKey(),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    user2,
+					Permission: types.AppPermission,
+					ExpiresAt:  baseTime.Unix() + 100,
+					CreatedAt:  baseTime.Unix(),
+					Amount:     types.NewCoinFromInt64(0),
+				},
+			},
 		},
 		{
 			testName:       "override app permission",
@@ -1698,7 +1710,15 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
-			expectPubKey:   appPriv1.PubKey(),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    user2,
+					Permission: types.AppPermission,
+					ExpiresAt:  baseTime.Unix() + 1000,
+					CreatedAt:  baseTime.Unix(),
+					Amount:     types.NewCoinFromInt64(0),
+				},
+			},
 		},
 		{
 			testName:       "grant app permission to non-exist user",
@@ -1707,8 +1727,16 @@ func TestAuthorizePermission(t *testing.T) {
 			level:          types.AppPermission,
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(0),
-			expectResult:   ErrGetAppKey(nonExistUser),
-			expectPubKey:   appPriv1.PubKey(),
+			expectResult:   ErrAccountNotFound(nonExistUser),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    user2,
+					Permission: types.AppPermission,
+					ExpiresAt:  baseTime.Unix() + 1000,
+					CreatedAt:  baseTime.Unix(),
+					Amount:     types.NewCoinFromInt64(0),
+				},
+			},
 		},
 		{
 			testName:       "grant pre authorization permission",
@@ -1718,7 +1746,15 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 100,
 			amount:         types.NewCoinFromInt64(1000),
 			expectResult:   nil,
-			expectPubKey:   txPriv1.PubKey(),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    user3,
+					Permission: types.PreAuthorizationPermission,
+					ExpiresAt:  baseTime.Unix() + 100,
+					CreatedAt:  baseTime.Unix(),
+					Amount:     types.NewCoinFromInt64(1000),
+				},
+			},
 		},
 		{
 			testName:       "override pre authorization permission",
@@ -1728,7 +1764,15 @@ func TestAuthorizePermission(t *testing.T) {
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(10000),
 			expectResult:   nil,
-			expectPubKey:   txPriv1.PubKey(),
+			expectGrantPubKeys: []*model.GrantPubKey{
+				&model.GrantPubKey{
+					GrantTo:    user3,
+					Permission: types.PreAuthorizationPermission,
+					ExpiresAt:  baseTime.Unix() + 1000,
+					CreatedAt:  baseTime.Unix(),
+					Amount:     types.NewCoinFromInt64(10000),
+				},
+			},
 		},
 	}
 
@@ -1736,23 +1780,17 @@ func TestAuthorizePermission(t *testing.T) {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
 		err := am.AuthorizePermission(ctx, tc.user, tc.grantTo, tc.validityPeriod, tc.level, tc.amount)
 		if !assert.Equal(t, tc.expectResult, err) {
+			fmt.Println(err)
 			t.Errorf("%s: failed to authorize permission, got err %v", tc.testName, err)
 		}
 
 		if tc.expectResult == nil {
-			grantPubKey, err := am.storage.GetGrantPubKey(ctx, tc.user, tc.expectPubKey)
+			grantPubKeys, err := am.storage.GetGrantPubKeys(ctx, tc.user, tc.grantTo)
 			if err != nil {
 				t.Errorf("%s: failed to get grant pub key, got err %v", tc.testName, err)
 			}
-			expectGrantPubKey := model.GrantPubKey{
-				Username:   tc.grantTo,
-				ExpiresAt:  baseTime.Unix() + tc.validityPeriod,
-				CreatedAt:  baseTime.Unix(),
-				Permission: tc.level,
-				Amount:     tc.amount,
-			}
-			if !assert.Equal(t, expectGrantPubKey, *grantPubKey) {
-				t.Errorf("%s: diff grant pub key, got %v, want %v", tc.testName, *grantPubKey, expectGrantPubKey)
+			if !assert.Equal(t, tc.expectGrantPubKeys, grantPubKeys) {
+				t.Errorf("%s: diff grant pub key, got %v, want %v", tc.testName, grantPubKeys, tc.expectGrantPubKeys)
 			}
 		}
 	}
