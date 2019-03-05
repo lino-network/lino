@@ -383,19 +383,7 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 		err = as.SetPendingCoinDayQueue(ctx, v.Username, q)
 		check(err)
 	}
-	// import AccountGrantPubKeys
-	pubKeyMap := make(map[types.AccountKey][]*GrantPubKey)
-	for _, v := range tb.AccountGrantPubKeys {
-		if _, ok := pubKeyMap[v.GrantPubKey.GrantTo]; ok {
-			pubKeyMap[v.GrantPubKey.GrantTo] = append(pubKeyMap[v.GrantPubKey.GrantTo], &v.GrantPubKey)
-		} else {
-			pubKeyMap[v.GrantPubKey.GrantTo] = []*GrantPubKey{&v.GrantPubKey}
-		}
-	}
-	// for grantTo, grantPubKeyList := range pubKeyMap {
-	// 	err := as.SetGrantPubKeys(ctx, v.Username, grantTo, grantPubKeyList)
-	// 	check(err)
-	// }
+	// AccountGrantPubKeys are not imported here and should and is done in manager.
 }
 
 // IterateAccounts - iterate accounts in KVStore

@@ -880,6 +880,16 @@ func (accManager AccountManager) Export(ctx sdk.Context) *model.AccountTables {
 // Import -
 func (accManager AccountManager) Import(ctx sdk.Context, dt *model.AccountTablesIR) {
 	accManager.storage.Import(ctx, dt)
+	// XXX(yumin): during upgrade-1, we changed the kv of grantPubKey, so we import them here
+	// by calling AuthorizePermission.
+	for _, v := range dt.AccountGrantPubKeys {
+		grant := v.GrantPubKey
+		remainingTime := grant.ExpiresAt - ctx.BlockHeader().Time.Unix()
+		if remainingTime > 0 {
+			accManager.AuthorizePermission(ctx, v.Username, grant.GrantTo,
+				remainingTime, grant.Permission, grant.Amount)
+		}
+	}
 }
 
 // IterateAccounts - iterate accounts in KVStore

@@ -274,7 +274,8 @@ func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidAuthorizedApp()
 	}
 
-	if msg.ValidityPeriodSec <= 0 {
+	if msg.ValidityPeriodSec <= 0 ||
+		msg.ValidityPeriodSec > types.MaxPreauthValidityPeriodSec {
 		return ErrInvalidValidityPeriod()
 	}
 

@@ -94,6 +94,9 @@ const (
 	// MaxPostContentLength - maximum length of post content
 	MaxPostContentLength = 1000
 
+	// MaxValidityPeriodSec - maximum validity period, 10 years
+	MaxPreauthValidityPeriodSec = 10 * 3600 * 24 * 365
+
 	// KeySeparator - separate different key component
 	KeySeparator = "/"
 
