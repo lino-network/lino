@@ -124,21 +124,21 @@ func TestAccountGrantPubkey(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	grantPubKey := GrantPubKey{GrantTo: types.AccountKey("grantTo"), Permission: types.AppPermission, Amount: types.NewCoinFromInt64(0)}
-	grantPubKey2 := GrantPubKey{GrantTo: types.AccountKey("grantTo"), Permission: types.PreAuthorizationPermission, Amount: types.NewCoinFromInt64(10)}
-	err := as.SetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), []*GrantPubKey{&grantPubKey, &grantPubKey2})
+	grantPubKey := GrantPermission{GrantTo: types.AccountKey("grantTo"), Permission: types.AppPermission, Amount: types.NewCoinFromInt64(0)}
+	grantPubKey2 := GrantPermission{GrantTo: types.AccountKey("grantTo"), Permission: types.PreAuthorizationPermission, Amount: types.NewCoinFromInt64(10)}
+	err := as.SetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), []*GrantPermission{&grantPubKey, &grantPubKey2})
 	assert.Nil(t, err)
 
-	resultList, err := as.GetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
+	resultList, err := as.GetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
 	assert.Nil(t, err)
-	assert.Equal(t, []*GrantPubKey{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
+	assert.Equal(t, []*GrantPermission{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
 
-	resultList, err = as.GetAllGrantPubKeys(ctx, types.AccountKey("test"))
+	resultList, err = as.GetAllGrantPermissions(ctx, types.AccountKey("test"))
 	assert.Nil(t, err)
-	assert.Equal(t, []*GrantPubKey{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
+	assert.Equal(t, []*GrantPermission{&grantPubKey, &grantPubKey2}, resultList, "Account grant user should be equal")
 
-	as.DeleteAllGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
-	resultList, err = as.GetGrantPubKeys(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
+	as.DeleteAllGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
+	resultList, err = as.GetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
 	assert.NotNil(t, err)
 	assert.Nil(t, resultList)
 }

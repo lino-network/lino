@@ -598,18 +598,18 @@ func (accManager AccountManager) AuthorizePermission(
 	if grantLevel != types.PreAuthorizationPermission && grantLevel != types.AppPermission {
 		return ErrUnsupportGrantLevel()
 	}
-	newGrantPubKey := model.GrantPubKey{
+	newGrantPubKey := model.GrantPermission{
 		GrantTo:    grantTo,
 		Permission: grantLevel,
 		CreatedAt:  ctx.BlockHeader().Time.Unix(),
 		ExpiresAt:  ctx.BlockHeader().Time.Add(time.Duration(validityPeriod) * time.Second).Unix(),
 		Amount:     amount,
 	}
-	pubkeys, err := accManager.storage.GetGrantPubKeys(ctx, me, grantTo)
+	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
 	if err != nil {
 		// if grant permission list is empty, create a new one
 		if err.Code() == model.ErrGrantPubKeyNotFound().Code() {
-			return accManager.storage.SetGrantPubKeys(ctx, me, grantTo, []*model.GrantPubKey{&newGrantPubKey})
+			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, []*model.GrantPermission{&newGrantPubKey})
 		}
 		return err
 	}
@@ -618,18 +618,18 @@ func (accManager AccountManager) AuthorizePermission(
 	for i, pubkey := range pubkeys {
 		if pubkey.Permission == grantLevel {
 			pubkeys[i] = &newGrantPubKey
-			return accManager.storage.SetGrantPubKeys(ctx, me, grantTo, pubkeys)
+			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
 		}
 	}
 	// If grant permission doesn't have record in store, add to grant public key list
 	pubkeys = append(pubkeys, &newGrantPubKey)
-	return accManager.storage.SetGrantPubKeys(ctx, me, grantTo, pubkeys)
+	return accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
 }
 
 // RevokePermission - revoke permission from a developer
 func (accManager AccountManager) RevokePermission(
 	ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, permission types.Permission) sdk.Error {
-	pubkeys, err := accManager.storage.GetGrantPubKeys(ctx, me, grantTo)
+	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
 	if err != nil {
 		return err
 	}
@@ -638,10 +638,10 @@ func (accManager AccountManager) RevokePermission(
 	for i, pubkey := range pubkeys {
 		if pubkey.Permission == permission {
 			if len(pubkeys) == 1 {
-				accManager.storage.DeleteAllGrantPubKeys(ctx, me, grantTo)
+				accManager.storage.DeleteAllGrantPermissions(ctx, me, grantTo)
 				return nil
 			}
-			return accManager.storage.SetGrantPubKeys(ctx, me, grantTo, append(pubkeys[:i], pubkeys[i+1:]...))
+			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, append(pubkeys[:i], pubkeys[i+1:]...))
 		}
 	}
 	return model.ErrGrantPubKeyNotFound()
@@ -694,7 +694,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	}
 
 	// if user doesn't use his own key, check his grant user pubkey
-	grantPubKeys, err := accManager.storage.GetAllGrantPubKeys(ctx, me)
+	grantPubKeys, err := accManager.storage.GetAllGrantPermissions(ctx, me)
 	if err != nil {
 		return "", err
 	}
