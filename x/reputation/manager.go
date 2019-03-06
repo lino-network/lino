@@ -190,20 +190,12 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 	return ts, nil
 }
 
-// Import reputation system.
-func (rep ReputationManager) Import(ctx sdk.Context, dt []byte) error {
+// ExportToFile state of reputation system.
+func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
 		return err
 	}
-	return handler.Import(dt)
-}
-
-// Export state of reputation system.
-func (rep ReputationManager) Export(ctx sdk.Context) ([]byte, error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return handler.Export()
+	handler.ExportToFile(file)
+	return nil
 }

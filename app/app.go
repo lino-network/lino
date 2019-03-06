@@ -664,13 +664,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile("voter", func(ctx sdk.Context) interface{} {
 		return lb.voteManager.Export(ctx).ToIR()
 	})
-	exportToFile("reputation", func(ctx sdk.Context) interface{} {
-		rep, err := lb.reputationManager.Export(ctx)
-		if err != nil {
-			panic(err)
-		}
-		return rep
-	})
+	lb.reputationManager.ExportToFile(ctx, "./" + "reputation")
 
 	genesisState := GenesisState{}
 
