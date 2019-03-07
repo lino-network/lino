@@ -11,7 +11,7 @@ func decode$TYPE(data []byte) *TYPE {
 		return nil
 	}
 	rst := &TYPE{}
-	err := cdc.UnmarshalJSON(data, rst)
+	err := cdc.UnmarshalBinaryBare(data, rst)
 	if err != nil {
 		panic("error in json decode TYPE" + err.Error())
 	}
@@ -22,7 +22,7 @@ func encode$TYPE(dt *TYPE) []byte {
 	if dt == nil {
 		return nil
 	}
-	rst, err := cdc.MarshalJSON(dt)
+	rst, err := cdc.MarshalBinaryBare(dt)
 	if err != nil {
 		panic("error in encoding: " + err.Error())
 	}
