@@ -242,7 +242,7 @@ func (impl reputationStoreImpl) Export() *UserReputationTable {
 			continue
 		}
 		v := impl.getUserMeta(uid)
-		rst.reputations = append(rst.reputations, UserReputation{
+		rst.Reputations = append(rst.Reputations, UserReputation{
 			Username: uid,
 			CustomerScore: v.CustomerScore,
 			FreeScore: v.FreeScore,
@@ -259,16 +259,16 @@ func (impl reputationStoreImpl) ExportToFile(file string) {
 	}
 	defer f.Close()
 	jsonbytes, err := cdc.MarshalJSON(rst)
-	f.Write(jsonbytes)
 	if err != nil {
 		panic("failed to marshal json for " + file + " due to " + err.Error())
 	}
+	f.Write(jsonbytes)
 	f.Sync()
 }
 
 
 func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
-	for _, v := range tb.reputations {
+	for _, v := range tb.Reputations {
 		impl.setUserMeta(v.Username, &userMeta{
 			FreeScore: v.FreeScore,
 			CustomerScore: v.CustomerScore,
