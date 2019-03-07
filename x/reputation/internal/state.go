@@ -2,12 +2,12 @@ package internal
 
 // UserReputation - pk: Username
 type UserReputation struct {
-	Username          Uid
-	CustomerScore     Rep
-	FreeScore         Rep
+	Username      Uid `json:"username"`
+	CustomerScore Rep `json:"customer_score"`
+	FreeScore     Rep `json:"free_score"`
 }
 
 // UserReputationTable -
 type UserReputationTable struct {
-	reputations []UserReputation
+	Reputations []UserReputation `json:"reputations"`
 }
