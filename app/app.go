@@ -727,13 +727,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
 		return lb.voteManager.Export(ctx).ToIR()
 	})
-	exportToFile(reputationStateFile, func(ctx sdk.Context) interface{} {
-		rep, err := lb.reputationManager.Export(ctx)
-		if err != nil {
-			panic(err)
-		}
-		return rep
-	})
+	lb.reputationManager.ExportToFile(ctx, exportPath + "reputation")
 
 	genesisState := GenesisState{}
 
@@ -797,11 +791,8 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.voteManager.Import(ctx, t)
-		case *[]byte:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.reputationManager.Import(ctx, *t)
+		default:
+			panic(fmt.Sprintf("Unknown import type: %T", t))
 		}
 		fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
 	}
@@ -812,6 +803,6 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
 	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
-	importFromFile(reputationStateFile, &[]byte{})
 	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
+	lb.reputationManager.ImportFromFile(ctx, DefaultNodeHome + "/" + prevStateFolder + reputationStateFile)
 }

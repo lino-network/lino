@@ -9,6 +9,9 @@ import (
 	"encoding/binary"
 	"math/big"
 	"sort"
+	"os"
+	"strings"
+	"io/ioutil"
 )
 
 // Store - store.
@@ -34,9 +37,12 @@ type ReputationStore interface {
 	// TODO(yumin): these two are all in memory, which is extremely bad if state is large.
 	// should changed to io.Write/Reader.
 	// Export all state to deterministic bytes
-	Export() ([]byte, error)
+	Export() *UserReputationTable
+	ExportToFile(file string)
+
 	// Import state from bytes
-	Import(bytes []byte) error
+	Import(tb *UserReputationTable)
+	ImportFromFile(file string)
 
 	// Note that, this value may not be the exact customer score of the user
 	// due to there might be unsettled keys remaining.
@@ -228,35 +234,66 @@ func NewReputationStore(s Store, n int) ReputationStore {
 	return &reputationStoreImpl{store: s, BestContentIndexN: n}
 }
 
-type repKV struct {
-	Key   []byte
-	Value []byte
-}
-
-type reputationStoreState struct {
-	KVs []repKV `json:"kvs"`
-}
-
-func (impl reputationStoreImpl) Export() ([]byte, error) {
-	rst := reputationStoreState{}
-	itr := impl.store.Iterator(nil, nil)
+func (impl reputationStoreImpl) Export() *UserReputationTable {
+	rst := &UserReputationTable{}
+	itr := impl.store.Iterator(repUserMetaPrefix, PrefixEndBytes(repUserMetaPrefix))
 	defer itr.Close()
-	for itr.Valid() {
-		rst.KVs = append(rst.KVs, repKV{Key: itr.Key(), Value: itr.Value()})
-		itr.Next()
+	for ; itr.Valid(); itr.Next() {
+		uid := Uid(itr.Key()[1:])
+		if strings.Contains(uid, string(KeySeparator)) {
+			continue
+		}
+		v := impl.getUserMeta(uid)
+		rst.Reputations = append(rst.Reputations, UserReputation{
+			Username: uid,
+			CustomerScore: v.CustomerScore,
+			FreeScore: v.FreeScore,
+		})
 	}
-	return encodeReputationStoreState(&rst)
+	return rst
 }
 
-func (impl reputationStoreImpl) Import(bytes []byte) error {
-	state, err := decodeReputationStoreState(bytes)
+func (impl reputationStoreImpl) ExportToFile(file string) {
+	rst := impl.Export()
+	f, err := os.Create(file)
 	if err != nil {
-		return err
+		panic("failed to create account")
 	}
-	for _, v := range state.KVs {
-		impl.store.Set(v.Key, v.Value)
+	defer f.Close()
+	jsonbytes, err := cdc.MarshalJSON(rst)
+	if err != nil {
+		panic("failed to marshal json for " + file + " due to " + err.Error())
 	}
-	return nil
+	f.Write(jsonbytes)
+	f.Sync()
+}
+
+
+func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
+	for _, v := range tb.Reputations {
+		impl.setUserMeta(v.Username, &userMeta{
+			FreeScore: v.FreeScore,
+			CustomerScore: v.CustomerScore,
+		})
+	}
+}
+
+func (impl reputationStoreImpl) ImportFromFile(file string) {
+	f, err := os.Open(file)
+	if err != nil {
+		panic("failed to open " + err.Error())
+	}
+	defer f.Close()
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic("failed to readall: " + err.Error())
+	}
+	dt := &UserReputationTable{}
+	err = cdc.UnmarshalJSON(bytes, dt)
+	if err != nil {
+		panic("failed to unmarshal: " + err.Error())
+	}
+	impl.Import(dt)
 }
 
 // TODO(yumin): a cache can help to make it faster.
