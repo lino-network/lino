@@ -159,7 +159,8 @@ func NewLinoBlockchain(
 		AddRoute(infra.QuerierRoute, infra.NewQuerier(lb.infraManager)).
 		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
-		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder))
+		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
+		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
@@ -727,7 +728,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
 		return lb.voteManager.Export(ctx).ToIR()
 	})
-	lb.reputationManager.ExportToFile(ctx, exportPath + "reputation")
+	lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
 
 	genesisState := GenesisState{}
 
@@ -804,5 +805,5 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
 	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
-	lb.reputationManager.ImportFromFile(ctx, DefaultNodeHome + "/" + prevStateFolder + reputationStateFile)
+	lb.reputationManager.ImportFromFile(ctx, DefaultNodeHome+"/"+prevStateFolder+reputationStateFile)
 }
