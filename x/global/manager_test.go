@@ -1593,7 +1593,6 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 func TestRegisterParamChangeEvent(t *testing.T) {
 	ctx, gm := setupTest(t)
 	baseTime := time.Now().Unix()
-	proposalParam, _ := gm.paramHolder.GetProposalParam(ctx)
 
 	testCases := []struct {
 		testName        string
@@ -1627,7 +1626,8 @@ func TestRegisterParamChangeEvent(t *testing.T) {
 		if err = gm.CommitEventCache(ctx); err != nil {
 			t.Errorf("%s: failed to commit event cache, %v", tc.testName, err)
 		}
-		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.atTime+proposalParam.ChangeParamExecutionSec)
+		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.atTime+types.ParamChangeTimeout)
+		assert.NotNil(t, timeEventList)
 		assert.Equal(t, timeEventList.Events, tc.expectEventList)
 	}
 }

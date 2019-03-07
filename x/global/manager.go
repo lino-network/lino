@@ -313,21 +313,9 @@ func (gm *GlobalManager) RegisterProposalDecideEvent(
 
 // RegisterParamChangeEvent - register parameter change event
 func (gm *GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	// param will be changed in one day
-	proposalParam, err := gm.paramHolder.GetProposalParam(ctx)
-	if err != nil {
+	if err := gm.registerEventAtTime(ctx,
+		ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, event); err != nil {
 		return err
-	}
-	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-		if err := gm.registerEventAtTime(
-			ctx, ctx.BlockHeader().Time.Unix()+3600, event); err != nil {
-			return err
-		}
-	} else {
-		if err := gm.registerEventAtTime(
-			ctx, ctx.BlockHeader().Time.Unix()+proposalParam.ChangeParamExecutionSec, event); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -338,10 +326,6 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	if err != nil {
 		return err
-	}
-	if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-		globalAllocation.DeveloperAllocation = types.NewDecFromRat(35, 100)
-		globalAllocation.ContentCreatorAllocation = types.NewDecFromRat(40, 1000)
 	}
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	if err != nil {

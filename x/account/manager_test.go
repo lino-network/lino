@@ -43,7 +43,7 @@ func TestAddCoinBundle(t *testing.T) {
 	baseTime2 := baseTime1.Add(d1)
 	baseTime3 := baseTime2.Add(d1)
 
-	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime, Height: types.LinoBlockchainSecondUpdateHeight + 1})
+	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime, Height: 1})
 	createTestAccount(ctx, am, string(testUser))
 
 	testCases := []struct {
@@ -119,7 +119,7 @@ func TestAddCoinBundle(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: types.LinoBlockchainSecondUpdateHeight + 1, Time: tc.atWhen})
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
 		err := am.AddSavingCoin(
 			ctx, testUser, tc.amount, "", "", types.TransferIn)
 
