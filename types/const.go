@@ -157,12 +157,9 @@ const (
 	// CoinDayRecordIntervalSec - coin day record in the same interval bucket will be merged
 	CoinDayRecordIntervalSec = 1200
 
-	// LinoBlockchainFirstUpdateHeight - first blockchain update
-	LinoBlockchainFirstUpdateHeight = 156000
-
-	// LinoBlockchainSecondUpdateHeight - second blockchain update
-	LinoBlockchainSecondUpdateHeight = 356000
-
 	// TendermintValidatorPower - every validator has const power in tendermint engine.
 	TendermintValidatorPower = 1000
+
+	// BlockchainUpgrade1Update1Height - since this height, donation > 1 will not cost bandwidth.
+	BlockchainUpgrade1Update1Height = 17526
 )
