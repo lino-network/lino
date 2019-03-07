@@ -148,6 +148,9 @@ const (
 	// PermlinkSeparator - permlink separator
 	PermlinkSeparator = "#"
 
+	// ParamChangeTimeout - time in secs for ParamChange to happen.
+	ParamChangeTimeout = 3600
+
 	// BalanceHistoryBundleSize - bundle size for balance history
 	BalanceHistoryBundleSize = 100
 
@@ -161,5 +164,8 @@ const (
 	TendermintValidatorPower = 1000
 
 	// BlockchainUpgrade1Update1Height - since this height, donation > 1 will not cost bandwidth.
-	BlockchainUpgrade1Update1Height = 17526
+	BlockchainUpgrade1Update1Height = 21610
+
+	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
+	NoTPSLimitDonationMin = 100000
 )

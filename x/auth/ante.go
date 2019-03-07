@@ -10,11 +10,25 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	post "github.com/lino-network/lino/x/post"
 )
 
 const (
 	maxMemoCharacters = 100
 )
+
+// GetMsgDonationAmount - return the amount of donation in of @p msg, if not donation, return 0.
+func GetMsgDonationAmount(msg types.Msg) types.Coin {
+	donation, ok := msg.(post.DonateMsg)
+	if !ok {
+		return types.NewCoinFromInt64(0)
+	}
+	rst, err := types.LinoToCoin(donation.Amount)
+	if err != nil {
+		return types.NewCoinFromInt64(0)
+	}
+	return rst
+}
 
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
@@ -73,14 +87,19 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-				// get current tps
-				tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-				// check user tps capacity
-				if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
-					return ctx, err.Result(), true
+				donationAmount := GetMsgDonationAmount(msg)
+				// enable no-cost-donation starting BlockchainUpgrade1Update1Height
+				if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
+					!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
+					// get current tps
+					tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+					if err != nil {
+						return ctx, err.Result(), true
+					}
+					// check user tps capacity
+					if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
+						return ctx, err.Result(), true
+					}
 				}
 				// construct sign bytes and verify sequence number.
 				seq, err := am.GetSequence(ctx, types.AccountKey(msgSigner))

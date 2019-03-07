@@ -313,7 +313,8 @@ func (gm *GlobalManager) RegisterProposalDecideEvent(
 
 // RegisterParamChangeEvent - register parameter change event
 func (gm *GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	if err := gm.registerEventAtTime(ctx, ctx.BlockHeader().Time.Unix()+3600, event); err != nil {
+	if err := gm.registerEventAtTime(ctx,
+		ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, event); err != nil {
 		return err
 	}
 	return nil
