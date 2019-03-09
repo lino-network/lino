@@ -439,11 +439,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:7e8d267900c7fa7f35129a2a37596e38ed0f11ca746d6d9ba727980ee138f9f6"
+  digest = "1:c52d48fe752736ae45b72959e1e4fc1a5b60d5b56f8fad42c58414daab5f309d"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "require",
+    "suite",
   ]
   pruneopts = "UT"
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
@@ -746,6 +747,7 @@
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "github.com/stretchr/testify/suite",
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/config",
     "github.com/tendermint/tendermint/crypto",
