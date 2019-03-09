@@ -1,0 +1,135 @@
+diff --git a/libs/db/c_level_db.go b/libs/db/c_level_db.go
+index 7f74b2a7..decb1af5 100644
+--- a/libs/db/c_level_db.go
++++ b/libs/db/c_level_db.go
+@@ -179,6 +179,11 @@ func (mBatch *cLevelDBBatch) WriteSync() {
+ 	}
+ }
+ 
++// Implements Batch.
++func (mBatch *cLevelDBBatch) Close() {
++	mBatch.batch.Close()
++}
++
+ //----------------------------------------
+ // Iterator
+ // NOTE This is almost identical to db/go_level_db.Iterator
+diff --git a/libs/db/debug_db.go b/libs/db/debug_db.go
+index bb361a26..658cd055 100644
+--- a/libs/db/debug_db.go
++++ b/libs/db/debug_db.go
+@@ -250,3 +250,8 @@ func (dbch debugBatch) WriteSync() {
+ 	fmt.Printf("%v.batch.WriteSync()\n", dbch.label)
+ 	dbch.bch.WriteSync()
+ }
++
++// Implements Batch.
++func (dbch debugBatch) Close() {
++	dbch.bch.Close()
++}
+diff --git a/libs/db/go_level_db.go b/libs/db/go_level_db.go
+index fd487a4d..9a4358f6 100644
+--- a/libs/db/go_level_db.go
++++ b/libs/db/go_level_db.go
+@@ -184,6 +184,10 @@ func (mBatch *goLevelDBBatch) WriteSync() {
+ 	}
+ }
+ 
++// Implements Batch.
++// Close is no-op for goLevelDBBatch.
++func (mBatch *goLevelDBBatch) Close() {}
++
+ //----------------------------------------
+ // Iterator
+ // NOTE This is almost identical to db/c_level_db.Iterator
+diff --git a/libs/db/mem_batch.go b/libs/db/mem_batch.go
+index 5c5d0c13..ebba43f5 100644
+--- a/libs/db/mem_batch.go
++++ b/libs/db/mem_batch.go
+@@ -46,6 +46,10 @@ func (mBatch *memBatch) WriteSync() {
+ 	mBatch.write(true)
+ }
+ 
++func (mBatch *memBatch) Close() {
++	mBatch.ops = nil
++}
++
+ func (mBatch *memBatch) write(doSync bool) {
+ 	if mtx := mBatch.db.Mutex(); mtx != nil {
+ 		mtx.Lock()
+diff --git a/libs/db/prefix_db.go b/libs/db/prefix_db.go
+index 40d72560..0dd06ef9 100644
+--- a/libs/db/prefix_db.go
++++ b/libs/db/prefix_db.go
+@@ -248,6 +248,10 @@ func (pb prefixBatch) WriteSync() {
+ 	pb.source.WriteSync()
+ }
+ 
++func (pb prefixBatch) Close() {
++	pb.source.Close()
++}
++
+ //----------------------------------------
+ // prefixIterator
+ 
+diff --git a/libs/db/remotedb/grpcdb/server.go b/libs/db/remotedb/grpcdb/server.go
+index 3a9955dd..bfe65e61 100644
+--- a/libs/db/remotedb/grpcdb/server.go
++++ b/libs/db/remotedb/grpcdb/server.go
+@@ -180,6 +180,7 @@ func (s *server) BatchWriteSync(c context.Context, b *protodb.Batch) (*protodb.N
+ 
+ func (s *server) batchWrite(c context.Context, b *protodb.Batch, sync bool) (*protodb.Nothing, error) {
+ 	bat := s.db.NewBatch()
++	defer bat.Close()
+ 	for _, op := range b.Ops {
+ 		switch op.Type {
+ 		case protodb.Operation_SET:
+diff --git a/libs/db/types.go b/libs/db/types.go
+index 9b9c6d0b..30f8afd1 100644
+--- a/libs/db/types.go
++++ b/libs/db/types.go
+@@ -57,10 +57,12 @@ type DB interface {
+ //----------------------------------------
+ // Batch
+ 
++// Batch Close must be called when the program no longer needs the object.
+ type Batch interface {
+ 	SetDeleter
+ 	Write()
+ 	WriteSync()
++	Close()
+ }
+ 
+ type SetDeleter interface {
+diff --git a/lite/dbprovider.go b/lite/dbprovider.go
+index ef1b2a59..9a3636d5 100644
+--- a/lite/dbprovider.go
++++ b/lite/dbprovider.go
+@@ -54,6 +54,7 @@ func (dbp *DBProvider) SaveFullCommit(fc FullCommit) error {
+ 
+ 	dbp.logger.Info("DBProvider.SaveFullCommit()...", "fc", fc)
+ 	batch := dbp.db.NewBatch()
++	defer batch.Close()
+ 
+ 	// Save the fc.validators.
+ 	// We might be overwriting what we already have, but
+diff --git a/state/txindex/kv/kv.go b/state/txindex/kv/kv.go
+index 93249b7f..84208b8c 100644
+--- a/state/txindex/kv/kv.go
++++ b/state/txindex/kv/kv.go
+@@ -78,6 +78,7 @@ func (txi *TxIndex) Get(hash []byte) (*types.TxResult, error) {
+ // AddBatch indexes a batch of transactions using the given list of tags.
+ func (txi *TxIndex) AddBatch(b *txindex.Batch) error {
+ 	storeBatch := txi.store.NewBatch()
++	defer storeBatch.Close()
+ 
+ 	for _, result := range b.Ops {
+ 		hash := result.Tx.Hash()
+@@ -109,6 +110,7 @@ func (txi *TxIndex) AddBatch(b *txindex.Batch) error {
+ // Index indexes a single transaction using the given list of tags.
+ func (txi *TxIndex) Index(result *types.TxResult) error {
+ 	b := txi.store.NewBatch()
++	defer b.Close()
+ 
+ 	hash := result.Tx.Hash()
+ 
