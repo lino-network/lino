@@ -1,8 +1,62 @@
 diff --git a/libs/db/c_level_db.go b/libs/db/c_level_db.go
-index 7f74b2a7..decb1af5 100644
+index 7f74b2a7..81d8be7c 100644
 --- a/libs/db/c_level_db.go
 +++ b/libs/db/c_level_db.go
-@@ -179,6 +179,11 @@ func (mBatch *cLevelDBBatch) WriteSync() {
+@@ -21,17 +21,22 @@ func init() {
+ var _ DB = (*CLevelDB)(nil)
+ 
+ type CLevelDB struct {
+-	db     *levigo.DB
+-	ro     *levigo.ReadOptions
+-	wo     *levigo.WriteOptions
+-	woSync *levigo.WriteOptions
++	db           *levigo.DB
++	ro           *levigo.ReadOptions
++	wo           *levigo.WriteOptions
++	woSync       *levigo.WriteOptions
++	cache        *levigo.Cache
++	filterPolicy *levigo.FilterPolicy
+ }
+ 
+ func NewCLevelDB(name string, dir string) (*CLevelDB, error) {
+ 	dbPath := filepath.Join(dir, name+".db")
+ 
++	cache := levigo.NewLRUCache(100 * 1024 * 1024) // XXX(yumin): let's try use a smaller cache.
++	filter := levigo.NewBloomFilter(10)
+ 	opts := levigo.NewOptions()
+-	opts.SetCache(levigo.NewLRUCache(1 << 30))
++	opts.SetCache(cache)
++	opts.SetFilterPolicy(filter)
+ 	opts.SetCreateIfMissing(true)
+ 	db, err := levigo.Open(dbPath, opts)
+ 	if err != nil {
+@@ -42,10 +47,12 @@ func NewCLevelDB(name string, dir string) (*CLevelDB, error) {
+ 	woSync := levigo.NewWriteOptions()
+ 	woSync.SetSync(true)
+ 	database := &CLevelDB{
+-		db:     db,
+-		ro:     ro,
+-		wo:     wo,
+-		woSync: woSync,
++		db:           db,
++		ro:           ro,
++		wo:           wo,
++		woSync:       woSync,
++		cache:        cache,
++		filterPolicy: filter,
+ 	}
+ 	return database, nil
+ }
+@@ -113,6 +120,8 @@ func (db *CLevelDB) Close() {
+ 	db.ro.Close()
+ 	db.wo.Close()
+ 	db.woSync.Close()
++	db.cache.Close()
++	db.filterPolicy.Close()
+ }
+ 
+ // Implements DB.
+@@ -179,6 +188,11 @@ func (mBatch *cLevelDBBatch) WriteSync() {
  	}
  }
  
@@ -84,6 +138,18 @@ index 3a9955dd..bfe65e61 100644
  	for _, op := range b.Ops {
  		switch op.Type {
  		case protodb.Operation_SET:
+diff --git a/libs/db/remotedb/remotedb.go b/libs/db/remotedb/remotedb.go
+index 2b60d815..c70d54b9 100644
+--- a/libs/db/remotedb/remotedb.go
++++ b/libs/db/remotedb/remotedb.go
+@@ -260,3 +260,7 @@ func (bat *batch) WriteSync() {
+ 		panic(fmt.Sprintf("RemoteDB.BatchWriteSync: %v", err))
+ 	}
+ }
++
++func (bat *batch) Close() {
++	bat.ops = nil
++}
 diff --git a/libs/db/types.go b/libs/db/types.go
 index 9b9c6d0b..30f8afd1 100644
 --- a/libs/db/types.go
