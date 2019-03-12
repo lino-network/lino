@@ -369,12 +369,6 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		thisHourInflation.Minus(contentCreatorInflation).Minus(validatorInflation).Minus(infraInflation)
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(contentCreatorInflation)
 
-	// one time execution for upgrade1update2
-	if ctx.BlockHeight() == types.BlockchainUpgrade1Update2Height {
-		consumptionMeta.ConsumptionRewardPool = types.DecToCoin(
-			consumptionMeta.ConsumptionRewardPool.ToDec().Quo(sdk.NewDec(6)))
-	}
-
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}

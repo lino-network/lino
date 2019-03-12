@@ -169,6 +169,9 @@ const (
 	// BlockchainUpgrade1Update2Height - global growth rate is corrected.
 	BlockchainUpgrade1Update2Height = 146000
 
+	// BlockchainUpgrade1Update3Height - reward pool is adjusted.
+	BlockchainUpgrade1Update3Height = 148000
+
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000
 )
