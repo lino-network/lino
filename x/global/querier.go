@@ -54,7 +54,7 @@ func queryTimeEventList(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 		return nil, err
 	}
 	unixTime, convertErr := strconv.ParseInt(path[0], 10, 64)
-	if convertErr == nil {
+	if convertErr != nil {
 		return nil, ErrQueryFailed()
 	}
 	eventList, err := gm.storage.GetTimeEventList(ctx, unixTime)
@@ -133,14 +133,14 @@ func queryLinoStakeStat(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 		return nil, err
 	}
 	day, convertErr := strconv.ParseInt(path[0], 10, 64)
-	if convertErr == nil {
+	if convertErr != nil {
 		return nil, ErrQueryFailed()
 	}
-	globalTime, err := gm.storage.GetLinoStakeStat(ctx, day)
+	stakeStat, err := gm.storage.GetLinoStakeStat(ctx, day)
 	if err != nil {
 		return nil, err
 	}
-	res, marshalErr := cdc.MarshalJSON(globalTime)
+	res, marshalErr := cdc.MarshalJSON(stakeStat)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
