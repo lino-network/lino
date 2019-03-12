@@ -121,10 +121,10 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:fed20bf7f0da387c96d4cfc140a95572e5aba4bb984beb7de910e090ae39849b"
+  digest = "1:93823b572e4a204a71939a635866fd659f3b871bca144a98a66fc4391f4ae186"
   name = "github.com/ethereum/go-ethereum"
   packages = ["crypto/secp256k1"]
-  pruneopts = "UT"
+  pruneopts = "T"
   revision = "7fa3509e2eaf1a4ebc12344590e5699406690f15"
   version = "v1.8.22"
 
