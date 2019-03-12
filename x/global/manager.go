@@ -335,11 +335,19 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	if err != nil {
 		return err
 	}
+
+	// BlockchainUpgrade1Update2Height
+	// Growth rate in genesis file for testnet-upgrade1 was wrong.
+	// For lino-testnet, the growth rate is, and always was, 0.5%, not 5%.
+	growthRate := globalAllocation.GlobalGrowthRate
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update2Height {
+		growthRate = types.NewDecFromRat(5, 1000)
+	}
 	// get hourly inflation
 	thisHourInflation :=
 		types.DecToCoin(
 			globalMeta.LastYearTotalLinoCoin.ToDec().
-				Mul(globalAllocation.GlobalGrowthRate).
+				Mul(growthRate).
 				Mul(types.NewDecFromRat(1, types.HoursPerYear)))
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err

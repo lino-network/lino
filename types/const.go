@@ -166,6 +166,9 @@ const (
 	// BlockchainUpgrade1Update1Height - since this height, donation > 1 will not cost bandwidth.
 	BlockchainUpgrade1Update1Height = 21610
 
+	// BlockchainUpgrade1Update1Height - since this height, donation > 1 will not cost bandwidth.
+	BlockchainUpgrade1Update2Height = 152000
+
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000
 )
