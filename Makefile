@@ -1,7 +1,7 @@
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
 COMMIT_HASH := $(shell git rev-parse --short HEAD)
 LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=`git rev-parse --short=8 HEAD`"
-GO_TAGS := "tendermint gcc cgo"
+GO_TAGS := "tendermint gcc cgo libsecp256k1"
 CGO_LDFLAGS := "-lsnappy"
 
 all: get_tools get_vendor_deps install build test
