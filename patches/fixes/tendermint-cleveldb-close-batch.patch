@@ -21,7 +21,7 @@ index 7f74b2a7..81d8be7c 100644
  func NewCLevelDB(name string, dir string) (*CLevelDB, error) {
  	dbPath := filepath.Join(dir, name+".db")
  
-+	cache := levigo.NewLRUCache(100 * 1024 * 1024) // XXX(yumin): let's try use a smaller cache.
++	cache := levigo.NewLRUCache(500 * 1024 * 1024) // XXX(yumin): let's try use a smaller cache.
 +	filter := levigo.NewBloomFilter(10)
  	opts := levigo.NewOptions()
 -	opts.SetCache(levigo.NewLRUCache(1 << 30))

@@ -1,0 +1,12 @@
+diff --git a/nodedb.go b/nodedb.go
+index c41a1c0..2d97095 100644
+--- a/nodedb.go
++++ b/nodedb.go
+@@ -330,6 +330,7 @@ func (ndb *nodeDB) Commit() {
+ 	defer ndb.mtx.Unlock()
+ 
+ 	ndb.batch.Write()
++	ndb.batch.Close()
+ 	ndb.batch = ndb.db.NewBatch()
+ }
+ 
