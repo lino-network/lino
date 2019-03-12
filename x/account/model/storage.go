@@ -321,33 +321,24 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
 		defer itr.Close()
 		for ; itr.Valid(); itr.Next() {
-			usernamePubKeyPermission := string(itr.Key()[1:])
-			strs := strings.Split(usernamePubKeyPermission, types.KeySeparator)
+			usernameApp := string(itr.Key()[1:])
+			strs := strings.Split(usernameApp, types.KeySeparator)
 			if len(strs) != 3 {
-				panic("illegat usernamePubkeyAndPermission: " + usernamePubKeyPermission)
+				panic("illegat usernamePubkeyAndPermission: " + usernameApp)
 			}
-			// username, grantTo, permission := types.AccountKey(strs[0]), types.AccountKey(strs[1]), types.Permission(strs[2])
-			// pubKeyBytes, err := hex.DecodeString(pubKeyHex)
-			// if err != nil {
-			// 	panic("Failed to decode pubkeyHex: " + pubKeyHex + " " + err.Error())
-			// }
-			// var pubKey crypto.PubKey
-			// err = as.cdc.UnmarshalBinaryLengthPrefixed(pubKeyBytes, &pubKey)
-			// if err != nil {
-			// 	panic("Faield to decode pubkeyBytes to pubkey interface: " + err.Error())
-			// }
-
-			// xxx(yukai): need update
-			// info, err := as.GetGrantPubKey(ctx, username, grantTo, permission)
-			// if err != nil {
-			// 	panic("failed GetGrantPubKey: " + err.Error())
-			// }
-			// row := GrantPubKeyRow{
-			// 	Username:    username,
-			// 	PubKey:      pubKey,
-			// 	GrantPubKey: *info,
-			// }
-			// tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
+			username, app := types.AccountKey(strs[0]), types.AccountKey(strs[1])
+			permissions, err := as.GetGrantPermissions(ctx, username, app)
+			if err != nil {
+				panic("failed to fetch permission for " + username + " and " + app)
+			}
+			for _, v := range permissions {
+				row := GrantPubKeyRow{
+					Username:    username,
+					PubKey:      nil, // PubKey is deprecated since upgrade1
+					GrantPubKey: *v,
+				}
+				tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
+			}
 		}
 	}()
 	return tables
