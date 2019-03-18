@@ -209,3 +209,8 @@ func ErrInvalidJSONMeta() sdk.Error {
 func ErrQueryFailed() sdk.Error {
 	return types.NewError(types.CodeAccountQueryFailed, fmt.Sprintf("query account store failed"))
 }
+
+// ErrQueryTxFaild - error when query tx failed
+func ErrQueryTxFailed(msg string) sdk.Error {
+	return types.NewError(types.CodeAccountQueryFailed, fmt.Sprintf("query tx failed, err: %s", msg))
+}

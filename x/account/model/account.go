@@ -6,6 +6,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ttypes "github.com/tendermint/tendermint/types"
 )
 
 // AccountInfo - user information
@@ -100,4 +101,18 @@ type Reward struct {
 	FrictionIncome  types.Coin `json:"friction_income"`
 	InflationIncome types.Coin `json:"inflation_income"`
 	UnclaimReward   types.Coin `json:"unclaim_reward"`
+}
+
+type TxAndSequenceNumber struct {
+	Username string      `json:"username"`
+	Sequence uint64      `json:"sequence"`
+	Tx       Transaction `json:"tx"`
+}
+
+type Transaction struct {
+	Hash   string    `json:"hash"`
+	Height int64     `json:"height"`
+	Tx     ttypes.Tx `json:"tx"`
+	Code   uint32    `json:"code"`
+	Log    string    `json:"log"`
 }

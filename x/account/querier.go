@@ -1,10 +1,14 @@
 package account
 
 import (
+	"encoding/hex"
+
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
 	abci "github.com/tendermint/tendermint/abci/types"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 const (
@@ -24,6 +28,7 @@ const (
 	QueryAccountPendingCoinDay  = "pendingCoinDay"
 	QueryAccountGrantPubKeys    = "grantPubKey"
 	QueryAccountAllGrantPubKeys = "allGrantPubKey"
+	QueryTxAndAccountSequence   = "txAndSeq"
 )
 
 // creates a querier for account REST endpoints
@@ -46,6 +51,8 @@ func NewQuerier(am AccountManager) sdk.Querier {
 			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
 		case QueryAccountAllGrantPubKeys:
 			return queryAccountAllGrantPubKeys(ctx, cdc, path[1:], req, am)
+		case QueryTxAndAccountSequence:
+			return queryTxAndSequenceNumber(ctx, cdc, path[1:], req, am)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown account query endpoint")
 		}
@@ -91,6 +98,44 @@ func queryAccountMeta(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.
 		return nil, err
 	}
 	res, marshalErr := cdc.MarshalJSON(accountMeta)
+	if marshalErr != nil {
+		return nil, ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
+	if err := types.CheckPathContentAndMinLength(path, 2); err != nil {
+		return nil, err
+	}
+
+	accountMeta, err := am.storage.GetMeta(ctx, types.AccountKey(path[0]))
+	if err != nil {
+		return nil, err
+	}
+
+	txHash, decodeFail := hex.DecodeString(path[1])
+	if decodeFail != nil {
+		return nil, ErrQueryFailed()
+	}
+
+	rpc := rpcclient.NewHTTP("http://localhost:26657", "/websocket")
+	tx, queryError := rpc.Tx(txHash, false)
+	if queryError != nil {
+		return nil, ErrQueryTxFailed(queryError.Error())
+	}
+	sequenceAndTx := model.TxAndSequenceNumber{
+		Username: path[0],
+		Sequence: accountMeta.Sequence,
+		Tx: model.Transaction{
+			Hash:   hex.EncodeToString(tx.Hash),
+			Height: tx.Height,
+			Tx:     tx.Tx,
+			Code:   tx.TxResult.Code,
+			Log:    tx.TxResult.Log,
+		},
+	}
+	res, marshalErr := cdc.MarshalJSON(sequenceAndTx)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
