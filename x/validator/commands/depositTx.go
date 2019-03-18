@@ -49,7 +49,7 @@ func sendDepositValidatorTx(cdc *wire.Codec) client.CommandTxCallback {
 		// TODO(yumin): use new file: PrivValidatorKeyFile, priv_validator_key.json
 		// also, the state file is not correct here, need to update.
 		// MUST revisit this part.
-		privValFile := tmConfig.OldPrivValidatorFile()
+		privValFile := tmConfig.PrivValidatorKeyFile()
 		privValStateFile := tmConfig.PrivValidatorStateFile()
 
 		var privValidator *pvm.FilePV
