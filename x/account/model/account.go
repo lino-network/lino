@@ -104,9 +104,9 @@ type Reward struct {
 }
 
 type TxAndSequenceNumber struct {
-	Username string      `json:"username"`
-	Sequence uint64      `json:"sequence"`
-	Tx       Transaction `json:"tx"`
+	Username string       `json:"username"`
+	Sequence uint64       `json:"sequence"`
+	Tx       *Transaction `json:"tx"`
 }
 
 type Transaction struct {

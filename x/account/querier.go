@@ -114,28 +114,28 @@ func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, r
 		return nil, err
 	}
 
+	txAndSeq := model.TxAndSequenceNumber{
+		Username: path[0],
+		Sequence: accountMeta.Sequence,
+	}
+
 	txHash, decodeFail := hex.DecodeString(path[1])
 	if decodeFail != nil {
 		return nil, ErrQueryFailed()
 	}
 
 	rpc := rpcclient.NewHTTP("http://localhost:26657", "/websocket")
-	tx, queryError := rpc.Tx(txHash, false)
-	if queryError != nil {
-		return nil, ErrQueryTxFailed(queryError.Error())
-	}
-	sequenceAndTx := model.TxAndSequenceNumber{
-		Username: path[0],
-		Sequence: accountMeta.Sequence,
-		Tx: model.Transaction{
+	tx, _ := rpc.Tx(txHash, false)
+	if tx != nil {
+		txAndSeq.Tx = &model.Transaction{
 			Hash:   hex.EncodeToString(tx.Hash),
 			Height: tx.Height,
 			Tx:     tx.Tx,
 			Code:   tx.TxResult.Code,
 			Log:    tx.TxResult.Log,
-		},
+		}
 	}
-	res, marshalErr := cdc.MarshalJSON(sequenceAndTx)
+	res, marshalErr := cdc.MarshalJSON(txAndSeq)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
