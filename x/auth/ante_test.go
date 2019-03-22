@@ -111,7 +111,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	pm := post.NewPostManager(TestPostKVStoreKey, ph)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm)
+	anteHandler := NewAnteHandler(am, gm, pm)
 
 	suite.am = am
 	suite.pm = pm
@@ -416,7 +416,68 @@ func (suite *AnteTestSuite) TestTPSCapacityDonationAfterUpdate1() {
 	seqs = []uint64{4}
 	tx = newTestTx(suite.ctx, []sdk.Msg{testMsg}, privs, seqs)
 	suite.checkInvalidTx(tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
+
+	// BUG EXPECTED
+	// Invalid amount donation will still pass.
+	msg = post.NewDonateMsg("user1", types.LNO("100000"), "user2", "post1", "", "memee")
+	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{4}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkValidTx(tx)
 }
+
+// after BlockchainUpgrade1Update4Height, Test Donation message > NoTPSLimitDonationMin
+// and with enough saving will no check or cost bandwidth.
+func (suite *AnteTestSuite) TestTPSCapacityDonationAfterUpdate4() {
+	// keys and username
+	_, transaction1, _, user1 := suite.createTestAccount("user1")
+	suite.createTestAccount("user2")
+	suite.createTestPost("post1", "user2")
+
+	// donation msg and signatures
+	var tx sdk.Tx
+	msg := post.NewDonateMsg("user1", types.LNO("1"), "user2", "post1", "", "memee")
+
+	// test valid transaction
+	privs, seqs := []crypto.PrivKey{transaction1}, []uint64{0}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkValidTx(tx)
+
+	seq, err := suite.am.GetSequence(suite.ctx, user1)
+	suite.Nil(err)
+	suite.Equal(seq, uint64(1))
+
+	suite.ctx = suite.ctx.WithBlockHeader(
+		abci.Header{ChainID: "Lino", Height: types.BlockchainUpgrade1Update4Height,
+			Time: time.Now(), NumTxs: 1000})
+	suite.gm.SetLastBlockTime(suite.ctx, time.Now().Unix()-1)
+	suite.gm.UpdateTPS(suite.ctx)
+
+	seqs = []uint64{1}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkValidTx(tx)
+	seqs = []uint64{2}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkValidTx(tx)
+
+	// first one with wrong permlink, ok, but will cost TPS
+	msg = post.NewDonateMsg("user1", types.LNO("1"), "user2", "postNotExist", "", "memee")
+	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{3}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkValidTx(tx) // first one cost TPS
+
+	// second one shall be blocked.
+	testMsg := newTestMsg(user1)
+	seqs = []uint64{4}
+	tx = newTestTx(suite.ctx, []sdk.Msg{testMsg}, privs, seqs)
+	suite.checkInvalidTx(tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
+
+	// Invalid amount donation will not pass now.
+	msg = post.NewDonateMsg("user1", types.LNO("100000000"), "user2", "post1", "", "memee")
+	privs, seqs = []crypto.PrivKey{transaction1}, []uint64{4}
+	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
+	suite.checkInvalidTx(tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
+}
+
 
 func TestAnteTestSuite(t *testing.T) {
 	suite.Run(t, &AnteTestSuite{})
