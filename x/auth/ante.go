@@ -18,6 +18,7 @@ const (
 )
 
 // GetMsgDonationAmount - return the amount of donation in of @p msg, if not donation, return 0.
+// XXX(yumin): outdated, should be remove after Upgrade2.
 func GetMsgDonationAmount(msg types.Msg) types.Coin {
 	donation, ok := msg.(post.DonateMsg)
 	if !ok {
@@ -30,8 +31,42 @@ func GetMsgDonationAmount(msg types.Msg) types.Coin {
 	return rst
 }
 
+// GetMsgDonationValidAmount - return the min of (amount of donation in of @p msg, saving)
+// if not donation, return 0.
+func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountManager, pm post.PostManager) types.Coin {
+	zero := types.NewCoinFromInt64(0)
+	donation, ok := msg.(post.DonateMsg)
+	if !ok {
+		return zero
+	}
+	rst, err := types.LinoToCoin(donation.Amount)
+	if err != nil {
+		return zero
+	}
+
+	permlink := types.GetPermlink(donation.Author, donation.PostID)
+	if !pm.DoesPostExist(ctx, permlink) {
+		return zero
+	}
+	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
+		return zero
+	}
+
+	saving, err := am.GetSavingFromBank(ctx, donation.Username)
+	if err != nil {
+		return types.NewCoinFromInt64(0)
+	}
+
+	// not valid when saving is less than donation amount.
+	if (rst.IsGT(saving)) {
+		return types.NewCoinFromInt64(0)
+	}
+	return rst
+}
+
 // NewAnteHandler - return an AnteHandler
-func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
+	pm post.PostManager) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -88,6 +123,9 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager) sdk.AnteHand
 					return ctx, err.Result(), true
 				}
 				donationAmount := GetMsgDonationAmount(msg)
+				if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update4Height {
+					donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
+				}
 				// enable no-cost-donation starting BlockchainUpgrade1Update1Height
 				if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
 					!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
