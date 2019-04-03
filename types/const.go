@@ -175,6 +175,9 @@ const (
 	// BlockchainUpgrade1Update4Height - fix donation bandwidth check.
 	BlockchainUpgrade1Update4Height = 386000
 
+	// BlockchainUpgrade1Update5Height - use coin instead of coinday as input for reputaion.
+	BlockchainUpgrade1Update5Height = 680000
+
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000
 )

@@ -175,7 +175,11 @@ func processDonationFriction(
 	}
 	frictionCoin := types.DecToCoin(coin.ToDec().Mul(consumptionFrictionRate))
 	// evaluate this consumption can get the result, the result is used to get inflation from pool
-	dp, err := rm.DonateAt(ctx, consumer, postKey, coinDayDonated)
+	repInput := coinDayDonated
+	if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update5Height {
+		repInput = coin
+	}
+	dp, err := rm.DonateAt(ctx, consumer, postKey, repInput)
 	if err != nil {
 		return err
 	}
