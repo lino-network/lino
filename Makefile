@@ -14,6 +14,7 @@ apply_patch:
 	dep ensure
 	cp ./patches/general/constructors ./vendor/github.com/cosmos/cosmos-sdk/server/constructors.go
 	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fixes/tendermint-cleveldb-close-batch.patch); exit 0
+	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fullnode/tendermint-cached-txindexer.patch); exit 0
 	(cd vendor/github.com/tendermint/iavl       && patch -p1 -t < ../../../../patches/fixes/iavl-cleveldb-close-batch.patch); exit 0
 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
 
