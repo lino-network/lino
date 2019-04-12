@@ -17,13 +17,19 @@ apply_patch:
 	(cd vendor/github.com/tendermint/iavl       && patch -p1 -t < ../../../../patches/fixes/iavl-cleveldb-close-batch.patch); exit 0
 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
 
-build: get_vendor_deps apply_patch
+_raw_build_cmd:
 	CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go build -ldflags $(LD_FLAGS) -tags $(GO_TAGS) -o bin/linod   cmd/lino/main.go
 	CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go build -ldflags $(LD_FLAGS) -tags $(GO_TAGS) -o bin/linocli cmd/linocli/main.go
 
-install: get_vendor_deps apply_patch
+_raw_install_cmd:
 	cd cmd/lino    && CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go install -ldflags $(LD_FLAGS) -tags $(GO_TAGS)
 	cd cmd/linocli && CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go install -ldflags $(LD_FLAGS) -tags $(GO_TAGS)
+
+build: get_vendor_deps apply_patch
+	make _raw_build_cmd
+
+install: get_vendor_deps apply_patch
+	make _raw_install_cmd
 
 get_vendor_deps:
 	@rm -rf vendor/
