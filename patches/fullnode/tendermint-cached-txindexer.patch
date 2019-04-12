@@ -25,7 +25,7 @@ index 969452c4..c86efcf1 100644
  	bcReactor := bc.NewBlockchainReactor(state.Copy(), blockExec, blockStore, fastSync)
  	bcReactor.SetLogger(logger.With("module", "blockchain"))
 diff --git a/state/execution.go b/state/execution.go
-index 8ab95839..c44b1571 100644
+index 8ab95839..76748f79 100644
 --- a/state/execution.go
 +++ b/state/execution.go
 @@ -9,6 +9,8 @@ import (
@@ -81,11 +81,12 @@ index 8ab95839..c44b1571 100644
  // SetEventBus - sets the event bus for publishing block related events.
  // If not called, it defaults to types.NopEventBus.
  func (blockExec *BlockExecutor) SetEventBus(eventBus types.BlockEventPublisher) {
-@@ -167,6 +178,16 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
+@@ -161,6 +172,17 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
  
  	fail.Fail() // XXX
  
-+	// cache txs first
++	// XXX(yumin): this must happens before SaveState.
++	// cache txs
 +	for i, tx := range block.Data.Txs {
 +		blockExec.txindexer.Cache(&types.TxResult{
 +			Height: block.Height,
@@ -95,9 +96,9 @@ index 8ab95839..c44b1571 100644
 +		})
 +	}
 +
- 	// Events are fired after everything else.
- 	// NOTE: if we crash between Commit and Save, events wont be fired during replay
- 	fireEvents(blockExec.logger, blockExec.eventBus, block, abciResponses, validatorUpdates)
+ 	// Update the app hash and save the state.
+ 	state.AppHash = appHash
+ 	SaveState(blockExec.db, state)
 diff --git a/state/txindex/indexer.go b/state/txindex/indexer.go
 index ab509f96..c8aee640 100644
 --- a/state/txindex/indexer.go
