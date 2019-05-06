@@ -20,6 +20,9 @@ type Reputation interface {
 	// ExportImporter
 	ExportToFile(file string)
 	ImportFromFile(file string)
+
+	// dumper only
+	GetRoundMetaInfo(id RoundId) RoundMetaInfo
 }
 
 type ReputationImpl struct {
@@ -298,6 +301,25 @@ func (rep ReputationImpl) Update(t Time) {
 
 func (rep ReputationImpl) moreThan(cur, startAt Time, hours int64) bool {
 	return cur-startAt >= hours*3600
+}
+
+// RoundMetaInfo -
+type RoundMetaInfo struct {
+	Result  []Pid
+	SumDp   Dp
+	StartAt Time
+	EndAt   Time
+	TopN    []PostDpPair
+}
+
+// GetRoundMetaInfo -
+func (rep ReputationImpl) GetRoundMetaInfo(id RoundId) RoundMetaInfo {
+	return RoundMetaInfo{
+		Result:  rep.store.GetRoundResult(id),
+		SumDp:   rep.store.GetRoundSumDp(id),
+		StartAt: rep.store.GetRoundStartAt(id),
+		TopN:    rep.store.GetRoundTopNPosts(id),
+	}
 }
 
 // a bunch of helper functions that takes two bitInt and returns

@@ -209,3 +209,29 @@ func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error 
 	handler.ImportFromFile(file)
 	return nil
 }
+
+// RoundMetaInfo - meta info of a round.
+type RoundMetaInfo = model.RoundMetaInfo
+
+// GetRoundsData returns raw reputation score, except for stakein bonus.
+func (rep ReputationManager) GetRoundsData(ctx sdk.Context) ([]RoundMetaInfo, sdk.Error) {
+	handler, err := rep.getHandler(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	current, curstartAt := handler.GetCurrentRound()
+	infos := make([]RoundMetaInfo, 0)
+	for i := int64(1); i < current; i++ {
+		infos = append(infos, handler.GetRoundMetaInfo(i))
+	}
+
+	for i := 0; i < len(infos); i++ {
+		if i == len(infos)-1 {
+			infos[i].EndAt = curstartAt
+		} else {
+			infos[i].EndAt = infos[i+1].StartAt
+		}
+	}
+	return infos, nil
+}

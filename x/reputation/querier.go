@@ -17,7 +17,8 @@ const (
 	// QuerierRoute is the querier route for gov
 	QuerierRoute = ModuleName
 
-	QueryReputation = "rep"
+	QueryReputation          = "rep"
+	QueryReputationRoundInfo = "repinfo"
 )
 
 // creates a querier for vote REST endpoints
@@ -28,6 +29,8 @@ func NewQuerier(rm ReputationManager) sdk.Querier {
 		switch path[0] {
 		case QueryReputation:
 			return queryReputation(ctx, cdc, path[1:], req, rm)
+		case QueryReputationRoundInfo:
+			return queryReputationRoundInfo(ctx, cdc, path[1:], req, rm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown vote query endpoint")
 		}
@@ -43,6 +46,18 @@ func queryReputation(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.R
 		return nil, err
 	}
 	res, marshalErr := cdc.MarshalJSON(reputation)
+	if marshalErr != nil {
+		return nil, ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryReputationRoundInfo(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, rm ReputationManager) ([]byte, sdk.Error) {
+	roundsInfo, err := rm.GetRoundsData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(roundsInfo)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
