@@ -222,7 +222,7 @@ func (rep ReputationManager) GetRoundsData(ctx sdk.Context) ([]RoundMetaInfo, sd
 
 	current, curstartAt := handler.GetCurrentRound()
 	infos := make([]RoundMetaInfo, 0)
-	for i := int64(1); i < current; i++ {
+	for i := int64(2); i < current; i++ {
 		infos = append(infos, handler.GetRoundMetaInfo(i))
 	}
 

@@ -305,6 +305,7 @@ func (rep ReputationImpl) moreThan(cur, startAt Time, hours int64) bool {
 
 // RoundMetaInfo -
 type RoundMetaInfo struct {
+	ID      RoundId
 	Result  []Pid
 	SumDp   Dp
 	StartAt Time
@@ -315,6 +316,7 @@ type RoundMetaInfo struct {
 // GetRoundMetaInfo -
 func (rep ReputationImpl) GetRoundMetaInfo(id RoundId) RoundMetaInfo {
 	return RoundMetaInfo{
+		ID:      id,
 		Result:  rep.store.GetRoundResult(id),
 		SumDp:   rep.store.GetRoundSumDp(id),
 		StartAt: rep.store.GetRoundStartAt(id),
