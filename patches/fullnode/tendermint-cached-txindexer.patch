@@ -1,15 +1,56 @@
 diff --git a/consensus/replay.go b/consensus/replay.go
-index 21fef6b2..1426cfe7 100644
+index 21fef6b2..e2593496 100644
 --- a/consensus/replay.go
 +++ b/consensus/replay.go
-@@ -441,6 +441,7 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
- 	meta := h.store.LoadBlockMeta(height)
+@@ -16,6 +16,8 @@ import (
+ 	cmn "github.com/tendermint/tendermint/libs/common"
+ 	dbm "github.com/tendermint/tendermint/libs/db"
+ 	"github.com/tendermint/tendermint/libs/log"
++	"github.com/tendermint/tendermint/state/txindex"
++	nulltxindexer "github.com/tendermint/tendermint/state/txindex/null"
  
+ 	"github.com/tendermint/tendermint/proxy"
+ 	sm "github.com/tendermint/tendermint/state"
+@@ -201,6 +203,9 @@ type Handshaker struct {
+ 	genDoc       *types.GenesisDoc
+ 	logger       log.Logger
+ 
++	// indexer, null cacher if not set
++	txindexer txindex.TxIndexer
++
+ 	nBlocks int // number of blocks applied to the state
+ }
+ 
+@@ -214,6 +219,7 @@ func NewHandshaker(stateDB dbm.DB, state sm.State,
+ 		eventBus:     types.NopEventBus{},
+ 		genDoc:       genDoc,
+ 		logger:       log.NewNopLogger(),
++		txindexer:    &nulltxindexer.TxIndex{},
+ 		nBlocks:      0,
+ 	}
+ }
+@@ -222,6 +228,11 @@ func (h *Handshaker) SetLogger(l log.Logger) {
+ 	h.logger = l
+ }
+ 
++// SetTxIndexer - sets tx indexer, if not called, nulltxinders.
++func (h *Handshaker) SetTxIndexer(indexer txindex.TxIndexer) {
++	h.txindexer = indexer
++}
++
+ // SetEventBus - sets the event bus for publishing block related events.
+ // If not called, it defaults to types.NopEventBus.
+ func (h *Handshaker) SetEventBus(eventBus types.BlockEventPublisher) {
+@@ -443,6 +454,9 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
  	blockExec := sm.NewBlockExecutor(h.stateDB, h.logger, proxyApp, sm.MockMempool{}, sm.MockEvidencePool{})
-+	// XXX(yumin): setTxIndexer for cache is skipped.
  	blockExec.SetEventBus(h.eventBus)
  
++	// XXX(yumin): setTxIndexer for cache is required as fullnodes hit this path.
++	blockExec.SetTxIndexer(h.txindexer)
++
  	var err error
+ 	state, err = blockExec.ApplyBlock(state, meta.BlockID, block)
+ 	if err != nil {
 diff --git a/node/node.go b/node/node.go
 index 969452c4..c86efcf1 100644
 --- a/node/node.go
@@ -25,7 +66,7 @@ index 969452c4..c86efcf1 100644
  	bcReactor := bc.NewBlockchainReactor(state.Copy(), blockExec, blockStore, fastSync)
  	bcReactor.SetLogger(logger.With("module", "blockchain"))
 diff --git a/state/execution.go b/state/execution.go
-index 8ab95839..76748f79 100644
+index 8ab95839..3637e1d7 100644
 --- a/state/execution.go
 +++ b/state/execution.go
 @@ -9,6 +9,8 @@ import (
@@ -73,7 +114,7 @@ index 8ab95839..76748f79 100644
  	return res
  }
  
-+// SetTxIndexer - sets tx indexer, if not called, nil, so
++// SetTxIndexer - sets tx indexer, if not called, nulltxinders.
 +func (blockExec *BlockExecutor) SetTxIndexer(indexer txindex.TxIndexer) {
 +	blockExec.txindexer = indexer
 +}
