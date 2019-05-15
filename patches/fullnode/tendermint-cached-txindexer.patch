@@ -66,7 +66,7 @@ index 969452c4..c86efcf1 100644
  	bcReactor := bc.NewBlockchainReactor(state.Copy(), blockExec, blockStore, fastSync)
  	bcReactor.SetLogger(logger.With("module", "blockchain"))
 diff --git a/state/execution.go b/state/execution.go
-index 8ab95839..3637e1d7 100644
+index 8ab95839..cca5c1a9 100644
 --- a/state/execution.go
 +++ b/state/execution.go
 @@ -9,6 +9,8 @@ import (
@@ -122,12 +122,11 @@ index 8ab95839..3637e1d7 100644
  // SetEventBus - sets the event bus for publishing block related events.
  // If not called, it defaults to types.NopEventBus.
  func (blockExec *BlockExecutor) SetEventBus(eventBus types.BlockEventPublisher) {
-@@ -161,6 +172,17 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
+@@ -150,6 +161,16 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
+ 		return state, fmt.Errorf("Commit failed for application: %v", err)
+ 	}
  
- 	fail.Fail() // XXX
- 
-+	// XXX(yumin): this must happens before SaveState.
-+	// cache txs
++	// XXX(yumin): this must happen before Commit to cache txs.
 +	for i, tx := range block.Data.Txs {
 +		blockExec.txindexer.Cache(&types.TxResult{
 +			Height: block.Height,
@@ -137,9 +136,9 @@ index 8ab95839..3637e1d7 100644
 +		})
 +	}
 +
- 	// Update the app hash and save the state.
- 	state.AppHash = appHash
- 	SaveState(blockExec.db, state)
+ 	// Lock mempool, commit app state, update mempoool.
+ 	appHash, err := blockExec.Commit(state, block)
+ 	if err != nil {
 diff --git a/state/txindex/indexer.go b/state/txindex/indexer.go
 index ab509f96..c8aee640 100644
 --- a/state/txindex/indexer.go
