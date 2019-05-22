@@ -3,7 +3,7 @@
 ## v0.3.0
 ---
 
-*date*
+Tue May 21 16:54:46 PDT 2019
 
 IMPROVEMENTS
 
@@ -11,7 +11,3 @@ IMPROVEMENTS
   * [cosmos-sdk] upgrade to v0.34.4
   * [build] remove cleveldb related patches as tendermint/iavl are upgraded, cosmos's patch is required.
   * [build] remove cosmos clelveldb patch as they now support it through build tags.
-
-BUG FIXES
-
-  * [module] xxxxxx
