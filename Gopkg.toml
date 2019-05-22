@@ -27,13 +27,14 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "=0.32.0"
+  version = "=0.34.4"
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  revision = "v0.30.0"
+  revision = "v0.31.5"
 
 # XXX(yumin): need to override again here, though already specified in cosmos-sdk's Gopkg.toml.
+# 05/19: cosmos has switched to go mod.
 [[override]]
   name = "golang.org/x/crypto"
   source = "https://github.com/tendermint/crypto"

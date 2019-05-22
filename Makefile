@@ -1,6 +1,6 @@
+COMMIT := $(shell git log -1 --format='%H')
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
-COMMIT_HASH := $(shell git rev-parse --short HEAD)
-LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=`git rev-parse --short=8 HEAD`"
+LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X vendor/github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb"
 GO_TAGS := "tendermint gcc cgo"
 CGO_LDFLAGS := "-lsnappy"
 
@@ -12,10 +12,7 @@ get_tools:
 
 apply_patch:
 	dep ensure
-	cp ./patches/general/constructors ./vendor/github.com/cosmos/cosmos-sdk/server/constructors.go
-	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fixes/tendermint-cleveldb-close-batch.patch); exit 0
 	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fullnode/tendermint-cached-txindexer.patch); exit 0
-	(cd vendor/github.com/tendermint/iavl       && patch -p1 -t < ../../../../patches/fixes/iavl-cleveldb-close-batch.patch); exit 0
 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
 
 _raw_build_cmd:
