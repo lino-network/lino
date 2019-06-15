@@ -75,6 +75,8 @@ var (
 //     so if there would be any unsettled customer score, when lastDonationRound > LastSettled,
 //     they are all in the lastDonationRound.
 type userMeta struct {
+	Consumption       Rep        `json:"cs"`
+	Hold              Rep        `json:"hold"`
 	Reputation        Rep        `json:"rep"`
 	LastSettledRound  RoundId    `json:"ls"`
 	LastDonationRound RoundId    `json:"ldr"`
@@ -155,6 +157,8 @@ func (impl reputationStoreImpl) GetUserMeta(u Uid) *userMeta {
 	rst := decodeUserMeta(buf)
 	if rst == nil {
 		return &userMeta{
+			Consumption:       big.NewInt(InitialReputation),
+			Hold:              big.NewInt(0),
 			Reputation:        big.NewInt(InitialReputation),
 			LastSettledRound:  0,
 			LastDonationRound: 0,
