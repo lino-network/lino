@@ -1,6 +1,7 @@
 package repv2
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -27,9 +28,11 @@ func (suite *ReputationTestSuite) SetupTest() {
 	suite.roundDurationSeconds = 25 * 3600
 	suite.bestN = 30
 	suite.userMaxN = 10
-	suite.store = NewReputationStore(internal.NewMockStore())
+	suite.store = NewReputationStore(internal.NewMockStore(), DefaultInitialReputation)
 	suite.rep = NewReputation(
-		suite.store, suite.bestN, suite.userMaxN, suite.roundDurationSeconds).(ReputationImpl)
+		suite.store, suite.bestN, suite.userMaxN,
+		DefaultRoundDurationSeconds, DefaultSampleWindowSize, DefaultDecayFactor,
+	).(ReputationImpl)
 	suite.time = time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
 }
 
@@ -43,36 +46,32 @@ func (suite *ReputationTestSuite) EqualZero(a bigInt, args ...interface{}) {
 	suite.Equal(0, a.Cmp(big.NewInt(0)), "%d is not bigInt zero", a.Int64())
 }
 
-func (suite *ReputationTestSuite) TestFirstBlock1() {
+func (suite *ReputationTestSuite) TestReputationMigrate() {
 	rep := suite.rep
-	newBlockTime := int64(0)
-	rep.Update(0)
-	rid, startAt := rep.GetCurrentRound()
-	suite.Equal(int64(1), rid)
-	suite.Equal(newBlockTime, startAt)
-	suite.Equal(rep.GetReputation("me"), big.NewInt(InitialReputation))
-}
+	user1 := "user1"
+	user2 := "user2"
+	post1 := "post1"
+	suite.True(rep.RequireMigrate(user1))
+	suite.True(rep.RequireMigrate(user2))
+	suite.MoveToNewRound()
+	suite.True(rep.RequireMigrate(user1))
+	suite.MoveToNewRound()
+	suite.MoveToNewRound()
+	suite.True(rep.RequireMigrate(user1))
+	suite.MoveToNewRound()
+	suite.True(rep.RequireMigrate(user1))
+	rep.DonateAt(user1, post1, big.NewInt(1000))
+	suite.False(rep.RequireMigrate(user1))
+	suite.MoveToNewRound()
+	suite.False(rep.RequireMigrate(user1))
+	suite.True(rep.RequireMigrate(user2))
+	rep.MigrateFromV1(user2, big.NewInt(333))
+	suite.False(rep.RequireMigrate(user2))
 
-func (suite *ReputationTestSuite) TestFirstBlock2() {
-	rep := suite.rep
-	newBlockTime := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
-	rep.Update(newBlockTime.Unix())
-	rid, startAt := rep.GetCurrentRound()
-	suite.Equal(int64(2), rid)
-	suite.Equal(newBlockTime.Unix(), startAt)
+	// double migration should be ignored.
+	rep.MigrateFromV1(user2, big.NewInt(9999))
 
-	nextBlockTime := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
-	suite.Equal(newBlockTime.Add(time.Duration(suite.roundDurationSeconds)*time.Second), nextBlockTime)
-	rep.Update(nextBlockTime.Unix())
-	rid, startAt = rep.GetCurrentRound()
-	suite.Equal(int64(3), rid)
-	suite.Equal(nextBlockTime.Unix(), startAt)
-}
-
-func (suite *ReputationTestSuite) TestIncFreeScore() {
-	rep := suite.rep
-	rep.IncFreeScore("user1", big.NewInt(3000))
-	suite.Equal(big.NewInt(3000+InitialReputation), rep.GetReputation("user1"))
+	suite.Equal(big.NewInt(333), rep.GetReputation(user2))
 }
 
 func (suite *ReputationTestSuite) TestExtractConsumptionInfo() {
@@ -171,25 +170,13 @@ func (suite *ReputationTestSuite) TestGetSeedSet() {
 	suite.False(set["other"])
 }
 
-func (suite *ReputationTestSuite) TestReputationDecraseToZero() {
-	repData := reputationData{
-		consumption: big.NewInt(1),
-		hold:        big.NewInt(0),
-		reputation:  big.NewInt(1),
-	}
-	consumptions := consumptionInfo{
-		seed:    big.NewInt(0),
-		other:   big.NewInt(1),
-		seedIF:  big.NewInt(0),
-		otherIF: big.NewInt(1),
-	}
-
+func (suite *ReputationTestSuite) TestComputeReputation() {
 	rep := suite.rep
-	newrep := rep.calcReputation(repData, consumptions)
-	suite.EqualZero(newrep.reputation)
+	suite.EqualZero(rep.computeReputation(big.NewInt(0), big.NewInt(1000)))
+	suite.Equal(big.NewInt(969), rep.computeReputation(big.NewInt(999), big.NewInt(3)))
 }
 
-func (suite *ReputationTestSuite) TestCalcReputation() {
+func (suite *ReputationTestSuite) TestComputeNewRepData() {
 	cases := []struct {
 		repData     reputationData
 		consumption consumptionInfo
@@ -232,7 +219,7 @@ func (suite *ReputationTestSuite) TestCalcReputation() {
 			13,
 			reputationData{
 				consumption: big.NewInt(37860000),
-				hold:        big.NewInt(10 *100000),
+				hold:        big.NewInt(10 * 100000),
 				reputation:  big.NewInt(27860000),
 			},
 		},
@@ -241,14 +228,32 @@ func (suite *ReputationTestSuite) TestCalcReputation() {
 	for i, c := range cases {
 		data := c.repData
 		for j := 0; j < c.repeat; j++ {
-			data = rep.calcReputation(data, c.consumption)
+			data = rep.computeNewRepData(data, c.consumption)
 		}
 		suite.Equal(c.expected, data, "case: %d", i)
 	}
 }
 
+func (suite *ReputationTestSuite) TestComputeNewRepDataDecraseToZero() {
+	repData := reputationData{
+		consumption: big.NewInt(1),
+		hold:        big.NewInt(0),
+		reputation:  big.NewInt(1),
+	}
+	consumptions := consumptionInfo{
+		seed:    big.NewInt(0),
+		other:   big.NewInt(1),
+		seedIF:  big.NewInt(0),
+		otherIF: big.NewInt(1),
+	}
+
+	rep := suite.rep
+	newrep := rep.computeNewRepData(repData, consumptions)
+	suite.EqualZero(newrep.reputation)
+}
+
 // reputation values are greater than zero even if data does not make sense.
-func (suite *ReputationTestSuite) TestReputationGTEZero() {
+func (suite *ReputationTestSuite) TestComputeNewRepDataGTEZero() {
 	repData := reputationData{
 		consumption: big.NewInt(0),
 		hold:        big.NewInt(0),
@@ -262,43 +267,92 @@ func (suite *ReputationTestSuite) TestReputationGTEZero() {
 	}
 
 	rep := suite.rep
-	newrep := rep.calcReputation(repData, consumptions)
+	newrep := rep.computeNewRepData(repData, consumptions)
 	suite.True(newrep.reputation.Cmp(big.NewInt(0)) >= 0)
 	suite.True(newrep.hold.Cmp(big.NewInt(0)) >= 0)
 	suite.True(newrep.hold.Cmp(big.NewInt(0)) >= 0)
 }
 
-func (suite *ReputationTestSuite) TestReputationMigrate() {
+func (suite *ReputationTestSuite) TestUpdateReputationDonateAt() {
 	rep := suite.rep
-	user1 := "user1"
-	user2 := "user2"
-	post1 := "post1"
-	suite.True(rep.RequireMigrate(user1))
-	suite.True(rep.RequireMigrate(user2))
+	donations := []struct {
+		from   Uid
+		to     Pid
+		amount int64
+	}{
+		{"user1", "post1", 10000},
+		{"user2", "post1", 3},
+		{"user3", "post1", 600},
+		{"user4", "post1", 999},
+		{"user5", "post1", 1},
+		{"user6", "post1", 2},
+		{"user7", "post2", 7777},
+		{"user8", "post2", 2},
+		{"user9", "post2", 2},
+		{"user10", "post2", 100},
+		{"user11", "post2", 1000000},
+	}
+	cases := []struct {
+		user     string
+		expected *userMeta
+	}{
+		{
+			"user1",
+			&userMeta{
+				Consumption:       big.NewInt(1000),
+				Hold:              big.NewInt(99),
+				Reputation:        big.NewInt(10),
+				LastDonationRound: 1,
+				LastSettledRound:  1,
+			},
+		},
+		{
+			"user3",
+			&userMeta{
+				Consumption:       big.NewInt(60),
+				Hold:              big.NewInt(5),
+				Reputation:        big.NewInt(10),
+				LastDonationRound: 1,
+				LastSettledRound:  1,
+			},
+		},
+		{
+			"user7",
+			&userMeta{
+				Consumption:       big.NewInt(778),
+				Hold:              big.NewInt(77),
+				Reputation:        big.NewInt(8),
+				LastDonationRound: 1,
+				LastSettledRound:  1,
+			},
+		},
+		{
+			"user11",
+			&userMeta{
+				Consumption:       big.NewInt(100000),
+				Hold:              big.NewInt(9999),
+				Reputation:        big.NewInt(10),
+				LastDonationRound: 1,
+				LastSettledRound:  1,
+			},
+		},
+	}
+	for _, donation := range donations {
+		rep.DonateAt(donation.from, donation.to, big.NewInt(donation.amount))
+	}
 	suite.MoveToNewRound()
-	suite.True(rep.RequireMigrate(user1))
-	suite.MoveToNewRound()
-	suite.MoveToNewRound()
-	suite.True(rep.RequireMigrate(user1))
-	suite.MoveToNewRound()
-	suite.True(rep.RequireMigrate(user1))
-	rep.DonateAt(user1, post1, big.NewInt(1000))
-	suite.False(rep.RequireMigrate(user1))
-	suite.MoveToNewRound()
-	suite.False(rep.RequireMigrate(user1))
-	suite.True(rep.RequireMigrate(user2))
-	rep.MigrateFromV1(user2, big.NewInt(333))
-	suite.False(rep.RequireMigrate(user2))
-
-	// double migration should be ignored.
-	rep.MigrateFromV1(user2, big.NewInt(9999))
-
-	suite.Equal(big.NewInt(333), rep.GetReputation(user2))
+	for i, v := range cases {
+		user := rep.store.GetUserMeta(v.user)
+		rep.updateReputation(user, 2)
+		suite.Equal(v.expected, user, "case: %d", i)
+	}
 }
 
 func (suite *ReputationTestSuite) TestAppendDonation() {
-	rep := NewReputation(NewReputationStore(internal.NewMockStore()), 100000, 2,
-		suite.roundDurationSeconds).(ReputationImpl)
+	rep := NewReputation(
+		NewReputationStore(internal.NewMockStore(), DefaultInitialReputation),
+		100000, 2,
+		DefaultRoundDurationSeconds, DefaultSampleWindowSize, DefaultDecayFactor).(ReputationImpl)
 	user := &userMeta{
 		Reputation: big.NewInt(100),
 		Unsettled:  []Donation{},
@@ -367,18 +421,89 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 	}
 }
 
-// func (suite *ReputationTestSuite) TestComputeReputation() {
-// 	cases := []struct{
-// 		u *userMeta
-// 		r RoundId
-// 	}{
-// 		{
-// 			&userMeta{
+func (suite *ReputationTestSuite) TestIncRoundPostSumImpactAndUpdate() {
+	rep := suite.rep
+	for i := 0; i < 1000; i++ {
+		post := fmt.Sprintf("post%d", i)
+		rep.incRoundPostSumImpact(1, post, big.NewInt(int64(1)))
+	}
+	for i := 999; i >= 0; i-- {
+		post := fmt.Sprintf("post%d", 999-i)
+		rep.incRoundPostSumImpact(1, post, big.NewInt(int64(3)))
+	}
+	for i := 0; i < 1000; i++ {
+		post := fmt.Sprintf("post%d", i)
+		if i%173 == 0 {
+			rep.incRoundPostSumImpact(1, post, big.NewInt(10000))
+		}
+	}
 
-// 			}, 3,
-// 		},
-// 	}
-// }
+	for i := 0; i < 1000; i++ {
+		post := fmt.Sprintf("post%d", i)
+		meta := rep.store.GetRoundPostMeta(1, post)
+		if i%173 == 0 {
+			suite.Equal(big.NewInt(10004), meta.SumIF)
+		} else {
+			suite.Equal(big.NewInt(4), meta.SumIF)
+		}
+	}
+
+	round := rep.store.GetRoundMeta(1)
+	suite.Nil(round.Result)
+	suite.Equal(big.NewInt(4*1000+10000*6), round.SumIF)
+	suite.Equal(int64(0), round.StartAt)
+	suite.Equal(30, len(round.TopN))
+	for _, v := range round.TopN {
+		id := -1
+		fmt.Sscanf(v.Pid, "post%d", &id)
+		if id%173 == 0 {
+			suite.Equal(big.NewInt(10004), v.SumIF)
+		} else {
+			suite.Equal(big.NewInt(4), v.SumIF)
+		}
+	}
+
+	suite.MoveToNewRound()
+	roundFinal := rep.store.GetRoundMeta(1)
+	suite.Equal(6, len(roundFinal.Result))
+	for _, v := range round.Result {
+		id := -1
+		fmt.Sscanf(v, "post%d", &id)
+		suite.True(id%173 == 0)
+	}
+}
+
+func (suite *ReputationTestSuite) TestFirstBlock1() {
+	rep := suite.rep
+	newBlockTime := int64(0)
+	rep.Update(0)
+	rid, startAt := rep.GetCurrentRound()
+	suite.Equal(int64(1), rid)
+	suite.Equal(newBlockTime, startAt)
+	suite.Equal(rep.GetReputation("me"), big.NewInt(DefaultInitialReputation))
+}
+
+func (suite *ReputationTestSuite) TestFirstBlock2() {
+	rep := suite.rep
+	newBlockTime := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
+	rep.Update(newBlockTime.Unix())
+	rid, startAt := rep.GetCurrentRound()
+	suite.Equal(int64(2), rid)
+	suite.Equal(newBlockTime.Unix(), startAt)
+
+	nextBlockTime := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
+	suite.Equal(newBlockTime.Add(time.Duration(suite.roundDurationSeconds)*time.Second), nextBlockTime)
+	rep.Update(nextBlockTime.Unix())
+	rid, startAt = rep.GetCurrentRound()
+	suite.Equal(int64(3), rid)
+	suite.Equal(nextBlockTime.Unix(), startAt)
+}
+
+func (suite *ReputationTestSuite) TestIncFreeScore() {
+	rep := suite.rep
+	rep.IncFreeScore("user1", big.NewInt(3000))
+	suite.Equal(big.NewInt(3000+DefaultInitialReputation), rep.GetReputation("user1"))
+}
 
 func (suite *ReputationTestSuite) TestDonationReturnDp1() {
 	rep := suite.rep
@@ -386,10 +511,10 @@ func (suite *ReputationTestSuite) TestDonationReturnDp1() {
 	post1 := "post1"
 	post2 := "post2"
 
-	dp1 := rep.DonateAt(user1, post1, big.NewInt(InitialReputation))
-	dp2 := rep.DonateAt(user1, post1, big.NewInt(InitialReputation))
-	dp3 := rep.DonateAt(user1, post2, big.NewInt(InitialReputation))
-	suite.Equal(big.NewInt(InitialReputation), dp1)
+	dp1 := rep.DonateAt(user1, post1, big.NewInt(DefaultInitialReputation))
+	dp2 := rep.DonateAt(user1, post1, big.NewInt(DefaultInitialReputation))
+	dp3 := rep.DonateAt(user1, post2, big.NewInt(DefaultInitialReputation))
+	suite.Equal(big.NewInt(DefaultInitialReputation), dp1)
 	suite.Equal(big.NewInt(0), dp2)
 	suite.Equal(big.NewInt(0), dp3)
 }
@@ -401,12 +526,12 @@ func (suite *ReputationTestSuite) TestDonationReturnDp2() {
 	post1 := "post1"
 	post2 := "post2"
 
-	dp1 := rep.DonateAt(user1, post1, big.NewInt(100))
-	dp2 := rep.DonateAt(user1, post2, big.NewInt(100))
-	dpu2 := rep.DonateAt(user2, post1, big.NewInt(100))
-	suite.Equal(big.NewInt(InitialReputation), dp1)
+	dp1 := rep.DonateAt(user1, post1, big.NewInt(10000))
+	dp2 := rep.DonateAt(user1, post2, big.NewInt(10000))
+	dpu2 := rep.DonateAt(user2, post1, big.NewInt(10000))
+	suite.Equal(big.NewInt(DefaultInitialReputation), dp1)
 	suite.Equal(big.NewInt(0), dp2)
-	suite.Equal(big.NewInt(InitialReputation), dpu2)
+	suite.Equal(big.NewInt(DefaultInitialReputation), dpu2)
 
 	suite.MoveToNewRound()
 
@@ -417,169 +542,9 @@ func (suite *ReputationTestSuite) TestDonationReturnDp2() {
 	dpu2 = rep.DonateAt(user2, post2, big.NewInt(17))
 	suite.Equal(big.NewInt(3), dp3)
 	suite.Equal(big.NewInt(4), dp4)
-	suite.Equal(big.NewInt(2), dp5)
-	suite.Equal(big.NewInt(9), dpu2)
+	suite.Equal(big.NewInt(3), dp5)
+	suite.Equal(big.NewInt(10), dpu2)
 }
-
-// func TestDonationBasic(t *testing.T) {
-// 	assert := assert.New(t)
-// 	store := newReputationStoreOnMock()
-// 	rep := NewTestReputationImpl(store)
-// 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
-// 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
-// 	user1 := "user1"
-// 	post1 := "post1"
-
-// 	// round 2
-// 	rep.Update(t1.Unix())
-// 	rep.DonateAt(user1, post1, big.NewInt(100*OneLinoCoin))
-// 	assert.Equal(big.NewInt(100*OneLinoCoin), rep.store.GetRoundPostSumStake(2, post1))
-// 	assert.Equal(rep.GetReputation(user1), big.NewInt(InitialCustomerScore))
-// 	assert.Equal(big.NewInt(OneLinoCoin), rep.store.GetRoundSumDp(2)) // bounded by this user's dp
-
-// 	// round 3
-// 	rep.Update(t3.Unix())
-// 	// (1 * 9 + 100) / 10
-// 	assert.Equal(big.NewInt(1090000), rep.GetReputation(user1))
-// 	assert.Equal(big.NewInt(OneLinoCoin), rep.GetSumRep(post1))
-// }
-
-// // customer score is correct after multiple rounds.
-// func TestDonationCase1(t *testing.T) {
-// 	assert := assert.New(t)
-// 	store := newReputationStoreOnMock()
-// 	rep := NewTestReputationImpl(store)
-// 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
-// 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
-// 	t4 := time.Date(1995, time.February, 7, 13, 11, 1, 0, time.UTC)
-// 	user1 := "user1"
-// 	post1 := "post1"
-// 	post2 := "post2"
-
-// 	// round 2
-// 	rep.Update(t1.Unix())
-// 	rep.DonateAt(user1, post1, big.NewInt(100*OneLinoCoin))
-// 	assert.Equal(big.NewInt(100*OneLinoCoin), rep.store.GetRoundPostSumStake(2, post1))
-// 	assert.Equal(rep.GetReputation(user1), big.NewInt(InitialCustomerScore))
-// 	assert.Equal(big.NewInt(OneLinoCoin), rep.store.GetRoundSumDp(2)) // bounded by this user's dp
-
-// 	// round 3
-// 	rep.Update(t3.Unix())
-// 	// (1 * 9 + 100) / 10
-// 	assert.Equal(big.NewInt(1090000), rep.GetReputation(user1))
-// 	assert.Equal(big.NewInt(OneLinoCoin), rep.GetSumRep(post1))
-// 	rep.DonateAt(user1, post1, big.NewInt(1*OneLinoCoin)) // does not count
-// 	rep.DonateAt(user1, post2, big.NewInt(900*OneLinoCoin))
-// 	rep.Update(t4.Unix())
-// 	// (10.9 * 9 + 900) / 10
-// 	assert.Equal(big.NewInt(9981000), rep.GetReputation(user1))
-// 	assert.Equal([]Pid{post2}, rep.store.GetRoundResult(3))
-// 	// round 4
-// }
-
-// // multiple user split stake correct.
-// func TestDonationCase2(t *testing.T) {
-// 	assert := assert.New(t)
-// 	store := newReputationStoreOnMock()
-// 	rep := NewTestReputationImpl(store)
-// 	t1 := time.Date(1995, time.February, 5, 11, 11, 0, 0, time.UTC)
-// 	t3 := time.Date(1995, time.February, 6, 12, 11, 0, 0, time.UTC)
-// 	t4 := time.Date(1995, time.February, 7, 13, 11, 1, 0, time.UTC)
-// 	user1 := "user1"
-// 	user2 := "user2"
-// 	user3 := "user3"
-// 	post1 := "post1"
-// 	post2 := "post2"
-
-// 	// round 2
-// 	rep.Update(t1.Unix())
-// 	dp1 := rep.DonateAt(user1, post1, big.NewInt(100*OneLinoCoin))
-// 	dp2 := rep.DonateAt(user2, post2, big.NewInt(1000*OneLinoCoin))
-// 	dp3 := rep.DonateAt(user3, post2, big.NewInt(1000*OneLinoCoin))
-// 	assert.Equal(big.NewInt(OneLinoCoin), dp1)
-// 	assert.Equal(big.NewInt(OneLinoCoin), dp2)
-// 	assert.Equal(big.NewInt(OneLinoCoin), dp3)
-// 	assert.Equal(big.NewInt(100*OneLinoCoin), rep.store.GetRoundPostSumStake(2, post1))
-// 	assert.Equal(rep.GetReputation(user1), big.NewInt(InitialCustomerScore))
-// 	assert.Equal(big.NewInt(3*OneLinoCoin), rep.store.GetRoundSumDp(2)) // bounded by this user's dp
-
-// 	// post1, dp, 1
-// 	// post2, dp, 2
-// 	// round 3
-// 	rep.Update(t3.Unix())
-// 	assert.Equal([]Pid{post2, post1}, rep.store.GetRoundResult(2))
-// 	assert.Equal(big.NewInt(1090000), rep.GetReputation(user1))
-// 	assert.Equal(big.NewInt(13943027), rep.GetReputation(user2))
-// 	assert.Equal(big.NewInt(6236972), rep.GetReputation(user3))
-// 	assert.Equal(big.NewInt(OneLinoCoin), rep.GetSumRep(post1))
-// 	assert.Equal(big.NewInt(2*OneLinoCoin), rep.GetSumRep(post2))
-
-// 	// user1: 10.9
-// 	// user2: 139.43027
-// 	// user3: 62.36972
-// 	dp1 = rep.DonateAt(user2, post2, big.NewInt(200*OneLinoCoin))
-// 	dp2 = rep.DonateAt(user1, post1, big.NewInt(400*OneLinoCoin))
-// 	// does not count because rep used up.
-// 	dp3 = rep.DonateAt(user1, post1, big.NewInt(900*OneLinoCoin))
-// 	dp4 := rep.DonateAt(user3, post1, big.NewInt(500*OneLinoCoin))
-// 	assert.Equal(big.NewInt(13943027-OneLinoCoin), dp1)
-// 	assert.Equal(big.NewInt(1090000-OneLinoCoin), dp2)
-// 	assert.Equal(BigIntZero, dp3)
-// 	assert.Equal(big.NewInt(6236972), dp4)
-
-// 	// round 4
-// 	rep.Update(t4.Unix())
-// 	assert.Equal([]Pid{post2, post1}, rep.store.GetRoundResult(3))
-// 	assert.Equal(big.NewInt(16136841), rep.GetReputation(user1))
-// 	assert.Equal(big.NewInt(14548724), rep.GetReputation(user2))
-// 	assert.Equal(big.NewInt(8457432), rep.GetReputation(user3))
-// }
-// func TestStartNewRound(t *testing.T) {
-// 	assert := assert.New(t)
-// 	store := newReputationStoreOnMock()
-
-// 	assert.Equal(RoundId(1), store.GetCurrentRound())
-// 	store.StartNewRound(222)
-// 	assert.Equal(RoundId(2), store.GetCurrentRound())
-// 	assert.Equal(int64(222), store.GetRoundStartAt(2))
-// 	assert.Empty(store.GetRoundTopNPosts(2))
-// 	assert.Empty(store.GetRoundResult(2))
-// 	assert.Equal(big.NewInt(0), store.GetRoundSumDp(1))
-// 	assert.Equal(big.NewInt(0), store.GetRoundSumDp(2))
-// }
-
-// func TestTopN(t *testing.T) {
-// 	assert := assert.New(t)
-// 	post1 := "bla"
-// 	post2 := "zzz"
-// 	store := newReputationStoreOnMock()
-
-// 	// test sorting
-// 	store.StartNewRound(222)
-// 	store.SetRoundPostSumDp(2, post1, big.NewInt(100))
-// 	assert.Equal([]PostDpPair{{post1, big.NewInt(100)}}, store.GetRoundTopNPosts(2))
-// 	store.SetRoundPostSumDp(2, post2, big.NewInt(300))
-// 	assert.Equal([]PostDpPair{{post2, big.NewInt(300)}, {post1, big.NewInt(100)}}, store.GetRoundTopNPosts(2))
-// 	store.SetRoundPostSumDp(2, post1, big.NewInt(1000))
-// 	assert.Equal([]PostDpPair{{post1, big.NewInt(1000)}, {post2, big.NewInt(300)}}, store.GetRoundTopNPosts(2))
-
-// 	for i := 1; i <= DefaultBestContentIndexN; i++ {
-// 		store.SetRoundPostSumDp(2, "p"+string(i), big.NewInt(int64(i)))
-// 	}
-// 	for i := DefaultBestContentIndexN; i >= 0; i-- {
-// 		store.SetRoundPostSumDp(2, "pp"+string(i), big.NewInt(int64(i)))
-// 	}
-// 	topN := store.GetRoundTopNPosts(2)
-
-// 	// at most N.
-// 	assert.Equal(DefaultBestContentIndexN, len(topN))
-// 	// decreasing order
-// 	for i, v := range topN {
-// 		if i > 0 {
-// 			assert.Truef(v.SumDp.Cmp(topN[i-1].SumDp) <= 0, "%+v, %+v", v, topN[i-1])
-// 		}
-// 	}
-// }
 
 func (suite *ReputationTestSuite) TestBigIntEMA() {
 	cases := []struct {

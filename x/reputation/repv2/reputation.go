@@ -46,17 +46,20 @@ type ReputationImpl struct {
 	BestN                int
 	UserMaxN             int
 	RoundDurationSeconds int64
+	SampleWindowSize     int64
+	DecayFactor          int64
 }
 
 var _ Reputation = ReputationImpl{}
 
-// There will be at mode @p BestN content and @p UserMaxN.
-func NewReputation(s ReputationStore, BestN int, UserMaxN int, RoundDurationSeconds int64) Reputation {
+func NewReputation(s ReputationStore, BestN int, UserMaxN int, RoundDurationSeconds, SampleWindowSize, DecayFactor int64) Reputation {
 	return ReputationImpl{
 		store:                s,
 		BestN:                BestN,
 		UserMaxN:             UserMaxN,
 		RoundDurationSeconds: RoundDurationSeconds,
+		SampleWindowSize:     SampleWindowSize,
+		DecayFactor:          DecayFactor,
 	}
 }
 
@@ -95,14 +98,22 @@ func (rep ReputationImpl) ImportFromFile(file string) {
 	rep.store.Import(dt)
 }
 
+// Import reputation score from V1
+// The previous reputation score becomes consumption in V2.
+// User's last donation round will be reset to current round to
+// indicate the this user has migrated.
 func (rep ReputationImpl) MigrateFromV1(u Uid, prevRep Rep) {
 	if !rep.RequireMigrate(u) {
 		return
 	}
-	userMeta := rep.store.GetUserMeta(u)
-	userMeta.Reputation = prevRep
-	userMeta.LastDonationRound = rep.store.GetCurrentRound()
-	rep.store.SetUserMeta(u, userMeta)
+	user := rep.store.GetUserMeta(u)
+	defer func() {
+		rep.store.SetUserMeta(u, user)
+	}()
+	user.LastDonationRound = rep.store.GetCurrentRound()
+	user.Consumption = prevRep
+	user.Consumption = bigIntMax(user.Consumption, big.NewInt(0))
+	user.Reputation = rep.computeReputation(user.Consumption, user.Hold)
 }
 
 // any donation or import will make user's lastDonationRound
@@ -115,6 +126,7 @@ func (rep ReputationImpl) RequireMigrate(u Uid) bool {
 	return true
 }
 
+// internal struct as a summary of an user's consumption in a round.
 type consumptionInfo struct {
 	seed    LinoCoin
 	other   LinoCoin
@@ -122,6 +134,9 @@ type consumptionInfo struct {
 	otherIF IF
 }
 
+// extract user' consumptionInfo from userMeta. The @p seedSet is the result
+// of the user's the last donation, and also the round when donations in user.Unsettled
+// happened.
 func (rep ReputationImpl) extractConsumptionInfo(user *userMeta, seedSet map[Pid]bool) consumptionInfo {
 	seed := big.NewInt(0)
 	other := big.NewInt(0)
@@ -147,6 +162,7 @@ func (rep ReputationImpl) extractConsumptionInfo(user *userMeta, seedSet map[Pid
 	}
 }
 
+// return the seed set of the @p id round.
 func (rep ReputationImpl) getSeedSet(id RoundId) map[Pid]bool {
 	result := rep.store.GetRoundMeta(id)
 	tops := make(map[Pid]bool)
@@ -156,21 +172,25 @@ func (rep ReputationImpl) getSeedSet(id RoundId) map[Pid]bool {
 	return tops
 }
 
+// compute reputation from @p consumption and @p hold.
+func (rep ReputationImpl) computeReputation(consumption LinoCoin, hold Rep) Rep {
+	return bigIntMax(
+		bigIntSub(consumption, bigIntMul(hold, big.NewInt(rep.SampleWindowSize))),
+		big.NewInt(0),
+	)
+}
+
+// internal struct for reputation data of an user.
 type reputationData struct {
 	consumption LinoCoin
 	hold        Rep
 	reputation  Rep
 }
 
-func computeReputation(consumption LinoCoin, hold Rep) Rep {
-	return bigIntMax(
-		bigIntSub(consumption, bigIntMul(hold, big.NewInt(SampleWindowSize))),
-		big.NewInt(0),
-	)
-}
-
 // will mutate @p user to new reputation score based on @p consumptions
-func (rep ReputationImpl) calcReputation(repData reputationData, consumptions consumptionInfo) reputationData {
+// Return a new reputationData that is computed from (a user's) @p repData with
+// new @p consumptions in a round.
+func (rep ReputationImpl) computeNewRepData(repData reputationData, consumptions consumptionInfo) reputationData {
 	seed := consumptions.seed
 	other := consumptions.other
 	seedIF := consumptions.seedIF
@@ -182,30 +202,30 @@ func (rep ReputationImpl) calcReputation(repData reputationData, consumptions co
 	)
 	newConsumption := repData.consumption
 	if bigIntGreater(adjustedConsumption, repData.consumption) {
-		newConsumption = bigIntEMA(repData.consumption, adjustedConsumption, SampleWindowSize)
+		newConsumption = bigIntEMA(repData.consumption, adjustedConsumption, rep.SampleWindowSize)
 	}
 	otherLimit := bigIntDiv(bigIntAdd(seedIF, otherIF), big.NewInt(5)) // * 20%
 	if bigIntGreater(otherIF, otherLimit) {
 		newConsumption = bigIntSub(newConsumption,
 			bigIntMax(big.NewInt(1),
-				bigIntMulFrac(bigIntSub(otherIF, otherLimit), DecayFactor, 100)))
+				bigIntMulFrac(bigIntSub(otherIF, otherLimit), rep.DecayFactor, 100)))
 		newConsumption = bigIntMax(big.NewInt(0), newConsumption)
 	}
 
 	if bigIntGTE(newConsumption, repData.consumption) {
 		delta := bigIntSub(newConsumption, repData.consumption)
-		repData.hold = bigIntEMA(repData.hold, delta, SampleWindowSize)
+		repData.hold = bigIntMax(big.NewInt(1), bigIntEMA(repData.hold, delta, rep.SampleWindowSize))
 	}
 
 	repData.consumption = newConsumption
-	repData.reputation = computeReputation(repData.consumption, repData.hold)
+	repData.reputation = rep.computeReputation(repData.consumption, repData.hold)
 	return repData
 }
 
-// will mutate @p user.
+// update @p user with information of @p current round.
 func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 	// needs to update user's reputation only when the last settled
-	// round is less than the last donation round, and current round
+	// round is less than the last donation round, *and* current round
 	// is newer than last donation round(i.e. the last donation round has ended).
 	// if above conditions do not hold, skip update.
 	if !(user.LastSettledRound < user.LastDonationRound && user.LastDonationRound < current) {
@@ -214,7 +234,7 @@ func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 
 	seedset := rep.getSeedSet(user.LastDonationRound)
 	consumptions := rep.extractConsumptionInfo(user, seedset)
-	newrep := rep.calcReputation(reputationData{
+	newrep := rep.computeNewRepData(reputationData{
 		consumption: user.Consumption,
 		hold:        user.Hold,
 		reputation:  user.Reputation,
@@ -227,6 +247,7 @@ func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 	user.Unsettled = nil
 }
 
+// return the reputation of @p u.
 func (rep ReputationImpl) GetReputation(u Uid) Rep {
 	user := rep.store.GetUserMeta(u)
 	current := rep.store.GetCurrentRound()
@@ -234,7 +255,13 @@ func (rep ReputationImpl) GetReputation(u Uid) Rep {
 	return user.Reputation
 }
 
+// Record @p u has donated to @p p with @p amount LinoCoin.
 // Only the first UserMaxN posts will be counted and have impact.
+// The invarience is that user will have only *one* round of donations unsettled,
+// either because that round is current round(not ended yet),
+// or the user has never donated after that round.
+// So when an user donates, we first update user's reputation, then
+// we add this donation to records.
 func (rep ReputationImpl) DonateAt(u Uid, p Pid, amount LinoCoin) IF {
 	if len(u) == 0 {
 		panic("Uid must be longer than 0")
@@ -256,7 +283,8 @@ func (rep ReputationImpl) DonateAt(u Uid, p Pid, amount LinoCoin) IF {
 
 // appendDonation: append a new donation to user's unsettled list, return the impact
 // factor of this donation.
-// contract: before calling this, user's reputation needs to be updated by call computeReputation.
+// contract: before calling this, user's reputation needs to
+//           be updated by calling updateReputation.
 func (rep ReputationImpl) appendDonation(user *userMeta, post Pid, amount LinoCoin) IF {
 	reputation := user.Reputation
 	pos := -1
@@ -285,6 +313,9 @@ func (rep ReputationImpl) appendDonation(user *userMeta, post Pid, amount LinoCo
 	return impact
 }
 
+// increase the sum of impact factors of @p post by @p dp, in @p round
+// It also maintains an order of posts of the round by bubbling up the rank
+// of post on impact factor increasing.
 func (rep ReputationImpl) incRoundPostSumImpact(round RoundId, p Pid, dp IF) {
 	roundPost := rep.store.GetRoundPostMeta(round, p)
 	defer func() {
@@ -317,7 +348,8 @@ func (rep ReputationImpl) incRoundPostSumImpact(round RoundId, p Pid, dp IF) {
 			if bigIntLess(lastSumIF, newSumIF) {
 				roundMeta.TopN = append(roundMeta.TopN, PostIFPair{Pid: p, SumIF: newSumIF})
 			} else {
-				// do not need to do anything, as this post's sumDP is less or equal to the last one.
+				// do not need to do anything, as this post's sumDP
+				// is less or equal to the last one.
 				return
 			}
 		}
@@ -330,13 +362,15 @@ func (rep ReputationImpl) incRoundPostSumImpact(round RoundId, p Pid, dp IF) {
 	}
 }
 
+// return the current round id the the start time of the round.
 func (rep ReputationImpl) GetCurrentRound() (RoundId, Time) {
 	rid := rep.store.GetCurrentRound()
 	return rid, rep.store.GetRoundMeta(rid).StartAt
 }
 
-// to make added score permanent, add it on consumption, as reputation is
-// only a temporory result.
+// increase @p u user's reputation by @p score.
+// To make added score permanent, add it on consumption, as reputation is
+// only a temporory result, same in reputation migration.
 func (rep ReputationImpl) IncFreeScore(u Uid, score Rep) {
 	user := rep.store.GetUserMeta(u)
 	defer func() {
@@ -344,9 +378,11 @@ func (rep ReputationImpl) IncFreeScore(u Uid, score Rep) {
 	}()
 	user.Consumption.Add(user.Consumption, score)
 	user.Consumption = bigIntMax(user.Consumption, big.NewInt(0))
-	user.Reputation = computeReputation(user.Consumption, user.Hold)
+	user.Reputation = rep.computeReputation(user.Consumption, user.Hold)
 }
 
+// On BlockEnd(@p t), select out the seed set of the current round and start
+// a new round.
 func (rep ReputationImpl) Update(t Time) {
 	current := rep.store.GetCurrentRound()
 	roundInfo := rep.store.GetRoundMeta(current)
@@ -397,7 +433,7 @@ func (rep ReputationImpl) StartNewRound(t Time) {
 }
 
 // a bunch of helper functions that takes two bitInt and returns
-// a newly allocated int
+// a newly allocated bigInt.
 func bigIntAdd(a, b *big.Int) *big.Int {
 	rst := big.NewInt(0)
 	return rst.Add(a, b)
@@ -455,6 +491,8 @@ func bigIntLTE(a, b *big.Int) bool {
 	return a.Cmp(b) <= 0
 }
 
+// return the exponential moving average of @p prev on having a new sample @p new
+// with sample size of @p windowSize.
 func bigIntEMA(prev, new *big.Int, windowSize int64) *big.Int {
 	if windowSize <= 0 {
 		panic("bigIntEMA illegal windowSize: " + strconv.FormatInt(windowSize, 10))
@@ -464,6 +502,7 @@ func bigIntEMA(prev, new *big.Int, windowSize int64) *big.Int {
 		big.NewInt(windowSize))
 }
 
+// return v / (num / denom)
 func bigIntDivFrac(v *big.Int, num, denom int64) *big.Int {
 	if num == 0 || denom == 0 {
 		panic("bigIntDivFrac zero num or denom")
@@ -471,6 +510,7 @@ func bigIntDivFrac(v *big.Int, num, denom int64) *big.Int {
 	return bigIntMulFrac(v, denom, num)
 }
 
+// return v * (num / denom)
 func bigIntMulFrac(v *big.Int, num, denom int64) *big.Int {
 	if denom == 0 {
 		panic("bigIntMulFrac zero denom")
@@ -478,6 +518,9 @@ func bigIntMulFrac(v *big.Int, num, denom int64) *big.Int {
 	return bigIntDiv(bigIntMul(v, big.NewInt(num)), big.NewInt(denom))
 }
 
+// contract:
+//     before: all inversions are related to posts[pos].
+//     after:  posts are sorted by SumIF, decreasingly.
 func bubbleUp(posts []PostIFPair, pos int) {
 	for i := pos; i > 0; i-- {
 		if bigIntLess(posts[i-1].SumIF, posts[i].SumIF) {
