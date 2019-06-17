@@ -35,11 +35,11 @@ func (suite *StoreTestSuite) TestPrefix() {
 }
 
 func (suite *StoreTestSuite) TestInitValues() {
-	store := NewReputationStore(suite.mockDB)
+	store := NewReputationStore(suite.mockDB, DefaultInitialReputation)
 
 	// user
 	user := store.GetUserMeta("no")
-	suite.Equal(big.NewInt(InitialReputation), user.Reputation)
+	suite.Equal(big.NewInt(DefaultInitialReputation), user.Reputation)
 	suite.Equal(int64(0), user.LastSettledRound)
 	suite.Equal(int64(0), user.LastDonationRound)
 	suite.Empty(user.Unsettled)
@@ -64,7 +64,7 @@ func (suite *StoreTestSuite) TestInitValues() {
 }
 
 func (suite *StoreTestSuite) TestStoreGetSet() {
-	store := NewReputationStore(suite.mockDB)
+	store := NewReputationStore(suite.mockDB, DefaultInitialReputation)
 
 	user1 := "test"
 	user2 := "test2"
@@ -143,7 +143,7 @@ func (suite *StoreTestSuite) TestStoreGetSet() {
 }
 
 func (suite *StoreTestSuite) TestStoreImportExporter() {
-	store := NewReputationStore(suite.mockDB)
+	store := NewReputationStore(suite.mockDB, DefaultInitialReputation)
 
 	user1 := "test"
 	user2 := "test2"
@@ -171,7 +171,7 @@ func (suite *StoreTestSuite) TestStoreImportExporter() {
 	// export data
 	data := store.Export()
 	db2 := internal.NewMockStore()
-	store2 := NewReputationStore(db2)
+	store2 := NewReputationStore(db2, DefaultInitialReputation)
 	store2.Import(data)
 	suite.Equal(u1.Reputation, store2.GetUserMeta(user1).Reputation)
 	suite.Equal(u2.Reputation, store2.GetUserMeta(user2).Reputation)

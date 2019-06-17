@@ -120,11 +120,12 @@ func getGameKey() []byte {
 
 // no state.
 type reputationStoreImpl struct {
-	store Store
+	store          Store
+	initReputation int64
 }
 
-func NewReputationStore(s Store) ReputationStore {
-	return &reputationStoreImpl{store: s}
+func NewReputationStore(s Store, initRep int64) ReputationStore {
+	return &reputationStoreImpl{store: s, initReputation: initRep}
 }
 
 func (impl reputationStoreImpl) Export() *UserReputationTable {
@@ -157,9 +158,9 @@ func (impl reputationStoreImpl) GetUserMeta(u Uid) *userMeta {
 	rst := decodeUserMeta(buf)
 	if rst == nil {
 		return &userMeta{
-			Consumption:       big.NewInt(InitialReputation),
+			Consumption:       big.NewInt(impl.initReputation),
 			Hold:              big.NewInt(0),
-			Reputation:        big.NewInt(InitialReputation),
+			Reputation:        big.NewInt(impl.initReputation),
 			LastSettledRound:  0,
 			LastDonationRound: 0,
 			Unsettled:         nil,
