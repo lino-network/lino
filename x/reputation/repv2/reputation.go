@@ -65,6 +65,11 @@ func NewReputation(s ReputationStore, BestN int, UserMaxN int, RoundDurationSeco
 
 // ExportToFile - implementing ExporteImporter
 func (rep ReputationImpl) ExportToFile(file string) {
+	// before calling store's export, update reputation.
+	rep.store.IterateUsers(func(u Uid) bool {
+		rep.GetReputation(u)
+		return false
+	})
 	rst := rep.store.Export()
 	f, err := os.Create(file)
 	if err != nil {
@@ -250,6 +255,9 @@ func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 // return the reputation of @p u.
 func (rep ReputationImpl) GetReputation(u Uid) Rep {
 	user := rep.store.GetUserMeta(u)
+	defer func() {
+		rep.store.SetUserMeta(u, user)
+	}()
 	current := rep.store.GetCurrentRound()
 	rep.updateReputation(user, current)
 	return user.Reputation

@@ -71,13 +71,6 @@ func (suite *ReputationTestSuite) TestExportImportFile() {
 	suite.MoveToNewRound()
 	suite.MoveToNewRound()
 
-	// last round must be settled, otherwise export-then-import data will be different
-	// from values that comes from rep.GetReputation.
-	rep.DonateAt(user1, post1, big.NewInt(3333))
-	rep.DonateAt(user1, post1, big.NewInt(4444))
-	rep.DonateAt(user2, post1, big.NewInt(5555))
-	rep.DonateAt(user2, post2, big.NewInt(1324))
-
 	suite.Require().Equal(big.NewInt(10920), suite.rep.GetReputation("user1"))
 	suite.Require().Equal(big.NewInt(10910), suite.rep.GetReputation("user2"))
 
@@ -86,6 +79,7 @@ func (suite *ReputationTestSuite) TestExportImportFile() {
 	defer os.RemoveAll(dir) // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
+	suite.MoveToNewRound()
 	rep.ExportToFile(tmpfn)
 
 	imported := NewReputation(
