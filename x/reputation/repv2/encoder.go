@@ -15,7 +15,7 @@ func decodeUserMeta(data []byte) *userMeta {
 	rst := &userMeta{}
 	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
-		panic("error in json decode userMeta" + err.Error())
+		panic("error in json decode userMeta: " + err.Error())
 	}
 	return rst
 }
@@ -38,7 +38,7 @@ func decodeRoundMeta(data []byte) *roundMeta {
 	rst := &roundMeta{}
 	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
-		panic("error in json decode roundMeta" + err.Error())
+		panic("error in json decode roundMeta: " + err.Error())
 	}
 	return rst
 }
@@ -61,7 +61,7 @@ func decodeRoundPostMeta(data []byte) *roundPostMeta {
 	rst := &roundPostMeta{}
 	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
-		panic("error in json decode roundPostMeta" + err.Error())
+		panic("error in json decode roundPostMeta: " + err.Error())
 	}
 	return rst
 }
@@ -84,7 +84,7 @@ func decodeGameMeta(data []byte) *gameMeta {
 	rst := &gameMeta{}
 	err := cdc.UnmarshalJSON(data, rst)
 	if err != nil {
-		panic("error in json decode gameMeta" + err.Error())
+		panic("error in json decode gameMeta: " + err.Error())
 	}
 	return rst
 }
