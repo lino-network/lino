@@ -462,11 +462,6 @@ func bigIntDiv(a, b *big.Int) *big.Int {
 	return rst.Div(a, b)
 }
 
-func bigIntLsh(a *big.Int, n uint) *big.Int {
-	rst := big.NewInt(0)
-	return rst.Lsh(a, n)
-}
-
 func bigIntMin(a, b *big.Int) *big.Int {
 	if a.Cmp(b) < 0 {
 		return big.NewInt(0).Set(a)

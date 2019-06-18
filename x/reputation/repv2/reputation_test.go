@@ -322,6 +322,12 @@ func (suite *ReputationTestSuite) TestComputeNewRepDataGTEZero() {
 
 func (suite *ReputationTestSuite) TestUpdateReputationDonateAt() {
 	rep := suite.rep
+
+	// panics
+	suite.Panics(func() { rep.DonateAt("", "123", big.NewInt(11)) })
+	suite.Panics(func() { rep.DonateAt("u31", "", big.NewInt(11)) })
+	suite.Panics(func() { rep.DonateAt("", "", big.NewInt(11)) })
+
 	donations := []struct {
 		from   Uid
 		to     Pid
@@ -594,6 +600,7 @@ func (suite *ReputationTestSuite) TestDonationReturnDp2() {
 }
 
 func (suite *ReputationTestSuite) TestBigIntEMA() {
+	suite.Panics(func() { bigIntEMA(big.NewInt(1000), big.NewInt(333), 0) })
 	cases := []struct {
 		prev     bigInt
 		new      bigInt
@@ -632,6 +639,9 @@ func (suite *ReputationTestSuite) TestBigIntEMA() {
 }
 
 func (suite *ReputationTestSuite) TestIntDivFrac() {
+	suite.Panics(func() { bigIntDivFrac(big.NewInt(1000), 1, 0) })
+	suite.Panics(func() { bigIntDivFrac(big.NewInt(1000), 0, 1) })
+	suite.Panics(func() { bigIntDivFrac(big.NewInt(1000), 0, 0) })
 	cases := []struct {
 		v        bigInt
 		num      int64
@@ -664,6 +674,7 @@ func (suite *ReputationTestSuite) TestIntDivFrac() {
 }
 
 func (suite *ReputationTestSuite) TestIntMulFrac() {
+	suite.Panics(func() { bigIntMulFrac(big.NewInt(1000), 1, 0) })
 	cases := []struct {
 		v        bigInt
 		num      int64
