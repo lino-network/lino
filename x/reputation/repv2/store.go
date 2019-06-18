@@ -21,6 +21,8 @@ type Store interface {
 	Iterator(start, end []byte) db.Iterator
 }
 
+type UserIterator = func(user Uid) bool // return true to break.
+
 // ReputationStore - store reputation values.
 // a simple wrapper around kv-store. It does not handle any reputation computation logic,
 // except for init value for some field, like customer score.
@@ -33,6 +35,9 @@ type ReputationStore interface {
 
 	// Import state from bytes
 	Import(tb *UserReputationTable)
+
+	// Iterator over usernames
+	IterateUsers(UserIterator)
 
 	GetUserMeta(u Uid) *userMeta
 	SetUserMeta(u Uid, data *userMeta)
@@ -128,19 +133,29 @@ func NewReputationStore(s Store, initRep int64) ReputationStore {
 	return &reputationStoreImpl{store: s, initReputation: initRep}
 }
 
-func (impl reputationStoreImpl) Export() *UserReputationTable {
-	rst := &UserReputationTable{}
+func (impl reputationStoreImpl) IterateUsers(cb UserIterator) {
 	itr := impl.store.Iterator(repUserMetaPrefix, PrefixEndBytes(repUserMetaPrefix))
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		uid := Uid(itr.Key()[1:])
+		if cb(uid) {
+			break
+		}
+	}
+}
+
+func (impl reputationStoreImpl) Export() *UserReputationTable {
+	rst := &UserReputationTable{}
+	impl.IterateUsers(func(uid Uid) bool {
 		v := impl.GetUserMeta(uid)
 		rst.Reputations = append(rst.Reputations, UserReputation{
 			Username:      uid,
 			CustomerScore: v.Reputation,
 			FreeScore:     big.NewInt(0),
 		})
-	}
+
+		return false
+	})
 	return rst
 }
 
