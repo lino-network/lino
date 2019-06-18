@@ -2,7 +2,10 @@ package repv2
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/big"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -44,6 +47,56 @@ func (suite *ReputationTestSuite) MoveToNewRound() {
 // for bigInt(*big.Int), need this on comparing with zero value.
 func (suite *ReputationTestSuite) EqualZero(a bigInt, args ...interface{}) {
 	suite.Equal(0, a.Cmp(big.NewInt(0)), "%d is not bigInt zero", a.Int64())
+}
+
+func (suite *ReputationTestSuite) TestExportImportFile() {
+	rep := suite.rep
+	user1 := "user1"
+	user2 := "user2"
+	post1 := "post1"
+	post2 := "post2"
+	rep.IncFreeScore(user1, big.NewInt(10000))
+	rep.IncFreeScore(user2, big.NewInt(10000))
+
+	rep.DonateAt(user1, post1, big.NewInt(100000))
+	rep.DonateAt(user1, post1, big.NewInt(1000))
+	rep.DonateAt(user2, post1, big.NewInt(100000))
+	rep.DonateAt(user2, post2, big.NewInt(1000))
+	suite.MoveToNewRound()
+
+	rep.DonateAt(user1, post1, big.NewInt(3333))
+	rep.DonateAt(user1, post1, big.NewInt(4444))
+	rep.DonateAt(user2, post1, big.NewInt(5555))
+	rep.DonateAt(user2, post2, big.NewInt(1324))
+	suite.MoveToNewRound()
+	suite.MoveToNewRound()
+
+	// last round must be settled, otherwise export-then-import data will be different
+	// from values that comes from rep.GetReputation.
+	rep.DonateAt(user1, post1, big.NewInt(3333))
+	rep.DonateAt(user1, post1, big.NewInt(4444))
+	rep.DonateAt(user2, post1, big.NewInt(5555))
+	rep.DonateAt(user2, post2, big.NewInt(1324))
+
+	suite.Require().Equal(big.NewInt(10920), suite.rep.GetReputation("user1"))
+	suite.Require().Equal(big.NewInt(10910), suite.rep.GetReputation("user2"))
+
+	dir, err := ioutil.TempDir("", "example")
+	suite.Require().Nil(err)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	rep.ExportToFile(tmpfn)
+
+	imported := NewReputation(
+		NewReputationStore(internal.NewMockStore(), DefaultInitialReputation),
+		suite.bestN, suite.userMaxN,
+		DefaultRoundDurationSeconds, DefaultSampleWindowSize, DefaultDecayFactor,
+	).(ReputationImpl)
+
+	imported.ImportFromFile(tmpfn)
+	suite.Equal(suite.rep.GetReputation("user1"), imported.GetReputation("user1"))
+	suite.Equal(suite.rep.GetReputation("user2"), imported.GetReputation("user2"))
 }
 
 func (suite *ReputationTestSuite) TestReputationMigrate() {
