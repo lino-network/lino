@@ -84,10 +84,8 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	assert.Nil(t, err)
 
 	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
-	lb.Commit()
-
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)}})
+		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Unix(0, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
@@ -339,6 +337,7 @@ func TestFireByzantineValidators(t *testing.T) {
 
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
+			Height:  lb.LastBlockHeight() + 1,
 			ChainID: "Lino", Time: time.Unix(time.Now().Unix()+200, 0)},
 		ByzantineValidators: []abci.Evidence{
 			{
@@ -834,8 +833,9 @@ func TestGlobalTime(t *testing.T) {
 	}
 	for _, cs := range cases {
 		lb := NewLinoBlockchain(logger, db, nil)
+		// XXX(yumin): db is shared among all cases, so height is 2..3
 		lb.BeginBlock(abci.RequestBeginBlock{
-			Header: abci.Header{ChainID: "Lino", Time: time.Unix(cs.baseTime, 0)}})
+			Header: abci.Header{Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(cs.baseTime, 0)}})
 		lb.EndBlock(abci.RequestEndBlock{})
 		lb.Commit()
 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
