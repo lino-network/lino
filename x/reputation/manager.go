@@ -146,6 +146,10 @@ func (rep ReputationManager) OnStakeIn(ctx sdk.Context,
 // OnStakeOut - on @p username stakeout @p amount
 func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
+	// after upgrade6, no-op on stackout.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		return
+	}
 	incAmount := rep.calcFreeScore(amount)
 	incAmount.Neg(incAmount)
 	rep.incFreeScore(ctx, username, incAmount)
