@@ -1,6 +1,6 @@
 language: go
 install:
-- go get -u github.com/golang/dep/...
+- make get_tools
 script:
 - make build
 - make install
