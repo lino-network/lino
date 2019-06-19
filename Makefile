@@ -34,7 +34,7 @@ get_vendor_deps:
 	@dep ensure
 
 test:get_vendor_deps apply_patch
-	CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go test -ldflags $(LD_FLAGS) -tags $(GO_TAGS) ./...
+	CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go test -ldflags $(LD_FLAGS) -tags $(GO_TAGS) ./... -timeout 600s
 
 benchmark:
 	@go test -bench=. $(PACKAGES)

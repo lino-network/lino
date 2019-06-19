@@ -1,11 +1,10 @@
 language: go
 install:
 - go get -u github.com/golang/dep/...
-- dep ensure
 script:
-- go build github.com/lino-network/lino/cmd/lino
-- go build github.com/lino-network/lino/cmd/linocli
-- go test ./... -timeout 600s
+- make build
+- make install
+- make test
 notifications:
   slack:
     secure: QgDJp3M8MEVdU8EywqT+hq3YTWhL1o8v7MvVjJZV3D+FdS+2QmpSoF6v4olu633ps7F8b2g3Mkq7bM2U0khPvhnXXutfM/5x8Gd2V7G9+/fXlNxUMty3TA5ACbUbvJhveU4xZuXto52z7gXS4aCUQItQyxSlJsdAYJHQTgWOPX/lFSzR2yRQZUC1zs2gHg0FUVN6sBb3DzB0ui6tkM+0W0j60GScs4fnV0j/VuywEio4wGE4SpFZHptPYsPkpXiO6KxjCpUoMOOtbuzU5KPSZH5xeJpKVJhIoH9znfYXJyxXp1PJUQrg/gHD0O7RJYW3dYP51dYnt0AxROoAskkINWkoCj/zaWdqMdNaH5+w6OsOcjI4h3mej2Fuj2Jdjb6xJ4WNwL9Q6vhj8vlrK38KwMuAXVq6b1VXF9XQLJhBN991UmqH44JD6a9VlkX+lmoWefICbYNQJELOXIyC/+2yO0LGr83eojo/4GAdxtz4QlcN20cO7F5FT0ftqD1mRPCSSHMSLbes7TrlmbDpBn2/6GkOEFmtAh+pM46drnTrW9aAyrQzA/M8SSTtL61kHtgt3xGodllISQmmmgpszDuoHm4sTkZ+4ZJPgZ5dxmkwx8ab4qV+VVdnOCde1gGlqC+DeqoAjT0BnWeWvEwaMoAf8QBIc34adLfXdSeEVEWqvps=
