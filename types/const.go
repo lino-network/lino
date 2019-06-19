@@ -5,17 +5,18 @@ const (
 	Decimals = 100000
 
 	// KVStoreKey presents store which used by app
-	MainKVStoreKey       = "main"
-	AccountKVStoreKey    = "account"
-	PostKVStoreKey       = "post"
-	ValidatorKVStoreKey  = "validator"
-	GlobalKVStoreKey     = "global"
-	VoteKVStoreKey       = "vote"
-	InfraKVStoreKey      = "infra"
-	DeveloperKVStoreKey  = "developer"
-	ParamKVStoreKey      = "param"
-	ProposalKVStoreKey   = "proposal"
-	ReputationKVStoreKey = "reputation"
+	MainKVStoreKey         = "main"
+	AccountKVStoreKey      = "account"
+	PostKVStoreKey         = "post"
+	ValidatorKVStoreKey    = "validator"
+	GlobalKVStoreKey       = "global"
+	VoteKVStoreKey         = "vote"
+	InfraKVStoreKey        = "infra"
+	DeveloperKVStoreKey    = "developer"
+	ParamKVStoreKey        = "param"
+	ProposalKVStoreKey     = "proposal"
+	ReputationKVStoreKey   = "reputation"
+	ReputationV2KVStoreKey = "repv2"
 
 	// Different permission level for msg
 	UnknownPermission                = Permission(0)

@@ -58,7 +58,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 	}
 
 	// not valid when saving is less than donation amount.
-	if (rst.IsGT(saving)) {
+	if rst.IsGT(saving) {
 		return types.NewCoinFromInt64(0)
 	}
 	return rst

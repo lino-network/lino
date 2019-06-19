@@ -13,21 +13,23 @@ import (
 
 // ReputationManager - adaptor for reputation math model and cosmos application.
 type ReputationManager struct {
-	storeKey    sdk.StoreKey
+	v1key       sdk.StoreKey
+	v2key       sdk.StoreKey
 	paramHolder param.ParamHolder
 }
 
 // NewReputationManager - require holder for BestContentIndexN
-func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) ReputationManager {
+func NewReputationManager(v1key sdk.StoreKey, v2key sdk.StoreKey, holder param.ParamHolder) ReputationManager {
 	return ReputationManager{
-		storeKey:    key,
+		v1key:       v1key,
+		v2key:       v2key,
 		paramHolder: holder,
 	}
 }
 
 // construct a handler.
 func (rep ReputationManager) getHandlerV2(ctx sdk.Context) (repv2.Reputation, sdk.Error) {
-	store := ctx.KVStore(rep.storeKey)
+	store := ctx.KVStore(rep.v2key)
 	repStore := repv2.NewReputationStore(store, repv2.DefaultInitialReputation)
 	handler := repv2.NewReputation(repStore, 200, 50, 25*3600, 10, 10)
 	return handler, nil
@@ -35,7 +37,7 @@ func (rep ReputationManager) getHandlerV2(ctx sdk.Context) (repv2.Reputation, sd
 
 // construct a handler.
 func (rep ReputationManager) getHandler(ctx sdk.Context) (model.Reputation, sdk.Error) {
-	store := ctx.KVStore(rep.storeKey)
+	store := ctx.KVStore(rep.v1key)
 	param, err := rep.paramHolder.GetReputationParam(ctx)
 	if err != nil {
 		return nil, err
@@ -68,7 +70,7 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 	return err
 }
 
-func (rep ReputationManager) migrate(ctx sdk.Context, handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) sdk.Error {
+func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) sdk.Error {
 	if repv2.RequireMigrate(uid) {
 		repv2.MigrateFromV1(uid, handler.GetReputation(uid))
 	}
@@ -97,7 +99,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 		if err != nil {
 			return types.NewCoinFromInt64(0), err
 		}
-		rep.migrate(ctx, handler, repv2, uid)
+		rep.migrate(handler, repv2, uid)
 		dp := repv2.DonateAt(uid, pid, coinDay.Amount.BigInt())
 		return types.NewCoinFromBigInt(dp), nil
 	}
@@ -172,7 +174,7 @@ func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 		if err != nil {
 			return err
 		}
-		rep.migrate(ctx, handler, repv2, uid)
+		rep.migrate(handler, repv2, uid)
 		repv2.IncFreeScore(uid, score)
 		return nil
 	}
@@ -221,7 +223,7 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 		if err != nil {
 			return types.NewCoinFromInt64(0), err
 		}
-		rep.migrate(ctx, handler, repv2, uid)
+		rep.migrate(handler, repv2, uid)
 		return types.NewCoinFromBigInt(repv2.GetReputation(uid)), nil
 	}
 	return types.NewCoinFromBigInt(handler.GetReputation(uid)), nil
