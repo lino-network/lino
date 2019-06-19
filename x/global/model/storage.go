@@ -109,7 +109,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 func (gs GlobalStorage) InitGlobalState(
 	ctx sdk.Context, totalLino types.Coin) sdk.Error {
 	initParamList := InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}

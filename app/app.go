@@ -70,18 +70,19 @@ type LinoBlockchain struct {
 	cdc *wire.Codec
 
 	// keys to access the KVStore
-	CapKeyMainStore       *sdk.KVStoreKey
-	CapKeyAccountStore    *sdk.KVStoreKey
-	CapKeyPostStore       *sdk.KVStoreKey
-	CapKeyValStore        *sdk.KVStoreKey
-	CapKeyVoteStore       *sdk.KVStoreKey
-	CapKeyInfraStore      *sdk.KVStoreKey
-	CapKeyDeveloperStore  *sdk.KVStoreKey
-	CapKeyIBCStore        *sdk.KVStoreKey
-	CapKeyGlobalStore     *sdk.KVStoreKey
-	CapKeyParamStore      *sdk.KVStoreKey
-	CapKeyProposalStore   *sdk.KVStoreKey
-	CapKeyReputationStore *sdk.KVStoreKey
+	CapKeyMainStore         *sdk.KVStoreKey
+	CapKeyAccountStore      *sdk.KVStoreKey
+	CapKeyPostStore         *sdk.KVStoreKey
+	CapKeyValStore          *sdk.KVStoreKey
+	CapKeyVoteStore         *sdk.KVStoreKey
+	CapKeyInfraStore        *sdk.KVStoreKey
+	CapKeyDeveloperStore    *sdk.KVStoreKey
+	CapKeyIBCStore          *sdk.KVStoreKey
+	CapKeyGlobalStore       *sdk.KVStoreKey
+	CapKeyParamStore        *sdk.KVStoreKey
+	CapKeyProposalStore     *sdk.KVStoreKey
+	CapKeyReputationStore   *sdk.KVStoreKey
+	CapKeyReputationV2Store *sdk.KVStoreKey
 
 	// manager for different KVStore
 	accountManager    acc.AccountManager
@@ -122,6 +123,7 @@ func NewLinoBlockchain(
 		CapKeyParamStore:      sdk.NewKVStoreKey(types.ParamKVStoreKey),
 		CapKeyProposalStore:   sdk.NewKVStoreKey(types.ProposalKVStoreKey),
 		CapKeyReputationStore: sdk.NewKVStoreKey(types.ReputationKVStoreKey),
+		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
@@ -130,7 +132,7 @@ func NewLinoBlockchain(
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
-	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
+	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.CapKeyReputationV2Store, lb.paramHolder)
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
@@ -172,7 +174,7 @@ func NewLinoBlockchain(
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore, lb.CapKeyReputationV2Store)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
