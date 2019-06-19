@@ -1,13 +1,12 @@
 package reputation
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-
-	"math/big"
-
 	model "github.com/lino-network/lino/x/reputation/internal"
 	repv2 "github.com/lino-network/lino/x/reputation/repv2"
 )
