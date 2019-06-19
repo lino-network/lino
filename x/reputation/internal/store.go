@@ -7,11 +7,11 @@ import (
 	db "github.com/tendermint/tendermint/libs/db"
 
 	"encoding/binary"
-	"math/big"
-	"sort"
-	"os"
-	"strings"
 	"io/ioutil"
+	"math/big"
+	"os"
+	"sort"
+	"strings"
 )
 
 // Store - store.
@@ -245,9 +245,9 @@ func (impl reputationStoreImpl) Export() *UserReputationTable {
 		}
 		v := impl.getUserMeta(uid)
 		rst.Reputations = append(rst.Reputations, UserReputation{
-			Username: uid,
+			Username:      uid,
 			CustomerScore: v.CustomerScore,
-			FreeScore: v.FreeScore,
+			FreeScore:     v.FreeScore,
 		})
 	}
 	return rst
@@ -268,11 +268,10 @@ func (impl reputationStoreImpl) ExportToFile(file string) {
 	f.Sync()
 }
 
-
 func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
 	for _, v := range tb.Reputations {
 		impl.setUserMeta(v.Username, &userMeta{
-			FreeScore: v.FreeScore,
+			FreeScore:     v.FreeScore,
 			CustomerScore: v.CustomerScore,
 		})
 	}

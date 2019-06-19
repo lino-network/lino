@@ -131,7 +131,7 @@ func (rep ReputationImpl) RequireMigrate(u Uid) bool {
 	return true
 }
 
-// internal struct as a summary of an user's consumption in a round.
+// internal struct as a summary of a user's consumption in a round.
 type consumptionInfo struct {
 	seed    LinoCoin
 	other   LinoCoin
@@ -185,7 +185,7 @@ func (rep ReputationImpl) computeReputation(consumption LinoCoin, hold Rep) Rep 
 	)
 }
 
-// internal struct for reputation data of an user.
+// internal struct for reputation data of a user.
 type reputationData struct {
 	consumption LinoCoin
 	hold        Rep
@@ -268,7 +268,7 @@ func (rep ReputationImpl) GetReputation(u Uid) Rep {
 // The invarience is that user will have only *one* round of donations unsettled,
 // either because that round is current round(not ended yet),
 // or the user has never donated after that round.
-// So when an user donates, we first update user's reputation, then
+// So when a user donates, we first update user's reputation, then
 // we add this donation to records.
 func (rep ReputationImpl) DonateAt(u Uid, p Pid, amount LinoCoin) IF {
 	if len(u) == 0 {

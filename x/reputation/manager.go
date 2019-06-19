@@ -9,6 +9,7 @@ import (
 	"math/big"
 
 	model "github.com/lino-network/lino/x/reputation/internal"
+	repv2 "github.com/lino-network/lino/x/reputation/repv2"
 )
 
 // ReputationManager - adaptor for reputation math model and cosmos application.
@@ -23,6 +24,14 @@ func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) Reputation
 		storeKey:    key,
 		paramHolder: holder,
 	}
+}
+
+// construct a handler.
+func (rep ReputationManager) getHandlerV2(ctx sdk.Context) (repv2.Reputation, sdk.Error) {
+	store := ctx.KVStore(rep.storeKey)
+	repStore := repv2.NewReputationStore(store, repv2.DefaultInitialReputation)
+	handler := repv2.NewReputation(repStore, 200, 50, 25*3600, 10, 10)
+	return handler, nil
 }
 
 // construct a handler.
@@ -60,6 +69,13 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 	return err
 }
 
+func (rep ReputationManager) migrate(ctx sdk.Context, handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) sdk.Error {
+	if repv2.RequireMigrate(uid) {
+		repv2.MigrateFromV1(uid, handler.GetReputation(uid))
+	}
+	return nil
+}
+
 // DonateAt - It's caller's responsibility that parameters are all correct,
 // although we do have some checks.
 func (rep ReputationManager) DonateAt(ctx sdk.Context,
@@ -76,6 +92,17 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 		return types.NewCoinFromInt64(0), err
 	}
 
+	// Upgrade6, start to use new reputation algorithm.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return types.NewCoinFromInt64(0), err
+		}
+		rep.migrate(ctx, handler, repv2, uid)
+		dp := repv2.DonateAt(uid, pid, coinDay.Amount.BigInt())
+		return types.NewCoinFromBigInt(dp), nil
+	}
+
 	dp := handler.DonateAt(uid, pid, coinDay.Amount.BigInt())
 	return types.NewCoinFromBigInt(dp), nil
 }
@@ -83,6 +110,10 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 // ReportAt - @p username report @p post.
 func (rep ReputationManager) ReportAt(ctx sdk.Context,
 	username types.AccountKey, post types.Permlink) (types.Coin, sdk.Error) {
+	// Upgrade6, report is deprecated.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		return types.NewCoinFromInt64(0), nil
+	}
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -132,12 +163,33 @@ func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 		return err
 	}
 
+	// Upgrade6
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return err
+		}
+		rep.migrate(ctx, handler, repv2, uid)
+		repv2.IncFreeScore(uid, score)
+		return nil
+	}
+
 	handler.IncFreeScore(uid, score)
 	return nil
 }
 
 // Update - on blocker end, update reputation time related information.
 func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
+	// Upgrade6
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return err
+		}
+		repv2.Update(ctx.BlockHeader().Time.Unix())
+		return nil
+	}
+
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
 		return err
@@ -160,11 +212,24 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 		return types.NewCoinFromInt64(0), err
 	}
 
+	// Upgrade6
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return types.NewCoinFromInt64(0), err
+		}
+		rep.migrate(ctx, handler, repv2, uid)
+		return types.NewCoinFromBigInt(repv2.GetReputation(uid)), nil
+	}
 	return types.NewCoinFromBigInt(handler.GetReputation(uid)), nil
 }
 
 // GetSumRep of @p post
 func (rep ReputationManager) GetSumRep(ctx sdk.Context, post types.Permlink) (types.Coin, sdk.Error) {
+	// Upgrade6, sumrep deprecated.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		return types.NewCoinFromInt64(0), nil
+	}
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err
@@ -186,6 +251,16 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 		return 0, err
 	}
 
+	// Upgrade6
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return 0, err
+		}
+		_, ts := repv2.GetCurrentRound()
+		return ts, nil
+	}
+
 	_, ts := handler.GetCurrentRound()
 	return ts, nil
 }
@@ -196,11 +271,23 @@ func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
 	if err != nil {
 		return err
 	}
+	// Upgrade6, if a user does not donate after update6, his reputation is reset to 0.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		repv2, err := rep.getHandlerV2(ctx)
+		if err != nil {
+			return err
+		}
+		repv2.ExportToFile(file)
+		return nil
+	}
+
 	handler.ExportToFile(file)
 	return nil
 }
 
 // ImportFromFile state of reputation system.
+// TODO(yumin): this function needs to be changed if we want to make an upgrade. (before upgrade3)
+// because upgrade1update6 has changed the reputation algorithm.
 func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error {
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
