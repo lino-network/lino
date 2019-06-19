@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,6 +48,33 @@ func (suite *ReputationTestSuite) MoveToNewRound() {
 // for bigInt(*big.Int), need this on comparing with zero value.
 func (suite *ReputationTestSuite) EqualZero(a bigInt, args ...interface{}) {
 	suite.Equal(0, a.Cmp(big.NewInt(0)), "%d is not bigInt zero", a.Int64())
+}
+
+func (suite *ReputationTestSuite) TestUpdateTime() {
+	suite.MoveToNewRound()
+	t := suite.time
+	rep := suite.rep
+	r, rt := rep.GetCurrentRound()
+	suite.Equal(int64(2), r)
+	suite.Equal(t.Unix(), rt)
+
+	t2 := t.Add(time.Duration(10*3600) * time.Second)
+	rep.Update(t2.Unix())
+	r, rt = rep.GetCurrentRound()
+	suite.Equal(int64(2), r)
+	suite.Equal(t.Unix(), rt)
+
+	t3 := t2.Add(time.Duration(16*3600) * time.Second)
+	rep.Update(t3.Unix())
+	r, rt = rep.GetCurrentRound()
+	suite.Equal(int64(3), r)
+	suite.Equal(t3.Unix(), rt)
+
+	t4 := t3.Add(time.Duration(10*3600) * time.Second)
+	rep.Update(t4.Unix())
+	r, rt = rep.GetCurrentRound()
+	suite.Equal(int64(3), r)
+	suite.Equal(t3.Unix(), rt)
 }
 
 func (suite *ReputationTestSuite) TestExportImportFile() {
@@ -318,6 +346,41 @@ func (suite *ReputationTestSuite) TestComputeNewRepDataGTEZero() {
 	suite.True(newrep.reputation.Cmp(big.NewInt(0)) >= 0)
 	suite.True(newrep.hold.Cmp(big.NewInt(0)) >= 0)
 	suite.True(newrep.hold.Cmp(big.NewInt(0)) >= 0)
+}
+
+func (suite *ReputationTestSuite) TestDonateAtGrow1() {
+	rep := suite.rep
+	for i := 0; i <= 50; i++ {
+		rep.DonateAt("user1", "post1", big.NewInt(100*100000))
+		suite.MoveToNewRound()
+	}
+	suite.Equal(big.NewInt(9690802), rep.GetReputation("user1"))
+}
+
+func (suite *ReputationTestSuite) TestDonateAtGrowAndDown() {
+	rep := suite.rep
+	for i := 0; i <= 60; i++ {
+		rep.DonateAt("user1", "post1", big.NewInt(80*100000))
+		rep.DonateAt("user1", "post2", big.NewInt(20*100000))
+		suite.MoveToNewRound()
+	}
+	suite.Equal(big.NewInt(9270170), rep.GetReputation("user1"))
+
+	rep.IncFreeScore("majority", big.NewInt(1000000*100000))
+	for i := 0; i <= 1; i++ {
+		rep.DonateAt("user1", "trash", big.NewInt(1*100000))
+		rep.DonateAt("majority", "good", big.NewInt(1000000*100000))
+		suite.MoveToNewRound()
+	}
+	suite.Equal(big.NewInt(9254170), rep.GetReputation("user1"))
+
+	for i := 0; i <= 60; i++ {
+		// rep.DonateAt("user1", "good", big.NewInt(50 * 100000))
+		rep.DonateAt("user1", "trash", big.NewInt(100*100000))
+		rep.DonateAt("majority", "good", big.NewInt(1000000*100000))
+		suite.MoveToNewRound()
+	}
+	suite.Equal(big.NewInt(57205), rep.GetReputation("user1"))
 }
 
 func (suite *ReputationTestSuite) TestUpdateReputationDonateAt() {
@@ -778,5 +841,85 @@ func (suite *ReputationTestSuite) TestBubbleUp() {
 	for i, v := range cases {
 		bubbleUp(v.posts, v.pos)
 		suite.Equal(v.expected, v.posts, "case: %d", i)
+	}
+}
+
+func (suite *ReputationTestSuite) simPostZipf(nposts uint64) *rand.Zipf {
+	// zipf posts, with s = 2, v = 50. number of seed: 193 if nposts = 10000
+	zipf := rand.NewZipf(rand.New(rand.NewSource(121212)), 2, 50, uint64(nposts))
+	return zipf
+	// print distribution.
+	// count := make(map[uint64]int)
+	// for i := 0; i < nposts; i++ {
+	// 	v := zipf.Uint64()
+	// 	count[v]++
+	// }
+	// probs := make([]float64, nposts)
+	// for k, v := range count {
+	// 	probs[k] = float64(v) * 100 / float64(nposts)
+	// }
+	// total := float64(0.0)
+	// for i, v := range probs {
+	// 	total += v
+	// 	if total >= 80 {
+	// 		fmt.Printf("80: %d\n", i)
+	// 		break
+	// 	}
+	// }
+	// fmt.Println(probs)
+}
+
+// simulations
+// func (suite *ReputationTestSuite) TestSimulation() {
+// 	rep := NewReputation(
+// 		NewReputationStore(internal.NewMockStore(), DefaultInitialReputation),
+// 		200, 30, DefaultRoundDurationSeconds, DefaultSampleWindowSize, DefaultDecayFactor)
+// 	suite.rep = rep.(ReputationImpl)
+// 	// zipf posts.
+// 	nPosts := uint64(1000)
+// 	zipf := suite.simPostZipf(nPosts)
+// 	nUsers := int(5 * nPosts)
+// 	toUID := func(i int) Uid {
+// 		return fmt.Sprintf("user%d", i)
+// 	}
+// 	toPID := func(i uint64) Pid {
+// 		return fmt.Sprintf("post%d", i)
+// 	}
+
+// 	for j := 0; j < 3; j++ {
+// 		for i := 0; i < nUsers; i++ {
+// 			rep.DonateAt(toUID(i), toPID(zipf.Uint64()), big.NewInt(10*100000))
+// 		}
+// 		suite.MoveToNewRound()
+// 		fmt.Println(j)
+// 	}
+
+// 	for i := 0; i < nUsers; i++ {
+// 		fmt.Println(rep.GetReputation(toUID(i)))
+// 	}
+
+// }
+
+// benchmarks
+func BenchmarkDonateAt1(b *testing.B) {
+	suite := ReputationTestSuite{}
+	suite.SetupTest()
+	for n := 0; n < b.N; n++ {
+		suite.rep.DonateAt("user1", "post2", big.NewInt(100*100000))
+	}
+}
+
+func BenchmarkDonateAtWorstCase(b *testing.B) {
+	suite := ReputationTestSuite{}
+	suite.SetupTest()
+
+	posts := make([]Pid, b.N)
+	for i := 0; i < b.N; i++ {
+		posts[i] = fmt.Sprintf("post%d", i)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		suite.rep.DonateAt("user1", posts[n], big.NewInt(10000*100000))
 	}
 }

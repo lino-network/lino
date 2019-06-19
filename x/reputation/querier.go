@@ -29,7 +29,7 @@ func NewQuerier(rm ReputationManager) sdk.Querier {
 		case QueryReputation:
 			return queryReputation(ctx, cdc, path[1:], req, rm)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown vote query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown reputation query endpoint")
 		}
 	}
 }

@@ -272,10 +272,10 @@ func (rep ReputationImpl) GetReputation(u Uid) Rep {
 // we add this donation to records.
 func (rep ReputationImpl) DonateAt(u Uid, p Pid, amount LinoCoin) IF {
 	if len(u) == 0 {
-		panic("Uid must be longer than 0")
+		panic("Length of Uid must be longer than 0")
 	}
 	if len(p) == 0 {
-		panic("Pid must be longer than 0")
+		panic("Length of Pid must be longer than 0")
 	}
 	var current RoundId = rep.store.GetCurrentRound()
 	user := rep.store.GetUserMeta(u)
