@@ -1,7 +1,10 @@
 package reputation
 
 import (
+	"io/ioutil"
 	"math/big"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -138,19 +141,19 @@ func (suite *reputationTestSuite) TestOnStake() {
 
 	suite.timefies(true)
 	rv, _ = rep.GetReputation(suite.ctx, "yxia")
-	suite.Equal(types.NewCoinFromInt64(100000).String(), rv.String())
+	suite.Equal(types.NewCoinFromInt64(1).String(), rv.String())
 
 	suite.timefies(true)
 	rep.OnStakeIn(suite.ctx, "yxia", types.NewCoinFromInt64(10000000))
 	rv, _ = rep.GetReputation(suite.ctx, "yxia")
-	suite.Equal(types.NewCoinFromInt64(100000).String(), rv.String())
+	suite.Equal(types.NewCoinFromInt64(1).String(), rv.String())
 	rep.OnStakeOut(suite.ctx, "yxia", types.NewCoinFromInt64(10000))
 	rv, _ = rep.GetReputation(suite.ctx, "yxia")
-	suite.Equal(types.NewCoinFromInt64(100000).String(), rv.String())
+	suite.Equal(types.NewCoinFromInt64(1).String(), rv.String())
 
 	suite.timefies(true)
 	rv, _ = rep.GetReputation(suite.ctx, "yxia")
-	suite.Equal(types.NewCoinFromInt64(100000).String(), rv.String())
+	suite.Equal(types.NewCoinFromInt64(1).String(), rv.String())
 }
 
 func (suite *reputationTestSuite) TestGetCurrentRound() {
@@ -233,7 +236,11 @@ func (suite *reputationTestSuite) TestDonateAtUpdate() {
 	for i, v := range cases {
 		rv, err := rep.GetReputation(suite.ctx, v.username)
 		suite.Nil(err)
-		suite.Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+		if v.rep > 100000 {
+			suite.Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+		} else {
+			suite.Equal(types.NewCoinFromInt64(1).String(), rv.String(), "%d", i)
+		}
 	}
 
 	suite.timefies(true)
@@ -241,15 +248,23 @@ func (suite *reputationTestSuite) TestDonateAtUpdate() {
 	for i, v := range cases {
 		rv, err := rep.GetReputation(suite.ctx, v.username)
 		suite.Nil(err)
-		suite.Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+		if v.rep > 100000 {
+			suite.Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+		} else {
+			suite.Equal(types.NewCoinFromInt64(1).String(), rv.String(), "%d", i)
+		}
 	}
 
 	// donate
 	for _, v := range cases {
 		dp, err := rep.DonateAt(suite.ctx, v.username, v.post, types.NewCoinFromInt64(v.amount))
 		suite.Nil(err)
+		r := v.rep
+		if v.rep <= 100000 {
+			r = 1
+		}
 		suite.Equal(
-			types.NewCoinFromInt64(min(v.rep, v.amount)), dp, "ne: %s, %d", dp.String(), v.rep)
+			types.NewCoinFromInt64(min(r, v.amount)), dp, "ne: %s, %d", dp.String(), v.rep)
 	}
 
 	suite.timefies(true)
@@ -264,7 +279,7 @@ func (suite *reputationTestSuite) TestDonateAtUpdate() {
 		rv, err := rep.GetReputation(suite.ctx, v.username)
 		suite.Nil(err)
 		if i >= 8 {
-			suite.Equal(types.NewCoinFromInt64(92000).String(), rv.String(), "%d", i)
+			suite.Equal(types.NewCoinFromInt64(0).String(), rv.String(), "%d", i)
 		} else {
 			if i%2 == 0 {
 				suite.Equal(types.NewCoinFromInt64(1502021).String(), rv.String(), "%d", i)
@@ -273,6 +288,78 @@ func (suite *reputationTestSuite) TestDonateAtUpdate() {
 			}
 		}
 	}
+}
+
+func (suite *reputationTestSuite) TestExportImport() {
+	rep := suite.rep
+	cases := []struct {
+		username types.AccountKey
+		post     types.Permlink
+		amount   int64
+		dp       int64
+		rep      int64
+	}{
+		{"user1", "post1", (100 * 100000), (1 * 100000), (1416175)},
+		{"user2", "post1", (100 * 100000), (1 * 100000), (763824)},
+		{"user3", "post2", (100 * 100000), (1 * 100000), (1416175)},
+		{"user4", "post2", (100 * 100000), (1 * 100000), (763824)},
+		{"user5", "post3", (100 * 100000), (1 * 100000), (1416175)},
+		{"user6", "post3", (100 * 100000), (1 * 100000), (763824)},
+		{"user7", "post4", (100 * 100000), (1 * 100000), (1416175)},
+		{"user8", "post4", (100 * 100000), (1 * 100000), (763824)},
+		{"user9", "post5", (0.5 * 100000), (0.5 * 100000), 100000},
+		{"user10", "post6", (0.5 * 100000), (0.5 * 100000), 100000},
+		{"user11", "post7", (0.5 * 100000), (0.5 * 100000), 100000},
+		{"user12", "post8", (0.5 * 100000), (0.5 * 100000), 100000},
+	}
+	for _, v := range cases {
+		dp, err := rep.DonateAt(suite.ctx, v.username, v.post, types.NewCoinFromInt64(v.amount))
+		suite.Nil(err)
+		suite.Require().Equal(dp, types.NewCoinFromInt64(v.dp))
+	}
+	suite.timefies(false)
+	// check reputation
+	for i, v := range cases {
+		rv, err := rep.GetReputation(suite.ctx, v.username)
+		suite.Nil(err)
+		suite.Require().Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+	}
+
+	suite.timefies(true)
+	rep.DonateAt(suite.ctx, "yxia", "sp", types.NewCoinFromInt64(100000000))
+	suite.timefies(true)
+	rv, _ := rep.GetReputation(suite.ctx, "yxia")
+	suite.Equal(types.NewCoinFromInt64(10), rv)
+
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	rep.ExportToFile(suite.ctx, tmpfn)
+
+	// clear everything
+	suite.SetupTest()
+	suite.timefies(true) // start to use repv2
+	rep = suite.rep
+
+	rep.ImportFromFile(suite.ctx, tmpfn)
+	rv, err := rep.GetReputation(suite.ctx, "yxia")
+	suite.Nil(err)
+	suite.Equal(types.NewCoinFromInt64(10).String(), rv.String())
+
+	// check reputation of users that have not donated after update6
+	for i, v := range cases {
+		rv, err := rep.GetReputation(suite.ctx, v.username)
+		suite.Nil(err)
+		if v.rep > 100000 {
+			suite.Equal(types.NewCoinFromInt64(v.rep).String(), rv.String(), "%d", i)
+		} else {
+			suite.Equal(types.NewCoinFromInt64(repv2.DefaultInitialReputation).String(),
+				rv.String(), "%d", i)
+		}
+	}
+
 }
 
 func min(a, b int64) int64 {

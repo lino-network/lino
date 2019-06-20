@@ -72,7 +72,11 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 
 func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) sdk.Error {
 	if repv2.RequireMigrate(uid) {
-		repv2.MigrateFromV1(uid, handler.GetReputation(uid))
+		prev := handler.GetReputation(uid)
+		// only when user's reputation is larger than initial, migrate it.
+		if prev.Cmp(big.NewInt(model.InitialCustomerScore)) > 0 {
+			repv2.MigrateFromV1(uid, handler.GetReputation(uid))
+		}
 	}
 	return nil
 }
@@ -255,32 +259,34 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 // ExportToFile state of reputation system.
 func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
-	handler, err := rep.getHandler(ctx)
+	param, err := rep.paramHolder.GetReputationParam(ctx)
 	if err != nil {
 		return err
 	}
+	v1RepStore := model.NewReputationStore(ctx.KVStore(rep.v1key), param.BestContentIndexN)
+	v1handler := model.NewReputation(v1RepStore)
 	// Update6, if a user does not donate after update6, his reputation is reset to 0.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2 := rep.getHandlerV2(ctx)
 		if err != nil {
 			return err
 		}
+		v1RepStore.IterateUsers(func(uid string) bool {
+			rep.migrate(v1handler, repv2, uid)
+			return false
+		})
 		repv2.ExportToFile(file)
 		return nil
 	}
 
-	handler.ExportToFile(file)
+	v1handler.ExportToFile(file)
 	return nil
 }
 
 // ImportFromFile state of reputation system.
-// TODO(yumin): this function needs to be changed if we want to make an upgrade. (before upgrade3)
-// because upgrade1update6 has changed the reputation algorithm.
+// after update6's code is merged, V2 is the only version that will exist.
 func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return err
-	}
+	handler := rep.getHandlerV2(ctx)
 	handler.ImportFromFile(file)
 	return nil
 }
