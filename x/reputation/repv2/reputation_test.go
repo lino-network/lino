@@ -309,7 +309,7 @@ func (suite *ReputationTestSuite) TestComputeNewRepData() {
 	}
 }
 
-func (suite *ReputationTestSuite) TestComputeNewRepDataDecraseToZero() {
+func (suite *ReputationTestSuite) TestComputeNewRepDataDecreaseToZero() {
 	repData := reputationData{
 		consumption: big.NewInt(1),
 		hold:        big.NewInt(0),

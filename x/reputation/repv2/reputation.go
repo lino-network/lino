@@ -219,7 +219,7 @@ func (rep ReputationImpl) computeNewRepData(repData reputationData, consumptions
 
 	if bigIntGTE(newConsumption, repData.consumption) {
 		delta := bigIntSub(newConsumption, repData.consumption)
-		repData.hold = bigIntMax(big.NewInt(1), bigIntEMA(repData.hold, delta, rep.SampleWindowSize))
+		repData.hold = bigIntEMA(repData.hold, delta, rep.SampleWindowSize)
 	}
 
 	repData.consumption = newConsumption
@@ -412,6 +412,9 @@ func (rep ReputationImpl) Update(t Time) {
 		for _, pidDp := range topN {
 			pid := pidDp.Pid
 			postIF := pidDp.SumIF
+			if !bigIntGreater(postIF, big.NewInt(0)) {
+				break
+			}
 			dpCovered.Add(dpCovered, postIF)
 			rst = append(rst, pid)
 			if !bigIntLess(dpCovered, dpBound) {
