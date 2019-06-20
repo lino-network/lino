@@ -28,11 +28,11 @@ func NewReputationManager(v1key sdk.StoreKey, v2key sdk.StoreKey, holder param.P
 }
 
 // construct a handler.
-func (rep ReputationManager) getHandlerV2(ctx sdk.Context) (repv2.Reputation, sdk.Error) {
+func (rep ReputationManager) getHandlerV2(ctx sdk.Context) repv2.Reputation {
 	store := ctx.KVStore(rep.v2key)
 	repStore := repv2.NewReputationStore(store, repv2.DefaultInitialReputation)
 	handler := repv2.NewReputation(repStore, 200, 50, 25*3600, 10, 10)
-	return handler, nil
+	return handler
 }
 
 // construct a handler.
@@ -95,10 +95,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 
 	// Update6, start to use new reputation algorithm.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
-		if err != nil {
-			return types.NewCoinFromInt64(0), err
-		}
+		repv2 := rep.getHandlerV2(ctx)
 		rep.migrate(handler, repv2, uid)
 		dp := repv2.DonateAt(uid, pid, coinDay.Amount.BigInt())
 		return types.NewCoinFromBigInt(dp), nil
@@ -176,10 +173,7 @@ func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
-		if err != nil {
-			return err
-		}
+		repv2 := rep.getHandlerV2(ctx)
 		repv2.Update(ctx.BlockHeader().Time.Unix())
 		return nil
 	}
@@ -208,7 +202,7 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 
 	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
+		repv2 := rep.getHandlerV2(ctx)
 		if err != nil {
 			return types.NewCoinFromInt64(0), err
 		}
@@ -247,7 +241,7 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
+		repv2 := rep.getHandlerV2(ctx)
 		if err != nil {
 			return 0, err
 		}
@@ -267,7 +261,7 @@ func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
 	}
 	// Update6, if a user does not donate after update6, his reputation is reset to 0.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
+		repv2 := rep.getHandlerV2(ctx)
 		if err != nil {
 			return err
 		}
