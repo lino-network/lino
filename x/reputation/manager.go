@@ -93,7 +93,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 		return types.NewCoinFromInt64(0), err
 	}
 
-	// Upgrade6, start to use new reputation algorithm.
+	// Update6, start to use new reputation algorithm.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2, err := rep.getHandlerV2(ctx)
 		if err != nil {
@@ -111,7 +111,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 // ReportAt - @p username report @p post.
 func (rep ReputationManager) ReportAt(ctx sdk.Context,
 	username types.AccountKey, post types.Permlink) (types.Coin, sdk.Error) {
-	// Upgrade6, report is deprecated.
+	// Update6, report is deprecated.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		return types.NewCoinFromInt64(0), nil
 	}
@@ -147,10 +147,6 @@ func (rep ReputationManager) OnStakeIn(ctx sdk.Context,
 // OnStakeOut - on @p username stakeout @p amount
 func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
-	// after upgrade6, no-op on stackout.
-	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		return
-	}
 	incAmount := rep.calcFreeScore(amount)
 	incAmount.Neg(incAmount)
 	rep.incFreeScore(ctx, username, incAmount)
@@ -158,6 +154,10 @@ func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
 
 func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 	username types.AccountKey, score *big.Int) sdk.Error {
+	// After Update6, no-op on StakeIn/StakeOut.
+	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
+		return nil
+	}
 	handler, err := rep.getHandler(ctx)
 	if err != nil {
 		return err
@@ -168,24 +168,13 @@ func (rep ReputationManager) incFreeScore(ctx sdk.Context,
 		return err
 	}
 
-	// Upgrade6
-	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
-		repv2, err := rep.getHandlerV2(ctx)
-		if err != nil {
-			return err
-		}
-		rep.migrate(handler, repv2, uid)
-		repv2.IncFreeScore(uid, score)
-		return nil
-	}
-
 	handler.IncFreeScore(uid, score)
 	return nil
 }
 
 // Update - on blocker end, update reputation time related information.
 func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
-	// Upgrade6
+	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2, err := rep.getHandlerV2(ctx)
 		if err != nil {
@@ -217,7 +206,7 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 		return types.NewCoinFromInt64(0), err
 	}
 
-	// Upgrade6
+	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2, err := rep.getHandlerV2(ctx)
 		if err != nil {
@@ -231,7 +220,7 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 
 // GetSumRep of @p post
 func (rep ReputationManager) GetSumRep(ctx sdk.Context, post types.Permlink) (types.Coin, sdk.Error) {
-	// Upgrade6, sumrep deprecated.
+	// Update6, sumrep deprecated.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		return types.NewCoinFromInt64(0), nil
 	}
@@ -256,7 +245,7 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 		return 0, err
 	}
 
-	// Upgrade6
+	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2, err := rep.getHandlerV2(ctx)
 		if err != nil {
@@ -276,7 +265,7 @@ func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
 	if err != nil {
 		return err
 	}
-	// Upgrade6, if a user does not donate after update6, his reputation is reset to 0.
+	// Update6, if a user does not donate after update6, his reputation is reset to 0.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2, err := rep.getHandlerV2(ctx)
 		if err != nil {
