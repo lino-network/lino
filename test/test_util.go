@@ -100,10 +100,8 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	assert.Nil(t, err)
 
 	lb.InitChain(abci.RequestInitChain{ChainId: "Lino", AppStateBytes: json.RawMessage(result)})
-	lb.Commit()
-
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{ChainID: "Lino", Time: time.Now()}})
+		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Now()}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	return lb
@@ -211,7 +209,7 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uin
 	// Simulate a Block
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
+			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	res = lb.Deliver(tx)
 	if expPass {
 		require.True(t, res.IsOK(), res.Log)
@@ -226,7 +224,7 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uin
 func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			ChainID: "Lino", Time: time.Unix(headTime, 0)}})
+			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 }
