@@ -2,7 +2,7 @@
 
 This cmd directory contains two command line tool: lino and linocli. _lino_ is used to luanch the Lino Blockchain node. _linocli_ can be used to interact with Lino Blockchain.
 
-# Luanch Blockchain
+# Launch Blockchain
 ## Generate genesis file
 ```
 $ ./lino init
@@ -12,7 +12,7 @@ $ ./lino init
 $ ./lino start
 ```
 
-# Luanch Client
+# Launch Client
 ## Transfer coin to a user
 ```
 $ ./linocli transfer --sender=<username>  --receiver=<receiver> --amount=1 --chain-id=<chain id> --sequence=<sender's sequence number>
