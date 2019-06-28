@@ -206,9 +206,6 @@ func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.Accou
 	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2 := rep.getHandlerV2(ctx)
-		if err != nil {
-			return types.NewCoinFromInt64(0), err
-		}
 		rep.migrate(handler, repv2, uid)
 		return types.NewCoinFromBigInt(repv2.GetReputation(uid)), nil
 	}
@@ -245,9 +242,6 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 	// Update6
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2 := rep.getHandlerV2(ctx)
-		if err != nil {
-			return 0, err
-		}
 		_, ts := repv2.GetCurrentRound()
 		return ts, nil
 	}
@@ -267,9 +261,6 @@ func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
 	// Update6, if a user does not donate after update6, his reputation is reset to 0.
 	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update6Height {
 		repv2 := rep.getHandlerV2(ctx)
-		if err != nil {
-			return err
-		}
 		v1RepStore.IterateUsers(func(uid string) bool {
 			rep.migrate(v1handler, repv2, uid)
 			return false
