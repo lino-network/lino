@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
-	"math/rand"
+	// "math/rand"
 	"os"
 	"path/filepath"
 	"testing"
@@ -844,30 +844,30 @@ func (suite *ReputationTestSuite) TestBubbleUp() {
 	}
 }
 
-func (suite *ReputationTestSuite) simPostZipf(nposts uint64) *rand.Zipf {
-	// zipf posts, with s = 2, v = 50. number of seed: 193 if nposts = 10000
-	zipf := rand.NewZipf(rand.New(rand.NewSource(121212)), 2, 50, uint64(nposts))
-	return zipf
-	// print distribution.
-	// count := make(map[uint64]int)
-	// for i := 0; i < nposts; i++ {
-	// 	v := zipf.Uint64()
-	// 	count[v]++
-	// }
-	// probs := make([]float64, nposts)
-	// for k, v := range count {
-	// 	probs[k] = float64(v) * 100 / float64(nposts)
-	// }
-	// total := float64(0.0)
-	// for i, v := range probs {
-	// 	total += v
-	// 	if total >= 80 {
-	// 		fmt.Printf("80: %d\n", i)
-	// 		break
-	// 	}
-	// }
-	// fmt.Println(probs)
-}
+// func (suite *ReputationTestSuite) simPostZipf(nposts uint64) *rand.Zipf {
+// 	// zipf posts, with s = 2, v = 50. number of seed: 193 if nposts = 10000
+// 	zipf := rand.NewZipf(rand.New(rand.NewSource(121212)), 2, 50, uint64(nposts))
+// 	return zipf
+// 	// print distribution.
+// 	// count := make(map[uint64]int)
+// 	// for i := 0; i < nposts; i++ {
+// 	// 	v := zipf.Uint64()
+// 	// 	count[v]++
+// 	// }
+// 	// probs := make([]float64, nposts)
+// 	// for k, v := range count {
+// 	// 	probs[k] = float64(v) * 100 / float64(nposts)
+// 	// }
+// 	// total := float64(0.0)
+// 	// for i, v := range probs {
+// 	// 	total += v
+// 	// 	if total >= 80 {
+// 	// 		fmt.Printf("80: %d\n", i)
+// 	// 		break
+// 	// 	}
+// 	// }
+// 	// fmt.Println(probs)
+// }
 
 // simulations
 // func (suite *ReputationTestSuite) TestSimulation() {
