@@ -44,7 +44,7 @@ func (suite *reputationTestSuite) timefies(afterUpdate6 bool) {
 			Height:  suite.height,
 			Time:    suite.t}, false, log.NewNopLogger())
 
-	suite.rep.Update(newctx)
+	_ = suite.rep.Update(newctx)
 	suite.ctx = newctx
 }
 
@@ -63,12 +63,12 @@ func (suite *reputationTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestRepv1KVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestRepv2KVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	_ = ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: suite.t}, false, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
-	ph.InitParam(ctx)
+	_ = ph.InitParam(ctx)
 	rep := NewReputationManager(TestRepv1KVStoreKey, TestRepv2KVStoreKey, ph)
 	suite.ph = ph
 	suite.rep = rep
@@ -175,7 +175,8 @@ func (suite *reputationTestSuite) TestGetCurrentRound() {
 
 func (suite *reputationTestSuite) TestGetSumRep() {
 	rep := suite.rep
-	rep.DonateAt(suite.ctx, "yxia", "sp", types.NewCoinFromInt64(1))
+	_, err := rep.DonateAt(suite.ctx, "yxia", "sp", types.NewCoinFromInt64(1))
+	suite.Nil(err)
 	sumrep, err := rep.GetSumRep(suite.ctx, "sp")
 	suite.Nil(err)
 	suite.Equal(types.NewCoinFromInt64(100000), sumrep)
@@ -270,7 +271,8 @@ func (suite *reputationTestSuite) TestDonateAtUpdate() {
 	suite.timefies(true)
 	// donate
 	for _, v := range cases {
-		rep.DonateAt(suite.ctx, v.username, v.post, types.NewCoinFromInt64(v.amount))
+		_, err = rep.DonateAt(suite.ctx, v.username, v.post, types.NewCoinFromInt64(v.amount))
+		suite.Nil(err)
 	}
 
 	suite.timefies(true)
@@ -326,7 +328,8 @@ func (suite *reputationTestSuite) TestExportImport() {
 	}
 
 	suite.timefies(true)
-	rep.DonateAt(suite.ctx, "yxia", "sp", types.NewCoinFromInt64(100000000))
+	_, err := rep.DonateAt(suite.ctx, "yxia", "sp", types.NewCoinFromInt64(100000000))
+	suite.Nil(err)
 	suite.timefies(true)
 	rv, _ := rep.GetReputation(suite.ctx, "yxia")
 	suite.Equal(types.NewCoinFromInt64(10), rv)
@@ -336,15 +339,17 @@ func (suite *reputationTestSuite) TestExportImport() {
 	defer os.RemoveAll(dir) // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
-	rep.ExportToFile(suite.ctx, tmpfn)
+	err2 = rep.ExportToFile(suite.ctx, tmpfn)
+	suite.Nil(err2)
 
 	// clear everything
 	suite.SetupTest()
 	suite.timefies(true) // start to use repv2
 	rep = suite.rep
 
-	rep.ImportFromFile(suite.ctx, tmpfn)
-	rv, err := rep.GetReputation(suite.ctx, "yxia")
+	err3 := rep.ImportFromFile(suite.ctx, tmpfn)
+	suite.Nil(err3)
+	rv, err = rep.GetReputation(suite.ctx, "yxia")
 	suite.Nil(err)
 	suite.Equal(types.NewCoinFromInt64(10).String(), rv.String())
 

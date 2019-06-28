@@ -80,8 +80,14 @@ func (rep ReputationImpl) ExportToFile(file string) {
 	if err != nil {
 		panic("failed to marshal json for " + file + " due to " + err.Error())
 	}
-	f.Write(jsonbytes)
-	f.Sync()
+	_, err = f.Write(jsonbytes)
+	if err != nil {
+		panic(err)
+	}
+	err = f.Sync()
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ImportFromFile - implementing ExporteImporter
@@ -124,11 +130,7 @@ func (rep ReputationImpl) MigrateFromV1(u Uid, prevRep Rep) {
 // any donation or import will make user's lastDonationRound
 // to be updated to newest.
 func (rep ReputationImpl) RequireMigrate(u Uid) bool {
-	last := rep.store.GetUserMeta(u).LastDonationRound
-	if last > 0 {
-		return false
-	}
-	return true
+	return !(rep.store.GetUserMeta(u).LastDonationRound > 0)
 }
 
 // internal struct as a summary of a user's consumption in a round.
@@ -493,9 +495,9 @@ func bigIntLess(a, b *big.Int) bool {
 	return a.Cmp(b) < 0
 }
 
-func bigIntLTE(a, b *big.Int) bool {
-	return a.Cmp(b) <= 0
-}
+// func bigIntLTE(a, b *big.Int) bool {
+// 	return a.Cmp(b) <= 0
+// }
 
 // return the exponential moving average of @p prev on having a new sample @p new
 // with sample size of @p windowSize.

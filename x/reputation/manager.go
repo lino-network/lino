@@ -70,7 +70,7 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 	return err
 }
 
-func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) sdk.Error {
+func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reputation, uid model.Uid) {
 	if repv2.RequireMigrate(uid) {
 		prev := handler.GetReputation(uid)
 		// only when user's reputation is larger than initial, migrate it.
@@ -78,7 +78,6 @@ func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reput
 			repv2.MigrateFromV1(uid, handler.GetReputation(uid))
 		}
 	}
-	return nil
 }
 
 // DonateAt - It's caller's responsibility that parameters are all correct,
@@ -142,7 +141,7 @@ func (rep ReputationManager) calcFreeScore(amount types.Coin) *big.Int {
 func (rep ReputationManager) OnStakeIn(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
 	incAmount := rep.calcFreeScore(amount)
-	rep.incFreeScore(ctx, username, incAmount)
+	_ = rep.incFreeScore(ctx, username, incAmount)
 }
 
 // OnStakeOut - on @p username stakeout @p amount
@@ -150,7 +149,7 @@ func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
 	username types.AccountKey, amount types.Coin) {
 	incAmount := rep.calcFreeScore(amount)
 	incAmount.Neg(incAmount)
-	rep.incFreeScore(ctx, username, incAmount)
+	_ = rep.incFreeScore(ctx, username, incAmount)
 }
 
 func (rep ReputationManager) incFreeScore(ctx sdk.Context,

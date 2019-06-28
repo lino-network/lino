@@ -142,14 +142,14 @@ type ReputationStore interface {
 // https://github.com/alecthomas/go_serialization_benchmarks
 
 var (
-	KeySeparator               = []byte("/")
-	repUserMetaPrefix          = []byte{0x00}
-	repPostMetaPrefix          = []byte{0x01}
-	repUserPostMetaPrefix      = []byte{0x02}
-	repRoundMetaPrefix         = []byte{0x03}
-	repRoundPostMetaPrefix     = []byte{0x04}
-	repRoundUserPostMetaPrefix = []byte{0x05}
-	repGameMetaPrefix          = []byte{0x06}
+	KeySeparator      = []byte("/")
+	repUserMetaPrefix = []byte{0x00}
+	repPostMetaPrefix = []byte{0x01}
+	// repUserPostMetaPrefix      = []byte{0x02}
+	repRoundMetaPrefix = []byte{0x03}
+	// repRoundPostMetaPrefix     = []byte{0x04}
+	// repRoundUserPostMetaPrefix = []byte{0x05}
+	repGameMetaPrefix = []byte{0x06}
 )
 
 type userMeta struct {
@@ -283,8 +283,14 @@ func (impl reputationStoreImpl) ExportToFile(file string) {
 	if err != nil {
 		panic("failed to marshal json for " + file + " due to " + err.Error())
 	}
-	f.Write(jsonbytes)
-	f.Sync()
+	_, err = f.Write(jsonbytes)
+	if err != nil {
+		panic(err)
+	}
+	err = f.Sync()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
