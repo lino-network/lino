@@ -75,7 +75,7 @@ func (rep ReputationManager) migrate(handler model.Reputation, repv2 repv2.Reput
 		prev := handler.GetReputation(uid)
 		// only when user's reputation is larger than initial, migrate it.
 		if prev.Cmp(big.NewInt(model.InitialCustomerScore)) > 0 {
-			repv2.MigrateFromV1(uid, handler.GetReputation(uid))
+			repv2.MigrateFromV1(uid, prev)
 		}
 	}
 }
