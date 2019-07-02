@@ -180,7 +180,7 @@ const (
 	BlockchainUpgrade1Update5Height = 680000
 
 	// BlockchainUpgrade1Update6Height - reputation algorithm upgrade.
-	BlockchainUpgrade1Update6Height = 10000000000
+	BlockchainUpgrade1Update6Height = 2760000
 
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000
