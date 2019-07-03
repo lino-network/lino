@@ -76,15 +76,15 @@ func NewCreatePostMsg(
 	sourceAuthor, sourcePostID, redistributionSplitRate string,
 	links []types.IDToURLMapping) CreatePostMsg {
 	return CreatePostMsg{
-		Author:                  types.AccountKey(author),
-		PostID:                  postID,
-		Title:                   title,
-		Content:                 content,
-		ParentAuthor:            types.AccountKey(parentAuthor),
-		ParentPostID:            parentPostID,
-		SourceAuthor:            types.AccountKey(sourceAuthor),
-		SourcePostID:            sourcePostID,
-		Links:                   links,
+		Author:       types.AccountKey(author),
+		PostID:       postID,
+		Title:        title,
+		Content:      content,
+		ParentAuthor: types.AccountKey(parentAuthor),
+		ParentPostID: parentPostID,
+		SourceAuthor: types.AccountKey(sourceAuthor),
+		SourcePostID: sourcePostID,
+		Links:        links,
 		RedistributionSplitRate: redistributionSplitRate,
 	}
 }

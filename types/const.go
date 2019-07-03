@@ -5,18 +5,17 @@ const (
 	Decimals = 100000
 
 	// KVStoreKey presents store which used by app
-	MainKVStoreKey         = "main"
-	AccountKVStoreKey      = "account"
-	PostKVStoreKey         = "post"
-	ValidatorKVStoreKey    = "validator"
-	GlobalKVStoreKey       = "global"
-	VoteKVStoreKey         = "vote"
-	InfraKVStoreKey        = "infra"
-	DeveloperKVStoreKey    = "developer"
-	ParamKVStoreKey        = "param"
-	ProposalKVStoreKey     = "proposal"
-	ReputationKVStoreKey   = "reputation"
-	ReputationV2KVStoreKey = "repv2"
+	MainKVStoreKey       = "main"
+	AccountKVStoreKey    = "account"
+	PostKVStoreKey       = "post"
+	ValidatorKVStoreKey  = "validator"
+	GlobalKVStoreKey     = "global"
+	VoteKVStoreKey       = "vote"
+	InfraKVStoreKey      = "infra"
+	DeveloperKVStoreKey  = "developer"
+	ParamKVStoreKey      = "param"
+	ProposalKVStoreKey   = "proposal"
+	ReputationKVStoreKey = "reputation"
 
 	// Different permission level for msg
 	UnknownPermission                = Permission(0)
@@ -178,9 +177,6 @@ const (
 
 	// BlockchainUpgrade1Update5Height - use coin instead of coinday as input for reputaion.
 	BlockchainUpgrade1Update5Height = 680000
-
-	// BlockchainUpgrade1Update6Height - reputation algorithm upgrade.
-	BlockchainUpgrade1Update6Height = 2760000
 
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000

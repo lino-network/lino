@@ -7,11 +7,11 @@ import (
 	db "github.com/tendermint/tendermint/libs/db"
 
 	"encoding/binary"
-	"io/ioutil"
 	"math/big"
-	"os"
 	"sort"
+	"os"
 	"strings"
+	"io/ioutil"
 )
 
 // Store - store.
@@ -28,8 +28,6 @@ type Store interface {
 	Iterator(start, end []byte) db.Iterator
 }
 
-type UserIterator = func(user Uid) bool // return true to break.
-
 // ReputationStore - xx
 // a simple wrapper around kv-store. It does not handle any reputation computation logic,
 // except for init value for some field, like customer score.
@@ -45,9 +43,6 @@ type ReputationStore interface {
 	// Import state from bytes
 	Import(tb *UserReputationTable)
 	ImportFromFile(file string)
-
-	// Iterator over usernames
-	IterateUsers(UserIterator)
 
 	// Note that, this value may not be the exact customer score of the user
 	// due to there might be unsettled keys remaining.
@@ -142,14 +137,14 @@ type ReputationStore interface {
 // https://github.com/alecthomas/go_serialization_benchmarks
 
 var (
-	KeySeparator      = []byte("/")
-	repUserMetaPrefix = []byte{0x00}
-	repPostMetaPrefix = []byte{0x01}
-	// repUserPostMetaPrefix      = []byte{0x02}
-	repRoundMetaPrefix = []byte{0x03}
-	// repRoundPostMetaPrefix     = []byte{0x04}
-	// repRoundUserPostMetaPrefix = []byte{0x05}
-	repGameMetaPrefix = []byte{0x06}
+	KeySeparator               = []byte("/")
+	repUserMetaPrefix          = []byte{0x00}
+	repPostMetaPrefix          = []byte{0x01}
+	repUserPostMetaPrefix      = []byte{0x02}
+	repRoundMetaPrefix         = []byte{0x03}
+	repRoundPostMetaPrefix     = []byte{0x04}
+	repRoundUserPostMetaPrefix = []byte{0x05}
+	repGameMetaPrefix          = []byte{0x06}
 )
 
 type userMeta struct {
@@ -239,20 +234,6 @@ func NewReputationStore(s Store, n int) ReputationStore {
 	return &reputationStoreImpl{store: s, BestContentIndexN: n}
 }
 
-func (impl reputationStoreImpl) IterateUsers(cb UserIterator) {
-	itr := impl.store.Iterator(repUserMetaPrefix, PrefixEndBytes(repUserMetaPrefix))
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		uid := Uid(itr.Key()[1:])
-		if strings.Contains(uid, string(KeySeparator)) {
-			continue
-		}
-		if cb(uid) {
-			break
-		}
-	}
-}
-
 func (impl reputationStoreImpl) Export() *UserReputationTable {
 	rst := &UserReputationTable{}
 	itr := impl.store.Iterator(repUserMetaPrefix, PrefixEndBytes(repUserMetaPrefix))
@@ -264,9 +245,9 @@ func (impl reputationStoreImpl) Export() *UserReputationTable {
 		}
 		v := impl.getUserMeta(uid)
 		rst.Reputations = append(rst.Reputations, UserReputation{
-			Username:      uid,
+			Username: uid,
 			CustomerScore: v.CustomerScore,
-			FreeScore:     v.FreeScore,
+			FreeScore: v.FreeScore,
 		})
 	}
 	return rst
@@ -283,20 +264,15 @@ func (impl reputationStoreImpl) ExportToFile(file string) {
 	if err != nil {
 		panic("failed to marshal json for " + file + " due to " + err.Error())
 	}
-	_, err = f.Write(jsonbytes)
-	if err != nil {
-		panic(err)
-	}
-	err = f.Sync()
-	if err != nil {
-		panic(err)
-	}
+	f.Write(jsonbytes)
+	f.Sync()
 }
+
 
 func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
 	for _, v := range tb.Reputations {
 		impl.setUserMeta(v.Username, &userMeta{
-			FreeScore:     v.FreeScore,
+			FreeScore: v.FreeScore,
 			CustomerScore: v.CustomerScore,
 		})
 	}

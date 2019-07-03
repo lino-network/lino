@@ -224,7 +224,8 @@ func (rep ReputationImpl) incPostSumStake(roundId RoundId, p Pid, s Stake) {
 func (rep ReputationImpl) incPostSumRep(u Uid, p Pid, newRep Rep) {
 	sumRep := rep.store.GetSumRep(p)
 	oldRep := rep.store.GetUserLastDonation(u, p)
-	delta := bigIntSub(newRep, oldRep)
+	var delta Rep
+	delta = bigIntSub(newRep, oldRep)
 	rep.store.SetSumRep(p, sumRep.Add(sumRep, delta))
 	rep.store.SetUserLastDonation(u, p, newRep)
 }

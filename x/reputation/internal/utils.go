@@ -4,7 +4,7 @@ package internal
 // range query for all []byte with a certain prefix
 // Deals with last byte of prefix being FF without overflowing
 func PrefixEndBytes(prefix []byte) []byte {
-	if len(prefix) == 0 {
+	if prefix == nil || len(prefix) == 0 {
 		return nil
 	}
 
