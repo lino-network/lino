@@ -27,6 +27,7 @@ var (
 	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
 	testRepKVStoreKey     = sdk.NewKVStoreKey("reputation")
+	testRepV2KVStoreKey   = sdk.NewKVStoreKey("reputationv2")
 
 	c100 = types.NewCoinFromInt64(100 * types.Decimals)
 	c500 = types.NewCoinFromInt64(500 * types.Decimals)
@@ -44,7 +45,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	repManager := rep.NewReputationManager(testRepKVStoreKey, ph)
+	repManager := rep.NewReputationManager(testRepKVStoreKey, testRepV2KVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -63,6 +64,7 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testRepKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(testRepV2KVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 

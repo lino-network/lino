@@ -1,4 +1,4 @@
-package internal
+package repv2
 
 // PrefixEndBytes returns the []byte that would end a
 // range query for all []byte with a certain prefix

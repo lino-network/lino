@@ -478,7 +478,6 @@ func (suite *AnteTestSuite) TestTPSCapacityDonationAfterUpdate4() {
 	suite.checkInvalidTx(tx, acc.ErrAccountTPSCapacityNotEnough(user1).Result())
 }
 
-
 func TestAnteTestSuite(t *testing.T) {
 	suite.Run(t, &AnteTestSuite{})
 }
