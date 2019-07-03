@@ -153,7 +153,7 @@ index ab509f96..c8aee640 100644
  	// AddBatch analyzes, indexes and stores a batch of transactions.
  	AddBatch(b *Batch) error
 diff --git a/state/txindex/kv/kv.go b/state/txindex/kv/kv.go
-index 84208b8c..c0aad6fe 100644
+index 84208b8c..9de38181 100644
 --- a/state/txindex/kv/kv.go
 +++ b/state/txindex/kv/kv.go
 @@ -7,11 +7,13 @@ import (
@@ -196,7 +196,7 @@ index 84208b8c..c0aad6fe 100644
  	for _, o := range options {
  		o(txi)
  	}
-@@ -54,6 +62,39 @@ func IndexAllTags() func(*TxIndex) {
+@@ -54,6 +62,43 @@ func IndexAllTags() func(*TxIndex) {
  	}
  }
  
@@ -211,7 +211,11 @@ index 84208b8c..c0aad6fe 100644
 +	txi.cacheMux.Lock()
 +	defer txi.cacheMux.Unlock()
 +	if _, ok := txi.cache[string(hash)]; !ok {
-+		txi.logger.Error("[CachedTxIndexer] Removing non-existed hash")
++		if txi.logger != nil {
++			txi.logger.Error("[CachedTxIndexer] Removing non-existed hash")
++		} else {
++			fmt.Printf("%s\n", "[CachedTxIndexer] Removing non-existed hash")
++		}
 +	}
 +	delete(txi.cache, string(hash))
 +}
@@ -236,7 +240,7 @@ index 84208b8c..c0aad6fe 100644
  // Get gets transaction from the TxIndex storage and returns it or nil if the
  // transaction is not found.
  func (txi *TxIndex) Get(hash []byte) (*types.TxResult, error) {
-@@ -61,6 +102,10 @@ func (txi *TxIndex) Get(hash []byte) (*types.TxResult, error) {
+@@ -61,6 +106,10 @@ func (txi *TxIndex) Get(hash []byte) (*types.TxResult, error) {
  		return nil, txindex.ErrorEmptyHash
  	}
  
@@ -247,7 +251,7 @@ index 84208b8c..c0aad6fe 100644
  	rawBytes := txi.store.Get(hash)
  	if rawBytes == nil {
  		return nil, nil
-@@ -104,6 +149,12 @@ func (txi *TxIndex) AddBatch(b *txindex.Batch) error {
+@@ -104,6 +153,12 @@ func (txi *TxIndex) AddBatch(b *txindex.Batch) error {
  	}
  
  	storeBatch.Write()
