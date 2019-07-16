@@ -3,7 +3,7 @@
 sudo apt-get update
 sudo apt-get install -y build-essential gcc g++ make
 
-sudo apt-get install -y libgflags-dev libzstd-dev
+sudo apt-get install -y libgflags-dev libzstd-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev
 homedir="$PWD"
 
 wget -O rocks.tar.gz https://github.com/facebook/rocksdb/archive/v6.1.2.tar.gz && \
