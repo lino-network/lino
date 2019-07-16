@@ -31,7 +31,8 @@
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  revision = "v0.31.5"
+  source = "github.com/lino-network/tendermint"
+  branch = "yumin/exp-rocks"
 
 # XXX(yumin): need to override again here, though already specified in cosmos-sdk's Gopkg.toml.
 # 05/19: cosmos has switched to go mod.

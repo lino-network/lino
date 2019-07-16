@@ -452,6 +452,14 @@
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:c66f93b6a1386ec094c86c1e3ca7cb8c6f391fad66eec382a14bb2f0cddfff7d"
+  name = "github.com/stumble/gorocksdb"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "162552197222a834c6857385ae890e4decdd5049"
+  version = "v0.0.1"
+
+[[projects]]
   digest = "1:5b180f17d5bc50b765f4dcf0d126c72979531cbbd7f7929bf3edd87fb801ea2d"
   name = "github.com/syndtr/goleveldb"
   packages = [
@@ -497,7 +505,8 @@
   version = "v0.12.2"
 
 [[projects]]
-  digest = "1:4b0750aa7ef647aaf13de3eba5e7eab6253e3f148a776b3635a0a780177f5455"
+  branch = "yumin/exp-rocks"
+  digest = "1:b0534ce03bcbb432e29243573256be64ed4f9baeacc4c78b0a551fd4e9e1f77e"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -564,7 +573,8 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "v0.31.5"
+  revision = "8846453b606bb32c08b9fa2dff008b126adeef45"
+  source = "github.com/lino-network/tendermint"
 
 [[projects]]
   digest = "1:efa896fd8b5d5ad8189127b936b735cda7c8299a8e6f9c9918abce9888afec36"

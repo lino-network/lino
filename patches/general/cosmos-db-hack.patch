@@ -1,0 +1,17 @@
+diff --git a/types/utils.go b/types/utils.go
+index 09bce6b76..f31758833 100644
+--- a/types/utils.go
++++ b/types/utils.go
+@@ -72,6 +72,12 @@ func NewLevelDB(name, dir string) (db dbm.DB, err error) {
+ 	backend := dbm.GoLevelDBBackend
+ 	if DBBackend == string(dbm.CLevelDBBackend) {
+ 		backend = dbm.CLevelDBBackend
++	} else if DBBackend == string(dbm.FSDBBackend) {
++		backend = dbm.FSDBBackend
++	} else if DBBackend == "rocksdb" {
++		backend = "rocksdb"
++	} else {
++		panic("unknown cosmos app dbtype: " + DBBackend)
+ 	}
+ 	defer func() {
+ 		if r := recover(); r != nil {
