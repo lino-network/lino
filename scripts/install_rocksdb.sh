@@ -7,9 +7,9 @@ sudo apt-get install -y libgflags-dev libzstd-dev
 homedir="$PWD"
 
 wget -O rocks.tar.gz https://github.com/facebook/rocksdb/archive/v6.1.2.tar.gz && \
-  tar -zxvf rocks.tar.gz && mv rocksdb-6.1.2 rocksdb \
-  cd rocksdb/ && \
-  make -j4 && \
+  tar -zxvf rocks.tar.gz && \
+  cd rocksdb-6.1.2/ && \
+  make static_lib -j4 && \
   sudo cp librocksdb.a /usr/local/lib/ && \
   cd include/ && \
   sudo cp -r rocksdb /usr/local/include/ && \
@@ -17,5 +17,5 @@ wget -O rocks.tar.gz https://github.com/facebook/rocksdb/archive/v6.1.2.tar.gz &
 
 cd "$homedir"
 
-rm -f rocksdb.tar.gz
-rm -rf rocksdb
+rm rocks.tar.gz
+rm -rf rocksdb-6.1.2
