@@ -452,12 +452,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:c66f93b6a1386ec094c86c1e3ca7cb8c6f391fad66eec382a14bb2f0cddfff7d"
+  digest = "1:e0ebf0de5f4c40e388d4197b03ed20a9fd07afbc7cb96bcbb2e0d398492dcfc8"
   name = "github.com/stumble/gorocksdb"
   packages = ["."]
   pruneopts = "UT"
-  revision = "162552197222a834c6857385ae890e4decdd5049"
-  version = "v0.0.1"
+  revision = "b3df346ca07206d9edb426d8eafd395bc51e375a"
+  version = "v0.0.2"
 
 [[projects]]
   digest = "1:5b180f17d5bc50b765f4dcf0d126c72979531cbbd7f7929bf3edd87fb801ea2d"
@@ -573,7 +573,7 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "7ada16d4a12d6fbb101b6fdfc53f679c40fc62b7"
+  revision = "47d34ccd13448384821d0068ec4f720245d1cc26"
   source = "github.com/lino-network/tendermint"
 
 [[projects]]
