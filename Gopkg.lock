@@ -506,7 +506,7 @@
 
 [[projects]]
   branch = "yumin/exp-rocks"
-  digest = "1:9aa5a13bce8e5935dea813b0a9f25d9a534e6e4b6ac9659385d8d74665ab0941"
+  digest = "1:ef92c433991b1a511138422b1c966138b7aa6edf478738109eed258eb0ac6313"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -573,7 +573,7 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "47d34ccd13448384821d0068ec4f720245d1cc26"
+  revision = "917c19391a00e115124eea0fa27e3e160776fc5a"
   source = "github.com/lino-network/tendermint"
 
 [[projects]]
