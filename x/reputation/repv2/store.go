@@ -45,9 +45,10 @@ type ReputationStore interface {
 	SetRoundMeta(r RoundId, dt *roundMeta)
 	GetRoundMeta(r RoundId) *roundMeta
 
-	// total donation power received of a @p post in current round.
+	// total donation power received of a @p post in @p r round.
 	GetRoundPostMeta(r RoundId, p Pid) *roundPostMeta
 	SetRoundPostMeta(r RoundId, p Pid, dt *roundPostMeta)
+	DelRoundPostMeta(r RoundId, p Pid)
 
 	/// -----------  In this round  -------------
 	// RoundId is the current round, starts from 1.
@@ -225,6 +226,10 @@ func (impl reputationStoreImpl) SetRoundPostMeta(r RoundId, p Pid, dt *roundPost
 	if dt != nil {
 		impl.store.Set(getRoundPostMetaKey(r, p), encodeRoundPostMeta(dt))
 	}
+}
+
+func (impl reputationStoreImpl) DelRoundPostMeta(r RoundId, p Pid) {
+	impl.store.Delete(getRoundPostMetaKey(r, p))
 }
 
 // game starts with 1

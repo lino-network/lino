@@ -247,6 +247,13 @@ func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 		reputation:  user.Reputation,
 	}, consumptions)
 
+	// remove roundPostSumImpacts that are not no longer used.
+	// Note: this does not guarantee that all keys will be deleted, but rather
+	// set a bound on how much data one user may hold.
+	for _, pd := range user.Unsettled {
+		rep.deleteRoumdPostSumImpact(user.LastDonationRound, pd.Pid)
+	}
+
 	user.Consumption = newrep.consumption
 	user.Hold = newrep.hold
 	user.Reputation = newrep.reputation
@@ -321,6 +328,10 @@ func (rep ReputationImpl) appendDonation(user *userMeta, post Pid, amount LinoCo
 		})
 	}
 	return impact
+}
+
+func (rep ReputationImpl) deleteRoumdPostSumImpact(round RoundId, p Pid) {
+	rep.store.DelRoundPostMeta(round, p)
 }
 
 // increase the sum of impact factors of @p post by @p dp, in @p round
