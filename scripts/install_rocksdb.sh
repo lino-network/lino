@@ -5,9 +5,6 @@ sudo apt-get install -y build-essential gcc g++ make
 
 sudo apt-get install -y libgflags-dev
 
-# ubuntu 16.04's zstd-dev version is too low.
-sudo apt-get remove -y libzstd-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev
-
 homedir="$PWD"
 wget -O zstd.tar.gz https://github.com/facebook/zstd/archive/v1.4.0.tar.gz && \
     tar -zxvf zstd.tar.gz && \
