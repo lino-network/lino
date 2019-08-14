@@ -1,23 +1,18 @@
 package repv2
 
-import (
-	"math/big"
-)
-
-// Terminology
-// IF: Impact Factor in paper.
-
-type Uid = string
-type Pid = string
+type Uid string
+type Pid string
 
 // Time in this package is an int64, unix timestamp, in seconds.
-type Time = int64
+type Time int64
 
-type bigInt = *big.Int
+type bigInt = Int
+
 type LinoCoin = bigInt
 type IF = bigInt // Impact factor
 type Rep = bigInt
-type RoundId = int64
+
+type RoundId int64
 
 // used in topN.
 type PostIFPair struct {

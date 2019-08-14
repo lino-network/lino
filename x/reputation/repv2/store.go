@@ -1,7 +1,6 @@
 package repv2
 
 import (
-	"math/big"
 	"strconv"
 
 	db "github.com/tendermint/tendermint/libs/db"
@@ -28,8 +27,6 @@ type UserIterator = func(user Uid) bool // return true to break.
 // except for init value for some field, like customer score.
 // This interface should only be used by the reputation system implementation.
 type ReputationStore interface {
-	// TODO(yumin): these two are all in memory, which is extremely bad if state is large.
-	// should changed to io.Write/Reader.
 	// Export all state to deterministic bytes
 	Export() *UserReputationTable
 
@@ -112,11 +109,11 @@ func getUserMetaKey(u Uid) []byte {
 }
 
 func getRoundMetaKey(r RoundId) []byte {
-	return append(repRoundMetaPrefix, strconv.FormatInt(r, 36)...)
+	return append(repRoundMetaPrefix, strconv.FormatInt(int64(r), 36)...)
 }
 
 func getRoundPostMetaKey(r RoundId, p Pid) []byte {
-	prefix := append(repRoundPostMetaPrefix, strconv.FormatInt(r, 36)...)
+	prefix := append(repRoundPostMetaPrefix, strconv.FormatInt(int64(r), 36)...)
 	return append(append(prefix, KeySeparator), []byte(p)...)
 }
 
@@ -152,7 +149,8 @@ func (impl reputationStoreImpl) Export() *UserReputationTable {
 		rst.Reputations = append(rst.Reputations, UserReputation{
 			Username:      uid,
 			CustomerScore: v.Reputation,
-			FreeScore:     big.NewInt(0),
+			FreeScore:     NewInt(0),
+			IsMiniDollar:  true,
 		})
 
 		return false
@@ -160,11 +158,16 @@ func (impl reputationStoreImpl) Export() *UserReputationTable {
 	return rst
 }
 
-// backward compatible to v1.
 func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
 	for _, v := range tb.Reputations {
+		rep := IntAdd(v.FreeScore, v.CustomerScore)
+		// when import from upgrade-1, do a unit conversion.
+		// 1 testnetcoin = (10^-5 * 0.012) USD = 12 MiniUSD
+		if !v.IsMiniDollar {
+			rep.Mul(NewInt(12))
+		}
 		impl.SetUserMeta(v.Username, &userMeta{
-			Reputation: bigIntAdd(v.FreeScore, v.CustomerScore),
+			Reputation: rep,
 		})
 	}
 }
@@ -174,9 +177,9 @@ func (impl reputationStoreImpl) GetUserMeta(u Uid) *userMeta {
 	rst := decodeUserMeta(buf)
 	if rst == nil {
 		return &userMeta{
-			Consumption:       big.NewInt(impl.initReputation),
-			Hold:              big.NewInt(0),
-			Reputation:        big.NewInt(impl.initReputation),
+			Consumption:       NewInt(impl.initReputation),
+			Hold:              NewInt(0),
+			Reputation:        NewInt(impl.initReputation),
 			LastSettledRound:  0,
 			LastDonationRound: 0,
 			Unsettled:         nil,
@@ -197,7 +200,7 @@ func (impl reputationStoreImpl) GetRoundMeta(r RoundId) *roundMeta {
 	if rst == nil {
 		return &roundMeta{
 			Result:  nil,
-			SumIF:   big.NewInt(0),
+			SumIF:   NewInt(0),
 			StartAt: 0,
 			TopN:    nil,
 		}
@@ -216,7 +219,7 @@ func (impl reputationStoreImpl) GetRoundPostMeta(r RoundId, p Pid) *roundPostMet
 	rst := decodeRoundPostMeta(buf)
 	if rst == nil {
 		return &roundPostMeta{
-			SumIF: big.NewInt(0),
+			SumIF: NewInt(0),
 		}
 	}
 	return rst
