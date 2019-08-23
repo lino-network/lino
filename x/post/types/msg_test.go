@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	memo1       = "memo1"
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
 
 	// len of 101

@@ -307,4 +307,6 @@ const (
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000
+	// Unimplemented features.
+	CodeUnimplementedError sdk.CodeType = 100001
 )

@@ -262,7 +262,7 @@ func (suite *PostManagerTestSuite) TestUpdatePost() {
 			testName:   "update with account that does not exist",
 			author:     suite.unreg1,
 			postID:     postID,
-			expectErr:  types.ErrAccountNotFound(suite.unreg1),
+			expectErr:  types.ErrPostNotFound(linotypes.GetPermlink(suite.unreg1, postID)),
 			updateTime: baseTime + 10000,
 		},
 	}

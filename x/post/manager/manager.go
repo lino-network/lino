@@ -91,9 +91,6 @@ func (pm PostManager) CreatePost(ctx sdk.Context, author linotypes.AccountKey, p
 // 1. author exist.
 // 2. post exist.
 func (pm PostManager) UpdatePost(ctx sdk.Context, author linotypes.AccountKey, postID, title, content string) sdk.Error {
-	if !pm.am.DoesAccountExist(ctx, author) {
-		return types.ErrAccountNotFound(author)
-	}
 	permlink := linotypes.GetPermlink(author, postID)
 	postInfo, err := pm.postStorage.GetPost(ctx, permlink)
 	if err != nil {
