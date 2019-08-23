@@ -4,134 +4,65 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/types"
 )
 
-var (
-	TestKVStoreKey = sdk.NewKVStoreKey("post")
-)
-
-func TestPost(t *testing.T) {
-	postInfo := PostInfo{
-		PostID:       "Test Post",
-		Title:        "Test Post",
-		Content:      "Test Post",
-		Author:       types.AccountKey("author"),
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        []types.IDToURLMapping{types.IDToURLMapping{Identifier: "test", URL: "https://lino.network"}},
-	}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostInfo(env.ctx, &postInfo)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostInfo(env.ctx, types.GetPermlink(postInfo.Author, postInfo.PostID))
-		assert.Nil(t, err)
-		assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
-	})
-}
-
-func TestUTF8(t *testing.T) {
-	postInfo := PostInfo{
-		PostID:       "Test Post",
-		Title:        "Test Post",
-		Content:      "12345 67890 你好👌12345 67890 你好👌",
-		Author:       types.AccountKey("author"),
-		ParentAuthor: "",
-		ParentPostID: "",
-		SourceAuthor: "",
-		SourcePostID: "",
-		Links:        nil,
-	}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostInfo(env.ctx, &postInfo)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostInfo(env.ctx, types.GetPermlink(postInfo.Author, postInfo.PostID))
-		assert.Nil(t, err)
-		assert.Equal(t, postInfo, *resultPtr, "postInfo should be equal")
-	})
-}
-
-func TestPostMeta(t *testing.T) {
-	postMeta := PostMeta{
-		AllowReplies:            true,
-		RedistributionSplitRate: sdk.ZeroDec(),
-		TotalUpvoteCoinDay:      types.NewCoinFromInt64(0),
-		TotalReportCoinDay:      types.NewCoinFromInt64(0),
-		TotalReward:             types.NewCoinFromInt64(0),
-	}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostMeta(env.ctx, types.Permlink("test"), &postMeta)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostMeta(env.ctx, types.Permlink("test"))
-		assert.Nil(t, err)
-		assert.Equal(t, postMeta, *resultPtr, "Post meta should be equal")
-	})
-}
-
-func TestPostComment(t *testing.T) {
-	user := types.AccountKey("test")
-	postComment := Comment{Author: user, PostID: "test", CreatedAt: 100}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostComment(env.ctx, types.Permlink("test"), &postComment)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostComment(env.ctx, types.Permlink("test"), types.GetPermlink(user, "test"))
-		assert.Nil(t, err)
-		assert.Equal(t, postComment, *resultPtr, "Post comment should be equal")
-	})
-}
-
-func TestPostView(t *testing.T) {
-	user := types.AccountKey("test")
-	postView := View{Username: user, LastViewAt: 100, Times: 1}
-
-	runTest(t, func(env TestEnv) {
-		err := env.ps.SetPostView(env.ctx, types.Permlink("test"), &postView)
-		assert.Nil(t, err)
-
-		resultPtr, err := env.ps.GetPostView(env.ctx, types.Permlink("test"), user)
-		assert.Nil(t, err)
-		assert.Equal(t, postView, *resultPtr, "Post view should be equal")
-	})
-}
-
-//
-// Test Environment setup
-//
-
-type TestEnv struct {
-	ps  PostStorage
+type postStoreTestSuite struct {
+	suite.Suite
 	ctx sdk.Context
+	ps  PostStorage
 }
 
-func runTest(t *testing.T, fc func(env TestEnv)) {
-	env := TestEnv{
-		ps:  NewPostStorage(TestKVStoreKey),
-		ctx: getContext(),
-	}
-	fc(env)
+func TestPostStoreTestSuite(t *testing.T) {
+	suite.Run(t, &postStoreTestSuite{})
 }
 
-func getContext() sdk.Context {
+func (suite *postStoreTestSuite) SetupTest() {
+	TestKVStoreKey := sdk.NewKVStoreKey("post")
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	_ = ms.LoadLatestVersion()
+	suite.ctx = sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
+	suite.ps = NewPostStorage(TestKVStoreKey)
+}
 
-	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
+func (suite *postStoreTestSuite) TestPostGetSetHasDel() {
+	postInfo := &Post{
+		PostID:    "Test Post",
+		Title:     "Test Post",
+		Content:   "Test Post",
+		Author:    linotypes.AccountKey("author"),
+		CreatedBy: linotypes.AccountKey("app"),
+		CreatedAt: 1,
+		UpdatedAt: 2,
+	}
+	permlink := linotypes.GetPermlink(postInfo.Author, postInfo.PostID)
+
+	suite.False(suite.ps.HasPost(suite.ctx, permlink))
+	suite.ps.SetPost(suite.ctx, postInfo)
+	suite.True(suite.ps.HasPost(suite.ctx, permlink))
+
+	rst, err := suite.ps.GetPost(suite.ctx, permlink)
+	suite.Nil(err)
+	suite.Equal(postInfo, rst)
+
+	suite.ps.DeletePost(suite.ctx, permlink)
+	suite.False(suite.ps.HasPost(suite.ctx, permlink))
+
+	rst, err = suite.ps.GetPost(suite.ctx, permlink)
+	suite.Equal(types.ErrPostNotFound(permlink), err)
+	suite.Nil(rst)
+}
+
+func (suite *postStoreTestSuite) TestDeleteNotExistNop() {
+	permlink := linotypes.GetPermlink("yxia", "123")
+	suite.ps.DeletePost(suite.ctx, permlink)
 }

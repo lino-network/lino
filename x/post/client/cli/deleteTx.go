@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	post "github.com/lino-network/lino/x/post"
+	post "github.com/lino-network/lino/x/post/types"
 )
 
 // DeletePostTxCmd deletes a post tx and sign it with the given key
@@ -19,8 +19,8 @@ func DeletePostTxCmd(cdc *wire.Codec) *cobra.Command {
 		Short: "delete a post to blockchain",
 		RunE:  sendDeletePostTx(cdc),
 	}
-	cmd.Flags().String(client.FlagAuthor, "", "author of this post")
-	cmd.Flags().String(client.FlagPostID, "", "post id to identify this post for the author")
+	cmd.Flags().String(FlagAuthor, "", "author of this post")
+	cmd.Flags().String(FlagPostID, "", "post id to identify this post for the author")
 	return cmd
 }
 
@@ -28,8 +28,8 @@ func DeletePostTxCmd(cdc *wire.Codec) *cobra.Command {
 func sendDeletePostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
-		author := viper.GetString(client.FlagAuthor)
-		postID := viper.GetString(client.FlagPostID)
+		author := viper.GetString(FlagAuthor)
+		postID := viper.GetString(FlagPostID)
 
 		msg := post.NewDeletePostMsg(author, postID)
 

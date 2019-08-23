@@ -15,7 +15,6 @@ const (
 	DeveloperKVStoreKey    = "developer"
 	ParamKVStoreKey        = "param"
 	ProposalKVStoreKey     = "proposal"
-	ReputationKVStoreKey   = "reputation"
 	ReputationV2KVStoreKey = "repv2"
 
 	// Different permission level for msg
@@ -26,6 +25,10 @@ const (
 	GrantAppPermission               = Permission(4)
 	PreAuthorizationPermission       = Permission(5)
 	AppAndPreAuthorizationPermission = Permission(6)
+
+	// since upgrade2
+	// signed by the app or its affiliated accounts.
+	AppOrAffiliatedPermission = Permission(7)
 
 	// Different proposal result
 	ProposalNotPass = ProposalResult(0)
@@ -175,12 +178,6 @@ const (
 
 	// BlockchainUpgrade1Update4Height - fix donation bandwidth check.
 	BlockchainUpgrade1Update4Height = 386000
-
-	// BlockchainUpgrade1Update5Height - use coin instead of coinday as input for reputaion.
-	BlockchainUpgrade1Update5Height = 680000
-
-	// BlockchainUpgrade1Update6Height - reputation algorithm upgrade.
-	BlockchainUpgrade1Update6Height = 2760000
 
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000

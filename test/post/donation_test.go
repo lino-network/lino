@@ -6,8 +6,8 @@ import (
 
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
-	post "github.com/lino-network/lino/x/post"
+	// acc "github.com/lino-network/lino/x/account"
+	post "github.com/lino-network/lino/x/post/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
@@ -30,7 +30,7 @@ func TestNormalDonation(t *testing.T) {
 		secp256k1.GenPrivKey(), newDonateUserTransactionPriv, secp256k1.GenPrivKey(), "100")
 
 	test.CreateTestPost(
-		t, lb, newPostUser, postID, 0, newPostUserAppPriv, "", "", "", "", "0", baseTime)
+		t, lb, newPostUser, postID, 0, newPostUserTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(99*types.Decimals))
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(99*types.Decimals))
@@ -43,10 +43,10 @@ func TestNormalDonation(t *testing.T) {
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(49*types.Decimals))
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
 
-	claimMsg := acc.NewClaimMsg(newPostUser)
-	test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserTransactionPriv, baseTime)
-	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
-	test.SignCheckDeliver(
-		t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodSec+1)
-	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(1228089028362))
+	// claimMsg := acc.NewClaimMsg(newPostUser)
+	// test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserTransactionPriv, baseTime)
+	// test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
+	// test.SignCheckDeliver(
+	// 	t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodSec+1)
+	// test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(1228089028362))
 }

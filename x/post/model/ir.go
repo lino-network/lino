@@ -4,6 +4,19 @@ import (
 	"github.com/lino-network/lino/types"
 )
 
+// PostInfoV1 - can also use to present comment(with parent) or repost(with source)
+type PostInfoV1 struct {
+	PostID       string                 `json:"post_id"`
+	Title        string                 `json:"title"`
+	Content      string                 `json:"content"`
+	Author       types.AccountKey       `json:"author"`
+	ParentAuthor types.AccountKey       `json:"parent_author"`
+	ParentPostID string                 `json:"parent_postID"`
+	SourceAuthor types.AccountKey       `json:"source_author"`
+	SourcePostID string                 `json:"source_postID"`
+	Links        []types.IDToURLMapping `json:"links"`
+}
+
 // PostMetaIR RedistributionSplitRate rat -> string
 type PostMetaIR struct {
 	CreatedAt               int64      `json:"created_at"`
@@ -22,12 +35,12 @@ type PostMetaIR struct {
 // PostRowIR - Meta changed
 type PostRowIR struct {
 	Permlink types.Permlink `json:"permlink"`
-	Info     PostInfo       `json:"info"`
+	Info     PostInfoV1     `json:"info"`
 	Meta     PostMetaIR     `json:"meta"`
 }
 
 // PostTablesIR - PostRow changed.
 type PostTablesIR struct {
-	Posts     []PostRowIR   `json:"posts"`
-	PostUsers []PostUserRow `json:"post_users"`
+	Posts []PostRowIR `json:"posts"`
+	// PostUsers []PostUserRow `json:"post_users"`
 }

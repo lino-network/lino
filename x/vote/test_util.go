@@ -15,7 +15,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
-	rep "github.com/lino-network/lino/x/reputation"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
@@ -26,8 +25,6 @@ var (
 	testVoteKVStoreKey    = sdk.NewKVStoreKey("vote")
 	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
-	testRepKVStoreKey     = sdk.NewKVStoreKey("reputation")
-	testRepV2KVStoreKey   = sdk.NewKVStoreKey("reputationv2")
 
 	c100 = types.NewCoinFromInt64(100 * types.Decimals)
 	c500 = types.NewCoinFromInt64(500 * types.Decimals)
@@ -38,14 +35,13 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, VoteManager, global.GlobalManager, rep.ReputationManager) {
+	acc.AccountManager, VoteManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	repManager := rep.NewReputationManager(testRepKVStoreKey, testRepV2KVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -53,7 +49,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 
 	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, voteManager, globalManager, repManager
+	return ctx, accManager, voteManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -63,8 +59,6 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(testRepKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(testRepV2KVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 

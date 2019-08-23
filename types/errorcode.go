@@ -22,6 +22,7 @@ const (
 	CodeInvalidCoins        sdk.CodeType = 109
 	CodeInvalidInt64Number  sdk.CodeType = 110
 	CodeInvalidQueryPath    sdk.CodeType = 111
+	CodeInvalidIDAAmount    sdk.CodeType = 112
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150
@@ -147,6 +148,12 @@ const (
 	CodeGetSourcePost                        sdk.CodeType = 439
 	CodePostTooOften                         sdk.CodeType = 440
 	CodePostQueryFailed                      sdk.CodeType = 441
+	CodeNoCreatedBy                          sdk.CodeType = 442
+	CodeInvalidSigner                        sdk.CodeType = 443
+	CodeNoApp                                sdk.CodeType = 444
+	CodeNoDeletedBy                          sdk.CodeType = 445
+	CodeDonationAmountInvalid                sdk.CodeType = 446
+	CodeNonPositiveIDAAmount                 sdk.CodeType = 447
 
 	// Lino validator errors reserve 500 ~ 599
 	CodeValidatorNotFound              sdk.CodeType = 500
@@ -297,4 +304,7 @@ const (
 
 	// reputation errors reserve 1200 ~ 1299
 	CodeReputationQueryFailed sdk.CodeType = 1200
+
+	// testing dummy error 100000
+	CodeTestDummyError sdk.CodeType = 100000
 )

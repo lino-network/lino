@@ -33,7 +33,7 @@ func GetMsgDonationAmount(msg types.Msg) types.Coin {
 
 // GetMsgDonationValidAmount - return the min of (amount of donation in of @p msg, saving)
 // if not donation, return 0.
-func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountManager, pm post.PostManager) types.Coin {
+func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountManager, pm post.PostKeeper) types.Coin {
 	zero := types.NewCoinFromInt64(0)
 	donation, ok := msg.(post.DonateMsg)
 	if !ok {
@@ -46,9 +46,6 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 
 	permlink := types.GetPermlink(donation.Author, donation.PostID)
 	if !pm.DoesPostExist(ctx, permlink) {
-		return zero
-	}
-	if isDeleted, err := pm.IsDeleted(ctx, permlink); isDeleted || err != nil {
 		return zero
 	}
 
@@ -66,7 +63,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
-	pm post.PostManager) sdk.AnteHandler {
+	pm post.PostKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {

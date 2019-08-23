@@ -23,3 +23,8 @@ func ErrAmountOverflow() sdk.Error {
 func ErrInvalidQueryPath() sdk.Error {
 	return NewError(CodeInvalidQueryPath, "query path is invalid")
 }
+
+// ErrInvalidIDAAmount - error if the IDA amount is invalid.
+func ErrInvalidIDAAmount(msg string) sdk.Error {
+	return NewError(CodeInvalidIDAAmount, msg)
+}

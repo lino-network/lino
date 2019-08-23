@@ -58,10 +58,8 @@ func (gs GlobalStorage) WireCodec() *wire.Codec {
 func (gs GlobalStorage) InitGlobalStateWithConfig(
 	ctx sdk.Context, totalLino types.Coin, param InitParamList) sdk.Error {
 	globalMeta := &GlobalMeta{
-		TotalLinoCoin:                 totalLino,
-		LastYearTotalLinoCoin:         totalLino,
-		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
-		CumulativeConsumption:         types.NewCoinFromInt64(0),
+		TotalLinoCoin:         totalLino,
+		LastYearTotalLinoCoin: totalLino,
 	}
 	if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
@@ -79,7 +77,7 @@ func (gs GlobalStorage) InitGlobalStateWithConfig(
 
 	consumptionMeta := &ConsumptionMeta{
 		ConsumptionFrictionRate:      param.ConsumptionFrictionRate,
-		ConsumptionWindow:            types.NewCoinFromInt64(0),
+		ConsumptionWindow:            types.NewMiniDollar(0),
 		ConsumptionRewardPool:        types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodSec: param.ConsumptionFreezingPeriodSec,
 	}
@@ -398,20 +396,24 @@ func (gs GlobalStorage) Import(ctx sdk.Context, tb *GlobalTablesIR) {
 	}
 	// import table.Misc
 	misc := tb.GlobalMisc
-	err := gs.SetGlobalMeta(ctx, &misc.Meta)
-	check(err)
 
-	err = gs.SetInflationPool(ctx, &misc.InflationPool)
+	err := gs.SetInflationPool(ctx, &misc.InflationPool)
 	check(err)
 
 	err = gs.SetGlobalTime(ctx, &misc.Time)
 	check(err)
 
 	// type diff in IR
+	var cwindow types.MiniDollar
+	if misc.ConsumptionMeta.IsConsumptionWindowDollarUnit {
+		cwindow = types.NewMiniDollarFromInt(misc.ConsumptionMeta.ConsumptionWindow.Amount)
+	} else {
+		cwindow = types.NewMiniDollarFromTestnetCoin(misc.ConsumptionMeta.ConsumptionWindow)
+	}
 	err = gs.SetConsumptionMeta(ctx, &ConsumptionMeta{
 		ConsumptionFrictionRate: sdk.MustNewDecFromStr(
 			misc.ConsumptionMeta.ConsumptionFrictionRate),
-		ConsumptionWindow:            misc.ConsumptionMeta.ConsumptionWindow,
+		ConsumptionWindow:            cwindow,
 		ConsumptionRewardPool:        misc.ConsumptionMeta.ConsumptionRewardPool,
 		ConsumptionFreezingPeriodSec: misc.ConsumptionMeta.ConsumptionFreezingPeriodSec,
 	})

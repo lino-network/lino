@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
+	postmn "github.com/lino-network/lino/x/post/manager"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -37,7 +38,7 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, ProposalManager, post.PostManager, vote.VoteManager,
+	sdk.Context, acc.AccountManager, ProposalManager, post.PostKeeper, vote.VoteManager,
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
@@ -48,7 +49,7 @@ func setupTest(t *testing.T, height int64) (
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
-	postManager := post.NewPostManager(testPostKVStoreKey, ph)
+	postManager := postmn.NewPostManager(testPostKVStoreKey, accManager, &globalManager, nil, nil, nil)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
@@ -88,28 +89,17 @@ func createTestAccount(
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
-	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
+	am acc.AccountManager, pm post.PostKeeper, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
 	msg := &post.CreatePostMsg{
-		PostID:                  postID,
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user,
-		ParentAuthor:            "",
-		ParentPostID:            "",
-		SourceAuthor:            "",
-		SourcePostID:            "",
-		Links:                   []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionRate,
+		PostID:    postID,
+		Title:     string(make([]byte, 50)),
+		Content:   string(make([]byte, 1000)),
+		Author:    user,
+		CreatedBy: user,
 	}
-	splitRate, err := sdk.NewDecFromStr(redistributionRate)
-	assert.Nil(t, err)
 
-	err = pm.CreatePost(
-		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
-		msg.ParentAuthor, msg.ParentPostID, msg.Content,
-		msg.Title, splitRate, msg.Links)
-
+	err := pm.CreatePost(ctx, msg.Author, msg.PostID, msg.CreatedBy, msg.Content, msg.Title)
 	assert.Nil(t, err)
 	return user, postID
 }

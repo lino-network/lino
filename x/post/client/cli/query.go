@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"github.com/pkg/errors"
@@ -44,21 +44,12 @@ func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	postInfo := new(model.PostInfo)
-	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, postInfo); err != nil {
+	post := new(model.Post)
+	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, post); err != nil {
 		return err
 	}
 
-	res, err = ctx.Query(model.GetPostMetaKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	postMeta := new(model.PostMeta)
-	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, postMeta); err != nil {
-		return err
-	}
-
-	if err := client.PrintIndent(postInfo, postMeta); err != nil {
+	if err := client.PrintIndent(post); err != nil {
 		return err
 	}
 
@@ -89,13 +80,13 @@ func (c commander) getPostsCmd(cmd *cobra.Command, args []string) error {
 	author := types.AccountKey(args[0])
 
 	resKVs, err := ctx.QuerySubspace(
-		c.cdc, append(model.GetPostInfoPrefix(author), types.PermlinkSeparator...), c.storeName)
+		c.cdc, append(model.GetAuthorPrefix(author), types.PermlinkSeparator...), c.storeName)
 	if err != nil {
 		return err
 	}
-	var posts []model.PostInfo
+	var posts []model.Post
 	for _, KV := range resKVs {
-		var info model.PostInfo
+		var info model.Post
 		if err := c.cdc.UnmarshalBinaryLengthPrefixed(KV.Value, &info); err != nil {
 			return err
 		}

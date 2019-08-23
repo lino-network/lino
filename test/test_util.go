@@ -92,7 +92,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
@@ -241,22 +241,14 @@ func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx 
 // CreateTestPost - create a test post
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
-	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1,
-	sourceAuthor, sourcePostID string,
-	parentAuthor, parentPostID string,
-	redistributionSplitRate string, publishTime int64) {
+	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1, publishTime int64) {
 
 	msg := post.CreatePostMsg{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       types.AccountKey(username),
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionSplitRate,
+		PostID:    postID,
+		Title:     string(make([]byte, 50)),
+		Content:   string(make([]byte, 1000)),
+		Author:    types.AccountKey(username),
+		CreatedBy: types.AccountKey(username),
 	}
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
 }

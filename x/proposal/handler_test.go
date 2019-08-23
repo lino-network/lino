@@ -187,17 +187,6 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantProposal:        proposal1,
 		},
 		{
-			testName:            "target post is deleted",
-			creator:             user1,
-			permlink:            types.GetPermlink(user2, postID2),
-			proposalID:          proposalID1,
-			wantOK:              false,
-			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermlink(user2, postID2)).Result(),
-			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []model.Proposal{proposal1},
-			wantProposal:        proposal1,
-		},
-		{
 			testName:            "proposal is invalid",
 			creator:             "invalid",
 			permlink:            types.GetPermlink(user1, postID1),

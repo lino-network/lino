@@ -1,21 +1,23 @@
-package post
+package types
 
 import (
-	wire "github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Register concrete types on wire codec
-func RegisterWire(cdc *wire.Codec) {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(CreatePostMsg{}, "lino/createPost", nil)
 	cdc.RegisterConcrete(UpdatePostMsg{}, "lino/updatePost", nil)
 	cdc.RegisterConcrete(DeletePostMsg{}, "lino/deletePost", nil)
 	cdc.RegisterConcrete(DonateMsg{}, "lino/donate", nil)
-	cdc.RegisterConcrete(ViewMsg{}, "lino/view", nil)
-	cdc.RegisterConcrete(ReportOrUpvoteMsg{}, "lino/reportOrUpvote", nil)
+	cdc.RegisterConcrete(IDADonateMsg{}, "lino/idaDonate", nil)
 }
 
-var msgCdc = wire.New()
+// module codec
+var ModuleCdc *codec.Codec
 
 func init() {
-	RegisterWire(msgCdc)
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+	ModuleCdc.Seal()
 }

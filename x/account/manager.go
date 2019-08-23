@@ -4,13 +4,12 @@ import (
 	"reflect"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
-
-	"github.com/tendermint/tendermint/crypto"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // AccountManager - account manager
@@ -480,58 +479,6 @@ func (accManager AccountManager) AddDirectDeposit(
 	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
 		return err
 	}
-	return nil
-}
-
-// AddIncomeAndReward - after the evaluate of content value, the original friction
-// will be added to original income and friciton income. The actual inflation will
-// be added to inflation income, total income and unclaim reward
-func (accManager AccountManager) AddIncomeAndReward(
-	ctx sdk.Context, username types.AccountKey,
-	originalDonation, friction, actualReward types.Coin,
-	consumer, postAuthor types.AccountKey, postID string) sdk.Error {
-	reward, err := accManager.storage.GetReward(ctx, username)
-	if err != nil {
-		return err
-	}
-	reward.TotalIncome = reward.TotalIncome.Plus(actualReward)
-	reward.OriginalIncome = reward.OriginalIncome.Plus(friction)
-	reward.FrictionIncome = reward.FrictionIncome.Plus(friction)
-	reward.InflationIncome = reward.InflationIncome.Plus(actualReward)
-	reward.UnclaimReward = reward.UnclaimReward.Plus(actualReward)
-	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return err
-	}
-
-	// add reward detail
-	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ClaimReward - add content reward to user balance
-func (accManager AccountManager) ClaimReward(
-	ctx sdk.Context, username types.AccountKey) sdk.Error {
-	reward, err := accManager.storage.GetReward(ctx, username)
-	if err != nil {
-		return err
-	}
-	if err := accManager.AddSavingCoin(
-		ctx, username, reward.UnclaimReward, "", "", types.ClaimReward); err != nil {
-		return err
-	}
-	reward.UnclaimReward = types.NewCoinFromInt64(0)
-	if err := accManager.storage.SetReward(ctx, username, reward); err != nil {
-		return err
-	}
-
 	return nil
 }
 

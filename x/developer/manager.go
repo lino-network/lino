@@ -20,6 +20,17 @@ func NewDeveloperManager(key sdk.StoreKey, holder param.ParamHolder) DeveloperMa
 	}
 }
 
+// amount must > 0.
+func (dm DeveloperManager) MoveIDA(app types.AccountKey, from types.AccountKey, to types.AccountKey, amount types.MiniDollar) sdk.Error {
+	panic("unimplemented yet")
+	return nil
+}
+
+func (dm DeveloperManager) GetIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error) {
+	// do not need to check whether dev exists, direct check IDA exists is enough.
+	panic("unimplemented yet")
+}
+
 // InitGenesis - init developer manager
 func (dm DeveloperManager) InitGenesis(ctx sdk.Context) error {
 	if err := dm.storage.InitGenesis(ctx); err != nil {

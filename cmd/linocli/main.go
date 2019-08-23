@@ -16,7 +16,7 @@ import (
 	acccmd "github.com/lino-network/lino/x/account/commands"
 	developercmd "github.com/lino-network/lino/x/developer/commands"
 	infracmd "github.com/lino-network/lino/x/infra/commands"
-	postcmd "github.com/lino-network/lino/x/post/commands"
+	postcmd "github.com/lino-network/lino/x/post/client/cli"
 	proposalcmd "github.com/lino-network/lino/x/proposal/commands"
 	validatorcmd "github.com/lino-network/lino/x/validator/commands"
 	delegatecmd "github.com/lino-network/lino/x/vote/commands/delegate"
@@ -94,10 +94,6 @@ func main() {
 	linocliCmd.AddCommand(
 		client.PostCommands(
 			postcmd.DeletePostTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
-			postcmd.ViewTxCmd(cdc),
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(

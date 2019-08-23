@@ -40,20 +40,6 @@ const (
 	FlagProvider = "provider"
 	FlagUsage    = "usage"
 
-	// Post
-	FlagDonator                 = "donator"
-	FlagLikeUser                = "likeUser"
-	FlagWeight                  = "weight"
-	FlagAuthor                  = "author"
-	FlagPostID                  = "post-ID"
-	FlagTitle                   = "title"
-	FlagContent                 = "content"
-	FlagParentAuthor            = "parent-author"
-	FlagParentPostID            = "parent-post-ID"
-	FlagSourceAuthor            = "source-author"
-	FlagSourcePostID            = "source-post-ID"
-	FlagRedistributionSplitRate = "redistribution-split-rate"
-
 	// Vote
 	FlagVoter      = "voter"
 	FlagProposalID = "proposal-id"
