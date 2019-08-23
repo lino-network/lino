@@ -6,6 +6,7 @@ import (
 
 const (
 	MaxIDAStrLength = 20
+	MinIDAStrLength = 1
 )
 
 // IDAStr - string representation of the number of IDA.
@@ -15,8 +16,8 @@ type IDAStr string
 type IDA = sdk.Int
 
 func (i IDAStr) ToIDA() (IDA, sdk.Error) {
-	if len(i) > MaxIDAStrLength {
-		return IDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA string > MaxLength")
+	if len(i) > MaxIDAStrLength || len(i) < MinIDAStrLength {
+		return IDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA string invalid length")
 	}
 	amount, ok := sdk.NewIntFromString(string(i))
 	if !ok {
