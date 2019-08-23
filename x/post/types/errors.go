@@ -99,6 +99,6 @@ func ErrNoApp() sdk.Error {
 }
 
 // ErrNonPositiveIDAAmount - error when ida amount is invalid.
-func ErrNonPositiveIDAAmount(v linotypes.IDA) sdk.Error {
+func ErrNonPositiveIDAAmount(v linotypes.MiniIDA) sdk.Error {
 	return linotypes.NewError(linotypes.CodeNonPositiveIDAAmount, fmt.Sprintf("nonpositive IDA amount: %v", v))
 }

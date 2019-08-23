@@ -168,16 +168,16 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 }
 
 // IDADonate - handle IDA donation.
-func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.IDA, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
+func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.MiniIDA, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
 	if err := pm.validateIDADonate(ctx, from, n, author, postID, app); err != nil {
 		return err
 	}
 	permlink := linotypes.GetPermlink(author, postID)
-	idaPrice, err := pm.dev.GetIDAPrice(app)
+	idaPrice, err := pm.dev.GetMiniIDAPrice(app)
 	if err != nil {
 		return err
 	}
-	dollarAmount := linotypes.IDAToMiniDollar(n, idaPrice) // unit conversion
+	dollarAmount := linotypes.MiniIDAToMiniDollar(n, idaPrice) // unit conversion
 
 	rate, err := pm.gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
@@ -251,7 +251,7 @@ func (pm PostManager) validateLinoDonation(ctx sdk.Context, from linotypes.Accou
 // 1. basic validation
 // 2. lino amount > 0.
 // 3. app cannot be empty and the developer must exist.
-func (pm PostManager) validateIDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.IDA, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
+func (pm PostManager) validateIDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.MiniIDA, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
 	err := pm.validateDonationBasic(ctx, from, author, postID)
 	if err != nil {
 		return err

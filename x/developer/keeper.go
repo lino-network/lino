@@ -9,7 +9,7 @@ import (
 
 type DeveloperKeeper interface {
 	MoveIDA(app types.AccountKey, from types.AccountKey, to types.AccountKey, amount types.MiniDollar) sdk.Error
-	GetIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error)
+	GetMiniIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error)
 	DoesDeveloperExist(ctx sdk.Context, username types.AccountKey) bool
 	ReportConsumption(
 		ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error

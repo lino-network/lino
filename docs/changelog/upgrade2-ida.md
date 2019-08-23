@@ -2,15 +2,17 @@
 
 ## Concept
 ---
-**MiniDollar**: Introduce types.MiniDollar as the unit of IDA. One MiniDollar is 10^(-8) USD. 
-It is the basic unit of IDA. Internally it is a sdk.Int.
+**MiniDollar**: Introduce types.MiniDollar as the unit of consensus
+price of Lino. One MiniDollar is 10^(-8) USD. Internally it is a sdk.Int.
+
+**MiniIDA**: Introduce types.MiniIDA as the unit of IDA. One MiniIDA = 10^5 IDA.
 
 ## Changes to Post
 ---
 
 1. Simplify post struct, remove unused fields.
 2. Remove view/upvote/report tx.
-3. Storage use MustUnmarshalBinaryLengthPrefixed as cosmos modules.
+3. Storage use MustUnmarshalBinaryLengthPrefixed, same as cosmos modules.
 
 ### Minors
 
@@ -30,3 +32,5 @@ It is the basic unit of IDA. Internally it is a sdk.Int.
 
 **CreatePostMsg**: two new fields: signer, createdBy. Both must be provided.
 **Codec**: post signbytes are now sorted by sdk.MustSortJSON.
+**links**: now are in content.
+**CreateAffiliateAccounts**: app need to create affilicate accounts to create posts.

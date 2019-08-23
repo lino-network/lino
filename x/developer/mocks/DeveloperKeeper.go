@@ -25,8 +25,8 @@ func (_m *DeveloperKeeper) DoesDeveloperExist(ctx types.Context, username linoty
 	return r0
 }
 
-// GetIDAPrice provides a mock function with given fields: dev
-func (_m *DeveloperKeeper) GetIDAPrice(dev linotypes.AccountKey) (linotypes.MiniDollar, types.Error) {
+// GetMiniIDAPrice provides a mock function with given fields: dev
+func (_m *DeveloperKeeper) GetMiniIDAPrice(dev linotypes.AccountKey) (linotypes.MiniDollar, types.Error) {
 	ret := _m.Called(dev)
 
 	var r0 linotypes.MiniDollar

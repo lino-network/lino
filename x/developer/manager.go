@@ -26,7 +26,7 @@ func (dm DeveloperManager) MoveIDA(app types.AccountKey, from types.AccountKey, 
 	return nil
 }
 
-func (dm DeveloperManager) GetIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error) {
+func (dm DeveloperManager) GetMiniIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error) {
 	// do not need to check whether dev exists, direct check IDA exists is enough.
 	panic("unimplemented yet")
 }

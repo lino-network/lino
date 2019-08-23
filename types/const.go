@@ -2,6 +2,7 @@ package types
 
 const (
 	// Decimals - Total decimals in Lino Blockchain
+	// Used by both LNO and IDA.
 	Decimals = 100000
 
 	// KVStoreKey presents store which used by app

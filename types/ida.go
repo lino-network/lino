@@ -4,28 +4,28 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const (
-	MaxIDAStrLength = 20
-	MinIDAStrLength = 1
-)
-
 // IDAStr - string representation of the number of IDA.
+// same as coin, support at most 5 digits precision(log10(Decimals)).
 type IDAStr string
 
-// IDA is an unsigned integer, >= 0 <= max.
-type IDA = sdk.Int
+// MiniIDA is an unsigned integer, >= 0 <= max.
+// One MiniIDA = 100000 IDA(Decimals).
+type MiniIDA = sdk.Int
 
-func (i IDAStr) ToIDA() (IDA, sdk.Error) {
-	if len(i) > MaxIDAStrLength || len(i) < MinIDAStrLength {
-		return IDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA string invalid length")
+func (i IDAStr) ToIDA() (MiniIDA, sdk.Error) {
+	dec, err := sdk.NewDecFromStr(string(i))
+	if err != nil {
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("Illegal IDA amount")
 	}
-	amount, ok := sdk.NewIntFromString(string(i))
-	if !ok {
-		return IDA(sdk.NewInt(0)), ErrInvalidIDAAmount("not a valid sdk.Int")
+	if dec.GT(UpperBoundRat) {
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA overflow")
 	}
-	return amount, nil
+	if dec.LT(LowerBoundRat) {
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA can't be less than lower bound")
+	}
+	return MiniIDA(dec.MulInt64(Decimals).RoundInt()), nil
 }
 
-func IDAToMiniDollar(amount IDA, idaPrice MiniDollar) MiniDollar {
-	return MiniDollar{idaPrice.Mul(amount)}
+func MiniIDAToMiniDollar(amount MiniIDA, miniIDAPrice MiniDollar) MiniDollar {
+	return MiniDollar{miniIDAPrice.Mul(amount)}
 }

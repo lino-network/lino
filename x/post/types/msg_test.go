@@ -237,6 +237,18 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgPermission() {
 			},
 			expected: types.AppOrAffiliatedPermission,
 		},
+		{
+			testName: "created by app",
+			msg: CreatePostMsg{
+				PostID:    "TestPostID",
+				Title:     string(make([]byte, 100)),
+				Content:   string(make([]byte, 1000)),
+				Author:    author,
+				CreatedBy: app,
+				Preauth:   true,
+			},
+			expected: types.AppPermission,
+		},
 	}
 	for _, tc := range testCases {
 		suite.Equal(tc.expected, tc.msg.GetPermission(), "%s: diff result", tc.testName)
@@ -244,11 +256,79 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgPermission() {
 }
 
 func (suite *PostMsgTestSuite) TestCreatePostMsgSignBytes() {
-
+	author := types.AccountKey("TestAuthor")
+	app := types.AccountKey("app")
+	testCases := []struct {
+		testName string
+		msg      CreatePostMsg
+		expected []byte
+	}{
+		{
+			testName: "normal",
+			msg: CreatePostMsg{
+				PostID:    "TestPostID",
+				Title:     "title",
+				Content:   "content",
+				Author:    author,
+				CreatedBy: app,
+				Preauth:   true,
+			},
+			expected: []byte(`{"type":"lino/createPost","value":{"author":"TestAuthor","content":"content","created_by":"app","post_id":"TestPostID","preauth":true,"title":"title"}}`),
+		},
+	}
+	for _, tc := range testCases {
+		suite.Equal(tc.expected, tc.msg.GetSignBytes(), "%s", tc.testName)
+	}
 }
 
 func (suite *PostMsgTestSuite) TestCreatePostMsgSigners() {
-
+	author := types.AccountKey("TestAuthor")
+	app := types.AccountKey("app")
+	testCases := []struct {
+		testName string
+		msg      CreatePostMsg
+		expected []sdk.AccAddress
+	}{
+		{
+			testName: "created by author",
+			msg: CreatePostMsg{
+				PostID:    "TestPostID",
+				Title:     "title",
+				Content:   "content",
+				Author:    author,
+				CreatedBy: author,
+				Preauth:   false,
+			},
+			expected: []sdk.AccAddress{sdk.AccAddress(author)},
+		},
+		{
+			testName: "created by app",
+			msg: CreatePostMsg{
+				PostID:    "TestPostID",
+				Title:     "title",
+				Content:   "content",
+				Author:    author,
+				CreatedBy: app,
+				Preauth:   false,
+			},
+			expected: []sdk.AccAddress{sdk.AccAddress(app)},
+		},
+		{
+			testName: "created by preauth",
+			msg: CreatePostMsg{
+				PostID:    "TestPostID",
+				Title:     "title",
+				Content:   "content",
+				Author:    author,
+				CreatedBy: app,
+				Preauth:   true,
+			},
+			expected: []sdk.AccAddress{sdk.AccAddress(author)},
+		},
+	}
+	for _, tc := range testCases {
+		suite.Equal(tc.expected, tc.msg.GetSigners(), "%s", tc.testName)
+	}
 }
 
 // func TestUpdatePostMsg(t *testing.T) {

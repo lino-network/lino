@@ -18,18 +18,20 @@ type CreatePostMsg struct {
 	Title     string           `json:"title"`
 	Content   string           `json:"content"`
 	CreatedBy types.AccountKey `json:"created_by"`
+	Preauth   bool             `json:"preauth"`
 }
 
 var _ types.Msg = CreatePostMsg{}
 
 // NewCreatePostMsg - constructs a post msg
-func NewCreatePostMsg(author, postID, title, content, createdBy string) CreatePostMsg {
+func NewCreatePostMsg(author, postID, title, content, createdBy string, preauth bool) CreatePostMsg {
 	return CreatePostMsg{
 		Author:    types.AccountKey(author),
 		PostID:    postID,
 		Title:     title,
 		Content:   content,
 		CreatedBy: types.AccountKey(createdBy),
+		Preauth:   preauth,
 	}
 }
 
@@ -41,6 +43,9 @@ func (msg CreatePostMsg) Type() string { return "CreatePostMsg" }
 
 // GetSigners - implements sdk.Msg
 func (msg CreatePostMsg) GetSigners() []sdk.AccAddress {
+	if msg.Preauth {
+		return []sdk.AccAddress{sdk.AccAddress(msg.Author)}
+	}
 	return []sdk.AccAddress{sdk.AccAddress(msg.CreatedBy)}
 }
 
@@ -51,6 +56,9 @@ func (msg CreatePostMsg) GetSignBytes() []byte {
 
 // GetPermission - implements types.Msg
 func (msg CreatePostMsg) GetPermission() types.Permission {
+	if msg.Preauth {
+		return types.AppPermission
+	}
 	if msg.CreatedBy == msg.Author {
 		return types.TransactionPermission
 	}
