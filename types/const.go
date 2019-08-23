@@ -2,20 +2,21 @@ package types
 
 const (
 	// Decimals - Total decimals in Lino Blockchain
+	// Used by both LNO and IDA.
 	Decimals = 100000
 
 	// KVStoreKey presents store which used by app
-	MainKVStoreKey       = "main"
-	AccountKVStoreKey    = "account"
-	PostKVStoreKey       = "post"
-	ValidatorKVStoreKey  = "validator"
-	GlobalKVStoreKey     = "global"
-	VoteKVStoreKey       = "vote"
-	InfraKVStoreKey      = "infra"
-	DeveloperKVStoreKey  = "developer"
-	ParamKVStoreKey      = "param"
-	ProposalKVStoreKey   = "proposal"
-	ReputationKVStoreKey = "reputation"
+	MainKVStoreKey         = "main"
+	AccountKVStoreKey      = "account"
+	PostKVStoreKey         = "post"
+	ValidatorKVStoreKey    = "validator"
+	GlobalKVStoreKey       = "global"
+	VoteKVStoreKey         = "vote"
+	InfraKVStoreKey        = "infra"
+	DeveloperKVStoreKey    = "developer"
+	ParamKVStoreKey        = "param"
+	ProposalKVStoreKey     = "proposal"
+	ReputationV2KVStoreKey = "repv2"
 
 	// Different permission level for msg
 	UnknownPermission                = Permission(0)
@@ -25,6 +26,10 @@ const (
 	GrantAppPermission               = Permission(4)
 	PreAuthorizationPermission       = Permission(5)
 	AppAndPreAuthorizationPermission = Permission(6)
+
+	// since upgrade2
+	// signed by the app or its affiliated accounts.
+	AppOrAffiliatedPermission = Permission(7)
 
 	// Different proposal result
 	ProposalNotPass = ProposalResult(0)
@@ -174,9 +179,6 @@ const (
 
 	// BlockchainUpgrade1Update4Height - fix donation bandwidth check.
 	BlockchainUpgrade1Update4Height = 386000
-
-	// BlockchainUpgrade1Update5Height - use coin instead of coinday as input for reputaion.
-	BlockchainUpgrade1Update5Height = 680000
 
 	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
 	NoTPSLimitDonationMin = 100000

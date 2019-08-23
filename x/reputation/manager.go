@@ -5,10 +5,8 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-
-	"math/big"
-
 	model "github.com/lino-network/lino/x/reputation/internal"
+	repv2 "github.com/lino-network/lino/x/reputation/repv2"
 )
 
 // ReputationManager - adaptor for reputation math model and cosmos application.
@@ -18,23 +16,23 @@ type ReputationManager struct {
 }
 
 // NewReputationManager - require holder for BestContentIndexN
-func NewReputationManager(key sdk.StoreKey, holder param.ParamHolder) ReputationManager {
+func NewReputationManager(storeKey sdk.StoreKey, holder param.ParamHolder) ReputationKeeper {
 	return ReputationManager{
-		storeKey:    key,
+		storeKey:    storeKey,
 		paramHolder: holder,
 	}
 }
 
 // construct a handler.
-func (rep ReputationManager) getHandler(ctx sdk.Context) (model.Reputation, sdk.Error) {
+func (rep ReputationManager) getHandlerV2(ctx sdk.Context) repv2.Reputation {
 	store := ctx.KVStore(rep.storeKey)
-	param, err := rep.paramHolder.GetReputationParam(ctx)
-	if err != nil {
-		return nil, err
-	}
-	repStore := model.NewReputationStore(store, param.BestContentIndexN)
-	handler := model.NewReputation(repStore)
-	return handler, nil
+	repStore := repv2.NewReputationStore(store, repv2.DefaultInitialReputation)
+	handler := repv2.NewReputation(
+		repStore, 200, 50,
+		repv2.DefaultRoundDurationSeconds,
+		repv2.DefaultSampleWindowSize,
+		repv2.DefaultDecayFactor)
+	return handler
 }
 
 func (rep ReputationManager) checkUsername(uid model.Uid) sdk.Error {
@@ -63,149 +61,55 @@ func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error 
 // DonateAt - It's caller's responsibility that parameters are all correct,
 // although we do have some checks.
 func (rep ReputationManager) DonateAt(ctx sdk.Context,
-	username types.AccountKey, post types.Permlink, coinDay types.Coin) (types.Coin, sdk.Error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
+	username types.AccountKey, post types.Permlink, amount types.MiniDollar) (types.MiniDollar, sdk.Error) {
 	uid := string(username)
 	pid := string(post)
-	err = rep.basicCheck(uid, pid)
+	err := rep.basicCheck(uid, pid)
 	if err != nil {
-		return types.NewCoinFromInt64(0), err
+		return types.NewMiniDollar(0), err
 	}
 
-	dp := handler.DonateAt(uid, pid, coinDay.Amount.BigInt())
-	return types.NewCoinFromBigInt(dp), nil
-}
-
-// ReportAt - @p username report @p post.
-func (rep ReputationManager) ReportAt(ctx sdk.Context,
-	username types.AccountKey, post types.Permlink) (types.Coin, sdk.Error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	uid := string(username)
-	pid := string(post)
-	err = rep.basicCheck(uid, pid)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	sumRep := handler.ReportAt(uid, pid)
-	return types.NewCoinFromBigInt(sumRep), nil
-}
-
-func (rep ReputationManager) calcFreeScore(amount types.Coin) *big.Int {
-	score := amount.Amount.BigInt()
-	score.Mul(score, big.NewInt(15))
-	score.Div(score, big.NewInt(10000)) // 0.15% freescore if you lock down.
-	return score
-}
-
-// OnStakeIn - on @p username stakein @p amount.
-func (rep ReputationManager) OnStakeIn(ctx sdk.Context,
-	username types.AccountKey, amount types.Coin) {
-	incAmount := rep.calcFreeScore(amount)
-	rep.incFreeScore(ctx, username, incAmount)
-}
-
-// OnStakeOut - on @p username stakeout @p amount
-func (rep ReputationManager) OnStakeOut(ctx sdk.Context,
-	username types.AccountKey, amount types.Coin) {
-	incAmount := rep.calcFreeScore(amount)
-	incAmount.Neg(incAmount)
-	rep.incFreeScore(ctx, username, incAmount)
-}
-
-func (rep ReputationManager) incFreeScore(ctx sdk.Context,
-	username types.AccountKey, score *big.Int) sdk.Error {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return err
-	}
-	uid := string(username)
-	err = rep.checkUsername(uid)
-	if err != nil {
-		return err
-	}
-
-	handler.IncFreeScore(uid, score)
-	return nil
+	// Update6, start to use new reputation algorithm.
+	handler := rep.getHandlerV2(ctx)
+	dp := handler.DonateAt(repv2.Uid(uid), repv2.Pid(pid), repv2.NewIntFromBig(amount.Int.BigInt()))
+	return types.NewMiniDollarFromBig(dp.Int), nil
 }
 
 // Update - on blocker end, update reputation time related information.
 func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return err
-	}
-
-	handler.Update(ctx.BlockHeader().Time.Unix())
+	handler := rep.getHandlerV2(ctx)
+	handler.Update(repv2.Time(ctx.BlockHeader().Time.Unix()))
 	return nil
 }
 
 // GetRepution - return reputation of @p username, costomnerScore + freeScore.
-func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
+func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.AccountKey) (types.MiniDollar, sdk.Error) {
 	uid := string(username)
-	err = rep.checkUsername(uid)
+	err := rep.checkUsername(uid)
 	if err != nil {
-		return types.NewCoinFromInt64(0), err
+		return types.NewMiniDollar(0), err
 	}
 
-	return types.NewCoinFromBigInt(handler.GetReputation(uid)), nil
-}
-
-// GetSumRep of @p post
-func (rep ReputationManager) GetSumRep(ctx sdk.Context, post types.Permlink) (types.Coin, sdk.Error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	pid := string(post)
-	err = rep.checkPost(pid)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	return types.NewCoinFromBigInt(handler.GetSumRep(pid)), nil
+	handler := rep.getHandlerV2(ctx)
+	return types.NewMiniDollarFromBig(handler.GetReputation(repv2.Uid(uid)).Int), nil
 }
 
 // GetCurrentRound of now
 func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error) {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	_, ts := handler.GetCurrentRound()
-	return ts, nil
+	repv2 := rep.getHandlerV2(ctx)
+	_, ts := repv2.GetCurrentRound()
+	return int64(ts), nil
 }
 
 // ExportToFile state of reputation system.
 func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return err
-	}
-	handler.ExportToFile(file)
-	return nil
+	repv2 := rep.getHandlerV2(ctx)
+	return repv2.ExportToFile(file)
 }
 
 // ImportFromFile state of reputation system.
+// after update6's code is merged, V2 is the only version that will exist.
 func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error {
-	handler, err := rep.getHandler(ctx)
-	if err != nil {
-		return err
-	}
-	handler.ImportFromFile(file)
-	return nil
+	handler := rep.getHandlerV2(ctx)
+	return handler.ImportFromFile(file)
 }

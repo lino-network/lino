@@ -14,6 +14,8 @@ import (
 	"github.com/lino-network/lino/x/auth"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
+	postmn "github.com/lino-network/lino/x/post/manager"
+	posttypes "github.com/lino-network/lino/x/post/types"
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
@@ -23,7 +25,7 @@ import (
 	globalmodel "github.com/lino-network/lino/x/global/model"
 	infra "github.com/lino-network/lino/x/infra"
 	inframodel "github.com/lino-network/lino/x/infra/model"
-	postmodel "github.com/lino-network/lino/x/post/model"
+	pricemn "github.com/lino-network/lino/x/price/manager"
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
 	valmodel "github.com/lino-network/lino/x/validator/model"
@@ -70,29 +72,29 @@ type LinoBlockchain struct {
 	cdc *wire.Codec
 
 	// keys to access the KVStore
-	CapKeyMainStore       *sdk.KVStoreKey
-	CapKeyAccountStore    *sdk.KVStoreKey
-	CapKeyPostStore       *sdk.KVStoreKey
-	CapKeyValStore        *sdk.KVStoreKey
-	CapKeyVoteStore       *sdk.KVStoreKey
-	CapKeyInfraStore      *sdk.KVStoreKey
-	CapKeyDeveloperStore  *sdk.KVStoreKey
-	CapKeyIBCStore        *sdk.KVStoreKey
-	CapKeyGlobalStore     *sdk.KVStoreKey
-	CapKeyParamStore      *sdk.KVStoreKey
-	CapKeyProposalStore   *sdk.KVStoreKey
-	CapKeyReputationStore *sdk.KVStoreKey
+	CapKeyMainStore         *sdk.KVStoreKey
+	CapKeyAccountStore      *sdk.KVStoreKey
+	CapKeyPostStore         *sdk.KVStoreKey
+	CapKeyValStore          *sdk.KVStoreKey
+	CapKeyVoteStore         *sdk.KVStoreKey
+	CapKeyInfraStore        *sdk.KVStoreKey
+	CapKeyDeveloperStore    *sdk.KVStoreKey
+	CapKeyIBCStore          *sdk.KVStoreKey
+	CapKeyGlobalStore       *sdk.KVStoreKey
+	CapKeyParamStore        *sdk.KVStoreKey
+	CapKeyProposalStore     *sdk.KVStoreKey
+	CapKeyReputationV2Store *sdk.KVStoreKey
 
 	// manager for different KVStore
 	accountManager    acc.AccountManager
-	postManager       post.PostManager
+	postManager       post.PostKeeper
 	valManager        val.ValidatorManager
 	globalManager     global.GlobalManager
 	voteManager       vote.VoteManager
 	infraManager      infra.InfraManager
 	developerManager  developer.DeveloperManager
 	proposalManager   proposal.ProposalManager
-	reputationManager rep.ReputationManager
+	reputationManager rep.ReputationKeeper
 
 	// global param
 	paramHolder param.ParamHolder
@@ -109,39 +111,40 @@ func NewLinoBlockchain(
 	bApp := bam.NewBaseApp(appName, logger, db, DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
-		BaseApp:               bApp,
-		cdc:                   cdc,
-		CapKeyMainStore:       sdk.NewKVStoreKey(types.MainKVStoreKey),
-		CapKeyAccountStore:    sdk.NewKVStoreKey(types.AccountKVStoreKey),
-		CapKeyPostStore:       sdk.NewKVStoreKey(types.PostKVStoreKey),
-		CapKeyValStore:        sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
-		CapKeyVoteStore:       sdk.NewKVStoreKey(types.VoteKVStoreKey),
-		CapKeyInfraStore:      sdk.NewKVStoreKey(types.InfraKVStoreKey),
-		CapKeyDeveloperStore:  sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
-		CapKeyGlobalStore:     sdk.NewKVStoreKey(types.GlobalKVStoreKey),
-		CapKeyParamStore:      sdk.NewKVStoreKey(types.ParamKVStoreKey),
-		CapKeyProposalStore:   sdk.NewKVStoreKey(types.ProposalKVStoreKey),
-		CapKeyReputationStore: sdk.NewKVStoreKey(types.ReputationKVStoreKey),
+		BaseApp:                 bApp,
+		cdc:                     cdc,
+		CapKeyMainStore:         sdk.NewKVStoreKey(types.MainKVStoreKey),
+		CapKeyAccountStore:      sdk.NewKVStoreKey(types.AccountKVStoreKey),
+		CapKeyPostStore:         sdk.NewKVStoreKey(types.PostKVStoreKey),
+		CapKeyValStore:          sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
+		CapKeyVoteStore:         sdk.NewKVStoreKey(types.VoteKVStoreKey),
+		CapKeyInfraStore:        sdk.NewKVStoreKey(types.InfraKVStoreKey),
+		CapKeyDeveloperStore:    sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
+		CapKeyGlobalStore:       sdk.NewKVStoreKey(types.GlobalKVStoreKey),
+		CapKeyParamStore:        sdk.NewKVStoreKey(types.ParamKVStoreKey),
+		CapKeyProposalStore:     sdk.NewKVStoreKey(types.ProposalKVStoreKey),
+		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
-	lb.postManager = post.NewPostManager(lb.CapKeyPostStore, lb.paramHolder)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
-	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationStore, lb.paramHolder)
+	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
 	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.developerManager = developer.NewDeveloperManager(lb.CapKeyDeveloperStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
+	// TODO(yumin): update this when price manager is implemented.
+	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
+
 	lb.Router().
 		AddRoute(acc.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
-		AddRoute(post.RouterKey, post.NewHandler(
-			lb.postManager, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager)).
+		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(vote.RouterKey, vote.NewHandler(
-			lb.voteManager, lb.accountManager, &lb.globalManager, lb.reputationManager)).
+			lb.voteManager, lb.accountManager, &lb.globalManager)).
 		AddRoute(developer.RouterKey, developer.NewHandler(
 			lb.developerManager, lb.accountManager, &lb.globalManager)).
 		AddRoute(proposal.RouterKey, proposal.NewHandler(
@@ -152,7 +155,7 @@ func NewLinoBlockchain(
 
 	lb.QueryRouter().
 		AddRoute(acc.QuerierRoute, acc.NewQuerier(lb.accountManager)).
-		AddRoute(post.QuerierRoute, post.NewQuerier(lb.postManager)).
+		AddRoute(posttypes.QuerierRoute, post.NewQuerier(lb.postManager)).
 		AddRoute(vote.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(developer.QuerierRoute, developer.NewQuerier(lb.developerManager)).
 		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
@@ -172,7 +175,7 @@ func NewLinoBlockchain(
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationStore)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -214,7 +217,7 @@ func MakeCodec() *wire.Codec {
 	sdk.RegisterCodec(cdc)
 
 	acc.RegisterWire(cdc)
-	post.RegisterWire(cdc)
+	posttypes.RegisterCodec(cdc)
 	developer.RegisterWire(cdc)
 	infra.RegisterWire(cdc)
 	vote.RegisterWire(cdc)
@@ -229,7 +232,7 @@ func MakeCodec() *wire.Codec {
 
 func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(post.RewardEvent{}, "lino/eventReward", nil)
+	cdc.RegisterConcrete(postmn.RewardEvent{}, "lino/eventReward", nil)
 	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
@@ -369,8 +372,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		}
 		if err := vote.AddStake(
 			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
-			lb.voteManager, &lb.globalManager, lb.accountManager,
-			lb.reputationManager); err != nil {
+			lb.voteManager, &lb.globalManager, lb.accountManager); err != nil {
 			panic(err)
 		}
 		if err := lb.voteManager.AddVoter(
@@ -482,10 +484,9 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
 	for _, event := range eventList {
 		switch e := event.(type) {
-		case post.RewardEvent:
-			if err := e.Execute(
-				ctx, lb.postManager, lb.accountManager, &lb.globalManager,
-				lb.developerManager, lb.voteManager, lb.reputationManager); err != nil {
+		case postmn.RewardEvent:
+			// TODO(yumin): need to rethink this part.
+			if err := e.Execute(ctx, lb.postManager.(postmn.PostManager)); err != nil {
 				panic(err)
 			}
 		case acc.ReturnCoinEvent:
@@ -713,9 +714,10 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
 		return lb.developerManager.Export(ctx).ToIR()
 	})
-	exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
-		return lb.postManager.Export(ctx).ToIR()
-	})
+	// TODO(yumin): post export is not implemented yet.
+	// exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.postManager.Export(ctx).ToIR()
+	// })
 	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
 		return lb.globalManager.Export(ctx).ToIR()
 	})
@@ -745,6 +747,12 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		if err != nil {
 			panic("failed to unmarshal " + err.Error())
 		}
+	}
+	// import post.
+	err := lb.postManager.ImportFromFile(
+		ctx, DefaultNodeHome+"/"+prevStateFolder+postStateFile)
+	if err != nil {
+		panic(err)
 	}
 	importFromFile := func(filename string, tables interface{}) {
 		// XXX(yumin): does not support customized node home import.
@@ -777,11 +785,6 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.infraManager.Import(ctx, t)
-		case *postmodel.PostTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.postManager.Import(ctx, t)
 		case *valmodel.ValidatorTablesIR:
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
@@ -800,7 +803,6 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 
 	importFromFile(accountStateFile, &accmodel.AccountTablesIR{})
 	importFromFile(developerStateFile, &devmodel.DeveloperTablesIR{})
-	importFromFile(postStateFile, &postmodel.PostTablesIR{})
 	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
 	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})

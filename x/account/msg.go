@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ types.Msg = ClaimMsg{}
 var _ types.Msg = TransferMsg{}
 var _ types.Msg = RecoverMsg{}
 var _ types.Msg = RegisterMsg{}
@@ -25,11 +24,6 @@ type RegisterMsg struct {
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
-}
-
-// ClaimMsg - claim content reward
-type ClaimMsg struct {
-	Username types.AccountKey `json:"username"`
 }
 
 // RecoverMsg - replace three public keys
@@ -52,56 +46,6 @@ type TransferMsg struct {
 type UpdateAccountMsg struct {
 	Username types.AccountKey `json:"username"`
 	JSONMeta string           `json:"json_meta"`
-}
-
-// NewClaimMsg - return a ClaimMsg
-func NewClaimMsg(username string) ClaimMsg {
-	return ClaimMsg{
-		Username: types.AccountKey(username),
-	}
-}
-
-// Route - implements sdk.Msg
-func (msg ClaimMsg) Route() string { return RouterKey }
-
-// Type - implements sdk.Msg
-func (msg ClaimMsg) Type() string { return "ClaimMsg" }
-
-// ValidateBasic - implements sdk.Msg
-func (msg ClaimMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
-	}
-	return nil
-}
-
-func (msg ClaimMsg) String() string {
-	return fmt.Sprintf("ClaimMsg{Username:%v}", msg.Username)
-}
-
-// GetPermission - implements types.Msg
-func (msg ClaimMsg) GetPermission() types.Permission {
-	return types.AppPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg ClaimMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg ClaimMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
-}
-
-// GetConsumeAmount - implements types.Msg
-func (msg ClaimMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
 }
 
 // NewTransferMsg - return a TransferMsg

@@ -198,7 +198,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 	// simulate one block
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			Height: lb.LastBlockHeight() + 1,
+			Height:  lb.LastBlockHeight() + 1,
 			ChainID: "Lino",
 			Time:    time.Unix(baseTime+100, 0),
 		},
@@ -232,7 +232,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 	for i := 0; i < 599; i++ {
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
-				Height: lb.LastBlockHeight() + 1,
+				Height:  lb.LastBlockHeight() + 1,
 				ChainID: "Lino",
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
@@ -309,7 +309,7 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 	for i := 0; i < 594; i++ {
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
-				Height: lb.LastBlockHeight() + 1,
+				Height:  lb.LastBlockHeight() + 1,
 				ChainID: "Lino",
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},
@@ -369,7 +369,7 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	// simulate one block
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
-			Height: lb.LastBlockHeight() + 1,
+			Height:  lb.LastBlockHeight() + 1,
 			ChainID: "Lino",
 			Time:    time.Unix(baseTime+100, 0),
 		},
@@ -384,7 +384,7 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	for i := 0; i < 599; i++ {
 		lb.BeginBlock(abci.RequestBeginBlock{
 			Header: abci.Header{
-				Height: lb.LastBlockHeight() + 1,
+				Height:  lb.LastBlockHeight() + 1,
 				ChainID: "Lino",
 				Time:    time.Unix(baseTime+200+int64(i), 0),
 			},

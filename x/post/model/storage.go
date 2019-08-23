@@ -1,30 +1,29 @@
 package model
 
 import (
-	"strings"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/post/types"
 )
 
 var (
-	postInfoSubStore           = []byte{0x00} // SubStore for all post info
-	postMetaSubStore           = []byte{0x01} // SubStore for all post mata info
-	postReportOrUpvoteSubStore = []byte{0x02} // SubStore for all report or upvote to post
-	postCommentSubStore        = []byte{0x03} // SubStore for all comments
-	postViewsSubStore          = []byte{0x04} // SubStore for all views
-	// XXX(yukai): deprecated.
-	// postDonationsSubStore      = []byte{0x05} // SubStore for all donations
+	postSubStore = []byte{0x00} // SubStore for all post info
 )
+
+func GetAuthorPrefix(author linotypes.AccountKey) []byte {
+	return append(postSubStore, author...)
+}
+
+// GetPostInfoKey - "post info substore" + "permlink"
+func GetPostInfoKey(permlink linotypes.Permlink) []byte {
+	return append(postSubStore, permlink...)
+}
 
 // PostStorage - post storage
 type PostStorage struct {
-	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
-
-	// The wire codec for binary encoding/decoding of accounts.
 	cdc *wire.Codec
 }
 
@@ -41,274 +40,77 @@ func NewPostStorage(key sdk.StoreKey) PostStorage {
 }
 
 // DoesPostExist - check if a post exists in KVStore or not
-func (ps PostStorage) DoesPostExist(ctx sdk.Context, permlink types.Permlink) bool {
+func (ps PostStorage) HasPost(ctx sdk.Context, permlink linotypes.Permlink) bool {
 	store := ctx.KVStore(ps.key)
 	return store.Has(GetPostInfoKey(permlink))
 }
 
 // GetPostInfo - get post info from KVStore
-func (ps PostStorage) GetPostInfo(ctx sdk.Context, permlink types.Permlink) (*PostInfo, sdk.Error) {
+func (ps PostStorage) GetPost(ctx sdk.Context, permlink linotypes.Permlink) (*Post, sdk.Error) {
 	store := ctx.KVStore(ps.key)
-	infoByte := store.Get(GetPostInfoKey(permlink))
+	key := GetPostInfoKey(permlink)
+	infoByte := store.Get(key)
 	if infoByte == nil {
-		return nil, ErrPostNotFound(GetPostInfoKey(permlink))
+		return nil, types.ErrPostNotFound(permlink)
 	}
-	postInfo := new(PostInfo)
-	if err := ps.cdc.UnmarshalBinaryLengthPrefixed(infoByte, postInfo); err != nil {
-		return nil, ErrFailedToUnmarshalPostInfo(err)
-	}
+	postInfo := new(Post)
+	ps.cdc.MustUnmarshalBinaryLengthPrefixed(infoByte, postInfo)
 	return postInfo, nil
 }
 
 // SetPostInfo - set post info to KVStore
-func (ps PostStorage) SetPostInfo(ctx sdk.Context, postInfo *PostInfo) sdk.Error {
+func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 	store := ctx.KVStore(ps.key)
-	infoByte, err := ps.cdc.MarshalBinaryLengthPrefixed(*postInfo)
-	if err != nil {
-		return ErrFailedToMarshalPostInfo(err)
-	}
-	store.Set(GetPostInfoKey(types.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
-	return nil
+	infoByte := ps.cdc.MustMarshalBinaryLengthPrefixed(*postInfo)
+	store.Set(GetPostInfoKey(linotypes.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
 }
 
-// GetPostMeta - get post meta from KVStore
-func (ps PostStorage) GetPostMeta(ctx sdk.Context, permlink types.Permlink) (*PostMeta, sdk.Error) {
+// SetPostInfo - set post info to KVStore
+func (ps PostStorage) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) {
 	store := ctx.KVStore(ps.key)
-	metaBytes := store.Get(GetPostMetaKey(permlink))
-	if metaBytes == nil {
-		return nil, ErrPostMetaNotFound(GetPostMetaKey(permlink))
-	}
-	postMeta := new(PostMeta)
-	if unmarshalErr := ps.cdc.UnmarshalBinaryLengthPrefixed(metaBytes, postMeta); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostMeta(unmarshalErr)
-	}
-	return postMeta, nil
-}
-
-// SetPostMeta - set post meta to KVStore
-func (ps PostStorage) SetPostMeta(ctx sdk.Context, permlink types.Permlink, postMeta *PostMeta) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	metaBytes, err := ps.cdc.MarshalBinaryLengthPrefixed(*postMeta)
-	if err != nil {
-		return ErrFailedToMarshalPostMeta(err)
-	}
-	store.Set(GetPostMetaKey(permlink), metaBytes)
-	return nil
-}
-
-// GetPostReportOrUpvote - get report or upvote from KVStore
-func (ps PostStorage) GetPostReportOrUpvote(
-	ctx sdk.Context, permlink types.Permlink, user types.AccountKey) (*ReportOrUpvote, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	reportOrUpvoteBytes := store.Get(getPostReportOrUpvoteKey(permlink, user))
-	if reportOrUpvoteBytes == nil {
-		return nil, ErrPostReportOrUpvoteNotFound(getPostReportOrUpvoteKey(permlink, user))
-	}
-	reportOrUpvote := new(ReportOrUpvote)
-	if unmarshalErr := ps.cdc.UnmarshalBinaryLengthPrefixed(reportOrUpvoteBytes, reportOrUpvote); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostReportOrUpvote(unmarshalErr)
-	}
-	return reportOrUpvote, nil
-}
-
-// SetPostReportOrUpvote - set report or upvote to KVStore
-func (ps PostStorage) SetPostReportOrUpvote(
-	ctx sdk.Context, permlink types.Permlink, reportOrUpvote *ReportOrUpvote) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	reportOrUpvoteByte, err := ps.cdc.MarshalBinaryLengthPrefixed(*reportOrUpvote)
-	if err != nil {
-		return ErrFailedToMarshalPostReportOrUpvote(err)
-	}
-	store.Set(getPostReportOrUpvoteKey(permlink, reportOrUpvote.Username), reportOrUpvoteByte)
-	return nil
-}
-
-// GetPostComment - get post comment from KVStore
-func (ps PostStorage) GetPostComment(
-	ctx sdk.Context, permlink types.Permlink, commentPermlink types.Permlink) (*Comment, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	commentBytes := store.Get(getPostCommentKey(permlink, commentPermlink))
-	if commentBytes == nil {
-		return nil, ErrPostCommentNotFound(getPostCommentKey(permlink, commentPermlink))
-	}
-	postComment := new(Comment)
-	if unmarshalErr := ps.cdc.UnmarshalBinaryLengthPrefixed(commentBytes, postComment); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostComment(unmarshalErr)
-	}
-	return postComment, nil
-}
-
-// SetPostComment - set post comment to KVStore
-func (ps PostStorage) SetPostComment(
-	ctx sdk.Context, permlink types.Permlink, postComment *Comment) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	postCommentByte, err := ps.cdc.MarshalBinaryLengthPrefixed(*postComment)
-	if err != nil {
-		return ErrFailedToMarshalPostComment(err)
-	}
-	store.Set(
-		getPostCommentKey(permlink, types.GetPermlink(postComment.Author, postComment.PostID)),
-		postCommentByte)
-	return nil
-}
-
-// GetPostView - get post view from KVStore
-func (ps PostStorage) GetPostView(
-	ctx sdk.Context, permlink types.Permlink, viewUser types.AccountKey) (*View, sdk.Error) {
-	store := ctx.KVStore(ps.key)
-	viewBytes := store.Get(getPostViewKey(permlink, viewUser))
-	if viewBytes == nil {
-		return nil, ErrPostViewNotFound(getPostViewKey(permlink, viewUser))
-	}
-	postView := new(View)
-	if unmarshalErr := ps.cdc.UnmarshalBinaryLengthPrefixed(viewBytes, postView); unmarshalErr != nil {
-		return nil, ErrFailedToUnmarshalPostView(unmarshalErr)
-	}
-	return postView, nil
-}
-
-// SetPostView - set post view to KVStore
-func (ps PostStorage) SetPostView(ctx sdk.Context, permlink types.Permlink, postView *View) sdk.Error {
-	store := ctx.KVStore(ps.key)
-	postViewByte, err := ps.cdc.MarshalBinaryLengthPrefixed(*postView)
-	if err != nil {
-		return ErrFailedToMarshalPostView(err)
-	}
-	store.Set(getPostViewKey(permlink, postView.Username), postViewByte)
-	return nil
+	store.Delete(GetPostInfoKey(permlink))
 }
 
 // Export post storage state.
-func (ps PostStorage) Export(ctx sdk.Context) *PostTables {
-	tables := &PostTables{}
-	store := ctx.KVStore(ps.key)
-	// export table.Posts
-	func() {
-		itr := sdk.KVStorePrefixIterator(store, postInfoSubStore)
-		defer itr.Close()
-		for ; itr.Valid(); itr.Next() {
-			k := itr.Key()
-			permlink := types.Permlink(k[1:])
-			info, err := ps.GetPostInfo(ctx, permlink)
-			if err != nil {
-				panic("failed to read post info: " + err.Error())
-			}
-			meta, err := ps.GetPostMeta(ctx, permlink)
-			if err != nil {
-				panic("failed to read post meta: " + err.Error())
-			}
-			row := PostRow{
-				Permlink: permlink,
-				Info:     *info,
-				Meta:     *meta,
-			}
-			tables.Posts = append(tables.Posts, row)
-		}
-	}()
-	// export tables.PostUser
-	func() {
-		itr := sdk.KVStorePrefixIterator(store, postReportOrUpvoteSubStore)
-		defer itr.Close()
-		for ; itr.Valid(); itr.Next() {
-			k := itr.Key()
-			permlinkAccount := string(k[1:])
-			strs := strings.Split(permlinkAccount, types.KeySeparator)
-			if len(strs) != 2 {
-				panic("failed to split out permlink account: " + permlinkAccount)
-			}
-			permlink, username := types.Permlink(strs[0]), types.AccountKey(strs[1])
-			ru, err := ps.GetPostReportOrUpvote(ctx, permlink, username)
-			if err != nil {
-				panic("failed to get report or upvote: " + err.Error())
-			}
-			row := PostUserRow{
-				Permlink:       permlink,
-				User:           username,
-				ReportOrUpvote: *ru,
-			}
-			tables.PostUsers = append(tables.PostUsers, row)
-		}
-	}()
-	return tables
+func (ps PostStorage) Export(ctx sdk.Context) *PostTablesIR {
+	panic("post export unimplemented")
+	// tables := &PostTables{}
+	// store := ctx.KVStore(ps.key)
+	// // export table.Posts
+	// func() {
+	// 	itr := sdk.KVStorePrefixIterator(store, postSubStore)
+	// 	defer itr.Close()
+	// 	for ; itr.Valid(); itr.Next() {
+	// 		k := itr.Key()
+	// 		permlink := linotypes.Permlink(k[1:])
+	// 		info, err := ps.GetPost(ctx, permlink)
+	// 		if err != nil {
+	// 			panic("failed to read post info: " + err.Error())
+	// 		}
+	// 		row := PostRow{
+	// 			Permlink: permlink,
+	// 			Info:     *info,
+	// 			Meta:     *meta,
+	// 		}
+	// 		tables.Posts = append(tables.Posts, row)
+	// 	}
+	// }()
+	// return tables
 }
 
 // Import from tablesIR.
-func (ps PostStorage) Import(ctx sdk.Context, tb *PostTablesIR) {
-	check := func(e error) {
-		if e != nil {
-			panic("[ps] Failed to import: " + e.Error())
-		}
-	}
-	// import table.developers
+func (ps PostStorage) Import(ctx sdk.Context, tb *PostTablesIR) error {
+	// upgrade2 has simplied the post structure to just one post.
 	for _, v := range tb.Posts {
-		err := ps.SetPostInfo(ctx, &v.Info)
-		check(err)
-		err = ps.SetPostMeta(ctx, v.Permlink, &PostMeta{
-			CreatedAt:               v.Meta.CreatedAt,
-			LastUpdatedAt:           v.Meta.LastUpdatedAt,
-			LastActivityAt:          v.Meta.LastActivityAt,
-			AllowReplies:            v.Meta.AllowReplies,
-			IsDeleted:               v.Meta.IsDeleted,
-			TotalDonateCount:        v.Meta.TotalDonateCount,
-			TotalReportCoinDay:      v.Meta.TotalReportCoinDay,
-			TotalUpvoteCoinDay:      v.Meta.TotalUpvoteCoinDay,
-			TotalViewCount:          v.Meta.TotalViewCount,
-			TotalReward:             v.Meta.TotalReward,
-			RedistributionSplitRate: sdk.MustNewDecFromStr(v.Meta.RedistributionSplitRate),
+		ps.SetPost(ctx, &Post{
+			PostID:    v.Info.PostID,
+			Title:     v.Info.Title,
+			Content:   v.Info.Content,
+			Author:    v.Info.Author,
+			CreatedBy: v.Info.Author,
+			CreatedAt: v.Meta.CreatedAt,
+			UpdatedAt: v.Meta.LastUpdatedAt,
 		})
-		check(err)
 	}
-	// import PostUsers
-	for _, v := range tb.PostUsers {
-		err := ps.SetPostReportOrUpvote(ctx, v.Permlink, &v.ReportOrUpvote)
-		check(err)
-	}
-}
-
-// GetPostInfoPrefix - "post info substore" + "author"
-func GetPostInfoPrefix(author types.AccountKey) []byte {
-	return append(postInfoSubStore, author...)
-}
-
-// GetPostInfoKey - "post info substore" + "permlink"
-func GetPostInfoKey(permlink types.Permlink) []byte {
-	return append(postInfoSubStore, permlink...)
-}
-
-// GetPostMetaKey - "post meta substore" + "permlink"
-func GetPostMetaKey(permlink types.Permlink) []byte {
-	return append(postMetaSubStore, permlink...)
-}
-
-// getPostReportOrUpvotePrefix - "post report or upvote substore" + "permlink"
-// which can be used to access all reports belong to this post
-func getPostReportOrUpvotePrefix(permlink types.Permlink) []byte {
-	return append(append(postReportOrUpvoteSubStore, permlink...), types.KeySeparator...)
-}
-
-// getPostReportOrUpvotePrefix - "post report or upvote substore" + "permlink" + "user"
-func getPostReportOrUpvoteKey(permlink types.Permlink, user types.AccountKey) []byte {
-	return append(getPostReportOrUpvotePrefix(permlink), user...)
-}
-
-// getPostViewPrefix - "post view substore" + "permlink"
-// which can be used to access all views belong to this post
-func getPostViewPrefix(permlink types.Permlink) []byte {
-	return append(append(postViewsSubStore, permlink...), types.KeySeparator...)
-}
-
-// getPostViewKey - "post view substore" + "permlink" + "user"
-func getPostViewKey(permlink types.Permlink, viewUser types.AccountKey) []byte {
-	return append(getPostViewPrefix(permlink), viewUser...)
-}
-
-// PostCommentPrefix - "comment substore" + "permlink"
-// which can be used to access all comments belong to this post
-func getPostCommentPrefix(permlink types.Permlink) []byte {
-	return append(append(postCommentSubStore, permlink...), types.KeySeparator...)
-}
-
-// PostCommentPrefix - "comment substore" + "permlink" + "comment permlink"
-func getPostCommentKey(permlink types.Permlink, commentPermlink types.Permlink) []byte {
-	return append(getPostCommentPrefix(permlink), commentPermlink...)
+	return nil
 }

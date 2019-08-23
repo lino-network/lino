@@ -57,15 +57,13 @@ func TestGlobalStorageGenesis(t *testing.T) {
 	err := InitGlobalStorage(t, ctx, gm)
 	assert.Nil(t, err)
 	globalMeta := GlobalMeta{
-		TotalLinoCoin:                 types.NewCoinFromInt64(10000 * types.Decimals),
-		LastYearTotalLinoCoin:         types.NewCoinFromInt64(10000 * types.Decimals),
-		CumulativeConsumption:         types.NewCoinFromInt64(0),
-		LastYearCumulativeConsumption: types.NewCoinFromInt64(0),
+		TotalLinoCoin:         types.NewCoinFromInt64(10000 * types.Decimals),
+		LastYearTotalLinoCoin: types.NewCoinFromInt64(10000 * types.Decimals),
 	}
 
 	consumptionMeta := ConsumptionMeta{
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
-		ConsumptionWindow:            types.NewCoinFromInt64(0),
+		ConsumptionWindow:            types.NewMiniDollar(0),
 		ConsumptionRewardPool:        types.NewCoinFromInt64(0),
 		ConsumptionFreezingPeriodSec: 24 * 7 * 3600,
 	}

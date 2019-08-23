@@ -21,7 +21,7 @@ const (
 )
 
 // creates a querier for vote REST endpoints
-func NewQuerier(rm ReputationManager) sdk.Querier {
+func NewQuerier(rm ReputationKeeper) sdk.Querier {
 	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
@@ -29,12 +29,12 @@ func NewQuerier(rm ReputationManager) sdk.Querier {
 		case QueryReputation:
 			return queryReputation(ctx, cdc, path[1:], req, rm)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown vote query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown reputation query endpoint")
 		}
 	}
 }
 
-func queryReputation(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, rm ReputationManager) ([]byte, sdk.Error) {
+func queryReputation(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, rm ReputationKeeper) ([]byte, sdk.Error) {
 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}

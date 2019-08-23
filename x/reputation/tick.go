@@ -7,7 +7,8 @@ import (
 
 // EndBlocker - called every end blocker, udpate new round
 func EndBlocker(
-	ctx sdk.Context, req abci.RequestEndBlock, rm ReputationManager) (tags sdk.Tags) {
-	rm.Update(ctx)
+	ctx sdk.Context, req abci.RequestEndBlock, rm ReputationKeeper) (tags sdk.Tags) {
+	// TODO(yumin): this err should be checked in next upgrade.
+	_ = rm.Update(ctx)
 	return
 }

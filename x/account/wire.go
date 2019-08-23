@@ -8,7 +8,6 @@ import (
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(RegisterMsg{}, "lino/register", nil)
 	cdc.RegisterConcrete(TransferMsg{}, "lino/transfer", nil)
-	cdc.RegisterConcrete(ClaimMsg{}, "lino/claim", nil)
 	cdc.RegisterConcrete(RecoverMsg{}, "lino/recover", nil)
 	cdc.RegisterConcrete(UpdateAccountMsg{}, "lino/updateAcc", nil)
 }

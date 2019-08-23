@@ -125,40 +125,6 @@ func TestRecoverMsg(t *testing.T) {
 	}
 }
 
-func TestClaimMsg(t *testing.T) {
-	testCases := map[string]struct {
-		msg      ClaimMsg
-		wantCode sdk.CodeType
-	}{
-		"normal case": {
-			msg:      NewClaimMsg("test"),
-			wantCode: sdk.CodeOK,
-		},
-		"invalid claim - Username is too short": {
-			msg:      NewClaimMsg("te"),
-			wantCode: types.CodeInvalidUsername,
-		},
-		"invalid claim - Username is too long": {
-			msg:      NewClaimMsg("testtesttesttesttesttest"),
-			wantCode: types.CodeInvalidUsername,
-		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: diff error: got %v, want %v", testName, tc.wantCode, tc.wantCode)
-			}
-			continue
-		}
-		if got.Code() != tc.wantCode {
-			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
-		}
-	}
-}
-
 func TestUpdateAccountMsg(t *testing.T) {
 	testCases := map[string]struct {
 		msg      UpdateAccountMsg
@@ -297,10 +263,6 @@ func TestMsgPermission(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.ResetPermission,
 		},
-		"claim": {
-			msg:              NewClaimMsg("test"),
-			expectPermission: types.AppPermission,
-		},
 		"register msg": {
 			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
@@ -339,9 +301,6 @@ func TestGetSignBytes(t *testing.T) {
 				"userA", secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
-		},
-		"claim": {
-			msg: NewClaimMsg("test"),
 		},
 		"register msg with public key type Ed25519": {
 			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
@@ -383,10 +342,6 @@ func TestGetSigners(t *testing.T) {
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"userA"},
-		},
-		"claim": {
-			msg:           NewClaimMsg("test"),
-			expectSigners: []types.AccountKey{"test"},
 		},
 		"register msg with public key type Ed25519": {
 			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),

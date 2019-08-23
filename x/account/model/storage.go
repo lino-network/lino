@@ -353,6 +353,7 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 	}
 	// import table.accounts
 	for _, v := range tb.Accounts {
+		// TODO(yumin): BROKEN NOW, when import, rewards should be added to saving account.
 		err := as.SetInfo(ctx, v.Username, &v.Info)
 		check(err)
 		err = as.SetBankFromAccountKey(ctx, v.Username, &v.Bank)

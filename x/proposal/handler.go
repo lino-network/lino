@@ -16,7 +16,7 @@ import (
 // NewHandler - Handle all "proposal" type messages.
 func NewHandler(
 	am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
+	postManager post.PostKeeper, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -114,17 +114,13 @@ func handleProtocolUpgradeMsg(
 
 func handleContentCensorshipMsg(
 	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
+	postManager post.PostKeeper, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
 	}
 
 	if !postManager.DoesPostExist(ctx, msg.GetPermlink()) {
 		return ErrPostNotFound().Result()
-	}
-
-	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermlink()); isDeleted || err != nil {
-		return ErrCensorshipPostIsDeleted(msg.GetPermlink()).Result()
 	}
 
 	param, err := proposalManager.paramHolder.GetProposalParam(ctx)

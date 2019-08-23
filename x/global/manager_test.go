@@ -1,19 +1,19 @@
 package global
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/lino-network/lino/param"
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global/model"
 )
 
 const (
@@ -161,41 +161,41 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 	testCases := []struct {
 		testName              string
 		frictionCoin          types.Coin
-		evaluateCoin          types.Coin
+		evaluate              types.MiniDollar
 		registerBaseTime      int64
 		expectCoinInStatistic types.Coin
-		expectCoinInWindow    types.Coin
+		expectInWindow        types.MiniDollar
 	}{
 		{
 			testName:              "add 1 friction",
 			frictionCoin:          types.NewCoinFromInt64(1),
-			evaluateCoin:          types.NewCoinFromInt64(1),
+			evaluate:              types.NewMiniDollar(1),
 			registerBaseTime:      baseTime,
 			expectCoinInStatistic: types.NewCoinFromInt64(1),
-			expectCoinInWindow:    types.NewCoinFromInt64(1),
+			expectInWindow:        types.NewMiniDollar(1),
 		},
 		{
 			testName:              "add 100 more friction",
 			frictionCoin:          types.NewCoinFromInt64(100),
-			evaluateCoin:          types.NewCoinFromInt64(1),
+			evaluate:              types.NewMiniDollar(1),
 			registerBaseTime:      baseTime + 100,
 			expectCoinInStatistic: types.NewCoinFromInt64(101),
-			expectCoinInWindow:    types.NewCoinFromInt64(2),
+			expectInWindow:        types.NewMiniDollar(2),
 		},
 		{
 			testName:              "add 1 more friction",
 			frictionCoin:          types.NewCoinFromInt64(1),
-			evaluateCoin:          types.NewCoinFromInt64(100),
+			evaluate:              types.NewMiniDollar(100),
 			registerBaseTime:      baseTime + 1001,
 			expectCoinInStatistic: types.NewCoinFromInt64(102),
-			expectCoinInWindow:    types.NewCoinFromInt64(102),
+			expectInWindow:        types.NewMiniDollar(102),
 		},
 	}
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Time: time.Unix(tc.registerBaseTime, 0)})
 		err := gm.AddFrictionAndRegisterContentRewardEvent(
-			ctx, testEvent{}, tc.frictionCoin, tc.evaluateCoin)
+			ctx, testEvent{}, tc.frictionCoin, tc.evaluate)
 		if err != nil {
 			t.Errorf("%s: failed to add friction and register event, got err %v", tc.testName, err)
 		}
@@ -208,9 +208,9 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 			t.Errorf("%s: diff consumption reward pool, got %v, want zero",
 				tc.testName, consumptionMeta.ConsumptionRewardPool)
 		}
-		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectCoinInWindow) {
+		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectInWindow.Int) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
-				consumptionMeta.ConsumptionWindow, tc.expectCoinInWindow)
+				consumptionMeta.ConsumptionWindow, tc.expectInWindow)
 		}
 		pastDay, err := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
 		if err != nil {
@@ -241,103 +241,31 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 	ctx, gm := setupTest(t)
 	testCases := []struct {
 		testName                    string
-		evaluate                    types.Coin
-		penaltyScore                sdk.Dec
+		evaluate                    types.MiniDollar
 		expectReward                types.Coin
 		initConsumptionRewardPool   types.Coin
-		initConsumptionWindow       types.Coin
+		initConsumptionWindow       types.MiniDollar
 		expectConsumptionRewardPool types.Coin
-		expectConsumptionWindow     types.Coin
+		expectConsumptionWindow     types.MiniDollar
 	}{
 		{
 			testName:                    "1 evaluate, 0 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                sdk.ZeroDec(),
+			evaluate:                    types.NewMiniDollar(1),
 			expectReward:                types.NewCoinFromInt64(100),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
+			initConsumptionWindow:       types.NewMiniDollar(10),
 			expectConsumptionRewardPool: types.NewCoinFromInt64(900),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9),
+			expectConsumptionWindow:     types.NewMiniDollar(9),
 		},
 		{
-			testName:                    "1/1000 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                types.NewDecFromRat(1, 1000),
-			expectReward:                types.NewCoinFromInt64(100),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(900),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9),
-		},
-		{
-			testName:                    "6/1000 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                types.NewDecFromRat(6, 1000),
-			expectReward:                types.NewCoinFromInt64(99),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(901),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9)},
-		{
-			testName:                    "1/10 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                types.NewDecFromRat(1, 10),
-			expectReward:                types.NewCoinFromInt64(90),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(910),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9),
-		},
-		{
-			testName:                    "5/10 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                types.NewDecFromRat(5, 10),
-			expectReward:                types.NewCoinFromInt64(50),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(950),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9),
-		},
-		{
-			testName:                    "1/1 penalty",
-			evaluate:                    types.NewCoinFromInt64(1),
-			penaltyScore:                types.NewDecFromRat(1, 1),
-			expectReward:                types.NewCoinFromInt64(0),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
-			expectConsumptionWindow:     types.NewCoinFromInt64(9),
-		},
-		{
-			testName:                    "6/1000 penalty",
-			evaluate:                    types.NewCoinFromInt64(0),
-			penaltyScore:                sdk.ZeroDec(),
-			expectReward:                types.NewCoinFromInt64(0),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
-			expectConsumptionWindow:     types.NewCoinFromInt64(10),
-		},
-		{
-			testName:                    "0 evaluate, 0 penalty",
-			evaluate:                    types.NewCoinFromInt64(0),
-			penaltyScore:                sdk.OneDec(),
-			expectReward:                types.NewCoinFromInt64(0),
-			initConsumptionRewardPool:   types.NewCoinFromInt64(1000),
-			initConsumptionWindow:       types.NewCoinFromInt64(10),
-			expectConsumptionRewardPool: types.NewCoinFromInt64(1000),
-			expectConsumptionWindow:     types.NewCoinFromInt64(10),
-		},
-		// issue https://github.com/lino-network/lino/issues/150
-		{
+			// issue https://github.com/lino-network/lino/issues/150
 			testName:                    "test large number",
-			evaluate:                    types.NewCoinFromInt64(77777777777777),
-			penaltyScore:                sdk.ZeroDec(),
+			evaluate:                    types.NewMiniDollar(77777777777777),
 			expectReward:                types.NewCoinFromInt64(23333333),
 			initConsumptionRewardPool:   types.NewCoinFromInt64(100000000),
-			initConsumptionWindow:       types.NewCoinFromInt64(333333333333333),
+			initConsumptionWindow:       types.NewMiniDollar(333333333333333),
 			expectConsumptionRewardPool: types.NewCoinFromInt64(76666667),
-			expectConsumptionWindow:     types.NewCoinFromInt64(255555555555556),
+			expectConsumptionWindow:     types.NewMiniDollar(255555555555556),
 		},
 	}
 
@@ -363,7 +291,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 			return
 		}
 
-		reward, err := gm.GetRewardAndPopFromWindow(ctx, tc.evaluate, tc.penaltyScore)
+		reward, err := gm.GetRewardAndPopFromWindow(ctx, tc.evaluate)
 		if err != nil {
 			t.Errorf("%s: failed to get reward and pop from window, got err %v", tc.testName, err)
 			return
@@ -383,7 +311,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 				consumptionMeta.ConsumptionRewardPool, tc.expectConsumptionRewardPool)
 			return
 		}
-		if !consumptionMeta.ConsumptionWindow.IsEqual(tc.expectConsumptionWindow) {
+		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectConsumptionWindow.Int) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectConsumptionWindow)
 			return
@@ -672,239 +600,237 @@ func AddToDeveloperInflationPool(t *testing.T) {
 	}
 }
 
-func TestRecalculateAnnuallyInflation(t *testing.T) {
-	ctx, gm := setupTest(t)
-	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
-	ceiling := types.NewDecFromRat(98, 1000)
-	floor := types.NewDecFromRat(30, 1000)
+// func TestRecalculateAnnuallyInflation(t *testing.T) {
+// 	ctx, gm := setupTest(t)
+// 	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
+// 	ceiling := types.NewDecFromRat(98, 1000)
+// 	floor := types.NewDecFromRat(30, 1000)
 
-	testCases := []struct {
-		testName            string
-		lastYearConsumption types.Coin
-		thisYearConsumption types.Coin
-		expectGrowthRate    sdk.Dec
-	}{
-		{
-			testName:            "same consumption of last year and this year, get floor growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "right equal to floor growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "right equal to ceiling growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(1098000000 * types.Decimals),
-			expectGrowthRate:    ceiling,
-		},
-		{
-			testName:            "bigger than ceiling will be rounded to ceiling growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(1099000000 * types.Decimals),
-			expectGrowthRate:    ceiling,
-		},
-		{
-			testName:            "less year consumption will use floor growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(90000000 * types.Decimals),
-			expectGrowthRate:    floor,
-		},
-	}
+// 	testCases := []struct {
+// 		testName            string
+// 		lastYearConsumption types.Coin
+// 		thisYearConsumption types.Coin
+// 		expectGrowthRate    sdk.Dec
+// 	}{
+// 		{
+// 			testName:            "same consumption of last year and this year, get floor growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "right equal to floor growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "right equal to ceiling growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(1098000000 * types.Decimals),
+// 			expectGrowthRate:    ceiling,
+// 		},
+// 		{
+// 			testName:            "bigger than ceiling will be rounded to ceiling growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(1099000000 * types.Decimals),
+// 			expectGrowthRate:    ceiling,
+// 		},
+// 		{
+// 			testName:            "less year consumption will use floor growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(90000000 * types.Decimals),
+// 			expectGrowthRate:    floor,
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		globalMeta := &model.GlobalMeta{
-			TotalLinoCoin:                 totalLino,
-			LastYearTotalLinoCoin:         totalLino,
-			LastYearCumulativeConsumption: tc.lastYearConsumption,
-			CumulativeConsumption:         tc.thisYearConsumption,
-		}
-		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
-		if err != nil {
-			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
-		}
+// 	for _, tc := range testCases {
+// 		globalMeta := &model.GlobalMeta{
+// 			TotalLinoCoin:                 totalLino,
+// 			LastYearTotalLinoCoin:         totalLino,
+// 		}
+// 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
+// 		}
 
-		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to recalculate annually inflation, got err %v", tc.testName, err)
-		}
+// 		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to recalculate annually inflation, got err %v", tc.testName, err)
+// 		}
 
-		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
-		}
-		if !globalMeta.LastYearTotalLinoCoin.IsEqual(globalMeta.TotalLinoCoin) {
-			t.Errorf("%s: diff lino coin, got %v, want %v", tc.testName,
-				globalMeta.LastYearTotalLinoCoin, globalMeta.TotalLinoCoin)
-		}
-		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
-			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
-				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
-		}
-		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
-			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
-				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
-		}
-	}
-}
+// 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+// 		}
+// 		if !globalMeta.LastYearTotalLinoCoin.IsEqual(globalMeta.TotalLinoCoin) {
+// 			t.Errorf("%s: diff lino coin, got %v, want %v", tc.testName,
+// 				globalMeta.LastYearTotalLinoCoin, globalMeta.TotalLinoCoin)
+// 		}
+// 		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
+// 			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
+// 				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
+// 		}
+// 		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
+// 			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
+// 				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
+// 		}
+// 	}
+// }
 
-func TestGetGrowthRate(t *testing.T) {
-	ctx, gm := setupTest(t)
-	totalLino := types.NewCoinFromInt64(1000000)
-	ceiling := types.NewDecFromRat(98, 1000)
-	floor := types.NewDecFromRat(30, 1000)
-	bigLastYearConsumption, _ := new(big.Int).SetString("77777777777777777777", 10)
-	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
-	bigLastYearConsumptionCoin := types.NewCoinFromBigInt(bigLastYearConsumption)
-	bigThisYearConsumptionCoin := types.NewCoinFromBigInt(bigThisYearConsumption)
-	bigGrowth := bigThisYearConsumptionCoin.Minus(bigLastYearConsumptionCoin)
-	bigExpectedGrowth := sdk.NewDecFromBigInt(bigGrowth.Amount.BigInt()).Quo(sdk.NewDecFromBigInt(bigLastYearConsumptionCoin.Amount.BigInt()))
+// func TestGetGrowthRate(t *testing.T) {
+// 	ctx, gm := setupTest(t)
+// 	totalLino := types.NewCoinFromInt64(1000000)
+// 	ceiling := types.NewDecFromRat(98, 1000)
+// 	floor := types.NewDecFromRat(30, 1000)
+// 	bigLastYearConsumption, _ := new(big.Int).SetString("77777777777777777777", 10)
+// 	bigThisYearConsumption, _ := new(big.Int).SetString("83333333333333333332", 10)
+// 	bigLastYearConsumptionCoin := types.NewCoinFromBigInt(bigLastYearConsumption)
+// 	bigThisYearConsumptionCoin := types.NewCoinFromBigInt(bigThisYearConsumption)
+// 	bigGrowth := bigThisYearConsumptionCoin.Minus(bigLastYearConsumptionCoin)
+// 	bigExpectedGrowth := sdk.NewDecFromBigInt(bigGrowth.Amount.BigInt()).Quo(sdk.NewDecFromBigInt(bigLastYearConsumptionCoin.Amount.BigInt()))
 
-	testCases := []struct {
-		testName            string
-		lastYearConsumption types.Coin
-		thisYearConsumption types.Coin
-		lastYearGrowthRate  sdk.Dec
-		expectGrowthRate    sdk.Dec
-	}{
-		{
-			testName:            "floor growth rate, 0 thisYearConsumption",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "ceiling growth rate, 0 lastYearConsumption",
-			lastYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    types.NewDecFromRat(98, 1000),
-		},
-		{
-			testName:            "floor growth rate, thisYearConsumption = lastYearConsumption",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "ceiling growth rate, 0 lastYearConsumption",
-			lastYearConsumption: types.NewCoinFromInt64(0),
-			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    types.NewDecFromRat(98, 1000),
-		},
-		{
-			testName:            "less than floor will be rounded to floor growth rate 1",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(100010000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "less than floor will be rounded to floor growth rate 2",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(102900000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "less than floor will be rounded to floor growth rate 3",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    floor,
-		},
-		{
-			testName:            "growth rate between floor and ceiling 1",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(103100000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    types.NewDecFromRat(31, 1000),
-		},
-		{
-			testName:            "right equal to ceiling growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(109800000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    ceiling,
-		},
-		{
-			testName:            "higher than ceiling will be rouned to ceiling growth rate",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(109900000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    ceiling,
-		},
-		{
-			testName:            "growth rate between floor and ceiling 2",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(109700000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    types.NewDecFromRat(97, 1000),
-		},
-		{
-			testName:            "growth rate between floor and ceiling 3",
-			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
-			thisYearConsumption: types.NewCoinFromInt64(104700000 * types.Decimals),
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    types.NewDecFromRat(47, 1000),
-		},
-		// issue https://github.com/lino-network/lino/issues/150
-		{
-			testName:            "overflow testing",
-			lastYearConsumption: bigLastYearConsumptionCoin,
-			thisYearConsumption: bigThisYearConsumptionCoin,
-			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
-			expectGrowthRate:    bigExpectedGrowth,
-		},
-	}
+// 	testCases := []struct {
+// 		testName            string
+// 		lastYearConsumption types.Coin
+// 		thisYearConsumption types.Coin
+// 		lastYearGrowthRate  sdk.Dec
+// 		expectGrowthRate    sdk.Dec
+// 	}{
+// 		{
+// 			testName:            "floor growth rate, 0 thisYearConsumption",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "ceiling growth rate, 0 lastYearConsumption",
+// 			lastYearConsumption: types.NewCoinFromInt64(0 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    types.NewDecFromRat(98, 1000),
+// 		},
+// 		{
+// 			testName:            "floor growth rate, thisYearConsumption = lastYearConsumption",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "ceiling growth rate, 0 lastYearConsumption",
+// 			lastYearConsumption: types.NewCoinFromInt64(0),
+// 			thisYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    types.NewDecFromRat(98, 1000),
+// 		},
+// 		{
+// 			testName:            "less than floor will be rounded to floor growth rate 1",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(100010000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "less than floor will be rounded to floor growth rate 2",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(102900000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "less than floor will be rounded to floor growth rate 3",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(103000000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    floor,
+// 		},
+// 		{
+// 			testName:            "growth rate between floor and ceiling 1",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(103100000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    types.NewDecFromRat(31, 1000),
+// 		},
+// 		{
+// 			testName:            "right equal to ceiling growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(109800000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    ceiling,
+// 		},
+// 		{
+// 			testName:            "higher than ceiling will be rouned to ceiling growth rate",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(109900000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    ceiling,
+// 		},
+// 		{
+// 			testName:            "growth rate between floor and ceiling 2",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(109700000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    types.NewDecFromRat(97, 1000),
+// 		},
+// 		{
+// 			testName:            "growth rate between floor and ceiling 3",
+// 			lastYearConsumption: types.NewCoinFromInt64(100000000 * types.Decimals),
+// 			thisYearConsumption: types.NewCoinFromInt64(104700000 * types.Decimals),
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    types.NewDecFromRat(47, 1000),
+// 		},
+// 		// issue https://github.com/lino-network/lino/issues/150
+// 		{
+// 			testName:            "overflow testing",
+// 			lastYearConsumption: bigLastYearConsumptionCoin,
+// 			thisYearConsumption: bigThisYearConsumptionCoin,
+// 			lastYearGrowthRate:  types.NewDecFromRat(98, 1000),
+// 			expectGrowthRate:    bigExpectedGrowth,
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		globalMeta := &model.GlobalMeta{
-			TotalLinoCoin:                 totalLino,
-			LastYearTotalLinoCoin:         totalLino,
-			LastYearCumulativeConsumption: tc.lastYearConsumption,
-			CumulativeConsumption:         tc.thisYearConsumption,
-		}
-		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
-		if err != nil {
-			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
-		}
-		err = gm.paramHolder.UpdateGlobalGrowthRate(ctx, tc.lastYearGrowthRate)
-		if err != nil {
-			t.Errorf("%s: failed to set global growth rate, got err %v", tc.testName, err)
-		}
+// 	for _, tc := range testCases {
+// 		globalMeta := &model.GlobalMeta{
+// 			TotalLinoCoin:                 totalLino,
+// 			LastYearTotalLinoCoin:         totalLino,
+// 			LastYearCumulativeConsumption: tc.lastYearConsumption,
+// 			CumulativeConsumption:         tc.thisYearConsumption,
+// 		}
+// 		err := gm.storage.SetGlobalMeta(ctx, globalMeta)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to set global meta, got err %v", tc.testName, err)
+// 		}
+// 		err = gm.paramHolder.UpdateGlobalGrowthRate(ctx, tc.lastYearGrowthRate)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to set global growth rate, got err %v", tc.testName, err)
+// 		}
 
-		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get growth rate, got err %v", tc.testName, err)
-		}
+// 		err = gm.SetTotalLinoAndRecalculateGrowthRate(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to get growth rate, got err %v", tc.testName, err)
+// 		}
 
-		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
-		}
-		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
-			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
-				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
-		}
-		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
-			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
-				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
-		}
-		globalParam, _ := gm.paramHolder.GetGlobalAllocationParam(ctx)
-		if !tc.expectGrowthRate.Equal(globalParam.GlobalGrowthRate) {
-			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName,
-				globalParam.GlobalGrowthRate, tc.expectGrowthRate)
-		}
-	}
-}
+// 		globalMeta, err = gm.storage.GetGlobalMeta(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
+// 		}
+// 		if !globalMeta.LastYearCumulativeConsumption.IsEqual(tc.thisYearConsumption) {
+// 			t.Errorf("%s: diff last year cumulative consumption, got %v, want %v", tc.testName,
+// 				globalMeta.LastYearCumulativeConsumption, tc.thisYearConsumption)
+// 		}
+// 		if !globalMeta.CumulativeConsumption.IsEqual(types.NewCoinFromInt64(0)) {
+// 			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
+// 				globalMeta.CumulativeConsumption, types.NewCoinFromInt64(0))
+// 		}
+// 		globalParam, _ := gm.paramHolder.GetGlobalAllocationParam(ctx)
+// 		if !tc.expectGrowthRate.Equal(globalParam.GlobalGrowthRate) {
+// 			t.Errorf("%s: diff growth rate, got %v, want %v", tc.testName,
+// 				globalParam.GlobalGrowthRate, tc.expectGrowthRate)
+// 		}
+// 	}
+// }
 
 func TestGetValidatorHourlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
@@ -1006,43 +932,6 @@ func TestAddToValidatorInflationPool(t *testing.T) {
 	}
 }
 
-func TestAddConsumption(t *testing.T) {
-	ctx, gm := setupTest(t)
-
-	testCases := []struct {
-		testName string
-		coin     types.Coin
-		expect   types.Coin
-	}{
-		{
-			testName: "add 100 consumption",
-			coin:     types.NewCoinFromInt64(100),
-			expect:   types.NewCoinFromInt64(100),
-		},
-		{
-			testName: "add 1 more consumption",
-			coin:     types.NewCoinFromInt64(1),
-			expect:   types.NewCoinFromInt64(101),
-		},
-	}
-
-	for _, tc := range testCases {
-		err := gm.AddConsumption(ctx, tc.coin)
-		if err != nil {
-			t.Errorf("%s: failed to add consumption, got err %v", tc.testName, err)
-		}
-
-		globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get global meta, got err %v", tc.testName, err)
-		}
-		if !globalMeta.CumulativeConsumption.IsEqual(tc.expect) {
-			t.Errorf("%s: diff cumulative consumption, got %v, want %v", tc.testName,
-				globalMeta.CumulativeConsumption, tc.expect)
-		}
-	}
-}
-
 func TestChainStartTime(t *testing.T) {
 	ctx, gm := setupTest(t)
 
@@ -1139,41 +1028,6 @@ func TestGetConsumptionFrictionRate(t *testing.T) {
 		if !frictionRate.Equal(tc.consumptionMeta.ConsumptionFrictionRate) {
 			t.Errorf("%s: diff friction rate, got %v, want %v",
 				tc.testName, frictionRate, tc.consumptionMeta.ConsumptionFrictionRate)
-			return
-		}
-	}
-}
-
-func TestGetConsumption(t *testing.T) {
-	ctx, gm := setupTest(t)
-
-	testCases := []struct {
-		testName   string
-		globalMeta model.GlobalMeta
-	}{
-		{
-			testName: "zero consumption",
-			globalMeta: model.GlobalMeta{
-				CumulativeConsumption: types.NewCoinFromInt64(0),
-			},
-		},
-		{
-			testName: "10000 LNO consumption",
-			globalMeta: model.GlobalMeta{
-				CumulativeConsumption: types.NewCoinFromInt64(10000 * types.Decimals),
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		err := gm.storage.SetGlobalMeta(ctx, &tc.globalMeta)
-		assert.Nil(t, err)
-		consumption, err := gm.GetConsumption(ctx)
-		assert.Nil(t, err)
-
-		if !consumption.IsEqual(tc.globalMeta.CumulativeConsumption) {
-			t.Errorf("%s: diff friction rate, got %v, want %v",
-				tc.testName, consumption, tc.globalMeta.CumulativeConsumption)
 			return
 		}
 	}
