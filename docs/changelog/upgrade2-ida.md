@@ -8,7 +8,13 @@ It is the basic unit of IDA. Internally it is a sdk.Int.
 ## Changes to Post
 ---
 
+1. Simplify post struct, remove unused fields.
+2. Remove view/upvote/report tx.
+3. Storage use MustUnmarshalBinaryLengthPrefixed as cosmos modules.
 
+### Minors
+
+1. experimental refactor on post structure.
 
 ## Changes to Donation
 ---
