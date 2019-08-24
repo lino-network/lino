@@ -1,0 +1,15 @@
+[
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/reservepool",
+      "value": {
+        "total": {
+          "amount": "1"
+        },
+        "total_minidollar": "0"
+      }
+    }
+  }
+]

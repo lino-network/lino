@@ -204,6 +204,6 @@ func (suite *StoreTestSuite) TestStoreImportExporterFromUpgrade1() {
 	db2 := internal.NewMockStore()
 	store2 := NewReputationStore(db2, DefaultInitialReputation)
 	store2.Import(data)
-	u1.Reputation.Mul(NewInt(12))
+	u1.Reputation.Mul(NewInt(1200))
 	suite.Equal(u1.Reputation, store2.GetUserMeta(user1).Reputation)
 }

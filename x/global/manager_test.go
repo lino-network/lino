@@ -871,7 +871,7 @@ func TestGetInfraMonthlyInflation(t *testing.T) {
 	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalInfraInflation))
 }
 
-func TestGetDeveloperMonthlyInflation(t *testing.T) {
+func TestPopDeveloperMonthlyInflation(t *testing.T) {
 	ctx, gm := setupTest(t)
 	totalDeveloperInflation := types.NewCoinFromInt64(10000 * 100)
 	inflationPool := &model.InflationPool{
@@ -879,7 +879,7 @@ func TestGetDeveloperMonthlyInflation(t *testing.T) {
 	}
 	err := gm.storage.SetInflationPool(ctx, inflationPool)
 	assert.Nil(t, err)
-	coin, err := gm.GetDeveloperMonthlyInflation(ctx)
+	coin, err := gm.PopDeveloperMonthlyInflation(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, totalDeveloperInflation, coin)
 	pool, err := gm.storage.GetInflationPool(ctx)

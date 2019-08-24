@@ -488,8 +488,9 @@ func (gm *GlobalManager) GetInfraMonthlyInflation(ctx sdk.Context) (types.Coin, 
 	return resCoin, nil
 }
 
-// GetDeveloperMonthlyInflation - get developer monthly inflation
-func (gm *GlobalManager) GetDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
+// PopDeveloperMonthlyInflation - pop out developer monthly inflation and
+// reset current inflation pool to zero. Total coin amount will be updated.
+func (gm *GlobalManager) PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
 		return types.NewCoinFromInt64(0), err

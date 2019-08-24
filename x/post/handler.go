@@ -77,11 +77,11 @@ func handleDonateMsg(ctx sdk.Context, msg DonateMsg, pm PostKeeper) sdk.Result {
 
 func handleIDADonateMsg(ctx sdk.Context, msg IDADonateMsg, pm PostKeeper) sdk.Result {
 	// amount must be an positive integer.
-	amount, err := msg.Amount.ToIDA()
+	amount, err := msg.Amount.ToMiniIDA()
 	if err != nil {
 		return err.Result()
 	}
-	err = pm.IDADonate(ctx, msg.Username, amount, msg.Author, msg.PostID, msg.App)
+	err = pm.IDADonate(ctx, msg.Username, amount, msg.Author, msg.PostID, msg.App, msg.Signer)
 	if err != nil {
 		return err.Result()
 	}

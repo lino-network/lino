@@ -4,30 +4,36 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/x/account"
-	accmn "github.com/lino-network/lino/x/account/manager"
-	global "github.com/lino-network/lino/x/global"
+
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/developer/types"
 )
 
 // NewHandler - Handle all "developer" type messages.
-func NewHandler(dm DeveloperManager, am acc.AccountKeeper, gm *global.GlobalManager) sdk.Handler {
+func NewHandler(dm DeveloperKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case DeveloperRegisterMsg:
-			return handleDeveloperRegisterMsg(ctx, dm, am, msg)
-		case DeveloperUpdateMsg:
-			return handleDeveloperUpdateMsg(ctx, dm, am, msg)
-		case GrantPermissionMsg:
-			return handleGrantPermissionMsg(ctx, dm, am, msg)
-		case PreAuthorizationMsg:
-			return handlePreAuthorizationMsg(ctx, dm, am, msg)
-		case DeveloperRevokeMsg:
-			return handleDeveloperRevokeMsg(ctx, dm, am, gm, msg)
-		case RevokePermissionMsg:
-			return handleRevokePermissionMsg(ctx, dm, am, msg)
+		case types.DeveloperRegisterMsg:
+			return handleDeveloperRegisterMsg(ctx, dm, msg)
+		case types.DeveloperUpdateMsg:
+			return handleDeveloperUpdateMsg(ctx, dm, msg)
+		// case types.DeveloperRevokeMsg:
+		// 	return handleDeveloperRevokeMsg(ctx, dm, am, gm, msg)
+		case types.IDAIssueMsg:
+			return handleIDAIssueMsg(ctx, dm, msg)
+		case types.IDAMintMsg:
+			return handleIDAMintMsg(ctx, dm, msg)
+		case types.IDATransferMsg:
+			return handleIDATransferMsg(ctx, dm, msg)
+		case types.IDAAuthorizeMsg:
+			return handleIDAAuthorizeMsg(ctx, dm, msg)
+		case types.UpdateAffiliatedMsg:
+			return handleUpdateAffiliatedMsg(ctx, dm, msg)
+		case types.GrantPermissionMsg:
+			return handleGrantPermissionMsg(ctx, dm, msg)
+		case types.RevokePermissionMsg:
+			return handleRevokePermissionMsg(ctx, dm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -36,37 +42,16 @@ func NewHandler(dm DeveloperManager, am acc.AccountKeeper, gm *global.GlobalMana
 }
 
 func handleDeveloperRegisterMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg DeveloperRegisterMsg) sdk.Result {
-	if dm.DoesDeveloperExist(ctx, msg.Username) {
-		return ErrDeveloperAlreadyExist(msg.Username).Result()
-	}
-
-	deposit, err := types.LinoToCoin(msg.Deposit)
-	if err != nil {
-		return err.Result()
-	}
-
-	// withdraw money from developer's bank
-	if err = am.MinusCoinFromUsername(ctx, msg.Username, deposit); err != nil {
-		return err.Result()
-	}
+	ctx sdk.Context, dm DeveloperKeeper, msg types.DeveloperRegisterMsg) sdk.Result {
 	if err := dm.RegisterDeveloper(
-		ctx, msg.Username, deposit, msg.Website, msg.Description, msg.AppMetaData); err != nil {
+		ctx, msg.Username, msg.Website, msg.Description, msg.AppMetaData); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func handleDeveloperUpdateMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg DeveloperUpdateMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
-	if !dm.DoesDeveloperExist(ctx, msg.Username) {
-		return ErrDeveloperNotFound().Result()
-	}
-
+	ctx sdk.Context, dm DeveloperKeeper, msg types.DeveloperUpdateMsg) sdk.Result {
 	if err := dm.UpdateDeveloper(
 		ctx, msg.Username, msg.Website, msg.Description, msg.AppMetaData); err != nil {
 		return err.Result()
@@ -74,125 +59,92 @@ func handleDeveloperUpdateMsg(
 	return sdk.Result{}
 }
 
-func handleDeveloperRevokeMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper,
-	gm *global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
-	if !dm.DoesDeveloperExist(ctx, msg.Username) {
-		return ErrDeveloperNotFound().Result()
-	}
-
-	if err := dm.RemoveFromDeveloperList(ctx, msg.Username); err != nil {
-		return err.Result()
-	}
-
-	coin, withdrawErr := dm.WithdrawAll(ctx, msg.Username)
-	if withdrawErr != nil {
-		return withdrawErr.Result()
-	}
-
-	param, err := dm.paramHolder.GetDeveloperParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
-	if err := returnCoinTo(
-		ctx, msg.Username, gm, am, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalSec, coin); err != nil {
+func handleUpdateAffiliatedMsg(
+	ctx sdk.Context, dm DeveloperKeeper, msg types.UpdateAffiliatedMsg) sdk.Result {
+	if err := dm.UpdateAffiliated(ctx, msg.App, msg.Username, msg.Activate); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
+
+func handleIDAIssueMsg(
+	ctx sdk.Context, dm DeveloperKeeper, msg types.IDAIssueMsg) sdk.Result {
+	if err := dm.IssueIDA(ctx, msg.Username, string(msg.Username), msg.IDAPrice); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleIDAMintMsg(
+	ctx sdk.Context, dm DeveloperKeeper, msg types.IDAMintMsg) sdk.Result {
+	amount, err := linotypes.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := dm.MintIDA(ctx, msg.Username, amount); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleIDATransferMsg(
+	ctx sdk.Context, dm DeveloperKeeper, msg types.IDATransferMsg) sdk.Result {
+	amount, err := msg.Amount.ToMiniIDA()
+	if err != nil {
+		return err.Result()
+	}
+	if err := dm.AppTransferIDA(ctx, msg.App, msg.Signer, amount, msg.From, msg.To); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleIDAAuthorizeMsg(ctx sdk.Context, dm DeveloperKeeper, msg types.IDAAuthorizeMsg) sdk.Result {
+	if err := dm.UpdateIDAAuth(ctx, msg.App, msg.Username, msg.Activate); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// func handleDeveloperRevokeMsg(
+// 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager,
+// 	gm *global.GlobalManager, msg types.DeveloperRevokeMsg) sdk.Result {
+// 	if !dm.DoesDeveloperExist(ctx, msg.Username) {
+// 		return types.ErrDeveloperNotFound().Result()
+// 	}
+
+// 	if err := dm.RemoveFromDeveloperList(ctx, msg.Username); err != nil {
+// 		return err.Result()
+// 	}
+
+// 	coin, withdrawErr := dm.WithdrawAll(ctx, msg.Username)
+// 	if withdrawErr != nil {
+// 		return withdrawErr.Result()
+// 	}
+
+// 	param, err := dm.paramHolder.GetDeveloperParam(ctx)
+// 	if err != nil {
+// 		return err.Result()
+// 	}
+
+// 	if err := returnCoinTo(
+// 		ctx, msg.Username, gm, am, param.DeveloperCoinReturnTimes, param.DeveloperCoinReturnIntervalSec, coin); err != nil {
+// 		return err.Result()
+// 	}
+// 	return sdk.Result{}
+// }
 
 func handleGrantPermissionMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg GrantPermissionMsg) sdk.Result {
-	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
-		return ErrDeveloperNotFound().Result()
-	}
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
-	switch msg.GrantLevel {
-	case types.AppPermission:
-		if err := am.AuthorizePermission(
-			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, types.NewCoinFromInt64(0)); err != nil {
-			return err.Result()
-		}
-	case types.PreAuthorizationPermission:
-		amount, err := types.LinoToCoin(msg.Amount)
-		if err != nil {
-			return err.Result()
-		}
-		if err := am.AuthorizePermission(
-			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, msg.GrantLevel, amount); err != nil {
-			return err.Result()
-		}
-	case types.AppAndPreAuthorizationPermission:
-		if err := am.AuthorizePermission(
-			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.AppPermission, types.NewCoinFromInt64(0)); err != nil {
-			return err.Result()
-		}
-		amount, err := types.LinoToCoin(msg.Amount)
-		if err != nil {
-			return err.Result()
-		}
-		if err := am.AuthorizePermission(
-			ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.PreAuthorizationPermission, amount); err != nil {
-			return err.Result()
-		}
-	default:
-		return ErrInvalidGrantPermission().Result()
-	}
-	return sdk.Result{}
-}
-
-func handleRevokePermissionMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg RevokePermissionMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
-	if err := am.RevokePermission(ctx, msg.Username, msg.RevokeFrom, msg.Permission); err != nil {
+	ctx sdk.Context, dm DeveloperKeeper, msg types.GrantPermissionMsg) sdk.Result {
+	if err := dm.GrantPermission(ctx, msg.AuthorizedApp, msg.Username, msg.ValidityPeriodSec, msg.GrantLevel, msg.Amount); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
-func handlePreAuthorizationMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg PreAuthorizationMsg) sdk.Result {
-	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
-		return ErrDeveloperNotFound().Result()
-	}
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
-	amount, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err.Result()
-	}
-
-	if err := am.AuthorizePermission(
-		ctx, msg.Username, msg.AuthorizedApp, msg.ValidityPeriodSec, types.PreAuthorizationPermission, amount); err != nil {
+func handleRevokePermissionMsg(ctx sdk.Context, dm DeveloperKeeper, msg types.RevokePermissionMsg) sdk.Result {
+	if err := dm.RevokePermission(ctx, msg.Username, msg.RevokeFrom, msg.Permission); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
-}
-
-func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager,
-	am acc.AccountKeeper, times int64, interval int64, coin types.Coin) sdk.Error {
-	if err := am.AddFrozenMoney(
-		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {
-		return err
-	}
-
-	events, err := accmn.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.DeveloperReturnCoin)
-	if err != nil {
-		return err
-	}
-
-	if err := gm.RegisterCoinReturnEvent(ctx, events, times, interval); err != nil {
-		return err
-	}
-	return nil
 }

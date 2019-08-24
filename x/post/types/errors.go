@@ -58,14 +58,14 @@ func ErrPostIDTooLong() sdk.Error {
 	return linotypes.NewError(linotypes.CodePostIDTooLong, fmt.Sprintf("post ID is too long"))
 }
 
-// ErrNoAuthor - error when posting without user
-func ErrNoAuthor() sdk.Error {
-	return linotypes.NewError(linotypes.CodeNoAuthor, fmt.Sprintf("no Author"))
+// ErrInvalidAuthor - error when posting without user
+func ErrInvalidAuthor() sdk.Error {
+	return linotypes.NewError(linotypes.CodeInvalidAuthor, fmt.Sprintf("invalid Author"))
 }
 
-// ErrNoCreatedBy - error when posting without createdBy
-func ErrNoCreatedBy() sdk.Error {
-	return linotypes.NewError(linotypes.CodeNoCreatedBy, fmt.Sprintf("no CreatedBy"))
+// ErrInvalidCreatedBy - error when posting without createdBy
+func ErrInvalidCreatedBy() sdk.Error {
+	return linotypes.NewError(linotypes.CodeInvalidCreatedBy, fmt.Sprintf("invalid CreatedBy"))
 }
 
 // ErrInvalidTarget - error when target post is invalid
@@ -83,9 +83,9 @@ func ErrPostContentExceedMaxLength() sdk.Error {
 	return linotypes.NewError(linotypes.CodePostContentExceedMaxLength, fmt.Sprintf("post content exceeds max length limitation"))
 }
 
-// ErrNoUsername - error when posting without username
-func ErrNoUsername() sdk.Error {
-	return linotypes.NewError(linotypes.CodeNoUsername, fmt.Sprintf("username is missing"))
+// ErrInvalidUsername - error when posting without username
+func ErrInvalidUsername() sdk.Error {
+	return linotypes.NewError(linotypes.CodeInvalidUsername, fmt.Sprintf("invalid username"))
 }
 
 // ErrInvalidMemo - error when donate memo is invalid
@@ -98,12 +98,23 @@ func ErrQueryFailed() sdk.Error {
 	return linotypes.NewError(linotypes.CodePostQueryFailed, fmt.Sprintf("query post store failed"))
 }
 
-// ErrNoApp - error when making an IDA donation without specifying app.
-func ErrNoApp() sdk.Error {
-	return linotypes.NewError(linotypes.CodeNoCreatedBy, fmt.Sprintf("no App"))
+// ErrInvalidApp - error when making an IDA donation without specifying app.
+func ErrInvalidApp() sdk.Error {
+	return linotypes.NewError(linotypes.CodeInvalidApp, fmt.Sprintf("invalid App"))
 }
 
 // ErrNonPositiveIDAAmount - error when ida amount is invalid.
 func ErrNonPositiveIDAAmount(v linotypes.MiniIDA) sdk.Error {
 	return linotypes.NewError(linotypes.CodeNonPositiveIDAAmount, fmt.Sprintf("nonpositive IDA amount: %v", v))
+}
+
+// ErrDonateAmountTooLittle -
+func ErrDonateAmountTooLittle() sdk.Error {
+	return linotypes.NewError(linotypes.CodeDonateAmountTooLittle, fmt.Sprintf("donation amount is too small"))
+}
+
+// ErrInvalidSigner - signes does not match app.
+func ErrInvalidSigner() sdk.Error {
+	return linotypes.NewError(
+		linotypes.CodeInvalidSigner, fmt.Sprintf("signer does not match app, post"))
 }

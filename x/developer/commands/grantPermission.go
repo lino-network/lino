@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	dev "github.com/lino-network/lino/x/developer"
+	dev "github.com/lino-network/lino/x/developer/types"
 )
 
 // GrantPermissionTxCmd - user grant permission to application

@@ -26,7 +26,7 @@ func (_m *PriceKeeper) CoinToMiniDollar(coin types.Coin) types.MiniDollar {
 }
 
 // MiniDollarToCoin provides a mock function with given fields: dollar
-func (_m *PriceKeeper) MiniDollarToCoin(dollar types.MiniDollar) types.Coin {
+func (_m *PriceKeeper) MiniDollarToCoin(dollar types.MiniDollar) (types.Coin, types.MiniDollar) {
 	ret := _m.Called(dollar)
 
 	var r0 types.Coin
@@ -36,5 +36,12 @@ func (_m *PriceKeeper) MiniDollarToCoin(dollar types.MiniDollar) types.Coin {
 		r0 = ret.Get(0).(types.Coin)
 	}
 
-	return r0
+	var r1 types.MiniDollar
+	if rf, ok := ret.Get(1).(func(types.MiniDollar) types.MiniDollar); ok {
+		r1 = rf(dollar)
+	} else {
+		r1 = ret.Get(1).(types.MiniDollar)
+	}
+
+	return r0, r1
 }

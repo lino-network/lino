@@ -34,7 +34,17 @@ func (suite *postStoreTestSuite) SetupTest() {
 }
 
 func (suite *postStoreTestSuite) TestPostGetSetHas() {
-	postInfo := &Post{
+	postInfo1 := &Post{
+		PostID:    "Test Post",
+		Title:     "Test Post",
+		Content:   "Test Post",
+		Author:    linotypes.AccountKey("author1"),
+		CreatedBy: linotypes.AccountKey("app"),
+		CreatedAt: 1,
+		UpdatedAt: 2,
+		IsDeleted: true,
+	}
+	postInfo2 := &Post{
 		PostID:    "Test Post",
 		Title:     "Test Post",
 		Content:   "Test Post",
@@ -44,13 +54,29 @@ func (suite *postStoreTestSuite) TestPostGetSetHas() {
 		UpdatedAt: 2,
 		IsDeleted: true,
 	}
-	permlink := linotypes.GetPermlink(postInfo.Author, postInfo.PostID)
+	permlink1 := linotypes.GetPermlink(postInfo1.Author, postInfo1.PostID)
+	permlink2 := linotypes.GetPermlink(postInfo2.Author, postInfo2.PostID)
 
-	suite.False(suite.ps.HasPost(suite.ctx, permlink))
-	suite.ps.SetPost(suite.ctx, postInfo)
-	suite.True(suite.ps.HasPost(suite.ctx, permlink))
-
-	rst, err := suite.ps.GetPost(suite.ctx, permlink)
+	// add post1
+	suite.False(suite.ps.HasPost(suite.ctx, permlink1))
+	suite.False(suite.ps.HasPost(suite.ctx, permlink2))
+	suite.ps.SetPost(suite.ctx, postInfo1)
+	suite.True(suite.ps.HasPost(suite.ctx, permlink1))
+	suite.False(suite.ps.HasPost(suite.ctx, permlink2))
+	rst1, err := suite.ps.GetPost(suite.ctx, permlink1)
 	suite.Nil(err)
-	suite.Equal(postInfo, rst)
+	suite.Equal(postInfo1, rst1)
+	_, err = suite.ps.GetPost(suite.ctx, permlink2)
+	suite.NotNil(err)
+
+	// add post2
+	suite.ps.SetPost(suite.ctx, postInfo2)
+	suite.True(suite.ps.HasPost(suite.ctx, permlink1))
+	suite.True(suite.ps.HasPost(suite.ctx, permlink2))
+	rst2, err := suite.ps.GetPost(suite.ctx, permlink2)
+	suite.Nil(err)
+	suite.Equal(postInfo2, rst2)
+	rst1, err = suite.ps.GetPost(suite.ctx, permlink1)
+	suite.Nil(err)
+	suite.Equal(postInfo1, rst1)
 }

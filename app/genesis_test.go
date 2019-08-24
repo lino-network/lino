@@ -33,16 +33,16 @@ func TestGetGenesisJson(t *testing.T) {
 	}
 
 	genesisAppDeveloper := GenesisAppDeveloper{
-		Name:    "Lino",
-		Deposit: types.NewCoinFromInt64(1000000 * types.Decimals),
+		Name: "Lino",
 	}
 	genesisInfraProvider := GenesisInfraProvider{
 		Name: "Lino",
 	}
 	genesisState := GenesisState{
-		Accounts:   []GenesisAccount{genesisAcc},
-		Developers: []GenesisAppDeveloper{genesisAppDeveloper},
-		Infra:      []GenesisInfraProvider{genesisInfraProvider},
+		Accounts:    []GenesisAccount{genesisAcc},
+		ReservePool: types.NewCoinFromInt64(1000000),
+		Developers:  []GenesisAppDeveloper{genesisAppDeveloper},
+		Infra:       []GenesisInfraProvider{genesisInfraProvider},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{

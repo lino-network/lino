@@ -4,18 +4,51 @@ package developer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/lino-network/lino/types"
+
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/developer/model"
 )
 
 type DeveloperKeeper interface {
-	MoveIDA(app types.AccountKey, from types.AccountKey, to types.AccountKey, amount types.MiniDollar) sdk.Error
-	GetMiniIDAPrice(dev types.AccountKey) (types.MiniDollar, sdk.Error)
-	DoesDeveloperExist(ctx sdk.Context, username types.AccountKey) bool
-	ReportConsumption(
-		ctx sdk.Context, username types.AccountKey, consumption types.Coin) sdk.Error
+	// developer
+	DoesDeveloperExist(ctx sdk.Context, username linotypes.AccountKey) bool
+
+	RegisterDeveloper(ctx sdk.Context, username linotypes.AccountKey, website, description, appMetaData string) sdk.Error
+	UpdateDeveloper(
+		ctx sdk.Context, username linotypes.AccountKey, website, description, appMetadata string) sdk.Error
+	GetDeveloper(ctx sdk.Context, username linotypes.AccountKey) (model.Developer, sdk.Error)
 	GetLiveDevelopers(ctx sdk.Context) []model.Developer
-	GetAffiliatingApp(ctx sdk.Context, username types.AccountKey) (types.AccountKey, sdk.Error)
+
+	// affiliated account
+	UpdateAffiliated(ctx sdk.Context, appname, username linotypes.AccountKey, activate bool) sdk.Error
+	GetAffiliatingApp(ctx sdk.Context, username linotypes.AccountKey) (linotypes.AccountKey, sdk.Error)
+	GetAffiliated(ctx sdk.Context, app linotypes.AccountKey) []linotypes.AccountKey
+
+	// IDA
+	IssueIDA(ctx sdk.Context, appname linotypes.AccountKey, idaName string, idaPrice int64) sdk.Error
+	MintIDA(ctx sdk.Context, appname linotypes.AccountKey, amount linotypes.Coin) sdk.Error
+	GetMiniIDAPrice(ctx sdk.Context, app linotypes.AccountKey) (linotypes.MiniDollar, sdk.Error)
+	AppTransferIDA(ctx sdk.Context, appname, signer linotypes.AccountKey, amount linotypes.MiniIDA, from, to linotypes.AccountKey) sdk.Error
+	MoveIDA(ctx sdk.Context, app linotypes.AccountKey, from, to linotypes.AccountKey, amount linotypes.MiniDollar) sdk.Error
+	BurnIDA(ctx sdk.Context, app, user linotypes.AccountKey, amount linotypes.MiniDollar) (linotypes.Coin, sdk.Error)
+	UpdateIDAAuth(ctx sdk.Context, app, username linotypes.AccountKey, active bool) sdk.Error
+	GetIDABank(ctx sdk.Context, app, user linotypes.AccountKey) (model.IDABank, sdk.Error)
+	GetIDA(ctx sdk.Context, app linotypes.AccountKey) (model.AppIDA, sdk.Error)
+
+	// consumption stats
+	ReportConsumption(
+		ctx sdk.Context, username linotypes.AccountKey, consumption linotypes.MiniDollar) sdk.Error
+	DistributeDevInflation(ctx sdk.Context) sdk.Error
+
+	// permissions, will be removed in upgrade3.
+	RevokePermission(ctx sdk.Context, user, app linotypes.AccountKey, perm linotypes.Permission) sdk.Error
+	GrantPermission(ctx sdk.Context, app, user linotypes.AccountKey, duration int64, level linotypes.Permission, amount linotypes.LNO) sdk.Error
+
+	// Genesis
+	InitGenesis(ctx sdk.Context, reservePoolAmount linotypes.Coin) sdk.Error
+
+	// importer exporter
+	ImportFromFile(ctx sdk.Context, filepath string) error
 }
 
-var _ DeveloperKeeper = DeveloperManager{}
+// var _ DeveloperKeeper = DeveloperManager{}

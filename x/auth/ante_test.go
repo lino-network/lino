@@ -19,13 +19,17 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
-
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidthmock "github.com/lino-network/lino/x/bandwidth/mocks"
+	// bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
+	// dev "github.com/lino-network/lino/x/developer"
+	devmn "github.com/lino-network/lino/x/developer/manager"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
+	pricemn "github.com/lino-network/lino/x/price/manager"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 type TestMsg struct {
@@ -121,9 +125,13 @@ func (suite *AnteTestSuite) SetupTest() {
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
+	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+	price := pricemn.TestnetPriceManager{}
+	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
+	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
 
 	bm := &bandwidthmock.BandwidthKeeper{}
-	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
+
 	initGlobalManager(ctx, gm)
 	anteHandler := NewAnteHandler(am, bm)
 

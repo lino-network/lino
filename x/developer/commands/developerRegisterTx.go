@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	developer "github.com/lino-network/lino/x/developer"
+	"github.com/lino-network/lino/client"
+	// "github.com/lino-network/lino/types"
+	developer "github.com/lino-network/lino/x/developer/types"
 )
 
 // DeveloperRegisterTxCmd - register to be developer
@@ -21,7 +21,6 @@ func DeveloperRegisterTxCmd(cdc *wire.Codec) *cobra.Command {
 		RunE:  sendDeveloperRegisterTx(cdc),
 	}
 	cmd.Flags().String(client.FlagDeveloper, "", "developer name of this transaction")
-	cmd.Flags().String(client.FlagDeposit, "", "deposit of the registration")
 	cmd.Flags().String(client.FlagWebsite, "", "website of the app")
 	cmd.Flags().String(client.FlagDescription, "", "description of the app")
 	cmd.Flags().String(client.FlagAppMeta, "", "meta-data of the app")
@@ -34,7 +33,7 @@ func sendDeveloperRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		username := viper.GetString(client.FlagDeveloper)
 		msg := developer.NewDeveloperRegisterMsg(
-			username, types.LNO(viper.GetString(client.FlagDeposit)),
+			username,
 			viper.GetString(client.FlagWebsite), viper.GetString(client.FlagDescription),
 			viper.GetString(client.FlagAppMeta))
 

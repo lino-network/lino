@@ -23,6 +23,7 @@ const (
 	CodeInvalidInt64Number  sdk.CodeType = 110
 	CodeInvalidQueryPath    sdk.CodeType = 111
 	CodeInvalidIDAAmount    sdk.CodeType = 112
+	CodeUnimplemented       sdk.CodeType = 113
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150
@@ -138,7 +139,7 @@ const (
 	CodeReportOrUpvoteAlreadyExist           sdk.CodeType = 425
 	CodeNoPostID                             sdk.CodeType = 426
 	CodePostIDTooLong                        sdk.CodeType = 427
-	CodeNoAuthor                             sdk.CodeType = 428
+	CodeInvalidAuthor                        sdk.CodeType = 428
 	CodeNoUsername                           sdk.CodeType = 429
 	CodeCommentAndRepostConflict             sdk.CodeType = 430
 	CodePostTitleExceedMaxLength             sdk.CodeType = 431
@@ -152,13 +153,15 @@ const (
 	CodeGetSourcePost                        sdk.CodeType = 439
 	CodePostTooOften                         sdk.CodeType = 440
 	CodePostQueryFailed                      sdk.CodeType = 441
-	CodeNoCreatedBy                          sdk.CodeType = 442
-	CodeInvalidSigner                        sdk.CodeType = 443
-	CodeNoApp                                sdk.CodeType = 444
-	CodeNoDeletedBy                          sdk.CodeType = 445
-	CodeDonationAmountInvalid                sdk.CodeType = 446
-	CodeNonPositiveIDAAmount                 sdk.CodeType = 447
-	CodePostDeleted                          sdk.CodeType = 448
+	CodeInvalidCreatedBy                     sdk.CodeType = 442
+	// Moved to developer's code space.
+	// CodeInvalidSigner                        sdk.CodeType = 443
+	CodeInvalidApp            sdk.CodeType = 444
+	CodeNoDeletedBy           sdk.CodeType = 445
+	CodeDonationAmountInvalid sdk.CodeType = 446
+	CodeNonPositiveIDAAmount  sdk.CodeType = 447
+	CodePostDeleted           sdk.CodeType = 448
+	CodeDonateAmountTooLittle sdk.CodeType = 449
 
 	// Lino validator errors reserve 500 ~ 599
 	CodeValidatorNotFound              sdk.CodeType = 500
@@ -244,6 +247,24 @@ const (
 	CodeInvalidAppMetadata             sdk.CodeType = 912
 	CodeInvalidGrantPermission         sdk.CodeType = 913
 	CodeDeveloperQueryFailed           sdk.CodeType = 914
+	CodeInvalidReserveAmount           sdk.CodeType = 915
+	CodeInvalidVoterDuty               sdk.CodeType = 916
+	CodeInvalidUserRole                sdk.CodeType = 917
+	CodeInvalidIDAName                 sdk.CodeType = 918
+	CodeInvalidIDAPrice                sdk.CodeType = 919
+	CodeIDATransferSelf                sdk.CodeType = 920
+	CodeIDAIssuedBefore                sdk.CodeType = 921
+	CodeIDARevoked                     sdk.CodeType = 922
+	CodeIDAUnauthed                    sdk.CodeType = 923
+	CodeExchangeMiniDollarZeroAmount   sdk.CodeType = 924
+	CodeNotEnoughIDA                   sdk.CodeType = 925
+	CodeBurnZeroIDA                    sdk.CodeType = 926
+	CodeInvalidTransferTarget          sdk.CodeType = 927
+	CodeInvalidAffiliatedAccount       sdk.CodeType = 928
+	CodeMaxAffiliatedExceeded          sdk.CodeType = 929
+	CodeInvalidIDAAuth                 sdk.CodeType = 930
+	CodeIDANotFound                    sdk.CodeType = 931
+	CodeInvalidSigner                  sdk.CodeType = 932
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000

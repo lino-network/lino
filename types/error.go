@@ -25,6 +25,11 @@ func ErrInvalidQueryPath() sdk.Error {
 }
 
 // ErrInvalidIDAAmount - error if the IDA amount is invalid.
-func ErrInvalidIDAAmount(msg string) sdk.Error {
-	return NewError(CodeInvalidIDAAmount, msg)
+func ErrInvalidIDAAmount() sdk.Error {
+	return NewError(CodeInvalidIDAAmount, "Invlid IDA amount")
+}
+
+// ErrUnimplemented - error if the feature is not implemented yet.
+func ErrUnimplemented(msg string) sdk.Error {
+	return NewError(CodeUnimplementedError, msg)
 }

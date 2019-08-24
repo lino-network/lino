@@ -23,18 +23,6 @@ type CreatePostMsg struct {
 
 var _ types.Msg = CreatePostMsg{}
 
-// NewCreatePostMsg - constructs a post msg
-func NewCreatePostMsg(author, postID, title, content, createdBy string, preauth bool) CreatePostMsg {
-	return CreatePostMsg{
-		Author:    types.AccountKey(author),
-		PostID:    postID,
-		Title:     title,
-		Content:   content,
-		CreatedBy: types.AccountKey(createdBy),
-		Preauth:   preauth,
-	}
-}
-
 // Route - implements sdk.Msg
 func (msg CreatePostMsg) Route() string { return RouterKey }
 
@@ -76,8 +64,8 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return err
 	}
-	if len(msg.CreatedBy) == 0 {
-		return ErrNoCreatedBy()
+	if !types.RuleUsernameLength(msg.CreatedBy) {
+		return ErrInvalidCreatedBy()
 	}
 	return nil
 }
@@ -98,16 +86,6 @@ type UpdatePostMsg struct {
 }
 
 var _ types.Msg = UpdatePostMsg{}
-
-// NewUpdatePostMsg - constructs a UpdatePost msg
-func NewUpdatePostMsg(author, postID, title, content string) UpdatePostMsg {
-	return UpdatePostMsg{
-		Author:  types.AccountKey(author),
-		PostID:  postID,
-		Title:   title,
-		Content: content,
-	}
-}
 
 // Route - implements sdk.Msg
 func (msg UpdatePostMsg) Route() string { return RouterKey }
@@ -157,14 +135,6 @@ type DeletePostMsg struct {
 
 var _ types.Msg = DeletePostMsg{}
 
-// NewDeletePostMsg - constructs a DeletePostMsg
-func NewDeletePostMsg(author, postID string) DeletePostMsg {
-	return DeletePostMsg{
-		Author: types.AccountKey(author),
-		PostID: postID,
-	}
-}
-
 // Route - implements sdk.Msg
 func (msg DeletePostMsg) Route() string { return RouterKey }
 
@@ -176,8 +146,8 @@ func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.PostID) == 0 {
 		return ErrNoPostID()
 	}
-	if len(msg.Author) == 0 {
-		return ErrNoAuthor()
+	if !types.RuleUsernameLength(msg.Author) {
+		return ErrInvalidAuthor()
 	}
 	return nil
 }
@@ -241,11 +211,17 @@ func (msg DonateMsg) Type() string { return "DonateMsg" }
 // ValidateBasic - implements sdk.Msg
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink  exists
-	if len(msg.Username) == 0 {
-		return ErrNoUsername()
+	if !types.RuleUsernameLength(msg.Username) {
+		return ErrInvalidUsername()
 	}
-	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
+	if !types.RuleUsernameLength(msg.Author) || len(msg.PostID) == 0 {
 		return ErrInvalidTarget()
+	}
+	if msg.FromApp != "" && !types.RuleUsernameLength(msg.FromApp) {
+		return ErrInvalidApp()
+	}
+	if msg.Username == msg.Author {
+		return ErrCannotDonateToSelf(msg.Username)
 	}
 	_, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -292,21 +268,10 @@ type IDADonateMsg struct {
 	Author   types.AccountKey `json:"author"`
 	PostID   string           `json:"post_id"`
 	Memo     string           `json:"memo"`
+	Signer   types.AccountKey `json:"singer"`
 }
 
 var _ types.Msg = DonateMsg{}
-
-// NewIDADonateMsg - constructs a donate msg use In-app digital assets.
-func NewIDADonateMsg(user, app string, amount types.IDAStr, author string, postID string, memo string) IDADonateMsg {
-	return IDADonateMsg{
-		Username: types.AccountKey(user),
-		App:      types.AccountKey(app),
-		Amount:   amount,
-		Author:   types.AccountKey(author),
-		PostID:   postID,
-		Memo:     memo,
-	}
-}
 
 // Route - implements sdk.Msg
 func (msg IDADonateMsg) Route() string { return RouterKey }
@@ -316,18 +281,21 @@ func (msg IDADonateMsg) Type() string { return "IDADonateMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDADonateMsg) ValidateBasic() sdk.Error {
-	// Ensure permlink  exists
-	if len(msg.Username) == 0 {
-		return ErrNoUsername()
+	if !types.RuleUsernameLength(msg.Username) ||
+		!types.RuleUsernameLength(msg.Signer) {
+		return ErrInvalidUsername()
 	}
-	if len(msg.App) == 0 {
-		return ErrNoApp()
+	if !types.RuleUsernameLength(msg.App) {
+		return ErrInvalidApp()
 	}
-	if len(msg.Author) == 0 || len(msg.PostID) == 0 {
+	if !types.RuleUsernameLength(msg.Author) || len(msg.PostID) == 0 {
 		return ErrInvalidTarget()
 	}
+	if msg.Username == msg.Author {
+		return ErrCannotDonateToSelf(msg.Author)
+	}
 
-	_, err := msg.Amount.ToIDA()
+	_, err := msg.Amount.ToMiniIDA()
 	if err != nil {
 		return err
 	}
@@ -350,7 +318,7 @@ func (msg IDADonateMsg) GetSignBytes() []byte {
 
 // GetSigners - implements sdk.Msg
 func (msg IDADonateMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.App)}
+	return []sdk.AccAddress{sdk.AccAddress(msg.Signer)}
 }
 
 func (msg IDADonateMsg) String() string {
@@ -377,8 +345,8 @@ func checkPostBasic(postID string, author types.AccountKey, title, content strin
 	if len(postID) > types.MaximumLengthOfPostID {
 		return ErrPostIDTooLong()
 	}
-	if len(author) == 0 {
-		return ErrNoAuthor()
+	if !types.RuleUsernameLength(author) {
+		return ErrInvalidAuthor()
 	}
 	if utf8.RuneCountInString(title) > types.MaxPostTitleLength {
 		return ErrPostTitleExceedMaxLength()

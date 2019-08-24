@@ -448,7 +448,7 @@
   version = "v0.1.1"
 
 [[projects]]
-  digest = "1:288e2ba4192b77ec619875ab54d82e2179ca8978e8baa690dcb4343a4a1f4da7"
+  digest = "1:d88ba57c4e8f5db6ce9ab6605a89f4542ee751b576884ba5271c2ba3d4b6f2d2"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",

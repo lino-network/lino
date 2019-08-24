@@ -1,0 +1,105 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "2"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-max-affiliated",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-max-affliated",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "500"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testuser-developer",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testuser-developer",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "testapp/testuser",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "testapp/testuser-deactivate",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "testuser",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "testapp"
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "testuser-affiliated",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "testapp-a"
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "testuser-deactivate",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "testapp"
+      }
+    }
+  }
+]

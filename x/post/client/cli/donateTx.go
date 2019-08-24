@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/client"
 	post "github.com/lino-network/lino/x/post/types"
+	// "github.com/lino-network/lino/types"
 )
 
 // DonateTxCmd will create a donate tx and sign it with the given key
@@ -36,7 +36,7 @@ func sendDonateTx(cdc *wire.Codec) client.CommandTxCallback {
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
 		msg := post.NewDonateMsg(
-			username, types.LNO(viper.GetString(client.FlagAmount)),
+			username, viper.GetString(client.FlagAmount),
 			author, postID, "", viper.GetString(client.FlagMemo))
 
 		// build and sign the transaction, then broadcast to Tendermint

@@ -177,10 +177,6 @@ func main() {
 		)...)
 	linocliCmd.AddCommand(
 		client.PostCommands(
-			developercmd.PreAuthorizationPermissionTxCmd(cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.PostCommands(
 			developercmd.DeveloperUpdateTxCmd(cdc),
 		)...)
 
@@ -213,16 +209,6 @@ func main() {
 		client.GetCommands(
 			infracmd.GetInfraProvidersCmd(types.InfraKVStoreKey, cdc),
 		)...)
-
-	linocliCmd.AddCommand(
-		client.GetCommands(
-			developercmd.GetDeveloperCmd(types.DeveloperKVStoreKey, cdc),
-		)...)
-	linocliCmd.AddCommand(
-		client.GetCommands(
-			developercmd.GetDevelopersCmd(types.DeveloperKVStoreKey, cdc),
-		)...)
-
 	linocliCmd.AddCommand(
 		client.GetCommands(
 			validatorcmd.GetValidatorsCmd(types.ValidatorKVStoreKey, cdc),

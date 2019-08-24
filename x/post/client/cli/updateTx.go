@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/client"
+	linotypes "github.com/lino-network/lino/types"
 	post "github.com/lino-network/lino/x/post/types"
 )
 
@@ -31,9 +32,12 @@ func sendUpdatePostTx(cdc *wire.Codec) client.CommandTxCallback {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := client.NewCoreContextFromViper()
 
-		msg := post.NewUpdatePostMsg(
-			viper.GetString(FlagAuthor), viper.GetString(FlagPostID),
-			viper.GetString(FlagTitle), viper.GetString(FlagContent))
+		msg := post.UpdatePostMsg{
+			Author:  linotypes.AccountKey(viper.GetString(FlagAuthor)),
+			PostID:  viper.GetString(FlagPostID),
+			Title:   viper.GetString(FlagTitle),
+			Content: viper.GetString(FlagContent),
+		}
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

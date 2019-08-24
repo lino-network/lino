@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	developer "github.com/lino-network/lino/x/developer"
+	developer "github.com/lino-network/lino/x/developer/types"
 )
 
 // DeveloperRevokeTxCmd - revoke developer

@@ -16,7 +16,7 @@ linters:
     - lll
     - maligned
     - nakedret
-    - errcheck
     - scopelint
     - prealloc
     - varcheck
+    - goconst

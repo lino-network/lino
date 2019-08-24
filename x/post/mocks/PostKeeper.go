@@ -96,13 +96,13 @@ func (_m *PostKeeper) GetPost(ctx types.Context, permlink linotypes.Permlink) (m
 	return r0, r1
 }
 
-// IDADonate provides a mock function with given fields: ctx, from, n, author, postID, app
-func (_m *PostKeeper) IDADonate(ctx types.Context, from linotypes.AccountKey, n types.Int, author linotypes.AccountKey, postID string, app linotypes.AccountKey) types.Error {
-	ret := _m.Called(ctx, from, n, author, postID, app)
+// IDADonate provides a mock function with given fields: ctx, from, n, author, postID, app, signer
+func (_m *PostKeeper) IDADonate(ctx types.Context, from linotypes.AccountKey, n types.Int, author linotypes.AccountKey, postID string, app linotypes.AccountKey, signer linotypes.AccountKey) types.Error {
+	ret := _m.Called(ctx, from, n, author, postID, app, signer)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, types.Int, linotypes.AccountKey, string, linotypes.AccountKey) types.Error); ok {
-		r0 = rf(ctx, from, n, author, postID, app)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, types.Int, linotypes.AccountKey, string, linotypes.AccountKey, linotypes.AccountKey) types.Error); ok {
+		r0 = rf(ctx, from, n, author, postID, app, signer)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
