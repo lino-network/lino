@@ -11,7 +11,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/post/types"
 )
 
 type postStoreTestSuite struct {
@@ -34,7 +33,7 @@ func (suite *postStoreTestSuite) SetupTest() {
 	suite.ps = NewPostStorage(TestKVStoreKey)
 }
 
-func (suite *postStoreTestSuite) TestPostGetSetHasDel() {
+func (suite *postStoreTestSuite) TestPostGetSetHas() {
 	postInfo := &Post{
 		PostID:    "Test Post",
 		Title:     "Test Post",
@@ -43,6 +42,7 @@ func (suite *postStoreTestSuite) TestPostGetSetHasDel() {
 		CreatedBy: linotypes.AccountKey("app"),
 		CreatedAt: 1,
 		UpdatedAt: 2,
+		IsDeleted: true,
 	}
 	permlink := linotypes.GetPermlink(postInfo.Author, postInfo.PostID)
 
@@ -53,16 +53,4 @@ func (suite *postStoreTestSuite) TestPostGetSetHasDel() {
 	rst, err := suite.ps.GetPost(suite.ctx, permlink)
 	suite.Nil(err)
 	suite.Equal(postInfo, rst)
-
-	suite.ps.DeletePost(suite.ctx, permlink)
-	suite.False(suite.ps.HasPost(suite.ctx, permlink))
-
-	rst, err = suite.ps.GetPost(suite.ctx, permlink)
-	suite.Equal(types.ErrPostNotFound(permlink), err)
-	suite.Nil(rst)
-}
-
-func (suite *postStoreTestSuite) TestDeleteNotExistNop() {
-	permlink := linotypes.GetPermlink("yxia", "123")
-	suite.ps.DeletePost(suite.ctx, permlink)
 }

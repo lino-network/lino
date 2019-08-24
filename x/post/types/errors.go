@@ -23,6 +23,11 @@ func ErrPostAlreadyExist(permlink linotypes.Permlink) sdk.Error {
 	return linotypes.NewError(linotypes.CodePostAlreadyExist, fmt.Sprintf("post %v already exist", permlink))
 }
 
+// ErrPostDeleted - error when post has been deleted.
+func ErrPostDeleted(permlink linotypes.Permlink) sdk.Error {
+	return linotypes.NewError(linotypes.CodePermlinkDeleted, fmt.Sprintf("permlink %v was deleted", permlink))
+}
+
 // ErrDeveloperNotFound - error when develoepr is not found
 func ErrDeveloperNotFound(fromApp linotypes.AccountKey) sdk.Error {
 	return linotypes.NewError(linotypes.CodeDeveloperNotFound, fmt.Sprintf("developer %s is not found", fromApp))

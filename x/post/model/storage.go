@@ -65,13 +65,14 @@ func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 	store.Set(GetPostInfoKey(linotypes.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
 }
 
-// SetPostInfo - set post info to KVStore
-func (ps PostStorage) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) {
-	store := ctx.KVStore(ps.key)
-	store.Delete(GetPostInfoKey(permlink))
-}
+// Post cannot be deleted in the store. you can mark it as deleted.
+// // SetPostInfo - set post info to KVStore
+// func (ps PostStorage) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) {
+// 	store := ctx.KVStore(ps.key)
+// 	store.Delete(GetPostInfoKey(permlink))
+// }
 
-// Export post storage state.
+// // Export post storage state.
 func (ps PostStorage) Export(ctx sdk.Context) *PostTablesIR {
 	panic("post export unimplemented")
 	// tables := &PostTables{}
@@ -110,6 +111,7 @@ func (ps PostStorage) Import(ctx sdk.Context, tb *PostTablesIR) error {
 			CreatedBy: v.Info.Author,
 			CreatedAt: v.Meta.CreatedAt,
 			UpdatedAt: v.Meta.LastUpdatedAt,
+			IsDeleted: v.Meta.IsDeleted,
 		})
 	}
 	return nil

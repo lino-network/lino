@@ -154,6 +154,7 @@ const (
 	CodeNoDeletedBy                          sdk.CodeType = 445
 	CodeDonationAmountInvalid                sdk.CodeType = 446
 	CodeNonPositiveIDAAmount                 sdk.CodeType = 447
+	CodePermlinkDeleted                      sdk.CodeType = 448
 
 	// Lino validator errors reserve 500 ~ 599
 	CodeValidatorNotFound              sdk.CodeType = 500
