@@ -45,8 +45,8 @@ func NewQuerier(am AccountManager) sdk.Querier {
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
 		case QueryAccountReward:
 			return queryAccountReward(ctx, cdc, path[1:], req, am)
-		case QueryAccountPendingCoinDay:
-			return queryAccountPendingCoinDay(ctx, cdc, path[1:], req, am)
+		// case QueryAccountPendingCoinDay:
+		// 	return queryAccountPendingCoinDay(ctx, cdc, path[1:], req, am)
 		case QueryAccountGrantPubKeys:
 			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
 		case QueryAccountAllGrantPubKeys:
@@ -78,11 +78,15 @@ func queryAccountBank(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.
 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	accountBank, err := am.storage.GetBankFromAccountKey(ctx, types.AccountKey(path[0]))
+	info, err := am.storage.GetInfo(ctx, types.AccountKey(path[0]))
 	if err != nil {
 		return nil, err
 	}
-	res, marshalErr := cdc.MarshalJSON(accountBank)
+	bank, err := am.storage.GetBank(ctx, info.Address)
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(bank)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
@@ -109,14 +113,18 @@ func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, r
 		return nil, err
 	}
 
-	accountMeta, err := am.storage.GetMeta(ctx, types.AccountKey(path[0]))
+	info, err := am.storage.GetInfo(ctx, types.AccountKey(path[0]))
+	if err != nil {
+		return nil, err
+	}
+	bank, err := am.storage.GetBank(ctx, info.Address)
 	if err != nil {
 		return nil, err
 	}
 
 	txAndSeq := model.TxAndSequenceNumber{
 		Username: path[0],
-		Sequence: accountMeta.Sequence,
+		Sequence: bank.Sequence,
 	}
 
 	txHash, decodeFail := hex.DecodeString(path[1])
@@ -157,20 +165,20 @@ func queryAccountReward(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 	return res, nil
 }
 
-func queryAccountPendingCoinDay(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
-	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	pendingCoinDay, err := am.storage.GetPendingCoinDayQueue(ctx, types.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(pendingCoinDay)
-	if marshalErr != nil {
-		return nil, ErrQueryFailed()
-	}
-	return res, nil
-}
+// func queryAccountPendingCoinDay(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
+// 	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
+// 		return nil, err
+// 	}
+// 	pendingCoinDay, err := am.storage.GetPendingCoinDayQueue(ctx, types.AccountKey(path[0]))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	res, marshalErr := cdc.MarshalJSON(pendingCoinDay)
+// 	if marshalErr != nil {
+// 		return nil, ErrQueryFailed()
+// 	}
+// 	return res, nil
+// }
 
 func queryAccountGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountManager) ([]byte, sdk.Error) {
 	if err := types.CheckPathContentAndMinLength(path, 2); err != nil {

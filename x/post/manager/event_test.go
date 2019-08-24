@@ -80,9 +80,7 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 			suite.global.On("GetRewardAndPopFromWindow", mock.Anything, tc.event.Evaluate).Return(
 				tc.reward, nil,
 			).Once()
-			suite.am.On("AddSavingCoin", mock.Anything,
-				tc.event.PostAuthor, tc.reward, tc.event.PostAuthor, "", linotypes.ClaimReward,
-			).Return(nil).Once()
+			suite.am.On("AddCoinToUsername", mock.Anything, tc.event.PostAuthor, tc.reward).Return(nil).Once()
 			if tc.hasDev {
 				suite.dev.On(
 					"ReportConsumption", mock.Anything, tc.event.FromApp, tc.reward).Return(nil).Once()

@@ -49,7 +49,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 		return zero
 	}
 
-	saving, err := am.GetSavingFromBank(ctx, donation.Username)
+	saving, err := am.GetSavingFromUsername(ctx, donation.Username)
 	if err != nil {
 		return types.NewCoinFromInt64(0)
 	}
@@ -119,25 +119,29 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-				donationAmount := GetMsgDonationAmount(msg)
-				if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update4Height {
-					donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
-				}
+				// donationAmount := GetMsgDonationAmount(msg)
+				// if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update4Height {
+				// 	donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
+				// }
 				// enable no-cost-donation starting BlockchainUpgrade1Update1Height
-				if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
-					!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
-					// get current tps
-					tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-					if err != nil {
-						return ctx, err.Result(), true
-					}
-					// check user tps capacity
-					if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
-						return ctx, err.Result(), true
-					}
-				}
+				// if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
+				// 	!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
+				// 	// get current tps
+				// 	tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+				// 	if err != nil {
+				// 		return ctx, err.Result(), true
+				// 	}
+				// 	// check user tps capacity
+				// 	// if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
+				// 	// 	return ctx, err.Result(), true
+				// 	// }
+				// }
 				// construct sign bytes and verify sequence number.
-				seq, err := am.GetSequence(ctx, types.AccountKey(msgSigner))
+				addr, err := am.GetAddress(ctx, types.AccountKey(msgSigner))
+				if err != nil {
+					return ctx, err.Result(), true
+				}
+				seq, err := am.GetSequence(ctx, addr)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
@@ -149,7 +153,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
 							ctx.ChainID(), seq)).Result(), true
 				}
 				// succ
-				if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(msgSigner)); err != nil {
+				if err := am.IncreaseSequenceByOne(ctx, addr); err != nil {
 					// XXX(yumin): cosmos anth panic here, should we?
 					return ctx, err.Result(), true
 				}

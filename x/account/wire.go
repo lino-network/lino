@@ -2,6 +2,7 @@ package account
 
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // RegisterWire - register concrete types on wire codec
@@ -16,5 +17,6 @@ var msgCdc = wire.New()
 
 func init() {
 	RegisterWire(msgCdc)
+	sdk.RegisterCodec(msgCdc)
 	wire.RegisterCrypto(msgCdc)
 }

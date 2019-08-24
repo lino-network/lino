@@ -36,9 +36,9 @@ func handleStakeInMsg(
 	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
 	am acc.AccountManager, msg StakeInMsg) sdk.Result {
 	// Must have an normal acount
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
+	// if !am.DoesAccountExist(ctx, msg.Username) {
+	// 	return ErrAccountNotFound().Result()
+	// }
 
 	coin, err := types.LinoToCoin(msg.Deposit)
 	if err != nil {
@@ -55,7 +55,7 @@ func handleStakeInMsg(
 	}
 
 	// withdraw money from voter's bank
-	if err := am.MinusSavingCoin(ctx, msg.Username, coin, "", "", types.VoterDeposit); err != nil {
+	if err := am.MinusCoinFromUsername(ctx, msg.Username, coin); err != nil {
 		return err.Result()
 	}
 
@@ -97,11 +97,6 @@ func handleStakeOutMsg(
 
 func handleDelegateMsg(
 	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager, am acc.AccountManager, msg DelegateMsg) sdk.Result {
-	// Must have an normal acount
-	if !am.DoesAccountExist(ctx, msg.Voter) {
-		return ErrAccountNotFound().Result()
-	}
-
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -117,8 +112,7 @@ func handleDelegateMsg(
 	}
 
 	// withdraw money from delegator's bank
-	if err := am.MinusSavingCoin(
-		ctx, msg.Delegator, coin, msg.Voter, "", types.Delegate); err != nil {
+	if err := am.MinusCoinFromUsername(ctx, msg.Delegator, coin); err != nil {
 		return err.Result()
 	}
 
@@ -172,8 +166,7 @@ func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm *global.GlobalMa
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.AddSavingCoin(
-		ctx, msg.Username, interest, "", "", types.ClaimInterest); err != nil {
+	if err := am.AddCoinToUsername(ctx, msg.Username, interest); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

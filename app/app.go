@@ -352,8 +352,10 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		panic(errors.New("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
-		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
-		ga.ResetKey, ga.TransactionKey, ga.AppKey, ga.Coin); err != nil {
+		ctx, types.AccountKey(ga.Name), ga.TransactionKey, ga.ResetKey); err != nil {
+		panic(err)
+	}
+	if err := lb.accountManager.AddCoinToUsername(ctx, types.AccountKey(ga.Name), ga.Coin); err != nil {
 		panic(err)
 	}
 
@@ -364,10 +366,9 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 
 	if ga.IsValidator {
 		// withdraw money from validator's bank
-		if err := lb.accountManager.MinusSavingCoin(
+		if err := lb.accountManager.MinusCoinFromUsername(
 			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
-			"", "", types.ValidatorDeposit); err != nil {
+			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
 			panic(err)
 		}
 		if err := vote.AddStake(
@@ -398,9 +399,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return ErrGenesisFailed("genesis developer account doesn't exist")
 	}
 
-	if err := lb.accountManager.MinusSavingCoin(
-		ctx, types.AccountKey(developer.Name), developer.Deposit,
-		"", "", types.DeveloperDeposit); err != nil {
+	if err := lb.accountManager.MinusCoinFromUsername(
+		ctx, types.AccountKey(developer.Name), developer.Deposit); err != nil {
 		return err
 	}
 
@@ -590,8 +590,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		// though only differs in round?
 		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
 		coinPerValidator := types.DecToCoin(ratPerValidator)
-		lb.accountManager.AddSavingCoin(
-			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
+		lb.accountManager.AddCoinToUsername(ctx, validator, coinPerValidator)
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -611,8 +610,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, provider := range lst.AllInfraProviders {
 		if idx == (len(lst.AllInfraProviders) - 1) {
-			lb.accountManager.AddSavingCoin(
-				ctx, provider, inflation.Minus(totalDistributedInflation), "", "", types.InfraInflation)
+			lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
 			break
 		}
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
@@ -622,8 +620,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		lb.accountManager.AddSavingCoin(
-			ctx, provider, myShareCoin, "", "", types.InfraInflation)
+		lb.accountManager.AddCoinToUsername(ctx, provider, myShareCoin)
 	}
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
@@ -646,8 +643,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, developer := range lst.AllDevelopers {
 		if idx == (len(lst.AllDevelopers) - 1) {
-			lb.accountManager.AddSavingCoin(
-				ctx, developer, inflation.Minus(totalDistributedInflation), "", "", types.DeveloperInflation)
+			lb.accountManager.AddCoinToUsername(ctx, developer, inflation.Minus(totalDistributedInflation))
 			break
 		}
 		percentage, err := lb.developerManager.GetConsumptionWeight(ctx, developer)
@@ -657,8 +653,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		lb.accountManager.AddSavingCoin(
-			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
+		lb.accountManager.AddCoinToUsername(ctx, developer, myShareCoin)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {

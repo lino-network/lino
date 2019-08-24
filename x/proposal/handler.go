@@ -59,9 +59,7 @@ func handleChangeParamMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, "",
-		string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ChangeParamMinDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -98,9 +96,7 @@ func handleProtocolUpgradeMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit,
-		"", string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -140,9 +136,7 @@ func handleContentCensorshipMsg(
 	//  set a time event to decide the proposal
 	event := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit,
-		"", string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit); err != nil {
 		return err.Result()
 	}
 

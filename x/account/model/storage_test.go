@@ -35,9 +35,9 @@ func TestAccountInfo(t *testing.T) {
 	accInfo := AccountInfo{
 		Username:       types.AccountKey("test"),
 		CreatedAt:      0,
-		ResetKey:       secp256k1.GenPrivKey().PubKey(),
+		SignningKey:    secp256k1.GenPrivKey().PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
-		AppKey:         secp256k1.GenPrivKey().PubKey(),
+		Address:        sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 	assert.Nil(t, err)
@@ -60,39 +60,34 @@ func TestAccountBank(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
+	pubKey := secp256k1.GenPrivKey().PubKey()
+	addr := sdk.AccAddress(pubKey.Address())
 	accBank := AccountBank{
-		Saving:  types.NewCoinFromInt64(int64(123)),
-		CoinDay: types.NewCoinFromInt64(0),
+		Saving: types.NewCoinFromInt64(int64(123)),
 	}
-	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
+	err := as.SetBank(ctx, addr, &accBank)
 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetBankFromAccountKey(ctx, types.AccountKey("test"))
+	resultPtr, err := as.GetBank(ctx, addr)
 	assert.Nil(t, err)
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
-}
 
-func TestAccountBankZeroValue(t *testing.T) {
-	as := NewAccountStorage(TestKVStoreKey)
-	ctx := getContext()
+	accBank.PubKey = pubKey
 
-	accBank := AccountBank{
-		Saving:  types.NewCoinFromInt64(0),
-		CoinDay: types.NewCoinFromInt64(0),
-	}
-	err := as.SetBankFromAccountKey(ctx, types.AccountKey("test"), &accBank)
+	err = as.SetBank(ctx, addr, &accBank)
 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetBankFromAccountKey(ctx, types.AccountKey("test"))
+	resultPtr, err = as.GetBank(ctx, addr)
 	assert.Nil(t, err)
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
+
 }
 
 func TestAccountMeta(t *testing.T) {
 	as := NewAccountStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	accMeta := AccountMeta{TransactionCapacity: types.NewCoinFromInt64(0)}
+	accMeta := AccountMeta{JSONMeta: "{'test':1}"}
 	err := as.SetMeta(ctx, types.AccountKey("test"), &accMeta)
 	assert.Nil(t, err)
 
@@ -143,31 +138,31 @@ func TestAccountGrantPubkey(t *testing.T) {
 	assert.Nil(t, resultList)
 }
 
-func TestPendingCoinDayQueueZeroValue(t *testing.T) {
-	as := NewAccountStorage(TestKVStoreKey)
-	ctx := getContext()
+// func TestPendingCoinDayQueueZeroValue(t *testing.T) {
+// 	as := NewAccountStorage(TestKVStoreKey)
+// 	ctx := getContext()
 
-	pendingCoinDayQueue := &PendingCoinDayQueue{TotalCoinDay: sdk.ZeroDec(), TotalCoin: types.NewCoinFromInt64(0)}
-	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
-	assert.Nil(t, err)
+// 	pendingCoinDayQueue := &PendingCoinDayQueue{TotalCoinDay: sdk.ZeroDec(), TotalCoin: types.NewCoinFromInt64(0)}
+// 	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+// 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
-}
+// 	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
+// }
 
-func TestPendingCoinDayQueue(t *testing.T) {
-	as := NewAccountStorage(TestKVStoreKey)
-	ctx := getContext()
+// func TestPendingCoinDayQueue(t *testing.T) {
+// 	as := NewAccountStorage(TestKVStoreKey)
+// 	ctx := getContext()
 
-	pendingCoinDayQueue := &PendingCoinDayQueue{
-		TotalCoinDay:    sdk.OneDec(),
-		TotalCoin:       types.NewCoinFromInt64(1000),
-		PendingCoinDays: []PendingCoinDay{PendingCoinDay{Coin: types.NewCoinFromInt64(0)}}}
-	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
-	assert.Nil(t, err)
+// 	pendingCoinDayQueue := &PendingCoinDayQueue{
+// 		TotalCoinDay:    sdk.OneDec(),
+// 		TotalCoin:       types.NewCoinFromInt64(1000),
+// 		PendingCoinDays: []PendingCoinDay{PendingCoinDay{Coin: types.NewCoinFromInt64(0)}}}
+// 	err := as.SetPendingCoinDayQueue(ctx, types.AccountKey("test"), pendingCoinDayQueue)
+// 	assert.Nil(t, err)
 
-	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
-}
+// 	resultPtr, err := as.GetPendingCoinDayQueue(ctx, types.AccountKey("test"))
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, *pendingCoinDayQueue, *resultPtr, "Account pending coin day queue should be equal")
+// }

@@ -101,7 +101,7 @@ func TestChangeParamProposal(t *testing.T) {
 			continue
 		}
 
-		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.msg.GetCreator())
+		creatorBalance, _ := am.GetSavingFromUsername(ctx, tc.msg.GetCreator())
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
 			t.Errorf("%s: diff bank balance: got %v, want %v", tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
@@ -220,7 +220,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			continue
 		}
 
-		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.creator)
+		creatorBalance, _ := am.GetSavingFromUsername(ctx, tc.creator)
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
 			t.Errorf("%s: diff bank balance: got %v, want %v",
 				tc.testName, creatorBalance, tc.wantCreatorBalance)
@@ -295,7 +295,12 @@ func TestAddFrozenMoney(t *testing.T) {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
 
-		lst, err := am.GetFrozenMoneyList(ctx, user)
+		addr, err := am.GetAddress(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get address, got err %v", tc.testName, err)
+		}
+
+		lst, err := am.GetFrozenMoneyList(ctx, addr)
 		if err != nil {
 			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
 		}

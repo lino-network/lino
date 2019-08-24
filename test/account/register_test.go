@@ -17,16 +17,15 @@ import (
 
 // test normal transfer and register
 func TestTransferAndRegisterAccount(t *testing.T) {
-	newResetPriv := secp256k1.GenPrivKey()
 	newTransactionPriv := secp256k1.GenPrivKey()
-	newAppPriv := secp256k1.GenPrivKey()
+	newSigningPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
 	baseTime := time.Now().Unix()
 
 	registerMsg := acc.NewRegisterMsg(test.GenesisUser, newAccountName, types.LNO("100"),
-		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newAppPriv.PubKey())
+		newTransactionPriv.PubKey(), newSigningPriv.PubKey(), nil)
 	test.SignCheckDeliver(t, lb, registerMsg, 0, true, test.GenesisTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(99*types.Decimals))

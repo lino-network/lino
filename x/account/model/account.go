@@ -13,16 +13,18 @@ import (
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`
 	CreatedAt      int64            `json:"created_at"`
-	ResetKey       crypto.PubKey    `json:"reset_key"`
+	SignningKey    crypto.PubKey    `json:"signning_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
-	AppKey         crypto.PubKey    `json:"app_key"`
+	Address        sdk.AccAddress   `json:"address"`
 }
 
 // AccountBank - user balance
 type AccountBank struct {
-	Saving          types.Coin    `json:"saving"`
-	CoinDay         types.Coin    `json:"coin_day"`
-	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
+	Saving          types.Coin       `json:"saving"`
+	FrozenMoneyList []FrozenMoney    `json:"frozen_money_list"`
+	PubKey          crypto.PubKey    `json:"public_key"`
+	Sequence        uint64           `json:"sequence"`
+	Username        types.AccountKey `json:"username"`
 }
 
 // FrozenMoney - frozen money
@@ -80,12 +82,7 @@ func (g GrantPermission) ToIR() GrantPermissionIR {
 
 // AccountMeta - stores tiny and frequently updated fields.
 type AccountMeta struct {
-	Sequence             uint64     `json:"sequence"`
-	LastActivityAt       int64      `json:"last_activity_at"`
-	TransactionCapacity  types.Coin `json:"transaction_capacity"`
-	JSONMeta             string     `json:"json_meta"`
-	LastReportOrUpvoteAt int64      `json:"last_report_or_upvote_at"`
-	LastPostAt           int64      `json:"last_post_at"`
+	JSONMeta string `json:"json_meta"`
 }
 
 // AccountInfraConsumption records infra utility consumption

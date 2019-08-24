@@ -454,12 +454,8 @@ func (suite *PostManagerTestSuite) TestLinoDonateOK() {
 		tax,
 		dp,
 	).Return(nil).Once()
-	suite.am.On("MinusSavingCoinWithFullCoinDay",
-		mock.Anything, from, amount, author, "", linotypes.DonationOut).Return(
-		linotypes.NewCoinFromInt64(0), nil).Once()
-	suite.am.On("AddSavingCoin",
-		mock.Anything, author, income, from, "", linotypes.DonationIn,
-	).Return(nil).Once()
+	suite.am.On("MinusCoinFromUsername", mock.Anything, from, amount).Return(nil).Once()
+	suite.am.On("AddCoinToUsername", mock.Anything, author, income).Return(nil).Once()
 	err = suite.pm.LinoDonate(suite.Ctx, from, amount, author, postID, app)
 	suite.Nil(err)
 	suite.price.AssertExpectations(suite.T())

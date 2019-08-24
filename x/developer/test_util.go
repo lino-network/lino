@@ -63,7 +63,7 @@ func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, 
 	resetPriv := secp256k1.GenPrivKey()
 	txPriv := secp256k1.GenPrivKey()
 	appPriv := secp256k1.GenPrivKey()
-	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		resetPriv.PubKey(), txPriv.PubKey(), appPriv.PubKey(), initCoin)
+	am.CreateAccount(ctx, types.AccountKey(username), txPriv.PubKey(), resetPriv.PubKey())
+	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
 	return resetPriv, txPriv, appPriv
 }

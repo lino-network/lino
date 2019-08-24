@@ -121,9 +121,9 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
-	saving, err :=
-		accManager.GetSavingFromBank(ctx, types.AccountKey(accountName))
+	saving, err := accManager.GetSavingFromUsername(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
+	// fmt.Println("expect:", expectBalance, saving)
 	assert.Equal(t, expectBalance, saving)
 }
 

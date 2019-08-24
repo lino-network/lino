@@ -43,6 +43,11 @@ func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountAlreadyExists, fmt.Sprintf("account %v already exists", accKey))
 }
 
+// ErrAddressAlreadyTaken - error when register address is already took by other username
+func ErrAddressAlreadyTaken(addr sdk.Address) sdk.Error {
+	return types.NewError(types.CodeAddressIsTaken, fmt.Sprintf("address %v is already taken", addr))
+}
+
 // ErrRegisterFeeInsufficient - error when register fee insufficient
 func ErrRegisterFeeInsufficient() sdk.Error {
 	return types.NewError(types.CodeRegisterFeeInsufficient, fmt.Sprintf("register fee insufficient"))
@@ -73,6 +78,11 @@ func ErrGetAppKey(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeGetAppKey, fmt.Sprintf("get %v app key failed", accKey))
 }
 
+// ErrSigningKey - error when get signing public key failed
+func ErrGetSigningKey(username types.AccountKey) sdk.Error {
+	return types.NewError(types.CodeGetSigningKeyFailed, fmt.Sprintf("get %v signing key failed", username))
+}
+
 // ErrGetSavingFromBank - error when get saving failed
 func ErrGetSavingFromBank(err error) sdk.Error {
 	return types.NewError(types.CodeGetSavingFromBank, fmt.Sprintf("failed to get saving from bank: %s", err.Error()))
@@ -81,6 +91,11 @@ func ErrGetSavingFromBank(err error) sdk.Error {
 // ErrGetSequence - error when get sequence number failed
 func ErrGetSequence(err error) sdk.Error {
 	return types.NewError(types.CodeGetSequence, fmt.Sprintf("failed to get sequence: %s", err.Error()))
+}
+
+// ErrGetAddress - error when get address failed
+func ErrGetAddress(err error) sdk.Error {
+	return types.NewError(types.CodeGetAddressFailed, fmt.Sprintf("failed to get address: %s", err.Error()))
 }
 
 // ErrGetLastReportOrUpvoteAt - error when get last report or upvote time failed

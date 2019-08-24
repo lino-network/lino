@@ -15,13 +15,12 @@ type ReturnCoinEvent struct {
 
 // Execute - execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
-	if !am.DoesAccountExist(ctx, event.Username) {
+	addr, err := am.GetAddress(ctx, event.Username)
+	if err != nil {
 		return ErrAccountNotFound(event.Username)
 	}
 
-	if err := am.AddSavingCoin(
-		ctx, event.Username, event.Amount, "", "",
-		event.ReturnType); err != nil {
+	if err := am.AddCoinToAddress(ctx, addr, event.Amount); err != nil {
 		return err
 	}
 	return nil

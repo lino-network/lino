@@ -94,22 +94,24 @@ func getContext(height int64) sdk.Context {
 		false, log.NewNopLogger())
 }
 
-func createTestAccount(ctx sdk.Context, am AccountManager, username string) (secp256k1.PrivKeySecp256k1,
-	secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1) {
-	resetPriv := secp256k1.GenPrivKey()
+func createTestAccount(ctx sdk.Context, am AccountManager, username string) (secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1) {
+	signingKey := secp256k1.GenPrivKey()
 	txPriv := secp256k1.GenPrivKey()
-	appPriv := secp256k1.GenPrivKey()
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.CreateAccount(ctx, accountReferrer, types.AccountKey(username),
-		resetPriv.PubKey(), txPriv.PubKey(), appPriv.PubKey(), accParam.RegisterFee)
-	return resetPriv, txPriv, appPriv
+	am.CreateAccount(ctx, types.AccountKey(username), signingKey.PubKey(), txPriv.PubKey())
+	am.AddCoinToAddress(ctx, sdk.AccAddress(txPriv.PubKey().Address()), accParam.RegisterFee)
+	return signingKey, txPriv
 }
 
 func checkBankKVByUsername(
 	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, bank model.AccountBank) {
 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	bankPtr, err := accStorage.GetBankFromAccountKey(ctx, username)
+	info, err := accStorage.GetInfo(ctx, username)
+	if err != nil {
+		t.Errorf("%s, failed to get info, got err %v", testName, err)
+	}
+	bankPtr, err := accStorage.GetBank(ctx, info.Address)
 	if err != nil {
 		t.Errorf("%s, failed to get bank, got err %v", testName, err)
 	}
@@ -118,13 +120,13 @@ func checkBankKVByUsername(
 	}
 }
 
-func checkPendingCoinDay(
-	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingCoinDayQueue model.PendingCoinDayQueue) {
-	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	pendingCoinDayQueuePtr, err := accStorage.GetPendingCoinDayQueue(ctx, username)
-	assert.Nil(t, err, "%s, failed to get pending coin day queue, got err %v", testName, err)
-	assert.Equal(t, pendingCoinDayQueue, *pendingCoinDayQueuePtr, "%s: diff pending coin day queue, got %v, want %v", testName, *pendingCoinDayQueuePtr, pendingCoinDayQueue)
-}
+// func checkPendingCoinDay(
+// 	t *testing.T, ctx sdk.Context, testName string, username types.AccountKey, pendingCoinDayQueue model.PendingCoinDayQueue) {
+// 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
+// 	pendingCoinDayQueuePtr, err := accStorage.GetPendingCoinDayQueue(ctx, username)
+// 	assert.Nil(t, err, "%s, failed to get pending coin day queue, got err %v", testName, err)
+// 	assert.Equal(t, pendingCoinDayQueue, *pendingCoinDayQueuePtr, "%s: diff pending coin day queue, got %v, want %v", testName, *pendingCoinDayQueuePtr, pendingCoinDayQueue)
+// }
 
 func checkAccountInfo(
 	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accInfo model.AccountInfo) {

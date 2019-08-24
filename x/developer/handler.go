@@ -36,10 +36,6 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm *global.GlobalMan
 
 func handleDeveloperRegisterMsg(
 	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
 	if dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperAlreadyExist(msg.Username).Result()
 	}
@@ -50,8 +46,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusSavingCoin(
-		ctx, msg.Username, deposit, "", "", types.DeveloperDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(

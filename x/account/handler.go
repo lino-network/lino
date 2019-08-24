@@ -30,26 +30,12 @@ func NewHandler(am AccountManager, gm *global.GlobalManager) sdk.Handler {
 }
 
 func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Receiver) {
-		return ErrReceiverNotFound(msg.Receiver).Result()
-	}
-
-	if !am.DoesAccountExist(ctx, msg.Sender) {
-		return ErrSenderNotFound(msg.Sender).Result()
-	}
 	// withdraw money from sender's bank
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MinusSavingCoin(
-		ctx, msg.Sender, coin, msg.Receiver, msg.Memo, types.TransferOut); err != nil {
-		return err.Result()
-	}
-
-	// send coins using username
-	if err := am.AddSavingCoin(
-		ctx, msg.Receiver, coin, msg.Sender, msg.Memo, types.TransferIn); err != nil {
+	if err := am.MoveCoinFromUsernameToUsername(ctx, msg.Sender, msg.Receiver, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -57,22 +43,19 @@ func handleTransferMsg(ctx sdk.Context, am AccountManager, msg TransferMsg) sdk.
 
 func handleRecoverMsg(ctx sdk.Context, am AccountManager, msg RecoverMsg) sdk.Result {
 	// recover
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound(msg.Username).Result()
-	}
-	if err := am.RecoverAccount(
-		ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewAppPubKey); err != nil {
-		return err.Result()
-	}
+	// if !am.DoesAccountExist(ctx, msg.Username) {
+	// 	return ErrAccountNotFound(msg.Username).Result()
+	// }
+	// if err := am.RecoverAccount(
+	// 	ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
+	// 	msg.NewAppPubKey); err != nil {
+	// 	return err.Result()
+	// }
 	return sdk.Result{}
 }
 
 // Handle RegisterMsg
 func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm *global.GlobalManager, msg RegisterMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Referrer) {
-		return ErrReferrerNotFound(msg.Referrer).Result()
-	}
 	coin, err := types.LinoToCoin(msg.RegisterFee)
 	if err != nil {
 		return err.Result()
@@ -84,18 +67,19 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm *global.GlobalMana
 	if accParams.RegisterFee.IsGT(coin) {
 		return ErrRegisterFeeInsufficient().Result()
 	}
-	if err := am.MinusSavingCoin(
-		ctx, msg.Referrer, coin, msg.NewUser, "", types.TransferOut); err != nil {
-		return err.Result()
-	}
 	// the open account fee will be added to developer inflation pool
-	if err := gm.AddToDeveloperInflationPool(ctx, accParams.RegisterFee); err != nil {
+
+	if err := am.MinusCoinFromUsername(ctx, msg.Referrer, accParams.RegisterFee); err != nil {
 		return err.Result()
 	}
-
 	if err := am.CreateAccount(
-		ctx, msg.Referrer, msg.NewUser, msg.NewResetPubKey, msg.NewTransactionPubKey,
-		msg.NewAppPubKey, coin.Minus(accParams.RegisterFee)); err != nil {
+		ctx, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
+		return err.Result()
+	}
+	if err := gm.AddToValidatorInflationPool(ctx, accParams.RegisterFee); err != nil {
+		return err.Result()
+	}
+	if err := am.MoveCoinFromUsernameToUsername(ctx, msg.Referrer, msg.NewUser, coin.Minus(accParams.RegisterFee)); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -103,9 +87,6 @@ func handleRegisterMsg(ctx sdk.Context, am AccountManager, gm *global.GlobalMana
 
 // Handle RegisterMsg
 func handleUpdateAccountMsg(ctx sdk.Context, am AccountManager, msg UpdateAccountMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound(msg.Username).Result()
-	}
 	if err := am.UpdateJSONMeta(ctx, msg.Username, msg.JSONMeta); err != nil {
 		return err.Result()
 	}
