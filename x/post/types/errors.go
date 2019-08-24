@@ -25,7 +25,7 @@ func ErrPostAlreadyExist(permlink linotypes.Permlink) sdk.Error {
 
 // ErrPostDeleted - error when post has been deleted.
 func ErrPostDeleted(permlink linotypes.Permlink) sdk.Error {
-	return linotypes.NewError(linotypes.CodePermlinkDeleted, fmt.Sprintf("permlink %v was deleted", permlink))
+	return linotypes.NewError(linotypes.CodePostDeleted, fmt.Sprintf("permlink %v was deleted", permlink))
 }
 
 // ErrDeveloperNotFound - error when develoepr is not found
