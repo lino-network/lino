@@ -13,4 +13,5 @@ type Post struct {
 	CreatedBy types.AccountKey `json:"created_by"`
 	CreatedAt int64            `json:"created_at"`
 	UpdatedAt int64            `json:"updated_at"`
+	IsDeleted bool             `json:"is_deleted"`
 }

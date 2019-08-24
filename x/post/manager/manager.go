@@ -38,15 +38,25 @@ func NewPostManager(key sdk.StoreKey, am acc.AccountKeeper, gm global.GlobalKeep
 }
 
 // DoesPostExist - check if post exist
+// 1. permlink kv exists.
+// 2. post is not marked as deleted.
 func (pm PostManager) DoesPostExist(ctx sdk.Context, permlink linotypes.Permlink) bool {
-	return pm.postStorage.HasPost(ctx, permlink)
+	if !pm.postStorage.HasPost(ctx, permlink) {
+		return false
+	}
+	post, _ := pm.postStorage.GetPost(ctx, permlink)
+	return !post.IsDeleted
 }
 
 // GetPost - return post.
+// return err if post is deleted.
 func (pm PostManager) GetPost(ctx sdk.Context, permlink linotypes.Permlink) (model.Post, sdk.Error) {
 	post, err := pm.postStorage.GetPost(ctx, permlink)
 	if err != nil {
 		return model.Post{}, err
+	}
+	if post.IsDeleted {
+		return model.Post{}, types.ErrPostDeleted(permlink)
 	}
 	return *post, nil
 }
@@ -55,7 +65,7 @@ func (pm PostManager) GetPost(ctx sdk.Context, permlink linotypes.Permlink) (mod
 // stateful validation;
 // 1. both author and post id exists.
 // 2. if createdBy is not author, then it must be an app.
-// 3. post does not exists.
+// 3. post's permlink does not exists.
 func (pm PostManager) CreatePost(ctx sdk.Context, author linotypes.AccountKey, postID string, createdBy linotypes.AccountKey, content string, title string) sdk.Error {
 	if !pm.am.DoesAccountExist(ctx, author) {
 		return types.ErrAccountNotFound(author)
@@ -68,7 +78,7 @@ func (pm PostManager) CreatePost(ctx sdk.Context, author linotypes.AccountKey, p
 		return types.ErrDeveloperNotFound(createdBy)
 	}
 	permlink := linotypes.GetPermlink(author, postID)
-	if pm.DoesPostExist(ctx, permlink) {
+	if pm.postStorage.HasPost(ctx, permlink) {
 		return types.ErrPostAlreadyExist(permlink)
 	}
 
@@ -106,13 +116,25 @@ func (pm PostManager) UpdatePost(ctx sdk.Context, author linotypes.AccountKey, p
 
 // DeletePost - delete post by author or content censorship
 // stateful validation:
-// 1. author exists.
-// 2. permlink exists.
+// 1. permlink exists.
+// 2. post not deleted.
+// Delete does not delete the post in kv store, as that will make `permlink` not permanent.
+// It is marked as deleted, then on deleted posts,
+// 1. manager.DoesPostExist will return false.
+// 2. manager.GetPost will return ErrPermlinkDeleted.
+// 3. manager.CreatePost will return ErrPostAlreadyExist.
 func (pm PostManager) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) sdk.Error {
-	if !pm.DoesPostExist(ctx, permlink) {
-		return types.ErrPostNotFound(permlink)
+	post, err := pm.postStorage.GetPost(ctx, permlink)
+	if err != nil {
+		return err
 	}
-	pm.postStorage.DeletePost(ctx, permlink)
+	if post.IsDeleted {
+		return types.ErrPostDeleted(permlink)
+	}
+	post.IsDeleted = true
+	post.Title = ""
+	post.Content = ""
+	pm.postStorage.SetPost(ctx, post)
 	return nil
 }
 

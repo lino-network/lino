@@ -311,18 +311,26 @@ func (suite *PostManagerTestSuite) TestDeletePost() {
 			testName:  "delete post not exist",
 			author:    user1,
 			postID:    postID,
-			expectErr: types.ErrPostNotFound(linotypes.GetPermlink(user1, postID)),
+			expectErr: types.ErrPostDeleted(linotypes.GetPermlink(user1, postID)),
 		},
 	}
 
 	for _, tc := range testCases {
 		err := suite.pm.DeletePost(suite.Ctx, linotypes.GetPermlink(tc.author, tc.postID))
-		suite.Equal(tc.expectErr, err)
+		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 		if tc.expectErr == nil {
 			suite.False(suite.pm.DoesPostExist(
 				suite.Ctx, linotypes.GetPermlink(tc.author, tc.postID)))
 		}
 	}
+
+	// after deleting post, cannot create post with same permlink.
+	err = suite.pm.CreatePost(suite.Ctx, user1, postID, app1, "content", "title")
+	suite.Equal(types.ErrPostAlreadyExist(linotypes.GetPermlink(user1, postID)), err)
+
+	// after deleting post, cannot create post with same permlink.
+	_, err = suite.pm.GetPost(suite.Ctx, linotypes.GetPermlink(user1, postID))
+	suite.Equal(types.ErrPostDeleted(linotypes.GetPermlink(user1, postID)), err)
 }
 
 func (suite *PostManagerTestSuite) TestLinoDonateInvalid() {
