@@ -1,11 +1,12 @@
 package vote
 
 import (
-	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/vote/model"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/param"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/model"
+	"github.com/lino-network/lino/x/vote/types"
 )
 
 // VoteManager - vote manager
@@ -30,22 +31,22 @@ func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
 }
 
 // DoesVoterExist - check if voter exist or not
-func (vm VoteManager) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
+func (vm VoteManager) DoesVoterExist(ctx sdk.Context, accKey linotypes.AccountKey) bool {
 	return vm.storage.DoesVoterExist(ctx, accKey)
 }
 
 // DoesVoterExist - check if vote exist or not
-func (vm VoteManager) DoesVoteExist(ctx sdk.Context, proposalID types.ProposalKey, accKey types.AccountKey) bool {
+func (vm VoteManager) DoesVoteExist(ctx sdk.Context, proposalID linotypes.ProposalKey, accKey linotypes.AccountKey) bool {
 	return vm.storage.DoesVoteExist(ctx, proposalID, accKey)
 }
 
 // DoesVoterExist - check if delegation exist or not
-func (vm VoteManager) DoesDelegationExist(ctx sdk.Context, voter types.AccountKey, delegator types.AccountKey) bool {
+func (vm VoteManager) DoesDelegationExist(ctx sdk.Context, voter linotypes.AccountKey, delegator linotypes.AccountKey) bool {
 	return vm.storage.DoesDelegationExist(ctx, voter, delegator)
 }
 
 // DoesVoterExist - check if a voter is validator or not
-func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountKey) bool {
+func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username linotypes.AccountKey) bool {
 	lst, err := vm.storage.GetReferenceList(ctx)
 	if err != nil {
 		return false
@@ -60,7 +61,7 @@ func (vm VoteManager) IsInValidatorList(ctx sdk.Context, username types.AccountK
 
 // IsLegalVoterWithdraw - check withdraw voter is not validator
 func (vm VoteManager) IsLegalVoterWithdraw(
-	ctx sdk.Context, username types.AccountKey, coin types.Coin) bool {
+	ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return false
@@ -77,7 +78,7 @@ func (vm VoteManager) IsLegalVoterWithdraw(
 
 // IsLegalDelegatorWithdraw - check if delegator withdraw is valid or not
 func (vm VoteManager) IsLegalDelegatorWithdraw(
-	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) bool {
+	ctx sdk.Context, voterName linotypes.AccountKey, delegatorName linotypes.AccountKey, coin linotypes.Coin) bool {
 	delegation, err := vm.storage.GetDelegation(ctx, voterName, delegatorName)
 	if err != nil {
 		return false
@@ -88,7 +89,7 @@ func (vm VoteManager) IsLegalDelegatorWithdraw(
 }
 
 // CanBecomeValidator - check if vote deposit meet requirement or not
-func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.AccountKey) bool {
+func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username linotypes.AccountKey) bool {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return false
@@ -102,7 +103,7 @@ func (vm VoteManager) CanBecomeValidator(ctx sdk.Context, username types.Account
 }
 
 // AddVote - voter vote for a proposal
-func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey, res bool) sdk.Error {
+func (vm VoteManager) AddVote(ctx sdk.Context, proposalID linotypes.ProposalKey, voter linotypes.AccountKey, res bool) sdk.Error {
 	// check if the vote exist
 	if vm.DoesVoteExist(ctx, proposalID, voter) {
 		return ErrVoteAlreadyExist()
@@ -126,19 +127,19 @@ func (vm VoteManager) AddVote(ctx sdk.Context, proposalID types.ProposalKey, vot
 }
 
 // GetVote - get vote detail based on voter and proposal ID
-func (vm VoteManager) GetVote(ctx sdk.Context, proposalID types.ProposalKey, voter types.AccountKey) (*model.Vote, sdk.Error) {
+func (vm VoteManager) GetVote(ctx sdk.Context, proposalID linotypes.ProposalKey, voter linotypes.AccountKey) (*model.Vote, sdk.Error) {
 	return vm.storage.GetVote(ctx, proposalID, voter)
 }
 
 // AddDelegation - add delegation
-func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName linotypes.AccountKey, delegatorName linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	var delegation *model.Delegation
 	var err sdk.Error
 
 	if !vm.DoesDelegationExist(ctx, voterName, delegatorName) {
 		delegation = &model.Delegation{
 			Delegator: delegatorName,
-			Amount:    types.NewCoinFromInt64(0),
+			Amount:    linotypes.NewCoinFromInt64(0),
 		}
 	} else {
 		delegation, err = vm.storage.GetDelegation(ctx, voterName, delegatorName)
@@ -149,7 +150,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 
 	// add voter if not exist
 	if !vm.DoesVoterExist(ctx, voterName) {
-		if err := vm.AddVoter(ctx, voterName, types.NewCoinFromInt64(0)); err != nil {
+		if err := vm.AddVoter(ctx, voterName, linotypes.NewCoinFromInt64(0)); err != nil {
 			return err
 		}
 	}
@@ -182,7 +183,7 @@ func (vm VoteManager) AddDelegation(ctx sdk.Context, voterName types.AccountKey,
 }
 
 // AddVoter - add voter
-func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) AddVoter(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	voter := &model.Voter{
 		Username:          username,
 		LinoStake:         coin,
@@ -196,7 +197,7 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username types.AccountKey, coin 
 }
 
 // AddLinoStake - add lino power
-func (vm VoteManager) AddLinoStake(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) AddLinoStake(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
@@ -210,7 +211,7 @@ func (vm VoteManager) AddLinoStake(ctx sdk.Context, username types.AccountKey, c
 }
 
 // MinusLinoStake - this method won't check if it is a legal withdraw, caller should check by itself
-func (vm VoteManager) MinusLinoStake(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (vm VoteManager) MinusLinoStake(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrInvalidCoin()
 	}
@@ -228,7 +229,7 @@ func (vm VoteManager) MinusLinoStake(ctx sdk.Context, username types.AccountKey,
 
 // DelegatorWithdraw - withdraw delegation
 func (vm VoteManager) DelegatorWithdraw(
-	ctx sdk.Context, voterName types.AccountKey, delegatorName types.AccountKey, coin types.Coin) sdk.Error {
+	ctx sdk.Context, voterName linotypes.AccountKey, delegatorName linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	if coin.IsZero() {
 		return ErrInvalidCoin()
 	}
@@ -272,22 +273,22 @@ func (vm VoteManager) DelegatorWithdraw(
 
 // ClaimInterest - add lino power interst to user balance
 func (vm VoteManager) ClaimInterest(
-	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+	ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
-		return types.NewCoinFromInt64(0), err
+		return linotypes.NewCoinFromInt64(0), err
 	}
 	claimedInterest := voter.Interest
-	voter.Interest = types.NewCoinFromInt64(0)
+	voter.Interest = linotypes.NewCoinFromInt64(0)
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
-		return types.NewCoinFromInt64(0), err
+		return linotypes.NewCoinFromInt64(0), err
 	}
 	return claimedInterest, nil
 }
 
 // AddInterest - add interst
 func (vm VoteManager) AddInterest(
-	ctx sdk.Context, username types.AccountKey, interest types.Coin) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey, interest linotypes.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
@@ -300,10 +301,10 @@ func (vm VoteManager) AddInterest(
 }
 
 // GetVotingPower - get voter voting power
-func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey) (types.Coin, sdk.Error) {
+func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, voterName)
 	if err != nil {
-		return types.Coin{}, err
+		return linotypes.Coin{}, err
 	}
 	res := voter.LinoStake.Plus(voter.DelegatedPower).Minus(voter.DelegateToOthers)
 	return res, nil
@@ -311,10 +312,10 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName types.AccountKey
 
 // GetPenaltyList - get penalty list if voter is also validator doesn't vote
 func (vm VoteManager) GetPenaltyList(
-	ctx sdk.Context, proposalID types.ProposalKey, proposalType types.ProposalType,
-	oncallValidators []types.AccountKey) (types.PenaltyList, sdk.Error) {
-	penaltyList := types.PenaltyList{
-		PenaltyList: []types.AccountKey{},
+	ctx sdk.Context, proposalID linotypes.ProposalKey, proposalType linotypes.ProposalType,
+	oncallValidators []linotypes.AccountKey) (linotypes.PenaltyList, sdk.Error) {
+	penaltyList := linotypes.PenaltyList{
+		PenaltyList: []linotypes.AccountKey{},
 	}
 
 	// get all votes to calculate the voting result
@@ -335,24 +336,24 @@ func (vm VoteManager) GetPenaltyList(
 		// vm.storage.DeleteVote(ctx, proposalID, vote.Voter)
 	}
 
-	// put all validators who didn't vote on these two types proposal into penalty list
-	if proposalType == types.ChangeParam || proposalType == types.ProtocolUpgrade {
+	// put all validators who didn't vote on these two linotypes.proposal into penalty list
+	if proposalType == linotypes.ChangeParam || proposalType == linotypes.ProtocolUpgrade {
 		penaltyList.PenaltyList = oncallValidators
 	}
 	return penaltyList, nil
 }
 
 // GetLinoStake - get lino stake
-func (vm VoteManager) GetLinoStake(ctx sdk.Context, accKey types.AccountKey) (types.Coin, sdk.Error) {
+func (vm VoteManager) GetLinoStake(ctx sdk.Context, accKey linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
-		return types.NewCoinFromInt64(0), err
+		return linotypes.NewCoinFromInt64(0), err
 	}
 	return voter.LinoStake, nil
 }
 
 // GetLinoStakeLastChangedAt - get linoStake last changed time
-func (vm VoteManager) GetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.AccountKey) (int64, sdk.Error) {
+func (vm VoteManager) GetLinoStakeLastChangedAt(ctx sdk.Context, accKey linotypes.AccountKey) (int64, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
 		return 0, err
@@ -361,7 +362,7 @@ func (vm VoteManager) GetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.Ac
 }
 
 // SetLinoStakeLastChangedAt - set linoStake last changed time
-func (vm VoteManager) SetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.AccountKey, lastChangedAt int64) sdk.Error {
+func (vm VoteManager) SetLinoStakeLastChangedAt(ctx sdk.Context, accKey linotypes.AccountKey, lastChangedAt int64) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
 		return err
@@ -374,7 +375,7 @@ func (vm VoteManager) SetLinoStakeLastChangedAt(ctx sdk.Context, accKey types.Ac
 }
 
 // GetAllDelegators - get all delegators of a voter
-func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName types.AccountKey) ([]types.AccountKey, sdk.Error) {
+func (vm VoteManager) GetAllDelegators(ctx sdk.Context, voterName linotypes.AccountKey) ([]linotypes.AccountKey, sdk.Error) {
 	return vm.storage.GetAllDelegators(ctx, voterName)
 }
 
@@ -386,6 +387,10 @@ func (vm VoteManager) GetValidatorReferenceList(ctx sdk.Context) (*model.Referen
 // SetValidatorReferenceList - set validator reference list
 func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.ReferenceList) sdk.Error {
 	return vm.storage.SetReferenceList(ctx, lst)
+}
+
+func (vm VoteManager) GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) types.VoterDuty {
+	panic(linotypes.NewError(linotypes.CodeUnimplementedError, "voter duty unimplemented"))
 }
 
 // Export storage state.
