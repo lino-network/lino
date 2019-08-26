@@ -165,6 +165,8 @@ func TestBandwidthParam(t *testing.T) {
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
+		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 20),
+		AppMsgEMAFactor:             types.NewDecFromRat(1, 20),
 	}
 	err := ph.setBandwidthParam(ctx, &parameter)
 	assert.Nil(t, err)

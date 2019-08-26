@@ -119,10 +119,15 @@ type CoinDayParam struct {
 // BandwidthParam - bandwidth parameters
 // SecondsToRecoverBandwidth - seconds for user tps capacity fully charged
 // CapacityUsagePerTransaction - capacity usage per transaction, dynamic changed based on traffic
+// GeneralMsgEMAFactor - the multiplier for weighting the general message EMA
+// AppMsgEMAFactor - the multiplier for weighting the app message EMA
+
 type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
 	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
 	VirtualCoin                 types.Coin `json:"virtual_coin"`
+	GeneralMsgEMAFactor         sdk.Dec    `json:"general_msg_ema_factor"`
+	AppMsgEMAFactor             sdk.Dec    `json:"app_msg_ema_factor"`
 }
 
 // AccountParam - account parameters

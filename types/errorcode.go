@@ -309,6 +309,14 @@ const (
 	// reputation errors reserve 1200 ~ 1299
 	CodeReputationQueryFailed sdk.CodeType = 1200
 
+	// bandwidth errors reserve 1300 ~ 1399
+	CodeBandwidthInfoNotFound          sdk.CodeType = 1300
+	CodeFailedToMarshalBandwidthInfo   sdk.CodeType = 1301
+	CodeFailedToUnmarshalBandwidthInfo sdk.CodeType = 1302
+	CodeCurBlockInfoNotFound           sdk.CodeType = 1303
+	CodeFailedToMarshalCurBlockInfo    sdk.CodeType = 1304
+	CodeFailedToUnmarshalCurBlockInfo  sdk.CodeType = 1305
+
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000
 	// Unimplemented features.

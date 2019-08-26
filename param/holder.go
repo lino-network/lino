@@ -142,6 +142,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
+		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
+		AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
 	}
 	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
 		return err
