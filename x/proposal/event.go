@@ -20,7 +20,7 @@ type DecideProposalEvent struct {
 // Execute - execute proposal event, check vote and update status
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
-	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostKeeper,
+	am acc.AccountKeeper, proposalManager ProposalManager, postManager post.PostKeeper,
 	gm *global.GlobalManager) sdk.Error {
 	// check it is ongoing proposal
 	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {

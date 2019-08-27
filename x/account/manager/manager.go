@@ -1,4 +1,4 @@
-package account
+package manager
 
 import (
 	"reflect"
@@ -8,33 +8,60 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
+	"github.com/lino-network/lino/x/account/types"
+	"github.com/lino-network/lino/x/global"
 )
 
 // AccountManager - account manager
 type AccountManager struct {
 	storage     model.AccountStorage
 	paramHolder param.ParamHolder
+	gm          global.GlobalKeeper
 }
 
 // NewLinoAccount - new account manager
-func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder) AccountManager {
+func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder, gm global.GlobalKeeper) AccountManager {
 	return AccountManager{
 		storage:     model.NewAccountStorage(key),
 		paramHolder: holder,
 	}
 }
 
-func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool {
+func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username linotypes.AccountKey) bool {
 	return accManager.storage.DoesAccountExist(ctx, username)
+}
+
+// RegisterAccount - register account, deduct fee from referrer address then create a new account
+func (accManager AccountManager) RegisterAccount(
+	ctx sdk.Context, referrerAddr sdk.AccAddress, registerFee linotypes.Coin,
+	username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
+	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
+	if err != nil {
+		return err
+	}
+	if accParams.RegisterFee.IsGT(registerFee) {
+		return types.ErrRegisterFeeInsufficient()
+	}
+
+	if err := accManager.MinusCoinFromAddress(ctx, referrerAddr, registerFee); err != nil {
+		return err
+	}
+	if err := accManager.CreateAccount(ctx, username, signingKey, transactionKey); err != nil {
+		return err
+	}
+	if err := accManager.gm.AddToValidatorInflationPool(ctx, accParams.RegisterFee); err != nil {
+		return err
+	}
+	return accManager.AddCoinToUsername(ctx, username, registerFee.Minus(accParams.RegisterFee))
 }
 
 // CreateAccount - create account, caller should make sure the register fee is valid
 func (accManager AccountManager) CreateAccount(
-	ctx sdk.Context, username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
 	if accManager.storage.DoesAccountExist(ctx, username) {
-		return ErrAccountAlreadyExists(username)
+		return types.ErrAccountAlreadyExists(username)
 	}
 
 	// get address from tx key
@@ -47,7 +74,7 @@ func (accManager AccountManager) CreateAccount(
 		bank = &model.AccountBank{}
 	}
 	if bank.Username != "" {
-		return ErrAddressAlreadyTaken(addr)
+		return types.ErrAddressAlreadyTaken(addr)
 	}
 
 	// set public key to bank
@@ -73,53 +100,11 @@ func (accManager AccountManager) CreateAccount(
 	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
 		return err
 	}
-	// if err := accManager.storage.SetReward(ctx, username, &model.Reward{}); err != nil {
-	// 	return err
-	// }
-	// when open account, blockchain will give a certain amount lino with full coin day.
-	// if err := accManager.AddSavingCoinWithFullCoinDay(
-	// 	ctx, username, depositWithFullCoinDay, referrer,
-	// 	types.InitAccountWithFullCoinDayMemo, types.TransferIn); err != nil {
-	// 	return ErrAddSavingCoinWithFullCoinDay()
-	// }
-	// if err := accManager.AddSavingCoin(
-	// 	ctx, username, registerDeposit.Minus(depositWithFullCoinDay), referrer,
-	// 	types.InitAccountRegisterDepositMemo, types.TransferIn); err != nil {
-	// 	return ErrAddSavingCoin()
-	// }
 	return nil
 }
 
-// GetCoinDay - recalculate and get user current coin day
-// func (accManager AccountManager) GetCoinDay(
-// 	ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
-// 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
-// 	if err != nil {
-// 		return types.NewCoinFromInt64(0), err
-// 	}
-// 	pendingCoinDayQueue, err := accManager.storage.GetPendingCoinDayQueue(ctx, username)
-// 	if err != nil {
-// 		return types.NewCoinFromInt64(0), err
-// 	}
-// 	accManager.updateTXFromPendingCoinDayQueue(ctx, bank, pendingCoinDayQueue)
-
-// 	if err := accManager.storage.SetPendingCoinDayQueue(
-// 		ctx, username, pendingCoinDayQueue); err != nil {
-// 		return types.NewCoinFromInt64(0), err
-// 	}
-
-// 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-// 		return types.NewCoinFromInt64(0), err
-// 	}
-
-// 	coinDay := bank.CoinDay
-// 	coinDayInQueue := types.DecToCoin(pendingCoinDayQueue.TotalCoinDay)
-// 	totalCoinDay := coinDay.Plus(coinDayInQueue)
-// 	return totalCoinDay, nil
-// }
-
 // MoveCoinFromUsernameToUsername - move coin from sender to receiver
-func (accManager AccountManager) MoveCoinFromUsernameToUsername(ctx sdk.Context, sender, receiver types.AccountKey, coin types.Coin) sdk.Error {
+func (accManager AccountManager) MoveCoinFromUsernameToUsername(ctx sdk.Context, sender, receiver linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	if err := accManager.MinusCoinFromUsername(ctx, sender, coin); err != nil {
 		return err
 	}
@@ -130,7 +115,7 @@ func (accManager AccountManager) MoveCoinFromUsernameToUsername(ctx sdk.Context,
 }
 
 // AddCoinToUsername - add coin to address associated username
-func (accManager AccountManager) AddCoinToUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (accManager AccountManager) AddCoinToUsername(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
@@ -139,7 +124,7 @@ func (accManager AccountManager) AddCoinToUsername(ctx sdk.Context, username typ
 }
 
 // AddCoinToAddress - add coin to address associated username
-func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Address, coin types.Coin) sdk.Error {
+func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Address, coin linotypes.Coin) sdk.Error {
 	bank, err := accManager.storage.GetBank(ctx, addr)
 	if err != nil {
 		if err.Code() != model.ErrAccountBankNotFound().Code() {
@@ -153,35 +138,12 @@ func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Addr
 	return accManager.storage.SetBank(ctx, addr, bank)
 }
 
-// AddSavingCoinWithFullCoinDay - add coin to balance with full coin day
-// func (accManager AccountManager) AddSavingCoinWithFullCoinDay(
-// 	ctx sdk.Context, username types.AccountKey, coin types.Coin, from types.AccountKey, memo string,
-// 	detailType types.TransferDetailType) (err sdk.Error) {
-// 	if !accManager.DoesAccountExist(ctx, username) {
-// 		return ErrAccountNotFound(username)
-// 	}
-// 	if coin.IsZero() {
-// 		return nil
-// 	}
-// 	bank, err := accManager.storage.GetBankFromAccountKey(ctx, username)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	bank.Saving = bank.Saving.Plus(coin)
-// 	bank.CoinDay = bank.CoinDay.Plus(coin)
-// 	if err := accManager.storage.SetBankFromAccountKey(ctx, username, bank); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
 // MinusSavingCoin - minus coin from balance, remove coin day in the tail
-func (accManager AccountManager) MinusCoinFromUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error {
+func (accManager AccountManager) MinusCoinFromUsername(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		if err.Code() == model.ErrAccountInfoNotFound().Code() {
-			return ErrAccountNotFound(username)
+			return types.ErrAccountNotFound(username)
 		}
 		return err
 	}
@@ -190,7 +152,7 @@ func (accManager AccountManager) MinusCoinFromUsername(ctx sdk.Context, username
 }
 
 // MinusCoinFromAddress - minus coin from address
-func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address sdk.Address, coin types.Coin) sdk.Error {
+func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address sdk.Address, coin linotypes.Coin) sdk.Error {
 	if coin.IsZero() {
 		return nil
 	}
@@ -206,7 +168,7 @@ func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address s
 
 	bank.Saving = bank.Saving.Minus(coin)
 	if !bank.Saving.IsGTE(accountParams.MinimumBalance) {
-		return ErrAccountSavingCoinNotEnough()
+		return types.ErrAccountSavingCoinNotEnough()
 	}
 
 	return accManager.storage.SetBank(ctx, address, bank)
@@ -214,7 +176,7 @@ func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address s
 
 // UpdateJSONMeta - update user JONS meta data
 func (accManager AccountManager) UpdateJSONMeta(
-	ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey, JSONMeta string) sdk.Error {
 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 	if err != nil {
 		return err
@@ -226,42 +188,42 @@ func (accManager AccountManager) UpdateJSONMeta(
 
 // GetTransactionKey - get transaction public key
 func (accManager AccountManager) GetTransactionKey(
-	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
+	ctx sdk.Context, username linotypes.AccountKey) (crypto.PubKey, sdk.Error) {
 	accountInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetTransactionKey(username)
+		return nil, types.ErrGetTransactionKey(username)
 	}
 	return accountInfo.TransactionKey, nil
 }
 
 // GetAppKey - get app public key
 func (accManager AccountManager) GetSigningKey(
-	ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error) {
+	ctx sdk.Context, username linotypes.AccountKey) (crypto.PubKey, sdk.Error) {
 	info, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetSigningKey(username)
+		return nil, types.ErrGetSigningKey(username)
 	}
 	return info.SignningKey, nil
 }
 
-// GetSavingFromBank - get user balance
-func (accManager AccountManager) GetSavingFromUsername(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error) {
+// GetSavingFromUsername - get user balance
+func (accManager AccountManager) GetSavingFromUsername(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
 	info, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return types.Coin{}, ErrGetSavingFromBank(err)
+		return linotypes.Coin{}, types.ErrGetSavingFromBank(err)
 	}
 	bank, err := accManager.storage.GetBank(ctx, info.Address)
 	if err != nil {
-		return types.Coin{}, ErrGetSavingFromBank(err)
+		return linotypes.Coin{}, types.ErrGetSavingFromBank(err)
 	}
 	return bank.Saving, nil
 }
 
 // GetSavingFromBank - get user balance
-func (accManager AccountManager) GetSavingFromAddress(ctx sdk.Context, address sdk.Address) (types.Coin, sdk.Error) {
+func (accManager AccountManager) GetSavingFromAddress(ctx sdk.Context, address sdk.Address) (linotypes.Coin, sdk.Error) {
 	bank, err := accManager.storage.GetBank(ctx, address)
 	if err != nil {
-		return types.Coin{}, ErrGetSavingFromBank(err)
+		return linotypes.Coin{}, types.ErrGetSavingFromBank(err)
 	}
 	return bank.Saving, nil
 }
@@ -270,23 +232,23 @@ func (accManager AccountManager) GetSavingFromAddress(ctx sdk.Context, address s
 func (accManager AccountManager) GetSequence(ctx sdk.Context, address sdk.Address) (uint64, sdk.Error) {
 	bank, err := accManager.storage.GetBank(ctx, address)
 	if err != nil {
-		return 0, ErrGetSequence(err)
+		return 0, types.ErrGetSequence(err)
 	}
 	return bank.Sequence, nil
 }
 
 // GetAddress - get user bank address
-func (accManager AccountManager) GetAddress(ctx sdk.Context, username types.AccountKey) (sdk.Address, sdk.Error) {
+func (accManager AccountManager) GetAddress(ctx sdk.Context, username linotypes.AccountKey) (sdk.AccAddress, sdk.Error) {
 	info, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
-		return nil, ErrGetAddress(err)
+		return nil, types.ErrGetAddress(err)
 	}
 	return info.Address, nil
 }
 
 // GetLastReportOrUpvoteAt - get user last report or upvote time
 // func (accManager AccountManager) GetLastReportOrUpvoteAt(
-// 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+// 	ctx sdk.Context, username linotypes.AccountKey) (int64, sdk.Error) {
 // 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 // 	if err != nil {
 // 		return 0, ErrGetLastReportOrUpvoteAt(err)
@@ -296,7 +258,7 @@ func (accManager AccountManager) GetAddress(ctx sdk.Context, username types.Acco
 
 // UpdateLastReportOrUpvoteAt - update user last report or upvote time to current block time
 // func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
-// 	ctx sdk.Context, username types.AccountKey) sdk.Error {
+// 	ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 // 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 // 	if err != nil {
 // 		return ErrUpdateLastReportOrUpvoteAt(err)
@@ -307,7 +269,7 @@ func (accManager AccountManager) GetAddress(ctx sdk.Context, username types.Acco
 
 // GetLastPostAt - get user last post time
 // func (accManager AccountManager) GetLastPostAt(
-// 	ctx sdk.Context, username types.AccountKey) (int64, sdk.Error) {
+// 	ctx sdk.Context, username linotypes.AccountKey) (int64, sdk.Error) {
 // 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 // 	if err != nil {
 // 		return 0, ErrGetLastPostAt(err)
@@ -317,7 +279,7 @@ func (accManager AccountManager) GetAddress(ctx sdk.Context, username types.Acco
 
 // UpdateLastPostAt - update user last post time to current block time
 // func (accManager AccountManager) UpdateLastPostAt(
-// 	ctx sdk.Context, username types.AccountKey) sdk.Error {
+// 	ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 // 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
 // 	if err != nil {
 // 		return ErrUpdateLastPostAt(err)
@@ -331,7 +293,7 @@ func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error) {
 	bank, err := accManager.storage.GetBank(ctx, addr)
 	if err != nil {
-		return nil, ErrGetFrozenMoneyList(err)
+		return nil, types.ErrGetFrozenMoneyList(err)
 	}
 	return bank.FrozenMoneyList, nil
 }
@@ -340,7 +302,7 @@ func (accManager AccountManager) GetFrozenMoneyList(
 func (accManager AccountManager) IncreaseSequenceByOne(ctx sdk.Context, address sdk.Address) sdk.Error {
 	bank, err := accManager.storage.GetBank(ctx, address)
 	if err != nil {
-		return ErrIncreaseSequenceByOne(err)
+		return types.ErrIncreaseSequenceByOne(err)
 	}
 	bank.Sequence++
 	if err := accManager.storage.SetBank(ctx, address, bank); err != nil {
@@ -351,13 +313,13 @@ func (accManager AccountManager) IncreaseSequenceByOne(ctx sdk.Context, address 
 
 // AuthorizePermission - userA authorize permission to userB (currently only support auth to a developer)
 func (accManager AccountManager) AuthorizePermission(
-	ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey,
-	validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error {
+	ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey,
+	validityPeriod int64, grantLevel linotypes.Permission, amount linotypes.Coin) sdk.Error {
 	if !accManager.storage.DoesAccountExist(ctx, grantTo) {
-		return ErrAccountNotFound(grantTo)
+		return types.ErrAccountNotFound(grantTo)
 	}
-	if grantLevel != types.PreAuthorizationPermission && grantLevel != types.AppPermission {
-		return ErrUnsupportGrantLevel()
+	if grantLevel != linotypes.PreAuthorizationPermission && grantLevel != linotypes.AppPermission {
+		return types.ErrUnsupportGrantLevel()
 	}
 	newGrantPubKey := model.GrantPermission{
 		GrantTo:    grantTo,
@@ -389,7 +351,7 @@ func (accManager AccountManager) AuthorizePermission(
 
 // RevokePermission - revoke permission from a developer
 func (accManager AccountManager) RevokePermission(
-	ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey, permission types.Permission) sdk.Error {
+	ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey, permission linotypes.Permission) sdk.Error {
 	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
 	if err != nil {
 		return err
@@ -410,8 +372,8 @@ func (accManager AccountManager) RevokePermission(
 
 // CheckSigningPubKeyOwner - given a public key, check if it is valid for given permission
 func (accManager AccountManager) CheckSigningPubKeyOwner(
-	ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
-	permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error) {
+	ctx sdk.Context, me linotypes.AccountKey, signKey crypto.PubKey,
+	permission linotypes.Permission, amount linotypes.Coin) (linotypes.AccountKey, sdk.Error) {
 	accInfo, err := accManager.storage.GetInfo(ctx, me)
 	if err != nil {
 		return "", err
@@ -450,12 +412,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 				return "", err
 			}
 			if !reflect.DeepEqual(signKey, txKey) {
-				return "", ErrCheckAuthenticatePubKeyOwner(me)
+				return "", types.ErrCheckAuthenticatePubKeyOwner(me)
 			}
 		}
-		if permission == types.PreAuthorizationPermission {
+		if permission == linotypes.PreAuthorizationPermission {
 			if amount.IsGT(pubKey.Amount) {
-				return "", ErrPreAuthAmountInsufficient(pubKey.GrantTo, pubKey.Amount, amount)
+				return "", types.ErrPreAuthAmountInsufficient(pubKey.GrantTo, pubKey.Amount, amount)
 			}
 			// override previous grant public key
 			if err := accManager.AuthorizePermission(ctx, me, pubKey.GrantTo, pubKey.ExpiresAt-ctx.BlockHeader().Time.Unix(), pubKey.Permission, pubKey.Amount.Minus(amount)); err != nil {
@@ -464,12 +426,12 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		}
 		return pubKey.GrantTo, nil
 	}
-	return "", ErrCheckAuthenticatePubKeyOwner(me)
+	return "", types.ErrCheckAuthenticatePubKeyOwner(me)
 }
 
-// RecoverAccount - reset three public key pairs
+// RecoverAccount - reset two public key pairs
 func (accManager AccountManager) RecoverAccount(
-	ctx sdk.Context, username types.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
@@ -484,7 +446,7 @@ func (accManager AccountManager) RecoverAccount(
 		newBank = &model.AccountBank{}
 	}
 	if newBank.Username != "" {
-		return ErrAddressAlreadyTaken(newAddr)
+		return types.ErrAddressAlreadyTaken(newAddr)
 	}
 
 	oldAddr := accInfo.Address
@@ -498,7 +460,7 @@ func (accManager AccountManager) RecoverAccount(
 
 	newBank.Sequence = newBank.Sequence + oldBank.Sequence
 	newBank.Saving = newBank.Saving.Plus(oldBank.Saving)
-	oldBank.Saving = types.NewCoinFromInt64(0)
+	oldBank.Saving = linotypes.NewCoinFromInt64(0)
 
 	accInfo.Address = newAddr
 	accInfo.SignningKey = newSigningKey
@@ -510,7 +472,7 @@ func (accManager AccountManager) RecoverAccount(
 	}
 	newBank.FrozenMoneyList = append(newBank.FrozenMoneyList, oldBank.FrozenMoneyList...)
 	if int64(len(newBank.FrozenMoneyList)) >= accParams.MaxNumFrozenMoney {
-		return ErrFrozenMoneyListTooLong()
+		return types.ErrFrozenMoneyListTooLong()
 	}
 
 	oldBank.FrozenMoneyList = nil
@@ -535,13 +497,13 @@ func (accManager AccountManager) RecoverAccount(
 // 		return err
 // 	}
 
-// 	currentTimeSlot := ctx.BlockHeader().Time.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
+// 	currentTimeSlot := ctx.BlockHeader().Time.Unix() / linotypes.CoinDayRecordIntervalSec * linotypes.CoinDayRecordIntervalSec
 // 	for len(pendingCoinDayQueue.PendingCoinDays) > 0 {
 // 		pendingCoinDay := pendingCoinDayQueue.PendingCoinDays[0]
 // 		if pendingCoinDay.EndTime <= currentTimeSlot {
 // 			// remove the transaction from queue, clean coin day coin in queue and minus total coin
 // 			// coinDayRatioOfThisTransaction means the ratio of coin day of this transaction was added last time
-// 			coinDayRatioOfThisTransaction := types.NewDecFromRat(
+// 			coinDayRatioOfThisTransaction := linotypes.NewDecFromRat(
 // 				pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
 // 				coinDayParams.SecondsToRecoverCoinDay)
 // 			// remove the coin day in the queue of this transaction
@@ -559,7 +521,7 @@ func (accManager AccountManager) RecoverAccount(
 // 		}
 // 	}
 // 	if len(pendingCoinDayQueue.PendingCoinDays) == 0 {
-// 		pendingCoinDayQueue.TotalCoin = types.NewCoinFromInt64(0)
+// 		pendingCoinDayQueue.TotalCoin = linotypes.NewCoinFromInt64(0)
 // 		pendingCoinDayQueue.TotalCoinDay = sdk.ZeroDec()
 // 	} else {
 // 		// update all pending coin day at the same time
@@ -581,8 +543,8 @@ func (accManager AccountManager) RecoverAccount(
 
 // AddFrozenMoney - add frozen money to user's frozen money list
 func (accManager AccountManager) AddFrozenMoney(
-	ctx sdk.Context, username types.AccountKey,
-	amount types.Coin, start, interval, times int64) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey,
+	amount linotypes.Coin, start, interval, times int64) sdk.Error {
 	info, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
@@ -605,7 +567,7 @@ func (accManager AccountManager) AddFrozenMoney(
 	}
 
 	if int64(len(accountBank.FrozenMoneyList)) >= accParams.MaxNumFrozenMoney {
-		return ErrFrozenMoneyListTooLong()
+		return types.ErrFrozenMoneyListTooLong()
 	}
 
 	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
@@ -626,6 +588,35 @@ func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *
 
 		idx++
 	}
+}
+
+// getter
+func (accManager AccountManager) GetInfo(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountInfo, sdk.Error) {
+	return accManager.storage.GetInfo(ctx, username)
+}
+
+func (accManager AccountManager) GetBank(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountBank, sdk.Error) {
+	info, err := accManager.storage.GetInfo(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	return accManager.storage.GetBank(ctx, info.Address)
+}
+
+func (accManager AccountManager) GetMeta(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountMeta, sdk.Error) {
+	return accManager.storage.GetMeta(ctx, username)
+}
+
+func (accManager AccountManager) GetReward(ctx sdk.Context, username linotypes.AccountKey) (*model.Reward, sdk.Error) {
+	return accManager.storage.GetReward(ctx, username)
+}
+
+func (accManager AccountManager) GetGrantPubKeys(ctx sdk.Context, username, grantTo linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
+	return accManager.storage.GetGrantPermissions(ctx, username, grantTo)
+}
+
+func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
+	return accManager.storage.GetAllGrantPermissions(ctx, username)
 }
 
 // Export -

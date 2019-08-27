@@ -1,4 +1,4 @@
-package account
+package manager
 
 import (
 	"testing"
@@ -69,8 +69,8 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := NewAccountManager(testAccountKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	accManager := NewAccountManager(testAccountKVStoreKey, ph, globalManager)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

@@ -7,12 +7,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	"github.com/lino-network/lino/x/global"
 	vote "github.com/lino-network/lino/x/vote"
 )
 
 // NewHandler - Handle all "validator" type messages.
-func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager vote.VoteManager, gm *global.GlobalManager) sdk.Handler {
+func NewHandler(am acc.AccountKeeper, valManager ValidatorManager, voteManager vote.VoteManager, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
@@ -30,7 +31,7 @@ func NewHandler(am acc.AccountManager, valManager ValidatorManager, voteManager 
 
 func handleDepositMsg(
 	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
-	am acc.AccountManager, msg ValidatorDepositMsg) sdk.Result {
+	am acc.AccountKeeper, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound().Result()
@@ -82,7 +83,7 @@ func handleDepositMsg(
 
 // Handle Withdraw Msg
 func handleWithdrawMsg(
-	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountKeeper,
 	msg ValidatorWithdrawMsg) sdk.Result {
 	coin, err := types.LinoToCoin(msg.Amount)
 	if err != nil {
@@ -111,7 +112,7 @@ func handleWithdrawMsg(
 }
 
 func handleRevokeMsg(
-	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, vm ValidatorManager, gm *global.GlobalManager, am acc.AccountKeeper,
 	msg ValidatorRevokeMsg) sdk.Result {
 	coin, withdrawErr := vm.ValidatorWithdrawAll(ctx, msg.Username)
 	if withdrawErr != nil {
@@ -136,7 +137,7 @@ func handleRevokeMsg(
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountKeeper,
 	times int64, interval int64, coin types.Coin) sdk.Error {
 
 	if err := am.AddFrozenMoney(
@@ -144,7 +145,7 @@ func returnCoinTo(
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ValidatorReturnCoin)
+	events, err := accmn.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ValidatorReturnCoin)
 	if err != nil {
 		return err
 	}

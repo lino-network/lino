@@ -15,6 +15,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	am "github.com/lino-network/lino/x/account/manager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
@@ -35,17 +36,17 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, VoteManager, global.GlobalManager) {
+	acc.AccountKeeper, VoteManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
-	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	accManager := am.NewAccountManager(testAccountKVStoreKey, ph, globalManager)
+	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(am.ReturnCoinEvent{}, "1", nil)
 
 	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
@@ -66,7 +67,7 @@ func getContext(height int64) sdk.Context {
 }
 
 // helper function to create an account for testing purpose
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
+func createTestAccount(ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
 	am.CreateAccount(
 		ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)

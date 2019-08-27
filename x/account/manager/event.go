@@ -1,23 +1,24 @@
-package account
+package manager
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	types "github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/types"
 )
 
 // ReturnCoinEvent - return a certain amount of coin to an account
 type ReturnCoinEvent struct {
-	Username   types.AccountKey         `json:"username"`
-	Amount     types.Coin               `json:"amount"`
-	ReturnType types.TransferDetailType `json:"return_type"`
+	Username   linotypes.AccountKey         `json:"username"`
+	Amount     linotypes.Coin               `json:"amount"`
+	ReturnType linotypes.TransferDetailType `json:"return_type"`
 }
 
 // Execute - execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
 	addr, err := am.GetAddress(ctx, event.Username)
 	if err != nil {
-		return ErrAccountNotFound(event.Username)
+		return types.ErrAccountNotFound(event.Username)
 	}
 
 	if err := am.AddCoinToAddress(ctx, addr, event.Amount); err != nil {
@@ -28,12 +29,12 @@ func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Err
 
 // CreateCoinReturnEvents - create coin return events
 func CreateCoinReturnEvents(
-	ctx sdk.Context, username types.AccountKey, times int64, interval int64, coin types.Coin,
-	returnType types.TransferDetailType) ([]types.Event, sdk.Error) {
-	events := []types.Event{}
+	ctx sdk.Context, username linotypes.AccountKey, times int64, interval int64, coin linotypes.Coin,
+	returnType linotypes.TransferDetailType) ([]linotypes.Event, sdk.Error) {
+	events := []linotypes.Event{}
 	for i := int64(0); i < times; i++ {
 		pieceRat := coin.ToDec().Quo(sdk.NewDec(times - i))
-		piece := types.DecToCoin(pieceRat)
+		piece := linotypes.DecToCoin(pieceRat)
 		coin = coin.Minus(piece)
 
 		event := ReturnCoinEvent{

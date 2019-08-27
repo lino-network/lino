@@ -11,11 +11,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 )
 
 // NewHandler - Handle all "proposal" type messages.
 func NewHandler(
-	am acc.AccountManager, proposalManager ProposalManager,
+	am acc.AccountKeeper, proposalManager ProposalManager,
 	postManager post.PostKeeper, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -35,7 +36,7 @@ func NewHandler(
 }
 
 func handleChangeParamMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
+	ctx sdk.Context, am acc.AccountKeeper, pm ProposalManager, gm *global.GlobalManager,
 	msg ChangeParamMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -72,7 +73,7 @@ func handleChangeParamMsg(
 }
 
 func handleProtocolUpgradeMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
+	ctx sdk.Context, am acc.AccountKeeper, pm ProposalManager, gm *global.GlobalManager,
 	msg ProtocolUpgradeMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -109,7 +110,7 @@ func handleProtocolUpgradeMsg(
 }
 
 func handleContentCensorshipMsg(
-	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
+	ctx sdk.Context, am acc.AccountKeeper, proposalManager ProposalManager,
 	postManager post.PostKeeper, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -179,14 +180,14 @@ func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm 
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountKeeper,
 	times int64, interval int64, coin types.Coin) sdk.Error {
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ProposalReturnCoin)
+	events, err := accmn.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ProposalReturnCoin)
 	if err != nil {
 		return err
 	}

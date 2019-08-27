@@ -17,6 +17,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	val "github.com/lino-network/lino/x/validator"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -38,28 +39,28 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, ProposalManager, post.PostKeeper, vote.VoteManager,
+	sdk.Context, acc.AccountKeeper, ProposalManager, post.PostKeeper, vote.VoteManager,
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, globalManager)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
-	postManager := postmn.NewPostManager(testPostKVStoreKey, accManager, &globalManager, nil, nil, nil)
+	postManager := postmn.NewPostManager(testPostKVStoreKey, am, &globalManager, nil, nil, nil)
 
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
 	err := initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
-	return ctx, accManager, proposalManager, postManager, voteManager, valManager, globalManager
+	return ctx, am, proposalManager, postManager, voteManager, valManager, globalManager
 }
 
 func getContext(height int64) sdk.Context {
@@ -80,7 +81,7 @@ func getContext(height int64) sdk.Context {
 
 // helper function to create an account for testing purpose
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
+	ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
 	am.CreateAccount(ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
 	return types.AccountKey(username)
@@ -88,7 +89,7 @@ func createTestAccount(
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
-	am acc.AccountManager, pm post.PostKeeper, redistributionRate string) (types.AccountKey, string) {
+	am acc.AccountKeeper, pm post.PostKeeper, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
 	msg := &post.CreatePostMsg{
 		PostID:    postID,
