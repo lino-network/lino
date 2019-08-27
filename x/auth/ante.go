@@ -118,13 +118,8 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostK
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-				// donationAmount := GetMsgDonationAmount(msg)
-				// if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update4Height {
-				// 	donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
-				// }
-				// enable no-cost-donation starting BlockchainUpgrade1Update1Height
-				// if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
-				// 	!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
+				// donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
+				// if !donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
 				// 	// get current tps
 				// 	tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
 				// 	if err != nil {

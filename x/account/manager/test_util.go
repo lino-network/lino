@@ -100,7 +100,7 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) (sec
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
 	am.CreateAccount(ctx, types.AccountKey(username), signingKey.PubKey(), txPriv.PubKey())
-	am.AddCoinToAddress(ctx, sdk.AccAddress(txPriv.PubKey().Address()), accParam.RegisterFee)
+	am.AddCoinToUsername(ctx, types.AccountKey(username), accParam.RegisterFee)
 	return signingKey, txPriv
 }
 

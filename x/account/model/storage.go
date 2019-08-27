@@ -277,25 +277,20 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 			k, _ := itr.Key(), itr.Value()
 			username := types.AccountKey(k[1:])
 
-			accInfo, err := as.GetInfo(ctx, username)
+			info, err := as.GetInfo(ctx, username)
 			if err != nil {
 				panic(err)
 			}
 
-			accBank, err := as.GetBank(ctx, accInfo.Address)
+			bank, err := as.GetBank(ctx, info.Address)
 			if err != nil {
 				panic(err)
 			}
 
-			accMeta, err := as.GetMeta(ctx, username)
+			meta, err := as.GetMeta(ctx, username)
 			if err != nil {
 				panic(err)
 			}
-
-			// accPending, err := as.GetPendingCoinDayQueue(ctx, username)
-			// if err != nil {
-			// 	panic(err)
-			// }
 
 			reward, err := as.GetReward(ctx, username)
 			if err != nil {
@@ -305,11 +300,10 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 			// set all states
 			accRow := AccountRow{
 				Username: username,
-				Info:     *accInfo,
-				Bank:     *accBank,
-				Meta:     *accMeta,
+				Info:     *info,
+				Bank:     *bank,
+				Meta:     *meta,
 				Reward:   *reward,
-				// PendingCoinDayQueue: *accPending,
 			}
 			tables.Accounts = append(tables.Accounts, accRow)
 		}

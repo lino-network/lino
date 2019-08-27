@@ -3,11 +3,12 @@ package account
 import (
 	"encoding/hex"
 
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/account/types"
+
+	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -37,8 +38,6 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
 		case QueryAccountReward:
 			return queryAccountReward(ctx, cdc, path[1:], req, am)
-		// case QueryAccountPendingCoinDay:
-		// 	return queryAccountPendingCoinDay(ctx, cdc, path[1:], req, am)
 		case QueryAccountGrantPubKeys:
 			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
 		case QueryAccountAllGrantPubKeys:
@@ -147,21 +146,6 @@ func queryAccountReward(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 	}
 	return res, nil
 }
-
-// func queryAccountPendingCoinDay(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-// 	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-// 		return nil, err
-// 	}
-// 	pendingCoinDay, err := am.storage.GetPendingCoinDayQueue(ctx, linotypes.AccountKey(path[0]))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	res, marshalErr := cdc.MarshalJSON(pendingCoinDay)
-// 	if marshalErr != nil {
-// 		return nil, ErrQueryFailed()
-// 	}
-// 	return res, nil
-// }
 
 func queryAccountGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
 	if err := linotypes.CheckPathContentAndMinLength(path, 2); err != nil {
