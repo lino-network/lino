@@ -34,6 +34,7 @@ func TestBandwidthInfo(t *testing.T) {
 	info := BandwidthInfo{
 		GeneralMsgEMA: types.NewDecFromRat(311, 1),
 		AppMsgEMA:     types.NewDecFromRat(200, 10),
+		MaxMPS:        types.NewDecFromRat(12, 3),
 	}
 	err := bs.SetBandwidthInfo(ctx, &info)
 	assert.Nil(t, err)

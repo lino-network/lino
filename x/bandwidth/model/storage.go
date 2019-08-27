@@ -29,14 +29,26 @@ func NewBandwidthStorage(key sdk.StoreKey) BandwidthStorage {
 }
 
 func (bs BandwidthStorage) InitGenesis(ctx sdk.Context) error {
-	info := &BandwidthInfo{
+	bandwidthInfo := &BandwidthInfo{
 		GeneralMsgEMA: sdk.NewDec(0),
 		AppMsgEMA:     sdk.NewDec(0),
+		MaxMPS:        sdk.NewDec(0),
 	}
 
-	if err := bs.SetBandwidthInfo(ctx, info); err != nil {
+	if err := bs.SetBandwidthInfo(ctx, bandwidthInfo); err != nil {
 		return err
 	}
+
+	curBlockInfo := &CurBlockInfo{
+		TotalMsgSignedByApp:  0,
+		TotalMsgSignedByUser: 0,
+		CurMsgFee:            sdk.NewDec(0),
+	}
+
+	if err := bs.SetCurBlockInfo(ctx, curBlockInfo); err != nil {
+		return err
+	}
+
 	return nil
 }
 

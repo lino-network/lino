@@ -24,6 +24,9 @@ import (
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
+
+	bandwidth "github.com/lino-network/lino/x/bandwidth"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 type TestMsg struct {
@@ -97,6 +100,8 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestPostKVStoreKey := sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey := sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
+	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
+	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -112,10 +117,14 @@ func (suite *AnteTestSuite) SetupTest() {
 	ph.InitParam(ctx)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
+
+	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+	bm := bandwidth.NewBandwidthManager(TestBandwidthKVStoreKey, ph)
+
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm)
+	anteHandler := NewAnteHandler(am, gm, pm, vm, bm)
 
 	suite.am = am
 	suite.pm = pm
