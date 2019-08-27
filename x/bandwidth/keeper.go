@@ -5,16 +5,15 @@ package bandwidth
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/lino-network/lino/types"
 )
 
 type BandwidthKeeper interface {
-	IsAppBandwidthEnough(ctx sdk.Context, username types.AccountKey) bool
-	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) (bool, sdk.Error)
+	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool
 	AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Error
 	AddMsgSignedByUser(ctx sdk.Context, num uint32) sdk.Error
 	ClearCurBlockInfo(ctx sdk.Context) sdk.Error
-	UpdateEMA(ctx sdk.Context) sdk.Error
+	UpdateMaxMPSAndEMA(ctx sdk.Context, lastBlockTime int64) sdk.Error
+	CalculateCurMsgFee(ctx sdk.Context) sdk.Error
 }
 
 var _ BandwidthKeeper = BandwidthManager{}

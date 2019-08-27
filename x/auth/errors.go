@@ -37,3 +37,8 @@ func ErrWrongNumberOfSigners() sdk.Error {
 func ErrUnverifiedBytes(msg string) sdk.Error {
 	return types.NewError(types.CodeUnverifiedBytes, fmt.Sprintf("msg: %v", msg))
 }
+
+// ErrMsgFeeNotEnough - error if the provided message fee is not enough
+func ErrMsgFeeNotEnough() sdk.Error {
+	return types.NewError(types.CodeMsgFeeNotEnough, fmt.Sprint("message fee is not enough"))
+}

@@ -133,7 +133,7 @@ type BandwidthParam struct {
 	GeneralMsgEMAFactor         sdk.Dec    `json:"general_msg_ema_factor"`
 	AppMsgQuotaRatio            sdk.Dec    `json:"app_msg_quota_ratio"`
 	AppMsgEMAFactor             sdk.Dec    `json:"app_msg_ema_factor"`
-	ExpectedMaxMPS              int64      `json:"expected_max_mps"`
+	ExpectedMaxMPS              sdk.Dec    `json:"expected_max_mps"`
 	MsgFeeFactorA               sdk.Dec    `json:"msg_fee_factor_a"`
 	MsgFeeFactorB               sdk.Dec    `json:"msg_fee_factor_b"`
 }
