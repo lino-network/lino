@@ -3,7 +3,6 @@ package bandwidth
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/bandwidth/model"
@@ -25,8 +24,15 @@ func NewBandwidthManager(key sdk.StoreKey, holder param.ParamHolder) BandwidthMa
 func (bm BandwidthManager) IsAppBandwidthEnough(ctx sdk.Context, username types.AccountKey) bool {
 	return false
 }
-func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, username types.AccountKey, fee auth.StdFee) bool {
-	return false
+func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) (bool, sdk.Error) {
+	blockInfo, err := bm.storage.GetCurBlockInfo(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	curFeeCoin := types.DecToCoin(blockInfo.CurMsgFee.Mul(sdk.NewDec(100000)))
+	aa := types.NewCoinFromInt64(fee.Amount.AmountOf("LNO").Int64())
+	return aa.IsGT(curFeeCoin), nil
 }
 
 func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Error {
@@ -99,4 +105,53 @@ func (bm BandwidthManager) UpdateEMA(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	return nil
+}
+
+// calcuate the current msg fee at the begining of each block
+func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context, maxMPS int64) sdk.Error {
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	curMaxMPS := int64(0)
+	if params.ExpectedMaxMPS > maxMPS {
+		curMaxMPS = params.ExpectedMaxMPS
+	} else {
+		curMaxMPS = maxMPS
+	}
+	generalMsgQuota := params.GeneralMsgQuotaRatio.Mul(sdk.NewDec(curMaxMPS))
+
+	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	blockInfo, err := bm.storage.GetCurBlockInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	expResult := bm.approximateExp(bandwidthInfo.GeneralMsgEMA.Sub(generalMsgQuota)).Quo(generalMsgQuota).Mul(params.MsgFeeFactorA)
+	blockInfo.CurMsgFee = expResult.Mul(params.MsgFeeFactorB)
+
+	if err := bm.storage.SetCurBlockInfo(ctx, blockInfo); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bm BandwidthManager) approximateExp(x sdk.Dec) sdk.Dec {
+	x = sdk.NewDec(1).Add(x.Quo(sdk.NewDec(1024)))
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	x = x.Mul(x)
+	return x
 }

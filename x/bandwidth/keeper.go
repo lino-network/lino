@@ -10,7 +10,7 @@ import (
 
 type BandwidthKeeper interface {
 	IsAppBandwidthEnough(ctx sdk.Context, username types.AccountKey) bool
-	IsUserMsgFeeEnough(ctx sdk.Context, username types.AccountKey, fee auth.StdFee) bool
+	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) (bool, sdk.Error)
 	AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Error
 	AddMsgSignedByUser(ctx sdk.Context, num uint32) sdk.Error
 	ClearCurBlockInfo(ctx sdk.Context) sdk.Error

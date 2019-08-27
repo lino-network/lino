@@ -12,6 +12,7 @@ type BandwidthInfo struct {
 
 // CurBlockInfo - stores info about number of tx in current block
 type CurBlockInfo struct {
-	TotalMsgSignedByApp  uint32 `json:"total_tx_signed_by_app"`
-	TotalMsgSignedByUser uint32 `json:"total_tx_signed_by_user"`
+	TotalMsgSignedByApp  uint32  `json:"total_tx_signed_by_app"`
+	TotalMsgSignedByUser uint32  `json:"total_tx_signed_by_user"`
+	CurMsgFee            sdk.Dec `json:"cur_msg_fee"`
 }

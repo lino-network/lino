@@ -119,15 +119,23 @@ type CoinDayParam struct {
 // BandwidthParam - bandwidth parameters
 // SecondsToRecoverBandwidth - seconds for user tps capacity fully charged
 // CapacityUsagePerTransaction - capacity usage per transaction, dynamic changed based on traffic
+// GeneralMsgQuotaRatio - the ratio for reserved general messages per second
 // GeneralMsgEMAFactor - the multiplier for weighting the general message EMA
+// AppMsgQuotaRatio - the ratio for reserved app messages per second
 // AppMsgEMAFactor - the multiplier for weighting the app message EMA
+// ExpectedMaxMPS - the expected max messages per second
 
 type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
 	CapacityUsagePerTransaction types.Coin `json:"capacity_usage_per_transaction"`
 	VirtualCoin                 types.Coin `json:"virtual_coin"`
+	GeneralMsgQuotaRatio        sdk.Dec    `json:"general_msg_quota_ratio"`
 	GeneralMsgEMAFactor         sdk.Dec    `json:"general_msg_ema_factor"`
+	AppMsgQuotaRatio            sdk.Dec    `json:"app_msg_quota_ratio"`
 	AppMsgEMAFactor             sdk.Dec    `json:"app_msg_ema_factor"`
+	ExpectedMaxMPS              int64      `json:"expected_max_mps"`
+	MsgFeeFactorA               sdk.Dec    `json:"msg_fee_factor_a"`
+	MsgFeeFactorB               sdk.Dec    `json:"msg_fee_factor_b"`
 }
 
 // AccountParam - account parameters
