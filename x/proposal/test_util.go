@@ -46,21 +46,21 @@ func setupTest(t *testing.T, height int64) (
 	ph.InitParam(ctx)
 
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, globalManager)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
-	postManager := postmn.NewPostManager(testPostKVStoreKey, am, &globalManager, nil, nil, nil)
+	postManager := postmn.NewPostManager(testPostKVStoreKey, am, &gm, nil, nil, nil)
 
-	cdc := globalManager.WireCodec()
+	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
-	return ctx, am, proposalManager, postManager, voteManager, valManager, globalManager
+	return ctx, am, proposalManager, postManager, voteManager, valManager, gm
 }
 
 func getContext(height int64) sdk.Context {

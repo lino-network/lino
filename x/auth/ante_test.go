@@ -19,6 +19,8 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
@@ -82,7 +84,7 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 
 type AnteTestSuite struct {
 	suite.Suite
-	am   acc.AccountManager
+	am   acc.AccountKeeper
 	pm   post.PostKeeper
 	gm   global.GlobalManager
 	ph   param.ParamHolder
@@ -108,8 +110,8 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
-	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
@@ -184,7 +186,7 @@ func (suite *AnteTestSuite) TestAnteHandlerSigErrors() {
 	// test sig user mismatch
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{0, 0}
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 }
 
 // Test various error cases in the AnteHandler control flow.
@@ -222,7 +224,7 @@ func (suite *AnteTestSuite) TestAnteHandlerNormalTx() {
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test wrong sig number
 	privs, seqs = []crypto.PrivKey{transaction2, transaction1}, []uint64{2, 0}
@@ -256,11 +258,11 @@ func (suite *AnteTestSuite) TestGrantAuthenticationTx() {
 	// test wrong priv key
 	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	privs, seqs = []crypto.PrivKey{transaction3}, []uint64{1}
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.AppPermission, types.NewCoinFromInt64(0))
 	suite.Nil(err)
@@ -283,7 +285,7 @@ func (suite *AnteTestSuite) TestGrantAuthenticationTx() {
 	suite.ctx = suite.ctx.WithBlockHeader(abci.Header{
 		ChainID: "Lino", Height: 2,
 		Time: suite.ctx.BlockHeader().Time.Add(time.Duration(3601) * time.Second)})
-	suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
+	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test pre authorization permission
 	err = suite.am.AuthorizePermission(suite.ctx, user1, user3, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
@@ -308,7 +310,7 @@ func (suite *AnteTestSuite) TestGrantAuthenticationTx() {
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
 	suite.checkInvalidTx(
 		tx,
-		acc.ErrPreAuthAmountInsufficient(
+		acctypes.ErrPreAuthAmountInsufficient(
 			user3, types.NewCoinFromInt64(0), msg.Amount).Result())
 }
 

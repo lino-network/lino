@@ -26,6 +26,7 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder, gm global.Glo
 	return AccountManager{
 		storage:     model.NewAccountStorage(key),
 		paramHolder: holder,
+		gm:          gm,
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
-	am "github.com/lino-network/lino/x/account/manager"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
@@ -40,17 +40,17 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	accManager := am.NewAccountManager(testAccountKVStoreKey, ph, globalManager)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	accManager := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
 
-	cdc := globalManager.WireCodec()
+	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(am.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
-	return ctx, accManager, voteManager, globalManager
+	return ctx, accManager, voteManager, gm
 }
 
 func getContext(height int64) sdk.Context {

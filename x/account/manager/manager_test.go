@@ -1,12 +1,12 @@
 package manager
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
+	acctypes "github.com/lino-network/lino/x/account/types"
 
 	"github.com/stretchr/testify/assert"
 
@@ -247,7 +247,7 @@ func TestMinusCoin(t *testing.T) {
 		{
 			testName:  "minus saving coin from user with limit saving",
 			fromUser:  userWithLimitSaving,
-			expectErr: ErrAccountSavingCoinNotEnough(),
+			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
 			amount:    accParam.RegisterFee.Plus(accParam.RegisterFee),
 			expectBank: model.AccountBank{
 				PubKey:   txKey2.PubKey(),
@@ -258,7 +258,7 @@ func TestMinusCoin(t *testing.T) {
 		{
 			testName:  "minus saving coin exceeds the coin user hold",
 			fromUser:  userWithLimitSaving,
-			expectErr: ErrAccountSavingCoinNotEnough(),
+			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
 			amount:    c100,
 			expectBank: model.AccountBank{
 				PubKey:   txKey2.PubKey(),
@@ -1073,7 +1073,7 @@ func TestAuthorizePermission(t *testing.T) {
 			level:          types.AppPermission,
 			validityPeriod: 1000,
 			amount:         types.NewCoinFromInt64(0),
-			expectResult:   ErrAccountNotFound(nonExistUser),
+			expectResult:   acctypes.ErrAccountNotFound(nonExistUser),
 			expectGrantPubKeys: []*model.GrantPermission{
 				&model.GrantPermission{
 					GrantTo:    user2,
@@ -1126,7 +1126,6 @@ func TestAuthorizePermission(t *testing.T) {
 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: baseTime})
 		err := am.AuthorizePermission(ctx, tc.user, tc.grantTo, tc.validityPeriod, tc.level, tc.amount)
 		if !assert.Equal(t, tc.expectResult, err) {
-			fmt.Println(err)
 			t.Errorf("%s: failed to authorize permission, got err %v", tc.testName, err)
 		}
 

@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +85,7 @@ func TestChangeParamProposal(t *testing.T) {
 			},
 			proposalID:          proposalID2,
 			wantOK:              false,
-			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
+			wantRes:             acctypes.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600,
 			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        nil,
@@ -203,7 +203,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
-			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
+			wantRes:             acctypes.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
 			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,

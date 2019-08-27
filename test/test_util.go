@@ -13,7 +13,9 @@ import (
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
+	acctypes "github.com/lino-network/lino/x/account/types"
+	"github.com/lino-network/lino/x/global"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
@@ -120,11 +122,11 @@ func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocatio
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
+	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
 	saving, err := accManager.GetSavingFromUsername(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
-	// fmt.Println("expect:", expectBalance, saving)
-	assert.Equal(t, expectBalance, saving)
+	assert.Equal(t, expectBalance.Amount.Int64(), saving.Amount.Int64())
 }
 
 // CheckValidatorDeposit - check validator deposit
@@ -177,7 +179,7 @@ func CreateAccount(
 	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
-	registerMsg := acc.NewRegisterMsg(
+	registerMsg := acctypes.NewRegisterMsg(
 		GenesisUser, accountName, types.LNO(numOfLino),
 		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())

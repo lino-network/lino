@@ -129,7 +129,7 @@ func NewLinoBlockchain(
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
-	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, lb.globalManager)
+	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
 	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
