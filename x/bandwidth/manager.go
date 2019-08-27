@@ -1,6 +1,8 @@
 package bandwidth
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/lino-network/lino/param"
@@ -19,6 +21,14 @@ func NewBandwidthManager(key sdk.StoreKey, holder param.ParamHolder) BandwidthMa
 		storage:     model.NewBandwidthStorage(key),
 		paramHolder: holder,
 	}
+}
+
+// InitGenesis - initialize KV Store
+func (bm BandwidthManager) InitGenesis(ctx sdk.Context) error {
+	if err := bm.storage.InitGenesis(ctx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool {
@@ -139,7 +149,7 @@ func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
-	expResult := bm.approximateExp(bandwidthInfo.GeneralMsgEMA.Sub(generalMsgQuota)).Quo(generalMsgQuota).Mul(params.MsgFeeFactorA)
+	expResult := bm.approximateExp(bandwidthInfo.GeneralMsgEMA.Sub(generalMsgQuota).Quo(generalMsgQuota).Mul(params.MsgFeeFactorA))
 	blockInfo.CurMsgFee = expResult.Mul(params.MsgFeeFactorB)
 
 	if err := bm.storage.SetCurBlockInfo(ctx, blockInfo); err != nil {
@@ -149,6 +159,7 @@ func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 }
 
 func (bm BandwidthManager) approximateExp(x sdk.Dec) sdk.Dec {
+	fmt.Println(x)
 	prev := x
 	x = sdk.NewDec(1).Add(x.Abs().Quo(sdk.NewDec(1024)))
 	x = x.Mul(x)

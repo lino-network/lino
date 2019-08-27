@@ -146,7 +146,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
 		AppMsgQuotaRatio:            types.NewDecFromRat(80, 100),
 		AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
-		ExpectedMaxMPS:              types.NewDecFromRat(300, 1),
+		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
 		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 	}
