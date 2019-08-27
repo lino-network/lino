@@ -8,6 +8,7 @@ import (
 var (
 	bandwidthInfoSubstore = []byte{0x00}
 	curBlockInfoSubstore  = []byte{0x01}
+	mpsSubStore           = []byte{0x02}
 )
 
 // BandwidthStorage - bandwidth storage

@@ -17,6 +17,7 @@ const (
 	ParamKVStoreKey        = "param"
 	ProposalKVStoreKey     = "proposal"
 	ReputationV2KVStoreKey = "repv2"
+	BandwidthKVStoreKey    = "bandwidth"
 
 	// Different permission level for msg
 	UnknownPermission                = Permission(0)

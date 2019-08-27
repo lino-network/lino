@@ -3,6 +3,8 @@ package auth
 import (
 	"fmt"
 
+	"github.com/lino-network/lino/x/bandwidth"
+
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 
@@ -11,6 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post"
+	vote "github.com/lino-network/lino/x/vote"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 )
 
 const (
@@ -62,7 +66,8 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKee
 }
 
 // NewAnteHandler - return an AnteHandler
-func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostKeeper) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
+	pm post.PostKeeper, vm vote.VoteKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -112,12 +117,14 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostK
 			permission := msg.GetPermission()
 			msgSigners := msg.GetSigners()
 			consumeAmount := msg.GetConsumeAmount()
+
 			for _, msgSigner := range msgSigners {
 				// check public key is valid to sign this msg
-				_, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
+				signer, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
+
 				// donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
 				// if !donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
 				// 	// get current tps
@@ -130,6 +137,7 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostK
 				// 	// 	return ctx, err.Result(), true
 				// 	// }
 				// }
+
 				// construct sign bytes and verify sequence number.
 				addr, err := am.GetAddress(ctx, types.AccountKey(msgSigner))
 				if err != nil {
@@ -152,6 +160,20 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostK
 					return ctx, err.Result(), true
 				}
 
+				signerDuty := vm.GetVoterDuty(ctx, signer)
+				// TODO(zhimao): bandwidth model for app signed message
+				if signerDuty == votetypes.DutyApp {
+					bm.AddMsgSignedByApp(ctx, 1)
+				} else {
+					// msg fee for general message
+					if !bm.IsUserMsgFeeEnough(ctx, fee) {
+						return ctx, ErrIncorrectStdTxType().Result(), true
+					}
+
+					// TODO(zhimao): minus message fee
+					types.NewCoinFromInt64(fee.Amount.AmountOf("LNO").Int64())
+					bm.AddMsgSignedByUser(ctx, 1)
+				}
 				idx++
 			}
 		}

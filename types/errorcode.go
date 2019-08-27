@@ -31,6 +31,7 @@ const (
 	CodeWrongNumberOfSigners sdk.CodeType = 153
 	CodeInvalidSequence      sdk.CodeType = 154
 	CodeUnverifiedBytes      sdk.CodeType = 155
+	CodeMsgFeeNotEnough      sdk.CodeType = 156
 
 	// ABCI Response Codes
 	CodeGenesisFailed sdk.CodeType = 200

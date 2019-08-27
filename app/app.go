@@ -22,6 +22,7 @@ import (
 	accmn "github.com/lino-network/lino/x/account/manager"
 	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	bandwidth "github.com/lino-network/lino/x/bandwidth"
 	developer "github.com/lino-network/lino/x/developer"
 	devmodel "github.com/lino-network/lino/x/developer/model"
 	globalmodel "github.com/lino-network/lino/x/global/model"
@@ -86,6 +87,7 @@ type LinoBlockchain struct {
 	CapKeyParamStore        *sdk.KVStoreKey
 	CapKeyProposalStore     *sdk.KVStoreKey
 	CapKeyReputationV2Store *sdk.KVStoreKey
+	CapKeyBandwidthStore    *sdk.KVStoreKey
 
 	// manager for different KVStore
 	accountManager    acc.AccountKeeper
@@ -97,6 +99,7 @@ type LinoBlockchain struct {
 	developerManager  developer.DeveloperManager
 	proposalManager   proposal.ProposalManager
 	reputationManager rep.ReputationKeeper
+	bandwidthManager  bandwidth.BandwidthManager
 
 	// global param
 	paramHolder param.ParamHolder
@@ -126,6 +129,7 @@ func NewLinoBlockchain(
 		CapKeyParamStore:        sdk.NewKVStoreKey(types.ParamKVStoreKey),
 		CapKeyProposalStore:     sdk.NewKVStoreKey(types.ProposalKVStoreKey),
 		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
+		CapKeyBandwidthStore:    sdk.NewKVStoreKey(types.BandwidthKVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
@@ -141,6 +145,7 @@ func NewLinoBlockchain(
 
 	// TODO(yumin): update this when price manager is implemented.
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
+	lb.bandwidthManager = bandwidth.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
@@ -177,7 +182,7 @@ func NewLinoBlockchain(
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -458,6 +463,16 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		panic(err)
 	}
 
+	// calculate the new general msg fee for the current block
+	if err := lb.bandwidthManager.CalculateCurMsgFee(ctx); err != nil {
+		panic(err)
+	}
+
+	// clear stats for block info
+	if err := lb.bandwidthManager.ClearCurBlockInfo(ctx); err != nil {
+		panic(err)
+	}
+
 	lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
 	return abci.ResponseBeginBlock{}
@@ -521,6 +536,16 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	if err != nil {
 		panic(err)
 	}
+
+	// update maxMPS and EMA for different msgs
+	lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if err := lb.bandwidthManager.UpdateMaxMPSAndEMA(ctx, lastBlockTime); err != nil {
+		panic(err)
+	}
+
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
 	}
