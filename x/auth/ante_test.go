@@ -20,11 +20,11 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	bandwidth "github.com/lino-network/lino/x/bandwidth"
+	dev "github.com/lino-network/lino/x/developer"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
 	posttypes "github.com/lino-network/lino/x/post/types"
-	vote "github.com/lino-network/lino/x/vote"
 )
 
 type TestMsg struct {
@@ -98,7 +98,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestPostKVStoreKey := sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey := sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
-	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
+	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
 
 	db := dbm.NewMemDB()
@@ -106,6 +106,8 @@ func (suite *AnteTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
@@ -115,12 +117,12 @@ func (suite *AnteTestSuite) SetupTest() {
 	ph.InitParam(ctx)
 	am := acc.NewAccountManager(TestAccountKVStoreKey, ph)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
-	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
 	bm := bandwidth.NewBandwidthManager(TestBandwidthKVStoreKey, ph)
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm, vm, bm)
+	anteHandler := NewAnteHandler(am, gm, pm, dm, bm)
 
 	suite.am = am
 	suite.pm = pm

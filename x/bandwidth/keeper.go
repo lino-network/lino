@@ -14,6 +14,7 @@ type BandwidthKeeper interface {
 	ClearCurBlockInfo(ctx sdk.Context) sdk.Error
 	UpdateMaxMPSAndEMA(ctx sdk.Context, lastBlockTime int64) sdk.Error
 	CalculateCurMsgFee(ctx sdk.Context) sdk.Error
+	InitGenesis(ctx sdk.Context) error
 }
 
 var _ BandwidthKeeper = BandwidthManager{}

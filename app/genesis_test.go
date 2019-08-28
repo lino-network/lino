@@ -103,6 +103,13 @@ func TestGetGenesisJson(t *testing.T) {
 				SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 				CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 				VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
+				GeneralMsgQuotaRatio:        types.NewDecFromRat(20, 100),
+				GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
+				AppMsgQuotaRatio:            types.NewDecFromRat(80, 100),
+				AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
+				ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
+				MsgFeeFactorA:               types.NewDecFromRat(6, 1),
+				MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 			},
 			param.AccountParam{
 				MinimumBalance:               types.NewCoinFromInt64(0),
@@ -120,7 +127,7 @@ func TestGetGenesisJson(t *testing.T) {
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS:                       sdk.NewDec(1000),
+			MaxTPS: sdk.NewDec(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},

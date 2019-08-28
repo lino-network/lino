@@ -97,7 +97,7 @@ type LinoBlockchain struct {
 	developerManager  developer.DeveloperManager
 	proposalManager   proposal.ProposalManager
 	reputationManager rep.ReputationKeeper
-	bandwidthManager  bandwidth.BandwidthManager
+	bandwidthManager  bandwidth.BandwidthKeeper
 
 	// global param
 	paramHolder param.ParamHolder
@@ -173,7 +173,7 @@ func NewLinoBlockchain(
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager, lb.developerManager, lb.bandwidthManager))
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
@@ -310,6 +310,9 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.bandwidthManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
 

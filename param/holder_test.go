@@ -165,8 +165,13 @@ func TestBandwidthParam(t *testing.T) {
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
-		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 20),
-		AppMsgEMAFactor:             types.NewDecFromRat(1, 20),
+		GeneralMsgQuotaRatio:        types.NewDecFromRat(20, 100),
+		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
+		AppMsgQuotaRatio:            types.NewDecFromRat(80, 100),
+		AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
+		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
+		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
+		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 	}
 	err := ph.setBandwidthParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -263,6 +268,13 @@ func TestInitParam(t *testing.T) {
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
+		GeneralMsgQuotaRatio:        types.NewDecFromRat(20, 100),
+		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
+		AppMsgQuotaRatio:            types.NewDecFromRat(80, 100),
+		AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
+		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
+		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
+		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:               types.NewCoinFromInt64(0),
@@ -347,6 +359,13 @@ func TestInitParamFromConfig(t *testing.T) {
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
 		VirtualCoin:                 types.NewCoinFromInt64(1 * types.Decimals),
+		GeneralMsgQuotaRatio:        types.NewDecFromRat(20, 100),
+		GeneralMsgEMAFactor:         types.NewDecFromRat(1, 10),
+		AppMsgQuotaRatio:            types.NewDecFromRat(80, 100),
+		AppMsgEMAFactor:             types.NewDecFromRat(1, 10),
+		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
+		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
+		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:               types.NewCoinFromInt64(0),
