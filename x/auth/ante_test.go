@@ -19,6 +19,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/global"
@@ -26,6 +27,10 @@ import (
 	postmn "github.com/lino-network/lino/x/post/manager"
 
 	bandwidth "github.com/lino-network/lino/x/bandwidth"
+	dev "github.com/lino-network/lino/x/developer"
+	"github.com/lino-network/lino/x/global"
+	post "github.com/lino-network/lino/x/post"
+	postmn "github.com/lino-network/lino/x/post/manager"
 	vote "github.com/lino-network/lino/x/vote"
 )
 
@@ -100,14 +105,17 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestPostKVStoreKey := sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey := sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
-	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
+	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
+	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
@@ -116,15 +124,19 @@ func (suite *AnteTestSuite) SetupTest() {
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 
 	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+
+	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
+
 	bm := bandwidth.NewBandwidthManager(TestBandwidthKVStoreKey, ph)
 
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm, vm, bm)
+	anteHandler := NewAnteHandler(am, gm, pm, dm, bm)
 
 	suite.am = am
 	suite.pm = pm

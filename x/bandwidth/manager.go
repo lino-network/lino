@@ -38,7 +38,7 @@ func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) 
 	}
 
 	curFeeCoin := types.DecToCoin(blockInfo.CurMsgFee.Mul(sdk.NewDec(100000)))
-	providedFee := types.NewCoinFromInt64(fee.Amount.AmountOf("LNO").Int64())
+	providedFee := types.NewCoinFromInt64(fee.Amount.AmountOf("lino").Int64())
 	return providedFee.IsGT(curFeeCoin)
 }
 

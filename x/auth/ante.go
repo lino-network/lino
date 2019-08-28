@@ -12,9 +12,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	dev "github.com/lino-network/lino/x/developer"
 	post "github.com/lino-network/lino/x/post"
-	vote "github.com/lino-network/lino/x/vote"
-	votetypes "github.com/lino-network/lino/x/vote/types"
 )
 
 const (
@@ -66,8 +65,9 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKee
 }
 
 // NewAnteHandler - return an AnteHandler
+
 func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
-	pm post.PostKeeper, vm vote.VoteKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
+	pm post.PostKeeper, dm dev.DeveloperKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -160,18 +160,17 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
 					return ctx, err.Result(), true
 				}
 
-				signerDuty := vm.GetVoterDuty(ctx, signer)
-				// TODO(zhimao): bandwidth model for app signed message
-				if signerDuty == votetypes.DutyApp {
+				// TODO(zhimao): bandwidth model for app signed message, and check affiliate account
+				if dm.DoesDeveloperExist(ctx, signer) {
 					bm.AddMsgSignedByApp(ctx, 1)
 				} else {
 					// msg fee for general message
-					if !bm.IsUserMsgFeeEnough(ctx, fee) {
-						return ctx, ErrIncorrectStdTxType().Result(), true
-					}
+					// if !bm.IsUserMsgFeeEnough(ctx, fee) {
+					// 	return ctx, ErrMsgFeeNotEnough().Result(), true
+					// }
 
 					// TODO(zhimao): minus message fee
-					types.NewCoinFromInt64(fee.Amount.AmountOf("LNO").Int64())
+					types.NewCoinFromInt64(fee.Amount.AmountOf("lino").Int64())
 					bm.AddMsgSignedByUser(ctx, 1)
 				}
 				idx++
