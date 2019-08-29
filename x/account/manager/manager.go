@@ -17,12 +17,12 @@ import (
 // AccountManager - account manager
 type AccountManager struct {
 	storage     model.AccountStorage
-	paramHolder param.ParamHolder
+	paramHolder param.ParamKeeper
 	gm          global.GlobalKeeper
 }
 
 // NewLinoAccount - new account manager
-func NewAccountManager(key sdk.StoreKey, holder param.ParamHolder, gm global.GlobalKeeper) AccountManager {
+func NewAccountManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper) AccountManager {
 	return AccountManager{
 		storage:     model.NewAccountStorage(key),
 		paramHolder: holder,
@@ -132,7 +132,9 @@ func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Addr
 			return err
 		}
 		// if address is not created, created a new one
-		bank = &model.AccountBank{}
+		bank = &model.AccountBank{
+			Saving: linotypes.NewCoinFromInt64(0),
+		}
 	}
 	bank.Saving = bank.Saving.Plus(coin)
 

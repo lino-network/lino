@@ -4,349 +4,479 @@ import (
 	"testing"
 	"time"
 
+	parammodel "github.com/lino-network/lino/param"
+	param "github.com/lino-network/lino/param/mocks"
+	"github.com/lino-network/lino/testsuites"
 	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	global "github.com/lino-network/lino/x/global/mocks"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
-func TestDoesAccountExist(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	if am.DoesAccountExist(ctx, types.AccountKey("user1")) {
-		t.Error("TestDoesAccountExist: user1 has already existed")
-	}
+type AccountManagerTestSuite struct {
+	testsuites.CtxTestSuite
+	am AccountManager
+	ph *param.ParamKeeper
+	// deps
+	global *global.GlobalKeeper
 
-	createTestAccount(ctx, am, "user1")
-	if !am.DoesAccountExist(ctx, types.AccountKey("user1")) {
-		t.Error("TestDoesAccountExist: user1 should exist, but not")
+	// mock data
+	userWithoutBalance model.AccountInfo
+
+	userWithBalance       model.AccountInfo
+	userWithBalanceSaving types.Coin
+
+	unreg model.AccountInfo
+
+	unregSaving types.Coin
+}
+
+func TestAccountManagerTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountManagerTestSuite))
+}
+
+func (suite *AccountManagerTestSuite) SetupTest() {
+	testAccountKey := sdk.NewKVStoreKey("account")
+	suite.SetupCtx(0, time.Unix(0, 0), testAccountKey)
+	suite.ph = &param.ParamKeeper{}
+	suite.global = &global.GlobalKeeper{}
+	suite.am = NewAccountManager(testAccountKey, suite.ph, suite.global)
+
+	// background
+	suite.userWithoutBalance = model.AccountInfo{
+		Username:       linotypes.AccountKey("userwithoutbalance"),
+		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+	}
+	suite.userWithoutBalance.Address = sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address())
+
+	suite.userWithBalance = model.AccountInfo{
+		Username:       linotypes.AccountKey("userwithbalance"),
+		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+	}
+	suite.userWithBalance.Address = sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())
+
+	suite.unreg = model.AccountInfo{
+		Username:       linotypes.AccountKey("unreg"),
+		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+	}
+	suite.unreg.Address = sdk.AccAddress(suite.unreg.TransactionKey.Address())
+
+	suite.userWithBalanceSaving = types.NewCoinFromInt64(1000 * types.Decimals)
+	suite.unregSaving = types.NewCoinFromInt64(1 * types.Decimals)
+
+	suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SignningKey, suite.userWithoutBalance.TransactionKey)
+
+	suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SignningKey, suite.userWithBalance.TransactionKey)
+	suite.am.AddCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
+
+	suite.am.AddCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
+
+	suite.ph.On("GetAccountParam", mock.Anything).Return(&parammodel.AccountParam{
+		RegisterFee:    types.NewCoinFromInt64(100 * types.Decimals),
+		MinimumBalance: types.NewCoinFromInt64(0),
+	}, nil).Maybe()
+
+	// // reg accounts
+	// for _, v := range []linotypes.AccountKey{suite.user1, suite.user2, suite.app1, suite.app2, suite.app3} {
+	// 	suite.am.On("DoesAccountExist", mock.Anything, v).Return(true).Maybe()
+	// }
+	// // unreg accounts
+	// for _, v := range []linotypes.AccountKey{suite.unreg} {
+	// 	suite.am.On("DoesAccountExist", mock.Anything, v).Return(false).Maybe()
+	// }
+
+	// // reg dev
+	// for _, v := range []linotypes.AccountKey{suite.app1, suite.app2, suite.app3} {
+	// 	suite.dev.On("DoesDeveloperExist", mock.Anything, v).Return(true).Maybe()
+	// }
+	// // unreg devs
+	// for _, v := range []linotypes.AccountKey{suite.unreg, suite.user1, suite.user2} {
+	// 	suite.dev.On("DoesDeveloperExist", mock.Anything, v).Return(false).Maybe()
+	// }
+
+	// rate, err := sdk.NewDecFromStr("0.099")
+	// suite.Require().Nil(err)
+	// suite.global.On("GetConsumptionFrictionRate", mock.Anything).Return(rate, nil).Maybe()
+	// suite.rate = rate
+	// // app1, app2 has issued IDA
+	// suite.dev.On("GetIDAPrice", suite.Ctx, suite.app1).Return(linotypes.NewMiniDollar(10),nil)
+	// suite.dev.On("GetIDAPrice", suite.Ctx, suite.app2).Return(linotypes.NewMiniDollar(7),nil)
+}
+
+func (suite *AccountManagerTestSuite) TestDoesAccountExist() {
+	testCases := []struct {
+		testName     string
+		user         linotypes.AccountKey
+		expectResult bool
+	}{
+		{
+			testName:     "user does exists",
+			user:         suite.userWithBalance.Username,
+			expectResult: true,
+		},
+		{
+			testName:     "user doesn't exists",
+			user:         suite.userWithoutBalance.Username,
+			expectResult: true,
+		},
+	}
+	for _, tc := range testCases {
+		res := suite.am.DoesAccountExist(suite.Ctx, tc.user)
+		suite.Equal(
+			tc.expectResult, res,
+			"%s: does account exist for user %s, expect %t, got %t", tc.testName, tc.user, tc.expectResult, res)
 	}
 }
 
-// // https://github.com/lino-network/lino/issues/297
-// func TestAddCoinBundle(t *testing.T) {
-// 	ctx, am, _ := setupTest(t, 1)
-// 	testUser := types.AccountKey("testUser")
-// 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-// 	coinDayParams, _ := am.paramHolder.GetCoinDayParam(ctx)
-
-// 	baseTime := time.Now()
-// 	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-// 	baseTime = time.Unix(baseTimeSlot, 0)
-// 	d1 := time.Duration(types.CoinDayRecordIntervalSec/10) * time.Second
-// 	baseTime1 := baseTime.Add(d1)
-// 	baseTime2 := baseTime1.Add(d1)
-// 	baseTime3 := baseTime2.Add(d1)
-
-// 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime, Height: 1})
-// 	createTestAccount(ctx, am, string(testUser))
-
-// 	testCases := []struct {
-// 		testName                  string
-// 		amount                    types.Coin
-// 		atWhen                    time.Time
-// 		expectBank                model.AccountBank
-// 		expectPendingCoinDayQueue model.PendingCoinDayQueue
-// 	}{
-// 		{
-// 			testName: "add coin to account's saving",
-// 			amount:   c100,
-// 			atWhen:   baseTime,
-// 			expectBank: model.AccountBank{
-// 				Saving:  accParam.RegisterFee.Plus(c100),
-// 				CoinDay: accParam.RegisterFee,
-// 			},
-// 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
-// 				LastUpdatedAt: baseTimeSlot,
-// 				TotalCoinDay:  sdk.ZeroDec(),
-// 				TotalCoin:     c100,
-// 				PendingCoinDays: []model.PendingCoinDay{
-// 					{
-// 						StartTime: baseTimeSlot,
-// 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
-// 						Coin:      c100,
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName: "add coin to same bucket at time 2",
-// 			amount:   c100,
-// 			atWhen:   baseTime2,
-// 			expectBank: model.AccountBank{
-// 				Saving:  accParam.RegisterFee.Plus(c200),
-// 				CoinDay: accParam.RegisterFee,
-// 			},
-// 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
-// 				LastUpdatedAt: baseTimeSlot,
-// 				TotalCoinDay:  sdk.ZeroDec(),
-// 				TotalCoin:     c200,
-// 				PendingCoinDays: []model.PendingCoinDay{
-// 					{
-// 						StartTime: baseTimeSlot,
-// 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
-// 						Coin:      c200,
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName: "add coin to same bucket at time 3",
-// 			amount:   c100,
-// 			atWhen:   baseTime3,
-// 			expectBank: model.AccountBank{
-// 				Saving:  accParam.RegisterFee.Plus(c300),
-// 				CoinDay: accParam.RegisterFee,
-// 			},
-// 			expectPendingCoinDayQueue: model.PendingCoinDayQueue{
-// 				LastUpdatedAt: baseTimeSlot,
-// 				TotalCoinDay:  sdk.ZeroDec(),
-// 				TotalCoin:     c300,
-// 				PendingCoinDays: []model.PendingCoinDay{
-// 					{
-// 						StartTime: baseTimeSlot,
-// 						EndTime:   baseTimeSlot + coinDayParams.SecondsToRecoverCoinDay,
-// 						Coin:      c300,
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
-// 		err := am.AddSavingCoin(
-// 			ctx, testUser, tc.amount, "", "", types.TransferIn)
-
-// 		if err != nil {
-// 			t.Errorf("%s: failed to add coin, got err: %v", tc.testName, err)
-// 			return
-// 		}
-// 		checkBankKVByUsername(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectBank)
-// 		checkPendingCoinDay(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectPendingCoinDayQueue)
-// 	}
-// }
-
-// func TestAddCoin(t *testing.T) {
-// 	ctx, am, _ := setupTest(t, 1)
-// 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-// 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-// 	if err != nil {
-// 		t.Error("TestAddCoin: failed to get coin day param")
-// 	}
-
-// 	fromUser1, fromUser2, testUser :=
-// 		types.AccountKey("fromUser1"), types.AccountKey("fromuser2"), types.AccountKey("testUser")
-
-// 	baseTime := time.Now()
-// 	baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-// 	d1 := time.Duration(coinDayParams.SecondsToRecoverCoinDay/2) * time.Second
-// 	baseTime1 := baseTime.Add(d1)
-// 	baseTime1Slot := baseTime1.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-// 	d2 := time.Duration(coinDayParams.SecondsToRecoverCoinDay+1+types.CoinDayRecordIntervalSec) * time.Second
-// 	baseTime2 := baseTime.Add(d2)
-// 	baseTime2Slot := baseTime2.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-// 	d3 := time.Duration(coinDayParams.SecondsToRecoverCoinDay+1) * time.Second
-// 	baseTime3 := baseTime2.Add(d3)
-
-// 	ctx = ctx.WithBlockHeader(abci.Header{Time: baseTime})
-// 	createTestAccount(ctx, am, string(testUser))
-
-// 	testCases := []struct {
-// 		testName   string
-// 		amount     types.Coin
-// 		expectBank model.AccountBank
-// 		// expectPendingCoinDayQueue model.PendingCoinDayQueue
-// 	}{
-// 		{
-// 			testName: "add coin to account's saving",
-// 			amount:   c100,
-// 			expectBank: model.AccountBank{
-// 				Saving: accParam.RegisterFee.Plus(c100),
-// 			},
-// 		},
-// 		{
-// 			testName: "add coin to exist account's saving while previous tx is still in pending queue",
-// 			amount:   c100,
-// 			expectBank: model.AccountBank{
-// 				Saving: accParam.RegisterFee.Plus(c200),
-// 			},
-// 		},
-// 		{
-// 			testName: "add coin to exist account's saving while previous tx just finished pending",
-// 			amount:   c100,
-// 			expectBank: model.AccountBank{
-// 				Saving: accParam.RegisterFee.Plus(c300),
-// 			},
-// 		},
-// 		{
-// 			testName: "add coin is zero",
-// 			amount:   c0,
-// 			expectBank: model.AccountBank{
-// 				Saving: accParam.RegisterFee.Plus(c300),
-// 			},
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2})
-// 		err = am.AddCoinToUsername(ctx, testUser, tc.amount)
-
-// 		if err != nil {
-// 			t.Errorf("%s: failed to add coin, got err: %v", tc.testName, err)
-// 			return
-// 		}
-// 		checkBankKVByUsername(t, ctx, tc.testName, types.AccountKey(testUser), tc.expectBank)
-// 	}
-// }
-
-func TestMinusCoin(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-
-	userWithSufficientSaving := types.AccountKey("user1")
-	userWithLimitSaving := types.AccountKey("user3")
-	// fromUser, toUser := types.AccountKey("fromUser"), types.AccountKey("toUser")
-
-	// Get the minimum time of this history slot
-	// baseTime := time.Now()
-	// baseTimeSlot := baseTime.Unix() / types.CoinDayRecordIntervalSec * types.CoinDayRecordIntervalSec
-	// baseTime2 := baseTime + coinDayParams.SecondsToRecoverCoinDay + 1
-	// baseTime3 := baseTime + accParam.BalanceHistoryIntervalTime + 1
-
-	_, txKey1 := createTestAccount(ctx, am, string(userWithSufficientSaving))
-	_, txKey2 := createTestAccount(ctx, am, string(userWithLimitSaving))
-
-	err := am.AddCoinToUsername(
-		ctx, userWithSufficientSaving, accParam.RegisterFee)
-	if err != nil {
-		t.Errorf("TestMinusCoin: failed to add saving coin, got err %v", err)
-	}
+func (suite *AccountManagerTestSuite) TestAddCoinToAddress() {
+	userWithBalance := suite.userWithBalance
+	unreg := suite.unreg
+	emptyAddress := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	testCases := []struct {
 		testName   string
-		fromUser   types.AccountKey
-		expectErr  sdk.Error
+		address    sdk.AccAddress
 		amount     types.Coin
-		expectBank model.AccountBank
+		expectBank *model.AccountBank
 	}{
 		{
-			testName:  "minus saving coin from user with sufficient saving",
-			fromUser:  userWithSufficientSaving,
-			expectErr: nil,
-			amount:    coin1,
-			expectBank: model.AccountBank{
-				PubKey:   txKey1.PubKey(),
-				Saving:   accParam.RegisterFee.Plus(accParam.RegisterFee).Minus(coin1),
-				Username: userWithSufficientSaving,
+			testName: "add coin to bank which is linked to username",
+			address:  sdk.AccAddress(userWithBalance.TransactionKey.Address()),
+			amount:   c100,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Plus(c100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
 			},
 		},
 		{
-			testName:  "minus saving coin from user with limit saving",
-			fromUser:  userWithLimitSaving,
+			testName: "add coin to bank which is not linked to username",
+			address:  sdk.AccAddress(unreg.TransactionKey.Address()),
+			amount:   c100,
+			expectBank: &model.AccountBank{
+				Saving: suite.unregSaving.Plus(c100),
+			},
+		},
+		{
+			testName: "add coin to empty bank",
+			address:  emptyAddress,
+			amount:   c100,
+			expectBank: &model.AccountBank{
+				Saving: c100,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := suite.am.AddCoinToAddress(suite.Ctx, tc.address, tc.amount)
+		suite.Nil(err, "%s: failed to add coin, got err: %v", tc.testName, err)
+		suite.checkBankKVByAddress(tc.testName, tc.address, tc.expectBank)
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestAddCoinToUsername() {
+	userWithBalance := suite.userWithBalance
+	unreg := suite.unreg
+
+	testCases := []struct {
+		testName   string
+		username   types.AccountKey
+		amount     types.Coin
+		expectErr  sdk.Error
+		expectBank *model.AccountBank
+	}{
+		{
+			testName:  "add coin to created username",
+			username:  userWithBalance.Username,
+			amount:    c100,
+			expectErr: nil,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Plus(c100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:   "add coin to unregister username",
+			username:   unreg.Username,
+			amount:     c100,
+			expectErr:  model.ErrAccountInfoNotFound(),
+			expectBank: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := suite.am.AddCoinToUsername(suite.Ctx, tc.username, tc.amount)
+		suite.Equal(
+			tc.expectErr, err,
+			"%s: failed to add coin to user %s, expect err %v, got %v",
+			tc.testName, tc.username, tc.expectErr, err)
+		if tc.expectBank != nil {
+			suite.checkBankKVByUsername(tc.testName, tc.username, tc.expectBank)
+		}
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
+	userWithBalance := suite.userWithBalance
+	userWithoutBalance := suite.userWithoutBalance
+	unreg := suite.unreg
+	emptyAddress := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	testCases := []struct {
+		testName   string
+		address    sdk.AccAddress
+		amount     types.Coin
+		expectErr  sdk.Error
+		expectBank *model.AccountBank
+	}{
+		{
+			testName:  "minus coin from address with sufficient balance",
+			address:   userWithBalance.Address,
+			expectErr: nil,
+			amount:    coin100,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:  "minus coin from address without sufficient balance",
+			address:   userWithoutBalance.Address,
 			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
-			amount:    accParam.RegisterFee.Plus(accParam.RegisterFee),
-			expectBank: model.AccountBank{
-				PubKey:   txKey2.PubKey(),
-				Saving:   accParam.RegisterFee,
-				Username: userWithLimitSaving,
+			amount:    coin1,
+			expectBank: &model.AccountBank{
+				PubKey:   userWithoutBalance.TransactionKey,
+				Saving:   types.NewCoinFromInt64(0),
+				Username: userWithoutBalance.Username,
+			},
+		},
+		{
+			testName:  "minus saving coin exceeds the coin address hold",
+			address:   userWithBalance.Address,
+			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
+			amount:    suite.userWithBalanceSaving,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:  "minus saving coin from unregister address",
+			address:   sdk.AccAddress(unreg.TransactionKey.Address()),
+			expectErr: nil,
+			amount:    coin100,
+			expectBank: &model.AccountBank{
+				Saving: suite.unregSaving.Minus(coin100),
+			},
+		},
+		{
+			testName:   "minus saving coin from empty address",
+			address:    emptyAddress,
+			expectErr:  model.ErrAccountBankNotFound(),
+			amount:     coin1,
+			expectBank: nil,
+		},
+	}
+	for _, tc := range testCases {
+		err := suite.am.MinusCoinFromAddress(suite.Ctx, tc.address, tc.amount)
+		suite.Equal(
+			tc.expectErr, err,
+			"%s: failed to minus coin from address %s, expect err %v, got %v",
+			tc.testName, tc.address, tc.expectErr, err)
+		if tc.expectBank != nil {
+			suite.checkBankKVByAddress(tc.testName, tc.address, tc.expectBank)
+		}
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestMinusCoinFromUsername() {
+	userWithBalance := suite.userWithBalance
+	userWithoutBalance := suite.userWithoutBalance
+	unreg := suite.unreg
+
+	testCases := []struct {
+		testName   string
+		username   types.AccountKey
+		amount     types.Coin
+		expectErr  sdk.Error
+		expectBank *model.AccountBank
+	}{
+		{
+			testName:  "minus coin from user with sufficient balance",
+			username:  userWithBalance.Username,
+			expectErr: nil,
+			amount:    coin100,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:  "minus coin from user without sufficient balance",
+			username:  userWithoutBalance.Username,
+			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
+			amount:    coin1,
+			expectBank: &model.AccountBank{
+				PubKey:   userWithoutBalance.TransactionKey,
+				Saving:   types.NewCoinFromInt64(0),
+				Username: userWithoutBalance.Username,
 			},
 		},
 		{
 			testName:  "minus saving coin exceeds the coin user hold",
-			fromUser:  userWithLimitSaving,
+			username:  userWithBalance.Username,
 			expectErr: acctypes.ErrAccountSavingCoinNotEnough(),
-			amount:    c100,
-			expectBank: model.AccountBank{
-				PubKey:   txKey2.PubKey(),
-				Saving:   accParam.RegisterFee,
-				Username: userWithLimitSaving,
+			amount:    suite.userWithBalanceSaving,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
 			},
+		},
+		{
+			testName:   "minus saving coin from unregister account",
+			username:   unreg.Username,
+			expectErr:  acctypes.ErrAccountNotFound(unreg.Username),
+			amount:     coin1,
+			expectBank: nil,
 		},
 	}
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 2})
-		err = am.MinusCoinFromUsername(ctx, tc.fromUser, tc.amount)
-
-		if !assert.Equal(t, tc.expectErr, err) {
-			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectErr)
-		}
-		if tc.expectErr == nil {
-			checkBankKVByUsername(t, ctx, tc.testName, tc.fromUser, tc.expectBank)
+		err := suite.am.MinusCoinFromUsername(suite.Ctx, tc.username, tc.amount)
+		suite.Equal(
+			tc.expectErr, err,
+			"%s: failed to minus coin from user %s, expect err %v, got %v",
+			tc.testName, tc.username, tc.expectErr, err)
+		if tc.expectBank != nil {
+			suite.checkBankKVByUsername(tc.testName, tc.username, tc.expectBank)
 		}
 	}
 }
 
-// func TestCreateAccountNormalCase(t *testing.T) {
-// 	ctx, am, _ := setupTest(t, 1)
-// 	// accParam, _ := am.paramHolder.GetAccountParam(ctx)
-// 	// coinDayParam, _ := am.paramHolder.GetCoinDayParam(ctx)
+func (suite *AccountManagerTestSuite) TestCreateAccount() {
+	userWithBalance := suite.userWithBalance
+	unreg := suite.unreg
 
-// 	// largeAmountRegisterFee := types.NewCoinFromInt64(150000 * types.Decimals)
-// 	testCases := []struct {
-// 		testName string
-// 		username types.AccountKey
-// 	}{
-// 		{
-// 			testName: "zero register fee",
-// 			username: types.AccountKey("test1"),
-// 		},
-// 		{
-// 			testName: "micro register fee",
-// 			username: types.AccountKey("test2"),
-// 		},
-// 		{
-// 			testName: "register fee less than full coin day coin limitation",
-// 			username: types.AccountKey("test3"),
-// 		},
-// 		{
-// 			testName: "register fee much than full coin day coin limitation",
-// 			username: types.AccountKey("test4"),
-// 		},
-// 		{
-// 			testName: "register with large amount of coin",
-// 			username: types.AccountKey("test5"),
-// 		},
-// 	}
-// 	// normal test
-// 	for _, tc := range testCases {
-// 		assert.False(t, am.DoesAccountExist(ctx, tc.username))
-// 		signingPriv := secp256k1.GenPrivKey()
-// 		txPriv := secp256k1.GenPrivKey()
+	txKeyWithEmptyAddress := secp256k1.GenPrivKey().PubKey()
+	signingKey := secp256k1.GenPrivKey().PubKey()
+	txKey := secp256k1.GenPrivKey().PubKey()
 
-// 		err := am.CreateAccount(ctx, tc.username, signingPriv.PubKey(), txPriv.PubKey())
-// 		if err != nil {
-// 			t.Errorf("%v: failed to create account, got err %v", tc.testName, err)
-// 		}
-
-// 		assert.True(t, am.DoesAccountExist(ctx, tc.username))
-// 		bank := model.AccountBank{
-// 			Saving: types.NewCoinFromInt64(0),
-// 		}
-// 		checkBankKVByUsername(t, ctx, tc.testName, tc.username, bank)
-
-// 		accInfo := model.AccountInfo{
-// 			Username:       tc.username,
-// 			CreatedAt:      ctx.BlockHeader().Time.Unix(),
-// 			TransactionKey: txPriv.PubKey(),
-// 			SignningKey:    signingPriv.PubKey(),
-// 		}
-// 		checkAccountInfo(t, ctx, tc.testName, tc.username, accInfo)
-// 		checkAccountMeta(t, ctx, tc.testName, tc.username, model.AccountMeta{})
-
-// 		// reward := model.Reward{
-// 		// 	TotalIncome:     types.NewCoinFromInt64(0),
-// 		// 	OriginalIncome:  types.NewCoinFromInt64(0),
-// 		// 	InflationIncome: types.NewCoinFromInt64(0),
-// 		// 	FrictionIncome:  types.NewCoinFromInt64(0),
-// 		// 	UnclaimReward:   types.NewCoinFromInt64(0),
-// 		// }
-// 		// checkAccountReward(t, ctx, tc.testName, tc.username, reward)
-// 	}
-// }
+	testCases := []struct {
+		testName   string
+		username   types.AccountKey
+		signingKey crypto.PubKey
+		txKey      crypto.PubKey
+		expectErr  sdk.Error
+		expectInfo *model.AccountInfo
+		expectBank *model.AccountBank
+	}{
+		{
+			testName:   "create account with registered username",
+			username:   userWithBalance.Username,
+			signingKey: userWithBalance.SignningKey,
+			txKey:      userWithBalance.TransactionKey,
+			expectErr:  acctypes.ErrAccountAlreadyExists(userWithBalance.Username),
+			expectInfo: &userWithBalance,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving,
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:   "create account with bank linked to other username",
+			username:   unreg.Username,
+			signingKey: unreg.SignningKey,
+			txKey:      userWithBalance.TransactionKey,
+			expectErr:  acctypes.ErrAddressAlreadyTaken(sdk.AccAddress(userWithBalance.TransactionKey.Address())),
+			expectInfo: nil,
+			expectBank: &model.AccountBank{
+				Saving:   suite.userWithBalanceSaving,
+				PubKey:   userWithBalance.TransactionKey,
+				Username: userWithBalance.Username,
+			},
+		},
+		{
+			testName:   "create account with exist address",
+			username:   unreg.Username,
+			signingKey: unreg.SignningKey,
+			txKey:      unreg.TransactionKey,
+			expectErr:  nil,
+			expectInfo: &unreg,
+			expectBank: &model.AccountBank{
+				Saving:   suite.unregSaving,
+				PubKey:   unreg.TransactionKey,
+				Username: unreg.Username,
+			},
+		},
+		{
+			testName:   "create account with empty address",
+			username:   "test1",
+			signingKey: signingKey,
+			txKey:      txKeyWithEmptyAddress,
+			expectErr:  nil,
+			expectInfo: &model.AccountInfo{
+				Username:       "test1",
+				SignningKey:    signingKey,
+				TransactionKey: txKeyWithEmptyAddress,
+				Address:        sdk.AccAddress(txKeyWithEmptyAddress.Address()),
+			},
+			expectBank: &model.AccountBank{
+				Saving:   types.NewCoinFromInt64(0),
+				PubKey:   txKeyWithEmptyAddress,
+				Username: "test1",
+			},
+		},
+		{
+			testName:   "create account without signing key",
+			username:   "test2",
+			signingKey: nil,
+			txKey:      txKey,
+			expectErr:  nil,
+			expectInfo: &model.AccountInfo{
+				Username:       "test2",
+				TransactionKey: txKey,
+				Address:        sdk.AccAddress(txKey.Address()),
+			},
+			expectBank: &model.AccountBank{
+				Saving:   types.NewCoinFromInt64(0),
+				PubKey:   txKey,
+				Username: "test2",
+			},
+		},
+	}
+	// normal test
+	for _, tc := range testCases {
+		err := suite.am.CreateAccount(suite.Ctx, tc.username, tc.signingKey, tc.txKey)
+		suite.Equal(
+			tc.expectErr, err,
+			"%s: failed to create account for user %s, expect err %v, got %v",
+			tc.testName, tc.username, tc.expectErr, err)
+		if tc.expectBank != nil {
+			suite.checkBankKVByAddress(tc.testName, sdk.AccAddress(tc.txKey.Address()), tc.expectBank)
+		}
+		if tc.expectInfo != nil {
+			suite.checkInfoKVByUsername(tc.testName, tc.username, tc.expectInfo)
+		}
+	}
+}
 
 // func TestInvalidCreateAccount(t *testing.T) {
 // 	ctx, am, _ := setupTest(t, 1)
@@ -1325,4 +1455,22 @@ func TestAddFrozenMoney(t *testing.T) {
 			t.Errorf("%s: diff num of frozen money, got %v, want %v", tc.testName, len(accountBank.FrozenMoneyList), tc.expectNumOfFrozenAmount)
 		}
 	}
+}
+
+func (suite *AccountManagerTestSuite) checkInfoKVByUsername(testName string, username types.AccountKey, info *model.AccountInfo) {
+	infoPtr, err := suite.am.storage.GetInfo(suite.Ctx, username)
+	suite.Nil(err, "%s, failed to get info, got err %v", testName, err)
+	suite.Equal(info, infoPtr, "%s: diff info, got %v, want %v", testName, *infoPtr, info)
+}
+
+func (suite *AccountManagerTestSuite) checkBankKVByAddress(testName string, address sdk.AccAddress, bank *model.AccountBank) {
+	bankPtr, err := suite.am.storage.GetBank(suite.Ctx, address)
+	suite.Nil(err, "%s, failed to get account bank, got err %v", testName, err)
+	suite.Equal(bank, bankPtr, "%s: diff bank, got %v, want %v", testName, *bankPtr, bank)
+}
+
+func (suite *AccountManagerTestSuite) checkBankKVByUsername(testName string, username types.AccountKey, bank *model.AccountBank) {
+	info, err := suite.am.storage.GetInfo(suite.Ctx, username)
+	suite.Nil(err, "%s, failed to get info, got err %v", testName, err)
+	suite.checkBankKVByAddress(testName, info.Address, bank)
 }
