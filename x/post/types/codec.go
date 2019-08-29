@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// Register concrete types on wire codec
+// RegisterCodec concrete types on wire codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(CreatePostMsg{}, "lino/createPost", nil)
 	cdc.RegisterConcrete(UpdatePostMsg{}, "lino/updatePost", nil)
@@ -13,7 +13,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(IDADonateMsg{}, "lino/idaDonate", nil)
 }
 
-// module codec
+// ModuleCdc is the module codec
 var ModuleCdc *codec.Codec
 
 func init() {

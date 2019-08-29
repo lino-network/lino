@@ -157,6 +157,7 @@ type DeletePostMsg struct {
 
 var _ types.Msg = DeletePostMsg{}
 
+// NewDeletePostMsg - constructs a DeletePostMsg
 func NewDeletePostMsg(author, postID string) DeletePostMsg {
 	return DeletePostMsg{
 		Author: types.AccountKey(author),
@@ -283,7 +284,7 @@ func (msg DonateMsg) GetConsumeAmount() types.Coin {
 	return coin
 }
 
-// DonateMsg - sent from a user to a post
+// IDADonateMsg - IDA Donation sent from a user to a post
 type IDADonateMsg struct {
 	Username types.AccountKey `json:"username"`
 	App      types.AccountKey `json:"app"`
