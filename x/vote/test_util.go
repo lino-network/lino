@@ -15,7 +15,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
-	rep "github.com/lino-network/lino/x/reputation"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
@@ -26,7 +26,6 @@ var (
 	testVoteKVStoreKey    = sdk.NewKVStoreKey("vote")
 	testGlobalKVStoreKey  = sdk.NewKVStoreKey("global")
 	testParamKVStoreKey   = sdk.NewKVStoreKey("param")
-	testRepKVStoreKey     = sdk.NewKVStoreKey("reputation")
 
 	c100 = types.NewCoinFromInt64(100 * types.Decimals)
 	c500 = types.NewCoinFromInt64(500 * types.Decimals)
@@ -37,22 +36,21 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, VoteManager, global.GlobalManager, rep.ReputationManager) {
+	acc.AccountKeeper, VoteManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	accManager := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
-	repManager := rep.NewReputationManager(testRepKVStoreKey, ph)
 
-	cdc := globalManager.WireCodec()
+	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
-	return ctx, accManager, voteManager, globalManager, repManager
+	return ctx, accManager, voteManager, gm
 }
 
 func getContext(height int64) sdk.Context {
@@ -62,7 +60,6 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(testRepKVStoreKey, sdk.StoreTypeIAVL, db)
 
 	ms.LoadLatestVersion()
 
@@ -70,10 +67,10 @@ func getContext(height int64) sdk.Context {
 }
 
 // helper function to create an account for testing purpose
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
-	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(), initCoin)
+func createTestAccount(ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
+	am.CreateAccount(
+		ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
+	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
 	return types.AccountKey(username)
 }
 

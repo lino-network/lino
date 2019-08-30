@@ -33,6 +33,10 @@
   name = "github.com/tendermint/tendermint"
   revision = "v0.31.5"
 
+[[override]]
+  name = "github.com/tendermint/iavl"
+  version = "=0.12.2"
+
 # XXX(yumin): need to override again here, though already specified in cosmos-sdk's Gopkg.toml.
 # 05/19: cosmos has switched to go mod.
 [[override]]

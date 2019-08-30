@@ -11,12 +11,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 )
 
 // NewHandler - Handle all "proposal" type messages.
 func NewHandler(
-	am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
+	am acc.AccountKeeper, proposalManager ProposalManager,
+	postManager post.PostKeeper, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -35,7 +36,7 @@ func NewHandler(
 }
 
 func handleChangeParamMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
+	ctx sdk.Context, am acc.AccountKeeper, pm ProposalManager, gm *global.GlobalManager,
 	msg ChangeParamMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -59,9 +60,7 @@ func handleChangeParamMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ChangeParamMinDeposit, "",
-		string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ChangeParamMinDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -74,7 +73,7 @@ func handleChangeParamMsg(
 }
 
 func handleProtocolUpgradeMsg(
-	ctx sdk.Context, am acc.AccountManager, pm ProposalManager, gm *global.GlobalManager,
+	ctx sdk.Context, am acc.AccountKeeper, pm ProposalManager, gm *global.GlobalManager,
 	msg ProtocolUpgradeMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
@@ -98,9 +97,7 @@ func handleProtocolUpgradeMsg(
 	}
 
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit,
-		"", string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ProtocolUpgradeMinDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -113,18 +110,14 @@ func handleProtocolUpgradeMsg(
 }
 
 func handleContentCensorshipMsg(
-	ctx sdk.Context, am acc.AccountManager, proposalManager ProposalManager,
-	postManager post.PostManager, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
+	ctx sdk.Context, am acc.AccountKeeper, proposalManager ProposalManager,
+	postManager post.PostKeeper, gm *global.GlobalManager, msg ContentCensorshipMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.GetCreator()) {
 		return ErrAccountNotFound().Result()
 	}
 
 	if !postManager.DoesPostExist(ctx, msg.GetPermlink()) {
 		return ErrPostNotFound().Result()
-	}
-
-	if isDeleted, err := postManager.IsDeleted(ctx, msg.GetPermlink()); isDeleted || err != nil {
-		return ErrCensorshipPostIsDeleted(msg.GetPermlink()).Result()
 	}
 
 	param, err := proposalManager.paramHolder.GetProposalParam(ctx)
@@ -144,9 +137,7 @@ func handleContentCensorshipMsg(
 	//  set a time event to decide the proposal
 	event := proposalManager.CreateDecideProposalEvent(ctx, types.ContentCensorship, proposalID)
 	// minus coin from account and return when deciding the proposal
-	if err = am.MinusSavingCoin(
-		ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit,
-		"", string(proposalID), types.ProposalDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.GetCreator(), param.ContentCensorshipMinDeposit); err != nil {
 		return err.Result()
 	}
 
@@ -189,14 +180,14 @@ func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm 
 }
 
 func returnCoinTo(
-	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountManager,
+	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager, am acc.AccountKeeper,
 	times int64, interval int64, coin types.Coin) sdk.Error {
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ProposalReturnCoin)
+	events, err := accmn.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.ProposalReturnCoin)
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
+	postmn "github.com/lino-network/lino/x/post/manager"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -16,6 +17,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	val "github.com/lino-network/lino/x/validator"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -37,28 +39,28 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (
-	sdk.Context, acc.AccountManager, ProposalManager, post.PostManager, vote.VoteManager,
+	sdk.Context, acc.AccountKeeper, ProposalManager, post.PostKeeper, vote.VoteManager,
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
 
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
-	postManager := post.NewPostManager(testPostKVStoreKey, ph)
+	postManager := postmn.NewPostManager(testPostKVStoreKey, am, &gm, nil, nil, nil)
 
-	cdc := globalManager.WireCodec()
+	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
-	return ctx, accManager, proposalManager, postManager, voteManager, valManager, globalManager
+	return ctx, am, proposalManager, postManager, voteManager, valManager, gm
 }
 
 func getContext(height int64) sdk.Context {
@@ -79,37 +81,25 @@ func getContext(height int64) sdk.Context {
 
 // helper function to create an account for testing purpose
 func createTestAccount(
-	ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
-	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(), initCoin)
+	ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
+	am.CreateAccount(ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
+	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
 	return types.AccountKey(username)
 }
 
 func createTestPost(
 	t *testing.T, ctx sdk.Context, username, postID string, initCoin types.Coin,
-	am acc.AccountManager, pm post.PostManager, redistributionRate string) (types.AccountKey, string) {
+	am acc.AccountKeeper, pm post.PostKeeper, redistributionRate string) (types.AccountKey, string) {
 	user := createTestAccount(ctx, am, username, initCoin)
 	msg := &post.CreatePostMsg{
-		PostID:                  postID,
-		Title:                   string(make([]byte, 50)),
-		Content:                 string(make([]byte, 1000)),
-		Author:                  user,
-		ParentAuthor:            "",
-		ParentPostID:            "",
-		SourceAuthor:            "",
-		SourcePostID:            "",
-		Links:                   []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionRate,
+		PostID:    postID,
+		Title:     string(make([]byte, 50)),
+		Content:   string(make([]byte, 1000)),
+		Author:    user,
+		CreatedBy: user,
 	}
-	splitRate, err := sdk.NewDecFromStr(redistributionRate)
-	assert.Nil(t, err)
 
-	err = pm.CreatePost(
-		ctx, msg.Author, msg.PostID, msg.SourceAuthor, msg.SourcePostID,
-		msg.ParentAuthor, msg.ParentPostID, msg.Content,
-		msg.Title, splitRate, msg.Links)
-
+	err := pm.CreatePost(ctx, msg.Author, msg.PostID, msg.CreatedBy, msg.Content, msg.Title)
 	assert.Nil(t, err)
 	return user, postID
 }

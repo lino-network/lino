@@ -20,7 +20,7 @@ type DecideProposalEvent struct {
 // Execute - execute proposal event, check vote and update status
 func (dpe DecideProposalEvent) Execute(
 	ctx sdk.Context, voteManager vote.VoteManager, valManager val.ValidatorManager,
-	am acc.AccountManager, proposalManager ProposalManager, postManager post.PostManager,
+	am acc.AccountKeeper, proposalManager ProposalManager, postManager post.PostKeeper,
 	gm *global.GlobalManager) sdk.Error {
 	// check it is ongoing proposal
 	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {
@@ -97,7 +97,7 @@ func (dpe DecideProposalEvent) ExecuteChangeParam(
 // ExecuteContentCensorship - delete target post
 func (dpe DecideProposalEvent) ExecuteContentCensorship(
 	ctx sdk.Context, curID types.ProposalKey, proposalManager ProposalManager,
-	postManager post.PostManager) sdk.Error {
+	postManager post.PostKeeper) sdk.Error {
 	permlink, err := proposalManager.GetPermlink(ctx, curID)
 	if err != nil {
 		return err

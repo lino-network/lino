@@ -8,10 +8,8 @@ import (
 
 // GlobalMeta - global statistic information
 type GlobalMeta struct {
-	TotalLinoCoin                 types.Coin `json:"total_lino_coin"`
-	LastYearTotalLinoCoin         types.Coin `json:"last_year_total_lino_coin"`
-	LastYearCumulativeConsumption types.Coin `json:"last_year_cumulative_consumption"`
-	CumulativeConsumption         types.Coin `json:"cumulative_consumption"`
+	TotalLinoCoin         types.Coin `json:"total_lino_coin"`
+	LastYearTotalLinoCoin types.Coin `json:"last_year_total_lino_coin"`
 }
 
 // GlobalTime - global time
@@ -61,19 +59,20 @@ type InflationPool struct {
 // ConsumptionWindow records all content related consumption within the freezing period
 // ConsumptionFreezingPeriodHr is the time content createor can get remain consumption after friction
 type ConsumptionMeta struct {
-	ConsumptionFrictionRate      sdk.Dec    `json:"consumption_friction_rate"`
-	ConsumptionWindow            types.Coin `json:"consumption_window"`
-	ConsumptionRewardPool        types.Coin `json:"consumption_reward_pool"`
-	ConsumptionFreezingPeriodSec int64      `json:"consumption_freezing_period_second"`
+	ConsumptionFrictionRate      sdk.Dec          `json:"consumption_friction_rate"`
+	ConsumptionWindow            types.MiniDollar `json:"consumption_window"`
+	ConsumptionRewardPool        types.Coin       `json:"consumption_reward_pool"`
+	ConsumptionFreezingPeriodSec int64            `json:"consumption_freezing_period_second"`
 }
 
 // ToIR -
 func (c *ConsumptionMeta) ToIR() ConsumptionMetaIR {
 	return ConsumptionMetaIR{
-		ConsumptionFrictionRate:      c.ConsumptionFrictionRate.String(),
-		ConsumptionWindow:            c.ConsumptionWindow,
-		ConsumptionRewardPool:        c.ConsumptionRewardPool,
-		ConsumptionFreezingPeriodSec: c.ConsumptionFreezingPeriodSec,
+		ConsumptionFrictionRate:       c.ConsumptionFrictionRate.String(),
+		ConsumptionWindow:             types.Coin{c.ConsumptionWindow.Int},
+		ConsumptionRewardPool:         c.ConsumptionRewardPool,
+		ConsumptionFreezingPeriodSec:  c.ConsumptionFreezingPeriodSec,
+		IsConsumptionWindowDollarUnit: true,
 	}
 }
 

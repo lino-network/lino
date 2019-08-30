@@ -11,7 +11,7 @@ import (
 
 	"github.com/lino-network/lino/client"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	acctypes "github.com/lino-network/lino/x/account/types"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	wire "github.com/cosmos/cosmos-sdk/codec"
@@ -50,7 +50,7 @@ func sendRegisterTx(cdc *wire.Codec) client.CommandTxCallback {
 		fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 		// // create the message
-		msg := acc.NewRegisterMsg(
+		msg := acctypes.NewRegisterMsg(
 			referrer, name, types.LNO(amount),
 			resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 

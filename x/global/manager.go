@@ -160,18 +160,9 @@ func (gm *GlobalManager) GetConsumptionFrictionRate(ctx sdk.Context) (sdk.Dec, s
 	return consumptionMeta.ConsumptionFrictionRate, nil
 }
 
-// GetConsumption - get this year consumption
-func (gm *GlobalManager) GetConsumption(ctx sdk.Context) (types.Coin, sdk.Error) {
-	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return globalMeta.CumulativeConsumption, nil
-}
-
 // AddFrictionAndRegisterContentRewardEvent - register reward calculation event at 7 days later
 func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
-	ctx sdk.Context, event types.Event, friction types.Coin, evaluate types.Coin) sdk.Error {
+	ctx sdk.Context, event types.Event, friction types.Coin, evaluate types.MiniDollar) sdk.Error {
 	consumptionMeta, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
 		return err
@@ -184,7 +175,7 @@ func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	if err != nil {
 		return err
 	}
-	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Plus(evaluate)
+	consumptionMeta.ConsumptionWindow = types.NewMiniDollarFromInt(consumptionMeta.ConsumptionWindow.Add(evaluate.Int))
 	linoStakeStat.TotalConsumptionFriction = linoStakeStat.TotalConsumptionFriction.Plus(friction)
 	linoStakeStat.UnclaimedFriction = linoStakeStat.UnclaimedFriction.Plus(friction)
 	if err := gm.registerEventAtTime(
@@ -394,22 +385,8 @@ func (gm *GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) s
 	if err != nil {
 		return err
 	}
-	// if last year cumulative consumption is zero, we use the same growth rate as the last year
-	if globalMeta.LastYearCumulativeConsumption.IsZero() {
-		growthRate = globalAllocationParam.GlobalGrowthRate
-	} else {
-		// growthRate = (consumption this year - consumption last year) / consumption last year
-		lastYearConsumptionRat := globalMeta.LastYearCumulativeConsumption.ToDec()
-		thisYearConsumptionRat := globalMeta.CumulativeConsumption.ToDec()
-		consumptionIncrement := thisYearConsumptionRat.Sub(lastYearConsumptionRat)
-		if consumptionIncrement.GTE(lastYearConsumptionRat) {
-			growthRate = sdk.OneDec()
-		} else {
-			growthRate = consumptionIncrement.Quo(lastYearConsumptionRat)
-		}
-	}
-	globalMeta.LastYearCumulativeConsumption = globalMeta.CumulativeConsumption
-	globalMeta.CumulativeConsumption = types.NewCoinFromInt64(0)
+	// TODO(yumin): revisit this part before release, growth rate setting.
+	growthRate = globalAllocationParam.GlobalGrowthRate
 	globalMeta.LastYearTotalLinoCoin = globalMeta.TotalLinoCoin
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
 		return err
@@ -418,8 +395,7 @@ func (gm *GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) s
 }
 
 // GetRewardAndPopFromWindow - after 7 days, one consumption needs to claim its reward from consumption reward pool
-func (gm *GlobalManager) GetRewardAndPopFromWindow(
-	ctx sdk.Context, evaluate types.Coin, penaltyScore sdk.Dec) (types.Coin, sdk.Error) {
+func (gm *GlobalManager) GetRewardAndPopFromWindow(ctx sdk.Context, evaluate types.MiniDollar) (types.Coin, sdk.Error) {
 	if evaluate.IsZero() {
 		return types.NewCoinFromInt64(0), nil
 	}
@@ -433,14 +409,13 @@ func (gm *GlobalManager) GetRewardAndPopFromWindow(
 	consumptionRatio := sdk.ZeroDec()
 	if !consumptionMeta.ConsumptionWindow.ToDec().IsZero() {
 		consumptionRatio =
-			evaluate.ToDec().Mul(sdk.OneDec().Sub(penaltyScore)).Quo(
-				consumptionMeta.ConsumptionWindow.ToDec())
+			evaluate.ToDec().Quo(consumptionMeta.ConsumptionWindow.ToDec())
 	}
 	// reward = (consumption reward pool) * (consumptionRatio)
 	reward := types.DecToCoin(
 		consumptionMeta.ConsumptionRewardPool.ToDec().Mul(consumptionRatio))
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Minus(reward)
-	consumptionMeta.ConsumptionWindow = consumptionMeta.ConsumptionWindow.Minus(evaluate)
+	consumptionMeta.ConsumptionWindow = types.NewMiniDollarFromInt(consumptionMeta.ConsumptionWindow.Sub(evaluate.Int))
 	if err := gm.addTotalLinoCoin(ctx, reward); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
@@ -448,20 +423,6 @@ func (gm *GlobalManager) GetRewardAndPopFromWindow(
 		return types.NewCoinFromInt64(0), err
 	}
 	return reward, nil
-}
-
-// AddConsumption - add consumption to global meta, which is used to compute GDP
-func (gm *GlobalManager) AddConsumption(ctx sdk.Context, coin types.Coin) sdk.Error {
-	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-	if err != nil {
-		return err
-	}
-	globalMeta.CumulativeConsumption = globalMeta.CumulativeConsumption.Plus(coin)
-
-	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
-		return err
-	}
-	return nil
 }
 
 // AddToDeveloperInflationPool - add coin to developer inflation pool
@@ -590,17 +551,6 @@ func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Erro
 		return sdk.ZeroDec(), err
 	}
 	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
-}
-
-// EvaluateConsumption - evaluate consumption
-// XXX(yumin): deprecated, now just return @p coin, need @refactor.
-func (gm *GlobalManager) EvaluateConsumption(
-	coin types.Coin,
-	// ctx sdk.Context, coin types.Coin,
-	// numOfConsumptionOnAuthor int64, created int64,
-	// totalReward types.Coin
-) (types.Coin, sdk.Error) {
-	return coin, nil
 }
 
 // CommitEvent - append event to event list

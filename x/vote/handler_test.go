@@ -12,8 +12,8 @@ import (
 )
 
 func TestVoterDepositBasic(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
-	handler := NewHandler(vm, am, &gm, rm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(vm, am, &gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -25,7 +25,7 @@ func TestVoterDepositBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// check acc1's money has been withdrawn
-	acc1saving, _ := am.GetSavingFromBank(ctx, user1)
+	acc1saving, _ := am.GetSavingFromUsername(ctx, user1)
 	assert.Equal(t, minBalance, acc1saving)
 	assert.Equal(t, true, vm.DoesVoterExist(ctx, user1))
 
@@ -41,8 +41,8 @@ func TestVoterDepositBasic(t *testing.T) {
 }
 
 func TestDelegateBasic(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
-	handler := NewHandler(vm, am, &gm, rm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(vm, am, &gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
@@ -70,7 +70,7 @@ func TestDelegateBasic(t *testing.T) {
 
 	votingPower, _ := vm.GetVotingPower(ctx, "user1")
 	assert.Equal(t, true, votingPower.IsEqual(voteParam.MinStakeIn.Plus(delegatedCoin).Plus(delegatedCoin)))
-	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
+	acc2Balance, _ := am.GetSavingFromUsername(ctx, user2)
 
 	assert.Equal(t, minBalance.Minus(delegatedCoin).Minus(delegatedCoin), acc2Balance)
 
@@ -93,8 +93,8 @@ func TestDelegateBasic(t *testing.T) {
 }
 
 func TestVotingPowerAndStake(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
-	handler := NewHandler(vm, am, &gm, rm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(vm, am, &gm)
 
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(5000 * types.Decimals)
@@ -125,8 +125,8 @@ func TestVotingPowerAndStake(t *testing.T) {
 }
 
 func TestRevokeBasic(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
-	handler := NewHandler(vm, am, &gm, rm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(vm, am, &gm)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	minBalance := types.NewCoinFromInt64(3000 * types.Decimals)
 
@@ -158,7 +158,7 @@ func TestRevokeBasic(t *testing.T) {
 
 	// make sure user3 won't get coins immediately, but user1 power down immediately
 	voter, _ := vm.storage.GetVoter(ctx, "user1")
-	acc3Balance, _ := am.GetSavingFromBank(ctx, user3)
+	acc3Balance, _ := am.GetSavingFromUsername(ctx, user3)
 	_, err := vm.storage.GetDelegation(ctx, "user1", "user3")
 	assert.Equal(t, model.ErrDelegationNotFound(), err)
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
@@ -176,8 +176,8 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
-	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
-	acc2Balance, _ := am.GetSavingFromBank(ctx, user2)
+	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
+	acc2Balance, _ := am.GetSavingFromUsername(ctx, user2)
 	assert.Equal(t, model.ErrDelegationNotFound(), err)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
@@ -190,8 +190,8 @@ func TestRevokeBasic(t *testing.T) {
 }
 
 func TestVoterWithdraw(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
-	handler := NewHandler(vm, am, &gm, rm)
+	ctx, am, vm, gm := setupTest(t, 0)
+	handler := NewHandler(vm, am, &gm)
 	minBalance := types.NewCoinFromInt64(30 * types.Decimals)
 	voteParam, _ := vm.paramHolder.GetVoteParam(ctx)
 	withdraw := types.NewCoinFromInt64(10 * types.Decimals)
@@ -220,7 +220,7 @@ func TestVoterWithdraw(t *testing.T) {
 	// invalid deposit
 	invalidDepositMsg := NewStakeInMsg("1du1i2bdi12bud", coinToString(voteParam.MinStakeIn))
 	res = handler(ctx, invalidDepositMsg)
-	assert.Equal(t, ErrAccountNotFound().Result(), res)
+	assert.Equal(t, ErrAccountNotFound().Result().Code, res.Code)
 
 	msg2 := NewStakeOutMsg("user1", coinToString(minBalance.Plus(voteParam.MinStakeIn)))
 	result2 := handler(ctx, msg2)
@@ -239,11 +239,11 @@ func TestVoterWithdraw(t *testing.T) {
 }
 
 func TestDelegatorWithdraw(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
+	ctx, am, vm, gm := setupTest(t, 0)
 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
-	handler := NewHandler(vm, am, &gm, rm)
+	handler := NewHandler(vm, am, &gm)
 	param, _ := vm.paramHolder.GetVoteParam(ctx)
 	delegatedCoin := param.MinStakeIn
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
@@ -305,7 +305,7 @@ func TestDelegatorWithdraw(t *testing.T) {
 }
 
 func TestAddFrozenMoney(t *testing.T) {
-	ctx, am, vm, gm, _ := setupTest(t, 0)
+	ctx, am, vm, gm := setupTest(t, 0)
 	vm.InitGenesis(ctx)
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
@@ -349,7 +349,11 @@ func TestAddFrozenMoney(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
-		lst, err := am.GetFrozenMoneyList(ctx, user)
+		addr, err := am.GetAddress(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get address, got err %v", tc.testName, err)
+		}
+		lst, err := am.GetFrozenMoneyList(ctx, addr)
 		if err != nil {
 			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
 		}
@@ -369,9 +373,9 @@ func TestAddFrozenMoney(t *testing.T) {
 }
 
 func TestDeleteVoteBasic(t *testing.T) {
-	ctx, am, vm, gm, rm := setupTest(t, 0)
+	ctx, am, vm, gm := setupTest(t, 0)
 	vm.InitGenesis(ctx)
-	handler := NewHandler(vm, am, &gm, rm)
+	handler := NewHandler(vm, am, &gm)
 
 	proposalID1 := types.ProposalKey("1")
 	minBalance := types.NewCoinFromInt64(2000 * types.Decimals)

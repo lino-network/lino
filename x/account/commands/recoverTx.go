@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/lino-network/lino/client"
-	acc "github.com/lino-network/lino/x/account"
+	acctypes "github.com/lino-network/lino/x/account/types"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,7 +41,7 @@ func sendRecoverTx(cdc *wire.Codec) client.CommandTxCallback {
 		fmt.Println("new app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 		// create the message
-		msg := acc.NewRecoverMsg(name, resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
+		msg := acctypes.NewRecoverMsg(name, resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

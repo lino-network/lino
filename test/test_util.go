@@ -13,7 +13,9 @@ import (
 	"github.com/lino-network/lino/app"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
+	acctypes "github.com/lino-network/lino/x/account/types"
+	"github.com/lino-network/lino/x/global"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	post "github.com/lino-network/lino/x/post"
 	val "github.com/lino-network/lino/x/validator"
@@ -92,7 +94,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
@@ -120,11 +122,11 @@ func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocatio
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	accManager := acc.NewAccountManager(lb.CapKeyAccountStore, ph)
-	saving, err :=
-		accManager.GetSavingFromBank(ctx, types.AccountKey(accountName))
+	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
+	saving, err := accManager.GetSavingFromUsername(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
-	assert.Equal(t, expectBalance, saving)
+	assert.Equal(t, expectBalance.Amount.Int64(), saving.Amount.Int64())
 }
 
 // CheckValidatorDeposit - check validator deposit
@@ -177,7 +179,7 @@ func CreateAccount(
 	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
-	registerMsg := acc.NewRegisterMsg(
+	registerMsg := acctypes.NewRegisterMsg(
 		GenesisUser, accountName, types.LNO(numOfLino),
 		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
@@ -241,22 +243,14 @@ func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx 
 // CreateTestPost - create a test post
 func CreateTestPost(
 	t *testing.T, lb *app.LinoBlockchain,
-	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1,
-	sourceAuthor, sourcePostID string,
-	parentAuthor, parentPostID string,
-	redistributionSplitRate string, publishTime int64) {
+	username, postID string, seq uint64, priv secp256k1.PrivKeySecp256k1, publishTime int64) {
 
 	msg := post.CreatePostMsg{
-		PostID:       postID,
-		Title:        string(make([]byte, 50)),
-		Content:      string(make([]byte, 1000)),
-		Author:       types.AccountKey(username),
-		ParentAuthor: types.AccountKey(parentAuthor),
-		ParentPostID: parentPostID,
-		SourceAuthor: types.AccountKey(sourceAuthor),
-		SourcePostID: sourcePostID,
-		Links:        []types.IDToURLMapping{},
-		RedistributionSplitRate: redistributionSplitRate,
+		PostID:    postID,
+		Title:     string(make([]byte, 50)),
+		Content:   string(make([]byte, 1000)),
+		Author:    types.AccountKey(username),
+		CreatedBy: types.AccountKey(username),
 	}
 	SignCheckDeliver(t, lb, msg, seq, true, priv, publishTime)
 }

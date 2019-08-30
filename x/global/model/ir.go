@@ -6,10 +6,14 @@ import (
 
 // ConsumptionMetaIR - ConsumptionFrictionRate rat -> float string
 type ConsumptionMetaIR struct {
-	ConsumptionFrictionRate      string     `json:"consumption_friction_rate"`
+	ConsumptionFrictionRate string `json:"consumption_friction_rate"`
+	// Although ConsumptionWindow's type is types.Coin, its actually type is specified by
+	// IsConsumptionWindowDollarUnit, from upgrade2.
 	ConsumptionWindow            types.Coin `json:"consumption_window"`
 	ConsumptionRewardPool        types.Coin `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodSec int64      `json:"consumption_freezing_period_second"`
+	// since upgrade-2
+	IsConsumptionWindowDollarUnit bool `json:"is_consumption_window_dollar_unit"`
 }
 
 // TPSIR - all from rat to float string

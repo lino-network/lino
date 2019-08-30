@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/proposal/model"
 	"github.com/lino-network/lino/x/vote"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +85,7 @@ func TestChangeParamProposal(t *testing.T) {
 			},
 			proposalID:          proposalID2,
 			wantOK:              false,
-			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
+			wantRes:             acctypes.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600,
 			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        nil,
@@ -101,7 +101,7 @@ func TestChangeParamProposal(t *testing.T) {
 			continue
 		}
 
-		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.msg.GetCreator())
+		creatorBalance, _ := am.GetSavingFromUsername(ctx, tc.msg.GetCreator())
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
 			t.Errorf("%s: diff bank balance: got %v, want %v", tc.testName, creatorBalance, tc.wantCreatorBalance)
 		}
@@ -187,17 +187,6 @@ func TestContentCensorshipProposal(t *testing.T) {
 			wantProposal:        proposal1,
 		},
 		{
-			testName:            "target post is deleted",
-			creator:             user1,
-			permlink:            types.GetPermlink(user2, postID2),
-			proposalID:          proposalID1,
-			wantOK:              false,
-			wantRes:             ErrCensorshipPostIsDeleted(types.GetPermlink(user2, postID2)).Result(),
-			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
-			wantOngoingProposal: []model.Proposal{proposal1},
-			wantProposal:        proposal1,
-		},
-		{
 			testName:            "proposal is invalid",
 			creator:             "invalid",
 			permlink:            types.GetPermlink(user1, postID1),
@@ -214,7 +203,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			permlink:            types.GetPermlink(user1, postID1),
 			proposalID:          proposalID1,
 			wantOK:              false,
-			wantRes:             acc.ErrAccountSavingCoinNotEnough().Result(),
+			wantRes:             acctypes.ErrAccountSavingCoinNotEnough().Result(),
 			wantCreatorBalance:  c4600.Minus(proposalParam.ContentCensorshipMinDeposit),
 			wantOngoingProposal: []model.Proposal{proposal1},
 			wantProposal:        proposal1,
@@ -231,7 +220,7 @@ func TestContentCensorshipProposal(t *testing.T) {
 			continue
 		}
 
-		creatorBalance, _ := am.GetSavingFromBank(ctx, tc.creator)
+		creatorBalance, _ := am.GetSavingFromUsername(ctx, tc.creator)
 		if !creatorBalance.IsEqual(tc.wantCreatorBalance) {
 			t.Errorf("%s: diff bank balance: got %v, want %v",
 				tc.testName, creatorBalance, tc.wantCreatorBalance)
@@ -306,7 +295,12 @@ func TestAddFrozenMoney(t *testing.T) {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
 
-		lst, err := am.GetFrozenMoneyList(ctx, user)
+		addr, err := am.GetAddress(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get address, got err %v", tc.testName, err)
+		}
+
+		lst, err := am.GetFrozenMoneyList(ctx, addr)
 		if err != nil {
 			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
 		}

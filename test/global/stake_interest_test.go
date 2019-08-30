@@ -8,7 +8,7 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	"github.com/lino-network/lino/x/post"
+	posttypes "github.com/lino-network/lino/x/post/types"
 	vote "github.com/lino-network/lino/x/vote"
 )
 
@@ -38,9 +38,9 @@ func TestStakeInterest(t *testing.T) {
 	test.CreateAccount(t, postUserName, lb, 3,
 		secp256k1.GenPrivKey(), postUserPriv, secp256k1.GenPrivKey(), "100000")
 	test.CreateTestPost(
-		t, lb, postUserName, postID, 0, postUserPriv, "", "", "", "", "0", baseTime)
+		t, lb, postUserName, postID, 0, postUserPriv, baseTime)
 
-	donateMsg := post.NewDonateMsg(
+	donateMsg := posttypes.NewDonateMsg(
 		donatorName, types.LNO("2000"), postUserName, postID, "", "")
 	u1StakeInMsg := vote.NewStakeInMsg(u1Name, types.LNO("10000"))
 	u2StakeInMsg := vote.NewStakeInMsg(u2Name, types.LNO("40000"))

@@ -40,6 +40,7 @@ type AccountStorage struct {
 func NewAccountStorage(key sdk.StoreKey) AccountStorage {
 	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
+	sdk.RegisterCodec(cdc)
 
 	return AccountStorage{
 		key: key,
@@ -78,12 +79,10 @@ func (as AccountStorage) SetInfo(ctx sdk.Context, accKey types.AccountKey, accIn
 	return nil
 }
 
-// GetBankFromAccountKey - returns bank info of a specific account, returns error
-// if any.
-func (as AccountStorage) GetBankFromAccountKey(
-	ctx sdk.Context, me types.AccountKey) (*AccountBank, sdk.Error) {
+// GetBank - returns bank info of a specific address, returns error if any.
+func (as AccountStorage) GetBank(ctx sdk.Context, addr sdk.Address) (*AccountBank, sdk.Error) {
 	store := ctx.KVStore(as.key)
-	bankByte := store.Get(GetAccountBankKey(me))
+	bankByte := store.Get(GetAccountBankKey(addr))
 	if bankByte == nil {
 		return nil, ErrAccountBankNotFound()
 	}
@@ -94,15 +93,14 @@ func (as AccountStorage) GetBankFromAccountKey(
 	return bank, nil
 }
 
-// SetBankFromAddress - sets bank info for a given address,
-// returns error if any.
-func (as AccountStorage) SetBankFromAccountKey(ctx sdk.Context, username types.AccountKey, accBank *AccountBank) sdk.Error {
+// SetBank - sets bank info for a given address, returns error if any.
+func (as AccountStorage) SetBank(ctx sdk.Context, addr sdk.Address, accBank *AccountBank) sdk.Error {
 	store := ctx.KVStore(as.key)
 	bankByte, err := as.cdc.MarshalBinaryLengthPrefixed(*accBank)
 	if err != nil {
 		return ErrFailedToMarshalAccountBank(err)
 	}
-	store.Set(GetAccountBankKey(username), bankByte)
+	store.Set(GetAccountBankKey(addr), bankByte)
 	return nil
 }
 
@@ -157,30 +155,30 @@ func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, rew
 }
 
 // GetPendingCoinDayQueue - returns a pending coin day queue for a given address.
-func (as AccountStorage) GetPendingCoinDayQueue(
-	ctx sdk.Context, me types.AccountKey) (*PendingCoinDayQueue, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	pendingCoinDayQueueByte := store.Get(getPendingCoinDayQueueKey(me))
-	if pendingCoinDayQueueByte == nil {
-		return nil, ErrPendingCoinDayQueueNotFound()
-	}
-	queue := new(PendingCoinDayQueue)
-	if err := as.cdc.UnmarshalBinaryLengthPrefixed(pendingCoinDayQueueByte, queue); err != nil {
-		return nil, ErrFailedToUnmarshalPendingCoinDayQueue(err)
-	}
-	return queue, nil
-}
+// func (as AccountStorage) GetPendingCoinDayQueue(
+// 	ctx sdk.Context, me types.AccountKey) (*PendingCoinDayQueue, sdk.Error) {
+// 	store := ctx.KVStore(as.key)
+// 	pendingCoinDayQueueByte := store.Get(getPendingCoinDayQueueKey(me))
+// 	if pendingCoinDayQueueByte == nil {
+// 		return nil, ErrPendingCoinDayQueueNotFound()
+// 	}
+// 	queue := new(PendingCoinDayQueue)
+// 	if err := as.cdc.UnmarshalBinaryLengthPrefixed(pendingCoinDayQueueByte, queue); err != nil {
+// 		return nil, ErrFailedToUnmarshalPendingCoinDayQueue(err)
+// 	}
+// 	return queue, nil
+// }
 
 // SetPendingCoinDayQueue - sets a pending coin day queue for a given username.
-func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.AccountKey, pendingCoinDayQueue *PendingCoinDayQueue) sdk.Error {
-	store := ctx.KVStore(as.key)
-	pendingCoinDayQueueByte, err := as.cdc.MarshalBinaryLengthPrefixed(*pendingCoinDayQueue)
-	if err != nil {
-		return ErrFailedToMarshalPendingCoinDayQueue(err)
-	}
-	store.Set(getPendingCoinDayQueueKey(me), pendingCoinDayQueueByte)
-	return nil
-}
+// func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.AccountKey, pendingCoinDayQueue *PendingCoinDayQueue) sdk.Error {
+// 	store := ctx.KVStore(as.key)
+// 	pendingCoinDayQueueByte, err := as.cdc.MarshalBinaryLengthPrefixed(*pendingCoinDayQueue)
+// 	if err != nil {
+// 		return ErrFailedToMarshalPendingCoinDayQueue(err)
+// 	}
+// 	store.Set(getPendingCoinDayQueueKey(me), pendingCoinDayQueueByte)
+// 	return nil
+// }
 
 // DeleteAllGrantPermissions - deletes all grant pubkeys from a granted user in KV.
 func (as AccountStorage) DeleteAllGrantPermissions(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) {
@@ -242,8 +240,8 @@ func GetAccountInfoKey(accKey types.AccountKey) []byte {
 }
 
 // GetAccountBankKey - "account bank substore" + "username"
-func GetAccountBankKey(accKey types.AccountKey) []byte {
-	return append(accountBankSubstore, accKey...)
+func GetAccountBankKey(addr sdk.Address) []byte {
+	return append(accountBankSubstore, addr.Bytes()...)
 }
 
 // GetAccountMetaKey - "account meta substore" + "username"
@@ -279,22 +277,17 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 			k, _ := itr.Key(), itr.Value()
 			username := types.AccountKey(k[1:])
 
-			accInfo, err := as.GetInfo(ctx, username)
+			info, err := as.GetInfo(ctx, username)
 			if err != nil {
 				panic(err)
 			}
 
-			accBank, err := as.GetBankFromAccountKey(ctx, username)
+			bank, err := as.GetBank(ctx, info.Address)
 			if err != nil {
 				panic(err)
 			}
 
-			accMeta, err := as.GetMeta(ctx, username)
-			if err != nil {
-				panic(err)
-			}
-
-			accPending, err := as.GetPendingCoinDayQueue(ctx, username)
+			meta, err := as.GetMeta(ctx, username)
 			if err != nil {
 				panic(err)
 			}
@@ -306,12 +299,11 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 
 			// set all states
 			accRow := AccountRow{
-				Username:            username,
-				Info:                *accInfo,
-				Bank:                *accBank,
-				Meta:                *accMeta,
-				Reward:              *reward,
-				PendingCoinDayQueue: *accPending,
+				Username: username,
+				Info:     *info,
+				Bank:     *bank,
+				Meta:     *meta,
+				Reward:   *reward,
 			}
 			tables.Accounts = append(tables.Accounts, accRow)
 		}
@@ -353,22 +345,23 @@ func (as AccountStorage) Import(ctx sdk.Context, tb *AccountTablesIR) {
 	}
 	// import table.accounts
 	for _, v := range tb.Accounts {
+		// TODO(yumin): BROKEN NOW, when import, rewards should be added to saving account.
 		err := as.SetInfo(ctx, v.Username, &v.Info)
 		check(err)
-		err = as.SetBankFromAccountKey(ctx, v.Username, &v.Bank)
+		err = as.SetBank(ctx, v.Info.Address, &v.Bank)
 		check(err)
 		err = as.SetMeta(ctx, v.Username, &v.Meta)
 		check(err)
 		err = as.SetReward(ctx, v.Username, &v.Reward)
 		check(err)
-		q := &PendingCoinDayQueue{
-			LastUpdatedAt:   v.PendingCoinDayQueue.LastUpdatedAt,
-			TotalCoinDay:    sdk.MustNewDecFromStr(v.PendingCoinDayQueue.TotalCoinDay),
-			TotalCoin:       v.PendingCoinDayQueue.TotalCoin,
-			PendingCoinDays: v.PendingCoinDayQueue.PendingCoinDays,
-		}
-		err = as.SetPendingCoinDayQueue(ctx, v.Username, q)
-		check(err)
+		// q := &PendingCoinDayQueue{
+		// 	LastUpdatedAt:   v.PendingCoinDayQueue.LastUpdatedAt,
+		// 	TotalCoinDay:    sdk.MustNewDecFromStr(v.PendingCoinDayQueue.TotalCoinDay),
+		// 	TotalCoin:       v.PendingCoinDayQueue.TotalCoin,
+		// 	PendingCoinDays: v.PendingCoinDayQueue.PendingCoinDays,
+		// }
+		// err = as.SetPendingCoinDayQueue(ctx, v.Username, q)
+		// check(err)
 	}
 	// AccountGrantPubKeys are not imported here and should and is done in manager.
 }
@@ -387,7 +380,7 @@ func (as AccountStorage) IterateAccounts(ctx sdk.Context, process func(AccountIn
 		if err != nil {
 			panic(err)
 		}
-		accBank, err := as.GetBankFromAccountKey(ctx, types.AccountKey(val))
+		accBank, err := as.GetBank(ctx, accInfo.Address)
 		if err != nil {
 			panic(err)
 		}
