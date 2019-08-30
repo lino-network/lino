@@ -1,7 +1,7 @@
 package types
 
 const (
-	// module name
+	// ModuleName is module name
 	ModuleName = "post"
 
 	// RouterKey is the message route for slashing

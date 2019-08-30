@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	memo1       = "test memo"
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
 
 	// len of 101
@@ -330,6 +331,161 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgSigners() {
 	}
 }
 
+func (suite *PostMsgTestSuite) TestUpdatePostValidateBasic() {
+	author := types.AccountKey("TestAuthor")
+	testCases := []struct {
+		testName string
+		msg      UpdatePostMsg
+		expected sdk.Error
+	}{
+		{
+			testName: "correct input",
+			msg: UpdatePostMsg{
+				Author:  author,
+				PostID:  "TestPostID",
+				Title:   "TestTitle",
+				Content: "TestContent",
+			},
+			expected: nil,
+		},
+		{
+			testName: "should throw error after failing post basic check",
+			msg: UpdatePostMsg{
+				Author:  types.AccountKey(""),
+				PostID:  "TestPostID",
+				Title:   "TestTitle",
+				Content: "TestContent",
+			},
+			expected: ErrNoAuthor(),
+		},
+	}
+	for _, c := range testCases {
+		suite.Equal(c.expected, c.msg.ValidateBasic())
+	}
+}
+
+func (suite *PostMsgTestSuite) TestDeletePostValidateBasic() {
+	author := types.AccountKey("TestAuthor")
+	testCases := []struct {
+		testName string
+		msg      DeletePostMsg
+		expected sdk.Error
+	}{
+		{
+			testName: "correct input",
+			msg: DeletePostMsg{
+				Author: author,
+				PostID: "TestPostID",
+			},
+			expected: nil,
+		},
+		{
+			testName: "should throw error if author is empty",
+			msg: DeletePostMsg{
+				Author: types.AccountKey(""),
+				PostID: "TestPostID",
+			},
+			expected: ErrNoAuthor(),
+		},
+		{
+			testName: "should throw error if postID is empty",
+			msg: DeletePostMsg{
+				Author: author,
+				PostID: "",
+			},
+			expected: ErrNoPostID(),
+		},
+	}
+	for _, c := range testCases {
+		suite.Equal(c.expected, c.msg.ValidateBasic())
+	}
+}
+
+func (suite *PostMsgTestSuite) TestDonateMsgValidateBasic() {
+	testCases := []struct {
+		testName string
+		msg      DonateMsg
+		expected sdk.Error
+	}{
+		{
+			testName: "normal case",
+			msg:      NewDonateMsg("test", types.LNO("1"), "author", "postID", "", memo1),
+			expected: nil,
+		},
+		{
+			testName: "no username",
+			msg:      NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
+			expected: ErrNoUsername(),
+		},
+		{
+			testName: "zero coin is less than lower bound",
+			msg:      NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
+			expected: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName: "negative coin is less than lower bound",
+			msg:      NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
+			expected: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+		{
+			testName: "invalid target - no post id",
+			msg:      NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid target - no author",
+			msg:      NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid target - no author and post id",
+			msg:      NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid memo",
+			msg:      NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
+			expected: ErrInvalidMemo(),
+		},
+		{
+			testName: "utf8 memo is too long",
+			msg:      NewDonateMsg("test", types.LNO("1"), "author", "postID", "", tooLongOfUTF8Memo),
+			expected: ErrInvalidMemo(),
+		},
+	}
+	for _, c := range testCases {
+		suite.Equal(c.expected, c.msg.ValidateBasic())
+	}
+}
+
+func (suite *PostMsgTestSuite) TestDonateMsgConsumeAmount() {
+	testCases := []struct {
+		testName string
+		msg      DonateMsg
+		expected types.Coin
+	}{
+		{
+			testName: "donateMsg",
+			msg: NewDonateMsg(
+				"test", types.LNO("1"),
+				"author", "postID", "", memo1),
+			expected: types.NewCoinFromInt64(1 * types.Decimals),
+		},
+	}
+	for _, c := range testCases {
+		suite.Equal(c.expected, c.msg.GetConsumeAmount())
+	}
+}
+
+// func (suite *PostMsgTestSuite) TestIDADonateMsgValidateBasic() {
+// 	testCases := []struct {
+// 		testName string
+// 		msg IDADonateMsg
+// 		expected sdk.Error
+// 	}{
+// 		{
+// 			testName: "
+
 // func TestUpdatePostMsg(t *testing.T) {
 // 	testCases := []struct {
 // 		testName       string
@@ -447,67 +603,6 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgSigners() {
 // 			if got.Code() != tc.wantErrCode {
 // 				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, got, tc.wantErrCode)
 // 			}
-// 		}
-// 	}
-// }
-
-// func TestDonationMsg(t *testing.T) {
-// 	testCases := []struct {
-// 		testName      string
-// 		donateMsg     DonateMsg
-// 		expectedError sdk.Error
-// 	}{
-// 		{
-// 			testName:      "normal case",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", memo1),
-// 			expectedError: nil,
-// 		},
-// 		{
-// 			testName:      "no username",
-// 			donateMsg:     NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
-// 			expectedError: ErrNoUsername(),
-// 		},
-// 		{
-// 			testName:      "zero coin is less than lower bound",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("0"), "author", "postID", "", memo1),
-// 			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
-// 		},
-// 		{
-// 			testName:      "negative coin is less than lower bound",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("-1"), "author", "postID", "", memo1),
-// 			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
-// 		},
-// 		{
-// 			testName:      "invalid target - no post id",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "", "", memo1),
-// 			expectedError: ErrInvalidTarget(),
-// 		},
-// 		{
-// 			testName:      "invalid target - no author",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "postID", "", memo1),
-// 			expectedError: ErrInvalidTarget(),
-// 		},
-// 		{
-// 			testName:      "invalid target - no author and post id",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "", "", "", memo1),
-// 			expectedError: ErrInvalidTarget(),
-// 		},
-// 		{
-// 			testName:      "invalid memo",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
-// 			expectedError: ErrInvalidMemo(),
-// 		},
-// 		{
-// 			testName:      "utf8 memo is too long",
-// 			donateMsg:     NewDonateMsg("test", types.LNO("1"), "author", "postID", "", tooLongOfUTF8Memo),
-// 			expectedError: ErrInvalidMemo(),
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		result := tc.donateMsg.ValidateBasic()
-// 		if !assert.Equal(t, tc.expectedError, result) {
-// 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 // 		}
 // 	}
 // }
