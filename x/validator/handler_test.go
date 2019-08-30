@@ -33,7 +33,7 @@ func TestRegisterBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
+	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
 	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
@@ -297,7 +297,7 @@ func TestDepositBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result)
 
 	// check acc1's money has been withdrawn
-	acc1Balance, _ := am.GetSavingFromBank(ctx, user1)
+	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
 	assert.Equal(t, acc1Balance, minBalance)
 	assert.Equal(t, true, valManager.DoesValidatorExist(ctx, user1))
 
@@ -541,7 +541,11 @@ func TestAddFrozenMoney(t *testing.T) {
 			t.Errorf("%s: failed to return coin, got err %v", tc.testName, err)
 		}
 
-		lst, err := am.GetFrozenMoneyList(ctx, user)
+		addr, err := am.GetAddress(ctx, user)
+		if err != nil {
+			t.Errorf("%s: failed to get address, got err %v", tc.testName, err)
+		}
+		lst, err := am.GetFrozenMoneyList(ctx, addr)
 		if err != nil {
 			t.Errorf("%s: failed to get frozen money list, got err %v", tc.testName, err)
 		}

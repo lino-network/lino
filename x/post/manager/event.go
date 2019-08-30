@@ -39,7 +39,6 @@ func (event RewardEvent) Execute(ctx sdk.Context, pm PostManager) sdk.Error {
 	}
 
 	// previsously rewards were added to account's reward, now it's added directly to balance.
-	err = pm.am.AddSavingCoin(
-		ctx, event.PostAuthor, reward, event.PostAuthor, "", linotypes.ClaimReward)
+	err = pm.am.AddCoinToUsername(ctx, event.PostAuthor, reward)
 	return err
 }

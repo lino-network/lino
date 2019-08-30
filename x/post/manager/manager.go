@@ -173,14 +173,12 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		return err
 	}
 	// memo is deprecated.
-	_, err = pm.am.MinusSavingCoinWithFullCoinDay(
-		ctx, from, amount, author, "", linotypes.DonationOut)
+	err = pm.am.MinusCoinFromUsername(ctx, from, amount)
 	if err != nil {
 		return err
 	}
 	directDeposit := amount.Minus(frictionCoin)
-	if err := pm.am.AddSavingCoin(
-		ctx, author, directDeposit, from, "", linotypes.DonationIn); err != nil {
+	if err := pm.am.AddCoinToUsername(ctx, author, directDeposit); err != nil {
 		return err
 	}
 	return nil

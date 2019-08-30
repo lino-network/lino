@@ -167,7 +167,7 @@ func TestGenesisAcc(t *testing.T) {
 			expectBalance = expectBalance.Minus(param.DeveloperMinDeposit)
 		}
 		saving, err :=
-			lb.accountManager.GetSavingFromBank(ctx, types.AccountKey(acc.genesisAccountName))
+			lb.accountManager.GetSavingFromUsername(ctx, types.AccountKey(acc.genesisAccountName))
 		assert.Nil(t, err)
 		assert.Equal(t, expectBalance, saving)
 	}
@@ -325,7 +325,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 		expectBalanceList[i] = expectBalanceList[i].Plus(inflation)
 		inflationForValidator = inflationForValidator.Minus(inflation)
 		saving, err :=
-			lb.accountManager.GetSavingFromBank(
+			lb.accountManager.GetSavingFromUsername(
 				ctx, types.AccountKey("validator"+strconv.Itoa(i)))
 		assert.Nil(t, err)
 		assert.Equal(t, expectBalanceList[i], saving)
@@ -443,9 +443,8 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		totalWeight := int64(0)
 		for i := 0; i < cs.numberOfInfraProvider; i++ {
 			err := lb.accountManager.CreateAccount(
-				ctx, "", types.AccountKey("infra"+strconv.Itoa(i)),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), types.NewCoinFromInt64(0))
+				ctx, types.AccountKey("infra"+strconv.Itoa(i)),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 			if err != nil {
 				t.Errorf("%s: failed to register account, got err %v", testName, err)
 			}
@@ -483,7 +482,7 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		actualInflation := types.NewCoinFromInt64(0)
 		for i := 0; i < cs.numberOfInfraProvider; i++ {
 			saving, err :=
-				lb.accountManager.GetSavingFromBank(
+				lb.accountManager.GetSavingFromUsername(
 					ctx, types.AccountKey("infra"+strconv.Itoa(i)))
 			assert.Nil(t, err)
 			var inflation types.Coin
@@ -601,9 +600,8 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 		totalConsumption := types.NewCoinFromInt64(0)
 		for i := 0; i < cs.numberOfDevelopers; i++ {
 			err := lb.accountManager.CreateAccount(
-				ctx, "", types.AccountKey("dev"+strconv.Itoa(i)),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), types.NewCoinFromInt64(0))
+				ctx, types.AccountKey("dev"+strconv.Itoa(i)),
+				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 			if err != nil {
 				t.Errorf("%s: failed to register account, got err %v", testName, err)
 			}
@@ -642,7 +640,7 @@ func TestDistributeInflationToDevelopers(t *testing.T) {
 		actualInflation := types.NewCoinFromInt64(0)
 		for i := 0; i < cs.numberOfDevelopers; i++ {
 			saving, err :=
-				lb.accountManager.GetSavingFromBank(
+				lb.accountManager.GetSavingFromUsername(
 					ctx, types.AccountKey("dev"+strconv.Itoa(i)))
 			assert.Nil(t, err)
 			var inflation types.Coin

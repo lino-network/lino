@@ -6,7 +6,7 @@ import (
 
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
-	acc "github.com/lino-network/lino/x/account"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
@@ -19,7 +19,7 @@ func TestTransferToAccount(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
 
-	transferMsg := acc.NewTransferMsg(
+	transferMsg := acctypes.NewTransferMsg(
 		test.GenesisUser, newAccountName, types.LNO("200"), "")
 
 	test.SignCheckDeliver(t, lb, transferMsg, 1, true, test.GenesisTransactionPriv, baseTime)

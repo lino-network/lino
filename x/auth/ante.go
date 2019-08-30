@@ -33,7 +33,7 @@ func GetMsgDonationAmount(msg types.Msg) types.Coin {
 
 // GetMsgDonationValidAmount - return the min of (amount of donation in of @p msg, saving)
 // if not donation, return 0.
-func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountManager, pm post.PostKeeper) types.Coin {
+func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKeeper, pm post.PostKeeper) types.Coin {
 	zero := types.NewCoinFromInt64(0)
 	donation, ok := msg.(post.DonateMsg)
 	if !ok {
@@ -49,7 +49,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 		return zero
 	}
 
-	saving, err := am.GetSavingFromBank(ctx, donation.Username)
+	saving, err := am.GetSavingFromUsername(ctx, donation.Username)
 	if err != nil {
 		return types.NewCoinFromInt64(0)
 	}
@@ -62,8 +62,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountMan
 }
 
 // NewAnteHandler - return an AnteHandler
-func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
-	pm post.PostKeeper) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager, pm post.PostKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -119,25 +118,24 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-				donationAmount := GetMsgDonationAmount(msg)
-				if ctx.BlockHeader().Height >= types.BlockchainUpgrade1Update4Height {
-					donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
-				}
-				// enable no-cost-donation starting BlockchainUpgrade1Update1Height
-				if ctx.BlockHeader().Height < types.BlockchainUpgrade1Update1Height ||
-					!donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
-					// get current tps
-					tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-					if err != nil {
-						return ctx, err.Result(), true
-					}
-					// check user tps capacity
-					if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
-						return ctx, err.Result(), true
-					}
-				}
+				// donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
+				// if !donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
+				// 	// get current tps
+				// 	tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
+				// 	if err != nil {
+				// 		return ctx, err.Result(), true
+				// 	}
+				// 	// check user tps capacity
+				// 	// if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
+				// 	// 	return ctx, err.Result(), true
+				// 	// }
+				// }
 				// construct sign bytes and verify sequence number.
-				seq, err := am.GetSequence(ctx, types.AccountKey(msgSigner))
+				addr, err := am.GetAddress(ctx, types.AccountKey(msgSigner))
+				if err != nil {
+					return ctx, err.Result(), true
+				}
+				seq, err := am.GetSequence(ctx, addr)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
@@ -149,7 +147,7 @@ func NewAnteHandler(am acc.AccountManager, gm global.GlobalManager,
 							ctx.ChainID(), seq)).Result(), true
 				}
 				// succ
-				if err := am.IncreaseSequenceByOne(ctx, types.AccountKey(msgSigner)); err != nil {
+				if err := am.IncreaseSequenceByOne(ctx, addr); err != nil {
 					// XXX(yumin): cosmos anth panic here, should we?
 					return ctx, err.Result(), true
 				}

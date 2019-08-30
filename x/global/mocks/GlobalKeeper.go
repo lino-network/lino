@@ -27,6 +27,22 @@ func (_m *GlobalKeeper) AddFrictionAndRegisterContentRewardEvent(ctx types.Conte
 	return r0
 }
 
+// AddToValidatorInflationPool provides a mock function with given fields: ctx, coin
+func (_m *GlobalKeeper) AddToValidatorInflationPool(ctx types.Context, coin linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, coin)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, coin)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // GetConsumptionFrictionRate provides a mock function with given fields: ctx
 func (_m *GlobalKeeper) GetConsumptionFrictionRate(ctx types.Context) (types.Dec, types.Error) {
 	ret := _m.Called(ctx)
