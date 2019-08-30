@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/lino-network/lino/x/account/model"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -66,9 +68,12 @@ func (c commander) getBankCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide an address")
 	}
 
-	username := types.AccountKey(args[0])
+	addr, err := hex.DecodeString(args[0])
+	if err != nil {
+		return err
+	}
 
-	res, err := ctx.Query(model.GetAccountBankKey(username), c.storeName)
+	res, err := ctx.Query(model.GetAccountBankKey(sdk.AccAddress(addr)), c.storeName)
 	if err != nil {
 		return err
 	}
@@ -105,10 +110,16 @@ func (c commander) getAccountCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	res, err = ctx.Query(model.GetAccountBankKey(accKey), c.storeName)
+	addr, err := hex.DecodeString(args[0])
 	if err != nil {
 		return err
 	}
+
+	res, err = ctx.Query(model.GetAccountBankKey(sdk.AccAddress(addr)), c.storeName)
+	if err != nil {
+		return err
+	}
+
 	bank := new(model.AccountBank)
 	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, bank); err != nil {
 		return err

@@ -104,6 +104,9 @@ const (
 	CodeUpdateLastPostAt                     sdk.CodeType = 361
 	CodeFrozenMoneyListTooLong               sdk.CodeType = 362
 	CodeAccountQueryFailed                   sdk.CodeType = 363
+	CodeGetSigningKeyFailed                  sdk.CodeType = 364
+	CodeGetAddressFailed                     sdk.CodeType = 365
+	CodeAddressIsTaken                       sdk.CodeType = 366
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400

@@ -1,4 +1,4 @@
-package account
+package manager
 
 import (
 	"testing"
@@ -146,7 +146,7 @@ func TestReturnCoinEvent(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to execute event, got err %v", tc.testName, err)
 		}
-		saving, err := am.GetSavingFromBank(ctx, tc.event.Username)
+		saving, err := am.GetSavingFromUsername(ctx, tc.event.Username)
 		if err != nil {
 			t.Errorf("%s: failed to get saving from bank, got err %v", tc.testName, err)
 		}

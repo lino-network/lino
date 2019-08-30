@@ -7,11 +7,11 @@ import (
 	"github.com/lino-network/lino/types"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/x/account"
 )
 
 // TransferTxCmd will create a transfer tx and sign it with the given key
@@ -34,7 +34,7 @@ func sendTransferTx(cdc *wire.Codec) client.CommandTxCallback {
 		ctx := client.NewCoreContextFromViper()
 		sender := viper.GetString(client.FlagSender)
 		receiver := viper.GetString(client.FlagReceiver)
-		msg := acc.NewTransferMsg(
+		msg := acctypes.NewTransferMsg(
 			sender, receiver, types.LNO(viper.GetString(client.FlagAmount)), viper.GetString(client.FlagMemo))
 
 		// build and sign the transaction, then broadcast to Tendermint

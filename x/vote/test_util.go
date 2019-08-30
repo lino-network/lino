@@ -15,6 +15,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
@@ -35,21 +36,21 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountManager, VoteManager, global.GlobalManager) {
+	acc.AccountKeeper, VoteManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	ph.InitParam(ctx)
-	accManager := acc.NewAccountManager(testAccountKVStoreKey, ph)
+	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
+	accManager := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
-	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 
-	cdc := globalManager.WireCodec()
+	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "1", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "1", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err := initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
-	return ctx, accManager, voteManager, globalManager
+	return ctx, accManager, voteManager, gm
 }
 
 func getContext(height int64) sdk.Context {
@@ -66,10 +67,10 @@ func getContext(height int64) sdk.Context {
 }
 
 // helper function to create an account for testing purpose
-func createTestAccount(ctx sdk.Context, am acc.AccountManager, username string, initCoin types.Coin) types.AccountKey {
-	am.CreateAccount(ctx, "referrer", types.AccountKey(username),
-		secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(), initCoin)
+func createTestAccount(ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
+	am.CreateAccount(
+		ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
+	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
 	return types.AccountKey(username)
 }
 

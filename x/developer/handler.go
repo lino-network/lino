@@ -8,11 +8,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	global "github.com/lino-network/lino/x/global"
 )
 
 // NewHandler - Handle all "developer" type messages.
-func NewHandler(dm DeveloperManager, am acc.AccountManager, gm *global.GlobalManager) sdk.Handler {
+func NewHandler(dm DeveloperManager, am acc.AccountKeeper, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case DeveloperRegisterMsg:
@@ -35,11 +36,7 @@ func NewHandler(dm DeveloperManager, am acc.AccountManager, gm *global.GlobalMan
 }
 
 func handleDeveloperRegisterMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperRegisterMsg) sdk.Result {
-	if !am.DoesAccountExist(ctx, msg.Username) {
-		return ErrAccountNotFound().Result()
-	}
-
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg DeveloperRegisterMsg) sdk.Result {
 	if dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperAlreadyExist(msg.Username).Result()
 	}
@@ -50,8 +47,7 @@ func handleDeveloperRegisterMsg(
 	}
 
 	// withdraw money from developer's bank
-	if err = am.MinusSavingCoin(
-		ctx, msg.Username, deposit, "", "", types.DeveloperDeposit); err != nil {
+	if err = am.MinusCoinFromUsername(ctx, msg.Username, deposit); err != nil {
 		return err.Result()
 	}
 	if err := dm.RegisterDeveloper(
@@ -62,7 +58,7 @@ func handleDeveloperRegisterMsg(
 }
 
 func handleDeveloperUpdateMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg DeveloperUpdateMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg DeveloperUpdateMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound().Result()
 	}
@@ -79,7 +75,7 @@ func handleDeveloperUpdateMsg(
 }
 
 func handleDeveloperRevokeMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager,
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper,
 	gm *global.GlobalManager, msg DeveloperRevokeMsg) sdk.Result {
 	if !dm.DoesDeveloperExist(ctx, msg.Username) {
 		return ErrDeveloperNotFound().Result()
@@ -107,7 +103,7 @@ func handleDeveloperRevokeMsg(
 }
 
 func handleGrantPermissionMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg GrantPermissionMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg GrantPermissionMsg) sdk.Result {
 	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -150,7 +146,7 @@ func handleGrantPermissionMsg(
 }
 
 func handleRevokePermissionMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg RevokePermissionMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg RevokePermissionMsg) sdk.Result {
 	if !am.DoesAccountExist(ctx, msg.Username) {
 		return ErrAccountNotFound().Result()
 	}
@@ -162,7 +158,7 @@ func handleRevokePermissionMsg(
 }
 
 func handlePreAuthorizationMsg(
-	ctx sdk.Context, dm DeveloperManager, am acc.AccountManager, msg PreAuthorizationMsg) sdk.Result {
+	ctx sdk.Context, dm DeveloperManager, am acc.AccountKeeper, msg PreAuthorizationMsg) sdk.Result {
 	if !dm.DoesDeveloperExist(ctx, msg.AuthorizedApp) {
 		return ErrDeveloperNotFound().Result()
 	}
@@ -184,13 +180,13 @@ func handlePreAuthorizationMsg(
 
 func returnCoinTo(
 	ctx sdk.Context, name types.AccountKey, gm *global.GlobalManager,
-	am acc.AccountManager, times int64, interval int64, coin types.Coin) sdk.Error {
+	am acc.AccountKeeper, times int64, interval int64, coin types.Coin) sdk.Error {
 	if err := am.AddFrozenMoney(
 		ctx, name, coin, ctx.BlockHeader().Time.Unix(), interval, times); err != nil {
 		return err
 	}
 
-	events, err := acc.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.DeveloperReturnCoin)
+	events, err := accmn.CreateCoinReturnEvents(ctx, name, times, interval, coin, types.DeveloperReturnCoin)
 	if err != nil {
 		return err
 	}

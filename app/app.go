@@ -19,7 +19,9 @@ import (
 	"github.com/lino-network/lino/x/proposal"
 
 	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	accmodel "github.com/lino-network/lino/x/account/model"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	developer "github.com/lino-network/lino/x/developer"
 	devmodel "github.com/lino-network/lino/x/developer/model"
 	globalmodel "github.com/lino-network/lino/x/global/model"
@@ -86,7 +88,7 @@ type LinoBlockchain struct {
 	CapKeyReputationV2Store *sdk.KVStoreKey
 
 	// manager for different KVStore
-	accountManager    acc.AccountManager
+	accountManager    acc.AccountKeeper
 	postManager       post.PostKeeper
 	valManager        val.ValidatorManager
 	globalManager     global.GlobalManager
@@ -126,9 +128,9 @@ func NewLinoBlockchain(
 		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
-	lb.accountManager = acc.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder)
-	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
+	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
+	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
@@ -141,7 +143,7 @@ func NewLinoBlockchain(
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
 
 	lb.Router().
-		AddRoute(acc.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
+		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(vote.RouterKey, vote.NewHandler(
 			lb.voteManager, lb.accountManager, &lb.globalManager)).
@@ -154,7 +156,7 @@ func NewLinoBlockchain(
 			lb.accountManager, lb.valManager, lb.voteManager, &lb.globalManager))
 
 	lb.QueryRouter().
-		AddRoute(acc.QuerierRoute, acc.NewQuerier(lb.accountManager)).
+		AddRoute(acctypes.QuerierRoute, acc.NewQuerier(lb.accountManager)).
 		AddRoute(posttypes.QuerierRoute, post.NewQuerier(lb.postManager)).
 		AddRoute(vote.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(developer.QuerierRoute, developer.NewQuerier(lb.developerManager)).
@@ -216,7 +218,7 @@ func MakeCodec() *wire.Codec {
 	wire.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
-	acc.RegisterWire(cdc)
+	acctypes.RegisterWire(cdc)
 	posttypes.RegisterCodec(cdc)
 	developer.RegisterWire(cdc)
 	infra.RegisterWire(cdc)
@@ -233,7 +235,7 @@ func MakeCodec() *wire.Codec {
 func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(postmn.RewardEvent{}, "lino/eventReward", nil)
-	cdc.RegisterConcrete(acc.ReturnCoinEvent{}, "lino/eventReturn", nil)
+	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
 }
@@ -352,8 +354,10 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		panic(errors.New("genesis account already exist"))
 	}
 	if err := lb.accountManager.CreateAccount(
-		ctx, types.AccountKey(ga.Name), types.AccountKey(ga.Name),
-		ga.ResetKey, ga.TransactionKey, ga.AppKey, ga.Coin); err != nil {
+		ctx, types.AccountKey(ga.Name), ga.TransactionKey, ga.ResetKey); err != nil {
+		panic(err)
+	}
+	if err := lb.accountManager.AddCoinToUsername(ctx, types.AccountKey(ga.Name), ga.Coin); err != nil {
 		panic(err)
 	}
 
@@ -364,10 +368,9 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 
 	if ga.IsValidator {
 		// withdraw money from validator's bank
-		if err := lb.accountManager.MinusSavingCoin(
+		if err := lb.accountManager.MinusCoinFromUsername(
 			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit),
-			"", "", types.ValidatorDeposit); err != nil {
+			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
 			panic(err)
 		}
 		if err := vote.AddStake(
@@ -398,9 +401,8 @@ func (lb *LinoBlockchain) toAppDeveloper(
 		return ErrGenesisFailed("genesis developer account doesn't exist")
 	}
 
-	if err := lb.accountManager.MinusSavingCoin(
-		ctx, types.AccountKey(developer.Name), developer.Deposit,
-		"", "", types.DeveloperDeposit); err != nil {
+	if err := lb.accountManager.MinusCoinFromUsername(
+		ctx, types.AccountKey(developer.Name), developer.Deposit); err != nil {
 		return err
 	}
 
@@ -489,8 +491,8 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			if err := e.Execute(ctx, lb.postManager.(postmn.PostManager)); err != nil {
 				panic(err)
 			}
-		case acc.ReturnCoinEvent:
-			if err := e.Execute(ctx, lb.accountManager); err != nil {
+		case accmn.ReturnCoinEvent:
+			if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
 				panic(err)
 			}
 		case proposal.DecideProposalEvent:
@@ -590,8 +592,7 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		// though only differs in round?
 		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
 		coinPerValidator := types.DecToCoin(ratPerValidator)
-		lb.accountManager.AddSavingCoin(
-			ctx, validator, coinPerValidator, "", "", types.ValidatorInflation)
+		lb.accountManager.AddCoinToUsername(ctx, validator, coinPerValidator)
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -611,8 +612,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, provider := range lst.AllInfraProviders {
 		if idx == (len(lst.AllInfraProviders) - 1) {
-			lb.accountManager.AddSavingCoin(
-				ctx, provider, inflation.Minus(totalDistributedInflation), "", "", types.InfraInflation)
+			lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
 			break
 		}
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
@@ -622,8 +622,7 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		lb.accountManager.AddSavingCoin(
-			ctx, provider, myShareCoin, "", "", types.InfraInflation)
+		lb.accountManager.AddCoinToUsername(ctx, provider, myShareCoin)
 	}
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
@@ -646,8 +645,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, developer := range lst.AllDevelopers {
 		if idx == (len(lst.AllDevelopers) - 1) {
-			lb.accountManager.AddSavingCoin(
-				ctx, developer, inflation.Minus(totalDistributedInflation), "", "", types.DeveloperInflation)
+			lb.accountManager.AddCoinToUsername(ctx, developer, inflation.Minus(totalDistributedInflation))
 			break
 		}
 		percentage, err := lb.developerManager.GetConsumptionWeight(ctx, developer)
@@ -657,8 +655,7 @@ func (lb *LinoBlockchain) distributeInflationToDeveloper(ctx sdk.Context) {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		lb.accountManager.AddSavingCoin(
-			ctx, developer, myShareCoin, "", "", types.DeveloperInflation)
+		lb.accountManager.AddCoinToUsername(ctx, developer, myShareCoin)
 	}
 
 	if err := lb.developerManager.ClearConsumption(ctx); err != nil {
@@ -708,9 +705,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		f.Sync()
 	}
 
-	exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
-		return lb.accountManager.Export(ctx).ToIR()
-	})
+	// exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.accountManager.Export(ctx).ToIR()
+	// })
 	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
 		return lb.developerManager.Export(ctx).ToIR()
 	})
@@ -765,11 +762,11 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		check(err)
 		// XXX(yumin): ugly, trying found a better way.
 		switch t := tables.(type) {
-		case *accmodel.AccountTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.accountManager.Import(ctx, t)
+		// case *accmodel.AccountTablesIR:
+		// 	err = lb.cdc.UnmarshalJSON(bytes, t)
+		// 	check(err)
+		// 	fmt.Printf("%s state parsed: %T\n", filename, t)
+		// 	lb.accountManager.Import(ctx, t)
 		case *devmodel.DeveloperTablesIR:
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
