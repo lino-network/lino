@@ -23,6 +23,7 @@ import (
 	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidth "github.com/lino-network/lino/x/bandwidth"
+	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	developer "github.com/lino-network/lino/x/developer"
 	devmodel "github.com/lino-network/lino/x/developer/model"
 	globalmodel "github.com/lino-network/lino/x/global/model"
@@ -145,7 +146,7 @@ func NewLinoBlockchain(
 
 	// TODO(yumin): update this when price manager is implemented.
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
-	lb.bandwidthManager = bandwidth.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder)
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).

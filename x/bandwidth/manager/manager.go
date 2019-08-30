@@ -12,15 +12,15 @@ import (
 // BandwidthManager - bandwidth manager
 type BandwidthManager struct {
 	storage     model.BandwidthStorage
-	paramHolder param.ParamHolder
+	paramHolder param.ParamKeeper
 	// in-memory storage
 	blockStatsCache model.BlockStatsCache
 	// deps
 	gm global.GlobalKeeper
 }
 
-func NewBandwidthManager(key sdk.StoreKey, holder param.ParamHolder, gm global.GlobalKeeper) BandwidthManager {
-	return BandwidthManager{
+func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper) *BandwidthManager {
+	return &BandwidthManager{
 		storage:         model.NewBandwidthStorage(key),
 		paramHolder:     holder,
 		gm:              gm,

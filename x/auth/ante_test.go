@@ -22,16 +22,12 @@ import (
 
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
 
-	bandwidth "github.com/lino-network/lino/x/bandwidth"
 	dev "github.com/lino-network/lino/x/developer"
-	"github.com/lino-network/lino/x/global"
-	post "github.com/lino-network/lino/x/post"
-	postmn "github.com/lino-network/lino/x/post/manager"
-	vote "github.com/lino-network/lino/x/vote"
 )
 
 type TestMsg struct {
@@ -107,7 +103,6 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
 	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
-	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -127,11 +122,9 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 
-	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
-
 	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
 
-	bm := bandwidth.NewBandwidthManager(TestBandwidthKVStoreKey, ph)
+	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm)
 
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)

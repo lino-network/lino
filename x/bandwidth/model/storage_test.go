@@ -52,7 +52,7 @@ func TestLastBlockInfo(t *testing.T) {
 		TotalMsgSignedByApp:  213123,
 		TotalMsgSignedByUser: 0,
 	}
-	err := bs.SetCurBlockInfo(ctx, &info)
+	err := bs.SetLastBlockInfo(ctx, &info)
 	assert.Nil(t, err)
 
 	resultPtr, err := bs.GetLastBlockInfo(ctx)
