@@ -466,13 +466,13 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		panic(err)
 	}
 
-	// calculate the new general msg fee for the current block
-	if err := lb.bandwidthManager.CalculateCurMsgFee(ctx); err != nil {
+	// clear stats for block info
+	if err := lb.bandwidthManager.ClearBlockStatsCache(ctx); err != nil {
 		panic(err)
 	}
 
-	// clear stats for block info
-	if err := lb.bandwidthManager.ClearCurBlockInfo(ctx); err != nil {
+	// calculate the new general msg fee for the current block
+	if err := lb.bandwidthManager.CalculateCurMsgFee(ctx); err != nil {
 		panic(err)
 	}
 
@@ -540,12 +540,8 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 		panic(err)
 	}
 
-	// update maxMPS and EMA for different msgs
-	lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
-	if err != nil {
-		panic(err)
-	}
-	if err := lb.bandwidthManager.UpdateMaxMPSAndEMA(ctx, lastBlockTime); err != nil {
+	// update maxMPS and EMA for different msgs and store cur block info
+	if err := lb.bandwidthManager.UpdateMaxMPSAndEMA(ctx); err != nil {
 		panic(err)
 	}
 

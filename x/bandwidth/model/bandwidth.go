@@ -11,9 +11,15 @@ type BandwidthInfo struct {
 	MaxMPS        sdk.Dec `json:"max_mps"`
 }
 
-// CurBlockInfo - stores info about number of tx in current block
-type CurBlockInfo struct {
+// LastBlockInfo - stores info about number of tx in last block
+type LastBlockInfo struct {
+	TotalMsgSignedByApp  uint32 `json:"total_tx_signed_by_app"`
+	TotalMsgSignedByUser uint32 `json:"total_tx_signed_by_user"`
+}
+
+// BlockStatsCache - message stats in-memory cache of current block
+type BlockStatsCache struct {
+	CurMsgFee            sdk.Dec `json:"cur_msg_fee"`
 	TotalMsgSignedByApp  uint32  `json:"total_tx_signed_by_app"`
 	TotalMsgSignedByUser uint32  `json:"total_tx_signed_by_user"`
-	CurMsgFee            sdk.Dec `json:"cur_msg_fee"`
 }

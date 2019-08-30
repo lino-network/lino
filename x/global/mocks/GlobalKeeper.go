@@ -66,6 +66,29 @@ func (_m *GlobalKeeper) GetConsumptionFrictionRate(ctx types.Context) (types.Dec
 	return r0, r1
 }
 
+// GetLastBlockTime provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) GetLastBlockTime(ctx types.Context) (int64, types.Error) {
+	ret := _m.Called(ctx)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(types.Context) int64); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // GetRewardAndPopFromWindow provides a mock function with given fields: ctx, evaluate
 func (_m *GlobalKeeper) GetRewardAndPopFromWindow(ctx types.Context, evaluate linotypes.MiniDollar) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, evaluate)

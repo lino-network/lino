@@ -44,19 +44,18 @@ func TestBandwidthInfo(t *testing.T) {
 	assert.Equal(t, info, *resultPtr, "Bandwidth info should be equal")
 }
 
-func TestCurBlockInfo(t *testing.T) {
+func TestLastBlockInfo(t *testing.T) {
 	bs := NewBandwidthStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	info := CurBlockInfo{
+	info := LastBlockInfo{
 		TotalMsgSignedByApp:  213123,
 		TotalMsgSignedByUser: 0,
-		CurMsgFee:            types.NewDecFromRat(12, 23),
 	}
 	err := bs.SetCurBlockInfo(ctx, &info)
 	assert.Nil(t, err)
 
-	resultPtr, err := bs.GetCurBlockInfo(ctx)
+	resultPtr, err := bs.GetLastBlockInfo(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, info, *resultPtr, "CurBlockInfo info should be equal")
+	assert.Equal(t, info, *resultPtr, "LastBlockInfo info should be equal")
 }

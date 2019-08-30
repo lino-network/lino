@@ -7,7 +7,7 @@ import (
 
 var (
 	bandwidthInfoSubstore = []byte{0x00}
-	curBlockInfoSubstore  = []byte{0x01}
+	lastBlockInfoSubstore = []byte{0x01}
 	mpsSubStore           = []byte{0x02}
 )
 
@@ -39,13 +39,12 @@ func (bs BandwidthStorage) InitGenesis(ctx sdk.Context) error {
 		return err
 	}
 
-	curBlockInfo := &CurBlockInfo{
+	lastBlockInfo := &LastBlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
-		CurMsgFee:            sdk.NewDec(0),
 	}
 
-	if err := bs.SetCurBlockInfo(ctx, curBlockInfo); err != nil {
+	if err := bs.SetLastBlockInfo(ctx, lastBlockInfo); err != nil {
 		return err
 	}
 
@@ -77,28 +76,28 @@ func (bs BandwidthStorage) SetBandwidthInfo(ctx sdk.Context, info *BandwidthInfo
 	return nil
 }
 
-// GetCurBlockInfo - returns cur block info, returns error otherwise.
-func (bs BandwidthStorage) GetCurBlockInfo(ctx sdk.Context) (*CurBlockInfo, sdk.Error) {
+// GetLastBlockInfo - returns cur block info, returns error otherwise.
+func (bs BandwidthStorage) GetLastBlockInfo(ctx sdk.Context) (*LastBlockInfo, sdk.Error) {
 	store := ctx.KVStore(bs.key)
-	infoByte := store.Get(GetCurBlockInfoKey())
+	infoByte := store.Get(GetLastBlockInfoKey())
 	if infoByte == nil {
-		return nil, ErrCurBlockInfoNotFound()
+		return nil, ErrLastBlockInfoNotFound()
 	}
-	info := new(CurBlockInfo)
+	info := new(LastBlockInfo)
 	if err := bs.cdc.UnmarshalBinaryLengthPrefixed(infoByte, info); err != nil {
-		return nil, ErrFailedToUnmarshalCurBlockInfo(err)
+		return nil, ErrFailedToUnmarshalLastBlockInfo(err)
 	}
 	return info, nil
 }
 
-// SetCurBlockInfo - sets cur block info, returns error if any.
-func (bs BandwidthStorage) SetCurBlockInfo(ctx sdk.Context, info *CurBlockInfo) sdk.Error {
+// SetLastBlockInfo - sets cur block info, returns error if any.
+func (bs BandwidthStorage) SetLastBlockInfo(ctx sdk.Context, info *LastBlockInfo) sdk.Error {
 	store := ctx.KVStore(bs.key)
 	infoByte, err := bs.cdc.MarshalBinaryLengthPrefixed(*info)
 	if err != nil {
-		return ErrFailedToMarshalCurBlockInfo(err)
+		return ErrFailedToMarshalLastBlockInfo(err)
 	}
-	store.Set(GetCurBlockInfoKey(), infoByte)
+	store.Set(GetLastBlockInfoKey(), infoByte)
 	return nil
 }
 
@@ -106,6 +105,6 @@ func GetBandwidthInfoKey() []byte {
 	return bandwidthInfoSubstore
 }
 
-func GetCurBlockInfoKey() []byte {
-	return curBlockInfoSubstore
+func GetLastBlockInfoKey() []byte {
+	return lastBlockInfoSubstore
 }

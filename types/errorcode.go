@@ -314,9 +314,9 @@ const (
 	CodeBandwidthInfoNotFound          sdk.CodeType = 1300
 	CodeFailedToMarshalBandwidthInfo   sdk.CodeType = 1301
 	CodeFailedToUnmarshalBandwidthInfo sdk.CodeType = 1302
-	CodeCurBlockInfoNotFound           sdk.CodeType = 1303
-	CodeFailedToMarshalCurBlockInfo    sdk.CodeType = 1304
-	CodeFailedToUnmarshalCurBlockInfo  sdk.CodeType = 1305
+	CodeLastBlockInfoNotFound          sdk.CodeType = 1303
+	CodeFailedToMarshalLastBlockInfo   sdk.CodeType = 1304
+	CodeFailedToUnmarshalLastBlockInfo sdk.CodeType = 1305
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000
