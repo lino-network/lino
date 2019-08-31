@@ -23,17 +23,17 @@ func ErrFailedToUnmarshalBandwidthInfo(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalBandwidthInfo, fmt.Sprintf("failed to unmarshal bandwidth info: %s", err.Error()))
 }
 
-// ErrLastBlockInfoNotFound - error if last block info is not found
-func ErrLastBlockInfoNotFound() sdk.Error {
-	return types.NewError(types.CodeLastBlockInfoNotFound, fmt.Sprintf("last block info is not found"))
+// ErrBlockInfoNotFound - error if last block info is not found
+func ErrBlockInfoNotFound() sdk.Error {
+	return types.NewError(types.CodeBlockInfoNotFound, fmt.Sprintf("last block info is not found"))
 }
 
-// ErrFailedToMarshalLastBlockInfo - error if marshal Last block info failed
-func ErrFailedToMarshalLastBlockInfo(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToMarshalLastBlockInfo, fmt.Sprintf("failed to marshal last block info: %s", err.Error()))
+// ErrFailedToMarshalBlockInfo - error if marshal Last block info failed
+func ErrFailedToMarshalBlockInfo(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToMarshalBlockInfo, fmt.Sprintf("failed to marshal last block info: %s", err.Error()))
 }
 
-// ErrFailedToUnmarshalLastBlockInfo - error if unmarshal Last block info failed
-func ErrFailedToUnmarshalLastBlockInfo(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToUnmarshalLastBlockInfo, fmt.Sprintf("failed to unmarshal last block info: %s", err.Error()))
+// ErrFailedToUnmarshalBlockInfo - error if unmarshal Last block info failed
+func ErrFailedToUnmarshalBlockInfo(err error) sdk.Error {
+	return types.NewError(types.CodeFailedToUnmarshalBlockInfo, fmt.Sprintf("failed to unmarshal last block info: %s", err.Error()))
 }

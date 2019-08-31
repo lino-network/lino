@@ -170,7 +170,7 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
 					// }
 
 					// TODO(zhimao): minus message fee
-					types.NewCoinFromInt64(fee.Amount.AmountOf("lino").Int64())
+					types.NewCoinFromInt64(fee.Amount.AmountOf(types.LinoCoinDenom).Int64())
 					bm.AddMsgSignedByUser(ctx, 1)
 				}
 				idx++

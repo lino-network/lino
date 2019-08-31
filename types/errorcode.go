@@ -314,9 +314,10 @@ const (
 	CodeBandwidthInfoNotFound          sdk.CodeType = 1300
 	CodeFailedToMarshalBandwidthInfo   sdk.CodeType = 1301
 	CodeFailedToUnmarshalBandwidthInfo sdk.CodeType = 1302
-	CodeLastBlockInfoNotFound          sdk.CodeType = 1303
-	CodeFailedToMarshalLastBlockInfo   sdk.CodeType = 1304
-	CodeFailedToUnmarshalLastBlockInfo sdk.CodeType = 1305
+	CodeBlockInfoNotFound              sdk.CodeType = 1303
+	CodeFailedToMarshalBlockInfo       sdk.CodeType = 1304
+	CodeFailedToUnmarshalBlockInfo     sdk.CodeType = 1305
+	CodeInvalidMsgQuota                sdk.CodeType = 1306
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

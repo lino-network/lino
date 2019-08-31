@@ -149,6 +149,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
 		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
+		MaxMPSDecayRate:             types.NewDecFromRat(99, 100),
 	}
 	if err := ph.setBandwidthParam(ctx, bandwidthParam); err != nil {
 		return err

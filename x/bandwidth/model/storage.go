@@ -7,7 +7,7 @@ import (
 
 var (
 	bandwidthInfoSubstore = []byte{0x00}
-	lastBlockInfoSubstore = []byte{0x01}
+	BlockInfoSubstore     = []byte{0x01}
 	mpsSubStore           = []byte{0x02}
 )
 
@@ -39,12 +39,12 @@ func (bs BandwidthStorage) InitGenesis(ctx sdk.Context) error {
 		return err
 	}
 
-	lastBlockInfo := &LastBlockInfo{
+	BlockInfo := &BlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
 	}
 
-	if err := bs.SetLastBlockInfo(ctx, lastBlockInfo); err != nil {
+	if err := bs.SetBlockInfo(ctx, BlockInfo); err != nil {
 		return err
 	}
 
@@ -76,28 +76,28 @@ func (bs BandwidthStorage) SetBandwidthInfo(ctx sdk.Context, info *BandwidthInfo
 	return nil
 }
 
-// GetLastBlockInfo - returns cur block info, returns error otherwise.
-func (bs BandwidthStorage) GetLastBlockInfo(ctx sdk.Context) (*LastBlockInfo, sdk.Error) {
+// GetBlockInfo - returns cur block info, returns error otherwise.
+func (bs BandwidthStorage) GetBlockInfo(ctx sdk.Context) (*BlockInfo, sdk.Error) {
 	store := ctx.KVStore(bs.key)
-	infoByte := store.Get(GetLastBlockInfoKey())
+	infoByte := store.Get(GetBlockInfoKey())
 	if infoByte == nil {
-		return nil, ErrLastBlockInfoNotFound()
+		return nil, ErrBlockInfoNotFound()
 	}
-	info := new(LastBlockInfo)
+	info := new(BlockInfo)
 	if err := bs.cdc.UnmarshalBinaryLengthPrefixed(infoByte, info); err != nil {
-		return nil, ErrFailedToUnmarshalLastBlockInfo(err)
+		return nil, ErrFailedToUnmarshalBlockInfo(err)
 	}
 	return info, nil
 }
 
-// SetLastBlockInfo - sets cur block info, returns error if any.
-func (bs BandwidthStorage) SetLastBlockInfo(ctx sdk.Context, info *LastBlockInfo) sdk.Error {
+// SetBlockInfo - sets cur block info, returns error if any.
+func (bs BandwidthStorage) SetBlockInfo(ctx sdk.Context, info *BlockInfo) sdk.Error {
 	store := ctx.KVStore(bs.key)
 	infoByte, err := bs.cdc.MarshalBinaryLengthPrefixed(*info)
 	if err != nil {
-		return ErrFailedToMarshalLastBlockInfo(err)
+		return ErrFailedToMarshalBlockInfo(err)
 	}
-	store.Set(GetLastBlockInfoKey(), infoByte)
+	store.Set(GetBlockInfoKey(), infoByte)
 	return nil
 }
 
@@ -105,6 +105,6 @@ func GetBandwidthInfoKey() []byte {
 	return bandwidthInfoSubstore
 }
 
-func GetLastBlockInfoKey() []byte {
-	return lastBlockInfoSubstore
+func GetBlockInfoKey() []byte {
+	return BlockInfoSubstore
 }

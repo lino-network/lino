@@ -172,6 +172,7 @@ func TestBandwidthParam(t *testing.T) {
 		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
 		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
+		MaxMPSDecayRate:             types.NewDecFromRat(99, 100),
 	}
 	err := ph.setBandwidthParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -275,6 +276,7 @@ func TestInitParam(t *testing.T) {
 		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
 		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
+		MaxMPSDecayRate:             types.NewDecFromRat(99, 100),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:               types.NewCoinFromInt64(0),
@@ -366,6 +368,7 @@ func TestInitParamFromConfig(t *testing.T) {
 		ExpectedMaxMPS:              types.NewDecFromRat(1000, 1),
 		MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               types.NewDecFromRat(10, 1),
+		MaxMPSDecayRate:             types.NewDecFromRat(99, 100),
 	}
 	accountParam := AccountParam{
 		MinimumBalance:               types.NewCoinFromInt64(0),

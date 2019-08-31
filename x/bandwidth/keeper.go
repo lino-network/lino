@@ -12,10 +12,11 @@ type BandwidthKeeper interface {
 	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool
 	AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Error
 	AddMsgSignedByUser(ctx sdk.Context, num uint32) sdk.Error
-	ClearBlockStatsCache(ctx sdk.Context) sdk.Error
+	ClearBlockInfo(ctx sdk.Context) sdk.Error
 	UpdateMaxMPSAndEMA(ctx sdk.Context) sdk.Error
 	CalculateCurMsgFee(ctx sdk.Context) sdk.Error
 	InitGenesis(ctx sdk.Context) error
+	DecayMaxMPS(ctx sdk.Context) sdk.Error
 }
 
-var _ BandwidthKeeper = &manager.BandwidthManager{}
+var _ BandwidthKeeper = manager.BandwidthManager{}

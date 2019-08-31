@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/stretchr/testify/assert"
@@ -32,9 +32,9 @@ func TestBandwidthInfo(t *testing.T) {
 	ctx := getContext()
 
 	info := BandwidthInfo{
-		GeneralMsgEMA: types.NewDecFromRat(311, 1),
-		AppMsgEMA:     types.NewDecFromRat(200, 10),
-		MaxMPS:        types.NewDecFromRat(12, 3),
+		GeneralMsgEMA: linotypes.NewDecFromRat(311, 1),
+		AppMsgEMA:     linotypes.NewDecFromRat(200, 10),
+		MaxMPS:        linotypes.NewDecFromRat(12, 3),
 	}
 	err := bs.SetBandwidthInfo(ctx, &info)
 	assert.Nil(t, err)
@@ -44,18 +44,19 @@ func TestBandwidthInfo(t *testing.T) {
 	assert.Equal(t, info, *resultPtr, "Bandwidth info should be equal")
 }
 
-func TestLastBlockInfo(t *testing.T) {
+func TestBlockInfo(t *testing.T) {
 	bs := NewBandwidthStorage(TestKVStoreKey)
 	ctx := getContext()
 
-	info := LastBlockInfo{
+	info := BlockInfo{
 		TotalMsgSignedByApp:  213123,
 		TotalMsgSignedByUser: 0,
+		CurMsgFee:            linotypes.NewCoinFromInt64(int64(123)),
 	}
-	err := bs.SetLastBlockInfo(ctx, &info)
+	err := bs.SetBlockInfo(ctx, &info)
 	assert.Nil(t, err)
 
-	resultPtr, err := bs.GetLastBlockInfo(ctx)
+	resultPtr, err := bs.GetBlockInfo(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, info, *resultPtr, "LastBlockInfo info should be equal")
+	assert.Equal(t, info, *resultPtr, "BlockInfo info should be equal")
 }

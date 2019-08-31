@@ -460,20 +460,11 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	}
 
 	global.BeginBlocker(ctx, req, &lb.globalManager)
+	bandwidth.BeginBlocker(ctx, req, lb.bandwidthManager)
 	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
 	if err := lb.globalManager.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
-		panic(err)
-	}
-
-	// clear stats for block info
-	if err := lb.bandwidthManager.ClearBlockStatsCache(ctx); err != nil {
-		panic(err)
-	}
-
-	// calculate the new general msg fee for the current block
-	if err := lb.bandwidthManager.CalculateCurMsgFee(ctx); err != nil {
 		panic(err)
 	}
 
@@ -535,14 +526,10 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	rep.EndBlocker(ctx, req, lb.reputationManager)
 
 	global.EndBlocker(ctx, req, &lb.globalManager)
+	bandwidth.EndBlocker(ctx, req, lb.bandwidthManager)
 	// update validator set.
 	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
-		panic(err)
-	}
-
-	// update maxMPS and EMA for different msgs and store cur block info
-	if err := lb.bandwidthManager.UpdateMaxMPSAndEMA(ctx); err != nil {
 		panic(err)
 	}
 

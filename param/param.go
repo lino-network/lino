@@ -124,6 +124,9 @@ type CoinDayParam struct {
 // AppMsgQuotaRatio - the ratio for reserved app messages per second
 // AppMsgEMAFactor - the multiplier for weighting the app message EMA
 // ExpectedMaxMPS - the expected max messages per second
+// MsgFeeFactorA - factor A for calculating msg fee
+// MsgFeeFactorB - factor B for calculating msg fee
+// MaxMPSDecayRate - decay rate for historical max message per seconds
 
 type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
@@ -136,6 +139,7 @@ type BandwidthParam struct {
 	ExpectedMaxMPS              sdk.Dec    `json:"expected_max_mps"`
 	MsgFeeFactorA               sdk.Dec    `json:"msg_fee_factor_a"`
 	MsgFeeFactorB               sdk.Dec    `json:"msg_fee_factor_b"`
+	MaxMPSDecayRate             sdk.Dec    `json:"max_mps_decay_rate"`
 }
 
 // AccountParam - account parameters
