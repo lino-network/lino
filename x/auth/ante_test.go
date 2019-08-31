@@ -19,11 +19,15 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
+
+	dev "github.com/lino-network/lino/x/developer"
 )
 
 type TestMsg struct {
@@ -97,12 +101,16 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestPostKVStoreKey := sdk.NewKVStoreKey("post")
 	TestGlobalKVStoreKey := sdk.NewKVStoreKey("global")
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
+	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
+	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestPostKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
@@ -111,11 +119,17 @@ func (suite *AnteTestSuite) SetupTest() {
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ph.InitParam(ctx)
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
+
+	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
+
+	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm)
+
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm)
+	anteHandler := NewAnteHandler(am, gm, pm, dm, bm)
 
 	suite.am = am
 	suite.pm = pm

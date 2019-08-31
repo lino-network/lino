@@ -22,6 +22,8 @@ import (
 	accmn "github.com/lino-network/lino/x/account/manager"
 	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	bandwidth "github.com/lino-network/lino/x/bandwidth"
+	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	developer "github.com/lino-network/lino/x/developer"
 	devmodel "github.com/lino-network/lino/x/developer/model"
 	globalmodel "github.com/lino-network/lino/x/global/model"
@@ -86,6 +88,7 @@ type LinoBlockchain struct {
 	CapKeyParamStore        *sdk.KVStoreKey
 	CapKeyProposalStore     *sdk.KVStoreKey
 	CapKeyReputationV2Store *sdk.KVStoreKey
+	CapKeyBandwidthStore    *sdk.KVStoreKey
 
 	// manager for different KVStore
 	accountManager    acc.AccountKeeper
@@ -97,6 +100,7 @@ type LinoBlockchain struct {
 	developerManager  developer.DeveloperManager
 	proposalManager   proposal.ProposalManager
 	reputationManager rep.ReputationKeeper
+	bandwidthManager  bandwidth.BandwidthKeeper
 
 	// global param
 	paramHolder param.ParamHolder
@@ -126,6 +130,7 @@ func NewLinoBlockchain(
 		CapKeyParamStore:        sdk.NewKVStoreKey(types.ParamKVStoreKey),
 		CapKeyProposalStore:     sdk.NewKVStoreKey(types.ProposalKVStoreKey),
 		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
+		CapKeyBandwidthStore:    sdk.NewKVStoreKey(types.BandwidthKVStoreKey),
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
@@ -141,6 +146,7 @@ func NewLinoBlockchain(
 
 	// TODO(yumin): update this when price manager is implemented.
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
@@ -170,14 +176,14 @@ func NewLinoBlockchain(
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager, lb.developerManager, lb.bandwidthManager))
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -307,6 +313,9 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 	if err := lb.valManager.InitGenesis(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.bandwidthManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
 
@@ -451,6 +460,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 	}
 
 	global.BeginBlocker(ctx, req, &lb.globalManager)
+	bandwidth.BeginBlocker(ctx, req, lb.bandwidthManager)
 	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
 
 	// add coins back to inflation pool
@@ -516,11 +526,13 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 	rep.EndBlocker(ctx, req, lb.reputationManager)
 
 	global.EndBlocker(ctx, req, &lb.globalManager)
+	bandwidth.EndBlocker(ctx, req, lb.bandwidthManager)
 	// update validator set.
 	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {
 		panic(err)
 	}
+
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
 	}
@@ -559,6 +571,7 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 // execute daily event, record consumption friction and lino power
 func (lb *LinoBlockchain) executeDailyEvent(ctx sdk.Context) {
 	lb.globalManager.RecordConsumptionAndLinoStake(ctx)
+	lb.bandwidthManager.DecayMaxMPS(ctx)
 }
 
 // execute monthly event, distribute inflation to infra and application

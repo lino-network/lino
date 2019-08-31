@@ -31,6 +31,7 @@ const (
 	CodeWrongNumberOfSigners sdk.CodeType = 153
 	CodeInvalidSequence      sdk.CodeType = 154
 	CodeUnverifiedBytes      sdk.CodeType = 155
+	CodeMsgFeeNotEnough      sdk.CodeType = 156
 
 	// ABCI Response Codes
 	CodeGenesisFailed sdk.CodeType = 200
@@ -308,6 +309,11 @@ const (
 
 	// reputation errors reserve 1200 ~ 1299
 	CodeReputationQueryFailed sdk.CodeType = 1200
+
+	// bandwidth errors reserve 1300 ~ 1399
+	CodeBandwidthInfoNotFound sdk.CodeType = 1300
+	CodeBlockInfoNotFound     sdk.CodeType = 1301
+	CodeInvalidMsgQuota       sdk.CodeType = 1302
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000
