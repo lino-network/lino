@@ -12,3 +12,8 @@ import (
 func ErrInvalidMsgQuota() sdk.Error {
 	return linotypes.NewError(linotypes.CodeInvalidMsgQuota, fmt.Sprintf("invalid message quota"))
 }
+
+// ErrInvalidExpectedMPS - error when message fee is not valid
+func ErrInvalidExpectedMPS() sdk.Error {
+	return linotypes.NewError(linotypes.CodeInvalidExpectedMPS, fmt.Sprintf("invalid expected mps"))
+}

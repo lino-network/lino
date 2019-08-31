@@ -127,6 +127,9 @@ type CoinDayParam struct {
 // MsgFeeFactorA - factor A for calculating msg fee
 // MsgFeeFactorB - factor B for calculating msg fee
 // MaxMPSDecayRate - decay rate for historical max message per seconds
+// AppBandwidthPoolSize - the depth for app bandwidth pool
+// AppVacancyFactor - app vacancy factor for calculating u
+// AppPunishmentFactor - app punishment factor for calculating p
 
 type BandwidthParam struct {
 	SecondsToRecoverBandwidth   int64      `json:"seconds_to_recover_bandwidth"`
@@ -140,6 +143,9 @@ type BandwidthParam struct {
 	MsgFeeFactorA               sdk.Dec    `json:"msg_fee_factor_a"`
 	MsgFeeFactorB               sdk.Dec    `json:"msg_fee_factor_b"`
 	MaxMPSDecayRate             sdk.Dec    `json:"max_mps_decay_rate"`
+	AppBandwidthPoolSize        sdk.Dec    `json:"app_bandwidth_pool_size"`
+	AppVacancyFactor            sdk.Dec    `json:"app_vacancy_factor"`
+	AppPunishmentFactor         sdk.Dec    `json:"app_punishment_factor"`
 }
 
 // AccountParam - account parameters

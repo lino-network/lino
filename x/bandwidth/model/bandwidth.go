@@ -18,3 +18,12 @@ type BlockInfo struct {
 	TotalMsgSignedByUser int64          `json:"total_tx_signed_by_user"`
 	CurMsgFee            linotypes.Coin `json:"cur_msg_fee"`
 }
+
+// AppBandwidthInfo - stores info about each app's bandwidth
+type AppBandwidthInfo struct {
+	MaxBandwidthCredit sdk.Dec `json:"max_bandwidth_credit"`
+	CurBandwidthCredit sdk.Dec `json:"cur_bandwidth_credit"`
+	MessagesInCurBlock int64   `json:"messages_in_cur_block"`
+	ExpectedMPS        sdk.Dec `json:"expected_mps"`
+	LastRefilledAt     int64   `json:"last_refilled_at"`
+}

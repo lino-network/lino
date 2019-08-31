@@ -311,9 +311,11 @@ const (
 	CodeReputationQueryFailed sdk.CodeType = 1200
 
 	// bandwidth errors reserve 1300 ~ 1399
-	CodeBandwidthInfoNotFound sdk.CodeType = 1300
-	CodeBlockInfoNotFound     sdk.CodeType = 1301
-	CodeInvalidMsgQuota       sdk.CodeType = 1302
+	CodeBandwidthInfoNotFound    sdk.CodeType = 1300
+	CodeBlockInfoNotFound        sdk.CodeType = 1301
+	CodeInvalidMsgQuota          sdk.CodeType = 1302
+	CodeAppBandwidthInfoNotFound sdk.CodeType = 1303
+	CodeInvalidExpectedMPS       sdk.CodeType = 1304
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

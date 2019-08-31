@@ -15,5 +15,10 @@ func ErrBandwidthInfoNotFound() sdk.Error {
 
 // ErrBlockInfoNotFound - error if last block info is not found
 func ErrBlockInfoNotFound() sdk.Error {
-	return types.NewError(types.CodeBlockInfoNotFound, fmt.Sprintf("last block info is not found"))
+	return types.NewError(types.CodeBlockInfoNotFound, fmt.Sprintf("block info is not found"))
+}
+
+// ErrAppBandwidthInfoNotFound - error if app bandwidth info is not found
+func ErrAppBandwidthInfoNotFound() sdk.Error {
+	return types.NewError(types.CodeAppBandwidthInfoNotFound, fmt.Sprintf("app bandwidth info is not found"))
 }

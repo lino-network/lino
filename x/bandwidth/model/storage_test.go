@@ -60,3 +60,21 @@ func TestBlockInfo(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, info, *resultPtr, "BlockInfo info should be equal")
 }
+
+func TestAppBandwidthInfo(t *testing.T) {
+	bs := NewBandwidthStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	info := AppBandwidthInfo{
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(1000),
+		MessagesInCurBlock: 100,
+	}
+	accName := linotypes.AccountKey("test")
+	err := bs.SetAppBandwidthInfo(ctx, accName, &info)
+	assert.Nil(t, err)
+
+	resultPtr, err := bs.GetAppBandwidthInfo(ctx, accName)
+	assert.Nil(t, err)
+	assert.Equal(t, info, *resultPtr, "App bandwidth info should be equal")
+}

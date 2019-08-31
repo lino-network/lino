@@ -3,12 +3,14 @@ package model
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	linotypes "github.com/lino-network/lino/types"
 )
 
 var (
 	bandwidthInfoSubstore = []byte{0x00}
 	blockInfoSubstore     = []byte{0x01}
-	mpsSubStore           = []byte{0x02}
+	appBandwidthSubstore  = []byte{0x02}
 )
 
 // BandwidthStorage - bandwidth storage
@@ -68,10 +70,33 @@ func (bs BandwidthStorage) SetBlockInfo(ctx sdk.Context, info *BlockInfo) sdk.Er
 	return nil
 }
 
+func (bs BandwidthStorage) GetAppBandwidthInfo(ctx sdk.Context, accKey linotypes.AccountKey) (*AppBandwidthInfo, sdk.Error) {
+	store := ctx.KVStore(bs.key)
+	infoByte := store.Get(GetAppBandwidthInfoKey(accKey))
+	if infoByte == nil {
+		return nil, ErrAppBandwidthInfoNotFound()
+	}
+	info := new(AppBandwidthInfo)
+	bs.cdc.MustUnmarshalBinaryLengthPrefixed(infoByte, info)
+	return info, nil
+}
+
+func (bs BandwidthStorage) SetAppBandwidthInfo(ctx sdk.Context, accKey linotypes.AccountKey, info *AppBandwidthInfo) sdk.Error {
+	store := ctx.KVStore(bs.key)
+	infoByte := bs.cdc.MustMarshalBinaryLengthPrefixed(*info)
+	store.Set(GetAppBandwidthInfoKey(accKey), infoByte)
+	return nil
+}
+
 func GetBandwidthInfoKey() []byte {
 	return bandwidthInfoSubstore
 }
 
 func GetBlockInfoKey() []byte {
 	return blockInfoSubstore
+}
+
+// GetAppBandwidthInfoKey - "app bandwidth substore" + "username"
+func GetAppBandwidthInfoKey(accKey linotypes.AccountKey) []byte {
+	return append(appBandwidthSubstore, accKey...)
 }

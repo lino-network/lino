@@ -208,6 +208,100 @@ func (bm BandwidthManager) DecayMaxMPS(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+func (bm BandwidthManager) RefillAppBandwidthCredit(ctx sdk.Context, accKey linotypes.AccountKey) sdk.Error {
+	info, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
+	if err != nil {
+		return err
+	}
+
+	curTime := ctx.BlockHeader().Time.Unix()
+	if info.LastRefilledAt >= curTime {
+		return nil
+	}
+
+	if info.CurBandwidthCredit.GTE(info.MaxBandwidthCredit) {
+		return nil
+	}
+
+	pastSeconds := curTime - info.LastRefilledAt
+	// assume refill rate is equal to expectedMPS
+	newCredit := info.ExpectedMPS.Mul(sdk.NewDec(pastSeconds)).Add(info.CurBandwidthCredit)
+	if newCredit.GTE(info.MaxBandwidthCredit) {
+		info.CurBandwidthCredit = info.MaxBandwidthCredit
+	} else {
+		info.CurBandwidthCredit = newCredit
+	}
+	info.LastRefilledAt = curTime
+
+	if bm.storage.SetAppBandwidthInfo(ctx, accKey, info); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bm BandwidthManager) GetVacancyCoeff(ctx sdk.Context) (sdk.Error, sdk.Dec) {
+	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
+	if err != nil {
+		return err, sdk.NewDec(1)
+	}
+
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return err, sdk.NewDec(1)
+	}
+
+	curMaxMPS := sdk.NewDec(1)
+	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
+		curMaxMPS = params.ExpectedMaxMPS
+	} else {
+		curMaxMPS = bandwidthInfo.MaxMPS
+	}
+
+	appMsgQuota := params.AppMsgQuotaRatio.Mul(curMaxMPS)
+	if !appMsgQuota.IsPositive() {
+		return types.ErrInvalidMsgQuota(), sdk.NewDec(1)
+	}
+
+	delta := bandwidthInfo.AppMsgEMA.Sub(appMsgQuota)
+	return nil, bm.approximateExp(delta.Quo(appMsgQuota).Mul(params.AppVacancyFactor))
+}
+
+func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Error, sdk.Dec) {
+	lastBlockTime, err := bm.gm.GetLastBlockTime(ctx)
+	if err != nil {
+		return err, sdk.NewDec(1)
+	}
+	if lastBlockTime >= ctx.BlockHeader().Time.Unix() {
+		return nil, sdk.NewDec(1)
+	}
+	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
+
+	appInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
+	if err != nil {
+		return err, sdk.NewDec(1)
+	}
+
+	if !appInfo.ExpectedMPS.IsPositive() {
+		return types.ErrInvalidExpectedMPS(), sdk.NewDec(1)
+	}
+
+	curMPS := linotypes.NewDecFromRat(appInfo.MessagesInCurBlock, pastTime)
+	delta := curMPS.Sub(appInfo.ExpectedMPS)
+	if delta.IsNegative() {
+		delta = sdk.NewDec(0)
+	}
+
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return err, sdk.NewDec(1)
+	}
+	return nil, bm.approximateExp(delta.Quo(appInfo.ExpectedMPS).Mul(params.AppPunishmentFactor))
+}
+
+func (bm BandwidthManager) GetBandwidthCostPerMsg(ctx sdk.Context, u sdk.Dec, p sdk.Dec) sdk.Dec {
+	return u.Mul(p)
+}
+
 func (bm BandwidthManager) calculateEMA(prevEMA sdk.Dec, k sdk.Dec, curMPS sdk.Dec) sdk.Dec {
 	pre := prevEMA.Mul(sdk.NewDec(1).Sub(k))
 	cur := curMPS.Mul(k)
