@@ -311,13 +311,9 @@ const (
 	CodeReputationQueryFailed sdk.CodeType = 1200
 
 	// bandwidth errors reserve 1300 ~ 1399
-	CodeBandwidthInfoNotFound          sdk.CodeType = 1300
-	CodeFailedToMarshalBandwidthInfo   sdk.CodeType = 1301
-	CodeFailedToUnmarshalBandwidthInfo sdk.CodeType = 1302
-	CodeBlockInfoNotFound              sdk.CodeType = 1303
-	CodeFailedToMarshalBlockInfo       sdk.CodeType = 1304
-	CodeFailedToUnmarshalBlockInfo     sdk.CodeType = 1305
-	CodeInvalidMsgQuota                sdk.CodeType = 1306
+	CodeBandwidthInfoNotFound sdk.CodeType = 1300
+	CodeBlockInfoNotFound     sdk.CodeType = 1301
+	CodeInvalidMsgQuota       sdk.CodeType = 1302
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

@@ -75,7 +75,7 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}
@@ -264,7 +264,7 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}

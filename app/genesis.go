@@ -200,7 +200,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS: sdk.NewDec(1000),
+			MaxTPS:                       sdk.NewDec(1000),
 			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},

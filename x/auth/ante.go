@@ -3,16 +3,14 @@ package auth
 import (
 	"fmt"
 
-	"github.com/lino-network/lino/x/bandwidth"
-
-	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
+	"github.com/lino-network/lino/x/bandwidth"
 	dev "github.com/lino-network/lino/x/developer"
+	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 )
 
@@ -65,7 +63,6 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKee
 }
 
 // NewAnteHandler - return an AnteHandler
-
 func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
 	pm post.PostKeeper, dm dev.DeveloperKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(

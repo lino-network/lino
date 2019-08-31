@@ -28,7 +28,23 @@ func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.G
 
 // InitGenesis - initialize KV Store
 func (bm BandwidthManager) InitGenesis(ctx sdk.Context) error {
-	if err := bm.storage.InitGenesis(ctx); err != nil {
+	bandwidthInfo := &model.BandwidthInfo{
+		GeneralMsgEMA: sdk.NewDec(0),
+		AppMsgEMA:     sdk.NewDec(0),
+		MaxMPS:        sdk.NewDec(0),
+	}
+
+	if err := bm.storage.SetBandwidthInfo(ctx, bandwidthInfo); err != nil {
+		return err
+	}
+
+	blockInfo := &model.BlockInfo{
+		TotalMsgSignedByApp:  0,
+		TotalMsgSignedByUser: 0,
+		CurMsgFee:            linotypes.NewCoinFromInt64(int64(0)),
+	}
+
+	if err := bm.storage.SetBlockInfo(ctx, blockInfo); err != nil {
 		return err
 	}
 	return nil
@@ -46,7 +62,7 @@ func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) 
 	return providedFee.IsGTE(info.CurMsgFee)
 }
 
-func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Error {
+func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num int64) sdk.Error {
 	info, err := bm.storage.GetBlockInfo(ctx)
 	if err != nil {
 		return err
@@ -59,7 +75,7 @@ func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num uint32) sdk.Er
 	return nil
 }
 
-func (bm BandwidthManager) AddMsgSignedByUser(ctx sdk.Context, num uint32) sdk.Error {
+func (bm BandwidthManager) AddMsgSignedByUser(ctx sdk.Context, num int64) sdk.Error {
 	info, err := bm.storage.GetBlockInfo(ctx)
 	if err != nil {
 		return err

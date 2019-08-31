@@ -94,7 +94,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS: sdk.NewDec(1000),
+		MaxTPS:                       sdk.NewDec(1000),
 		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
 		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 	}

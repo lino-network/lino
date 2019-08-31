@@ -28,29 +28,6 @@ func NewBandwidthStorage(key sdk.StoreKey) BandwidthStorage {
 	}
 }
 
-func (bs BandwidthStorage) InitGenesis(ctx sdk.Context) error {
-	bandwidthInfo := &BandwidthInfo{
-		GeneralMsgEMA: sdk.NewDec(0),
-		AppMsgEMA:     sdk.NewDec(0),
-		MaxMPS:        sdk.NewDec(0),
-	}
-
-	if err := bs.SetBandwidthInfo(ctx, bandwidthInfo); err != nil {
-		return err
-	}
-
-	BlockInfo := &BlockInfo{
-		TotalMsgSignedByApp:  0,
-		TotalMsgSignedByUser: 0,
-	}
-
-	if err := bs.SetBlockInfo(ctx, BlockInfo); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // GetBandwidthInfo - returns bandwidth info, returns error otherwise.
 func (bs BandwidthStorage) GetBandwidthInfo(ctx sdk.Context) (*BandwidthInfo, sdk.Error) {
 	store := ctx.KVStore(bs.key)
@@ -59,19 +36,14 @@ func (bs BandwidthStorage) GetBandwidthInfo(ctx sdk.Context) (*BandwidthInfo, sd
 		return nil, ErrBandwidthInfoNotFound()
 	}
 	info := new(BandwidthInfo)
-	if err := bs.cdc.UnmarshalBinaryLengthPrefixed(infoByte, info); err != nil {
-		return nil, ErrFailedToUnmarshalBandwidthInfo(err)
-	}
+	bs.cdc.MustUnmarshalBinaryLengthPrefixed(infoByte, info)
 	return info, nil
 }
 
 // SetBandwidthInfo - sets bandwidth info, returns error if any.
 func (bs BandwidthStorage) SetBandwidthInfo(ctx sdk.Context, info *BandwidthInfo) sdk.Error {
 	store := ctx.KVStore(bs.key)
-	infoByte, err := bs.cdc.MarshalBinaryLengthPrefixed(*info)
-	if err != nil {
-		return ErrFailedToMarshalBandwidthInfo(err)
-	}
+	infoByte := bs.cdc.MustMarshalBinaryLengthPrefixed(*info)
 	store.Set(GetBandwidthInfoKey(), infoByte)
 	return nil
 }
@@ -84,19 +56,14 @@ func (bs BandwidthStorage) GetBlockInfo(ctx sdk.Context) (*BlockInfo, sdk.Error)
 		return nil, ErrBlockInfoNotFound()
 	}
 	info := new(BlockInfo)
-	if err := bs.cdc.UnmarshalBinaryLengthPrefixed(infoByte, info); err != nil {
-		return nil, ErrFailedToUnmarshalBlockInfo(err)
-	}
+	bs.cdc.MustUnmarshalBinaryLengthPrefixed(infoByte, info)
 	return info, nil
 }
 
 // SetBlockInfo - sets cur block info, returns error if any.
 func (bs BandwidthStorage) SetBlockInfo(ctx sdk.Context, info *BlockInfo) sdk.Error {
 	store := ctx.KVStore(bs.key)
-	infoByte, err := bs.cdc.MarshalBinaryLengthPrefixed(*info)
-	if err != nil {
-		return ErrFailedToMarshalBlockInfo(err)
-	}
+	infoByte := bs.cdc.MustMarshalBinaryLengthPrefixed(*info)
 	store.Set(GetBlockInfoKey(), infoByte)
 	return nil
 }

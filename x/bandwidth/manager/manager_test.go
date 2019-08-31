@@ -1,19 +1,20 @@
 package manager
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+
 	parammodel "github.com/lino-network/lino/param"
 	param "github.com/lino-network/lino/param/mocks"
 	"github.com/lino-network/lino/testsuites"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	global "github.com/lino-network/lino/x/global/mocks"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 )
 
 type BandwidthManagerTestSuite struct {
@@ -57,7 +58,7 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
 	testCases := []struct {
 		testName        string
-		amount          uint32
+		amount          int64
 		expectBlockInfo model.BlockInfo
 	}{
 		{
@@ -82,7 +83,7 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
 func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 	testCases := []struct {
 		testName        string
-		amount          uint32
+		amount          int64
 		expectBlockInfo model.BlockInfo
 	}{
 		{
@@ -182,14 +183,24 @@ func (suite *BandwidthManagerTestSuite) TestCalculateCurMsgFee() {
 			},
 			expectMessageFeeCoin: int64(19997635),
 		},
+		{
+			testName: "test5",
+			bandwidthInfo: model.BandwidthInfo{
+				GeneralMsgEMA: sdk.NewDec(300),
+				AppMsgEMA:     sdk.NewDec(0),
+				MaxMPS:        sdk.NewDec(500),
+			},
+			expectMessageFeeCoin: int64(19997635),
+		},
 	}
 
 	for _, tc := range testCases {
 		suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
-		suite.bm.CalculateCurMsgFee(suite.Ctx)
+		err := suite.bm.CalculateCurMsgFee(suite.Ctx)
+		suite.Require().Nil(err)
+
 		info, getErr := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Require().Nil(getErr)
-		fmt.Println(info.CurMsgFee)
 		suite.Equal(linotypes.NewCoinFromInt64(tc.expectMessageFeeCoin), info.CurMsgFee, "%s", tc.testName)
 	}
 }
@@ -202,6 +213,7 @@ func (suite *BandwidthManagerTestSuite) TestUpdateMaxMPSAndEMA() {
 		bandwidthInfo    model.BandwidthInfo
 		expectGeneralEMA string
 		expectAppEMA     string
+		expectMaxMPS     sdk.Dec
 	}{
 		{
 			testName: "test general message ema",
@@ -217,6 +229,7 @@ func (suite *BandwidthManagerTestSuite) TestUpdateMaxMPSAndEMA() {
 
 			expectGeneralEMA: "11",
 			expectAppEMA:     "0",
+			expectMaxMPS:     sdk.NewDec(1000),
 		},
 		{
 			testName: "test app message ema",
@@ -231,6 +244,22 @@ func (suite *BandwidthManagerTestSuite) TestUpdateMaxMPSAndEMA() {
 			},
 			expectGeneralEMA: "0",
 			expectAppEMA:     "54",
+			expectMaxMPS:     sdk.NewDec(1000),
+		},
+		{
+			testName: "test update max MPS",
+			bandwidthInfo: model.BandwidthInfo{
+				GeneralMsgEMA: sdk.NewDec(0),
+				AppMsgEMA:     sdk.NewDec(0),
+				MaxMPS:        sdk.NewDec(1000),
+			},
+			blockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  15000,
+				TotalMsgSignedByUser: 15000,
+			},
+			expectGeneralEMA: "500",
+			expectAppEMA:     "500",
+			expectMaxMPS:     sdk.NewDec(10000),
 		},
 	}
 
@@ -251,6 +280,8 @@ func (suite *BandwidthManagerTestSuite) TestUpdateMaxMPSAndEMA() {
 		suite.Nil(err, "%s", tc.testName)
 		suite.Equal(expectedGeneralEMA, info.GeneralMsgEMA, "%s", tc.testName)
 		suite.Equal(expectedAppEMA, info.AppMsgEMA, "%s", tc.testName)
+		suite.Equal(tc.expectMaxMPS, info.MaxMPS, "%s", tc.testName)
+
 	}
 }
 
@@ -306,5 +337,82 @@ func (suite *BandwidthManagerTestSuite) TestCalculateEMA() {
 	for _, tc := range testCases {
 		res := suite.bm.calculateEMA(tc.prevEMA, tc.k, tc.curMPS)
 		suite.Equal(tc.expectedEMA, res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestIsUserMsgFeeEnough() {
+	testCases := []struct {
+		testName    string
+		providedFee auth.StdFee
+		curMsgFee   linotypes.Coin
+		expectedRes bool
+	}{
+		{
+			testName: "test1",
+			providedFee: auth.StdFee{
+				Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(12))),
+			},
+			curMsgFee:   linotypes.NewCoinFromInt64(int64(10)),
+			expectedRes: true,
+		},
+		{
+			testName: "test2",
+			providedFee: auth.StdFee{
+				Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(2))),
+			},
+			curMsgFee:   linotypes.NewCoinFromInt64(int64(10)),
+			expectedRes: false,
+		},
+		{
+			testName: "test3",
+			providedFee: auth.StdFee{
+				Amount: sdk.NewCoins(sdk.NewCoin("dummy", sdk.NewInt(12))),
+			},
+			curMsgFee:   linotypes.NewCoinFromInt64(int64(10)),
+			expectedRes: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		info := model.BlockInfo{
+			CurMsgFee: tc.curMsgFee,
+		}
+		suite.bm.storage.SetBlockInfo(suite.Ctx, &info)
+		res := suite.bm.IsUserMsgFeeEnough(suite.Ctx, tc.providedFee)
+		suite.Equal(tc.expectedRes, res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestClearBlockInfo() {
+	testCases := []struct {
+		testName          string
+		curBlockInfo      model.BlockInfo
+		expectedBlockInfo model.BlockInfo
+	}{
+		{
+			testName: "test1",
+			curBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  1,
+				TotalMsgSignedByUser: 2,
+				CurMsgFee:            linotypes.NewCoinFromInt64(int64(32)),
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(int64(32)),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.curBlockInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.ClearBlockInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+
+		res, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedBlockInfo, *res, "%s", tc.testName)
 	}
 }
