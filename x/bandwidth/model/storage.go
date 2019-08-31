@@ -7,7 +7,7 @@ import (
 
 var (
 	bandwidthInfoSubstore = []byte{0x00}
-	BlockInfoSubstore     = []byte{0x01}
+	blockInfoSubstore     = []byte{0x01}
 	mpsSubStore           = []byte{0x02}
 )
 
@@ -73,5 +73,5 @@ func GetBandwidthInfoKey() []byte {
 }
 
 func GetBlockInfoKey() []byte {
-	return BlockInfoSubstore
+	return blockInfoSubstore
 }
