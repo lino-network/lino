@@ -17,3 +17,13 @@ func ErrInvalidMsgQuota() sdk.Error {
 func ErrInvalidExpectedMPS() sdk.Error {
 	return linotypes.NewError(linotypes.CodeInvalidExpectedMPS, fmt.Sprintf("invalid expected mps"))
 }
+
+// ErrAppBandwidthNotEnough - error when app bandwidth not enough
+func ErrAppBandwidthNotEnough() sdk.Error {
+	return linotypes.NewError(linotypes.CodeAppBandwidthNotEnough, fmt.Sprintf("app bandwidth not enough"))
+}
+
+// ErrUserMsgFeeNotEnough - error when app bandwidth not enough
+func ErrUserMsgFeeNotEnough() sdk.Error {
+	return linotypes.NewError(linotypes.CodeUserMsgFeeNotEnough, fmt.Sprintf("user message fee not enough"))
+}

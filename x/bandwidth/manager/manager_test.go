@@ -14,6 +14,7 @@ import (
 	param "github.com/lino-network/lino/param/mocks"
 	"github.com/lino-network/lino/testsuites"
 	linotypes "github.com/lino-network/lino/types"
+	account "github.com/lino-network/lino/x/account/mocks"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	developer "github.com/lino-network/lino/x/developer/mocks"
 	global "github.com/lino-network/lino/x/global/mocks"
@@ -29,6 +30,7 @@ type BandwidthManagerTestSuite struct {
 	global *global.GlobalKeeper
 	vm     *vote.VoteKeeper
 	dm     *developer.DeveloperKeeper
+	am     *account.AccountKeeper
 }
 
 func TestBandwidthManagerTestSuite(t *testing.T) {
@@ -41,7 +43,7 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.SetupCtx(0, suite.baseTime.Add(3*time.Second), testBandwidthKey)
 	suite.global = &global.GlobalKeeper{}
 	suite.ph = &param.ParamKeeper{}
-	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global, suite.vm, suite.dm)
+	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global, suite.vm, suite.dm, suite.am)
 	suite.bm.InitGenesis(suite.Ctx)
 	suite.ph.On("GetBandwidthParam", mock.Anything).Return(&parammodel.BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -94,6 +96,7 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 		testName        string
 		amount          int64
 		expectBlockInfo model.BlockInfo
+		expectAppInfo   model.AppBandwidthInfo
 	}{
 		{
 			testName: "add user signed message",
@@ -103,14 +106,30 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 				TotalMsgSignedByUser: 0,
 				CurMsgFee:            linotypes.NewCoinFromInt64(int64(0)),
 			},
+			expectAppInfo: model.AppBandwidthInfo{
+				MessagesInCurBlock: 1,
+				MaxBandwidthCredit: sdk.NewDec(0),
+				CurBandwidthCredit: sdk.NewDec(0),
+				ExpectedMPS:        sdk.NewDec(0),
+				LastRefilledAt:     0,
+			},
 		},
 	}
 
 	for _, tc := range testCases {
-		suite.bm.AddMsgSignedByApp(suite.Ctx, tc.amount)
+		appName := linotypes.AccountKey("test")
+		appBandwidthInfo := model.AppBandwidthInfo{}
+
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &appBandwidthInfo)
+		suite.Require().Nil(err)
+
+		suite.bm.AddMsgSignedByApp(suite.Ctx, appName, tc.amount)
 		info, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Require().Nil(err)
 		suite.Equal(tc.expectBlockInfo, *info, "%s", tc.testName)
+
+		appInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Equal(tc.expectAppInfo, *appInfo, "%s", tc.testName)
 	}
 }
 

@@ -316,6 +316,8 @@ const (
 	CodeInvalidMsgQuota          sdk.CodeType = 1302
 	CodeAppBandwidthInfoNotFound sdk.CodeType = 1303
 	CodeInvalidExpectedMPS       sdk.CodeType = 1304
+	CodeAppBandwidthNotEnough    sdk.CodeType = 1305
+	CodeUserMsgFeeNotEnough      sdk.CodeType = 1306
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

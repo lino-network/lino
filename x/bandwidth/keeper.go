@@ -13,7 +13,7 @@ import (
 
 type BandwidthKeeper interface {
 	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool
-	AddMsgSignedByApp(ctx sdk.Context, num int64) sdk.Error
+	AddMsgSignedByApp(ctx sdk.Context, accKey linotypes.AccountKey, num int64) sdk.Error
 	AddMsgSignedByUser(ctx sdk.Context, num int64) sdk.Error
 	ClearBlockInfo(ctx sdk.Context) sdk.Error
 	UpdateMaxMPSAndEMA(ctx sdk.Context) sdk.Error
@@ -26,6 +26,7 @@ type BandwidthKeeper interface {
 	GetBandwidthCostPerMsg(ctx sdk.Context, u sdk.Dec, p sdk.Dec) sdk.Dec
 	ConsumeBandwidthCredit(ctx sdk.Context, costPerMsg sdk.Dec, accKey linotypes.AccountKey) sdk.Error
 	ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Error
+	CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error
 	// getter
 	GetAllAppInfo(ctx sdk.Context) ([]*model.AppBandwidthInfo, sdk.Error)
 }

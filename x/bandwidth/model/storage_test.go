@@ -69,6 +69,8 @@ func TestAppBandwidthInfo(t *testing.T) {
 		MaxBandwidthCredit: sdk.NewDec(1000),
 		CurBandwidthCredit: sdk.NewDec(1000),
 		MessagesInCurBlock: 100,
+		LastRefilledAt:     1230,
+		ExpectedMPS:        sdk.NewDec(200),
 	}
 	accName := linotypes.AccountKey("test")
 	err := bs.SetAppBandwidthInfo(ctx, accName, &info)

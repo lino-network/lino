@@ -26,6 +26,7 @@ import (
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
+	vote "github.com/lino-network/lino/x/vote"
 
 	dev "github.com/lino-network/lino/x/developer"
 )
@@ -103,6 +104,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
 	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
+	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -112,6 +114,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
@@ -124,12 +127,14 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
 
-	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm)
+	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+
+	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm, vm, dm, am)
 
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm, dm, bm)
+	anteHandler := NewAnteHandler(am, gm, pm, bm)
 
 	suite.am = am
 	suite.pm = pm

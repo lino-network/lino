@@ -6,6 +6,7 @@ import (
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	account "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/bandwidth/types"
 	developer "github.com/lino-network/lino/x/developer"
@@ -21,15 +22,17 @@ type BandwidthManager struct {
 	gm global.GlobalKeeper
 	vm vote.VoteKeeper
 	dm developer.DeveloperKeeper
+	am account.AccountKeeper
 }
 
-func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper, vm vote.VoteKeeper, dm developer.DeveloperKeeper) *BandwidthManager {
+func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper, vm vote.VoteKeeper, dm developer.DeveloperKeeper, am account.AccountKeeper) *BandwidthManager {
 	return &BandwidthManager{
 		storage:     model.NewBandwidthStorage(key),
 		paramHolder: holder,
 		gm:          gm,
 		vm:          vm,
 		dm:          dm,
+		am:          am,
 	}
 }
 
@@ -57,6 +60,14 @@ func (bm BandwidthManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
+func (bm BandwidthManager) IsAppBandwidthEnough(ctx sdk.Context, accKey linotypes.AccountKey) bool {
+	appBandwidthInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
+	if err != nil {
+		return false
+	}
+	return appBandwidthInfo.CurBandwidthCredit.IsPositive()
+}
+
 func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool {
 	if !fee.Amount.IsValid() {
 		return false
@@ -69,7 +80,7 @@ func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) 
 	return providedFee.IsGTE(info.CurMsgFee)
 }
 
-func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num int64) sdk.Error {
+func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, accKey linotypes.AccountKey, num int64) sdk.Error {
 	info, err := bm.storage.GetBlockInfo(ctx)
 	if err != nil {
 		return err
@@ -77,6 +88,15 @@ func (bm BandwidthManager) AddMsgSignedByApp(ctx sdk.Context, num int64) sdk.Err
 	info.TotalMsgSignedByApp += num
 
 	if err := bm.storage.SetBlockInfo(ctx, info); err != nil {
+		return err
+	}
+
+	appBandwidthInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
+	if err != nil {
+		return err
+	}
+	appBandwidthInfo.MessagesInCurBlock += 1
+	if err := bm.storage.SetAppBandwidthInfo(ctx, accKey, appBandwidthInfo); err != nil {
 		return err
 	}
 	return nil
@@ -370,6 +390,33 @@ func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Erro
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error {
+	if bm.dm.DoesDeveloperExist(ctx, accKey) {
+		appName, err := bm.dm.GetAffiliatingApp(ctx, accKey)
+		if err != nil {
+			return err
+		}
+		if !bm.IsAppBandwidthEnough(ctx, appName) {
+			return types.ErrAppBandwidthNotEnough()
+		}
+
+		// add app message stats
+		if err := bm.AddMsgSignedByApp(ctx, appName, 1); err != nil {
+			return err
+		}
+	} else {
+		// msg fee for general message
+		// if !bm.IsUserMsgFeeEnough(ctx, fee) {
+		// 	return types.ErrUserMsgFeeNotEnough()
+		// }
+
+		// TODO(zhimao): minus message fee
+		linotypes.NewCoinFromInt64(fee.Amount.AmountOf(linotypes.LinoCoinDenom).Int64())
+		bm.AddMsgSignedByUser(ctx, 1)
 	}
 	return nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/bandwidth"
-	dev "github.com/lino-network/lino/x/developer"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 )
@@ -64,7 +63,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKee
 
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
-	pm post.PostKeeper, dm dev.DeveloperKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
+	pm post.PostKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {
@@ -157,18 +156,8 @@ func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
 					return ctx, err.Result(), true
 				}
 
-				// TODO(zhimao): bandwidth model for app signed message, and check affiliate account
-				if dm.DoesDeveloperExist(ctx, signer) {
-					bm.AddMsgSignedByApp(ctx, 1)
-				} else {
-					// msg fee for general message
-					// if !bm.IsUserMsgFeeEnough(ctx, fee) {
-					// 	return ctx, ErrMsgFeeNotEnough().Result(), true
-					// }
-
-					// TODO(zhimao): minus message fee
-					types.NewCoinFromInt64(fee.Amount.AmountOf(types.LinoCoinDenom).Int64())
-					bm.AddMsgSignedByUser(ctx, 1)
+				if err := bm.CheckBandwidth(ctx, signer, fee); err != nil {
+					return ctx, err.Result(), true
 				}
 				idx++
 			}
