@@ -8,6 +8,7 @@ import (
 
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/bandwidth/manager"
+	"github.com/lino-network/lino/x/bandwidth/model"
 )
 
 type BandwidthKeeper interface {
@@ -19,10 +20,14 @@ type BandwidthKeeper interface {
 	CalculateCurMsgFee(ctx sdk.Context) sdk.Error
 	InitGenesis(ctx sdk.Context) error
 	DecayMaxMPS(ctx sdk.Context) sdk.Error
-	RefillAppBandwidthCredit(ctx sdk.Context, linotypes.AccountKey) sdk.Error
-	GetVacancyCoeff(ctx sdk.Context) sdk.Error
-	GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Error, sdk.Dec)
-	GetBandwidthCostPerMsg(ctx sdk.Context, u sdk.NewDec, p sdk.NewDec) (sdk.Error, sdk.Dec)
+	RefillAppBandwidthCredit(ctx sdk.Context, accKey linotypes.AccountKey) sdk.Error
+	GetVacancyCoeff(ctx sdk.Context) (sdk.Dec, sdk.Error)
+	GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Dec, sdk.Error)
+	GetBandwidthCostPerMsg(ctx sdk.Context, u sdk.Dec, p sdk.Dec) sdk.Dec
+	ConsumeBandwidthCredit(ctx sdk.Context, costPerMsg sdk.Dec, accKey linotypes.AccountKey) sdk.Error
+	ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Error
+	// getter
+	GetAllAppInfo(ctx sdk.Context) ([]*model.AppBandwidthInfo, sdk.Error)
 }
 
 var _ BandwidthKeeper = manager.BandwidthManager{}

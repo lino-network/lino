@@ -3,11 +3,14 @@ package manager
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/bandwidth/types"
+	developer "github.com/lino-network/lino/x/developer"
 	global "github.com/lino-network/lino/x/global"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 // BandwidthManager - bandwidth manager
@@ -16,13 +19,17 @@ type BandwidthManager struct {
 	paramHolder param.ParamKeeper
 	// deps
 	gm global.GlobalKeeper
+	vm vote.VoteKeeper
+	dm developer.DeveloperKeeper
 }
 
-func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper) *BandwidthManager {
+func NewBandwidthManager(key sdk.StoreKey, holder param.ParamKeeper, gm global.GlobalKeeper, vm vote.VoteKeeper, dm developer.DeveloperKeeper) *BandwidthManager {
 	return &BandwidthManager{
 		storage:     model.NewBandwidthStorage(key),
 		paramHolder: holder,
 		gm:          gm,
+		vm:          vm,
+		dm:          dm,
 	}
 }
 
@@ -168,16 +175,9 @@ func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
-	curMaxMPS := sdk.NewDec(0)
-	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
-		curMaxMPS = params.ExpectedMaxMPS
-	} else {
-		curMaxMPS = bandwidthInfo.MaxMPS
-	}
-
-	generalMsgQuota := params.GeneralMsgQuotaRatio.Mul(curMaxMPS)
-	if !generalMsgQuota.IsPositive() {
-		return types.ErrInvalidMsgQuota()
+	generalMsgQuota, err := bm.getGeneralMsgQuota(ctx)
+	if err != nil {
+		return err
 	}
 
 	expResult := bm.approximateExp(bandwidthInfo.GeneralMsgEMA.Sub(generalMsgQuota).Quo(generalMsgQuota).Mul(params.MsgFeeFactorA))
@@ -239,50 +239,42 @@ func (bm BandwidthManager) RefillAppBandwidthCredit(ctx sdk.Context, accKey lino
 	return nil
 }
 
-func (bm BandwidthManager) GetVacancyCoeff(ctx sdk.Context) (sdk.Error, sdk.Dec) {
+func (bm BandwidthManager) GetVacancyCoeff(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
 	if err != nil {
-		return err, sdk.NewDec(1)
+		return sdk.NewDec(1), err
 	}
 
 	params, err := bm.paramHolder.GetBandwidthParam(ctx)
 	if err != nil {
-		return err, sdk.NewDec(1)
+		return sdk.NewDec(1), err
 	}
 
-	curMaxMPS := sdk.NewDec(1)
-	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
-		curMaxMPS = params.ExpectedMaxMPS
-	} else {
-		curMaxMPS = bandwidthInfo.MaxMPS
+	appMsgQuota, err := bm.getAppMsgQuota(ctx)
+	if err != nil {
+		return sdk.NewDec(1), err
 	}
-
-	appMsgQuota := params.AppMsgQuotaRatio.Mul(curMaxMPS)
-	if !appMsgQuota.IsPositive() {
-		return types.ErrInvalidMsgQuota(), sdk.NewDec(1)
-	}
-
 	delta := bandwidthInfo.AppMsgEMA.Sub(appMsgQuota)
-	return nil, bm.approximateExp(delta.Quo(appMsgQuota).Mul(params.AppVacancyFactor))
+	return bm.approximateExp(delta.Quo(appMsgQuota).Mul(params.AppVacancyFactor)), nil
 }
 
-func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Error, sdk.Dec) {
+func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Dec, sdk.Error) {
 	lastBlockTime, err := bm.gm.GetLastBlockTime(ctx)
 	if err != nil {
-		return err, sdk.NewDec(1)
+		return sdk.NewDec(1), err
 	}
 	if lastBlockTime >= ctx.BlockHeader().Time.Unix() {
-		return nil, sdk.NewDec(1)
+		return sdk.NewDec(1), nil
 	}
 	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
 
 	appInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
 	if err != nil {
-		return err, sdk.NewDec(1)
+		return sdk.NewDec(1), err
 	}
 
 	if !appInfo.ExpectedMPS.IsPositive() {
-		return types.ErrInvalidExpectedMPS(), sdk.NewDec(1)
+		return sdk.NewDec(1), types.ErrInvalidExpectedMPS()
 	}
 
 	curMPS := linotypes.NewDecFromRat(appInfo.MessagesInCurBlock, pastTime)
@@ -293,13 +285,101 @@ func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.
 
 	params, err := bm.paramHolder.GetBandwidthParam(ctx)
 	if err != nil {
-		return err, sdk.NewDec(1)
+		return sdk.NewDec(1), err
 	}
-	return nil, bm.approximateExp(delta.Quo(appInfo.ExpectedMPS).Mul(params.AppPunishmentFactor))
+	return bm.approximateExp(delta.Quo(appInfo.ExpectedMPS).Mul(params.AppPunishmentFactor)), nil
+}
+
+func (bm BandwidthManager) ConsumeBandwidthCredit(ctx sdk.Context, costPerMsg sdk.Dec, accKey linotypes.AccountKey) sdk.Error {
+	info, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
+	if err != nil {
+		return err
+	}
+
+	// currently allow the credit be negative
+	info.CurBandwidthCredit = info.CurBandwidthCredit.Sub(sdk.NewDec(info.MessagesInCurBlock).Mul(costPerMsg))
+	info.MessagesInCurBlock = 0
+	if err := bm.storage.SetAppBandwidthInfo(ctx, accKey, info); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Error {
+	totalAppStakeCoin := linotypes.NewCoinFromInt64(0)
+
+	// calculate all app total stake
+	for _, app := range bm.dm.GetLiveDevelopers(ctx) {
+		appStakeCoin, err := bm.vm.GetLinoStake(ctx, app.Username)
+		if err != nil {
+			return err
+		}
+		totalAppStakeCoin = totalAppStakeCoin.Plus(appStakeCoin)
+	}
+
+	if !totalAppStakeCoin.IsPositive() {
+		return nil
+	}
+
+	// calculate all app MPS quota
+	appMsgQuota, err := bm.getAppMsgQuota(ctx)
+	if err != nil {
+		return err
+	}
+
+	// calculate each app's share and expected MPS
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, app := range bm.dm.GetLiveDevelopers(ctx) {
+		appStakeCoin, err := bm.vm.GetLinoStake(ctx, app.Username)
+		if err != nil {
+			return err
+		}
+		appStakePct := appStakeCoin.ToDec().Quo(totalAppStakeCoin.ToDec())
+		expectedMPS := appMsgQuota.Mul(appStakePct)
+		maxBandwidthCredit := expectedMPS.Mul(params.AppBandwidthPoolSize)
+
+		// first time app, refill it's current pool to the full
+		if !bm.storage.DoesAppBandwidthInfoExist(ctx, app.Username) {
+			newAppInfo := model.AppBandwidthInfo{
+				Username:           app.Username,
+				MaxBandwidthCredit: maxBandwidthCredit,
+				CurBandwidthCredit: maxBandwidthCredit,
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        expectedMPS,
+				LastRefilledAt:     ctx.BlockHeader().Time.Unix(),
+			}
+
+			if err := bm.storage.SetAppBandwidthInfo(ctx, app.Username, &newAppInfo); err != nil {
+				return err
+			}
+
+		} else {
+			// only update it's max and expected MPS, refill will happen when the app actually send messages.
+			info, err := bm.storage.GetAppBandwidthInfo(ctx, app.Username)
+			if err != nil {
+				return err
+			}
+			info.ExpectedMPS = expectedMPS
+			info.MaxBandwidthCredit = maxBandwidthCredit
+
+			if err := bm.storage.SetAppBandwidthInfo(ctx, app.Username, info); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (bm BandwidthManager) GetBandwidthCostPerMsg(ctx sdk.Context, u sdk.Dec, p sdk.Dec) sdk.Dec {
 	return u.Mul(p)
+}
+
+func (bm BandwidthManager) GetAllAppInfo(ctx sdk.Context) ([]*model.AppBandwidthInfo, sdk.Error) {
+	return bm.storage.GetAllAppBandwidthInfo(ctx)
 }
 
 func (bm BandwidthManager) calculateEMA(prevEMA sdk.Dec, k sdk.Dec, curMPS sdk.Dec) sdk.Dec {
@@ -326,4 +406,54 @@ func (bm BandwidthManager) approximateExp(x sdk.Dec) sdk.Dec {
 		return sdk.NewDec(1).Quo(x)
 	}
 	return x
+}
+
+func (bm BandwidthManager) getAppMsgQuota(ctx sdk.Context) (sdk.Dec, sdk.Error) {
+	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
+	if err != nil {
+		return sdk.NewDec(1), err
+	}
+
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return sdk.NewDec(1), err
+	}
+
+	curMaxMPS := sdk.NewDec(1)
+	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
+		curMaxMPS = params.ExpectedMaxMPS
+	} else {
+		curMaxMPS = bandwidthInfo.MaxMPS
+	}
+
+	appMsgQuota := params.AppMsgQuotaRatio.Mul(curMaxMPS)
+	if !appMsgQuota.IsPositive() {
+		return sdk.NewDec(1), types.ErrInvalidMsgQuota()
+	}
+	return appMsgQuota, nil
+}
+
+func (bm BandwidthManager) getGeneralMsgQuota(ctx sdk.Context) (sdk.Dec, sdk.Error) {
+	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
+	if err != nil {
+		return sdk.NewDec(1), err
+	}
+
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return sdk.NewDec(1), err
+	}
+
+	curMaxMPS := sdk.NewDec(1)
+	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
+		curMaxMPS = params.ExpectedMaxMPS
+	} else {
+		curMaxMPS = bandwidthInfo.MaxMPS
+	}
+
+	generalMsgQuota := params.GeneralMsgQuotaRatio.Mul(curMaxMPS)
+	if !generalMsgQuota.IsPositive() {
+		return sdk.NewDec(1), types.ErrInvalidMsgQuota()
+	}
+	return generalMsgQuota, nil
 }

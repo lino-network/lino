@@ -27,6 +27,29 @@ func (_m *VoteKeeper) DoesVoterExist(ctx types.Context, accKey linotypes.Account
 	return r0
 }
 
+// GetLinoStake provides a mock function with given fields: ctx, accKey
+func (_m *VoteKeeper) GetLinoStake(ctx types.Context, accKey linotypes.AccountKey) (linotypes.Coin, types.Error) {
+	ret := _m.Called(ctx, accKey)
+
+	var r0 linotypes.Coin
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) linotypes.Coin); ok {
+		r0 = rf(ctx, accKey)
+	} else {
+		r0 = ret.Get(0).(linotypes.Coin)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
+		r1 = rf(ctx, accKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // GetVoterDuty provides a mock function with given fields: ctx, accKey
 func (_m *VoteKeeper) GetVoterDuty(ctx types.Context, accKey linotypes.AccountKey) votetypes.VoterDuty {
 	ret := _m.Called(ctx, accKey)

@@ -27,5 +27,36 @@ func EndBlocker(
 	if err := bm.UpdateMaxMPSAndEMA(ctx); err != nil {
 		panic(err)
 	}
+
+	// calculate vacancy coefficient
+	u, err := bm.GetVacancyCoeff(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// get all app bandwidth info
+	allInfo, err := bm.GetAllAppInfo(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range allInfo {
+		if info.MessagesInCurBlock == 0 {
+			continue
+		}
+		// refill bandwidth for apps with messages in current block
+		if err := bm.RefillAppBandwidthCredit(ctx, info.Username); err != nil {
+			panic(err)
+		}
+		// calculate cost and consume bandwidth credit
+		p, err := bm.GetPunishmentCoeff(ctx, info.Username)
+		if err != nil {
+			panic(err)
+		}
+		costPerMsg := bm.GetBandwidthCostPerMsg(ctx, u, p)
+		if err := bm.ConsumeBandwidthCredit(ctx, costPerMsg, info.Username); err != nil {
+			panic(err)
+		}
+	}
 	return
 }

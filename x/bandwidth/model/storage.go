@@ -88,6 +88,26 @@ func (bs BandwidthStorage) SetAppBandwidthInfo(ctx sdk.Context, accKey linotypes
 	return nil
 }
 
+// GetAllAppBandwidthInfo
+func (bs BandwidthStorage) GetAllAppBandwidthInfo(ctx sdk.Context) ([]*AppBandwidthInfo, sdk.Error) {
+	allInfo := make([]*AppBandwidthInfo, 0)
+	store := ctx.KVStore(bs.key)
+	iter := sdk.KVStorePrefixIterator(store, appBandwidthSubstore)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		val := iter.Value()
+		info := new(AppBandwidthInfo)
+		bs.cdc.MustUnmarshalBinaryLengthPrefixed(val, info)
+		allInfo = append(allInfo, info)
+	}
+	return allInfo, nil
+}
+
+func (bs BandwidthStorage) DoesAppBandwidthInfoExist(ctx sdk.Context, accKey linotypes.AccountKey) bool {
+	store := ctx.KVStore(bs.key)
+	return store.Has(GetAppBandwidthInfoKey(accKey))
+}
+
 func GetBandwidthInfoKey() []byte {
 	return bandwidthInfoSubstore
 }

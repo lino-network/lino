@@ -21,9 +21,10 @@ type BlockInfo struct {
 
 // AppBandwidthInfo - stores info about each app's bandwidth
 type AppBandwidthInfo struct {
-	MaxBandwidthCredit sdk.Dec `json:"max_bandwidth_credit"`
-	CurBandwidthCredit sdk.Dec `json:"cur_bandwidth_credit"`
-	MessagesInCurBlock int64   `json:"messages_in_cur_block"`
-	ExpectedMPS        sdk.Dec `json:"expected_mps"`
-	LastRefilledAt     int64   `json:"last_refilled_at"`
+	Username           linotypes.AccountKey `json:"username"`
+	MaxBandwidthCredit sdk.Dec              `json:"max_bandwidth_credit"`
+	CurBandwidthCredit sdk.Dec              `json:"cur_bandwidth_credit"`
+	MessagesInCurBlock int64                `json:"messages_in_cur_block"`
+	ExpectedMPS        sdk.Dec              `json:"expected_mps"`
+	LastRefilledAt     int64                `json:"last_refilled_at"`
 }
