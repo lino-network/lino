@@ -80,3 +80,35 @@ func TestAppBandwidthInfo(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, info, *resultPtr, "App bandwidth info should be equal")
 }
+
+func TestGetAllAppBandwidthInfo(t *testing.T) {
+	bs := NewBandwidthStorage(TestKVStoreKey)
+	ctx := getContext()
+	appName1 := linotypes.AccountKey("app1")
+	appName2 := linotypes.AccountKey("app2")
+	info1 := AppBandwidthInfo{
+		Username:           appName1,
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(1000),
+		MessagesInCurBlock: 100,
+		LastRefilledAt:     1230,
+		ExpectedMPS:        sdk.NewDec(200),
+	}
+	info2 := AppBandwidthInfo{
+		Username:           appName2,
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(2000),
+		MessagesInCurBlock: 1300,
+		LastRefilledAt:     1130,
+		ExpectedMPS:        sdk.NewDec(100),
+	}
+
+	err := bs.SetAppBandwidthInfo(ctx, appName1, &info1)
+	assert.Nil(t, err)
+	err = bs.SetAppBandwidthInfo(ctx, appName2, &info2)
+	assert.Nil(t, err)
+
+	resultList, err := bs.GetAllAppBandwidthInfo(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, []*AppBandwidthInfo{&info1, &info2}, resultList, "App bandwidth info should be equal")
+}

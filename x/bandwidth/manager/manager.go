@@ -327,7 +327,6 @@ func (bm BandwidthManager) ConsumeBandwidthCredit(ctx sdk.Context, costPerMsg sd
 
 func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Error {
 	totalAppStakeCoin := linotypes.NewCoinFromInt64(0)
-
 	// calculate all app total stake
 	for _, app := range bm.dm.GetLiveDevelopers(ctx) {
 		appStakeCoin, err := bm.vm.GetLinoStake(ctx, app.Username)
