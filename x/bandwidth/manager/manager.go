@@ -52,6 +52,7 @@ func (bm BandwidthManager) InitGenesis(ctx sdk.Context) error {
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
 		CurMsgFee:            linotypes.NewCoinFromInt64(int64(0)),
+		CurU:                 sdk.NewDec(1),
 	}
 
 	if err := bm.storage.SetBlockInfo(ctx, blockInfo); err != nil {
@@ -60,12 +61,26 @@ func (bm BandwidthManager) InitGenesis(ctx sdk.Context) error {
 	return nil
 }
 
-func (bm BandwidthManager) IsAppBandwidthEnough(ctx sdk.Context, accKey linotypes.AccountKey) bool {
+func (bm BandwidthManager) PrecheckAndConsumeBandwidthCredit(ctx sdk.Context, accKey linotypes.AccountKey) sdk.Error {
 	appBandwidthInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
 	if err != nil {
-		return false
+		return err
 	}
-	return appBandwidthInfo.CurBandwidthCredit.IsPositive()
+
+	blockInfo, err := bm.storage.GetBlockInfo(ctx)
+	if err != nil {
+		return err
+	}
+	if appBandwidthInfo.CurBandwidthCredit.LT(blockInfo.CurU) {
+		return types.ErrAppBandwidthNotEnough()
+	}
+
+	// consume u at first
+	appBandwidthInfo.CurBandwidthCredit = appBandwidthInfo.CurBandwidthCredit.Sub(blockInfo.CurU)
+	if err := bm.storage.SetAppBandwidthInfo(ctx, accKey, appBandwidthInfo); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (bm BandwidthManager) IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool {
@@ -210,6 +225,36 @@ func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+// calcuate the current vacancy coeef u based on last block info at the begining of each block
+func (bm BandwidthManager) CalculateCurU(ctx sdk.Context) sdk.Error {
+	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	params, err := bm.paramHolder.GetBandwidthParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	appMsgQuota, err := bm.getAppMsgQuota(ctx)
+	if err != nil {
+		return err
+	}
+
+	blockInfo, err := bm.storage.GetBlockInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	delta := bandwidthInfo.AppMsgEMA.Sub(appMsgQuota)
+	blockInfo.CurU = bm.approximateExp(delta.Quo(appMsgQuota).Mul(params.AppVacancyFactor))
+	if err := bm.storage.SetBlockInfo(ctx, blockInfo); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (bm BandwidthManager) DecayMaxMPS(ctx sdk.Context) sdk.Error {
 	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
 	if err != nil {
@@ -259,35 +304,15 @@ func (bm BandwidthManager) RefillAppBandwidthCredit(ctx sdk.Context, accKey lino
 	return nil
 }
 
-func (bm BandwidthManager) GetVacancyCoeff(ctx sdk.Context) (sdk.Dec, sdk.Error) {
-	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
-	if err != nil {
-		return sdk.NewDec(1), err
-	}
-
-	params, err := bm.paramHolder.GetBandwidthParam(ctx)
-	if err != nil {
-		return sdk.NewDec(1), err
-	}
-
-	appMsgQuota, err := bm.getAppMsgQuota(ctx)
-	if err != nil {
-		return sdk.NewDec(1), err
-	}
-	delta := bandwidthInfo.AppMsgEMA.Sub(appMsgQuota)
-	return bm.approximateExp(delta.Quo(appMsgQuota).Mul(params.AppVacancyFactor)), nil
-}
-
 func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Dec, sdk.Error) {
 	lastBlockTime, err := bm.gm.GetLastBlockTime(ctx)
 	if err != nil {
 		return sdk.NewDec(1), err
 	}
-	if lastBlockTime >= ctx.BlockHeader().Time.Unix() {
+	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
+	if pastTime <= 0 {
 		return sdk.NewDec(1), nil
 	}
-	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
-
 	appInfo, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
 	if err != nil {
 		return sdk.NewDec(1), err
@@ -310,14 +335,18 @@ func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.
 	return bm.approximateExp(delta.Quo(appInfo.ExpectedMPS).Mul(params.AppPunishmentFactor)), nil
 }
 
-func (bm BandwidthManager) ConsumeBandwidthCredit(ctx sdk.Context, costPerMsg sdk.Dec, accKey linotypes.AccountKey) sdk.Error {
+func (bm BandwidthManager) ConsumeBandwidthCredit(ctx sdk.Context, u sdk.Dec, p sdk.Dec, accKey linotypes.AccountKey) sdk.Error {
 	info, err := bm.storage.GetAppBandwidthInfo(ctx, accKey)
 	if err != nil {
 		return err
 	}
 
-	// currently allow the credit be negative
-	info.CurBandwidthCredit = info.CurBandwidthCredit.Sub(sdk.NewDec(info.MessagesInCurBlock).Mul(costPerMsg))
+	numMsgs := sdk.NewDec(info.MessagesInCurBlock)
+	// add back pre-check consumed bandwidth credit
+	info.CurBandwidthCredit = info.CurBandwidthCredit.Add(numMsgs.Mul(u))
+	// consume credit, currently allow the credit be negative
+	costPerMsg := bm.GetBandwidthCostPerMsg(ctx, u, p)
+	info.CurBandwidthCredit = info.CurBandwidthCredit.Sub(numMsgs.Mul(costPerMsg))
 	info.MessagesInCurBlock = 0
 	if err := bm.storage.SetAppBandwidthInfo(ctx, accKey, info); err != nil {
 		return err
@@ -377,7 +406,11 @@ func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Erro
 			}
 
 		} else {
-			// only update it's max and expected MPS, refill will happen when the app actually send messages.
+			// refill the bandwidth credit with old expectedMPS (refill rate)
+			if err := bm.RefillAppBandwidthCredit(ctx, app.Username); err != nil {
+				return err
+			}
+			// update it's max and expected MPS
 			info, err := bm.storage.GetAppBandwidthInfo(ctx, app.Username)
 			if err != nil {
 				return err
@@ -399,8 +432,9 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 		if err != nil {
 			return err
 		}
-		if !bm.IsAppBandwidthEnough(ctx, appName) {
-			return types.ErrAppBandwidthNotEnough()
+
+		if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
+			return err
 		}
 
 		// add app message stats
@@ -427,6 +461,62 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 		if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (bm BandwidthManager) BeginBlocker(ctx sdk.Context) sdk.Error {
+	// calculate the new general msg fee for the current block
+	if err := bm.CalculateCurMsgFee(ctx); err != nil {
+		return err
+	}
+
+	// calculate the new vacancy coeff
+	if err := bm.CalculateCurU(ctx); err != nil {
+		return err
+	}
+
+	// clear stats for block info
+	if err := bm.ClearBlockInfo(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bm BandwidthManager) EndBlocker(ctx sdk.Context) sdk.Error {
+	// update maxMPS and EMA for different msgs and store cur block info
+	if err := bm.UpdateMaxMPSAndEMA(ctx); err != nil {
+		return err
+	}
+
+	blockInfo, err := bm.storage.GetBlockInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	// get all app bandwidth info
+	allInfo, err := bm.GetAllAppInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, info := range allInfo {
+		if info.MessagesInCurBlock == 0 {
+			continue
+		}
+		// refill bandwidth for apps with messages in current block
+		if err := bm.RefillAppBandwidthCredit(ctx, info.Username); err != nil {
+			return err
+		}
+		// calculate cost and consume bandwidth credit
+		p, err := bm.GetPunishmentCoeff(ctx, info.Username)
+		if err != nil {
+			return err
+		}
+		if err := bm.ConsumeBandwidthCredit(ctx, blockInfo.CurU, p, info.Username); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }

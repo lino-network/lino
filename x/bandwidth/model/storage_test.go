@@ -52,6 +52,7 @@ func TestBlockInfo(t *testing.T) {
 		TotalMsgSignedByApp:  213123,
 		TotalMsgSignedByUser: 0,
 		CurMsgFee:            linotypes.NewCoinFromInt64(int64(123)),
+		CurU:                 sdk.NewDec(1),
 	}
 	err := bs.SetBlockInfo(ctx, &info)
 	assert.Nil(t, err)
