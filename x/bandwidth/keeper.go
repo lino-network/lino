@@ -12,7 +12,6 @@ import (
 )
 
 type BandwidthKeeper interface {
-	IsUserMsgFeeEnough(ctx sdk.Context, fee auth.StdFee) bool
 	AddMsgSignedByApp(ctx sdk.Context, accKey linotypes.AccountKey, num int64) sdk.Error
 	AddMsgSignedByUser(ctx sdk.Context, num int64) sdk.Error
 	ClearBlockInfo(ctx sdk.Context) sdk.Error

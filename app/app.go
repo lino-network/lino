@@ -176,7 +176,7 @@ func NewLinoBlockchain(
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager, lb.bandwidthManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.bandwidthManager))
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 

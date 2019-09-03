@@ -9,7 +9,6 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/bandwidth"
-	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 )
 
@@ -62,8 +61,7 @@ func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKee
 }
 
 // NewAnteHandler - return an AnteHandler
-func NewAnteHandler(am acc.AccountKeeper, gm global.GlobalManager,
-	pm post.PostKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
+func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (_ sdk.Context, _ sdk.Result, abort bool) {

@@ -74,12 +74,12 @@ func newTestTx(
 	sigs := make([]auth.StdSignature, len(privs))
 
 	for i, priv := range privs {
-		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{}, msgs, "")
+		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, msgs, "")
 		bz, _ := priv.Sign(signBytes)
 		sigs[i] = auth.StdSignature{
 			PubKey: priv.PubKey(), Signature: bz}
 	}
-	tx := auth.NewStdTx(msgs, auth.StdFee{}, sigs, "")
+	tx := auth.NewStdTx(msgs, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
 	return tx
 }
 
@@ -130,11 +130,11 @@ func (suite *AnteTestSuite) SetupTest() {
 	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
 
 	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm, vm, dm, am)
-
+	bm.InitGenesis(ctx)
 	// dev, rep, price = nil
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm, bm)
+	anteHandler := NewAnteHandler(am, bm)
 
 	suite.am = am
 	suite.pm = pm

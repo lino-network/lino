@@ -14,13 +14,13 @@ type BandwidthKeeper struct {
 	mock.Mock
 }
 
-// AddMsgSignedByApp provides a mock function with given fields: ctx, num
-func (_m *BandwidthKeeper) AddMsgSignedByApp(ctx types.Context, num int64) types.Error {
-	ret := _m.Called(ctx, num)
+// AddMsgSignedByApp provides a mock function with given fields: ctx, accKey, num
+func (_m *BandwidthKeeper) AddMsgSignedByApp(ctx types.Context, accKey linotypes.AccountKey, num int64) types.Error {
+	ret := _m.Called(ctx, accKey, num)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, int64) types.Error); ok {
-		r0 = rf(ctx, num)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, int64) types.Error); ok {
+		r0 = rf(ctx, accKey, num)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -53,6 +53,22 @@ func (_m *BandwidthKeeper) CalculateCurMsgFee(ctx types.Context) types.Error {
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
 		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// CheckBandwidth provides a mock function with given fields: ctx, accKey, fee
+func (_m *BandwidthKeeper) CheckBandwidth(ctx types.Context, accKey linotypes.AccountKey, fee auth.StdFee) types.Error {
+	ret := _m.Called(ctx, accKey, fee)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, auth.StdFee) types.Error); ok {
+		r0 = rf(ctx, accKey, fee)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -204,20 +220,6 @@ func (_m *BandwidthKeeper) InitGenesis(ctx types.Context) error {
 		r0 = rf(ctx)
 	} else {
 		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// IsUserMsgFeeEnough provides a mock function with given fields: ctx, fee
-func (_m *BandwidthKeeper) IsUserMsgFeeEnough(ctx types.Context, fee auth.StdFee) bool {
-	ret := _m.Called(ctx, fee)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(types.Context, auth.StdFee) bool); ok {
-		r0 = rf(ctx, fee)
-	} else {
-		r0 = ret.Get(0).(bool)
 	}
 
 	return r0

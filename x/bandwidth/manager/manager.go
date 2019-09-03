@@ -410,13 +410,24 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 		}
 	} else {
 		// msg fee for general message
-		// if !bm.IsUserMsgFeeEnough(ctx, fee) {
-		// 	return types.ErrUserMsgFeeNotEnough()
-		// }
+		if !bm.IsUserMsgFeeEnough(ctx, fee) {
+			return types.ErrUserMsgFeeNotEnough()
+		}
 
-		// TODO(zhimao): minus message fee
-		linotypes.NewCoinFromInt64(fee.Amount.AmountOf(linotypes.LinoCoinDenom).Int64())
-		bm.AddMsgSignedByUser(ctx, 1)
+		// minus message fee
+		_, err := bm.storage.GetBlockInfo(ctx)
+		if err != nil {
+			return err
+		}
+
+		// TODO(zhimao): minus msg fee
+		// if err := bm.am.MinusCoinFromUsername(ctx, accKey, info.CurMsgFee); err != nil {
+		// 	return err
+		// }
+		// add general message stats
+		if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
+			return err
+		}
 	}
 	return nil
 }
