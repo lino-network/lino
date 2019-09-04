@@ -162,9 +162,9 @@ func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
 	for _, v := range tb.Reputations {
 		rep := IntAdd(v.FreeScore, v.CustomerScore)
 		// when import from upgrade-1, do a unit conversion.
-		// 1 testnetcoin = (10^-5 * 0.012) USD = 12 MiniUSD
+		// 1 testnetcoin = (10^-5 * 0.012) USD = 1200 MiniUSD
 		if !v.IsMiniDollar {
-			rep.Mul(NewInt(12))
+			rep.Mul(NewInt(1200))
 		}
 		impl.SetUserMeta(v.Username, &userMeta{
 			Reputation: rep,

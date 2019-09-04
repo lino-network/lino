@@ -1,0 +1,157 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-revoked-ida",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-revoked-ida",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-without-ida",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-without-ida",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp-revoked-ida",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp-revoked-ida",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": true,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/from",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "100000"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/from-not-enough",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "10"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/from-unauthed",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "1000",
+        "unauthed": true
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/testuser",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "0",
+        "unauthed": true
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/to",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "1000"
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "testapp/testuser-affiliated",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "testuser-affiliated",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "testapp"
+      }
+    }
+  }
+]

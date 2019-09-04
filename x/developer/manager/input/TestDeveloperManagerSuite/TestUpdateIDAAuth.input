@@ -1,0 +1,20 @@
+[
+  {
+    "prefix": "4",
+      "key": "testapp/testuser-affiliated",
+      "val": {
+        "type": "str",
+        "value": "t"
+      }
+  },
+  {
+    "prefix": "5",
+      "key": "testuser-affiliated",
+      "val": {
+        "type": "lino/role",
+        "value": {
+          "aa": "testapp"
+        }
+      }
+  }
+]

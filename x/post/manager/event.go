@@ -35,7 +35,7 @@ func (event RewardEvent) Execute(ctx sdk.Context, pm PostManager) sdk.Error {
 	// if developer exist, add to developer consumption
 	if pm.dev.DoesDeveloperExist(ctx, event.FromApp) {
 		// ignore report consumption err.
-		_ = pm.dev.ReportConsumption(ctx, event.FromApp, reward)
+		_ = pm.dev.ReportConsumption(ctx, event.FromApp, event.Evaluate)
 	}
 
 	// previsously rewards were added to account's reward, now it's added directly to balance.

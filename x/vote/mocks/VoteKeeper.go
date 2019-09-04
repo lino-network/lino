@@ -13,6 +13,22 @@ type VoteKeeper struct {
 	mock.Mock
 }
 
+// AssignDuty provides a mock function with given fields: ctx, accKey, duty, frozenAmount
+func (_m *VoteKeeper) AssignDuty(ctx types.Context, accKey linotypes.AccountKey, duty votetypes.VoterDuty, frozenAmount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, accKey, duty, frozenAmount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, votetypes.VoterDuty, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, accKey, duty, frozenAmount)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // DoesVoterExist provides a mock function with given fields: ctx, accKey
 func (_m *VoteKeeper) DoesVoterExist(ctx types.Context, accKey linotypes.AccountKey) bool {
 	ret := _m.Called(ctx, accKey)

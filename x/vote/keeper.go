@@ -14,6 +14,7 @@ type VoteKeeper interface {
 	DoesVoterExist(ctx sdk.Context, accKey linotypes.AccountKey) bool
 	GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) types.VoterDuty
 	GetLinoStake(ctx sdk.Context, accKey linotypes.AccountKey) (linotypes.Coin, sdk.Error)
+	AssignDuty(ctx sdk.Context, accKey linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error
 }
 
 var _ VoteKeeper = VoteManager{}

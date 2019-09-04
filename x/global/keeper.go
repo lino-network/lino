@@ -15,6 +15,9 @@ type GlobalKeeper interface {
 	GetRewardAndPopFromWindow(ctx sdk.Context, evaluate types.MiniDollar) (types.Coin, sdk.Error)
 	AddToValidatorInflationPool(ctx sdk.Context, coin types.Coin) sdk.Error
 	GetLastBlockTime(ctx sdk.Context) (int64, sdk.Error)
+
+	// pop out developer monthly inflation from pool.
+	PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
 }
 
 var _ GlobalKeeper = &GlobalManager{}

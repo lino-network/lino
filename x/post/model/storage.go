@@ -98,21 +98,3 @@ func (ps PostStorage) Export(ctx sdk.Context) *PostTablesIR {
 	// }()
 	// return tables
 }
-
-// Import from tablesIR.
-func (ps PostStorage) Import(ctx sdk.Context, tb *PostTablesIR) error {
-	// upgrade2 has simplied the post structure to just one post.
-	for _, v := range tb.Posts {
-		ps.SetPost(ctx, &Post{
-			PostID:    v.Info.PostID,
-			Title:     v.Info.Title,
-			Content:   v.Info.Content,
-			Author:    v.Info.Author,
-			CreatedBy: v.Info.Author,
-			CreatedAt: v.Meta.CreatedAt,
-			UpdatedAt: v.Meta.LastUpdatedAt,
-			IsDeleted: v.Meta.IsDeleted,
-		})
-	}
-	return nil
-}

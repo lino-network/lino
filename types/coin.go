@@ -25,6 +25,11 @@ type Coin struct {
 	Amount sdk.Int `json:"amount"`
 }
 
+// NewCoin - return coin from sdk.Int.
+func NewCoin(amount sdk.Int) Coin {
+	return Coin{Amount: amount}
+}
+
 // NewCoinFromInt64 - return int64 amount of Coin
 func NewCoinFromInt64(amount int64) Coin {
 	// return Coin{big.NewInt(amount)}

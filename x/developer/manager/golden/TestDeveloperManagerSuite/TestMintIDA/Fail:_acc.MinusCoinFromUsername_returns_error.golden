@@ -1,0 +1,154 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-revoked-ida",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-revoked-ida",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-unauthed-bank",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-unauthed-bank",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-without-ida",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-without-ida",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp-revoked-ida",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp-revoked-ida",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": true,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp-unauthed-bank",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp-unauthed-bank",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp-unauthed-bank/testapp-unauthed-bank",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "10000",
+        "unauthed": true
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "testapp/testapp",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "10000"
+      }
+    }
+  },
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/reservepool",
+      "value": {
+        "total": {
+          "amount": "0"
+        },
+        "total_minidollar": "0"
+      }
+    }
+  }
+]

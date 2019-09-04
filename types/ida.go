@@ -8,20 +8,20 @@ import (
 // same as coin, support at most 5 digits precision(log10(Decimals)).
 type IDAStr string
 
-// MiniIDA is an unsigned integer, >= 0 <= max.
-// One MiniIDA = 100000 IDA(Decimals).
+// MiniIDA is an integer.
+// 100000 MiniIDA =  one IDA(Decimals).
 type MiniIDA = sdk.Int
 
-func (i IDAStr) ToIDA() (MiniIDA, sdk.Error) {
+func (i IDAStr) ToMiniIDA() (MiniIDA, sdk.Error) {
 	dec, err := sdk.NewDecFromStr(string(i))
 	if err != nil {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("Illegal IDA amount")
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
 	}
 	if dec.GT(UpperBoundRat) {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA overflow")
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
 	}
 	if dec.LT(LowerBoundRat) {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount("IDA can't be less than lower bound")
+		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
 	}
 	return MiniIDA(dec.MulInt64(Decimals).RoundInt()), nil
 }

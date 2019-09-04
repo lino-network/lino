@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/lino-network/lino/client"
+	linotypes "github.com/lino-network/lino/types"
 	post "github.com/lino-network/lino/x/post/types"
 )
 
@@ -31,7 +32,10 @@ func sendDeletePostTx(cdc *wire.Codec) client.CommandTxCallback {
 		author := viper.GetString(FlagAuthor)
 		postID := viper.GetString(FlagPostID)
 
-		msg := post.NewDeletePostMsg(author, postID)
+		msg := post.DeletePostMsg{
+			Author: linotypes.AccountKey(author),
+			PostID: postID,
+		}
 
 		// build and sign the transaction, then broadcast to Tendermint
 		res, err := ctx.SignBuildBroadcast([]sdk.Msg{msg}, cdc)

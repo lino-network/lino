@@ -14,6 +14,13 @@ price of Lino. One MiniDollar is 10^(-8) USD. Internally it is a sdk.Int.
 2. Remove view/upvote/report tx.
 3. Storage use MustUnmarshalBinaryLengthPrefixed, same as cosmos modules.
 
+## Changes to Developer
+---
+
+1. Deposit from Upgrade1 will be burned, since In Upgrade2 Developer uses stake-in.
+2. One account can only be a developer once. Had the account unregistered, cannot register again.
+3. Remove DeveloperList. Replace it with GetActiveDeveloper() which returns all active developers.
+
 ### Minors
 
 1. experimental refactor on post structure.
@@ -34,3 +41,4 @@ price of Lino. One MiniDollar is 10^(-8) USD. Internally it is a sdk.Int.
 **Codec**: post signbytes are now sorted by sdk.MustSortJSON.
 **links**: now are in content.
 **CreateAffiliateAccounts**: app need to create affilicate accounts to create posts.
+**DeveloperRegisterMsg**: temporarily disabled as vote module is not ready.

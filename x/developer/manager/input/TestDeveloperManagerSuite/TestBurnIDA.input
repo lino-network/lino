@@ -1,0 +1,25 @@
+[
+  {
+    "prefix": "3",
+      "key": "",
+      "val": {
+        "type": "lino/reservepool",
+        "value": {
+          "total": {
+            "amount": "10"
+          },
+          "total_minidollar": "1000"
+        }
+      }
+  },
+  {
+    "prefix": "6",
+    "key": "testapp",
+    "val": {
+      "type": "lino/appidastats",
+      "value": {
+        "total": "1000"
+      }
+    }
+  }
+]

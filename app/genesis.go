@@ -26,6 +26,7 @@ var (
 // genesis state for blockchain
 type GenesisState struct {
 	Accounts       []GenesisAccount          `json:"accounts"`
+	ReservePool    types.Coin                `json:"reserve_pool"`
 	Developers     []GenesisAppDeveloper     `json:"developers"`
 	Infra          []GenesisInfraProvider    `json:"infra"`
 	GenesisParam   GenesisParam              `json:"genesis_param"`
@@ -47,11 +48,10 @@ type GenesisAccount struct {
 
 // GenesisAppDeveloper - register developer in genesis phase
 type GenesisAppDeveloper struct {
-	Name        string     `json:"name"`
-	Deposit     types.Coin `json:"deposit"`
-	Website     string     `json:"web_site"`
-	Description string     `json:"description"`
-	AppMetaData string     `json:"app_meta_data"`
+	Name        string `json:"name"`
+	Website     string `json:"web_site"`
+	Description string `json:"description"`
+	AppMetaData string `json:"app_meta_data"`
 }
 
 // GenesisInfraProvider - register infra provider in genesis phase
@@ -120,9 +120,10 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 
 	// totalLino := "10000000000"
 	genesisState := GenesisState{
-		Accounts:   []GenesisAccount{},
-		Developers: []GenesisAppDeveloper{},
-		Infra:      []GenesisInfraProvider{},
+		Accounts:    []GenesisAccount{},
+		ReservePool: types.NewCoinFromInt64(0),
+		Developers:  []GenesisAppDeveloper{},
+		Infra:       []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
@@ -216,7 +217,6 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name:        "lino",
-		Deposit:     types.NewCoinFromInt64(1000000 * types.Decimals),
 		Website:     "https://lino.network/",
 		Description: "",
 		AppMetaData: "",

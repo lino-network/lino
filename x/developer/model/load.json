@@ -1,0 +1,95 @@
+[
+  {
+    "prefix": "0",
+    "key": "test",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "test",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "web1",
+        "description": "desc1",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "test2",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "test2",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "web2",
+        "description": "desc2",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "app1",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "app1",
+        "name": "appname1",
+        "price": "0",
+        "is_revoked": true,
+        "revoke_coin_price": "333"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "app1/user1",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "33"
+      }
+    }
+  },
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/reservepool",
+      "value": {
+        "total": {
+          "amount": "444"
+        },
+        "total_minidollar": "333"
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "app1/user1",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "user2",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "app3"
+      }
+    }
+  }
+]

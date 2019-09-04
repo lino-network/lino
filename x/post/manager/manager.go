@@ -73,13 +73,18 @@ func (pm PostManager) CreatePost(ctx sdk.Context, author linotypes.AccountKey, p
 	if !pm.am.DoesAccountExist(ctx, createdBy) {
 		return types.ErrAccountNotFound(createdBy)
 	}
-	// if created by app, then app must exist.
-	if author != createdBy && !pm.dev.DoesDeveloperExist(ctx, createdBy) {
-		return types.ErrDeveloperNotFound(createdBy)
-	}
 	permlink := linotypes.GetPermlink(author, postID)
 	if pm.postStorage.HasPost(ctx, permlink) {
 		return types.ErrPostAlreadyExist(permlink)
+	}
+	if author != createdBy {
+		// if created by app, then createdBy must either be the app or an affiliated account of app.
+		dev := createdBy
+		var err error
+		createdBy, err = pm.dev.GetAffiliatingApp(ctx, createdBy)
+		if err != nil {
+			return types.ErrDeveloperNotFound(dev)
+		}
 	}
 
 	createdAt := ctx.BlockHeader().Time.Unix()
@@ -145,6 +150,7 @@ func (pm PostManager) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) s
 // 3. no self donation.
 // 4. if app is not empty, then developer must exist.
 // 5. amount positive > 0.
+// 6. 9.9% of amount > 0 coin.
 func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amount linotypes.Coin, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
 	if err := pm.validateLinoDonation(ctx, from, amount, author, postID, app); err != nil {
 		return err
@@ -156,11 +162,15 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		return err
 	}
 	frictionCoin := linotypes.DecToCoin(amount.ToDec().Mul(rate))
-	// dp is the evaluated result.
+	if frictionCoin.IsZero() {
+		return types.ErrDonateAmountTooLittle()
+	}
+	// dp is the evaluated consumption.
 	dp, err := pm.rep.DonateAt(ctx, from, permlink, pm.price.CoinToMiniDollar(amount))
 	if err != nil {
 		return err
 	}
+
 	rewardEvent := RewardEvent{
 		PostAuthor: author,
 		PostID:     postID,
@@ -172,7 +182,6 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		ctx, rewardEvent, frictionCoin, dp); err != nil {
 		return err
 	}
-	// memo is deprecated.
 	err = pm.am.MinusCoinFromUsername(ctx, from, amount)
 	if err != nil {
 		return err
@@ -185,25 +194,42 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 }
 
 // IDADonate - handle IDA donation.
-func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.MiniIDA, author linotypes.AccountKey, postID string, app linotypes.AccountKey) sdk.Error {
+func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.MiniIDA, author linotypes.AccountKey, postID string, app, signer linotypes.AccountKey) sdk.Error {
 	if err := pm.validateIDADonate(ctx, from, n, author, postID, app); err != nil {
 		return err
 	}
+	signerApp, err := pm.dev.GetAffiliatingApp(ctx, signer)
+	if err != nil || signerApp != app {
+		return types.ErrInvalidSigner()
+	}
 	permlink := linotypes.GetPermlink(author, postID)
-	idaPrice, err := pm.dev.GetMiniIDAPrice(app)
+	idaPrice, err := pm.dev.GetMiniIDAPrice(ctx, app)
 	if err != nil {
 		return err
 	}
-	dollarAmount := linotypes.MiniIDAToMiniDollar(n, idaPrice) // unit conversion
-
 	rate, err := pm.gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
 		return err
 	}
-	tax := linotypes.NewMiniDollarFromInt(dollarAmount.ToDec().Mul(rate).TruncateInt())
-	dollarTransfer := linotypes.NewMiniDollarFromInt(dollarAmount.Sub(tax.Int))
 
-	// dp is the evaluated result.
+	// amount = tax + dollarTransfer
+	// tax: burned to lino
+	// dollarTransfer: moved from sender to receipient.
+	dollarAmount := linotypes.MiniIDAToMiniDollar(n, idaPrice) // unit conversion
+	tax := linotypes.NewMiniDollarFromInt(dollarAmount.ToDec().Mul(rate).TruncateInt())
+	dollarTransfer := dollarAmount.Minus(tax)
+
+	// burn and check taxable coins.
+	// tax will be subtracted from @p from's IDA account, and converted to coins out.
+	taxcoins, err := pm.dev.BurnIDA(ctx, app, from, tax)
+	if err != nil {
+		return err
+	}
+	if !taxcoins.IsPositive() {
+		return types.ErrDonateAmountTooLittle()
+	}
+
+	// dp is the evaluated consumption.
 	dp, err := pm.rep.DonateAt(ctx, from, permlink, dollarAmount)
 	if err != nil {
 		return err
@@ -216,10 +242,10 @@ func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n li
 		FromApp:    app,
 	}
 	if err := pm.gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, pm.price.MiniDollarToCoin(tax), dp); err != nil {
+		ctx, rewardEvent, taxcoins, dp); err != nil {
 		return err
 	}
-	if err := pm.dev.MoveIDA(app, from, author, dollarTransfer); err != nil {
+	if err := pm.dev.MoveIDA(ctx, app, from, author, dollarTransfer); err != nil {
 		return err
 	}
 	return nil
@@ -282,12 +308,12 @@ func (pm PostManager) validateIDADonate(ctx sdk.Context, from linotypes.AccountK
 	return nil
 }
 
-// Export - adaptor to storage Export.
+// Export - to file.
 func (pm PostManager) ExportToFile(ctx sdk.Context, filepath string) error {
 	panic("post export unimplemented")
 }
 
-// Import - adaptor to storage Export.
+// Import - from file
 func (pm PostManager) ImportFromFile(ctx sdk.Context, filepath string) error {
 	rst, err := utils.Load(filepath, func() interface{} { return &model.PostTablesIR{} })
 	if err != nil {

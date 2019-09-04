@@ -1,0 +1,88 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-has-ida",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-has-ida",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "testapp-has-ida",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "testapp-has-ida",
+        "name": "test-lemon",
+        "price": "10000",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "test2",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "test2"
+      }
+    }
+  },
+  {
+    "prefix": "6",
+    "key": "testapp",
+    "val": {
+      "type": "lino/appidastats",
+      "value": {
+        "total": "0"
+      }
+    }
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-deleted",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-deleted",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "0",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": true,
+        "n_affiliated": "0"
+      }
+    }
+  }
+]

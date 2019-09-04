@@ -1,0 +1,59 @@
+[
+  {
+    "prefix": "0",
+    "key": "testapp-0",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-0",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "1",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-1",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-1",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "2",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "testapp-2",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "testapp-2",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "4",
+        "web_site": "",
+        "description": "",
+        "app_meta_data": "",
+        "is_deleted": false,
+        "n_affiliated": "0"
+      }
+    }
+  }
+]

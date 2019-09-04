@@ -131,7 +131,7 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgValidateBasic() {
 				Author:    "",
 				CreatedBy: app,
 			},
-			expectedResult: ErrNoAuthor(),
+			expectedResult: ErrInvalidAuthor(),
 		},
 		{
 			testName: "post id is too long",
@@ -197,7 +197,7 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgValidateBasic() {
 				Content: string(make([]byte, 1000)),
 				Author:  author,
 			},
-			expectedResult: ErrNoCreatedBy(),
+			expectedResult: ErrInvalidCreatedBy(),
 		},
 	}
 	for _, tc := range testCases {
@@ -356,11 +356,13 @@ func (suite *PostMsgTestSuite) TestUpdatePostValidateBasic() {
 				Title:   "TestTitle",
 				Content: "TestContent",
 			},
-			expected: ErrNoAuthor(),
+			expected: ErrInvalidAuthor(),
 		},
 	}
 	for _, c := range testCases {
-		suite.Equal(c.expected, c.msg.ValidateBasic())
+		suite.Run(c.testName, func() {
+			suite.Equal(c.expected, c.msg.ValidateBasic())
+		})
 	}
 }
 
@@ -385,7 +387,7 @@ func (suite *PostMsgTestSuite) TestDeletePostValidateBasic() {
 				Author: types.AccountKey(""),
 				PostID: "TestPostID",
 			},
-			expected: ErrNoAuthor(),
+			expected: ErrInvalidAuthor(),
 		},
 		{
 			testName: "should throw error if postID is empty",
@@ -397,7 +399,9 @@ func (suite *PostMsgTestSuite) TestDeletePostValidateBasic() {
 		},
 	}
 	for _, c := range testCases {
-		suite.Equal(c.expected, c.msg.ValidateBasic())
+		suite.Run(c.testName, func() {
+			suite.Equal(c.expected, c.msg.ValidateBasic())
+		})
 	}
 }
 
@@ -415,7 +419,7 @@ func (suite *PostMsgTestSuite) TestDonateMsgValidateBasic() {
 		{
 			testName: "no username",
 			msg:      NewDonateMsg("", types.LNO("1"), "author", "postID", "", memo1),
-			expected: ErrNoUsername(),
+			expected: ErrInvalidUsername(),
 		},
 		{
 			testName: "zero coin is less than lower bound",
@@ -443,6 +447,16 @@ func (suite *PostMsgTestSuite) TestDonateMsgValidateBasic() {
 			expected: ErrInvalidTarget(),
 		},
 		{
+			testName: "invalid app - invalid app name",
+			msg:      NewDonateMsg("test", types.LNO("1"), "", "", "x", memo1),
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "self donate",
+			msg:      NewDonateMsg("test", types.LNO("1"), "test", "post1", "app1", memo1),
+			expected: ErrCannotDonateToSelf("test"),
+		},
+		{
 			testName: "invalid memo",
 			msg:      NewDonateMsg("test", types.LNO("1"), "author", "postID", "", invalidMemo),
 			expected: ErrInvalidMemo(),
@@ -454,7 +468,9 @@ func (suite *PostMsgTestSuite) TestDonateMsgValidateBasic() {
 		},
 	}
 	for _, c := range testCases {
-		suite.Equal(c.expected, c.msg.ValidateBasic())
+		suite.Run(c.testName, func() {
+			suite.Equal(c.expected, c.msg.ValidateBasic())
+		})
 	}
 }
 
@@ -473,141 +489,173 @@ func (suite *PostMsgTestSuite) TestDonateMsgConsumeAmount() {
 		},
 	}
 	for _, c := range testCases {
-		suite.Equal(c.expected, c.msg.GetConsumeAmount())
+		suite.Run(c.testName, func() {
+			suite.Equal(c.expected, c.msg.GetConsumeAmount())
+		})
 	}
 }
 
-// func (suite *PostMsgTestSuite) TestIDADonateMsgValidateBasic() {
-// 	testCases := []struct {
-// 		testName string
-// 		msg IDADonateMsg
-// 		expected sdk.Error
-// 	}{
-// 		{
-// 			testName: "
+func (suite *PostMsgTestSuite) TestIDADonateMsgValidateBasic() {
+	testCases := []struct {
+		testName string
+		msg      IDADonateMsg
+		expected sdk.Error
+	}{
+		{
+			testName: "ok1",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "12345",
+				Author:   "user2",
+				PostID:   "post1",
+				Memo:     memo1,
+				Signer:   "singer",
+			},
+			expected: nil,
+		},
+		{
+			testName: "no username",
+			msg: IDADonateMsg{
+				Username: "",
+				App:      "app1",
+				Amount:   "12345",
+				Author:   "user2",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: ErrInvalidUsername(),
+		},
+		{
+			testName: "zero amount is less than lower bound",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "0",
+				Author:   "user2",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: types.ErrInvalidIDAAmount(),
+		},
+		{
+			testName: "negative coin is less than lower bound",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "-1",
+				Author:   "user2",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: types.ErrInvalidIDAAmount(),
+		},
+		{
+			testName: "invalid target - no post id",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "",
+				Signer:   "singer",
+			},
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid target - no author",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid target - no post id",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "",
+				Signer:   "singer",
+			},
+			expected: ErrInvalidTarget(),
+		},
+		{
+			testName: "invalid app - invalid app name",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "x",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: ErrInvalidApp(),
+		},
+		{
+			testName: "self donate",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user1",
+				PostID:   "post1",
+				Signer:   "singer",
+			},
+			expected: ErrCannotDonateToSelf("user1"),
+		},
+		{
+			testName: "invalid memo",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "post1",
+				Memo:     invalidMemo,
+				Signer:   "singer",
+			},
+			expected: ErrInvalidMemo(),
+		},
+		{
+			testName: "utf8 memo is too long",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "post1",
+				Memo:     tooLongOfUTF8Memo,
+				Signer:   "singer",
+			},
+			expected: ErrInvalidMemo(),
+		},
+		{
+			testName: "invalid signer",
+			msg: IDADonateMsg{
+				Username: "user1",
+				App:      "app1",
+				Amount:   "1",
+				Author:   "user2",
+				PostID:   "post1",
+				Memo:     memo1,
+				Signer:   "x",
+			},
+			expected: ErrInvalidUsername(),
+		},
+	}
+	for _, tc := range testCases {
+		suite.Equal(tc.expected, tc.msg.ValidateBasic(), "%s", tc.testName)
+	}
+}
 
-// func TestUpdatePostMsg(t *testing.T) {
-// 	testCases := []struct {
-// 		testName       string
-// 		updatePostMsg  UpdatePostMsg
-// 		expectedResult sdk.Error
-// 	}{
-// 		{
-// 			testName: "normal case 1",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", "title", "content", []types.IDToURLMapping{}),
-// 			expectedResult: nil,
-// 		},
-// 		{
-// 			testName: "normal case 2",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", "title", "content", []types.IDToURLMapping{}),
-// 			expectedResult: nil,
-// 		},
-// 		{
-// 			testName: "utf8 title",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", maxLenOfUTF8Title, "content", []types.IDToURLMapping{}),
-// 			expectedResult: nil,
-// 		},
-// 		{
-// 			testName: "utf8 content",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", "title", maxLenOfUTF8Content, []types.IDToURLMapping{}),
-// 			expectedResult: nil,
-// 		},
-// 		{
-// 			testName: "no author",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"", "postID", "title", "content", []types.IDToURLMapping{}),
-// 			expectedResult: ErrNoAuthor(),
-// 		},
-// 		{
-// 			testName: "no post id",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "", "title", "content", []types.IDToURLMapping{}),
-// 			expectedResult: ErrNoPostID(),
-// 		},
-// 		{
-// 			testName: "post tile is too long",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", string(make([]byte, 101)), "content", []types.IDToURLMapping{}),
-// 			expectedResult: ErrPostTitleExceedMaxLength(),
-// 		},
-// 		{
-// 			testName: "post utf8 tile is too long",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", tooLongOfUTF8Title, "content", []types.IDToURLMapping{}),
-// 			expectedResult: ErrPostTitleExceedMaxLength(),
-// 		},
-// 		{
-// 			testName: "post content is too long",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", string(make([]byte, 100)), string(make([]byte, 1001)),
-// 				[]types.IDToURLMapping{}),
-// 			expectedResult: ErrPostContentExceedMaxLength(),
-// 		},
-// 		{
-// 			testName: "post utf8 content is too long",
-// 			updatePostMsg: NewUpdatePostMsg(
-// 				"author", "postID", string(make([]byte, 100)), tooLongOfUTF8Content,
-// 				[]types.IDToURLMapping{}),
-// 			expectedResult: ErrPostContentExceedMaxLength(),
-// 		},
-// 	}
-// 	for _, tc := range testCases {
-// 		result := tc.updatePostMsg.ValidateBasic()
-// 		if !assert.Equal(t, result, tc.expectedResult) {
-// 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedResult)
-// 		}
-// 	}
-// }
-
-// func TestDeletePostMsg(t *testing.T) {
-// 	testCases := []struct {
-// 		testName    string
-// 		msg         DeletePostMsg
-// 		wantErrCode sdk.CodeType
-// 	}{
-// 		{
-// 			testName: "normal case",
-// 			msg: DeletePostMsg{
-// 				Author: "author",
-// 				PostID: "postID",
-// 			},
-// 			wantErrCode: sdk.CodeOK,
-// 		},
-// 		{
-// 			testName: "empty author",
-// 			msg: DeletePostMsg{
-// 				Author: "",
-// 				PostID: "postID",
-// 			},
-// 			wantErrCode: types.CodeNoAuthor,
-// 		},
-// 		{
-// 			testName: "empty postID",
-// 			msg: DeletePostMsg{
-// 				Author: "author",
-// 				PostID: "",
-// 			},
-// 			wantErrCode: types.CodeNoPostID,
-// 		},
-// 	}
-// 	for _, tc := range testCases {
-// 		got := tc.msg.ValidateBasic()
-// 		if got == nil && tc.wantErrCode != sdk.CodeOK {
-// 			t.Errorf("%s: got non-OK code, got %v, want %v", tc.testName, got, tc.wantErrCode)
-// 		}
-// 		if got != nil {
-// 			if got.Code() != tc.wantErrCode {
-// 				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, got, tc.wantErrCode)
-// 			}
-// 		}
-// 	}
-// }
-
-// func TestMsgPermission(t *testing.T) {
+// func (suite *PostMsgTestSuite) TestMsgPermission() {
 // 	testCases := []struct {
 // 		testName           string
 // 		msg                types.Msg
@@ -672,64 +720,6 @@ func (suite *PostMsgTestSuite) TestDonateMsgConsumeAmount() {
 // 		if tc.expectedPermission != permission {
 // 			t.Errorf("%s: diff permission, got %v, want %v", tc.testName, tc.expectedPermission, permission)
 // 		}
-// 	}
-// }
-
-// func TestGetSignBytes(t *testing.T) {
-// 	testCases := []struct {
-// 		testName string
-// 		msg      types.Msg
-// 	}{
-// 		{
-// 			testName: "donateMsg",
-// 			msg: NewDonateMsg(
-// 				"test", types.LNO("1"),
-// 				"author", "postID", "", memo1),
-// 		},
-// 		{
-// 			testName: "create post",
-// 			msg: CreatePostMsg{
-// 				PostID:       "test",
-// 				Title:        "title",
-// 				Content:      "content",
-// 				Author:       "author",
-// 				ParentAuthor: types.AccountKey("parentAuthor"),
-// 				ParentPostID: "parentPostID",
-// 				SourceAuthor: types.AccountKey("sourceAuthor"),
-// 				SourcePostID: "sourcePostID",
-// 				Links: []types.IDToURLMapping{
-// 					{
-// 						Identifier: "#1",
-// 						URL:        "https://lino.network",
-// 					},
-// 				},
-// 				RedistributionSplitRate: "0.5",
-// 			},
-// 		},
-// 		{
-// 			testName: "view post",
-// 			msg: NewViewMsg(
-// 				"test", "author", "postID"),
-// 		},
-// 		{
-// 			testName: "report post",
-// 			msg: NewReportOrUpvoteMsg(
-// 				"test", "author", "postID", true),
-// 		},
-// 		{
-// 			testName: "upvote post",
-// 			msg: NewReportOrUpvoteMsg(
-// 				"test", "author", "postID", false),
-// 		},
-// 		{
-// 			testName: "update post",
-// 			msg: NewUpdatePostMsg(
-// 				"author", "postID", "title", "content", []types.IDToURLMapping{}),
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		require.NotPanics(t, func() { tc.msg.GetSignBytes() }, tc.testName)
 // 	}
 // }
 
@@ -803,74 +793,6 @@ func (suite *PostMsgTestSuite) TestDonateMsgConsumeAmount() {
 // 				t.Errorf("%s: expect signer wrong, got %v, want %v", tc.testName, types.AccountKey(signer), tc.expectSigners[i])
 // 				return
 // 			}
-// 		}
-// 	}
-// }
-
-// func TestGetConsumeAmount(t *testing.T) {
-// 	testCases := []struct {
-// 		testName     string
-// 		msg          types.Msg
-// 		expectAmount types.Coin
-// 	}{
-// 		{
-// 			testName: "donateMsg",
-// 			msg: NewDonateMsg(
-// 				"test", types.LNO("1"),
-// 				"author", "postID", "", memo1),
-// 			expectAmount: types.NewCoinFromInt64(1 * types.Decimals),
-// 		},
-// 		{
-// 			testName: "create post",
-// 			msg: CreatePostMsg{
-// 				PostID:       "test",
-// 				Title:        "title",
-// 				Content:      "content",
-// 				Author:       "author",
-// 				ParentAuthor: types.AccountKey("parentAuthor"),
-// 				ParentPostID: "parentPostID",
-// 				SourceAuthor: types.AccountKey("sourceAuthor"),
-// 				SourcePostID: "sourcePostID",
-// 				Links: []types.IDToURLMapping{
-// 					{
-// 						Identifier: "#1",
-// 						URL:        "https://lino.network",
-// 					},
-// 				},
-// 				RedistributionSplitRate: "0.5",
-// 			},
-// 			expectAmount: types.NewCoinFromInt64(0),
-// 		},
-// 		{
-// 			testName: "view post",
-// 			msg: NewViewMsg(
-// 				"test", "author", "postID"),
-// 			expectAmount: types.NewCoinFromInt64(0),
-// 		},
-// 		{
-// 			testName: "report post",
-// 			msg: NewReportOrUpvoteMsg(
-// 				"test", "author", "postID", true),
-// 			expectAmount: types.NewCoinFromInt64(0),
-// 		},
-// 		{
-// 			testName: "upvote post",
-// 			msg: NewReportOrUpvoteMsg(
-// 				"test", "author", "postID", false),
-// 			expectAmount: types.NewCoinFromInt64(0),
-// 		},
-// 		{
-// 			testName: "update post",
-// 			msg: NewUpdatePostMsg(
-// 				"author", "postID", "title", "content", []types.IDToURLMapping{}),
-// 			expectAmount: types.NewCoinFromInt64(0),
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		if !tc.expectAmount.IsEqual(tc.msg.GetConsumeAmount()) {
-// 			t.Errorf("%s: expect consume amount wrong, got %v, want %v", tc.testName, tc.msg.GetConsumeAmount(), tc.expectAmount)
-// 			return
 // 		}
 // 	}
 // }

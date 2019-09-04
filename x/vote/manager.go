@@ -390,7 +390,12 @@ func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.Refe
 }
 
 func (vm VoteManager) GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) types.VoterDuty {
-	panic(linotypes.NewError(linotypes.CodeUnimplementedError, "voter duty unimplemented"))
+	return types.DutyUnimplemented
+}
+
+// AssignDuty froze some amount of stake and assign a duty to user.
+func (vm VoteManager) AssignDuty(ctx sdk.Context, user linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error {
+	return linotypes.ErrUnimplemented("assign duty")
 }
 
 // Export storage state.

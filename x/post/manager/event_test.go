@@ -83,7 +83,7 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 			suite.am.On("AddCoinToUsername", mock.Anything, tc.event.PostAuthor, tc.reward).Return(nil).Once()
 			if tc.hasDev {
 				suite.dev.On(
-					"ReportConsumption", mock.Anything, tc.event.FromApp, tc.reward).Return(nil).Once()
+					"ReportConsumption", mock.Anything, tc.event.FromApp, tc.event.Evaluate).Return(nil).Once()
 			}
 		}
 		err := tc.event.Execute(suite.Ctx, suite.pm)
