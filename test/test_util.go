@@ -62,7 +62,6 @@ func loggerAndDB() (log.Logger, dbm.DB) {
 func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchain {
 	logger, db := loggerAndDB()
 	lb := app.NewLinoBlockchain(logger, db, nil)
-
 	genesisState := app.GenesisState{
 		Accounts: []app.GenesisAccount{},
 	}
@@ -106,6 +105,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Now()}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
+
 	return lb
 }
 
@@ -232,12 +232,12 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 }
 
 func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
-	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{}, []sdk.Msg{msg}, ""))
+	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),
 		Signature: bz,
 	}}
-	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, sigs, "")
+	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
 }
 
 // CreateTestPost - create a test post

@@ -52,6 +52,7 @@ func TestBlockInfo(t *testing.T) {
 		TotalMsgSignedByApp:  213123,
 		TotalMsgSignedByUser: 0,
 		CurMsgFee:            linotypes.NewCoinFromInt64(int64(123)),
+		CurU:                 sdk.NewDec(1),
 	}
 	err := bs.SetBlockInfo(ctx, &info)
 	assert.Nil(t, err)
@@ -59,4 +60,56 @@ func TestBlockInfo(t *testing.T) {
 	resultPtr, err := bs.GetBlockInfo(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, info, *resultPtr, "BlockInfo info should be equal")
+}
+
+func TestAppBandwidthInfo(t *testing.T) {
+	bs := NewBandwidthStorage(TestKVStoreKey)
+	ctx := getContext()
+
+	info := AppBandwidthInfo{
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(1000),
+		MessagesInCurBlock: 100,
+		LastRefilledAt:     1230,
+		ExpectedMPS:        sdk.NewDec(200),
+	}
+	accName := linotypes.AccountKey("test")
+	err := bs.SetAppBandwidthInfo(ctx, accName, &info)
+	assert.Nil(t, err)
+
+	resultPtr, err := bs.GetAppBandwidthInfo(ctx, accName)
+	assert.Nil(t, err)
+	assert.Equal(t, info, *resultPtr, "App bandwidth info should be equal")
+}
+
+func TestGetAllAppBandwidthInfo(t *testing.T) {
+	bs := NewBandwidthStorage(TestKVStoreKey)
+	ctx := getContext()
+	appName1 := linotypes.AccountKey("app1")
+	appName2 := linotypes.AccountKey("app2")
+	info1 := AppBandwidthInfo{
+		Username:           appName1,
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(1000),
+		MessagesInCurBlock: 100,
+		LastRefilledAt:     1230,
+		ExpectedMPS:        sdk.NewDec(200),
+	}
+	info2 := AppBandwidthInfo{
+		Username:           appName2,
+		MaxBandwidthCredit: sdk.NewDec(1000),
+		CurBandwidthCredit: sdk.NewDec(2000),
+		MessagesInCurBlock: 1300,
+		LastRefilledAt:     1130,
+		ExpectedMPS:        sdk.NewDec(100),
+	}
+
+	err := bs.SetAppBandwidthInfo(ctx, appName1, &info1)
+	assert.Nil(t, err)
+	err = bs.SetAppBandwidthInfo(ctx, appName2, &info2)
+	assert.Nil(t, err)
+
+	resultList, err := bs.GetAllAppBandwidthInfo(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, []*AppBandwidthInfo{&info1, &info2}, resultList, "App bandwidth info should be equal")
 }

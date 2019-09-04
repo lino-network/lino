@@ -146,7 +146,7 @@ func NewLinoBlockchain(
 
 	// TODO(yumin): update this when price manager is implemented.
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, pricemn.DummyPriceManager{})
-	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager)
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, lb.voteManager, lb.developerManager, lb.accountManager)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
@@ -176,7 +176,7 @@ func NewLinoBlockchain(
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
 	lb.SetEndBlocker(lb.endBlocker)
-	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.globalManager, lb.postManager, lb.developerManager, lb.bandwidthManager))
+	lb.SetAnteHandler(auth.NewAnteHandler(lb.accountManager, lb.bandwidthManager))
 	// TODO(Cosmos): mounting multiple stores is broken
 	// https://github.com/cosmos/cosmos-sdk/issues/532
 
@@ -566,6 +566,7 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 	lb.globalManager.DistributeHourlyInflation(ctx)
 	lb.distributeInflationToValidator(ctx)
+	lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx)
 }
 
 // execute daily event, record consumption friction and lino power

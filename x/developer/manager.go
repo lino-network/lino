@@ -228,3 +228,11 @@ func (dm DeveloperManager) Export(ctx sdk.Context) *model.DeveloperTables {
 func (dm DeveloperManager) Import(ctx sdk.Context, tb *model.DeveloperTablesIR) {
 	dm.storage.Import(ctx, tb)
 }
+
+// Zhimao: for mocks
+func (dm DeveloperManager) GetLiveDevelopers(ctx sdk.Context) []model.Developer {
+	return nil
+}
+func (dm DeveloperManager) GetAffiliatingApp(ctx sdk.Context, username types.AccountKey) (types.AccountKey, sdk.Error) {
+	return types.AccountKey("dummy"), ErrDeveloperNotFound()
+}

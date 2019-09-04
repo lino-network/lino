@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -22,12 +22,10 @@ import (
 
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
-	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
+	bandwidthmock "github.com/lino-network/lino/x/bandwidth/mocks"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
-
-	dev "github.com/lino-network/lino/x/developer"
 )
 
 type TestMsg struct {
@@ -73,12 +71,12 @@ func newTestTx(
 	sigs := make([]auth.StdSignature, len(privs))
 
 	for i, priv := range privs {
-		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{}, msgs, "")
+		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, msgs, "")
 		bz, _ := priv.Sign(signBytes)
 		sigs[i] = auth.StdSignature{
 			PubKey: priv.PubKey(), Signature: bz}
 	}
-	tx := auth.NewStdTx(msgs, auth.StdFee{}, sigs, "")
+	tx := auth.NewStdTx(msgs, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
 	return tx
 }
 
@@ -103,6 +101,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestParamKVStoreKey := sdk.NewKVStoreKey("param")
 	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
+	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -112,6 +111,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestDeveloperKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.LoadLatestVersion()
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
@@ -122,14 +122,10 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 
-	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
-
-	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm)
-
-	// dev, rep, price = nil
+	bm := &bandwidthmock.BandwidthKeeper{}
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
-	anteHandler := NewAnteHandler(am, gm, pm, dm, bm)
+	anteHandler := NewAnteHandler(am, bm)
 
 	suite.am = am
 	suite.pm = pm
@@ -137,6 +133,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.ph = ph
 	suite.ctx = ctx
 	suite.ante = anteHandler
+	bm.On("CheckBandwidth", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 }
 
 func (suite *AnteTestSuite) createTestAccount(username string) (secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1, types.AccountKey) {

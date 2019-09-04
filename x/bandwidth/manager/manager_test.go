@@ -8,21 +8,31 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	parammodel "github.com/lino-network/lino/param"
 	param "github.com/lino-network/lino/param/mocks"
 	"github.com/lino-network/lino/testsuites"
 	linotypes "github.com/lino-network/lino/types"
+	account "github.com/lino-network/lino/x/account/mocks"
 	"github.com/lino-network/lino/x/bandwidth/model"
+	"github.com/lino-network/lino/x/bandwidth/types"
+	developer "github.com/lino-network/lino/x/developer/mocks"
+	devModel "github.com/lino-network/lino/x/developer/model"
 	global "github.com/lino-network/lino/x/global/mocks"
+	vote "github.com/lino-network/lino/x/vote/mocks"
 )
 
 type BandwidthManagerTestSuite struct {
 	testsuites.CtxTestSuite
-	bm BandwidthManager
-	ph *param.ParamKeeper
+	bm       BandwidthManager
+	ph       *param.ParamKeeper
+	baseTime time.Time
 	// deps
 	global *global.GlobalKeeper
+	vm     *vote.VoteKeeper
+	dm     *developer.DeveloperKeeper
+	am     *account.AccountKeeper
 }
 
 func TestBandwidthManagerTestSuite(t *testing.T) {
@@ -30,12 +40,14 @@ func TestBandwidthManagerTestSuite(t *testing.T) {
 }
 
 func (suite *BandwidthManagerTestSuite) SetupTest() {
-	baseTime := time.Now()
+	suite.baseTime = time.Now()
 	testBandwidthKey := sdk.NewKVStoreKey("bandwidth")
-	suite.SetupCtx(0, baseTime.Add(3*time.Second), testBandwidthKey)
+	suite.SetupCtx(0, suite.baseTime.Add(3*time.Second), testBandwidthKey)
 	suite.global = &global.GlobalKeeper{}
 	suite.ph = &param.ParamKeeper{}
-	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global)
+	suite.vm = &vote.VoteKeeper{}
+	suite.dm = &developer.DeveloperKeeper{}
+	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global, suite.vm, suite.dm, suite.am)
 	suite.bm.InitGenesis(suite.Ctx)
 	suite.ph.On("GetBandwidthParam", mock.Anything).Return(&parammodel.BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
@@ -49,9 +61,23 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 		MsgFeeFactorA:               linotypes.NewDecFromRat(6, 1),
 		MsgFeeFactorB:               linotypes.NewDecFromRat(10, 1),
 		MaxMPSDecayRate:             linotypes.NewDecFromRat(99, 100),
+		AppBandwidthPoolSize:        linotypes.NewDecFromRat(10, 1),
+		AppVacancyFactor:            linotypes.NewDecFromRat(69, 100),
+		AppPunishmentFactor:         linotypes.NewDecFromRat(14, 5),
 	}, nil).Maybe()
 
-	suite.global.On("GetLastBlockTime", mock.Anything).Return(baseTime.Unix(), nil).Maybe()
+	suite.vm.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("AppX")).Return(linotypes.NewCoinFromInt64(10), nil).Maybe()
+	suite.vm.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.NewCoinFromInt64(90), nil).Maybe()
+	suite.dm.On("GetLiveDevelopers", mock.Anything).Return([]devModel.Developer{
+		devModel.Developer{
+			Username: "AppX",
+		},
+		devModel.Developer{
+			Username: "AppY",
+		},
+	}, nil).Maybe()
+	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.AccountKey("AppY"), nil).Maybe()
+	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
 
 }
 
@@ -68,6 +94,7 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
 				TotalMsgSignedByApp:  0,
 				TotalMsgSignedByUser: 1,
 				CurMsgFee:            linotypes.NewCoinFromInt64(int64(0)),
+				CurU:                 sdk.NewDec(1),
 			},
 		},
 	}
@@ -85,6 +112,7 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 		testName        string
 		amount          int64
 		expectBlockInfo model.BlockInfo
+		expectAppInfo   model.AppBandwidthInfo
 	}{
 		{
 			testName: "add user signed message",
@@ -93,15 +121,32 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 				TotalMsgSignedByApp:  1,
 				TotalMsgSignedByUser: 0,
 				CurMsgFee:            linotypes.NewCoinFromInt64(int64(0)),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectAppInfo: model.AppBandwidthInfo{
+				MessagesInCurBlock: 1,
+				MaxBandwidthCredit: sdk.NewDec(0),
+				CurBandwidthCredit: sdk.NewDec(0),
+				ExpectedMPS:        sdk.NewDec(0),
+				LastRefilledAt:     0,
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		suite.bm.AddMsgSignedByApp(suite.Ctx, tc.amount)
+		appName := linotypes.AccountKey("test")
+		appBandwidthInfo := model.AppBandwidthInfo{}
+
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &appBandwidthInfo)
+		suite.Require().Nil(err)
+
+		suite.bm.AddMsgSignedByApp(suite.Ctx, appName, tc.amount)
 		info, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Require().Nil(err)
 		suite.Equal(tc.expectBlockInfo, *info, "%s", tc.testName)
+
+		appInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Equal(tc.expectAppInfo, *appInfo, "%s", tc.testName)
 	}
 }
 
@@ -395,11 +440,13 @@ func (suite *BandwidthManagerTestSuite) TestClearBlockInfo() {
 				TotalMsgSignedByApp:  1,
 				TotalMsgSignedByUser: 2,
 				CurMsgFee:            linotypes.NewCoinFromInt64(int64(32)),
+				CurU:                 sdk.NewDec(2),
 			},
 			expectedBlockInfo: model.BlockInfo{
 				TotalMsgSignedByApp:  0,
 				TotalMsgSignedByUser: 0,
 				CurMsgFee:            linotypes.NewCoinFromInt64(int64(32)),
+				CurU:                 sdk.NewDec(2),
 			},
 		},
 	}
@@ -414,5 +461,454 @@ func (suite *BandwidthManagerTestSuite) TestClearBlockInfo() {
 		res, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Nil(err, "%s", tc.testName)
 		suite.Equal(tc.expectedBlockInfo, *res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestGetBandwidthCostPerMsg() {
+	testCases := []struct {
+		testName     string
+		u            sdk.Dec
+		p            sdk.Dec
+		expectedCost sdk.Dec
+	}{
+		{
+			testName:     "test1",
+			u:            sdk.NewDec(5),
+			p:            sdk.NewDec(2),
+			expectedCost: sdk.NewDec(10),
+		},
+	}
+
+	for _, tc := range testCases {
+		res := suite.bm.GetBandwidthCostPerMsg(suite.Ctx, tc.u, tc.p)
+		suite.Equal(tc.expectedCost, res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestGetPunishmentCoeff() {
+	testCases := []struct {
+		testName         string
+		appBandwidthInfo model.AppBandwidthInfo
+		expectedP        string
+	}{
+		{
+			testName: "test1",
+			appBandwidthInfo: model.AppBandwidthInfo{
+				ExpectedMPS:        sdk.NewDec(100),
+				MessagesInCurBlock: 300,
+			},
+			expectedP: "1",
+		},
+		{
+			testName: "test2",
+			appBandwidthInfo: model.AppBandwidthInfo{
+				ExpectedMPS:        sdk.NewDec(100),
+				MessagesInCurBlock: 375,
+			},
+			expectedP: "2.013271178444183139",
+		},
+	}
+
+	for _, tc := range testCases {
+		appName := linotypes.AccountKey("test")
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &tc.appBandwidthInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		res, getErr := suite.bm.GetPunishmentCoeff(suite.Ctx, appName)
+		suite.Nil(getErr, "%s", tc.testName)
+
+		expectedRes, err := sdk.NewDecFromStr(tc.expectedP)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(expectedRes, res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestGetVacancyCoeff() {
+	testCases := []struct {
+		testName      string
+		bandwidthInfo model.BandwidthInfo
+		expectedU     string
+	}{
+		{
+			testName: "test1",
+			bandwidthInfo: model.BandwidthInfo{
+				MaxMPS:    sdk.NewDec(1000),
+				AppMsgEMA: sdk.NewDec(0),
+			},
+			expectedU: "0.501692631996395802",
+		},
+		{
+			testName: "test2",
+			bandwidthInfo: model.BandwidthInfo{
+				MaxMPS:    sdk.NewDec(800),
+				AppMsgEMA: sdk.NewDec(800),
+			},
+			expectedU: "1",
+		},
+	}
+
+	for _, tc := range testCases {
+		err := suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.CalculateCurU(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+
+		expectedRes, err := sdk.NewDecFromStr(tc.expectedU)
+		suite.Nil(err, "%s", tc.testName)
+
+		blockInfo, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(expectedRes, blockInfo.CurU, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestRefillAppBandwidthCredit() {
+	testCases := []struct {
+		testName         string
+		appBandwidthInfo model.AppBandwidthInfo
+		curTime          time.Time
+		expectedInfo     model.AppBandwidthInfo
+	}{
+		{
+			testName: "test1",
+			appBandwidthInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(0),
+				LastRefilledAt:     suite.baseTime.Unix(),
+			},
+			curTime: suite.baseTime.Add(3 * time.Second),
+			expectedInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(600),
+				LastRefilledAt:     suite.baseTime.Add(3 * time.Second).Unix(),
+			},
+		},
+		{
+			testName: "test2",
+			appBandwidthInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(0),
+				LastRefilledAt:     suite.baseTime.Unix(),
+			},
+			curTime: suite.baseTime.Add(1000 * time.Second),
+			expectedInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(3000),
+				LastRefilledAt:     suite.baseTime.Add(1000 * time.Second).Unix(),
+			},
+		},
+		{
+			testName: "test3",
+			appBandwidthInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(0),
+				LastRefilledAt:     suite.baseTime.Add(3 * time.Second).Unix(),
+			},
+			curTime: suite.baseTime,
+			expectedInfo: model.AppBandwidthInfo{
+				MaxBandwidthCredit: sdk.NewDec(3000),
+				ExpectedMPS:        sdk.NewDec(200),
+				CurBandwidthCredit: sdk.NewDec(0),
+				LastRefilledAt:     suite.baseTime.Add(3 * time.Second).Unix(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Ctx = suite.Ctx.WithBlockHeader(abci.Header{Time: tc.curTime})
+		appName := linotypes.AccountKey("test")
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &tc.appBandwidthInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.RefillAppBandwidthCredit(suite.Ctx, appName)
+		suite.Nil(err, "%s", tc.testName)
+
+		res, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedInfo, *res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestConsumeBandwidthCredit() {
+	testCases := []struct {
+		testName     string
+		appInfo      model.AppBandwidthInfo
+		u            sdk.Dec
+		p            sdk.Dec
+		expectedInfo model.AppBandwidthInfo
+	}{
+		{
+			testName: "test1",
+			u:        linotypes.NewDecFromRat(5, 10),
+			p:        linotypes.NewDecFromRat(5, 10),
+			appInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(500),
+				MessagesInCurBlock: 100,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(525),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+		},
+		{
+			testName: "test2",
+			u:        linotypes.NewDecFromRat(1, 1),
+			p:        linotypes.NewDecFromRat(200, 1),
+			appInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(500),
+				MessagesInCurBlock: 20,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(-3480),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		appName := linotypes.AccountKey("test")
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &tc.appInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.ConsumeBandwidthCredit(suite.Ctx, tc.u, tc.p, appName)
+		suite.Nil(err, "%s", tc.testName)
+
+		res, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedInfo, *res, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestPrecheckAndConsumeBandwidthCredit() {
+	testCases := []struct {
+		testName        string
+		appInfo         model.AppBandwidthInfo
+		blockInfo       model.BlockInfo
+		expectedAppInfo model.AppBandwidthInfo
+		expectedErr     sdk.Error
+	}{
+		{
+			testName: "test1",
+			blockInfo: model.BlockInfo{
+				CurU: sdk.NewDec(1),
+			},
+			appInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(500),
+				MessagesInCurBlock: 100,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedAppInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(499),
+				MessagesInCurBlock: 100,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedErr: nil,
+		},
+		{
+			testName: "test2",
+			blockInfo: model.BlockInfo{
+				CurU: sdk.NewDec(2),
+			},
+			appInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(1),
+				MessagesInCurBlock: 100,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedAppInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("test"),
+				MaxBandwidthCredit: sdk.NewDec(1000),
+				CurBandwidthCredit: sdk.NewDec(1),
+				MessagesInCurBlock: 100,
+				ExpectedMPS:        sdk.NewDec(50),
+				LastRefilledAt:     0,
+			},
+			expectedErr: types.ErrAppBandwidthNotEnough(),
+		},
+	}
+
+	for _, tc := range testCases {
+		appName := linotypes.AccountKey("test")
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &tc.appInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.blockInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.PrecheckAndConsumeBandwidthCredit(suite.Ctx, appName)
+		suite.Equal(tc.expectedErr, err, "%s", tc.testName)
+
+		appInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedAppInfo, *appInfo, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestReCalculateAppBandwidthInfo() {
+	testCases := []struct {
+		testName         string
+		prevAppYInfo     model.AppBandwidthInfo
+		expectedAppXInfo model.AppBandwidthInfo
+		expectedAppYInfo model.AppBandwidthInfo
+	}{
+		{
+			testName: "test1",
+			prevAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(800 * 10),
+				CurBandwidthCredit: sdk.NewDec(0),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(800),
+				LastRefilledAt:     suite.baseTime.Unix(),
+			},
+			expectedAppXInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppX"),
+				MaxBandwidthCredit: sdk.NewDec(80 * 10),
+				CurBandwidthCredit: sdk.NewDec(80 * 10),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(80),
+				LastRefilledAt:     suite.Ctx.BlockHeader().Time.Unix(),
+			},
+			expectedAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(720 * 10),
+				CurBandwidthCredit: sdk.NewDec(2400),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(720),
+				LastRefilledAt:     suite.Ctx.BlockHeader().Time.Unix(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		appX := linotypes.AccountKey("AppX")
+		appY := linotypes.AccountKey("AppY")
+
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appY, &tc.prevAppYInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.ReCalculateAppBandwidthInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+
+		appXInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appX)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedAppXInfo, *appXInfo, "%s", tc.testName)
+
+		appYInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appY)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedAppYInfo, *appYInfo, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestCheckBandwidth() {
+	testCases := []struct {
+		testName          string
+		fee               auth.StdFee
+		prevAppYInfo      model.AppBandwidthInfo
+		expectedAppYInfo  model.AppBandwidthInfo
+		expectedBlockInfo model.BlockInfo
+		expectedErr       sdk.Error
+	}{
+		{
+			testName: "test1",
+			fee:      auth.StdFee{},
+			prevAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(800 * 10),
+				CurBandwidthCredit: sdk.NewDec(4000),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(800),
+				LastRefilledAt:     0,
+			},
+			expectedAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(800 * 10),
+				CurBandwidthCredit: sdk.NewDec(3999),
+				MessagesInCurBlock: 1,
+				ExpectedMPS:        sdk.NewDec(800),
+				LastRefilledAt:     0,
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  1,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(0),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedErr: nil,
+		},
+		{
+			testName: "test2",
+			fee:      auth.StdFee{},
+			prevAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(800 * 10),
+				CurBandwidthCredit: sdk.NewDec(0),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(800),
+				LastRefilledAt:     0,
+			},
+			expectedAppYInfo: model.AppBandwidthInfo{
+				Username:           linotypes.AccountKey("AppY"),
+				MaxBandwidthCredit: sdk.NewDec(800 * 10),
+				CurBandwidthCredit: sdk.NewDec(0),
+				MessagesInCurBlock: 0,
+				ExpectedMPS:        sdk.NewDec(800),
+				LastRefilledAt:     0,
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  1,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(0),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedErr: types.ErrAppBandwidthNotEnough(),
+		},
+	}
+
+	for _, tc := range testCases {
+		appY := linotypes.AccountKey("AppY")
+		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appY, &tc.prevAppYInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.CheckBandwidth(suite.Ctx, appY, tc.fee)
+		suite.Equal(tc.expectedErr, err, "%s", tc.testName)
+
+		appYInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appY)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedAppYInfo, *appYInfo, "%s", tc.testName)
+
+		blockInfo, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedBlockInfo, *blockInfo, "%s", tc.testName)
 	}
 }

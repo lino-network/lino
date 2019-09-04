@@ -247,6 +247,9 @@ func TestGenesisFromConfig(t *testing.T) {
 			MsgFeeFactorA:               types.NewDecFromRat(6, 1),
 			MsgFeeFactorB:               types.NewDecFromRat(10, 1),
 			MaxMPSDecayRate:             types.NewDecFromRat(99, 100),
+			AppBandwidthPoolSize:        types.NewDecFromRat(10, 1),
+			AppVacancyFactor:            types.NewDecFromRat(69, 100),
+			AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 		},
 		param.AccountParam{
 			MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
