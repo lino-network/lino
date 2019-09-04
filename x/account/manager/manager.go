@@ -90,7 +90,7 @@ func (accManager AccountManager) CreateAccount(
 		Username:       username,
 		CreatedAt:      ctx.BlockHeader().Time.Unix(),
 		TransactionKey: transactionKey,
-		SignningKey:    signingKey,
+		SigningKey:     signingKey,
 		Address:        addr,
 	}
 	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
@@ -206,7 +206,7 @@ func (accManager AccountManager) GetSigningKey(
 	if err != nil {
 		return nil, types.ErrGetSigningKey(username)
 	}
-	return info.SignningKey, nil
+	return info.SigningKey, nil
 }
 
 // GetSavingFromUsername - get user balance
@@ -382,7 +382,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return "", err
 	}
 	//check signing key for all permissions
-	if reflect.DeepEqual(accInfo.SignningKey, signKey) {
+	if reflect.DeepEqual(accInfo.SigningKey, signKey) {
 		return me, nil
 	}
 
@@ -466,7 +466,7 @@ func (accManager AccountManager) RecoverAccount(
 	oldBank.Saving = linotypes.NewCoinFromInt64(0)
 
 	accInfo.Address = newAddr
-	accInfo.SignningKey = newSigningKey
+	accInfo.SigningKey = newSigningKey
 	accInfo.TransactionKey = newTransactionPubKey
 
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)

@@ -55,21 +55,21 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	// background
 	suite.userWithoutBalance = model.AccountInfo{
 		Username:       linotypes.AccountKey("userwithoutbalance"),
-		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     secp256k1.GenPrivKey().PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 	}
 	suite.userWithoutBalance.Address = sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address())
 
 	suite.userWithBalance = model.AccountInfo{
 		Username:       linotypes.AccountKey("userwithbalance"),
-		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     secp256k1.GenPrivKey().PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 	}
 	suite.userWithBalance.Address = sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())
 
 	suite.unreg = model.AccountInfo{
 		Username:       linotypes.AccountKey("unreg"),
-		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     secp256k1.GenPrivKey().PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 	}
 	suite.unreg.Address = sdk.AccAddress(suite.unreg.TransactionKey.Address())
@@ -77,9 +77,9 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.userWithBalanceSaving = types.NewCoinFromInt64(1000 * types.Decimals)
 	suite.unregSaving = types.NewCoinFromInt64(1 * types.Decimals)
 
-	suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SignningKey, suite.userWithoutBalance.TransactionKey)
+	suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SigningKey, suite.userWithoutBalance.TransactionKey)
 
-	suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SignningKey, suite.userWithBalance.TransactionKey)
+	suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
 	suite.am.AddCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
 
 	suite.am.AddCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
@@ -390,7 +390,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 		{
 			testName:   "create account with registered username",
 			username:   userWithBalance.Username,
-			signingKey: userWithBalance.SignningKey,
+			signingKey: userWithBalance.SigningKey,
 			txKey:      userWithBalance.TransactionKey,
 			expectErr:  acctypes.ErrAccountAlreadyExists(userWithBalance.Username),
 			expectInfo: &userWithBalance,
@@ -403,7 +403,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 		{
 			testName:   "create account with bank linked to other username",
 			username:   unreg.Username,
-			signingKey: unreg.SignningKey,
+			signingKey: unreg.SigningKey,
 			txKey:      userWithBalance.TransactionKey,
 			expectErr:  acctypes.ErrAddressAlreadyTaken(sdk.AccAddress(userWithBalance.TransactionKey.Address())),
 			expectInfo: nil,
@@ -416,7 +416,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 		{
 			testName:   "create account with exist address",
 			username:   unreg.Username,
-			signingKey: unreg.SignningKey,
+			signingKey: unreg.SigningKey,
 			txKey:      unreg.TransactionKey,
 			expectErr:  nil,
 			expectInfo: &unreg,
@@ -434,7 +434,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			expectErr:  nil,
 			expectInfo: &model.AccountInfo{
 				Username:       "test1",
-				SignningKey:    signingKey,
+				SigningKey:     signingKey,
 				TransactionKey: txKeyWithEmptyAddress,
 				Address:        sdk.AccAddress(txKeyWithEmptyAddress.Address()),
 			},
