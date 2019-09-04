@@ -169,19 +169,4 @@ const (
 
 	// TendermintValidatorPower - every validator has const power in tendermint engine.
 	TendermintValidatorPower = 1000
-
-	// BlockchainUpgrade1Update1Height - since this height, donation > 1 will not cost bandwidth.
-	BlockchainUpgrade1Update1Height = 21610
-
-	// BlockchainUpgrade1Update2Height - global growth rate is corrected.
-	BlockchainUpgrade1Update2Height = 146000
-
-	// BlockchainUpgrade1Update3Height - reward pool is adjusted.
-	BlockchainUpgrade1Update3Height = 148000
-
-	// BlockchainUpgrade1Update4Height - fix donation bandwidth check.
-	BlockchainUpgrade1Update4Height = 386000
-
-	// NoTPSLimitDonationMin - donation >= this value will not cost bandwidth, in coin.
-	NoTPSLimitDonationMin = 100000
 )

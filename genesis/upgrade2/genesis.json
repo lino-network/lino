@@ -1,0 +1,147 @@
+{
+  "genesis_time": "2019-03-07T02:36:06.096303264Z",
+  "chain_id": "lino-testnet-upgrade1",
+  "consensus_params": {
+    "block": {
+      "time_iota_ms": "1000",
+      "max_bytes": "22020096",
+      "max_gas": "-1"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    }
+  },
+  "validators": [],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [],
+    "developers": [],
+    "infra": [],
+    "genesis_param": {
+      "init_from_config": true,
+      "GlobalAllocationParam": {
+        "global_growth_rate": "0.005",
+        "infra_allocation": "0.2",
+        "content_creator_allocation": "0.4",
+        "developer_allocation": "0.35",
+        "validator_allocation": "0.05"
+      },
+      "InfraInternalAllocationParam": {
+        "storage_allocation": "0.5",
+        "CDN_allocation": "0.5"
+      },
+      "VoteParam": {
+        "voter_coin_return_interval_second": "604800",
+        "voter_coin_return_times": "12",
+        "delegator_coin_return_interval_second": "604800",
+        "delegator_coin_return_times": "12",
+        "min_stake_in": {
+          "amount": "100000000"
+        }
+      },
+      "ProposalParam": {
+        "content_censorship_decide_second": "259200",
+        "content_censorship_min_deposit": {
+          "amount": "10000000"
+        },
+        "content_censorship_pass_ratio": "0.5",
+        "content_censorship_pass_votes": {
+          "amount": "1000000000"
+        },
+        "change_param_decide_second": "259200",
+        "change_param_execution_second": "0",
+        "change_param_min_deposit": {
+          "amount": "1000000000000"
+        },
+        "change_param_pass_ratio": "0.7",
+        "change_param_pass_votes": {
+          "amount": "10000000000000"
+        },
+        "protocol_upgrade_decide_second": "259200",
+        "protocol_upgrade_min_deposit": {
+          "amount": "10000000000000"
+        },
+        "protocol_upgrade_pass_ratio": "0.8",
+        "protocol_upgrade_pass_votes": {
+          "amount": "100000000000000"
+        }
+      },
+      "DeveloperParam": {
+        "developer_min_deposit": {
+          "amount": "1000000000000"
+        },
+        "developer_coin_return_interval_second": "604800",
+        "developer_coin_return_times": "12"
+      },
+      "ValidatorParam": {
+        "validator_min_withdraw": {
+          "amount": "100000"
+        },
+        "validator_min_voting_deposit": {
+          "amount": "20000000000"
+        },
+        "validator_min_committing_deposit": {
+          "amount": "20000000000"
+        },
+        "validator_coin_return_second": "604800",
+        "validator_coin_return_times": "12",
+        "penalty_miss_vote": {
+          "amount": "2000000000"
+        },
+        "penalty_miss_commit": {
+          "amount": "20000000"
+        },
+        "penalty_byzantine": {
+          "amount": "100000000000"
+        },
+        "validator_list_size": "22",
+        "absent_commit_limitation": "600"
+      },
+      "CoinDayParam": {
+        "seconds_to_recover_coin_day": "604800"
+      },
+      "BandwidthParam": {
+        "seconds_to_recover_bandwidth": "604800",
+        "capacity_usage_per_transaction": {
+          "amount": "100000"
+        },
+        "virtual_coin": {
+          "amount": "100000"
+        }
+      },
+      "AccountParam": {
+        "minimum_balance": {
+          "amount": "0"
+        },
+        "register_fee": {
+          "amount": "10000000"
+        },
+        "first_deposit_full_coin_day_limit": {
+          "amount": "100000"
+        },
+        "max_num_frozen_money": "10"
+      },
+      "PostParam": {
+        "report_or_upvote_interval_second": "60",
+        "post_interval_sec": "30",
+        "max_report_reputation": {
+          "amount": "1000000000"
+        }
+      },
+      "ReputationParam": {
+        "best_content_index_n": "20"
+      }
+    },
+    "init_global_meta": {
+      "max_tps": "500",
+      "consumption_friction_rate": "0.099",
+      "consumption_freezing_period_second": "604800"
+    },
+    "reputation": null
+  }
+}

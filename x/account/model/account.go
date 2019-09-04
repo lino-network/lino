@@ -35,31 +35,6 @@ type FrozenMoney struct {
 	Interval int64      `json:"interval"`
 }
 
-// PendingCoinDayQueue - stores a list of pending coin day and total number of coin waiting in list
-type PendingCoinDayQueue struct {
-	LastUpdatedAt   int64            `json:"last_updated_at"`
-	TotalCoinDay    sdk.Dec          `json:"total_coin_day"`
-	TotalCoin       types.Coin       `json:"total_coin"`
-	PendingCoinDays []PendingCoinDay `json:"pending_coin_days"`
-}
-
-// ToIR coin.
-func (p PendingCoinDayQueue) ToIR() PendingCoinDayQueueIR {
-	return PendingCoinDayQueueIR{
-		LastUpdatedAt:   p.LastUpdatedAt,
-		TotalCoinDay:    p.TotalCoinDay.String(),
-		TotalCoin:       p.TotalCoin,
-		PendingCoinDays: p.PendingCoinDays,
-	}
-}
-
-// PendingCoinDay - pending coin day in the list
-type PendingCoinDay struct {
-	StartTime int64      `json:"start_time"`
-	EndTime   int64      `json:"end_time"`
-	Coin      types.Coin `json:"coin"`
-}
-
 // GrantPermission - user grant permission to a user with a certain permission
 type GrantPermission struct {
 	GrantTo    types.AccountKey `json:"grant_to"`
@@ -69,35 +44,9 @@ type GrantPermission struct {
 	Amount     types.Coin       `json:"amount"`
 }
 
-// ToIR - name change, username -> GrantTo
-func (g GrantPermission) ToIR() GrantPermissionIR {
-	return GrantPermissionIR{
-		Username:   g.GrantTo,
-		Permission: g.Permission,
-		CreatedAt:  g.CreatedAt,
-		ExpiresAt:  g.ExpiresAt,
-		Amount:     g.Amount,
-	}
-}
-
 // AccountMeta - stores tiny and frequently updated fields.
 type AccountMeta struct {
 	JSONMeta string `json:"json_meta"`
-}
-
-// AccountInfraConsumption records infra utility consumption
-// type AccountInfraConsumption struct {
-// 	Storage   int64 `json:"storage"`
-// 	Bandwidth int64 `json:"bandwidth"`
-// }
-
-// Reward - get from the inflation pool
-type Reward struct {
-	TotalIncome     types.Coin `json:"total_income"`
-	OriginalIncome  types.Coin `json:"original_income"`
-	FrictionIncome  types.Coin `json:"friction_income"`
-	InflationIncome types.Coin `json:"inflation_income"`
-	UnclaimReward   types.Coin `json:"unclaim_reward"`
 }
 
 type TxAndSequenceNumber struct {

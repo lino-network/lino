@@ -13,18 +13,7 @@ var (
 	accountInfoSubstore                = []byte{0x00}
 	accountBankSubstore                = []byte{0x01}
 	accountMetaSubstore                = []byte{0x02}
-	accountRewardSubstore              = []byte{0x03}
-	accountPendingCoinDayQueueSubstore = []byte{0x04}
-	accountGrantPubKeySubstore         = []byte{0x05}
-	// XXX(yukai): deprecated.
-	// accountFollowerSubstore            = []byte{0x03}
-	// accountFollowingSubstore           = []byte{0x04}
-	// XXX(yukai): deprecated.
-	// accountRelationshipSubstore        = []byte{0x07}
-	// XXX(yukai): deprecated.
-	// accountBalanceHistorySubstore      = []byte{0x08}
-	// XXX(yukai): deprecated.
-	// accountRewardHistorySubstore = []byte{0x0a}
+	accountGrantPubKeySubstore         = []byte{0x03}
 )
 
 // AccountStorage - account storage
@@ -129,57 +118,6 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey types.AccountKey, accMe
 	return nil
 }
 
-// GetReward - returns reward info of a given account, returns error if any.
-func (as AccountStorage) GetReward(ctx sdk.Context, accKey types.AccountKey) (*Reward, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	rewardByte := store.Get(getRewardKey(accKey))
-	if rewardByte == nil {
-		return nil, ErrRewardNotFound()
-	}
-	reward := new(Reward)
-	if err := as.cdc.UnmarshalBinaryLengthPrefixed(rewardByte, reward); err != nil {
-		return nil, ErrFailedToUnmarshalReward(err)
-	}
-	return reward, nil
-}
-
-// SetReward - sets the rewards info of a given account, returns error if any.
-func (as AccountStorage) SetReward(ctx sdk.Context, accKey types.AccountKey, reward *Reward) sdk.Error {
-	store := ctx.KVStore(as.key)
-	rewardByte, err := as.cdc.MarshalBinaryLengthPrefixed(*reward)
-	if err != nil {
-		return ErrFailedToMarshalReward(err)
-	}
-	store.Set(getRewardKey(accKey), rewardByte)
-	return nil
-}
-
-// GetPendingCoinDayQueue - returns a pending coin day queue for a given address.
-// func (as AccountStorage) GetPendingCoinDayQueue(
-// 	ctx sdk.Context, me types.AccountKey) (*PendingCoinDayQueue, sdk.Error) {
-// 	store := ctx.KVStore(as.key)
-// 	pendingCoinDayQueueByte := store.Get(getPendingCoinDayQueueKey(me))
-// 	if pendingCoinDayQueueByte == nil {
-// 		return nil, ErrPendingCoinDayQueueNotFound()
-// 	}
-// 	queue := new(PendingCoinDayQueue)
-// 	if err := as.cdc.UnmarshalBinaryLengthPrefixed(pendingCoinDayQueueByte, queue); err != nil {
-// 		return nil, ErrFailedToUnmarshalPendingCoinDayQueue(err)
-// 	}
-// 	return queue, nil
-// }
-
-// SetPendingCoinDayQueue - sets a pending coin day queue for a given username.
-// func (as AccountStorage) SetPendingCoinDayQueue(ctx sdk.Context, me types.AccountKey, pendingCoinDayQueue *PendingCoinDayQueue) sdk.Error {
-// 	store := ctx.KVStore(as.key)
-// 	pendingCoinDayQueueByte, err := as.cdc.MarshalBinaryLengthPrefixed(*pendingCoinDayQueue)
-// 	if err != nil {
-// 		return ErrFailedToMarshalPendingCoinDayQueue(err)
-// 	}
-// 	store.Set(getPendingCoinDayQueueKey(me), pendingCoinDayQueueByte)
-// 	return nil
-// }
-
 // DeleteAllGrantPermissions - deletes all grant pubkeys from a granted user in KV.
 func (as AccountStorage) DeleteAllGrantPermissions(ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey) {
 	store := ctx.KVStore(as.key)
@@ -247,14 +185,6 @@ func GetAccountBankKey(addr sdk.Address) []byte {
 // GetAccountMetaKey - "account meta substore" + "username"
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
 	return append(accountMetaSubstore, accKey...)
-}
-
-func getRewardKey(accKey types.AccountKey) []byte {
-	return append(accountRewardSubstore, accKey...)
-}
-
-func getPendingCoinDayQueueKey(accKey types.AccountKey) []byte {
-	return append(accountPendingCoinDayQueueSubstore, accKey...)
 }
 
 func getGrantPermPrefix(me types.AccountKey) []byte {
