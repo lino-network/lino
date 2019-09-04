@@ -15,6 +15,7 @@ import (
 	"github.com/lino-network/lino/types"
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
+	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	"github.com/lino-network/lino/x/global"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	post "github.com/lino-network/lino/x/post"
@@ -105,7 +106,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Now()}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
-
+	bandwidthmn.BandwidthManagerTestMode = true
 	return lb
 }
 
