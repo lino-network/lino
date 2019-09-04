@@ -13,7 +13,7 @@ import (
 type AccountInfo struct {
 	Username       types.AccountKey `json:"username"`
 	CreatedAt      int64            `json:"created_at"`
-	SignningKey    crypto.PubKey    `json:"signning_key"`
+	SigningKey     crypto.PubKey    `json:"signing_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
 	Address        sdk.AccAddress   `json:"address"`
 }
