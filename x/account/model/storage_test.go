@@ -35,7 +35,7 @@ func TestAccountInfo(t *testing.T) {
 	accInfo := AccountInfo{
 		Username:       types.AccountKey("test"),
 		CreatedAt:      0,
-		SignningKey:    secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     secp256k1.GenPrivKey().PubKey(),
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 		Address:        sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
