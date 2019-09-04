@@ -427,21 +427,8 @@ func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Erro
 }
 
 func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error {
-	if bm.dm.DoesDeveloperExist(ctx, accKey) {
-		appName, err := bm.dm.GetAffiliatingApp(ctx, accKey)
-		if err != nil {
-			return err
-		}
-
-		if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
-			return err
-		}
-
-		// add app message stats
-		if err := bm.AddMsgSignedByApp(ctx, appName, 1); err != nil {
-			return err
-		}
-	} else {
+	appName, err := bm.dm.GetAffiliatingApp(ctx, accKey)
+	if err != nil {
 		// msg fee for general message
 		if !bm.IsUserMsgFeeEnough(ctx, fee) {
 			return types.ErrUserMsgFeeNotEnough()
@@ -459,6 +446,16 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 		// }
 		// add general message stats
 		if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
+			return err
+		}
+	} else {
+		// app bandwidth model
+		if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
+			return err
+		}
+
+		// add app message stats
+		if err := bm.AddMsgSignedByApp(ctx, appName, 1); err != nil {
 			return err
 		}
 	}

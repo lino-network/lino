@@ -76,7 +76,6 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 			Username: "AppY",
 		},
 	}, nil).Maybe()
-	suite.dm.On("DoesDeveloperExist", suite.Ctx, linotypes.AccountKey("AppY")).Return(true).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.AccountKey("AppY"), nil).Maybe()
 	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
 

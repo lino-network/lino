@@ -234,5 +234,5 @@ func (dm DeveloperManager) GetLiveDevelopers(ctx sdk.Context) []model.Developer 
 	return nil
 }
 func (dm DeveloperManager) GetAffiliatingApp(ctx sdk.Context, username types.AccountKey) (types.AccountKey, sdk.Error) {
-	return types.AccountKey("dummy"), nil
+	return types.AccountKey("dummy"), ErrDeveloperNotFound()
 }

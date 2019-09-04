@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -22,13 +22,10 @@ import (
 
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
-	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
+	bandwidthmock "github.com/lino-network/lino/x/bandwidth/mocks"
 	"github.com/lino-network/lino/x/global"
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
-	vote "github.com/lino-network/lino/x/vote"
-
-	dev "github.com/lino-network/lino/x/developer"
 )
 
 type TestMsg struct {
@@ -125,13 +122,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 
-	dm := dev.NewDeveloperManager(TestDeveloperKVStoreKey, ph)
-
-	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
-
-	bm := bandwidthmn.NewBandwidthManager(TestBandwidthKVStoreKey, ph, &gm, vm, dm, am)
-	bm.InitGenesis(ctx)
-	// dev, rep, price = nil
+	bm := &bandwidthmock.BandwidthKeeper{}
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, nil, nil, nil)
 	initGlobalManager(ctx, gm)
 	anteHandler := NewAnteHandler(am, bm)
@@ -142,6 +133,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.ph = ph
 	suite.ctx = ctx
 	suite.ante = anteHandler
+	bm.On("CheckBandwidth", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 }
 
 func (suite *AnteTestSuite) createTestAccount(username string) (secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1, types.AccountKey) {
