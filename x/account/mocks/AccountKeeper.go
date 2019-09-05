@@ -289,31 +289,6 @@ func (_m *AccountKeeper) GetMeta(ctx types.Context, username linotypes.AccountKe
 	return r0, r1
 }
 
-// GetReward provides a mock function with given fields: ctx, username
-func (_m *AccountKeeper) GetReward(ctx types.Context, username linotypes.AccountKey) (*model.Reward, types.Error) {
-	ret := _m.Called(ctx, username)
-
-	var r0 *model.Reward
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) *model.Reward); ok {
-		r0 = rf(ctx, username)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Reward)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
-		r1 = rf(ctx, username)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
 // GetSavingFromUsername provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetSavingFromUsername(ctx types.Context, username linotypes.AccountKey) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, username)

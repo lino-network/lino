@@ -328,6 +328,7 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 	}
 
 	// get hourly inflation
+	growthRate := globalAllocation.GlobalGrowthRate
 	thisHourInflation :=
 		types.DecToCoin(
 			globalMeta.LastYearTotalLinoCoin.ToDec().

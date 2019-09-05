@@ -1,3 +1,4 @@
+TODO: change chain_id and genesis_time.
 {
   "genesis_time": "2019-03-07T02:36:06.096303264Z",
   "chain_id": "lino-testnet-upgrade1",

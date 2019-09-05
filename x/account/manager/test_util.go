@@ -143,23 +143,8 @@ func checkAccountInfo(
 func checkAccountMeta(
 	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, accMeta model.AccountMeta) {
 	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	metaPtr, err := accStorage.GetMeta(ctx, accKey)
-	if err != nil {
-		t.Errorf("%s, failed to get account meta, got err %v", testName, err)
-	}
+	metaPtr := accStorage.GetMeta(ctx, accKey)
 	if !assert.Equal(t, accMeta, *metaPtr) {
 		t.Errorf("%s: diff account meta, got %v, want %v", testName, *metaPtr, accMeta)
-	}
-}
-
-func checkAccountReward(
-	t *testing.T, ctx sdk.Context, testName string, accKey types.AccountKey, reward model.Reward) {
-	accStorage := model.NewAccountStorage(testAccountKVStoreKey)
-	rewardPtr, err := accStorage.GetReward(ctx, accKey)
-	if err != nil {
-		t.Errorf("%s, failed to get reward, got err %v", testName, err)
-	}
-	if !assert.Equal(t, reward, *rewardPtr) {
-		t.Errorf("%s: diff reward, got %v, want %v", testName, *rewardPtr, reward)
 	}
 }

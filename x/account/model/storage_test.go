@@ -39,8 +39,7 @@ func TestAccountInfo(t *testing.T) {
 		TransactionKey: secp256k1.GenPrivKey().PubKey(),
 		Address:        sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
-	err := as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
-	assert.Nil(t, err)
+	as.SetInfo(ctx, types.AccountKey("test"), &accInfo)
 
 	resultPtr, err := as.GetInfo(ctx, types.AccountKey("test"))
 	assert.Nil(t, err)
@@ -65,8 +64,7 @@ func TestAccountBank(t *testing.T) {
 	accBank := AccountBank{
 		Saving: types.NewCoinFromInt64(int64(123)),
 	}
-	err := as.SetBank(ctx, addr, &accBank)
-	assert.Nil(t, err)
+	as.SetBank(ctx, addr, &accBank)
 
 	resultPtr, err := as.GetBank(ctx, addr)
 	assert.Nil(t, err)
@@ -74,8 +72,7 @@ func TestAccountBank(t *testing.T) {
 
 	accBank.PubKey = pubKey
 
-	err = as.SetBank(ctx, addr, &accBank)
-	assert.Nil(t, err)
+	as.SetBank(ctx, addr, &accBank)
 
 	resultPtr, err = as.GetBank(ctx, addr)
 	assert.Nil(t, err)
@@ -88,31 +85,10 @@ func TestAccountMeta(t *testing.T) {
 	ctx := getContext()
 
 	accMeta := AccountMeta{JSONMeta: "{'test':1}"}
-	err := as.SetMeta(ctx, types.AccountKey("test"), &accMeta)
-	assert.Nil(t, err)
+	as.SetMeta(ctx, types.AccountKey("test"), &accMeta)
 
-	resultPtr, err := as.GetMeta(ctx, types.AccountKey("test"))
-	assert.Nil(t, err)
+	resultPtr := as.GetMeta(ctx, types.AccountKey("test"))
 	assert.Equal(t, accMeta, *resultPtr, "Account meta should be equal")
-}
-
-func TestAccountReward(t *testing.T) {
-	as := NewAccountStorage(TestKVStoreKey)
-	ctx := getContext()
-
-	reward := Reward{
-		TotalIncome:     types.NewCoinFromInt64(5),
-		OriginalIncome:  types.NewCoinFromInt64(4),
-		FrictionIncome:  types.NewCoinFromInt64(3),
-		InflationIncome: types.NewCoinFromInt64(2),
-		UnclaimReward:   types.NewCoinFromInt64(1),
-	}
-	err := as.SetReward(ctx, types.AccountKey("test"), &reward)
-	assert.Nil(t, err)
-
-	resultPtr, err := as.GetReward(ctx, types.AccountKey("test"))
-	assert.Nil(t, err)
-	assert.Equal(t, reward, *resultPtr, "Account reward should be equal")
 }
 
 func TestAccountGrantPubkey(t *testing.T) {
@@ -121,8 +97,7 @@ func TestAccountGrantPubkey(t *testing.T) {
 
 	grantPubKey := GrantPermission{GrantTo: types.AccountKey("grantTo"), Permission: types.AppPermission, Amount: types.NewCoinFromInt64(0)}
 	grantPubKey2 := GrantPermission{GrantTo: types.AccountKey("grantTo"), Permission: types.PreAuthorizationPermission, Amount: types.NewCoinFromInt64(10)}
-	err := as.SetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), []*GrantPermission{&grantPubKey, &grantPubKey2})
-	assert.Nil(t, err)
+	as.SetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"), []*GrantPermission{&grantPubKey, &grantPubKey2})
 
 	resultList, err := as.GetGrantPermissions(ctx, types.AccountKey("test"), types.AccountKey("grantTo"))
 	assert.Nil(t, err)

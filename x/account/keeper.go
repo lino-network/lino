@@ -45,7 +45,6 @@ type AccountKeeper interface {
 	GetInfo(ctx sdk.Context, username types.AccountKey) (*model.AccountInfo, sdk.Error)
 	GetBank(ctx sdk.Context, username types.AccountKey) (*model.AccountBank, sdk.Error)
 	GetMeta(ctx sdk.Context, username types.AccountKey) (*model.AccountMeta, sdk.Error)
-	GetReward(ctx sdk.Context, username types.AccountKey) (*model.Reward, sdk.Error)
 	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 }
