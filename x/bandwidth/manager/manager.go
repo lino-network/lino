@@ -311,6 +311,7 @@ func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.
 	if err != nil {
 		return sdk.NewDec(1), err
 	}
+
 	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
 	if pastTime <= 0 {
 		return sdk.NewDec(1), nil
@@ -319,7 +320,6 @@ func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.
 	if err != nil {
 		return sdk.NewDec(1), err
 	}
-
 	if !appInfo.ExpectedMPS.IsPositive() {
 		return sdk.NewDec(1), types.ErrInvalidExpectedMPS()
 	}
