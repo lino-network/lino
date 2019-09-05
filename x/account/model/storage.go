@@ -333,6 +333,7 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 		defer wg.Done()
 		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
 		defer itr.Close()
+		exported := 0
 		for ; itr.Valid(); itr.Next() {
 			usernameApp := string(itr.Key()[1:])
 			strs := strings.Split(usernameApp, types.KeySeparator)
@@ -352,7 +353,12 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 				}
 				tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
 			}
+			exported += 1
+			if exported % 100000 == 0 {
+				fmt.Printf("account permission exported: %d", exported)
+			}
 		}
+		fmt.Printf("account export permission done\n")
 	}()
 	wg.Wait()
 	return tables
