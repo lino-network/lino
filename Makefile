@@ -3,7 +3,7 @@ PACKAGES=$(shell go list ./... | grep -v '/vendor/')
 VENDOR_PATH=github.com/lino-network/lino/vendor
 LD_FLAGS := "-X $(VENDOR_PATH)/github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X $(VENDOR_PATH)/github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
 GO_TAGS := "tendermint gcc cgo rocksdb"
-CGO_LDFLAGS := "-lrocksdb -lstdc++ -lm -lzstd"
+CGO_LDFLAGS := "-lrocksdb -lstdc++ -lm -lzstd -lsnappy"
 
 all: get_tools get_vendor_deps install build test
 
