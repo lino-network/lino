@@ -1,6 +1,8 @@
 package model
 
+
 import (
+	"fmt"
 	"sync"
 	"strings"
 
@@ -279,6 +281,7 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 		defer wg.Done()
 		itr := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
 		defer itr.Close()
+		exported := 0
 		for ; itr.Valid(); itr.Next() {
 			k, _ := itr.Key(), itr.Value()
 			username := types.AccountKey(k[1:])
@@ -318,7 +321,12 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 				PendingCoinDayQueue: PendingCoinDayQueue{},
 			}
 			tables.Accounts = append(tables.Accounts, accRow)
+			exported += 1
+			if exported % 100000 == 0 {
+				fmt.Printf("account exported: %d\n", exported)
+			}
 		}
+		fmt.Printf("account export info done\n")
 	}()
 	// export tables.GrantPubKeys
 	go func() {
