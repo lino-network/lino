@@ -5,6 +5,7 @@ import (
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/vote/model"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -295,6 +296,107 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 		res := vm.IsLegalDelegatorWithdraw(ctx, tc.voter, tc.delegator, tc.withdraw)
 		if res != tc.expectedResult {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, res, tc.expectedResult)
+		}
+	}
+}
+
+func TestAssignDuty(t *testing.T) {
+	ctx, _, vm, _ := setupTest(t, 0)
+	// minBalance := types.NewCoinFromInt64(1 * types.Decimals)
+
+	testCases := []struct {
+		testName      string
+		username      types.AccountKey
+		newDuty       votetypes.VoterDuty
+		frozenAmount  types.Coin
+		prevVoter     model.Voter
+		expectedVoter model.Voter
+		expectedErr   sdk.Error
+	}{
+		{
+			testName:     "test1",
+			username:     types.AccountKey("test"),
+			newDuty:      votetypes.DutyApp,
+			frozenAmount: types.NewCoinFromInt64(100),
+			prevVoter: model.Voter{
+				Username:          types.AccountKey("test"),
+				LinoStake:         types.NewCoinFromInt64(100),
+				Duty:              votetypes.DutyVoter,
+				FrozenAmount:      types.NewCoinFromInt64(0),
+				DelegatedPower:    types.NewCoinFromInt64(0),
+				DelegateToOthers:  types.NewCoinFromInt64(0),
+				Interest:          types.NewCoinFromInt64(0),
+				LastPowerChangeAt: 0,
+			},
+			expectedVoter: model.Voter{
+				Username:          types.AccountKey("test"),
+				LinoStake:         types.NewCoinFromInt64(0),
+				Duty:              votetypes.DutyApp,
+				FrozenAmount:      types.NewCoinFromInt64(100),
+				DelegatedPower:    types.NewCoinFromInt64(0),
+				DelegateToOthers:  types.NewCoinFromInt64(0),
+				Interest:          types.NewCoinFromInt64(0),
+				LastPowerChangeAt: 0,
+			},
+			expectedErr: nil,
+		},
+		{
+			testName:     "test2",
+			username:     types.AccountKey("test"),
+			newDuty:      votetypes.DutyApp,
+			frozenAmount: types.NewCoinFromInt64(100),
+			prevVoter: model.Voter{
+				Username:          types.AccountKey("test"),
+				LinoStake:         types.NewCoinFromInt64(100),
+				Duty:              votetypes.DutyNop,
+				FrozenAmount:      types.NewCoinFromInt64(0),
+				DelegatedPower:    types.NewCoinFromInt64(0),
+				DelegateToOthers:  types.NewCoinFromInt64(0),
+				Interest:          types.NewCoinFromInt64(0),
+				LastPowerChangeAt: 0,
+			},
+			expectedVoter: model.Voter{},
+			expectedErr:   ErrNotAVoterOrHasDuty(),
+		},
+		{
+			testName:     "test3",
+			username:     types.AccountKey("test"),
+			newDuty:      votetypes.DutyApp,
+			frozenAmount: types.NewCoinFromInt64(1000),
+			prevVoter: model.Voter{
+				Username:          types.AccountKey("test"),
+				LinoStake:         types.NewCoinFromInt64(800),
+				Duty:              votetypes.DutyVoter,
+				FrozenAmount:      types.NewCoinFromInt64(0),
+				DelegatedPower:    types.NewCoinFromInt64(0),
+				DelegateToOthers:  types.NewCoinFromInt64(0),
+				Interest:          types.NewCoinFromInt64(0),
+				LastPowerChangeAt: 0,
+			},
+			expectedVoter: model.Voter{},
+			expectedErr:   ErrInsufficientStake(),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := vm.storage.SetVoter(ctx, tc.username, &tc.prevVoter)
+		if err != nil {
+			t.Errorf("%s: failed to set voter , got err %v", tc.testName, err)
+		}
+
+		err = vm.AssignDuty(ctx, tc.username, tc.newDuty, tc.frozenAmount)
+		if err != nil && err.Code() != tc.expectedErr.Code() {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectedErr)
+		}
+
+		if tc.expectedErr == nil {
+			voter, err := vm.storage.GetVoter(ctx, tc.username)
+			if err != nil {
+				t.Errorf("%s: failed to get voter , got err %v", tc.testName, err)
+			}
+			if !assert.Equal(t, tc.expectedVoter, *voter) {
+				t.Errorf("%s: diff voter", tc.testName)
+			}
 		}
 	}
 }

@@ -2,16 +2,19 @@ package model
 
 import (
 	types "github.com/lino-network/lino/types"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 )
 
 // Voter - a voter in blockchain is account with voter deposit, who can vote for a proposal
 type Voter struct {
-	Username          types.AccountKey `json:"username"`
-	LinoStake         types.Coin       `json:"lino_stake"`
-	DelegatedPower    types.Coin       `json:"delegated_power"`
-	DelegateToOthers  types.Coin       `json:"delegate_to_others"`
-	LastPowerChangeAt int64            `json:"last_power_change_at"`
-	Interest          types.Coin       `json:"interest"`
+	Username          types.AccountKey    `json:"username"`
+	LinoStake         types.Coin          `json:"lino_stake"`
+	DelegatedPower    types.Coin          `json:"delegated_power"`
+	DelegateToOthers  types.Coin          `json:"delegate_to_others"`
+	LastPowerChangeAt int64               `json:"last_power_change_at"`
+	Interest          types.Coin          `json:"interest"`
+	Duty              votetypes.VoterDuty `json:"duty"`
+	FrozenAmount      types.Coin          `json:"frozen_amount"`
 }
 
 // Vote - a vote is created by a voter to a proposal

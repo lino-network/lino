@@ -179,6 +179,7 @@ func TestVoter(t *testing.T) {
 		DelegateToOthers:  types.NewCoinFromInt64(10000),
 		LastPowerChangeAt: 0,
 		Interest:          types.NewCoinFromInt64(0),
+		FrozenAmount:      types.NewCoinFromInt64(10),
 	}
 	err := vs.SetVoter(ctx, user, &voter)
 	assert.Nil(t, err)
