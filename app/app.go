@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/lino-network/lino/param"
@@ -693,6 +694,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	}
 
 	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
+		fmt.Printf("start to export %s\n", filename)
 		f, err := os.Create(exportPath + filename)
 		if err != nil {
 			panic("failed to create account")
@@ -707,28 +709,52 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		f.Sync()
 	}
 
-	exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
-		return lb.accountManager.Export(ctx).ToIR()
-	})
-	exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
-		return lb.developerManager.Export(ctx).ToIR()
-	})
-	exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
-		return lb.postManager.Export(ctx).ToIR()
-	})
-	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
-		return lb.globalManager.Export(ctx).ToIR()
-	})
-	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
-		return lb.infraManager.Export(ctx).ToIR()
-	})
-	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
-		return lb.valManager.Export(ctx).ToIR()
-	})
-	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
-		return lb.voteManager.Export(ctx).ToIR()
-	})
-	lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
+	fmt.Println("start to export")
+	runAll(
+		func() {
+			fmt.Println("enter export account")
+			exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
+				return lb.accountManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
+				return lb.developerManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
+				return lb.postManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
+				return lb.globalManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
+				return lb.infraManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
+				return lb.valManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
+				return lb.voteManager.Export(ctx).ToIR()
+			})
+		},
+		func() {
+			fmt.Printf("start to export reputation\n")
+			defer func() {
+				fmt.Printf("export reputation done\n")
+			}()
+			lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
+		},
+	)
 
 	genesisState := GenesisState{}
 
@@ -737,6 +763,19 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		return nil, nil, err
 	}
 	return appState, validators, nil
+}
+
+func runAll(funcs ...func()) {
+	var wg sync.WaitGroup
+	for i := range funcs {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			funcs[n]()
+		}(i)
+		fmt.Println("job added")
+	}
+	wg.Wait()
 }
 
 // ImportFromFiles Custom logic for state export
