@@ -485,7 +485,6 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 // execute events between last block time and current block time
 func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	currentTime := ctx.BlockHeader().Time.Unix()
-
 	lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
 	if err != nil {
 		panic(err)
@@ -495,9 +494,6 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 			lb.executeEvents(ctx, timeEvents.Events)
 			lb.globalManager.RemoveTimeEventList(ctx, i)
 		}
-	}
-	if err := lb.globalManager.SetLastBlockTime(ctx, currentTime); err != nil {
-		panic(err)
 	}
 }
 
@@ -533,9 +529,13 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	// XXX(yumin): reputation updates, will not change any tendermint.
 	rep.EndBlocker(ctx, req, lb.reputationManager)
-
 	global.EndBlocker(ctx, req, &lb.globalManager)
 	bandwidth.EndBlocker(ctx, req, lb.bandwidthManager)
+
+	// update last block time
+	if err := lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time.Unix()); err != nil {
+		panic(err)
+	}
 	// update validator set.
 	validatorUpdates, err := lb.valManager.GetValidatorUpdates(ctx)
 	if err != nil {

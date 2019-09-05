@@ -223,6 +223,28 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uin
 	lb.Commit()
 }
 
+// RepeatSignCheckDeliver - sign same transaction repeatly, simulate and commit a block
+func RepeatSignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
+	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64, times int) {
+
+	// Simulate a Block
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
+
+	for i := 0; i < times; i++ {
+		tx := genTx(msg, seq+uint64(i), priv)
+		res := lb.Deliver(tx)
+		if expPass {
+			require.True(t, res.IsOK(), res.Log)
+		} else {
+			require.False(t, res.IsOK(), res.Log)
+		}
+	}
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+}
+
 // SimulateOneBlock - simulate a empty block and commit
 func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.BeginBlock(abci.RequestBeginBlock{

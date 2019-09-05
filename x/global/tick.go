@@ -10,9 +10,6 @@ import (
 // BeginBlocker - called every begin blocker, udpate transaction per second
 func BeginBlocker(
 	ctx sdk.Context, req abci.RequestBeginBlock, gm *GlobalManager) (tags sdk.Tags) {
-	if err := gm.UpdateTPS(ctx); err != nil {
-		panic(err)
-	}
 	if err := gm.ClearEventCache(ctx); err != nil {
 		panic(err)
 	}

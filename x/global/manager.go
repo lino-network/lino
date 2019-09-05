@@ -519,32 +519,6 @@ func (gm *GlobalManager) addTotalLinoCoin(ctx sdk.Context, newCoin types.Coin) s
 	return nil
 }
 
-// UpdateTPS - update current tps based on current block information
-func (gm *GlobalManager) UpdateTPS(ctx sdk.Context) sdk.Error {
-	tps, err := gm.storage.GetTPS(ctx)
-	if err != nil {
-		return err
-	}
-	lastBlockTime, err := gm.GetLastBlockTime(ctx)
-	if err != nil {
-		return err
-	}
-
-	if ctx.BlockHeader().Time.Unix() == lastBlockTime {
-		tps.CurrentTPS = sdk.ZeroDec()
-	} else {
-		tps.CurrentTPS = types.NewDecFromRat(int64(ctx.BlockHeader().NumTxs), ctx.BlockHeader().Time.Unix()-lastBlockTime)
-	}
-	if tps.CurrentTPS.GT(tps.MaxTPS) {
-		tps.MaxTPS = tps.CurrentTPS
-	}
-
-	if err := gm.storage.SetTPS(ctx, tps); err != nil {
-		return err
-	}
-	return nil
-}
-
 // GetTPSCapacityRatio - get transaction per second ratio
 func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	tps, err := gm.storage.GetTPS(ctx)
