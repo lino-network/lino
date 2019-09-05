@@ -16,6 +16,7 @@ import (
 	accmn "github.com/lino-network/lino/x/account/manager"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
+	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/global"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	post "github.com/lino-network/lino/x/post"
@@ -174,6 +175,26 @@ func CheckAllValidatorList(
 	}
 }
 
+// CheckAppBandwidthInfo
+func CheckAppBandwidthInfo(
+	t *testing.T, info bandwidthmodel.AppBandwidthInfo, username types.AccountKey, lb *app.LinoBlockchain) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+	bs := bandwidthmodel.NewBandwidthStorage(lb.CapKeyBandwidthStore)
+	res, err := bs.GetAppBandwidthInfo(ctx, username)
+	assert.Nil(t, err)
+	assert.Equal(t, info, res)
+}
+
+// CheckCurBlockInfo
+func CheckCurBlockInfo(
+	t *testing.T, info bandwidthmodel.BlockInfo, lb *app.LinoBlockchain) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+	bs := bandwidthmodel.NewBandwidthStorage(lb.CapKeyBandwidthStore)
+	res, err := bs.GetBlockInfo(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, info, res)
+}
+
 // CreateAccount - register account on test blockchain
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
@@ -200,6 +221,34 @@ func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uin
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, seq, priv)
+	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
+	// about what is the right way..
+	res := lb.Simulate(nil, tx)
+	if expPass {
+		require.True(t, res.IsOK(), res.Log)
+	} else {
+		require.False(t, res.IsOK(), res.Log)
+	}
+
+	// Simulate a Block
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
+	res = lb.Deliver(tx)
+	if expPass {
+		require.True(t, res.IsOK(), res.Log)
+	} else {
+		require.False(t, res.IsOK(), res.Log)
+	}
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+}
+
+// SignCheckDeliverWithFee - sign transaction with fee, simulate and commit a block
+func SignCheckDeliverWithFee(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
+	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64, fee auth.StdFee) {
+	// Sign the tx
+	tx := genTxWithFee(msg, seq, priv, fee)
 	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
 	// about what is the right way..
 	res := lb.Simulate(nil, tx)
@@ -261,6 +310,15 @@ func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx 
 		Signature: bz,
 	}}
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
+}
+
+func genTxWithFee(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1, fee auth.StdFee) auth.StdTx {
+	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, fee, []sdk.Msg{msg}, ""))
+	sigs := []auth.StdSignature{{
+		PubKey:    priv.PubKey(),
+		Signature: bz,
+	}}
+	return auth.NewStdTx([]sdk.Msg{msg}, fee, sigs, "")
 }
 
 // CreateTestPost - create a test post
