@@ -1,0 +1,14 @@
+diff --git a/server/export.go b/server/export.go
+index 1df998f5f..077fc9fd7 100644
+--- a/server/export.go
++++ b/server/export.go
+@@ -93,8 +93,5 @@ func ExportCmd(ctx *Context, cdc *codec.Codec, appExporter AppExporter) *cobra.C
+ }
+ 
+ func isEmptyState(db dbm.DB) bool {
+-	if db.Stats()["leveldb.sstables"] != "" {
+-		return false
+-	}
+-	return true
++	return false
+ }
