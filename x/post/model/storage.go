@@ -1,8 +1,6 @@
 package model
 
 import (
-	"strings"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -205,30 +203,31 @@ func (ps PostStorage) Export(ctx sdk.Context) *PostTables {
 			tables.Posts = append(tables.Posts, row)
 		}
 	}()
-	// export tables.PostUser
-	func() {
-		itr := sdk.KVStorePrefixIterator(store, postReportOrUpvoteSubStore)
-		defer itr.Close()
-		for ; itr.Valid(); itr.Next() {
-			k := itr.Key()
-			permlinkAccount := string(k[1:])
-			strs := strings.Split(permlinkAccount, types.KeySeparator)
-			if len(strs) != 2 {
-				panic("failed to split out permlink account: " + permlinkAccount)
-			}
-			permlink, username := types.Permlink(strs[0]), types.AccountKey(strs[1])
-			ru, err := ps.GetPostReportOrUpvote(ctx, permlink, username)
-			if err != nil {
-				panic("failed to get report or upvote: " + err.Error())
-			}
-			row := PostUserRow{
-				Permlink:       permlink,
-				User:           username,
-				ReportOrUpvote: *ru,
-			}
-			tables.PostUsers = append(tables.PostUsers, row)
-		}
-	}()
+	// deprecated
+	// // export tables.PostUser
+	// func() {
+	// 	itr := sdk.KVStorePrefixIterator(store, postReportOrUpvoteSubStore)
+	// 	defer itr.Close()
+	// 	for ; itr.Valid(); itr.Next() {
+	// 		k := itr.Key()
+	// 		permlinkAccount := string(k[1:])
+	// 		strs := strings.Split(permlinkAccount, types.KeySeparator)
+	// 		if len(strs) != 2 {
+	// 			panic("failed to split out permlink account: " + permlinkAccount)
+	// 		}
+	// 		permlink, username := types.Permlink(strs[0]), types.AccountKey(strs[1])
+	// 		ru, err := ps.GetPostReportOrUpvote(ctx, permlink, username)
+	// 		if err != nil {
+	// 			panic("failed to get report or upvote: " + err.Error())
+	// 		}
+	// 		row := PostUserRow{
+	// 			Permlink:       permlink,
+	// 			User:           username,
+	// 			ReportOrUpvote: *ru,
+	// 		}
+	// 		tables.PostUsers = append(tables.PostUsers, row)
+	// 	}
+	// }()
 	return tables
 }
 
