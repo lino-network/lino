@@ -220,6 +220,8 @@ const (
 	CodeValidatorCannotRevoke          sdk.CodeType = 712
 	CodeVoteAlreadyExist               sdk.CodeType = 713
 	CodeVoteQueryFailed                sdk.CodeType = 714
+	CodeNotAVoterOrHasDuty             sdk.CodeType = 715
+	CodeInsufficientStake              sdk.CodeType = 716
 
 	// Lino infra errors reserve 800 ~ 899
 	CodeInfraProviderNotFound              sdk.CodeType = 800

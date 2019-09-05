@@ -2,7 +2,6 @@ package vote
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/vote/model"
@@ -188,6 +187,7 @@ func (vm VoteManager) AddVoter(ctx sdk.Context, username linotypes.AccountKey, c
 		Username:          username,
 		LinoStake:         coin,
 		LastPowerChangeAt: ctx.BlockHeader().Time.Unix(),
+		Duty:              types.DutyVoter,
 	}
 
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
@@ -306,7 +306,7 @@ func (vm VoteManager) GetVotingPower(ctx sdk.Context, voterName linotypes.Accoun
 	if err != nil {
 		return linotypes.Coin{}, err
 	}
-	res := voter.LinoStake.Plus(voter.DelegatedPower).Minus(voter.DelegateToOthers)
+	res := voter.LinoStake.Plus(voter.DelegatedPower).Plus(voter.FrozenAmount).Minus(voter.DelegateToOthers)
 	return res, nil
 }
 
@@ -349,7 +349,7 @@ func (vm VoteManager) GetLinoStake(ctx sdk.Context, accKey linotypes.AccountKey)
 	if err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
-	return voter.LinoStake, nil
+	return voter.LinoStake.Plus(voter.FrozenAmount), nil
 }
 
 // GetLinoStakeLastChangedAt - get linoStake last changed time
@@ -390,12 +390,36 @@ func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.Refe
 }
 
 func (vm VoteManager) GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) types.VoterDuty {
-	return types.DutyUnimplemented
+	voter, err := vm.storage.GetVoter(ctx, accKey)
+	if err != nil {
+		return types.DutyNop
+	}
+	return voter.Duty
 }
 
 // AssignDuty froze some amount of stake and assign a duty to user.
 func (vm VoteManager) AssignDuty(ctx sdk.Context, user linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error {
-	return linotypes.ErrUnimplemented("assign duty")
+	oldDuty := vm.GetVoterDuty(ctx, user)
+	if oldDuty != types.DutyVoter {
+		return ErrNotAVoterOrHasDuty()
+	}
+
+	voter, err := vm.storage.GetVoter(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	voter.Duty = duty
+	voter.FrozenAmount = frozenAmount
+	voter.LinoStake = voter.LinoStake.Minus(frozenAmount)
+
+	if !voter.LinoStake.IsGTE(linotypes.NewCoinFromInt64(0)) {
+		return ErrInsufficientStake()
+	}
+	if err := vm.storage.SetVoter(ctx, user, voter); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Export storage state.

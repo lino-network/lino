@@ -51,3 +51,13 @@ func ErrInvalidUsername() sdk.Error {
 func ErrQueryFailed() sdk.Error {
 	return types.NewError(types.CodeVoteQueryFailed, fmt.Sprintf("query vote store failed"))
 }
+
+// ErrNotAVoterOrHasDuty
+func ErrNotAVoterOrHasDuty() sdk.Error {
+	return types.NewError(types.CodeNotAVoterOrHasDuty, fmt.Sprintf("not a voter or has duty"))
+}
+
+// ErrInsufficientStake
+func ErrInsufficientStake() sdk.Error {
+	return types.NewError(types.CodeInsufficientStake, fmt.Sprintf("stake is not enough"))
+}
