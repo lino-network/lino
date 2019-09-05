@@ -1,6 +1,7 @@
 package model
 
 import (
+	"sync"
 	"strings"
 
 	"github.com/lino-network/lino/types"
@@ -271,8 +272,11 @@ func getGrantPermKey(me types.AccountKey, grantTo types.AccountKey) []byte {
 func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 	tables := &AccountTables{}
 	store := ctx.KVStore(as.key)
+	var wg sync.WaitGroup
+	wg.Add(2)
 	// export tables.account
-	func() {
+	go func() {
+		defer wg.Done()
 		itr := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
 		defer itr.Close()
 		for ; itr.Valid(); itr.Next() {
@@ -317,7 +321,8 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 		}
 	}()
 	// export tables.GrantPubKeys
-	func() {
+	go func() {
+		defer wg.Done()
 		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
 		defer itr.Close()
 		for ; itr.Valid(); itr.Next() {
@@ -341,6 +346,7 @@ func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
 			}
 		}
 	}()
+	wg.Wait()
 	return tables
 }
 
