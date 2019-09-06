@@ -6,8 +6,7 @@ import (
 )
 
 // BeginBlocker
-func BeginBlocker(
-	ctx sdk.Context, req abci.RequestBeginBlock, bm BandwidthKeeper) (tags sdk.Tags) {
+func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, bm BandwidthKeeper) {
 	if err := bm.BeginBlocker(ctx); err != nil {
 		panic(err)
 	}
@@ -16,7 +15,7 @@ func BeginBlocker(
 
 // EndBlocker
 func EndBlocker(
-	ctx sdk.Context, req abci.RequestEndBlock, bm BandwidthKeeper) (tags sdk.Tags) {
+	ctx sdk.Context, req abci.RequestEndBlock, bm BandwidthKeeper) {
 	if err := bm.EndBlocker(ctx); err != nil {
 		panic(err)
 	}

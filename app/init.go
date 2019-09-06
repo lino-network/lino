@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
@@ -41,7 +42,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// gen pubkey
-			_, pk, err := gaiaInit.InitializeNodeValidatorFiles(config)
+			_, pk, err := genutil.InitializeNodeValidatorFiles(config)
 			if err != nil {
 				return err
 			}
@@ -62,8 +63,17 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			if err = gaiaInit.ExportGenesisFile(
-				genFile, chainID, []tmtypes.GenesisValidator{validator}, appState); err != nil {
+			// TODO(yumin): this is broken and we need update this part.
+			if err = genutil.ExportGenesisFile(
+				&tmtypes.GenesisDoc{
+					GenesisTime:     time.Now(),
+					ChainID:         chainID,
+					ConsensusParams: nil,
+					Validators:      []tmtypes.GenesisValidator{validator},
+					AppHash:         []byte(""),
+					AppState:        appState,
+				},
+				genFile); err != nil {
 				return err
 			}
 

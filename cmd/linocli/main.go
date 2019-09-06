@@ -5,14 +5,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/lino-network/lino/app"
-	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/types"
+	txutils "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	// server "github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 
+	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/client"
+	"github.com/lino-network/lino/types"
 	acccmd "github.com/lino-network/lino/x/account/commands"
 	developercmd "github.com/lino-network/lino/x/developer/commands"
 	infracmd "github.com/lino-network/lino/x/infra/commands"
@@ -50,8 +50,8 @@ func main() {
 
 	// XXX(yumin): before major-update-1, it's tx.AddCommands.
 	tendermintCmd.AddCommand(
-		tx.SearchTxCmd(cdc),
-		tx.QueryTxCmd(cdc),
+		// txutils.SearchTxCmd(cdc),
+		txutils.QueryTxCmd(cdc),
 	)
 
 	advancedCmd := &cobra.Command{
@@ -222,7 +222,7 @@ func main() {
 	linocliCmd.AddCommand(
 		keys.Commands(),
 		client.LineBreak,
-		version.VersionCmd,
+		// server.VersionCmd,
 	)
 
 	// prepare and add flags

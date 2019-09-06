@@ -3,10 +3,10 @@ package core
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	// "github.com/cosmos/cosmos-sdk/client"
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	txbuilder "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	txbuilder "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -126,14 +126,14 @@ func (ctx CoreContext) SignBuildBroadcast(
 	return ctx.BroadcastTx(txBytes)
 }
 
-// get passphrase from std input
-func (ctx CoreContext) GetPassphraseFromStdin(name string) (pass string, err error) {
-	buf := client.BufferStdin()
-	prompt := fmt.Sprintf("Password to sign with '%s':", name)
-	return client.GetPassword(prompt, buf)
-}
+// // get passphrase from std input
+// func (ctx CoreContext) GetPassphraseFromStdin(name string) (pass string, err error) {
+// 	buf := client.BufferStdin()
+// 	prompt := fmt.Sprintf("Password to sign with '%s':", name)
+// 	return client.GetPassword(prompt, buf)
+// }
 
-// GetNode prepares a simple rpc.Client
+// // GetNode prepares a simple rpc.Client
 func (ctx CoreContext) GetNode() (rpcclient.Client, error) {
 	if ctx.Client == nil {
 		return nil, errors.New("Must define node URI")

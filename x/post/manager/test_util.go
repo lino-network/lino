@@ -19,7 +19,7 @@ package manager
 
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
 // 	abci "github.com/tendermint/tendermint/abci/types"
-// 	dbm "github.com/tendermint/tendermint/libs/db"
+// 	dbm "github.com/tendermint/tm-db"
 // )
 
 // // Construct some global addrs and txs for tests.
