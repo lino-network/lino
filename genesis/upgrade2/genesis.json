@@ -114,7 +114,18 @@ TODO: change chain_id and genesis_time.
         },
         "virtual_coin": {
           "amount": "100000"
-        }
+        },
+        "general_msg_quota_ratio": "0.2",
+        "general_msg_ema_factor": "0.1",
+        "app_msg_quota_ratio": "0.8",
+        "app_msg_ema_factor": "0.1",
+        "expected_max_mps": "300",
+        "msg_fee_factor_a": "6",
+        "msg_fee_factor_b": "10",
+        "max_mps_decay_rate": "0.99",
+        "app_bandwidth_pool_size": "10",
+        "app_vacancy_factor": "0.69",
+        "app_punishment_factor": "2.8"
       },
       "AccountParam": {
         "minimum_balance": {
