@@ -1,6 +1,6 @@
 COMMIT := $(shell git log -1 --format='%H')
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
-LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X vendor/github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb"
+LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb"
 GO_TAGS := "tendermint cgo cleveldb"
 CGO_LDFLAGS := "-lsnappy"
 GO111MODULE = on
