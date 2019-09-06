@@ -3,7 +3,7 @@ package repv2
 import (
 	"strconv"
 
-	db "github.com/tendermint/tendermint/libs/db"
+	db "github.com/tendermint/tm-db"
 )
 
 // Store - store.
