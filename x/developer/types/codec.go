@@ -21,4 +21,5 @@ var ModuleCdc = wire.New()
 func init() {
 	RegisterWire(ModuleCdc)
 	wire.RegisterCrypto(ModuleCdc)
+	ModuleCdc.Seal()
 }

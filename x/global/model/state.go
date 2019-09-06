@@ -42,12 +42,3 @@ type GlobalTables struct {
 	GlobalStakeStats     []GlobalStakeStatDayRow  `json:"global_stake_stats"`
 	GlobalMisc           GlobalMisc               `json:"global_misc"`
 }
-
-// ToIR -
-func (g GlobalTables) ToIR() GlobalTablesIR {
-	return GlobalTablesIR{
-		GlobalTimeEventLists: g.GlobalTimeEventLists,
-		GlobalStakeStats:     g.GlobalStakeStats,
-		GlobalMisc:           g.GlobalMisc.ToIR(),
-	}
-}

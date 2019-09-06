@@ -1,6 +1,9 @@
 package manager
 
 import (
+	"fmt"
+
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
@@ -171,7 +174,7 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		return err
 	}
 
-	rewardEvent := RewardEvent{
+	rewardEvent := types.RewardEvent{
 		PostAuthor: author,
 		PostID:     postID,
 		Consumer:   from,
@@ -234,7 +237,7 @@ func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n li
 	if err != nil {
 		return err
 	}
-	rewardEvent := RewardEvent{
+	rewardEvent := types.RewardEvent{
 		PostAuthor: author,
 		PostID:     postID,
 		Consumer:   from,
@@ -308,20 +311,45 @@ func (pm PostManager) validateIDADonate(ctx sdk.Context, from linotypes.AccountK
 	return nil
 }
 
+// ExecRewardEvent - execute reward events.
+func (pm PostManager) ExecRewardEvent(ctx sdk.Context, event types.RewardEvent) sdk.Error {
+	// check if post is deleted, Note that if post is deleted, it's ok to just
+	// skip this event. It does not return an error because errors will panic in events.
+	permlink := linotypes.GetPermlink(event.PostAuthor, event.PostID)
+	if !pm.DoesPostExist(ctx, permlink) {
+		return nil
+	}
+
+	// pop out rewards
+	reward, err := pm.gm.GetRewardAndPopFromWindow(ctx, event.Evaluate)
+	if err != nil {
+		return err
+	}
+	// if developer exist, add to developer consumption
+	if pm.dev.DoesDeveloperExist(ctx, event.FromApp) {
+		// ignore report consumption err.
+		_ = pm.dev.ReportConsumption(ctx, event.FromApp, event.Evaluate)
+	}
+
+	// previsously rewards were added to account's reward, now it's added directly to balance.
+	err = pm.am.AddCoinToUsername(ctx, event.PostAuthor, reward)
+	return err
+}
+
 // Export - to file.
 func (pm PostManager) ExportToFile(ctx sdk.Context, filepath string) error {
 	panic("post export unimplemented")
 }
 
 // Import - from file
-func (pm PostManager) ImportFromFile(ctx sdk.Context, filepath string) error {
-	rst, err := utils.Load(filepath, func() interface{} { return &model.PostTablesIR{} })
+func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.PostTablesIR{} })
 	if err != nil {
 		return err
 	}
 	table := rst.(*model.PostTablesIR)
-	ctx.Logger().Info("%s state parsed\n", filepath)
 
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
 	// upgrade2 has simplied the post structure to just one post.
 	for _, v := range table.Posts {
 		pm.postStorage.SetPost(ctx, &model.Post{
@@ -334,6 +362,6 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, filepath string) error {
 			UpdatedAt: v.Meta.LastUpdatedAt,
 		})
 	}
-	ctx.Logger().Info("%s state imported\n", filepath)
+	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
 }

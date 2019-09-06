@@ -3,6 +3,7 @@ package global
 //go:generate mockery -name GlobalKeeper
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/types"
@@ -18,6 +19,9 @@ type GlobalKeeper interface {
 
 	// pop out developer monthly inflation from pool.
 	PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
+
+	// import export
+	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 var _ GlobalKeeper = &GlobalManager{}

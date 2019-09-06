@@ -2,6 +2,7 @@
 
 package mocks
 
+import amino "github.com/tendermint/go-amino"
 import crypto "github.com/tendermint/tendermint/crypto"
 import linotypes "github.com/lino-network/lino/types"
 import mock "github.com/stretchr/testify/mock"
@@ -289,31 +290,6 @@ func (_m *AccountKeeper) GetMeta(ctx types.Context, username linotypes.AccountKe
 	return r0, r1
 }
 
-// GetReward provides a mock function with given fields: ctx, username
-func (_m *AccountKeeper) GetReward(ctx types.Context, username linotypes.AccountKey) (*model.Reward, types.Error) {
-	ret := _m.Called(ctx, username)
-
-	var r0 *model.Reward
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) *model.Reward); ok {
-		r0 = rf(ctx, username)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Reward)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
-		r1 = rf(ctx, username)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
 // GetSavingFromUsername provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetSavingFromUsername(ctx types.Context, username linotypes.AccountKey) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -408,6 +384,20 @@ func (_m *AccountKeeper) GetTransactionKey(ctx types.Context, username linotypes
 	}
 
 	return r0, r1
+}
+
+// ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *AccountKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // IncreaseSequenceByOne provides a mock function with given fields: ctx, address

@@ -557,10 +557,7 @@ func TestUpdateJSONMeta(t *testing.T) {
 			t.Errorf("%s: failed to update json meta, got err %v", tc.testName, err)
 		}
 
-		accMeta, err := am.storage.GetMeta(ctx, tc.username)
-		if err != nil {
-			t.Errorf("%s: failed to get meta, got err %v", tc.testName, err)
-		}
+		accMeta := am.storage.GetMeta(ctx, tc.username)
 		if tc.JSONMeta != accMeta.JSONMeta {
 			t.Errorf("%s: diff json meta, got %v, want %v", tc.testName, accMeta.JSONMeta, tc.JSONMeta)
 		}

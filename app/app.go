@@ -27,7 +27,6 @@ import (
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
 
-	globalmodel "github.com/lino-network/lino/x/global/model"
 	infra "github.com/lino-network/lino/x/infra"
 	inframodel "github.com/lino-network/lino/x/infra/model"
 	"github.com/lino-network/lino/x/proposal"
@@ -107,9 +106,6 @@ type LinoBlockchain struct {
 
 	// global param
 	paramHolder param.ParamHolder
-
-	// start from previous exported state
-	importRequired bool
 }
 
 // NewLinoBlockchain - create a Lino Blockchain instance
@@ -245,16 +241,12 @@ func MakeCodec() *wire.Codec {
 
 func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	cdc.RegisterConcrete(postmn.RewardEvent{}, "lino/eventReward", nil)
+	// TODO(yumin): remove this on upgrade3.
+	cdc.RegisterConcrete(posttypes.RewardEventV1{}, "lino/eventReward", nil)
+	cdc.RegisterConcrete(posttypes.RewardEvent{}, "lino/eventRewardV2", nil)
 	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
-}
-
-// SetImportRequired - set whether import is required in initchainer.
-// This can be done even after seal().
-func (lb *LinoBlockchain) SetImportRequired(v bool) {
-	lb.importRequired = v
 }
 
 // custom logic for lino blockchain initialization
@@ -326,7 +318,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	}
 
 	// import from prev state, do not read from genesis.
-	if lb.importRequired {
+	if genesisState.LoadPrevStates {
 		lb.ImportFromFiles(ctx)
 	} else {
 		// init genesis accounts
@@ -501,9 +493,8 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
 	for _, event := range eventList {
 		switch e := event.(type) {
-		case postmn.RewardEvent:
-			// TODO(yumin): need to rethink this part.
-			if err := e.Execute(ctx, lb.postManager.(postmn.PostManager)); err != nil {
+		case posttypes.RewardEvent:
+			if err := lb.postManager.ExecRewardEvent(ctx, e); err != nil {
 				panic(err)
 			}
 		case accmn.ReturnCoinEvent:
@@ -520,6 +511,8 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			if err := e.Execute(ctx, lb.paramHolder); err != nil {
 				panic(err)
 			}
+		default:
+			ctx.Logger().Error(fmt.Sprintf("skipping event: %+v", e))
 		}
 	}
 	return nil
@@ -711,9 +704,10 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	// exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
 	// 	return lb.postManager.Export(ctx).ToIR()
 	// })
-	exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
-		return lb.globalManager.Export(ctx).ToIR()
-	})
+	// TODO(yumin): global export is not implemented yet.
+	// exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.globalManager.Export(ctx).ToIR()
+	// })
 	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
 		return lb.infraManager.Export(ctx).ToIR()
 	})
@@ -741,19 +735,33 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			panic("failed to unmarshal " + err.Error())
 		}
 	}
-	// TODO(yumin): add import account.
+
+	prevStateDir := DefaultNodeHome + "/" + prevStateFolder
+	// import account
+	err := lb.accountManager.ImportFromFile(
+		ctx, lb.cdc, prevStateDir + accountStateFile)
+	if err != nil {
+		panic(err)
+	}
 	// import post.
-	err := lb.postManager.ImportFromFile(
-		ctx, DefaultNodeHome+"/"+prevStateFolder+postStateFile)
+	err = lb.postManager.ImportFromFile(
+		ctx, lb.cdc, prevStateDir+postStateFile)
 	if err != nil {
 		panic(err)
 	}
 	// import dev
 	err = lb.developerManager.ImportFromFile(
-		ctx, DefaultNodeHome+"/"+prevStateFolder+developerStateFile)
+		ctx, lb.cdc, prevStateDir+developerStateFile)
 	if err != nil {
 		panic(err)
 	}
+	// import global
+	err = lb.globalManager.ImportFromFile(
+		ctx, lb.cdc, prevStateDir+globalStateFile)
+	if err != nil {
+		panic(err)
+	}
+
 	importFromFile := func(filename string, tables interface{}) {
 		// XXX(yumin): does not support customized node home import.
 		f, err := os.Open(DefaultNodeHome + "/" + prevStateFolder + filename)
@@ -765,11 +773,6 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		check(err)
 		// XXX(yumin): ugly, trying found a better way.
 		switch t := tables.(type) {
-		case *globalmodel.GlobalTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.globalManager.Import(ctx, t)
 		case *inframodel.InfraTablesIR:
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
@@ -791,7 +794,6 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
 	}
 
-	importFromFile(globalStateFile, &globalmodel.GlobalTablesIR{})
 	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
 	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})

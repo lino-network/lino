@@ -25,6 +25,7 @@ var (
 
 // genesis state for blockchain
 type GenesisState struct {
+	LoadPrevStates bool                      `json:"load_prev_states"`
 	Accounts       []GenesisAccount          `json:"accounts"`
 	ReservePool    types.Coin                `json:"reserve_pool"`
 	Developers     []GenesisAppDeveloper     `json:"developers"`
@@ -120,10 +121,11 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 
 	// totalLino := "10000000000"
 	genesisState := GenesisState{
-		Accounts:    []GenesisAccount{},
-		ReservePool: types.NewCoinFromInt64(0),
-		Developers:  []GenesisAppDeveloper{},
-		Infra:       []GenesisInfraProvider{},
+		LoadPrevStates: false,
+		Accounts:       []GenesisAccount{},
+		ReservePool:    types.NewCoinFromInt64(0),
+		Developers:     []GenesisAppDeveloper{},
+		Infra:          []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
