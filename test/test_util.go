@@ -182,7 +182,7 @@ func CheckAppBandwidthInfo(
 	bs := bandwidthmodel.NewBandwidthStorage(lb.CapKeyBandwidthStore)
 	res, err := bs.GetAppBandwidthInfo(ctx, username)
 	assert.Nil(t, err)
-	assert.Equal(t, info, res)
+	assert.Equal(t, info, *res)
 }
 
 // CheckCurBlockInfo
@@ -192,7 +192,7 @@ func CheckCurBlockInfo(
 	bs := bandwidthmodel.NewBandwidthStorage(lb.CapKeyBandwidthStore)
 	res, err := bs.GetBlockInfo(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, info, res)
+	assert.Equal(t, info, *res)
 }
 
 // CreateAccount - register account on test blockchain
