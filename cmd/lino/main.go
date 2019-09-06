@@ -22,8 +22,6 @@ import (
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	app := app.NewLinoBlockchain(logger, db, traceStore,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
-	// after upgrade-1, lino needs to starts
-	app.SetImportRequired(true)
 	return app
 }
 

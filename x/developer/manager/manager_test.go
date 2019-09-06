@@ -907,6 +907,7 @@ func (suite *DeveloperManagerSuite) TestPrivateValidAppIDA() {
 func (suite *DeveloperManagerSuite) TestBurnIDA() {
 	zeroCoin := linotypes.NewCoinFromInt64(0)
 	coin := linotypes.NewCoinFromInt64(1)
+	coinAmountMoreThanPool := linotypes.NewCoinFromInt64(11)
 	used := linotypes.NewMiniDollar(100)
 	userNotEnough := linotypes.AccountKey("from-not-enough")
 	user := linotypes.AccountKey("from")
@@ -959,6 +960,17 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			accountExists: &exists,
 			expectedError: types.ErrBurnZeroIDA(),
 			bought:        &zeroCoin,
+			used:          &used,
+		},
+		{
+			name:          "Fail: burn amount more than reserve pool",
+			app:           appTest,
+			user:          user,
+			amount:        amount,
+			expectedCoin:  zeroCoin,
+			accountExists: &exists,
+			expectedError: types.ErrInsuffientReservePool(),
+			bought:        &coinAmountMoreThanPool,
 			used:          &used,
 		},
 		{

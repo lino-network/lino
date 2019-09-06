@@ -3,6 +3,7 @@ package account
 //go:generate mockery -name AccountKeeper
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
@@ -45,9 +46,9 @@ type AccountKeeper interface {
 	GetInfo(ctx sdk.Context, username types.AccountKey) (*model.AccountInfo, sdk.Error)
 	GetBank(ctx sdk.Context, username types.AccountKey) (*model.AccountBank, sdk.Error)
 	GetMeta(ctx sdk.Context, username types.AccountKey) (*model.AccountMeta, sdk.Error)
-	GetReward(ctx sdk.Context, username types.AccountKey) (*model.Reward, sdk.Error)
 	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
+	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 var _ AccountKeeper = manager.AccountManager{}

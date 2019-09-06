@@ -521,7 +521,7 @@ func (suite *PostManagerTestSuite) TestLinoDonateOK() {
 		dp, nil).Once()
 	suite.global.On("AddFrictionAndRegisterContentRewardEvent",
 		mock.Anything,
-		RewardEvent{
+		types.RewardEvent{
 			PostAuthor: author,
 			PostID:     postID,
 			Consumer:   from,
@@ -708,7 +708,7 @@ func (suite *PostManagerTestSuite) TestIDADonateOK() {
 		dp, nil).Once()
 	suite.global.On("AddFrictionAndRegisterContentRewardEvent",
 		mock.Anything,
-		RewardEvent{
+		types.RewardEvent{
 			PostAuthor: author,
 			PostID:     postID,
 			Consumer:   from,

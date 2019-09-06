@@ -20,7 +20,7 @@ import (
 	"github.com/lino-network/lino/types"
 	globalModel "github.com/lino-network/lino/x/global/model"
 	infraModel "github.com/lino-network/lino/x/infra/model"
-	postmn "github.com/lino-network/lino/x/post/manager"
+	posttypes "github.com/lino-network/lino/x/post/types"
 )
 
 var (
@@ -626,7 +626,7 @@ func TestIncreaseMinute(t *testing.T) {
 		ctx := lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64((i-1)*60), 0)})
 		lb.globalManager.AddLinoStakeToStat(ctx, types.NewCoinFromInt64(1))
 		lb.globalManager.AddFrictionAndRegisterContentRewardEvent(
-			ctx, postmn.RewardEvent{}, types.NewCoinFromInt64(2), types.NewMiniDollar(1))
+			ctx, posttypes.RewardEvent{}, types.NewCoinFromInt64(2), types.NewMiniDollar(1))
 		expectLinoStakeStat.TotalConsumptionFriction =
 			expectLinoStakeStat.TotalConsumptionFriction.Plus(types.NewCoinFromInt64(2))
 		expectLinoStakeStat.UnclaimedFriction =

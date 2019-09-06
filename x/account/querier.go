@@ -17,7 +17,6 @@ const (
 	QueryAccountInfo            = "info"
 	QueryAccountBank            = "bank"
 	QueryAccountMeta            = "meta"
-	QueryAccountReward          = "reward"
 	QueryAccountPendingCoinDay  = "pendingCoinDay"
 	QueryAccountGrantPubKeys    = "grantPubKey"
 	QueryAccountAllGrantPubKeys = "allGrantPubKey"
@@ -36,8 +35,6 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 			return queryAccountBank(ctx, cdc, path[1:], req, am)
 		case QueryAccountMeta:
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
-		case QueryAccountReward:
-			return queryAccountReward(ctx, cdc, path[1:], req, am)
 		case QueryAccountGrantPubKeys:
 			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
 		case QueryAccountAllGrantPubKeys:
@@ -126,21 +123,6 @@ func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, r
 		}
 	}
 	res, marshalErr := cdc.MarshalJSON(txAndSeq)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountReward(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	reward, err := am.GetReward(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(reward)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()
 	}

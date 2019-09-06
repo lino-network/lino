@@ -3,6 +3,7 @@ package developer
 //go:generate mockery -name DeveloperKeeper
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
@@ -48,7 +49,7 @@ type DeveloperKeeper interface {
 	InitGenesis(ctx sdk.Context, reservePoolAmount linotypes.Coin) sdk.Error
 
 	// importer exporter
-	ImportFromFile(ctx sdk.Context, filepath string) error
+	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 // var _ DeveloperKeeper = DeveloperManager{}

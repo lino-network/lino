@@ -2,6 +2,8 @@
 
 package mocks
 
+import amino "github.com/tendermint/go-amino"
+
 import linotypes "github.com/lino-network/lino/types"
 import mock "github.com/stretchr/testify/mock"
 import model "github.com/lino-network/lino/x/developer/model"
@@ -244,13 +246,13 @@ func (_m *DeveloperKeeper) GrantPermission(ctx types.Context, app linotypes.Acco
 	return r0
 }
 
-// ImportFromFile provides a mock function with given fields: ctx, filepath
-func (_m *DeveloperKeeper) ImportFromFile(ctx types.Context, filepath string) error {
-	ret := _m.Called(ctx, filepath)
+// ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *DeveloperKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.Context, string) error); ok {
-		r0 = rf(ctx, filepath)
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
 	} else {
 		r0 = ret.Error(0)
 	}

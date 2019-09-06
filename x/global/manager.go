@@ -1,12 +1,19 @@
 package global
 
 import (
+	"fmt"
+
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/model"
+
+	// only for import from last version.
+	posttypes "github.com/lino-network/lino/x/post/types"
 )
 
 // GlobalManager - encapsulates all basic struct
@@ -22,16 +29,6 @@ func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder) GlobalManager 
 		storage:     model.NewGlobalStorage(key),
 		paramHolder: holder,
 	}
-}
-
-// Export state
-func (gm *GlobalManager) Export(ctx sdk.Context) *model.GlobalTables {
-	return gm.storage.Export(ctx)
-}
-
-// Import state
-func (gm *GlobalManager) Import(ctx sdk.Context, tb *model.GlobalTablesIR) {
-	gm.storage.Import(ctx, tb)
 }
 
 // WireCodec - access to global manager codec
@@ -327,15 +324,8 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
-	// BlockchainUpgrade1Update2Height
-	// Growth rate in genesis file for testnet-upgrade1 was wrong.
-	// For lino-testnet, the growth rate is, and always was, 0.5%, not 5%.
-	growthRate := globalAllocation.GlobalGrowthRate
-	if ctx.BlockHeight() >= types.BlockchainUpgrade1Update2Height {
-		growthRate = types.NewDecFromRat(5, 1000)
-	}
-
 	// get hourly inflation
+	growthRate := globalAllocation.GlobalGrowthRate
 	thisHourInflation :=
 		types.DecToCoin(
 			globalMeta.LastYearTotalLinoCoin.ToDec().
@@ -552,6 +542,97 @@ func (gm *GlobalManager) CommitEventCache(ctx sdk.Context) sdk.Error {
 // clear event cache will only be committed at the beginblocker
 func (gm *GlobalManager) ClearEventCache(ctx sdk.Context) sdk.Error {
 	gm.deliverTxEventCacheList = []*model.EventCache{}
+	return nil
+}
+
+func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
+	if err != nil {
+		return err
+	}
+	table := rst.(*model.GlobalTablesIR)
+
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+
+	// import table.TimeEventLists
+	for _, v := range table.GlobalTimeEventLists {
+		newevents := make([]types.Event, 0)
+		events := v.TimeEventList.Events
+		for _, event := range events {
+			switch e := event.(type) {
+			case posttypes.RewardEventV1:
+				newevent := posttypes.RewardEvent{
+					PostAuthor: e.PostAuthor,
+					PostID:     e.PostID,
+					Consumer:   e.Consumer,
+					Evaluate:   types.NewMiniDollarFromTestnetCoin(e.Evaluate),
+					FromApp:    e.FromApp,
+				}
+				newevents = append(newevents, newevent)
+				ctx.Logger().Info(fmt.Sprintf("event conversion: from %+v to %+v ", e, newevent))
+			default:
+				newevents = append(newevents, event)
+			}
+		}
+		err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &types.TimeEventList{
+			Events: newevents,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	// import table.GlobalStakeStats
+	for _, v := range table.GlobalStakeStats {
+		err := gm.storage.SetLinoStakeStat(ctx, v.Day, &v.StakeStat)
+		if err != nil {
+			return err
+		}
+	}
+	// import table.Misc
+	misc := table.GlobalMisc
+
+	err = gm.storage.SetInflationPool(ctx, &misc.InflationPool)
+	if err != nil {
+		return err
+	}
+
+	err = gm.storage.SetGlobalTime(ctx, &misc.Time)
+	if err != nil {
+		return err
+	}
+
+	// type diff in IR
+	var cwindow types.MiniDollar
+	if misc.ConsumptionMeta.IsConsumptionWindowDollarUnit {
+		cwindow = types.NewMiniDollarFromInt(misc.ConsumptionMeta.ConsumptionWindow.Amount)
+	} else {
+		cwindow = types.NewMiniDollarFromTestnetCoin(misc.ConsumptionMeta.ConsumptionWindow)
+		ctx.Logger().Info(
+			fmt.Sprintf("consumption window converting, from %+v to %+v ",
+				misc.ConsumptionMeta.ConsumptionWindow,
+				cwindow,
+			))
+	}
+	err = gm.storage.SetConsumptionMeta(ctx, &model.ConsumptionMeta{
+		ConsumptionFrictionRate: sdk.MustNewDecFromStr(
+			misc.ConsumptionMeta.ConsumptionFrictionRate),
+		ConsumptionWindow:            cwindow,
+		ConsumptionRewardPool:        misc.ConsumptionMeta.ConsumptionRewardPool,
+		ConsumptionFreezingPeriodSec: misc.ConsumptionMeta.ConsumptionFreezingPeriodSec,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = gm.storage.SetTPS(ctx, &model.TPS{
+		CurrentTPS: sdk.MustNewDecFromStr(misc.TPS.CurrentTPS),
+		MaxTPS:     sdk.MustNewDecFromStr(misc.TPS.MaxTPS),
+	})
+	if err != nil {
+		return err
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
 }
 

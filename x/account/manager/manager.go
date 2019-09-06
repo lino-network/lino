@@ -1,14 +1,17 @@
 package manager
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/global"
@@ -82,9 +85,7 @@ func (accManager AccountManager) CreateAccount(
 	bank.Username = username
 	bank.PubKey = transactionKey
 
-	if err := accManager.storage.SetBank(ctx, addr, bank); err != nil {
-		return err
-	}
+	accManager.storage.SetBank(ctx, addr, bank)
 
 	accountInfo := &model.AccountInfo{
 		Username:       username,
@@ -93,14 +94,9 @@ func (accManager AccountManager) CreateAccount(
 		SigningKey:     signingKey,
 		Address:        addr,
 	}
-	if err := accManager.storage.SetInfo(ctx, username, accountInfo); err != nil {
-		return err
-	}
-
+	accManager.storage.SetInfo(ctx, username, accountInfo)
 	accountMeta := &model.AccountMeta{}
-	if err := accManager.storage.SetMeta(ctx, username, accountMeta); err != nil {
-		return err
-	}
+	accManager.storage.SetMeta(ctx, username, accountMeta)
 	return nil
 }
 
@@ -138,7 +134,8 @@ func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Addr
 	}
 	bank.Saving = bank.Saving.Plus(coin)
 
-	return accManager.storage.SetBank(ctx, addr, bank)
+	accManager.storage.SetBank(ctx, addr, bank)
+	return nil
 }
 
 // MinusSavingCoin - minus coin from balance, remove coin day in the tail
@@ -174,19 +171,17 @@ func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address s
 		return types.ErrAccountSavingCoinNotEnough()
 	}
 
-	return accManager.storage.SetBank(ctx, address, bank)
+	accManager.storage.SetBank(ctx, address, bank)
+	return nil
 }
 
 // UpdateJSONMeta - update user JONS meta data
 func (accManager AccountManager) UpdateJSONMeta(
 	ctx sdk.Context, username linotypes.AccountKey, JSONMeta string) sdk.Error {
-	accountMeta, err := accManager.storage.GetMeta(ctx, username)
-	if err != nil {
-		return err
-	}
+	accountMeta := accManager.storage.GetMeta(ctx, username)
 	accountMeta.JSONMeta = JSONMeta
-
-	return accManager.storage.SetMeta(ctx, username, accountMeta)
+	accManager.storage.SetMeta(ctx, username, accountMeta)
+	return nil
 }
 
 // GetTransactionKey - get transaction public key
@@ -249,48 +244,6 @@ func (accManager AccountManager) GetAddress(ctx sdk.Context, username linotypes.
 	return info.Address, nil
 }
 
-// GetLastReportOrUpvoteAt - get user last report or upvote time
-// func (accManager AccountManager) GetLastReportOrUpvoteAt(
-// 	ctx sdk.Context, username linotypes.AccountKey) (int64, sdk.Error) {
-// 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
-// 	if err != nil {
-// 		return 0, ErrGetLastReportOrUpvoteAt(err)
-// 	}
-// 	return accountMeta.LastReportOrUpvoteAt, nil
-// }
-
-// UpdateLastReportOrUpvoteAt - update user last report or upvote time to current block time
-// func (accManager AccountManager) UpdateLastReportOrUpvoteAt(
-// 	ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
-// 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
-// 	if err != nil {
-// 		return ErrUpdateLastReportOrUpvoteAt(err)
-// 	}
-// 	accountMeta.LastReportOrUpvoteAt = ctx.BlockHeader().Time.Unix()
-// 	return accManager.storage.SetMeta(ctx, username, accountMeta)
-// }
-
-// GetLastPostAt - get user last post time
-// func (accManager AccountManager) GetLastPostAt(
-// 	ctx sdk.Context, username linotypes.AccountKey) (int64, sdk.Error) {
-// 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
-// 	if err != nil {
-// 		return 0, ErrGetLastPostAt(err)
-// 	}
-// 	return accountMeta.LastPostAt, nil
-// }
-
-// UpdateLastPostAt - update user last post time to current block time
-// func (accManager AccountManager) UpdateLastPostAt(
-// 	ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
-// 	accountMeta, err := accManager.storage.GetMeta(ctx, username)
-// 	if err != nil {
-// 		return ErrUpdateLastPostAt(err)
-// 	}
-// 	accountMeta.LastPostAt = ctx.BlockHeader().Time.Unix()
-// 	return accManager.storage.SetMeta(ctx, username, accountMeta)
-// }
-
 // GetFrozenMoneyList - get user frozen money list
 func (accManager AccountManager) GetFrozenMoneyList(
 	ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error) {
@@ -308,9 +261,7 @@ func (accManager AccountManager) IncreaseSequenceByOne(ctx sdk.Context, address 
 		return types.ErrIncreaseSequenceByOne(err)
 	}
 	bank.Sequence++
-	if err := accManager.storage.SetBank(ctx, address, bank); err != nil {
-		return err
-	}
+	accManager.storage.SetBank(ctx, address, bank)
 	return nil
 }
 
@@ -335,7 +286,9 @@ func (accManager AccountManager) AuthorizePermission(
 	if err != nil {
 		// if grant permission list is empty, create a new one
 		if err.Code() == model.ErrGrantPubKeyNotFound().Code() {
-			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, []*model.GrantPermission{&newGrantPubKey})
+			accManager.storage.SetGrantPermissions(
+				ctx, me, grantTo, []*model.GrantPermission{&newGrantPubKey})
+			return nil
 		}
 		return err
 	}
@@ -344,12 +297,14 @@ func (accManager AccountManager) AuthorizePermission(
 	for i, pubkey := range pubkeys {
 		if pubkey.Permission == grantLevel {
 			pubkeys[i] = &newGrantPubKey
-			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
+			accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
+			return nil
 		}
 	}
 	// If grant permission doesn't have record in store, add to grant public key list
 	pubkeys = append(pubkeys, &newGrantPubKey)
-	return accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
+	accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
+	return nil
 }
 
 // RevokePermission - revoke permission from a developer
@@ -367,7 +322,8 @@ func (accManager AccountManager) RevokePermission(
 				accManager.storage.DeleteAllGrantPermissions(ctx, me, grantTo)
 				return nil
 			}
-			return accManager.storage.SetGrantPermissions(ctx, me, grantTo, append(pubkeys[:i], pubkeys[i+1:]...))
+			accManager.storage.SetGrantPermissions(ctx, me, grantTo, append(pubkeys[:i], pubkeys[i+1:]...))
+			return nil
 		}
 	}
 	return model.ErrGrantPubKeyNotFound()
@@ -480,69 +436,11 @@ func (accManager AccountManager) RecoverAccount(
 
 	oldBank.FrozenMoneyList = nil
 
-	if err := accManager.storage.SetInfo(ctx, username, accInfo); err != nil {
-		return err
-	}
-	if err := accManager.storage.SetBank(ctx, newAddr, newBank); err != nil {
-		return err
-	}
-	if err := accManager.storage.SetBank(ctx, oldAddr, oldBank); err != nil {
-		return err
-	}
+	accManager.storage.SetInfo(ctx, username, accInfo)
+	accManager.storage.SetBank(ctx, newAddr, newBank)
+	accManager.storage.SetBank(ctx, oldAddr, oldBank)
 	return nil
 }
-
-// func (accManager AccountManager) updateTXFromPendingCoinDayQueue(
-// 	ctx sdk.Context, bank *model.AccountBank, pendingCoinDayQueue *model.PendingCoinDayQueue) sdk.Error {
-// 	// remove expired transaction
-// 	coinDayParams, err := accManager.paramHolder.GetCoinDayParam(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	currentTimeSlot := ctx.BlockHeader().Time.Unix() / linotypes.CoinDayRecordIntervalSec * linotypes.CoinDayRecordIntervalSec
-// 	for len(pendingCoinDayQueue.PendingCoinDays) > 0 {
-// 		pendingCoinDay := pendingCoinDayQueue.PendingCoinDays[0]
-// 		if pendingCoinDay.EndTime <= currentTimeSlot {
-// 			// remove the transaction from queue, clean coin day coin in queue and minus total coin
-// 			// coinDayRatioOfThisTransaction means the ratio of coin day of this transaction was added last time
-// 			coinDayRatioOfThisTransaction := linotypes.NewDecFromRat(
-// 				pendingCoinDayQueue.LastUpdatedAt-pendingCoinDay.StartTime,
-// 				coinDayParams.SecondsToRecoverCoinDay)
-// 			// remove the coin day in the queue of this transaction
-// 			pendingCoinDayQueue.TotalCoinDay =
-// 				pendingCoinDayQueue.TotalCoinDay.Sub(
-// 					coinDayRatioOfThisTransaction.Mul(pendingCoinDay.Coin.ToDec()))
-// 			// update bank coin day
-// 			bank.CoinDay = bank.CoinDay.Plus(pendingCoinDay.Coin)
-
-// 			pendingCoinDayQueue.TotalCoin = pendingCoinDayQueue.TotalCoin.Minus(pendingCoinDay.Coin)
-
-// 			pendingCoinDayQueue.PendingCoinDays = pendingCoinDayQueue.PendingCoinDays[1:]
-// 		} else {
-// 			break
-// 		}
-// 	}
-// 	if len(pendingCoinDayQueue.PendingCoinDays) == 0 {
-// 		pendingCoinDayQueue.TotalCoin = linotypes.NewCoinFromInt64(0)
-// 		pendingCoinDayQueue.TotalCoinDay = sdk.ZeroDec()
-// 	} else {
-// 		// update all pending coin day at the same time
-// 		// recoverRatio = (currentTime - lastUpdateTime)/totalRecoverSeconds
-// 		// totalCoinDay += recoverRatio * totalCoin
-
-// 		// XXX(yumin): @mul-first-form transform to
-// 		// totalcoin * (currentTime - lastUpdateTime)/totalRecoverSeconds
-// 		pendingCoinDayQueue.TotalCoinDay =
-// 			pendingCoinDayQueue.TotalCoinDay.Add(
-// 				pendingCoinDayQueue.TotalCoin.ToDec().Mul(
-// 					sdk.NewDec(currentTimeSlot - pendingCoinDayQueue.LastUpdatedAt)).Quo(
-// 					sdk.NewDec(coinDayParams.SecondsToRecoverCoinDay)))
-// 	}
-
-// 	pendingCoinDayQueue.LastUpdatedAt = currentTimeSlot
-// 	return nil
-// }
 
 // AddFrozenMoney - add frozen money to user's frozen money list
 func (accManager AccountManager) AddFrozenMoney(
@@ -574,9 +472,7 @@ func (accManager AccountManager) AddFrozenMoney(
 	}
 
 	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
-	if err := accManager.storage.SetBank(ctx, info.Address, accountBank); err != nil {
-		return err
-	}
+	accManager.storage.SetBank(ctx, info.Address, accountBank)
 	return nil
 }
 
@@ -607,11 +503,7 @@ func (accManager AccountManager) GetBank(ctx sdk.Context, username linotypes.Acc
 }
 
 func (accManager AccountManager) GetMeta(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountMeta, sdk.Error) {
-	return accManager.storage.GetMeta(ctx, username)
-}
-
-func (accManager AccountManager) GetReward(ctx sdk.Context, username linotypes.AccountKey) (*model.Reward, sdk.Error) {
-	return accManager.storage.GetReward(ctx, username)
+	return accManager.storage.GetMeta(ctx, username), nil
 }
 
 func (accManager AccountManager) GetGrantPubKeys(ctx sdk.Context, username, grantTo linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
@@ -623,25 +515,69 @@ func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username li
 }
 
 // Export -
-func (accManager AccountManager) Export(ctx sdk.Context) *model.AccountTables {
-	return accManager.storage.Export(ctx)
+func (accManager AccountManager) ExportToFile(ctx sdk.Context, filepath string) error {
+	panic("export account unimplemented")
 }
 
-// Import -
-func (accManager AccountManager) Import(ctx sdk.Context, dt *model.AccountTablesIR) {
-	accManager.storage.Import(ctx, dt)
-	// XXX(yumin): during upgrade-1, we changed the kv of grantPubKey, so we import them here
-	// by calling AuthorizePermission.
-	for _, v := range dt.AccountGrantPubKeys {
+// ImportFromFile import state from file.
+func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.AccountTablesIR{} })
+	if err != nil {
+		return err
+	}
+	table := rst.(*model.AccountTablesIR)
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	// import accounts.
+	for _, v := range table.Accounts {
+		pubkey := v.Info.ResetKey
+		addr := sdk.AccAddress(pubkey.Address())
+		if _, err := accManager.storage.GetBank(ctx, addr); err == nil {
+			addr = sdk.AccAddress(v.Username)
+			// bank already exists, account bank use safe address. User must use
+			// their signing key to reset.
+			ctx.Logger().Error(
+				fmt.Sprintf("bank account already exits, %v; use safe addr: %s", v, addr))
+		}
+		info := &model.AccountInfo{
+			Username:       v.Username,
+			CreatedAt:      v.Info.CreatedAt,
+			SigningKey:     v.Info.TransactionKey,
+			TransactionKey: pubkey,
+			Address:        addr,
+		}
+		totalSaving := v.Bank.Saving
+		totalSaving = totalSaving.Plus(v.Reward.UnclaimReward)
+		bank := &model.AccountBank{
+			Saving:          totalSaving,
+			FrozenMoneyList: v.Bank.FrozenMoneyList,
+			PubKey:          pubkey,
+			Sequence:        v.Meta.Sequence,
+			Username:        v.Username,
+		}
+		accManager.storage.SetInfo(ctx, v.Username, info)
+		accManager.storage.SetBank(ctx, addr, bank)
+		if v.Meta.JSONMeta != "" {
+			meta := &model.AccountMeta{
+				JSONMeta: v.Meta.JSONMeta,
+			}
+			accManager.storage.SetMeta(ctx, v.Username, meta)
+		}
+	}
+
+	// import grant permissions.
+	for _, v := range table.AccountGrantPubKeys {
 		grant := v.GrantPubKey
 		remainingTime := grant.ExpiresAt - ctx.BlockHeader().Time.Unix()
 		if remainingTime > 0 {
-			// fmt.Printf("%s %s %d %d %d", v.Username, grant.Username,
-			// 	remainingTime, grant.Permission, grant.Amount)
-			accManager.AuthorizePermission(ctx, v.Username, grant.Username,
+			err := accManager.AuthorizePermission(ctx, v.Username, grant.Username,
 				remainingTime, grant.Permission, grant.Amount)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
+	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+	return nil
 }
 
 // IterateAccounts - iterate accounts in KVStore

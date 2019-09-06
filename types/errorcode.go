@@ -267,6 +267,7 @@ const (
 	CodeInvalidIDAAuth                 sdk.CodeType = 930
 	CodeIDANotFound                    sdk.CodeType = 931
 	CodeInvalidSigner                  sdk.CodeType = 932
+	CodeInsuffientReservePool          sdk.CodeType = 933
 
 	// Param errors reserve 1000 ~ 1099
 	CodeParamHolderGenesisError                       sdk.CodeType = 1000

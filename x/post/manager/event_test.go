@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	linotypes "github.com/lino-network/lino/types"
+	types "github.com/lino-network/lino/x/post/types"
 )
 
 type PostManagerEventTestSuite struct {
@@ -29,14 +30,14 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 
 	testCases := []struct {
 		testName string
-		event    RewardEvent
+		event    types.RewardEvent
 		reward   linotypes.Coin
 		hasDev   bool
 		hasPost  bool
 	}{
 		{
 			testName: "OK",
-			event: RewardEvent{
+			event: types.RewardEvent{
 				PostAuthor: user1,
 				PostID:     postID,
 				Consumer:   user2,
@@ -49,7 +50,7 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 		},
 		{
 			testName: "PostDeleted",
-			event: RewardEvent{
+			event: types.RewardEvent{
 				PostAuthor: user1,
 				PostID:     "deletedpost",
 				Consumer:   user2,
@@ -62,7 +63,7 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 		},
 		{
 			testName: "NoDev",
-			event: RewardEvent{
+			event: types.RewardEvent{
 				PostAuthor: user1,
 				PostID:     postID,
 				Consumer:   user2,
@@ -86,7 +87,7 @@ func (suite *PostManagerEventTestSuite) TestRewardEvent() {
 					"ReportConsumption", mock.Anything, tc.event.FromApp, tc.event.Evaluate).Return(nil).Once()
 			}
 		}
-		err := tc.event.Execute(suite.Ctx, suite.pm)
+		err := suite.pm.ExecRewardEvent(suite.Ctx, tc.event)
 		suite.Nil(err)
 		suite.global.AssertExpectations(suite.T())
 		suite.am.AssertExpectations(suite.T())
