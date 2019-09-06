@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
-	// bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
+	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	devtypes "github.com/lino-network/lino/x/developer/types"
 	vote "github.com/lino-network/lino/x/vote"
 )
@@ -36,11 +37,39 @@ func TestAppBandwidth(t *testing.T) {
 
 	// the tx will success after one hour
 	test.SimulateOneBlock(lb, baseTime+3600)
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2, true, newAccountTransactionPriv, baseTime+3603, 4800)
-	// new bandwidth credit will be -29049
-	// test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{}, types.AccountKey(newAccountName), lb)
-	// can send msg after max 3600 seconds
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 4802, true, newAccountTransactionPriv, baseTime+3603+3600, 1)
-	// test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{}, types.AccountKey(newAccountName), lb)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2, true, newAccountTransactionPriv, baseTime+3603, 1000)
+	curCredit := "910.849417274954801802"
+	curCreditDec, _ := sdk.NewDecFromStr(curCredit)
+	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
+		Username:           "newuser",
+		MaxBandwidthCredit: sdk.NewDec(2400),
+		CurBandwidthCredit: curCreditDec,
+		MessagesInCurBlock: 0,
+		ExpectedMPS:        sdk.NewDec(240),
+		LastRefilledAt:     baseTime + 3603,
+	}, types.AccountKey(newAccountName), lb)
 
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 1002, true, newAccountTransactionPriv, baseTime+3603+3, 1000)
+	curCredit = "7.099448771136388802"
+	curCreditDec, _ = sdk.NewDecFromStr(curCredit)
+	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
+		Username:           "newuser",
+		MaxBandwidthCredit: sdk.NewDec(2400),
+		CurBandwidthCredit: curCreditDec,
+		MessagesInCurBlock: 0,
+		ExpectedMPS:        sdk.NewDec(240),
+		LastRefilledAt:     baseTime + 3603 + 3,
+	}, types.AccountKey(newAccountName), lb)
+
+	curCredit = "301.600990083371031122"
+	curCreditDec, _ = sdk.NewDecFromStr(curCredit)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2002, true, newAccountTransactionPriv, baseTime+3603+3+3, 720)
+	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
+		Username:           "newuser",
+		MaxBandwidthCredit: sdk.NewDec(2400),
+		CurBandwidthCredit: curCreditDec,
+		MessagesInCurBlock: 0,
+		ExpectedMPS:        sdk.NewDec(240),
+		LastRefilledAt:     baseTime + 3603 + 3 + 3,
+	}, types.AccountKey(newAccountName), lb)
 }

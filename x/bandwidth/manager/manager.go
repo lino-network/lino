@@ -342,7 +342,6 @@ func (bm BandwidthManager) ConsumeBandwidthCredit(ctx sdk.Context, u sdk.Dec, p 
 	if err != nil {
 		return err
 	}
-
 	numMsgs := sdk.NewDec(info.MessagesInCurBlock)
 	// add back pre-check consumed bandwidth credit
 	info.CurBandwidthCredit = info.CurBandwidthCredit.Add(numMsgs.Mul(u))
@@ -447,6 +446,7 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 			if err := bm.am.MinusCoinFromUsername(ctx, accKey, info.CurMsgFee); err != nil {
 				return err
 			}
+
 			if err := bm.gm.AddToValidatorInflationPool(ctx, info.CurMsgFee); err != nil {
 				return err
 			}
@@ -456,6 +456,11 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 			return err
 		}
 	} else {
+		// refill bandwidth for apps with messages in current block
+		if err := bm.RefillAppBandwidthCredit(ctx, appName); err != nil {
+			return err
+		}
+
 		// app bandwidth model
 		if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
 			return err
@@ -507,10 +512,6 @@ func (bm BandwidthManager) EndBlocker(ctx sdk.Context) sdk.Error {
 	for _, info := range allInfo {
 		if info.MessagesInCurBlock == 0 {
 			continue
-		}
-		// refill bandwidth for apps with messages in current block
-		if err := bm.RefillAppBandwidthCredit(ctx, info.Username); err != nil {
-			return err
 		}
 		// calculate cost and consume bandwidth credit
 		p, err := bm.GetPunishmentCoeff(ctx, info.Username)

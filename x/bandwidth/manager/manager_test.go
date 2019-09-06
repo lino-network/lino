@@ -857,10 +857,10 @@ func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 			expectedAppYInfo: model.AppBandwidthInfo{
 				Username:           linotypes.AccountKey("AppY"),
 				MaxBandwidthCredit: sdk.NewDec(800 * 10),
-				CurBandwidthCredit: sdk.NewDec(3999),
+				CurBandwidthCredit: sdk.NewDec(7999),
 				MessagesInCurBlock: 1,
 				ExpectedMPS:        sdk.NewDec(800),
-				LastRefilledAt:     0,
+				LastRefilledAt:     suite.Ctx.BlockHeader().Time.Unix(),
 			},
 			expectedBlockInfo: model.BlockInfo{
 				TotalMsgSignedByApp:  1,
@@ -879,7 +879,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 				CurBandwidthCredit: sdk.NewDec(0),
 				MessagesInCurBlock: 0,
 				ExpectedMPS:        sdk.NewDec(800),
-				LastRefilledAt:     0,
+				LastRefilledAt:     suite.Ctx.BlockHeader().Time.Unix(),
 			},
 			expectedAppYInfo: model.AppBandwidthInfo{
 				Username:           linotypes.AccountKey("AppY"),
@@ -887,7 +887,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 				CurBandwidthCredit: sdk.NewDec(0),
 				MessagesInCurBlock: 0,
 				ExpectedMPS:        sdk.NewDec(800),
-				LastRefilledAt:     0,
+				LastRefilledAt:     suite.Ctx.BlockHeader().Time.Unix(),
 			},
 			expectedBlockInfo: model.BlockInfo{
 				TotalMsgSignedByApp:  1,
