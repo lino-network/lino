@@ -325,6 +325,9 @@ func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountK
 		return linotypes.NewCoinFromInt64(0), types.ErrBurnZeroIDA()
 	}
 	pool := dm.storage.GetReservePool(ctx)
+	if !pool.Total.IsGTE(bought) {
+		return linotypes.NewCoinFromInt64(0), types.ErrInsuffientReservePool()
+	}
 	pool.Total = pool.Total.Minus(bought)
 	pool.TotalMiniDollar = pool.TotalMiniDollar.Minus(used)
 	dm.storage.SetReservePool(ctx, pool)

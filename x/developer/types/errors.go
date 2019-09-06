@@ -179,3 +179,9 @@ func ErrInvalidSigner() sdk.Error {
 	return types.NewError(
 		types.CodeInvalidSigner, fmt.Sprintf("invalid signer of developer"))
 }
+
+// ErrInsuffientReservePool -
+func ErrInsuffientReservePool() sdk.Error {
+	return types.NewError(
+		types.CodeInsuffientReservePool, fmt.Sprintf(""))
+}
