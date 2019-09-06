@@ -1,6 +1,9 @@
 package developer
 
 import (
+	"fmt"
+
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
@@ -597,13 +600,14 @@ func (dm DeveloperManager) ExportToFile(ctx sdk.Context, filepath string) error 
 }
 
 // Import from file
-func (dm DeveloperManager) ImportFromFile(ctx sdk.Context, filepath string) error {
-	rst, err := utils.Load(filepath, func() interface{} { return &model.DeveloperTablesIR{} })
+func (dm DeveloperManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.DeveloperTablesIR{} })
 	if err != nil {
 		return err
 	}
 	table := rst.(*model.DeveloperTablesIR)
-	ctx.Logger().Info("%s state parsed\n", filepath)
+
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
 	for _, v := range table.Developers {
 		dev := model.Developer{
 			Username: v.Developer.Username,
@@ -618,6 +622,6 @@ func (dm DeveloperManager) ImportFromFile(ctx sdk.Context, filepath string) erro
 		}
 		dm.storage.SetDeveloper(ctx, dev)
 	}
-	ctx.Logger().Info("%s state imported\n", filepath)
+	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
 }

@@ -2,6 +2,7 @@
 
 package mocks
 
+import amino "github.com/tendermint/go-amino"
 import crypto "github.com/tendermint/tendermint/crypto"
 import linotypes "github.com/lino-network/lino/types"
 import mock "github.com/stretchr/testify/mock"
@@ -383,6 +384,20 @@ func (_m *AccountKeeper) GetTransactionKey(ctx types.Context, username linotypes
 	}
 
 	return r0, r1
+}
+
+// ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *AccountKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // IncreaseSequenceByOne provides a mock function with given fields: ctx, address

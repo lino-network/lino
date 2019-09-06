@@ -1,9 +1,11 @@
 package manager
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
@@ -518,17 +520,22 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, filepath string) 
 }
 
 // Import -
-func (accManager AccountManager) ImportFromFile(ctx sdk.Context, filepath string) error {
-	rst, err := utils.Load(filepath, func() interface{} { return &model.AccountTablesIR{} })
+func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.AccountTablesIR{} })
 	if err != nil {
 		return err
 	}
 	table := rst.(*model.AccountTablesIR)
-	ctx.Logger().Info("%s state parsed\n", filepath)
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
 	// import accounts.
 	for _, v := range table.Accounts {
 		pubkey := v.Info.ResetKey
 		addr := sdk.AccAddress(pubkey.Address())
+		if _, err := accManager.storage.GetBank(ctx, addr); err == nil {
+			// bank already exists, account skipped.
+			ctx.Logger().Error(fmt.Sprintf("bank account already exits, skipping: %v", v))
+			continue
+		}
 		info := &model.AccountInfo{
 			Username:       v.Username,
 			CreatedAt:      v.Info.CreatedAt,
@@ -567,7 +574,7 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, filepath string
 			}
 		}
 	}
-	ctx.Logger().Info("%s state imported\n", filepath)
+	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
 }
 

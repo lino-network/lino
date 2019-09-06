@@ -20,6 +20,7 @@ TODO: change chain_id and genesis_time.
   "validators": [],
   "app_hash": "",
   "app_state": {
+    "load_prev_states": true,
     "accounts": [],
     "developers": [],
     "infra": [],
