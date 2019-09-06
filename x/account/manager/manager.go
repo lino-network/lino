@@ -519,7 +519,7 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, filepath string) 
 	panic("export account unimplemented")
 }
 
-// Import -
+// ImportFromFile import state from file.
 func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.AccountTablesIR{} })
 	if err != nil {
@@ -532,9 +532,11 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 		pubkey := v.Info.ResetKey
 		addr := sdk.AccAddress(pubkey.Address())
 		if _, err := accManager.storage.GetBank(ctx, addr); err == nil {
-			// bank already exists, account skipped.
-			ctx.Logger().Error(fmt.Sprintf("bank account already exits, skipping: %v", v))
-			continue
+			addr = sdk.AccAddress(v.Username)
+			// bank already exists, account bank use safe address. User must use
+			// their signing key to reset.
+			ctx.Logger().Error(
+				fmt.Sprintf("bank account already exits, %v; use safe addr: %s", v, addr))
 		}
 		info := &model.AccountInfo{
 			Username:       v.Username,
