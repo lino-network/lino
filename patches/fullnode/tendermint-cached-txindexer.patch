@@ -4,7 +4,7 @@ index e47d4892..c249231a 100644
 +++ b/consensus/replay.go
 @@ -16,6 +16,8 @@ import (
  	cmn "github.com/tendermint/tendermint/libs/common"
- 	dbm "github.com/tendermint/tendermint/libs/db"
+ 	dbm "github.com/tendermint/tm-db"
  	"github.com/tendermint/tendermint/libs/log"
 +	"github.com/tendermint/tendermint/state/txindex"
 +	nulltxindexer "github.com/tendermint/tendermint/state/txindex/null"
@@ -165,7 +165,7 @@ index 84208b8c..9de38181 100644
  
  	"github.com/pkg/errors"
  	cmn "github.com/tendermint/tendermint/libs/common"
- 	dbm "github.com/tendermint/tendermint/libs/db"
+ 	dbm "github.com/tendermint/tm-db"
 +	"github.com/tendermint/tendermint/libs/log"
  
  	"github.com/tendermint/tendermint/libs/pubsub/query"

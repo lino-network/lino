@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	db "github.com/tendermint/tendermint/libs/db"
+	db "github.com/tendermint/tm-db"
 )
 
 // A mock store for testing.

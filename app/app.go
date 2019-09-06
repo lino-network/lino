@@ -44,8 +44,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cauth "github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
-	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 	cmn "github.com/tendermint/tmlibs/common"
 )
 
@@ -520,7 +520,6 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 
 // udpate validator set and renew reputation round
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	// XXX(yumin): reputation updates, will not change any tendermint.
 	rep.EndBlocker(ctx, req, lb.reputationManager)
 	global.EndBlocker(ctx, req, &lb.globalManager)
 	bandwidth.EndBlocker(ctx, req, lb.bandwidthManager)
@@ -739,7 +738,7 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	prevStateDir := DefaultNodeHome + "/" + prevStateFolder
 	// import account
 	err := lb.accountManager.ImportFromFile(
-		ctx, lb.cdc, prevStateDir + accountStateFile)
+		ctx, lb.cdc, prevStateDir+accountStateFile)
 	if err != nil {
 		panic(err)
 	}

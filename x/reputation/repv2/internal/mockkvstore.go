@@ -3,7 +3,7 @@ package internal
 import (
 	"bytes"
 
-	db "github.com/tendermint/tendermint/libs/db"
+	db "github.com/tendermint/tm-db"
 )
 
 // A mock store for testing.

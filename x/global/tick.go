@@ -6,8 +6,7 @@ import (
 )
 
 // BeginBlocker - called every begin blocker, udpate transaction per second
-func BeginBlocker(
-	ctx sdk.Context, req abci.RequestBeginBlock, gm *GlobalManager) (tags sdk.Tags) {
+func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, gm *GlobalManager) {
 	if err := gm.ClearEventCache(ctx); err != nil {
 		panic(err)
 	}
@@ -15,8 +14,7 @@ func BeginBlocker(
 }
 
 // EndBlocker - related to upgrade1update3.
-func EndBlocker(
-	ctx sdk.Context, req abci.RequestEndBlock, gm *GlobalManager) (tags sdk.Tags) {
+func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, gm *GlobalManager) {
 	if err := gm.CommitEventCache(ctx); err != nil {
 		panic(err)
 	}

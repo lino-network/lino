@@ -4,7 +4,7 @@ import (
 	// XXX(yumin): hmm, seems that golang can not recursively check assignability
 	// of interfaces. so we have to import an Iterator type here, because
 	// the exact same one we defined is not assignable.
-	db "github.com/tendermint/tendermint/libs/db"
+	db "github.com/tendermint/tm-db"
 
 	"encoding/binary"
 	"io/ioutil"
