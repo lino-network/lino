@@ -47,6 +47,7 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.ph = &param.ParamKeeper{}
 	suite.vm = &vote.VoteKeeper{}
 	suite.dm = &developer.DeveloperKeeper{}
+	suite.am = &account.AccountKeeper{}
 	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global, suite.vm, suite.dm, suite.am)
 	suite.bm.InitGenesis(suite.Ctx)
 	suite.ph.On("GetBandwidthParam", mock.Anything).Return(&parammodel.BandwidthParam{
@@ -77,7 +78,10 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 		},
 	}, nil).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.AccountKey("AppY"), nil).Maybe()
+	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("UserX")).Return(linotypes.AccountKey("dummy"), types.ErrUserMsgFeeNotEnough()).Maybe()
 	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
+	suite.global.On("AddToValidatorInflationPool", mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.am.On("MinusCoinFromUsername", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 }
 
@@ -830,7 +834,7 @@ func (suite *BandwidthManagerTestSuite) TestReCalculateAppBandwidthInfo() {
 	}
 }
 
-func (suite *BandwidthManagerTestSuite) TestCheckBandwidth() {
+func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 	testCases := []struct {
 		testName          string
 		fee               auth.StdFee
@@ -910,5 +914,66 @@ func (suite *BandwidthManagerTestSuite) TestCheckBandwidth() {
 		blockInfo, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Nil(err, "%s", tc.testName)
 		suite.Equal(tc.expectedBlockInfo, *blockInfo, "%s", tc.testName)
+	}
+}
+
+func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
+	testCases := []struct {
+		testName          string
+		username          linotypes.AccountKey
+		fee               auth.StdFee
+		blockInfo         model.BlockInfo
+		expectedBlockInfo model.BlockInfo
+		expectedErr       sdk.Error
+	}{
+		{
+			testName: "test1",
+			fee:      auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(1000)))},
+			username: linotypes.AccountKey("UserX"),
+			blockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 1,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedErr: nil,
+		},
+		{
+			testName: "test2",
+			fee:      auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(10)))},
+			username: linotypes.AccountKey("UserX"),
+			blockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedErr: types.ErrUserMsgFeeNotEnough(),
+		},
+	}
+
+	for _, tc := range testCases {
+		err := suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.blockInfo)
+		suite.Nil(err, "%s", tc.testName)
+
+		err = suite.bm.CheckBandwidth(suite.Ctx, tc.username, tc.fee)
+		suite.Equal(tc.expectedErr, err, "%s", tc.testName)
+
+		blockInfo, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
+		suite.Nil(err, "%s", tc.testName)
+		suite.Equal(tc.expectedBlockInfo, *blockInfo, "%s", tc.testName)
+
 	}
 }

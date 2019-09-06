@@ -4,20 +4,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/types"
-	// "github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	// val "github.com/lino-network/lino/x/validator"
-	// store "github.com/lino-network/lino/x/validator/model"
+	"github.com/lino-network/lino/test"
+	"github.com/lino-network/lino/types"
+	// bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	devtypes "github.com/lino-network/lino/x/developer/types"
 	vote "github.com/lino-network/lino/x/vote"
-	// abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // test validator deposit
-func TestBandwidth(t *testing.T) {
+func TestAppBandwidth(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
 	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
@@ -39,7 +36,11 @@ func TestBandwidth(t *testing.T) {
 
 	// the tx will success after one hour
 	test.SimulateOneBlock(lb, baseTime+3600)
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2, true, newAccountTransactionPriv, baseTime+3603, 15946)
-	// test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 3+15946, true, newAccountTransactionPriv, baseTime+3601, 1)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2, true, newAccountTransactionPriv, baseTime+3603, 4800)
+	// new bandwidth credit will be -29049
+	// test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{}, types.AccountKey(newAccountName), lb)
+	// can send msg after max 3600 seconds
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 4802, true, newAccountTransactionPriv, baseTime+3603+3600, 1)
+	// test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{}, types.AccountKey(newAccountName), lb)
 
 }

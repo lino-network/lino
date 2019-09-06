@@ -447,6 +447,9 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.Acco
 			if err := bm.am.MinusCoinFromUsername(ctx, accKey, info.CurMsgFee); err != nil {
 				return err
 			}
+			if err := bm.gm.AddToValidatorInflationPool(ctx, info.CurMsgFee); err != nil {
+				return err
+			}
 		}
 		// add general message stats
 		if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
