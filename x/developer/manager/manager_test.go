@@ -1137,7 +1137,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      nil,
 		},
 		{
-			name:          "Fail deactivate user isn't affiliated with any app",
+			name:          "Fail deactivate user isnt affiliated with any app",
 			appName:       appTest,
 			username:      username,
 			accountExists: &t,
