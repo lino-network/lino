@@ -77,13 +77,13 @@ func (suite *DeveloperManagerSuite) TestInitGenesis() {
 		expectedStore     *model.ReservePool
 	}{
 		{
-			name:              "Success: Valid Genesis",
+			name:              "Success Valid Genesis",
 			reservePoolAmount: linotypes.NewCoin(sdk.NewInt(1)),
 			expected:          nil,
 			expectedStore:     &model.ReservePool{Total: linotypes.NewCoin(sdk.NewInt(1))},
 		},
 		{
-			name:              "Fail: Invalid Genesis, negative reservePoolAmount",
+			name:              "Fail Invalid Genesis negative reservePoolAmount",
 			reservePoolAmount: linotypes.NewCoin(sdk.NewInt(-1)),
 			expected:          types.ErrInvalidReserveAmount(linotypes.NewCoin(sdk.NewInt(-1))),
 			expectedStore:     nil,
@@ -106,12 +106,12 @@ func (suite *DeveloperManagerSuite) TestDoesDeveloperExist() {
 		expected bool
 	}{
 		{
-			name:     "Developer exists, not deleted",
+			name:     "Developer exists not deleted",
 			username: appTest,
 			expected: true,
 		},
 		{
-			name:     "Developer exist, deleted",
+			name:     "Developer exist deleted",
 			username: devDeleted,
 			expected: false,
 		},
@@ -225,33 +225,33 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 		expected             sdk.Error
 	}{
 		{
-			name:         "Fail: Account does not exist",
+			name:         "Fail Account does not exist",
 			accountExist: false,
 			username:     username,
 			expected:     types.ErrAccountNotFound(),
 		},
 		{
-			name:         "Fail: Developer already exists",
+			name:         "Fail Developer already exists",
 			accountExist: true,
 			username:     duplicateUsername,
 			expected:     types.ErrDeveloperAlreadyExist(duplicateUsername),
 		},
 		{
-			name:         "Fail: Account is not a Duty Voter",
+			name:         "Fail Account is not a Duty Voter",
 			accountExist: true,
 			voterDuty:    &invalidVoterDuty,
 			username:     username,
 			expected:     types.ErrInvalidVoterDuty(),
 		},
 		{
-			name:         "Fail: Account has user role",
+			name:         "Fail Account has user role",
 			accountExist: true,
 			voterDuty:    &voterDuty,
 			username:     userRoleUsername,
 			expected:     types.ErrInvalidUserRole(),
 		},
 		{
-			name:                "Fail: Error from paramHolder",
+			name:                "Fail Error from paramHolder",
 			accountExist:        true,
 			voterDuty:           &voterDuty,
 			developerParam:      &params,
@@ -260,7 +260,7 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 			expected:            sdk.ErrInternal("test"),
 		},
 		{
-			name:                "Fail: Error from vote.GetLinoStake",
+			name:                "Fail Error from vote.GetLinoStake",
 			accountExist:        true,
 			voterDuty:           &voterDuty,
 			developerParam:      &params,
@@ -271,7 +271,7 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 			expected:            sdk.ErrInternal("test linostake"),
 		},
 		{
-			name:                "Fail: not enough stake",
+			name:                "Fail not enough stake",
 			accountExist:        true,
 			voterDuty:           &voterDuty,
 			developerParam:      &params,
@@ -282,7 +282,7 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 			expected:            types.ErrInsufficientDeveloperDeposit(),
 		},
 		{
-			name:                 "Fail: Error from vote.AssignDuty",
+			name:                 "Fail Error from vote.AssignDuty",
 			accountExist:         true,
 			voterDuty:            &voterDuty,
 			developerParam:       &params,
@@ -352,11 +352,11 @@ func (suite *DeveloperManagerSuite) TestUpdateDeveloper() {
 		expected sdk.Error
 	}{
 		{
-			name:     "Failed: developer doesn't exist",
+			name:     "Fail developer doesnt exist",
 			username: usernameDoesNotExist,
 			expected: types.ErrDeveloperNotFound(),
 		}, {
-			name:     "Failed: developer deleted",
+			name:     "Fail developer deleted",
 			username: usernameDeleted,
 			expected: types.ErrDeveloperNotFound(),
 		}, {
@@ -389,12 +389,12 @@ func (suite *DeveloperManagerSuite) TestIssueIDA() {
 		expected sdk.Error
 	}{
 		{
-			name:     "Fail: Developer doesn't exist",
+			name:     "Fail Developer doesnt exist",
 			appName:  appDoesNotExists,
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:     "Fail: Developer has already issued IDA",
+			name:     "Fail Developer has already issued IDA",
 			appName:  appHasIDA,
 			expected: types.ErrIDAIssuedBefore(),
 		},
@@ -430,32 +430,32 @@ func (suite *DeveloperManagerSuite) TestMintIDA() {
 		minusCoinFromUser       sdk.Error
 	}{
 		{
-			name:     "Fail: Developer doesn't exist",
+			name:     "Fail Developer doesnt exist",
 			appName:  appDoesNotExists,
 			amount:   amount,
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:     "Fail: App doesn't have IDA",
+			name:     "Fail App doesnt have IDA",
 			appName:  appWithoutIDA,
 			amount:   amount,
 			expected: types.ErrIDANotFound(),
 		},
 		{
-			name:     "Fail: App has revoked IDA",
+			name:     "Fail App has revoked IDA",
 			appName:  appHasRevokedIDA,
 			amount:   amount,
 			expected: types.ErrIDARevoked(),
 		},
 		{
-			name:             "Fail: price.CoinToMiniDollar returns 0",
+			name:             "Fail priceCoinToMiniDollar returns 0",
 			appName:          appTest,
 			amount:           amount,
 			coinToMiniDollar: &zeroMiniDollar,
 			expected:         types.ErrExchangeMiniDollarZeroAmount(),
 		},
 		{
-			name:                    "Fail: acc.MinusCoinFromUsername returns error",
+			name:                    "Fail accMinusCoinFromUsername returns error",
 			appName:                 appTest,
 			amount:                  amount,
 			coinToMiniDollar:        &validMiniDollar,
@@ -510,7 +510,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 		expected sdk.Error
 	}{
 		{
-			name:     "Fail: negative amount",
+			name:     "Fail negative amount",
 			app:      appTest,
 			from:     from,
 			to:       to,
@@ -518,7 +518,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 			expected: linotypes.ErrInvalidIDAAmount(),
 		},
 		{
-			name:     "Fail: from not found",
+			name:     "Fail from not found",
 			app:      appTest,
 			from:     fromNotFound,
 			to:       to,
@@ -526,7 +526,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 			expected: types.ErrNotEnoughIDA(),
 		},
 		{
-			name:     "Fail: from unauthed",
+			name:     "Fail from unauthed",
 			app:      appTest,
 			from:     fromUnauthed,
 			to:       to,
@@ -534,7 +534,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 			expected: types.ErrIDAUnauthed(),
 		},
 		{
-			name:     "Fail: from balance not enough",
+			name:     "Fail from balance not enough",
 			app:      appTest,
 			from:     fromNotEnough,
 			to:       to,
@@ -542,7 +542,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 			expected: types.ErrNotEnoughIDA(),
 		},
 		{
-			name:     "Succes: should add to existing to account bank",
+			name:     "Succ should add to existing to account bank",
 			app:      appTest,
 			from:     from,
 			to:       to,
@@ -550,7 +550,7 @@ func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 			expected: nil,
 		},
 		{
-			name:     "Succes: should create new to account bank",
+			name:     "Succ should create new to account bank",
 			app:      appTest,
 			from:     from,
 			to:       toNotFound,
@@ -588,7 +588,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 		expected   sdk.Error
 	}{
 		{
-			name:     "Fail: from and to both not sender",
+			name:     "Fail from and to both not sender",
 			appName:  appTest,
 			signer:   appTest,
 			from:     from,
@@ -596,7 +596,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected: types.ErrInvalidTransferTarget(),
 		},
 		{
-			name:     "Fail: App does not exist",
+			name:     "Fail App does not exist",
 			appName:  appDoesNotExists,
 			signer:   appDoesNotExists,
 			from:     from,
@@ -604,7 +604,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:     "Fail: App doesn't have IDA",
+			name:     "Fail App doesnt have IDA",
 			appName:  appWithoutIDA,
 			signer:   appWithoutIDA,
 			from:     from,
@@ -612,7 +612,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected: types.ErrIDANotFound(),
 		},
 		{
-			name:     "Fail: App has revoked IDA",
+			name:     "Fail App has revoked IDA",
 			appName:  appHasRevokedIDA,
 			signer:   appHasRevokedIDA,
 			from:     from,
@@ -620,7 +620,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected: types.ErrIDARevoked(),
 		},
 		{
-			name:       "Fail: from account doesn't exist",
+			name:       "Fail from account doesnt exist",
 			appName:    appTest,
 			signer:     appTest,
 			from:       from,
@@ -629,7 +629,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected:   types.ErrAccountNotFound(),
 		},
 		{
-			name:       "Fail: to account doesn't exist",
+			name:       "Fail to account doesnt exist",
 			appName:    appTest,
 			signer:     appTest,
 			from:       from,
@@ -639,7 +639,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected:   types.ErrAccountNotFound(),
 		},
 		{
-			name:       "Fail: signer does not match",
+			name:       "Fail signer does not match",
 			appName:    appTest,
 			signer:     from,
 			from:       from,
@@ -649,7 +649,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected:   types.ErrInvalidSigner(),
 		},
 		{
-			name:       "Success: Transfer from App",
+			name:       "Success Transfer from App",
 			appName:    appTest,
 			signer:     appTest,
 			from:       appTest,
@@ -659,7 +659,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected:   nil,
 		},
 		{
-			name:       "Success: Transfer to App",
+			name:       "Success Transfer to App",
 			appName:    appTest,
 			signer:     appTest,
 			from:       from,
@@ -669,7 +669,7 @@ func (suite *DeveloperManagerSuite) TestAppTransferIDA() {
 			expected:   nil,
 		},
 		{
-			name:       "Success: Transfer to App by affiliated",
+			name:       "Success Transfer to App by affiliated",
 			appName:    appTest,
 			signer:     app1affiliated,
 			from:       from,
@@ -720,25 +720,25 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 		expected   sdk.Error
 	}{
 		{
-			name:     "Fail: Developer doesn't exist",
+			name:     "Fail Developer doesnt exist",
 			app:      appDoesNotExists,
 			amount:   amount,
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:     "Fail: App doesn't have IDA",
+			name:     "Fail App doesnt have IDA",
 			app:      appWithoutIDA,
 			amount:   amount,
 			expected: types.ErrIDANotFound(),
 		},
 		{
-			name:     "Fail: App has revoked IDA",
+			name:     "Fail App has revoked IDA",
 			app:      appHasRevokedIDA,
 			amount:   amount,
 			expected: types.ErrIDARevoked(),
 		},
 		{
-			name:       "Fail: from account doesn't exist",
+			name:       "Fail from account doesnt exist",
 			app:        appTest,
 			from:       from,
 			to:         appTest,
@@ -746,7 +746,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   types.ErrAccountNotFound(),
 		},
 		{
-			name:       "Fail: to account doesn't exist",
+			name:       "Fail to account doesnt exist",
 			app:        appTest,
 			from:       from,
 			to:         appTest,
@@ -755,7 +755,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   types.ErrAccountNotFound(),
 		},
 		{
-			name:       "Fail: negative amount",
+			name:       "Fail negative amount",
 			app:        appTest,
 			from:       from,
 			to:         to,
@@ -765,7 +765,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   linotypes.ErrInvalidIDAAmount(),
 		},
 		{
-			name:       "Fail: from bank not found",
+			name:       "Fail from bank not found",
 			app:        appTest,
 			from:       fromNotFound,
 			to:         to,
@@ -775,7 +775,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   types.ErrNotEnoughIDA(),
 		},
 		{
-			name:       "Fail: from bank unauthed",
+			name:       "Fail from bank unauthed",
 			app:        appTest,
 			from:       fromUnauthed,
 			to:         to,
@@ -785,7 +785,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   types.ErrIDAUnauthed(),
 		},
 		{
-			name:       "Fail: from bank balance not enough",
+			name:       "Fail from bank balance not enough",
 			app:        appTest,
 			from:       fromNotEnough,
 			to:         to,
@@ -795,7 +795,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   types.ErrNotEnoughIDA(),
 		},
 		{
-			name:       "Succes: should add to existing to account bank",
+			name:       "Succes should add to existing to account bank",
 			app:        appTest,
 			from:       from,
 			to:         to,
@@ -805,7 +805,7 @@ func (suite *DeveloperManagerSuite) TestMoveIDA() {
 			expected:   nil,
 		},
 		{
-			name:       "Succes: should create new to account bank",
+			name:       "Succes should create new to account bank",
 			app:        appTest,
 			from:       from,
 			to:         toNotFound,
@@ -853,21 +853,21 @@ func (suite *DeveloperManagerSuite) TestPrivateValidAppIDA() {
 		expectedIDA   model.AppIDA
 	}{
 		{
-			name:          "Fail: Developer doesn't exist",
+			name:          "Fail Developer doesnt exist",
 			app:           appDoesNotExists,
 			expectedError: types.ErrDeveloperNotFound(),
 			expectedPrice: zeroPrices,
 			expectedIDA:   zeroIDA,
 		},
 		{
-			name:          "Fail: App doesn't have IDA",
+			name:          "Fail App doesnt have IDA",
 			app:           appWithoutIDA,
 			expectedError: types.ErrIDANotFound(),
 			expectedPrice: zeroPrices,
 			expectedIDA:   zeroIDA,
 		},
 		{
-			name:          "Fail: App has revoked IDA",
+			name:          "Fail App has revoked IDA",
 			app:           appHasRevokedIDA,
 			expectedError: types.ErrIDARevoked(),
 			expectedPrice: zeroPrices,
@@ -926,7 +926,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 		used          *linotypes.MiniDollar
 	}{
 		{
-			name:          "Fail: app does not exist",
+			name:          "Fail app does not exist",
 			app:           appDoesNotExists,
 			user:          user,
 			amount:        amount,
@@ -934,7 +934,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			expectedError: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:          "Fail: user does not exist",
+			name:          "Fail user does not exist",
 			app:           appTest,
 			user:          user,
 			amount:        amount,
@@ -943,7 +943,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			expectedError: types.ErrAccountNotFound(),
 		},
 		{
-			name:          "Fail: user does not have enough mini dollar",
+			name:          "Fail user does not have enough mini dollar",
 			app:           appTest,
 			user:          userNotEnough,
 			amount:        amount,
@@ -952,7 +952,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			expectedError: types.ErrNotEnoughIDA(),
 		},
 		{
-			name:          "Fail: cannot burn 0 coin",
+			name:          "Fail cannot burn 0 coin",
 			app:           appTest,
 			user:          user,
 			amount:        amount,
@@ -963,7 +963,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			used:          &used,
 		},
 		{
-			name:          "Fail: burn amount more than reserve pool",
+			name:          "Fail burn amount more than reserve pool",
 			app:           appTest,
 			user:          user,
 			amount:        amount,
@@ -1024,14 +1024,14 @@ func (suite *DeveloperManagerSuite) TestGetIDABank() {
 		accountExists *bool
 	}{
 		{
-			name:          "Fail: app does not exist",
+			name:          "Fail app does not exist",
 			app:           appDoesNotExists,
 			user:          user,
 			expectedError: types.ErrDeveloperNotFound(),
 			expectedBank:  zeroBank,
 		},
 		{
-			name:          "Fail: user does not exist",
+			name:          "Fail user does not exist",
 			app:           appTest,
 			user:          user,
 			accountExists: &noExists,
@@ -1083,27 +1083,27 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 		vote          *votetypes.VoterDuty
 	}{
 		{
-			name:     "Fail: app doesn't exist",
+			name:     "Fail app doesnt exist",
 			appName:  appDoesNotExists,
 			username: username,
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:          "Fail: user doesn't exist",
+			name:          "Fail user doesnt exist",
 			appName:       appTest,
 			username:      username,
 			accountExists: &f,
 			expected:      types.ErrAccountNotFound(),
 		},
 		{
-			name:          "Fail: max affiliated account reached",
+			name:          "Fail max affiliated account reached",
 			appName:       appMaxAffiliated,
 			username:      username,
 			accountExists: &t,
 			expected:      types.ErrMaxAffiliatedExceeded(),
 		},
 		{
-			name:          "Fail: activate, user is already affiliated with some app",
+			name:          "Fail activate user is already affiliated with some app",
 			appName:       appTest,
 			username:      userAffiliated,
 			accountExists: &t,
@@ -1111,7 +1111,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      types.ErrInvalidAffiliatedAccount("is affiliated already"),
 		},
 		{
-			name:          "Fail: activate, user is already a developer",
+			name:          "Fail activate user is already a developer",
 			appName:       appTest,
 			username:      userDeveloper,
 			accountExists: &t,
@@ -1119,7 +1119,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      types.ErrInvalidAffiliatedAccount("is/was developer"),
 		},
 		{
-			name:          "Fail: activate, user has some other duty",
+			name:          "Fail activate user has some other duty",
 			appName:       appTest,
 			username:      username,
 			accountExists: &t,
@@ -1128,7 +1128,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      types.ErrInvalidAffiliatedAccount("on duty of something else"),
 		},
 		{
-			name:          "Success: activate",
+			name:          "Success activate",
 			appName:       appTest,
 			username:      username,
 			accountExists: &t,
@@ -1137,7 +1137,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      nil,
 		},
 		{
-			name:          "Fail: deactivate, user isn't affiliated with any app",
+			name:          "Fail deactivate user isn't affiliated with any app",
 			appName:       appTest,
 			username:      username,
 			accountExists: &t,
@@ -1146,7 +1146,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      types.ErrInvalidUserRole(),
 		},
 		{
-			name:          "Fail: deactivate, user has different affiliated account",
+			name:          "Fail deactivate user has different affiliated account",
 			appName:       appTest,
 			username:      userAffiliated,
 			accountExists: &t,
@@ -1155,7 +1155,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 			expected:      types.ErrInvalidAffiliatedAccount("not affiliated account of provided app"),
 		},
 		{
-			name:          "Success: deactivate",
+			name:          "Success deactivate",
 			appName:       appTest,
 			username:      userDeactivate,
 			accountExists: &t,
@@ -1196,19 +1196,19 @@ func (suite *DeveloperManagerSuite) TestGetAffiliatingApp() {
 		expectedError sdk.Error
 	}{
 		{
-			name:          "Fail: no affiliation found",
+			name:          "Fail no affiliation found",
 			username:      usernameNotAf,
 			expectedApp:   "",
 			expectedError: types.ErrInvalidUserRole(),
 		},
 		{
-			name:          "Success: is developer",
+			name:          "Success is developer",
 			username:      userDev,
 			expectedApp:   userDev,
 			expectedError: nil,
 		},
 		{
-			name:          "Success: found affiliated app",
+			name:          "Success found affiliated app",
 			username:      username,
 			expectedApp:   app,
 			expectedError: nil,
@@ -1233,12 +1233,12 @@ func (suite *DeveloperManagerSuite) TestGetAffiliated() {
 		expected []linotypes.AccountKey
 	}{
 		{
-			name:     "Success: developer doesn't exist",
+			name:     "Success developer doesnt exist",
 			app:      appDoesNotExists,
 			expected: nil,
 		},
 		{
-			name: "Success: get all affiliated account",
+			name: "Success get all affiliated account",
 			app:  appTest,
 			expected: []linotypes.AccountKey{
 				linotypes.AccountKey("testuser-deactivate"),
@@ -1269,25 +1269,25 @@ func (suite *DeveloperManagerSuite) TestUpdateIDAAuth() {
 		aExists  *bool
 	}{
 		{
-			name:     "Fail: developer doesn't exist",
+			name:     "Fail developer doesnt exist",
 			app:      appDoesNotExists,
 			expected: types.ErrDeveloperNotFound(),
 		},
 		{
-			name:     "Fail: account doesn't exist",
+			name:     "Fail account doesnt exist",
 			app:      appTest,
 			aExists:  &f,
 			expected: types.ErrAccountNotFound(),
 		},
 		{
-			name:     "Fail: user is affiliated account",
+			name:     "Fail user is affiliated account",
 			app:      appTest,
 			username: userAf,
 			aExists:  &t,
 			expected: types.ErrInvalidIDAAuth(),
 		},
 		{
-			name:     "Fail: bank already has the target active state",
+			name:     "Fail bank already has the target active state",
 			app:      appTest,
 			username: user,
 			aExists:  &t,
@@ -1327,7 +1327,7 @@ func (suite *DeveloperManagerSuite) TestReportConsumption() {
 		expected    sdk.Error
 	}{
 		{
-			name:     "Fail: developer doesn't exist",
+			name:     "Fail developer doesnt exist",
 			app:      appDoesNotExists,
 			expected: types.ErrDeveloperNotFound(),
 		},
@@ -1363,13 +1363,13 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 		addCoinError        sdk.Error
 	}{
 		{
-			name:                "Fail: error from global.PopDeveloperMonthlyInflation",
+			name:                "Fail error from global.PopDeveloperMonthlyInflation",
 			expected:            sdk.ErrInternal(""),
 			totalInflation:      &zeroCoin,
 			totalInflationError: sdk.ErrInternal(""),
 		},
 		{
-			name:                "Fail: error from acc.AddCoinToUsername",
+			name:                "Fail error from acc.AddCoinToUsername",
 			expected:            sdk.ErrInternal(""),
 			totalInflation:      &inflation,
 			totalInflationError: nil,
@@ -1379,11 +1379,11 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 			addCoinError: sdk.ErrInternal(""),
 		},
 		{
-			name:     "Succes: no developers",
+			name:     "Succ no developers",
 			expected: nil,
 		},
 		{
-			name:                "Success: even distribution",
+			name:                "Success even distribution",
 			expected:            nil,
 			totalInflation:      &inflation,
 			totalInflationError: nil,
@@ -1393,7 +1393,7 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 			},
 		},
 		{
-			name:                "Success: even distribution with remainder",
+			name:                "Success even distribution with remainder",
 			expected:            nil,
 			totalInflation:      &inflation,
 			totalInflationError: nil,
@@ -1405,7 +1405,7 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 			stateChange: true,
 		},
 		{
-			name:                "Success: distribute according to consumption",
+			name:                "Success distribute according to consumption",
 			expected:            nil,
 			totalInflation:      &inflation,
 			totalInflationError: nil,
