@@ -144,10 +144,9 @@ func NewLinoBlockchain(
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
-	// TODO(yumin): update this when price manager is implemented.
-	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
 	lb.developerManager = devmn.NewDeveloperManager(
 		lb.CapKeyDeveloperStore, lb.paramHolder, lb.voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
+	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
 	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, lb.voteManager, lb.developerManager, lb.accountManager)
 
 	lb.Router().
