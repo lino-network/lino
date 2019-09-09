@@ -9,4 +9,11 @@ const (
 
 	// QuerierRoute is the querier route for gov
 	QuerierRoute = ModuleName
+
+	// Query sub spaces.
+	QueryDeveloper     = "dev"
+	QueryDeveloperList = "devList"
+	QueryIDA           = "devIDA"
+	QueryIDABalance    = "devIDABalance"
+	QueryAffiliated    = "devAffiliated"
 )

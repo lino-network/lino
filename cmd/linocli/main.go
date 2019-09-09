@@ -24,14 +24,6 @@ import (
 	votecmd "github.com/lino-network/lino/x/vote/commands/vote"
 )
 
-// linocliCmd is the entry point for this binary
-var (
-	linocliCmd = &cobra.Command{
-		Use:   "linocli",
-		Short: "Lino Blockchain light-client",
-	}
-)
-
 func main() {
 	// disable sorting
 	cobra.EnableCommandSorting = false

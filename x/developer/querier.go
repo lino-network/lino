@@ -1,6 +1,8 @@
 package developer
 
 import (
+	"fmt"
+
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -10,32 +12,26 @@ import (
 	"github.com/lino-network/lino/x/developer/types"
 )
 
-const (
-	QueryDeveloper     = "dev"
-	QueryDeveloperList = "devList"
-	QueryIDA           = "devIDA"
-	QueryIDABalance    = "devIDABalance"
-	QueryAffiliated    = "devAffiliated"
-)
-
 // creates a querier for developer REST endpoints
 func NewQuerier(dm DeveloperKeeper) sdk.Querier {
 	cdc := wire.New()
 	wire.RegisterCrypto(cdc)
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case QueryDeveloper:
+		case types.QueryDeveloper:
 			return queryDeveloper(ctx, cdc, path[1:], req, dm)
-		case QueryDeveloperList:
+		case types.QueryDeveloperList:
 			return queryDeveloperList(ctx, cdc, path[1:], req, dm)
-		case QueryIDA:
+		case types.QueryIDA:
 			return queryIDA(ctx, cdc, path[1:], req, dm)
-		case QueryIDABalance:
+		case types.QueryIDABalance:
 			return queryIDABalance(ctx, cdc, path[1:], req, dm)
-		case QueryAffiliated:
+		case types.QueryAffiliated:
 			return queryAffiliated(ctx, cdc, path[1:], req, dm)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown developer query endpoint")
+			return nil, sdk.ErrUnknownRequest(
+				fmt.Sprintf("unknown developer query endpoint: %s", path[0]),
+			)
 		}
 	}
 }
@@ -61,16 +57,11 @@ func queryDeveloperList(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 	for _, dev := range developers {
 		devmap[string(dev.Username)] = dev
 	}
-	res, marshalErr := cdc.MarshalJSON(developers)
+	res, marshalErr := cdc.MarshalJSON(devmap)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()
 	}
 	return res, nil
-}
-
-type QueryResultIDABalance struct {
-	Amount   string `json:"amount"`
-	Unauthed bool   `json:"unauthed"`
 }
 
 func queryIDABalance(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, dm DeveloperKeeper) ([]byte, sdk.Error) {
@@ -89,7 +80,7 @@ func queryIDABalance(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.R
 	}
 
 	idaAmount := bank.Balance.Quo(price.Int).ToDec().Quo(sdk.NewDec(linotypes.Decimals)).String()
-	res, marshalErr := cdc.MarshalJSON(QueryResultIDABalance{
+	res, marshalErr := cdc.MarshalJSON(types.QueryResultIDABalance{
 		Amount:   idaAmount,
 		Unauthed: bank.Unauthed,
 	})
