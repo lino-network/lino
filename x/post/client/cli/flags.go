@@ -9,4 +9,6 @@ const (
 	FlagDonator   = "donator"
 	FlagAmount    = "amount"
 	FlagMemo      = "memo"
+	FlagApp       = "app"
+	FlagSigner    = "signer"
 )

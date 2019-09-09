@@ -15,9 +15,6 @@ const (
 	FlagPubKey    = "pub-key"
 
 	// Account
-	FlagIsFollow = "is-follow"
-	FlagFollowee = "followee"
-	FlagFollower = "follower"
 	FlagSender   = "sender"
 	FlagReceiver = "receiver"
 	FlagAmount   = "amount"
