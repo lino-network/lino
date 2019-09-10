@@ -27,3 +27,8 @@ func ErrAppBandwidthNotEnough() sdk.Error {
 func ErrUserMsgFeeNotEnough() sdk.Error {
 	return linotypes.NewError(linotypes.CodeUserMsgFeeNotEnough, fmt.Sprintf("user message fee not enough"))
 }
+
+// ErrQueryFailed - error when query bandwidth store failed
+func ErrQueryFailed() sdk.Error {
+	return linotypes.NewError(linotypes.CodeBandwidthQueryFailed, fmt.Sprintf("query bandwidth store failed"))
+}

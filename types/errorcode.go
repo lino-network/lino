@@ -342,6 +342,7 @@ const (
 	CodeInvalidExpectedMPS       sdk.CodeType = 1304
 	CodeAppBandwidthNotEnough    sdk.CodeType = 1305
 	CodeUserMsgFeeNotEnough      sdk.CodeType = 1306
+	CodeBandwidthQueryFailed     sdk.CodeType = 1307
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

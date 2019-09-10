@@ -8,7 +8,7 @@ import (
 
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/bandwidth/manager"
-	// "github.com/lino-network/lino/x/bandwidth/model"
+	"github.com/lino-network/lino/x/bandwidth/model"
 )
 
 type BandwidthKeeper interface {
@@ -18,6 +18,11 @@ type BandwidthKeeper interface {
 	CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error
 	EndBlocker(ctx sdk.Context) sdk.Error
 	BeginBlocker(ctx sdk.Context) sdk.Error
+
+	// getter
+	GetBandwidthInfo(ctx sdk.Context) (*model.BandwidthInfo, sdk.Error)
+	GetBlockInfo(ctx sdk.Context) (*model.BlockInfo, sdk.Error)
+	GetAppBandwidthInfo(ctx sdk.Context, accKey linotypes.AccountKey) (*model.AppBandwidthInfo, sdk.Error)
 }
 
 var _ BandwidthKeeper = manager.BandwidthManager{}

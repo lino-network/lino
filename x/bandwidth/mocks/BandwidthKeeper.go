@@ -9,6 +9,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	model "github.com/lino-network/lino/x/bandwidth/model"
+
 	types "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -79,6 +81,81 @@ func (_m *BandwidthKeeper) EndBlocker(ctx types.Context) types.Error {
 	}
 
 	return r0
+}
+
+// GetAppBandwidthInfo provides a mock function with given fields: ctx, accKey
+func (_m *BandwidthKeeper) GetAppBandwidthInfo(ctx types.Context, accKey linotypes.AccountKey) (*model.AppBandwidthInfo, types.Error) {
+	ret := _m.Called(ctx, accKey)
+
+	var r0 *model.AppBandwidthInfo
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) *model.AppBandwidthInfo); ok {
+		r0 = rf(ctx, accKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.AppBandwidthInfo)
+		}
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
+		r1 = rf(ctx, accKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
+// GetBandwidthInfo provides a mock function with given fields: ctx
+func (_m *BandwidthKeeper) GetBandwidthInfo(ctx types.Context) (*model.BandwidthInfo, types.Error) {
+	ret := _m.Called(ctx)
+
+	var r0 *model.BandwidthInfo
+	if rf, ok := ret.Get(0).(func(types.Context) *model.BandwidthInfo); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.BandwidthInfo)
+		}
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
+// GetBlockInfo provides a mock function with given fields: ctx
+func (_m *BandwidthKeeper) GetBlockInfo(ctx types.Context) (*model.BlockInfo, types.Error) {
+	ret := _m.Called(ctx)
+
+	var r0 *model.BlockInfo
+	if rf, ok := ret.Get(0).(func(types.Context) *model.BlockInfo); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.BlockInfo)
+		}
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
 }
 
 // InitGenesis provides a mock function with given fields: ctx

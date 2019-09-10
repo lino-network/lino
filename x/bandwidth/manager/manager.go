@@ -609,3 +609,16 @@ func (bm BandwidthManager) getGeneralMsgQuota(ctx sdk.Context) (sdk.Dec, sdk.Err
 	}
 	return generalMsgQuota, nil
 }
+
+// getter
+func (bm BandwidthManager) GetBandwidthInfo(ctx sdk.Context) (*model.BandwidthInfo, sdk.Error) {
+	return bm.storage.GetBandwidthInfo(ctx)
+}
+
+func (bm BandwidthManager) GetBlockInfo(ctx sdk.Context) (*model.BlockInfo, sdk.Error) {
+	return bm.storage.GetBlockInfo(ctx)
+}
+
+func (bm BandwidthManager) GetAppBandwidthInfo(ctx sdk.Context, accKey linotypes.AccountKey) (*model.AppBandwidthInfo, sdk.Error) {
+	return bm.storage.GetAppBandwidthInfo(ctx, accKey)
+}
