@@ -19,11 +19,11 @@ update_mocks:
 
 _raw_build_cmd:
 	GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go build -ldflags $(LD_FLAGS) -tags $(GO_TAGS) -o bin/linod   cmd/lino/main.go
-	GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go build -ldflags $(LD_FLAGS) -tags $(GO_TAGS) -o bin/linocli cmd/linocli/main.go
+	GO111MODULE=$(GO111MODULE) CGO_ENABLED=0 go build -ldflags $(LD_FLAGS) -o bin/linocli cmd/linocli/main.go
 
 _raw_install_cmd:
 	cd cmd/lino    && GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go install -ldflags $(LD_FLAGS) -tags $(GO_TAGS)
-	cd cmd/linocli && GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go install -ldflags $(LD_FLAGS) -tags $(GO_TAGS)
+	cd cmd/linocli && GO111MODULE=$(GO111MODULE) CGO_ENABLED=0 go install -ldflags $(LD_FLAGS)
 
 build:
 	make _raw_build_cmd

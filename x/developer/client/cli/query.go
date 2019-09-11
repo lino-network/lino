@@ -27,6 +27,8 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		getCmdListAffiliated(cdc),
 		getCmdIDAShow(cdc),
 		getCmdIDABalance(cdc),
+		getCmdReservePool(cdc),
+		getCmdIDAStats(cdc),
 	)...)
 	return cmd
 }
@@ -104,6 +106,37 @@ func getCmdIDABalance(cdc *codec.Codec) *cobra.Command {
 			user := args[1]
 			uri := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, types.QueryIDABalance, app, user)
 			rst := types.QueryResultIDABalance{}
+			return utils.CLIQueryJSONPrint(cdc, uri, nil,
+				func() interface{} { return &rst })
+		},
+	}
+}
+
+// GetCmdReservePool -
+func getCmdReservePool(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reserve-pool",
+		Short: "reserve-pool",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			uri := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryReservePool)
+			rst := model.ReservePool{}
+			return utils.CLIQueryJSONPrint(cdc, uri, nil,
+				func() interface{} { return &rst })
+		},
+	}
+}
+
+// GetCmdIDAStats -
+func getCmdIDAStats(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "ida-stats",
+		Short: "ida-stats",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			app := args[0]
+			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryIDAStats, app)
+			rst := model.AppIDAStats{}
 			return utils.CLIQueryJSONPrint(cdc, uri, nil,
 				func() interface{} { return &rst })
 		},

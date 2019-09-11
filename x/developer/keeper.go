@@ -35,6 +35,8 @@ type DeveloperKeeper interface {
 	UpdateIDAAuth(ctx sdk.Context, app, username linotypes.AccountKey, active bool) sdk.Error
 	GetIDABank(ctx sdk.Context, app, user linotypes.AccountKey) (model.IDABank, sdk.Error)
 	GetIDA(ctx sdk.Context, app linotypes.AccountKey) (model.AppIDA, sdk.Error)
+	GetReservePool(ctx sdk.Context) model.ReservePool
+	GetIDAStats(ctx sdk.Context, app linotypes.AccountKey) (model.AppIDAStats, sdk.Error)
 
 	// consumption stats
 	ReportConsumption(

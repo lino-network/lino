@@ -1,100 +1,44 @@
 package cli
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/client"
-	"github.com/lino-network/lino/types"
+	// linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/post/model"
+	"github.com/lino-network/lino/x/post/types"
 )
 
-// GetPostCmd returns a query post that will display the
-// info and meta of the post at a given author and postID
-func GetPostCmd(storeName string, cdc *wire.Codec) *cobra.Command {
-	cmdr := commander{
-		storeName,
-		cdc,
+func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        types.ModuleName,
+		Short:                      "Querying commands for the post module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
 	}
+	cmd.AddCommand(client.GetCommands(
+		getCmdInfo(cdc),
+	)...)
+	return cmd
+}
+
+// GetCmdInfo -
+func getCmdInfo(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "getpost <author> <postID>",
-		Short: "Query a post",
-		RunE:  cmdr.getPostCmd,
+		Use:   "info <permlink>",
+		Short: "info <permlink>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			permlink := args[0]
+			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryPostInfo, permlink)
+			rst := model.Post{}
+			return utils.CLIQueryJSONPrint(cdc, uri, nil,
+				func() interface{} { return &rst })
+		},
 	}
-}
-
-type commander struct {
-	storeName string
-	cdc       *wire.Codec
-}
-
-func (c commander) getPostCmd(cmd *cobra.Command, args []string) error {
-	ctx := client.NewCoreContextFromViper()
-	if len(args) != 2 || len(args[0]) == 0 || len(args[1]) == 0 {
-		return errors.New("You must provide an valid author and post id")
-	}
-
-	// find the key to look up the account
-	author := args[0]
-	postID := args[1]
-	postKey := types.GetPermlink(types.AccountKey(author), postID)
-
-	res, err := ctx.Query(model.GetPostInfoKey(postKey), c.storeName)
-	if err != nil {
-		return err
-	}
-	post := new(model.Post)
-	if err := c.cdc.UnmarshalBinaryLengthPrefixed(res, post); err != nil {
-		return err
-	}
-
-	if err := client.PrintIndent(post); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// GetPostsCmd returns a query post that will display the
-// info and meta of the post at a given author and postID
-func GetPostsCmd(storeName string, cdc *wire.Codec) *cobra.Command {
-	cmdr := commander{
-		storeName,
-		cdc,
-	}
-	return &cobra.Command{
-		Use:   "posts <author>",
-		Short: "Query posts of an author",
-		RunE:  cmdr.getPostsCmd,
-	}
-}
-
-func (c commander) getPostsCmd(cmd *cobra.Command, args []string) error {
-	ctx := client.NewCoreContextFromViper()
-	if len(args) != 1 || len(args[0]) == 0 {
-		return errors.New("You must provide an valid author")
-	}
-
-	// find the key to look up the account
-	author := types.AccountKey(args[0])
-
-	resKVs, err := ctx.QuerySubspace(
-		c.cdc, append(model.GetAuthorPrefix(author), types.PermlinkSeparator...), c.storeName)
-	if err != nil {
-		return err
-	}
-	var posts []model.Post
-	for _, KV := range resKVs {
-		var info model.Post
-		if err := c.cdc.UnmarshalBinaryLengthPrefixed(KV.Value, &info); err != nil {
-			return err
-		}
-		posts = append(posts, info)
-	}
-
-	if err := client.PrintIndent(posts); err != nil {
-		return err
-	}
-	return nil
 }

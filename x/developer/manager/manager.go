@@ -318,7 +318,7 @@ func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountK
 		return linotypes.NewCoinFromInt64(0), err
 	}
 	if bank.Unauthed {
-		return linotypes.NewCoinFromInt64(0), types.ErrInvalidIDAAuth()
+		return linotypes.NewCoinFromInt64(0), types.ErrIDAUnauthed()
 	}
 	if bank.Balance.LT(amount.Int) {
 		return linotypes.NewCoinFromInt64(0), types.ErrNotEnoughIDA()
@@ -593,6 +593,18 @@ func (dm DeveloperManager) RevokePermission(ctx sdk.Context, user, app linotypes
 		return err
 	}
 	return nil
+}
+
+func (dm DeveloperManager) GetReservePool(ctx sdk.Context) model.ReservePool {
+	return *dm.storage.GetReservePool(ctx)
+}
+
+func (dm DeveloperManager) GetIDAStats(ctx sdk.Context, app linotypes.AccountKey) (model.AppIDAStats, sdk.Error) {
+	if _, err := dm.validAppIDA(ctx, app); err != nil {
+		return model.AppIDAStats{}, err
+	}
+	stats := *dm.storage.GetIDAStats(ctx, app)
+	return stats, nil
 }
 
 func (dm DeveloperManager) ExportToFile(ctx sdk.Context, filepath string) error {

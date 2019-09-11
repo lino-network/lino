@@ -9,4 +9,7 @@ const (
 
 	// QuerierRoute is the querier route for slashing
 	QuerierRoute = ModuleName
+
+	// query stores
+	QueryPostInfo = "info"
 )

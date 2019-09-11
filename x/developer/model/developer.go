@@ -21,7 +21,7 @@ type Developer struct {
 type AppIDA struct {
 	App             types.AccountKey `json:"app"`
 	Name            string           `json:"name"`
-	MiniIDAPrice    types.MiniDollar `json:"price"`
+	MiniIDAPrice    types.MiniDollar `json:"mini_ida_price"`
 	IsRevoked       bool             `json:"is_revoked"`
 	RevokeCoinPrice types.MiniDollar `json:"revoke_coin_price"` // the price of one coin upon revoke.
 }

@@ -16,4 +16,6 @@ const (
 	QueryIDA           = "devIDA"
 	QueryIDABalance    = "devIDABalance"
 	QueryAffiliated    = "devAffiliated"
+	QueryReservePool   = "devReservePool"
+	QueryIDAStats      = "devIDAStats"
 )

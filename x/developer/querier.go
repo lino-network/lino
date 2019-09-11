@@ -28,6 +28,10 @@ func NewQuerier(dm DeveloperKeeper) sdk.Querier {
 			return queryIDABalance(ctx, cdc, path[1:], req, dm)
 		case types.QueryAffiliated:
 			return queryAffiliated(ctx, cdc, path[1:], req, dm)
+		case types.QueryReservePool:
+			return queryReservePool(ctx, cdc, req, dm)
+		case types.QueryIDAStats:
+			return queryIDAStats(ctx, cdc, path[1:], req, dm)
 		default:
 			return nil, sdk.ErrUnknownRequest(
 				fmt.Sprintf("unknown developer query endpoint: %s", path[0]),
@@ -113,6 +117,31 @@ func queryAffiliated(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.R
 	app := linotypes.AccountKey(path[0])
 	accounts := dm.GetAffiliated(ctx, app)
 	res, marshalErr := cdc.MarshalJSON(accounts)
+	if marshalErr != nil {
+		return nil, types.ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryReservePool(ctx sdk.Context, cdc *wire.Codec, req abci.RequestQuery, dm DeveloperKeeper) ([]byte, sdk.Error) {
+	pool := dm.GetReservePool(ctx)
+	res, marshalErr := cdc.MarshalJSON(pool)
+	if marshalErr != nil {
+		return nil, types.ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryIDAStats(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, dm DeveloperKeeper) ([]byte, sdk.Error) {
+	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
+		return nil, err
+	}
+	app := linotypes.AccountKey(path[0])
+	stats, err := dm.GetIDAStats(ctx, app)
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(stats)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()
 	}
