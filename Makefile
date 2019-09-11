@@ -15,7 +15,7 @@ get_tools:
 # 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
 
 update_mocks:
-	go generate ./...
+	GO111MODULE=$(GO111MODULE) go generate ./...
 
 _raw_build_cmd:
 	GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go build -ldflags $(LD_FLAGS) -tags $(GO_TAGS) -o bin/linod   cmd/lino/main.go
