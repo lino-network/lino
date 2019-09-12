@@ -534,9 +534,9 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if pastMinutes%types.MinutesPerMonth == 0 {
 		lb.executeMonthlyEvent(ctx)
 	}
-// 	if pastMinutes%types.MinutesPerYear == 0 {
-// 		lb.executeAnnuallyEvent(ctx)
-// 	}
+	// 	if pastMinutes%types.MinutesPerYear == 0 {
+	// 		lb.executeAnnuallyEvent(ctx)
+	// 	}
 }
 
 // execute hourly event, distribute inflation to validators and
@@ -737,6 +737,12 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
+	// import reputation
+	err = lb.reputationManager.ImportFromFile(
+		ctx, DefaultNodeHome+"/"+prevStateFolder+reputationStateFile)
+	if err != nil {
+		panic(err)
+	}
 
 	importFromFile := func(filename string, tables interface{}) {
 		// XXX(yumin): does not support customized node home import.
@@ -773,5 +779,4 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
 	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
 	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
-	lb.reputationManager.ImportFromFile(ctx, DefaultNodeHome+"/"+prevStateFolder+reputationStateFile)
 }

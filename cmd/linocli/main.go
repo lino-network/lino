@@ -18,6 +18,7 @@ import (
 	globalcli "github.com/lino-network/lino/x/global/client/cli"
 	postcli "github.com/lino-network/lino/x/post/client/cli"
 	proposalcli "github.com/lino-network/lino/x/proposal/client/cli"
+	repcli "github.com/lino-network/lino/x/reputation/client/cli"
 	validatorcli "github.com/lino-network/lino/x/validator/client/cli"
 )
 
@@ -75,6 +76,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		globalcli.GetQueryCmd(cdc),
 		bwcli.GetQueryCmd(cdc),
 		paramcli.GetQueryCmd(cdc),
+		repcli.GetQueryCmd(cdc),
 		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
