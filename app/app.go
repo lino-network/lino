@@ -17,6 +17,7 @@ import (
 	"github.com/lino-network/lino/x/auth"
 	bandwidth "github.com/lino-network/lino/x/bandwidth"
 	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
+	bandwidthtypes "github.com/lino-network/lino/x/bandwidth/types"
 	dev "github.com/lino-network/lino/x/developer"
 	devmn "github.com/lino-network/lino/x/developer/manager"
 	devtypes "github.com/lino-network/lino/x/developer/types"
@@ -171,6 +172,7 @@ func NewLinoBlockchain(
 		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
+		AddRoute(bandwidthtypes.QuerierRoute, bandwidth.NewQuerier(lb.bandwidthManager)).
 		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager))
 
 	lb.SetInitChainer(lb.initChainer)

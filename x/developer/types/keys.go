@@ -4,10 +4,10 @@ const (
 	// ModuleKey is the name of the module
 	ModuleName = "developer"
 
-	// RouterKey is the message route for gov
+	// RouterKey is the message route for developer
 	RouterKey = ModuleName
 
-	// QuerierRoute is the querier route for gov
+	// QuerierRoute is the querier route for developer
 	QuerierRoute = ModuleName
 
 	// Query sub spaces.
