@@ -10,10 +10,10 @@ const (
 	// ModuleKey is the name of the module
 	ModuleName = "param"
 
-	// RouterKey is the message route for gov
+	// RouterKey is the message route for param
 	RouterKey = ModuleName
 
-	// QuerierRoute is the querier route for gov
+	// QuerierRoute is the querier route for param
 	QuerierRoute = ModuleName
 
 	QueryAllocationParam              = "allocation"
@@ -22,7 +22,6 @@ const (
 	QueryVoteParam                    = "vote"
 	QueryProposalParam                = "proposal"
 	QueryValidatorParam               = "validator"
-	QueryCoinDayParam                 = "coinday"
 	QueryBandwidthParam               = "bandwidth"
 	QueryAccountParam                 = "account"
 	QueryPostParam                    = "post"
