@@ -16,6 +16,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/types"
 )
 
 // generate Lino application
@@ -27,6 +28,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 
 func main() {
 	cobra.EnableCommandSorting = false
+
+	types.ConfigAndSealCosmosSDKAddress()
 
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
