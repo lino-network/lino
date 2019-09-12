@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/lino-network/lino/app"
+	paramcli "github.com/lino-network/lino/param/client/cli"
 	"github.com/lino-network/lino/types"
 	acccli "github.com/lino-network/lino/x/account/client/cli"
 	bwcli "github.com/lino-network/lino/x/bandwidth/client/cli"
@@ -73,6 +74,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		validatorcli.GetQueryCmd(cdc),
 		globalcli.GetQueryCmd(cdc),
 		bwcli.GetQueryCmd(cdc),
+		paramcli.GetQueryCmd(cdc),
 		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
