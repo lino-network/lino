@@ -171,7 +171,7 @@ func (suite *AnteTestSuite) createTestPost(postid string, author types.AccountKe
 func (suite *AnteTestSuite) checkValidTx(tx sdk.Tx) {
 	_, result, abort := suite.ante(suite.ctx, tx, false)
 	suite.Assert().False(abort)
-	suite.Assert().True(result.Code.IsOK()) // redundent
+	suite.Assert().True(result.Code.IsOK()) // redundant
 	suite.Assert().True(result.IsOK())
 }
 

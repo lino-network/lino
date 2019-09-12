@@ -1166,7 +1166,7 @@ func TestAuthorizePermission(t *testing.T) {
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
 			expectGrantPubKeys: []*model.GrantPermission{
-				&model.GrantPermission{
+				{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 100,
@@ -1184,7 +1184,7 @@ func TestAuthorizePermission(t *testing.T) {
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   nil,
 			expectGrantPubKeys: []*model.GrantPermission{
-				&model.GrantPermission{
+				{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,
@@ -1202,7 +1202,7 @@ func TestAuthorizePermission(t *testing.T) {
 			amount:         types.NewCoinFromInt64(0),
 			expectResult:   acctypes.ErrAccountNotFound(nonExistUser),
 			expectGrantPubKeys: []*model.GrantPermission{
-				&model.GrantPermission{
+				{
 					GrantTo:    user2,
 					Permission: types.AppPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,
@@ -1220,7 +1220,7 @@ func TestAuthorizePermission(t *testing.T) {
 			amount:         types.NewCoinFromInt64(1000),
 			expectResult:   nil,
 			expectGrantPubKeys: []*model.GrantPermission{
-				&model.GrantPermission{
+				{
 					GrantTo:    user3,
 					Permission: types.PreAuthorizationPermission,
 					ExpiresAt:  baseTime.Unix() + 100,
@@ -1238,7 +1238,7 @@ func TestAuthorizePermission(t *testing.T) {
 			amount:         types.NewCoinFromInt64(10000),
 			expectResult:   nil,
 			expectGrantPubKeys: []*model.GrantPermission{
-				&model.GrantPermission{
+				{
 					GrantTo:    user3,
 					Permission: types.PreAuthorizationPermission,
 					ExpiresAt:  baseTime.Unix() + 1000,

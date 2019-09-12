@@ -1106,19 +1106,19 @@ func TestGetInterestSince(t *testing.T) {
 		{
 			testName: "get past 3 days interest",
 			pastRecord: []model.LinoStakeStat{
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(10000 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(10000 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(0 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(0 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(7777 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(1111 * types.Decimals),
@@ -1133,19 +1133,19 @@ func TestGetInterestSince(t *testing.T) {
 		{
 			testName: "get past 2 days interest",
 			pastRecord: []model.LinoStakeStat{
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(10000 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(10000 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(8000 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(8000 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(7777 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(1111 * types.Decimals),
@@ -1160,19 +1160,19 @@ func TestGetInterestSince(t *testing.T) {
 		{
 			testName: "get one of days doesn't have stake",
 			pastRecord: []model.LinoStakeStat{
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(10000 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(10000 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(1000 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(1000 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(0 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedLinoStake:       types.NewCoinFromInt64(0 * types.Decimals),
 				},
-				model.LinoStakeStat{
+				{
 					TotalConsumptionFriction: types.NewCoinFromInt64(7777 * types.Decimals),
 					TotalLinoStake:           types.NewCoinFromInt64(1000 * types.Decimals),
 					UnclaimedFriction:        types.NewCoinFromInt64(1111 * types.Decimals),

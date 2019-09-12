@@ -70,10 +70,10 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.vm.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("AppX")).Return(linotypes.NewCoinFromInt64(10), nil).Maybe()
 	suite.vm.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.NewCoinFromInt64(90), nil).Maybe()
 	suite.dm.On("GetLiveDevelopers", mock.Anything).Return([]devModel.Developer{
-		devModel.Developer{
+		{
 			Username: "AppX",
 		},
-		devModel.Developer{
+		{
 			Username: "AppY",
 		},
 	}, nil).Maybe()

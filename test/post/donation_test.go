@@ -6,6 +6,7 @@ import (
 
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
+
 	// acc "github.com/lino-network/lino/x/account"
 	post "github.com/lino-network/lino/x/post/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
