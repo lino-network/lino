@@ -43,6 +43,8 @@ func NewQuerier(gm GlobalManager) sdk.Querier {
 			return queryGlobalTime(ctx, cdc, path[1:], req, gm)
 		case QueryLinoStakeStat:
 			return queryLinoStakeStat(ctx, cdc, path[1:], req, gm)
+		case QueryInflationPool:
+			return queryInflationPool(ctx, cdc, path[1:], req, gm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown global query endpoint")
 		}

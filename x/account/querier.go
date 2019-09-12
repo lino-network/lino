@@ -3,24 +3,14 @@ package account
 import (
 	"encoding/hex"
 
-	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/account/model"
-	"github.com/lino-network/lino/x/account/types"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-)
 
-const (
-	QueryAccountInfo            = "info"
-	QueryAccountBank            = "bank"
-	QueryAccountMeta            = "meta"
-	QueryAccountPendingCoinDay  = "pendingCoinDay"
-	QueryAccountGrantPubKeys    = "grantPubKey"
-	QueryAccountAllGrantPubKeys = "allGrantPubKey"
-	QueryTxAndAccountSequence   = "txAndSeq"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
+	"github.com/lino-network/lino/x/account/types"
 )
 
 // creates a querier for account REST endpoints
@@ -29,17 +19,17 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 	wire.RegisterCrypto(cdc)
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case QueryAccountInfo:
+		case types.QueryAccountInfo:
 			return queryAccountInfo(ctx, cdc, path[1:], req, am)
-		case QueryAccountBank:
+		case types.QueryAccountBank:
 			return queryAccountBank(ctx, cdc, path[1:], req, am)
-		case QueryAccountMeta:
+		case types.QueryAccountMeta:
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
-		case QueryAccountGrantPubKeys:
+		case types.QueryAccountGrantPubKeys:
 			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
-		case QueryAccountAllGrantPubKeys:
+		case types.QueryAccountAllGrantPubKeys:
 			return queryAccountAllGrantPubKeys(ctx, cdc, path[1:], req, am)
-		case QueryTxAndAccountSequence:
+		case types.QueryTxAndAccountSequence:
 			return queryTxAndSequenceNumber(ctx, cdc, path[1:], req, am)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown account query endpoint")

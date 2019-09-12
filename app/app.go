@@ -113,7 +113,7 @@ func NewLinoBlockchain(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *LinoBlockchain {
 	// create your application object
 	cdc := MakeCodec()
-	bApp := bam.NewBaseApp(appName, logger, db, DefaultTxDecoder(cdc), baseAppOptions...)
+	bApp := bam.NewBaseApp(appName, logger, db, types.TxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	var lb = &LinoBlockchain{
 		BaseApp:                 bApp,
@@ -191,30 +191,6 @@ func NewLinoBlockchain(
 	lb.Seal()
 
 	return lb
-}
-
-// DefaultTxDecoder - default tx decoder, decode tx before authenticate handler
-func DefaultTxDecoder(cdc *wire.Codec) sdk.TxDecoder {
-	return func(txBytes []byte) (tx sdk.Tx, err sdk.Error) {
-		defer func() {
-			if r := recover(); r != nil {
-				err = sdk.ErrTxDecode("tx decode panic")
-			}
-		}()
-		tx = cauth.StdTx{}
-
-		if len(txBytes) == 0 {
-			return nil, sdk.ErrTxDecode("txBytes are empty")
-		}
-
-		// StdTx.Msg is an interface. The concrete types
-		// are registered by MakeTxCodec
-		unmarshalErr := cdc.UnmarshalJSON(txBytes, &tx)
-		if unmarshalErr != nil {
-			return nil, sdk.ErrTxDecode("")
-		}
-		return tx, nil
-	}
 }
 
 // MackCodec - codec for application, used by command line tool and authenticate handler

@@ -1,9 +1,11 @@
 package core
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
-
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+
+	linotypes "github.com/lino-network/lino/types"
 )
 
 // CoreContext - context used in terminal
@@ -16,7 +18,9 @@ type CoreContext struct {
 	Sequence        uint64
 	Memo            string
 	Client          rpcclient.Client
-	PrivKey         crypto.PrivKey
+	PrivKeys        []crypto.PrivKey
+	Fees            sdk.Coins
+	TxEncoder       sdk.TxEncoder
 }
 
 // WithChainID - mount chain id on context
@@ -63,6 +67,25 @@ func (c CoreContext) WithClient(client rpcclient.Client) CoreContext {
 
 // WithPrivKey - mount private key on context
 func (c CoreContext) WithPrivKey(privKey crypto.PrivKey) CoreContext {
-	c.PrivKey = privKey
+	c.PrivKeys = append(c.PrivKeys, privKey)
+	return c
+}
+
+// WithFees - mount fees
+func (c CoreContext) WithFees(fees string) CoreContext {
+	parsedFees, err := sdk.ParseCoins(fees)
+	if err != nil {
+		panic(err)
+	}
+	if parsedFees.Len() != 1 || parsedFees[0].Denom != linotypes.LinoCoinDenom {
+		panic("invalid tx fees, unit must be: " + linotypes.LinoCoinDenom)
+	}
+	c.Fees = parsedFees
+	return c
+}
+
+// WithCodec - mount cdc on context.
+func (c CoreContext) WithTxEncoder(encoder sdk.TxEncoder) CoreContext {
+	c.TxEncoder = encoder
 	return c
 }

@@ -3,56 +3,40 @@ package core
 import (
 	"fmt"
 
-	// "github.com/cosmos/cosmos-sdk/client"
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	txbuilder "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/pkg/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/crypto"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // BroadcastTx - broadcast the transaction bytes to Tendermint
-func (ctx CoreContext) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, error) {
+func (ctx CoreContext) BroadcastTx(txBytes []byte) (sdk.TxResponse, error) {
 	node, err := ctx.GetNode()
 	if err != nil {
-		return nil, err
+		return sdk.TxResponse{}, err
 	}
 
-	res, err := node.BroadcastTxCommit(tx)
+	res, err := node.BroadcastTxCommit(txBytes)
 	if err != nil {
-		return res, err
+		return sdk.NewResponseFormatBroadcastTxCommit(res), err
 	}
 
-	if res.CheckTx.Code != uint32(0) {
-		return res, errors.Errorf("CheckTx failed: (%d) %s",
-			res.CheckTx.Code,
-			res.CheckTx.Log)
+	if !res.CheckTx.IsOK() {
+		return sdk.NewResponseFormatBroadcastTxCommit(res), fmt.Errorf(res.CheckTx.Log)
 	}
-	if res.DeliverTx.Code != uint32(0) {
-		return res, errors.Errorf("DeliverTx failed: (%d) %s",
-			res.DeliverTx.Code,
-			res.DeliverTx.Log)
+
+	if !res.DeliverTx.IsOK() {
+		return sdk.NewResponseFormatBroadcastTxCommit(res), fmt.Errorf(res.DeliverTx.Log)
 	}
-	return res, err
+
+	return sdk.NewResponseFormatBroadcastTxCommit(res), nil
 }
 
 // Query - query from Tendermint with the provided key and storename
 func (ctx CoreContext) Query(key cmn.HexBytes, storeName string) (res []byte, err error) {
 	return ctx.query(key, storeName, "key")
-}
-
-// QuerySubspace - query from Tendermint with the provided storename and subspace
-func (ctx CoreContext) QuerySubspace(cdc *wire.Codec, subspace []byte, storeName string) (res []sdk.KVPair, err error) {
-	resRaw, err := ctx.query(subspace, storeName, "subspace")
-	if err != nil {
-		return res, err
-	}
-	cdc.MustUnmarshalBinaryLengthPrefixed(resRaw, &res)
-	return
 }
 
 // Query from Tendermint with the provided storename and path
@@ -78,62 +62,86 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 	return resp.Value, nil
 }
 
-// sign and build the transaction from the msg
-func (ctx CoreContext) SignAndBuild(msgs []sdk.Msg, cdc *wire.Codec) ([]byte, error) {
-	// build the Sign Messsage from the Standard Message
-	chainID := ctx.ChainID
-	if chainID == "" {
-		return nil, errors.Errorf("Chain ID required but not specified")
-	}
-	sequence := ctx.Sequence
-	memo := ctx.Memo
-	signMsg := txbuilder.StdSignMsg{
-		ChainID:       chainID,
-		AccountNumber: 0,
-		Sequence:      sequence,
-		Msgs:          msgs,
+func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg) error {
+	if err := msg.ValidateBasic(); err != nil {
+		panic(err)
 	}
 
-	// sign and build
-	bz := signMsg.Bytes()
-	if ctx.PrivKey == nil {
-		return nil, errors.New("Must provide private key")
+	// build and sign the transaction, then broadcast to Tendermint
+	res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg})
+	if signErr != nil {
+		return signErr
 	}
-	sig, err := ctx.PrivKey.Sign(bz)
-	if err != nil {
-		return nil, err
-	}
-	sigs := []auth.StdSignature{{
-		PubKey:    ctx.PrivKey.PubKey(),
-		Signature: sig,
-		// XXX(yumin): client core may be broken now. we need to revisit this part
-		// and probably remove all these and use cosmos's build-in support functions.
-		// Sequence:  sequence,
-	}}
 
-	// marshal bytes
-	tx := auth.NewStdTx(signMsg.Msgs, signMsg.Fee, sigs, memo)
-	return cdc.MarshalJSON(tx)
+	fmt.Println(res.String())
+	return nil
 }
 
 // sign and build the transaction from the msg
-func (ctx CoreContext) SignBuildBroadcast(
-	msgs []sdk.Msg, cdc *wire.Codec) (*ctypes.ResultBroadcastTxCommit, error) {
-	txBytes, err := ctx.SignAndBuild(msgs, cdc)
+func (ctx CoreContext) SignBuildBroadcast(msgs []sdk.Msg) (sdk.TxResponse, error) {
+	txBytes, err := ctx.BuildAndSign(msgs)
 	if err != nil {
-		return nil, err
+		return sdk.TxResponse{}, err
 	}
 	return ctx.BroadcastTx(txBytes)
 }
 
-// // get passphrase from std input
-// func (ctx CoreContext) GetPassphraseFromStdin(name string) (pass string, err error) {
-// 	buf := client.BufferStdin()
-// 	prompt := fmt.Sprintf("Password to sign with '%s':", name)
-// 	return client.GetPassword(prompt, buf)
-// }
+func MakeSignature(msg authtypes.StdSignMsg, pk crypto.PrivKey) (sig authtypes.StdSignature, err error) {
+	// sign and build
+	bz := msg.Bytes()
+	if pk == nil {
+		return sig, errors.New("Must provide private key")
+	}
+	sigBytes, err := pk.Sign(bz)
+	if err != nil {
+		return sig, err
+	}
+	sig = authtypes.StdSignature{
+		PubKey:    pk.PubKey(),
+		Signature: sigBytes,
+	}
+	return sig, err
+}
 
-// // GetNode prepares a simple rpc.Client
+func (ctx CoreContext) Sign(msg authtypes.StdSignMsg) ([]byte, error) {
+	sigs := make([]authtypes.StdSignature, 0)
+	for _, pk := range ctx.PrivKeys {
+		sig, err := MakeSignature(msg, pk)
+		if err != nil {
+			return nil, err
+		}
+		sigs = append(sigs, sig)
+	}
+
+	return ctx.TxEncoder(
+		authtypes.NewStdTx(msg.Msgs, msg.Fee, sigs, msg.Memo))
+}
+
+func (ctx CoreContext) BuildSignMsg(msgs []sdk.Msg) (authtypes.StdSignMsg, error) {
+	if ctx.ChainID == "" {
+		return authtypes.StdSignMsg{}, fmt.Errorf("chain ID required but not specified")
+	}
+	fees := ctx.Fees
+	return authtypes.StdSignMsg{
+		ChainID:       ctx.ChainID,
+		AccountNumber: 0,
+		Sequence:      ctx.Sequence,
+		Memo:          ctx.Memo,
+		Msgs:          msgs,
+		Fee:           authtypes.NewStdFee(1, fees),
+	}, nil
+}
+
+func (ctx CoreContext) BuildAndSign(msgs []sdk.Msg) ([]byte, error) {
+	msg, err := ctx.BuildSignMsg(msgs)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx.Sign(msg)
+}
+
+// GetNode prepares a simple rpc.Client
 func (ctx CoreContext) GetNode() (rpcclient.Client, error) {
 	if ctx.Client == nil {
 		return nil, errors.New("Must define node URI")
