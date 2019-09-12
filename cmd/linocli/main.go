@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/lino-network/lino/app"
+	"github.com/lino-network/lino/types"
 	acccli "github.com/lino-network/lino/x/account/client/cli"
 	bwcli "github.com/lino-network/lino/x/bandwidth/client/cli"
 	devcli "github.com/lino-network/lino/x/developer/client/cli"
@@ -29,6 +30,8 @@ var (
 
 func main() {
 	cobra.EnableCommandSorting = false
+
+	types.ConfigAndSealCosmosSDKAddress()
 
 	cdc := app.MakeCodec()
 
