@@ -178,9 +178,15 @@ func marshalJSON(i *big.Int) ([]byte, error) {
 func unmarshalJSON(i *big.Int, bz []byte) error {
 	var text string
 	err := json.Unmarshal(bz, &text)
+	if err == nil {
+		return unmarshalText(i, text)
+	}
+
+	// backward compatibility for old big int.
+	num := big.NewInt(0)
+	err = json.Unmarshal(bz, &num)
 	if err != nil {
 		return err
 	}
-
-	return unmarshalText(i, text)
+	return unmarshalText(i, num.String())
 }
