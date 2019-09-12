@@ -31,6 +31,12 @@ build:
 install:
 	make _raw_install_cmd
 
+install_cli:
+	cd cmd/linocli && GO111MODULE=$(GO111MODULE) CGO_ENABLED=0 go install -ldflags $(LD_FLAGS)
+
+build_cli:
+	GO111MODULE=$(GO111MODULE) CGO_ENABLED=0 go build -ldflags $(LD_FLAGS) -o bin/linocli cmd/linocli/main.go
+
 test:
 	GO111MODULE=$(GO111MODULE) CGO_LDFLAGS=$(CGO_LDFLAGS) CGO_ENABLED=1 go test -ldflags $(LD_FLAGS) -tags $(GO_TAGS) ./... -timeout 600s
 
