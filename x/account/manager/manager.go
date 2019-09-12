@@ -95,8 +95,6 @@ func (accManager AccountManager) CreateAccount(
 		Address:        addr,
 	}
 	accManager.storage.SetInfo(ctx, username, accountInfo)
-	accountMeta := &model.AccountMeta{}
-	accManager.storage.SetMeta(ctx, username, accountMeta)
 	return nil
 }
 
