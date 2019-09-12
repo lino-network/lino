@@ -534,9 +534,9 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 	if pastMinutes%types.MinutesPerMonth == 0 {
 		lb.executeMonthlyEvent(ctx)
 	}
-	if pastMinutes%types.MinutesPerYear == 0 {
-		lb.executeAnnuallyEvent(ctx)
-	}
+// 	if pastMinutes%types.MinutesPerYear == 0 {
+// 		lb.executeAnnuallyEvent(ctx)
+// 	}
 }
 
 // execute hourly event, distribute inflation to validators and
