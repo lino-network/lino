@@ -27,7 +27,7 @@ func ErrWrongNumberOfSigners() sdk.Error {
 	return types.NewError(types.CodeWrongNumberOfSigners, fmt.Sprint("the number of siners is wrong"))
 }
 
-// XXX(yumin): no longer avaiable, due to upgrade-1.
+// XXX(yumin): no longer available, due to upgrade-1.
 // ErrInvalidSequence - error if sequence number mismatch
 // func ErrInvalidSequence(msg string) sdk.Error {
 // 	return types.NewError(types.CodeInvalidSequence, fmt.Sprintf("msg: %v", msg))

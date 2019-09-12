@@ -3,6 +3,7 @@ package repv2
 import (
 	"fmt"
 	"io/ioutil"
+
 	// "math/rand"
 	"os"
 	"path/filepath"
@@ -457,7 +458,7 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 			&userMeta{
 				Reputation: NewInt(100),
 				Unsettled: []Donation{
-					Donation{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
+					{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
 				},
 			},
 		},
@@ -466,8 +467,8 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 			&userMeta{
 				Reputation: NewInt(100),
 				Unsettled: []Donation{
-					Donation{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
-					Donation{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
+					{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
+					{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
 				},
 			},
 		},
@@ -476,8 +477,8 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 			&userMeta{
 				Reputation: NewInt(100),
 				Unsettled: []Donation{
-					Donation{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
-					Donation{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
+					{Pid: "p1", Amount: NewInt(33), Impact: NewInt(33)},
+					{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
 				},
 			},
 		},
@@ -486,8 +487,8 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 			&userMeta{
 				Reputation: NewInt(100),
 				Unsettled: []Donation{
-					Donation{Pid: "p1", Amount: NewInt(133), Impact: NewInt(33)},
-					Donation{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
+					{Pid: "p1", Amount: NewInt(133), Impact: NewInt(33)},
+					{Pid: "p2", Amount: NewInt(77), Impact: NewInt(67)},
 				},
 			},
 		},
@@ -496,8 +497,8 @@ func (suite *ReputationTestSuite) TestAppendDonation() {
 			&userMeta{
 				Reputation: NewInt(100),
 				Unsettled: []Donation{
-					Donation{Pid: "p1", Amount: NewInt(133), Impact: NewInt(33)},
-					Donation{Pid: "p2", Amount: NewInt(1077), Impact: NewInt(67)},
+					{Pid: "p1", Amount: NewInt(133), Impact: NewInt(33)},
+					{Pid: "p2", Amount: NewInt(1077), Impact: NewInt(67)},
 				},
 			},
 		},

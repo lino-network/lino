@@ -195,7 +195,7 @@ func (bm BandwidthManager) UpdateMaxMPSAndEMA(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
-// calcuate the current msg fee based on last block info at the begining of each block
+// calcuate the current msg fee based on last block info at the beginning of each block
 func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 	params, err := bm.paramHolder.GetBandwidthParam(ctx)
 	if err != nil {
@@ -227,7 +227,7 @@ func (bm BandwidthManager) CalculateCurMsgFee(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
-// calcuate the current vacancy coeef u based on last block info at the begining of each block
+// calcuate the current vacancy coeef u based on last block info at the beginning of each block
 func (bm BandwidthManager) CalculateCurU(ctx sdk.Context) sdk.Error {
 	bandwidthInfo, err := bm.storage.GetBandwidthInfo(ctx)
 	if err != nil {

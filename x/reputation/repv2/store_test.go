@@ -77,8 +77,8 @@ func (suite *StoreTestSuite) TestStoreGetSet() {
 		LastSettledRound:  3,
 		LastDonationRound: 3,
 		Unsettled: []Donation{
-			Donation{Pid: post1, Amount: NewInt(3), Impact: NewInt(2)},
-			Donation{Pid: post2, Amount: NewInt(4), Impact: NewInt(7)},
+			{Pid: post1, Amount: NewInt(3), Impact: NewInt(2)},
+			{Pid: post2, Amount: NewInt(4), Impact: NewInt(7)},
 		}}
 	u2 := &userMeta{
 		Consumption:       NewInt(0),
@@ -87,7 +87,7 @@ func (suite *StoreTestSuite) TestStoreGetSet() {
 		LastSettledRound:  4,
 		LastDonationRound: 5,
 		Unsettled: []Donation{
-			Donation{Pid: post2, Amount: NewInt(6), Impact: NewInt(11)},
+			{Pid: post2, Amount: NewInt(6), Impact: NewInt(11)},
 		}}
 	store.SetUserMeta(user1, u2)
 	store.SetUserMeta(user1, u1)
@@ -108,7 +108,7 @@ func (suite *StoreTestSuite) TestStoreGetSet() {
 		SumIF:   NewInt(234134),
 		StartAt: 342,
 		TopN: []PostIFPair{
-			PostIFPair{
+			{
 				Pid:   post1,
 				SumIF: NewInt(234235311),
 			},
@@ -158,15 +158,15 @@ func (suite *StoreTestSuite) TestStoreImportExporter() {
 		LastSettledRound:  3,
 		LastDonationRound: 3,
 		Unsettled: []Donation{
-			Donation{Pid: post1, Amount: NewInt(3), Impact: NewInt(2)},
-			Donation{Pid: post2, Amount: NewInt(4), Impact: NewInt(7)},
+			{Pid: post1, Amount: NewInt(3), Impact: NewInt(2)},
+			{Pid: post2, Amount: NewInt(4), Impact: NewInt(7)},
 		}}
 	u2 := &userMeta{
 		Reputation:        NewInt(456),
 		LastSettledRound:  4,
 		LastDonationRound: 5,
 		Unsettled: []Donation{
-			Donation{Pid: post2, Amount: NewInt(6), Impact: NewInt(11)},
+			{Pid: post2, Amount: NewInt(6), Impact: NewInt(11)},
 		}}
 	store.SetUserMeta(user1, u1)
 	store.SetUserMeta(user2, u2)

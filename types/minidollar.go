@@ -13,7 +13,7 @@ var TestnetPrice = NewMiniDollar(1200)
 
 // 1 MiniDollar = 10^(-10) USD.
 type MiniDollar struct {
-	// embeding sdk.Int, inheriting marshal/unmarshal funciton from
+	// embeding sdk.Int, inheriting marshal/unmarshal function from
 	// sdk.Int, so DO NOT add any other field in this struct.
 	sdk.Int
 }

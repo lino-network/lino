@@ -1,9 +1,10 @@
 package internal
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func newReputationStoreOnMock() ReputationStore {

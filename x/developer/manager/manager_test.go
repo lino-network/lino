@@ -399,7 +399,7 @@ func (suite *DeveloperManagerSuite) TestIssueIDA() {
 			expected: types.ErrIDAIssuedBefore(),
 		},
 		{
-			name:     "Sucess",
+			name:     "Success",
 			appName:  app,
 			expected: nil,
 		},

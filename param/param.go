@@ -30,7 +30,7 @@ type InfraInternalAllocationParam struct {
 	CDNAllocation     sdk.Dec `json:"CDN_allocation"`
 }
 
-// VoteParam - vote paramters
+// VoteParam - vote parameters
 // MinStakeIn - minimum stake for stake in msg
 // VoterCoinReturnIntervalSec - when withdraw or revoke, the deposit return to voter by return event
 // VoterCoinReturnTimes - when withdraw or revoke, the deposit return to voter by return event
