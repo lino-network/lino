@@ -21,10 +21,13 @@ func setup(t *testing.T) (sdk.Context, ProposalStorage) {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	ps := NewProposalStorage(TestKVStoreKey)
-	err := ps.InitGenesis(ctx)
+	err = ps.InitGenesis(ctx)
 	assert.Nil(t, err)
 	return ctx, ps
 }
@@ -54,8 +57,14 @@ func TestProposalList(t *testing.T) {
 	p2 := p1
 	p2.ProposalInfo.ProposalID = types.ProposalKey("321")
 
-	ps.SetOngoingProposal(ctx, types.ProposalKey("123"), &p1)
-	ps.SetOngoingProposal(ctx, types.ProposalKey("321"), &p2)
+	err = ps.SetOngoingProposal(ctx, types.ProposalKey("123"), &p1)
+	if err != nil {
+		panic(err)
+	}
+	err = ps.SetOngoingProposal(ctx, types.ProposalKey("321"), &p2)
+	if err != nil {
+		panic(err)
+	}
 
 	proposalList =
 		append(proposalList, &p1)

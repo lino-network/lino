@@ -164,24 +164,30 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc3Balance)
 
-	// user1 can revoke voter candidancy now
-	referenceList := &model.ReferenceList{
-		AllValidators: []types.AccountKey{},
-	}
-	vm.storage.SetReferenceList(ctx, referenceList)
-	msg5 := NewStakeOutMsg("user1", coinToString(voteParam.MinStakeIn))
-
-	vm.storage.SetReferenceList(ctx, referenceList)
-	result2 := handler(ctx, msg5)
-	assert.Equal(t, sdk.Result{}, result2)
-
-	// make sure user2 wont get coins immediately, and delegatin was deleted
 	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
 	acc2Balance, _ := am.GetSavingFromUsername(ctx, user2)
 	assert.Equal(t, model.ErrDelegationNotFound(), err)
 	assert.Equal(t, minBalance, acc1Balance)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
 
+	// user1 can revoke voter candidancy now
+	referenceList := &model.ReferenceList{
+		AllValidators: []types.AccountKey{},
+	}
+	err = vm.storage.SetReferenceList(ctx, referenceList)
+	if err != nil {
+		panic(err)
+	}
+	msg5 := NewStakeOutMsg("user1", coinToString(voteParam.MinStakeIn))
+
+	err = vm.storage.SetReferenceList(ctx, referenceList)
+	if err != nil {
+		panic(err)
+	}
+	result2 := handler(ctx, msg5)
+	assert.Equal(t, sdk.Result{}, result2)
+
+	// make sure user2 wont get coins immediately, and delegatin was deleted
 	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	linoStat, _ := gs.GetLinoStakeStat(ctx, day)
@@ -248,7 +254,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 	delegatedCoin := param.MinStakeIn
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
 
-	vm.AddVoter(ctx, user1, param.MinStakeIn)
+	err := vm.AddVoter(ctx, user1, param.MinStakeIn)
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := []struct {
 		testName       string
@@ -306,7 +315,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 
 func TestAddFrozenMoney(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	vm.InitGenesis(ctx)
+	err := vm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user := createTestAccount(ctx, am, "user", minBalance)
@@ -374,7 +386,10 @@ func TestAddFrozenMoney(t *testing.T) {
 
 func TestDeleteVoteBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	vm.InitGenesis(ctx)
+	err := vm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	handler := NewHandler(vm, am, &gm)
 
 	proposalID1 := types.ProposalKey("1")
@@ -393,7 +408,10 @@ func TestDeleteVoteBasic(t *testing.T) {
 	assert.Equal(t, user2, voteList[0].Voter)
 
 	// test delete vote
-	vm.storage.DeleteVote(ctx, proposalID1, "user2")
-	_, err := vm.storage.GetVote(ctx, proposalID1, "user2")
+	err = vm.storage.DeleteVote(ctx, proposalID1, "user2")
+	if err != nil {
+		panic(err)
+	}
+	_, err = vm.storage.GetVote(ctx, proposalID1, "user2")
 	assert.Equal(t, model.ErrVoteNotFound(), err)
 }

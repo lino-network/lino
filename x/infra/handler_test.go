@@ -11,11 +11,17 @@ import (
 func TestReportBasic(t *testing.T) {
 	ctx, im := setupTest(t, 0)
 	handler := NewHandler(im)
-	im.InitGenesis(ctx)
+	err := im.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	user1 := types.AccountKey("user1")
 	usage := int64(100)
-	im.RegisterInfraProvider(ctx, user1)
+	err = im.RegisterInfraProvider(ctx, user1)
+	if err != nil {
+		panic(err)
+	}
 
 	// infra provider does not exist
 	msg1 := NewProviderReportMsg("qwdqwdqw", usage)

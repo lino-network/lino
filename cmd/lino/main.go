@@ -45,7 +45,10 @@ func main() {
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	executor := cli.PrepareBaseCmd(rootCmd, "BC", app.DefaultNodeHome)
-	executor.Execute()
+	err := executor.Execute()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, traceStore io.Writer,

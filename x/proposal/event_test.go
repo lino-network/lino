@@ -11,9 +11,18 @@ import (
 
 func TestDecideProposal(t *testing.T) {
 	ctx, am, pm, postManager, voteManager, valManager, gm := setupTest(t, 0)
-	voteManager.InitGenesis(ctx)
-	valManager.InitGenesis(ctx)
-	pm.InitGenesis(ctx)
+	err := voteManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = pm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 
 	c1, c2, c3, c4 :=
@@ -27,10 +36,22 @@ func TestDecideProposal(t *testing.T) {
 	user3 := createTestAccount(ctx, am, "user3", c3)
 	user4 := createTestAccount(ctx, am, "user4", c4)
 
-	voteManager.AddVoter(ctx, user1, c1)
-	voteManager.AddVoter(ctx, user2, c2)
-	voteManager.AddVoter(ctx, user3, c3)
-	voteManager.AddVoter(ctx, user4, c4)
+	err = voteManager.AddVoter(ctx, user1, c1)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, user2, c2)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, user3, c3)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, user4, c4)
+	if err != nil {
+		panic(err)
+	}
 
 	param1 := param.GlobalAllocationParam{
 		InfraAllocation: types.NewDecFromRat(50, 100),
@@ -192,9 +213,12 @@ func TestDecideProposal(t *testing.T) {
 			assert.Equal(t, cs.expectDisagreeVotes, proposalInfo.DisagreeVotes)
 
 		} else {
-			voteManager.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
+			err := voteManager.AddVote(ctx, cs.proposalID, cs.voter, cs.voterRes)
+			if err != nil {
+				panic(err)
+			}
 
-			err := pm.UpdateProposalVotingStatus(ctx, cs.proposalID, cs.voter, cs.voterRes, cs.votingPower)
+			err = pm.UpdateProposalVotingStatus(ctx, cs.proposalID, cs.voter, cs.voterRes, cs.votingPower)
 			assert.Nil(t, err)
 		}
 

@@ -74,7 +74,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := val.NewValidatorDepositMsg(
-			newAccountName, types.LNO(strconv.Itoa(120000+100*seq)), newValidatorPriv.PubKey(), "")
+			newAccountName, strconv.Itoa(120000+100*seq), newValidatorPriv.PubKey(), "")
 		test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 		test.CheckOncallValidatorList(t, newAccountName, true, lb)
 		test.CheckAllValidatorList(t, newAccountName, true, lb)

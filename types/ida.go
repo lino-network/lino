@@ -15,15 +15,15 @@ type MiniIDA = sdk.Int
 func (i IDAStr) ToMiniIDA() (MiniIDA, sdk.Error) {
 	dec, err := sdk.NewDecFromStr(string(i))
 	if err != nil {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
+		return sdk.NewInt(0), ErrInvalidIDAAmount()
 	}
 	if dec.GT(UpperBoundRat) {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
+		return sdk.NewInt(0), ErrInvalidIDAAmount()
 	}
 	if dec.LT(LowerBoundRat) {
-		return MiniIDA(sdk.NewInt(0)), ErrInvalidIDAAmount()
+		return sdk.NewInt(0), ErrInvalidIDAAmount()
 	}
-	return MiniIDA(dec.MulInt64(Decimals).RoundInt()), nil
+	return dec.MulInt64(Decimals).RoundInt(), nil
 }
 
 func MiniIDAToMiniDollar(amount MiniIDA, miniIDAPrice MiniDollar) MiniDollar {

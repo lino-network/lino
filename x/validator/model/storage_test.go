@@ -21,10 +21,13 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	vs := NewValidatorStorage(TestKVStoreKey)
-	err := vs.InitGenesis(ctx)
+	err = vs.InitGenesis(ctx)
 	assert.Nil(t, err)
 	return ctx, vs
 }

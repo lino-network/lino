@@ -99,7 +99,8 @@ func (suite *GoldenTestSuite) AssertStateUnchanged(enableSubTest bool, importJso
 	if fileExists(gp) {
 		input, err := ioutil.ReadFile(gp)
 		suite.NoError(err)
-		json.Unmarshal(input, &states)
+		err = json.Unmarshal(input, &states)
+		suite.NoError(err)
 	}
 
 	for _, p := range importJsonPaths {
@@ -107,7 +108,8 @@ func (suite *GoldenTestSuite) AssertStateUnchanged(enableSubTest bool, importJso
 		gp := filepath.Join("input", "common", p+".input")
 		input, err := ioutil.ReadFile(gp)
 		suite.NoError(err)
-		json.Unmarshal(input, &tmp)
+		err = json.Unmarshal(input, &tmp)
+		suite.NoError(err)
 		states = append(states, tmp...)
 	}
 

@@ -23,7 +23,10 @@ func getContext() sdk.Context {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }
@@ -52,9 +55,12 @@ func TestGlobalStorageGenesis(t *testing.T) {
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	ctx := getContext()
 
-	ph.InitParam(ctx)
+	err := ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 
-	err := InitGlobalStorage(t, ctx, gm)
+	err = InitGlobalStorage(t, ctx, gm)
 	assert.Nil(t, err)
 	globalMeta := GlobalMeta{
 		TotalLinoCoin:         types.NewCoinFromInt64(10000 * types.Decimals),

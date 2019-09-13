@@ -47,7 +47,7 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			referrer := linotypes.AccountKey(args[0])
-			amount := linotypes.LNO(args[1])
+			amount := args[1]
 			username := linotypes.AccountKey(args[2])
 
 			resetPriv := secp256k1.GenPrivKey()
@@ -84,8 +84,8 @@ func GetCmdTransfer(cdc *codec.Codec) *cobra.Command {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			from := linotypes.AccountKey(args[0])
 			to := linotypes.AccountKey(viper.GetString(FlagTo))
-			amount := linotypes.LNO(viper.GetString(FlagAmount))
-			memo := linotypes.LNO(viper.GetString(FlagMemo))
+			amount := viper.GetString(FlagAmount)
+			memo := viper.GetString(FlagMemo)
 			msg := types.TransferMsg{
 				Sender:   from,
 				Receiver: to,
@@ -98,7 +98,7 @@ func GetCmdTransfer(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTo, "", "receiver username")
 	cmd.Flags().String(FlagAmount, "", "amount to transfer")
 	cmd.Flags().String(FlagMemo, "", "memo msg")
-	cmd.MarkFlagRequired(FlagTo)
-	cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagTo)
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }

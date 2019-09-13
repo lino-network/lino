@@ -49,7 +49,8 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.dm = &developer.DeveloperKeeper{}
 	suite.am = &account.AccountKeeper{}
 	suite.bm = *NewBandwidthManager(testBandwidthKey, suite.ph, suite.global, suite.vm, suite.dm, suite.am)
-	suite.bm.InitGenesis(suite.Ctx)
+	err := suite.bm.InitGenesis(suite.Ctx)
+	suite.NoError(err)
 	suite.ph.On("GetBandwidthParam", mock.Anything).Return(&parammodel.BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: linotypes.NewCoinFromInt64(1 * linotypes.Decimals),
@@ -104,7 +105,8 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
 	}
 
 	for _, tc := range testCases {
-		suite.bm.AddMsgSignedByUser(suite.Ctx, tc.amount)
+		err := suite.bm.AddMsgSignedByUser(suite.Ctx, tc.amount)
+		suite.NoError(err)
 		info, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Require().Nil(err)
 		suite.Equal(tc.expectBlockInfo, *info, "%s", tc.testName)
@@ -144,12 +146,14 @@ func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByApp() {
 		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appName, &appBandwidthInfo)
 		suite.Require().Nil(err)
 
-		suite.bm.AddMsgSignedByApp(suite.Ctx, appName, tc.amount)
+		err = suite.bm.AddMsgSignedByApp(suite.Ctx, appName, tc.amount)
+		suite.NoError(err)
 		info, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Require().Nil(err)
 		suite.Equal(tc.expectBlockInfo, *info, "%s", tc.testName)
 
 		appInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appName)
+		suite.Require().Nil(err)
 		suite.Equal(tc.expectAppInfo, *appInfo, "%s", tc.testName)
 	}
 }
@@ -244,8 +248,9 @@ func (suite *BandwidthManagerTestSuite) TestCalculateCurMsgFee() {
 	}
 
 	for _, tc := range testCases {
-		suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
-		err := suite.bm.CalculateCurMsgFee(suite.Ctx)
+		err := suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
+		suite.NoError(err)
+		err = suite.bm.CalculateCurMsgFee(suite.Ctx)
 		suite.Require().Nil(err)
 
 		info, getErr := suite.bm.storage.GetBlockInfo(suite.Ctx)
@@ -313,10 +318,12 @@ func (suite *BandwidthManagerTestSuite) TestUpdateMaxMPSAndEMA() {
 	}
 
 	for _, tc := range testCases {
-		suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
-		suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.blockInfo)
+		err := suite.bm.storage.SetBandwidthInfo(suite.Ctx, &tc.bandwidthInfo)
+		suite.NoError(err)
+		err = suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.blockInfo)
+		suite.NoError(err)
 
-		err := suite.bm.UpdateMaxMPSAndEMA(suite.Ctx)
+		err = suite.bm.UpdateMaxMPSAndEMA(suite.Ctx)
 		suite.Nil(err, "%s", tc.testName)
 
 		expectedGeneralEMA, err := sdk.NewDecFromStr(tc.expectGeneralEMA)
@@ -426,7 +433,8 @@ func (suite *BandwidthManagerTestSuite) TestIsUserMsgFeeEnough() {
 		info := model.BlockInfo{
 			CurMsgFee: tc.curMsgFee,
 		}
-		suite.bm.storage.SetBlockInfo(suite.Ctx, &info)
+		err := suite.bm.storage.SetBlockInfo(suite.Ctx, &info)
+		suite.NoError(err)
 		res := suite.bm.IsUserMsgFeeEnough(suite.Ctx, tc.providedFee)
 		suite.Equal(tc.expectedRes, res, "%s", tc.testName)
 	}

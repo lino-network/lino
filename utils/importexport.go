@@ -15,6 +15,9 @@ func Load(filepath string, cdc *codec.Codec, factory func() interface{}) (interf
 	}
 	defer f.Close()
 	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
 
 	table := factory()
 	err = cdc.UnmarshalJSON(bytes, table)

@@ -19,7 +19,10 @@ var (
 func setupTest(t *testing.T, height int64) (sdk.Context, InfraManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
-	ph.InitParam(ctx)
+	err := ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 	im := NewInfraManager(testInfraKVStoreKey, ph)
 	return ctx, im
 }
@@ -29,7 +32,10 @@ func getContext(height int64) sdk.Context {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(testInfraKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(ms, abci.Header{Height: height}, false, log.NewNopLogger())
 }

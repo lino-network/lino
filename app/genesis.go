@@ -17,12 +17,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var (
-	flagName       = "name"
-	flagClientHome = "home-client"
-	flagOWK        = "owk"
-)
-
 // genesis state for blockchain
 type GenesisState struct {
 	LoadPrevStates bool                      `json:"load_prev_states"`

@@ -70,7 +70,7 @@ func GetCmdCreatePost(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagContent, "", "content for the post")
 	cmd.Flags().Bool(FlagPreauth, false, "application(developer) that creates the post")
 	for _, v := range []string{FlagAuthor, FlagPostID, FlagPreauth} {
-		cmd.MarkFlagRequired(v)
+		_ = cmd.MarkFlagRequired(v)
 	}
 	return cmd
 }
@@ -146,7 +146,7 @@ func GetCmdDonate(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagMemo, "", "memo of this donation")
 	cmd.Flags().String(FlagApp, "", "donation comes from app")
 	for _, v := range []string{FlagAuthor, FlagPostID, FlagAmount} {
-		cmd.MarkFlagRequired(v)
+		_ = cmd.MarkFlagRequired(v)
 	}
 	return cmd
 }
@@ -179,7 +179,7 @@ func GetCmdIDADonate(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagMemo, "", "memo of this donation")
 	cmd.Flags().String(FlagApp, "", "App's IDA")
 	for _, v := range []string{FlagDonator, FlagAuthor, FlagPostID, FlagAmount, FlagApp} {
-		cmd.MarkFlagRequired(v)
+		_ = cmd.MarkFlagRequired(v)
 	}
 	return cmd
 }
