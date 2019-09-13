@@ -1,6 +1,7 @@
 language: go
 install:
 - make get_tools
+- make get_golangci_lint
 script:
 - make lint
 - make build

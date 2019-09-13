@@ -48,7 +48,7 @@ benchmark:
 GOLANGCI_LINT_VERSION := v1.17.1
 GOLANGCI_LINT_HASHSUM := f5fa647a12f658924d9f7d6b9628d505ab118e8e049e43272de6526053ebe08d
 
-get-golangci-lint:
+get_golangci_lint:
 	cd scripts && bash install-golangci-lint.sh $(GOPATH)/bin $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
 
 lint:
