@@ -8,7 +8,10 @@ import (
 // BeginBlocker
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, bm BandwidthKeeper) {
 	if ctx.BlockHeight() == 1 {
-		bm.ReCalculateAppBandwidthInfo(ctx)
+		err := bm.ReCalculateAppBandwidthInfo(ctx)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if err := bm.BeginBlocker(ctx); err != nil {
 		panic(err)

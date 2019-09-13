@@ -121,7 +121,7 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 				return nil, err
 			}
 			if validator.Deposit.IsZero() {
-				vm.storage.DeleteValidator(ctx, validator.Username)
+				_ = vm.storage.DeleteValidator(ctx, validator.Username)
 			}
 			updates = append(updates, abci.ValidatorUpdate{
 				PubKey: tmtypes.TM2PB.PubKey(validator.PubKey),
@@ -424,7 +424,10 @@ func (vm ValidatorManager) TryBecomeOncallValidator(ctx sdk.Context, username ty
 	if err != nil {
 		return err
 	}
-	defer vm.updateLowestValidator(ctx)
+	defer func() {
+		// TODO(yumin): why is this error ignored?
+		_ = vm.updateLowestValidator(ctx)
+	}()
 	// has alreay in the oncall validator list
 	if types.FindAccountInList(username, lst.OncallValidators) != -1 {
 		return nil

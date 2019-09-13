@@ -44,14 +44,14 @@ type ReputationImpl struct {
 
 var _ Reputation = ReputationImpl{}
 
-func NewReputation(s ReputationStore, BestN int, UserMaxN int, RoundDurationSeconds, SampleWindowSize, DecayFactor int64) Reputation {
+func NewReputation(s ReputationStore, bestN int, userMaxN int, roundDurationSeconds, sampleWindowSize, decayFactor int64) Reputation {
 	return ReputationImpl{
 		store:                s,
-		BestN:                BestN,
-		UserMaxN:             UserMaxN,
-		RoundDurationSeconds: RoundDurationSeconds,
-		SampleWindowSize:     SampleWindowSize,
-		DecayFactor:          DecayFactor,
+		BestN:                bestN,
+		UserMaxN:             userMaxN,
+		RoundDurationSeconds: roundDurationSeconds,
+		SampleWindowSize:     sampleWindowSize,
+		DecayFactor:          decayFactor,
 	}
 }
 

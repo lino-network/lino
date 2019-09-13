@@ -1,3 +1,4 @@
+//nolint:deadcode,unused
 package manager
 
 import (
@@ -68,7 +69,10 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
-	ph.InitParam(ctx)
+	err := ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 	globalManager := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	accManager := NewAccountManager(testAccountKVStoreKey, ph, &globalManager)
 
@@ -76,7 +80,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context, AccountManager, global.
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(ReturnCoinEvent{}, "event/return", nil)
 
-	err := initGlobalManager(ctx, globalManager)
+	err = initGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, accManager, globalManager
 }
@@ -87,7 +91,10 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testAccountKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: height, Time: time.Now()},
@@ -99,8 +106,14 @@ func createTestAccount(ctx sdk.Context, am AccountManager, username string) (sec
 	txPriv := secp256k1.GenPrivKey()
 
 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-	am.CreateAccount(ctx, types.AccountKey(username), signingKey.PubKey(), txPriv.PubKey())
-	am.AddCoinToUsername(ctx, types.AccountKey(username), accParam.RegisterFee)
+	err := am.CreateAccount(ctx, types.AccountKey(username), signingKey.PubKey(), txPriv.PubKey())
+	if err != nil {
+		panic(err)
+	}
+	err = am.AddCoinToUsername(ctx, types.AccountKey(username), accParam.RegisterFee)
+	if err != nil {
+		panic(err)
+	}
 	return signingKey, txPriv
 }
 

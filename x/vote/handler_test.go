@@ -1,3 +1,4 @@
+//nolint:errcheck
 package vote
 
 import (
@@ -168,10 +169,16 @@ func TestRevokeBasic(t *testing.T) {
 	referenceList := &model.ReferenceList{
 		AllValidators: []types.AccountKey{},
 	}
-	vm.storage.SetReferenceList(ctx, referenceList)
+	err = vm.storage.SetReferenceList(ctx, referenceList)
+	if err != nil {
+		panic(err)
+	}
 	msg5 := NewStakeOutMsg("user1", coinToString(voteParam.MinStakeIn))
 
-	vm.storage.SetReferenceList(ctx, referenceList)
+	err = vm.storage.SetReferenceList(ctx, referenceList)
+	if err != nil {
+		panic(err)
+	}
 	result2 := handler(ctx, msg5)
 	assert.Equal(t, sdk.Result{}, result2)
 
@@ -248,7 +255,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 	delegatedCoin := param.MinStakeIn
 	delta := types.NewCoinFromInt64(1 * types.Decimals)
 
-	vm.AddVoter(ctx, user1, param.MinStakeIn)
+	err := vm.AddVoter(ctx, user1, param.MinStakeIn)
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := []struct {
 		testName       string
@@ -306,7 +316,10 @@ func TestDelegatorWithdraw(t *testing.T) {
 
 func TestAddFrozenMoney(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	vm.InitGenesis(ctx)
+	err := vm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user := createTestAccount(ctx, am, "user", minBalance)
@@ -374,7 +387,10 @@ func TestAddFrozenMoney(t *testing.T) {
 
 func TestDeleteVoteBasic(t *testing.T) {
 	ctx, am, vm, gm := setupTest(t, 0)
-	vm.InitGenesis(ctx)
+	err := vm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	handler := NewHandler(vm, am, &gm)
 
 	proposalID1 := types.ProposalKey("1")
@@ -394,6 +410,6 @@ func TestDeleteVoteBasic(t *testing.T) {
 
 	// test delete vote
 	vm.storage.DeleteVote(ctx, proposalID1, "user2")
-	_, err := vm.storage.GetVote(ctx, proposalID1, "user2")
+	_, err = vm.storage.GetVote(ctx, proposalID1, "user2")
 	assert.Equal(t, model.ErrVoteNotFound(), err)
 }

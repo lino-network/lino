@@ -265,7 +265,10 @@ func (vm VoteManager) DelegatorWithdraw(
 			return err
 		}
 	} else {
-		vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation)
+		err := vm.storage.SetDelegation(ctx, voterName, delegatorName, delegation)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

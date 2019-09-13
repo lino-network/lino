@@ -43,7 +43,10 @@ func setupTest(t *testing.T, height int64) (
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
-	ph.InitParam(ctx)
+	err := ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
@@ -58,7 +61,7 @@ func setupTest(t *testing.T, height int64) (
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "2", nil)
 	cdc.RegisterConcrete(DecideProposalEvent{}, "3", nil)
 
-	err := initGlobalManager(ctx, gm)
+	err = initGlobalManager(ctx, gm)
 	assert.Nil(t, err)
 	return ctx, am, proposalManager, postManager, voteManager, valManager, gm
 }
@@ -74,7 +77,10 @@ func getContext(height int64) sdk.Context {
 	ms.MountStoreWithDB(testValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(testPostKVStoreKey, sdk.StoreTypeIAVL, db)
 
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(ms, abci.Header{Height: height, Time: time.Now()}, false, log.NewNopLogger())
 }
@@ -82,8 +88,14 @@ func getContext(height int64) sdk.Context {
 // helper function to create an account for testing purpose
 func createTestAccount(
 	ctx sdk.Context, am acc.AccountKeeper, username string, initCoin types.Coin) types.AccountKey {
-	am.CreateAccount(ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-	am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
+	err := am.CreateAccount(ctx, types.AccountKey(username), secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
+	if err != nil {
+		panic(err)
+	}
+	err = am.AddCoinToUsername(ctx, types.AccountKey(username), initCoin)
+	if err != nil {
+		panic(err)
+	}
 	return types.AccountKey(username)
 }
 

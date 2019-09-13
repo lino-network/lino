@@ -77,12 +77,16 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.userWithBalanceSaving = types.NewCoinFromInt64(1000 * types.Decimals)
 	suite.unregSaving = types.NewCoinFromInt64(1 * types.Decimals)
 
-	suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SigningKey, suite.userWithoutBalance.TransactionKey)
+	err := suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SigningKey, suite.userWithoutBalance.TransactionKey)
+	suite.NoError(err)
 
-	suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
-	suite.am.AddCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
+	err = suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
+	suite.NoError(err)
+	err = suite.am.AddCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
+	suite.NoError(err)
 
-	suite.am.AddCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
+	err = suite.am.AddCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
+	suite.NoError(err)
 
 	suite.ph.On("GetAccountParam", mock.Anything).Return(&parammodel.AccountParam{
 		RegisterFee:    types.NewCoinFromInt64(100 * types.Decimals),
@@ -1365,7 +1369,10 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 
 	for _, tc := range testCases {
 		for i := 0; i < tc.increaseTimes; i++ {
-			am.IncreaseSequenceByOne(ctx, addr)
+			err = am.IncreaseSequenceByOne(ctx, addr)
+			if err != nil {
+				panic(err)
+			}
 		}
 		seq, err := am.GetSequence(ctx, addr)
 		if err != nil {

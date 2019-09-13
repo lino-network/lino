@@ -1,3 +1,4 @@
+//nolint:deadcode,unused
 package app
 
 import (
@@ -324,7 +325,10 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	for i := 0; i < len(expectBalanceList); i++ {
 		expectBalanceList[i] = expectBaseBalance
 	}
-	lb.globalManager.DistributeHourlyInflation(ctx)
+	err := lb.globalManager.DistributeHourlyInflation(ctx)
+	if err != nil {
+		panic(err)
+	}
 	lb.distributeInflationToValidator(ctx)
 	// simulate app
 	// hourly inflation
@@ -467,8 +471,11 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 			}
 			infra, _ := infraStorage.GetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
 			infra.Usage = cs.consumptionList[i]
-			infraStorage.SetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)), infra)
-			totalWeight = totalWeight + cs.consumptionList[i]
+			err = infraStorage.SetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)), infra)
+			if err != nil {
+				panic(err)
+			}
+			totalWeight += cs.consumptionList[i]
 		}
 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
@@ -624,9 +631,15 @@ func TestIncreaseMinute(t *testing.T) {
 	for i := 1; i < types.MinutesPerMonth/10; i++ {
 		// simulate add lino stake and friction at previous block
 		ctx := lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64((i-1)*60), 0)})
-		lb.globalManager.AddLinoStakeToStat(ctx, types.NewCoinFromInt64(1))
-		lb.globalManager.AddFrictionAndRegisterContentRewardEvent(
+		err := lb.globalManager.AddLinoStakeToStat(ctx, types.NewCoinFromInt64(1))
+		if err != nil {
+			panic(err)
+		}
+		err = lb.globalManager.AddFrictionAndRegisterContentRewardEvent(
 			ctx, posttypes.RewardEvent{}, types.NewCoinFromInt64(2), types.NewMiniDollar(1))
+		if err != nil {
+			panic(err)
+		}
 		expectLinoStakeStat.TotalConsumptionFriction =
 			expectLinoStakeStat.TotalConsumptionFriction.Plus(types.NewCoinFromInt64(2))
 		expectLinoStakeStat.UnclaimedFriction =

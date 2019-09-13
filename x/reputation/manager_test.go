@@ -32,7 +32,7 @@ type reputationTestSuite struct {
 
 func (suite *reputationTestSuite) timefies() {
 	suite.t = suite.t.Add(25 * time.Hour)
-	suite.height = suite.height + 1
+	suite.height += 1
 	// donate several rounds
 	newctx := sdk.NewContext(
 		suite.ms, abci.Header{

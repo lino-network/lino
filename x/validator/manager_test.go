@@ -1,3 +1,4 @@
+//nolint:errcheck
 package validator
 
 import (
@@ -19,7 +20,10 @@ import (
 func TestByzantines(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -28,12 +32,15 @@ func TestByzantines(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		if err != nil {
+			panic(err)
+		}
 
 		// they will deposit 10,20,30...200, 210
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
-		deposit := types.LNO(strconv.FormatInt(num, 10))
+		deposit := strconv.FormatInt(num, 10)
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
@@ -49,7 +56,7 @@ func TestByzantines(t *testing.T) {
 			Address: valKeys[idx].Address(),
 			Power:   1000}})
 	}
-	_, err := valManager.FireIncompetentValidator(ctx, byzantines)
+	_, err = valManager.FireIncompetentValidator(ctx, byzantines)
 	assert.Nil(t, err)
 
 	validatorList3, _ := valManager.storage.GetValidatorList(ctx)
@@ -66,7 +73,10 @@ func TestByzantines(t *testing.T) {
 func TestAbsentValidatorWillBeFired(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -75,12 +85,15 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		if err != nil {
+			panic(err)
+		}
 
 		// they will deposit 10,20,30...200, 210
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
-		deposit := types.LNO(strconv.FormatInt(num, 10))
+		deposit := strconv.FormatInt(num, 10)
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
@@ -110,7 +123,7 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	for i, v := range perm {
 		destSigningList[v] = signingList[i]
 	}
-	err := valManager.UpdateSigningStats(ctx, signingList)
+	err = valManager.UpdateSigningStats(ctx, signingList)
 	assert.Nil(t, err)
 
 	index = 0
@@ -162,7 +175,10 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 func TestAbsentValidatorWontBeFired(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -171,12 +187,15 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		if err != nil {
+			panic(err)
+		}
 
 		// they will deposit 1000,2000,3000...20000, 21000
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*1000) + validatorMinDeposit/types.Decimals
-		deposit := types.LNO(strconv.FormatInt(num, 10))
+		deposit := strconv.FormatInt(num, 10)
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
@@ -206,7 +225,7 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 	for i, v := range perm {
 		destSigningList[v] = signingList[i]
 	}
-	err := valManager.UpdateSigningStats(ctx, signingList)
+	err = valManager.UpdateSigningStats(ctx, signingList)
 	assert.Nil(t, err)
 
 	index = 0
@@ -280,7 +299,7 @@ func TestGetOncallList(t *testing.T) {
 		// they will deposit 10,20,30...200, 210
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*10) + validatorMinDeposit/types.Decimals
-		deposit := types.LNO(strconv.FormatInt(num, 10))
+		deposit := strconv.FormatInt(num, 10)
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		name := "user" + strconv.Itoa(i)
 		msg := NewValidatorDepositMsg(name, deposit, valKeys[i], "")
@@ -319,7 +338,10 @@ func TestPunishmentBasic(t *testing.T) {
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, types.PunishByzantine)
+	_, err := valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, types.PunishByzantine)
+	if err != nil {
+		panic(err)
+	}
 	lst, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 1, len(lst.OncallValidators))
 	assert.Equal(t, 1, len(lst.AllValidators))
@@ -329,7 +351,10 @@ func TestPunishmentBasic(t *testing.T) {
 	assert.Equal(t, true, validator.Deposit.IsZero())
 
 	// punish user1 as missing vote (wont explicitly remove)
-	valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), valParam.PenaltyMissVote, types.PunishDidntVote)
+	_, err = valManager.PunishOncallValidator(ctx, types.AccountKey("user1"), valParam.PenaltyMissVote, types.PunishDidntVote)
+	if err != nil {
+		panic(err)
+	}
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 0, len(lst2.OncallValidators))
 	assert.Equal(t, 0, len(lst2.AllValidators))
@@ -355,7 +380,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*1000) + validatorMinDeposit/types.Decimals
-		deposit := types.LNO(strconv.FormatInt(num, 10))
+		deposit := strconv.FormatInt(num, 10)
 
 		valKeys[i] = secp256k1.GenPrivKey().PubKey()
 		msg := NewValidatorDepositMsg("user"+strconv.Itoa(i+1), deposit, valKeys[i], "")
@@ -372,7 +397,10 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 	// punish user4 as missing vote (wont explicitly remove)
 	// user3 will become the lowest one with power (min + 3000)
-	valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), types.PunishDidntVote)
+	_, err := valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), types.PunishDidntVote)
+	if err != nil {
+		panic(err)
+	}
 	lst2, _ := valManager.storage.GetValidatorList(ctx)
 	assert.Equal(t, 21, len(lst2.OncallValidators))
 	assert.Equal(t, 24, len(lst2.AllValidators))
@@ -395,8 +423,14 @@ func TestInitValidators(t *testing.T) {
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
-	valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
+	err := valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
+	if err != nil {
+		panic(err)
+	}
+	err = valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
+	if err != nil {
+		panic(err)
+	}
 
 	val1 := abci.ValidatorUpdate{
 		PubKey: tmtypes.TM2PB.PubKey(valKey1),
@@ -467,8 +501,14 @@ func TestGetValidatorUpdates(t *testing.T) {
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
-	valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
+	err := valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
+	if err != nil {
+		panic(err)
+	}
+	err = valManager.RegisterValidator(ctx, user2, valKey2, param.ValidatorMinCommittingDeposit, "")
+	if err != nil {
+		panic(err)
+	}
 
 	val1 := abci.ValidatorUpdate{
 		PubKey: tmtypes.TM2PB.PubKey(valKey1),
@@ -555,9 +595,12 @@ func TestIsLegalWithdraw(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	valManager.InitGenesis(ctx)
-	valManager.RegisterValidator(
+	err := valManager.RegisterValidator(
 		ctx, user1, secp256k1.GenPrivKey().PubKey(),
 		param.ValidatorMinCommittingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := []struct {
 		testName         string

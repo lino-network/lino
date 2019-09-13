@@ -179,7 +179,7 @@ func GetCmdIDAAuthorize(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().Bool(FlagActive, false, "true = active IDA account")
-	cmd.MarkFlagRequired(FlagActive)
+	_ = cmd.MarkFlagRequired(FlagActive)
 	return cmd
 }
 
@@ -203,6 +203,6 @@ func GetCmdUpdateAffiliated(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().Bool(FlagActive, false, "true = add USERNAME as affiliated of APP")
-	cmd.MarkFlagRequired(FlagActive)
+	_ = cmd.MarkFlagRequired(FlagActive)
 	return cmd
 }

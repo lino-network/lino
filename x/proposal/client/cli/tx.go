@@ -49,7 +49,7 @@ func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.Flags().Int64(FlagProposalID, -1, "proposal id")
 	cmd.Flags().Bool(FlagResult, true, "vote result")
-	cmd.MarkFlagRequired(FlagProposalID)
-	cmd.MarkFlagRequired(FlagResult)
+	_ = cmd.MarkFlagRequired(FlagProposalID)
+	_ = cmd.MarkFlagRequired(FlagResult)
 	return cmd
 }

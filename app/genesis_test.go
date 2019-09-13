@@ -142,7 +142,7 @@ func TestGetGenesisJson(t *testing.T) {
 	appState, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
 	appGenesisState := new(GenesisState)
-	err = cdc.UnmarshalJSON([]byte(appState), appGenesisState)
+	err = cdc.UnmarshalJSON(appState, appGenesisState)
 	assert.Nil(t, err)
 
 	assert.Equal(t, genesisState, *appGenesisState)

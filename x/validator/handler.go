@@ -57,7 +57,7 @@ func handleDepositMsg(
 			ctx, msg.Username, msg.ValPubKey, coin, msg.Link); err != nil {
 			return err.Result()
 		}
-	} else {
+	} else { //nolint:gocritic
 		// Deposit coins
 		if err := valManager.Deposit(ctx, msg.Username, coin, msg.Link); err != nil {
 			return err.Result()

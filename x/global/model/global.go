@@ -69,7 +69,7 @@ type ConsumptionMeta struct {
 func (c *ConsumptionMeta) ToIR() ConsumptionMetaIR {
 	return ConsumptionMetaIR{
 		ConsumptionFrictionRate:       c.ConsumptionFrictionRate.String(),
-		ConsumptionWindow:             types.Coin{c.ConsumptionWindow.Int},
+		ConsumptionWindow:             types.Coin{Amount: c.ConsumptionWindow.Int},
 		ConsumptionRewardPool:         c.ConsumptionRewardPool,
 		ConsumptionFreezingPeriodSec:  c.ConsumptionFreezingPeriodSec,
 		IsConsumptionWindowDollarUnit: true,

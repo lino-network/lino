@@ -1,3 +1,4 @@
+//nolint:deadcode,unused
 package proposal
 
 import (
@@ -22,7 +23,10 @@ var (
 func TestChangeParamProposal(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, proposalManager, postManager, &gm, vm)
-	proposalManager.InitGenesis(ctx)
+	err := proposalManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	allocation := param.GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
@@ -130,7 +134,10 @@ func TestContentCensorshipProposal(t *testing.T) {
 	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := proposalManager.paramHolder.GetProposalParam(ctx)
 
-	proposalManager.InitGenesis(ctx)
+	err := proposalManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	proposalID1 := types.ProposalKey(strconv.FormatInt(int64(1), 10))
 
@@ -138,7 +145,10 @@ func TestContentCensorshipProposal(t *testing.T) {
 	user2, postID2 := createTestPost(t, ctx, "user2", "postID", c4600, am, postManager, "0")
 	user3 := createTestAccount(
 		ctx, am, "user3", proposalParam.ContentCensorshipMinDeposit.Minus(types.NewCoinFromInt64((1))))
-	postManager.DeletePost(ctx, types.GetPermlink(user2, postID2))
+	err = postManager.DeletePost(ctx, types.GetPermlink(user2, postID2))
+	if err != nil {
+		panic(err)
+	}
 	censorshipReason := "reason"
 	proposal1 := &model.ContentCensorshipProposal{
 		ProposalInfo: model.ProposalInfo{
@@ -251,7 +261,10 @@ func TestContentCensorshipProposal(t *testing.T) {
 
 func TestAddFrozenMoney(t *testing.T) {
 	ctx, am, proposalManager, _, _, _, gm := setupTest(t, 0)
-	proposalManager.InitGenesis(ctx)
+	err := proposalManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user := createTestAccount(ctx, am, "user", minBalance)
@@ -323,7 +336,10 @@ func TestVoteProposalBasic(t *testing.T) {
 	ctx, am, proposalManager, postManager, vm, _, gm := setupTest(t, 0)
 	handler := NewHandler(am, proposalManager, postManager, &gm, vm)
 	curTime := ctx.BlockHeader().Time.Unix()
-	proposalManager.InitGenesis(ctx)
+	err := proposalManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	user2 := types.AccountKey("user2")
 

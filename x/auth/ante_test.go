@@ -1,3 +1,4 @@
+//nolint:unused,deadcode
 package auth
 
 import (
@@ -117,12 +118,18 @@ func (suite *AnteTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 	ctx := sdk.NewContext(
 		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
-	ph.InitParam(ctx)
+	err = ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
@@ -133,7 +140,10 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	bm := &bandwidthmock.BandwidthKeeper{}
 
-	initGlobalManager(ctx, gm)
+	err = initGlobalManager(ctx, gm)
+	if err != nil {
+		panic(err)
+	}
 	anteHandler := NewAnteHandler(am, bm)
 
 	suite.am = am
@@ -149,9 +159,15 @@ func (suite *AnteTestSuite) createTestAccount(username string) (secp256k1.PrivKe
 	signingKey := secp256k1.GenPrivKey()
 	transactionKey := secp256k1.GenPrivKey()
 	accParams, _ := suite.ph.GetAccountParam(suite.ctx)
-	suite.am.CreateAccount(suite.ctx, types.AccountKey(username),
+	err := suite.am.CreateAccount(suite.ctx, types.AccountKey(username),
 		signingKey.PubKey(), transactionKey.PubKey())
-	suite.am.AddCoinToUsername(suite.ctx, types.AccountKey(username), accParams.RegisterFee)
+	if err != nil {
+		panic(err)
+	}
+	err = suite.am.AddCoinToUsername(suite.ctx, types.AccountKey(username), accParams.RegisterFee)
+	if err != nil {
+		panic(err)
+	}
 	return signingKey, transactionKey, types.AccountKey(username)
 }
 

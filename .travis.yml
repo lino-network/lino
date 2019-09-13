@@ -2,6 +2,7 @@ language: go
 install:
 - make get_tools
 script:
+- make lint
 - make build
 - make install
 - make test

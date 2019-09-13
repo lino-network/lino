@@ -141,7 +141,7 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-				signBytes := auth.StdSignBytes(ctx.ChainID(), uint64(0), uint64(seq), fee, sdkMsgs, stdTx.GetMemo())
+				signBytes := auth.StdSignBytes(ctx.ChainID(), uint64(0), seq, fee, sdkMsgs, stdTx.GetMemo())
 				// verify signature
 				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
 					return ctx, ErrUnverifiedBytes(

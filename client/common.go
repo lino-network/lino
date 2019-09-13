@@ -21,7 +21,7 @@ func parsePrivKey(key string) (crypto.PrivKey, error) {
 	if err != nil {
 		return privKey, err
 	}
-	privKey, _ = cryptoAmino.PrivKeyFromBytes(privKeyBytes)
+	privKey, err = cryptoAmino.PrivKeyFromBytes(privKeyBytes)
 	if err != nil {
 		return privKey, err
 	}

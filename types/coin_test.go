@@ -14,8 +14,8 @@ var (
 	bigString = "1000000000000000000000000"
 	bigInt, _ = new(big.Int).SetString(bigString, 10)
 
-	doubleBigString  = "2000000000000000000000000"
-	doubleBigInt, _  = new(big.Int).SetString(doubleBigString, 10)
+	doubleBigString = "2000000000000000000000000"
+	// doubleBigInt, _  = new(big.Int).SetString(doubleBigString, 10)
 	bigCoin, _       = NewCoinFromString(bigString)
 	doubleBigCoin, _ = NewCoinFromString(doubleBigString)
 )
@@ -194,7 +194,7 @@ func TestLNOToCoin(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		coin, err := LinoToCoin(LNO(tc.inputString))
+		coin, err := LinoToCoin(tc.inputString)
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff err, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
@@ -653,7 +653,7 @@ func TestSerializationGoWire(t *testing.T) {
 
 	r2 := NewCoinFromInt64(0)
 	//err = json.Unmarshal([]byte(bz), &r2)
-	err = cdc.UnmarshalJSON([]byte(bz), &r2)
+	err = cdc.UnmarshalJSON(bz, &r2)
 	//panic(fmt.Sprintf("debug bz: %v\n", string(bz)))
 	if err != nil {
 		t.Errorf("TestSerializationGoWire: failed to unmarshal, got err %v", err)

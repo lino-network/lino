@@ -30,7 +30,7 @@ type ProposalInfo struct {
 type ChangeParamProposal struct {
 	ProposalInfo
 	Param  param.Parameter `json:"param"`
-	Reason string          `json:"reason"`
+	Reason string          `json:"reason"` //nolint:govet
 }
 
 // GetProposalInfo - implements Proposal
@@ -43,7 +43,7 @@ func (p *ChangeParamProposal) SetProposalInfo(info ProposalInfo) { p.ProposalInf
 type ContentCensorshipProposal struct {
 	ProposalInfo
 	Permlink types.Permlink `json:"permlink"`
-	Reason   string         `json:"reason"`
+	Reason   string         `json:"reason"` //nolint:govet
 }
 
 // GetProposalInfo - implements Proposal
@@ -56,7 +56,7 @@ func (p *ContentCensorshipProposal) SetProposalInfo(info ProposalInfo) { p.Propo
 type ProtocolUpgradeProposal struct {
 	ProposalInfo
 	Link   string `json:"link"`
-	Reason string `json:"reason"`
+	Reason string `json:"reason"` //nolint:govet
 }
 
 // GetProposalInfo - implements Proposal

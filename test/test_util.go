@@ -202,7 +202,7 @@ func CreateAccount(
 	numOfLino string) {
 
 	registerMsg := acctypes.NewRegisterMsg(
-		GenesisUser, accountName, types.LNO(numOfLino),
+		GenesisUser, accountName, numOfLino,
 		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }

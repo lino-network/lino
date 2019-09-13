@@ -176,7 +176,10 @@ func TestIsLegalVoterWithdraw(t *testing.T) {
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 
-	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(100*types.Decimals))
+	err := vm.AddVoter(ctx, user1, types.NewCoinFromInt64(100*types.Decimals))
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := []struct {
 		testName       string
@@ -232,7 +235,10 @@ func TestIsLegalDelegatorWithdraw(t *testing.T) {
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	user2 := createTestAccount(ctx, am, "user2", minBalance)
 
-	vm.AddVoter(ctx, user1, types.NewCoinFromInt64(101*types.Decimals))
+	err := vm.AddVoter(ctx, user1, types.NewCoinFromInt64(101*types.Decimals))
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := []struct {
 		testName       string

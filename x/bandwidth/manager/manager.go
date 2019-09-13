@@ -175,15 +175,15 @@ func (bm BandwidthManager) UpdateMaxMPSAndEMA(ctx sdk.Context) sdk.Error {
 	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
 
 	// EMA_general = EMA_general_prev * (1 - k_general) + generalMPS * k_general
-	generalMPS := linotypes.NewDecFromRat(int64(blockInfo.TotalMsgSignedByUser), pastTime)
+	generalMPS := linotypes.NewDecFromRat(blockInfo.TotalMsgSignedByUser, pastTime)
 	bandwidthInfo.GeneralMsgEMA = bm.calculateEMA(bandwidthInfo.GeneralMsgEMA, params.GeneralMsgEMAFactor, generalMPS)
 
 	// EMA_app = EMA_app_prev * (1 - k_app) + appMPS * k_app
-	appMPS := linotypes.NewDecFromRat(int64(blockInfo.TotalMsgSignedByApp), pastTime)
+	appMPS := linotypes.NewDecFromRat(blockInfo.TotalMsgSignedByApp, pastTime)
 	bandwidthInfo.AppMsgEMA = bm.calculateEMA(bandwidthInfo.AppMsgEMA, params.AppMsgEMAFactor, appMPS)
 
 	// MaxMPS = max( (totalMsgSignedByUser + totalMsgSignedByApp)/(curBlockTime - lastBlockTime), MaxMPS)
-	totalMPS := linotypes.NewDecFromRat(int64(blockInfo.TotalMsgSignedByUser)+int64(blockInfo.TotalMsgSignedByApp), pastTime)
+	totalMPS := linotypes.NewDecFromRat(blockInfo.TotalMsgSignedByUser+blockInfo.TotalMsgSignedByApp, pastTime)
 	if totalMPS.GT(bandwidthInfo.MaxMPS) {
 		bandwidthInfo.MaxMPS = totalMPS
 	}
@@ -300,7 +300,7 @@ func (bm BandwidthManager) RefillAppBandwidthCredit(ctx sdk.Context, accKey lino
 	}
 	info.LastRefilledAt = curTime
 
-	if bm.storage.SetAppBandwidthInfo(ctx, accKey, info); err != nil {
+	if err := bm.storage.SetAppBandwidthInfo(ctx, accKey, info); err != nil {
 		return err
 	}
 	return nil
@@ -571,7 +571,7 @@ func (bm BandwidthManager) getAppMsgQuota(ctx sdk.Context) (sdk.Dec, sdk.Error) 
 		return sdk.NewDec(1), err
 	}
 
-	curMaxMPS := sdk.NewDec(1)
+	var curMaxMPS sdk.Dec
 	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
 		curMaxMPS = params.ExpectedMaxMPS
 	} else {
@@ -596,7 +596,7 @@ func (bm BandwidthManager) getGeneralMsgQuota(ctx sdk.Context) (sdk.Dec, sdk.Err
 		return sdk.NewDec(1), err
 	}
 
-	curMaxMPS := sdk.NewDec(1)
+	var curMaxMPS sdk.Dec
 	if params.ExpectedMaxMPS.GT(bandwidthInfo.MaxMPS) {
 		curMaxMPS = params.ExpectedMaxMPS
 	} else {

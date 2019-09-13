@@ -10,22 +10,34 @@ import (
 
 func TestRegister(t *testing.T) {
 	ctx, im := setupTest(t, 0)
-	im.InitGenesis(ctx)
+	err := im.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	user1 := types.AccountKey("user1")
-	im.RegisterInfraProvider(ctx, user1)
+	err = im.RegisterInfraProvider(ctx, user1)
+	if err != nil {
+		panic(err)
+	}
 
-	_, err := im.storage.GetInfraProvider(ctx, user1)
+	_, err = im.storage.GetInfraProvider(ctx, user1)
 	assert.Nil(t, err)
 
 }
 
 func TestInfraProviderList(t *testing.T) {
 	ctx, im := setupTest(t, 0)
-	im.InitGenesis(ctx)
+	err := im.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	user1 := types.AccountKey("user1")
-	im.RegisterInfraProvider(ctx, user1)
+	err = im.RegisterInfraProvider(ctx, user1)
+	if err != nil {
+		panic(err)
+	}
 
 	addErr := im.AddToInfraProviderList(ctx, "user1")
 	assert.Nil(t, addErr)
@@ -44,16 +56,31 @@ func TestInfraProviderList(t *testing.T) {
 
 func TestReportUsage(t *testing.T) {
 	ctx, im := setupTest(t, 0)
-	im.InitGenesis(ctx)
+	err := im.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	user1 := types.AccountKey("user1")
-	im.RegisterInfraProvider(ctx, user1)
+	err = im.RegisterInfraProvider(ctx, user1)
+	if err != nil {
+		panic(err)
+	}
 
 	user2 := types.AccountKey("user2")
-	im.RegisterInfraProvider(ctx, user2)
+	err = im.RegisterInfraProvider(ctx, user2)
+	if err != nil {
+		panic(err)
+	}
 
-	im.AddToInfraProviderList(ctx, "user1")
-	im.AddToInfraProviderList(ctx, "user2")
+	err = im.AddToInfraProviderList(ctx, "user1")
+	if err != nil {
+		panic(err)
+	}
+	err = im.AddToInfraProviderList(ctx, "user2")
+	if err != nil {
+		panic(err)
+	}
 
 	testCases := map[string]struct {
 		user1Usage             int64
@@ -81,8 +108,14 @@ func TestReportUsage(t *testing.T) {
 		},
 	}
 	for testName, tc := range testCases {
-		im.ReportUsage(ctx, "user1", tc.user1Usage)
-		im.ReportUsage(ctx, "user2", tc.user2Usage)
+		err := im.ReportUsage(ctx, "user1", tc.user1Usage)
+		if err != nil {
+			panic(err)
+		}
+		err = im.ReportUsage(ctx, "user2", tc.user2Usage)
+		if err != nil {
+			panic(err)
+		}
 
 		w1, _ := im.GetUsageWeight(ctx, "user1")
 		if !tc.expectUser1UsageWeight.Equal(w1) {
@@ -95,6 +128,9 @@ func TestReportUsage(t *testing.T) {
 			t.Errorf("%s: diff user2 usage weight, got %v, want %v", testName, w2, tc.expectUser2UsageWeight)
 			return
 		}
-		im.ClearUsage(ctx)
+		err = im.ClearUsage(ctx)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

@@ -58,9 +58,9 @@ func (is InfraProviderStorage) GetInfraProvider(
 
 // SetInfraProvider - set infra provider to KVStore
 func (is InfraProviderStorage) SetInfraProvider(
-	ctx sdk.Context, accKey types.AccountKey, InfraProvider *InfraProvider) sdk.Error {
+	ctx sdk.Context, accKey types.AccountKey, infraProvider *InfraProvider) sdk.Error {
 	store := ctx.KVStore(is.key)
-	InfraProviderByte, err := is.cdc.MarshalBinaryLengthPrefixed(*InfraProvider)
+	InfraProviderByte, err := is.cdc.MarshalBinaryLengthPrefixed(*infraProvider)
 	if err != nil {
 		return ErrFailedToMarshalInfraProvider(err)
 	}

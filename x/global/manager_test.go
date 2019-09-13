@@ -1,3 +1,4 @@
+//nolint:unused,deadcode
 package global
 
 import (
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	eventTypeTestEvent = "1"
+// eventTypeTestEvent = "1"
 )
 
 type testEvent struct{}
@@ -38,7 +39,10 @@ func getContext() sdk.Context {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestGlobalKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(ms, abci.Header{Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 }
@@ -46,12 +50,15 @@ func getContext() sdk.Context {
 func setupTest(t *testing.T) (sdk.Context, GlobalManager) {
 	ctx := getContext()
 	holder := param.NewParamHolder(TestParamKVStoreKey)
-	holder.InitParam(ctx)
+	err := holder.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 	globalManager := NewGlobalManager(TestGlobalKVStoreKey, holder)
 	cdc := globalManager.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)
 	cdc.RegisterConcrete(testEvent{}, "test", nil)
-	err := InitGlobalManager(ctx, globalManager)
+	err = InitGlobalManager(ctx, globalManager)
 	assert.Nil(t, err)
 	return ctx, globalManager
 }

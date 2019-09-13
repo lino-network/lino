@@ -175,9 +175,9 @@ func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address s
 
 // UpdateJSONMeta - update user JONS meta data
 func (accManager AccountManager) UpdateJSONMeta(
-	ctx sdk.Context, username linotypes.AccountKey, JSONMeta string) sdk.Error {
+	ctx sdk.Context, username linotypes.AccountKey, jsonMeta string) sdk.Error {
 	accountMeta := accManager.storage.GetMeta(ctx, username)
-	accountMeta.JSONMeta = JSONMeta
+	accountMeta.JSONMeta = jsonMeta
 	accManager.storage.SetMeta(ctx, username, accountMeta)
 	return nil
 }
@@ -415,7 +415,7 @@ func (accManager AccountManager) RecoverAccount(
 	newBank.Username = username
 	oldBank.Username = ""
 
-	newBank.Sequence = newBank.Sequence + oldBank.Sequence
+	newBank.Sequence += oldBank.Sequence
 	newBank.Saving = newBank.Saving.Plus(oldBank.Saving)
 	oldBank.Saving = linotypes.NewCoinFromInt64(0)
 
@@ -581,18 +581,4 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 // IterateAccounts - iterate accounts in KVStore
 func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
 	accManager.storage.IterateAccounts(ctx, process)
-}
-
-func min(a, b int64) int64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int64) int64 {
-	if a < b {
-		return b
-	}
-	return a
 }

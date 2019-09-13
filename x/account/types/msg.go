@@ -251,10 +251,10 @@ func (msg RegisterMsg) GetConsumeAmount() types.Coin {
 }
 
 // NewUpdateAccountMsg - construct user update msg to update user JSON meta info.
-func NewUpdateAccountMsg(username string, JSONMeta string) UpdateAccountMsg {
+func NewUpdateAccountMsg(username string, jsonMeta string) UpdateAccountMsg {
 	return UpdateAccountMsg{
 		Username: types.AccountKey(username),
-		JSONMeta: JSONMeta,
+		JSONMeta: jsonMeta,
 	}
 }
 

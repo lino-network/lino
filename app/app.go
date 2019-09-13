@@ -420,8 +420,14 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		panic(err)
 	}
 	if chainStartTime == 0 {
-		lb.globalManager.SetChainStartTime(ctx, ctx.BlockHeader().Time.Unix())
-		lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time.Unix())
+		err := lb.globalManager.SetChainStartTime(ctx, ctx.BlockHeader().Time.Unix())
+		if err != nil {
+			panic(err)
+		}
+		err = lb.globalManager.SetLastBlockTime(ctx, ctx.BlockHeader().Time.Unix())
+		if err != nil {
+			panic(err)
+		}
 		chainStartTime = ctx.BlockHeader().Time.Unix()
 	}
 
@@ -461,13 +467,16 @@ func (lb *LinoBlockchain) executeTimeEvents(ctx sdk.Context) {
 	for i := lastBlockTime; i < currentTime; i++ {
 		if timeEvents := lb.globalManager.GetTimeEventListAtTime(ctx, i); timeEvents != nil {
 			lb.executeEvents(ctx, timeEvents.Events)
-			lb.globalManager.RemoveTimeEventList(ctx, i)
+			err := lb.globalManager.RemoveTimeEventList(ctx, i)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
 
 // execute events in list based on their type
-func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) sdk.Error {
+func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event) {
 	for _, event := range eventList {
 		switch e := event.(type) {
 		case posttypes.RewardEvent:
@@ -492,7 +501,6 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			ctx.Logger().Error(fmt.Sprintf("skipping event: %+v", e))
 		}
 	}
-	return nil
 }
 
 // udpate validator set and renew reputation round
@@ -542,15 +550,27 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	lb.globalManager.DistributeHourlyInflation(ctx)
+	err := lb.globalManager.DistributeHourlyInflation(ctx)
+	if err != nil {
+		panic(err)
+	}
 	lb.distributeInflationToValidator(ctx)
-	lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx)
+	err = lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // execute daily event, record consumption friction and lino power
 func (lb *LinoBlockchain) executeDailyEvent(ctx sdk.Context) {
-	lb.globalManager.RecordConsumptionAndLinoStake(ctx)
-	lb.bandwidthManager.DecayMaxMPS(ctx)
+	err := lb.globalManager.RecordConsumptionAndLinoStake(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = lb.bandwidthManager.DecayMaxMPS(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // execute monthly event, distribute inflation to infra and application
@@ -564,7 +584,7 @@ func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 
 }
 
-func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) {
+func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) { //nolint:unused
 	if err := lb.globalManager.SetTotalLinoAndRecalculateGrowthRate(ctx); err != nil {
 		panic(err)
 	}
@@ -589,7 +609,10 @@ func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
 		// though only differs in round?
 		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
 		coinPerValidator := types.DecToCoin(ratPerValidator)
-		lb.accountManager.AddCoinToUsername(ctx, validator, coinPerValidator)
+		err := lb.accountManager.AddCoinToUsername(ctx, validator, coinPerValidator)
+		if err != nil {
+			panic(err)
+		}
 		coin = coin.Minus(coinPerValidator)
 	}
 }
@@ -609,7 +632,10 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, provider := range lst.AllInfraProviders {
 		if idx == (len(lst.AllInfraProviders) - 1) {
-			lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
+			err := lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
+			if err != nil {
+				panic(err)
+			}
 			break
 		}
 		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
@@ -619,7 +645,10 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := types.DecToCoin(myShareRat)
 		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		lb.accountManager.AddCoinToUsername(ctx, provider, myShareCoin)
+		err = lb.accountManager.AddCoinToUsername(ctx, provider, myShareCoin)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
@@ -660,12 +689,18 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		}
 		defer f.Close()
 		jsonbytes, err := lb.cdc.MarshalJSON(exporter(ctx))
-		f.Write(jsonbytes)
 		if err != nil {
 			panic("failed to marshal json for " + filename + " due to " + err.Error())
 		}
+		_, err = f.Write(jsonbytes)
+		if err != nil {
+			panic(err)
+		}
 		fmt.Printf("export for %s done: %d bytes\n", filename, len(jsonbytes))
-		f.Sync()
+		err = f.Sync()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// TODO(yumin): accountStateFile
@@ -693,7 +728,10 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
 		return lb.voteManager.Export(ctx).ToIR()
 	})
-	lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
+	err = lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
+	if err != nil {
+		panic(err)
+	}
 
 	genesisState := GenesisState{}
 

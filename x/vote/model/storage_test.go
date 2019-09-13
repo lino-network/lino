@@ -22,7 +22,10 @@ func setup(t *testing.T) (sdk.Context, VoteStorage) {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	vs := NewVoteStorage(TestKVStoreKey)
 	return ctx, vs
@@ -188,7 +191,10 @@ func TestVoter(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, voter, *voterPtr, "voter should be equal")
 
-	vs.DeleteVoter(ctx, user)
+	err = vs.DeleteVoter(ctx, user)
+	if err != nil {
+		panic(err)
+	}
 	voterPtr, err = vs.GetVoter(ctx, user)
 	assert.Nil(t, voterPtr)
 	assert.Equal(t, ErrVoterNotFound(), err)
@@ -338,7 +344,10 @@ func TestVote(t *testing.T) {
 
 	for _, tc := range testCases {
 		if tc.isDelete {
-			vs.DeleteVote(ctx, tc.proposalID, tc.voter)
+			err := vs.DeleteVote(ctx, tc.proposalID, tc.voter)
+			if err != nil {
+				panic(err)
+			}
 			votePtr, err := vs.GetVote(ctx, tc.proposalID, tc.voter)
 			if err.Code() != types.CodeVoteNotFound {
 				t.Errorf("%s: diff err code, got %v, want %v", tc.testName, err.Code(), types.CodeVoteNotFound)

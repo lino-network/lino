@@ -1,3 +1,4 @@
+//nolint:unused
 package param
 
 import (
@@ -21,7 +22,10 @@ func getContext() sdk.Context {
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	ms.LoadLatestVersion()
+	err := ms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	return sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 }
@@ -206,7 +210,10 @@ func TestInitParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 
-	ph.InitParam(ctx)
+	err := ph.InitParam(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),

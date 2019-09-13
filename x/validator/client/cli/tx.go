@@ -49,7 +49,7 @@ func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			validator := args[0]
-			amount := linotypes.LNO(viper.GetString(FlagAmount))
+			amount := viper.GetString(FlagAmount)
 			link := viper.GetString(FlagLink)
 			pubKey, err := getLocalUserPubKey()
 			if err != nil {
@@ -62,7 +62,7 @@ func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAmount, "", "amount of the donation")
 	cmd.Flags().String(FlagLink, "", "link of the validator")
 	for _, v := range []string{FlagUser, FlagAmount, FlagLink} {
-		cmd.MarkFlagRequired(v)
+		_ = cmd.MarkFlagRequired(v)
 	}
 	return cmd
 }
@@ -121,6 +121,6 @@ func GetCmdWithdraw(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagAmount, "", "amount of the donation")
-	cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }

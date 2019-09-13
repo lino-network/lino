@@ -19,7 +19,10 @@ func TestUpdateProposalVotingStatus(t *testing.T) {
 		Reason:   censorshipReason,
 	}
 
-	pm.InitGenesis(ctx)
+	err := pm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	curTime := ctx.BlockHeader().Time.Unix()
 	decideSec := int64(100)
 	proposalID1, _ := pm.AddProposal(ctx, user1, proposal1, decideSec)
@@ -122,7 +125,10 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		Permlink: permlink,
 		Reason:   censorshipReason,
 	}
-	pm.InitGenesis(ctx)
+	err := pm.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	curTime := ctx.BlockHeader().Time.Unix()
 	proposalParam, _ := pm.paramHolder.GetProposalParam(ctx)
 	decideSec := proposalParam.ContentCensorshipDecideSec
@@ -219,6 +225,9 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		}
 
 		ongoingProposal, err := pm.storage.GetOngoingProposal(ctx, tc.proposalID)
+		if err != nil {
+			panic(err)
+		}
 		if !assert.Equal(t, nil, ongoingProposal) {
 			t.Errorf("%s: didn't remove ongoing proposal", tc.testName)
 		}
