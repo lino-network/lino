@@ -1,4 +1,3 @@
-//nolint:errcheck
 package validator
 
 import (
@@ -285,7 +284,10 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 func TestGetOncallList(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -294,7 +296,10 @@ func TestGetOncallList(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		if err != nil {
+			panic(err)
+		}
 
 		// they will deposit 10,20,30...200, 210
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
@@ -317,7 +322,10 @@ func TestGetOncallList(t *testing.T) {
 func TestPunishmentBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
@@ -328,8 +336,14 @@ func TestPunishmentBasic(t *testing.T) {
 	valKey1 := secp256k1.GenPrivKey().PubKey()
 	valKey2 := secp256k1.GenPrivKey().PubKey()
 
-	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
-	voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
 
 	// let both users register as validator
 	msg1 := NewValidatorDepositMsg("user1", coinToString(valParam.ValidatorMinCommittingDeposit), valKey1, "")
@@ -338,7 +352,7 @@ func TestPunishmentBasic(t *testing.T) {
 	handler(ctx, msg2)
 
 	// punish user2 as byzantine (explicitly remove)
-	_, err := valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, types.PunishByzantine)
+	_, err = valManager.PunishOncallValidator(ctx, types.AccountKey("user2"), valParam.PenaltyByzantine, types.PunishByzantine)
 	if err != nil {
 		panic(err)
 	}
@@ -366,7 +380,10 @@ func TestPunishmentBasic(t *testing.T) {
 func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -376,7 +393,10 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
+		if err != nil {
+			panic(err)
+		}
 
 		validatorMinDeposit, _ := valParam.ValidatorMinCommittingDeposit.ToInt64()
 		num := int64((i+1)*1000) + validatorMinDeposit/types.Decimals
@@ -397,7 +417,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 	// punish user4 as missing vote (wont explicitly remove)
 	// user3 will become the lowest one with power (min + 3000)
-	_, err := valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), types.PunishDidntVote)
+	_, err = valManager.PunishOncallValidator(ctx, users[3], types.NewCoinFromInt64(2000*types.Decimals), types.PunishDidntVote)
 	if err != nil {
 		panic(err)
 	}
@@ -411,7 +431,10 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 
 func TestInitValidators(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(100 * types.Decimals)
 
@@ -423,7 +446,7 @@ func TestInitValidators(t *testing.T) {
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	err := valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
+	err = valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
 	if err != nil {
 		panic(err)
 	}
@@ -489,7 +512,10 @@ func TestInitValidators(t *testing.T) {
 
 func TestGetValidatorUpdates(t *testing.T) {
 	ctx, am, valManager, _, _ := setupTest(t, 0)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(100 * types.Decimals)
 
@@ -501,7 +527,7 @@ func TestGetValidatorUpdates(t *testing.T) {
 
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
-	err := valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
+	err = valManager.RegisterValidator(ctx, user1, valKey1, param.ValidatorMinCommittingDeposit, "")
 	if err != nil {
 		panic(err)
 	}
@@ -594,8 +620,11 @@ func TestIsLegalWithdraw(t *testing.T) {
 
 	user1 := createTestAccount(ctx, am, "user1", minBalance)
 	param, _ := valManager.paramHolder.GetValidatorParam(ctx)
-	valManager.InitGenesis(ctx)
-	err := valManager.RegisterValidator(
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = valManager.RegisterValidator(
 		ctx, user1, secp256k1.GenPrivKey().PubKey(),
 		param.ValidatorMinCommittingDeposit.Plus(types.NewCoinFromInt64(100*types.Decimals)), "")
 	if err != nil {

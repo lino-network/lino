@@ -1,4 +1,3 @@
-//nolint:errcheck
 package vote
 
 import (
@@ -409,7 +408,10 @@ func TestDeleteVoteBasic(t *testing.T) {
 	assert.Equal(t, user2, voteList[0].Voter)
 
 	// test delete vote
-	vm.storage.DeleteVote(ctx, proposalID1, "user2")
+	err = vm.storage.DeleteVote(ctx, proposalID1, "user2")
+	if err != nil {
+		panic(err)
+	}
 	_, err = vm.storage.GetVote(ctx, proposalID1, "user2")
 	assert.Equal(t, model.ErrVoteNotFound(), err)
 }

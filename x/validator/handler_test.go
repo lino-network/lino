@@ -1,4 +1,3 @@
-//nolint:errcheck
 package validator
 
 import (
@@ -389,7 +388,10 @@ func TestCommittingDepositExceedVotingDeposit(t *testing.T) {
 func TestDepositWithoutLinoAccount(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
 	valKey := secp256k1.GenPrivKey().PubKey()
@@ -401,7 +403,10 @@ func TestDepositWithoutLinoAccount(t *testing.T) {
 func TestValidatorReplacement(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 	minBalance := types.NewCoinFromInt64(100000 * types.Decimals)
@@ -436,7 +441,10 @@ func TestValidatorReplacement(t *testing.T) {
 
 	// create a user failed to join oncall validator list (not enough power)
 	createTestAccount(ctx, am, "noPowerUser", minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-	voteManager.AddVoter(ctx, "noPowerUser", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddVoter(ctx, "noPowerUser", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
 
 	// let user1 register as validator
 	valKey := secp256k1.GenPrivKey().PubKey()
@@ -457,7 +465,10 @@ func TestValidatorReplacement(t *testing.T) {
 	// create a user success to join oncall validator list
 	createTestAccount(ctx, am, "powerfulUser", minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
 	// let user register as voter first
-	voteManager.AddVoter(ctx, "powerfulUser", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddVoter(ctx, "powerfulUser", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
 
 	//check the user has been added to oncall validators and in the pool
 	valKey = secp256k1.GenPrivKey().PubKey()
@@ -491,7 +502,10 @@ func TestValidatorReplacement(t *testing.T) {
 func TestRemoveBasic(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	// create two test users
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
@@ -503,8 +517,14 @@ func TestRemoveBasic(t *testing.T) {
 	valKey1 := secp256k1.GenPrivKey().PubKey()
 	valKey2 := secp256k1.GenPrivKey().PubKey()
 
-	voteManager.AddVoter(ctx, "goodUser", valParam.ValidatorMinVotingDeposit)
-	voteManager.AddVoter(ctx, "badUser", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddVoter(ctx, "goodUser", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, "badUser", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
 
 	// let both users register as validator
 	msg1 := NewValidatorDepositMsg("goodUser", coinToString(valParam.ValidatorMinCommittingDeposit), valKey1, "")
@@ -516,7 +536,7 @@ func TestRemoveBasic(t *testing.T) {
 	assert.Equal(t, 2, len(verifyList.OncallValidators))
 	assert.Equal(t, 2, len(verifyList.AllValidators))
 
-	err := valManager.RemoveValidatorFromAllLists(ctx, "badUser")
+	err = valManager.RemoveValidatorFromAllLists(ctx, "badUser")
 	if err != nil {
 		panic(err)
 	}
@@ -530,7 +550,10 @@ func TestRemoveBasic(t *testing.T) {
 func TestRegisterWithDupKey(t *testing.T) {
 	ctx, am, valManager, voteManager, gm := setupTest(t, 0)
 	handler := NewHandler(am, valManager, voteManager, &gm)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	valParam, _ := valManager.paramHolder.GetValidatorParam(ctx)
 
@@ -540,8 +563,14 @@ func TestRegisterWithDupKey(t *testing.T) {
 
 	valKey1 := secp256k1.GenPrivKey().PubKey()
 
-	voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
-	voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
+	err = voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
+	if err != nil {
+		panic(err)
+	}
 
 	// let both users register as validator
 	msg1 := NewValidatorDepositMsg("user1", coinToString(valParam.ValidatorMinCommittingDeposit), valKey1, "")
@@ -555,7 +584,10 @@ func TestRegisterWithDupKey(t *testing.T) {
 
 func TestAddFrozenMoney(t *testing.T) {
 	ctx, am, valManager, _, gm := setupTest(t, 0)
-	valManager.InitGenesis(ctx)
+	err := valManager.InitGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	minBalance := types.NewCoinFromInt64(1 * types.Decimals)
 	user := createTestAccount(ctx, am, "user", minBalance)
