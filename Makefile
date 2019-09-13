@@ -52,14 +52,14 @@ get_golangci_lint:
 	cd scripts && bash install-golangci-lint.sh $(GOPATH)/bin $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
 
 lint:
-	@golangci-lint run
-	go mod verify
+	GO111MODULE=$(GO111MODULE) golangci-lint run
+	GO111MODULE=$(GO111MODULE) go mod verify
 
 lint-fix:
 	@echo "--> Running linter auto fix"
-	@golangci-lint run --fix
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
+	GO111MODULE=$(GO111MODULE) golangci-lint run --fix
+	GO111MODULE=$(GO111MODULE) find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	GO111MODULE=$(GO111MODULE) go mod verify
 
 .PHONY: lint lint-fix
 
