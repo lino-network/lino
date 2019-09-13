@@ -47,7 +47,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	cmn "github.com/tendermint/tmlibs/common"
 )
 
 const (
@@ -187,7 +186,7 @@ func NewLinoBlockchain(
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
 		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
-		cmn.Exit(err.Error())
+		panic(err)
 	}
 
 	lb.Seal()
@@ -629,7 +628,6 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(lst)
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, provider := range lst.AllInfraProviders {
 		if idx == (len(lst.AllInfraProviders) - 1) {
