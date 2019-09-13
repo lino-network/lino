@@ -225,9 +225,7 @@ func TestUpdateProposalPassStatus(t *testing.T) {
 		}
 
 		ongoingProposal, err := pm.storage.GetOngoingProposal(ctx, tc.proposalID)
-		if err != nil {
-			panic(err)
-		}
+		assert.NotNil(t, err)
 		if !assert.Equal(t, nil, ongoingProposal) {
 			t.Errorf("%s: didn't remove ongoing proposal", tc.testName)
 		}

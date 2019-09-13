@@ -164,6 +164,12 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, delegatedCoin, voter.DelegatedPower)
 	assert.Equal(t, minBalance.Minus(delegatedCoin), acc3Balance)
 
+	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
+	acc2Balance, _ := am.GetSavingFromUsername(ctx, user2)
+	assert.Equal(t, model.ErrDelegationNotFound(), err)
+	assert.Equal(t, minBalance, acc1Balance)
+	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
+
 	// user1 can revoke voter candidancy now
 	referenceList := &model.ReferenceList{
 		AllValidators: []types.AccountKey{},
@@ -182,12 +188,6 @@ func TestRevokeBasic(t *testing.T) {
 	assert.Equal(t, sdk.Result{}, result2)
 
 	// make sure user2 wont get coins immediately, and delegatin was deleted
-	acc1Balance, _ := am.GetSavingFromUsername(ctx, user1)
-	acc2Balance, _ := am.GetSavingFromUsername(ctx, user2)
-	assert.Equal(t, model.ErrDelegationNotFound(), err)
-	assert.Equal(t, minBalance, acc1Balance)
-	assert.Equal(t, minBalance.Minus(delegatedCoin), acc2Balance)
-
 	day, _ := gm.GetPastDay(ctx, ctx.BlockHeader().Time.Unix())
 	gs := globalModel.NewGlobalStorage(testGlobalKVStoreKey)
 	linoStat, _ := gs.GetLinoStakeStat(ctx, day)

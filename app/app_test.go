@@ -539,7 +539,10 @@ func TestDistributeInflationToInfraProvider(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: failed to set past minutes, got err %v", testName, err)
 		}
-		err = lb.infraManager.RegisterInfraProvider(ctx, "Lino")
+		_ = lb.accountManager.CreateAccount(
+			ctx, types.AccountKey("lino"),
+			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
+		err = lb.infraManager.RegisterInfraProvider(ctx, "lino")
 		if err != nil {
 			t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
 		}

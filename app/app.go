@@ -629,12 +629,13 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(lst)
 	totalDistributedInflation := types.NewCoinFromInt64(0)
 	for idx, provider := range lst.AllInfraProviders {
 		if idx == (len(lst.AllInfraProviders) - 1) {
 			err := lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
 			if err != nil {
-				panic(err)
+				panic(fmt.Errorf("%s: %s", err, provider))
 			}
 			break
 		}
