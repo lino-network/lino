@@ -1,4 +1,6 @@
 language: go
+go:
+- 1.12.9
 install:
 - make get_tools
 - make get_golangci_lint
