@@ -28,7 +28,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 		// "syncable": PruneSyncable = NewPruningOptions(100, 10000)
 		// which means every (10000 * block_time) seconds, a state is kept.
 		// If block_time is around 3 seconds, then every ~8.33 hours, a state
-		// is kept. When height is 400M, there are about 400 copies in db. Even if
+		// is kept. When height is 4M, there are about 400 copies in db. Even if
 		// it's an immutable iavl, an early state may be just a full copy of the state, as
 		// it may be totally different from current and following kepted states.
 		// Plus state-sync is not supported for now, we set it to 400000 here.
