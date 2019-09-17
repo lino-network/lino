@@ -375,7 +375,6 @@ func (gm *GlobalManager) SetTotalLinoAndRecalculateGrowthRate(ctx sdk.Context) s
 	if err != nil {
 		return err
 	}
-	// TODO(yumin): revisit this part before release, growth rate setting.
 	growthRate = globalAllocationParam.GlobalGrowthRate
 	globalMeta.LastYearTotalLinoCoin = globalMeta.TotalLinoCoin
 	if err := gm.storage.SetGlobalMeta(ctx, globalMeta); err != nil {
