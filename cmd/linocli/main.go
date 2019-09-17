@@ -21,6 +21,7 @@ import (
 	proposalcli "github.com/lino-network/lino/x/proposal/client/cli"
 	repcli "github.com/lino-network/lino/x/reputation/client/cli"
 	validatorcli "github.com/lino-network/lino/x/validator/client/cli"
+	votecli "github.com/lino-network/lino/x/vote/client/cli"
 )
 
 // linocliCmd is the entry point for this binary
@@ -78,6 +79,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		bwcli.GetQueryCmd(cdc),
 		paramcli.GetQueryCmd(cdc),
 		repcli.GetQueryCmd(cdc),
+		votecli.GetQueryCmd(cdc),
 		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),

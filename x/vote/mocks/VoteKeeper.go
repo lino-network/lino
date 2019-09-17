@@ -70,7 +70,7 @@ func (_m *VoteKeeper) GetLinoStake(ctx types.Context, accKey linotypes.AccountKe
 }
 
 // GetVoterDuty provides a mock function with given fields: ctx, accKey
-func (_m *VoteKeeper) GetVoterDuty(ctx types.Context, accKey linotypes.AccountKey) votetypes.VoterDuty {
+func (_m *VoteKeeper) GetVoterDuty(ctx types.Context, accKey linotypes.AccountKey) (votetypes.VoterDuty, types.Error) {
 	ret := _m.Called(ctx, accKey)
 
 	var r0 votetypes.VoterDuty
@@ -80,5 +80,14 @@ func (_m *VoteKeeper) GetVoterDuty(ctx types.Context, accKey linotypes.AccountKe
 		r0 = ret.Get(0).(votetypes.VoterDuty)
 	}
 
-	return r0
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
+		r1 = rf(ctx, accKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
 }
