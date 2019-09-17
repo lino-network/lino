@@ -6,9 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
@@ -21,8 +20,20 @@ import (
 
 // generate Lino application
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	app := app.NewLinoBlockchain(logger, db, traceStore,
-		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+	app := app.NewLinoBlockchain(
+		logger,
+		db,
+		traceStore,
+		// XXX(yumin): previously we use
+		// "syncable": PruneSyncable = NewPruningOptions(100, 10000)
+		// which means every (10000 * block_time) seconds, a state is kept.
+		// If block_time is around 3 seconds, then every ~8.33 hours, a state
+		// is kept. When height is 4M, there are about 400 copies in db. Even if
+		// it's an immutable iavl, an early state may be just a full copy of the state, as
+		// it may be totally different from current and following kepted states.
+		// Plus state-sync is not supported for now, we set it to 400000 here.
+		baseapp.SetPruning(storetypes.NewPruningOptions(100, 400000)),
+	)
 	return app
 }
 
