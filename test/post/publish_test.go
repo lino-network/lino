@@ -18,8 +18,9 @@ func TestNormalPublish(t *testing.T) {
 	postID1 := "New Post 1"
 	postID2 := "New Post 2"
 	// recover some coin day
-	baseTime := time.Now().Unix() + 3600
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(3600 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "100")
