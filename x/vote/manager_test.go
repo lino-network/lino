@@ -316,6 +316,7 @@ func TestAssignDuty(t *testing.T) {
 		newDuty       votetypes.VoterDuty
 		frozenAmount  types.Coin
 		prevVoter     model.Voter
+		notVoter      bool
 		expectedVoter model.Voter
 		expectedErr   sdk.Error
 	}{
@@ -347,20 +348,11 @@ func TestAssignDuty(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			testName:     "test2",
-			username:     types.AccountKey("test"),
-			newDuty:      votetypes.DutyApp,
-			frozenAmount: types.NewCoinFromInt64(100),
-			prevVoter: model.Voter{
-				Username:          types.AccountKey("test"),
-				LinoStake:         types.NewCoinFromInt64(100),
-				Duty:              votetypes.DutyNop,
-				FrozenAmount:      types.NewCoinFromInt64(0),
-				DelegatedPower:    types.NewCoinFromInt64(0),
-				DelegateToOthers:  types.NewCoinFromInt64(0),
-				Interest:          types.NewCoinFromInt64(0),
-				LastPowerChangeAt: 0,
-			},
+			testName:      "test2",
+			username:      types.AccountKey("test"),
+			newDuty:       votetypes.DutyApp,
+			frozenAmount:  types.NewCoinFromInt64(100),
+			notVoter:      true,
 			expectedVoter: model.Voter{},
 			expectedErr:   ErrNotAVoterOrHasDuty(),
 		},
@@ -385,12 +377,14 @@ func TestAssignDuty(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		err := vm.storage.SetVoter(ctx, tc.username, &tc.prevVoter)
-		if err != nil {
-			t.Errorf("%s: failed to set voter , got err %v", tc.testName, err)
+		if !tc.notVoter {
+			err := vm.storage.SetVoter(ctx, tc.username, &tc.prevVoter)
+			if err != nil {
+				t.Errorf("%s: failed to set voter , got err %v", tc.testName, err)
+			}
 		}
 
-		err = vm.AssignDuty(ctx, tc.username, tc.newDuty, tc.frozenAmount)
+		err := vm.AssignDuty(ctx, tc.username, tc.newDuty, tc.frozenAmount)
 		if err != nil && err.Code() != tc.expectedErr.Code() {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, err, tc.expectedErr)
 		}

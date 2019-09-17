@@ -200,6 +200,7 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 	duplicateUsername := linotypes.AccountKey("test")
 	userRoleUsername := linotypes.AccountKey("test2")
 	voterDuty := votetypes.DutyVoter
+	voterDutyErr := linotypes.NewError(linotypes.CodeTestDummyError, "")
 	invalidVoterDuty := votetypes.DutyApp
 
 	minDeposit := linotypes.NewCoinFromInt64(50)
@@ -215,6 +216,7 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 		description          string
 		appMetaData          string
 		accountExist         bool
+		voterDutyErr         *sdk.Error
 		voterDuty            *votetypes.VoterDuty
 		developerParam       *param.DeveloperParam
 		developerParamError  sdk.Error
@@ -235,6 +237,14 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 			accountExist: true,
 			username:     duplicateUsername,
 			expected:     types.ErrDeveloperAlreadyExist(duplicateUsername),
+		},
+		{
+			name:         "Fail Account is not a Voter",
+			accountExist: true,
+			voterDuty:    nil,
+			voterDutyErr: &voterDutyErr,
+			username:     username,
+			expected:     types.ErrInvalidVoterDuty(),
 		},
 		{
 			name:         "Fail Account is not a Duty Voter",
@@ -316,7 +326,10 @@ func (suite *DeveloperManagerSuite) TestRegisterDeveloper() {
 			suite.LoadState(false)
 			suite.mAccountKeeper.On("DoesAccountExist", mock.Anything, c.username).Return(c.accountExist).Once()
 			if c.voterDuty != nil {
-				suite.mVoteKeeper.On("GetVoterDuty", mock.Anything, c.username).Return(*c.voterDuty).Once()
+				suite.mVoteKeeper.On("GetVoterDuty", mock.Anything, c.username).Return(*c.voterDuty, nil).Once()
+			}
+			if c.voterDutyErr != nil {
+				suite.mVoteKeeper.On("GetVoterDuty", mock.Anything, c.username).Return(voterDuty, *c.voterDutyErr).Once()
 			}
 			if c.developerParam != nil {
 				suite.mParamKeeper.On("GetDeveloperParam", mock.Anything).Return(c.developerParam, c.developerParamError).Once()
@@ -1170,7 +1183,7 @@ func (suite *DeveloperManagerSuite) TestUpdateAffiliated() {
 				suite.mAccountKeeper.On("DoesAccountExist", mock.Anything, c.username).Return(*c.accountExists).Once()
 			}
 			if c.vote != nil && c.activate {
-				suite.mVoteKeeper.On("GetVoterDuty", mock.Anything, c.username).Return(*c.vote).Once()
+				suite.mVoteKeeper.On("GetVoterDuty", mock.Anything, c.username).Return(*c.vote, nil).Once()
 			}
 			suite.LoadState(false, "AffiliatedBasic")
 			suite.Equal(c.expected, suite.manager.UpdateAffiliated(suite.Ctx, c.appName, c.username, c.activate))

@@ -392,17 +392,20 @@ func (vm VoteManager) SetValidatorReferenceList(ctx sdk.Context, lst *model.Refe
 	return vm.storage.SetReferenceList(ctx, lst)
 }
 
-func (vm VoteManager) GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) types.VoterDuty {
+func (vm VoteManager) GetVoterDuty(ctx sdk.Context, accKey linotypes.AccountKey) (types.VoterDuty, sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, accKey)
 	if err != nil {
-		return types.DutyNop
+		return types.DutyVoter, err
 	}
-	return voter.Duty
+	return voter.Duty, nil
 }
 
 // AssignDuty froze some amount of stake and assign a duty to user.
 func (vm VoteManager) AssignDuty(ctx sdk.Context, user linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error {
-	oldDuty := vm.GetVoterDuty(ctx, user)
+	oldDuty, err := vm.GetVoterDuty(ctx, user)
+	if err != nil {
+		return err
+	}
 	if oldDuty != types.DutyVoter {
 		return ErrNotAVoterOrHasDuty()
 	}

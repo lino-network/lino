@@ -98,7 +98,7 @@ func (dm DeveloperManager) RegisterDeveloper(ctx sdk.Context, username linotypes
 	if dm.storage.HasDeveloper(ctx, username) {
 		return types.ErrDeveloperAlreadyExist(username)
 	}
-	if dm.vote.GetVoterDuty(ctx, username) != votetypes.DutyVoter {
+	if duty, err := dm.vote.GetVoterDuty(ctx, username); err != nil || duty != votetypes.DutyVoter {
 		return types.ErrInvalidVoterDuty()
 	}
 	if dm.storage.HasUserRole(ctx, username) {
@@ -405,8 +405,8 @@ func (dm DeveloperManager) addAffiliated(ctx sdk.Context, app, username linotype
 	if dm.storage.HasDeveloper(ctx, username) {
 		return types.ErrInvalidAffiliatedAccount("is/was developer")
 	}
-	duty := dm.vote.GetVoterDuty(ctx, username)
-	if duty != votetypes.DutyNop && duty != votetypes.DutyVoter {
+	duty, err := dm.vote.GetVoterDuty(ctx, username)
+	if err == nil && duty != votetypes.DutyVoter {
 		return types.ErrInvalidAffiliatedAccount("on duty of something else")
 	}
 	dm.storage.SetAffiliatedAcc(ctx, app, username)
