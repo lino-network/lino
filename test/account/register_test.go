@@ -23,8 +23,9 @@ func TestTransferAndRegisterAccount(t *testing.T) {
 	newSigningPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix()
+	baseT := time.Now()
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	registerMsg := acctypes.NewRegisterMsg(test.GenesisUser, newAccountName, types.LNO("100"),
 		newTransactionPriv.PubKey(), newSigningPriv.PubKey(), nil)
@@ -42,8 +43,9 @@ func TestRegisterAccountFailed(t *testing.T) {
 	newAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix()
+	baseT := time.Now()
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 	registerMsg := acctypes.NewRegisterMsg(test.GenesisUser, newAccountName, "0.1",
 		newResetPriv.PubKey(), newTransactionPriv.PubKey(), newAppPriv.PubKey())
 	test.SignCheckDeliver(t, lb, registerMsg, 0, false, test.GenesisPriv, baseTime)

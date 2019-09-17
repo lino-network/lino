@@ -24,8 +24,9 @@ func TestValidatorDeposit(t *testing.T) {
 	newAccountName := "newuser"
 	newValidatorPriv := secp256k1.GenPrivKey()
 
-	baseTime := time.Now().Unix() + 100
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "500000")
@@ -52,8 +53,9 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	testName := "TestRegisterValidatorOneByOne"
 
 	// start with 1 genesis validator
-	lb := test.NewTestLinoBlockchain(t, 1)
-	baseTime := time.Now().Unix() + 100
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, 1, baseT)
 
 	// add 20 validators
 	seq := 0
@@ -131,8 +133,9 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 
 func TestRemoveTheSameLowestDepositValidator(t *testing.T) {
 	// start with 21 genesis validator
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix() + 100
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	// Add a new validator who has higher deposit
 	newAccountResetPriv := secp256k1.GenPrivKey()
@@ -164,8 +167,9 @@ func TestFireIncompetentValidator(t *testing.T) {
 	testName := "TestFireIncompetentValidator"
 
 	// start with 21 genesis validator
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix() + 100
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
@@ -253,8 +257,9 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 	testName := "TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement"
 
 	// start with 21 genesis validator
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix() + 100
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	// add two more validators but not oncall
 	for i := 0; i < 2; i++ {
@@ -338,8 +343,9 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	testName := "TestFireIncompetentValidatorAndThenAddOneMoreValidator"
 
 	// start with 21 genesis validator
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
-	baseTime := time.Now().Unix() + 100
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)

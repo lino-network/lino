@@ -24,8 +24,9 @@ func TestForceValidatorVote(t *testing.T) {
 	accountName2 := "newuser2"
 	validatorPriv2 := secp256k1.GenPrivKey()
 
-	baseTime := time.Now().Unix() + 100
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(100 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	totalLNO := types.LNO("1000000000")
 	depositLNO := types.LNO("3000000")

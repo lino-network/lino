@@ -21,8 +21,10 @@ func TestMsgFee(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
 	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
-	baseTime := time.Now().Unix()
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now()
+	baseTime := baseT.Unix()
+
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 	bandwidthmn.BandwidthManagerTestMode = false
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000")

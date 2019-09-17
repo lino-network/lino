@@ -13,8 +13,10 @@ import (
 // test normal transfer to account name
 func TestTransferToAccount(t *testing.T) {
 	newAccountName := "newuser"
-	baseTime := time.Now().Unix()
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+
+	baseT := time.Now()
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")

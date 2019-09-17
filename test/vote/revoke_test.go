@@ -23,8 +23,9 @@ func TestVoterRevoke(t *testing.T) {
 	delegator2Name := "delegator2"
 
 	// to recover the coin day
-	baseTime := time.Now().Unix() + 7200
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(7200 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, secp256k1.GenPrivKey(), "500000")

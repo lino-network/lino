@@ -61,7 +61,7 @@ func loggerAndDB() (log.Logger, dbm.DB) {
 	return logger, db
 }
 
-func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchain {
+func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime time.Time) *app.LinoBlockchain {
 	logger, db := loggerAndDB()
 	lb := app.NewLinoBlockchain(logger, db, nil)
 	genesisState := app.GenesisState{
@@ -104,7 +104,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int) *app.LinoBlockchai
 
 	lb.InitChain(abci.RequestInitChain{ChainId: "Lino", AppStateBytes: json.RawMessage(result)})
 	lb.BeginBlock(abci.RequestBeginBlock{
-		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Now()}})
+		Header: abci.Header{Height: 1, ChainID: "Lino", Time: beginBlockTime}})
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	bandwidthmn.BandwidthManagerTestMode = true

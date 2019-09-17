@@ -26,8 +26,9 @@ func TestDelegateInterest(t *testing.T) {
 	postID := "New Post"
 
 	// to recover the coin day
-	baseTime := time.Now().Unix() + 7200
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(7200 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, donatorName, lb, 0,
 		secp256k1.GenPrivKey(), donatorPriv, secp256k1.GenPrivKey(), "100000")

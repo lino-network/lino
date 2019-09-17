@@ -19,8 +19,9 @@ func TestValidatorRevoke(t *testing.T) {
 	newAccountName := "newuser"
 	newValidatorPriv := secp256k1.GenPrivKey()
 
-	baseTime := time.Now().Unix() + 3600
-	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal)
+	baseT := time.Now().Add(3600 * time.Second)
+	baseTime := baseT.Unix()
+	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
