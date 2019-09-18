@@ -18,6 +18,8 @@ const (
 	FlagFrom        = "from"
 	FlagTo          = "to"
 	FlagActive      = "active"
+	FlagAmount      = "amount"
+	FlagApp         = "app"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -45,8 +47,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // GetCmdRegister - register as developer.
 func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register NAME",
-		Short: "register NAME as dev",
+		Use:   "register",
+		Short: "register <username> --website <web> --description <desc> --appmeta <meta>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -69,7 +71,7 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 func GetCmdUpdate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "update APP info",
+		Short: "update <app> --website <web> --description <desc> --appmeta <meta>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -94,7 +96,7 @@ func GetCmdUpdate(cdc *codec.Codec) *cobra.Command {
 func GetCmdIDAIssue(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ida-issue",
-		Short: "ida-issue APP will issue an ida for app with --ida-price 0.001 USD",
+		Short: "ida-issue <app> --ida-price <amount>, amount is an integer in [1, 1000], 1 = 0.001 USD",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -114,13 +116,13 @@ func GetCmdIDAIssue(cdc *codec.Codec) *cobra.Command {
 // GetCmdIDAMint - mint IDA for the app
 func GetCmdIDAMint(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ida-mint app lino-amount",
-		Short: "ida-mint APP LINO-AMOUNT-STRING will mint new IDA for the app",
-		Args:  cobra.ExactArgs(2),
+		Use:   "ida-mint",
+		Short: "ida-mint <app> --amount <lino-amount>",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			app := linotypes.AccountKey(args[0])
-			amount := args[1]
+			amount := viper.GetString(FlagAmount)
 			msg := types.IDAMintMsg{
 				Username: app,
 				Amount:   amount,
@@ -128,6 +130,9 @@ func GetCmdIDAMint(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
+	cmd.Flags().Int64(FlagAmount, 0,
+		"Amount of LINO to convert to IDA")
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }
 
@@ -135,13 +140,13 @@ func GetCmdIDAMint(cdc *codec.Codec) *cobra.Command {
 func GetCmdIDATransfer(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ida-transfer",
-		Short: "ida-transfer SIGNER APP AMOUNT --from FOO --to BAR",
-		Args:  cobra.ExactArgs(3),
+		Short: "ida-transfer <signer> <app> --from <foo> --to <bar> --amount <amount>",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			signer := linotypes.AccountKey(args[0])
 			app := linotypes.AccountKey(args[1])
-			amount := linotypes.IDAStr(args[2])
+			amount := linotypes.IDAStr(viper.GetString(FlagAmount))
 			from := linotypes.AccountKey(viper.GetString(FlagFrom))
 			to := linotypes.AccountKey(viper.GetString(FlagTo))
 			msg := types.IDATransferMsg{
@@ -154,6 +159,7 @@ func GetCmdIDATransfer(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
+	cmd.Flags().String(FlagAmount, "", "amount of IDA")
 	cmd.Flags().String(FlagTo, "", "receipient of this transfer")
 	cmd.Flags().String(FlagFrom, "", "sender of this transfer")
 	return cmd
@@ -163,7 +169,7 @@ func GetCmdIDATransfer(cdc *codec.Codec) *cobra.Command {
 func GetCmdIDAAuthorize(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ida-auth",
-		Short: "ida-auth USERNAME APP --active true/false",
+		Short: "ida-auth <username> <app> --active=true/false",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -187,7 +193,7 @@ func GetCmdIDAAuthorize(cdc *codec.Codec) *cobra.Command {
 func GetCmdUpdateAffiliated(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "affiliated",
-		Short: "affiliated APP USERNAME --active true/false",
+		Short: "affiliated <app> <username> --active=true/false",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -202,7 +208,7 @@ func GetCmdUpdateAffiliated(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
-	cmd.Flags().Bool(FlagActive, false, "true = add USERNAME as affiliated of APP")
+	cmd.Flags().Bool(FlagActive, false, "true = add <username> as an affiliated of <app>")
 	_ = cmd.MarkFlagRequired(FlagActive)
 	return cmd
 }

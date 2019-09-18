@@ -13,6 +13,7 @@ builds:
   -
     id: "linocli"
     main: ./cmd/linocli/main.go
+    binary: linocli
     env:
       - CGO_ENABLED=0
     goos:
@@ -20,10 +21,8 @@ builds:
       - darwin
       - windows
     goarch:
-      - 386
       - amd64
       - arm
-      - arm64
 archives:
 - replacements:
     darwin: Darwin

@@ -36,8 +36,8 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 // GetCmdShow queries information about a name
 func getCmdShow(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "show [username]",
-		Short: "show username's developer detail",
+		Use:   "show <username>",
+		Short: "show <username>, developer detail",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
@@ -67,7 +67,7 @@ func getCmdList(cdc *codec.Codec) *cobra.Command {
 func getCmdListAffiliated(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list-affiliated [app]",
-		Short: "list all affiliated accounts of app",
+		Short: "list <app>, all affiliated accounts of app",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app := args[0]
@@ -82,8 +82,8 @@ func getCmdListAffiliated(cdc *codec.Codec) *cobra.Command {
 // GetCmdIDAShow -
 func getCmdIDAShow(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "ida-show [app]",
-		Short: "show ida details",
+		Use:   "ida-show <app>",
+		Short: "ida-show <app>, show ida details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app := args[0]
@@ -98,8 +98,8 @@ func getCmdIDAShow(cdc *codec.Codec) *cobra.Command {
 // GetCmdIDABalance -
 func getCmdIDABalance(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "ida-balance app user",
-		Short: "return ida balance of a user of the app",
+		Use:   "ida-balance <app> <user>",
+		Short: "ida-balance <app> <user>",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app := args[0]
