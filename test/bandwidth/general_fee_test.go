@@ -26,11 +26,13 @@ func TestMsgFee(t *testing.T) {
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 	bandwidthmn.BandwidthManagerTestMode = false
-	test.CreateAccount(t, newAccountName, lb, 0,
-		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000")
+
+	test.CreateAccountWithTime(t, newAccountName, lb, 0,
+		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000", baseTime)
 
 	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("3000000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64((5000000000-3000000-1)*types.Decimals-2523))
 
 	voteDepositSmallMsg := vote.NewStakeInMsg(newAccountName, types.LNO("1000"))
