@@ -49,7 +49,7 @@ func GetCmdStakein(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagAmount, "", "amount of stake in")
-	cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }
 
@@ -71,7 +71,7 @@ func GetCmdStakeout(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagAmount, "", "amount of stake in")
-	cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }
 
