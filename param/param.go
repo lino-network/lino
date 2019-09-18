@@ -85,9 +85,7 @@ type DeveloperParam struct {
 }
 
 // ValidatorParam - validator parameters
-// ValidatorMinWithdraw - minimum withdraw requirement
-// ValidatorMinVotingDeposit - minimum voting deposit requirement for user wanna be validator
-// ValidatorMinCommittingDeposit - minimum committing (validator) deposit requirement for user wanna be validator
+// ValidatorMinDeposit - minimum deposit requirement for user wanna be validator
 // ValidatorCoinReturnIntervalSec - when withdraw or revoke, coin return to validator by coin return event
 // ValidatorCoinReturnTimes - when withdraw or revoke, coin return to validator by coin return event
 // PenaltyMissVote - when missing vote for content censorship or protocol upgrade proposal,
@@ -97,10 +95,11 @@ type DeveloperParam struct {
 // minus PenaltyByzantine amount of Coin from validator deposit
 // ValidatorListSize - size of oncall validator
 // AbsentCommitLimitation - absent block limitation till penalty
+// OncallSize - the size of oncall validators
+// StandbySize - the size of standby validators
 type ValidatorParam struct {
-	ValidatorMinWithdraw           types.Coin `json:"validator_min_withdraw"`
-	ValidatorMinVotingDeposit      types.Coin `json:"validator_min_voting_deposit"`
-	ValidatorMinCommittingDeposit  types.Coin `json:"validator_min_committing_deposit"`
+	ValidatorMinVotingDeposit      types.Coin `json:"validator_min_deposit"`
+	ValidatorMinDeposit            types.Coin `json:"validator_min_deposit"`
 	ValidatorCoinReturnIntervalSec int64      `json:"validator_coin_return_second"`
 	ValidatorCoinReturnTimes       int64      `json:"validator_coin_return_times"`
 	PenaltyMissVote                types.Coin `json:"penalty_miss_vote"`
@@ -108,6 +107,8 @@ type ValidatorParam struct {
 	PenaltyByzantine               types.Coin `json:"penalty_byzantine"`
 	ValidatorListSize              int64      `json:"validator_list_size"`
 	AbsentCommitLimitation         int64      `json:"absent_commit_limitation"`
+	OncallSize                     int64      `json:"oncall_size"`
+	StandbySize                    int64      `json:"standby_size"`
 }
 
 // CoinDayParam - coin day parameters

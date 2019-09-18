@@ -13,7 +13,7 @@ import (
 
 	"github.com/lino-network/lino/client"
 	linotypes "github.com/lino-network/lino/types"
-	types "github.com/lino-network/lino/x/validator"
+	types "github.com/lino-network/lino/x/validator/types"
 )
 
 const (
@@ -32,30 +32,29 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.AddCommand(client.PostCommands(
-		GetCmdDeposit(cdc),
+		GetCmdRegister(cdc),
 		GetCmdRevoke(cdc),
-		GetCmdWithdraw(cdc),
 	)...)
 
 	return cmd
+
 }
 
-// GetCmdDeposit -
-func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
+// GetCmdRegister -
+func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deposit",
-		Short: "deposit user --amount <amount> --link <link>",
+		Use:   "register",
+		Short: "register user --amount <amount> --link <link>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			validator := args[0]
-			amount := viper.GetString(FlagAmount)
 			link := viper.GetString(FlagLink)
 			pubKey, err := getLocalUserPubKey()
 			if err != nil {
 				return err
 			}
-			msg := types.NewValidatorDepositMsg(validator, amount, pubKey, link)
+			msg := types.NewValidatorRegisterMsg(validator, pubKey, link)
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
@@ -104,23 +103,5 @@ func GetCmdRevoke(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
-	return cmd
-}
-
-// GetCmdWithdraw -
-func GetCmdWithdraw(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "withdraw",
-		Short: "withdraw <username> --amount <amount>",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
-			user := args[0]
-			msg := types.NewValidatorWithdrawMsg(user, viper.GetString(FlagAmount))
-			return ctx.DoTxPrintResponse(msg)
-		},
-	}
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
-	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }

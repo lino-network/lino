@@ -178,4 +178,7 @@ const (
 
 	// Upgrade2Update3 - fix registration bug.
 	Upgrade2Update3Height = 98000
+
+	// MaxVotedValidator - the max validators a voter can vote
+	MaxVotedValidators = 3
 )

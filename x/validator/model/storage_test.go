@@ -40,25 +40,25 @@ func TestValidator(t *testing.T) {
 		testName string
 		power    int64
 		user     types.AccountKey
-		deposit  types.Coin
+		votes    types.Coin
 	}{
 		{
 			testName: "user as validator",
 			power:    1000,
 			user:     types.AccountKey("user"),
-			deposit:  types.NewCoinFromInt64(100),
+			votes:    types.NewCoinFromInt64(10),
 		},
 		{
 			testName: "user as validator again",
 			power:    10000,
 			user:     types.AccountKey("user"),
-			deposit:  types.NewCoinFromInt64(0),
+			votes:    types.NewCoinFromInt64(10),
 		},
 		{
 			testName: "user2 as validator",
 			power:    1,
 			user:     types.AccountKey("user2"),
-			deposit:  types.NewCoinFromInt64(10),
+			votes:    types.NewCoinFromInt64(10),
 		},
 	}
 
@@ -67,8 +67,8 @@ func TestValidator(t *testing.T) {
 			ABCIValidator: abci.Validator{
 				Address: priv.PubKey().Address(),
 				Power:   1000},
-			Username: tc.user,
-			Deposit:  tc.deposit,
+			Username:      tc.user,
+			ReceivedVotes: tc.votes,
 		}
 		err := vs.SetValidator(ctx, tc.user, &validator)
 		if err != nil {
@@ -95,14 +95,25 @@ func TestValidatorList(t *testing.T) {
 		{
 			testName: "normal case",
 			valList: ValidatorList{
-				OncallValidators: []types.AccountKey{
+				Oncall: []types.AccountKey{
 					types.AccountKey("user1"),
 				},
-				AllValidators: []types.AccountKey{
+				Standby: []types.AccountKey{
 					types.AccountKey("user2"),
 				},
-				LowestPower:     types.NewCoinFromInt64(100),
-				LowestValidator: types.AccountKey("user2"),
+				Candidates: []types.AccountKey{
+					types.AccountKey("user2"),
+				},
+				Jail: []types.AccountKey{
+					types.AccountKey("user2"),
+				},
+				PreBlockValidators: []types.AccountKey{
+					types.AccountKey("user2"),
+				},
+				LowestOncallVotes:  types.NewCoinFromInt64(100),
+				LowestOncall:       types.AccountKey("user2"),
+				LowestStandbyVotes: types.NewCoinFromInt64(100),
+				LowestStandby:      types.AccountKey("user2"),
 			},
 		},
 	}
@@ -119,6 +130,44 @@ func TestValidatorList(t *testing.T) {
 		}
 		if !assert.Equal(t, tc.valList, *valListPtr) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *valListPtr, tc.valList)
+		}
+	}
+}
+
+func TestElectionVoteList(t *testing.T) {
+	ctx, vs := setup(t)
+
+	testCases := []struct {
+		testName string
+		lst      ElectionVoteList
+		user     types.AccountKey
+	}{
+		{
+			testName: "normal case",
+			user:     types.AccountKey("user"),
+			lst: ElectionVoteList{
+				ElectionVotes: []ElectionVote{
+					ElectionVote{
+						ValidatorName: types.AccountKey("test"),
+						Vote:          types.NewCoinFromInt64(100),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		err := vs.SetElectionVoteList(ctx, tc.user, &tc.lst)
+		if err != nil {
+			t.Errorf("%s: failed to set election list, got err %v", tc.testName, err)
+		}
+
+		lstPtr, err := vs.GetElectionVoteList(ctx, tc.user)
+		if err != nil {
+			t.Errorf("%s: failed to get election list, got err %v", tc.testName, err)
+		}
+		if !assert.Equal(t, tc.lst, *lstPtr) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *lstPtr, tc.lst)
 		}
 	}
 }

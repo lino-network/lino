@@ -8,7 +8,7 @@ import (
 type ValidatorRow struct {
 	Username types.AccountKey `json:"username"`
 	// XXX(yumin): type changed.
-	Validator Validator `json:"validator"`
+	Validator ValidatorV1 `json:"validator"`
 }
 
 // ToIR -

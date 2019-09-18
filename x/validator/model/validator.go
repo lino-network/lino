@@ -5,23 +5,44 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	types "github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 )
 
 // Validator is basic structure records all validator information
+type ValidatorV1 struct {
+	ABCIValidator   abci.Validator
+	PubKey          crypto.PubKey        `json:"pubkey"`
+	Username        linotypes.AccountKey `json:"username"`
+	Deposit         linotypes.Coin       `json:"deposit"`
+	AbsentCommit    int64                `json:"absent_commit"`
+	ByzantineCommit int64                `json:"byzantine_commit"`
+	ProducedBlocks  int64                `json:"produced_blocks"`
+	Link            string               `json:"link"`
+}
+
 type Validator struct {
 	ABCIValidator   abci.Validator
-	PubKey          crypto.PubKey    `json:"pubkey"`
-	Username        types.AccountKey `json:"username"`
-	Deposit         types.Coin       `json:"deposit"`
-	AbsentCommit    int64            `json:"absent_commit"`
-	ByzantineCommit int64            `json:"byzantine_commit"`
-	ProducedBlocks  int64            `json:"produced_blocks"`
-	Link            string           `json:"link"`
+	PubKey          crypto.PubKey        `json:"pubkey"`
+	Username        linotypes.AccountKey `json:"username"`
+	ReceivedVotes   linotypes.Coin       `json:"received_votes"`
+	HasRevoked      bool                 `json:"has_revoked"`
+	AbsentCommit    int64                `json:"absent_commit"`
+	ByzantineCommit int64                `json:"byzantine_commit"`
+	ProducedBlocks  int64                `json:"produced_blocks"`
+	Link            string               `json:"link"`
+}
+
+type ElectionVote struct {
+	ValidatorName linotypes.AccountKey `json:"validator_name"`
+	Vote          linotypes.Coin       `json:"votes"`
+}
+
+type ElectionVoteList struct {
+	ElectionVotes []ElectionVote `json:"election_votes"`
 }
 
 // ToIR -
-func (v Validator) ToIR() ValidatorIR {
+func (v ValidatorV1) ToIR() ValidatorIR {
 	abciPubKey := tmtypes.TM2PB.PubKey(v.PubKey)
 	return ValidatorIR{
 		ABCIValidator: ABCIValidatorIR{
@@ -41,11 +62,23 @@ func (v Validator) ToIR() ValidatorIR {
 	}
 }
 
-// ValidatorList -
+type ValidatorListV1 struct {
+	OncallValidators   []linotypes.AccountKey `json:"oncall_validators"`
+	AllValidators      []linotypes.AccountKey `json:"all_validators"`
+	PreBlockValidators []linotypes.AccountKey `json:"pre_block_validators"`
+	LowestPower        linotypes.Coin         `json:"lowest_power"`
+	LowestValidator    linotypes.AccountKey   `json:"lowest_validator"`
+}
+
+// ValidatorList
 type ValidatorList struct {
-	OncallValidators   []types.AccountKey `json:"oncall_validators"`
-	AllValidators      []types.AccountKey `json:"all_validators"`
-	PreBlockValidators []types.AccountKey `json:"pre_block_validators"`
-	LowestPower        types.Coin         `json:"lowest_power"`
-	LowestValidator    types.AccountKey   `json:"lowest_validator"`
+	Oncall             []linotypes.AccountKey `json:"oncall"`
+	Standby            []linotypes.AccountKey `json:"standby"`
+	Candidates         []linotypes.AccountKey `json:"candidates"`
+	Jail               []linotypes.AccountKey `json:"jail"`
+	PreBlockValidators []linotypes.AccountKey `json:"pre_block_validators"`
+	LowestOncallVotes  linotypes.Coin         `json:"lowest_oncall_votes"`
+	LowestOncall       linotypes.AccountKey   `json:"lowest_oncall"`
+	LowestStandbyVotes linotypes.Coin         `json:"lowest_standby_votes"`
+	LowestStandby      linotypes.AccountKey   `json:"lowest_standby"`
 }
