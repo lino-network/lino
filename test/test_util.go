@@ -207,6 +207,18 @@ func CreateAccount(
 	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
 }
 
+// CreateAccountWithTime - register account on test blockchain
+func CreateAccountWithTime(
+	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
+	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
+	numOfLino string, blockTime int64) {
+
+	registerMsg := acctypes.NewRegisterMsg(
+		GenesisUser, accountName, numOfLino,
+		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
+	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, blockTime)
+}
+
 // GetGenesisAccountCoin - get genesis account coin
 func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 	coinPerValidator, _ := CoinPerValidator.ToInt64()

@@ -100,7 +100,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		postcli.GetTxCmd(cdc),
 		proposalcli.GetTxCmd(cdc),
 		validatorcli.GetTxCmd(cdc),
-		client.LineBreak,
+		votecli.GetTxCmd(cdc),
 		client.LineBreak,
 	)
 
