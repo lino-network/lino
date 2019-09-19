@@ -1,4 +1,4 @@
-package vote
+package types
 
 // nolint
 import (

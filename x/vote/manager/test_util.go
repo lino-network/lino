@@ -1,4 +1,4 @@
-package vote
+package manager
 
 import (
 	"strconv"
@@ -45,7 +45,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	}
 	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	accManager := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
-	voteManager := NewVoteManager(testVoteKVStoreKey, ph)
+	voteManager := NewVoteManager(testVoteKVStoreKey, ph, accManager, &gm)
 
 	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

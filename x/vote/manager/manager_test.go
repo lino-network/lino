@@ -1,4 +1,4 @@
-package vote
+package manager
 
 import (
 	"testing"

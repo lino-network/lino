@@ -1,4 +1,4 @@
-package vote
+package types
 
 import (
 	"fmt"
@@ -50,6 +50,11 @@ func ErrInvalidUsername() sdk.Error {
 // ErrQueryFailed - error when query vote store failed
 func ErrQueryFailed() sdk.Error {
 	return types.NewError(types.CodeVoteQueryFailed, fmt.Sprintf("query vote store failed"))
+}
+
+// ErrNotAVoterOrHasDuty
+func ErrNotAVoterOrHasDuty() sdk.Error {
+	return types.NewError(types.CodeNotAVoterOrHasDuty, fmt.Sprintf("not a voter or has duty"))
 }
 
 // ErrNotAVoterOrHasDuty

@@ -96,68 +96,6 @@ func handleStakeOutMsg(
 	return sdk.Result{}
 }
 
-func handleDelegateMsg(
-	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager, am acc.AccountKeeper, msg DelegateMsg) sdk.Result {
-	coin, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err.Result()
-	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-
-	if param.MinStakeIn.IsGT(coin) {
-		return ErrInsufficientDeposit().Result()
-	}
-
-	// withdraw money from delegator's bank
-	if err := am.MinusCoinFromUsername(ctx, msg.Delegator, coin); err != nil {
-		return err.Result()
-	}
-
-	if err := AddStake(ctx, msg.Delegator, coin, vm, gm, am); err != nil {
-		return err.Result()
-	}
-
-	// add delegation relation
-	if addErr := vm.AddDelegation(ctx, msg.Voter, msg.Delegator, coin); addErr != nil {
-		return addErr.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleDelegatorWithdrawMsg(
-	ctx sdk.Context, vm VoteManager, gm *global.GlobalManager,
-	am acc.AccountKeeper, msg DelegatorWithdrawMsg) sdk.Result {
-	coin, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err.Result()
-	}
-	if !vm.IsLegalDelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin) {
-		return ErrIllegalWithdraw().Result()
-	}
-
-	param, err := vm.paramHolder.GetVoteParam(ctx)
-	if err != nil {
-		return err.Result()
-	}
-	if err := MinusStake(ctx, msg.Delegator, coin, vm, gm, am); err != nil {
-		return err.Result()
-	}
-	if err := vm.DelegatorWithdraw(ctx, msg.Voter, msg.Delegator, coin); err != nil {
-		return err.Result()
-	}
-
-	if err := returnCoinTo(
-		ctx, msg.Delegator, gm, am, param.DelegatorCoinReturnTimes,
-		param.DelegatorCoinReturnIntervalSec, coin, types.DelegationReturnCoin); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
 func handleClaimInterestMsg(ctx sdk.Context, vm VoteManager, gm *global.GlobalManager, am acc.AccountKeeper, msg ClaimInterestMsg) sdk.Result {
 	if err := calculateAndAddInterest(ctx, vm, gm, am, msg.Username); err != nil {
 		return err.Result()

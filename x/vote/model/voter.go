@@ -1,36 +1,16 @@
 package model
 
 import (
-	types "github.com/lino-network/lino/types"
-	votetypes "github.com/lino-network/lino/x/vote/types"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/vote/types"
 )
 
 // Voter - a voter in blockchain is account with voter deposit, who can vote for a proposal
 type Voter struct {
-	Username          types.AccountKey    `json:"username"`
-	LinoStake         types.Coin          `json:"lino_stake"`
-	DelegatedPower    types.Coin          `json:"delegated_power"`
-	DelegateToOthers  types.Coin          `json:"delegate_to_others"`
-	LastPowerChangeAt int64               `json:"last_power_change_at"`
-	Interest          types.Coin          `json:"interest"`
-	Duty              votetypes.VoterDuty `json:"duty"`
-	FrozenAmount      types.Coin          `json:"frozen_amount"`
-}
-
-// Vote - a vote is created by a voter to a proposal
-type Vote struct {
-	Voter       types.AccountKey `json:"voter"`
-	VotingPower types.Coin       `json:"voting_power"`
-	Result      bool             `json:"result"`
-}
-
-// Delegation - normal user can delegate money to a voter to increase voter's voting power
-type Delegation struct {
-	Delegator types.AccountKey `json:"delegator"`
-	Amount    types.Coin       `json:"amount"`
-}
-
-// ReferenceList - record validator to punish the validator who doesn't vote for proposal
-type ReferenceList struct {
-	AllValidators []types.AccountKey `json:"all_validators"`
+	Username          linotypes.AccountKey `json:"username"`
+	LinoStake         linotypes.Coin       `json:"lino_stake"`
+	LastPowerChangeAt int64                `json:"last_power_change_at"`
+	Interest          linotypes.Coin       `json:"interest"`
+	Duty              types.VoterDuty      `json:"duty"`
+	FrozenAmount      linotypes.Coin       `json:"frozen_amount"`
 }

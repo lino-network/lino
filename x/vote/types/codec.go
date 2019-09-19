@@ -1,4 +1,4 @@
-package vote
+package types
 
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
