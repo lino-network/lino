@@ -1,7 +1,6 @@
-TODO: change chain_id and genesis_time.
 {
-  "genesis_time": "2019-03-07T02:36:06.096303264Z",
-  "chain_id": "lino-testnet-upgrade1",
+  "genesis_time": "2019-09-19T19:12:05.141699565Z",
+  "chain_id": "lino-testnet-upgrade2",
   "consensus_params": {
     "block": {
       "time_iota_ms": "1000",
