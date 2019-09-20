@@ -5,12 +5,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 
 	// sdk "github.com/cosmos/cosmos-sdk/types"
-	txutils "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	// txutils "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/spf13/cobra"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/lino-network/lino/app"
+	blockcli "github.com/lino-network/lino/client/blockchain"
 	paramcli "github.com/lino-network/lino/param/client/cli"
 	"github.com/lino-network/lino/types"
 	acccli "github.com/lino-network/lino/x/account/client/cli"
@@ -68,7 +69,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 	}
 
 	queryCmd.AddCommand(
-		txutils.QueryTxCmd(cdc),
+		blockcli.GetQueryCmd(cdc),
 		client.LineBreak,
 		devcli.GetQueryCmd(cdc),
 		acccli.GetQueryCmd(cdc),
@@ -80,9 +81,6 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		paramcli.GetQueryCmd(cdc),
 		repcli.GetQueryCmd(cdc),
 		votecli.GetQueryCmd(cdc),
-		client.LineBreak,
-		rpc.ValidatorCommand(cdc),
-		rpc.BlockCommand(),
 	)
 
 	return queryCmd
