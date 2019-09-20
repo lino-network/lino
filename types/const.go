@@ -169,4 +169,7 @@ const (
 
 	// TendermintValidatorPower - every validator has const power in tendermint engine.
 	TendermintValidatorPower = 1000
+
+	// Upgrade2Update1 - adjust minimum registration fee.
+	Upgrade2Update1Height = 30000
 )
