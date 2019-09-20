@@ -1,9 +1,9 @@
 GOPATH ?= $(shell $(GO) env GOPATH)
 COMMIT := $(shell git log -1 --format='%H')
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
-LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb"
-GO_TAGS := "tendermint cgo cleveldb"
-CGO_LDFLAGS := "-lsnappy"
+LD_FLAGS := "-X github.com/tendermint/tendermint/version.GitCommit=$(COMMIT) -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
+GO_TAGS := "tendermint cgo rocksdb"
+CGO_LDFLAGS := "-lsnappy -lzstd"
 GO111MODULE = on
 
 all: get_tools install build test
