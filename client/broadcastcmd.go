@@ -16,7 +16,7 @@ import (
 func GetCmdBroadcast(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "broadcast",
-		Short: "broadcast <tx-hash>",
+		Short: "broadcast <tx-hex>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := NewCoreBroadcastContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
