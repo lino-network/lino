@@ -45,6 +45,7 @@ func NewCoreContextFromViper() core.CoreContext {
 		Height:          viper.GetInt64(FlagHeight),
 		TrustNode:       viper.GetBool(FlagTrustNode),
 		FromAddressName: viper.GetString(FlagName),
+		Offline:         viper.GetBool(FlagOffline),
 		NodeURI:         nodeURI,
 		Sequence:        uint64(viper.GetInt64(FlagSequence)), // XXX(yumin): dangerous, but ok.
 		Client:          rpc,
@@ -65,6 +66,25 @@ func NewCoreContextFromViper() core.CoreContext {
 	}
 	if !hasKey {
 		panic("Missing --" + FlagPrivKey)
+	}
+	return ctx
+}
+
+func NewCoreBroadcastContextFromViper() core.CoreContext {
+	nodeURI := viper.GetString(FlagNode)
+	var rpc rpcclient.Client
+	if nodeURI != "" {
+		rpc = rpcclient.NewHTTP(nodeURI, "/websocket")
+	}
+
+	ctx := core.CoreContext{
+		ChainID:         viper.GetString(FlagChainID),
+		Height:          viper.GetInt64(FlagHeight),
+		TrustNode:       viper.GetBool(FlagTrustNode),
+		FromAddressName: viper.GetString(FlagName),
+		Offline:         viper.GetBool(FlagOffline),
+		NodeURI:         nodeURI,
+		Client:          rpc,
 	}
 	return ctx
 }

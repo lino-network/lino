@@ -1,0 +1,334 @@
+* Introduction
+Linocli is the official CLI tool for users to interact with Lino
+Blockchain. It can:
++ Query on-chain state
++ Build and broadcast transaction.(including offilne signing)
+
+* Setup
+** Installation
+To install linocli, you can clone and build from the lino
+repository. 
+
+#+begin_src shell
+# Prerequisite: go >= 1.12 is installed. 
+git clone https://github.com/lino-network/lino.git
+cd lino
+make install_cli
+#+end_src
+
+Also, you can download pre-build executables from our release page:
+https://github.com/lino-network/lino/releases. Mac user should
+download the `***_Darwin_x86_64.tar.gz`.
+
+** Configuration
+
+To connect with latest Lino Blockchain, chain id and node url should be set specifically as following:
+
+#+begin_src shell
+linocli config node "https://fullnode.lino.network:443"
+linocli config chain-id "lino-testnet-upgrade2"
+#+end_src
+
+Also, you can always overwrite these two values through --node
+--chain-id flags.
+
+* Query
+** Blockchain
+*** Current Block Height
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-lastest-block-height
+
+#+begin_src shell
+$ linocli q blockchain height                                                             
+223039
+#+end_src
+*** Messages In Block
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-transactions-in-a-block
+
+`linocli q blockchain msg <height>`, will print messages and results of the block height
+#+begin_src shell
+$ linocli q blockchain msg 5000
+[
+  {
+    "hash": "CD86D156FF062EB8E42922DF1C7C8E01FBB4D2F4D4C02674AB10A3ACA1DAD156",
+    "msgs": [
+      {
+        "type": "lino/donate",
+        "value": {
+          "username": "mjay1989",
+          "amount": "100",
+          "author": "xav2k",
+          "post_id": "BVIHXNpWg",
+          "from_app": "dlivetv",
+          "memo": "@mjay1989 donated 100 points to post xav2k+BVIHXNpWg"
+        }
+      }
+    ]
+  }
+]
+#+end_src
+*** Query Tx Result
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-transactions-by-hash
+
+`linocli q blockchain tx <hash>`
+A transaction is considered as a success, when the Response code is 0
+(which won't be printed on screen). Any other response code indicates
+a failure.
+#+begin_src text
+$ linocli q blockchain tx CD86D156FF062EB8E42922DF1C7C8E01FBB4D2F4D4C02674AB10A3ACA1DAD156
+{
+  "type": "auth/StdTx",
+  "value": {
+    "msg": [
+      {
+        "type": "lino/donate",
+        "value": {
+          "username": "mjay1989",
+          "amount": "100",
+          "author": "xav2k",
+          "post_id": "BVIHXNpWg",
+          "from_app": "dlivetv",
+          "memo": "@mjay1989 donated 100 points to post xav2k+BVIHXNpWg"
+        }
+      }
+    ],
+    "fee": {
+      "amount": [
+        {
+          "denom": "linocoin",
+          "amount": "100000"
+        }
+      ],
+      "gas": "0"
+    },
+    "signatures": [
+      {
+        "pub_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A3hsbA+PeGUFLk3fpUoH7UUqoSR0sjCUCNSb/GptZ5sE"
+        },
+        "signature": "hPo3CWsq+Mo51mQpUabAILVKDdxFktL3NUWCcATqnqwJvupwSUjfJG5v/0wQJ2/yeDnH9FRYAn8sVckpxpcGUg=="
+      }
+    ],
+    "memo": ""
+  }
+}
+Response:
+  Height: 5000
+  TxHash: CD86D156FF062EB8E42922DF1C7C8E01FBB4D2F4D4C02674AB10A3ACA1DAD156
+  Raw Log: [{"msg_index":0,"success":true,"log":""}]
+  Logs: [{"msg_index":0,"success":true,"log":""}]
+  GasUsed: 476266
+  Timestamp: 2019-09-20T02:04:47Z
+  Events: 
+		- message
+			- action: DonateMsg
+#+end_src
+
+*** Block Details
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-block-information
+
+Get verified data for a the block at given height
+#+begin_src text
+$ linocli q blockchain block 5000                                                         
+{"block_meta":{"block_id":{"hash":"63AC69D8CDCFD17FBFA8180632976F89E0BF94E4EDE6D6652A0C577F36D42B3B","parts":{"total":"1","hash":"FD9071F86DB6A66AFE4EFC73A64E3C69C020898CB58C30752DED8AC6BF94585B"}},"header":{"version":{"block":"10","app":"0"},"chain_id":"lino-testnet-upgrade2","height":"5000","time":"2019-09-20T02:04:47.872531687Z","num_txs":"1","total_txs":"9829","last_block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"last_commit_hash":"E51B442C89544E78F6768B0F2268AB08EF75D13450595239FF8F3158814ED290","data_hash":"A158D2CA6C5FD424A31693D8E6E8E2503CF52D7AE6156A43834E80A7F96A8A36","validators_hash":"F29730F7417C82A26FE3FA55D07E2D5F771FC2B0EA2E387E2E2A3CF10B1B571F","next_validators_hash":"F29730F7417C82A26FE3FA55D07E2D5F771FC2B0EA2E387E2E2A3CF10B1B571F","consensus_hash":"048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F","app_hash":"02B546649796CC03C59AC53492A4A187B5FC85A8C62E4BFC1012078D4185ED82","last_results_hash":"4837665DFE640A370E7496C691987562D02462142C5F34F59E185911A12370EA","evidence_hash":"","proposer_address":"DA6381BDA9B8654420A1F489823E5C1798657ABF"}},"block":{"header":{"version":{"block":"10","app":"0"},"chain_id":"lino-testnet-upgrade2","height":"5000","time":"2019-09-20T02:04:47.872531687Z","num_txs":"1","total_txs":"9829","last_block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"last_commit_hash":"E51B442C89544E78F6768B0F2268AB08EF75D13450595239FF8F3158814ED290","data_hash":"A158D2CA6C5FD424A31693D8E6E8E2503CF52D7AE6156A43834E80A7F96A8A36","validators_hash":"F29730F7417C82A26FE3FA55D07E2D5F771FC2B0EA2E387E2E2A3CF10B1B571F","next_validators_hash":"F29730F7417C82A26FE3FA55D07E2D5F771FC2B0EA2E387E2E2A3CF10B1B571F","consensus_hash":"048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F","app_hash":"02B546649796CC03C59AC53492A4A187B5FC85A8C62E4BFC1012078D4185ED82","last_results_hash":"4837665DFE640A370E7496C691987562D02462142C5F34F59E185911A12370EA","evidence_hash":"","proposer_address":"DA6381BDA9B8654420A1F489823E5C1798657ABF"},"data":{"txs":["eyJ0eXBlIjoiYXV0aC9TdGRUeCIsInZhbHVlIjp7Im1zZyI6W3sidHlwZSI6Imxpbm8vZG9uYXRlIiwidmFsdWUiOnsidXNlcm5hbWUiOiJtamF5MTk4OSIsImFtb3VudCI6IjEwMCIsImF1dGhvciI6InhhdjJrIiwicG9zdF9pZCI6IkJWSUhYTnBXZyIsImZyb21fYXBwIjoiZGxpdmV0diIsIm1lbW8iOiJAbWpheTE5ODkgZG9uYXRlZCAxMDAgcG9pbnRzIHRvIHBvc3QgeGF2MmsrQlZJSFhOcFdnIn19XSwiZmVlIjp7ImFtb3VudCI6W3siZGVub20iOiJsaW5vY29pbiIsImFtb3VudCI6IjEwMDAwMCJ9XSwiZ2FzIjoiMCJ9LCJzaWduYXR1cmVzIjpbeyJwdWJfa2V5Ijp7InR5cGUiOiJ0ZW5kZXJtaW50L1B1YktleVNlY3AyNTZrMSIsInZhbHVlIjoiQTNoc2JBK1BlR1VGTGszZnBVb0g3VVVxb1NSMHNqQ1VDTlNiL0dwdFo1c0UifSwic2lnbmF0dXJlIjoiaFBvM0NXc3ErTW81MW1RcFVhYkFJTFZLRGR4Rmt0TDNOVVdDY0FUcW5xd0p2dXB3U1VqZkpHNXYvMHdRSjIveWVEbkg5RlJZQW44c1Zja3B4cGNHVWc9PSJ9XSwibWVtbyI6IiJ9fQ=="]},"evidence":{"evidence":null},"last_commit":{"block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"precommits":[{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.833164205Z","validator_address":"1DB04F427828A3952E82E01004545742ADEB8C6A","validator_index":"0","signature":"yFeB5Jzcd1rKNk2HuUqJn/bQkuVc3a2tgvcAmfUjd+UwfNHnRXVyZ4rLKIC6oFjZYmmPsoKjXm0Woh4SNNfjDQ=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.848977968Z","validator_address":"1E1B60F12C837BB35218E1F370B935FEBC17B8A0","validator_index":"1","signature":"bVSJ57buRvyyOhPQZMabV6D3/y1nOUxo6ZpsO+G3oL3epAgD7YtuFmEBaCvdqAlbX+F5yQqB+bTLE+YdfMSmAA=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.93508494Z","validator_address":"26017706E5A3481108C09687DF661762ACC34A56","validator_index":"2","signature":"zO6EgId3xpqvN7T+SrNNkcDPJu6eHtYwNc2+ba/y67KFMG+pIvMVMDQ5W58ZtQSr9HmXQrJqNZ5fS2BpCD/MCw=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.936500585Z","validator_address":"3E10584CE6C811A154CCA3A55E62314B031895A5","validator_index":"3","signature":"HVMldW0LeF/WPUyy0ECtdMpUAIa9DlYu9o7UVL7GS7XPbPqrBfwmgTZv2X2rCTy5A+WWEIhR8kDk8OSf+XHgAw=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.933656998Z","validator_address":"7F6435EEDB4081BBDB3560B8BF723618F6690785","validator_index":"4","signature":"E3jwP/ljE73B0brG7/W5sSfDbznaK8NeMbd4QvyOvs0BxBUHtJbZcc5TitUvzPUh0Gr1J4OQIsAM04OwpTo2Ag=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.836291399Z","validator_address":"991B3275E3A86FB4817E070FA45EC0FDF39B8C3D","validator_index":"5","signature":"pg348/p9xxqEGmXq+l0qK5EopbLxzlB2OW5KLN82y+1YcNo75bCudDh/3ym2RWSEFloqCFjYZr3mRpvnbPbzCA=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.872531687Z","validator_address":"9BE329A4CB0D0656FBF10E1FF326AFD98F97C66D","validator_index":"6","signature":"sbUPLCZqnC34M8U4bqlzHgHVu6NmNXQwLMO+1w61fZ7vdiJidYX5FAb+ki8NBrW5WOBaUN0VOIDKWs7iZmpEBQ=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.927047103Z","validator_address":"A3E16AB3947215CEECCF5DF9C5FCE51BB30606A7","validator_index":"7","signature":"V9lM877mIUGIuFLZVTYku1YwPtk2H8MDldXRzmRTV+82y5g6mI2xq9PT4i7VCLjxbKz8DtOUH2oiZQUyfEZACw=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.884249891Z","validator_address":"DA6381BDA9B8654420A1F489823E5C1798657ABF","validator_index":"8","signature":"G0pEEE5ruN5zEcSckI2Kp+38mPu9FfXVs7K2r77hjKw4kKo0QuLayGTnD7UIbtm7ISYIm8wzObm3aGMtZv+aAg=="},{"type":2,"height":"4999","round":"0","block_id":{"hash":"A1B4AAFE6B089F5703869012F7736274779CB8C89BC8A6CBBAA99EF42AFF08DD","parts":{"total":"1","hash":"4C3DBB0AC0610E96DC07D630E463DFE5DFCC75FA4362505A216353A0030E305D"}},"timestamp":"2019-09-20T02:04:47.840068638Z","validator_address":"E717FDDA508B87B44327CF75F5F5310FB5F9F5EE","validator_index":"9","signature":"63o1ahrEdUxF8b4/zlUqIhcymnLjI7QAgYIBEmv/lGtiO5jF8TLJVUUI+RMZFvff4BMSlopJ2HjuOJM7iLbIBA=="}]}}}
+#+end_src
+
+*** Validators
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-validators
+
+linocli q blockchain tendermint-validator-set 
+#+begin_src text
+$ linocli q blockchain tendermint-validator-set 
+blockheight: 27671
+validators:
+- address: linovalcons1rkcy7snc9z3e2t5zuqgqg4zhg2k7hrr20nh0wj
+  pubkey: linovalconspub1zcjduepq4nexa3gf0lhczrzty074l6dl9ydcx30a445ucfl8v9ht823sjcaq4s2akp
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1rcdkpufvsdamx5scu8ehpwf4l67p0w9q767za7
+  pubkey: linovalconspub1zcjduepqu2uzrlyxm67ne68ldvmkpx9f63079p6gymteme3wkgjzn98txcfqgr2e3a
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1ycqhwph95dypzzxqj6ra7eshv2kvxjjk9myk57
+  pubkey: linovalconspub1zcjduepqsxp0xqckfkyt89y6t58d8t5mvwc7j3syy3y2gcj80thezy6anu8s4tlkwj
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons18cg9sn8xeqg6z4xv5wj4uc33fvp339d9qv0wal
+  pubkey: linovalconspub1zcjduepq3hhjx4d66at2lx280a0gmrx28glunjkl9h3gsp3wcysd4faqagusm435sx
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons10ajrtmkmgzqmhke4vzut7u3krrmxjpu9c0p0e0
+  pubkey: linovalconspub1zcjduepqmxefkztwsdxemskyn7k47rqdjcag3gjw6tewlqlxcd6drmq7ptuskkfxn8
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1nydnya0r4phmfqt7qu86ghkqlheehrpa3a80r5
+  pubkey: linovalconspub1zcjduepqcuclpyzh386p0pcv6d64s4g97af3zyh67l25x0dft8yv9gg8cqwq68chf6
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1n03jnfxtp5r9d7l3pc0lxf40mx8e03ndpq8mqx
+  pubkey: linovalconspub1zcjduepqh60ctatwu85hpwcjgejda0a83t2sw43ec3rnujw9sm300dq7ar6s4u4jen
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons150sk4vu5wg2uamx0thuutl89rwesvp48s09d8t
+  pubkey: linovalconspub1zcjduepq2pex2tvnd3qmfmugh7gfamcgpuadd60f6tl9ztlflk9clt32um3qrludjh
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1mf3cr0dfhpj5gg9p7jycy0juz7vx274lavf008
+  pubkey: linovalconspub1zcjduepq3aus4csxr9vjem3vn5j83l5fs55vv75lswl2xcf3a40q8f02sz7spnnfus
+  proposerpriority: 0
+  votingpower: 1000
+- address: linovalcons1uutlmkjs3wrmgse8ea6ltaf3p76lna0w2u55u0
+  pubkey: linovalconspub1zcjduepqp5uck88rkd35ldn55zawxn5ycgkfgsjkw72jvzpp3klzzs9mrj5sayqzdt
+  proposerpriority: 0
+  votingpower: 1000
+#+end_src
+** Lino Modules
+*** Account
+#+begin_src text
+Usage:
+  linocli query account [flags]
+  linocli query account [command]
+
+Available Commands:
+  info        info USERNAME
+  bank        bank USERNAME
+  meta        meta USERNAME
+  list-grants list-grants USERNAME
+
+#+end_src
+**** Balance
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#account
+
+linocli q account bank <userrname>
+#+begin_src text
+$ linocli q account bank yxia
+{
+  "saving": {
+    "amount": "101598958"
+  },
+  "frozen_money_list": null,
+  "public_key": {
+    "type": "tendermint/PubKeySecp256k1",
+    "value": "A5LJfVGyYpkNK/xKpXXIdzUo9/tj6s/755KkFMHTGs1x"
+  },
+  "sequence": "870",
+  "username": "yxia"
+}
+#+end_src
+*** Others
+
+You can find out all commands available for other modules by entering
+`linocli q`.
+#+begin_src text
+$ linocli q     
+Querying subcommands
+
+Usage:
+  linocli query [command]
+
+Aliases:
+  query, q
+
+Available Commands:
+  blockchain  Blockchain-related Queries
+              
+  developer   Querying commands for the developer module
+  account     Querying commands for the account module
+  post        Querying commands for the post module
+  proposal    Querying commands for the proposal module
+  validator   Querying commands for the validator module
+  global      Querying commands for the global module
+  bandwidth   Querying commands for the bandwidth module
+  param       Querying commands for the param module
+  reputation  Querying commands for the reputation module
+  vote        Querying commands for the vote module
+
+Flags:
+  -h, --help   help for query
+
+Global Flags:
+      --chain-id string   Chain ID of tendermint node
+  -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
+      --home string       directory for config and data (default "/home/stumble/.linocli")
+  -o, --output string     Output format (text|json) (default "text")
+      --trace             print out full stack trace on errors
+
+Use "linocli query [command] --help" for more information about a command.
+#+end_src
+* Transaction
+For transactions, you must provide the following required flags
++ --fees <amount>, maximum transaction fee, e.g. --fees 1000000linocoin.
++ --priv-key, hex encoded private key.
++ --sequence, the sequence number of the private key.
+
+Example:
+#+begin_src text
+linocli tx account register <referrer> <regfee> <username> --sequence 123 --fees 10000linocoin --priv-key "PRIVATEKEYHEXBYTES"
+#+end_src
+** Build Offline Transaction
+You can generate a signed offline message by passing --offline=true to
+any transaction subcommands. The printed result contains two line,
+where the first line is the json encoded transaction. The second line
+is the hex encoded transaction, which can used for broadcasting.
+#+begin_src text
+linocli tx account transfer dlivetv --to ytu --amount 1 --memo haha --priv-key <private-key-hex> --sequence 0 --fees 10000linocoin --offline=true
+{"type":"auth/StdTx","value":{"msg":[{"type":"lino/transfer","value":{"sender":"dlivetv","receiver":"ytu","amount":"1","memo":"haha"}}],"fee":{"amount":[{"denom":"linocoin","amount":"10000"}],"gas":"1"},"signatures":[{"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"A6nE19NXXEnsK69C+UOTqKhNq64pcnCFjVmchAfjsNSE"},"signature":"J6HsQqvHu34I5KNiPjX2N2Wa1tM8oIroo3Do0hJYW/RAETdUO53dGpWQKlV1tnghhDsSBd/MZyE9qFY1V8dQYw=="}],"memo":""}}
+7B2274797065223A22617574682F5374645478222C2276616C7565223A7B226D7367223A5B7B2274797065223A226C696E6F2F7472616E73666572222C2276616C7565223A7B2273656E646572223A22646C6976657476222C227265636569766572223A22797475222C22616D6F756E74223A2231222C226D656D6F223A2268616861227D7D5D2C22666565223A7B22616D6F756E74223A5B7B2264656E6F6D223A226C696E6F636F696E222C22616D6F756E74223A223130303030227D5D2C22676173223A2231227D2C227369676E617475726573223A5B7B227075625F6B6579223A7B2274797065223A2274656E6465726D696E742F5075624B6579536563703235366B31222C2276616C7565223A2241366E4531394E5858456E734B3639432B554F54714B684E71363470636E43466A566D636841666A734E5345227D2C227369676E6174757265223A224A3648735171764875333449354B4E69506A58324E32576131744D386F49726F6F33446F30684A59572F5241455464554F353364477057514B6C5631746E67686844735342642F4D5A794539714659315638645159773D3D227D5D2C226D656D6F223A22227D7D
+#+end_src
+
+** Broadcast 
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#synchronizing-and-analyzing-the-successful-transfers
+
+If you have a string of hex encoded transaction, you can broadcast it
+by
+#+begin_src text
+linocli tx broadcast broadcast <tx-hex>
+#+end_src
+
+** Lino Modules
+*** Account
+**** Register
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#register-a-new-user
+
+`linocli tx account register <referrer> <regfee> <new-username>` will
+register an account of <new-username>, by <referrer>, paying <regfee>.
+#+begin_src text
+linocli tx account register dlivetv 100 validator4 --sequence <seq> --fees 10000linocoin --priv-key <pk> 
+#+end_src
+**** Transfer
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#transfer-lino-between-two-users
+
+`linocli tx account transfer <from> --to <bar> --amount <amount> --memo memo`
+#+begin_src text
+$ `linocli tx account transfer yxia --to ytu --amount 1 --memo memo --sequence 123 --fees 10000linocoin --priv-key "PRIVATEKEY"`
+Response:
+  Height: 223856
+  TxHash: 7860BA7CEE3205DC8694E0B39BCA53B8C9518544F96F62C4E6EBEE5811C952F1
+  Raw Log: [{"msg_index":0,"success":true,"log":""}]
+  Logs: [{"msg_index":0,"success":true,"log":""}]
+  GasUsed: 127028
+  Events: 
+		- message
+			- action: TransferMsg
+#+end_src
+
+*** Others
+You can find other transaction subcommands in `linocli tx`.
+#+begin_src text
+$ linocli tx
+Transactions subcommands
+
+Usage:
+  linocli tx [command]
+
+Available Commands:
+  broadcast   broadcast <tx-hex>
+              
+  developer   Developer tx subcommands
+  account     Account tx subcommands
+  post        Post tx subcommands
+  proposal    vote tx subcommands
+  validator   validator tx subcommands
+  vote        vote tx subcommands
+              
+#+end_src

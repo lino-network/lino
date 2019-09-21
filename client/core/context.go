@@ -17,6 +17,7 @@ type CoreContext struct {
 	FromAddressName string
 	Sequence        uint64
 	Memo            string
+	Offline         bool
 	Client          rpcclient.Client
 	PrivKeys        []crypto.PrivKey
 	Fees            sdk.Coins
