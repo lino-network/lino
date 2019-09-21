@@ -35,11 +35,15 @@ Also, you can always overwrite these two values through --node
 * Query
 ** Blockchain
 *** Current Block Height
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-lastest-block-height
+
 #+begin_src shell
 $ linocli q blockchain height                                                             
 223039
 #+end_src
 *** Messages In Block
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-transactions-in-a-block
+
 `linocli q blockchain msg <height>`, will print messages and results of the block height
 #+begin_src shell
 $ linocli q blockchain msg 5000
@@ -63,6 +67,8 @@ $ linocli q blockchain msg 5000
 ]
 #+end_src
 *** Query Tx Result
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-transactions-by-hash
+
 `linocli q blockchain tx <hash>`
 A transaction is considered as a success, when the Response code is 0
 (which won't be printed on screen). Any other response code indicates
@@ -119,6 +125,8 @@ Response:
 #+end_src
 
 *** Block Details
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-block-information
+
 Get verified data for a the block at given height
 #+begin_src text
 $ linocli q blockchain block 5000                                                         
@@ -126,6 +134,8 @@ $ linocli q blockchain block 5000
 #+end_src
 
 *** Validators
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-validators
+
 linocli q blockchain tendermint-validator-set 
 #+begin_src text
 $ linocli q blockchain tendermint-validator-set 
@@ -187,6 +197,8 @@ Available Commands:
 
 #+end_src
 **** Balance
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#account
+
 linocli q account bank <userrname>
 #+begin_src text
 $ linocli q account bank yxia
@@ -204,6 +216,7 @@ $ linocli q account bank yxia
 }
 #+end_src
 *** Others
+
 You can find out all commands available for other modules by entering
 `linocli q`.
 #+begin_src text
@@ -264,6 +277,8 @@ linocli tx account transfer dlivetv --to ytu --amount 1 --memo haha --priv-key <
 #+end_src
 
 ** Broadcast 
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#synchronizing-and-analyzing-the-successful-transfers
+
 If you have a string of hex encoded transaction, you can broadcast it
 by
 #+begin_src text
@@ -273,12 +288,16 @@ linocli tx broadcast broadcast <tx-hex>
 ** Lino Modules
 *** Account
 **** Register
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#register-a-new-user
+
 `linocli tx account register <referrer> <regfee> <new-username>` will
 register an account of <new-username>, by <referrer>, paying <regfee>.
 #+begin_src text
 linocli tx account register dlivetv 100 validator4 --sequence <seq> --fees 10000linocoin --priv-key <pk> 
 #+end_src
 **** Transfer
+go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#transfer-lino-between-two-users
+
 `linocli tx account transfer <from> --to <bar> --amount <amount> --memo memo`
 #+begin_src text
 $ `linocli tx account transfer yxia --to ytu --amount 1 --memo memo --sequence 123 --fees 10000linocoin --priv-key "PRIVATEKEY"`
