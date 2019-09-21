@@ -36,6 +36,7 @@ Also, you can always overwrite these two values through --node
 ** Blockchain
 *** Current Block Height
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-lastest-block-height
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-blockchain-status-last-block-height-last-block-time-etc
 
 #+begin_src shell
 $ linocli q blockchain height                                                             
@@ -43,6 +44,7 @@ $ linocli q blockchain height
 #+end_src
 *** Messages In Block
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-transactions-in-a-block
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-txs-in-block
 
 `linocli q blockchain msg <height>`, will print messages and results of the block height
 #+begin_src shell
@@ -68,6 +70,7 @@ $ linocli q blockchain msg 5000
 #+end_src
 *** Query Tx Result
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-transactions-by-hash
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-tx-by-hash
 
 `linocli q blockchain tx <hash>`
 A transaction is considered as a success, when the Response code is 0
@@ -126,6 +129,7 @@ Response:
 
 *** Block Details
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-block-information
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-block
 
 Get verified data for a the block at given height
 #+begin_src text
@@ -135,6 +139,7 @@ $ linocli q blockchain block 5000
 
 *** Validators
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#get-all-validators
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-all-validators
 
 linocli q blockchain tendermint-validator-set 
 #+begin_src text
@@ -198,6 +203,7 @@ Available Commands:
 #+end_src
 **** Balance
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#account
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#get-accountbank
 
 linocli q account bank <userrname>
 #+begin_src text
@@ -297,6 +303,7 @@ linocli tx account register dlivetv 100 validator4 --sequence <seq> --fees 10000
 #+end_src
 **** Transfer
 go-sdk: https://github.com/lino-network/lino-go/tree/master/doc#transfer-lino-between-two-users
+js-sdk: https://github.com/lino-network/lino-js/tree/master/doc#register-a-new-user
 
 `linocli tx account transfer <from> --to <bar> --amount <amount> --memo memo`
 #+begin_src text
