@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/lino-network/lino/app"
+	linoclient "github.com/lino-network/lino/client"
 	blockcli "github.com/lino-network/lino/client/blockchain"
 	paramcli "github.com/lino-network/lino/param/client/cli"
 	"github.com/lino-network/lino/types"
@@ -93,6 +94,8 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
+		linoclient.GetCmdBroadcast(cdc),
+		client.LineBreak,
 		devcli.GetTxCmd(cdc),
 		acccli.GetTxCmd(cdc),
 		postcli.GetTxCmd(cdc),

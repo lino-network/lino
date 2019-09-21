@@ -172,6 +172,8 @@ func getCmdTx(cdc *codec.Codec) *cobra.Command {
 				}
 			}
 
+			printTx(cdc, resTx.Tx)
+
 			resBlocks, err := getBlocksForTxResults(cliCtx, []*ctypes.ResultTx{resTx})
 			if err != nil {
 				return err
@@ -226,4 +228,18 @@ func parseTx(decoder sdk.TxDecoder, txBytes []byte) (sdk.Tx, error) {
 	}
 
 	return tx, nil
+}
+
+func printTx(cdc *codec.Codec, txBytes []byte) error {
+	decoder := linotypes.TxDecoder(cdc)
+	msg, err := decoder(txBytes)
+	if err != nil {
+		return err
+	}
+	out, err2 := cdc.MarshalJSONIndent(msg, "", "  ")
+	if err2 != nil {
+		return err
+	}
+	fmt.Println(string(out))
+	return nil
 }

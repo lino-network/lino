@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -64,7 +66,19 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 
 func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg) error {
 	if err := msg.ValidateBasic(); err != nil {
-		panic(err)
+		return err
+	}
+
+	if ctx.Offline {
+		tx, err := ctx.BuildAndSign([]sdk.Msg{msg})
+		if err != nil {
+			return err
+		}
+		txhex := hex.EncodeToString(tx)
+		txhex = strings.ToUpper(txhex)
+		fmt.Println(string(tx))
+		fmt.Println(txhex)
+		return nil
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
