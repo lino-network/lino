@@ -172,4 +172,7 @@ const (
 
 	// Upgrade2Update1 - adjust minimum registration fee.
 	Upgrade2Update1Height = 30000
+
+	// Upgrade2Update2 - fix registration bug.
+	Upgrade2Update2Height = 50000
 )

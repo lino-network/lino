@@ -59,6 +59,12 @@ func (accManager AccountManager) RegisterAccount(
 	if err := accManager.CreateAccount(ctx, username, signingKey, transactionKey); err != nil {
 		return err
 	}
+	if ctx.BlockHeight() >= linotypes.Upgrade2Update2Height {
+		if err := accManager.gm.AddToValidatorInflationPool(ctx, minRegFee); err != nil {
+			return err
+		}
+		return accManager.AddCoinToUsername(ctx, username, registerFee.Minus(minRegFee))
+	}
 	if err := accManager.gm.AddToValidatorInflationPool(ctx, accParams.RegisterFee); err != nil {
 		return err
 	}
