@@ -6,7 +6,8 @@ env:
 before:
   hooks:
     # you may remove this if you don't use vgo
-    - go mod tidy
+    # go mod tidy is flaky with go get.
+    # - go mod tidy
     # you may remove this if you don't need go generate
     # - go generate ./...
 builds:
