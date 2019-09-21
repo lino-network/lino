@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	tmliteProxy "github.com/tendermint/tendermint/lite/proxy"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+
 	// "github.com/lino-network/lino/utils"
 
 	linotypes "github.com/lino-network/lino/types"
@@ -172,7 +173,7 @@ func getCmdTx(cdc *codec.Codec) *cobra.Command {
 				}
 			}
 
-			printTx(cdc, resTx.Tx)
+			_ = printTx(cdc, resTx.Tx)
 
 			resBlocks, err := getBlocksForTxResults(cliCtx, []*ctypes.ResultTx{resTx})
 			if err != nil {

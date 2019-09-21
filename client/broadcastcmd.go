@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/hex"
 	"fmt"
+
 	// "strings"
 
 	"github.com/spf13/cobra"
