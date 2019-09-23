@@ -20,12 +20,12 @@ func NewHandler(vm VoteManager, am acc.AccountKeeper, gm *global.GlobalManager) 
 			return handleStakeInMsg(ctx, vm, gm, am, msg)
 		case StakeOutMsg:
 			return handleStakeOutMsg(ctx, vm, gm, am, msg)
-		case DelegateMsg:
-			return handleDelegateMsg(ctx, vm, gm, am, msg)
-		case DelegatorWithdrawMsg:
-			return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
-		case ClaimInterestMsg:
-			return handleClaimInterestMsg(ctx, vm, gm, am, msg)
+		// case DelegateMsg:
+		// 	return handleDelegateMsg(ctx, vm, gm, am, msg)
+		// case DelegatorWithdrawMsg:
+		// 	return handleDelegatorWithdrawMsg(ctx, vm, gm, am, msg)
+		// case ClaimInterestMsg:
+		// 	return handleClaimInterestMsg(ctx, vm, gm, am, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()

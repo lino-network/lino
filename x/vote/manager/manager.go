@@ -56,7 +56,10 @@ func (vm VoteManager) StakeIn(ctx sdk.Context, username linotypes.AccountKey, am
 	if err := vm.am.MinusCoinFromUsername(ctx, username, amount); err != nil {
 		return err
 	}
+	return vm.AddStake(ctx, username, amount)
+}
 
+func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		if err.Code() != linotypes.CodeVoterNotFound {
@@ -86,10 +89,6 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
-	}
-
-	if !voter.LinoStake.IsGTE(amount) {
-		return types.ErrInsufficientStake()
 	}
 
 	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
@@ -129,6 +128,28 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 	return nil
 }
 
+func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	// make sure stake is sufficient excludes
+	if !voter.LinoStake.Minus(voter.FrozenAmount).IsGTE(amount) {
+		return types.ErrInsufficientStake()
+	}
+
+	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
+	if err != nil {
+		return err
+	}
+	voter.Interest = voter.Interest.Plus(interest)
+	voter.LinoStake = voter.LinoStake.Minus(amount)
+	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
+
+	return vm.storage.SetVoter(ctx, username, voter)
+}
+
 // ClaimInterest - add lino power interst to user balance
 func (vm VoteManager) ClaimInterest(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
@@ -166,6 +187,10 @@ func (vm VoteManager) AssignDuty(
 	}
 	if voter.Duty != types.DutyVoter {
 		return types.ErrNotAVoterOrHasDuty()
+	}
+
+	if voter.FrozenAmount.IsPositive() {
+		return types.ErrFrozenAmountIsNotEmpty()
 	}
 
 	if !voter.LinoStake.IsGTE(frozenAmount) {
