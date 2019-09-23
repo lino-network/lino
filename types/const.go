@@ -175,4 +175,7 @@ const (
 
 	// Upgrade2Update2 - fix registration bug.
 	Upgrade2Update2Height = 50000
+
+	// Upgrade2Update3 - fix registration bug.
+	Upgrade2Update3Height = 98000
 )
