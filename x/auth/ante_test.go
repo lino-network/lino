@@ -31,6 +31,7 @@ import (
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
 	pricemn "github.com/lino-network/lino/x/price/manager"
+
 	// vote "github.com/lino-network/lino/x/vote"
 	votemn "github.com/lino-network/lino/x/vote/manager"
 )
