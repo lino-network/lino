@@ -13,7 +13,7 @@ import (
 
 	val "github.com/lino-network/lino/x/validator"
 	store "github.com/lino-network/lino/x/validator/model"
-	vote "github.com/lino-network/lino/x/vote"
+	vote "github.com/lino-network/lino/x/vote/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

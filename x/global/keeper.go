@@ -19,9 +19,11 @@ type GlobalKeeper interface {
 	GetInterestSince(ctx sdk.Context, unixTime int64, linoStake types.Coin) (types.Coin, sdk.Error)
 	RegisterCoinReturnEvent(
 		ctx sdk.Context, events []types.Event, times int64, intervalSec int64) sdk.Error
-
+	RegisterEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error
 	// pop out developer monthly inflation from pool.
 	PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
+	AddLinoStakeToStat(ctx sdk.Context, linoStake types.Coin) sdk.Error
+	MinusLinoStakeFromStat(ctx sdk.Context, linoStake types.Coin) sdk.Error
 
 	// import export
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error

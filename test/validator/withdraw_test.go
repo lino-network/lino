@@ -7,7 +7,7 @@ import (
 	"github.com/lino-network/lino/test"
 	"github.com/lino-network/lino/types"
 	val "github.com/lino-network/lino/x/validator"
-	vote "github.com/lino-network/lino/x/vote"
+	vote "github.com/lino-network/lino/x/vote/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 

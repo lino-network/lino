@@ -157,7 +157,6 @@ func TestGenesisAcc(t *testing.T) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	for _, acc := range accs {
 		expectBalance := acc.coin
-		assert.Nil(t, err)
 		if acc.isValidator {
 			param, _ := lb.paramHolder.GetValidatorParam(ctx)
 			expectBalance = expectBalance.Minus(
@@ -172,7 +171,9 @@ func TestGenesisAcc(t *testing.T) {
 		saving, err :=
 			lb.accountManager.GetSavingFromUsername(ctx, types.AccountKey(acc.genesisAccountName))
 		assert.Nil(t, err)
-		assert.Equal(t, expectBalance, saving)
+		assert.Equal(
+			t, expectBalance, saving,
+			"account %s saving is %s, expect is %s, struct: %+v", acc.genesisAccountName, saving.String(), expectBalance.String(), acc)
 	}
 }
 

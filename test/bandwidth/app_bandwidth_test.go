@@ -11,7 +11,7 @@ import (
 	"github.com/lino-network/lino/types"
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	devtypes "github.com/lino-network/lino/x/developer/types"
-	vote "github.com/lino-network/lino/x/vote"
+	vote "github.com/lino-network/lino/x/vote/types"
 )
 
 // test validator deposit

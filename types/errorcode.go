@@ -223,6 +223,7 @@ const (
 	CodeNotAVoterOrHasDuty             sdk.CodeType = 715
 	CodeInsufficientStake              sdk.CodeType = 716
 	CodeFrozenAmountIsNotEmpty         sdk.CodeType = 717
+	CodeNoDuty                         sdk.CodeType = 718
 
 	// Lino infra errors reserve 800 ~ 899
 	CodeInfraProviderNotFound              sdk.CodeType = 800

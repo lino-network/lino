@@ -17,6 +17,7 @@ type VoteManager struct {
 	storage     model.VoteStorage
 	paramHolder param.ParamHolder
 	gm          global.GlobalKeeper
+	hooks       StakingHooks
 }
 
 // NewVoteManager - new vote manager
@@ -27,14 +28,6 @@ func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder, am acc.AccountKe
 		paramHolder: holder,
 		gm:          gm,
 	}
-}
-
-// InitGenesis - initialize KV Store
-func (vm VoteManager) InitGenesis(ctx sdk.Context) error {
-	if err := vm.storage.InitGenesis(ctx); err != nil {
-		return err
-	}
-	return nil
 }
 
 // DoesVoterExist - check if voter exist or not
@@ -82,24 +75,18 @@ func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, a
 	voter.LinoStake = voter.LinoStake.Plus(amount)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
-	return vm.storage.SetVoter(ctx, username, voter)
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return err
+	}
+	// add linoStake to global stat
+	if err := vm.gm.AddLinoStakeToStat(ctx, amount); err != nil {
+		return err
+	}
+	return vm.AfterAddingStake(ctx, username)
 }
 
 func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
-	voter, err := vm.storage.GetVoter(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
-	if err != nil {
-		return err
-	}
-	voter.Interest = voter.Interest.Plus(interest)
-	voter.LinoStake = voter.LinoStake.Minus(amount)
-	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-
-	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+	if err := vm.MinusStake(ctx, username, amount); err != nil {
 		return err
 	}
 
@@ -134,7 +121,7 @@ func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey,
 		return err
 	}
 
-	// make sure stake is sufficient excludes
+	// make sure stake is sufficient excludes frozen amount
 	if !voter.LinoStake.Minus(voter.FrozenAmount).IsGTE(amount) {
 		return types.ErrInsufficientStake()
 	}
@@ -147,7 +134,14 @@ func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey,
 	voter.LinoStake = voter.LinoStake.Minus(amount)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
-	return vm.storage.SetVoter(ctx, username, voter)
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return err
+	}
+	// add linoStake to global stat
+	if err := vm.gm.MinusLinoStakeFromStat(ctx, amount); err != nil {
+		return err
+	}
+	return vm.AfterSubtractingStake(ctx, username)
 }
 
 // ClaimInterest - add lino power interst to user balance
@@ -176,6 +170,14 @@ func (vm VoteManager) GetVoterDuty(ctx sdk.Context, username linotypes.AccountKe
 		return types.DutyVoter, err
 	}
 	return voter.Duty, nil
+}
+
+func (vm VoteManager) GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+	return voter.LinoStake, nil
 }
 
 // AssignDuty froze some amount of stake and assign a duty to user.
@@ -212,6 +214,64 @@ func (vm VoteManager) AssignDuty(
 		return err
 	}
 	return nil
+}
+
+// UnassignDuty register unassign duty event with time after waitingPeriodSec seconds.
+func (vm VoteManager) UnassignDuty(ctx sdk.Context, username linotypes.AccountKey, waitingPeriodSec int64) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return err
+	}
+	if voter.Duty == types.DutyVoter {
+		return types.ErrNoDuty()
+	}
+	return vm.gm.RegisterEventAtTime(
+		ctx, ctx.BlockHeader().Time.Unix()+waitingPeriodSec, types.UnassignDutyEvent{Username: username})
+}
+
+// SlashStake - slash as much as it can, regardless of frozen money
+func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	// slash amount should be larger than stake
+	// frozen money doesn't affect slash logic
+	if !voter.LinoStake.IsGTE(amount) {
+		return types.ErrInsufficientStake()
+	}
+
+	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
+	if err != nil {
+		return err
+	}
+
+	voter.Interest = voter.Interest.Plus(interest)
+	voter.LinoStake = voter.LinoStake.Minus(amount)
+
+	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return err
+	}
+	return vm.hooks.AfterSubtractingStake(ctx, username)
+}
+
+// ExecUnassignDutyEvent - execute unassign duty events.
+func (vm VoteManager) ExecUnassignDutyEvent(ctx sdk.Context, event types.UnassignDutyEvent) sdk.Error {
+	// Check if it is voter or not
+	voter, err := vm.storage.GetVoter(ctx, event.Username)
+	if err != nil {
+		return err
+	}
+
+	// set frozen amount to zero and duty to voter
+	voter.FrozenAmount = linotypes.NewCoinFromInt64(0)
+	voter.Duty = types.DutyVoter
+	return vm.storage.SetVoter(ctx, event.Username, voter)
+}
+
+func (vm VoteManager) GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error) {
+	return vm.storage.GetVoter(ctx, username)
 }
 
 // Export storage state.

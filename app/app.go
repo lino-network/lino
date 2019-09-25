@@ -27,6 +27,8 @@ import (
 	posttypes "github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
+	votemn "github.com/lino-network/lino/x/vote/manager"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 
 	infra "github.com/lino-network/lino/x/infra"
 	inframodel "github.com/lino-network/lino/x/infra/model"
@@ -96,7 +98,7 @@ type LinoBlockchain struct {
 	postManager       post.PostKeeper
 	valManager        val.ValidatorManager
 	globalManager     global.GlobalManager
-	voteManager       vote.VoteManager
+	voteManager       vote.VoteKeeper
 	infraManager      infra.InfraManager
 	developerManager  dev.DeveloperKeeper
 	proposalManager   proposal.ProposalManager
@@ -140,7 +142,7 @@ func NewLinoBlockchain(
 	registerEvent(lb.globalManager.WireCodec())
 
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
-	lb.voteManager = vote.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder)
+	lb.voteManager = votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
@@ -152,8 +154,7 @@ func NewLinoBlockchain(
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
-		AddRoute(vote.RouterKey, vote.NewHandler(
-			lb.voteManager, lb.accountManager, &lb.globalManager)).
+		AddRoute(votetypes.RouterKey, vote.NewHandler(lb.voteManager)).
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
 		AddRoute(proposal.RouterKey, proposal.NewHandler(
 			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
@@ -164,7 +165,7 @@ func NewLinoBlockchain(
 	lb.QueryRouter().
 		AddRoute(acctypes.QuerierRoute, acc.NewQuerier(lb.accountManager)).
 		AddRoute(posttypes.QuerierRoute, post.NewQuerier(lb.postManager)).
-		AddRoute(vote.QuerierRoute, vote.NewQuerier(lb.voteManager)).
+		AddRoute(votetypes.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(devtypes.QuerierRoute, dev.NewQuerier(lb.developerManager)).
 		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
 		AddRoute(infra.QuerierRoute, infra.NewQuerier(lb.infraManager)).
@@ -205,7 +206,7 @@ func MakeCodec() *wire.Codec {
 	posttypes.RegisterCodec(cdc)
 	devtypes.RegisterWire(cdc)
 	infra.RegisterWire(cdc)
-	vote.RegisterWire(cdc)
+	votetypes.RegisterWire(cdc)
 	val.RegisterWire(cdc)
 	proposal.RegisterWire(cdc)
 	registerEvent(cdc)
@@ -223,6 +224,7 @@ func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
 	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
+	cdc.RegisterConcrete(votetypes.UnassignDutyEvent{}, "lino/eventUde", nil)
 }
 
 // custom logic for lino blockchain initialization
@@ -278,9 +280,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		panic(err)
 	}
 	if err := lb.infraManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
-	if err := lb.voteManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
 	if err := lb.proposalManager.InitGenesis(ctx); err != nil {
@@ -356,12 +355,12 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
 			panic(err)
 		}
-		if err := vote.AddStake(
-			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
-			lb.voteManager, &lb.globalManager, lb.accountManager); err != nil {
-			panic(err)
-		}
-		if err := lb.voteManager.AddVoter(
+		// if err := vote.AddStake(
+		// 	ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
+		// 	lb.voteManager, &lb.globalManager, lb.accountManager); err != nil {
+		// 	panic(err)
+		// }
+		if err := lb.voteManager.AddStake(
 			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit); err != nil {
 			panic(err)
 		}
@@ -451,7 +450,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		panic(err)
 	}
 
-	lb.syncInfoWithVoteManager(ctx)
+	// lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
 	return abci.ResponseBeginBlock{}
 }
@@ -494,6 +493,10 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			}
 		case param.ChangeParamEvent:
 			if err := e.Execute(ctx, lb.paramHolder); err != nil {
+				panic(err)
+			}
+		case votetypes.UnassignDutyEvent:
+			if err := lb.voteManager.ExecUnassignDutyEvent(ctx, e); err != nil {
 				panic(err)
 			}
 		default:
@@ -654,22 +657,22 @@ func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
 	}
 }
 
-func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
-	// tell voting committee the newest validators
-	validatorList, err := lb.valManager.GetValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
+// func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
+// 	// tell voting committee the newest validators
+// 	validatorList, err := lb.valManager.GetValidatorList(ctx)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	referenceList, err := lb.voteManager.GetValidatorReferenceList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	referenceList.AllValidators = validatorList.AllValidators
-	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
-		panic(err)
-	}
-}
+// 	referenceList, err := lb.voteManager.GetValidatorReferenceList(ctx)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	referenceList.AllValidators = validatorList.AllValidators
+// 	if err := lb.voteManager.SetValidatorReferenceList(ctx, referenceList); err != nil {
+// 		panic(err)
+// 	}
+// }
 
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
@@ -724,9 +727,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
 		return lb.valManager.Export(ctx).ToIR()
 	})
-	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
-		return lb.voteManager.Export(ctx).ToIR()
-	})
+	// exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.voteManager.Export(ctx).ToIR()
+	// })
 	err = lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
 	if err != nil {
 		panic(err)
@@ -802,11 +805,11 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
 			lb.valManager.Import(ctx, t)
-		case *votemodel.VoterTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.voteManager.Import(ctx, t)
+		// case *votemodel.VoterTablesIR:
+		// 	err = lb.cdc.UnmarshalJSON(bytes, t)
+		// 	check(err)
+		// 	fmt.Printf("%s state parsed: %T\n", filename, t)
+		// 	lb.voteManager.Import(ctx, t)
 		default:
 			panic(fmt.Sprintf("Unknown import type: %T", t))
 		}

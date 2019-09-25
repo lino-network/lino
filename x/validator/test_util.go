@@ -16,6 +16,7 @@ import (
 	acc "github.com/lino-network/lino/x/account"
 	accmn "github.com/lino-network/lino/x/account/manager"
 	vote "github.com/lino-network/lino/x/vote"
+	votemn "github.com/lino-network/lino/x/vote/manager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -33,7 +34,7 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (sdk.Context,
-	acc.AccountKeeper, ValidatorManager, vote.VoteManager, global.GlobalManager) {
+	acc.AccountKeeper, ValidatorManager, vote.VoteKeeper, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
 	err := ph.InitParam(ctx)
@@ -43,7 +44,7 @@ func setupTest(t *testing.T, height int64) (sdk.Context,
 	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
 	postManager := NewValidatorManager(testValidatorKVStoreKey, ph)
-	voteManager := vote.NewVoteManager(testVoteKVStoreKey, ph)
+	voteManager := votemn.NewVoteManager(testVoteKVStoreKey, ph, am, &gm)
 
 	cdc := gm.WireCodec()
 	cdc.RegisterInterface((*types.Event)(nil), nil)

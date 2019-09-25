@@ -29,11 +29,6 @@ func NewVoteStorage(key sdk.StoreKey) VoteStorage {
 	return vs
 }
 
-// InitGenesis - initialize genesis
-func (vs VoteStorage) InitGenesis(ctx sdk.Context) sdk.Error {
-	return nil
-}
-
 // DoesVoterExist - check if voter exist in KVStore or not
 func (vs VoteStorage) DoesVoterExist(ctx sdk.Context, accKey types.AccountKey) bool {
 	store := ctx.KVStore(vs.key)

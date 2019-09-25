@@ -7,19 +7,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
+	accmn "github.com/lino-network/lino/x/account/manager"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
+	val "github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
+	votemn "github.com/lino-network/lino/x/vote/manager"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acc "github.com/lino-network/lino/x/account"
-	accmn "github.com/lino-network/lino/x/account/manager"
-	val "github.com/lino-network/lino/x/validator"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -39,7 +40,7 @@ func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
 }
 
 func setupTest(t *testing.T, height int64) (
-	sdk.Context, acc.AccountKeeper, ProposalManager, post.PostKeeper, vote.VoteManager,
+	sdk.Context, acc.AccountKeeper, ProposalManager, post.PostKeeper, vote.VoteKeeper,
 	val.ValidatorManager, global.GlobalManager) {
 	ctx := getContext(height)
 	ph := param.NewParamHolder(testParamKVStoreKey)
@@ -51,7 +52,7 @@ func setupTest(t *testing.T, height int64) (
 	proposalManager := NewProposalManager(testProposalKVStoreKey, ph)
 	gm := global.NewGlobalManager(testGlobalKVStoreKey, ph)
 	am := accmn.NewAccountManager(testAccountKVStoreKey, ph, &gm)
-	voteManager := vote.NewVoteManager(testGlobalKVStoreKey, ph)
+	voteManager := votemn.NewVoteManager(testGlobalKVStoreKey, ph, am, &gm)
 	valManager := val.NewValidatorManager(testValidatorKVStoreKey, ph)
 	postManager := postmn.NewPostManager(testPostKVStoreKey, am, &gm, nil, nil, nil)
 

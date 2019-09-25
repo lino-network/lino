@@ -17,7 +17,7 @@ import (
 // NewHandler - Handle all "proposal" type messages.
 func NewHandler(
 	am acc.AccountKeeper, proposalManager ProposalManager,
-	postManager post.PostKeeper, gm *global.GlobalManager, vm vote.VoteManager) sdk.Handler {
+	postManager post.PostKeeper, gm *global.GlobalManager, vm vote.VoteKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ChangeParamMsg:
@@ -55,7 +55,8 @@ func handleChangeParamMsg(
 	//  set a time event to decide the proposal
 	event := pm.CreateDecideProposalEvent(ctx, types.ChangeParam, proposalID)
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ChangeParamDecideSec, event); err != nil {
+	if err := gm.RegisterEventAtTime(
+		ctx, ctx.BlockHeader().Time.Unix()+param.ChangeParamDecideSec, event); err != nil {
 		return err.Result()
 	}
 
@@ -92,7 +93,8 @@ func handleProtocolUpgradeMsg(
 	//  set a time event to decide the proposal
 	event := pm.CreateDecideProposalEvent(ctx, types.ProtocolUpgrade, proposalID)
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ProtocolUpgradeDecideSec, event); err != nil {
+	if err := gm.RegisterEventAtTime(
+		ctx, ctx.BlockHeader().Time.Unix()+param.ProtocolUpgradeDecideSec, event); err != nil {
 		return err.Result()
 	}
 
@@ -141,7 +143,8 @@ func handleContentCensorshipMsg(
 		return err.Result()
 	}
 
-	if err := gm.RegisterProposalDecideEvent(ctx, param.ContentCensorshipDecideSec, event); err != nil {
+	if err := gm.RegisterEventAtTime(
+		ctx, ctx.BlockHeader().Time.Unix()+param.ContentCensorshipDecideSec, event); err != nil {
 		return err.Result()
 	}
 
@@ -153,7 +156,7 @@ func handleContentCensorshipMsg(
 	return sdk.Result{}
 }
 
-func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm vote.VoteManager, msg VoteProposalMsg) sdk.Result {
+func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm vote.VoteKeeper, msg VoteProposalMsg) sdk.Result {
 	if !vm.DoesVoterExist(ctx, msg.Voter) {
 		return ErrVoterNotFound().Result()
 	}
@@ -162,19 +165,19 @@ func handleVoteProposalMsg(ctx sdk.Context, proposalManager ProposalManager, vm 
 		return ErrNotOngoingProposal().Result()
 	}
 
-	if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
-		return err.Result()
-	}
+	// if err := vm.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Result); err != nil {
+	// 	return err.Result()
+	// }
 
-	v, err := vm.GetVote(ctx, msg.ProposalID, msg.Voter)
-	if err != nil {
-		return err.Result()
-	}
+	// v, err := vm.GetVote(ctx, msg.ProposalID, msg.Voter)
+	// if err != nil {
+	// 	return err.Result()
+	// }
 
-	err = proposalManager.UpdateProposalVotingStatus(ctx, msg.ProposalID, msg.Voter, v.Result, v.VotingPower)
-	if err != nil {
-		return err.Result()
-	}
+	// err = proposalManager.UpdateProposalVotingStatus(ctx, msg.ProposalID, msg.Voter, v.Result, v.VotingPower)
+	// if err != nil {
+	// 	return err.Result()
+	// }
 
 	return sdk.Result{}
 }

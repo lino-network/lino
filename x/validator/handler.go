@@ -13,11 +13,11 @@ import (
 )
 
 // NewHandler - Handle all "validator" type messages.
-func NewHandler(am acc.AccountKeeper, valManager ValidatorManager, voteManager vote.VoteManager, gm *global.GlobalManager) sdk.Handler {
+func NewHandler(am acc.AccountKeeper, valManager ValidatorManager, vk vote.VoteKeeper, gm *global.GlobalManager) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case ValidatorDepositMsg:
-			return handleDepositMsg(ctx, valManager, voteManager, am, msg)
+			return handleDepositMsg(ctx, valManager, vk, am, msg)
 		case ValidatorWithdrawMsg:
 			return handleWithdrawMsg(ctx, valManager, gm, am, msg)
 		case ValidatorRevokeMsg:
@@ -30,7 +30,7 @@ func NewHandler(am acc.AccountKeeper, valManager ValidatorManager, voteManager v
 }
 
 func handleDepositMsg(
-	ctx sdk.Context, valManager ValidatorManager, voteManager vote.VoteManager,
+	ctx sdk.Context, valManager ValidatorManager, vk vote.VoteKeeper,
 	am acc.AccountKeeper, msg ValidatorDepositMsg) sdk.Result {
 	// Must have a normal acount
 	if !am.DoesAccountExist(ctx, msg.Username) {
@@ -50,9 +50,9 @@ func handleDepositMsg(
 	// Register the user if this name has not been registered
 	if !valManager.DoesValidatorExist(ctx, msg.Username) {
 		// check validator minimum voting deposit requirement
-		if !voteManager.CanBecomeValidator(ctx, msg.Username) {
-			return ErrInsufficientDeposit().Result()
-		}
+		// if !vk.CanBecomeValidator(ctx, msg.Username) {
+		// 	return ErrInsufficientDeposit().Result()
+		// }
 		if err := valManager.RegisterValidator(
 			ctx, msg.Username, msg.ValPubKey, coin, msg.Link); err != nil {
 			return err.Result()
@@ -65,7 +65,7 @@ func handleDepositMsg(
 	}
 
 	// Deposit must be balanced
-	linoStake, err := voteManager.GetLinoStake(ctx, msg.Username)
+	linoStake, err := vk.GetLinoStake(ctx, msg.Username)
 	if err != nil {
 		return err.Result()
 	}

@@ -57,6 +57,11 @@ func ErrNotAVoterOrHasDuty() sdk.Error {
 	return types.NewError(types.CodeNotAVoterOrHasDuty, fmt.Sprintf("not a voter or has duty"))
 }
 
+// ErrNoDuty
+func ErrNoDuty() sdk.Error {
+	return types.NewError(types.CodeNoDuty, fmt.Sprintf("voter doesn't have duty"))
+}
+
 // ErrFrozenAmountIsNotEmpty
 func ErrFrozenAmountIsNotEmpty() sdk.Error {
 	return types.NewError(types.CodeFrozenAmountIsNotEmpty, fmt.Sprintf("forzen money is not empty"))

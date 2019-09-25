@@ -47,7 +47,7 @@ func (gm *GlobalManager) InitGlobalManagerWithConfig(
 	return gm.storage.InitGlobalStateWithConfig(ctx, totalLino, param)
 }
 
-func (gm *GlobalManager) registerEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
+func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, event types.Event) sdk.Error {
 	if unixTime < ctx.BlockHeader().Time.Unix() {
 		return ErrRegisterExpiredEvent(unixTime)
 	}
@@ -175,7 +175,7 @@ func (gm *GlobalManager) AddFrictionAndRegisterContentRewardEvent(
 	consumptionMeta.ConsumptionWindow = types.NewMiniDollarFromInt(consumptionMeta.ConsumptionWindow.Add(evaluate.Int))
 	linoStakeStat.TotalConsumptionFriction = linoStakeStat.TotalConsumptionFriction.Plus(friction)
 	linoStakeStat.UnclaimedFriction = linoStakeStat.UnclaimedFriction.Plus(friction)
-	if err := gm.registerEventAtTime(
+	if err := gm.RegisterEventAtTime(
 		ctx, ctx.BlockHeader().Time.Unix()+consumptionMeta.ConsumptionFreezingPeriodSec, event); err != nil {
 		return err
 	}
@@ -281,29 +281,10 @@ func (gm *GlobalManager) RecordConsumptionAndLinoStake(ctx sdk.Context) sdk.Erro
 func (gm *GlobalManager) RegisterCoinReturnEvent(
 	ctx sdk.Context, events []types.Event, times int64, intervalSec int64) sdk.Error {
 	for i := int64(0); i < times; i++ {
-		if err := gm.registerEventAtTime(
+		if err := gm.RegisterEventAtTime(
 			ctx, ctx.BlockHeader().Time.Unix()+(intervalSec*(i+1)), events[i]); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// RegisterProposalDecideEvent - register proposal decide event
-func (gm *GlobalManager) RegisterProposalDecideEvent(
-	ctx sdk.Context, decideSec int64, event types.Event) sdk.Error {
-	if err := gm.registerEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+decideSec, event); err != nil {
-		return err
-	}
-	return nil
-}
-
-// RegisterParamChangeEvent - register parameter change event
-func (gm *GlobalManager) RegisterParamChangeEvent(ctx sdk.Context, event types.Event) sdk.Error {
-	if err := gm.registerEventAtTime(ctx,
-		ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, event); err != nil {
-		return err
 	}
 	return nil
 }

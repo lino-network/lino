@@ -273,7 +273,7 @@ func TestTimeEventList(t *testing.T) {
 	}
 
 	for _, tc := range regCases {
-		err := gm.registerEventAtTime(ctx, tc.registerAtTime, testEvent{})
+		err := gm.RegisterEventAtTime(ctx, tc.registerAtTime, testEvent{})
 		if !assert.Equal(t, tc.expectResult, err) {
 			t.Errorf("%s: diff err result, got %v, want %v", tc.testName, err, tc.expectResult)
 		}
@@ -1380,7 +1380,7 @@ func TestRegisterParamChangeEvent(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atTime, 0)})
-		err := gm.RegisterParamChangeEvent(ctx, testEvent{})
+		err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, testEvent{})
 		if err != nil {
 			t.Errorf("%s: failed to register parameter change event, got err %v", tc.testName, err)
 		}
