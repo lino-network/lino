@@ -30,6 +30,15 @@ func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder, am acc.AccountKe
 	}
 }
 
+// Set the validator hooks
+func (vm *VoteManager) SetHooks(sh StakingHooks) *VoteManager {
+	if vm.hooks != nil {
+		panic("cannot set vote hooks twice")
+	}
+	vm.hooks = sh
+	return vm
+}
+
 // DoesVoterExist - check if voter exist or not
 func (vm VoteManager) DoesVoterExist(ctx sdk.Context, username linotypes.AccountKey) bool {
 	return vm.storage.DoesVoterExist(ctx, username)

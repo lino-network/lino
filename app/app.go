@@ -135,24 +135,25 @@ func NewLinoBlockchain(
 	}
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
 	lb.priceManager = pricemn.TestnetPriceManager{}
-	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
-	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
-	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
 
+	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
+	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
+
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
-	lb.voteManager = votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
+	voteManager := votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
 	lb.developerManager = devmn.NewDeveloperManager(
-		lb.CapKeyDeveloperStore, lb.paramHolder, lb.voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
+		lb.CapKeyDeveloperStore, lb.paramHolder, &voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
-	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, lb.voteManager, lb.developerManager, lb.accountManager)
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
+	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks())
 
 	lb.Router().
-		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager, &lb.globalManager)).
+		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager)).
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(votetypes.RouterKey, vote.NewHandler(lb.voteManager)).
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
