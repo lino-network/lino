@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	val "github.com/lino-network/lino/x/validator"
-	vote "github.com/lino-network/lino/x/vote/types"
+	types "github.com/lino-network/lino/x/vote/types"
 )
 
 func TestVoterRevoke(t *testing.T) {
@@ -34,27 +34,27 @@ func TestVoterRevoke(t *testing.T) {
 	test.CreateAccount(t, delegator2Name, lb, 2,
 		secp256k1.GenPrivKey(), delegator2TransactionPriv, secp256k1.GenPrivKey(), "70100")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("150000"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("150000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// // let delegator delegate coins to voter
-	// delegateMsg := vote.NewDelegateMsg(delegator1Name, newAccountName, types.LNO("210000"))
-	// delegateMsg2 := vote.NewDelegateMsg(delegator2Name, newAccountName, types.LNO("70000"))
+	// delegateMsg := types.NewDelegateMsg(delegator1Name, newAccountName, linotypes.LNO("210000"))
+	// delegateMsg2 := types.NewDelegateMsg(delegator2Name, newAccountName, linotypes.LNO("70000"))
 
 	// test.SignCheckDeliver(t, lb, delegateMsg, 0, true, delegator1TransactionPriv, baseTime)
 	// test.SignCheckDeliver(t, lb, delegateMsg2, 0, true, delegator2TransactionPriv, baseTime)
 
 	// // delegator can withdraw coins
-	// delegatorWithdrawMsg := vote.NewDelegatorWithdrawMsg(delegator1Name, newAccountName,
-	// 	types.LNO("70000"))
+	// delegatorWithdrawMsg := types.NewDelegatorWithdrawMsg(delegator1Name, newAccountName,
+	// 	linotypes.LNO("70000"))
 	// test.SignCheckDeliver(t, lb, delegatorWithdrawMsg, 1, true, delegator1TransactionPriv, baseTime)
 
 	// //all validators cannot revoke voter candidancy
-	// stakeOutMsg := vote.NewStakeOutMsg(newAccountName, types.LNO("300000"))
+	// stakeOutMsg := types.NewStakeOutMsg(newAccountName, linotypes.LNO("300000"))
 	// test.SimulateOneBlock(lb, baseTime)
 	// test.SignCheckDeliver(t, lb, stakeOutMsg, 2, false, newAccountTransactionPriv, baseTime)
 
@@ -66,15 +66,15 @@ func TestVoterRevoke(t *testing.T) {
 
 	// // check delegator withdraw first coin return
 	// test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec+1)
-	// test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(11428471429))
-	// test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(10099*types.Decimals))
-	// test.CheckBalance(t, delegator2Name, lb, types.NewCoinFromInt64(99*types.Decimals))
+	// test.CheckBalance(t, newAccountName, lb, linotypes.NewCoinFromInt64(11428471429))
+	// test.CheckBalance(t, delegator1Name, lb, linotypes.NewCoinFromInt64(10099*linotypes.Decimals))
+	// test.CheckBalance(t, delegator2Name, lb, linotypes.NewCoinFromInt64(99*linotypes.Decimals))
 
 	// // check balance after freezing period
 	// for i := int64(1); i < test.CoinReturnTimes; i++ {
 	// 	test.SimulateOneBlock(lb, baseTime+test.CoinReturnIntervalSec*(i+1)+1)
 	// }
-	// test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(499999*types.Decimals))
-	// test.CheckBalance(t, delegator1Name, lb, types.NewCoinFromInt64(70099*types.Decimals))
-	// test.CheckBalance(t, delegator2Name, lb, types.NewCoinFromInt64(99*types.Decimals))
+	// test.CheckBalance(t, newAccountName, lb, linotypes.NewCoinFromInt64(499999*linotypes.Decimals))
+	// test.CheckBalance(t, delegator1Name, lb, linotypes.NewCoinFromInt64(70099*linotypes.Decimals))
+	// test.CheckBalance(t, delegator2Name, lb, linotypes.NewCoinFromInt64(99*linotypes.Decimals))
 }

@@ -9,10 +9,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
-	vote "github.com/lino-network/lino/x/vote/types"
+	types "github.com/lino-network/lino/x/vote/types"
 )
 
 // test validator deposit
@@ -30,14 +30,14 @@ func TestMsgFee(t *testing.T) {
 	test.CreateAccountWithTime(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000", baseTime)
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("3000000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("3000000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
-	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64((5000000000-3000000-1)*types.Decimals-2523))
+	test.CheckBalance(t, newAccountName, lb, linotypes.NewCoinFromInt64((5000000000-3000000-1)*linotypes.Decimals-2523))
 
-	voteDepositSmallMsg := vote.NewStakeInMsg(newAccountName, types.LNO("1000"))
-	fee := auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(100000000)))}
-	smFee := auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(1)))}
+	voteDepositSmallMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("1000"))
+	fee := auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(100000000)))}
+	smFee := auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(1)))}
 	test.SignCheckDeliverWithFee(t, lb, voteDepositSmallMsg, 1, false, newAccountTransactionPriv, baseTime+1, smFee)
 	test.SignCheckDeliverWithFee(t, lb, voteDepositSmallMsg, 1, true, newAccountTransactionPriv, baseTime+1, fee)
 
@@ -46,7 +46,7 @@ func TestMsgFee(t *testing.T) {
 	test.CheckCurBlockInfo(t, bandwidthmodel.BlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 1,
-		CurMsgFee:            types.NewCoinFromInt64(2523),
+		CurMsgFee:            linotypes.NewCoinFromInt64(2523),
 		CurU:                 curUDec,
 	}, lb)
 
@@ -55,7 +55,7 @@ func TestMsgFee(t *testing.T) {
 	test.CheckCurBlockInfo(t, bandwidthmodel.BlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
-		CurMsgFee:            types.NewCoinFromInt64(50006),
+		CurMsgFee:            linotypes.NewCoinFromInt64(50006),
 		CurU:                 curUDec,
 	}, lb)
 
@@ -64,7 +64,7 @@ func TestMsgFee(t *testing.T) {
 	test.CheckCurBlockInfo(t, bandwidthmodel.BlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
-		CurMsgFee:            types.NewCoinFromInt64(565615),
+		CurMsgFee:            linotypes.NewCoinFromInt64(565615),
 		CurU:                 curUDec,
 	}, lb)
 
@@ -73,7 +73,7 @@ func TestMsgFee(t *testing.T) {
 	test.CheckCurBlockInfo(t, bandwidthmodel.BlockInfo{
 		TotalMsgSignedByApp:  0,
 		TotalMsgSignedByUser: 0,
-		CurMsgFee:            types.NewCoinFromInt64(4044452),
+		CurMsgFee:            linotypes.NewCoinFromInt64(4044452),
 		CurU:                 curUDec,
 	}, lb)
 
