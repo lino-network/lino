@@ -26,7 +26,7 @@ func TestValidatorRevoke(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := types.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
