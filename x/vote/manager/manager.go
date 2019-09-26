@@ -263,7 +263,7 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
-	if err := vm.hooks.AfterSubtractingStake(ctx, username); err != nil {
+	if err := vm.AfterSubtractingStake(ctx, username); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
 	return slashedAmount, nil
