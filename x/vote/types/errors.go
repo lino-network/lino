@@ -22,11 +22,6 @@ func ErrValidatorCannotRevoke() sdk.Error {
 	return types.NewError(types.CodeValidatorCannotRevoke, fmt.Sprintf("invalid revoke"))
 }
 
-// ErrVoteAlreadyExist - error if user already vote for a proposal
-func ErrVoteAlreadyExist() sdk.Error {
-	return types.NewError(types.CodeVoteAlreadyExist, fmt.Sprintf("Vote exist"))
-}
-
 // ErrVoteNotFound - error if voter is not found
 func ErrVoterNotFound() sdk.Error {
 	return types.NewError(types.CodeVoterNotFound, fmt.Sprintf("voter not found"))
