@@ -50,7 +50,6 @@ func getCmdAll(cdc *codec.Codec) *cobra.Command {
 			}
 			for _, v := range all {
 				uri := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, v.path)
-				fmt.Println(uri)
 				err := utils.CLIQueryJSONPrint(cdc, uri, nil,
 					func() interface{} { return v.t })
 				if err != nil {

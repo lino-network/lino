@@ -6,13 +6,12 @@ import (
 
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/types"
-	"github.com/lino-network/lino/x/global"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewHandler - Handle all "account" type messages.
-func NewHandler(am AccountKeeper, gm *global.GlobalManager) sdk.Handler {
+func NewHandler(am AccountKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case types.TransferMsg:
@@ -20,7 +19,7 @@ func NewHandler(am AccountKeeper, gm *global.GlobalManager) sdk.Handler {
 		case types.RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
 		case types.RegisterMsg:
-			return handleRegisterMsg(ctx, am, gm, msg)
+			return handleRegisterMsg(ctx, am, msg)
 		case types.UpdateAccountMsg:
 			return handleUpdateAccountMsg(ctx, am, msg)
 		default:
@@ -56,7 +55,7 @@ func handleRecoverMsg(ctx sdk.Context, am AccountKeeper, msg types.RecoverMsg) s
 }
 
 // Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, gm *global.GlobalManager, msg types.RegisterMsg) sdk.Result {
+func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsg) sdk.Result {
 	coin, err := linotypes.LinoToCoin(msg.RegisterFee)
 	if err != nil {
 		return err.Result()

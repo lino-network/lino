@@ -7,13 +7,13 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	val "github.com/lino-network/lino/x/validator"
 	store "github.com/lino-network/lino/x/validator/model"
-	vote "github.com/lino-network/lino/x/vote"
+	types "github.com/lino-network/lino/x/vote/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -31,19 +31,19 @@ func TestValidatorDeposit(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	// deposit the lowest requirement
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("100000"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("100000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
 
 	// deposit as the highest validator
 	valDepositMsg = val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("100"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("100"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
@@ -72,7 +72,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 		test.CreateAccount(t, newAccountName, lb, uint64(seq),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+		voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := val.NewValidatorDepositMsg(
@@ -109,11 +109,11 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, uint64(seq),
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("100000"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("100000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
@@ -122,7 +122,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	// the 22nd validator will be oncall by depositing more money,
 	// validator0 will be removed from oncall
 	valDepositMsg = val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("1"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("1"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
@@ -149,11 +149,11 @@ func TestRemoveTheSameLowestDepositValidator(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("110000"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("110000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)
@@ -275,11 +275,11 @@ func TestFireIncompetentValidatorAndThenAddOneWithHighestDepositAsSupplement(t *
 		test.CreateAccount(t, newAccountName, lb, uint64(i),
 			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-		voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+		voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := val.NewValidatorDepositMsg(
-			newAccountName, types.LNO("100000"), newValidatorPriv.PubKey(), "")
+			newAccountName, linotypes.LNO("100000"), newValidatorPriv.PubKey(), "")
 		test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 		test.CheckOncallValidatorList(t, newAccountName, false, lb)
 		test.CheckAllValidatorList(t, newAccountName, true, lb)
@@ -418,11 +418,11 @@ func TestFireIncompetentValidatorAndThenAddOneMoreValidator(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("300000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, types.LNO("100000"), newValidatorPriv.PubKey(), "")
+		newAccountName, linotypes.LNO("100000"), newValidatorPriv.PubKey(), "")
 	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	test.CheckAllValidatorList(t, newAccountName, true, lb)

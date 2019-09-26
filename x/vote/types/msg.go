@@ -1,4 +1,4 @@
-package vote
+package types
 
 // nolint
 import (
@@ -11,8 +11,6 @@ import (
 
 var _ types.Msg = StakeInMsg{}
 var _ types.Msg = StakeOutMsg{}
-var _ types.Msg = DelegateMsg{}
-var _ types.Msg = DelegatorWithdrawMsg{}
 var _ types.Msg = ClaimInterestMsg{}
 
 // StakeInMsg - voter deposit
@@ -25,20 +23,6 @@ type StakeInMsg struct {
 type StakeOutMsg struct {
 	Username types.AccountKey `json:"username"`
 	Amount   types.LNO        `json:"amount"`
-}
-
-// DelegateMsg - delegator delegate money to a voter
-type DelegateMsg struct {
-	Delegator types.AccountKey `json:"delegator"`
-	Voter     types.AccountKey `json:"voter"`
-	Amount    types.LNO        `json:"amount"`
-}
-
-// DelegatorWithdrawMsg - delegator withdraw delegation from a voter
-type DelegatorWithdrawMsg struct {
-	Delegator types.AccountKey `json:"delegator"`
-	Voter     types.AccountKey `json:"voter"`
-	Amount    types.LNO        `json:"amount"`
 }
 
 // ClaimInterestMsg - claim interest generated from lino power
@@ -154,123 +138,6 @@ func (msg StakeOutMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implement types.Msg
 func (msg StakeOutMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewDelegateMsg - return DelegateMsg
-func NewDelegateMsg(delegator string, voter string, amount types.LNO) DelegateMsg {
-	return DelegateMsg{
-		Delegator: types.AccountKey(delegator),
-		Voter:     types.AccountKey(voter),
-		Amount:    amount,
-	}
-}
-
-// Route - implements sdk.Msg
-func (msg DelegateMsg) Route() string { return RouterKey }
-
-// Type - implements sdk.Msg
-func (msg DelegateMsg) Type() string { return "DelegateMsg" }
-
-// ValidateBasic - implements sdk.Msg
-func (msg DelegateMsg) ValidateBasic() sdk.Error {
-	if len(msg.Delegator) < types.MinimumUsernameLength ||
-		len(msg.Delegator) > types.MaximumUsernameLength ||
-		len(msg.Voter) < types.MinimumUsernameLength ||
-		len(msg.Voter) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-
-	_, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (msg DelegateMsg) String() string {
-	return fmt.Sprintf("DelegateMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
-}
-
-// GetPermission - implements types.Msg
-func (msg DelegateMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg DelegateMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg DelegateMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg DelegateMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-// NewDelegatorWithdrawMsg - return NewDelegatorWithdrawMsg
-func NewDelegatorWithdrawMsg(delegator string, voter string, amount types.LNO) DelegatorWithdrawMsg {
-	return DelegatorWithdrawMsg{
-		Delegator: types.AccountKey(delegator),
-		Voter:     types.AccountKey(voter),
-		Amount:    amount,
-	}
-}
-
-// Route - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) Route() string { return RouterKey }
-
-// Type - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) Type() string { return "DelegatorWithdrawMsg" }
-
-// ValidateBasic - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) ValidateBasic() sdk.Error {
-	if len(msg.Delegator) < types.MinimumUsernameLength ||
-		len(msg.Delegator) > types.MaximumUsernameLength ||
-		len(msg.Voter) < types.MinimumUsernameLength ||
-		len(msg.Voter) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-	_, err := types.LinoToCoin(msg.Amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (msg DelegatorWithdrawMsg) String() string {
-	return fmt.Sprintf("DelegatorWithdrawMsg{Delegator:%v, Voter:%v, Amount:%v}", msg.Delegator, msg.Voter, msg.Amount)
-}
-
-// GetPermission - implements types.Msg
-func (msg DelegatorWithdrawMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implements sdk.Msg
-func (msg DelegatorWithdrawMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Delegator)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg DelegatorWithdrawMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

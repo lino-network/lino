@@ -31,7 +31,7 @@ func TestByzantines(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddStake(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 		if err != nil {
 			panic(err)
 		}
@@ -84,7 +84,7 @@ func TestAbsentValidatorWillBeFired(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddStake(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 		if err != nil {
 			panic(err)
 		}
@@ -186,7 +186,7 @@ func TestAbsentValidatorWontBeFired(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddStake(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 		if err != nil {
 			panic(err)
 		}
@@ -296,7 +296,7 @@ func TestGetOncallList(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 21)
 	for i := 0; i < 21; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddStake(ctx, types.AccountKey("user"+strconv.Itoa(i)), valParam.ValidatorMinVotingDeposit)
 		if err != nil {
 			panic(err)
 		}
@@ -336,11 +336,11 @@ func TestPunishmentBasic(t *testing.T) {
 	valKey1 := secp256k1.GenPrivKey().PubKey()
 	valKey2 := secp256k1.GenPrivKey().PubKey()
 
-	err = voteManager.AddVoter(ctx, "user1", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddStake(ctx, "user1", valParam.ValidatorMinVotingDeposit)
 	if err != nil {
 		panic(err)
 	}
-	err = voteManager.AddVoter(ctx, "user2", valParam.ValidatorMinVotingDeposit)
+	err = voteManager.AddStake(ctx, "user2", valParam.ValidatorMinVotingDeposit)
 	if err != nil {
 		panic(err)
 	}
@@ -393,7 +393,7 @@ func TestPunishmentAndSubstitutionExists(t *testing.T) {
 	valKeys := make([]crypto.PubKey, 24)
 	for i := 0; i < 24; i++ {
 		users[i] = createTestAccount(ctx, am, "user"+strconv.Itoa(i+1), minBalance.Plus(valParam.ValidatorMinCommittingDeposit))
-		err := voteManager.AddVoter(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
+		err := voteManager.AddStake(ctx, types.AccountKey("user"+strconv.Itoa(i+1)), valParam.ValidatorMinVotingDeposit)
 		if err != nil {
 			panic(err)
 		}

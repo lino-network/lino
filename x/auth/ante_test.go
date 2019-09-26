@@ -31,7 +31,9 @@ import (
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
 	pricemn "github.com/lino-network/lino/x/price/manager"
-	vote "github.com/lino-network/lino/x/vote"
+
+	// vote "github.com/lino-network/lino/x/vote"
+	votemn "github.com/lino-network/lino/x/vote/manager"
 )
 
 type TestMsg struct {
@@ -133,7 +135,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
-	vm := vote.NewVoteManager(TestVoteKVStoreKey, ph)
+	vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
 	price := pricemn.TestnetPriceManager{}
 	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)

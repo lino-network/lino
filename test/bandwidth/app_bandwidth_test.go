@@ -8,10 +8,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/lino-network/lino/test"
-	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	devtypes "github.com/lino-network/lino/x/developer/types"
-	vote "github.com/lino-network/lino/x/vote"
+	types "github.com/lino-network/lino/x/vote/types"
 )
 
 // test validator deposit
@@ -26,14 +26,14 @@ func TestAppBandwidth(t *testing.T) {
 	test.CreateAccount(t, newAccountName, lb, 0,
 		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000")
 
-	voteDepositMsg := vote.NewStakeInMsg(newAccountName, types.LNO("3000000"))
+	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("3000000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
 	registerAppMsg := devtypes.NewDeveloperRegisterMsg(newAccountName, "dummy", "dummy", "dummy")
 	test.SignCheckDeliver(t, lb, registerAppMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// the tx will fail since app bandwidth info will be updated hourly
-	voteDepositSmallMsg := vote.NewStakeInMsg(newAccountName, types.LNO("1000"))
+	voteDepositSmallMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("1000"))
 	test.SignCheckDeliver(t, lb, voteDepositSmallMsg, 2, false, newAccountTransactionPriv, baseTime)
 
 	// the tx will success after one hour
@@ -48,7 +48,7 @@ func TestAppBandwidth(t *testing.T) {
 		MessagesInCurBlock: 0,
 		ExpectedMPS:        sdk.NewDec(240),
 		LastRefilledAt:     baseTime + 3603,
-	}, types.AccountKey(newAccountName), lb)
+	}, linotypes.AccountKey(newAccountName), lb)
 
 	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 1002, true, newAccountTransactionPriv, baseTime+3603+3, 1000)
 	curCredit = "7.099448771136388802"
@@ -60,7 +60,7 @@ func TestAppBandwidth(t *testing.T) {
 		MessagesInCurBlock: 0,
 		ExpectedMPS:        sdk.NewDec(240),
 		LastRefilledAt:     baseTime + 3603 + 3,
-	}, types.AccountKey(newAccountName), lb)
+	}, linotypes.AccountKey(newAccountName), lb)
 
 	curCredit = "301.600990083371031122"
 	curCreditDec, _ = sdk.NewDecFromStr(curCredit)
@@ -72,5 +72,5 @@ func TestAppBandwidth(t *testing.T) {
 		MessagesInCurBlock: 0,
 		ExpectedMPS:        sdk.NewDec(240),
 		LastRefilledAt:     baseTime + 3603 + 3 + 3,
-	}, types.AccountKey(newAccountName), lb)
+	}, linotypes.AccountKey(newAccountName), lb)
 }

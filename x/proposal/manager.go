@@ -190,7 +190,13 @@ func (pm ProposalManager) UpdateProposalStatus(
 		return types.ProposalNotPass, err
 	}
 	totalVotes := proposalInfo.AgreeVotes.Plus(proposalInfo.DisagreeVotes)
-	actualRatio := proposalInfo.AgreeVotes.ToDec().Quo(totalVotes.ToDec())
+	actualRatio, err := sdk.NewDecFromStr("0")
+	if err != nil {
+		return types.ProposalNotPass, err
+	}
+	if !totalVotes.IsZero() {
+		actualRatio = proposalInfo.AgreeVotes.ToDec().Quo(totalVotes.ToDec())
+	}
 
 	if !totalVotes.IsGT(minVotes) || !ratio.LT(actualRatio) {
 		proposalInfo.Result = types.ProposalNotPass

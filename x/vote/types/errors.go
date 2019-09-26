@@ -1,4 +1,4 @@
-package vote
+package types
 
 import (
 	"fmt"
@@ -20,11 +20,6 @@ func ErrIllegalWithdraw() sdk.Error {
 // ErrValidatorCannotRevoke - error if voter is validator
 func ErrValidatorCannotRevoke() sdk.Error {
 	return types.NewError(types.CodeValidatorCannotRevoke, fmt.Sprintf("invalid revoke"))
-}
-
-// ErrVoteAlreadyExist - error if user already vote for a proposal
-func ErrVoteAlreadyExist() sdk.Error {
-	return types.NewError(types.CodeVoteAlreadyExist, fmt.Sprintf("Vote exist"))
 }
 
 // ErrVoteNotFound - error if voter is not found
@@ -55,6 +50,16 @@ func ErrQueryFailed() sdk.Error {
 // ErrNotAVoterOrHasDuty
 func ErrNotAVoterOrHasDuty() sdk.Error {
 	return types.NewError(types.CodeNotAVoterOrHasDuty, fmt.Sprintf("not a voter or has duty"))
+}
+
+// ErrNoDuty
+func ErrNoDuty() sdk.Error {
+	return types.NewError(types.CodeNoDuty, fmt.Sprintf("voter doesn't have duty"))
+}
+
+// ErrFrozenAmountIsNotEmpty
+func ErrFrozenAmountIsNotEmpty() sdk.Error {
+	return types.NewError(types.CodeFrozenAmountIsNotEmpty, fmt.Sprintf("forzen money is not empty"))
 }
 
 // ErrInsufficientStake
