@@ -8,8 +8,6 @@ import (
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(StakeInMsg{}, "lino/stakeIn", nil)
 	cdc.RegisterConcrete(StakeOutMsg{}, "lino/stakeOut", nil)
-	cdc.RegisterConcrete(DelegateMsg{}, "lino/delegate", nil)
-	cdc.RegisterConcrete(DelegatorWithdrawMsg{}, "lino/delegateWithdraw", nil)
 	cdc.RegisterConcrete(ClaimInterestMsg{}, "lino/claimInterest", nil)
 }
 

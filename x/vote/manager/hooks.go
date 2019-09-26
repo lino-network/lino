@@ -12,6 +12,7 @@ var _ StakingHooks = MultiStakingHooks{}
 // combine multiple staking hooks, all hook functions are run in array sequence
 type MultiStakingHooks []StakingHooks
 
+//go:generate mockery -name StakingHooks
 // StakingHooks event hooks for staking validator object (noalias)
 type StakingHooks interface {
 	AfterAddingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error

@@ -15,13 +15,14 @@ import (
 type VoteManager struct {
 	am          acc.AccountKeeper
 	storage     model.VoteStorage
-	paramHolder param.ParamHolder
+	paramHolder param.ParamKeeper
 	gm          global.GlobalKeeper
 	hooks       StakingHooks
 }
 
 // NewVoteManager - new vote manager
-func NewVoteManager(key sdk.StoreKey, holder param.ParamHolder, am acc.AccountKeeper, gm global.GlobalKeeper) VoteManager {
+func NewVoteManager(
+	key sdk.StoreKey, holder param.ParamKeeper, am acc.AccountKeeper, gm global.GlobalKeeper) VoteManager {
 	return VoteManager{
 		am:          am,
 		storage:     model.NewVoteStorage(key),
@@ -49,7 +50,6 @@ func (vm VoteManager) StakeIn(ctx sdk.Context, username linotypes.AccountKey, am
 	if err != nil {
 		return err
 	}
-
 	if param.MinStakeIn.IsGT(amount) {
 		return types.ErrInsufficientDeposit()
 	}

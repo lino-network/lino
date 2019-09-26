@@ -18,6 +18,8 @@ func NewHandler(vk VoteKeeper) sdk.Handler {
 			return handleStakeInMsg(ctx, vk, msg)
 		case types.StakeOutMsg:
 			return handleStakeOutMsg(ctx, vk, msg)
+		case types.ClaimInterestMsg:
+			return handleClaimInterestMsg(ctx, vk, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized vote msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -44,6 +46,13 @@ func handleStakeOutMsg(ctx sdk.Context, vk VoteKeeper, msg types.StakeOutMsg) sd
 		return err.Result()
 	}
 	if err := vk.StakeOut(ctx, msg.Username, coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleClaimInterestMsg(ctx sdk.Context, vk VoteKeeper, msg types.ClaimInterestMsg) sdk.Result {
+	if err := vk.ClaimInterest(ctx, msg.Username); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

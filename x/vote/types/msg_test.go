@@ -105,78 +105,6 @@ func TestStakeOutMsg(t *testing.T) {
 	}
 }
 
-func TestDelegateMsg(t *testing.T) {
-	testCases := []struct {
-		testName      string
-		delegateMsg   DelegateMsg
-		expectedError sdk.Error
-	}{
-		{
-			testName:      "normal case",
-			delegateMsg:   NewDelegateMsg("user1", "user2", "1"),
-			expectedError: nil,
-		},
-		{
-			testName:      "invalid delegator",
-			delegateMsg:   NewDelegateMsg("", "user2", "1"),
-			expectedError: ErrInvalidUsername(),
-		},
-		{
-			testName:      "invalid voter",
-			delegateMsg:   NewDelegateMsg("user1", "", "1"),
-			expectedError: ErrInvalidUsername(),
-		},
-		{
-			testName:      "both delegator and voter are invalid",
-			delegateMsg:   NewDelegateMsg("", "", "1"),
-			expectedError: ErrInvalidUsername(),
-		},
-		{
-			testName:      "invalid delegated coin",
-			delegateMsg:   NewDelegateMsg("user1", "user2", "-1"),
-			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.delegateMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
-			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
-func TestDelegatorWithdrawMsg(t *testing.T) {
-	testCases := []struct {
-		testName             string
-		delegatorWithdrawMsg DelegatorWithdrawMsg
-		expectedError        sdk.Error
-	}{
-		{
-			testName:             "normal case",
-			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("user1", "user2", "1"),
-			expectedError:        nil,
-		},
-		{
-			testName:             "invalid username",
-			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("", "", "1"),
-			expectedError:        ErrInvalidUsername(),
-		},
-		{
-			testName:             "invalid withdraw amount",
-			delegatorWithdrawMsg: NewDelegatorWithdrawMsg("user1", "user2", "-1"),
-			expectedError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.delegatorWithdrawMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
-			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
 func TestMsgPermission(t *testing.T) {
 	testCases := []struct {
 		testName           string
@@ -191,16 +119,6 @@ func TestMsgPermission(t *testing.T) {
 		{
 			testName:           "vote withdraw",
 			msg:                NewStakeOutMsg("test", types.LNO("1")),
-			expectedPermission: types.TransactionPermission,
-		},
-		{
-			testName:           "delegate to voter",
-			msg:                NewDelegateMsg("delegator", "voter", types.LNO("1")),
-			expectedPermission: types.TransactionPermission,
-		},
-		{
-			testName:           "delegate withdraw",
-			msg:                NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
 			expectedPermission: types.TransactionPermission,
 		},
 	}
@@ -226,14 +144,6 @@ func TestGetSignBytes(t *testing.T) {
 			testName: "vote withdraw",
 			msg:      NewStakeOutMsg("test", types.LNO("1")),
 		},
-		{
-			testName: "delegate to voter",
-			msg:      NewDelegateMsg("delegator", "voter", types.LNO("1")),
-		},
-		{
-			testName: "delegate withdraw",
-			msg:      NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-		},
 	}
 
 	for _, tc := range testCases {
@@ -256,16 +166,6 @@ func TestGetSigners(t *testing.T) {
 			testName:      "vote withdraw",
 			msg:           NewStakeOutMsg("test", types.LNO("1")),
 			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "delegate to voter",
-			msg:           NewDelegateMsg("delegator", "voter", types.LNO("1")),
-			expectSigners: []types.AccountKey{"delegator"},
-		},
-		{
-			testName:      "delegate withdraw",
-			msg:           NewDelegatorWithdrawMsg("delegator", "voter", types.LNO("1")),
-			expectSigners: []types.AccountKey{"delegator"},
 		},
 	}
 
