@@ -13,6 +13,5 @@ func (tm TestnetPriceManager) CoinToMiniDollar(coin types.Coin) (bought types.Mi
 
 // convert minidollar to coin
 func (tm TestnetPriceManager) MiniDollarToCoin(dollar types.MiniDollar) (bought types.Coin, used types.MiniDollar) {
-	bought, used = miniDollarToCoin(dollar, types.TestnetPrice)
-	return
+	return miniDollarToCoin(dollar, types.TestnetPrice)
 }

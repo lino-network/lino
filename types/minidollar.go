@@ -46,3 +46,11 @@ func (m MiniDollar) Minus(other MiniDollar) MiniDollar {
 func (m MiniDollar) Multiply(other MiniDollar) MiniDollar {
 	return MiniDollar{m.Mul(other.Int)}
 }
+
+func (m MiniDollar) Equal(other MiniDollar) bool {
+	return m.Int.Equal(other.Int)
+}
+
+func (m MiniDollar) LT(other MiniDollar) bool {
+	return m.Int.LT(other.Int)
+}
