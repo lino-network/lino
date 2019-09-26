@@ -240,7 +240,7 @@ func (gm *GlobalManager) GetInterestSince(ctx sdk.Context, unixTime int64, linoS
 		if err != nil {
 			return types.NewCoinFromInt64(0), err
 		}
-		if linoStakeStat.UnclaimedLinoStake.IsZero() {
+		if linoStakeStat.UnclaimedLinoStake.IsZero() && !linoStakeStat.UnclaimedLinoStake.IsGTE(linoStake) {
 			continue
 		}
 		interest :=

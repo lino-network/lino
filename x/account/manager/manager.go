@@ -388,7 +388,7 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 			}
 			// override previous grant public key
 			if err := accManager.AuthorizePermission(ctx, me, pubKey.GrantTo, pubKey.ExpiresAt-ctx.BlockHeader().Time.Unix(), pubKey.Permission, pubKey.Amount.Minus(amount)); err != nil {
-				return "", nil
+				return "", err
 			}
 		}
 		return pubKey.GrantTo, nil

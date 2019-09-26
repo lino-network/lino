@@ -474,19 +474,6 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 			testName:  "slash more than user's stake",
 			username:  suite.user2,
 			amount:    suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
-			expectErr: types.ErrInsufficientStake(),
-			expectVoter: &model.Voter{
-				Username:     suite.user2,
-				LinoStake:    suite.stakeInAmount,
-				Interest:     linotypes.NewCoinFromInt64(0),
-				Duty:         types.DutyVoter,
-				FrozenAmount: linotypes.NewCoinFromInt64(0),
-			},
-		},
-		{
-			testName:  "slash user's stake",
-			username:  suite.user2,
-			amount:    suite.stakeInAmount,
 			expectErr: nil,
 			expectVoter: &model.Voter{
 				Username:     suite.user2,

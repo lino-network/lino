@@ -19,7 +19,7 @@ type StakingHooks interface {
 	AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 }
 
-// AfterValidatorCreated - call hook if registered
+// AfterAddingStake - call hook if registered
 func (vm VoteManager) AfterAddingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	if vm.hooks != nil {
 		return vm.hooks.AfterAddingStake(ctx, username)
@@ -27,7 +27,7 @@ func (vm VoteManager) AfterAddingStake(ctx sdk.Context, username linotypes.Accou
 	return nil
 }
 
-// BeforeValidatorModified - call hook if registered
+// AfterSubtractingStake - call hook if registered
 func (vm VoteManager) AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	if vm.hooks != nil {
 		return vm.hooks.AfterSubtractingStake(ctx, username)

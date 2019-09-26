@@ -245,19 +245,18 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 		return err
 	}
 
-	// slash amount should be larger than stake
-	// frozen money doesn't affect slash logic
-	if !voter.LinoStake.IsGTE(amount) {
-		return types.ErrInsufficientStake()
-	}
-
 	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
 	if err != nil {
 		return err
 	}
 
 	voter.Interest = voter.Interest.Plus(interest)
-	voter.LinoStake = voter.LinoStake.Minus(amount)
+	if !voter.LinoStake.IsGTE(amount) {
+		voter.LinoStake = linotypes.NewCoinFromInt64(0)
+	} else {
+		voter.LinoStake = voter.LinoStake.Minus(amount)
+	}
+	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
