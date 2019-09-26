@@ -180,19 +180,26 @@ func (_m *VoteKeeper) MinusStake(ctx types.Context, username linotypes.AccountKe
 }
 
 // SlashStake provides a mock function with given fields: ctx, username, amount
-func (_m *VoteKeeper) SlashStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) types.Error {
+func (_m *VoteKeeper) SlashStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, username, amount)
 
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+	var r0 linotypes.Coin
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) linotypes.Coin); ok {
 		r0 = rf(ctx, username, amount)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
+		r0 = ret.Get(0).(linotypes.Coin)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+		r1 = rf(ctx, username, amount)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
 		}
 	}
 
-	return r0
+	return r0, r1
 }
 
 // StakeIn provides a mock function with given fields: ctx, username, amount

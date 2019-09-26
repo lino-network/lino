@@ -22,7 +22,7 @@ type VoteKeeper interface {
 	GetVoterDuty(ctx sdk.Context, username linotypes.AccountKey) (types.VoterDuty, sdk.Error)
 	AssignDuty(
 		ctx sdk.Context, username linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error
-	SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error
+	SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) (linotypes.Coin, sdk.Error)
 	UnassignDuty(ctx sdk.Context, username linotypes.AccountKey, waitingPeriodSec int64) sdk.Error
 	ExecUnassignDutyEvent(ctx sdk.Context, event types.UnassignDutyEvent) sdk.Error
 	GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error)

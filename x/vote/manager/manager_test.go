@@ -457,24 +457,27 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 	suite.Nil(e)
 
 	testCases := []struct {
-		testName    string
-		username    linotypes.AccountKey
-		amount      linotypes.Coin
-		expectErr   sdk.Error
-		expectVoter *model.Voter
+		testName            string
+		username            linotypes.AccountKey
+		amount              linotypes.Coin
+		expectErr           sdk.Error
+		expectSlashedAmount linotypes.Coin
+		expectVoter         *model.Voter
 	}{
 		{
-			testName:    "slash stake from user without stake",
-			username:    suite.user1,
-			amount:      linotypes.NewCoinFromInt64(1),
-			expectErr:   model.ErrVoterNotFound(),
-			expectVoter: nil,
+			testName:            "slash stake from user without stake",
+			username:            suite.user1,
+			amount:              linotypes.NewCoinFromInt64(1),
+			expectErr:           model.ErrVoterNotFound(),
+			expectSlashedAmount: linotypes.NewCoinFromInt64(0),
+			expectVoter:         nil,
 		},
 		{
-			testName:  "slash more than user's stake",
-			username:  suite.user2,
-			amount:    suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
-			expectErr: nil,
+			testName:            "slash more than user's stake",
+			username:            suite.user2,
+			amount:              suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
+			expectErr:           nil,
+			expectSlashedAmount: suite.stakeInAmount,
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
 				LinoStake:    linotypes.NewCoinFromInt64(0),
@@ -484,10 +487,11 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 			},
 		},
 		{
-			testName:  "slash user's stake with frozen",
-			username:  suite.user3,
-			amount:    suite.stakeInAmount,
-			expectErr: nil,
+			testName:            "slash user's stake with frozen",
+			username:            suite.user3,
+			amount:              suite.stakeInAmount,
+			expectErr:           nil,
+			expectSlashedAmount: suite.stakeInAmount,
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
 				LinoStake:    linotypes.NewCoinFromInt64(0),
@@ -499,8 +503,9 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.SlashStake(suite.Ctx, tc.username, tc.amount)
+		amount, err := suite.vm.SlashStake(suite.Ctx, tc.username, tc.amount)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
+		suite.Equal(tc.expectSlashedAmount, amount, "%s", tc.testName)
 		voter, _ := suite.vm.GetVoter(suite.Ctx, tc.username)
 		suite.Equal(tc.expectVoter, voter, "%s", tc.testName)
 	}

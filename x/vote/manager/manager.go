@@ -239,29 +239,34 @@ func (vm VoteManager) UnassignDuty(ctx sdk.Context, username linotypes.AccountKe
 }
 
 // SlashStake - slash as much as it can, regardless of frozen money
-func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) (slashedAmount linotypes.Coin, err sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
-		return err
+		return linotypes.NewCoinFromInt64(0), err
 	}
 
 	interest, err := vm.gm.GetInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
 	if err != nil {
-		return err
+		return linotypes.NewCoinFromInt64(0), err
 	}
 
 	voter.Interest = voter.Interest.Plus(interest)
 	if !voter.LinoStake.IsGTE(amount) {
+		slashedAmount = voter.LinoStake
 		voter.LinoStake = linotypes.NewCoinFromInt64(0)
 	} else {
+		slashedAmount = amount
 		voter.LinoStake = voter.LinoStake.Minus(amount)
 	}
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
-		return err
+		return linotypes.NewCoinFromInt64(0), err
 	}
-	return vm.hooks.AfterSubtractingStake(ctx, username)
+	if err := vm.hooks.AfterSubtractingStake(ctx, username); err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+	return slashedAmount, nil
 }
 
 // ExecUnassignDutyEvent - execute unassign duty events.
