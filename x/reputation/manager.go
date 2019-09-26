@@ -113,3 +113,9 @@ func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error 
 	handler := rep.getHandlerV2(ctx)
 	return handler.ImportFromFile(file)
 }
+
+// GetReputationDetail - string
+func (rep ReputationManager) GetReputationDetail(ctx sdk.Context, username types.AccountKey) (string, sdk.Error) {
+	handler := rep.getHandlerV2(ctx)
+	return handler.GetUserMeta(repv2.Uid(username)), nil
+}

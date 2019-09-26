@@ -18,6 +18,7 @@ const (
 	QuerierRoute = ModuleName
 
 	QueryReputation = "rep"
+	QueryDetails    = "details"
 )
 
 // creates a querier for vote REST endpoints
@@ -28,6 +29,8 @@ func NewQuerier(rm ReputationKeeper) sdk.Querier {
 		switch path[0] {
 		case QueryReputation:
 			return queryReputation(ctx, cdc, path[1:], req, rm)
+		case QueryDetails:
+			return queryDetails(ctx, cdc, path[1:], req, rm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown reputation query endpoint")
 		}
@@ -47,4 +50,15 @@ func queryReputation(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.R
 		return nil, ErrQueryFailed()
 	}
 	return res, nil
+}
+
+func queryDetails(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, rm ReputationKeeper) ([]byte, sdk.Error) {
+	if err := types.CheckPathContentAndMinLength(path, 1); err != nil {
+		return nil, err
+	}
+	detailstr, err := rm.GetReputationDetail(ctx, types.AccountKey(path[0]))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(detailstr), nil
 }

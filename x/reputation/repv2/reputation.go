@@ -1,6 +1,7 @@
 package repv2
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +32,8 @@ type Reputation interface {
 	// ExportImporter
 	ExportToFile(file string) error
 	ImportFromFile(file string) error
+
+	GetUserMeta(u Uid) string
 }
 
 type ReputationImpl struct {
@@ -110,6 +113,7 @@ type consumptionInfo struct {
 	seedIF  IF
 	otherIF IF
 }
+
 
 // extract user's consumptionInfo from userMeta. The @p seedSet is the result
 // of the user's the last donation, and also the round when donations in user.Unsettled
@@ -229,6 +233,16 @@ func (rep ReputationImpl) updateReputation(user *userMeta, current RoundId) {
 	user.Reputation = newrep.reputation
 	user.LastSettledRound = user.LastDonationRound
 	user.Unsettled = nil
+}
+
+
+func (rep ReputationImpl) GetUserMeta(u Uid) string {
+	user := rep.store.GetUserMeta(u)
+	rst, err := json.Marshal(user)
+	if err != nil {
+		panic(err)
+	}
+	return string(rst)
 }
 
 // return the reputation of @p u.

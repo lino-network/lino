@@ -22,6 +22,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.AddCommand(client.GetCommands(
 		getCmdShow(cdc),
+		getCmdDetail(cdc),
 	)...)
 	return cmd
 }
@@ -38,6 +39,20 @@ func getCmdShow(cdc *codec.Codec) *cobra.Command {
 			rst := linotypes.MiniDollar{}
 			return utils.CLIQueryJSONPrint(cdc, uri, nil,
 				func() interface{} { return &rst })
+		},
+	}
+}
+
+// GetCmdDetail -
+func getCmdDetail(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "detail <username>",
+		Short: "detail <username>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			username := args[0]
+			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryDetails, username)
+			return utils.CLIQueryStrPrint(cdc, uri, nil)
 		},
 	}
 }

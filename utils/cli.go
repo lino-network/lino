@@ -25,3 +25,14 @@ func CLIQueryJSONPrint(cdc *codec.Codec, uri string, data []byte, rstTypeFactory
 	fmt.Println(string(out))
 	return nil
 }
+
+func CLIQueryStrPrint(cdc *codec.Codec, uri string, data []byte) error {
+	cliCtx := context.NewCLIContext().WithCodec(cdc)
+	res, _, err := cliCtx.QueryWithData(uri, data)
+	if err != nil {
+		fmt.Printf("Failed to Query and Print: %s, because %s", uri, err)
+		return nil
+	}
+	fmt.Println(string(res))
+	return nil
+}

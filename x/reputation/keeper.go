@@ -26,6 +26,8 @@ type ReputationKeeper interface {
 	// return the current round start time
 	GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
+	GetReputationDetail(ctx sdk.Context, username types.AccountKey) (string, sdk.Error)
+
 	// import/export this module to files
 	ExportToFile(ctx sdk.Context, file string) error
 	ImportFromFile(ctx sdk.Context, file string) error
