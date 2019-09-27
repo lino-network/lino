@@ -1,0 +1,13 @@
+[
+  {
+    "prefix": "2",
+    "key": "",
+    "val": {
+      "type": "lino/price/current",
+      "value": {
+        "price": "456",
+        "update_at": "2000"
+      }
+    }
+  }
+]

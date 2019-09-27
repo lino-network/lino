@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	linotypes "github.com/lino-network/lino/types"
 )
 
@@ -10,11 +8,11 @@ import (
 type FedPrice struct {
 	Validator linotypes.AccountKey `json:"validator"`
 	Price     linotypes.MiniDollar `json:"price"`
-	FedTime   time.Time            `json:"fed_time"`
+	FedTime   int64                `json:"fed_time"`
 }
 
 // TimePrice is time + price
 type TimePrice struct {
 	Price    linotypes.MiniDollar `json:"price"`
-	UpdateAt time.Time            `json:"update_at"`
+	UpdateAt int64                `json:"update_at"`
 }

@@ -105,7 +105,7 @@ func (ps PriceStorage) GetCurrentPrice(ctx sdk.Context) (*TimePrice, sdk.Error) 
 	return price, nil
 }
 
-func (ps PriceStorage) SetCurrentPrice(ctx sdk.Context, price TimePrice) {
+func (ps PriceStorage) SetCurrentPrice(ctx sdk.Context, price *TimePrice) {
 	store := ctx.KVStore(ps.key)
 	bytes := ps.cdc.MustMarshalBinaryLengthPrefixed(price)
 	store.Set(GetCurrentPriceKey(), bytes)
@@ -125,6 +125,6 @@ func (ps PriceStorage) GetLastValidators(ctx sdk.Context) []linotypes.AccountKey
 
 func (ps PriceStorage) SetLastValidators(ctx sdk.Context, last []linotypes.AccountKey) {
 	store := ctx.KVStore(ps.key)
-	bytes := ps.cdc.MustMarshalBinaryLengthPrefixed(store)
+	bytes := ps.cdc.MustMarshalBinaryLengthPrefixed(last)
 	store.Set(GetLastValidatorsKey(), bytes)
 }

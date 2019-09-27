@@ -1,0 +1,13 @@
+[
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/price/lastvals",
+      "value": [
+        "user3",
+        "user4"
+      ]
+    }
+  }
+]
