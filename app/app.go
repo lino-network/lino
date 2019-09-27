@@ -36,7 +36,9 @@ import (
 
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
+	valmn "github.com/lino-network/lino/x/validator/manager"
 	valmodel "github.com/lino-network/lino/x/validator/model"
+	valtypes "github.com/lino-network/lino/x/validator/types"
 	vote "github.com/lino-network/lino/x/vote"
 	votemodel "github.com/lino-network/lino/x/vote/model"
 
@@ -96,7 +98,7 @@ type LinoBlockchain struct {
 	// manager for different KVStore
 	accountManager    acc.AccountKeeper
 	postManager       post.PostKeeper
-	valManager        val.ValidatorManager
+	valManager        val.ValidatorKeeper
 	globalManager     global.GlobalManager
 	voteManager       vote.VoteKeeper
 	infraManager      infra.InfraManager
@@ -139,8 +141,6 @@ func NewLinoBlockchain(
 	registerEvent(lb.globalManager.WireCodec())
 
 	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
-	lb.valManager = val.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder)
-
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
 	voteManager := votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
@@ -150,7 +150,8 @@ func NewLinoBlockchain(
 		lb.CapKeyDeveloperStore, lb.paramHolder, &voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
 	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
 	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
-	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks())
+	lb.valManager = valmn.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder, &voteManager, &lb.globalManager, lb.accountManager)
+	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks(lb.valManager.Hooks()))
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager)).
@@ -160,8 +161,7 @@ func NewLinoBlockchain(
 		AddRoute(proposal.RouterKey, proposal.NewHandler(
 			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
 		AddRoute(infra.RouterKey, infra.NewHandler(lb.infraManager)).
-		AddRoute(val.RouterKey, val.NewHandler(
-			lb.accountManager, lb.valManager, lb.voteManager, &lb.globalManager))
+		AddRoute(val.RouterKey, val.NewHandler(lb.valManager))
 
 	lb.QueryRouter().
 		AddRoute(acctypes.QuerierRoute, acc.NewQuerier(lb.accountManager)).
@@ -208,7 +208,7 @@ func MakeCodec() *wire.Codec {
 	devtypes.RegisterWire(cdc)
 	infra.RegisterWire(cdc)
 	votetypes.RegisterWire(cdc)
-	val.RegisterWire(cdc)
+	valtypes.RegisterCodec(cdc)
 	proposal.RegisterWire(cdc)
 	registerEvent(cdc)
 
@@ -350,27 +350,11 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 	}
 
 	if ga.IsValidator {
-		// withdraw money from validator's bank
-		if err := lb.accountManager.MinusCoinFromUsername(
-			ctx, types.AccountKey(ga.Name),
-			valParam.ValidatorMinCommittingDeposit.Plus(valParam.ValidatorMinVotingDeposit)); err != nil {
+		if err := lb.voteManager.StakeIn(
+			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinDeposit); err != nil {
 			panic(err)
 		}
-		// if err := vote.AddStake(
-		// 	ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit,
-		// 	lb.voteManager, &lb.globalManager, lb.accountManager); err != nil {
-		// 	panic(err)
-		// }
-		if err := lb.voteManager.AddStake(
-			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinVotingDeposit); err != nil {
-			panic(err)
-		}
-		if err := lb.valManager.RegisterValidator(
-			ctx, types.AccountKey(ga.Name), ga.ValPubKey,
-			valParam.ValidatorMinCommittingDeposit, ""); err != nil {
-			panic(err)
-		}
-		if err := lb.valManager.TryBecomeOncallValidator(ctx, types.AccountKey(ga.Name)); err != nil {
+		if err := lb.valManager.RegisterValidator(ctx, types.AccountKey(ga.Name), ga.ValPubKey, ""); err != nil {
 			panic(err)
 		}
 	}
@@ -444,12 +428,7 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 
 	global.BeginBlocker(ctx, req, &lb.globalManager)
 	bandwidth.BeginBlocker(ctx, req, lb.bandwidthManager)
-	actualPenalty := val.BeginBlocker(ctx, req, lb.valManager)
-
-	// add coins back to inflation pool
-	if err := lb.globalManager.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
-		panic(err)
-	}
+	val.BeginBlocker(ctx, req, lb.valManager)
 
 	// lb.syncInfoWithVoteManager(ctx)
 	lb.executeTimeEvents(ctx)
@@ -553,13 +532,13 @@ func (lb *LinoBlockchain) increaseMinute(ctx sdk.Context) {
 // execute hourly event, distribute inflation to validators and
 // add hourly inflation to content creator reward pool
 func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
-	err := lb.globalManager.DistributeHourlyInflation(ctx)
-	if err != nil {
+	if err := lb.globalManager.DistributeHourlyInflation(ctx); err != nil {
 		panic(err)
 	}
-	lb.distributeInflationToValidator(ctx)
-	err = lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx)
-	if err != nil {
+	if err := lb.valManager.DistributeInflationToValidator(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -590,33 +569,6 @@ func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) { //nolint:unused
 	if err := lb.globalManager.SetTotalLinoAndRecalculateGrowthRate(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// distribute inflation to validators
-// TODO: encaptulate module event inside module
-func (lb *LinoBlockchain) distributeInflationToValidator(ctx sdk.Context) {
-	lst, err := lb.valManager.GetValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	coin, err := lb.globalManager.GetValidatorHourlyInflation(ctx)
-	if err != nil {
-		panic(err)
-	}
-	// give inflation to each validator evenly
-	for i, validator := range lst.OncallValidators {
-		var ratPerValidator sdk.Dec
-		// XXX(yumin): why in the previous version, it's guarged with
-		// if ctx.BlockHeader().Height > types.LinoBlockchainFirstUpdateHeight {
-		// though only differs in round?
-		ratPerValidator = coin.ToDec().Quo(sdk.NewDec(int64(len(lst.OncallValidators) - i)))
-		coinPerValidator := types.DecToCoin(ratPerValidator)
-		err := lb.accountManager.AddCoinToUsername(ctx, validator, coinPerValidator)
-		if err != nil {
-			panic(err)
-		}
-		coin = coin.Minus(coinPerValidator)
 	}
 }
 
@@ -685,26 +637,26 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		panic("failed to create export dir due to: " + err.Error())
 	}
 
-	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
-		f, err := os.Create(exportPath + filename)
-		if err != nil {
-			panic("failed to create account")
-		}
-		defer f.Close()
-		jsonbytes, err := lb.cdc.MarshalJSON(exporter(ctx))
-		if err != nil {
-			panic("failed to marshal json for " + filename + " due to " + err.Error())
-		}
-		_, err = f.Write(jsonbytes)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("export for %s done: %d bytes\n", filename, len(jsonbytes))
-		err = f.Sync()
-		if err != nil {
-			panic(err)
-		}
-	}
+	// exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
+	// 	f, err := os.Create(exportPath + filename)
+	// 	if err != nil {
+	// 		panic("failed to create account")
+	// 	}
+	// 	defer f.Close()
+	// 	jsonbytes, err := lb.cdc.MarshalJSON(exporter(ctx))
+	// 	if err != nil {
+	// 		panic("failed to marshal json for " + filename + " due to " + err.Error())
+	// 	}
+	// 	_, err = f.Write(jsonbytes)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	fmt.Printf("export for %s done: %d bytes\n", filename, len(jsonbytes))
+	// 	err = f.Sync()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
 
 	// TODO(yumin): accountStateFile
 	// exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
@@ -722,12 +674,12 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	// exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
 	// 	return lb.globalManager.Export(ctx).ToIR()
 	// })
-	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
-		return lb.infraManager.Export(ctx).ToIR()
-	})
-	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
-		return lb.valManager.Export(ctx).ToIR()
-	})
+	// exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.infraManager.Export(ctx).ToIR()
+	// })
+	// exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
+	// 	return lb.valManager.Export(ctx).ToIR()
+	// })
 	// exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
 	// 	return lb.voteManager.Export(ctx).ToIR()
 	// })
@@ -805,7 +757,7 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 			err = lb.cdc.UnmarshalJSON(bytes, t)
 			check(err)
 			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.valManager.Import(ctx, t)
+			// lb.valManager.Import(ctx, t)
 		// case *votemodel.VoterTablesIR:
 		// 	err = lb.cdc.UnmarshalJSON(bytes, t)
 		// 	check(err)

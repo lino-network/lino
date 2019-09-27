@@ -11,6 +11,7 @@ import (
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/x/validator/types"
@@ -26,14 +27,17 @@ type ValidatorManager struct {
 	paramHolder param.ParamKeeper
 	vote        vote.VoteKeeper
 	global      global.GlobalKeeper
+	acc         acc.AccountKeeper
 }
 
-func NewValidatorManager(key sdk.StoreKey, holder param.ParamKeeper, vote vote.VoteKeeper, global global.GlobalKeeper) ValidatorManager {
+func NewValidatorManager(key sdk.StoreKey, holder param.ParamKeeper, vote vote.VoteKeeper,
+	global global.GlobalKeeper, acc acc.AccountKeeper) ValidatorManager {
 	return ValidatorManager{
 		storage:     model.NewValidatorStorage(key),
 		paramHolder: holder,
 		vote:        vote,
 		global:      global,
+		acc:         acc,
 	}
 }
 
@@ -93,11 +97,11 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes
 		return err
 	}
 
-	// join as candidate validator first
+	// join as candidate validator first and vote itself
 	if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 		return err
 	}
-	if err := vm.onCandidateVotesInc(ctx, username); err != nil {
+	if err := vm.VoteValidator(ctx, username, []linotypes.AccountKey{username}); err != nil {
 		return err
 	}
 	return nil
@@ -126,8 +130,7 @@ func (vm ValidatorManager) RevokeValidator(ctx sdk.Context, username linotypes.A
 		return err
 	}
 
-	// TODO: change to unassign validator duty in vote
-	if err = vm.vote.AssignDuty(ctx, username, votetypes.DutyValidator, param.ValidatorMinDeposit); err != nil {
+	if err = vm.vote.UnassignDuty(ctx, username, param.ValidatorRevokePendingSec); err != nil {
 		return err
 	}
 
@@ -164,8 +167,50 @@ func (vm ValidatorManager) VoteValidator(ctx sdk.Context, username linotypes.Acc
 		return err
 	}
 
-	// TODO (zhimao): give voter interests if possible
+	if err := vm.vote.ClaimInterest(ctx, username); err != nil {
+		return err
+	}
+	return nil
+}
 
+func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.Error {
+	lst, err := vm.storage.GetValidatorList(ctx)
+	if err != nil {
+		return err
+	}
+	coin, err := vm.global.GetValidatorHourlyInflation(ctx)
+	if err != nil {
+		return err
+	}
+
+	param, err := vm.paramHolder.GetValidatorParam(ctx)
+	if err != nil {
+		return err
+	}
+
+	totalWeight := int64(len(lst.Oncall))*param.OncallInflationWeight +
+		int64(len(lst.Standby))*param.StandbyInflationWeight
+	index := int64(0)
+	// give inflation to each validator according it's weight
+	for _, oncall := range lst.Oncall {
+		ratPerOncall := coin.ToDec().Mul(sdk.NewDec(param.OncallInflationWeight)).Quo(sdk.NewDec(int64(totalWeight) - index))
+		err := vm.acc.AddCoinToUsername(ctx, oncall, linotypes.DecToCoin(ratPerOncall))
+		if err != nil {
+			return err
+		}
+		coin = coin.Minus(linotypes.DecToCoin(ratPerOncall))
+		index += param.OncallInflationWeight
+	}
+
+	for _, standby := range lst.Standby {
+		ratPerStandby := coin.ToDec().Mul(sdk.NewDec(param.StandbyInflationWeight)).Quo(sdk.NewDec(int64(totalWeight) - index))
+		err := vm.acc.AddCoinToUsername(ctx, standby, linotypes.DecToCoin(ratPerStandby))
+		if err != nil {
+			return err
+		}
+		coin = coin.Minus(linotypes.DecToCoin(ratPerStandby))
+		index += param.StandbyInflationWeight
+	}
 	return nil
 }
 
@@ -436,10 +481,18 @@ func (vm ValidatorManager) UpdateSigningStats(ctx sdk.Context, voteInfos []abci.
 // PunishOncallValidator - punish committing validator if 1) byzantine or 2) missing blocks reach limiation
 func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
 	penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error {
+	// slash and add slashed coin back into validator inflation pool
+	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
+	if err != nil {
+		return err
+	}
 
-	// TODO call vote to slash
+	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
+		return err
+	}
+
 	if punishType == linotypes.PunishAbsentCommit {
-		// reset absent commit after slash
+		// reset absent commit
 		validator, err := vm.storage.GetValidator(ctx, username)
 		if err != nil {
 			return err
@@ -448,6 +501,7 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 		if err := vm.storage.SetValidator(ctx, username, validator); err != nil {
 			return err
 		}
+
 	}
 
 	param, err := vm.paramHolder.GetValidatorParam(ctx)
@@ -536,14 +590,6 @@ func (vm ValidatorManager) CheckDupPubKey(ctx sdk.Context, pubKey crypto.PubKey)
 	}
 
 	return nil
-}
-
-func (vm ValidatorManager) OnStakeIn(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
-	return vm.onStakeChange(ctx, username)
-}
-
-func (vm ValidatorManager) OnStakeOut(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
-	return vm.onStakeChange(ctx, username)
 }
 
 func (vm ValidatorManager) onStakeChange(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {

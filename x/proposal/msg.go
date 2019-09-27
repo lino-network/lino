@@ -730,15 +730,11 @@ func (msg ChangeValidatorParamMsg) ValidateBasic() sdk.Error {
 
 	if msg.Parameter.ValidatorCoinReturnIntervalSec <= 0 ||
 		msg.Parameter.ValidatorCoinReturnTimes <= 0 ||
-		msg.Parameter.AbsentCommitLimitation <= 0 ||
-		msg.Parameter.ValidatorListSize <= 0 {
+		msg.Parameter.AbsentCommitLimitation <= 0 {
 		return ErrIllegalParameter()
 	}
 
-	if !msg.Parameter.ValidatorMinWithdraw.IsPositive() ||
-		!msg.Parameter.ValidatorMinVotingDeposit.IsPositive() ||
-		!msg.Parameter.ValidatorMinCommittingDeposit.IsPositive() ||
-		!msg.Parameter.PenaltyMissVote.IsPositive() ||
+	if !msg.Parameter.ValidatorMinDeposit.IsPositive() ||
 		!msg.Parameter.PenaltyMissCommit.IsPositive() ||
 		!msg.Parameter.PenaltyByzantine.IsPositive() {
 		return ErrIllegalParameter()

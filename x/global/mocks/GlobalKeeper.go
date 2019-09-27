@@ -153,6 +153,29 @@ func (_m *GlobalKeeper) GetRewardAndPopFromWindow(ctx types.Context, evaluate li
 	return r0, r1
 }
 
+// GetValidatorHourlyInflation provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) GetValidatorHourlyInflation(ctx types.Context) (linotypes.Coin, types.Error) {
+	ret := _m.Called(ctx)
+
+	var r0 linotypes.Coin
+	if rf, ok := ret.Get(0).(func(types.Context) linotypes.Coin); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(linotypes.Coin)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
 func (_m *GlobalKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
 	ret := _m.Called(ctx, cdc, filepath)

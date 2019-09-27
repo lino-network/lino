@@ -85,16 +85,17 @@ func TestGetGenesisJson(t *testing.T) {
 				DeveloperCoinReturnTimes:       int64(7),
 			},
 			param.ValidatorParam{
-				ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-				ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-				ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+				ValidatorMinDeposit:            types.NewCoinFromInt64(20000000000 * types.Decimals),
 				ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 				ValidatorCoinReturnTimes:       int64(7),
-				PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 				PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
 				PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-				ValidatorListSize:              int64(21),
 				AbsentCommitLimitation:         int64(600), // 30min
+				OncallSize:                     int64(22),
+				StandbySize:                    int64(7),
+				ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+				OncallInflationWeight:          int64(2),
+				StandbyInflationWeight:         int64(1),
 			},
 			param.CoinDayParam{
 				SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
