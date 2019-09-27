@@ -489,7 +489,7 @@ func (suite *DeveloperManagerSuite) TestMintIDA() {
 	for _, c := range testCases {
 		suite.Run(c.name, func() {
 			if c.coinToMiniDollar != nil {
-				suite.mPriceKeeper.On("CoinToMiniDollar", c.amount).Return(*c.coinToMiniDollar).Once()
+				suite.mPriceKeeper.On("CoinToMiniDollar", mock.Anything, c.amount).Return(*c.coinToMiniDollar, nil).Once()
 			}
 			if c.minusCoinFromUserCalled {
 				suite.mAccountKeeper.On("MinusCoinFromUsername", mock.Anything, c.appName, c.amount).Return(c.minusCoinFromUser).Once()
@@ -1004,7 +1004,7 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 				suite.mAccountKeeper.On("DoesAccountExist", mock.Anything, c.user).Return(*c.accountExists).Once()
 			}
 			if c.bought != nil {
-				suite.mPriceKeeper.On("MiniDollarToCoin", c.amount).Return(*c.bought, *c.used).Once()
+				suite.mPriceKeeper.On("MiniDollarToCoin", mock.Anything, c.amount).Return(*c.bought, *c.used, nil).Once()
 			}
 			suite.LoadState(false, "IDABasic")
 			coin, err := suite.manager.BurnIDA(suite.Ctx, c.app, c.user, c.amount)

@@ -8,7 +8,7 @@ import (
 type FedPrice struct {
 	Validator linotypes.AccountKey `json:"validator"`
 	Price     linotypes.MiniDollar `json:"price"`
-	FedTime   int64                `json:"fed_time"`
+	UpdateAt  int64                `json:"update_at"`
 }
 
 // TimePrice is time + price

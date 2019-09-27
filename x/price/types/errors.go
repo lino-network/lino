@@ -26,3 +26,21 @@ func ErrNoValidator() sdk.Error {
 	return linotypes.NewError(
 		linotypes.CodeNoValidatorSet, fmt.Sprintf("no validator set found"))
 }
+
+// ErrNotAValidator -
+func ErrNotAValidator(u linotypes.AccountKey) sdk.Error {
+	return linotypes.NewError(
+		linotypes.CodeNotAValidator, fmt.Sprintf("%s is not a validator", u))
+}
+
+// ErrInvalidPriceFeed -
+func ErrInvalidPriceFeed(price linotypes.MiniDollar) sdk.Error {
+	return linotypes.NewError(
+		linotypes.CodeInvalidPriceFeed, fmt.Sprintf("invalid price: %s", price))
+}
+
+// ErrPriceFeedRateLimited -
+func ErrPriceFeedRateLimited() sdk.Error {
+	return linotypes.NewError(
+		linotypes.CodePriceFeedRateLimited, fmt.Sprintf(""))
+}

@@ -27,8 +27,9 @@ func NewReputationManager(storeKey sdk.StoreKey, holder param.ParamHolder) Reput
 func (rep ReputationManager) getHandlerV2(ctx sdk.Context) repv2.Reputation {
 	store := ctx.KVStore(rep.storeKey)
 	repStore := repv2.NewReputationStore(store, repv2.DefaultInitialReputation)
+	param := rep.paramHolder.GetReputationParam(ctx)
 	handler := repv2.NewReputation(
-		repStore, 200, 50,
+		repStore, param.BestContentIndexN, param.UserMaxN,
 		repv2.DefaultRoundDurationSeconds,
 		repv2.DefaultSampleWindowSize,
 		repv2.DefaultDecayFactor)

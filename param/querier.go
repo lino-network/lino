@@ -166,10 +166,7 @@ func queryPostParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.Re
 }
 
 func queryReputationParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	repParam, err := ph.GetReputationParam(ctx)
-	if err != nil {
-		return nil, err
-	}
+	repParam := ph.GetReputationParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(repParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()

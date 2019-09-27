@@ -2,23 +2,26 @@ package manager
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/lino-network/lino/testsuites"
 	"github.com/lino-network/lino/types"
 )
 
 type testnetPriceManagerTestSuite struct {
-	suite.Suite
+	testsuites.CtxTestSuite
 	price TestnetPriceManager
 }
 
 func TestTestnetPriceManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(testnetPriceManagerTestSuite))
+	suite.Run(t, &testnetPriceManagerTestSuite{})
 }
 
 func (suite *testnetPriceManagerTestSuite) SetupTest() {
 	suite.price = TestnetPriceManager{}
+	suite.SetupCtx(0, time.Unix(0, 0))
 }
 
 func (suite *testnetPriceManagerTestSuite) TestCoinToMiniDollar() {
@@ -60,7 +63,9 @@ func (suite *testnetPriceManagerTestSuite) TestCoinToMiniDollar() {
 	}
 
 	for _, tc := range testCases {
-		suite.Equal(tc.expected, suite.price.CoinToMiniDollar(tc.coin), "%s", tc.testName)
+		rst, err := suite.price.CoinToMiniDollar(suite.Ctx, tc.coin)
+		suite.Nil(err)
+		suite.Equal(tc.expected, rst, "%s", tc.testName)
 	}
 }
 
@@ -122,7 +127,8 @@ func (suite *testnetPriceManagerTestSuite) TestMiniDollarToCoin() {
 	}
 
 	for _, tc := range testCases {
-		bought, used := suite.price.MiniDollarToCoin(tc.mini)
+		bought, used, err := suite.price.MiniDollarToCoin(suite.Ctx, tc.mini)
+		suite.Nil(err)
 		suite.Equal(tc.expectedBought, bought, "%s", tc.testName)
 		suite.Equal(tc.expectedUsed, used, "%s", tc.testName)
 	}

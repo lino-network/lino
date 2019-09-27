@@ -3,15 +3,16 @@ package param
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/lino-network/lino/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/log"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/lino-network/lino/types"
 )
 
 var (
@@ -305,9 +306,19 @@ func TestInitParam(t *testing.T) {
 		PostIntervalSec:           int64(600),
 		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
+	repParam := ReputationParam{
+		BestContentIndexN: 200,
+		UserMaxN:          50,
+	}
+	priceParam := PriceParam{
+		UpdateEvery:   1 * time.Hour,
+		FeedEvery:     10 * time.Minute,
+		HistoryMaxLen: 71,
+	}
+
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		developerParam, validatorParam, voteParam,
-		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
+		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
 
 func TestInitParamFromConfig(t *testing.T) {
@@ -403,7 +414,13 @@ func TestInitParamFromConfig(t *testing.T) {
 		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 	}
 	repParam := ReputationParam{
-		BestContentIndexN: 10,
+		BestContentIndexN: 200,
+		UserMaxN:          40,
+	}
+	priceParam := PriceParam{
+		UpdateEvery:   1 * time.Hour,
+		FeedEvery:     10 * time.Minute,
+		HistoryMaxLen: 123,
 	}
 
 	err := ph.InitParamFromConfig(
@@ -418,12 +435,13 @@ func TestInitParamFromConfig(t *testing.T) {
 		bandwidthParam,
 		accountParam,
 		repParam,
+		priceParam,
 	)
 	assert.Nil(t, err)
 
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
 		developerParam, validatorParam, voteParam,
-		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam)
+		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
@@ -432,7 +450,10 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
 	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
-	expectPostParam PostParam) {
+	expectPostParam PostParam,
+	expectedRepParam ReputationParam,
+	expectedPriceParam PriceParam,
+) {
 	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalAllocationParam, *globalAllocationParam)
@@ -471,6 +492,12 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	postParam, err := ph.GetPostParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectPostParam, *postParam)
+
+	repParam := ph.GetReputationParam(ctx)
+	assert.Equal(t, expectedRepParam, *repParam)
+
+	priceParam := ph.GetPriceParam(ctx)
+	assert.Equal(t, expectedPriceParam, *priceParam)
 }
 
 func TestUpdateGlobalGrowthRate(t *testing.T) {

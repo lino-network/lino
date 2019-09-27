@@ -116,7 +116,7 @@ func TestAddFrictionAndRegisterContentRewardEvent(t *testing.T) {
 			t.Errorf("%s: diff consumption reward pool, got %v, want zero",
 				tc.testName, consumptionMeta.ConsumptionRewardPool)
 		}
-		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectInWindow.Int) {
+		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectInWindow) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectInWindow)
 		}
@@ -219,7 +219,7 @@ func TestGetRewardAndPopFromWindow(t *testing.T) {
 				consumptionMeta.ConsumptionRewardPool, tc.expectConsumptionRewardPool)
 			return
 		}
-		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectConsumptionWindow.Int) {
+		if !consumptionMeta.ConsumptionWindow.Equal(tc.expectConsumptionWindow) {
 			t.Errorf("%s: diff consumption window, got %v, want %v", tc.testName,
 				consumptionMeta.ConsumptionWindow, tc.expectConsumptionWindow)
 			return

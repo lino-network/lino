@@ -216,12 +216,15 @@ func (dm DeveloperManager) MintIDA(ctx sdk.Context, appname linotypes.AccountKey
 // 1. minus account saving.
 // 2. sending coin to reserve pool.
 func (dm DeveloperManager) exchangeMiniDollar(ctx sdk.Context, appname linotypes.AccountKey, amount linotypes.Coin) (linotypes.MiniDollar, sdk.Error) {
-	bought := dm.price.CoinToMiniDollar(amount)
+	bought, err := dm.price.CoinToMiniDollar(ctx, amount)
+	if err != nil {
+		return linotypes.NewMiniDollar(0), err
+	}
 	if !bought.IsPositive() {
 		return linotypes.NewMiniDollar(0), types.ErrExchangeMiniDollarZeroAmount()
 	}
 	// exchange
-	err := dm.acc.MinusCoinFromUsername(ctx, appname, amount)
+	err = dm.acc.MinusCoinFromUsername(ctx, appname, amount)
 	if err != nil {
 		return linotypes.NewMiniDollar(0), err
 	}
@@ -292,7 +295,7 @@ func (dm DeveloperManager) appIDAMove(ctx sdk.Context, app, from, to linotypes.A
 	if fromBank.Unauthed {
 		return types.ErrIDAUnauthed()
 	}
-	if fromBank.Balance.LT(amount.Int) {
+	if fromBank.Balance.LT(amount) {
 		return types.ErrNotEnoughIDA()
 	}
 	fromBank.Balance = fromBank.Balance.Minus(amount)
@@ -320,10 +323,13 @@ func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountK
 	if bank.Unauthed {
 		return linotypes.NewCoinFromInt64(0), types.ErrIDAUnauthed()
 	}
-	if bank.Balance.LT(amount.Int) {
+	if bank.Balance.LT(amount) {
 		return linotypes.NewCoinFromInt64(0), types.ErrNotEnoughIDA()
 	}
-	bought, used := dm.price.MiniDollarToCoin(amount)
+	bought, used, err := dm.price.MiniDollarToCoin(ctx, amount)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
 	if !bought.IsPositive() {
 		return linotypes.NewCoinFromInt64(0), types.ErrBurnZeroIDA()
 	}

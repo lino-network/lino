@@ -269,6 +269,12 @@ func TestGenesisFromConfig(t *testing.T) {
 		},
 		param.ReputationParam{
 			BestContentIndexN: 10,
+			UserMaxN:          50,
+		},
+		param.PriceParam{
+			UpdateEvery:   1 * time.Hour,
+			FeedEvery:     10 * time.Minute,
+			HistoryMaxLen: 71,
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{

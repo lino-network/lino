@@ -354,6 +354,9 @@ const (
 	CodeFedPriceNotFound     sdk.CodeType = 1400
 	CodeCurrentPriceNotFound sdk.CodeType = 1401
 	CodeNoValidatorSet       sdk.CodeType = 1402
+	CodeNotAValidator        sdk.CodeType = 1403
+	CodeInvalidPriceFeed     sdk.CodeType = 1404
+	CodePriceFeedRateLimited sdk.CodeType = 1405
 
 	// testing dummy error 100000
 	CodeTestDummyError sdk.CodeType = 100000

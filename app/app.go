@@ -256,7 +256,9 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			genesisState.GenesisParam.CoinDayParam,
 			genesisState.GenesisParam.BandwidthParam,
 			genesisState.GenesisParam.AccountParam,
-			genesisState.GenesisParam.ReputationParam); err != nil {
+			genesisState.GenesisParam.ReputationParam,
+			genesisState.GenesisParam.PriceParam,
+		); err != nil {
 			panic(err)
 		}
 	} else {
@@ -279,6 +281,9 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 
 	// set up init state, like empty lists in state.
 	if err := lb.developerManager.InitGenesis(ctx, genesisState.ReservePool); err != nil {
+		panic(err)
+	}
+	if err := lb.priceManager.InitGenesis(ctx, genesisState.InitCoinPrice); err != nil {
 		panic(err)
 	}
 	if err := lb.infraManager.InitGenesis(ctx); err != nil {

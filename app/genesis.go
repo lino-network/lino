@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,11 +23,11 @@ type GenesisState struct {
 	LoadPrevStates bool                      `json:"load_prev_states"`
 	Accounts       []GenesisAccount          `json:"accounts"`
 	ReservePool    types.Coin                `json:"reserve_pool"`
+	InitCoinPrice  types.MiniDollar          `json:"init_coin_price"`
 	Developers     []GenesisAppDeveloper     `json:"developers"`
 	Infra          []GenesisInfraProvider    `json:"infra"`
 	GenesisParam   GenesisParam              `json:"genesis_param"`
 	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
-	Reputation     []byte                    `json:"reputation"`
 }
 
 // genesis account will get coin to the address and register user
@@ -68,6 +69,7 @@ type GenesisParam struct {
 	param.AccountParam
 	param.PostParam
 	param.ReputationParam
+	param.PriceParam
 }
 
 // LinoBlockchainGenTx - init genesis account
@@ -118,6 +120,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		LoadPrevStates: false,
 		Accounts:       []GenesisAccount{},
 		ReservePool:    types.NewCoinFromInt64(0),
+		InitCoinPrice:  types.NewMiniDollar(1200),
 		Developers:     []GenesisAppDeveloper{},
 		Infra:          []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
@@ -207,6 +210,11 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			},
 			param.ReputationParam{
 				BestContentIndexN: 10,
+			},
+			param.PriceParam{
+				UpdateEvery:   1 * time.Hour,
+				FeedEvery:     10 * time.Minute,
+				HistoryMaxLen: 71,
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

@@ -4,19 +4,13 @@ import (
 	"sort"
 	"time"
 
-	// codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/price/model"
 	"github.com/lino-network/lino/x/price/types"
 	// "github.com/lino-network/lino/x/validator"
-)
-
-const (
-	OneHour = 1 * time.Hour
-	// Make it a param.
-	WeightPeriod = 71 // price is median from last 71 hours.
 )
 
 type FakeValidator interface {
@@ -32,8 +26,9 @@ type WeightedMedianPriceManager struct {
 	store model.PriceStorage
 
 	// deps
-	val  FakeValidator
-	vote FakeVote
+	param param.ParamHolder
+	val   FakeValidator
+	vote  FakeVote
 }
 
 type weightedValidator struct {
@@ -46,9 +41,9 @@ type weightedValidator struct {
 func (wm WeightedMedianPriceManager) InitGenesis(ctx sdk.Context, initPrice linotypes.MiniDollar) sdk.Error {
 	priceTime := model.TimePrice{
 		Price:    initPrice,
-		UpdateAt: ctx.BlockTime(),
+		UpdateAt: ctx.BlockTime().Unix(),
 	}
-	wm.store.SetCurrentPrice(ctx, priceTime)
+	wm.store.SetCurrentPrice(ctx, &priceTime)
 	wm.store.SetPriceHistory(ctx, []model.TimePrice{priceTime})
 	return nil
 }
@@ -60,14 +55,15 @@ func (wm WeightedMedianPriceManager) InitGenesis(ctx sdk.Context, initPrice lino
 // 3. remove invalid.
 // 4. get weighted median if at least one validator.
 // 5. otherwise, use the previsous price.
-func (wm WeightedMedianPriceManager) UpdateHourlyPrice(ctx sdk.Context) sdk.Error {
+func (wm WeightedMedianPriceManager) UpdatePrice(ctx sdk.Context) sdk.Error {
 	defer wm.store.SetLastValidators(ctx, wm.val.GetValidators())
 	wvals := wm.getWeightedValidators(ctx)
 	if len(wvals) == 0 {
 		return types.ErrNoValidator()
 	}
-	blocktime := ctx.BlockTime()
+	blocktime := ctx.BlockTime().Unix()
 	wvals = wm.filterAndSlash(ctx, wvals)
+	var price linotypes.MiniDollar
 	if len(wvals) == 0 {
 		// no valid price this hour, use the same price from last hour.
 		curr, err := wm.store.GetCurrentPrice(ctx)
@@ -76,19 +72,68 @@ func (wm WeightedMedianPriceManager) UpdateHourlyPrice(ctx sdk.Context) sdk.Erro
 			// return error, so panic when err.
 			panic(err)
 		}
-		wm.updateNewPrice(ctx, model.TimePrice{
-			Price:    curr.Price,
-			UpdateAt: blocktime,
-		})
+		price = curr.Price
 	} else {
-		median := wm.calcWeightedMedian(wvals)
-		wm.updateNewPrice(ctx, model.TimePrice{
-			Price:    median,
-			UpdateAt: blocktime,
-		})
+		price = wm.calcWeightedMedian(wvals)
+	}
+	wm.updateNewPrice(ctx, model.TimePrice{
+		Price:    price,
+		UpdateAt: blocktime,
+	})
+	return nil
+}
+
+// FeedPrice - validator update price.
+// validation:
+// 1. price is positive.
+// 2. feeder is a validator.
+// 3. can only update after FeedEvery.
+func (wm WeightedMedianPriceManager) FeedPrice(ctx sdk.Context, validator linotypes.AccountKey, price linotypes.MiniDollar) sdk.Error {
+	if !price.IsPositive() {
+		return types.ErrInvalidPriceFeed(price)
+	}
+	if !wm.isValidator(ctx, validator) {
+		return types.ErrNotAValidator(validator)
+	}
+	blocktime := ctx.BlockTime()
+	last, err := wm.store.GetFedPrice(ctx, validator)
+	feedEvery := wm.param.GetPriceParam(ctx).FeedEvery
+	if err == nil && blocktime.Sub(time.Unix(last.UpdateAt, 0)) < feedEvery {
+		return types.ErrPriceFeedRateLimited()
 	}
 
+	wm.store.SetFedPrice(ctx, &model.FedPrice{
+		Validator: validator,
+		Price:     price,
+	})
 	return nil
+}
+
+func (wm WeightedMedianPriceManager) CoinToMiniDollar(ctx sdk.Context, coin linotypes.Coin) (linotypes.MiniDollar, sdk.Error) {
+	curr, err := wm.store.GetCurrentPrice(ctx)
+	if err != nil {
+		return linotypes.NewMiniDollar(0), err
+	}
+	return coinToMiniDollar(coin, curr.Price), nil
+}
+
+func (wm WeightedMedianPriceManager) MiniDollarToCoin(ctx sdk.Context, dollar linotypes.MiniDollar) (linotypes.Coin, linotypes.MiniDollar, sdk.Error) {
+	curr, err := wm.store.GetCurrentPrice(ctx)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), linotypes.NewMiniDollar(0), err
+	}
+	bought, used := miniDollarToCoin(dollar, curr.Price)
+	return bought, used, nil
+}
+
+func (wm WeightedMedianPriceManager) isValidator(ctx sdk.Context, user linotypes.AccountKey) bool {
+	validators := wm.val.GetValidators()
+	for _, val := range validators {
+		if val == user {
+			return true
+		}
+	}
+	return false
 }
 
 // updateNewPrice update history and current price.
@@ -99,8 +144,9 @@ func (wm WeightedMedianPriceManager) UpdateHourlyPrice(ctx sdk.Context) sdk.Erro
 // 4. set the median as the current price
 func (wm WeightedMedianPriceManager) updateNewPrice(ctx sdk.Context, timePrice model.TimePrice) {
 	history := wm.store.GetPriceHistory(ctx)
-	if len(history)+1 > WeightPeriod {
-		history = history[len(history)+1-WeightPeriod:]
+	historyMaxLen := wm.param.GetPriceParam(ctx).HistoryMaxLen
+	if len(history)+1 > historyMaxLen {
+		history = history[len(history)+1-historyMaxLen:]
 	}
 	history = append(history, timePrice)
 	wm.store.SetPriceHistory(ctx, history)
@@ -110,14 +156,14 @@ func (wm WeightedMedianPriceManager) updateNewPrice(ctx sdk.Context, timePrice m
 		left := history[i]
 		right := history[j]
 		if left.Price.Equal(right.Price) {
-			return left.UpdateAt.Unix() < right.UpdateAt.Unix()
+			return left.UpdateAt < right.UpdateAt
 		}
 		return left.Price.LT(right.Price)
 	})
 	// when the length is an even number, use lower, indead of (mid + next) / 2.
 	mid := len(history) / 2
 	current := history[mid]
-	wm.store.SetCurrentPrice(ctx, current)
+	wm.store.SetCurrentPrice(ctx, &current)
 }
 
 // getWeightedValidators return weighted validators, sorted by (weight, namestr), increasingly.
@@ -143,7 +189,8 @@ func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []wei
 	for i := range wvals {
 		valname := wvals[i].validator
 		fedPrice, err := wm.store.GetFedPrice(ctx, valname)
-		if err != nil || blocktime.Sub(fedPrice.FedTime) > OneHour {
+		updateEvery := wm.param.GetPriceParam(ctx).UpdateEvery
+		if err != nil || blocktime.Sub(time.Unix(fedPrice.UpdateAt, 0)) > updateEvery {
 			// unless the validator is not in the last set, slash.
 			if lastValidatorSet[valname] {
 				wm.val.Slash(valname)

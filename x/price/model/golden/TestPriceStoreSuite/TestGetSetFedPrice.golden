@@ -7,7 +7,7 @@
       "value": {
         "validator": "user1",
         "price": "123",
-        "fed_time": "1000"
+        "update_at": "1000"
       }
     }
   },
@@ -19,7 +19,7 @@
       "value": {
         "validator": "user2",
         "price": "456",
-        "fed_time": "2000"
+        "update_at": "2000"
       }
     }
   }

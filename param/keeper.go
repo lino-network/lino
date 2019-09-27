@@ -17,7 +17,8 @@ type ParamKeeper interface {
 	GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error)
 	GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.Error)
 	GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error)
-	GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk.Error)
+	GetPriceParam(ctx sdk.Context) *PriceParam
+	GetReputationParam(ctx sdk.Context) *ReputationParam
 	UpdateGlobalGrowthRate(ctx sdk.Context, growthRate sdk.Dec) sdk.Error
 }
 

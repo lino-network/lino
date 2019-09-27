@@ -164,6 +164,22 @@ func (_m *ParamKeeper) GetPostParam(ctx types.Context) (*param.PostParam, types.
 	return r0, r1
 }
 
+// GetPriceParam provides a mock function with given fields: ctx
+func (_m *ParamKeeper) GetPriceParam(ctx types.Context) *param.PriceParam {
+	ret := _m.Called(ctx)
+
+	var r0 *param.PriceParam
+	if rf, ok := ret.Get(0).(func(types.Context) *param.PriceParam); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*param.PriceParam)
+		}
+	}
+
+	return r0
+}
+
 // GetProposalParam provides a mock function with given fields: ctx
 func (_m *ParamKeeper) GetProposalParam(ctx types.Context) (*param.ProposalParam, types.Error) {
 	ret := _m.Called(ctx)
@@ -190,7 +206,7 @@ func (_m *ParamKeeper) GetProposalParam(ctx types.Context) (*param.ProposalParam
 }
 
 // GetReputationParam provides a mock function with given fields: ctx
-func (_m *ParamKeeper) GetReputationParam(ctx types.Context) (*param.ReputationParam, types.Error) {
+func (_m *ParamKeeper) GetReputationParam(ctx types.Context) *param.ReputationParam {
 	ret := _m.Called(ctx)
 
 	var r0 *param.ReputationParam
@@ -202,16 +218,7 @@ func (_m *ParamKeeper) GetReputationParam(ctx types.Context) (*param.ReputationP
 		}
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetValidatorParam provides a mock function with given fields: ctx
