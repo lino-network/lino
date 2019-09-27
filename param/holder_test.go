@@ -311,6 +311,7 @@ func TestInitParam(t *testing.T) {
 		UserMaxN:          50,
 	}
 	priceParam := PriceParam{
+		TestnetMode:   true,
 		UpdateEvery:   1 * time.Hour,
 		FeedEvery:     10 * time.Minute,
 		HistoryMaxLen: 71,

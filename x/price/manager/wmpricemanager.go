@@ -110,20 +110,31 @@ func (wm WeightedMedianPriceManager) FeedPrice(ctx sdk.Context, validator linoty
 }
 
 func (wm WeightedMedianPriceManager) CoinToMiniDollar(ctx sdk.Context, coin linotypes.Coin) (linotypes.MiniDollar, sdk.Error) {
+	price, err := wm.currPrice(ctx)
+	if err != nil {
+		return linotypes.NewMiniDollar(0), err
+	}
+	return coinToMiniDollar(coin, price), nil
+}
+
+func (wm WeightedMedianPriceManager) MiniDollarToCoin(ctx sdk.Context, dollar linotypes.MiniDollar) (linotypes.Coin, linotypes.MiniDollar, sdk.Error) {
+	price, err := wm.currPrice(ctx)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), linotypes.NewMiniDollar(0), err
+	}
+	bought, used := miniDollarToCoin(dollar, price)
+	return bought, used, nil
+}
+
+func (wm WeightedMedianPriceManager) currPrice(ctx sdk.Context) (linotypes.MiniDollar, sdk.Error) {
+	if wm.param.GetPriceParam(ctx).TestnetMode {
+		return linotypes.TestnetPrice, nil
+	}
 	curr, err := wm.store.GetCurrentPrice(ctx)
 	if err != nil {
 		return linotypes.NewMiniDollar(0), err
 	}
-	return coinToMiniDollar(coin, curr.Price), nil
-}
-
-func (wm WeightedMedianPriceManager) MiniDollarToCoin(ctx sdk.Context, dollar linotypes.MiniDollar) (linotypes.Coin, linotypes.MiniDollar, sdk.Error) {
-	curr, err := wm.store.GetCurrentPrice(ctx)
-	if err != nil {
-		return linotypes.NewCoinFromInt64(0), linotypes.NewMiniDollar(0), err
-	}
-	bought, used := miniDollarToCoin(dollar, curr.Price)
-	return bought, used, nil
+	return curr.Price, nil
 }
 
 func (wm WeightedMedianPriceManager) isValidator(ctx sdk.Context, user linotypes.AccountKey) bool {
@@ -193,7 +204,9 @@ func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []wei
 		if err != nil || blocktime.Sub(time.Unix(fedPrice.UpdateAt, 0)) > updateEvery {
 			// unless the validator is not in the last set, slash.
 			if lastValidatorSet[valname] {
-				wm.val.Slash(valname)
+				if !wm.param.GetPriceParam(ctx).TestnetMode {
+					wm.val.Slash(valname)
+				}
 			}
 		} else {
 			wvals[i].price = fedPrice.Price
