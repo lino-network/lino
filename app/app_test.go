@@ -413,7 +413,9 @@ func TestDistributeInflationToValidator(t *testing.T) {
 			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
 		}
 
-		lb.valManager.DistributeInflationToValidator(ctx)
+		if err := lb.valManager.DistributeInflationToValidator(ctx); err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
 		inflationPool, err := globalStore.GetInflationPool(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)

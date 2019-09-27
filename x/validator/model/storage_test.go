@@ -147,7 +147,7 @@ func TestElectionVoteList(t *testing.T) {
 			user:     types.AccountKey("user"),
 			lst: ElectionVoteList{
 				ElectionVotes: []ElectionVote{
-					ElectionVote{
+					{
 						ValidatorName: types.AccountKey("test"),
 						Vote:          types.NewCoinFromInt64(100),
 					},

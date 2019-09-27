@@ -19,8 +19,7 @@ import (
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/global"
 	globalModel "github.com/lino-network/lino/x/global/model"
-	post "github.com/lino-network/lino/x/post"
-	val "github.com/lino-network/lino/x/validator"
+	"github.com/lino-network/lino/x/post"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -131,49 +130,39 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	assert.Equal(t, expectBalance.Amount.Int64(), saving.Amount.Int64())
 }
 
-// CheckValidatorDeposit - check validator deposit
-func CheckValidatorDeposit(t *testing.T, accountName string, lb *app.LinoBlockchain, expectDeposit types.Coin) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
-	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
-	deposit, err := valManager.GetValidatorDeposit(ctx, types.AccountKey(accountName))
-	assert.Nil(t, err)
-	assert.Equal(t, expectDeposit, deposit)
-}
-
 // CheckOncallValidatorList - check if account is in oncall validator set or not
-func CheckOncallValidatorList(
-	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
-	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
-	lst, err := valManager.GetValidatorList(ctx)
-	assert.Nil(t, err)
-	index := types.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
-	if isInOnCallValidatorList {
-		assert.True(t, index > -1)
-	} else {
-		assert.True(t, index == -1)
-	}
+// func CheckOncallValidatorList(
+// 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
+// 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+// 	ph := param.NewParamHolder(lb.CapKeyParamStore)
+// 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
+// 	lst, err := valManager.GetValidatorList(ctx)
+// 	assert.Nil(t, err)
+// 	index := types.FindAccountInList(types.AccountKey(accountName), lst.OncallValidators)
+// 	if isInOnCallValidatorList {
+// 		assert.True(t, index > -1)
+// 	} else {
+// 		assert.True(t, index == -1)
+// 	}
 
-}
+// }
 
-// CheckAllValidatorList - check if account is in all validator set or not
-func CheckAllValidatorList(
-	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
-	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
-	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
-	lst, err := valManager.GetValidatorList(ctx)
+// // CheckAllValidatorList - check if account is in all validator set or not
+// func CheckAllValidatorList(
+// 	t *testing.T, accountName string, isInAllValidatorList bool, lb *app.LinoBlockchain) {
+// 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+// 	ph := param.NewParamHolder(lb.CapKeyParamStore)
+// 	valManager := val.NewValidatorManager(lb.CapKeyValStore, ph)
+// 	lst, err := valManager.GetValidatorList(ctx)
 
-	assert.Nil(t, err)
-	index := types.FindAccountInList(types.AccountKey(accountName), lst.AllValidators)
-	if isInAllValidatorList {
-		assert.True(t, index > -1)
-	} else {
-		assert.True(t, index == -1)
-	}
-}
+// 	assert.Nil(t, err)
+// 	index := types.FindAccountInList(types.AccountKey(accountName), lst.AllValidators)
+// 	if isInAllValidatorList {
+// 		assert.True(t, index > -1)
+// 	} else {
+// 		assert.True(t, index == -1)
+// 	}
+// }
 
 // CheckAppBandwidthInfo
 func CheckAppBandwidthInfo(

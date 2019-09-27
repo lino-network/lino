@@ -8,14 +8,14 @@ import (
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	val "github.com/lino-network/lino/x/validator"
+	// val "github.com/lino-network/lino/x/validator"
 	types "github.com/lino-network/lino/x/vote/types"
 )
 
 func TestVoterRevoke(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
-	newValidatorPriv := secp256k1.GenPrivKey()
+	// newValidatorPriv := secp256k1.GenPrivKey()
 
 	delegator1TransactionPriv := secp256k1.GenPrivKey()
 	delegator2TransactionPriv := secp256k1.GenPrivKey()
@@ -37,9 +37,9 @@ func TestVoterRevoke(t *testing.T) {
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
 
-	valDepositMsg := val.NewValidatorDepositMsg(
-		newAccountName, linotypes.LNO("150000"), newValidatorPriv.PubKey(), "")
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+	// valDepositMsg := val.NewValidatorDepositMsg(
+	// 	newAccountName, linotypes.LNO("150000"), newValidatorPriv.PubKey(), "")
+	// test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// // let delegator delegate coins to voter
 	// delegateMsg := types.NewDelegateMsg(delegator1Name, newAccountName, linotypes.LNO("210000"))

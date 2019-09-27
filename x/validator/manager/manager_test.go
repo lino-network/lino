@@ -49,6 +49,7 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 	suite.acc = &acc.AccountKeeper{}
 
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("user1")).Return(linotypes.NewCoinFromInt64(300), nil).Maybe()
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("val")).Return(linotypes.NewCoinFromInt64(300), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("jail1")).Return(linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("jail2")).Return(linotypes.NewCoinFromInt64(200), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("abs")).Return(linotypes.NewCoinFromInt64(200), nil).Maybe()
@@ -1598,42 +1599,42 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val1"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val2"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val3"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
 				},
 			},
 			expectedUpdates: []*model.ElectionVote{
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val1"),
 					Vote:          linotypes.NewCoinFromInt64(-100),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val2"),
 					Vote:          linotypes.NewCoinFromInt64(-100),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val3"),
 					Vote:          linotypes.NewCoinFromInt64(-100),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val4"),
 					Vote:          linotypes.NewCoinFromInt64(100),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val5"),
 					Vote:          linotypes.NewCoinFromInt64(100),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val6"),
 					Vote:          linotypes.NewCoinFromInt64(100),
 				},
@@ -1647,7 +1648,7 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			},
 			prevList: model.ElectionVoteList{},
 			expectedUpdates: []*model.ElectionVote{
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val1"),
 					Vote:          linotypes.NewCoinFromInt64(300),
 				},
@@ -1662,18 +1663,18 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val1"),
 						Vote:          linotypes.NewCoinFromInt64(300),
 					},
 				},
 			},
 			expectedUpdates: []*model.ElectionVote{
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val1"),
 					Vote:          linotypes.NewCoinFromInt64(-150),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val2"),
 					Vote:          linotypes.NewCoinFromInt64(150),
 				},
@@ -1688,22 +1689,22 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val1"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val2"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
 				},
 			},
 			expectedUpdates: []*model.ElectionVote{
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val1"),
 					Vote:          linotypes.NewCoinFromInt64(50),
 				},
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val2"),
 					Vote:          linotypes.NewCoinFromInt64(50),
 				},
@@ -1717,14 +1718,14 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val1"),
 						Vote:          linotypes.NewCoinFromInt64(300),
 					},
 				},
 			},
 			expectedUpdates: []*model.ElectionVote{
-				&model.ElectionVote{
+				{
 					ValidatorName: linotypes.AccountKey("val1"),
 					Vote:          linotypes.NewCoinFromInt64(0),
 				},
@@ -1757,7 +1758,7 @@ func (suite *ValidatorManagerTestSuite) TestSetNewElectionVoteList() {
 			},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val6"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -1765,11 +1766,11 @@ func (suite *ValidatorManagerTestSuite) TestSetNewElectionVoteList() {
 			},
 			expectedList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val1"),
 						Vote:          linotypes.NewCoinFromInt64(150),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val2"),
 						Vote:          linotypes.NewCoinFromInt64(150),
 					},
@@ -1782,7 +1783,7 @@ func (suite *ValidatorManagerTestSuite) TestSetNewElectionVoteList() {
 			votedValidators: []linotypes.AccountKey{},
 			prevList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val6"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -1790,7 +1791,7 @@ func (suite *ValidatorManagerTestSuite) TestSetNewElectionVoteList() {
 			},
 			expectedList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("val6"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -2332,15 +2333,15 @@ func (suite *ValidatorManagerTestSuite) TestVoteValidator() {
 			},
 			expectElectionList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test1"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test2"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test3"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -2374,15 +2375,15 @@ func (suite *ValidatorManagerTestSuite) TestVoteValidator() {
 			},
 			expectElectionList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test1"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test2"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test3"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -2591,7 +2592,7 @@ func (suite *ValidatorManagerTestSuite) TestFireIncompetentValidator() {
 				LowestStandby:      linotypes.AccountKey(""),
 			},
 			byzantineValidators: []abci.Evidence{
-				abci.Evidence{
+				{
 					Validator: abci.Validator{
 						Address: byzKey.Address(),
 					},
@@ -2606,6 +2607,7 @@ func (suite *ValidatorManagerTestSuite) TestFireIncompetentValidator() {
 		err = suite.vm.FireIncompetentValidator(suite.Ctx, tc.byzantineValidators)
 		suite.NoError(err)
 		actualList, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		suite.NoError(err)
 		suite.Equal(tc.expectedList, *actualList, "%s", tc.testName)
 	}
 }
@@ -2643,15 +2645,15 @@ func (suite *ValidatorManagerTestSuite) TestOnStakeChange() {
 			voter: linotypes.AccountKey("changedVoter"),
 			prevElectionList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test1"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test2"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test3"),
 						Vote:          linotypes.NewCoinFromInt64(100),
 					},
@@ -2659,15 +2661,15 @@ func (suite *ValidatorManagerTestSuite) TestOnStakeChange() {
 			},
 			expectElectionList: model.ElectionVoteList{
 				ElectionVotes: []model.ElectionVote{
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test1"),
 						Vote:          linotypes.NewCoinFromInt64(200),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test2"),
 						Vote:          linotypes.NewCoinFromInt64(200),
 					},
-					model.ElectionVote{
+					{
 						ValidatorName: linotypes.AccountKey("test3"),
 						Vote:          linotypes.NewCoinFromInt64(200),
 					},
@@ -2714,9 +2716,9 @@ func (suite *ValidatorManagerTestSuite) TestRegisterValidator() {
 			testName: "vote validator",
 			link:     "web1",
 			expectList: model.ValidatorList{
-				Candidates:         []linotypes.AccountKey{val},
-				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
-				LowestOncall:       linotypes.AccountKey(""),
+				Oncall:             []linotypes.AccountKey{val},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(300),
+				LowestOncall:       linotypes.AccountKey("val"),
 				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
 				LowestStandby:      linotypes.AccountKey(""),
 			},
@@ -2729,7 +2731,7 @@ func (suite *ValidatorManagerTestSuite) TestRegisterValidator() {
 				Link:          "web1",
 				PubKey:        valKey,
 				Username:      val,
-				ReceivedVotes: linotypes.NewCoinFromInt64(0),
+				ReceivedVotes: linotypes.NewCoinFromInt64(300),
 			},
 			expectRes: nil,
 		},

@@ -193,7 +193,7 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 	index := int64(0)
 	// give inflation to each validator according it's weight
 	for _, oncall := range lst.Oncall {
-		ratPerOncall := coin.ToDec().Mul(sdk.NewDec(param.OncallInflationWeight)).Quo(sdk.NewDec(int64(totalWeight) - index))
+		ratPerOncall := coin.ToDec().Mul(sdk.NewDec(param.OncallInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
 		err := vm.acc.AddCoinToUsername(ctx, oncall, linotypes.DecToCoin(ratPerOncall))
 		if err != nil {
 			return err
@@ -203,7 +203,7 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 	}
 
 	for _, standby := range lst.Standby {
-		ratPerStandby := coin.ToDec().Mul(sdk.NewDec(param.StandbyInflationWeight)).Quo(sdk.NewDec(int64(totalWeight) - index))
+		ratPerStandby := coin.ToDec().Mul(sdk.NewDec(param.StandbyInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
 		err := vm.acc.AddCoinToUsername(ctx, standby, linotypes.DecToCoin(ratPerStandby))
 		if err != nil {
 			return err
@@ -257,7 +257,7 @@ func (vm ValidatorManager) getElectionVoteListUpdates(ctx sdk.Context, username 
 	}
 	voteStakeDec := totalStake.ToDec().Quo(sdk.NewDec(int64(len(votedValidators))))
 
-	// add all old votes into res set first and defualt all votes are negative (not in the new list)
+	// add all old votes into res set first and default all votes are negative (not in the new list)
 	for _, oldVote := range prevList.ElectionVotes {
 		changeDec := oldVote.Vote.ToDec().Mul(sdk.NewDec(-1))
 		res = append(res, &model.ElectionVote{
@@ -344,7 +344,7 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 
 func (vm ValidatorManager) setNewElectionVoteList(ctx sdk.Context, username linotypes.AccountKey,
 	votedValidators []linotypes.AccountKey) sdk.Error {
-	if len(votedValidators) <= 0 {
+	if len(votedValidators) == 0 {
 		return nil
 	}
 	lst := &model.ElectionVoteList{}
@@ -1147,7 +1147,7 @@ func (vm ValidatorManager) getHighestVotesAndValidator(ctx sdk.Context,
 	highestValdator := linotypes.AccountKey("")
 	highestValdatorVotes := linotypes.NewCoinFromInt64(0)
 
-	for i, _ := range lst {
+	for i := range lst {
 		validator, err := vm.storage.GetValidator(ctx, lst[i])
 		if err != nil {
 			return highestValdator, linotypes.NewCoinFromInt64(0), err
@@ -1165,7 +1165,7 @@ func (vm ValidatorManager) getLowestVotesAndValidator(ctx sdk.Context,
 	lowestValdator := linotypes.AccountKey("")
 	lowestValdatorVotes := linotypes.NewCoinFromInt64(math.MaxInt64)
 
-	for i, _ := range lst {
+	for i := range lst {
 		validator, err := vm.storage.GetValidator(ctx, lst[i])
 		if err != nil {
 			return lowestValdator, linotypes.NewCoinFromInt64(0), err

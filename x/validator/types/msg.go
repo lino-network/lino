@@ -157,7 +157,7 @@ func (msg VoteValidatorMsg) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.VotedValidators) > types.MaxVotedValidators ||
-		len(msg.VotedValidators) <= 0 {
+		len(msg.VotedValidators) == 0 {
 		return ErrInvalidVotedValidators()
 	}
 
