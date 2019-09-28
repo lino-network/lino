@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	userA = types.AccountKey("userA")
-	userB = types.AccountKey("userB")
+	userA = types.AccountKey("usera")
+	userB = types.AccountKey("userb")
 
 	memo1       = "This is a memo!"
 	invalidMemo = "Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! Memo is too long!!! "
@@ -92,18 +92,15 @@ func TestRecoverMsg(t *testing.T) {
 	}{
 		"normal case": {
 			msg: NewRecoverMsg("test", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
+				secp256k1.GenPrivKey().PubKey()),
 			wantCode: sdk.CodeOK,
 		},
 		"invalid recover - Username is too short": {
-			msg: NewRecoverMsg("te", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
+			msg:      NewRecoverMsg("te", secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"invalid recover - Username is too long": {
-			msg: NewRecoverMsg("testtesttesttesttesttest", secp256k1.GenPrivKey().PubKey(),
+			msg: NewRecoverMsg("testtesttesttesttesttest",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
@@ -136,6 +133,13 @@ func TestUpdateAccountMsg(t *testing.T) {
 				JSONMeta: "{'test':'test'}",
 			},
 			wantCode: sdk.CodeOK,
+		},
+		"invalid username": {
+			msg: UpdateAccountMsg{
+				Username: "us",
+				JSONMeta: "{'test':'test'}",
+			},
+			wantCode: types.CodeInvalidUsername,
 		},
 		"normal case - update JSON Meta too long": {
 			msg: UpdateAccountMsg{
@@ -202,17 +206,11 @@ func TestRegisterUsername(t *testing.T) {
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
-		"referrer invalid": {
-			msg: NewRegisterMsg("", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
-			wantCode: types.CodeInvalidUsername,
-		},
 		"register fee invalid": {
-			msg: NewRegisterMsg("", "newuser", "1.", secp256k1.GenPrivKey().PubKey(),
+			msg: NewRegisterMsg("newuser", "newuser", "1.", secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
-			wantCode: types.CodeInvalidUsername,
+			wantCode: types.CodeInvalidCoins,
 		},
 	}
 
@@ -240,11 +238,7 @@ func TestRegisterUsername(t *testing.T) {
 			"referer", register, "1", secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
 		result := msg.ValidateBasic()
-		if result == nil {
-			assert.Equal(t, ErrInvalidUsername("illegal input"), result)
-			return
-		}
-		assert.Equal(t, ErrInvalidUsername("illegal input"), result)
+		assert.Equal(t, ErrInvalidUsername("illegal username"), result, "%s", register)
 	}
 }
 
@@ -259,8 +253,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"recover": {
 			msg: NewRecoverMsg(
-				"userA", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
+				"userA", secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.ResetPermission,
 		},
 		"register msg": {
@@ -290,15 +283,9 @@ func TestGetSignBytes(t *testing.T) {
 		"transfer to user": {
 			msg: NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
 		},
-		"recover msg with public key type Ed25519": {
-			msg: NewRecoverMsg(
-				"userA", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey()),
-		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
-				"userA", secp256k1.GenPrivKey().PubKey(),
+				"userA",
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
 		},
@@ -321,6 +308,7 @@ func TestGetSignBytes(t *testing.T) {
 }
 
 func TestGetSigners(t *testing.T) {
+	privKey := secp256k1.GenPrivKey()
 	cases := map[string]struct {
 		msg           types.Msg
 		expectSigners []types.AccountKey
@@ -329,25 +317,20 @@ func TestGetSigners(t *testing.T) {
 			msg:           NewTransferMsg("test", "test_user", types.LNO("1"), "memo"),
 			expectSigners: []types.AccountKey{"test"},
 		},
-		"recover msg with public key type Ed25519": {
-			msg: NewRecoverMsg(
-				"userA", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey()),
-			expectSigners: []types.AccountKey{"userA"},
+		"transfer to address": {
+			msg:           NewTransferMsg("test", string(secp256k1.GenPrivKey().PubKey().Address()), types.LNO("1"), "memo"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		"transfer from address": {
+			msg:           NewTransferMsg(string(privKey.PubKey().Address()), "test", types.LNO("1"), "memo"),
+			expectSigners: []types.AccountKey{types.AccountKey(privKey.PubKey().Address())},
 		},
 		"recover msg with public key type Secp256k1": {
 			msg: NewRecoverMsg(
-				"userA", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(),
+				"userA",
+				privKey.PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
-			expectSigners: []types.AccountKey{"userA"},
-		},
-		"register msg with public key type Ed25519": {
-			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey()),
-			expectSigners: []types.AccountKey{"referrer"},
+			expectSigners: []types.AccountKey{"userA", types.AccountKey(privKey.PubKey().Address())},
 		},
 		"register msg with public key type Secp256k1": {
 			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),

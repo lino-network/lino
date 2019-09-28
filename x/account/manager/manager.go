@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"time"
@@ -39,7 +40,7 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username lino
 
 // RegisterAccount - register account, deduct fee from referrer address then create a new account
 func (accManager AccountManager) RegisterAccount(
-	ctx sdk.Context, referrerAddr sdk.AccAddress, registerFee linotypes.Coin,
+	ctx sdk.Context, referrer linotypes.AccountKey, registerFee linotypes.Coin,
 	username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
@@ -52,9 +53,14 @@ func (accManager AccountManager) RegisterAccount(
 	if minRegFee.IsGT(registerFee) {
 		return types.ErrRegisterFeeInsufficient()
 	}
-
-	if err := accManager.MinusCoinFromAddress(ctx, referrerAddr, registerFee); err != nil {
-		return err
+	if referrer.IsUsername() {
+		if err := accManager.MinusCoinFromUsername(ctx, referrer, registerFee); err != nil {
+			return err
+		}
+	} else {
+		if err := accManager.MinusCoinFromAddress(ctx, sdk.AccAddress(referrer), registerFee); err != nil {
+			return err
+		}
 	}
 	if err := accManager.CreateAccount(ctx, username, signingKey, transactionKey); err != nil {
 		return err
@@ -108,13 +114,25 @@ func (accManager AccountManager) CreateAccount(
 	return nil
 }
 
-// MoveCoinFromUsernameToUsername - move coin from sender to receiver
-func (accManager AccountManager) MoveCoinFromUsernameToUsername(ctx sdk.Context, sender, receiver linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
-	if err := accManager.MinusCoinFromUsername(ctx, sender, coin); err != nil {
-		return err
+// MoveCoin - move coin from sender to receiver
+func (accManager AccountManager) MoveCoin(ctx sdk.Context, sender, receiver linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
+	if sender.IsUsername() {
+		if err := accManager.MinusCoinFromUsername(ctx, sender, coin); err != nil {
+			return err
+		}
+	} else {
+		if err := accManager.MinusCoinFromAddress(ctx, sdk.AccAddress(sender), coin); err != nil {
+			return err
+		}
 	}
-	if err := accManager.AddCoinToUsername(ctx, receiver, coin); err != nil {
-		return err
+	if receiver.IsUsername() {
+		if err := accManager.AddCoinToUsername(ctx, receiver, coin); err != nil {
+			return err
+		}
+	} else {
+		if err := accManager.AddCoinToAddress(ctx, sdk.AccAddress(receiver), coin); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -123,13 +141,19 @@ func (accManager AccountManager) MoveCoinFromUsernameToUsername(ctx sdk.Context,
 func (accManager AccountManager) AddCoinToUsername(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	accInfo, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
+		if err.Code() == model.ErrAccountInfoNotFound().Code() {
+			return types.ErrAccountNotFound(username)
+		}
 		return err
 	}
 	return accManager.AddCoinToAddress(ctx, accInfo.Address, coin)
 }
 
 // AddCoinToAddress - add coin to address associated username
-func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.Address, coin linotypes.Coin) sdk.Error {
+func (accManager AccountManager) AddCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, coin linotypes.Coin) sdk.Error {
+	if coin.IsZero() {
+		return nil
+	}
 	bank, err := accManager.storage.GetBank(ctx, addr)
 	if err != nil {
 		if err.Code() != model.ErrAccountBankNotFound().Code() {
@@ -160,7 +184,7 @@ func (accManager AccountManager) MinusCoinFromUsername(ctx sdk.Context, username
 }
 
 // MinusCoinFromAddress - minus coin from address
-func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address sdk.Address, coin linotypes.Coin) sdk.Error {
+func (accManager AccountManager) MinusCoinFromAddress(ctx sdk.Context, address sdk.AccAddress, coin linotypes.Coin) sdk.Error {
 	if coin.IsZero() {
 		return nil
 	}
@@ -396,6 +420,30 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	return "", types.ErrCheckAuthenticatePubKeyOwner(me)
 }
 
+// CheckSigningPubKeyOwnerByAddress - given a public key, check if it is valid for given permission
+func (accManager AccountManager) CheckSigningPubKeyOwnerByAddress(
+	ctx sdk.Context, address sdk.AccAddress, signKey crypto.PubKey) sdk.Error {
+	bank, err := accManager.storage.GetBank(ctx, address)
+	if err != nil {
+		return err
+	}
+
+	if bank.PubKey == nil {
+		if !bytes.Equal(signKey.Address(), address) {
+			return sdk.ErrInvalidPubKey(
+				fmt.Sprintf("PubKey does not match Signer address %s", address))
+		}
+		bank.PubKey = signKey
+		accManager.storage.SetBank(ctx, address, bank)
+	}
+	//check signing key for all permissions
+	if !reflect.DeepEqual(bank.PubKey, signKey) {
+		return types.ErrCheckAuthenticatePubKeyAddress(address)
+	}
+
+	return nil
+}
+
 // RecoverAccount - reset two public key pairs
 func (accManager AccountManager) RecoverAccount(
 	ctx sdk.Context, username linotypes.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error {
@@ -508,6 +556,10 @@ func (accManager AccountManager) GetBank(ctx sdk.Context, username linotypes.Acc
 		return nil, err
 	}
 	return accManager.storage.GetBank(ctx, info.Address)
+}
+
+func (accManager AccountManager) GetBankByAddress(ctx sdk.Context, addr sdk.AccAddress) (*model.AccountBank, sdk.Error) {
+	return accManager.storage.GetBank(ctx, addr)
 }
 
 func (accManager AccountManager) GetMeta(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountMeta, sdk.Error) {

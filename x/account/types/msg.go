@@ -3,7 +3,6 @@ package types
 // nolint
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/lino-network/lino/types"
 	crypto "github.com/tendermint/tendermint/crypto"
@@ -28,10 +27,9 @@ type RegisterMsg struct {
 
 // RecoverMsg - replace three public keys
 type RecoverMsg struct {
-	Username             types.AccountKey `json:"username"`
-	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
-	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
-	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
+	Username         types.AccountKey `json:"username"`
+	NewTxPubKey      crypto.PubKey    `json:"new_tx_public_key"`
+	NewSigningPubKey crypto.PubKey    `json:"new_signing_public_key"`
 }
 
 // TransferMsg - sender transfer money to receiver
@@ -62,7 +60,7 @@ func NewTransferMsg(sender, receiver string, amount types.LNO, memo string) Tran
 func (msg TransferMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
-func (msg TransferMsg) Type() string { return "TransferMsg" }
+func (msg TransferMsg) Type() string { return TransferMsgType }
 
 // ValidateBasic - implements sdk.Msg
 func (msg TransferMsg) ValidateBasic() sdk.Error {
@@ -114,13 +112,11 @@ func (msg TransferMsg) GetConsumeAmount() types.Coin {
 
 // NewRecoverMsg - return a recover msg
 func NewRecoverMsg(
-	username string, resetPubkey, transactionPubkey,
-	appPubkey crypto.PubKey) RecoverMsg {
+	username string, transactionPubkey, signingPubkey crypto.PubKey) RecoverMsg {
 	return RecoverMsg{
-		Username:             types.AccountKey(username),
-		NewResetPubKey:       resetPubkey,
-		NewTransactionPubKey: transactionPubkey,
-		NewAppPubKey:         appPubkey,
+		Username:         types.AccountKey(username),
+		NewTxPubKey:      transactionPubkey,
+		NewSigningPubKey: signingPubkey,
 	}
 }
 
@@ -128,21 +124,21 @@ func NewRecoverMsg(
 func (msg RecoverMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
-func (msg RecoverMsg) Type() string { return "RecoverMsg" }
+func (msg RecoverMsg) Type() string { return RecoverMsgType }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RecoverMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
+	if !msg.Username.IsUsername() {
+		return ErrInvalidUsername("illegal username")
 	}
 
 	return nil
 }
 
 func (msg RecoverMsg) String() string {
-	return fmt.Sprintf("RecoverMsg{user:%v, new reset key:%v, new app Key:%v, new transaction key:%v}",
-		msg.Username, msg.NewResetPubKey, msg.NewAppPubKey, msg.NewTransactionPubKey)
+	return fmt.Sprintf(
+		"RecoverMsg{user:%v, new tx key:%v, new signing Key:%v}",
+		msg.Username, msg.NewTxPubKey, msg.NewSigningPubKey)
 }
 
 // GetPermission - implements types.Msg
@@ -161,7 +157,7 @@ func (msg RecoverMsg) GetSignBytes() []byte {
 
 // GetSigners - implements sdk.Msg
 func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username), sdk.AccAddress(msg.NewTxPubKey.Address())}
 }
 
 // GetConsumeAmount - implements types.Msg
@@ -187,31 +183,12 @@ func NewRegisterMsg(
 func (msg RegisterMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
-func (msg RegisterMsg) Type() string { return "RegisterMsg" }
+func (msg RegisterMsg) Type() string { return RegisterMsgType }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RegisterMsg) ValidateBasic() sdk.Error {
-	if len(msg.NewUser) < types.MinimumUsernameLength ||
-		len(msg.NewUser) > types.MaximumUsernameLength ||
-		len(msg.Referrer) < types.MinimumUsernameLength ||
-		len(msg.Referrer) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
-	}
-
-	match, err := regexp.MatchString(types.UsernameReCheck, string(msg.NewUser))
-	if err != nil {
-		return ErrInvalidUsername("match error")
-	}
-	if !match {
-		return ErrInvalidUsername("illegal input")
-	}
-
-	match, err = regexp.MatchString(types.IllegalUsernameReCheck, string(msg.NewUser))
-	if err != nil {
-		return ErrInvalidUsername("match error")
-	}
-	if match {
-		return ErrInvalidUsername("illegal input")
+	if !msg.NewUser.IsUsername() {
+		return ErrInvalidUsername("illegal username")
 	}
 
 	_, coinErr := types.LinoToCoin(msg.RegisterFee)
@@ -262,13 +239,12 @@ func NewUpdateAccountMsg(username string, jsonMeta string) UpdateAccountMsg {
 func (msg UpdateAccountMsg) Route() string { return RouterKey }
 
 // Type - implements sdk.Msg
-func (msg UpdateAccountMsg) Type() string { return "UpdateAccountMsg" }
+func (msg UpdateAccountMsg) Type() string { return UpdateAccountMsgType }
 
 // ValidateBasic - implements sdk.Msg
 func (msg UpdateAccountMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
-		return ErrInvalidUsername("illegal length")
+	if !msg.Username.IsUsername() {
+		return ErrInvalidUsername("illegal username")
 	}
 
 	if len(msg.JSONMeta) > types.MaximumJSONMetaLength {

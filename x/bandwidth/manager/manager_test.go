@@ -15,6 +15,7 @@ import (
 	"github.com/lino-network/lino/testsuites"
 	linotypes "github.com/lino-network/lino/types"
 	account "github.com/lino-network/lino/x/account/mocks"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/bandwidth/types"
 	developer "github.com/lino-network/lino/x/developer/mocks"
@@ -82,8 +83,14 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("UserX")).Return(linotypes.AccountKey("dummy"), types.ErrUserMsgFeeNotEnough()).Maybe()
 	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
 	suite.global.On("AddToValidatorInflationPool", mock.Anything, mock.Anything).Return(nil).Maybe()
-	suite.am.On("MinusCoinFromUsername", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-
+	suite.am.On("MinusCoinFromAddress", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("appYAddr")).Return(&accmodel.AccountBank{
+		Username: "AppY",
+	}, nil).Maybe()
+	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("userXAddr")).Return(&accmodel.AccountBank{
+		Username: "UserX",
+	}, nil).Maybe()
+	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("emptyAddr")).Return(nil, accmodel.ErrAccountBankNotFound()).Maybe()
 }
 
 func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
@@ -908,11 +915,12 @@ func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 	}
 
 	for _, tc := range testCases {
+		appYAddr := sdk.AccAddress("appYAddr")
 		appY := linotypes.AccountKey("AppY")
 		err := suite.bm.storage.SetAppBandwidthInfo(suite.Ctx, appY, &tc.prevAppYInfo)
 		suite.Nil(err, "%s", tc.testName)
 
-		err = suite.bm.CheckBandwidth(suite.Ctx, appY, tc.fee)
+		err = suite.bm.CheckBandwidth(suite.Ctx, appYAddr, tc.fee)
 		suite.Equal(tc.expectedErr, err, "%s", tc.testName)
 
 		appYInfo, err := suite.bm.storage.GetAppBandwidthInfo(suite.Ctx, appY)
@@ -928,7 +936,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckAppBandwidth() {
 func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 	testCases := []struct {
 		testName          string
-		username          linotypes.AccountKey
+		address           sdk.AccAddress
 		fee               auth.StdFee
 		blockInfo         model.BlockInfo
 		expectedBlockInfo model.BlockInfo
@@ -937,7 +945,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 		{
 			testName: "test1",
 			fee:      auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(1000)))},
-			username: linotypes.AccountKey("UserX"),
+			address:  sdk.AccAddress("userXAddr"),
 			blockInfo: model.BlockInfo{
 				TotalMsgSignedByApp:  0,
 				TotalMsgSignedByUser: 0,
@@ -955,7 +963,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 		{
 			testName: "test2",
 			fee:      auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(10)))},
-			username: linotypes.AccountKey("UserX"),
+			address:  sdk.AccAddress("userXAddr"),
 			blockInfo: model.BlockInfo{
 				TotalMsgSignedByApp:  0,
 				TotalMsgSignedByUser: 0,
@@ -970,18 +978,35 @@ func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 			},
 			expectedErr: types.ErrUserMsgFeeNotEnough(),
 		},
+		{
+			testName: "test3",
+			fee:      auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(linotypes.LinoCoinDenom, sdk.NewInt(10)))},
+			address:  sdk.AccAddress("emptyAddr"),
+			blockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedBlockInfo: model.BlockInfo{
+				TotalMsgSignedByApp:  0,
+				TotalMsgSignedByUser: 0,
+				CurMsgFee:            linotypes.NewCoinFromInt64(100),
+				CurU:                 sdk.NewDec(1),
+			},
+			expectedErr: accmodel.ErrAccountBankNotFound(),
+		},
 	}
 
 	for _, tc := range testCases {
 		err := suite.bm.storage.SetBlockInfo(suite.Ctx, &tc.blockInfo)
 		suite.Nil(err, "%s", tc.testName)
 
-		err = suite.bm.CheckBandwidth(suite.Ctx, tc.username, tc.fee)
+		err = suite.bm.CheckBandwidth(suite.Ctx, tc.address, tc.fee)
 		suite.Equal(tc.expectedErr, err, "%s", tc.testName)
 
 		blockInfo, err := suite.bm.storage.GetBlockInfo(suite.Ctx)
 		suite.Nil(err, "%s", tc.testName)
 		suite.Equal(tc.expectedBlockInfo, *blockInfo, "%s", tc.testName)
-
 	}
 }

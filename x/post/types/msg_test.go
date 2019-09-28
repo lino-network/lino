@@ -60,7 +60,7 @@ func TestPostMsgTestSuite(t *testing.T) {
 }
 
 func (suite *PostMsgTestSuite) TestCreatePostMsgValidateBasic() {
-	author := types.AccountKey("TestAuthor")
+	author := types.AccountKey("testauthor")
 	app := types.AccountKey("app")
 	testCases := []struct {
 		testName       string

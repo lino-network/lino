@@ -15,7 +15,7 @@ type BandwidthKeeper interface {
 	InitGenesis(ctx sdk.Context) error
 	DecayMaxMPS(ctx sdk.Context) sdk.Error
 	ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Error
-	CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error
+	CheckBandwidth(ctx sdk.Context, addr sdk.AccAddress, fee auth.StdFee) sdk.Error
 	EndBlocker(ctx sdk.Context) sdk.Error
 	BeginBlocker(ctx sdk.Context) sdk.Error
 

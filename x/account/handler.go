@@ -35,7 +35,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountKeeper, msg types.TransferMsg)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinFromUsernameToUsername(ctx, msg.Sender, msg.Receiver, coin); err != nil {
+	if err := am.MoveCoin(ctx, msg.Sender, msg.Receiver, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -60,12 +60,8 @@ func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsg)
 	if err != nil {
 		return err.Result()
 	}
-	addr, err := am.GetAddress(ctx, msg.Referrer)
-	if err != nil {
-		return err.Result()
-	}
 	if err := am.RegisterAccount(
-		ctx, addr, coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
+		ctx, msg.Referrer, coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

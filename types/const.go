@@ -184,4 +184,7 @@ const (
 
 	// ValidatorMaxPower - the max power of validator can have
 	ValidatorMaxPower = int64(100000000000)
+
+	// TxSigLimit - max number of sigs in one transaction
+	TxSigLimit = 2
 )

@@ -9,56 +9,12 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/bandwidth"
-	post "github.com/lino-network/lino/x/post"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 const (
 	maxMemoCharacters = 100
 )
-
-// GetMsgDonationAmount - return the amount of donation in of @p msg, if not donation, return 0.
-// XXX(yumin): outdated, should be remove after Upgrade2.
-func GetMsgDonationAmount(msg types.Msg) types.Coin {
-	donation, ok := msg.(post.DonateMsg)
-	if !ok {
-		return types.NewCoinFromInt64(0)
-	}
-	rst, err := types.LinoToCoin(donation.Amount)
-	if err != nil {
-		return types.NewCoinFromInt64(0)
-	}
-	return rst
-}
-
-// GetMsgDonationValidAmount - return the min of (amount of donation in of @p msg, saving)
-// if not donation, return 0.
-func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKeeper, pm post.PostKeeper) types.Coin {
-	zero := types.NewCoinFromInt64(0)
-	donation, ok := msg.(post.DonateMsg)
-	if !ok {
-		return zero
-	}
-	rst, err := types.LinoToCoin(donation.Amount)
-	if err != nil {
-		return zero
-	}
-
-	permlink := types.GetPermlink(donation.Author, donation.PostID)
-	if !pm.DoesPostExist(ctx, permlink) {
-		return zero
-	}
-
-	saving, err := am.GetSavingFromUsername(ctx, donation.Username)
-	if err != nil {
-		return types.NewCoinFromInt64(0)
-	}
-
-	// not valid when saving is less than donation amount.
-	if rst.IsGT(saving) {
-		return types.NewCoinFromInt64(0)
-	}
-	return rst
-}
 
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
@@ -96,6 +52,14 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 				signers = append(signers, signer)
 			}
 		}
+
+		if len(sigs) > types.TxSigLimit {
+			return ctx, sdk.ErrTooManySignatures(
+					fmt.Sprintf("signatures: %d, limit: %d", len(sigs), types.TxSigLimit),
+				).Result(),
+				true
+		}
+
 		if len(signers) != len(sigs) {
 			return ctx,
 				ErrWrongNumberOfSigners().Result(),
@@ -110,34 +74,16 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 			}
 			permission := msg.GetPermission()
 			msgSigners := msg.GetSigners()
+			// Recover msg needs one more signature for new bank address
 			consumeAmount := msg.GetConsumeAmount()
 
 			for _, msgSigner := range msgSigners {
-				// check public key is valid to sign this msg
-				signer, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
+				signerAddr, msgSignerAddr, err := getMsgSignerAddrAndSignerAddr(
+					ctx, am, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
-
-				// donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
-				// if !donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
-				// 	// get current tps
-				// 	tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-				// 	if err != nil {
-				// 		return ctx, err.Result(), true
-				// 	}
-				// 	// check user tps capacity
-				// 	// if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
-				// 	// 	return ctx, err.Result(), true
-				// 	// }
-				// }
-
-				// construct sign bytes and verify sequence number.
-				addr, err := am.GetAddress(ctx, types.AccountKey(msgSigner))
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-				seq, err := am.GetSequence(ctx, addr)
+				seq, err := am.GetSequence(ctx, msgSignerAddr)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
@@ -149,13 +95,16 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 							ctx.ChainID(), seq)).Result(), true
 				}
 				// succ
-				if err := am.IncreaseSequenceByOne(ctx, addr); err != nil {
+				if err := am.IncreaseSequenceByOne(ctx, msgSignerAddr); err != nil {
 					// XXX(yumin): cosmos anth panic here, should we?
 					return ctx, err.Result(), true
 				}
 
-				if err := bm.CheckBandwidth(ctx, signer, fee); err != nil {
-					return ctx, err.Result(), true
+				// first signer pays the fee
+				if idx == 0 {
+					if err := bm.CheckBandwidth(ctx, signerAddr, fee); err != nil {
+						return ctx, err.Result(), true
+					}
 				}
 				idx++
 			}
@@ -164,4 +113,38 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 		// TODO(Lino): verify application signature.
 		return ctx, sdk.Result{}, false
 	}
+}
+
+// this function return the actual signer of the msg (grant permission) and original signer of the msg
+func getMsgSignerAddrAndSignerAddr(
+	ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey,
+	signKey crypto.PubKey, permission types.Permission, amount types.Coin) (signerAddr sdk.AccAddress, msgSignerAddr sdk.AccAddress, err sdk.Error) {
+	if msgSigner.IsUsername() {
+		// if original signer is username
+		// check public key is valid to sign this msg
+		// return signer is the actual signer of the msg
+		signer, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), signKey, permission, amount)
+		if err != nil {
+			return nil, nil, err
+		}
+		// get address of actual signer.
+		signerAddr, err = am.GetAddress(ctx, signer)
+		if err != nil {
+			return nil, nil, err
+		}
+		// get address of original signer.
+		msgSignerAddr, err = am.GetAddress(ctx, types.AccountKey(msgSigner))
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		// if signer is address
+		if err := am.CheckSigningPubKeyOwnerByAddress(ctx, sdk.AccAddress(msgSigner), signKey); err != nil {
+			return nil, nil, err
+		}
+		// msg actual signer is the same as original signer
+		signerAddr = sdk.AccAddress(msgSigner)
+		msgSignerAddr = sdk.AccAddress(msgSigner)
+	}
+	return
 }
