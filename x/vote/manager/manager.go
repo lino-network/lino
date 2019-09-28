@@ -2,6 +2,7 @@ package manager
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"

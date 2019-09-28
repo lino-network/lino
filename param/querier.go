@@ -121,10 +121,7 @@ func queryProposalParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abc
 }
 
 func queryValidatorParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	valParam, err := ph.GetValidatorParam(ctx)
-	if err != nil {
-		return nil, err
-	}
+	valParam := ph.GetValidatorParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(valParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()

@@ -324,17 +324,15 @@ func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Err
 }
 
 // GetValidatorParam - get validator param
-func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.Error) {
+func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) *ValidatorParam {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetValidatorParamKey())
 	if paramBytes == nil {
-		return nil, ErrValidatorParamNotFound()
+		panic("Validator Param Not FOund")
 	}
 	param := new(ValidatorParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
-		return nil, ErrFailedToUnmarshalValidatorParam(err)
-	}
-	return param, nil
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
 }
 
 // GetCoinDayParam - get coin day param

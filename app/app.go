@@ -286,9 +286,7 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.proposalManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-	if err := lb.valManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
+	lb.valManager.InitGenesis(ctx)
 	if err := lb.bandwidthManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
@@ -344,11 +342,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		panic(err)
 	}
 
-	valParam, err := lb.paramHolder.GetValidatorParam(ctx)
-	if err != nil {
-		panic(err)
-	}
-
+	valParam := lb.paramHolder.GetValidatorParam(ctx)
 	if ga.IsValidator {
 		if err := lb.voteManager.StakeIn(
 			ctx, types.AccountKey(ga.Name), valParam.ValidatorMinDeposit); err != nil {

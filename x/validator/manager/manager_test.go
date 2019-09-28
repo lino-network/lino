@@ -69,8 +69,7 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 	suite.global.On("AddToValidatorInflationPool", suite.Ctx, linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(nil).Maybe()
 
 	suite.vm = NewValidatorManager(testValidatorKey, suite.ph, suite.vote, suite.global, suite.acc)
-	err := suite.vm.InitGenesis(suite.Ctx)
-	suite.NoError(err)
+	suite.vm.InitGenesis(suite.Ctx)
 	suite.ph.On("GetValidatorParam", mock.Anything).Return(&parammodel.ValidatorParam{
 		ValidatorMinDeposit:            linotypes.NewCoinFromInt64(20000000000 * linotypes.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
@@ -96,8 +95,7 @@ func (suite *ValidatorManagerTestSuite) SetupValidatorAndVotes(m map[linotypes.A
 			Username:      name,
 			ReceivedVotes: votes,
 		}
-		err := suite.vm.storage.SetValidator(suite.Ctx, name, &val)
-		suite.NoError(err)
+		suite.vm.storage.SetValidator(suite.Ctx, name, &val)
 	}
 }
 func (suite *ValidatorManagerTestSuite) TestAddValidatortToOncallList() {
@@ -137,14 +135,11 @@ func (suite *ValidatorManagerTestSuite) TestAddValidatortToOncallList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
-		suite.NoError(err)
-		err = suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.addValidatortToOncallList(suite.Ctx, tc.username)
+		suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.addValidatortToOncallList(suite.Ctx, tc.username)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
@@ -189,14 +184,11 @@ func (suite *ValidatorManagerTestSuite) TestAddValidatortToStandbyList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
-		suite.NoError(err)
-		err = suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.addValidatortToStandbyList(suite.Ctx, tc.username)
+		suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.addValidatortToStandbyList(suite.Ctx, tc.username)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
@@ -241,14 +233,11 @@ func (suite *ValidatorManagerTestSuite) TestAddValidatortToCandidateList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
-		suite.NoError(err)
-		err = suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.addValidatortToCandidateList(suite.Ctx, tc.username)
+		suite.vm.storage.SetValidator(suite.Ctx, tc.username, &tc.prevVal)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.addValidatortToCandidateList(suite.Ctx, tc.username)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
@@ -286,12 +275,9 @@ func (suite *ValidatorManagerTestSuite) TestRmValidatortFromCandidateList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.removeValidatorFromCandidateList(suite.Ctx, tc.username)
-		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		suite.vm.removeValidatorFromCandidateList(suite.Ctx, tc.username)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -326,12 +312,9 @@ func (suite *ValidatorManagerTestSuite) TestRmValidatortFromOncallList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.removeValidatorFromOncallList(suite.Ctx, tc.username)
-		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		suite.vm.removeValidatorFromOncallList(suite.Ctx, tc.username)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -366,12 +349,9 @@ func (suite *ValidatorManagerTestSuite) TestRmValidatortFromStandbyList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.removeValidatorFromStandbyList(suite.Ctx, tc.username)
-		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		suite.vm.removeValidatorFromStandbyList(suite.Ctx, tc.username)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -407,12 +387,10 @@ func (suite *ValidatorManagerTestSuite) TestRmValidatortFromAllList() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.removeValidatorFromAllLists(suite.Ctx, tc.username)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.removeValidatorFromAllLists(suite.Ctx, tc.username)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -477,13 +455,11 @@ func (suite *ValidatorManagerTestSuite) TestUpdateLowestOncall() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
 		suite.SetupValidatorAndVotes(tc.validators)
-		err = suite.vm.updateLowestOncall(suite.Ctx)
+		err := suite.vm.updateLowestOncall(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -548,12 +524,11 @@ func (suite *ValidatorManagerTestSuite) TestUpdateLowestStandby() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
 		suite.SetupValidatorAndVotes(tc.validators)
-		err = suite.vm.updateLowestStandby(suite.Ctx)
+		err := suite.vm.updateLowestStandby(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.NoError(err)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
@@ -681,12 +656,11 @@ func (suite *ValidatorManagerTestSuite) TestRemoveExtraOncall() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
 		suite.SetupValidatorAndVotes(tc.validators)
-		err = suite.vm.removeExtraOncall(suite.Ctx)
+		err := suite.vm.removeExtraOncall(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.NoError(err)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
@@ -745,11 +719,10 @@ func (suite *ValidatorManagerTestSuite) TestRemoveExtraStandby() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.removeExtraStandby(suite.Ctx)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.removeExtraStandby(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.NoError(err)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
@@ -829,11 +802,10 @@ func (suite *ValidatorManagerTestSuite) TestFillEmptyStandby() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.fillEmptyStandby(suite.Ctx)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.fillEmptyStandby(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.NoError(err)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
@@ -953,12 +925,10 @@ func (suite *ValidatorManagerTestSuite) TestFillEmptyOncall() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.fillEmptyOncall(suite.Ctx)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.fillEmptyOncall(suite.Ctx)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -1041,10 +1011,8 @@ func (suite *ValidatorManagerTestSuite) TestGetAllValidators() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		lst, err := suite.vm.GetAllValidators(suite.Ctx)
-		suite.Require().Nil(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		lst := suite.vm.GetAllValidators(suite.Ctx)
 		suite.Equal(tc.expectRes, lst, "%s", tc.testName)
 	}
 }
@@ -1103,10 +1071,8 @@ func (suite *ValidatorManagerTestSuite) TestGetCommittingValidators() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		lst, err := suite.vm.GetCommittingValidators(suite.Ctx)
-		suite.Require().Nil(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		lst := suite.vm.GetCommittingValidators(suite.Ctx)
 		suite.Equal(tc.expectRes, lst, "%s", tc.testName)
 	}
 }
@@ -1348,12 +1314,10 @@ func (suite *ValidatorManagerTestSuite) TestOnCandidateVotesInc() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.onCandidateVotesInc(suite.Ctx, tc.increasedUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.onCandidateVotesInc(suite.Ctx, tc.increasedUser)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -1464,12 +1428,10 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesInc() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.onStandbyVotesInc(suite.Ctx, tc.increasedUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.onStandbyVotesInc(suite.Ctx, tc.increasedUser)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -1510,11 +1472,10 @@ func (suite *ValidatorManagerTestSuite) TestOnOncallVotesInc() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.onOncallVotesInc(suite.Ctx, tc.increasedUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.onOncallVotesInc(suite.Ctx, tc.increasedUser)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.NoError(err)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
@@ -1572,11 +1533,9 @@ func (suite *ValidatorManagerTestSuite) TestCheckDupPubKey() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.storage.SetValidator(suite.Ctx, tc.existVal.Username, &tc.existVal)
-		suite.NoError(err)
-		err = suite.vm.CheckDupPubKey(suite.Ctx, tc.newKey)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		suite.vm.storage.SetValidator(suite.Ctx, tc.existVal.Username, &tc.existVal)
+		err := suite.vm.CheckDupPubKey(suite.Ctx, tc.newKey)
 		suite.Equal(tc.expectedRes, err, "%s", tc.testName)
 	}
 }
@@ -1727,14 +1686,14 @@ func (suite *ValidatorManagerTestSuite) TestGetElectionVoteListUpdates() {
 			expectedUpdates: []*model.ElectionVote{
 				{
 					ValidatorName: linotypes.AccountKey("val1"),
-					Vote:          linotypes.NewCoinFromInt64(0),
+					Vote: linotypes.NewCoinFromInt64(300).Plus(
+						linotypes.NewCoinFromInt64(300).Neg()),
 				},
 			},
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.username, &tc.prevList)
-		suite.NoError(err)
+		suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.username, &tc.prevList)
 		updates, err := suite.vm.getElectionVoteListUpdates(suite.Ctx, tc.username, tc.votedValidators)
 		suite.NoError(err)
 		suite.Equal(tc.expectedUpdates, updates, "%s", tc.testName)
@@ -1800,12 +1759,10 @@ func (suite *ValidatorManagerTestSuite) TestSetNewElectionVoteList() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.username, &tc.prevList)
+		suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.username, &tc.prevList)
+		err := suite.vm.setNewElectionVoteList(suite.Ctx, tc.username, tc.votedValidators)
 		suite.NoError(err)
-		err = suite.vm.setNewElectionVoteList(suite.Ctx, tc.username, tc.votedValidators)
-		suite.NoError(err)
-		lst, err := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.username)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.username)
 		suite.Equal(tc.expectedList, *lst, "%s", tc.testName)
 	}
 }
@@ -1942,12 +1899,10 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesDec() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.onStandbyVotesDec(suite.Ctx, tc.decreasedUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.onStandbyVotesDec(suite.Ctx, tc.decreasedUser)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -2102,12 +2057,10 @@ func (suite *ValidatorManagerTestSuite) TestOnOncallVotesDec() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.onOncallVotesDec(suite.Ctx, tc.decreasedUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.onOncallVotesDec(suite.Ctx, tc.decreasedUser)
 		suite.Require().Nil(err)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -2136,10 +2089,8 @@ func (suite *ValidatorManagerTestSuite) TestGetValidatorUpdates() {
 		Username:      user2,
 		ReceivedVotes: linotypes.NewCoinFromInt64(0),
 	}
-	err := suite.vm.storage.SetValidator(suite.Ctx, user1, &validator1)
-	suite.NoError(err)
-	err = suite.vm.storage.SetValidator(suite.Ctx, user2, &validator2)
-	suite.NoError(err)
+	suite.vm.storage.SetValidator(suite.Ctx, user1, &validator1)
+	suite.vm.storage.SetValidator(suite.Ctx, user2, &validator2)
 
 	val1 := abci.ValidatorUpdate{
 		PubKey: tmtypes.TM2PB.PubKey(valKey1),
@@ -2204,8 +2155,7 @@ func (suite *ValidatorManagerTestSuite) TestGetValidatorUpdates() {
 			Oncall:             tc.oncallValidators,
 			PreBlockValidators: tc.preBlockValidators,
 		}
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, lst)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, lst)
 
 		actualList, err := suite.vm.GetValidatorUpdates(suite.Ctx)
 		suite.NoError(err)
@@ -2285,12 +2235,10 @@ func (suite *ValidatorManagerTestSuite) TestRejoinFromJail() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.rejoinFromJail(suite.Ctx, tc.rejoinUser)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.rejoinFromJail(suite.Ctx, tc.rejoinUser)
 		suite.Equal(tc.expectRes, err, "%s", tc.testName)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 	}
 }
@@ -2398,12 +2346,10 @@ func (suite *ValidatorManagerTestSuite) TestVoteValidator() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevValList)
-		suite.NoError(err)
-		err = suite.vm.VoteValidator(suite.Ctx, tc.voter, tc.votedValidators)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevValList)
+		err := suite.vm.VoteValidator(suite.Ctx, tc.voter, tc.votedValidators)
 		suite.Equal(tc.expectRes, err, "%s", tc.testName)
-		lst, err := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.voter)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.voter)
 		suite.Equal(tc.expectElectionList, *lst, "%s", tc.testName)
 		for k, v := range tc.expectValAndVotes {
 			val, _ := suite.vm.storage.GetValidator(suite.Ctx, k)
@@ -2436,10 +2382,8 @@ func (suite *ValidatorManagerTestSuite) TestGetInitValidators() {
 		Username:      user2,
 		ReceivedVotes: linotypes.NewCoinFromInt64(0),
 	}
-	err := suite.vm.storage.SetValidator(suite.Ctx, user1, &validator1)
-	suite.NoError(err)
-	err = suite.vm.storage.SetValidator(suite.Ctx, user2, &validator2)
-	suite.NoError(err)
+	suite.vm.storage.SetValidator(suite.Ctx, user1, &validator1)
+	suite.vm.storage.SetValidator(suite.Ctx, user2, &validator2)
 
 	val1 := abci.ValidatorUpdate{
 		PubKey: tmtypes.TM2PB.PubKey(valKey1),
@@ -2477,8 +2421,7 @@ func (suite *ValidatorManagerTestSuite) TestGetInitValidators() {
 		lst := &model.ValidatorList{
 			Oncall: tc.oncallValidators,
 		}
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, lst)
-		suite.NoError(err)
+		suite.vm.storage.SetValidatorList(suite.Ctx, lst)
 
 		actualList, err := suite.vm.GetInitValidators(suite.Ctx)
 		suite.NoError(err)
@@ -2518,10 +2461,8 @@ func (suite *ValidatorManagerTestSuite) TestFireIncompetentValidator() {
 		ReceivedVotes: linotypes.NewCoinFromInt64(2000),
 		AbsentCommit:  20000,
 	}
-	err := suite.vm.storage.SetValidator(suite.Ctx, byz, &byzVal)
-	suite.NoError(err)
-	err = suite.vm.storage.SetValidator(suite.Ctx, abs, &absVal)
-	suite.NoError(err)
+	suite.vm.storage.SetValidator(suite.Ctx, byz, &byzVal)
+	suite.vm.storage.SetValidator(suite.Ctx, abs, &absVal)
 
 	testCases := []struct {
 		testName            string
@@ -2602,12 +2543,10 @@ func (suite *ValidatorManagerTestSuite) TestFireIncompetentValidator() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.FireIncompetentValidator(suite.Ctx, tc.byzantineValidators)
 		suite.NoError(err)
-		err = suite.vm.FireIncompetentValidator(suite.Ctx, tc.byzantineValidators)
-		suite.NoError(err)
-		actualList, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		actualList := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectedList, *actualList, "%s", tc.testName)
 	}
 }
@@ -2684,14 +2623,11 @@ func (suite *ValidatorManagerTestSuite) TestOnStakeChange() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevValList)
-		suite.NoError(err)
-		err = suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.voter, &tc.prevElectionList)
-		suite.NoError(err)
-		err = suite.vm.onStakeChange(suite.Ctx, tc.voter)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevValList)
+		suite.vm.storage.SetElectionVoteList(suite.Ctx, tc.voter, &tc.prevElectionList)
+		err := suite.vm.onStakeChange(suite.Ctx, tc.voter)
 		suite.Equal(tc.expectRes, err, "%s", tc.testName)
-		lst, err := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.voter)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetElectionVoteList(suite.Ctx, tc.voter)
 		suite.Equal(tc.expectElectionList, *lst, "%s", tc.testName)
 		for k, v := range tc.expectValAndVotes {
 			val, _ := suite.vm.storage.GetValidator(suite.Ctx, k)
@@ -2739,8 +2675,7 @@ func (suite *ValidatorManagerTestSuite) TestRegisterValidator() {
 	for _, tc := range testCases {
 		err := suite.vm.RegisterValidator(suite.Ctx, tc.username, valKey, tc.link)
 		suite.Equal(tc.expectRes, err, "%s", tc.testName)
-		lst, err := suite.vm.storage.GetValidatorList(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
@@ -2788,9 +2723,8 @@ func (suite *ValidatorManagerTestSuite) TestDistributeInflationToValidator() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		suite.NoError(err)
-		err = suite.vm.DistributeInflationToValidator(suite.Ctx)
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.DistributeInflationToValidator(suite.Ctx)
 		suite.NoError(err)
 
 	}

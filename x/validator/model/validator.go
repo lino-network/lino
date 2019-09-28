@@ -9,19 +9,8 @@ import (
 )
 
 // Validator is basic structure records all validator information
-type ValidatorV1 struct {
-	ABCIValidator   abci.Validator
-	PubKey          crypto.PubKey        `json:"pubkey"`
-	Username        linotypes.AccountKey `json:"username"`
-	Deposit         linotypes.Coin       `json:"deposit"`
-	AbsentCommit    int64                `json:"absent_commit"`
-	ByzantineCommit int64                `json:"byzantine_commit"`
-	ProducedBlocks  int64                `json:"produced_blocks"`
-	Link            string               `json:"link"`
-}
-
 type Validator struct {
-	ABCIValidator   abci.Validator
+	ABCIValidator   abci.Validator       `json:"abci_validator"`
 	PubKey          crypto.PubKey        `json:"pubkey"`
 	Username        linotypes.AccountKey `json:"username"`
 	ReceivedVotes   linotypes.Coin       `json:"received_votes"`
@@ -60,14 +49,6 @@ func (v ValidatorV1) ToIR() ValidatorIR {
 		ProducedBlocks:  v.ProducedBlocks,
 		Link:            v.Link,
 	}
-}
-
-type ValidatorListV1 struct {
-	OncallValidators   []linotypes.AccountKey `json:"oncall_validators"`
-	AllValidators      []linotypes.AccountKey `json:"all_validators"`
-	PreBlockValidators []linotypes.AccountKey `json:"pre_block_validators"`
-	LowestPower        linotypes.Coin         `json:"lowest_power"`
-	LowestValidator    linotypes.AccountKey   `json:"lowest_validator"`
 }
 
 // ValidatorList

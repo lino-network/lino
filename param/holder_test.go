@@ -98,8 +98,7 @@ func TestValidatorParam(t *testing.T) {
 	err := ph.setValidatorParam(ctx, &parameter)
 	assert.Nil(t, err)
 
-	resultPtr, err := ph.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	resultPtr := ph.GetValidatorParam(ctx)
 	assert.Equal(t, parameter, *resultPtr, "Validator param should be equal")
 }
 
@@ -443,8 +442,7 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	assert.Nil(t, err)
 	assert.Equal(t, expectDeveloperParam, *developerParam)
 
-	validatorParam, err := ph.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	validatorParam := ph.GetValidatorParam(ctx)
 	assert.Equal(t, expectValidatorParam, *validatorParam)
 
 	voteParam, err := ph.GetVoteParam(ctx)
