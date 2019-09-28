@@ -558,19 +558,19 @@ func (vm ValidatorManager) onCandidateVotesInc(ctx sdk.Context, username linotyp
 	}
 
 	lst := vm.GetValidatorList(ctx)
-	if !me.ReceivedVotes.IsGT(lst.LowestStandbyVotes) {
+	if !me.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
 		return nil
 	}
 
-	vm.removeValidatorFromCandidateList(ctx, username)
-
 	if me.ReceivedVotes.IsGT(lst.LowestOncallVotes) {
 		// join the oncall validator list
+		vm.removeValidatorFromCandidateList(ctx, username)
 		if err := vm.addValidatortToOncallList(ctx, username); err != nil {
 			return err
 		}
-	} else {
+	} else if me.ReceivedVotes.IsGT(lst.LowestStandbyVotes) {
 		// join the standby validator list
+		vm.removeValidatorFromCandidateList(ctx, username)
 		if err := vm.addValidatortToStandbyList(ctx, username); err != nil {
 			return err
 		}
