@@ -107,13 +107,13 @@ func (_m *AccountKeeper) CheckSigningPubKeyOwner(ctx types.Context, me linotypes
 	return r0, r1
 }
 
-// CheckSigningPubKeyOwnerByAddress provides a mock function with given fields: ctx, addr, signkey
-func (_m *AccountKeeper) CheckSigningPubKeyOwnerByAddress(ctx types.Context, addr types.AccAddress, signkey crypto.PubKey) types.Error {
-	ret := _m.Called(ctx, addr, signkey)
+// CheckSigningPubKeyOwnerByAddress provides a mock function with given fields: ctx, addr, signkey, isPaid
+func (_m *AccountKeeper) CheckSigningPubKeyOwnerByAddress(ctx types.Context, addr types.AccAddress, signkey crypto.PubKey, isPaid bool) types.Error {
+	ret := _m.Called(ctx, addr, signkey, isPaid)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, crypto.PubKey) types.Error); ok {
-		r0 = rf(ctx, addr, signkey)
+	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, crypto.PubKey, bool) types.Error); ok {
+		r0 = rf(ctx, addr, signkey, isPaid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
