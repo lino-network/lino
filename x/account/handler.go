@@ -42,15 +42,9 @@ func handleTransferMsg(ctx sdk.Context, am AccountKeeper, msg types.TransferMsg)
 }
 
 func handleRecoverMsg(ctx sdk.Context, am AccountKeeper, msg types.RecoverMsg) sdk.Result {
-	// recover
-	// if !am.DoesAccountExist(ctx, msg.Username) {
-	// 	return ErrAccountNotFound(msg.Username).Result()
-	// }
-	// if err := am.RecoverAccount(
-	// 	ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
-	// 	msg.NewAppPubKey); err != nil {
-	// 	return err.Result()
-	// }
+	if err := am.RecoverAccount(ctx, msg.Username, msg.NewTxPubKey, msg.NewSigningPubKey); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 
