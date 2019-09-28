@@ -440,7 +440,6 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	// slash and add slashed coin back into validator inflation pool
 	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
 	if err != nil {
-
 		return err
 	}
 	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
@@ -448,7 +447,6 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	}
 
 	if punishType == linotypes.PunishAbsentCommit {
-
 		// reset absent commit
 		validator, err := vm.storage.GetValidator(ctx, username)
 		if err != nil {
@@ -467,7 +465,6 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	// OR, we explicitly want to fire this validator
 	param := vm.paramHolder.GetValidatorParam(ctx)
 	if punishType == linotypes.PunishByzantine || !totalStake.IsGTE(param.ValidatorMinDeposit) {
-
 		if err := vm.removeValidatorFromAllLists(ctx, username); err != nil {
 			return err
 		}
@@ -492,7 +489,6 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
 	for _, validatorName := range committingValidators {
 		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
-
 			return err
 		}
 
@@ -500,7 +496,6 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
 			if reflect.DeepEqual(validator.ABCIValidator.Address, evidence.Validator.Address) {
 				if err := vm.punishCommittingValidator(ctx, validator.Username, param.PenaltyByzantine,
 					linotypes.PunishByzantine); err != nil {
-
 					return err
 				}
 				break
@@ -639,7 +634,6 @@ func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes
 
 func (vm ValidatorManager) onOncallVotesDec(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	lst := vm.GetValidatorList(ctx)
-
 	validator, err := vm.GetValidator(ctx, username)
 	if err != nil {
 		return err
@@ -656,14 +650,12 @@ func (vm ValidatorManager) onOncallVotesDec(ctx sdk.Context, username linotypes.
 			return err
 		}
 	} else {
-
 		// move to the standby validator list
 		if err := vm.addValidatortToStandbyList(ctx, username); err != nil {
 			return err
 		}
 	}
 	if err := vm.balanceValidatorList(ctx); err != nil {
-
 		return err
 	}
 	return nil
