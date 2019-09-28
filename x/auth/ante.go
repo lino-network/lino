@@ -123,7 +123,7 @@ func getMsgSignerAddrAndSignerAddr(
 		// if original signer is username
 		// check public key is valid to sign this msg
 		// return signer is the actual signer of the msg
-		signer, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), signKey, permission, amount)
+		signer, err := am.CheckSigningPubKeyOwner(ctx, msgSigner, signKey, permission, amount)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -133,7 +133,7 @@ func getMsgSignerAddrAndSignerAddr(
 			return nil, nil, err
 		}
 		// get address of original signer.
-		msgSignerAddr, err = am.GetAddress(ctx, types.AccountKey(msgSigner))
+		msgSignerAddr, err = am.GetAddress(ctx, msgSigner)
 		if err != nil {
 			return nil, nil, err
 		}
