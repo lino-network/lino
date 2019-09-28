@@ -746,7 +746,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 		err := suite.am.CheckSigningPubKeyOwnerByAddress(suite.Ctx, tc.address, tc.signKey)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 
-		bank, _ := suite.am.storage.GetBank(suite.Ctx, sdk.AccAddress(tc.address))
+		bank, _ := suite.am.storage.GetBank(suite.Ctx, tc.address)
 		suite.Equal(tc.expectAccBank, bank, "%s", tc.testName)
 	}
 }
