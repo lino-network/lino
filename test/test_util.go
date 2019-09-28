@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -322,6 +323,8 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 }
 
 func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
+	fmt.Println("gen tx seq:", seq)
+	fmt.Println("sign bytes client: ", string(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, []sdk.Msg{msg}, "")))
 	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, []sdk.Msg{msg}, ""))
 	sigs := []auth.StdSignature{{
 		PubKey:    priv.PubKey(),

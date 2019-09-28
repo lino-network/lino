@@ -18,4 +18,9 @@ const (
 	QueryAccountGrantPubKeys    = "grantPubKey"
 	QueryAccountAllGrantPubKeys = "allGrantPubKey"
 	QueryTxAndAccountSequence   = "txAndSeq"
+
+	TransferMsgType      = "TransferMsg"
+	RecoverMsgType       = "RecoverMsg"
+	RegisterMsgType      = "RegisterMsg"
+	UpdateAccountMsgType = "UpdateAccountMsg"
 )

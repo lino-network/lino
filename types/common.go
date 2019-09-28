@@ -1,5 +1,7 @@
 package types
 
+import "regexp"
+
 // AccountKey key format in KVStore
 type AccountKey string
 
@@ -30,7 +32,7 @@ type TransferDetailType int
 // indicates the type of punishment for oncall validators
 type PunishType int
 
-// GetPostKey try to generate PostKey from types.AccountKey and PostID
+// GetPostKey try to generate PostKey from AccountKey and PostID
 func GetPermlink(author AccountKey, postID string) Permlink {
 	return Permlink(string(author) + PermlinkSeparator + postID)
 }
@@ -62,4 +64,25 @@ func AccountListToSet(lst []AccountKey) map[AccountKey]bool {
 		rst[acc] = true
 	}
 	return rst
+}
+
+func (ak AccountKey) IsUsername() bool {
+	if len(ak) < MinimumUsernameLength ||
+		len(ak) > MaximumUsernameLength {
+		return false
+	}
+
+	match, err := regexp.MatchString(UsernameReCheck, string(ak))
+	if !match || err != nil {
+		return false
+	}
+	if !match {
+		return false
+	}
+
+	match, err = regexp.MatchString(IllegalUsernameReCheck, string(ak))
+	if match || err != nil {
+		return false
+	}
+	return true
 }

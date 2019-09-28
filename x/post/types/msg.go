@@ -64,7 +64,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return err
 	}
-	if !types.RuleUsernameLength(msg.CreatedBy) {
+	if !msg.CreatedBy.IsUsername() {
 		return ErrInvalidCreatedBy()
 	}
 	return nil
@@ -211,7 +211,7 @@ func (msg DonateMsg) Type() string { return "DonateMsg" }
 // ValidateBasic - implements sdk.Msg
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink  exists
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
 	if !types.RuleUsernameLength(msg.Author) || len(msg.PostID) == 0 {
@@ -281,14 +281,16 @@ func (msg IDADonateMsg) Type() string { return "IDADonateMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDADonateMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) ||
-		!types.RuleUsernameLength(msg.Signer) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
-	if !types.RuleUsernameLength(msg.App) {
+	if !msg.Signer.IsUsername() {
+		return ErrInvalidUsername()
+	}
+	if !msg.App.IsUsername() {
 		return ErrInvalidApp()
 	}
-	if !types.RuleUsernameLength(msg.Author) || len(msg.PostID) == 0 {
+	if !msg.Author.IsUsername() || len(msg.PostID) == 0 {
 		return ErrInvalidTarget()
 	}
 	if msg.Username == msg.Author {

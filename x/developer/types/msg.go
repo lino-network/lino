@@ -167,7 +167,7 @@ func (msg DeveloperRevokeMsg) Route() string { return RouterKey }
 func (msg DeveloperRevokeMsg) Type() string { return "DeveloperRevokeMsg" }
 
 func (msg DeveloperRevokeMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
 	return nil
@@ -227,11 +227,11 @@ func (msg GrantPermissionMsg) Type() string { return "GrantPermissionMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg GrantPermissionMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
 
-	if !types.RuleUsernameLength(msg.AuthorizedApp) {
+	if !msg.AuthorizedApp.IsUsername() {
 		return ErrInvalidAuthorizedApp()
 	}
 
@@ -311,10 +311,10 @@ func (msg RevokePermissionMsg) Type() string { return "RevokePermissionMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg RevokePermissionMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
-	if !types.RuleUsernameLength(msg.RevokeFrom) {
+	if !msg.RevokeFrom.IsUsername() {
 		return ErrInvalidUsername()
 	}
 	if msg.Permission == types.ResetPermission ||
@@ -372,7 +372,7 @@ func (msg IDAIssueMsg) Type() string { return "IDAIssueMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDAIssueMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
 	// if len(msg.IDAName) < 3 || len(msg.IDAName) > 10 {
@@ -426,7 +426,7 @@ func (msg IDAMintMsg) Type() string { return "IDAMintMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDAMintMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsUsername() {
 		return ErrInvalidUsername()
 	}
 	_, err := types.LinoToCoin(msg.Amount)

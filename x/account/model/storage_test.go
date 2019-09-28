@@ -72,6 +72,7 @@ func TestAccountBank(t *testing.T) {
 	resultPtr, err := as.GetBank(ctx, addr)
 	assert.Nil(t, err)
 	assert.Equal(t, accBank, *resultPtr, "Account bank should be equal")
+	assert.Nil(t, accBank.PubKey)
 
 	accBank.PubKey = pubKey
 
