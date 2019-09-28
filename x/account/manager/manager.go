@@ -2,6 +2,7 @@ package manager
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"time"
@@ -94,7 +95,7 @@ func (accManager AccountManager) CreateAccount(
 		bank = &model.AccountBank{}
 	}
 	if bank.Username != "" {
-		return types.ErrAddressAlreadyTaken(addr)
+		return types.ErrAddressAlreadyTaken(hex.EncodeToString(addr))
 	}
 
 	// set public key to bank
@@ -465,7 +466,7 @@ func (accManager AccountManager) RecoverAccount(
 		newBank = &model.AccountBank{}
 	}
 	if newBank.Username != "" {
-		return types.ErrAddressAlreadyTaken(newAddr)
+		return types.ErrAddressAlreadyTaken(hex.EncodeToString(newAddr))
 	}
 
 	oldAddr := accInfo.Address

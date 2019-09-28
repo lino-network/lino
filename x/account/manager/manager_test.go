@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -411,7 +412,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			username:   unreg.Username,
 			signingKey: unreg.SigningKey,
 			txKey:      userWithBalance.TransactionKey,
-			expectErr:  acctypes.ErrAddressAlreadyTaken(sdk.AccAddress(userWithBalance.TransactionKey.Address())),
+			expectErr:  acctypes.ErrAddressAlreadyTaken(hex.EncodeToString(userWithBalance.TransactionKey.Address())),
 			expectInfo: nil,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving,
@@ -583,9 +584,10 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 			username:    "test2",
 			signingKey:  signingPrivKeys[0].PubKey(),
 			txKey:       txPrivKeys[0].PubKey(),
-			expectErr:   acctypes.ErrAddressAlreadyTaken(sdk.AccAddress(txPrivKeys[0].PubKey().Address())),
-			accInfo:     nil,
-			accBank:     nil,
+			expectErr: acctypes.ErrAddressAlreadyTaken(
+				hex.EncodeToString(sdk.AccAddress(txPrivKeys[0].PubKey().Address()))),
+			accInfo: nil,
+			accBank: nil,
 		},
 		{
 			testName:    "referrer is address",

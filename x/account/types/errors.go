@@ -34,8 +34,8 @@ func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
 }
 
 // ErrAddressAlreadyTaken - error when register address is already took by other username
-func ErrAddressAlreadyTaken(addr sdk.Address) sdk.Error {
-	return types.NewError(types.CodeAddressIsTaken, fmt.Sprintf("address %v is already taken", addr))
+func ErrAddressAlreadyTaken(addr string) sdk.Error {
+	return types.NewError(types.CodeAddressIsTaken, fmt.Sprintf("address %s is already taken", addr))
 }
 
 // ErrRegisterFeeInsufficient - error when register fee insufficient

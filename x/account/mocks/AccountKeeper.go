@@ -527,6 +527,22 @@ func (_m *AccountKeeper) MoveCoin(ctx types.Context, sender linotypes.AccountKey
 	return r0
 }
 
+// RecoverAccount provides a mock function with given fields: ctx, username, newTransactionPubKey, newSigningKey
+func (_m *AccountKeeper) RecoverAccount(ctx types.Context, username linotypes.AccountKey, newTransactionPubKey crypto.PubKey, newSigningKey crypto.PubKey) types.Error {
+	ret := _m.Called(ctx, username, newTransactionPubKey, newSigningKey)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
+		r0 = rf(ctx, username, newTransactionPubKey, newSigningKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // RegisterAccount provides a mock function with given fields: ctx, referrer, registerFee, username, signingKey, transactionKey
 func (_m *AccountKeeper) RegisterAccount(ctx types.Context, referrer linotypes.AccountKey, registerFee linotypes.Coin, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
 	ret := _m.Called(ctx, referrer, registerFee, username, signingKey, transactionKey)

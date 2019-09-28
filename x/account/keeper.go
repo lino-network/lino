@@ -45,6 +45,8 @@ type AccountKeeper interface {
 		validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error
 	RevokePermission(
 		ctx sdk.Context, me, grantTo types.AccountKey, permission types.Permission) sdk.Error
+	RecoverAccount(
+		ctx sdk.Context, username types.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error
 
 	// getter
 	GetInfo(ctx sdk.Context, username types.AccountKey) (*model.AccountInfo, sdk.Error)
