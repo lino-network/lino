@@ -158,7 +158,7 @@ func TestGenesisAcc(t *testing.T) {
 	for _, acc := range accs {
 		expectBalance := acc.coin
 		if acc.isValidator {
-			param, _ := lb.paramHolder.GetValidatorParam(ctx)
+			param := lb.paramHolder.GetValidatorParam(ctx)
 			expectBalance = expectBalance.Minus(param.ValidatorMinDeposit)
 		}
 		if acc.genesisAccountName == "developer" {
@@ -294,8 +294,7 @@ func TestGenesisFromConfig(t *testing.T) {
 	coinDayParam, err := lb.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, genesisState.GenesisParam.CoinDayParam, *coinDayParam)
-	validatorParam, err := lb.paramHolder.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	validatorParam := lb.paramHolder.GetValidatorParam(ctx)
 	assert.Equal(t, genesisState.GenesisParam.ValidatorParam, *validatorParam)
 	voteParam, err := lb.paramHolder.GetVoteParam(ctx)
 	assert.Nil(t, err)
@@ -318,7 +317,7 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	remainValidatorPool := types.DecToCoin(
 		genesisTotalCoin.ToDec().Mul(
 			growthRate.Mul(validatorAllocation)))
-	param, _ := lb.paramHolder.GetValidatorParam(ctx)
+	param := lb.paramHolder.GetValidatorParam(ctx)
 
 	expectBaseBalance := coinPerValidator.Minus(param.ValidatorMinDeposit)
 	expectBalanceList := make([]types.Coin, 21)
@@ -370,8 +369,7 @@ func TestFireByzantineValidators(t *testing.T) {
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
-	lst, err := lb.valManager.GetValidatorList(ctx)
-	assert.Nil(t, err)
+	lst := lb.valManager.GetValidatorList(ctx)
 	assert.Equal(t, 20, len(lst.Oncall)+len(lst.Standby))
 }
 
@@ -625,7 +623,7 @@ func TestHourlyEvent(t *testing.T) {
 func TestIncreaseMinute(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	validatorParam, _ := lb.paramHolder.GetValidatorParam(ctx)
+	validatorParam := lb.paramHolder.GetValidatorParam(ctx)
 	minVotingDeposit, _ := validatorParam.ValidatorMinDeposit.ToInt64()
 	initStake := minVotingDeposit * 21
 	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)

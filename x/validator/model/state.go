@@ -1,12 +1,34 @@
 package model
 
 import (
-	"github.com/lino-network/lino/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+
+	linotypes "github.com/lino-network/lino/types"
 )
+
+type ValidatorListV1 struct {
+	OncallValidators   []linotypes.AccountKey `json:"oncall_validators"`
+	AllValidators      []linotypes.AccountKey `json:"all_validators"`
+	PreBlockValidators []linotypes.AccountKey `json:"pre_block_validators"`
+	LowestPower        linotypes.Coin         `json:"lowest_power"`
+	LowestValidator    linotypes.AccountKey   `json:"lowest_validator"`
+}
+
+type ValidatorV1 struct {
+	ABCIValidator   abci.Validator
+	PubKey          crypto.PubKey        `json:"pubkey"`
+	Username        linotypes.AccountKey `json:"username"`
+	Deposit         linotypes.Coin       `json:"deposit"`
+	AbsentCommit    int64                `json:"absent_commit"`
+	ByzantineCommit int64                `json:"byzantine_commit"`
+	ProducedBlocks  int64                `json:"produced_blocks"`
+	Link            string               `json:"link"`
+}
 
 // ValidatorRow - pk: (Username)
 type ValidatorRow struct {
-	Username types.AccountKey `json:"username"`
+	Username linotypes.AccountKey `json:"username"`
 	// XXX(yumin): type changed.
 	Validator ValidatorV1 `json:"validator"`
 }
@@ -21,7 +43,7 @@ func (v ValidatorRow) ToIR() ValidatorRowIR {
 
 // ValidatorListRow - pk: none
 type ValidatorListRow struct {
-	List ValidatorList `json:"list"`
+	List ValidatorListV1 `json:"list"`
 }
 
 // ValidatorTables state of validators

@@ -9,18 +9,10 @@ import (
 func BeginBlocker(
 	ctx sdk.Context, req abci.RequestBeginBlock, vm ValidatorKeeper) {
 	// update preblock validators
-	validatorList, err := vm.GetValidatorList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	vals, err := vm.GetCommittingValidators(ctx)
-	if err != nil {
-		panic(err)
-	}
+	validatorList := vm.GetValidatorList(ctx)
+	vals := vm.GetCommittingValidators(ctx)
 	validatorList.PreBlockValidators = vals
-	if err := vm.SetValidatorList(ctx, validatorList); err != nil {
-		panic(err)
-	}
+	vm.SetValidatorList(ctx, validatorList)
 
 	// update signing stats.
 	updateErr := vm.UpdateSigningStats(ctx, req.LastCommitInfo.Votes)

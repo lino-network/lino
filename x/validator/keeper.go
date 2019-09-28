@@ -13,7 +13,7 @@ import (
 )
 
 type ValidatorKeeper interface {
-	InitGenesis(ctx sdk.Context) error
+	InitGenesis(ctx sdk.Context)
 	RegisterValidator(ctx sdk.Context, username linotypes.AccountKey, valPubKey crypto.PubKey, link string) sdk.Error
 	RevokeValidator(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 	VoteValidator(ctx sdk.Context, username linotypes.AccountKey, votedValidators []linotypes.AccountKey) sdk.Error
@@ -25,10 +25,10 @@ type ValidatorKeeper interface {
 	UpdateSigningStats(ctx sdk.Context, voteInfos []abci.VoteInfo) sdk.Error
 	// getter and setter
 	GetValidator(ctx sdk.Context, username linotypes.AccountKey) (*model.Validator, sdk.Error)
-	GetValidatorList(ctx sdk.Context) (*model.ValidatorList, sdk.Error)
-	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) (*model.ElectionVoteList, sdk.Error)
-	GetCommittingValidators(ctx sdk.Context) ([]linotypes.AccountKey, sdk.Error)
-	SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) sdk.Error
+	GetValidatorList(ctx sdk.Context) *model.ValidatorList
+	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
+	GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey
+	SetValidatorList(ctx sdk.Context, lst *model.ValidatorList)
 }
 
 var _ ValidatorKeeper = votemn.ValidatorManager{}

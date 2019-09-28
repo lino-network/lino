@@ -58,10 +58,7 @@ func queryValidator(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.Re
 }
 
 func queryValidatorList(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, vm ValidatorKeeper) ([]byte, sdk.Error) {
-	validatorList, err := vm.GetValidatorList(ctx)
-	if err != nil {
-		return nil, err
-	}
+	validatorList := vm.GetValidatorList(ctx)
 	res, marshalErr := cdc.MarshalJSON(validatorList)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()
@@ -73,10 +70,7 @@ func queryElectionVoteList(ctx sdk.Context, cdc *wire.Codec, path []string, req 
 	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	lst, err := vm.GetElectionVoteList(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
+	lst := vm.GetElectionVoteList(ctx, linotypes.AccountKey(path[0]))
 	res, marshalErr := cdc.MarshalJSON(lst)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()

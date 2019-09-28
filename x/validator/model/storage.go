@@ -29,22 +29,10 @@ func NewValidatorStorage(key sdk.StoreKey) ValidatorStorage {
 	return vs
 }
 
-func (vs ValidatorStorage) InitGenesis(ctx sdk.Context) error {
-	lst := &ValidatorList{
-		LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
-		LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
-	}
-
-	if err := vs.SetValidatorList(ctx, lst); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (vs ValidatorStorage) DoesValidatorExist(ctx sdk.Context, accKey linotypes.AccountKey) bool {
-	store := ctx.KVStore(vs.key)
-	return store.Has(GetValidatorKey(accKey))
-}
+// func (vs ValidatorStorage) DoesValidatorExist(ctx sdk.Context, accKey linotypes.AccountKey) bool {
+// 	store := ctx.KVStore(vs.key)
+// 	return store.Has(GetValidatorKey(accKey))
+// }
 
 func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey linotypes.AccountKey) (*Validator, sdk.Error) {
 	store := ctx.KVStore(vs.key)
@@ -57,58 +45,45 @@ func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey linotypes.Accoun
 	return validator, nil
 }
 
-func (vs ValidatorStorage) SetValidator(ctx sdk.Context, accKey linotypes.AccountKey, validator *Validator) sdk.Error {
+func (vs ValidatorStorage) SetValidator(ctx sdk.Context, accKey linotypes.AccountKey, validator *Validator) {
 	store := ctx.KVStore(vs.key)
 	validatorByte := vs.cdc.MustMarshalBinaryLengthPrefixed(*validator)
 	store.Set(GetValidatorKey(accKey), validatorByte)
-	return nil
 }
 
-func (vs ValidatorStorage) DeleteValidator(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
-	store := ctx.KVStore(vs.key)
-	store.Delete(GetValidatorKey(username))
-	return nil
-}
-
-func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) (*ValidatorList, sdk.Error) {
+func (vs ValidatorStorage) GetValidatorList(ctx sdk.Context) *ValidatorList {
 	store := ctx.KVStore(vs.key)
 	listByte := store.Get(GetValidatorListKey())
 	if listByte == nil {
-		return nil, types.ErrValidatorListNotFound()
+		panic("Validator List should be initialized during genesis")
 	}
 	lst := new(ValidatorList)
 	vs.cdc.MustUnmarshalBinaryLengthPrefixed(listByte, lst)
-	return lst, nil
+	return lst
 }
 
-func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList) sdk.Error {
+func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList) {
 	store := ctx.KVStore(vs.key)
 	listByte := vs.cdc.MustMarshalBinaryLengthPrefixed(*lst)
 	store.Set(GetValidatorListKey(), listByte)
-	return nil
 }
 
-func (vs ValidatorStorage) DoesElectionVoteListExist(ctx sdk.Context, accKey linotypes.AccountKey) bool {
-	store := ctx.KVStore(vs.key)
-	return store.Has(GetElectionVoteListKey(accKey))
-}
-
-func (vs ValidatorStorage) GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) (*ElectionVoteList, sdk.Error) {
+func (vs ValidatorStorage) GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *ElectionVoteList {
 	store := ctx.KVStore(vs.key)
 	lstByte := store.Get(GetElectionVoteListKey(accKey))
 	if lstByte == nil {
-		return nil, types.ErrElectionListNotFound()
+		// valid empty value.
+		return &ElectionVoteList{}
 	}
 	lst := new(ElectionVoteList)
 	vs.cdc.MustUnmarshalBinaryLengthPrefixed(lstByte, lst)
-	return lst, nil
+	return lst
 }
 
-func (vs ValidatorStorage) SetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey, lst *ElectionVoteList) sdk.Error {
+func (vs ValidatorStorage) SetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey, lst *ElectionVoteList) {
 	store := ctx.KVStore(vs.key)
 	lstByte := vs.cdc.MustMarshalBinaryLengthPrefixed(*lst)
 	store.Set(GetElectionVoteListKey(accKey), lstByte)
-	return nil
 }
 
 // Export state of validators.

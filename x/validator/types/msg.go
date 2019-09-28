@@ -21,17 +21,6 @@ type ValidatorRegisterMsg struct {
 	Link      string           `json:"link"`
 }
 
-// ValidatorRevokeMsg - revoke validator
-type ValidatorRevokeMsg struct {
-	Username types.AccountKey `json:"username"`
-}
-
-// VoteValidatorMsg - vote for validator
-type VoteValidatorMsg struct {
-	Username        types.AccountKey   `json:"username"`
-	VotedValidators []types.AccountKey `json:"voted_validators"`
-}
-
 // ValidatorRegisterMsg Msg Implementations
 func NewValidatorRegisterMsg(validator string, pubKey crypto.PubKey, link string) ValidatorRegisterMsg {
 	return ValidatorRegisterMsg{
@@ -49,8 +38,7 @@ func (msg ValidatorRegisterMsg) Type() string { return "ValidatorRegisterMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
+	if !types.RuleUsernameLength(msg.Username) {
 		return ErrInvalidUsername()
 	}
 
@@ -85,6 +73,11 @@ func (msg ValidatorRegisterMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
+// ValidatorRevokeMsg - revoke validator
+type ValidatorRevokeMsg struct {
+	Username types.AccountKey `json:"username"`
+}
+
 // ValidatorRevokeMsg Msg Implementations
 func NewValidatorRevokeMsg(validator string) ValidatorRevokeMsg {
 	return ValidatorRevokeMsg{
@@ -100,8 +93,7 @@ func (msg ValidatorRevokeMsg) Type() string { return "ValidatorRevokeMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorRevokeMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
+	if !types.RuleUsernameLength(msg.Username) {
 		return ErrInvalidUsername()
 	}
 	return nil
@@ -131,6 +123,12 @@ func (msg ValidatorRevokeMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
+// VoteValidatorMsg - vote for validator
+type VoteValidatorMsg struct {
+	Username        types.AccountKey   `json:"username"`
+	VotedValidators []types.AccountKey `json:"voted_validators"`
+}
+
 // VoteValidatorMsg Msg Implementations
 func NewVoteValidatorMsg(username string, votedValidators []string) VoteValidatorMsg {
 	var votedVals []types.AccountKey
@@ -151,14 +149,19 @@ func (msg VoteValidatorMsg) Type() string { return "VoteValidatorMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg VoteValidatorMsg) ValidateBasic() sdk.Error {
-	if len(msg.Username) < types.MinimumUsernameLength ||
-		len(msg.Username) > types.MaximumUsernameLength {
+	if !types.RuleUsernameLength(msg.Username) {
 		return ErrInvalidUsername()
 	}
 
 	if len(msg.VotedValidators) > types.MaxVotedValidators ||
 		len(msg.VotedValidators) == 0 {
 		return ErrInvalidVotedValidators()
+	}
+
+	for _, val := range msg.VotedValidators {
+		if !types.RuleUsernameLength(val) {
+			return ErrInvalidVotedValidators()
+		}
 	}
 
 	return nil

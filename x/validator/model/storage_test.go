@@ -27,8 +27,6 @@ func setup(t *testing.T) (sdk.Context, ValidatorStorage) {
 	}
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	vs := NewValidatorStorage(TestKVStoreKey)
-	err = vs.InitGenesis(ctx)
-	assert.Nil(t, err)
 	return ctx, vs
 }
 
@@ -70,10 +68,7 @@ func TestValidator(t *testing.T) {
 			Username:      tc.user,
 			ReceivedVotes: tc.votes,
 		}
-		err := vs.SetValidator(ctx, tc.user, &validator)
-		if err != nil {
-			t.Errorf("%s: failed to set validator, got err %v", tc.testName, err)
-		}
+		vs.SetValidator(ctx, tc.user, &validator)
 
 		valPtr, err := vs.GetValidator(ctx, tc.user)
 		if err != nil {
@@ -119,15 +114,9 @@ func TestValidatorList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		err := vs.SetValidatorList(ctx, &tc.valList)
-		if err != nil {
-			t.Errorf("%s: failed to set validator list, got err %v", tc.testName, err)
-		}
+		vs.SetValidatorList(ctx, &tc.valList)
 
-		valListPtr, err := vs.GetValidatorList(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get validator list, got err %v", tc.testName, err)
-		}
+		valListPtr := vs.GetValidatorList(ctx)
 		if !assert.Equal(t, tc.valList, *valListPtr) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *valListPtr, tc.valList)
 		}
@@ -157,15 +146,9 @@ func TestElectionVoteList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		err := vs.SetElectionVoteList(ctx, tc.user, &tc.lst)
-		if err != nil {
-			t.Errorf("%s: failed to set election list, got err %v", tc.testName, err)
-		}
+		vs.SetElectionVoteList(ctx, tc.user, &tc.lst)
 
-		lstPtr, err := vs.GetElectionVoteList(ctx, tc.user)
-		if err != nil {
-			t.Errorf("%s: failed to get election list, got err %v", tc.testName, err)
-		}
+		lstPtr := vs.GetElectionVoteList(ctx, tc.user)
 		if !assert.Equal(t, tc.lst, *lstPtr) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, *lstPtr, tc.lst)
 		}
