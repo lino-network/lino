@@ -375,6 +375,7 @@ func (suite *AnteTestSuite) TestGetMsgSignerAddrAndSignerAddr() {
 		expectSignerAddr    sdk.AccAddress
 		expectMsgSignerAddr sdk.AccAddress
 		expectErr           sdk.Error
+		isPaid              bool
 	}{
 		{
 			testName:            "get signer from address",
@@ -421,11 +422,21 @@ func (suite *AnteTestSuite) TestGetMsgSignerAddrAndSignerAddr() {
 			expectMsgSignerAddr: nil,
 			expectErr:           accmodel.ErrAccountBankNotFound(),
 		},
+		{
+			testName:            "sign key without bank struct but paid",
+			signer:              types.AccountKey(newPrivKey.PubKey().Address()),
+			signKey:             newPrivKey.PubKey(),
+			permission:          types.AppPermission,
+			expectSignerAddr:    sdk.AccAddress(newPrivKey.PubKey().Address()),
+			expectMsgSignerAddr: sdk.AccAddress(newPrivKey.PubKey().Address()),
+			expectErr:           nil,
+			isPaid:              true,
+		},
 	}
 
 	for _, tc := range testCases {
 		signerAddr, msgSignerAddr, err := getMsgSignerAddrAndSignerAddr(
-			suite.ctx, suite.am, tc.signer, tc.signKey, tc.permission, types.NewCoinFromInt64(0))
+			suite.ctx, suite.am, tc.signer, tc.signKey, tc.permission, types.NewCoinFromInt64(0), tc.isPaid)
 		suite.Equal(tc.expectSignerAddr, signerAddr, "%s", tc.testName)
 		suite.Equal(tc.expectMsgSignerAddr, msgSignerAddr, "%s", tc.testName)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)

@@ -32,7 +32,7 @@ type TransferDetailType int
 // indicates the type of punishment for oncall validators
 type PunishType int
 
-// GetPostKey try to generate PostKey from AccountKey and PostID
+// GetPermlink try to generate Permlink from AccountKey and PostID
 func GetPermlink(author AccountKey, postID string) Permlink {
 	return Permlink(string(author) + PermlinkSeparator + postID)
 }
@@ -74,9 +74,6 @@ func (ak AccountKey) IsUsername() bool {
 
 	match, err := regexp.MatchString(UsernameReCheck, string(ak))
 	if !match || err != nil {
-		return false
-	}
-	if !match {
 		return false
 	}
 

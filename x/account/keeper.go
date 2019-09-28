@@ -39,7 +39,7 @@ type AccountKeeper interface {
 		ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
 		permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error)
 	CheckSigningPubKeyOwnerByAddress(
-		ctx sdk.Context, addr sdk.AccAddress, signkey crypto.PubKey) sdk.Error
+		ctx sdk.Context, addr sdk.AccAddress, signkey crypto.PubKey, isPaid bool) sdk.Error
 	AuthorizePermission(
 		ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey,
 		validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error

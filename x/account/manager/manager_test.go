@@ -700,6 +700,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 		testName      string
 		address       sdk.AccAddress
 		signKey       crypto.PubKey
+		isPaid        bool
 		expectErr     sdk.Error
 		expectAccBank *model.AccountBank
 	}{
@@ -707,13 +708,26 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			testName:      "bank doesn't exist",
 			address:       sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
 			signKey:       txPrivKeys[0].PubKey(),
+			isPaid:        false,
 			expectErr:     model.ErrAccountBankNotFound(),
 			expectAccBank: nil,
+		},
+		{
+			testName:  "set bank to paid address",
+			address:   sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
+			signKey:   txPrivKeys[0].PubKey(),
+			isPaid:    true,
+			expectErr: nil,
+			expectAccBank: &model.AccountBank{
+				Saving: types.NewCoinFromInt64(0),
+				PubKey: txPrivKeys[0].PubKey(),
+			},
 		},
 		{
 			testName: "signing key mismatch",
 			address:  sdk.AccAddress(suite.unreg.TransactionKey.Address()),
 			signKey:  txPrivKeys[0].PubKey(),
+			isPaid:   false,
 			expectErr: sdk.ErrInvalidPubKey(
 				fmt.Sprintf("PubKey does not match Signer address %s", sdk.AccAddress(suite.unreg.TransactionKey.Address()))),
 			expectAccBank: &model.AccountBank{
@@ -724,6 +738,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			testName:  "set public key to bank without public key info",
 			address:   sdk.AccAddress(suite.unreg.TransactionKey.Address()),
 			signKey:   suite.unreg.TransactionKey,
+			isPaid:    false,
 			expectErr: nil,
 			expectAccBank: &model.AccountBank{
 				PubKey: suite.unreg.TransactionKey,
@@ -734,6 +749,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			testName:  "check public key from registered account",
 			address:   sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
 			signKey:   suite.userWithoutBalance.TransactionKey,
+			isPaid:    false,
 			expectErr: nil,
 			expectAccBank: &model.AccountBank{
 				PubKey:   suite.userWithoutBalance.TransactionKey,
@@ -743,7 +759,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.am.CheckSigningPubKeyOwnerByAddress(suite.Ctx, tc.address, tc.signKey)
+		err := suite.am.CheckSigningPubKeyOwnerByAddress(suite.Ctx, tc.address, tc.signKey, tc.isPaid)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 
 		bank, _ := suite.am.storage.GetBank(suite.Ctx, tc.address)

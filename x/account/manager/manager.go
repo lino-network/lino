@@ -420,12 +420,16 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 	return "", types.ErrCheckAuthenticatePubKeyOwner(me)
 }
 
-// CheckSigningPubKeyOwnerByAddress - given a public key, check if it is valid for given permission
+// CheckSigningPubKeyOwnerByAddress - given a public key, check if it is valid for address.
+// If tx is already paid then bank can be created.
 func (accManager AccountManager) CheckSigningPubKeyOwnerByAddress(
-	ctx sdk.Context, address sdk.AccAddress, signKey crypto.PubKey) sdk.Error {
+	ctx sdk.Context, address sdk.AccAddress, signKey crypto.PubKey, isPaid bool) sdk.Error {
 	bank, err := accManager.storage.GetBank(ctx, address)
 	if err != nil {
-		return err
+		if !isPaid || err.Code() != linotypes.CodeAccountBankNotFound {
+			return err
+		}
+		bank = &model.AccountBank{}
 	}
 
 	if bank.PubKey == nil {

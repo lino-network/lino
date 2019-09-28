@@ -79,7 +79,7 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 
 			for _, msgSigner := range msgSigners {
 				signerAddr, msgSignerAddr, err := getMsgSignerAddrAndSignerAddr(
-					ctx, am, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
+					ctx, am, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount, idx > 0)
 				if err != nil {
 					return ctx, err.Result(), true
 				}
@@ -117,8 +117,8 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 
 // this function return the actual signer of the msg (grant permission) and original signer of the msg
 func getMsgSignerAddrAndSignerAddr(
-	ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey,
-	signKey crypto.PubKey, permission types.Permission, amount types.Coin) (signerAddr sdk.AccAddress, msgSignerAddr sdk.AccAddress, err sdk.Error) {
+	ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey, signKey crypto.PubKey, permission types.Permission,
+	amount types.Coin, isPaid bool) (signerAddr sdk.AccAddress, msgSignerAddr sdk.AccAddress, err sdk.Error) {
 	if msgSigner.IsUsername() {
 		// if original signer is username
 		// check public key is valid to sign this msg
@@ -139,7 +139,7 @@ func getMsgSignerAddrAndSignerAddr(
 		}
 	} else {
 		// if signer is address
-		if err := am.CheckSigningPubKeyOwnerByAddress(ctx, sdk.AccAddress(msgSigner), signKey); err != nil {
+		if err := am.CheckSigningPubKeyOwnerByAddress(ctx, sdk.AccAddress(msgSigner), signKey, isPaid); err != nil {
 			return nil, nil, err
 		}
 		// msg actual signer is the same as original signer
