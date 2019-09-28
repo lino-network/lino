@@ -38,7 +38,7 @@ func (vs ValidatorStorage) GetValidator(ctx sdk.Context, accKey linotypes.Accoun
 	store := ctx.KVStore(vs.key)
 	validatorByte := store.Get(GetValidatorKey(accKey))
 	if validatorByte == nil {
-		return nil, types.ErrValidatorNotFound()
+		return nil, types.ErrValidatorNotFound(accKey)
 	}
 	validator := new(Validator)
 	vs.cdc.MustUnmarshalBinaryLengthPrefixed(validatorByte, validator)

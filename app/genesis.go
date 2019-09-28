@@ -173,6 +173,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 				OncallInflationWeight:          int64(2),
 				StandbyInflationWeight:         int64(1),
+				MaxVotedValidators:             int64(3),
 			},
 			param.CoinDayParam{
 				SecondsToRecoverCoinDay: int64(7 * 24 * 3600),

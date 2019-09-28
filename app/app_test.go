@@ -235,6 +235,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 			OncallInflationWeight:          int64(2),
 			StandbyInflationWeight:         int64(1),
+			MaxVotedValidators:             int64(3),
 		},
 		param.CoinDayParam{
 			SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
@@ -352,7 +353,6 @@ func TestDistributeInflationToValidators(t *testing.T) {
 
 func TestFireByzantineValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
-
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
 			Height:  lb.LastBlockHeight() + 1,

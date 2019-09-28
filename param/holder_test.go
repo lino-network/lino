@@ -94,6 +94,7 @@ func TestValidatorParam(t *testing.T) {
 		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 	err := ph.setValidatorParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -246,6 +247,7 @@ func TestInitParam(t *testing.T) {
 		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 
 	voteParam := VoteParam{
@@ -342,6 +344,7 @@ func TestInitParamFromConfig(t *testing.T) {
 		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 
 	voteParam := VoteParam{

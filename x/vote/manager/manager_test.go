@@ -446,8 +446,8 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 }
 
 func (suite *VoteManagerTestSuite) TestSlashStake() {
-	suite.hooks.On("AfterSubtractingStake", mock.Anything, suite.user2).Return(nil).Maybe()
-	suite.hooks.On("AfterSubtractingStake", mock.Anything, suite.user3).Return(nil).Maybe()
+	suite.hooks.On("AfterSlashing", mock.Anything, suite.user2).Return(nil).Maybe()
+	suite.hooks.On("AfterSlashing", mock.Anything, suite.user3).Return(nil).Maybe()
 	// add stake to user2
 	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
 	suite.Nil(e)

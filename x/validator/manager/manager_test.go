@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -82,6 +83,7 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}, nil).Maybe()
 
 }
@@ -131,6 +133,31 @@ func (suite *ValidatorManagerTestSuite) TestAddValidatortToOncallList() {
 				LowestStandby:      linotypes.AccountKey(""),
 			},
 			expectPower: 1000,
+		},
+		{
+			testName: "add user to oncall2",
+			username: linotypes.AccountKey("test"),
+			prevVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: secp256k1.GenPrivKey().PubKey().Address(),
+					Power:   0},
+				Username:      linotypes.AccountKey("test"),
+				ReceivedVotes: linotypes.NewCoinFromInt64(900000000000 * linotypes.Decimals),
+			},
+			prevList: model.ValidatorList{
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			expectList: model.ValidatorList{
+				Oncall:             []linotypes.AccountKey{linotypes.AccountKey("test")},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			expectPower: 100000000000,
 		},
 	}
 
@@ -557,6 +584,21 @@ func (suite *ValidatorManagerTestSuite) TestGetHighestVotesAndValidator() {
 			expectValName: linotypes.AccountKey("test1"),
 			expectVotes:   linotypes.NewCoinFromInt64(10000000),
 		},
+		{
+			testName: "get highest votes and val2",
+			validators: map[linotypes.AccountKey]linotypes.Coin{
+				linotypes.AccountKey("test1"): linotypes.NewCoinFromInt64(0),
+				linotypes.AccountKey("test2"): linotypes.NewCoinFromInt64(0),
+				linotypes.AccountKey("test3"): linotypes.NewCoinFromInt64(0),
+			},
+			lst: []linotypes.AccountKey{
+				linotypes.AccountKey("test1"),
+				linotypes.AccountKey("test2"),
+				linotypes.AccountKey("test3"),
+			},
+			expectValName: linotypes.AccountKey("test3"),
+			expectVotes:   linotypes.NewCoinFromInt64(0),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -590,6 +632,21 @@ func (suite *ValidatorManagerTestSuite) TestGetLowestVotesAndValidator() {
 			},
 			expectValName: linotypes.AccountKey("test3"),
 			expectVotes:   linotypes.NewCoinFromInt64(1),
+		},
+		{
+			testName: "get lowest votes and val2",
+			validators: map[linotypes.AccountKey]linotypes.Coin{
+				linotypes.AccountKey("test1"): linotypes.NewCoinFromInt64(math.MaxInt64),
+				linotypes.AccountKey("test2"): linotypes.NewCoinFromInt64(math.MaxInt64),
+				linotypes.AccountKey("test3"): linotypes.NewCoinFromInt64(math.MaxInt64),
+			},
+			lst: []linotypes.AccountKey{
+				linotypes.AccountKey("test1"),
+				linotypes.AccountKey("test2"),
+				linotypes.AccountKey("test3"),
+			},
+			expectValName: linotypes.AccountKey("test3"),
+			expectVotes:   linotypes.NewCoinFromInt64(math.MaxInt64),
 		},
 	}
 
@@ -1803,8 +1860,8 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesDec() {
 			decreasedUser: linotypes.AccountKey("test2"),
 			expectList: model.ValidatorList{
 				Oncall: []linotypes.AccountKey{
-					linotypes.AccountKey("test4"),
 					linotypes.AccountKey("test3"),
+					linotypes.AccountKey("test4"),
 					linotypes.AccountKey("test2"),
 				},
 				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
@@ -2019,8 +2076,8 @@ func (suite *ValidatorManagerTestSuite) TestOnOncallVotesDec() {
 				},
 				Standby: []linotypes.AccountKey{
 					linotypes.AccountKey("test4"),
-					linotypes.AccountKey("test2"),
 					linotypes.AccountKey("test3"),
+					linotypes.AccountKey("test2"),
 				},
 				Candidates: []linotypes.AccountKey{
 					linotypes.AccountKey("test1"),
@@ -2342,7 +2399,7 @@ func (suite *ValidatorManagerTestSuite) TestVoteValidator() {
 				linotypes.AccountKey("test2"): linotypes.NewCoinFromInt64(300),
 				linotypes.AccountKey("test3"): linotypes.NewCoinFromInt64(400),
 			},
-			expectRes: types.ErrValidatorNotFound(),
+			expectRes: types.ErrValidatorNotFound(linotypes.AccountKey("dummy")),
 		},
 	}
 	for _, tc := range testCases {

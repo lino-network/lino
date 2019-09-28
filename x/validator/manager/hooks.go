@@ -15,6 +15,10 @@ func (vm ValidatorManager) AfterSubtractingStake(ctx sdk.Context, username linot
 	return vm.onStakeChange(ctx, username)
 }
 
+func (vm ValidatorManager) AfterSlashing(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	return nil
+}
+
 type Hooks struct {
 	vm ValidatorManager
 }
@@ -32,4 +36,8 @@ func (h Hooks) AfterAddingStake(ctx sdk.Context, username linotypes.AccountKey) 
 
 func (h Hooks) AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	return h.vm.AfterSubtractingStake(ctx, username)
+}
+
+func (h Hooks) AfterSlashing(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	return h.vm.AfterSlashing(ctx, username)
 }

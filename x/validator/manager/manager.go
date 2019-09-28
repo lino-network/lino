@@ -127,10 +127,14 @@ func (vm ValidatorManager) RevokeValidator(ctx sdk.Context, username linotypes.A
 
 func (vm ValidatorManager) VoteValidator(ctx sdk.Context, username linotypes.AccountKey,
 	votedValidators []linotypes.AccountKey) sdk.Error {
+	param := vm.paramHolder.GetValidatorParam(ctx)
+	if int64(len(votedValidators)) > param.MaxVotedValidators {
+		return types.ErrInvalidVotedValidators()
+	}
 	// check if voted validators exist
 	for _, valName := range votedValidators {
 		if !vm.IsLegalValidator(ctx, valName) {
-			return types.ErrValidatorNotFound()
+			return types.ErrValidatorNotFound(valName)
 		}
 	}
 
@@ -436,14 +440,15 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	// slash and add slashed coin back into validator inflation pool
 	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
 	if err != nil {
+
 		return err
 	}
-
 	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
 		return err
 	}
 
 	if punishType == linotypes.PunishAbsentCommit {
+
 		// reset absent commit
 		validator, err := vm.storage.GetValidator(ctx, username)
 		if err != nil {
@@ -462,6 +467,7 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	// OR, we explicitly want to fire this validator
 	param := vm.paramHolder.GetValidatorParam(ctx)
 	if punishType == linotypes.PunishByzantine || !totalStake.IsGTE(param.ValidatorMinDeposit) {
+
 		if err := vm.removeValidatorFromAllLists(ctx, username); err != nil {
 			return err
 		}
@@ -486,6 +492,7 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
 	for _, validatorName := range committingValidators {
 		validator, err := vm.storage.GetValidator(ctx, validatorName)
 		if err != nil {
+
 			return err
 		}
 
@@ -493,6 +500,7 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
 			if reflect.DeepEqual(validator.ABCIValidator.Address, evidence.Validator.Address) {
 				if err := vm.punishCommittingValidator(ctx, validator.Username, param.PenaltyByzantine,
 					linotypes.PunishByzantine); err != nil {
+
 					return err
 				}
 				break
@@ -607,33 +615,22 @@ func (vm ValidatorManager) onOncallVotesInc(ctx sdk.Context, username linotypes.
 }
 
 func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	lst := vm.GetValidatorList(ctx)
 	validator, err := vm.GetValidator(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	lst := vm.GetValidatorList(ctx)
 	if validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
 		return nil
 	}
 
-	// need to exchange position with the highest votes candidates if it's votes greater than me.
-	highestCandidate, highestCandidateVotes, err := vm.getHighestVotesAndValidator(ctx, lst.Candidates)
-	if err != nil {
+	vm.removeValidatorFromStandbyList(ctx, username)
+
+	if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 		return err
 	}
 
-	if highestCandidateVotes.IsGT(validator.ReceivedVotes) {
-		vm.removeValidatorFromCandidateList(ctx, highestCandidate)
-		vm.removeValidatorFromStandbyList(ctx, username)
-		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
-			return err
-		}
-		if err := vm.addValidatortToStandbyList(ctx, highestCandidate); err != nil {
-			return err
-		}
-
-	}
 	if err := vm.balanceValidatorList(ctx); err != nil {
 		return err
 	}
@@ -641,51 +638,32 @@ func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes
 }
 
 func (vm ValidatorManager) onOncallVotesDec(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	lst := vm.GetValidatorList(ctx)
+
 	validator, err := vm.GetValidator(ctx, username)
 	if err != nil {
 		return err
 	}
 
-	lst := vm.GetValidatorList(ctx)
 	if validator.ReceivedVotes.IsGTE(lst.LowestOncallVotes) {
 		return nil
 	}
 
-	// need to exchange position with the highest votes standby if it's votes greater than me.
-	highestStandby, highestStandbyVotes, err := vm.getHighestVotesAndValidator(ctx, lst.Standby)
-	if err != nil {
-		return err
-	}
-
-	if highestStandbyVotes.IsGT(validator.ReceivedVotes) {
-		vm.removeValidatorFromStandbyList(ctx, highestStandby)
-		vm.removeValidatorFromOncallList(ctx, username)
-		if err := vm.addValidatortToOncallList(ctx, highestStandby); err != nil {
+	vm.removeValidatorFromOncallList(ctx, username)
+	if !validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
+		// move to the candidate validator list
+		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 			return err
 		}
+	} else {
+
+		// move to the standby validator list
 		if err := vm.addValidatortToStandbyList(ctx, username); err != nil {
 			return err
 		}
 	}
-
-	// need to exchange position with the highest votes candidate if it's votes greater than me.
-	highestCandidate, highestCandidateVotes, err := vm.getHighestVotesAndValidator(ctx, lst.Candidates)
-	if err != nil {
-		return err
-	}
-
-	if highestCandidateVotes.IsGT(validator.ReceivedVotes) {
-		vm.removeValidatorFromCandidateList(ctx, highestCandidate)
-		vm.removeValidatorFromStandbyList(ctx, username)
-		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
-			return err
-		}
-		if err := vm.addValidatortToStandbyList(ctx, highestCandidate); err != nil {
-			return err
-		}
-	}
-
 	if err := vm.balanceValidatorList(ctx); err != nil {
+
 		return err
 	}
 	return nil
@@ -862,7 +840,13 @@ func (vm ValidatorManager) addValidatortToOncallList(ctx sdk.Context, username l
 		return err
 	}
 	// set oncall validator committing power equal to it's votes (lino)
-	me.ABCIValidator.Power = votesCoinInt64 / linotypes.Decimals
+	powerLNO := votesCoinInt64 / linotypes.Decimals
+	if powerLNO > linotypes.ValidatorMaxPower {
+		me.ABCIValidator.Power = linotypes.ValidatorMaxPower
+	} else {
+		me.ABCIValidator.Power = powerLNO
+	}
+
 	vm.storage.SetValidator(ctx, username, me)
 	vm.storage.SetValidatorList(ctx, lst)
 	return nil
@@ -932,7 +916,7 @@ func (vm ValidatorManager) getHighestVotesAndValidator(ctx sdk.Context,
 		if err != nil {
 			return highestValdator, linotypes.NewCoinFromInt64(0), err
 		}
-		if validator.ReceivedVotes.IsGT(highestValdatorVotes) {
+		if validator.ReceivedVotes.IsGTE(highestValdatorVotes) {
 			highestValdator = validator.Username
 			highestValdatorVotes = validator.ReceivedVotes
 		}
@@ -950,7 +934,7 @@ func (vm ValidatorManager) getLowestVotesAndValidator(ctx sdk.Context,
 		if err != nil {
 			return lowestValdator, linotypes.NewCoinFromInt64(0), err
 		}
-		if lowestValdatorVotes.IsGT(validator.ReceivedVotes) {
+		if lowestValdatorVotes.IsGTE(validator.ReceivedVotes) {
 			lowestValdator = validator.Username
 			lowestValdatorVotes = validator.ReceivedVotes
 		}
@@ -1054,6 +1038,22 @@ func (vm ValidatorManager) getPrevVotes(ctx sdk.Context, user linotypes.AccountK
 		return linotypes.NewCoinFromInt64(0)
 	}
 	return val.ReceivedVotes
+}
+
+func (vm ValidatorManager) GetCommittingValidatorVoteStatus(ctx sdk.Context) ([]model.ReceivedVotesStatus, sdk.Error) {
+	lst := vm.GetCommittingValidators(ctx)
+	res := []model.ReceivedVotesStatus{}
+	for _, name := range lst {
+		val, err := vm.storage.GetValidator(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, model.ReceivedVotesStatus{
+			ValidatorName: name,
+			ReceivedVotes: val.ReceivedVotes,
+		})
+	}
+	return res, nil
 }
 
 // // Export storage state.

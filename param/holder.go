@@ -95,6 +95,7 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
 		return err

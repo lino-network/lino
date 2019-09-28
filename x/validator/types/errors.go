@@ -58,8 +58,8 @@ func ErrQueryFailed() sdk.Error {
 }
 
 // not found
-func ErrValidatorNotFound() sdk.Error {
-	return linotypes.NewError(linotypes.CodeValidatorNotFound, fmt.Sprintf("validator is not found"))
+func ErrValidatorNotFound(username linotypes.AccountKey) sdk.Error {
+	return linotypes.NewError(linotypes.CodeValidatorNotFound, fmt.Sprintf("validator %s is not found", username))
 }
 
 func ErrValidatorListNotFound() sdk.Error {

@@ -26,6 +26,11 @@ type ElectionVote struct {
 	Vote          linotypes.Coin       `json:"votes"`
 }
 
+type ReceivedVotesStatus struct {
+	ValidatorName linotypes.AccountKey `json:"validator_name"`
+	ReceivedVotes linotypes.Coin       `json:"received_votes"`
+}
+
 type ElectionVoteList struct {
 	ElectionVotes []ElectionVote `json:"election_votes"`
 }

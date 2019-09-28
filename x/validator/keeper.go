@@ -29,6 +29,7 @@ type ValidatorKeeper interface {
 	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
 	GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey
 	SetValidatorList(ctx sdk.Context, lst *model.ValidatorList)
+	GetCommittingValidatorVoteStatus(ctx sdk.Context) ([]model.ReceivedVotesStatus, sdk.Error)
 }
 
 var _ ValidatorKeeper = votemn.ValidatorManager{}

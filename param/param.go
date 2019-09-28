@@ -98,6 +98,7 @@ type DeveloperParam struct {
 // ValidatorRevokePendingSec - how many seconds before unassign validator duty
 // OncallInflationWeight - oncall validator's weight when distributing inflation
 // StandbyInflationWeight - standby validator's weight when distributing inflation
+// MaxVotedValidators - the number of max validators one voter can vote
 type ValidatorParam struct {
 	ValidatorMinDeposit            types.Coin `json:"validator_min_deposit"`
 	ValidatorCoinReturnIntervalSec int64      `json:"validator_coin_return_second"`
@@ -110,6 +111,7 @@ type ValidatorParam struct {
 	ValidatorRevokePendingSec      int64      `json:"validator_revoke_pending_sec"`
 	OncallInflationWeight          int64      `json:"oncall_inflation_weight"`
 	StandbyInflationWeight         int64      `json:"standby_inflation_weight"`
+	MaxVotedValidators             int64      `json:"max_voted_validators"`
 }
 
 // CoinDayParam - coin day parameters

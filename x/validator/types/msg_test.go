@@ -86,11 +86,6 @@ func TestVoteValidatorMsg(t *testing.T) {
 		},
 		{
 			testName:      "invalid voted validators",
-			msg:           NewVoteValidatorMsg("user1", []string{"val1", "val2", "val3", "val4"}),
-			expectedError: ErrInvalidVotedValidators(),
-		},
-		{
-			testName:      "invalid voted validators",
 			msg:           NewVoteValidatorMsg("user1", []string{}),
 			expectedError: ErrInvalidVotedValidators(),
 		},
