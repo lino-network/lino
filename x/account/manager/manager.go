@@ -463,7 +463,9 @@ func (accManager AccountManager) RecoverAccount(
 		if err.Code() != model.ErrAccountBankNotFound().Code() {
 			return err
 		}
-		newBank = &model.AccountBank{}
+		newBank = &model.AccountBank{
+			Saving: linotypes.NewCoinFromInt64(0),
+		}
 	}
 	if newBank.Username != "" {
 		return types.ErrAddressAlreadyTaken(hex.EncodeToString(newAddr))
@@ -480,6 +482,7 @@ func (accManager AccountManager) RecoverAccount(
 
 	newBank.Sequence += oldBank.Sequence
 	newBank.Saving = newBank.Saving.Plus(oldBank.Saving)
+	newBank.PubKey = newTransactionPubKey
 	oldBank.Saving = linotypes.NewCoinFromInt64(0)
 
 	accInfo.Address = newAddr

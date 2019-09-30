@@ -8,6 +8,7 @@ import (
 // RegisterWire - register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(RegisterMsg{}, "lino/register", nil)
+	cdc.RegisterConcrete(RegisterMsgV2{}, "lino/registerv2", nil)
 	cdc.RegisterConcrete(TransferMsg{}, "lino/transfer", nil)
 	cdc.RegisterConcrete(RecoverMsg{}, "lino/recover", nil)
 	cdc.RegisterConcrete(UpdateAccountMsg{}, "lino/updateAcc", nil)

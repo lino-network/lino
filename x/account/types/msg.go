@@ -13,6 +13,7 @@ import (
 var _ types.Msg = TransferMsg{}
 var _ types.Msg = RecoverMsg{}
 var _ types.Msg = RegisterMsg{}
+var _ types.Msg = RegisterMsgV2{}
 var _ types.Msg = UpdateAccountMsg{}
 
 // RegisterMsg - bind username with public key, need to be referred by others (pay for it)
@@ -23,6 +24,15 @@ type RegisterMsg struct {
 	NewResetPubKey       crypto.PubKey    `json:"new_reset_public_key"`
 	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
 	NewAppPubKey         crypto.PubKey    `json:"new_app_public_key"`
+}
+
+// RegisterMsgV2 - bind username with public key, need to be referred by others (pay for it)
+type RegisterMsgV2 struct {
+	Referrer             types.AccountKey `json:"referrer"`
+	RegisterFee          types.LNO        `json:"register_fee"`
+	NewUser              types.AccountKey `json:"new_username"`
+	NewTransactionPubKey crypto.PubKey    `json:"new_transaction_public_key"`
+	NewSigningPubKey     crypto.PubKey    `json:"new_signing_public_key"`
 }
 
 // RecoverMsg - replace three public keys
@@ -279,5 +289,66 @@ func (msg UpdateAccountMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implements types.Msg
 func (msg UpdateAccountMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
+// NewRegisterMsgV2 - construct register msg.
+func NewRegisterMsgV2(
+	referrer string, newUser string, registerFee types.LNO,
+	transactionPubkey, signingPubKey crypto.PubKey) RegisterMsgV2 {
+	return RegisterMsgV2{
+		Referrer:             types.AccountKey(referrer),
+		NewUser:              types.AccountKey(newUser),
+		RegisterFee:          registerFee,
+		NewTransactionPubKey: transactionPubkey,
+		NewSigningPubKey:     signingPubKey,
+	}
+}
+
+// Route - implements sdk.Msg
+func (msg RegisterMsgV2) Route() string { return RouterKey }
+
+// Type - implements sdk.Msg
+func (msg RegisterMsgV2) Type() string { return RegisterMsgV2Type }
+
+// ValidateBasic - implements sdk.Msg
+func (msg RegisterMsgV2) ValidateBasic() sdk.Error {
+	if !msg.NewUser.IsUsername() {
+		return ErrInvalidUsername("illegal username")
+	}
+
+	_, coinErr := types.LinoToCoin(msg.RegisterFee)
+	if coinErr != nil {
+		return coinErr
+	}
+	return nil
+}
+
+func (msg RegisterMsgV2) String() string {
+	return fmt.Sprintf("RegisterMsgV2{Newuser:%v, Referrer: %s, Tx Key:%v, Signing Key:%v}",
+		msg.NewUser, msg.Referrer, msg.NewTransactionPubKey, msg.NewSigningPubKey)
+}
+
+// GetSignBytes - implements sdk.Msg
+func (msg RegisterMsgV2) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// GetPermission - implements types.Msg
+func (msg RegisterMsgV2) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+// GetSigners - implements sdk.Msg
+func (msg RegisterMsgV2) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Referrer), sdk.AccAddress(msg.NewTransactionPubKey.Address())}
+}
+
+// GetConsumeAmount - implements types.Msg
+func (msg RegisterMsgV2) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

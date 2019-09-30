@@ -92,8 +92,9 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.NoError(err)
 
 	suite.ph.On("GetAccountParam", mock.Anything).Return(&parammodel.AccountParam{
-		RegisterFee:    suite.registerFee,
-		MinimumBalance: types.NewCoinFromInt64(0),
+		RegisterFee:       suite.registerFee,
+		MinimumBalance:    types.NewCoinFromInt64(0),
+		MaxNumFrozenMoney: 10,
 	}, nil).Maybe()
 
 	// // reg accounts
@@ -861,276 +862,6 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwner() {
 	}
 }
 
-// 		{
-// 			testName:           "check user's transaction key",
-// 			checkUser:          user1,
-// 			checkPubKey:        transactionKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.TransactionPermission,
-// 			expectUser:         user1,
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check user's app key",
-// 			checkUser:          user1,
-// 			checkPubKey:        appKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.AppPermission,
-// 			expectUser:         user1,
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "user's transaction key can authorize grant app permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        transactionKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.GrantAppPermission,
-// 			expectUser:         user1,
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "user's transaction key can authorize app permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        transactionKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			permission:         types.AppPermission,
-// 			expectUser:         user1,
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check user's transaction key can't authorize reset permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        transactionKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.ResetPermission,
-// 			expectUser:         user1,
-// 			expectResult:       ErrCheckResetKey(),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check user's app key can authorize grant app permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        appKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.GrantAppPermission,
-// 			expectUser:         user1,
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check user's app key can't authorize transaction permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        appKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.TransactionPermission,
-// 			expectUser:         user1,
-// 			expectResult:       ErrCheckTransactionKey(),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check user's app key can't authorize reset permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        appKey.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.ResetPermission,
-// 			expectUser:         user1,
-// 			expectResult:       ErrCheckResetKey(),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:     "check app pubkey of user with app permission",
-// 			checkUser:    user1,
-// 			checkPubKey:  authAppPriv.PubKey(),
-// 			atWhen:       baseTime,
-// 			amount:       types.NewCoinFromInt64(0),
-// 			permission:   types.AppPermission,
-// 			expectUser:   appPermissionUser,
-// 			expectResult: nil,
-// 			expectGrantPubKeys: []*model.GrantPermission{
-// 				&model.GrantPermission{
-// 					GrantTo:    appPermissionUser,
-// 					Permission: types.AppPermission,
-// 					CreatedAt:  baseTime.Unix(),
-// 					ExpiresAt:  baseTime.Unix() + 100,
-// 					Amount:     types.NewCoinFromInt64(0),
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName:           "check transaction pubkey of user with app permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        unauthTxPriv.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(0),
-// 			permission:         types.PreAuthorizationPermission,
-// 			expectUser:         "",
-// 			expectResult:       nil,
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check unauthorized user app pubkey",
-// 			checkUser:          user1,
-// 			checkPubKey:        unauthPriv2.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(10),
-// 			permission:         types.AppPermission,
-// 			expectUser:         "",
-// 			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check unauthorized user transaction pubkey",
-// 			checkUser:          user1,
-// 			checkPubKey:        unauthPriv1.PubKey(),
-// 			atWhen:             baseTime,
-// 			amount:             types.NewCoinFromInt64(10),
-// 			permission:         types.PreAuthorizationPermission,
-// 			expectUser:         "",
-// 			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:     "check transaction pubkey of user with preauthorization permission",
-// 			checkUser:    user1,
-// 			checkPubKey:  authTxPriv.PubKey(),
-// 			atWhen:       baseTime,
-// 			amount:       types.NewCoinFromInt64(10),
-// 			permission:   types.PreAuthorizationPermission,
-// 			expectUser:   preAuthPermissionUser,
-// 			expectResult: nil,
-// 			expectGrantPubKeys: []*model.GrantPermission{
-// 				&model.GrantPermission{
-// 					GrantTo:    preAuthPermissionUser,
-// 					Permission: types.PreAuthorizationPermission,
-// 					CreatedAt:  baseTime.Unix(),
-// 					ExpiresAt:  baseTime.Unix() + 100,
-// 					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName:     "check app pubkey of user with preauthorization permission",
-// 			checkUser:    user1,
-// 			checkPubKey:  unauthAppPriv.PubKey(),
-// 			atWhen:       baseTime,
-// 			amount:       types.NewCoinFromInt64(10),
-// 			permission:   types.AppPermission,
-// 			expectUser:   preAuthPermissionUser,
-// 			expectResult: ErrCheckAuthenticatePubKeyOwner(user1),
-// 			expectGrantPubKeys: []*model.GrantPermission{
-// 				&model.GrantPermission{
-// 					GrantTo:    preAuthPermissionUser,
-// 					Permission: types.PreAuthorizationPermission,
-// 					CreatedAt:  baseTime.Unix(),
-// 					ExpiresAt:  baseTime.Unix() + 100,
-// 					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName:    "check amount exceeds preauthorization limitation",
-// 			checkUser:   user1,
-// 			checkPubKey: authTxPriv.PubKey(),
-// 			atWhen:      baseTime,
-// 			amount:      preAuthAmount,
-// 			permission:  types.PreAuthorizationPermission,
-// 			expectUser:  preAuthPermissionUser,
-// 			expectResult: ErrPreAuthAmountInsufficient(
-// 				preAuthPermissionUser, preAuthAmount.Minus(types.NewCoinFromInt64(10)),
-// 				preAuthAmount),
-// 			expectGrantPubKeys: []*model.GrantPermission{
-// 				&model.GrantPermission{
-// 					GrantTo:    preAuthPermissionUser,
-// 					Permission: types.PreAuthorizationPermission,
-// 					CreatedAt:  baseTime.Unix(),
-// 					ExpiresAt:  baseTime.Unix() + 100,
-// 					Amount:     preAuthAmount.Minus(types.NewCoinFromInt64(10)),
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName:     "check grant app key can't sign grant app msg",
-// 			checkUser:    user1,
-// 			checkPubKey:  authAppPriv.PubKey(),
-// 			atWhen:       baseTime,
-// 			permission:   types.GrantAppPermission,
-// 			expectUser:   appPermissionUser,
-// 			expectResult: ErrCheckGrantAppKey(),
-// 			expectGrantPubKeys: []*model.GrantPermission{
-// 				&model.GrantPermission{
-// 					GrantTo:    appPermissionUser,
-// 					Permission: types.AppPermission,
-// 					CreatedAt:  baseTime.Unix(),
-// 					ExpiresAt:  baseTime.Unix() + 100,
-// 					Amount:     types.NewCoinFromInt64(0),
-// 				},
-// 			},
-// 		},
-// 		{
-// 			testName:           "check expired app permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        authAppPriv.PubKey(),
-// 			atWhen:             baseTime.Add(time.Duration(101) * time.Second),
-// 			permission:         types.AppPermission,
-// 			expectUser:         "",
-// 			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 		{
-// 			testName:           "check expired preauth permission",
-// 			checkUser:          user1,
-// 			checkPubKey:        authTxPriv.PubKey(),
-// 			atWhen:             baseTime.Add(time.Duration(101) * time.Second),
-// 			amount:             types.NewCoinFromInt64(100),
-// 			permission:         types.PreAuthorizationPermission,
-// 			expectUser:         "",
-// 			expectResult:       ErrCheckAuthenticatePubKeyOwner(user1),
-// 			expectGrantPubKeys: nil,
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: tc.atWhen})
-// 		keyOwner, err := am.CheckSigningPubKeyOwner(ctx, tc.checkUser, tc.checkPubKey, tc.permission, tc.amount)
-// 		if tc.expectResult == nil {
-// 			if tc.expectUser != keyOwner {
-// 				t.Errorf("%s: diff key owner,  got %v, want %v", tc.testName, keyOwner, tc.expectUser)
-// 				return
-// 			}
-// 		} else {
-// 			fmt.Println(tc.testName, tc.expectResult.Result(), err)
-// 			if !assert.Equal(t, tc.expectResult.Result(), err.Result()) {
-// 				t.Errorf("%s: diff result,  got %v, want %v", tc.testName, err.Result(), tc.expectResult.Result())
-// 			}
-// 		}
-
-// 		grantPubKeys, err := am.storage.GetGrantPermissions(ctx, tc.checkUser, tc.expectUser)
-// 		if tc.expectGrantPubKeys == nil {
-// 			if err == nil {
-// 				t.Errorf("%s: got nil err", tc.testName)
-// 			}
-// 		} else {
-// 			if err != nil {
-// 				t.Errorf("%s: got non-empty err %v", tc.testName, err)
-// 			}
-// 			if len(tc.expectGrantPubKeys) != len(grantPubKeys) {
-// 				t.Errorf("%s: expect grant pubkey length is different,  got %v, want %v", tc.testName, len(grantPubKeys), len(tc.expectGrantPubKeys))
-// 			}
-// 		}
-// 	}
-// }
-
 func TestRevokePermission(t *testing.T) {
 	testName := "TestRevokePermission"
 
@@ -1337,73 +1068,6 @@ func TestAuthorizePermission(t *testing.T) {
 	}
 }
 
-// func TestAccountRecoverNormalCase(t *testing.T) {
-// 	testName := "TestAccountRecoverNormalCase"
-
-// 	ctx, am, _ := setupTest(t, 1)
-// 	accParam, _ := am.paramHolder.GetAccountParam(ctx)
-// 	user1 := types.AccountKey("user1")
-
-// 	coinDayParams, err := am.paramHolder.GetCoinDayParam(ctx)
-// 	if err != nil {
-// 		t.Errorf("%s: failed to get coin day param relationship, got err %v", testName, err)
-// 	}
-
-// 	createTestAccount(ctx, am, string(user1))
-
-// 	newResetPrivKey := secp256k1.GenPrivKey()
-// 	newTransactionPrivKey := secp256k1.GenPrivKey()
-// 	newAppPrivKey := secp256k1.GenPrivKey()
-
-// 	err = am.RecoverAccount(
-// 		ctx, user1, newResetPrivKey.PubKey(), newTransactionPrivKey.PubKey(),
-// 		newAppPrivKey.PubKey())
-// 	if err != nil {
-// 		t.Errorf("%s: failed to recover account, got err %v", testName, err)
-// 	}
-
-// 	accInfo := model.AccountInfo{
-// 		Username:       user1,
-// 		CreatedAt:      ctx.BlockHeader().Time.Unix(),
-// 		ResetKey:       newResetPrivKey.PubKey(),
-// 		TransactionKey: newTransactionPrivKey.PubKey(),
-// 		AppKey:         newAppPrivKey.PubKey(),
-// 	}
-// 	bank := model.AccountBank{
-// 		Saving:  accParam.RegisterFee,
-// 		CoinDay: accParam.RegisterFee,
-// 	}
-
-// 	checkAccountInfo(t, ctx, testName, user1, accInfo)
-// 	checkBankKVByUsername(t, ctx, testName, user1, bank)
-
-// 	pendingCoinDayQueue := model.PendingCoinDayQueue{
-// 		TotalCoinDay: sdk.ZeroDec(),
-// 		TotalCoin:    types.NewCoinFromInt64(0),
-// 	}
-// 	checkPendingCoinDay(t, ctx, testName, user1, pendingCoinDayQueue)
-
-// 	coinDay, err := am.GetCoinDay(ctx, user1)
-// 	if err != nil {
-// 		t.Errorf("%s: failed to get coin day, got err %v", testName, err)
-// 	}
-// 	if !coinDay.IsEqual(accParam.RegisterFee) {
-// 		t.Errorf("%s: diff coin day, got %v, want %v", testName, coinDay, accParam.RegisterFee)
-// 	}
-
-// 	ctx = ctx.WithBlockHeader(
-// 		abci.Header{
-// 			ChainID: "Lino", Height: 1,
-// 			Time: ctx.BlockHeader().Time.Add(time.Duration(coinDayParams.SecondsToRecoverCoinDay) * time.Second)})
-// 	coinDay, err = am.GetCoinDay(ctx, user1)
-// 	if err != nil {
-// 		t.Errorf("%s: failed to get coin day again, got err %v", testName, err)
-// 	}
-// 	if !coinDay.IsEqual(accParam.RegisterFee) {
-// 		t.Errorf("%s: diff coin day again, got %v, want %v", testName, coinDay, accParam.RegisterFee)
-// 	}
-// }
-
 func TestIncreaseSequenceByOne(t *testing.T) {
 	ctx, am, _ := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
@@ -1523,6 +1187,130 @@ func TestAddFrozenMoney(t *testing.T) {
 		if len(accountBank.FrozenMoneyList) != tc.expectNumOfFrozenAmount {
 			t.Errorf("%s: diff num of frozen money, got %v, want %v", tc.testName, len(accountBank.FrozenMoneyList), tc.expectNumOfFrozenAmount)
 		}
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestRecoverAccount() {
+	txPrivKeys := []crypto.PrivKey{secp256k1.GenPrivKey()}
+	err := suite.am.AddFrozenMoney(suite.Ctx, suite.userWithBalance.Username, types.NewCoinFromInt64(1), 0, 100, 10)
+	suite.Nil(err)
+	testCases := []struct {
+		testName         string
+		username         types.AccountKey
+		newTxPubKey      crypto.PubKey
+		newSigningPubKey crypto.PubKey
+		expectErr        sdk.Error
+		oldAddr          sdk.AccAddress
+		expectOldBank    *model.AccountBank
+		expectNewBank    *model.AccountBank
+		expectInfo       *model.AccountInfo
+	}{
+		{
+			testName:         "username doesn't exist",
+			username:         suite.unreg.Username,
+			newTxPubKey:      secp256k1.GenPrivKey().PubKey(),
+			newSigningPubKey: nil,
+			expectErr:        model.ErrAccountInfoNotFound(),
+			oldAddr:          sdk.AccAddress(suite.unreg.TransactionKey.Address()),
+			expectOldBank: &model.AccountBank{
+				Saving: suite.unregSaving,
+			},
+			expectNewBank: nil,
+			expectInfo:    nil,
+		},
+		{
+			testName:         "new bank linked to other account",
+			username:         suite.userWithoutBalance.Username,
+			newTxPubKey:      suite.userWithBalance.TransactionKey,
+			newSigningPubKey: nil,
+			expectErr: acctypes.ErrAddressAlreadyTaken(
+				hex.EncodeToString(suite.userWithBalance.TransactionKey.Address())),
+			oldAddr: sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
+			expectOldBank: &model.AccountBank{
+				Username: suite.userWithoutBalance.Username,
+				PubKey:   suite.userWithoutBalance.TransactionKey,
+				Saving:   types.NewCoinFromInt64(0),
+			},
+			expectNewBank: &model.AccountBank{
+				Username: suite.userWithBalance.Username,
+				PubKey:   suite.userWithBalance.TransactionKey,
+				Saving:   suite.userWithBalanceSaving,
+				FrozenMoneyList: []model.FrozenMoney{
+					{
+						Amount:   types.NewCoinFromInt64(1),
+						StartAt:  0,
+						Interval: 100,
+						Times:    10,
+					},
+				},
+			},
+			expectInfo: &suite.userWithoutBalance,
+		},
+		{
+			testName:         "recover to empty address",
+			username:         suite.userWithoutBalance.Username,
+			newTxPubKey:      txPrivKeys[0].PubKey(),
+			newSigningPubKey: nil,
+			expectErr:        nil,
+			oldAddr:          sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
+			expectOldBank: &model.AccountBank{
+				PubKey: suite.userWithoutBalance.TransactionKey,
+				Saving: types.NewCoinFromInt64(0),
+			},
+			expectNewBank: &model.AccountBank{
+				Username: suite.userWithoutBalance.Username,
+				PubKey:   txPrivKeys[0].PubKey(),
+				Saving:   types.NewCoinFromInt64(0),
+			},
+			expectInfo: &model.AccountInfo{
+				Username:       suite.userWithoutBalance.Username,
+				TransactionKey: txPrivKeys[0].PubKey(),
+				SigningKey:     nil,
+				Address:        sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
+			},
+		},
+		{
+			testName:         "recover to non empty address",
+			username:         suite.userWithBalance.Username,
+			newTxPubKey:      suite.unreg.TransactionKey,
+			newSigningPubKey: nil,
+			expectErr:        nil,
+			oldAddr:          sdk.AccAddress(suite.userWithBalance.TransactionKey.Address()),
+			expectOldBank: &model.AccountBank{
+				PubKey: suite.userWithBalance.TransactionKey,
+				Saving: types.NewCoinFromInt64(0),
+			},
+			expectNewBank: &model.AccountBank{
+				Username: suite.userWithBalance.Username,
+				PubKey:   suite.unreg.TransactionKey,
+				Saving:   suite.unregSaving.Plus(suite.userWithBalanceSaving),
+				FrozenMoneyList: []model.FrozenMoney{
+					{
+						Amount:   types.NewCoinFromInt64(1),
+						StartAt:  0,
+						Interval: 100,
+						Times:    10,
+					},
+				},
+			},
+			expectInfo: &model.AccountInfo{
+				Username:       suite.userWithBalance.Username,
+				TransactionKey: suite.unreg.TransactionKey,
+				SigningKey:     nil,
+				Address:        sdk.AccAddress(suite.unreg.TransactionKey.Address()),
+			},
+		},
+	}
+	for _, tc := range testCases {
+		err := suite.am.RecoverAccount(suite.Ctx, tc.username, tc.newTxPubKey, tc.newSigningPubKey)
+		fmt.Println(err)
+		suite.Equal(tc.expectErr, err, "%s", tc.testName)
+		oldBank, _ := suite.am.GetBankByAddress(suite.Ctx, tc.oldAddr)
+		suite.Equal(tc.expectOldBank, oldBank, "%s", tc.testName)
+		newBank, _ := suite.am.GetBankByAddress(suite.Ctx, sdk.AccAddress(tc.newTxPubKey.Address()))
+		suite.Equal(tc.expectNewBank, newBank, "%s", tc.testName)
+		info, _ := suite.am.GetInfo(suite.Ctx, tc.username)
+		suite.Equal(tc.expectInfo, info, "%s", tc.testName)
 	}
 }
 

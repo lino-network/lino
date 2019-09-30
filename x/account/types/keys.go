@@ -22,5 +22,6 @@ const (
 	TransferMsgType      = "TransferMsg"
 	RecoverMsgType       = "RecoverMsg"
 	RegisterMsgType      = "RegisterMsg"
+	RegisterMsgV2Type    = "RegisterMsgV2"
 	UpdateAccountMsgType = "UpdateAccountMsg"
 )
