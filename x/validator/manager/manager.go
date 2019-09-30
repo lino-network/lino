@@ -558,10 +558,6 @@ func (vm ValidatorManager) onCandidateVotesInc(ctx sdk.Context, username linotyp
 	}
 
 	lst := vm.GetValidatorList(ctx)
-	if !me.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
-		return nil
-	}
-
 	if me.ReceivedVotes.IsGT(lst.LowestOncallVotes) {
 		// join the oncall validator list
 		vm.removeValidatorFromCandidateList(ctx, username)
@@ -616,14 +612,12 @@ func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes
 		return err
 	}
 
-	if validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
-		return nil
-	}
+	if !validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
+		vm.removeValidatorFromStandbyList(ctx, username)
 
-	vm.removeValidatorFromStandbyList(ctx, username)
-
-	if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
-		return err
+		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
+			return err
+		}
 	}
 
 	if err := vm.balanceValidatorList(ctx); err != nil {
@@ -639,18 +633,15 @@ func (vm ValidatorManager) onOncallVotesDec(ctx sdk.Context, username linotypes.
 		return err
 	}
 
-	if validator.ReceivedVotes.IsGTE(lst.LowestOncallVotes) {
-		return nil
-	}
-
-	vm.removeValidatorFromOncallList(ctx, username)
 	if !validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
 		// move to the candidate validator list
+		vm.removeValidatorFromOncallList(ctx, username)
 		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 			return err
 		}
-	} else {
+	} else if !validator.ReceivedVotes.IsGTE(lst.LowestOncallVotes) {
 		// move to the standby validator list
+		vm.removeValidatorFromOncallList(ctx, username)
 		if err := vm.addValidatortToStandbyList(ctx, username); err != nil {
 			return err
 		}

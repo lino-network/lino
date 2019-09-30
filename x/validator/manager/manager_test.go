@@ -1369,6 +1369,74 @@ func (suite *ValidatorManagerTestSuite) TestOnCandidateVotesInc() {
 				LowestStandby:      linotypes.AccountKey("test2"),
 			},
 		},
+		{
+			testName: "on candidate votes inc7",
+			prevList: model.ValidatorList{
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test5"),
+				},
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test6"),
+				},
+				Candidates: []linotypes.AccountKey{
+					linotypes.AccountKey("test3"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(600),
+				LowestOncall:       linotypes.AccountKey("test6"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(500),
+				LowestStandby:      linotypes.AccountKey("test5"),
+			},
+			increasedUser: linotypes.AccountKey("test3"),
+			expectList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test6"),
+					linotypes.AccountKey("test5"),
+					linotypes.AccountKey("test3"),
+				},
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(300),
+				LowestOncall:       linotypes.AccountKey("test3"),
+			},
+		},
+		{
+			testName: "on candidate votes inc8",
+			prevList: model.ValidatorList{
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test4"),
+					linotypes.AccountKey("test3"),
+				},
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test7"),
+					linotypes.AccountKey("test6"),
+					linotypes.AccountKey("test5"),
+				},
+				Candidates: []linotypes.AccountKey{
+					linotypes.AccountKey("test1"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(500),
+				LowestOncall:       linotypes.AccountKey("test5"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(300),
+				LowestStandby:      linotypes.AccountKey("test3"),
+			},
+			increasedUser: linotypes.AccountKey("test1"),
+			expectList: model.ValidatorList{
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test4"),
+					linotypes.AccountKey("test3"),
+					linotypes.AccountKey("test1"),
+				},
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test7"),
+					linotypes.AccountKey("test6"),
+					linotypes.AccountKey("test5"),
+				},
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(100),
+				LowestStandby:      linotypes.AccountKey("test1"),
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(500),
+				LowestOncall:       linotypes.AccountKey("test5"),
+			},
+		},
 	}
 	for _, tc := range testCases {
 		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
@@ -1496,6 +1564,7 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesInc() {
 func (suite *ValidatorManagerTestSuite) TestOnOncallVotesInc() {
 	validators := map[linotypes.AccountKey]linotypes.Coin{
 		linotypes.AccountKey("test6"): linotypes.NewCoinFromInt64(600),
+		linotypes.AccountKey("test3"): linotypes.NewCoinFromInt64(300),
 	}
 	suite.SetupValidatorAndVotes(validators)
 
@@ -1525,6 +1594,32 @@ func (suite *ValidatorManagerTestSuite) TestOnOncallVotesInc() {
 				LowestStandby:      linotypes.AccountKey(""),
 				LowestOncallVotes:  linotypes.NewCoinFromInt64(600),
 				LowestOncall:       linotypes.AccountKey("test6"),
+			},
+		},
+		{
+			testName: "on oncall votes inc2",
+			prevList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test6"),
+				},
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test3"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(600),
+				LowestOncall:       linotypes.AccountKey("test6"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(300),
+				LowestStandby:      linotypes.AccountKey("test3"),
+			},
+			increasedUser: linotypes.AccountKey("test6"),
+			expectList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test6"),
+					linotypes.AccountKey("test3"),
+				},
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(300),
+				LowestOncall:       linotypes.AccountKey("test3"),
 			},
 		},
 	}
@@ -1843,7 +1938,7 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesDec() {
 		expectList    model.ValidatorList
 	}{
 		{
-			testName: "on standby votes dec2",
+			testName: "on standby votes dec1",
 			prevList: model.ValidatorList{
 				Standby: []linotypes.AccountKey{
 					linotypes.AccountKey("test3"),
@@ -1952,6 +2047,34 @@ func (suite *ValidatorManagerTestSuite) TestOnStandbyVotesDec() {
 				LowestStandby:      linotypes.AccountKey("test2"),
 				LowestOncallVotes:  linotypes.NewCoinFromInt64(500),
 				LowestOncall:       linotypes.AccountKey("test5"),
+			},
+		},
+		{
+			testName: "on standby votes dec4",
+			prevList: model.ValidatorList{
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test3"),
+					linotypes.AccountKey("test2"),
+				},
+				Candidates: []linotypes.AccountKey{
+					linotypes.AccountKey("test4"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(300),
+				LowestStandby:      linotypes.AccountKey("test3"),
+			},
+			decreasedUser: linotypes.AccountKey("test3"),
+			expectList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test3"),
+					linotypes.AccountKey("test2"),
+					linotypes.AccountKey("test4"),
+				},
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(200),
+				LowestOncall:       linotypes.AccountKey("test2"),
 			},
 		},
 	}
@@ -2097,6 +2220,32 @@ func (suite *ValidatorManagerTestSuite) TestOnOncallVotesDec() {
 				},
 				LowestOncallVotes:  linotypes.NewCoinFromInt64(100),
 				LowestOncall:       linotypes.AccountKey("test1"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			decreasedUser: linotypes.AccountKey("test2"),
+			expectList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test2"),
+					linotypes.AccountKey("test1"),
+				},
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(100),
+				LowestOncall:       linotypes.AccountKey("test1"),
+			},
+		},
+		{
+			testName: "on oncall votes dec5",
+			prevList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test2"),
+				},
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test1"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(200),
+				LowestOncall:       linotypes.AccountKey("test2"),
 				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
 				LowestStandby:      linotypes.AccountKey(""),
 			},
