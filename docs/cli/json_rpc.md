@@ -31,7 +31,7 @@ String - Current blockchain status.
 #### Example
 ```
 // Request
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"status"}' "https://fullnode.lino.network"
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"status"}' "https://fullnode.lino.network"
 
 // Result
 {
@@ -86,7 +86,7 @@ String - Block information.
 #### Example
 ```
 // Request
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"block", "params":{"height":"1"}}' "https://fullnode.lino.network" -s 'https://fullnode.lino.network/status'
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"block", "params":{"height":"1"}}' "https://fullnode.lino.network" -s 'https://fullnode.lino.network/status'
 
 // Result
 {
@@ -180,7 +180,7 @@ $ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"b
 To parse a transaction in the block:
 ```
 // Request
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"block", "params":{"height":"20000"}}' "https://fullnode.lino.network" | jq -r .result.block.data.txs[0] | base64 -d
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"block", "params":{"height":"20000"}}' "https://fullnode.lino.network" | jq -r .result.block.data.txs[0] | base64 -d
 
 // Result
 {
@@ -243,7 +243,7 @@ String - Tx information.
 #### Example
 ```
 // Request
-$  curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"tx", "params":{"hash":"3fTjLeArr8uLbRYxL6zJiRRhvpp+NX9FSqLAgdAY+9A="}}' "https://fullnode.lino.network"
+$  curl -X POST --data-binary '{"jsonrpc":"2.0","method":"tx", "params":{"hash":"3fTjLeArr8uLbRYxL6zJiRRhvpp+NX9FSqLAgdAY+9A="}}' "https://fullnode.lino.network"
 
 // Result
 {
@@ -295,7 +295,7 @@ String - Account information, which includes username, create time in unix, publ
 #### Example
 ```
 // Request, username is `ytu`
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/account/info/ytu","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/account/info/ytu","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
@@ -325,7 +325,7 @@ String - Bank information, which includes bank balance (in Lino Coin, 1 LINO = 1
 #### Example
 ```
 // Request, username is `ytu`
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/account/bank/ytu","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/account/bank/ytu","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
@@ -365,7 +365,7 @@ String - Post information, which includes author, post id, title, content, creat
 #### Example
 ```
 // Request, permlink is `pika35#VxWqSm2Wg`
-$  curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/post/info/pika35#VxWqSm2Wg","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$  curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/post/info/pika35#VxWqSm2Wg","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
@@ -393,7 +393,7 @@ String - Stake information, which includes total Lino stake (in Lino Coin, 1 LIN
 #### Example
 ```
 // Request, username is `dlivetv`
-$  curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/vote/voter/dlivetv","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$  curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/vote/voter/dlivetv","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
@@ -430,7 +430,7 @@ String - Stake information, which includes total Lino stake (in Lino Coin, 1 LIN
 #### Example
 ```
 // Request, username is `dlivetv`
-$  curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/vote/voter/dlivetv","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$  curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/vote/voter/dlivetv","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
@@ -467,7 +467,7 @@ String - Validator information, which number of poduced blocks, deposit (ytu 09/
 #### Example
 ```
 // Request, username is `validator1`
-$ curl -X POST --data-binary '{"jsonrpc":"2.0","id":"jsonrpc-client","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/validator/validator/validator1","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
+$ curl -X POST --data-binary '{"jsonrpc":"2.0","method":"abci_query","params":{"height":"0","trusted":false,"path":"/custom/validator/validator/validator1","data":""}}' "https://fullnode.lino.network" | jq -r .result.response.value | base64 -d | jq .
 
 // Result
 {
