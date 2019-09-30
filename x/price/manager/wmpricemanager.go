@@ -2,7 +2,6 @@ package manager
 
 import (
 	"sort"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -116,18 +115,18 @@ func (wm WeightedMedianPriceManager) FeedPrice(ctx sdk.Context, validator linoty
 	if !wm.isValidator(ctx, validator) {
 		return types.ErrNotAValidator(validator)
 	}
-	blocktime := ctx.BlockTime()
+	blocktime := ctx.BlockTime().Unix()
 	last, err := wm.store.GetFedPrice(ctx, validator)
-	feedEvery := wm.param.GetPriceParam(ctx).FeedEvery
+	feedEverySec := wm.param.GetPriceParam(ctx).FeedEverySec
 	// have fed price before(err is nil) and too frequent.
-	if err == nil && blocktime.Sub(time.Unix(last.UpdateAt, 0)) < feedEvery {
+	if err == nil && blocktime-last.UpdateAt < feedEverySec {
 		return types.ErrPriceFeedRateLimited()
 	}
 
 	wm.store.SetFedPrice(ctx, &model.FedPrice{
 		Validator: validator,
 		Price:     price,
-		UpdateAt:  blocktime.Unix(),
+		UpdateAt:  blocktime,
 	})
 	return nil
 }
@@ -214,12 +213,12 @@ func (wm WeightedMedianPriceManager) getWeightedValidators(ctx sdk.Context) []we
 // premise: fedPrice needs to be validated upon validators send update message.
 func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []weightedValidator) (rst []weightedValidator, err sdk.Error) {
 	lastValidatorSet := wm.lastRoundValidatorSet(ctx)
-	blocktime := ctx.BlockTime()
+	blocktime := ctx.BlockTime().Unix()
 	for i := range wvals {
 		valname := wvals[i].validator
 		fedPrice, err := wm.store.GetFedPrice(ctx, valname)
-		updateEvery := wm.param.GetPriceParam(ctx).UpdateEvery
-		if err != nil || blocktime.Sub(time.Unix(fedPrice.UpdateAt, 0)) > updateEvery {
+		updateEverySec := wm.param.GetPriceParam(ctx).UpdateEverySec
+		if err != nil || blocktime-fedPrice.UpdateAt > updateEverySec {
 			// unless the validator is not in the last set, slash.
 			if lastValidatorSet[valname] {
 				if !wm.param.GetPriceParam(ctx).TestnetMode {

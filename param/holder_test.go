@@ -312,8 +312,8 @@ func TestInitParam(t *testing.T) {
 	}
 	priceParam := PriceParam{
 		TestnetMode:     true,
-		UpdateEvery:     1 * time.Hour,
-		FeedEvery:       10 * time.Minute,
+		UpdateEverySec:  int64(time.Hour.Seconds()),
+		FeedEverySec:    int64((10 * time.Minute).Seconds()),
 		HistoryMaxLen:   71,
 		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}
@@ -420,8 +420,8 @@ func TestInitParamFromConfig(t *testing.T) {
 		UserMaxN:          40,
 	}
 	priceParam := PriceParam{
-		UpdateEvery:     1 * time.Hour,
-		FeedEvery:       10 * time.Minute,
+		UpdateEverySec:  int64(time.Hour.Seconds()),
+		FeedEverySec:    int64((10 * time.Minute).Seconds()),
 		HistoryMaxLen:   123,
 		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}

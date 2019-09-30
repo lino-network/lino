@@ -183,8 +183,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 
 	priceParam := &PriceParam{
 		TestnetMode:     true,
-		UpdateEvery:     1 * time.Hour,
-		FeedEvery:       10 * time.Minute,
+		UpdateEverySec:  int64(time.Hour.Seconds()),
+		FeedEverySec:    int64((10 * time.Minute).Seconds()),
 		HistoryMaxLen:   71,
 		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}

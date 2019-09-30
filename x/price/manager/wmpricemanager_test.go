@@ -100,8 +100,8 @@ func (suite *WMPriceManagerSuite) setParam(priceParam *param.PriceParam) {
 var (
 	basicParam = &param.PriceParam{
 		TestnetMode:     false,
-		UpdateEvery:     1 * time.Hour,
-		FeedEvery:       10 * time.Minute,
+		UpdateEverySec:  int64(1 * time.Hour.Seconds()),
+		FeedEverySec:    int64(10 * time.Minute.Seconds()),
 		HistoryMaxLen:   71,
 		PenaltyMissFeed: linotypes.NewCoinFromInt64(10000 * linotypes.Decimals),
 	}
@@ -146,7 +146,7 @@ type feedAction struct {
 
 func (suite *WMPriceManagerSuite) TestFeedPrice() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEvery.Seconds())
+	feedInterval := int64(basicParam.FeedEverySec)
 	testCases := []struct {
 		name    string
 		valDist []int64
@@ -270,8 +270,8 @@ type feedRound struct {
 // validators get slashed if not feeding price on time.
 func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEvery.Seconds())
-	updateInterval := int64(basicParam.UpdateEvery.Seconds())
+	feedInterval := int64(basicParam.FeedEverySec)
+	updateInterval := int64(basicParam.UpdateEverySec)
 	testCases := []struct {
 		name      string
 		rounds    []feedRound
@@ -341,6 +341,30 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 						},
 					},
 					slashes: []linotypes.AccountKey{"val3"},
+				},
+				{
+					updateTime: time.Unix(updateInterval*3, 0),
+					valDist:    []int64{100, 100, 100},
+					actions: []feedAction{
+						{
+							// too frequent, does not count.
+							feeder: "val1",
+							t:      time.Unix(updateInterval+feedInterval+1, 0),
+							price:  linotypes.NewMiniDollar(10),
+							err:    types.ErrPriceFeedRateLimited(),
+						},
+						{
+							feeder: "val2",
+							t:      time.Unix(updateInterval*2+feedInterval, 0),
+							price:  linotypes.NewMiniDollar(10),
+						},
+						{
+							feeder: "val3",
+							t:      time.Unix(updateInterval*3+feedInterval, 0),
+							price:  linotypes.NewMiniDollar(10),
+						},
+					},
+					slashes: []linotypes.AccountKey{"val1"},
 				},
 			},
 		},
@@ -440,8 +464,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 // current price is correct.
 func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEvery.Seconds())
-	updateInterval := int64(basicParam.UpdateEvery.Seconds())
+	feedInterval := int64(basicParam.FeedEverySec)
+	updateInterval := int64(basicParam.UpdateEverySec)
 	testCases := []struct {
 		name      string
 		rounds    []feedRound
@@ -681,8 +705,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 // current price is correct.
 func (suite *WMPriceManagerSuite) TestUpdatePriceHistoryRolling() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEvery.Seconds())
-	updateInterval := int64(basicParam.UpdateEvery.Seconds())
+	feedInterval := int64(basicParam.FeedEverySec)
+	updateInterval := int64(basicParam.UpdateEverySec)
 
 	history := []int64{genesisPrice.Int64()}
 	// 100 validators, weighted from 1..100

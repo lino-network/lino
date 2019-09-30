@@ -19,7 +19,19 @@
       "value": {
         "validator": "val2",
         "price": "10",
-        "update_at": "4200"
+        "update_at": "7800"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "val3",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "val3",
+        "price": "10",
+        "update_at": "11400"
       }
     }
   },
@@ -40,6 +52,10 @@
         {
           "price": "10",
           "update_at": "7200"
+        },
+        {
+          "price": "10",
+          "update_at": "10800"
         }
       ]
     }
