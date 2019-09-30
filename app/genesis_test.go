@@ -139,6 +139,7 @@ func TestGetGenesisJson(t *testing.T) {
 				UpdateEvery:   1 * time.Hour,
 				FeedEvery:     10 * time.Minute,
 				HistoryMaxLen: 71,
+				PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

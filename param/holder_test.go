@@ -311,10 +311,11 @@ func TestInitParam(t *testing.T) {
 		UserMaxN:          50,
 	}
 	priceParam := PriceParam{
-		TestnetMode:   true,
-		UpdateEvery:   1 * time.Hour,
-		FeedEvery:     10 * time.Minute,
-		HistoryMaxLen: 71,
+		TestnetMode:     true,
+		UpdateEvery:     1 * time.Hour,
+		FeedEvery:       10 * time.Minute,
+		HistoryMaxLen:   71,
+		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}
 
 	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
@@ -419,9 +420,10 @@ func TestInitParamFromConfig(t *testing.T) {
 		UserMaxN:          40,
 	}
 	priceParam := PriceParam{
-		UpdateEvery:   1 * time.Hour,
-		FeedEvery:     10 * time.Minute,
-		HistoryMaxLen: 123,
+		UpdateEvery:     1 * time.Hour,
+		FeedEvery:       10 * time.Minute,
+		HistoryMaxLen:   123,
+		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}
 
 	err := ph.InitParamFromConfig(

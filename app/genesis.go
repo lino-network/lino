@@ -212,10 +212,11 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				BestContentIndexN: 10,
 			},
 			param.PriceParam{
-				TestnetMode:   true,
-				UpdateEvery:   1 * time.Hour,
-				FeedEvery:     10 * time.Minute,
-				HistoryMaxLen: 71,
+				TestnetMode:     true,
+				UpdateEvery:     1 * time.Hour,
+				FeedEvery:       10 * time.Minute,
+				HistoryMaxLen:   71,
+				PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{

@@ -185,8 +185,9 @@ type ReputationParam struct {
 
 // PriceParam - parameters of price module.
 type PriceParam struct {
-	TestnetMode   bool          `json:"testnet_mode"`
-	UpdateEvery   time.Duration `json:"update_every"`
-	FeedEvery     time.Duration `json:"feed_every"`
-	HistoryMaxLen int           `json:"history_max_len"`
+	TestnetMode     bool          `json:"testnet_mode"`
+	UpdateEvery     time.Duration `json:"update_every"`
+	FeedEvery       time.Duration `json:"feed_every"`
+	HistoryMaxLen   int           `json:"history_max_len"`
+	PenaltyMissFeed types.Coin    `json:"penalty_miss_feed"`
 }
