@@ -176,6 +176,7 @@ const (
 	CodeValidatorAlreadyExist          sdk.CodeType = 509
 	CodeInvalidVotedValidators         sdk.CodeType = 510
 	CodeElectionListNotFound           sdk.CodeType = 511
+	CodeInvalidValidator               sdk.CodeType = 512
 
 	// Lino global errors reserve 600 ~ 699
 	CodeInfraInflationCoinConversion           sdk.CodeType = 600

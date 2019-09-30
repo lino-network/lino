@@ -304,6 +304,8 @@ func TestFireIncompetentValidator2(t *testing.T) {
 	// check val0 is gone
 	test.CheckOncallValidatorList(t, "validator0", false, lb)
 	test.CheckJailValidatorList(t, "validator0", true, lb)
+	// the votes won't change after slashing
+	test.CheckReceivedVotes(t, "validator0", linotypes.NewCoinFromInt64(200000*linotypes.Decimals), lb)
 
 	// check altval1 joins oncall validator, but altval0 not
 	test.CheckOncallValidatorList(t, "altval1", true, lb)

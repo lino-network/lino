@@ -98,10 +98,17 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes
 	if err := vm.VoteValidator(ctx, username, []linotypes.AccountKey{username}); err != nil {
 		return err
 	}
+	if err := vm.balanceValidatorList(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (vm ValidatorManager) RevokeValidator(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	if !vm.IsLegalValidator(ctx, username) {
+		return types.ErrInvalidValidator()
+	}
+
 	me, err := vm.storage.GetValidator(ctx, username)
 	if err != nil {
 		return err

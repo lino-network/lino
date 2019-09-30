@@ -171,6 +171,16 @@ func CheckJailValidatorList(
 	}
 }
 
+func CheckReceivedVotes(
+	t *testing.T, accountName string, votes types.Coin, lb *app.LinoBlockchain) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+	vs := valmodel.NewValidatorStorage(lb.CapKeyValStore)
+	val, err := vs.GetValidator(ctx, types.AccountKey(accountName))
+	assert.Nil(t, err)
+	assert.Equal(t, votes, val.ReceivedVotes)
+
+}
+
 // CheckAppBandwidthInfo
 func CheckAppBandwidthInfo(
 	t *testing.T, info bandwidthmodel.AppBandwidthInfo, username types.AccountKey, lb *app.LinoBlockchain) {

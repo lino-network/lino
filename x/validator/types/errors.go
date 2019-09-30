@@ -80,3 +80,8 @@ func ErrInvalidVoterDuty() sdk.Error {
 	return linotypes.NewError(
 		linotypes.CodeInvalidVoterDuty, fmt.Sprintf("user's duty is not voter"))
 }
+
+func ErrInvalidValidator() sdk.Error {
+	return linotypes.NewError(
+		linotypes.CodeInvalidValidator, fmt.Sprintf("not a validator or has revoked"))
+}

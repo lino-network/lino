@@ -277,7 +277,6 @@ func (vm VoteManager) ExecUnassignDutyEvent(ctx sdk.Context, event types.Unassig
 	if err != nil {
 		return err
 	}
-
 	// set frozen amount to zero and duty to voter
 	voter.FrozenAmount = linotypes.NewCoinFromInt64(0)
 	voter.Duty = types.DutyVoter
