@@ -14,21 +14,21 @@ import (
 
 type ValidatorKeeper interface {
 	InitGenesis(ctx sdk.Context)
+	OnBeginBlock(ctx sdk.Context, req abci.RequestBeginBlock)
 	RegisterValidator(ctx sdk.Context, username linotypes.AccountKey, valPubKey crypto.PubKey, link string) sdk.Error
 	RevokeValidator(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 	VoteValidator(ctx sdk.Context, username linotypes.AccountKey, votedValidators []linotypes.AccountKey) sdk.Error
+	DistributeInflationToValidator(ctx sdk.Context) sdk.Error
 	Hooks() votemn.Hooks
+
+	// getters
 	GetInitValidators(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error)
 	GetValidatorUpdates(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error)
-	DistributeInflationToValidator(ctx sdk.Context) sdk.Error
-	FireIncompetentValidator(ctx sdk.Context, byzantineValidators []abci.Evidence) sdk.Error
-	UpdateSigningStats(ctx sdk.Context, voteInfos []abci.VoteInfo) sdk.Error
-	// getter and setter
+	IsLegalValidator(ctx sdk.Context, accKey linotypes.AccountKey) bool
 	GetValidator(ctx sdk.Context, username linotypes.AccountKey) (*model.Validator, sdk.Error)
 	GetValidatorList(ctx sdk.Context) *model.ValidatorList
 	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
 	GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey
-	SetValidatorList(ctx sdk.Context, lst *model.ValidatorList)
 	GetCommittingValidatorVoteStatus(ctx sdk.Context) ([]model.ReceivedVotesStatus, sdk.Error)
 }
 
