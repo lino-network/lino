@@ -231,11 +231,15 @@ func (vm VoteManager) UnassignDuty(ctx sdk.Context, username linotypes.AccountKe
 	if err != nil {
 		return err
 	}
-	if voter.Duty == types.DutyVoter {
+	if voter.Duty == types.DutyVoter || voter.Duty == types.DutyPending {
 		return types.ErrNoDuty()
 	}
-	return vm.gm.RegisterEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+waitingPeriodSec, types.UnassignDutyEvent{Username: username})
+	if err := vm.gm.RegisterEventAtTime(
+		ctx, ctx.BlockHeader().Time.Unix()+waitingPeriodSec, types.UnassignDutyEvent{Username: username}); err != nil {
+		return err
+	}
+	voter.Duty = types.DutyPending
+	return vm.storage.SetVoter(ctx, username, voter)
 }
 
 // SlashStake - slash as much as it can, regardless of frozen money
