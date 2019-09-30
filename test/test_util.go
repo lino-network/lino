@@ -14,6 +14,7 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	accmn "github.com/lino-network/lino/x/account/manager"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
@@ -131,6 +132,17 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 	assert.Equal(t, expectBalance.Amount.Int64(), saving.Amount.Int64())
 }
 
+// CheckAccountInfo - check account balance
+func CheckAccountInfo(t *testing.T, accountName string, lb *app.LinoBlockchain, expectInfo accmodel.AccountInfo) {
+	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
+	ph := param.NewParamHolder(lb.CapKeyParamStore)
+	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
+	info, err := accManager.GetInfo(ctx, types.AccountKey(accountName))
+	assert.Nil(t, err)
+	assert.Equal(t, expectInfo, *info)
+}
+
 // CheckOncallValidatorList - check if account is in oncall validator set or not
 func CheckOncallValidatorList(
 	t *testing.T, accountName string, isInOnCallValidatorList bool, lb *app.LinoBlockchain) {
@@ -238,7 +250,36 @@ func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
-	tx := genTx(msg, seq, priv)
+	tx := genTx(msg, []uint64{seq}, []secp256k1.PrivKeySecp256k1{priv})
+	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
+	// about what is the right way..
+	res := lb.Simulate(nil, tx)
+	if expPass {
+		require.True(t, res.IsOK(), res.Log)
+	} else {
+		require.False(t, res.IsOK(), res.Log)
+	}
+
+	// Simulate a Block
+	lb.BeginBlock(abci.RequestBeginBlock{
+		Header: abci.Header{
+			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
+	res = lb.Deliver(tx)
+	if expPass {
+		require.True(t, res.IsOK(), res.Log)
+	} else {
+		require.False(t, res.IsOK(), res.Log)
+	}
+	lb.EndBlock(abci.RequestEndBlock{})
+	lb.Commit()
+}
+
+// SignCheckDeliverWithMultiSig - sign transaction with multi sig, simulate and commit a block
+func SignCheckDeliverWithMultiSig(
+	t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seqs []uint64,
+	expPass bool, privs []secp256k1.PrivKeySecp256k1, headTime int64) {
+	// Sign the tx
+	tx := genTx(msg, seqs, privs)
 	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
 	// about what is the right way..
 	res := lb.Simulate(nil, tx)
@@ -300,7 +341,7 @@ func RepeatSignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, s
 			Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(headTime, 0)}})
 
 	for i := 0; i < times; i++ {
-		tx := genTx(msg, seq+uint64(i), priv)
+		tx := genTx(msg, []uint64{seq + uint64(i)}, []secp256k1.PrivKeySecp256k1{priv})
 		res := lb.Deliver(tx)
 		if expPass {
 			require.True(t, res.IsOK(), res.Log)
@@ -321,12 +362,18 @@ func SimulateOneBlock(lb *app.LinoBlockchain, headTime int64) {
 	lb.Commit()
 }
 
-func genTx(msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) auth.StdTx {
-	bz, _ := priv.Sign(auth.StdSignBytes("Lino", 0, seq, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, []sdk.Msg{msg}, ""))
-	sigs := []auth.StdSignature{{
-		PubKey:    priv.PubKey(),
-		Signature: bz,
-	}}
+func genTx(msg sdk.Msg, seq []uint64, priv []secp256k1.PrivKeySecp256k1) auth.StdTx {
+	sigs := []auth.StdSignature{}
+	for i, priv := range priv {
+		bz, _ := priv.Sign(
+			auth.StdSignBytes(
+				"Lino", 0, seq[i], auth.StdFee{
+					Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, []sdk.Msg{msg}, ""))
+		sigs = append(sigs, auth.StdSignature{
+			PubKey:    priv.PubKey(),
+			Signature: bz,
+		})
+	}
 	return auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
 }
 

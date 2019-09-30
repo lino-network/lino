@@ -18,6 +18,8 @@ func NewHandler(am AccountKeeper) sdk.Handler {
 			return handleTransferMsg(ctx, am, msg)
 		case types.RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
+		case types.RegisterMsgV2:
+			return handleRegisterMsgV2(ctx, am, msg)
 		case types.RegisterMsg:
 			return handleRegisterMsg(ctx, am, msg)
 		case types.UpdateAccountMsg:
@@ -56,6 +58,19 @@ func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsg)
 	}
 	if err := am.RegisterAccount(
 		ctx, msg.Referrer, coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle RegisterMsgV2
+func handleRegisterMsgV2(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsgV2) sdk.Result {
+	coin, err := linotypes.LinoToCoin(msg.RegisterFee)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.RegisterAccount(
+		ctx, msg.Referrer, coin, msg.NewUser, msg.NewSigningPubKey, msg.NewTransactionPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
