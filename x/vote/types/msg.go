@@ -46,7 +46,7 @@ func (msg StakeInMsg) Type() string { return "StakeInMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg StakeInMsg) ValidateBasic() sdk.Error {
-	if !msg.Username.IsUsername() {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 
@@ -101,7 +101,7 @@ func (msg StakeOutMsg) Type() string { return "StakeOutMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg StakeOutMsg) ValidateBasic() sdk.Error {
-	if !msg.Username.IsUsername() {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 	_, err := types.LinoToCoin(msg.Amount)
@@ -154,7 +154,7 @@ func (msg ClaimInterestMsg) Type() string { return "ClaimInterestMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg ClaimInterestMsg) ValidateBasic() sdk.Error {
-	if !msg.Username.IsUsername() {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 	return nil

@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -413,7 +412,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			username:   unreg.Username,
 			signingKey: unreg.SigningKey,
 			txKey:      userWithBalance.TransactionKey,
-			expectErr:  acctypes.ErrAddressAlreadyTaken(hex.EncodeToString(userWithBalance.TransactionKey.Address())),
+			expectErr:  acctypes.ErrAddressAlreadyTaken(sdk.AccAddress(userWithBalance.TransactionKey.Address()).String()),
 			expectInfo: nil,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving,
@@ -523,7 +522,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 
 	testCases := []struct {
 		testName    string
-		referrer    types.AccountKey
+		referrer    types.AccOrAddr
 		registerFee types.Coin
 		username    types.AccountKey
 		signingKey  crypto.PubKey
@@ -534,7 +533,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 	}{
 		{
 			testName:    "register username already exists",
-			referrer:    suite.userWithBalance.Username,
+			referrer:    types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
 			registerFee: suite.registerFee,
 			username:    suite.userWithoutBalance.Username,
 			signingKey:  secp256k1.GenPrivKey().PubKey(),
@@ -549,7 +548,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 		},
 		{
 			testName:    "register fee not enough",
-			referrer:    suite.userWithBalance.Username,
+			referrer:    types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
 			registerFee: suite.registerFee.Minus(types.NewCoinFromInt64(1)),
 			username:    "test1",
 			signingKey:  secp256k1.GenPrivKey().PubKey(),
@@ -560,7 +559,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 		},
 		{
 			testName:    "register success",
-			referrer:    suite.userWithBalance.Username,
+			referrer:    types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
 			registerFee: suite.registerFee,
 			username:    "test1",
 			signingKey:  signingPrivKeys[0].PubKey(),
@@ -580,19 +579,20 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 		},
 		{
 			testName:    "register with same transaction private key",
-			referrer:    suite.userWithBalance.Username,
+			referrer:    types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
 			registerFee: suite.registerFee,
 			username:    "test2",
 			signingKey:  signingPrivKeys[0].PubKey(),
 			txKey:       txPrivKeys[0].PubKey(),
 			expectErr: acctypes.ErrAddressAlreadyTaken(
-				hex.EncodeToString(sdk.AccAddress(txPrivKeys[0].PubKey().Address()))),
+				sdk.AccAddress(txPrivKeys[0].PubKey().Address()).String()),
 			accInfo: nil,
 			accBank: nil,
 		},
 		{
-			testName:    "referrer is address",
-			referrer:    types.AccountKey(suite.userWithBalance.TransactionKey.Address()),
+			testName: "referrer is address",
+			referrer: types.NewAccOrAddrFromAddr(
+				sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())),
 			registerFee: suite.registerFee,
 			username:    "test3",
 			signingKey:  signingPrivKeys[1].PubKey(),
@@ -621,20 +621,20 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 	}
 }
 
-func (suite *AccountManagerTestSuite) TestMoveCoin() {
+func (suite *AccountManagerTestSuite) TestMoveCoinAccOrAddr() {
 	testCases := []struct {
 		testName              string
-		sender                types.AccountKey
+		sender                types.AccOrAddr
 		amount                types.Coin
-		receiver              types.AccountKey
+		receiver              types.AccOrAddr
 		expectErr             sdk.Error
 		expectSenderBalance   types.Coin
 		expectReceiverBalance types.Coin
 	}{
 		{
 			testName:              "sender doesnt exist",
-			sender:                "movecointest",
-			receiver:              suite.userWithoutBalance.Username,
+			sender:                types.NewAccOrAddrFromAcc("movecointest"),
+			receiver:              types.NewAccOrAddrFromAcc(suite.userWithoutBalance.Username),
 			amount:                types.NewCoinFromInt64(1),
 			expectErr:             acctypes.ErrAccountNotFound("movecointest"),
 			expectSenderBalance:   types.Coin{},
@@ -642,8 +642,8 @@ func (suite *AccountManagerTestSuite) TestMoveCoin() {
 		},
 		{
 			testName:              "receiver doesnt exist",
-			sender:                suite.userWithBalance.Username,
-			receiver:              "movecointest",
+			sender:                types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
+			receiver:              types.NewAccOrAddrFromAcc("movecointest"),
 			amount:                types.NewCoinFromInt64(1),
 			expectErr:             acctypes.ErrAccountNotFound("movecointest"),
 			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(1)),
@@ -651,47 +651,52 @@ func (suite *AccountManagerTestSuite) TestMoveCoin() {
 		},
 		{
 			testName:              "send from username to username",
-			sender:                suite.userWithBalance.Username,
-			receiver:              suite.userWithoutBalance.Username,
+			sender:                types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
+			receiver:              types.NewAccOrAddrFromAcc(suite.userWithoutBalance.Username),
 			amount:                types.NewCoinFromInt64(1),
 			expectErr:             nil,
 			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(2)),
 			expectReceiverBalance: types.NewCoinFromInt64(1),
 		},
 		{
-			testName:              "send from username to address",
-			sender:                suite.userWithBalance.Username,
-			receiver:              types.AccountKey(suite.userWithoutBalance.TransactionKey.Address()),
+			testName: "send from username to address",
+			sender:   types.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
+			receiver: types.NewAccOrAddrFromAddr(
+				sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address())),
 			amount:                types.NewCoinFromInt64(1),
 			expectErr:             nil,
 			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(3)),
 			expectReceiverBalance: types.NewCoinFromInt64(2),
 		},
 		{
-			testName:              "send from address to address",
-			sender:                types.AccountKey(suite.userWithBalance.TransactionKey.Address()),
-			receiver:              types.AccountKey(suite.userWithoutBalance.TransactionKey.Address()),
+			testName: "send from address to address",
+			sender: types.NewAccOrAddrFromAddr(
+				sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())),
+			receiver: types.NewAccOrAddrFromAddr(
+				sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address())),
 			amount:                types.NewCoinFromInt64(1),
 			expectErr:             nil,
 			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(4)),
 			expectReceiverBalance: types.NewCoinFromInt64(3),
 		},
+		// TODO(yumin):
+		// add case of from address to username.
 	}
 	for _, tc := range testCases {
-		err := suite.am.MoveCoin(suite.Ctx, tc.sender, tc.receiver, tc.amount)
+		err := suite.am.MoveCoinAccOrAddr(suite.Ctx, tc.sender, tc.receiver, tc.amount)
 		suite.Equal(tc.expectErr, err)
-		if tc.sender.IsUsername() {
-			saving, _ := suite.am.GetSavingFromUsername(suite.Ctx, tc.sender)
+		if !tc.sender.IsAddr {
+			saving, _ := suite.am.GetSavingFromUsername(suite.Ctx, tc.sender.AccountKey)
 			suite.Equal(tc.expectSenderBalance, saving)
 		} else {
-			saving, _ := suite.am.GetSavingFromAddress(suite.Ctx, sdk.AccAddress(tc.sender))
+			saving, _ := suite.am.GetSavingFromAddress(suite.Ctx, tc.sender.Addr)
 			suite.Equal(tc.expectSenderBalance, saving)
 		}
-		if tc.receiver.IsUsername() {
-			saving, _ := suite.am.GetSavingFromUsername(suite.Ctx, tc.receiver)
+		if !tc.receiver.IsAddr {
+			saving, _ := suite.am.GetSavingFromUsername(suite.Ctx, tc.receiver.AccountKey)
 			suite.Equal(tc.expectReceiverBalance, saving)
 		} else {
-			saving, _ := suite.am.GetSavingFromAddress(suite.Ctx, sdk.AccAddress(tc.receiver))
+			saving, _ := suite.am.GetSavingFromAddress(suite.Ctx, tc.receiver.Addr)
 			suite.Equal(tc.expectReceiverBalance, saving)
 		}
 	}
@@ -1224,7 +1229,7 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			newTxPubKey:      suite.userWithBalance.TransactionKey,
 			newSigningPubKey: nil,
 			expectErr: acctypes.ErrAddressAlreadyTaken(
-				hex.EncodeToString(suite.userWithBalance.TransactionKey.Address())),
+				sdk.AccAddress(suite.userWithBalance.TransactionKey.Address()).String()),
 			oldAddr: sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
 				Username: suite.userWithoutBalance.Username,
@@ -1303,7 +1308,6 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 	}
 	for _, tc := range testCases {
 		err := suite.am.RecoverAccount(suite.Ctx, tc.username, tc.newTxPubKey, tc.newSigningPubKey)
-		fmt.Println(err)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 		oldBank, _ := suite.am.GetBankByAddress(suite.Ctx, tc.oldAddr)
 		suite.Equal(tc.expectOldBank, oldBank, "%s", tc.testName)

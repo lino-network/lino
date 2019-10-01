@@ -511,12 +511,12 @@ func (_m *AccountKeeper) MinusCoinFromUsername(ctx types.Context, username linot
 	return r0
 }
 
-// MoveCoin provides a mock function with given fields: ctx, sender, receiver, coin
-func (_m *AccountKeeper) MoveCoin(ctx types.Context, sender linotypes.AccountKey, receiver linotypes.AccountKey, coin linotypes.Coin) types.Error {
+// MoveCoinAccOrAddr provides a mock function with given fields: ctx, sender, receiver, coin
+func (_m *AccountKeeper) MoveCoinAccOrAddr(ctx types.Context, sender linotypes.AccOrAddr, receiver linotypes.AccOrAddr, coin linotypes.Coin) types.Error {
 	ret := _m.Called(ctx, sender, receiver, coin)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccOrAddr, linotypes.AccOrAddr, linotypes.Coin) types.Error); ok {
 		r0 = rf(ctx, sender, receiver, coin)
 	} else {
 		if ret.Get(0) != nil {
@@ -544,11 +544,11 @@ func (_m *AccountKeeper) RecoverAccount(ctx types.Context, username linotypes.Ac
 }
 
 // RegisterAccount provides a mock function with given fields: ctx, referrer, registerFee, username, signingKey, transactionKey
-func (_m *AccountKeeper) RegisterAccount(ctx types.Context, referrer linotypes.AccountKey, registerFee linotypes.Coin, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
+func (_m *AccountKeeper) RegisterAccount(ctx types.Context, referrer linotypes.AccOrAddr, registerFee linotypes.Coin, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
 	ret := _m.Called(ctx, referrer, registerFee, username, signingKey, transactionKey)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccOrAddr, linotypes.Coin, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
 		r0 = rf(ctx, referrer, registerFee, username, signingKey, transactionKey)
 	} else {
 		if ret.Get(0) != nil {

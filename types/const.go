@@ -170,15 +170,6 @@ const (
 	// TendermintValidatorPower - every validator has const power in tendermint engine.
 	TendermintValidatorPower = 1000
 
-	// Upgrade2Update1 - adjust minimum registration fee.
-	Upgrade2Update1Height = 30000
-
-	// Upgrade2Update2 - fix registration bug.
-	Upgrade2Update2Height = 50000
-
-	// Upgrade2Update3 - fix registration bug.
-	Upgrade2Update3Height = 98000
-
 	// MaxVotedValidator - the max validators a voter can vote
 	MaxVotedValidators = 50
 
@@ -186,5 +177,6 @@ const (
 	ValidatorMaxPower = int64(100000000000)
 
 	// TxSigLimit - max number of sigs in one transaction
+	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
 )

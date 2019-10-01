@@ -202,6 +202,7 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(cauth.StdTx{}, "auth/StdTx", nil)
 	wire.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
+	types.RegisterWire(cdc) // types.Msg and types.AddrMsg
 
 	acctypes.RegisterWire(cdc)
 	posttypes.RegisterCodec(cdc)

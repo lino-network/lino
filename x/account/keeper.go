@@ -15,12 +15,12 @@ import (
 type AccountKeeper interface {
 	DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool
 	RegisterAccount(
-		ctx sdk.Context, referrer types.AccountKey, registerFee types.Coin,
+		ctx sdk.Context, referrer types.AccOrAddr, registerFee types.Coin,
 		username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
 	CreateAccount(
 		ctx sdk.Context, username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
-	MoveCoin(
-		ctx sdk.Context, sender, receiver types.AccountKey, coin types.Coin) sdk.Error
+	MoveCoinAccOrAddr(
+		ctx sdk.Context, sender, receiver types.AccOrAddr, coin types.Coin) sdk.Error
 	AddCoinToUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error
 	AddCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, coin types.Coin) sdk.Error
 	MinusCoinFromUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error

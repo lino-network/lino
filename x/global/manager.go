@@ -301,9 +301,6 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		return err
 	}
 
-	if ctx.BlockHeader().Height > types.Upgrade2Update3Height {
-		globalMeta.LastYearTotalLinoCoin = types.NewCoinFromInt64(10000000000 * types.Decimals)
-	}
 	pool, err := gm.storage.GetInflationPool(ctx)
 	if err != nil {
 		return err

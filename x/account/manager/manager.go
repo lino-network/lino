@@ -2,7 +2,6 @@ package manager
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"reflect"
 	"time"
@@ -41,41 +40,34 @@ func (accManager AccountManager) DoesAccountExist(ctx sdk.Context, username lino
 
 // RegisterAccount - register account, deduct fee from referrer address then create a new account
 func (accManager AccountManager) RegisterAccount(
-	ctx sdk.Context, referrer linotypes.AccountKey, registerFee linotypes.Coin,
+	ctx sdk.Context, referrer linotypes.AccOrAddr, registerFee linotypes.Coin,
 	username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
 	accParams, err := accManager.paramHolder.GetAccountParam(ctx)
 	if err != nil {
 		return err
 	}
 	minRegFee := accParams.RegisterFee
-	if ctx.BlockHeight() >= linotypes.Upgrade2Update1Height {
-		minRegFee = linotypes.NewCoinFromInt64(10000)
-	}
 	if minRegFee.IsGT(registerFee) {
 		return types.ErrRegisterFeeInsufficient()
 	}
-	if referrer.IsUsername() {
-		if err := accManager.MinusCoinFromUsername(ctx, referrer, registerFee); err != nil {
+	if !referrer.IsAddr {
+		if err := accManager.MinusCoinFromUsername(
+			ctx, referrer.AccountKey, registerFee); err != nil {
 			return err
 		}
 	} else {
-		if err := accManager.MinusCoinFromAddress(ctx, sdk.AccAddress(referrer), registerFee); err != nil {
+		if err := accManager.MinusCoinFromAddress(
+			ctx, referrer.Addr, registerFee); err != nil {
 			return err
 		}
 	}
 	if err := accManager.CreateAccount(ctx, username, signingKey, transactionKey); err != nil {
 		return err
 	}
-	if ctx.BlockHeight() >= linotypes.Upgrade2Update2Height {
-		if err := accManager.gm.AddToValidatorInflationPool(ctx, minRegFee); err != nil {
-			return err
-		}
-		return accManager.AddCoinToUsername(ctx, username, registerFee.Minus(minRegFee))
-	}
-	if err := accManager.gm.AddToValidatorInflationPool(ctx, accParams.RegisterFee); err != nil {
+	if err := accManager.gm.AddToValidatorInflationPool(ctx, minRegFee); err != nil {
 		return err
 	}
-	return accManager.AddCoinToUsername(ctx, username, registerFee.Minus(accParams.RegisterFee))
+	return accManager.AddCoinToUsername(ctx, username, registerFee.Minus(minRegFee))
 }
 
 // CreateAccount - create account, caller should make sure the register fee is valid
@@ -95,7 +87,7 @@ func (accManager AccountManager) CreateAccount(
 		bank = &model.AccountBank{}
 	}
 	if bank.Username != "" {
-		return types.ErrAddressAlreadyTaken(hex.EncodeToString(addr))
+		return types.ErrAddressAlreadyTaken(addr.String())
 	}
 
 	// set public key to bank
@@ -115,23 +107,23 @@ func (accManager AccountManager) CreateAccount(
 	return nil
 }
 
-// MoveCoin - move coin from sender to receiver
-func (accManager AccountManager) MoveCoin(ctx sdk.Context, sender, receiver linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
-	if sender.IsUsername() {
-		if err := accManager.MinusCoinFromUsername(ctx, sender, coin); err != nil {
+// MoveCoinAccOrAddr move coins from the acc/addr to the acc/addr.
+func (accManager AccountManager) MoveCoinAccOrAddr(ctx sdk.Context, sender, receiver linotypes.AccOrAddr, coin linotypes.Coin) sdk.Error {
+	if !sender.IsAddr {
+		if err := accManager.MinusCoinFromUsername(ctx, sender.AccountKey, coin); err != nil {
 			return err
 		}
 	} else {
-		if err := accManager.MinusCoinFromAddress(ctx, sdk.AccAddress(sender), coin); err != nil {
+		if err := accManager.MinusCoinFromAddress(ctx, sender.Addr, coin); err != nil {
 			return err
 		}
 	}
-	if receiver.IsUsername() {
-		if err := accManager.AddCoinToUsername(ctx, receiver, coin); err != nil {
+	if !receiver.IsAddr {
+		if err := accManager.AddCoinToUsername(ctx, receiver.AccountKey, coin); err != nil {
 			return err
 		}
 	} else {
-		if err := accManager.AddCoinToAddress(ctx, sdk.AccAddress(receiver), coin); err != nil {
+		if err := accManager.AddCoinToAddress(ctx, receiver.Addr, coin); err != nil {
 			return err
 		}
 	}
@@ -468,7 +460,7 @@ func (accManager AccountManager) RecoverAccount(
 		}
 	}
 	if newBank.Username != "" {
-		return types.ErrAddressAlreadyTaken(hex.EncodeToString(newAddr))
+		return types.ErrAddressAlreadyTaken(newAddr.String())
 	}
 
 	oldAddr := accInfo.Address

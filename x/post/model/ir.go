@@ -14,7 +14,6 @@ type PostInfoV1 struct {
 	ParentPostID string                 `json:"parent_postID"`
 	SourceAuthor types.AccountKey       `json:"source_author"`
 	SourcePostID string                 `json:"source_postID"`
-	Links        []types.IDToURLMapping `json:"links"`
 }
 
 // PostMetaIR RedistributionSplitRate rat -> string

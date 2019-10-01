@@ -64,7 +64,7 @@ func (msg CreatePostMsg) ValidateBasic() sdk.Error {
 	if err != nil {
 		return err
 	}
-	if !msg.CreatedBy.IsUsername() {
+	if !msg.CreatedBy.IsValid() {
 		return ErrInvalidCreatedBy()
 	}
 	return nil
@@ -146,7 +146,7 @@ func (msg DeletePostMsg) ValidateBasic() sdk.Error {
 	if len(msg.PostID) == 0 {
 		return ErrNoPostID()
 	}
-	if !types.RuleUsernameLength(msg.Author) {
+	if !msg.Author.IsValid() {
 		return ErrInvalidAuthor()
 	}
 	return nil
@@ -211,13 +211,13 @@ func (msg DonateMsg) Type() string { return "DonateMsg" }
 // ValidateBasic - implements sdk.Msg
 func (msg DonateMsg) ValidateBasic() sdk.Error {
 	// Ensure permlink  exists
-	if !msg.Username.IsUsername() {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
-	if !types.RuleUsernameLength(msg.Author) || len(msg.PostID) == 0 {
+	if !msg.Author.IsValid() || len(msg.PostID) == 0 {
 		return ErrInvalidTarget()
 	}
-	if msg.FromApp != "" && !types.RuleUsernameLength(msg.FromApp) {
+	if msg.FromApp != "" && !msg.FromApp.IsValid() {
 		return ErrInvalidApp()
 	}
 	if msg.Username == msg.Author {
@@ -281,16 +281,16 @@ func (msg IDADonateMsg) Type() string { return "IDADonateMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDADonateMsg) ValidateBasic() sdk.Error {
-	if !msg.Username.IsUsername() {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
-	if !msg.Signer.IsUsername() {
+	if !msg.Signer.IsValid() {
 		return ErrInvalidUsername()
 	}
-	if !msg.App.IsUsername() {
+	if !msg.App.IsValid() {
 		return ErrInvalidApp()
 	}
-	if !msg.Author.IsUsername() || len(msg.PostID) == 0 {
+	if !msg.Author.IsValid() || len(msg.PostID) == 0 {
 		return ErrInvalidTarget()
 	}
 	if msg.Username == msg.Author {
@@ -347,7 +347,7 @@ func checkPostBasic(postID string, author types.AccountKey, title, content strin
 	if len(postID) > types.MaximumLengthOfPostID {
 		return ErrPostIDTooLong()
 	}
-	if !types.RuleUsernameLength(author) {
+	if !author.IsValid() {
 		return ErrInvalidAuthor()
 	}
 	if utf8.RuneCountInString(title) > types.MaxPostTitleLength {

@@ -353,16 +353,14 @@ func (suite *AnteTestSuite) TestGrantAuthenticationTx() {
 			user3, types.NewCoinFromInt64(0), msg.Amount).Result())
 }
 
-// Test address sig.
-func (suite *AnteTestSuite) TestGetMsgSignerAddrAndSignerAddr() {
+// TestCheckAccountSigner
+func (suite *AnteTestSuite) TestCheckAccountSigner() {
 	// keys and username
 	_, transaction1, user1 := suite.createTestAccount("user1")
 	_, transaction2, user2 := suite.createTestAccount("user2")
 	privKey := secp256k1.GenPrivKey()
 	err := suite.am.AddCoinToAddress(suite.ctx, sdk.AccAddress(privKey.PubKey().Address()), types.NewCoinFromInt64(1000))
 	suite.Nil(err)
-
-	newPrivKey := secp256k1.GenPrivKey()
 
 	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
 	suite.Nil(err)
@@ -375,17 +373,7 @@ func (suite *AnteTestSuite) TestGetMsgSignerAddrAndSignerAddr() {
 		expectSignerAddr    sdk.AccAddress
 		expectMsgSignerAddr sdk.AccAddress
 		expectErr           sdk.Error
-		isPaid              bool
 	}{
-		{
-			testName:            "get signer from address",
-			signer:              types.AccountKey(privKey.PubKey().Address()),
-			signKey:             privKey.PubKey(),
-			permission:          types.PreAuthorizationPermission,
-			expectSignerAddr:    sdk.AccAddress(privKey.PubKey().Address()),
-			expectMsgSignerAddr: sdk.AccAddress(privKey.PubKey().Address()),
-			expectErr:           nil,
-		},
 		{
 			testName:            "get signer from username",
 			signer:              user1,
@@ -413,32 +401,62 @@ func (suite *AnteTestSuite) TestGetMsgSignerAddrAndSignerAddr() {
 			expectMsgSignerAddr: nil,
 			expectErr:           acctypes.ErrCheckAuthenticatePubKeyOwner(user1),
 		},
+	}
+
+	for _, tc := range testCases {
+		signerAddr, msgSignerAddr, err := checkAccountSigner(
+			suite.ctx, suite.am, tc.signer, tc.signKey, tc.permission, types.NewCoinFromInt64(0))
+		suite.Equal(tc.expectSignerAddr, signerAddr, "%s", tc.testName)
+		suite.Equal(tc.expectMsgSignerAddr, msgSignerAddr, "%s", tc.testName)
+		suite.Equal(tc.expectErr, err, "%s", tc.testName)
+	}
+}
+
+// Test address signer.
+func (suite *AnteTestSuite) TestCheckAddrSigner() {
+	// keys and username
+	_, _, user1 := suite.createTestAccount("user1")
+	_, _, user2 := suite.createTestAccount("user2")
+	privKey := secp256k1.GenPrivKey()
+	err := suite.am.AddCoinToAddress(suite.ctx, sdk.AccAddress(privKey.PubKey().Address()), types.NewCoinFromInt64(1000))
+	suite.Nil(err)
+
+	newPrivKey := secp256k1.GenPrivKey()
+
+	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
+	suite.Nil(err)
+
+	testCases := []struct {
+		testName  string
+		signer    sdk.AccAddress
+		signKey   crypto.PubKey
+		expectErr sdk.Error
+		isPaid    bool
+	}{
 		{
-			testName:            "sign key without bank struct",
-			signer:              types.AccountKey(newPrivKey.PubKey().Address()),
-			signKey:             newPrivKey.PubKey(),
-			permission:          types.AppPermission,
-			expectSignerAddr:    nil,
-			expectMsgSignerAddr: nil,
-			expectErr:           accmodel.ErrAccountBankNotFound(),
+			testName:  "get signer from address",
+			signer:    sdk.AccAddress(privKey.PubKey().Address()),
+			signKey:   privKey.PubKey(),
+			expectErr: nil,
 		},
 		{
-			testName:            "sign key without bank struct but paid",
-			signer:              types.AccountKey(newPrivKey.PubKey().Address()),
-			signKey:             newPrivKey.PubKey(),
-			permission:          types.AppPermission,
-			expectSignerAddr:    sdk.AccAddress(newPrivKey.PubKey().Address()),
-			expectMsgSignerAddr: sdk.AccAddress(newPrivKey.PubKey().Address()),
-			expectErr:           nil,
-			isPaid:              true,
+			testName:  "sign key without bank struct",
+			signer:    sdk.AccAddress(newPrivKey.PubKey().Address()),
+			signKey:   newPrivKey.PubKey(),
+			expectErr: accmodel.ErrAccountBankNotFound(),
+		},
+		{
+			testName:  "sign key without bank struct but paid",
+			signer:    sdk.AccAddress(newPrivKey.PubKey().Address()),
+			signKey:   newPrivKey.PubKey(),
+			expectErr: nil,
+			isPaid:    true,
 		},
 	}
 
 	for _, tc := range testCases {
-		signerAddr, msgSignerAddr, err := getMsgSignerAddrAndSignerAddr(
-			suite.ctx, suite.am, tc.signer, tc.signKey, tc.permission, types.NewCoinFromInt64(0), tc.isPaid)
-		suite.Equal(tc.expectSignerAddr, signerAddr, "%s", tc.testName)
-		suite.Equal(tc.expectMsgSignerAddr, msgSignerAddr, "%s", tc.testName)
+		err := checkAddrSigner(
+			suite.ctx, suite.am, tc.signer, tc.signKey, tc.isPaid)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 	}
 }
@@ -452,7 +470,7 @@ func (suite *AnteTestSuite) TestMultiSig() {
 
 	// msg and signatures
 	var tx sdk.Tx
-	msg := newTestMsg(user1, types.AccountKey(transaction1.PubKey().Address()))
+	msg := newTestMsg(user1, user1)
 
 	// test first private key is wrong
 	privs, seqs := []crypto.PrivKey{transaction2, transaction1}, []uint64{0, 1}
@@ -466,7 +484,7 @@ func (suite *AnteTestSuite) TestMultiSig() {
 	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
 	suite.checkInvalidTx(
 		tx,
-		acctypes.ErrCheckAuthenticatePubKeyAddress(sdk.AccAddress(transaction1.PubKey().Address())).Result())
+		acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
 
 	// test too many sigs
 	privs, seqs = []crypto.PrivKey{transaction1, transaction2, transaction1}, []uint64{0, 1, 1}

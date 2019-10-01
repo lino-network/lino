@@ -13,7 +13,13 @@ type Msg interface {
 	GetConsumeAmount() Coin
 }
 
+type AddrMsg interface {
+	sdk.Msg
+	GetAccOrAddrSigners() []AccOrAddr
+}
+
 // Register the lino message type
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterInterface((*Msg)(nil), nil)
+	cdc.RegisterInterface((*AddrMsg)(nil), nil)
 }
