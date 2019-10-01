@@ -224,11 +224,11 @@ func TestGenesisFromConfig(t *testing.T) {
 			DeveloperCoinReturnTimes:       int64(7),
 		},
 		param.ValidatorParam{
-			ValidatorMinDeposit:            types.NewCoinFromInt64(20000000000 * types.Decimals),
+			ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 			ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 			ValidatorCoinReturnTimes:       int64(7),
 			PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-			PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+			PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
 			AbsentCommitLimitation:         int64(600), // 30min
 			OncallSize:                     int64(22),
 			StandbySize:                    int64(7),

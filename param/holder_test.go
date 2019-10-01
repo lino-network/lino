@@ -87,7 +87,7 @@ func TestValidatorParam(t *testing.T) {
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
 		AbsentCommitLimitation:         int64(600), // 30min
 		OncallSize:                     int64(22),
 		StandbySize:                    int64(7),
@@ -240,7 +240,7 @@ func TestInitParam(t *testing.T) {
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
 		AbsentCommitLimitation:         int64(600), // 30min
 		OncallSize:                     int64(22),
 		StandbySize:                    int64(7),
@@ -337,7 +337,7 @@ func TestInitParamFromConfig(t *testing.T) {
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
 		AbsentCommitLimitation:         int64(600), // 30min
 		OncallSize:                     int64(22),
 		StandbySize:                    int64(7),

@@ -267,10 +267,10 @@ func TestFireIncompetentValidator2(t *testing.T) {
 	valStore := store.NewValidatorStorage(lb.CapKeyValStore)
 
 	lst := valStore.GetValidatorList(ctx)
-	committimgLst := append(lst.Oncall, lst.Standby...)
+	committingLst := append(lst.Oncall, lst.Standby...)
 	// set validator0 fails to commit
 	var signingValidators []abci.VoteInfo
-	for _, val := range committimgLst {
+	for _, val := range committingLst {
 		validator, err := valStore.GetValidator(ctx, val)
 		if err != nil {
 			t.Errorf("%s: failed to get validator, got err %v", testName, err)

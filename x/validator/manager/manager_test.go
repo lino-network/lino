@@ -51,19 +51,19 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("user1")).Return(linotypes.NewCoinFromInt64(300), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("val")).Return(linotypes.NewCoinFromInt64(300), nil).Maybe()
-	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("jail1")).Return(linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals), nil).Maybe()
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("jail1")).Return(linotypes.NewCoinFromInt64(200000*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("jail2")).Return(linotypes.NewCoinFromInt64(200), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("abs")).Return(linotypes.NewCoinFromInt64(200), nil).Maybe()
-	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("byz")).Return(linotypes.NewCoinFromInt64(200000000000*linotypes.Decimals), nil).Maybe()
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("byz")).Return(linotypes.NewCoinFromInt64(2000000*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("changedVoter")).Return(linotypes.NewCoinFromInt64(600), nil).Maybe()
 	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("val")).Return(votetypes.DutyVoter, nil).Maybe()
 	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("val"), votetypes.DutyValidator,
-		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+		linotypes.NewCoinFromInt64(200000*linotypes.Decimals)).Return(nil).Maybe()
 	suite.vote.On("UnassignDuty", suite.Ctx, linotypes.AccountKey("val"), mock.Anything).Return(nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("abs"),
 		linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("byz"),
-		linotypes.NewCoinFromInt64(1000000*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
+		linotypes.NewCoinFromInt64(1000*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 
 	suite.vote.On("ClaimInterest", suite.Ctx, mock.Anything).Return(nil).Maybe()
 
@@ -73,11 +73,11 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 	suite.vm = NewValidatorManager(testValidatorKey, suite.ph, suite.vote, suite.global, suite.acc)
 	suite.vm.InitGenesis(suite.Ctx)
 	suite.ph.On("GetValidatorParam", mock.Anything).Return(&parammodel.ValidatorParam{
-		ValidatorMinDeposit:            linotypes.NewCoinFromInt64(20000000000 * linotypes.Decimals),
+		ValidatorMinDeposit:            linotypes.NewCoinFromInt64(200000 * linotypes.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
 		PenaltyMissCommit:              linotypes.NewCoinFromInt64(200 * linotypes.Decimals),
-		PenaltyByzantine:               linotypes.NewCoinFromInt64(1000000 * linotypes.Decimals),
+		PenaltyByzantine:               linotypes.NewCoinFromInt64(1000 * linotypes.Decimals),
 		AbsentCommitLimitation:         int64(600), // 30min
 		OncallSize:                     int64(3),
 		StandbySize:                    int64(3),
@@ -2898,11 +2898,11 @@ func (suite *ValidatorManagerTestSuite) TestRegisterFromRevoked() {
 	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("valy")).Return(votetypes.DutyVoter, nil).Maybe()
 	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("valz")).Return(votetypes.DutyVoter, nil).Maybe()
 	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valx"), votetypes.DutyValidator,
-		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+		linotypes.NewCoinFromInt64(200000*linotypes.Decimals)).Return(nil).Maybe()
 	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valy"), votetypes.DutyValidator,
-		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+		linotypes.NewCoinFromInt64(200000*linotypes.Decimals)).Return(nil).Maybe()
 	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valz"), votetypes.DutyValidator,
-		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+		linotypes.NewCoinFromInt64(200000*linotypes.Decimals)).Return(nil).Maybe()
 
 	err := suite.vm.RegisterValidator(suite.Ctx, linotypes.AccountKey("valx"), secp256k1.GenPrivKey().PubKey(), "link")
 	suite.NoError(err)
