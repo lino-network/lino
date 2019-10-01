@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os/user"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
@@ -17,9 +18,10 @@ import (
 )
 
 const (
-	FlagUser   = "user"
-	FlagAmount = "amount"
-	FlagLink   = "link"
+	FlagUser       = "user"
+	FlagAmount     = "amount"
+	FlagLink       = "link"
+	FlagValidators = "validators"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -103,5 +105,24 @@ func GetCmdRevoke(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
+	return cmd
+}
+
+// GetCmdVote -
+func GetCmdVote(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vote",
+		Short: "vote voter --validators val1,val,...",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
+			voter := args[0]
+			validators := strings.Split(viper.GetString(FlagValidators), ",")
+			msg := types.NewVoteValidatorMsg(voter, validators)
+			return ctx.DoTxPrintResponse(msg)
+		},
+	}
+	cmd.Flags().String(FlagValidators, "", "a comma-separated string, the list of validators")
+	_ = cmd.MarkFlagRequired(FlagValidators)
 	return cmd
 }

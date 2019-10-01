@@ -50,6 +50,24 @@ func (vm ValidatorManager) InitGenesis(ctx sdk.Context) {
 	vm.storage.SetValidatorList(ctx, lst)
 }
 
+func (vm ValidatorManager) OnBeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
+	// update preblock validators
+	validatorList := vm.GetValidatorList(ctx)
+	vals := vm.GetCommittingValidators(ctx)
+	validatorList.PreBlockValidators = vals
+	vm.SetValidatorList(ctx, validatorList)
+
+	// update signing stats.
+	updateErr := vm.updateSigningStats(ctx, req.LastCommitInfo.Votes)
+	if updateErr != nil {
+		panic(updateErr)
+	}
+
+	if err := vm.fireIncompetentValidator(ctx, req.ByzantineValidators); err != nil {
+		panic(err)
+	}
+}
+
 // RegisterValidator - register a validator.
 func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes.AccountKey, valPubKey crypto.PubKey, link string) sdk.Error {
 	lst := vm.storage.GetValidatorList(ctx)
@@ -73,7 +91,7 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes
 		return err
 	}
 
-	if err := vm.CheckDupPubKey(ctx, valPubKey); err != nil {
+	if err := vm.checkDupPubKey(ctx, valPubKey); err != nil {
 		return err
 	}
 
@@ -381,11 +399,11 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 	validatorList := vm.storage.GetValidatorList(ctx)
 	updates := []abci.ValidatorUpdate{}
 	committingValidators := vm.GetCommittingValidators(ctx)
+	committingSet := linotypes.AccountListToSet(committingValidators)
 
-	// XXX(yumin): O(n^2) in the following two loops, can be optimized by map.
 	for _, preValidator := range validatorList.PreBlockValidators {
 		// set power to 0 if a previous validator not in oncall and standby list anymore
-		if linotypes.FindAccountInList(preValidator, committingValidators) == -1 {
+		if committingSet[preValidator] == false {
 			validator, err := vm.storage.GetValidator(ctx, preValidator)
 			if err != nil {
 				return nil, err
@@ -413,7 +431,7 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 }
 
 // UpdateSigningStats - based on info in beginBlocker, record last block singing info
-func (vm ValidatorManager) UpdateSigningStats(ctx sdk.Context, voteInfos []abci.VoteInfo) sdk.Error {
+func (vm ValidatorManager) updateSigningStats(ctx sdk.Context, voteInfos []abci.VoteInfo) sdk.Error {
 	// map address to whether that validator has signed.
 	addressSigned := make(map[string]bool)
 	for _, voteInfo := range voteInfos {
@@ -488,8 +506,10 @@ func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username l
 	return nil
 }
 
-// FireIncompetentValidator - fire oncall validator if 1) deposit insufficient 2) byzantine
-func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
+// FireIncompetentValidator - fire oncall validator if
+// 1. absent commit > absent limitation.
+// 2. byzantine
+func (vm ValidatorManager) fireIncompetentValidator(ctx sdk.Context,
 	byzantineValidators []abci.Evidence) sdk.Error {
 	param := vm.paramHolder.GetValidatorParam(ctx)
 	committingValidators := vm.GetCommittingValidators(ctx)
@@ -521,7 +541,7 @@ func (vm ValidatorManager) FireIncompetentValidator(ctx sdk.Context,
 	return nil
 }
 
-func (vm ValidatorManager) CheckDupPubKey(ctx sdk.Context, pubKey crypto.PubKey) sdk.Error {
+func (vm ValidatorManager) checkDupPubKey(ctx sdk.Context, pubKey crypto.PubKey) sdk.Error {
 	// make sure the pub key has not been registered
 	allValidators := vm.GetAllValidators(ctx)
 	for _, validatorName := range allValidators {

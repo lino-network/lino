@@ -55,3 +55,11 @@ func FindAccountInList(me AccountKey, lst []AccountKey) int {
 	}
 	return -1
 }
+
+func AccountListToSet(lst []AccountKey) map[AccountKey]bool {
+	rst := make(map[AccountKey]bool)
+	for _, acc := range lst {
+		rst[acc] = true
+	}
+	return rst
+}

@@ -1688,7 +1688,7 @@ func (suite *ValidatorManagerTestSuite) TestCheckDupPubKey() {
 	for _, tc := range testCases {
 		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
 		suite.vm.storage.SetValidator(suite.Ctx, tc.existVal.Username, &tc.existVal)
-		err := suite.vm.CheckDupPubKey(suite.Ctx, tc.newKey)
+		err := suite.vm.checkDupPubKey(suite.Ctx, tc.newKey)
 		suite.Equal(tc.expectedRes, err, "%s", tc.testName)
 	}
 }
@@ -2751,7 +2751,7 @@ func (suite *ValidatorManagerTestSuite) TestFireIncompetentValidator() {
 
 	for _, tc := range testCases {
 		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		err := suite.vm.FireIncompetentValidator(suite.Ctx, tc.byzantineValidators)
+		err := suite.vm.fireIncompetentValidator(suite.Ctx, tc.byzantineValidators)
 		suite.NoError(err)
 		actualList := suite.vm.storage.GetValidatorList(suite.Ctx)
 		suite.Equal(tc.expectedList, *actualList, "%s", tc.testName)
