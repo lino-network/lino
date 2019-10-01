@@ -344,35 +344,19 @@ func TestChangeDeveloperParamMsg(t *testing.T) {
 
 func TestChangeValidatorParamMsg(t *testing.T) {
 	p1 := param.ValidatorParam{
-		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(3000 * types.Decimals),
-		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(1000 * types.Decimals),
+		ValidatorMinDeposit:            types.NewCoinFromInt64(3000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
-		PenaltyMissVote:                types.NewCoinFromInt64(200 * types.Decimals),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
 		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
-		ValidatorListSize:              int64(21),
 		AbsentCommitLimitation:         int64(100),
 	}
-
-	p2 := p1
-	p2.ValidatorMinWithdraw = types.NewCoinFromInt64(-1 * types.Decimals)
-
-	p3 := p1
-	p3.ValidatorMinVotingDeposit = types.NewCoinFromInt64(0 * types.Decimals)
-
-	p4 := p1
-	p4.ValidatorMinCommittingDeposit = types.NewCoinFromInt64(-1000 * types.Decimals)
 
 	p5 := p1
 	p5.ValidatorCoinReturnIntervalSec = int64(-7 * 24 * 3600)
 
 	p6 := p1
 	p6.ValidatorCoinReturnTimes = int64(0)
-
-	p7 := p1
-	p7.PenaltyMissVote = types.NewCoinFromInt64(-200 * types.Decimals)
 
 	p8 := p1
 	p8.PenaltyByzantine = types.NewCoinFromInt64(-10233232300 * types.Decimals)
@@ -382,9 +366,6 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 
 	p10 := p1
 	p10.AbsentCommitLimitation = int64(0)
-
-	p11 := p1
-	p11.ValidatorListSize = int64(-1)
 
 	testCases := []struct {
 		testName                string
@@ -397,21 +378,6 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 			expectedError:           nil,
 		},
 		{
-			testName:                "negative ValidatorMinWithdraw is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p2, ""),
-			expectedError:           ErrIllegalParameter(),
-		},
-		{
-			testName:                "zero ValidatorMinVotingDeposit is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p3, ""),
-			expectedError:           ErrIllegalParameter(),
-		},
-		{
-			testName:                "negative ValidatorMinCommittingDeposit is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p4, ""),
-			expectedError:           ErrIllegalParameter(),
-		},
-		{
 			testName:                "negative ValidatorCoinReturnIntervalHr is illegal",
 			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p5, ""),
 			expectedError:           ErrIllegalParameter(),
@@ -419,11 +385,6 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		{
 			testName:                "zero ValidatorCoinReturnTimes is illegal",
 			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p6, ""),
-			expectedError:           ErrIllegalParameter(),
-		},
-		{
-			testName:                "negative PenaltyMissVote is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p7, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{
@@ -439,11 +400,6 @@ func TestChangeValidatorParamMsg(t *testing.T) {
 		{
 			testName:                "zero AbsentCommitLimitation is illegal",
 			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p10, ""),
-			expectedError:           ErrIllegalParameter(),
-		},
-		{
-			testName:                "negative ValidatorListSize is illegal",
-			ChangeValidatorParamMsg: NewChangeValidatorParamMsg("user1", p11, ""),
 			expectedError:           ErrIllegalParameter(),
 		},
 		{

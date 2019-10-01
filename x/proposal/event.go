@@ -19,37 +19,13 @@ type DecideProposalEvent struct {
 
 // Execute - execute proposal event, check vote and update status
 func (dpe DecideProposalEvent) Execute(
-	ctx sdk.Context, vk vote.VoteKeeper, valManager val.ValidatorManager,
+	ctx sdk.Context, vk vote.VoteKeeper, valManager val.ValidatorKeeper,
 	am acc.AccountKeeper, proposalManager ProposalManager, postManager post.PostKeeper,
 	gm *global.GlobalManager) sdk.Error {
 	// check it is ongoing proposal
 	if !proposalManager.IsOngoingProposal(ctx, dpe.ProposalID) {
 		return ErrOngoingProposalNotFound()
 	}
-
-	// get all oncall validators (make sure they voted on certain type of proposal)
-	// lst, err := valManager.GetValidatorList(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// get penalty list
-	// penaltyList, err := voteManager.GetPenaltyList(
-	// 	ctx, dpe.ProposalID, dpe.ProposalType, lst.OncallValidators)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// punish validators who didn't vote
-	// actualPenalty, err := valManager.PunishValidatorsDidntVote(ctx, penaltyList.PenaltyList)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// add coins back to inflation pool
-	// if err := gm.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
-	// 	return err
-	// }
 
 	// update the ongoing and past proposal list
 	proposalRes, err := proposalManager.UpdateProposalPassStatus(

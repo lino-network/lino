@@ -13,7 +13,7 @@ type ParamKeeper interface {
 	GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.Error)
 	GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error)
 	GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Error)
-	GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.Error)
+	GetValidatorParam(ctx sdk.Context) *ValidatorParam
 	GetCoinDayParam(ctx sdk.Context) (*CoinDayParam, sdk.Error)
 	GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.Error)
 	GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error)

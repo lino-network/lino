@@ -1,4 +1,4 @@
-package validator
+package types
 
 import (
 	"testing"
@@ -36,63 +36,63 @@ func TestValidatorRevokeMsg(t *testing.T) {
 	}
 }
 
-func TestValidatorWithdrawMsg(t *testing.T) {
+func TestValidatorRegisterMsg(t *testing.T) {
 	testCases := []struct {
 		testName             string
-		validatorWithdrawMsg ValidatorWithdrawMsg
+		validatorRegisterMsg ValidatorRegisterMsg
 		expectedError        sdk.Error
 	}{
 		{
 			testName:             "normal case",
-			validatorWithdrawMsg: NewValidatorWithdrawMsg("user1", "1"),
+			validatorRegisterMsg: NewValidatorRegisterMsg("user1", secp256k1.GenPrivKey().PubKey(), ""),
 			expectedError:        nil,
 		},
 		{
 			testName:             "invalid username",
-			validatorWithdrawMsg: NewValidatorWithdrawMsg("", "1"),
+			validatorRegisterMsg: NewValidatorRegisterMsg("", secp256k1.GenPrivKey().PubKey(), ""),
 			expectedError:        ErrInvalidUsername(),
+		},
+		{
+			testName: "invalid Website",
+			validatorRegisterMsg: NewValidatorRegisterMsg(
+				"user", secp256k1.GenPrivKey().PubKey(), string(make([]byte, types.MaximumLinkURL+1))),
+			expectedError: ErrInvalidWebsite(),
 		},
 	}
 
 	for _, tc := range testCases {
-		result := tc.validatorWithdrawMsg.ValidateBasic()
+		result := tc.validatorRegisterMsg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 		}
 	}
 }
 
-func TestValidatorDepositMsg(t *testing.T) {
+func TestVoteValidatorMsg(t *testing.T) {
 	testCases := []struct {
-		testName            string
-		validatorDepositMsg ValidatorDepositMsg
-		expectedError       sdk.Error
+		testName      string
+		msg           VoteValidatorMsg
+		expectedError sdk.Error
 	}{
 		{
-			testName:            "normal case",
-			validatorDepositMsg: NewValidatorDepositMsg("user1", "1", secp256k1.GenPrivKey().PubKey(), ""),
-			expectedError:       nil,
+			testName:      "normal case",
+			msg:           NewVoteValidatorMsg("user1", []string{"val1"}),
+			expectedError: nil,
 		},
 		{
-			testName:            "invalid username",
-			validatorDepositMsg: NewValidatorDepositMsg("", "1", secp256k1.GenPrivKey().PubKey(), ""),
-			expectedError:       ErrInvalidUsername(),
+			testName:      "invalid username",
+			msg:           NewVoteValidatorMsg("", []string{"val1"}),
+			expectedError: ErrInvalidUsername(),
 		},
 		{
-			testName:            "invalid LNO",
-			validatorDepositMsg: NewValidatorDepositMsg("user", ".", secp256k1.GenPrivKey().PubKey(), ""),
-			expectedError:       types.ErrInvalidCoins("Illegal LNO"),
-		},
-		{
-			testName: "invalid Website",
-			validatorDepositMsg: NewValidatorDepositMsg(
-				"user", "1", secp256k1.GenPrivKey().PubKey(), string(make([]byte, types.MaximumLinkURL+1))),
-			expectedError: ErrInvalidWebsite(),
+			testName:      "invalid voted validators",
+			msg:           NewVoteValidatorMsg("user1", []string{}),
+			expectedError: ErrInvalidVotedValidators(),
 		},
 	}
 
 	for _, tc := range testCases {
-		result := tc.validatorDepositMsg.ValidateBasic()
+		result := tc.msg.ValidateBasic()
 		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 		}
@@ -107,18 +107,18 @@ func TestMsgPermission(t *testing.T) {
 	}{
 		{
 			testName: "validator deposit msg",
-			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
-			expectedPermission: types.TransactionPermission,
-		},
-		{
-			testName:           "validator withdraw msg",
-			msg:                NewValidatorWithdrawMsg("test", types.LNO("1")),
+			msg: NewValidatorRegisterMsg(
+				"test", secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
 			expectedPermission: types.TransactionPermission,
 		},
 		{
 			testName:           "validator revoke msg",
 			msg:                NewValidatorRevokeMsg("test"),
+			expectedPermission: types.TransactionPermission,
+		},
+		{
+			testName:           "vote validator msg",
+			msg:                NewVoteValidatorMsg("test", []string{"val1"}),
 			expectedPermission: types.TransactionPermission,
 		},
 	}
@@ -139,16 +139,16 @@ func TestGetSignBytes(t *testing.T) {
 	}{
 		{
 			testName: "validator deposit msg",
-			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
-		},
-		{
-			testName: "validator withdraw msg",
-			msg:      NewValidatorWithdrawMsg("test", types.LNO("1")),
+			msg: NewValidatorRegisterMsg(
+				"test", secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
 		},
 		{
 			testName: "validator revoke msg",
 			msg:      NewValidatorRevokeMsg("test"),
+		},
+		{
+			testName: "vote validator msg",
+			msg:      NewVoteValidatorMsg("test", []string{"val1", "val2"}),
 		},
 	}
 
@@ -165,18 +165,18 @@ func TestGetSigners(t *testing.T) {
 	}{
 		{
 			testName: "validator deposit msg",
-			msg: NewValidatorDepositMsg(
-				"test", types.LNO("1"), secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "validator withdraw msg",
-			msg:           NewValidatorWithdrawMsg("test", types.LNO("1")),
+			msg: NewValidatorRegisterMsg(
+				"test", secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{
 			testName:      "validator revoke msg",
 			msg:           NewValidatorRevokeMsg("test"),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "vote validator msg",
+			msg:           NewVoteValidatorMsg("test", []string{"val1", "val2"}),
 			expectSigners: []types.AccountKey{"test"},
 		},
 	}

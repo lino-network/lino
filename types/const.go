@@ -178,4 +178,10 @@ const (
 
 	// Upgrade2Update3 - fix registration bug.
 	Upgrade2Update3Height = 98000
+
+	// MaxVotedValidator - the max validators a voter can vote
+	MaxVotedValidators = 50
+
+	// ValidatorMaxPower - the max power of validator can have
+	ValidatorMaxPower = int64(100000000000)
 )

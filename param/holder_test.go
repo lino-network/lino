@@ -83,22 +83,23 @@ func TestValidatorParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := ValidatorParam{
-		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
-		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:              int64(21),
-		AbsentCommitLimitation:         int64(100),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
+		AbsentCommitLimitation:         int64(600), // 30min
+		OncallSize:                     int64(22),
+		StandbySize:                    int64(7),
+		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+		OncallInflationWeight:          int64(2),
+		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 	err := ph.setValidatorParam(ctx, &parameter)
 	assert.Nil(t, err)
 
-	resultPtr, err := ph.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	resultPtr := ph.GetValidatorParam(ctx)
 	assert.Equal(t, parameter, *resultPtr, "Validator param should be equal")
 }
 
@@ -235,16 +236,18 @@ func TestInitParam(t *testing.T) {
 	}
 
 	validatorParam := ValidatorParam{
-		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
-		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:              int64(21),
-		AbsentCommitLimitation:         int64(600),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
+		AbsentCommitLimitation:         int64(600), // 30min
+		OncallSize:                     int64(22),
+		StandbySize:                    int64(7),
+		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+		OncallInflationWeight:          int64(2),
+		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 
 	voteParam := VoteParam{
@@ -330,16 +333,18 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	validatorParam := ValidatorParam{
-		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
-		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:              int64(21),
-		AbsentCommitLimitation:         int64(600),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
+		AbsentCommitLimitation:         int64(600), // 30min
+		OncallSize:                     int64(22),
+		StandbySize:                    int64(7),
+		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+		OncallInflationWeight:          int64(2),
+		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 
 	voteParam := VoteParam{
@@ -440,8 +445,7 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	assert.Nil(t, err)
 	assert.Equal(t, expectDeveloperParam, *developerParam)
 
-	validatorParam, err := ph.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	validatorParam := ph.GetValidatorParam(ctx)
 	assert.Equal(t, expectValidatorParam, *validatorParam)
 
 	voteParam, err := ph.GetVoteParam(ctx)

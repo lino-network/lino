@@ -2,6 +2,7 @@ package manager
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -263,7 +264,7 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
-	if err := vm.AfterSubtractingStake(ctx, username); err != nil {
+	if err := vm.AfterSlashing(ctx, username); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
 	return slashedAmount, nil
@@ -276,7 +277,6 @@ func (vm VoteManager) ExecUnassignDutyEvent(ctx sdk.Context, event types.Unassig
 	if err != nil {
 		return err
 	}
-
 	// set frozen amount to zero and duty to voter
 	voter.FrozenAmount = linotypes.NewCoinFromInt64(0)
 	voter.Duty = types.DutyVoter

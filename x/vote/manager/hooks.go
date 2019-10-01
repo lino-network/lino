@@ -17,6 +17,7 @@ type MultiStakingHooks []StakingHooks
 type StakingHooks interface {
 	AfterAddingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 	AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
+	AfterSlashing(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 }
 
 // AfterAddingStake - call hook if registered
@@ -31,6 +32,14 @@ func (vm VoteManager) AfterAddingStake(ctx sdk.Context, username linotypes.Accou
 func (vm VoteManager) AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	if vm.hooks != nil {
 		return vm.hooks.AfterSubtractingStake(ctx, username)
+	}
+	return nil
+}
+
+// AfterSubtractingStake - call hook if registered
+func (vm VoteManager) AfterSlashing(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	if vm.hooks != nil {
+		return vm.hooks.AfterSlashing(ctx, username)
 	}
 	return nil
 }
@@ -52,6 +61,15 @@ func (h MultiStakingHooks) AfterAddingStake(ctx sdk.Context, username linotypes.
 func (h MultiStakingHooks) AfterSubtractingStake(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	for i := range h {
 		if err := h[i].AfterSubtractingStake(ctx, username); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h MultiStakingHooks) AfterSlashing(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	for i := range h {
+		if err := h[i].AfterSlashing(ctx, username); err != nil {
 			return err
 		}
 	}

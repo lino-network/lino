@@ -129,3 +129,8 @@ func (coin Coin) Minus(coinB Coin) Coin {
 	sdkInt := coin.Amount.Sub(coinB.Amount)
 	return Coin{sdkInt}
 }
+
+// Neg - return a new neged coin.
+func (coin Coin) Neg() Coin {
+	return Coin{coin.Amount.Neg()}
+}

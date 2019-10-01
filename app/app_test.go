@@ -158,9 +158,8 @@ func TestGenesisAcc(t *testing.T) {
 	for _, acc := range accs {
 		expectBalance := acc.coin
 		if acc.isValidator {
-			param, _ := lb.paramHolder.GetValidatorParam(ctx)
-			expectBalance = expectBalance.Minus(
-				param.ValidatorMinCommittingDeposit.Plus(param.ValidatorMinVotingDeposit))
+			param := lb.paramHolder.GetValidatorParam(ctx)
+			expectBalance = expectBalance.Minus(param.ValidatorMinDeposit)
 		}
 		if acc.genesisAccountName == "developer" {
 			param, _ := lb.paramHolder.GetDeveloperParam(ctx)
@@ -225,16 +224,18 @@ func TestGenesisFromConfig(t *testing.T) {
 			DeveloperCoinReturnTimes:       int64(7),
 		},
 		param.ValidatorParam{
-			ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-			ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-			ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+			ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 			ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 			ValidatorCoinReturnTimes:       int64(7),
-			PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 			PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-			PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-			ValidatorListSize:              int64(21),
-			AbsentCommitLimitation:         int64(600), // 10min
+			PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
+			AbsentCommitLimitation:         int64(600), // 30min
+			OncallSize:                     int64(22),
+			StandbySize:                    int64(7),
+			ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+			OncallInflationWeight:          int64(2),
+			StandbyInflationWeight:         int64(1),
+			MaxVotedValidators:             int64(3),
 		},
 		param.CoinDayParam{
 			SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
@@ -294,8 +295,7 @@ func TestGenesisFromConfig(t *testing.T) {
 	coinDayParam, err := lb.paramHolder.GetCoinDayParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, genesisState.GenesisParam.CoinDayParam, *coinDayParam)
-	validatorParam, err := lb.paramHolder.GetValidatorParam(ctx)
-	assert.Nil(t, err)
+	validatorParam := lb.paramHolder.GetValidatorParam(ctx)
 	assert.Equal(t, genesisState.GenesisParam.ValidatorParam, *validatorParam)
 	voteParam, err := lb.paramHolder.GetVoteParam(ctx)
 	assert.Nil(t, err)
@@ -318,10 +318,9 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	remainValidatorPool := types.DecToCoin(
 		genesisTotalCoin.ToDec().Mul(
 			growthRate.Mul(validatorAllocation)))
-	param, _ := lb.paramHolder.GetValidatorParam(ctx)
+	param := lb.paramHolder.GetValidatorParam(ctx)
 
-	expectBaseBalance := coinPerValidator.Minus(
-		param.ValidatorMinCommittingDeposit.Plus(param.ValidatorMinVotingDeposit))
+	expectBaseBalance := coinPerValidator.Minus(param.ValidatorMinDeposit)
 	expectBalanceList := make([]types.Coin, 21)
 	for i := 0; i < len(expectBalanceList); i++ {
 		expectBalanceList[i] = expectBaseBalance
@@ -330,7 +329,9 @@ func TestDistributeInflationToValidators(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	lb.distributeInflationToValidator(ctx)
+	if err := lb.valManager.DistributeInflationToValidator(ctx); err != nil {
+		panic(err)
+	}
 	// simulate app
 	// hourly inflation
 	inflationForValidator :=
@@ -352,7 +353,6 @@ func TestDistributeInflationToValidators(t *testing.T) {
 
 func TestFireByzantineValidators(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
-
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{
 			Height:  lb.LastBlockHeight() + 1,
@@ -369,9 +369,8 @@ func TestFireByzantineValidators(t *testing.T) {
 	lb.EndBlock(abci.RequestEndBlock{})
 	lb.Commit()
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Now()})
-	lst, err := lb.valManager.GetValidatorList(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, 20, len(lst.OncallValidators))
+	lst := lb.valManager.GetValidatorList(ctx)
+	assert.Equal(t, 20, len(lst.Oncall)+len(lst.Standby))
 }
 
 func TestDistributeInflationToValidator(t *testing.T) {
@@ -412,7 +411,9 @@ func TestDistributeInflationToValidator(t *testing.T) {
 			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
 		}
 
-		lb.distributeInflationToValidator(ctx)
+		if err := lb.valManager.DistributeInflationToValidator(ctx); err != nil {
+			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
+		}
 		inflationPool, err := globalStore.GetInflationPool(ctx)
 		if err != nil {
 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
@@ -622,8 +623,8 @@ func TestHourlyEvent(t *testing.T) {
 func TestIncreaseMinute(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
-	validatorParam, _ := lb.paramHolder.GetValidatorParam(ctx)
-	minVotingDeposit, _ := validatorParam.ValidatorMinVotingDeposit.ToInt64()
+	validatorParam := lb.paramHolder.GetValidatorParam(ctx)
+	minVotingDeposit, _ := validatorParam.ValidatorMinDeposit.ToInt64()
 	initStake := minVotingDeposit * 21
 	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
 	expectLinoStakeStat := globalModel.LinoStakeStat{

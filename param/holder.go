@@ -84,16 +84,18 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	validatorParam := &ValidatorParam{
-		ValidatorMinWithdraw:           types.NewCoinFromInt64(1 * types.Decimals),
-		ValidatorMinVotingDeposit:      types.NewCoinFromInt64(300000 * types.Decimals),
-		ValidatorMinCommittingDeposit:  types.NewCoinFromInt64(100000 * types.Decimals),
+		ValidatorMinDeposit:            types.NewCoinFromInt64(200000 * types.Decimals),
 		ValidatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
 		ValidatorCoinReturnTimes:       int64(7),
-		PenaltyMissVote:                types.NewCoinFromInt64(20000 * types.Decimals),
 		PenaltyMissCommit:              types.NewCoinFromInt64(200 * types.Decimals),
-		PenaltyByzantine:               types.NewCoinFromInt64(1000000 * types.Decimals),
-		ValidatorListSize:              int64(21),
+		PenaltyByzantine:               types.NewCoinFromInt64(1000 * types.Decimals),
 		AbsentCommitLimitation:         int64(600), // 30min
+		OncallSize:                     int64(22),
+		StandbySize:                    int64(7),
+		ValidatorRevokePendingSec:      int64(7 * 24 * 3600),
+		OncallInflationWeight:          int64(2),
+		StandbyInflationWeight:         int64(1),
+		MaxVotedValidators:             int64(3),
 	}
 	if err := ph.setValidatorParam(ctx, validatorParam); err != nil {
 		return err
@@ -323,17 +325,15 @@ func (ph ParamHolder) GetProposalParam(ctx sdk.Context) (*ProposalParam, sdk.Err
 }
 
 // GetValidatorParam - get validator param
-func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) (*ValidatorParam, sdk.Error) {
+func (ph ParamHolder) GetValidatorParam(ctx sdk.Context) *ValidatorParam {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetValidatorParamKey())
 	if paramBytes == nil {
-		return nil, ErrValidatorParamNotFound()
+		panic("Validator Param Not FOund")
 	}
 	param := new(ValidatorParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
-		return nil, ErrFailedToUnmarshalValidatorParam(err)
-	}
-	return param, nil
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
 }
 
 // GetCoinDayParam - get coin day param

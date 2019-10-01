@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os/user"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
@@ -13,13 +14,14 @@ import (
 
 	"github.com/lino-network/lino/client"
 	linotypes "github.com/lino-network/lino/types"
-	types "github.com/lino-network/lino/x/validator"
+	types "github.com/lino-network/lino/x/validator/types"
 )
 
 const (
-	FlagUser   = "user"
-	FlagAmount = "amount"
-	FlagLink   = "link"
+	FlagUser       = "user"
+	FlagAmount     = "amount"
+	FlagLink       = "link"
+	FlagValidators = "validators"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -32,30 +34,29 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.AddCommand(client.PostCommands(
-		GetCmdDeposit(cdc),
+		GetCmdRegister(cdc),
 		GetCmdRevoke(cdc),
-		GetCmdWithdraw(cdc),
 	)...)
 
 	return cmd
+
 }
 
-// GetCmdDeposit -
-func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
+// GetCmdRegister -
+func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deposit",
-		Short: "deposit user --amount <amount> --link <link>",
+		Use:   "register",
+		Short: "register user --amount <amount> --link <link>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			validator := args[0]
-			amount := viper.GetString(FlagAmount)
 			link := viper.GetString(FlagLink)
 			pubKey, err := getLocalUserPubKey()
 			if err != nil {
 				return err
 			}
-			msg := types.NewValidatorDepositMsg(validator, amount, pubKey, link)
+			msg := types.NewValidatorRegisterMsg(validator, pubKey, link)
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
@@ -107,20 +108,21 @@ func GetCmdRevoke(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// GetCmdWithdraw -
-func GetCmdWithdraw(cdc *codec.Codec) *cobra.Command {
+// GetCmdVote -
+func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw",
-		Short: "withdraw <username> --amount <amount>",
+		Use:   "vote",
+		Short: "vote voter --validators val1,val,...",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
-			user := args[0]
-			msg := types.NewValidatorWithdrawMsg(user, viper.GetString(FlagAmount))
+			voter := args[0]
+			validators := strings.Split(viper.GetString(FlagValidators), ",")
+			msg := types.NewVoteValidatorMsg(voter, validators)
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
-	_ = cmd.MarkFlagRequired(FlagAmount)
+	cmd.Flags().String(FlagValidators, "", "a comma-separated string, the list of validators")
+	_ = cmd.MarkFlagRequired(FlagValidators)
 	return cmd
 }

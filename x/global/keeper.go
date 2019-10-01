@@ -24,7 +24,7 @@ type GlobalKeeper interface {
 	PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
 	AddLinoStakeToStat(ctx sdk.Context, linoStake types.Coin) sdk.Error
 	MinusLinoStakeFromStat(ctx sdk.Context, linoStake types.Coin) sdk.Error
-
+	GetValidatorHourlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
 	// import export
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
