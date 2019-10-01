@@ -158,16 +158,16 @@ func NewLinoBlockchain(
 	lb.priceManager = pricemn.NewWeightedMedianPriceManager(lb.CapKeyPriceStore, lb.valManager, lb.voteManager, &lb.globalManager, lb.paramHolder)
 
 	// layer-3: applications
-	lb.auth = auth.NewAnteHandler(lb.accountManager, lb.bandwidthManager)
 	lb.developerManager = devmn.NewDeveloperManager(
 		lb.CapKeyDeveloperStore, lb.paramHolder,
 		&voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
-	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(
-		lb.CapKeyBandwidthStore, lb.paramHolder,
-		&lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
 	lb.postManager = postmn.NewPostManager(
 		lb.CapKeyPostStore, lb.accountManager,
 		&lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(
+		lb.CapKeyBandwidthStore, lb.paramHolder,
+		&lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
+	lb.auth = auth.NewAnteHandler(lb.accountManager, lb.bandwidthManager)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager)).
