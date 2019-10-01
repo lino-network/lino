@@ -460,8 +460,9 @@ func (vm ValidatorManager) updateSigningStats(ctx sdk.Context, voteInfos []abci.
 	return nil
 }
 
-// PunishOncallValidator - punish committing validator if 1) byzantine or 2) missing blocks reach limiation
-func (vm ValidatorManager) punishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
+// PunishOncallValidator - punish committing validator
+// if 1) byzantine or 2) missing blocks reach limiation
+func (vm ValidatorManager) PunishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
 	penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error {
 	// slash and add slashed coin back into validator inflation pool
 	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
@@ -522,7 +523,7 @@ func (vm ValidatorManager) fireIncompetentValidator(ctx sdk.Context,
 
 		for _, evidence := range byzantineValidators {
 			if reflect.DeepEqual(validator.ABCIValidator.Address, evidence.Validator.Address) {
-				if err := vm.punishCommittingValidator(ctx, validator.Username, param.PenaltyByzantine,
+				if err := vm.PunishCommittingValidator(ctx, validator.Username, param.PenaltyByzantine,
 					linotypes.PunishByzantine); err != nil {
 					return err
 				}
@@ -531,7 +532,7 @@ func (vm ValidatorManager) fireIncompetentValidator(ctx sdk.Context,
 		}
 
 		if validator.AbsentCommit > param.AbsentCommitLimitation {
-			if err := vm.punishCommittingValidator(ctx, validator.Username, param.PenaltyMissCommit,
+			if err := vm.PunishCommittingValidator(ctx, validator.Username, param.PenaltyMissCommit,
 				linotypes.PunishAbsentCommit); err != nil {
 				return err
 			}

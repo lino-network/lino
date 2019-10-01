@@ -79,6 +79,7 @@ const (
 	PunishByzantine    = PunishType(1)
 	PunishAbsentCommit = PunishType(2)
 	PunishDidntVote    = PunishType(3)
+	PunishNoPriceFed   = PunishType(4)
 
 	// UsernameReCheck - UsernameReCheck is used to check user registration
 	UsernameReCheck        = "^[a-z]([a-z0-9-\\.]){1,19}[a-z0-9]$"

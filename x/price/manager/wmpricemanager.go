@@ -7,30 +7,24 @@ import (
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/price/model"
 	"github.com/lino-network/lino/x/price/types"
 	"github.com/lino-network/lino/x/validator"
-	"github.com/lino-network/lino/x/vote"
 )
 
 type WeightedMedianPriceManager struct {
 	store model.PriceStorage
 
 	// deps
-	param  param.ParamKeeper
-	val    validator.ValidatorKeeper
-	vote   vote.VoteKeeper
-	global global.GlobalKeeper
+	param param.ParamKeeper
+	val   validator.ValidatorKeeper
 }
 
-func NewWeightedMedianPriceManager(key sdk.StoreKey, val validator.ValidatorKeeper, vote vote.VoteKeeper, global global.GlobalKeeper, param param.ParamKeeper) WeightedMedianPriceManager {
+func NewWeightedMedianPriceManager(key sdk.StoreKey, val validator.ValidatorKeeper, param param.ParamKeeper) WeightedMedianPriceManager {
 	return WeightedMedianPriceManager{
-		store:  model.NewPriceStorage(key),
-		param:  param,
-		val:    val,
-		vote:   vote,
-		global: global,
+		store: model.NewPriceStorage(key),
+		param: param,
+		val:   val,
 	}
 }
 
@@ -218,12 +212,13 @@ func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []wei
 			// unless the validator is not in the last set, slash.
 			if lastValidatorSet[valname] {
 				if !wm.param.GetPriceParam(ctx).TestnetMode {
-					amount, err := wm.vote.SlashStake(
-						ctx, valname, wm.param.GetPriceParam(ctx).PenaltyMissFeed)
+					err := wm.val.PunishCommittingValidator(
+						ctx, valname,
+						wm.param.GetPriceParam(ctx).PenaltyMissFeed,
+						linotypes.PunishNoPriceFed)
 					if err != nil {
 						return nil, err
 					}
-					_ = wm.global.AddToValidatorInflationPool(ctx, amount)
 				}
 			}
 		} else {

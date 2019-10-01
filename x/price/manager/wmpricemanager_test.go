@@ -15,12 +15,10 @@ import (
 	"github.com/lino-network/lino/testsuites"
 	"github.com/lino-network/lino/testutils"
 	linotypes "github.com/lino-network/lino/types"
-	mglobal "github.com/lino-network/lino/x/global/mocks"
 	"github.com/lino-network/lino/x/price/model"
 	"github.com/lino-network/lino/x/price/types"
 	mval "github.com/lino-network/lino/x/validator/mocks"
 	valmodel "github.com/lino-network/lino/x/validator/model"
-	mvote "github.com/lino-network/lino/x/vote/mocks"
 )
 
 type ValidatorAndVotes = valmodel.ReceivedVotesStatus
@@ -44,9 +42,6 @@ type WMPriceManagerSuite struct {
 	// read only, can be reseted at will.
 	mParam *mparam.ParamKeeper
 	mVal   *mval.ValidatorKeeper
-	// mutation, should not reset .
-	mVote   *mvote.VoteKeeper
-	mGlobal *mglobal.GlobalKeeper
 }
 
 func NewPriceManagerSuite() *WMPriceManagerSuite {
@@ -58,11 +53,9 @@ func NewPriceManagerSuite() *WMPriceManagerSuite {
 func (suite *WMPriceManagerSuite) SetupTest() {
 	suite.mParam = new(mparam.ParamKeeper)
 	suite.mVal = new(mval.ValidatorKeeper)
-	suite.mVote = new(mvote.VoteKeeper)
-	suite.mGlobal = new(mglobal.GlobalKeeper)
 
 	suite.manager = NewWeightedMedianPriceManager(
-		storeKey, suite.mVal, suite.mVote, suite.mGlobal, suite.mParam)
+		storeKey, suite.mVal, suite.mParam)
 	suite.SetupCtx(0, time.Unix(0, 0), storeKey)
 }
 
@@ -431,13 +424,11 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 			for _, round := range tc.rounds {
 				suite.setValidatorByDist(round.valDist...)
 				for _, slash := range round.slashes {
-					slashedAmount := linotypes.NewCoinFromInt64(123) // no need to be variable.
-					suite.mVote.On("SlashStake",
-						mock.Anything, slash, basicParam.PenaltyMissFeed).Return(
-						slashedAmount, nil).Once()
-					suite.mGlobal.On("AddToValidatorInflationPool", mock.Anything,
-						slashedAmount,
-					).Return(nil).Once()
+					suite.mVal.On("PunishCommittingValidator",
+						mock.Anything,
+						slash,
+						basicParam.PenaltyMissFeed,
+						linotypes.PunishNoPriceFed).Return(nil).Once()
 				}
 				for _, act := range round.actions {
 					suite.NextBlock(act.t)
@@ -447,9 +438,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 				suite.NextBlock(round.updateTime)
 				err := suite.manager.UpdatePrice(suite.Ctx)
 				suite.Nil(err)
+				suite.mVal.AssertExpectations(suite.T())
 			}
-			suite.mVote.AssertExpectations(suite.T())
-			suite.mGlobal.AssertExpectations(suite.T())
 			suite.Golden()
 		})
 	}
@@ -660,15 +650,6 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 		},
 	}
 
-	// slashing is not tested here.
-	slashedAmount := linotypes.NewCoinFromInt64(123) // no need to be variable.
-	suite.mVote.On("SlashStake",
-		mock.Anything, mock.Anything, basicParam.PenaltyMissFeed).Return(
-		slashedAmount, nil).Maybe()
-	suite.mGlobal.On("AddToValidatorInflationPool", mock.Anything,
-		slashedAmount,
-	).Return(nil).Maybe()
-
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			suite.LoadState(false, "genesis")
@@ -677,6 +658,13 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 			}
 			for _, round := range tc.rounds {
 				suite.setValidatorByDist(round.valDist...)
+				// slashing is not tested here.
+				suite.mVal.On("PunishCommittingValidator",
+					mock.Anything,
+					mock.Anything,
+					basicParam.PenaltyMissFeed,
+					linotypes.PunishNoPriceFed).Return(nil).Maybe()
+
 				for _, act := range round.actions {
 					suite.NextBlock(act.t)
 					err := suite.manager.FeedPrice(suite.Ctx, act.feeder, act.price)
@@ -688,9 +676,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 				price, err := suite.manager.CurrPrice(suite.Ctx)
 				suite.Nil(err)
 				suite.Equal(round.priceAfter, price)
+				suite.mVal.AssertExpectations(suite.T())
 			}
-			suite.mVote.AssertExpectations(suite.T())
-			suite.mGlobal.AssertExpectations(suite.T())
 			suite.Golden()
 		})
 	}

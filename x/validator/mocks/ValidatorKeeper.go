@@ -201,6 +201,22 @@ func (_m *ValidatorKeeper) OnBeginBlock(ctx types.Context, req abcitypes.Request
 	_m.Called(ctx, req)
 }
 
+// PunishCommittingValidator provides a mock function with given fields: ctx, username, penalty, punishType
+func (_m *ValidatorKeeper) PunishCommittingValidator(ctx types.Context, username linotypes.AccountKey, penalty linotypes.Coin, punishType linotypes.PunishType) types.Error {
+	ret := _m.Called(ctx, username, penalty, punishType)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin, linotypes.PunishType) types.Error); ok {
+		r0 = rf(ctx, username, penalty, punishType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // RegisterValidator provides a mock function with given fields: ctx, username, valPubKey, link
 func (_m *ValidatorKeeper) RegisterValidator(ctx types.Context, username linotypes.AccountKey, valPubKey crypto.PubKey, link string) types.Error {
 	ret := _m.Called(ctx, username, valPubKey, link)

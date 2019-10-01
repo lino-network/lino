@@ -155,7 +155,7 @@ func NewLinoBlockchain(
 	lb.valManager = valmn.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder, &voteManager, &lb.globalManager, lb.accountManager)
 	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks(lb.valManager.Hooks()))
 	//// price -> vote, validator
-	lb.priceManager = pricemn.NewWeightedMedianPriceManager(lb.CapKeyPriceStore, lb.valManager, lb.voteManager, &lb.globalManager, lb.paramHolder)
+	lb.priceManager = pricemn.NewWeightedMedianPriceManager(lb.CapKeyPriceStore, lb.valManager, lb.paramHolder)
 
 	// layer-3: applications
 	lb.developerManager = devmn.NewDeveloperManager(

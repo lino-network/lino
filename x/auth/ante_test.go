@@ -142,7 +142,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 	vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
 	valm := valmn.NewValidatorManager(TestValidatorKVStoreKey, ph, vm, &gm, am)
-	price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, vm, &gm, ph)
+	price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, ph)
 	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
 
