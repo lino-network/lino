@@ -24,7 +24,6 @@ type ValidatorKeeper interface {
 	// getters
 	GetInitValidators(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error)
 	GetValidatorUpdates(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error)
-	IsLegalValidator(ctx sdk.Context, accKey linotypes.AccountKey) bool
 	GetValidator(ctx sdk.Context, username linotypes.AccountKey) (*model.Validator, sdk.Error)
 	GetValidatorList(ctx sdk.Context) *model.ValidatorList
 	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
