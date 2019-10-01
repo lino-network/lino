@@ -93,6 +93,16 @@ type TransferV2Msg struct {
 
 var _ types.AddrMsg = TransferV2Msg{}
 
+// NewTransferV2Msg - return a TransferV2Msg
+func NewTransferV2Msg(sender, receiver types.AccOrAddr, amount types.LNO, memo string) TransferV2Msg {
+	return TransferV2Msg{
+		Sender:   sender,
+		Receiver: receiver,
+		Amount:   amount,
+		Memo:     memo,
+	}
+}
+
 // Route - implements sdk.Msg
 func (msg TransferV2Msg) Route() string { return RouterKey }
 

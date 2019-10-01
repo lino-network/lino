@@ -96,6 +96,8 @@ func getMsgPermissionAndConsume(msg sdk.Msg) (types.Permission, types.Coin, sdk.
 	return permission, consumeAmount, nil
 }
 
+type signBytesFactory = func(seq uint64) []byte
+
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
@@ -108,67 +110,79 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 			return ctx, err.Result(), true
 		}
 
+		// signbyte creator returns the bytes that should be signed.
+		signBytesCreator := func(seq uint64) []byte {
+			return auth.StdSignBytes(
+				ctx.ChainID(), uint64(0), seq, stdTx.Fee, stdTx.GetMsgs(), stdTx.GetMemo())
+		}
+
 		// validate each msg.
 		for _, msgSigs := range msgAndSigs {
-			permission, consumeAmount, err := getMsgPermissionAndConsume(msgSigs.msg)
-			if err != nil {
+			if err := validateMsg(ctx, am, bm, msgSigs, signBytesCreator, stdTx.Fee); err != nil {
 				return ctx, err.Result(), true
-			}
-			// validate each signature.
-			paid := false
-			for i, signer := range msgSigs.signers {
-				sig := msgSigs.sigs[i]
-				var signerAddr sdk.AccAddress
-				var msgSignerAddr sdk.AccAddress
-				if signer.IsAddr {
-					err := checkAddrSigner(ctx, am, signer.Addr, sig.PubKey, paid)
-					if err != nil {
-						return ctx, err.Result(), true
-					}
-					signerAddr = signer.Addr
-					msgSignerAddr = signer.Addr
-				} else {
-					var err sdk.Error
-					signerAddr, msgSignerAddr, err = checkAccountSigner(
-						ctx, am, signer.AccountKey, sig.PubKey,
-						permission, consumeAmount)
-					if err != nil {
-						return ctx, err.Result(), true
-					}
-
-				}
-
-				// 1. verify seq.
-				seq, err := am.GetSequence(ctx, msgSignerAddr)
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-				// 2. verify signature
-				signBytes := auth.StdSignBytes(
-					ctx.ChainID(), uint64(0), seq, stdTx.Fee, stdTx.GetMsgs(), stdTx.GetMemo())
-				if !sig.PubKey.VerifyBytes(signBytes, sig.Signature) {
-					return ctx, ErrUnverifiedBytes(
-						fmt.Sprintf("signature verification failed, chain-id:%v, seq:%d",
-							ctx.ChainID(), seq)).Result(), true
-				}
-				// 3. increase seq
-				if err := am.IncreaseSequenceByOne(ctx, msgSignerAddr); err != nil {
-					return ctx, err.Result(), true
-				}
-
-				// 4. only pay fee in the end.
-				// only the first signer pays the fee
-				if !paid {
-					if err := bm.CheckBandwidth(ctx, signerAddr, stdTx.Fee); err != nil {
-						return ctx, err.Result(), true
-					}
-				}
-				paid = true
 			}
 		}
 
 		return ctx, sdk.Result{}, false
 	}
+}
+
+func validateMsg(ctx sdk.Context, am acc.AccountKeeper, bm bandwidth.BandwidthKeeper, msgSigs msgAndSigs, signBytesCreator signBytesFactory, fee auth.StdFee) sdk.Error {
+	permission, consumeAmount, err := getMsgPermissionAndConsume(msgSigs.msg)
+	if err != nil {
+		return err
+	}
+	// validate each signature.
+	paid := false
+	for i, signer := range msgSigs.signers {
+		sig := msgSigs.sigs[i]
+		var signerAddr sdk.AccAddress
+		var msgSignerAddr sdk.AccAddress
+		if signer.IsAddr {
+			err := checkAddrSigner(ctx, am, signer.Addr, sig.PubKey, paid)
+			if err != nil {
+				return err
+			}
+			signerAddr = signer.Addr
+			msgSignerAddr = signer.Addr
+		} else {
+			var err sdk.Error
+			signerAddr, msgSignerAddr, err = checkAccountSigner(
+				ctx, am, signer.AccountKey, sig.PubKey,
+				permission, consumeAmount)
+			if err != nil {
+				return err
+			}
+
+		}
+
+		// 1. verify seq.
+		seq, err := am.GetSequence(ctx, msgSignerAddr)
+		if err != nil {
+			return err
+		}
+		// 2. verify signature
+		signBytes := signBytesCreator(seq)
+		if !sig.PubKey.VerifyBytes(signBytes, sig.Signature) {
+			return ErrUnverifiedBytes(fmt.Sprintf(
+				"signature verification failed, chain-id:%v, seq:%d",
+				ctx.ChainID(), seq))
+		}
+		// 3. increase seq
+		if err := am.IncreaseSequenceByOne(ctx, msgSignerAddr); err != nil {
+			return err
+		}
+
+		// 4. only pay fee in the end.
+		// only the first signer pays the fee
+		if !paid {
+			if err := bm.CheckBandwidth(ctx, signerAddr, fee); err != nil {
+				return err
+			}
+		}
+		paid = true
+	}
+	return nil
 }
 
 func checkAddrSigner(ctx sdk.Context, am acc.AccountKeeper, addr sdk.AccAddress, signKey crypto.PubKey, isPaid bool) sdk.Error {

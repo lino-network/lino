@@ -24,8 +24,9 @@ func TestRecoverAccount(t *testing.T) {
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
-	registerMsgV2 := acctypes.NewRegisterMsgV2(
-		test.GenesisUser, newAccountName, types.LNO("100"),
+	registerMsgV2 := acctypes.NewRegisterV2Msg(
+		types.NewAccOrAddrFromAcc(
+			types.AccountKey(test.GenesisUser)), newAccountName, types.LNO("100"),
 		transactionPriv.PubKey(), signingPriv.PubKey())
 	test.SignCheckDeliverWithMultiSig(
 		t, lb, registerMsgV2, []uint64{0, 0}, true,
