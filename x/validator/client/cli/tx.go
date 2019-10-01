@@ -123,6 +123,6 @@ func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagValidators, "", "a comma-separated string, the list of validators")
-	cmd.MarkFlagRequired(FlagValidators)
+	_ = cmd.MarkFlagRequired(FlagValidators)
 	return cmd
 }
