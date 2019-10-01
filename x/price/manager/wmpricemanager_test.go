@@ -16,12 +16,14 @@ import (
 	"github.com/lino-network/lino/testutils"
 	linotypes "github.com/lino-network/lino/types"
 	mglobal "github.com/lino-network/lino/x/global/mocks"
-	"github.com/lino-network/lino/x/price/manager/fake"
-	mval "github.com/lino-network/lino/x/price/manager/fake/mocks"
 	"github.com/lino-network/lino/x/price/model"
 	"github.com/lino-network/lino/x/price/types"
+	mval "github.com/lino-network/lino/x/validator/mocks"
+	valmodel "github.com/lino-network/lino/x/validator/model"
 	mvote "github.com/lino-network/lino/x/vote/mocks"
 )
+
+type ValidatorAndVotes = valmodel.ReceivedVotesStatus
 
 var (
 	storeKeyStr = "priceStoreTestKey"
@@ -41,7 +43,7 @@ type WMPriceManagerSuite struct {
 	manager WeightedMedianPriceManager
 	// read only, can be reseted at will.
 	mParam *mparam.ParamKeeper
-	mVal   *mval.FakeValidator
+	mVal   *mval.ValidatorKeeper
 	// mutation, should not reset .
 	mVote   *mvote.VoteKeeper
 	mGlobal *mglobal.GlobalKeeper
@@ -55,7 +57,7 @@ func NewPriceManagerSuite() *WMPriceManagerSuite {
 
 func (suite *WMPriceManagerSuite) SetupTest() {
 	suite.mParam = new(mparam.ParamKeeper)
-	suite.mVal = new(mval.FakeValidator)
+	suite.mVal = new(mval.ValidatorKeeper)
 	suite.mVote = new(mvote.VoteKeeper)
 	suite.mGlobal = new(mglobal.GlobalKeeper)
 
@@ -64,30 +66,21 @@ func (suite *WMPriceManagerSuite) SetupTest() {
 	suite.SetupCtx(0, time.Unix(0, 0), storeKey)
 }
 
-func (suite *WMPriceManagerSuite) setValidators(vals []fake.ValidatorAndVote) {
-	suite.mVal = new(mval.FakeValidator)
+func (suite *WMPriceManagerSuite) setValidators(vals []ValidatorAndVotes) {
+	suite.mVal = new(mval.ValidatorKeeper)
 	suite.manager.val = suite.mVal
-	// suite.manager = NewWeightedMedianPriceManager(
-	// 	storeKey, suite.mVal, suite.mVote, suite.mGlobal, suite.mParam)
-	suite.mVal.On("GetValidatorAndVotes", mock.Anything).Return(vals)
-	names := fake.ToValNames(vals)
-	suite.mVal.On("DoesValidatorExist", mock.Anything,
-		mock.MatchedBy(func(u linotypes.AccountKey) bool {
-			return linotypes.FindAccountInList(u, names) == -1
-		})).Return(false)
-	suite.mVal.On("DoesValidatorExist", mock.Anything,
-		mock.MatchedBy(func(u linotypes.AccountKey) bool {
-			return linotypes.FindAccountInList(u, names) != -1
-		})).Return(true)
+	suite.mVal.On("GetCommittingValidatorVoteStatus", mock.Anything).Return(vals)
+	names := toValNames(vals)
+	suite.mVal.On("GetCommittingValidators", mock.Anything).Return(names)
 }
 
 // setup validators from "val1", "val2" ...."valx".
 func (suite *WMPriceManagerSuite) setValidatorByDist(votes ...int64) {
-	vals := []fake.ValidatorAndVote{}
+	vals := []ValidatorAndVotes{}
 	for i, v := range votes {
-		vals = append(vals, fake.ValidatorAndVote{
-			Username: linotypes.AccountKey(fmt.Sprintf("val%d", i+1)),
-			Votes:    linotypes.NewCoinFromInt64(v),
+		vals = append(vals, ValidatorAndVotes{
+			ValidatorName: linotypes.AccountKey(fmt.Sprintf("val%d", i+1)),
+			ReceivedVotes: linotypes.NewCoinFromInt64(v),
 		})
 	}
 	suite.setValidators(vals)
@@ -130,7 +123,8 @@ func (suite *WMPriceManagerSuite) TestInitGenesis() {
 	err := suite.manager.InitGenesis(suite.Ctx, linotypes.NewMiniDollar(-100))
 	suite.NotNil(err)
 	initPrice := linotypes.NewMiniDollar(1234)
-	suite.manager.InitGenesis(suite.Ctx, initPrice)
+	err = suite.manager.InitGenesis(suite.Ctx, initPrice)
+	suite.Nil(err)
 	price, err := suite.manager.CurrPrice(suite.Ctx)
 	suite.NoError(err)
 	suite.Equal(initPrice, price)
@@ -146,7 +140,7 @@ type feedAction struct {
 
 func (suite *WMPriceManagerSuite) TestFeedPrice() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEverySec)
+	feedInterval := basicParam.FeedEverySec
 	testCases := []struct {
 		name    string
 		valDist []int64
@@ -270,8 +264,8 @@ type feedRound struct {
 // validators get slashed if not feeding price on time.
 func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEverySec)
-	updateInterval := int64(basicParam.UpdateEverySec)
+	feedInterval := basicParam.FeedEverySec
+	updateInterval := basicParam.UpdateEverySec
 	testCases := []struct {
 		name      string
 		rounds    []feedRound
@@ -464,8 +458,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceSlash() {
 // current price is correct.
 func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEverySec)
-	updateInterval := int64(basicParam.UpdateEverySec)
+	feedInterval := basicParam.FeedEverySec
+	updateInterval := basicParam.UpdateEverySec
 	testCases := []struct {
 		name      string
 		rounds    []feedRound
@@ -705,8 +699,8 @@ func (suite *WMPriceManagerSuite) TestUpdatePriceCurrPrice() {
 // current price is correct.
 func (suite *WMPriceManagerSuite) TestUpdatePriceHistoryRolling() {
 	suite.setBasicParam(false)
-	feedInterval := int64(basicParam.FeedEverySec)
-	updateInterval := int64(basicParam.UpdateEverySec)
+	feedInterval := basicParam.FeedEverySec
+	updateInterval := basicParam.UpdateEverySec
 
 	history := []int64{genesisPrice.Int64()}
 	// 100 validators, weighted from 1..100
@@ -871,4 +865,11 @@ func (suite *WMPriceManagerSuite) TestMiniDollarToCoin() {
 		suite.Equal(tc.expectedBought, bought, "%s", tc.testName)
 		suite.Equal(tc.expectedUsed, used, "%s", tc.testName)
 	}
+}
+
+func toValNames(vals []ValidatorAndVotes) (rst []linotypes.AccountKey) {
+	for _, val := range vals {
+		rst = append(rst, val.ValidatorName)
+	}
+	return
 }

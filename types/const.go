@@ -18,6 +18,7 @@ const (
 	ProposalKVStoreKey     = "proposal"
 	ReputationV2KVStoreKey = "repv2"
 	BandwidthKVStoreKey    = "bandwidth"
+	PriceKVStoreKey        = "price"
 	LinoCoinDenom          = "linocoin"
 
 	// Different permission level for msg

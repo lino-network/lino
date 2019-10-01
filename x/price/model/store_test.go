@@ -54,12 +54,12 @@ func (suite *priceStoreTestSuite) TestGetSetFedPrice() {
 	fed1 := &FedPrice{
 		Validator: user1,
 		Price:     linotypes.NewMiniDollar(123),
-		UpdateAt:   time1.Unix(),
+		UpdateAt:  time1.Unix(),
 	}
 	fed2 := &FedPrice{
 		Validator: user2,
 		Price:     linotypes.NewMiniDollar(456),
-		UpdateAt:   time2.Unix(),
+		UpdateAt:  time2.Unix(),
 	}
 	_, err := store.GetFedPrice(ctx, user1)
 	suite.Require().NotNil(err)

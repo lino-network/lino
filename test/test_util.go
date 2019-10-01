@@ -66,7 +66,8 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 	logger, db := loggerAndDB()
 	lb := app.NewLinoBlockchain(logger, db, nil)
 	genesisState := app.GenesisState{
-		Accounts: []app.GenesisAccount{},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []app.GenesisAccount{},
 	}
 
 	// Generate 21 validators

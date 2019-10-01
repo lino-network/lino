@@ -94,6 +94,7 @@ type LinoBlockchain struct {
 	CapKeyProposalStore     *sdk.KVStoreKey
 	CapKeyReputationV2Store *sdk.KVStoreKey
 	CapKeyBandwidthStore    *sdk.KVStoreKey
+	CapKeyPriceStore        *sdk.KVStoreKey
 
 	// manager for different KVStore
 	accountManager    acc.AccountKeeper
@@ -134,24 +135,30 @@ func NewLinoBlockchain(
 		CapKeyProposalStore:     sdk.NewKVStoreKey(types.ProposalKVStoreKey),
 		CapKeyReputationV2Store: sdk.NewKVStoreKey(types.ReputationV2KVStoreKey),
 		CapKeyBandwidthStore:    sdk.NewKVStoreKey(types.BandwidthKVStoreKey),
+		CapKeyPriceStore:        sdk.NewKVStoreKey(types.PriceKVStoreKey),
 	}
+	// layer-1: basics
 	lb.paramHolder = param.NewParamHolder(lb.CapKeyParamStore)
-	lb.priceManager = pricemn.TestnetPriceManager{}
 	lb.globalManager = global.NewGlobalManager(lb.CapKeyGlobalStore, lb.paramHolder)
 	registerEvent(lb.globalManager.WireCodec())
-
 	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
-	voteManager := votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
 	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
-	lb.developerManager = devmn.NewDeveloperManager(
-		lb.CapKeyDeveloperStore, lb.paramHolder, &voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
-	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
-	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
+	// layer-2: middlewares
+	//// vote <--> validator
+	voteManager := votemn.NewVoteManager(lb.CapKeyVoteStore, lb.paramHolder, lb.accountManager, &lb.globalManager)
 	lb.valManager = valmn.NewValidatorManager(lb.CapKeyValStore, lb.paramHolder, &voteManager, &lb.globalManager, lb.accountManager)
 	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks(lb.valManager.Hooks()))
+	//// price -> vote, validator
+	lb.priceManager = pricemn.NewWeightedMedianPriceManager(lb.CapKeyPriceStore, lb.valManager, lb.voteManager, &lb.globalManager, lb.paramHolder)
+
+	// layer-3: applications
+	lb.developerManager = devmn.NewDeveloperManager(
+		lb.CapKeyDeveloperStore, lb.paramHolder, &voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
+	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(lb.CapKeyBandwidthStore, lb.paramHolder, &lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
+	lb.postManager = postmn.NewPostManager(lb.CapKeyPostStore, lb.accountManager, &lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
 
 	lb.Router().
 		AddRoute(acctypes.RouterKey, acc.NewHandler(lb.accountManager)).
@@ -186,7 +193,7 @@ func NewLinoBlockchain(
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
 		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
-		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore)
+		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore, lb.CapKeyPriceStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		panic(err)
 	}
@@ -292,10 +299,10 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.proposalManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
-	lb.valManager.InitGenesis(ctx)
 	if err := lb.bandwidthManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
+	lb.valManager.InitGenesis(ctx)
 
 	// import from prev state, do not read from genesis.
 	if genesisState.LoadPrevStates {
@@ -539,6 +546,9 @@ func (lb *LinoBlockchain) executeHourlyEvent(ctx sdk.Context) {
 		panic(err)
 	}
 	if err := lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx); err != nil {
+		panic(err)
+	}
+	if err := lb.priceManager.UpdatePrice(ctx); err != nil {
 		panic(err)
 	}
 }

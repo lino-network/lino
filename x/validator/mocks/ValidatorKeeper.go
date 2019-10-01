@@ -39,7 +39,7 @@ func (_m *ValidatorKeeper) DistributeInflationToValidator(ctx types.Context) typ
 }
 
 // GetCommittingValidatorVoteStatus provides a mock function with given fields: ctx
-func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) ([]model.ReceivedVotesStatus, types.Error) {
+func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) []model.ReceivedVotesStatus {
 	ret := _m.Called(ctx)
 
 	var r0 []model.ReceivedVotesStatus
@@ -51,16 +51,7 @@ func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) (
 		}
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetCommittingValidators provides a mock function with given fields: ctx

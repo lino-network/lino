@@ -1051,20 +1051,20 @@ func (vm ValidatorManager) getPrevVotes(ctx sdk.Context, user linotypes.AccountK
 	return val.ReceivedVotes
 }
 
-func (vm ValidatorManager) GetCommittingValidatorVoteStatus(ctx sdk.Context) ([]model.ReceivedVotesStatus, sdk.Error) {
+func (vm ValidatorManager) GetCommittingValidatorVoteStatus(ctx sdk.Context) []model.ReceivedVotesStatus {
 	lst := vm.GetCommittingValidators(ctx)
 	res := []model.ReceivedVotesStatus{}
 	for _, name := range lst {
 		val, err := vm.storage.GetValidator(ctx, name)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 		res = append(res, model.ReceivedVotesStatus{
 			ValidatorName: name,
 			ReceivedVotes: val.ReceivedVotes,
 		})
 	}
-	return res, nil
+	return res
 }
 
 // // Export storage state.

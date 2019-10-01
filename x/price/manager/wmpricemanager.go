@@ -8,9 +8,9 @@ import (
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/global"
-	"github.com/lino-network/lino/x/price/manager/fake"
 	"github.com/lino-network/lino/x/price/model"
 	"github.com/lino-network/lino/x/price/types"
+	"github.com/lino-network/lino/x/validator"
 	"github.com/lino-network/lino/x/vote"
 )
 
@@ -19,12 +19,12 @@ type WeightedMedianPriceManager struct {
 
 	// deps
 	param  param.ParamKeeper
-	val    fake.FakeValidator
+	val    validator.ValidatorKeeper
 	vote   vote.VoteKeeper
 	global global.GlobalKeeper
 }
 
-func NewWeightedMedianPriceManager(key sdk.StoreKey, val fake.FakeValidator, vote vote.VoteKeeper, global global.GlobalKeeper, param param.ParamKeeper) WeightedMedianPriceManager {
+func NewWeightedMedianPriceManager(key sdk.StoreKey, val validator.ValidatorKeeper, vote vote.VoteKeeper, global global.GlobalKeeper, param param.ParamKeeper) WeightedMedianPriceManager {
 	return WeightedMedianPriceManager{
 		store:  model.NewPriceStorage(key),
 		param:  param,
@@ -75,7 +75,7 @@ func (wm WeightedMedianPriceManager) UpdatePrice(ctx sdk.Context) sdk.Error {
 	var price linotypes.MiniDollar
 	if len(wvals) == 0 {
 		// no valid price this hour, use the same price from last hour.
-		// this is irrelevent to testnet mode, CANNOT use CurrPrice.
+		// this is irrelevant to testnet mode, CANNOT use CurrPrice.
 		curr, err := wm.store.GetCurrentPrice(ctx)
 		if err != nil {
 			// as long as genesis was inited correctly, curr price should never
@@ -94,13 +94,8 @@ func (wm WeightedMedianPriceManager) UpdatePrice(ctx sdk.Context) sdk.Error {
 }
 
 func (wm WeightedMedianPriceManager) updateLastValidatorSet(ctx sdk.Context) {
-	vals := wm.val.GetValidatorAndVotes(ctx)
-	var valnames []linotypes.AccountKey
-	for _, val := range vals {
-		valnames = append(valnames, val.Username)
-	}
-
-	wm.store.SetLastValidators(ctx, valnames)
+	vals := wm.val.GetCommittingValidators(ctx)
+	wm.store.SetLastValidators(ctx, vals)
 }
 
 // FeedPrice - validator update price.
@@ -160,7 +155,8 @@ func (wm WeightedMedianPriceManager) CurrPrice(ctx sdk.Context) (linotypes.MiniD
 }
 
 func (wm WeightedMedianPriceManager) isValidator(ctx sdk.Context, user linotypes.AccountKey) bool {
-	return wm.val.DoesValidatorExist(ctx, user)
+	vals := wm.val.GetCommittingValidators(ctx)
+	return linotypes.FindAccountInList(user, vals) != -1
 }
 
 // updateNewPrice update history and current price.
@@ -198,11 +194,11 @@ func (wm WeightedMedianPriceManager) updateNewPrice(ctx sdk.Context, timePrice m
 // price fields are empty value.
 func (wm WeightedMedianPriceManager) getWeightedValidators(ctx sdk.Context) []weightedValidator {
 	wvals := make([]weightedValidator, 0)
-	vals := wm.val.GetValidatorAndVotes(ctx)
+	vals := wm.val.GetCommittingValidatorVoteStatus(ctx)
 	for _, val := range vals {
 		wvals = append(wvals, weightedValidator{
-			validator: val.Username,
-			weight:    val.Votes,
+			validator: val.ValidatorName,
+			weight:    val.ReceivedVotes,
 			price:     linotypes.NewMiniDollar(0),
 		})
 	}
