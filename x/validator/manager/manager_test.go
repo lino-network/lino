@@ -59,6 +59,7 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("val")).Return(votetypes.DutyVoter, nil).Maybe()
 	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("val"), votetypes.DutyValidator,
 		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+	suite.vote.On("UnassignDuty", suite.Ctx, linotypes.AccountKey("val"), mock.Anything).Return(nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("abs"),
 		linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("byz"),
@@ -2886,7 +2887,99 @@ func (suite *ValidatorManagerTestSuite) TestRegisterValidator() {
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
 		suite.Equal(tc.expectVal, *val, "%s", tc.testName)
+	}
+}
 
+func (suite *ValidatorManagerTestSuite) TestRegisterFromRevoked() {
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("valx")).Return(linotypes.NewCoinFromInt64(1), nil).Maybe()
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("valy")).Return(linotypes.NewCoinFromInt64(2), nil).Maybe()
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("valz")).Return(linotypes.NewCoinFromInt64(3), nil).Maybe()
+	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("valx")).Return(votetypes.DutyVoter, nil).Maybe()
+	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("valy")).Return(votetypes.DutyVoter, nil).Maybe()
+	suite.vote.On("GetVoterDuty", suite.Ctx, linotypes.AccountKey("valz")).Return(votetypes.DutyVoter, nil).Maybe()
+	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valx"), votetypes.DutyValidator,
+		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valy"), votetypes.DutyValidator,
+		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+	suite.vote.On("AssignDuty", suite.Ctx, linotypes.AccountKey("valz"), votetypes.DutyValidator,
+		linotypes.NewCoinFromInt64(20000000000*linotypes.Decimals)).Return(nil).Maybe()
+
+	err := suite.vm.RegisterValidator(suite.Ctx, linotypes.AccountKey("valx"), secp256k1.GenPrivKey().PubKey(), "link")
+	suite.NoError(err)
+	err = suite.vm.RegisterValidator(suite.Ctx, linotypes.AccountKey("valy"), secp256k1.GenPrivKey().PubKey(), "link")
+	suite.NoError(err)
+	err = suite.vm.RegisterValidator(suite.Ctx, linotypes.AccountKey("valz"), secp256k1.GenPrivKey().PubKey(), "link")
+	suite.NoError(err)
+
+	valKey := secp256k1.GenPrivKey().PubKey()
+	valName := linotypes.AccountKey("val")
+	val := model.Validator{
+		ABCIValidator: abci.Validator{
+			Address: valKey.Address(),
+			Power:   linotypes.TendermintValidatorPower,
+		},
+		PubKey:        valKey,
+		Username:      valName,
+		ReceivedVotes: linotypes.NewCoinFromInt64(300),
+		HasRevoked:    true,
+	}
+	suite.vm.storage.SetValidator(suite.Ctx, valName, &val)
+	suite.vm.storage.SetElectionVoteList(suite.Ctx, valName, &model.ElectionVoteList{
+		ElectionVotes: []model.ElectionVote{
+			{
+				ValidatorName: linotypes.AccountKey("val"),
+				Vote:          linotypes.NewCoinFromInt64(300),
+			},
+		},
+	})
+
+	testCases := []struct {
+		testName   string
+		username   linotypes.AccountKey
+		link       string
+		expectList model.ValidatorList
+		expectVal  model.Validator
+		expectRes  sdk.Error
+	}{
+		{
+			testName: "register a revoked one",
+			link:     "web1",
+			expectList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("valy"),
+					linotypes.AccountKey("valz"),
+					linotypes.AccountKey("val"),
+				},
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("valx"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(2),
+				LowestOncall:       linotypes.AccountKey("valy"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(1),
+				LowestStandby:      linotypes.AccountKey("valx"),
+			},
+			username: valName,
+			expectVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: valKey.Address(),
+					Power:   0,
+				},
+				Link:          "web1",
+				PubKey:        valKey,
+				Username:      valName,
+				ReceivedVotes: linotypes.NewCoinFromInt64(300),
+			},
+			expectRes: nil,
+		},
+	}
+	for _, tc := range testCases {
+		err := suite.vm.RegisterValidator(suite.Ctx, tc.username, valKey, tc.link)
+		suite.Equal(tc.expectRes, err, "%s", tc.testName)
+		lst := suite.vm.storage.GetValidatorList(suite.Ctx)
+		suite.Equal(tc.expectList, *lst, "%s", tc.testName)
+		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
+		suite.NoError(err)
+		suite.Equal(tc.expectVal, *val, "%s", tc.testName)
 	}
 }
 
@@ -2933,5 +3026,153 @@ func (suite *ValidatorManagerTestSuite) TestDistributeInflationToValidator() {
 		err := suite.vm.DistributeInflationToValidator(suite.Ctx)
 		suite.NoError(err)
 
+	}
+}
+
+func (suite *ValidatorManagerTestSuite) TestRevokeValidator() {
+	valKey := secp256k1.GenPrivKey().PubKey()
+	val := linotypes.AccountKey("val")
+	err := suite.vm.RegisterValidator(suite.Ctx, val, valKey, "link")
+	suite.NoError(err)
+
+	testCases := []struct {
+		testName   string
+		username   linotypes.AccountKey
+		expectList model.ValidatorList
+		expectVal  model.Validator
+		expectRes  sdk.Error
+	}{
+		{
+			testName: "revoke validator",
+			expectList: model.ValidatorList{
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			username: val,
+			expectVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: valKey.Address(),
+					Power:   0,
+				},
+				Link:          "link",
+				PubKey:        valKey,
+				Username:      val,
+				ReceivedVotes: linotypes.NewCoinFromInt64(300),
+				HasRevoked:    true,
+			},
+			expectRes: nil,
+		},
+		{
+			testName: "revoke validator2",
+			expectList: model.ValidatorList{
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			username: val,
+			expectVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: valKey.Address(),
+					Power:   0,
+				},
+				Link:          "link",
+				PubKey:        valKey,
+				Username:      val,
+				ReceivedVotes: linotypes.NewCoinFromInt64(300),
+				HasRevoked:    true,
+			},
+			expectRes: types.ErrInvalidValidator(),
+		},
+	}
+	for _, tc := range testCases {
+		err := suite.vm.RevokeValidator(suite.Ctx, tc.username)
+		suite.Equal(tc.expectRes, err, "%s", tc.testName)
+
+		if tc.expectRes == nil {
+			lst := suite.vm.storage.GetValidatorList(suite.Ctx)
+			suite.Equal(tc.expectList, *lst, "%s", tc.testName)
+			val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
+			suite.NoError(err)
+			suite.Equal(tc.expectVal, *val, "%s", tc.testName)
+		}
+
+	}
+}
+
+func (suite *ValidatorManagerTestSuite) TestGetCommittingValidatorsVotes() {
+	validators := map[linotypes.AccountKey]linotypes.Coin{
+		linotypes.AccountKey("test1"): linotypes.NewCoinFromInt64(100),
+		linotypes.AccountKey("test2"): linotypes.NewCoinFromInt64(200),
+		linotypes.AccountKey("test3"): linotypes.NewCoinFromInt64(300),
+		linotypes.AccountKey("test4"): linotypes.NewCoinFromInt64(400),
+		linotypes.AccountKey("test5"): linotypes.NewCoinFromInt64(500),
+		linotypes.AccountKey("test6"): linotypes.NewCoinFromInt64(600),
+		linotypes.AccountKey("test7"): linotypes.NewCoinFromInt64(700),
+	}
+	suite.SetupValidatorAndVotes(validators)
+
+	testCases := []struct {
+		testName  string
+		prevList  model.ValidatorList
+		expectRes []model.ReceivedVotesStatus
+	}{
+		{
+			testName: "get committing validators votes status",
+			prevList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("test1"),
+					linotypes.AccountKey("test2"),
+					linotypes.AccountKey("test3"),
+				},
+				Standby: []linotypes.AccountKey{
+					linotypes.AccountKey("test4"),
+					linotypes.AccountKey("test5"),
+					linotypes.AccountKey("test6"),
+				},
+				Candidates: []linotypes.AccountKey{
+					linotypes.AccountKey("test7"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			expectRes: []model.ReceivedVotesStatus{
+				{
+					ValidatorName: linotypes.AccountKey("test1"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(100),
+				},
+				{
+					ValidatorName: linotypes.AccountKey("test2"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(200),
+				},
+				{
+					ValidatorName: linotypes.AccountKey("test3"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(300),
+				},
+				{
+					ValidatorName: linotypes.AccountKey("test4"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(400),
+				},
+				{
+					ValidatorName: linotypes.AccountKey("test5"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(500),
+				},
+				{
+					ValidatorName: linotypes.AccountKey("test6"),
+					ReceivedVotes: linotypes.NewCoinFromInt64(600),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		lst, err := suite.vm.GetCommittingValidatorVoteStatus(suite.Ctx)
+		suite.NoError(err)
+		suite.Equal(tc.expectRes, lst, "%s", tc.testName)
 	}
 }

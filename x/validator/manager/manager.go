@@ -95,12 +95,13 @@ func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes
 	if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 		return err
 	}
+	if err := vm.onCandidateVotesInc(ctx, username); err != nil {
+		return err
+	}
 	if err := vm.VoteValidator(ctx, username, []linotypes.AccountKey{username}); err != nil {
 		return err
 	}
-	if err := vm.balanceValidatorList(ctx); err != nil {
-		return err
-	}
+
 	return nil
 }
 
