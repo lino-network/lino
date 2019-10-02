@@ -167,6 +167,7 @@ func (impl reputationStoreImpl) Import(tb *UserReputationTable) {
 			rep.Mul(NewInt(1200))
 		}
 		impl.SetUserMeta(v.Username, &userMeta{
+			Consumption: rep,
 			Reputation: rep,
 		})
 	}
