@@ -679,8 +679,16 @@ func (suite *AccountManagerTestSuite) TestMoveCoinAccOrAddr() {
 			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(4)),
 			expectReceiverBalance: types.NewCoinFromInt64(3),
 		},
-		// TODO(yumin):
-		// add case of from address to username.
+		{
+			testName: "send from address to user",
+			sender: types.NewAccOrAddrFromAddr(
+				sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())),
+			receiver:              types.NewAccOrAddrFromAcc(suite.userWithoutBalance.Username),
+			amount:                types.NewCoinFromInt64(1),
+			expectErr:             nil,
+			expectSenderBalance:   suite.userWithBalanceSaving.Minus(types.NewCoinFromInt64(5)),
+			expectReceiverBalance: types.NewCoinFromInt64(4),
+		},
 	}
 	for _, tc := range testCases {
 		err := suite.am.MoveCoinAccOrAddr(suite.Ctx, tc.sender, tc.receiver, tc.amount)

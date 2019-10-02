@@ -394,5 +394,78 @@ func TestGetSigners(t *testing.T) {
 	}
 }
 
-//TODO(yumin):
-// add tests for AddrMsg
+func TestTransferV2Msg(t *testing.T) {
+	testCases := map[string]struct {
+		msg      TransferV2Msg
+		wantCode sdk.CodeType
+	}{
+		"normal case - transfer to an username": {
+			msg: TransferV2Msg{
+				Sender:   types.NewAccOrAddrFromAcc(userA),
+				Receiver: types.NewAccOrAddrFromAcc(userB),
+				Amount:   types.LNO("1900"),
+				Memo:     memo1,
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"invalid transfer - no receiver provided": {
+			msg: TransferV2Msg{
+				Sender: types.NewAccOrAddrFromAcc(userA),
+				Amount: types.LNO("1900"),
+				Memo:   memo1,
+			},
+			wantCode: types.CodeInvalidUsername,
+		},
+		"invalid transfer -  amount is invalid": {
+			msg: TransferV2Msg{
+				Sender:   types.NewAccOrAddrFromAcc(userA),
+				Receiver: types.NewAccOrAddrFromAcc(userB),
+				Amount:   types.LNO("-1900"),
+				Memo:     memo1,
+			},
+			wantCode: types.CodeInvalidCoins,
+		},
+		"invalid transfer -  memo is invalid": {
+			msg: TransferV2Msg{
+				Sender:   types.NewAccOrAddrFromAcc(userA),
+				Receiver: types.NewAccOrAddrFromAcc(userB),
+				Amount:   types.LNO("1900"),
+				Memo:     invalidMemo,
+			},
+			wantCode: types.CodeInvalidMemo,
+		},
+		"valid lino": {
+			msg: TransferV2Msg{
+				Sender:   types.NewAccOrAddrFromAcc(userA),
+				Receiver: types.NewAccOrAddrFromAcc(userB),
+				Amount:   types.LNO("100"),
+				Memo:     memo1,
+			},
+			wantCode: sdk.CodeOK,
+		},
+		"valid addr": {
+			msg: TransferV2Msg{
+				Sender:   types.NewAccOrAddrFromAddr(sdk.AccAddress("")),
+				Receiver: types.NewAccOrAddrFromAcc(userB),
+				Amount:   types.LNO("100"),
+				Memo:     memo1,
+			},
+
+			wantCode: types.CodeInvalidUsername,
+		},
+	}
+
+	for testName, tc := range testCases {
+		got := tc.msg.ValidateBasic()
+
+		if got == nil {
+			if tc.wantCode != sdk.CodeOK {
+				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
+			}
+			continue
+		}
+		if got.Code() != tc.wantCode {
+			t.Errorf("%s: diff error code: got %v, want %v", testName, got.Code(), tc.wantCode)
+		}
+	}
+}
