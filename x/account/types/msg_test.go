@@ -450,7 +450,6 @@ func TestTransferV2Msg(t *testing.T) {
 				Amount:   types.LNO("100"),
 				Memo:     memo1,
 			},
-
 			wantCode: types.CodeInvalidUsername,
 		},
 	}
