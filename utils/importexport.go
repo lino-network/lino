@@ -60,6 +60,7 @@ type SubStore struct {
 	Prefix     []byte
 	ValCreator ValueCreator
 	Decoder    Unmarshaler
+	NoValue    bool
 }
 
 func (s SubStore) Iterate(reactor ValueReactor) {
@@ -68,12 +69,25 @@ func (s SubStore) Iterate(reactor ValueReactor) {
 	for ; itr.Valid(); itr.Next() {
 		k := itr.Key()[len(s.Prefix):]
 		v := itr.Value()
-		rst := s.ValCreator()
-		s.Decoder(v, rst)
+		var rst interface{}
+		if s.ValCreator != nil {
+			rst = s.ValCreator()
+		}
+		if !s.NoValue {
+			s.Decoder(v, rst)
+		}
 		if reactor(k, rst) {
 			break
 		}
 	}
 }
 
-type StoreList map[string]SubStore
+type StoreMap map[string]SubStore
+
+func NewStoreMap(ss []SubStore) StoreMap {
+	rst := make(StoreMap)
+	for _, v := range ss {
+		rst[string(v.Prefix)] = v
+	}
+	return rst
+}

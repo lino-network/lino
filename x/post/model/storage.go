@@ -73,14 +73,15 @@ func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 // 	store.Delete(GetPostInfoKey(permlink))
 // }
 
-func (ps PostStorage) StoreList(ctx sdk.Context) utils.StoreList {
+func (ps PostStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
 	store := ctx.KVStore(ps.key)
-	return utils.StoreList{
-		string(PostSubStore): utils.SubStore{
+	stores := []utils.SubStore{
+		{
 			Store:      store,
 			Prefix:     PostSubStore,
 			ValCreator: func() interface{} { return new(Post) },
 			Decoder:    ps.cdc.MustUnmarshalBinaryLengthPrefixed,
 		},
 	}
+	return utils.NewStoreMap(stores)
 }

@@ -1,0 +1,204 @@
+[
+  {
+    "prefix": "0",
+    "key": "app1",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "app1",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "1234",
+        "web_site": "web1",
+        "description": "app1 is good",
+        "app_meta_data": "app1 meta",
+        "is_deleted": false,
+        "n_affiliated": "233"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "app2",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "app2",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "5678",
+        "web_site": "web2",
+        "description": "app2 is good",
+        "app_meta_data": "app2 meta",
+        "is_deleted": true,
+        "n_affiliated": "567"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "app3",
+    "val": {
+      "type": "lino/developer",
+      "value": {
+        "username": "app3",
+        "deposit": {
+          "amount": "0"
+        },
+        "app_consumption": "10",
+        "web_site": "web3",
+        "description": "app3 is good",
+        "app_meta_data": "app3 meta",
+        "is_deleted": true,
+        "n_affiliated": "567"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "app1",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "app1",
+        "name": "lemon",
+        "price": "1234",
+        "is_revoked": true,
+        "revoke_coin_price": "556"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "app2",
+    "val": {
+      "type": "lino/appida",
+      "value": {
+        "app": "app2",
+        "name": "candy",
+        "price": "45",
+        "is_revoked": false,
+        "revoke_coin_price": "0"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "app1/user1",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "123"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "app1/user2",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "789"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "app2/user1",
+    "val": {
+      "type": "lino/bank",
+      "value": {
+        "b": "456"
+      }
+    }
+  },
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/reservepool",
+      "value": {
+        "total": {
+          "amount": "123"
+        },
+        "total_minidollar": "456"
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "app1/user1",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "app1/user2",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "app2/user3",
+    "val": {
+      "type": "str",
+      "value": "t"
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "user1",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "app1"
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "user2",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "app1"
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "user3",
+    "val": {
+      "type": "lino/role",
+      "value": {
+        "aa": "app2"
+      }
+    }
+  },
+  {
+    "prefix": "6",
+    "key": "app1",
+    "val": {
+      "type": "lino/appidastats",
+      "value": {
+        "total": "1000"
+      }
+    }
+  },
+  {
+    "prefix": "6",
+    "key": "app2",
+    "val": {
+      "type": "lino/appidastats",
+      "value": {
+        "total": "2000"
+      }
+    }
+  }
+]

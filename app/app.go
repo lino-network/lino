@@ -659,7 +659,13 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		panic("failed to create export dir due to: " + err.Error())
 	}
 	// posts
-	if err := lb.postManager.ExportToFile(ctx, lb.cdc, exportPath+postStateFile); err != nil {
+	if err := lb.postManager.ExportToFile(
+		ctx, lb.cdc, exportPath+postStateFile); err != nil {
+		panic(err)
+	}
+	// developers
+	if err := lb.developerManager.ExportToFile(
+		ctx, lb.cdc, exportPath+developerStateFile); err != nil {
 		panic(err)
 	}
 
@@ -687,14 +693,6 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	// TODO(yumin): accountStateFile
 	// exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
 	// 	return lb.accountManager.Export(ctx).ToIR()
-	// })
-	// TODO(yumin): dev export is not implemented yet.
-	// exportToFile(developerStateFile, func(ctx sdk.Context) interface{} {
-	// 	return lb.developerManager.Export(ctx).ToIR()
-	// })
-	// TODO(yumin): post export is not implemented yet.
-	// exportToFile(postStateFile, func(ctx sdk.Context) interface{} {
-	// 	return lb.postManager.Export(ctx).ToIR()
 	// })
 	// TODO(yumin): global export is not implemented yet.
 	// exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
