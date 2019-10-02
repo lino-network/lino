@@ -346,7 +346,7 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 	state := &model.PostTablesIR{
 		Version: exportVersion,
 	}
-	storeList := pm.postStorage.StoreList(ctx)
+	storeList := pm.postStorage.StoreMap(ctx)
 
 	// export posts
 	posts := make([]model.PostIR, 0)
@@ -374,6 +374,7 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 	}
 
 	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	for _, v := range table.Posts {
 		pm.postStorage.SetPost(ctx, &model.Post{
 			PostID:    v.PostID,
@@ -386,6 +387,5 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 			IsDeleted: v.IsDeleted,
 		})
 	}
-	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
 }

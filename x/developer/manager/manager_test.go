@@ -2,14 +2,17 @@ package developer // To test private filed `storage`
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"testing"
 	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	mparam "github.com/lino-network/lino/param/mocks"
 	"github.com/lino-network/lino/testsuites"
@@ -1450,204 +1453,105 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 	}
 }
 
-// import (
-// 	"testing"
+func (suite *DeveloperManagerSuite) TestImportExport() {
+	// background data
+	suite.manager.storage.SetDeveloper(suite.Ctx, model.Developer{
+		Username:       "app1",
+		Deposit:        linotypes.NewCoinFromInt64(0),
+		AppConsumption: linotypes.NewMiniDollar(1234),
+		Website:        "web1",
+		Description:    "app1 is good",
+		AppMetaData:    "app1 meta",
+		IsDeleted:      false,
+		NAffiliated:    233,
+	})
+	suite.manager.storage.SetDeveloper(suite.Ctx, model.Developer{
+		Username:       "app2",
+		Deposit:        linotypes.NewCoinFromInt64(0),
+		AppConsumption: linotypes.NewMiniDollar(5678),
+		Website:        "web2",
+		Description:    "app2 is good",
+		AppMetaData:    "app2 meta",
+		IsDeleted:      true,
+		NAffiliated:    567,
+	})
+	suite.manager.storage.SetDeveloper(suite.Ctx, model.Developer{
+		Username:       "app3",
+		Deposit:        linotypes.NewCoinFromInt64(0),
+		AppConsumption: linotypes.NewMiniDollar(10),
+		Website:        "web3",
+		Description:    "app3 is good",
+		AppMetaData:    "app3 meta",
+		IsDeleted:      true,
+		NAffiliated:    567,
+	})
+	suite.manager.storage.SetIDA(suite.Ctx, model.AppIDA{
+		App:             "app1",
+		Name:            "lemon",
+		MiniIDAPrice:    linotypes.NewMiniDollar(1234),
+		IsRevoked:       true,
+		RevokeCoinPrice: linotypes.NewMiniDollar(556),
+	})
+	suite.manager.storage.SetIDA(suite.Ctx, model.AppIDA{
+		App:             "app2",
+		Name:            "candy",
+		MiniIDAPrice:    linotypes.NewMiniDollar(45),
+		IsRevoked:       false,
+		RevokeCoinPrice: linotypes.NewMiniDollar(0),
+	})
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/lino-network/lino/types"
-// 	"github.com/stretchr/testify/assert"
-// )
+	suite.manager.storage.SetAffiliatedAcc(suite.Ctx, "app1", "user1")
+	suite.manager.storage.SetAffiliatedAcc(suite.Ctx, "app1", "user2")
+	suite.manager.storage.SetAffiliatedAcc(suite.Ctx, "app2", "user3")
 
-// func TestReportConsumption(t *testing.T) {
-// 	ctx, _, dm, _ := setupTest(t, 0)
-// 	dm.InitGenesis(ctx)
+	suite.manager.storage.SetIDABank(suite.Ctx, "app1", "user1", &model.IDABank{
+		Balance:  linotypes.NewMiniDollar(123),
+		Unauthed: false,
+	})
+	suite.manager.storage.SetIDABank(suite.Ctx, "app2", "user1", &model.IDABank{
+		Balance:  linotypes.NewMiniDollar(456),
+		Unauthed: false,
+	})
+	suite.manager.storage.SetIDABank(suite.Ctx, "app1", "user2", &model.IDABank{
+		Balance:  linotypes.NewMiniDollar(789),
+		Unauthed: false,
+	})
 
-// 	devParam, _ := dm.paramHolder.GetDeveloperParam(ctx)
-// 	dm.RegisterDeveloper(ctx, "developer1", devParam.DeveloperMinDeposit, "", "", "")
-// 	dm.RegisterDeveloper(ctx, "developer2", devParam.DeveloperMinDeposit, "", "", "")
+	suite.manager.storage.SetIDAStats(suite.Ctx, "app1", model.AppIDAStats{
+		Total: linotypes.NewMiniDollar(1000),
+	})
+	suite.manager.storage.SetIDAStats(suite.Ctx, "app2", model.AppIDAStats{
+		Total: linotypes.NewMiniDollar(2000),
+	})
 
-// 	con1 := types.NewCoinFromInt64(100)
-// 	dm.ReportConsumption(ctx, "developer1", con1)
-// 	p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-// 	assert.True(t, p1.Equal(types.NewDecFromRat(1, 1)))
+	suite.manager.storage.SetUserRole(suite.Ctx, "user1", &model.Role{
+		AffiliatedApp: "app1",
+	})
+	suite.manager.storage.SetUserRole(suite.Ctx, "user2", &model.Role{
+		AffiliatedApp: "app1",
+	})
+	suite.manager.storage.SetUserRole(suite.Ctx, "user3", &model.Role{
+		AffiliatedApp: "app2",
+	})
 
-// 	con2 := types.NewCoinFromInt64(100)
-// 	dm.ReportConsumption(ctx, "developer2", con2)
-// 	p2, _ := dm.GetConsumptionWeight(ctx, "developer1")
-// 	assert.True(t, p2.Equal(types.NewDecFromRat(1, 2)))
+	suite.manager.storage.SetReservePool(suite.Ctx, &model.ReservePool{
+		Total:           linotypes.NewCoinFromInt64(123),
+		TotalMiniDollar: linotypes.NewMiniDollar(456),
+	})
 
-// 	dm.ClearConsumption(ctx)
-// 	p3, _ := dm.GetConsumptionWeight(ctx, "developer1")
-// 	assert.True(t, p3.Equal(types.NewDecFromRat(1, 2)))
+	cdc := codec.New()
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
 
-// 	testCases := map[string]struct {
-// 		developer1Consumption             types.Coin
-// 		developer2Consumption             types.Coin
-// 		expectDeveloper1ConsumptionWeight sdk.Dec
-// 		expectDeveloper2ConsumptionWeight sdk.Dec
-// 	}{
-// 		"test normal consumption": {
-// 			developer1Consumption:             types.NewCoinFromInt64(2500 * types.Decimals),
-// 			developer2Consumption:             types.NewCoinFromInt64(7500 * types.Decimals),
-// 			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(1, 4),
-// 			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(3, 4),
-// 		},
-// 		"test empty consumption": {
-// 			developer1Consumption:             types.NewCoinFromInt64(0),
-// 			developer2Consumption:             types.NewCoinFromInt64(0),
-// 			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(1, 2),
-// 			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(1, 2),
-// 		},
-// 		"large numbers": {
-// 			developer1Consumption:             types.NewCoinFromInt64(3333333),
-// 			developer2Consumption:             types.NewCoinFromInt64(4444444),
-// 			expectDeveloper1ConsumptionWeight: types.NewDecFromRat(3333333, 7777777),
-// 			expectDeveloper2ConsumptionWeight: types.NewDecFromRat(4444444, 7777777),
-// 		},
-// 	}
-// 	for testName, tc := range testCases {
-// 		dm.ReportConsumption(ctx, "developer1", tc.developer1Consumption)
-// 		dm.ReportConsumption(ctx, "developer2", tc.developer2Consumption)
+	tmpfn := filepath.Join(dir, "tmpfile")
+	err2 = suite.manager.ExportToFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
 
-// 		p1, _ := dm.GetConsumptionWeight(ctx, "developer1")
-// 		if !tc.expectDeveloper1ConsumptionWeight.Equal(p1) {
-// 			t.Errorf("%s: diff developer1 usage weight, got %v, want %v",
-// 				testName, p1, tc.expectDeveloper1ConsumptionWeight)
-// 			return
-// 		}
+	// reset all state.
+	suite.SetupTest()
+	err2 = suite.manager.ImportFromFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
 
-// 		p2, _ := dm.GetConsumptionWeight(ctx, "developer2")
-// 		if !tc.expectDeveloper2ConsumptionWeight.Equal(p2) {
-// 			t.Errorf("%s: diff developer2 usage weight, got %v, want %v",
-// 				testName, p2, tc.expectDeveloper2ConsumptionWeight)
-// 			return
-// 		}
-// 		dm.ClearConsumption(ctx)
-// 	}
-// }
-
-// func TestDistributeInflationToDevelopers(t *testing.T) {
-// 	cases := map[string]struct {
-// 		beforeDistributionInflationPool types.Coin
-// 		pastMinutes                     int64
-// 		numberOfDevelopers              int
-// 		consumptionList                 []types.MiniDollar
-// 	}{
-// 		"distribute to one developer with zero consumption": {
-// 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-// 			numberOfDevelopers:              1,
-// 			pastMinutes:                     types.MinutesPerMonth,
-// 			consumptionList:                 []types.MiniDollar{types.NewMiniDollar(0)},
-// 		},
-// 		"distribute to five developers with zero consumption": {
-// 			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-// 			numberOfDevelopers:              5,
-// 			pastMinutes:                     types.MinutesPerMonth,
-// 			consumptionList: []types.MiniDollar{
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0)},
-// 		},
-// 		"test inflation need to be rounded case": {
-// 			beforeDistributionInflationPool: types.NewCoinFromInt64(100 * types.Decimals),
-// 			numberOfDevelopers:              3,
-// 			pastMinutes:                     types.MinutesPerMonth,
-// 			consumptionList: []types.MiniDollar{
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0),
-// 				types.NewMiniDollar(0),
-// 			},
-// 		},
-// 		"test different consumption case": {
-// 			beforeDistributionInflationPool: types.NewCoinFromInt64(100 * types.Decimals),
-// 			numberOfDevelopers:              3,
-// 			pastMinutes:                     types.MinutesPerMonth,
-// 			consumptionList: []types.MiniDollar{
-// 				types.NewMiniDollar(1000 * types.Decimals),
-// 				types.NewMiniDollar(2000 * types.Decimals),
-// 				types.NewMiniDollar(20),
-// 			},
-// 		},
-// 	}
-// 	for testName, cs := range cases {
-// 		lb := newLinoBlockchain(t, 21)
-// 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-// 		devStorage := devModel.NewDeveloperStorage(lb.CapKeyDeveloperStore)
-// 		totalConsumption := types.NewMiniDollar(0)
-// 		for i := 0; i < cs.numberOfDevelopers; i++ {
-// 			err := lb.accountManager.CreateAccount(
-// 				ctx, types.AccountKey("dev"+strconv.Itoa(i)),
-// 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-// 			if err != nil {
-// 				t.Errorf("%s: failed to register account, got err %v", testName, err)
-// 			}
-// 			err = lb.developerManager.RegisterDeveloper(
-// 				ctx, types.AccountKey("dev"+strconv.Itoa(i)), "", "", "")
-// 			if err != nil {
-// 				t.Errorf("%s: failed to register developer, got err %v", testName, err)
-// 			}
-// 			developer, _ := devStorage.GetDeveloper(ctx, types.AccountKey("dev"+strconv.Itoa(i)))
-// 			developer.AppConsumption = cs.consumptionList[i]
-// 			devStorage.SetDeveloper(ctx, *developer)
-// 			totalConsumption = totalConsumption.Plus(cs.consumptionList[i])
-// 		}
-// 		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
-// 		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
-// 			DeveloperInflationPool: cs.beforeDistributionInflationPool,
-// 		})
-// 		if err != nil {
-// 			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
-// 		}
-
-// 		lb.distributeInflationToDeveloper(ctx)
-// 		inflationPool, err := globalStore.GetInflationPool(ctx)
-// 		if err != nil {
-// 			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
-// 		}
-
-// 		if !inflationPool.DeveloperInflationPool.IsZero() {
-// 			t.Errorf(
-// 				"%s: diff developer inflation pool, got %v, want %v",
-// 				testName, inflationPool.DeveloperInflationPool,
-// 				types.NewCoinFromInt64(0))
-// 			return
-// 		}
-
-// 		actualInflation := types.NewCoinFromInt64(0)
-// 		for i := 0; i < cs.numberOfDevelopers; i++ {
-// 			saving, err :=
-// 				lb.accountManager.GetSavingFromUsername(
-// 					ctx, types.AccountKey("dev"+strconv.Itoa(i)))
-// 			assert.Nil(t, err)
-// 			var inflation types.Coin
-// 			if totalConsumption.IsZero() {
-// 				inflation =
-// 					types.DecToCoin(
-// 						types.NewDecFromRat(1, int64(len(cs.consumptionList))).
-// 							Mul(cs.beforeDistributionInflationPool.ToDec()))
-// 			} else {
-// 				inflation =
-// 					types.DecToCoin(
-// 						cs.consumptionList[i].ToDec().
-// 							Quo(totalConsumption.ToDec()).
-// 							Mul(cs.beforeDistributionInflationPool.ToDec()))
-// 			}
-// 			if i == (cs.numberOfDevelopers - 1) {
-// 				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
-// 			}
-// 			actualInflation = actualInflation.Plus(inflation)
-// 			if !saving.IsEqual(inflation) {
-// 				t.Errorf(
-// 					"%s: diff inflation for %v, got %v, want %v",
-// 					testName, "dev"+strconv.Itoa(i), inflation,
-// 					saving)
-// 				return
-// 			}
-// 			developer, err := devStorage.GetDeveloper(ctx, types.AccountKey("dev"+strconv.Itoa(i)))
-// 			assert.Nil(t, err)
-// 			assert.True(t, developer.AppConsumption.IsZero())
-// 		}
-// 	}
-// }
+	suite.Golden()
+}

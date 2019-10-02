@@ -52,6 +52,7 @@ type DeveloperKeeper interface {
 
 	// importer exporter
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 // var _ DeveloperKeeper = DeveloperManager{}
