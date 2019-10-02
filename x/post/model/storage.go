@@ -5,20 +5,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/post/types"
 )
 
 var (
-	postSubStore = []byte{0x00} // SubStore for all post info
+	PostSubStore = []byte{0x00} // SubStore for all post info
 )
 
 func GetAuthorPrefix(author linotypes.AccountKey) []byte {
-	return append(postSubStore, author...)
+	return append(PostSubStore, author...)
 }
 
 // GetPostInfoKey - "post info substore" + "permlink"
 func GetPostInfoKey(permlink linotypes.Permlink) []byte {
-	return append(postSubStore, permlink...)
+	return append(PostSubStore, permlink...)
 }
 
 // PostStorage - post storage
@@ -72,29 +73,14 @@ func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 // 	store.Delete(GetPostInfoKey(permlink))
 // }
 
-// // Export post storage state.
-func (ps PostStorage) Export(ctx sdk.Context) *PostTablesIR {
-	panic("post export unimplemented")
-	// tables := &PostTables{}
-	// store := ctx.KVStore(ps.key)
-	// // export table.Posts
-	// func() {
-	// 	itr := sdk.KVStorePrefixIterator(store, postSubStore)
-	// 	defer itr.Close()
-	// 	for ; itr.Valid(); itr.Next() {
-	// 		k := itr.Key()
-	// 		permlink := linotypes.Permlink(k[1:])
-	// 		info, err := ps.GetPost(ctx, permlink)
-	// 		if err != nil {
-	// 			panic("failed to read post info: " + err.Error())
-	// 		}
-	// 		row := PostRow{
-	// 			Permlink: permlink,
-	// 			Info:     *info,
-	// 			Meta:     *meta,
-	// 		}
-	// 		tables.Posts = append(tables.Posts, row)
-	// 	}
-	// }()
-	// return tables
+func (ps PostStorage) StoreList(ctx sdk.Context) utils.StoreList {
+	store := ctx.KVStore(ps.key)
+	return utils.StoreList{
+		string(PostSubStore): utils.SubStore{
+			Store:      store,
+			Prefix:     PostSubStore,
+			ValCreator: func() interface{} { return new(Post) },
+			Decoder:    ps.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+	}
 }
