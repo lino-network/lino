@@ -17,6 +17,11 @@ import (
 	rep "github.com/lino-network/lino/x/reputation"
 )
 
+const (
+	exportVersion = 1
+	importVersion = 1
+)
+
 type PostManager struct {
 	postStorage model.PostStorage
 
@@ -337,8 +342,23 @@ func (pm PostManager) ExecRewardEvent(ctx sdk.Context, event types.RewardEvent) 
 }
 
 // Export - to file.
-func (pm PostManager) ExportToFile(ctx sdk.Context, filepath string) error {
-	panic("post export unimplemented")
+func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.PostTablesIR{
+		Version: exportVersion,
+	}
+	storeList := pm.postStorage.StoreList(ctx)
+
+	// export posts
+	posts := make([]model.PostIR, 0)
+	postSubStore := storeList[string(model.PostSubStore)]
+	postSubStore.Iterate(func(key []byte, val interface{}) bool {
+		post := val.(*model.Post)
+		posts = append(posts, model.PostIR(*post))
+		return false
+	})
+	state.Posts = posts
+
+	return utils.Save(filepath, cdc, state)
 }
 
 // Import - from file
@@ -349,17 +369,21 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 	}
 	table := rst.(*model.PostTablesIR)
 
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
+
 	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	// upgrade2 has simplied the post structure to just one post.
 	for _, v := range table.Posts {
 		pm.postStorage.SetPost(ctx, &model.Post{
-			PostID:    v.Info.PostID,
-			Title:     v.Info.Title,
-			Content:   v.Info.Content,
-			Author:    v.Info.Author,
-			CreatedBy: v.Info.Author,
-			CreatedAt: v.Meta.CreatedAt,
-			UpdatedAt: v.Meta.LastUpdatedAt,
+			PostID:    v.PostID,
+			Title:     v.Title,
+			Content:   v.Content,
+			Author:    v.Author,
+			CreatedBy: v.Author,
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
+			IsDeleted: v.IsDeleted,
 		})
 	}
 	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))

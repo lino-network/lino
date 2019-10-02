@@ -680,6 +680,10 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	if err != nil {
 		panic("failed to create export dir due to: " + err.Error())
 	}
+	// posts
+	if err := lb.postManager.ExportToFile(ctx, lb.cdc, exportPath+postStateFile); err != nil {
+		panic(err)
+	}
 
 	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
 		f, err := os.Create(exportPath + filename)
