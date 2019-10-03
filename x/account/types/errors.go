@@ -8,16 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ErrFolloweeNotFound - error when followee user is not found
-func ErrFolloweeNotFound(username types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeFolloweeNotFound, fmt.Sprintf("followee %s not found", username))
-}
-
-// ErrFollowerNotFound - error when follower user is not found
-func ErrFollowerNotFound(username types.AccountKey) sdk.Error {
-	return types.NewError(types.CodeFollowerNotFound, fmt.Sprintf("follower %s not found", username))
-}
-
 // ErrReceiverNotFound - error when receiver user is not found
 func ErrReceiverNotFound(username types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeReceiverNotFound, fmt.Sprintf("receiver %s not found", username))
@@ -44,8 +34,8 @@ func ErrAccountAlreadyExists(accKey types.AccountKey) sdk.Error {
 }
 
 // ErrAddressAlreadyTaken - error when register address is already took by other username
-func ErrAddressAlreadyTaken(addr sdk.Address) sdk.Error {
-	return types.NewError(types.CodeAddressIsTaken, fmt.Sprintf("address %v is already taken", addr))
+func ErrAddressAlreadyTaken(addr string) sdk.Error {
+	return types.NewError(types.CodeAddressIsTaken, fmt.Sprintf("address %s is already taken", addr))
 }
 
 // ErrRegisterFeeInsufficient - error when register fee insufficient
@@ -151,6 +141,11 @@ func ErrCheckGrantAppKey() sdk.Error {
 // ErrCheckAuthenticatePubKeyOwner - error when transaction signed by invalid public key
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeCheckAuthenticatePubKeyOwner, fmt.Sprintf("user %v authenticate public key match failed", accKey))
+}
+
+// ErrCheckAuthenticatePubKeyAddress - error when transaction signed by invalid public key
+func ErrCheckAuthenticatePubKeyAddress(addr sdk.AccAddress) sdk.Error {
+	return types.NewError(types.CodeCheckAuthenticatePubKeyOwner, fmt.Sprintf("address %v authenticate public key match failed", addr))
 }
 
 // ErrGrantKeyExpired - error when transaction signed by expired grant public key

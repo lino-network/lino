@@ -427,50 +427,58 @@ func (bm BandwidthManager) ReCalculateAppBandwidthInfo(ctx sdk.Context) sdk.Erro
 	return nil
 }
 
-func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, accKey linotypes.AccountKey, fee auth.StdFee) sdk.Error {
-	appName, err := bm.dm.GetAffiliatingApp(ctx, accKey)
+func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, addr sdk.AccAddress, fee auth.StdFee) sdk.Error {
+	bank, err := bm.am.GetBankByAddress(ctx, addr)
 	if err != nil {
-		// msg fee for general message
-		if !bm.IsUserMsgFeeEnough(ctx, fee) {
-			return types.ErrUserMsgFeeNotEnough()
-		}
-
-		// minus message fee
-		info, err := bm.storage.GetBlockInfo(ctx)
-		if err != nil {
-			return err
-		}
-
-		//  minus msg fee
-		if BandwidthManagerTestMode == false {
-			if err := bm.am.MinusCoinFromUsername(ctx, accKey, info.CurMsgFee); err != nil {
+		return err
+	}
+	if bank.Username != "" {
+		appName, err := bm.dm.GetAffiliatingApp(ctx, bank.Username)
+		if err == nil {
+			// refill bandwidth for apps with messages in current block
+			if err := bm.RefillAppBandwidthCredit(ctx, appName); err != nil {
 				return err
 			}
 
-			if err := bm.gm.AddToValidatorInflationPool(ctx, info.CurMsgFee); err != nil {
+			// app bandwidth model
+			if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
 				return err
 			}
+
+			// add app message stats
+			if err := bm.AddMsgSignedByApp(ctx, appName, 1); err != nil {
+				return err
+			}
+			return nil
 		}
-		// add general message stats
-		if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
-			return err
-		}
-	} else {
-		// refill bandwidth for apps with messages in current block
-		if err := bm.RefillAppBandwidthCredit(ctx, appName); err != nil {
+	}
+
+	// msg fee for general message
+	if !bm.IsUserMsgFeeEnough(ctx, fee) {
+		return types.ErrUserMsgFeeNotEnough()
+	}
+
+	// minus message fee
+	info, err := bm.storage.GetBlockInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	//  minus msg fee
+	if !BandwidthManagerTestMode {
+		if err := bm.am.MinusCoinFromAddress(ctx, addr, info.CurMsgFee); err != nil {
 			return err
 		}
 
-		// app bandwidth model
-		if err := bm.PrecheckAndConsumeBandwidthCredit(ctx, appName); err != nil {
-			return err
-		}
-
-		// add app message stats
-		if err := bm.AddMsgSignedByApp(ctx, appName, 1); err != nil {
+		if err := bm.gm.AddToValidatorInflationPool(ctx, info.CurMsgFee); err != nil {
 			return err
 		}
 	}
+	// add general message stats
+	if err := bm.AddMsgSignedByUser(ctx, 1); err != nil {
+		return err
+	}
+
 	return nil
 }
 

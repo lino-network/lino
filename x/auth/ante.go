@@ -9,159 +9,207 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/bandwidth"
-	post "github.com/lino-network/lino/x/post"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 const (
 	maxMemoCharacters = 100
 )
 
-// GetMsgDonationAmount - return the amount of donation in of @p msg, if not donation, return 0.
-// XXX(yumin): outdated, should be remove after Upgrade2.
-func GetMsgDonationAmount(msg types.Msg) types.Coin {
-	donation, ok := msg.(post.DonateMsg)
-	if !ok {
-		return types.NewCoinFromInt64(0)
+// getAccOrAddrSignersFromMsg allows AddrMsg to override signers
+func getAccOrAddrSignersFromMsg(msg sdk.Msg) []types.AccOrAddr {
+	switch v := msg.(type) {
+	case types.AddrMsg:
+		return v.GetAccOrAddrSigners()
+	default:
+		rst := make([]types.AccOrAddr, 0)
+		for _, signer := range msg.GetSigners() {
+			rst = append(rst, types.NewAccOrAddrFromAcc(types.AccountKey(signer)))
+		}
+		return rst
 	}
-	rst, err := types.LinoToCoin(donation.Amount)
-	if err != nil {
-		return types.NewCoinFromInt64(0)
-	}
-	return rst
 }
 
-// GetMsgDonationValidAmount - return the min of (amount of donation in of @p msg, saving)
-// if not donation, return 0.
-func GetMsgDonationValidAmount(ctx sdk.Context, msg types.Msg, am acc.AccountKeeper, pm post.PostKeeper) types.Coin {
-	zero := types.NewCoinFromInt64(0)
-	donation, ok := msg.(post.DonateMsg)
-	if !ok {
-		return zero
-	}
-	rst, err := types.LinoToCoin(donation.Amount)
-	if err != nil {
-		return zero
-	}
-
-	permlink := types.GetPermlink(donation.Author, donation.PostID)
-	if !pm.DoesPostExist(ctx, permlink) {
-		return zero
-	}
-
-	saving, err := am.GetSavingFromUsername(ctx, donation.Username)
-	if err != nil {
-		return types.NewCoinFromInt64(0)
-	}
-
-	// not valid when saving is less than donation amount.
-	if rst.IsGT(saving) {
-		return types.NewCoinFromInt64(0)
-	}
-	return rst
+type msgAndSigs struct {
+	msg     sdk.Msg
+	signers []types.AccOrAddr
+	sigs    []auth.StdSignature
 }
+
+func validateAndExtract(stdTx auth.StdTx) ([]msgAndSigs, sdk.Error) {
+	// validate memo
+	if len(stdTx.GetMemo()) > maxMemoCharacters {
+		return nil, sdk.ErrMemoTooLarge(fmt.Sprintf(
+			"maximum number of characters is %d but received %d characters",
+			maxMemoCharacters, len(stdTx.GetMemo())))
+	}
+
+	// validate sigs
+	// 1. that there are signatures.
+	// 2. no more than limit.
+	var sigs = stdTx.GetSignatures()
+	if len(sigs) == 0 {
+		return nil, ErrNoSignatures()
+	}
+	if len(sigs) > types.TxSigLimit {
+		return nil, sdk.ErrTooManySignatures(fmt.Sprintf(
+			"signatures: %d, limit: %d",
+			len(sigs), types.TxSigLimit))
+	}
+
+	// extract signers
+	msgs := stdTx.GetMsgs()
+	rst := make([]msgAndSigs, len(msgs))
+	for i, msg := range msgs {
+		signers := getAccOrAddrSignersFromMsg(msg)
+		nSigRequired := len(signers)
+		if len(sigs) < nSigRequired {
+			return nil, ErrWrongNumberOfSigners()
+		}
+		rst[i] = msgAndSigs{
+			msg:     msg,
+			signers: signers,
+			sigs:    sigs[:nSigRequired],
+		}
+		sigs = sigs[nSigRequired:]
+	}
+	if len(sigs) != 0 {
+		return nil, ErrWrongNumberOfSigners()
+	}
+
+	return rst, nil
+}
+
+func getMsgPermissionAndConsume(msg sdk.Msg) (types.Permission, types.Coin, sdk.Error) {
+	var permission types.Permission
+	var consumeAmount types.Coin
+	switch v := msg.(type) {
+	case types.Msg:
+		permission = v.GetPermission()
+		consumeAmount = v.GetConsumeAmount()
+	case types.AddrMsg:
+		permission = types.TransactionPermission
+		consumeAmount = types.NewCoinFromInt64(0)
+	default:
+		return permission, consumeAmount, ErrUnknownMsgType()
+	}
+	return permission, consumeAmount, nil
+}
+
+type signBytesFactory = func(seq uint64) []byte
 
 // NewAnteHandler - return an AnteHandler
 func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.AnteHandler {
-	return func(
-		ctx sdk.Context, tx sdk.Tx, simulate bool,
-	) (_ sdk.Context, _ sdk.Result, abort bool) {
+	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
 		stdTx, ok := tx.(auth.StdTx)
 		if !ok {
 			return ctx, ErrIncorrectStdTxType().Result(), true
 		}
-		// Assert that there are signatures.
-		var sigs = stdTx.GetSignatures()
-		if len(sigs) == 0 {
-			return ctx,
-				ErrNoSignatures().Result(),
-				true
+		msgAndSigs, err := validateAndExtract(stdTx)
+		if err != nil {
+			return ctx, err.Result(), true
 		}
 
-		memo := stdTx.GetMemo()
-		if len(memo) > maxMemoCharacters {
-			return ctx,
-				sdk.ErrMemoTooLarge(
-					fmt.Sprintf("maximum number of characters is %d but received %d characters",
-						maxMemoCharacters, len(memo))).Result(),
-				true
+		// signbyte creator returns the bytes that should be signed.
+		signBytesCreator := func(seq uint64) []byte {
+			return auth.StdSignBytes(
+				ctx.ChainID(), uint64(0), seq, stdTx.Fee, stdTx.GetMsgs(), stdTx.GetMemo())
 		}
 
-		fee := stdTx.Fee
-
-		sdkMsgs := tx.GetMsgs()
-
-		var signers []sdk.AccAddress
-		for _, msg := range sdkMsgs {
-			for _, signer := range msg.GetSigners() {
-				signers = append(signers, signer)
-			}
-		}
-		if len(signers) != len(sigs) {
-			return ctx,
-				ErrWrongNumberOfSigners().Result(),
-				true
-		}
-		// signers get from msg should be verify first
-		var idx = 0
-		for _, msg := range sdkMsgs {
-			msg, ok := msg.(types.Msg)
-			if !ok {
-				return ctx, ErrUnknownMsgType().Result(), true
-			}
-			permission := msg.GetPermission()
-			msgSigners := msg.GetSigners()
-			consumeAmount := msg.GetConsumeAmount()
-
-			for _, msgSigner := range msgSigners {
-				// check public key is valid to sign this msg
-				signer, err := am.CheckSigningPubKeyOwner(ctx, types.AccountKey(msgSigner), sigs[idx].PubKey, permission, consumeAmount)
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-
-				// donationAmount = GetMsgDonationValidAmount(ctx, msg, am, pm)
-				// if !donationAmount.IsGTE(types.NewCoinFromInt64(types.NoTPSLimitDonationMin)) {
-				// 	// get current tps
-				// 	tpsCapacityRatio, err := gm.GetTPSCapacityRatio(ctx)
-				// 	if err != nil {
-				// 		return ctx, err.Result(), true
-				// 	}
-				// 	// check user tps capacity
-				// 	// if err = am.CheckUserTPSCapacity(ctx, types.AccountKey(msgSigner), tpsCapacityRatio); err != nil {
-				// 	// 	return ctx, err.Result(), true
-				// 	// }
-				// }
-
-				// construct sign bytes and verify sequence number.
-				addr, err := am.GetAddress(ctx, types.AccountKey(msgSigner))
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-				seq, err := am.GetSequence(ctx, addr)
-				if err != nil {
-					return ctx, err.Result(), true
-				}
-				signBytes := auth.StdSignBytes(ctx.ChainID(), uint64(0), seq, fee, sdkMsgs, stdTx.GetMemo())
-				// verify signature
-				if !sigs[idx].PubKey.VerifyBytes(signBytes, sigs[idx].Signature) {
-					return ctx, ErrUnverifiedBytes(
-						fmt.Sprintf("signature verification failed, chain-id:%v, seq:%d",
-							ctx.ChainID(), seq)).Result(), true
-				}
-				// succ
-				if err := am.IncreaseSequenceByOne(ctx, addr); err != nil {
-					// XXX(yumin): cosmos anth panic here, should we?
-					return ctx, err.Result(), true
-				}
-
-				if err := bm.CheckBandwidth(ctx, signer, fee); err != nil {
-					return ctx, err.Result(), true
-				}
-				idx++
+		// validate each msg.
+		for _, msgSigs := range msgAndSigs {
+			if err := validateMsg(ctx, am, bm, msgSigs, signBytesCreator, stdTx.Fee); err != nil {
+				return ctx, err.Result(), true
 			}
 		}
 
-		// TODO(Lino): verify application signature.
 		return ctx, sdk.Result{}, false
 	}
+}
+
+func validateMsg(ctx sdk.Context, am acc.AccountKeeper, bm bandwidth.BandwidthKeeper, msgSigs msgAndSigs, signBytesCreator signBytesFactory, fee auth.StdFee) sdk.Error {
+	permission, consumeAmount, err := getMsgPermissionAndConsume(msgSigs.msg)
+	if err != nil {
+		return err
+	}
+	// validate each signature.
+	paid := false
+	for i, signer := range msgSigs.signers {
+		sig := msgSigs.sigs[i]
+		var signerAddr sdk.AccAddress
+		var msgSignerAddr sdk.AccAddress
+		if signer.IsAddr {
+			err := checkAddrSigner(ctx, am, signer.Addr, sig.PubKey, paid)
+			if err != nil {
+				return err
+			}
+			signerAddr = signer.Addr
+			msgSignerAddr = signer.Addr
+		} else {
+			var err sdk.Error
+			signerAddr, msgSignerAddr, err = checkAccountSigner(
+				ctx, am, signer.AccountKey, sig.PubKey,
+				permission, consumeAmount)
+			if err != nil {
+				return err
+			}
+
+		}
+
+		// 1. verify seq.
+		seq, err := am.GetSequence(ctx, msgSignerAddr)
+		if err != nil {
+			return err
+		}
+		// 2. verify signature
+		signBytes := signBytesCreator(seq)
+		if !sig.PubKey.VerifyBytes(signBytes, sig.Signature) {
+			return ErrUnverifiedBytes(fmt.Sprintf(
+				"signature verification failed, chain-id:%v, seq:%d",
+				ctx.ChainID(), seq))
+		}
+		// 3. increase seq
+		if err := am.IncreaseSequenceByOne(ctx, msgSignerAddr); err != nil {
+			return err
+		}
+
+		// 4. only pay fee in the end.
+		// only the first signer pays the fee
+		if !paid {
+			if err := bm.CheckBandwidth(ctx, signerAddr, fee); err != nil {
+				return err
+			}
+		}
+		paid = true
+	}
+	return nil
+}
+
+func checkAddrSigner(ctx sdk.Context, am acc.AccountKeeper, addr sdk.AccAddress, signKey crypto.PubKey, isPaid bool) sdk.Error {
+	// if signer is address
+	if err := am.CheckSigningPubKeyOwnerByAddress(ctx, addr, signKey, isPaid); err != nil {
+		return err
+	}
+	return nil
+}
+
+// this function return the actual signer of the msg (grant permission) and original signer of the msg
+func checkAccountSigner(ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey, signKey crypto.PubKey, permission types.Permission, amount types.Coin) (signerAddr sdk.AccAddress, msgSignerAddr sdk.AccAddress, err sdk.Error) {
+	// check public key is valid to sign this msg
+	// return signer is the actual signer of the msg
+	signer, err := am.CheckSigningPubKeyOwner(ctx, msgSigner, signKey, permission, amount)
+	if err != nil {
+		return nil, nil, err
+	}
+	// get address of actual signer.
+	signerAddr, err = am.GetAddress(ctx, signer)
+	if err != nil {
+		return nil, nil, err
+	}
+	// get address of original signer.
+	msgSignerAddr, err = am.GetAddress(ctx, msgSigner)
+	if err != nil {
+		return nil, nil, err
+	}
+	return signerAddr, msgSignerAddr, nil
 }

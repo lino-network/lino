@@ -16,8 +16,12 @@ func NewHandler(am AccountKeeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.TransferMsg:
 			return handleTransferMsg(ctx, am, msg)
+		case types.TransferV2Msg:
+			return handleTransferV2Msg(ctx, am, msg)
 		case types.RecoverMsg:
 			return handleRecoverMsg(ctx, am, msg)
+		case types.RegisterV2Msg:
+			return handleRegisterV2Msg(ctx, am, msg)
 		case types.RegisterMsg:
 			return handleRegisterMsg(ctx, am, msg)
 		case types.UpdateAccountMsg:
@@ -35,22 +39,31 @@ func handleTransferMsg(ctx sdk.Context, am AccountKeeper, msg types.TransferMsg)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinFromUsernameToUsername(ctx, msg.Sender, msg.Receiver, coin); err != nil {
+	if err := am.MoveCoinAccOrAddr(ctx,
+		linotypes.NewAccOrAddrFromAcc(msg.Sender),
+		linotypes.NewAccOrAddrFromAcc(msg.Receiver),
+		coin); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleTransferV2Msg(ctx sdk.Context, am AccountKeeper, msg types.TransferV2Msg) sdk.Result {
+	// withdraw money from sender's bank
+	coin, err := linotypes.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := am.MoveCoinAccOrAddr(ctx, msg.Sender, msg.Receiver, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
 }
 
 func handleRecoverMsg(ctx sdk.Context, am AccountKeeper, msg types.RecoverMsg) sdk.Result {
-	// recover
-	// if !am.DoesAccountExist(ctx, msg.Username) {
-	// 	return ErrAccountNotFound(msg.Username).Result()
-	// }
-	// if err := am.RecoverAccount(
-	// 	ctx, msg.Username, msg.NewResetPubKey, msg.NewTransactionPubKey,
-	// 	msg.NewAppPubKey); err != nil {
-	// 	return err.Result()
-	// }
+	if err := am.RecoverAccount(ctx, msg.Username, msg.NewTxPubKey, msg.NewSigningPubKey); err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 
@@ -60,12 +73,21 @@ func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsg)
 	if err != nil {
 		return err.Result()
 	}
-	addr, err := am.GetAddress(ctx, msg.Referrer)
+	if err := am.RegisterAccount(
+		ctx, linotypes.NewAccOrAddrFromAcc(msg.Referrer), coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+// Handle RegisterV2Msg
+func handleRegisterV2Msg(ctx sdk.Context, am AccountKeeper, msg types.RegisterV2Msg) sdk.Result {
+	coin, err := linotypes.LinoToCoin(msg.RegisterFee)
 	if err != nil {
 		return err.Result()
 	}
 	if err := am.RegisterAccount(
-		ctx, addr, coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
+		ctx, msg.Referrer, coin, msg.NewUser, msg.NewSigningPubKey, msg.NewTransactionPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

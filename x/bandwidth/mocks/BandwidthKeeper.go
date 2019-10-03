@@ -35,13 +35,13 @@ func (_m *BandwidthKeeper) BeginBlocker(ctx types.Context) types.Error {
 	return r0
 }
 
-// CheckBandwidth provides a mock function with given fields: ctx, accKey, fee
-func (_m *BandwidthKeeper) CheckBandwidth(ctx types.Context, accKey linotypes.AccountKey, fee authtypes.StdFee) types.Error {
-	ret := _m.Called(ctx, accKey, fee)
+// CheckBandwidth provides a mock function with given fields: ctx, addr, fee
+func (_m *BandwidthKeeper) CheckBandwidth(ctx types.Context, addr types.AccAddress, fee authtypes.StdFee) types.Error {
+	ret := _m.Called(ctx, addr, fee)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, authtypes.StdFee) types.Error); ok {
-		r0 = rf(ctx, accKey, fee)
+	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, authtypes.StdFee) types.Error); ok {
+		r0 = rf(ctx, addr, fee)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)

@@ -15,14 +15,16 @@ import (
 type AccountKeeper interface {
 	DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool
 	RegisterAccount(
-		ctx sdk.Context, referrerAddr sdk.AccAddress, registerFee types.Coin,
+		ctx sdk.Context, referrer types.AccOrAddr, registerFee types.Coin,
 		username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
 	CreateAccount(
 		ctx sdk.Context, username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
-	MoveCoinFromUsernameToUsername(
-		ctx sdk.Context, sender, receiver types.AccountKey, coin types.Coin) sdk.Error
+	MoveCoinAccOrAddr(
+		ctx sdk.Context, sender, receiver types.AccOrAddr, coin types.Coin) sdk.Error
 	AddCoinToUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error
+	AddCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, coin types.Coin) sdk.Error
 	MinusCoinFromUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error
+	MinusCoinFromAddress(ctx sdk.Context, addr sdk.AccAddress, coin types.Coin) sdk.Error
 	UpdateJSONMeta(ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error
 	GetTransactionKey(ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error)
 	GetSigningKey(ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error)
@@ -36,15 +38,20 @@ type AccountKeeper interface {
 	CheckSigningPubKeyOwner(
 		ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
 		permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error)
+	CheckSigningPubKeyOwnerByAddress(
+		ctx sdk.Context, addr sdk.AccAddress, signkey crypto.PubKey, isPaid bool) sdk.Error
 	AuthorizePermission(
 		ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey,
 		validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error
 	RevokePermission(
 		ctx sdk.Context, me, grantTo types.AccountKey, permission types.Permission) sdk.Error
+	RecoverAccount(
+		ctx sdk.Context, username types.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error
 
 	// getter
 	GetInfo(ctx sdk.Context, username types.AccountKey) (*model.AccountInfo, sdk.Error)
 	GetBank(ctx sdk.Context, username types.AccountKey) (*model.AccountBank, sdk.Error)
+	GetBankByAddress(ctx sdk.Context, addr sdk.AccAddress) (*model.AccountBank, sdk.Error)
 	GetMeta(ctx sdk.Context, username types.AccountKey) (*model.AccountMeta, sdk.Error)
 	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)

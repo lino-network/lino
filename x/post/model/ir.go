@@ -6,15 +6,14 @@ import (
 
 // PostInfoV1 - can also use to present comment(with parent) or repost(with source)
 type PostInfoV1 struct {
-	PostID       string                 `json:"post_id"`
-	Title        string                 `json:"title"`
-	Content      string                 `json:"content"`
-	Author       types.AccountKey       `json:"author"`
-	ParentAuthor types.AccountKey       `json:"parent_author"`
-	ParentPostID string                 `json:"parent_postID"`
-	SourceAuthor types.AccountKey       `json:"source_author"`
-	SourcePostID string                 `json:"source_postID"`
-	Links        []types.IDToURLMapping `json:"links"`
+	PostID       string           `json:"post_id"`
+	Title        string           `json:"title"`
+	Content      string           `json:"content"`
+	Author       types.AccountKey `json:"author"`
+	ParentAuthor types.AccountKey `json:"parent_author"`
+	ParentPostID string           `json:"parent_postID"`
+	SourceAuthor types.AccountKey `json:"source_author"`
+	SourcePostID string           `json:"source_postID"`
 }
 
 // PostMetaIR RedistributionSplitRate rat -> string
