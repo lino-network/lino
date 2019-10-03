@@ -1,9 +1,11 @@
 package vote
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/x/vote/types"
 )
@@ -429,11 +431,30 @@ func (vm VoteManager) AssignDuty(ctx sdk.Context, user linotypes.AccountKey, dut
 }
 
 // Export storage state.
-func (vm VoteManager) Export(ctx sdk.Context) *model.VoterTables {
-	return vm.storage.Export(ctx)
+func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.VoterTablesIR{
+		Version: 1,
+	}
+	storeList := vm.storage.StoreMap(ctx)
+
+	// export posts
+	voters := make([]model.VoterIR, 0)
+	storeList[string(model.VoterSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		v := val.(*model.Voter)
+		voters = append(voters, model.VoterIR{
+			Username:          v.Username,
+			LinoStake:         v.LinoStake,
+			LastPowerChangeAt: v.LastPowerChangeAt,
+			Interest:          v.Interest,
+			Duty:              v.Duty,
+			FrozenAmount:      v.FrozenAmount,
+		})
+		return false
+	})
+	return utils.Save(filepath, cdc, state)
 }
 
 // Import storage state.
-func (vm VoteManager) Import(ctx sdk.Context, voter *model.VoterTablesIR) {
-	vm.storage.Import(ctx, voter)
+func (vm VoteManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	panic("unimplemented")
 }
