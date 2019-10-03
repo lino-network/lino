@@ -38,7 +38,7 @@ func (msg ValidatorRegisterMsg) Type() string { return "ValidatorRegisterMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorRegisterMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 
@@ -93,7 +93,7 @@ func (msg ValidatorRevokeMsg) Type() string { return "ValidatorRevokeMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg ValidatorRevokeMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 	return nil
@@ -149,7 +149,7 @@ func (msg VoteValidatorMsg) Type() string { return "VoteValidatorMsg" }
 
 // ValidateBasic - implement sdk.Msg
 func (msg VoteValidatorMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsValid() {
 		return ErrInvalidUsername()
 	}
 
@@ -159,7 +159,7 @@ func (msg VoteValidatorMsg) ValidateBasic() sdk.Error {
 	}
 
 	for _, val := range msg.VotedValidators {
-		if !types.RuleUsernameLength(val) {
+		if !val.IsValid() {
 			return ErrInvalidVotedValidators()
 		}
 	}

@@ -1,6 +1,10 @@
 package types
 
-import "regexp"
+import (
+	"regexp"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // AccountKey key format in KVStore
 type AccountKey string
@@ -32,20 +36,43 @@ type TransferDetailType int
 // indicates the type of punishment for oncall validators
 type PunishType int
 
+// AccOrAddr is either an address or an account key.
+type AccOrAddr struct {
+	AccountKey AccountKey     `json:"account_key,omitempty"`
+	Addr       sdk.AccAddress `json:"addr,omitempty"`
+	IsAddr     bool           `json:"is_addr,omitempty"`
+}
+
+func NewAccOrAddrFromAcc(acc AccountKey) AccOrAddr {
+	return AccOrAddr{
+		AccountKey: acc,
+	}
+}
+
+func NewAccOrAddrFromAddr(addr sdk.AccAddress) AccOrAddr {
+	return AccOrAddr{
+		Addr:   addr,
+		IsAddr: true,
+	}
+}
+
+func (a AccOrAddr) IsValid() bool {
+	if a.IsAddr {
+		return sdk.VerifyAddressFormat(a.Addr) == nil
+	}
+	return a.AccountKey.IsValid()
+}
+
+func (a AccOrAddr) String() string {
+	if a.IsAddr {
+		return a.Addr.String()
+	}
+	return string(a.AccountKey)
+}
+
 // GetPermlink try to generate Permlink from AccountKey and PostID
 func GetPermlink(author AccountKey, postID string) Permlink {
 	return Permlink(string(author) + PermlinkSeparator + postID)
-}
-
-// Donation struct, only used in Donation
-type IDToURLMapping struct {
-	Identifier string `json:"identifier"`
-	URL        string `json:"url"`
-}
-
-// PenaltyList - get validator who doesn't vote for proposal
-type PenaltyList struct {
-	PenaltyList []AccountKey `json:"penalty_list"`
 }
 
 // FindAccountInList - find AccountKey in given AccountKey list
@@ -66,7 +93,7 @@ func AccountListToSet(lst []AccountKey) map[AccountKey]bool {
 	return rst
 }
 
-func (ak AccountKey) IsUsername() bool {
+func (ak AccountKey) IsValid() bool {
 	if len(ak) < MinimumUsernameLength ||
 		len(ak) > MaximumUsernameLength {
 		return false

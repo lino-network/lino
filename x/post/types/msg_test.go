@@ -332,7 +332,7 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgSigners() {
 }
 
 func (suite *PostMsgTestSuite) TestUpdatePostValidateBasic() {
-	author := types.AccountKey("TestAuthor")
+	author := types.AccountKey("testauthor")
 	testCases := []struct {
 		testName string
 		msg      UpdatePostMsg
@@ -367,7 +367,7 @@ func (suite *PostMsgTestSuite) TestUpdatePostValidateBasic() {
 }
 
 func (suite *PostMsgTestSuite) TestDeletePostValidateBasic() {
-	author := types.AccountKey("TestAuthor")
+	author := types.AccountKey("testauthor")
 	testCases := []struct {
 		testName string
 		msg      DeletePostMsg

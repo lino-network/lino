@@ -41,7 +41,7 @@ func TestIsUsername(t *testing.T) {
 
 	for testName, tc := range testCases {
 		for _, accKey := range tc.accountKeys {
-			res := accKey.IsUsername()
+			res := accKey.IsValid()
 			assert.Equal(t, tc.expectRes, res, "%s", testName)
 		}
 	}
