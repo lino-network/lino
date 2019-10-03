@@ -39,7 +39,7 @@ func (_m *ValidatorKeeper) DistributeInflationToValidator(ctx types.Context) typ
 }
 
 // GetCommittingValidatorVoteStatus provides a mock function with given fields: ctx
-func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) ([]model.ReceivedVotesStatus, types.Error) {
+func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) []model.ReceivedVotesStatus {
 	ret := _m.Called(ctx)
 
 	var r0 []model.ReceivedVotesStatus
@@ -51,16 +51,7 @@ func (_m *ValidatorKeeper) GetCommittingValidatorVoteStatus(ctx types.Context) (
 		}
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetCommittingValidators provides a mock function with given fields: ctx
@@ -208,6 +199,22 @@ func (_m *ValidatorKeeper) InitGenesis(ctx types.Context) {
 // OnBeginBlock provides a mock function with given fields: ctx, req
 func (_m *ValidatorKeeper) OnBeginBlock(ctx types.Context, req abcitypes.RequestBeginBlock) {
 	_m.Called(ctx, req)
+}
+
+// PunishCommittingValidator provides a mock function with given fields: ctx, username, penalty, punishType
+func (_m *ValidatorKeeper) PunishCommittingValidator(ctx types.Context, username linotypes.AccountKey, penalty linotypes.Coin, punishType linotypes.PunishType) types.Error {
+	ret := _m.Called(ctx, username, penalty, punishType)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin, linotypes.PunishType) types.Error); ok {
+		r0 = rf(ctx, username, penalty, punishType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
 }
 
 // RegisterValidator provides a mock function with given fields: ctx, username, valPubKey, link

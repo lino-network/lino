@@ -32,8 +32,7 @@ import (
 	post "github.com/lino-network/lino/x/post"
 	postmn "github.com/lino-network/lino/x/post/manager"
 	pricemn "github.com/lino-network/lino/x/price/manager"
-
-	// vote "github.com/lino-network/lino/x/vote"
+	valmn "github.com/lino-network/lino/x/validator/manager"
 	votemn "github.com/lino-network/lino/x/vote/manager"
 )
 
@@ -111,6 +110,8 @@ func (suite *AnteTestSuite) SetupTest() {
 	TestDeveloperKVStoreKey := sdk.NewKVStoreKey("dev")
 	TestBandwidthKVStoreKey := sdk.NewKVStoreKey("bandwidth")
 	TestVoteKVStoreKey := sdk.NewKVStoreKey("vote")
+	TestPriceKVStoreKey := sdk.NewKVStoreKey("price")
+	TestValidatorKVStoreKey := sdk.NewKVStoreKey("validator")
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -121,6 +122,9 @@ func (suite *AnteTestSuite) SetupTest() {
 	ms.MountStoreWithDB(TestBandwidthKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestParamKVStoreKey, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(TestVoteKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestPriceKVStoreKey, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(TestValidatorKVStoreKey, sdk.StoreTypeIAVL, db)
+
 	err := ms.LoadLatestVersion()
 	if err != nil {
 		panic(err)
@@ -137,7 +141,8 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
 	vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
-	price := pricemn.TestnetPriceManager{}
+	valm := valmn.NewValidatorManager(TestValidatorKVStoreKey, ph, vm, &gm, am)
+	price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, ph)
 	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
 	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
 

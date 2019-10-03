@@ -48,7 +48,8 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	lb := NewLinoBlockchain(logger, db, nil)
 
 	genesisState := GenesisState{
-		Accounts: []GenesisAccount{},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []GenesisAccount{},
 	}
 
 	// Generate 21 validators
@@ -121,7 +122,8 @@ func TestGenesisAcc(t *testing.T) {
 			false, secp256k1.GenPrivKey().PubKey()},
 	}
 	genesisState := GenesisState{
-		Accounts: []GenesisAccount{},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []GenesisAccount{},
 	}
 	for _, acc := range accs {
 		genesisAcc := GenesisAccount{
@@ -180,7 +182,8 @@ func TestGenesisFromConfig(t *testing.T) {
 	logger, db := loggerAndDB()
 	lb := NewLinoBlockchain(logger, db, nil)
 	genesisState := GenesisState{
-		Accounts: []GenesisAccount{},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []GenesisAccount{},
 	}
 	genesisState.GenesisParam = GenesisParam{
 		true,
@@ -268,7 +271,15 @@ func TestGenesisFromConfig(t *testing.T) {
 			MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 		},
 		param.ReputationParam{
-			BestContentIndexN: 10,
+			BestContentIndexN: 200,
+			UserMaxN:          50,
+		},
+		param.PriceParam{
+			TestnetMode:     true,
+			UpdateEverySec:  int64(time.Hour.Seconds()),
+			FeedEverySec:    int64((10 * time.Minute).Seconds()),
+			HistoryMaxLen:   71,
+			PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 		},
 	}
 	genesisState.InitGlobalMeta = globalModel.InitParamList{
@@ -687,7 +698,18 @@ func TestGlobalTime(t *testing.T) {
 	lb := NewLinoBlockchain(logger, db, nil)
 
 	genesisState := GenesisState{
-		Accounts: []GenesisAccount{},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts: []GenesisAccount{
+			{
+				Name:           user1,
+				Coin:           coinPerValidator,
+				ResetKey:       priv1.PubKey(),
+				TransactionKey: secp256k1.GenPrivKey().PubKey(),
+				AppKey:         secp256k1.GenPrivKey().PubKey(),
+				IsValidator:    true,
+				ValPubKey:      priv2.PubKey(),
+			},
+		},
 	}
 
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)

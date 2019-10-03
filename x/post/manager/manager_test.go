@@ -512,7 +512,7 @@ func (suite *PostManagerTestSuite) TestLinoDonateOK() {
 	income := amount.Minus(tax)
 	dollar := linotypes.NewMiniDollar(1000)
 	dp := linotypes.NewMiniDollar(33)
-	suite.price.On("CoinToMiniDollar", amount).Return(dollar)
+	suite.price.On("CoinToMiniDollar", mock.Anything, amount).Return(dollar, nil)
 	err := suite.pm.CreatePost(suite.Ctx, author, postID, app, "content", "title")
 	suite.Require().Nil(err)
 

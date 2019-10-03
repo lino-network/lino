@@ -1,9 +1,9 @@
 package param
 
 import (
-	"github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
 )
 
 // Parameter - parameter in Lino Blockchain
@@ -173,7 +173,19 @@ type PostParam struct {
 	MaxReportReputation       types.Coin `json:"max_report_reputation"`
 }
 
+// ReputationParam: parameters of reputation
 // BestContentIndexN - hard cap of how many content can be indexed every round.
+// UserMaxN - maximum different donation target counted every round.
 type ReputationParam struct {
 	BestContentIndexN int `json:"best_content_index_n"`
+	UserMaxN          int `json:"user_max_n"`
+}
+
+// PriceParam - parameters of price module.
+type PriceParam struct {
+	TestnetMode     bool       `json:"testnet_mode"`
+	UpdateEverySec  int64      `json:"update_every"`
+	FeedEverySec    int64      `json:"feed_every"`
+	HistoryMaxLen   int        `json:"history_max_len"`
+	PenaltyMissFeed types.Coin `json:"penalty_miss_feed"`
 }

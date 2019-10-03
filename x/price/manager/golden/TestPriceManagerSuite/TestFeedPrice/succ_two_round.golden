@@ -1,0 +1,62 @@
+[
+  {
+    "prefix": "0",
+    "key": "val1",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "val1",
+        "price": "400",
+        "update_at": "600"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "val2",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "val2",
+        "price": "500",
+        "update_at": "600"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "val3",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "val3",
+        "price": "600",
+        "update_at": "600"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/price/history",
+      "value": [
+        {
+          "price": "1200",
+          "update_at": "0"
+        }
+      ]
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "",
+    "val": {
+      "type": "lino/price/current",
+      "value": {
+        "price": "1200",
+        "update_at": "0"
+      }
+    }
+  }
+]

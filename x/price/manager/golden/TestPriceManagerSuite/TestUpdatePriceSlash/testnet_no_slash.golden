@@ -1,0 +1,50 @@
+[
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/price/history",
+      "value": [
+        {
+          "price": "1200",
+          "update_at": "0"
+        },
+        {
+          "price": "1200",
+          "update_at": "3600"
+        },
+        {
+          "price": "1200",
+          "update_at": "7200"
+        },
+        {
+          "price": "1200",
+          "update_at": "10800"
+        }
+      ]
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "",
+    "val": {
+      "type": "lino/price/current",
+      "value": {
+        "price": "1200",
+        "update_at": "7200"
+      }
+    }
+  },
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/price/lastvals",
+      "value": [
+        "val1",
+        "val2",
+        "val3"
+      ]
+    }
+  }
+]

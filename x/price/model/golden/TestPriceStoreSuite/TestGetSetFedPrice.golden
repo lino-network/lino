@@ -1,0 +1,26 @@
+[
+  {
+    "prefix": "0",
+    "key": "user1",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "user1",
+        "price": "123",
+        "update_at": "1000"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user2",
+    "val": {
+      "type": "lino/price/fedprice",
+      "value": {
+        "validator": "user2",
+        "price": "456",
+        "update_at": "2000"
+      }
+    }
+  }
+]

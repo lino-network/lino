@@ -3171,8 +3171,7 @@ func (suite *ValidatorManagerTestSuite) TestGetCommittingValidatorsVotes() {
 
 	for _, tc := range testCases {
 		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
-		lst, err := suite.vm.GetCommittingValidatorVoteStatus(suite.Ctx)
-		suite.NoError(err)
+		lst := suite.vm.GetCommittingValidatorVoteStatus(suite.Ctx)
 		suite.Equal(tc.expectRes, lst, "%s", tc.testName)
 	}
 }

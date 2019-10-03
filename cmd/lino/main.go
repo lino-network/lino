@@ -51,6 +51,8 @@ func main() {
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
+	rootCmd.AddCommand(app.VersionCmd())
+
 	rootCmd.AddCommand(app.InitCmd(ctx, cdc))
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)

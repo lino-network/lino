@@ -1,0 +1,19 @@
+[
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/price/history",
+      "value": [
+        {
+          "price": "456",
+          "update_at": "2000"
+        },
+        {
+          "price": "789",
+          "update_at": "3000"
+        }
+      ]
+    }
+  }
+]

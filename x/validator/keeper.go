@@ -19,6 +19,8 @@ type ValidatorKeeper interface {
 	RevokeValidator(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 	VoteValidator(ctx sdk.Context, username linotypes.AccountKey, votedValidators []linotypes.AccountKey) sdk.Error
 	DistributeInflationToValidator(ctx sdk.Context) sdk.Error
+	PunishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
+		penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error
 	Hooks() votemn.Hooks
 
 	// getters
@@ -28,7 +30,7 @@ type ValidatorKeeper interface {
 	GetValidatorList(ctx sdk.Context) *model.ValidatorList
 	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
 	GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey
-	GetCommittingValidatorVoteStatus(ctx sdk.Context) ([]model.ReceivedVotesStatus, sdk.Error)
+	GetCommittingValidatorVoteStatus(ctx sdk.Context) []model.ReceivedVotesStatus
 }
 
 var _ ValidatorKeeper = votemn.ValidatorManager{}

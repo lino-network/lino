@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -32,4 +34,9 @@ func ErrInvalidIDAAmount() sdk.Error {
 // ErrUnimplemented - error if the feature is not implemented yet.
 func ErrUnimplemented(msg string) sdk.Error {
 	return NewError(CodeUnimplementedError, msg)
+}
+
+// ErrInvalidUsername - error if the username is invalid.
+func ErrInvalidUsername(username AccountKey) sdk.Error {
+	return NewError(CodeInvalidUsername, fmt.Sprintf("Invalid username: %s", username))
 }

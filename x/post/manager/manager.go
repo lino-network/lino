@@ -169,7 +169,11 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		return types.ErrDonateAmountTooLittle()
 	}
 	// dp is the evaluated consumption.
-	dp, err := pm.rep.DonateAt(ctx, from, permlink, pm.price.CoinToMiniDollar(amount))
+	mdamount, err := pm.price.CoinToMiniDollar(ctx, amount)
+	if err != nil {
+		return err
+	}
+	dp, err := pm.rep.DonateAt(ctx, from, permlink, mdamount)
 	if err != nil {
 		return err
 	}

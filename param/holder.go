@@ -1,10 +1,12 @@
 package param
 
 import (
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/types"
+	"time"
 
+	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
 )
 
 var (
@@ -20,6 +22,7 @@ var (
 	accountParamSubstore                 = []byte{0x09} // Substore for account param
 	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
 	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
+	priceParamSubStore                   = []byte{0x0c} // Substore for price parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
 	AnnualInflationCeiling = types.NewDecFromRat(98, 1000)
@@ -171,11 +174,21 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	reputationParam := &ReputationParam{
-		BestContentIndexN: 10,
+		BestContentIndexN: 200,
+		UserMaxN:          50,
 	}
 	if err := ph.setReputationParam(ctx, reputationParam); err != nil {
 		return err
 	}
+
+	priceParam := &PriceParam{
+		TestnetMode:     true,
+		UpdateEverySec:  int64(time.Hour.Seconds()),
+		FeedEverySec:    int64((10 * time.Minute).Seconds()),
+		HistoryMaxLen:   71,
+		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
+	}
+	ph.setPriceParam(ctx, priceParam)
 
 	return nil
 }
@@ -193,7 +206,8 @@ func (ph ParamHolder) InitParamFromConfig(
 	coinDayParam CoinDayParam,
 	bandwidthParam BandwidthParam,
 	accParam AccountParam,
-	repParam ReputationParam) error {
+	repParam ReputationParam,
+	priceParam PriceParam) error {
 	if err := ph.setGlobalAllocationParam(ctx, &globalParam); err != nil {
 		return err
 	}
@@ -235,6 +249,7 @@ func (ph ParamHolder) InitParamFromConfig(
 		return err
 	}
 
+	ph.setPriceParam(ctx, &priceParam)
 	return nil
 }
 
@@ -379,17 +394,27 @@ func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error
 }
 
 // GetReputationParam - get reputation param
-func (ph ParamHolder) GetReputationParam(ctx sdk.Context) (*ReputationParam, sdk.Error) {
+func (ph ParamHolder) GetReputationParam(ctx sdk.Context) *ReputationParam {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetReputationParamKey())
 	if paramBytes == nil {
-		return nil, ErrReputationParamNotFound()
+		panic("Reputation Param Not Initialized")
 	}
 	param := new(ReputationParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
-		return nil, ErrFailedToUnmarshalReputationParam(err)
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
+}
+
+// GetPriceParam - get price param
+func (ph ParamHolder) GetPriceParam(ctx sdk.Context) *PriceParam {
+	store := ctx.KVStore(ph.key)
+	paramBytes := store.Get(GetPriceParamKey())
+	if paramBytes == nil {
+		panic("Price Param Not Initialized")
 	}
-	return param, nil
+	param := new(PriceParam)
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
 }
 
 // UpdateGlobalGrowthRate - update global growth rate
@@ -531,6 +556,12 @@ func (ph ParamHolder) setReputationParam(ctx sdk.Context, param *ReputationParam
 	return nil
 }
 
+func (ph ParamHolder) setPriceParam(ctx sdk.Context, param *PriceParam) {
+	store := ctx.KVStore(ph.key)
+	bytes := ph.cdc.MustMarshalBinaryLengthPrefixed(*param)
+	store.Set(GetPriceParamKey(), bytes)
+}
+
 // GetPostParamKey - "post param substore"
 func GetPostParamKey() []byte {
 	return postParamSubStore
@@ -589,4 +620,9 @@ func GetAccountParamKey() []byte {
 // GetAccountParamKey - "account param substore"
 func GetReputationParamKey() []byte {
 	return reputationParamSubStore
+}
+
+// GetPriceParamKey
+func GetPriceParamKey() []byte {
+	return priceParamSubStore
 }

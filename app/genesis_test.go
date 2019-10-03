@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
@@ -39,10 +40,11 @@ func TestGetGenesisJson(t *testing.T) {
 		Name: "Lino",
 	}
 	genesisState := GenesisState{
-		Accounts:    []GenesisAccount{genesisAcc},
-		ReservePool: types.NewCoinFromInt64(1000000),
-		Developers:  []GenesisAppDeveloper{genesisAppDeveloper},
-		Infra:       []GenesisInfraProvider{genesisInfraProvider},
+		Accounts:      []GenesisAccount{genesisAcc},
+		ReservePool:   types.NewCoinFromInt64(1000000),
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Developers:    []GenesisAppDeveloper{genesisAppDeveloper},
+		Infra:         []GenesisInfraProvider{genesisInfraProvider},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
@@ -129,7 +131,15 @@ func TestGetGenesisJson(t *testing.T) {
 				MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 			},
 			param.ReputationParam{
-				BestContentIndexN: 10,
+				BestContentIndexN: 200,
+				UserMaxN:          50,
+			},
+			param.PriceParam{
+				TestnetMode:     true,
+				UpdateEverySec:  int64(time.Hour.Seconds()),
+				FeedEverySec:    int64((10 * time.Minute).Seconds()),
+				HistoryMaxLen:   71,
+				PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 			},
 		},
 		InitGlobalMeta: globalModel.InitParamList{
