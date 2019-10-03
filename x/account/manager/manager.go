@@ -17,6 +17,11 @@ import (
 	"github.com/lino-network/lino/x/global"
 )
 
+const (
+	exportVersion = 1
+	importVersion = 1
+)
+
 // AccountManager - account manager
 type AccountManager struct {
 	storage     model.AccountStorage
@@ -522,9 +527,73 @@ func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username li
 	return accManager.storage.GetAllGrantPermissions(ctx, username)
 }
 
-// Export -
-func (accManager AccountManager) ExportToFile(ctx sdk.Context, filepath string) error {
-	panic("export account unimplemented")
+// ExportToFile -
+func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.AccountTablesIR{
+		Version: exportVersion,
+	}
+	substores := accManager.storage.StoreMap(ctx)
+
+	// export accounts
+	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		acc := val.(*model.AccountInfo)
+		state.Accounts = append(state.Accounts, model.AccountIR(*acc))
+		return false
+	})
+
+	// export banks
+	substores[string(model.AccountBankSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		bank := val.(*model.AccountBank)
+		addr := key
+		frozens := make([]model.FrozenMoneyIR, len(bank.FrozenMoneyList))
+		for i, v := range bank.FrozenMoneyList {
+			frozens[i] = model.FrozenMoneyIR(v)
+		}
+		state.Banks = append(state.Banks, model.AccountBankIR{
+			Address:         addr,
+			Saving:          bank.Saving,
+			FrozenMoneyList: frozens,
+			PubKey:          bank.PubKey,
+			Sequence:        bank.Sequence,
+			Username:        bank.Username,
+		})
+		return false
+	})
+
+	// export metas
+	substores[string(model.AccountMetaSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		meta := val.(*model.AccountMeta)
+		acc := linotypes.AccountKey(key)
+		state.Metas = append(state.Metas, model.AccountMetaIR{
+			Username: acc,
+			JSONMeta: meta.JSONMeta,
+		})
+		return false
+	})
+
+	// export grants
+	substores[string(model.AccountGrantPubKeySubstore)].Iterate(
+		func(key []byte, val interface{}) bool {
+			grants := val.(*([]*model.GrantPermission))
+			acc, grantTo := model.ParseGrantKey(key)
+			permissions := make([]model.PermissionIR, 0)
+			for _, grant := range *grants {
+				permissions = append(permissions, model.PermissionIR{
+					Permission: grant.Permission,
+					CreatedAt:  grant.CreatedAt,
+					ExpiresAt:  grant.ExpiresAt,
+					Amount:     grant.Amount,
+				})
+			}
+			state.Grants = append(state.Grants, model.GrantPermissionIR{
+				Username:    acc,
+				GrantTo:     grantTo,
+				Permissions: permissions,
+			})
+			return false
+		})
+
+	return utils.Save(filepath, cdc, state)
 }
 
 // ImportFromFile import state from file.
@@ -534,61 +603,49 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 		return err
 	}
 	table := rst.(*model.AccountTablesIR)
+
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
+
 	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
 	// import accounts.
 	for _, v := range table.Accounts {
-		pubkey := v.Info.ResetKey
-		addr := sdk.AccAddress(pubkey.Address())
-		if _, err := accManager.storage.GetBank(ctx, addr); err == nil {
-			addr = sdk.AccAddress(v.Username)
-			// bank already exists, account bank use safe address. User must use
-			// their signing key to reset.
-			ctx.Logger().Error(
-				fmt.Sprintf("bank account already exits, %v; use safe addr: %s", v, addr))
+		info := model.AccountInfo(v)
+		accManager.storage.SetInfo(ctx, v.Username, &info)
+	}
+
+	// import banks
+	for _, v := range table.Banks {
+		frozens := make([]model.FrozenMoney, 0)
+		for _, f := range v.FrozenMoneyList {
+			frozens = append(frozens, model.FrozenMoney(f))
 		}
-		info := &model.AccountInfo{
-			Username:       v.Username,
-			CreatedAt:      v.Info.CreatedAt,
-			SigningKey:     v.Info.TransactionKey,
-			TransactionKey: pubkey,
-			Address:        addr,
-		}
-		totalSaving := v.Bank.Saving
-		totalSaving = totalSaving.Plus(v.Reward.UnclaimReward)
-		bank := &model.AccountBank{
-			Saving:          totalSaving,
-			FrozenMoneyList: v.Bank.FrozenMoneyList,
-			PubKey:          pubkey,
-			Sequence:        v.Meta.Sequence,
+		bank := model.AccountBank{
+			Saving:          v.Saving,
+			FrozenMoneyList: frozens,
+			PubKey:          v.PubKey,
+			Sequence:        v.Sequence,
 			Username:        v.Username,
 		}
-		accManager.storage.SetInfo(ctx, v.Username, info)
-		accManager.storage.SetBank(ctx, addr, bank)
-		if v.Meta.JSONMeta != "" {
-			meta := &model.AccountMeta{
-				JSONMeta: v.Meta.JSONMeta,
-			}
-			accManager.storage.SetMeta(ctx, v.Username, meta)
-		}
+		accManager.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)
 	}
 
 	// import grant permissions.
-	for _, v := range table.AccountGrantPubKeys {
-		grant := v.GrantPubKey
-		remainingTime := grant.ExpiresAt - ctx.BlockHeader().Time.Unix()
-		if remainingTime > 0 {
-			err := accManager.AuthorizePermission(ctx, v.Username, grant.Username,
-				remainingTime, grant.Permission, grant.Amount)
-			if err != nil {
-				panic(err)
-			}
+	for _, v := range table.Grants {
+		perms := make([]*model.GrantPermission, 0)
+		for _, p := range v.Permissions {
+			perms = append(perms, &model.GrantPermission{
+				GrantTo:    v.GrantTo,
+				Permission: p.Permission,
+				CreatedAt:  p.CreatedAt,
+				ExpiresAt:  p.ExpiresAt,
+				Amount:     p.Amount,
+			})
 		}
+		accManager.storage.SetGrantPermissions(ctx, v.Username, v.GrantTo, perms)
 	}
-	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	return nil
-}
-
-// IterateAccounts - iterate accounts in KVStore
-func (accManager AccountManager) IterateAccounts(ctx sdk.Context, process func(model.AccountInfo, model.AccountBank) (stop bool)) {
-	accManager.storage.IterateAccounts(ctx, process)
 }
