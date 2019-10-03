@@ -49,6 +49,7 @@ func main() {
 
 	// Construct Root Command
 	rootCmd.AddCommand(
+		app.VersionCmd(),
 		rpc.StatusCommand(),
 		client.ConfigCmd(app.DefaultCLIHome),
 		queryCmd(cdc),
