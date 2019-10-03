@@ -161,12 +161,15 @@ func NewLinoBlockchain(
 	lb.developerManager = devmn.NewDeveloperManager(
 		lb.CapKeyDeveloperStore, lb.paramHolder,
 		&voteManager, lb.accountManager, lb.priceManager, &lb.globalManager)
+	//// post -> developer
 	lb.postManager = postmn.NewPostManager(
 		lb.CapKeyPostStore, lb.accountManager,
 		&lb.globalManager, lb.developerManager, lb.reputationManager, lb.priceManager)
+	// bandwidth -> developer
 	lb.bandwidthManager = bandwidthmn.NewBandwidthManager(
 		lb.CapKeyBandwidthStore, lb.paramHolder,
 		&lb.globalManager, &voteManager, lb.developerManager, lb.accountManager)
+	// bandwidth
 	lb.auth = auth.NewAnteHandler(lb.accountManager, lb.bandwidthManager)
 
 	lb.Router().

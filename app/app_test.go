@@ -271,7 +271,7 @@ func TestGenesisFromConfig(t *testing.T) {
 			MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
 		},
 		param.ReputationParam{
-			BestContentIndexN: 10,
+			BestContentIndexN: 200,
 			UserMaxN:          50,
 		},
 		param.PriceParam{

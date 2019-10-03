@@ -24,7 +24,7 @@ func (msg FeedPriceMsg) Type() string { return "FeedPriceMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg FeedPriceMsg) ValidateBasic() sdk.Error {
-	if !types.RuleUsernameLength(msg.Username) {
+	if !msg.Username.IsValid() {
 		return types.ErrInvalidUsername(msg.Username)
 	}
 	if !msg.Price.IsPositive() {
