@@ -1,17 +1,20 @@
 package model
 
 import (
-	"github.com/lino-network/lino/types"
+	"strings"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 )
 
 var (
-	accountInfoSubstore        = []byte{0x00}
-	accountBankSubstore        = []byte{0x01}
-	accountMetaSubstore        = []byte{0x02}
-	accountGrantPubKeySubstore = []byte{0x03}
+	AccountInfoSubstore        = []byte{0x00}
+	AccountBankSubstore        = []byte{0x01}
+	AccountMetaSubstore        = []byte{0x02}
+	AccountGrantPubKeySubstore = []byte{0x03}
 )
 
 // AccountStorage - account storage
@@ -140,9 +143,40 @@ func (as AccountStorage) SetGrantPermissions(ctx sdk.Context, me types.AccountKe
 	store.Set(getGrantPermKey(me, grantTo), grantPermByte)
 }
 
+func (as AccountStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
+	store := ctx.KVStore(as.key)
+	stores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     AccountInfoSubstore,
+			ValCreator: func() interface{} { return new(AccountInfo) },
+			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     AccountBankSubstore,
+			ValCreator: func() interface{} { return new(AccountBank) },
+			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     AccountMetaSubstore,
+			ValCreator: func() interface{} { return new(AccountMeta) },
+			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     AccountGrantPubKeySubstore,
+			ValCreator: func() interface{} { return new([]*GrantPermission) },
+			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+	}
+	return utils.NewStoreMap(stores)
+}
+
 // GetAccountInfoPrefix - "account info substore"
 func GetAccountInfoPrefix() []byte {
-	return accountInfoSubstore
+	return AccountInfoSubstore
 }
 
 // GetAccountInfoKey - "account info substore" + "username"
@@ -152,114 +186,27 @@ func GetAccountInfoKey(accKey types.AccountKey) []byte {
 
 // GetAccountBankKey - "account bank substore" + "username"
 func GetAccountBankKey(addr sdk.Address) []byte {
-	return append(accountBankSubstore, addr.Bytes()...)
+	return append(AccountBankSubstore, addr.Bytes()...)
 }
 
 // GetAccountMetaKey - "account meta substore" + "username"
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
-	return append(accountMetaSubstore, accKey...)
+	return append(AccountMetaSubstore, accKey...)
 }
 
 func getGrantPermPrefix(me types.AccountKey) []byte {
-	return append(append(accountGrantPubKeySubstore, me...), types.KeySeparator...)
+	return append(append(AccountGrantPubKeySubstore, me...), types.KeySeparator...)
 }
 
 func getGrantPermKey(me types.AccountKey, grantTo types.AccountKey) []byte {
 	return append(append(getGrantPermPrefix(me), grantTo...), types.KeySeparator...)
 }
 
-// // Export to table representation.
-// func (as AccountStorage) Export(ctx sdk.Context) *AccountTables {
-// 	tables := &AccountTables{}
-// 	store := ctx.KVStore(as.key)
-// 	// export tables.account
-// 	func() {
-// 		itr := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
-// 		defer itr.Close()
-// 		for ; itr.Valid(); itr.Next() {
-// 			k, _ := itr.Key(), itr.Value()
-// 			username := types.AccountKey(k[1:])
-
-// 			info, err := as.GetInfo(ctx, username)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-
-// 			bank, err := as.GetBank(ctx, info.Address)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-
-// 			meta, err := as.GetMeta(ctx, username)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-
-// 			reward, err := as.GetReward(ctx, username)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-
-// 			// set all states
-// 			accRow := AccountRow{
-// 				Username: username,
-// 				Info:     *info,
-// 				Bank:     *bank,
-// 				Meta:     *meta,
-// 				Reward:   *reward,
-// 			}
-// 			tables.Accounts = append(tables.Accounts, accRow)
-// 		}
-// 	}()
-// 	// export tables.GrantPubKeys
-// 	func() {
-// 		itr := sdk.KVStorePrefixIterator(store, accountGrantPubKeySubstore)
-// 		defer itr.Close()
-// 		for ; itr.Valid(); itr.Next() {
-// 			usernameApp := string(itr.Key()[1:])
-// 			strs := strings.Split(usernameApp, types.KeySeparator)
-// 			if len(strs) != 3 {
-// 				panic("illegat usernamePubkeyAndPermission: " + usernameApp)
-// 			}
-// 			username, app := types.AccountKey(strs[0]), types.AccountKey(strs[1])
-// 			permissions, err := as.GetGrantPermissions(ctx, username, app)
-// 			if err != nil {
-// 				panic("failed to fetch permission for " + username + " and " + app)
-// 			}
-// 			for _, v := range permissions {
-// 				row := GrantPubKeyRow{
-// 					Username:    username,
-// 					PubKey:      nil, // PubKey is deprecated since upgrade1
-// 					GrantPubKey: *v,
-// 				}
-// 				tables.AccountGrantPubKeys = append(tables.AccountGrantPubKeys, row)
-// 			}
-// 		}
-// 	}()
-// 	return tables
-// }
-
-// IterateAccounts - iterate accounts in KVStore
-func (as AccountStorage) IterateAccounts(ctx sdk.Context, process func(AccountInfo, AccountBank) (stop bool)) {
-	store := ctx.KVStore(as.key)
-	iter := sdk.KVStorePrefixIterator(store, accountInfoSubstore)
-	defer iter.Close()
-	for {
-		if !iter.Valid() {
-			return
-		}
-		val := iter.Value() // TODO(yumin): why value not key?
-		accInfo, err := as.GetInfo(ctx, types.AccountKey(val))
-		if err != nil {
-			panic(err)
-		}
-		accBank, err := as.GetBank(ctx, accInfo.Address)
-		if err != nil {
-			panic(err)
-		}
-		if process(*accInfo, *accBank) {
-			return
-		}
-		iter.Next()
+func ParseGrantKey(key []byte) (user types.AccountKey, grantTo types.AccountKey) {
+	parsed := strings.Split(string(key), types.KeySeparator)
+	// see above for why 3, instead of 2.
+	if len(parsed) != 3 {
+		panic("illeage grankey:" + string(key))
 	}
+	return types.AccountKey(parsed[0]), types.AccountKey(parsed[1])
 }
