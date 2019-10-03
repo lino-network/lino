@@ -13,6 +13,7 @@ const (
 	// query pathes
 	QueryAccountInfo            = "info"
 	QueryAccountBank            = "bank"
+	QueryAccountBankByAddress   = "bankByAddress"
 	QueryAccountMeta            = "meta"
 	QueryAccountPendingCoinDay  = "pendingCoinDay"
 	QueryAccountGrantPubKeys    = "grantPubKey"

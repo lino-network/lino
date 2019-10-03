@@ -23,6 +23,8 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 			return queryAccountInfo(ctx, cdc, path[1:], req, am)
 		case types.QueryAccountBank:
 			return queryAccountBank(ctx, cdc, path[1:], req, am)
+		case types.QueryAccountBankByAddress:
+			return queryAccountBankByAddress(ctx, cdc, path[1:], req, am)
 		case types.QueryAccountMeta:
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
 		case types.QueryAccountGrantPubKeys:
@@ -57,6 +59,25 @@ func queryAccountBank(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.
 		return nil, err
 	}
 	bank, err := am.GetBank(ctx, linotypes.AccountKey(path[0]))
+	if err != nil {
+		return nil, err
+	}
+	res, marshalErr := cdc.MarshalJSON(bank)
+	if marshalErr != nil {
+		return nil, types.ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryAccountBankByAddress(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
+	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
+		return nil, err
+	}
+	addr, e := hex.DecodeString(path[0])
+	if e != nil {
+		return nil, types.ErrQueryFailed()
+	}
+	bank, err := am.GetBankByAddress(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
