@@ -58,7 +58,7 @@ func NewAccOrAddrFromAddr(addr sdk.AccAddress) AccOrAddr {
 
 func (a AccOrAddr) IsValid() bool {
 	if a.IsAddr {
-		return len(a.Addr) > 0
+		return sdk.VerifyAddressFormat(a.Addr) == nil
 	}
 	return a.AccountKey.IsValid()
 }
