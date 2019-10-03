@@ -2,6 +2,7 @@ package global
 
 import (
 	"fmt"
+	"strconv"
 
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	wire "github.com/cosmos/cosmos-sdk/codec"
@@ -11,9 +12,11 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/model"
+)
 
-	// only for import from last version.
-	posttypes "github.com/lino-network/lino/x/post/types"
+const (
+	exportVersion = 1
+	importVersion = 1
 )
 
 // GlobalManager - encapsulates all basic struct
@@ -526,6 +529,73 @@ func (gm *GlobalManager) ClearEventCache(ctx sdk.Context) sdk.Error {
 	return nil
 }
 
+func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.GlobalTablesIR{
+		Version: exportVersion,
+	}
+	storeMap := gm.storage.PartialStoreMap(ctx)
+
+	// export events
+	storeMap[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		ts, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		events := val.(*types.TimeEventList)
+		state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
+			UnixTime:      ts,
+			TimeEventList: *events,
+		})
+		return false
+	})
+
+	// export stakes
+	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		day, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		stakeStats := val.(*model.LinoStakeStat)
+		state.GlobalStakeStats = append(state.GlobalStakeStats, model.GlobalStakeStatDayIR{
+			Day:       day,
+			StakeStat: model.LinoStakeStatIR(*stakeStats),
+		})
+		return false
+	})
+
+	meta, err := gm.storage.GetGlobalMeta(ctx)
+	if err != nil {
+		return err
+	}
+	state.Meta = model.GlobalMetaIR(*meta)
+
+	pool, err := gm.storage.GetInflationPool(ctx)
+	if err != nil {
+		return err
+	}
+	state.InflationPool = model.InflationPoolIR(*pool)
+
+	consumption, err := gm.storage.GetConsumptionMeta(ctx)
+	if err != nil {
+		return err
+	}
+	state.ConsumptionMeta = model.ConsumptionMetaIR(*consumption)
+
+	tps, err := gm.storage.GetTPS(ctx)
+	if err != nil {
+		return err
+	}
+	state.TPS = model.TPSIR(*tps)
+
+	globalt, err := gm.storage.GetGlobalTime(ctx)
+	if err != nil {
+		return err
+	}
+	state.Time = model.GlobalTimeIR(*globalt)
+
+	return utils.Save(filepath, cdc, state)
+}
+
 func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
 	if err != nil {
@@ -533,87 +603,60 @@ func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 	}
 	table := rst.(*model.GlobalTablesIR)
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
 
-	// import table.TimeEventLists
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
+	// import events
 	for _, v := range table.GlobalTimeEventLists {
-		newevents := make([]types.Event, 0)
-		events := v.TimeEventList.Events
-		for _, event := range events {
-			switch e := event.(type) {
-			case posttypes.RewardEventV1:
-				newevent := posttypes.RewardEvent{
-					PostAuthor: e.PostAuthor,
-					PostID:     e.PostID,
-					Consumer:   e.Consumer,
-					Evaluate:   types.NewMiniDollarFromTestnetCoin(e.Evaluate),
-					FromApp:    e.FromApp,
-				}
-				newevents = append(newevents, newevent)
-				ctx.Logger().Info(fmt.Sprintf("event conversion: from %+v to %+v ", e, newevent))
-			default:
-				newevents = append(newevents, event)
-			}
-		}
-		err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &types.TimeEventList{
-			Events: newevents,
-		})
+		err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
 		if err != nil {
 			return err
 		}
 	}
+
 	// import table.GlobalStakeStats
 	for _, v := range table.GlobalStakeStats {
-		err := gm.storage.SetLinoStakeStat(ctx, v.Day, &v.StakeStat)
+		stat := model.LinoStakeStat(v.StakeStat)
+		err := gm.storage.SetLinoStakeStat(ctx, v.Day, &stat)
 		if err != nil {
 			return err
 		}
 	}
-	// import table.Misc
-	misc := table.GlobalMisc
 
-	err = gm.storage.SetInflationPool(ctx, &misc.InflationPool)
+	meta := model.GlobalMeta(table.Meta)
+	err = gm.storage.SetGlobalMeta(ctx, &meta)
 	if err != nil {
 		return err
 	}
 
-	err = gm.storage.SetGlobalTime(ctx, &misc.Time)
+	pool := model.InflationPool(table.InflationPool)
+	err = gm.storage.SetInflationPool(ctx, &pool)
 	if err != nil {
 		return err
 	}
 
-	// type diff in IR
-	var cwindow types.MiniDollar
-	if misc.ConsumptionMeta.IsConsumptionWindowDollarUnit {
-		cwindow = types.NewMiniDollarFromInt(misc.ConsumptionMeta.ConsumptionWindow.Amount)
-	} else {
-		cwindow = types.NewMiniDollarFromTestnetCoin(misc.ConsumptionMeta.ConsumptionWindow)
-		ctx.Logger().Info(
-			fmt.Sprintf("consumption window converting, from %+v to %+v ",
-				misc.ConsumptionMeta.ConsumptionWindow,
-				cwindow,
-			))
-	}
-	err = gm.storage.SetConsumptionMeta(ctx, &model.ConsumptionMeta{
-		ConsumptionFrictionRate: sdk.MustNewDecFromStr(
-			misc.ConsumptionMeta.ConsumptionFrictionRate),
-		ConsumptionWindow:            cwindow,
-		ConsumptionRewardPool:        misc.ConsumptionMeta.ConsumptionRewardPool,
-		ConsumptionFreezingPeriodSec: misc.ConsumptionMeta.ConsumptionFreezingPeriodSec,
-	})
+	consumption := model.ConsumptionMeta(table.ConsumptionMeta)
+	err = gm.storage.SetConsumptionMeta(ctx, &consumption)
 	if err != nil {
 		return err
 	}
 
-	err = gm.storage.SetTPS(ctx, &model.TPS{
-		CurrentTPS: sdk.MustNewDecFromStr(misc.TPS.CurrentTPS),
-		MaxTPS:     sdk.MustNewDecFromStr(misc.TPS.MaxTPS),
-	})
+	tps := model.TPS(table.TPS)
+	err = gm.storage.SetTPS(ctx, &tps)
 	if err != nil {
 		return err
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+	t := model.GlobalTime(table.Time)
+	err = gm.storage.SetGlobalTime(ctx, &t)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
