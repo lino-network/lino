@@ -62,6 +62,23 @@ func (vm VoteManager) StakeIn(ctx sdk.Context, username linotypes.AccountKey, am
 	return vm.AddStake(ctx, username, amount)
 }
 
+func (vm VoteManager) StakeInFor(ctx sdk.Context, sender linotypes.AccountKey,
+	receiver linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	param, err := vm.paramHolder.GetVoteParam(ctx)
+	if err != nil {
+		return err
+	}
+	if param.MinStakeIn.IsGT(amount) {
+		return types.ErrInsufficientDeposit()
+	}
+
+	// withdraw money from sender's bank and add stake to receiver
+	if err := vm.am.MinusCoinFromUsername(ctx, sender, amount); err != nil {
+		return err
+	}
+	return vm.AddStake(ctx, receiver, amount)
+}
+
 func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {

@@ -40,6 +40,42 @@ func TestStakeInMsg(t *testing.T) {
 	}
 }
 
+func TestStakeInForMsg(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		StakeInForMsg StakeInForMsg
+		expectedError sdk.Error
+	}{
+		{
+			testName:      "normal case",
+			StakeInForMsg: NewStakeInForMsg("user1", "user2", "1"),
+			expectedError: nil,
+		},
+		{
+			testName:      "invalid username1",
+			StakeInForMsg: NewStakeInForMsg("", "user2", "1"),
+			expectedError: ErrInvalidUsername(),
+		},
+		{
+			testName:      "invalid username2",
+			StakeInForMsg: NewStakeInForMsg("user1", "", "1"),
+			expectedError: ErrInvalidUsername(),
+		},
+		{
+			testName:      "invalid deposit amount",
+			StakeInForMsg: NewStakeInForMsg("user1", "user2", "-1"),
+			expectedError: types.ErrInvalidCoins("LNO can't be less than lower bound"),
+		},
+	}
+
+	for _, tc := range testCases {
+		result := tc.StakeInForMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, expect %v", tc.testName, result, tc.expectedError)
+		}
+	}
+}
+
 func TestClaimInterestMsg(t *testing.T) {
 	testCases := map[string]struct {
 		msg      ClaimInterestMsg

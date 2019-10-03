@@ -26,7 +26,7 @@ type VoteKeeper interface {
 	UnassignDuty(ctx sdk.Context, username linotypes.AccountKey, waitingPeriodSec int64) sdk.Error
 	ExecUnassignDutyEvent(ctx sdk.Context, event types.UnassignDutyEvent) sdk.Error
 	GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error)
-
+	StakeInFor(ctx sdk.Context, sender linotypes.AccountKey, receiver linotypes.AccountKey, amount linotypes.Coin) sdk.Error
 	// Getter
 	GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error)
 }
