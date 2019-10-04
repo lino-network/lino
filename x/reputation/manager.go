@@ -102,9 +102,9 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 }
 
 // ExportToFile state of reputation system.
-func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
+func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string, prevstate string) error {
 	repv2 := rep.getHandlerV2(ctx)
-	return repv2.ExportToFile(file)
+	return repv2.ExportToFile(file, prevstate)
 }
 
 // ImportFromFile state of reputation system.

@@ -221,8 +221,21 @@ func (suite *reputationTestSuite) TestExportImport() {
 	suite.Require().Nil(err2)
 	defer os.RemoveAll(dir) // clean up
 
+	prevfile := filepath.Join(dir, "prev")
+	f, err := os.Create(prevfile)
+	if err != nil {
+		panic(err)
+	}
+	f.Write([]byte(`
+{"reputations":[
+{"username":"user2",
+"customer_score":"10",
+"free_score":"0",
+"is_mini_dollar":false
+}]}`))
+
 	tmpfn := filepath.Join(dir, "tmpfile")
-	err2 = rep.ExportToFile(suite.ctx, tmpfn)
+	err2 = rep.ExportToFile(suite.ctx, tmpfn, prevfile)
 	suite.Nil(err2)
 
 	// clear everything
@@ -246,7 +259,12 @@ func (suite *reputationTestSuite) TestExportImport() {
 		rv, err := rep.GetReputation(suite.ctx, v.username)
 		suite.Nil(err)
 		if i < 8 {
-			suite.Equal(types.NewMiniDollar(8304386).String(), rv.String(), "%d", i)
+			if v.username == "user2" {
+				suite.Equal(types.NewMiniDollar(8304386).Plus(types.NewMiniDollar(10*1200)).String(), rv.String(), "%d", i)
+			} else {
+
+				suite.Equal(types.NewMiniDollar(8304386).String(), rv.String(), "%d", i)
+			}
 		} else {
 			suite.Equal(types.NewMiniDollar(0).String(), rv.String(), "%d", i)
 		}

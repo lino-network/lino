@@ -106,9 +106,19 @@ func (suite *ReputationTestSuite) TestExportImportFile() {
 	suite.Require().Nil(err)
 	defer os.RemoveAll(dir) // clean up
 
+	prevfile := filepath.Join(dir, "prev")
+	f, err := os.Create(prevfile)
+	f.Write([]byte(`
+{"reputations":[
+{"username":"user2",
+"customer_score":"10",
+"free_score":"0",
+"is_mini_dollar":false
+}]}`))
+
 	tmpfn := filepath.Join(dir, "tmpfile")
 	suite.MoveToNewRound()
-	err = rep.ExportToFile(tmpfn)
+	err = rep.ExportToFile(tmpfn, prevfile)
 	suite.Nil(err)
 
 	imported := NewReputation(
@@ -120,7 +130,7 @@ func (suite *ReputationTestSuite) TestExportImportFile() {
 	err = imported.ImportFromFile(tmpfn)
 	suite.Nil(err)
 	suite.Equal(suite.rep.GetReputation("user1"), imported.GetReputation("user1"))
-	suite.Equal(suite.rep.GetReputation("user2"), imported.GetReputation("user2"))
+	suite.Equal(IntAdd(suite.rep.GetReputation("user2"), NewInt(10*1200)), imported.GetReputation("user2"))
 }
 
 func (suite *ReputationTestSuite) TestExtractConsumptionInfo() {

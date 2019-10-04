@@ -29,7 +29,7 @@ type Reputation interface {
 	GetCurrentRound() (RoundId, Time) // current round and its start time.
 
 	// ExportImporter
-	ExportToFile(file string) error
+	ExportToFile(file, prev string) error
 	ImportFromFile(file string) error
 }
 
@@ -56,13 +56,25 @@ func NewReputation(s ReputationStore, bestN int, userMaxN int, roundDurationSeco
 }
 
 // ExportToFile - implementing ExporteImporter
-func (rep ReputationImpl) ExportToFile(file string) error {
+func (rep ReputationImpl) ExportToFile(file string, prev string) error {
+	// merge result with prev
+	prevReps := rep.readPrev(prev)
+	prevRepsMap := make(map[Uid]Int)
+	for _, v := range prevReps.Reputations {
+		if !v.IsMiniDollar {
+			prevRepsMap[v.Username] = IntMul(v.CustomerScore, NewInt(1200))
+		} else {
+			prevRepsMap[v.Username] = v.CustomerScore
+		}
+	}
+
 	// before calling store's export, update reputation.
 	rep.store.IterateUsers(func(u Uid) bool {
 		rep.GetReputation(u)
 		return false
 	})
-	rst := rep.store.Export()
+	rst := rep.store.ExportWithPrev(prevRepsMap)
+
 	f, err := os.Create(file)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %s", err)
@@ -81,6 +93,24 @@ func (rep ReputationImpl) ExportToFile(file string) error {
 		return err
 	}
 	return nil
+}
+
+func (rep ReputationImpl) readPrev(file string) *UserReputationTable {
+	f, err := os.Open(file)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	dt := &UserReputationTable{}
+	err = cdc.UnmarshalJSON(bytes, dt)
+	if err != nil {
+		panic(err)
+	}
+	return dt
 }
 
 // ImportFromFile - implementing ExporteImporter

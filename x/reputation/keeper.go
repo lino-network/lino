@@ -27,6 +27,6 @@ type ReputationKeeper interface {
 	GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 	// import/export this module to files
-	ExportToFile(ctx sdk.Context, file string) error
+	ExportToFile(ctx sdk.Context, file string, prevstate string) error
 	ImportFromFile(ctx sdk.Context, file string) error
 }

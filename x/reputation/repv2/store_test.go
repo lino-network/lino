@@ -172,38 +172,18 @@ func (suite *StoreTestSuite) TestStoreImportExporter() {
 	store.SetUserMeta(user2, u2)
 
 	// export data
-	data := store.Export()
+	prev := make(map[Uid]Int)
+	prev[user2] = NewInt(10000)
+	data := store.ExportWithPrev(prev)
 	db2 := internal.NewMockStore()
 	store2 := NewReputationStore(db2, DefaultInitialReputation)
 	store2.Import(data)
 	suite.Equal(u1.Reputation, store2.GetUserMeta(user1).Reputation)
-	suite.Equal(u2.Reputation, store2.GetUserMeta(user2).Reputation)
+	suite.Equal(IntAdd(u2.Reputation, NewInt(10000)), store2.GetUserMeta(user2).Reputation)
 	suite.Equal(RoundId(0), store2.GetUserMeta(user1).LastDonationRound)
 	suite.Equal(RoundId(0), store2.GetUserMeta(user2).LastDonationRound)
 	suite.Equal(RoundId(0), store2.GetUserMeta(user1).LastSettledRound)
 	suite.Equal(RoundId(0), store2.GetUserMeta(user2).LastSettledRound)
 	suite.Empty(store2.GetUserMeta(user1).Unsettled)
 	suite.Empty(store2.GetUserMeta(user2).Unsettled)
-}
-
-func (suite *StoreTestSuite) TestStoreImportExporterFromUpgrade1() {
-	store := NewReputationStore(suite.mockDB, DefaultInitialReputation)
-
-	var user1 Uid = "test"
-	u1 := &userMeta{
-		Reputation:        NewInt(100000),
-		LastSettledRound:  3,
-		LastDonationRound: 3,
-		Unsettled:         []Donation{}}
-	store.SetUserMeta(user1, u1)
-
-	// export data
-	data := store.Export()
-	data.Reputations[0].IsMiniDollar = false
-
-	db2 := internal.NewMockStore()
-	store2 := NewReputationStore(db2, DefaultInitialReputation)
-	store2.Import(data)
-	u1.Reputation.Mul(NewInt(1200))
-	suite.Equal(u1.Reputation, store2.GetUserMeta(user1).Reputation)
 }

@@ -28,7 +28,7 @@ type UserIterator = func(user Uid) bool // return true to break.
 // This interface should only be used by the reputation system implementation.
 type ReputationStore interface {
 	// Export all state to deterministic bytes
-	Export() *UserReputationTable
+	ExportWithPrev(prev map[Uid]Int) *UserReputationTable
 
 	// Import state from bytes
 	Import(tb *UserReputationTable)
@@ -142,13 +142,17 @@ func (impl reputationStoreImpl) IterateUsers(cb UserIterator) {
 	}
 }
 
-func (impl reputationStoreImpl) Export() *UserReputationTable {
+func (impl reputationStoreImpl) ExportWithPrev(prev map[Uid]Int) *UserReputationTable {
 	rst := &UserReputationTable{}
 	impl.IterateUsers(func(uid Uid) bool {
 		v := impl.GetUserMeta(uid)
+		rep := v.Reputation
+		if prevRep, ok := prev[uid]; ok {
+			rep = IntAdd(rep, prevRep)
+		}
 		rst.Reputations = append(rst.Reputations, UserReputation{
 			Username:      uid,
-			CustomerScore: v.Reputation,
+			CustomerScore: rep,
 			FreeScore:     NewInt(0),
 			IsMiniDollar:  true,
 		})
