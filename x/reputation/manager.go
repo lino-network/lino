@@ -1,6 +1,7 @@
 package reputation
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
@@ -103,14 +104,14 @@ func (rep ReputationManager) GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 }
 
 // ExportToFile state of reputation system.
-func (rep ReputationManager) ExportToFile(ctx sdk.Context, file string) error {
+func (rep ReputationManager) ExportToFile(ctx sdk.Context, _ *codec.Codec, file string) error {
 	repv2 := rep.getHandlerV2(ctx)
 	return repv2.ExportToFile(file)
 }
 
 // ImportFromFile state of reputation system.
 // after update6's code is merged, V2 is the only version that will exist.
-func (rep ReputationManager) ImportFromFile(ctx sdk.Context, file string) error {
+func (rep ReputationManager) ImportFromFile(ctx sdk.Context, _ *codec.Codec, file string) error {
 	handler := rep.getHandlerV2(ctx)
 	return handler.ImportFromFile(file)
 }

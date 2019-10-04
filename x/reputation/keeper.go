@@ -3,6 +3,7 @@ package reputation
 //go:generate mockery -name ReputationKeeper
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/types"
@@ -27,6 +28,6 @@ type ReputationKeeper interface {
 	GetCurrentRound(ctx sdk.Context) (int64, sdk.Error)
 
 	// import/export this module to files
-	ExportToFile(ctx sdk.Context, file string) error
-	ImportFromFile(ctx sdk.Context, file string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, file string) error
+	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, file string) error
 }
