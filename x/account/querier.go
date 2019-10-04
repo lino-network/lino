@@ -73,7 +73,7 @@ func queryAccountBankByAddress(ctx sdk.Context, cdc *wire.Codec, path []string, 
 	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
 		return nil, err
 	}
-	addr, e := hex.DecodeString(path[0])
+	addr, e := sdk.AccAddressFromBech32(path[0])
 	if e != nil {
 		return nil, types.ErrQueryFailed()
 	}
