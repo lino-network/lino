@@ -7,11 +7,12 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 )
 
 var (
-	validatorSubstore     = []byte{0x00}
-	validatorListSubstore = []byte{0x01}
+	ValidatorSubstore     = []byte{0x00}
+	ValidatorListSubstore = []byte{0x01}
 )
 
 type ValidatorStorage struct {
@@ -98,76 +99,30 @@ func (vs ValidatorStorage) SetValidatorList(ctx sdk.Context, lst *ValidatorList)
 }
 
 // Export state of validators.
-func (vs ValidatorStorage) Export(ctx sdk.Context) *ValidatorTables {
-	tables := &ValidatorTables{}
+// StoreMap - map of all substores
+func (vs ValidatorStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
 	store := ctx.KVStore(vs.key)
-	// export table.validators
-	func() {
-		itr := sdk.KVStorePrefixIterator(store, validatorSubstore)
-		defer itr.Close()
-		for ; itr.Valid(); itr.Next() {
-			k := itr.Key()
-			username := types.AccountKey(k[1:])
-			val, err := vs.GetValidator(ctx, username)
-			if err != nil {
-				panic("failed to read validator: " + err.Error())
-			}
-			row := ValidatorRow{
-				Username:  username,
-				Validator: *val,
-			}
-			tables.Validators = append(tables.Validators, row)
-		}
-	}()
-	// export table.validatorList
-	list, err := vs.GetValidatorList(ctx)
-	if err != nil {
-		panic("failed to get validator list: " + err.Error())
+	substores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     ValidatorSubstore,
+			ValCreator: func() interface{} { return new(Validator) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     ValidatorListSubstore,
+			ValCreator: func() interface{} { return new(ValidatorList) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
 	}
-	tables.ValidatorList = ValidatorListRow{
-		List: *list,
-	}
-	return tables
-}
-
-// Import from tablesIR.
-func (vs ValidatorStorage) Import(ctx sdk.Context, tb *ValidatorTablesIR) {
-	check := func(e error) {
-		if e != nil {
-			panic("[vs] Failed to import: " + e.Error())
-		}
-	}
-	// import table.Validators
-	for _, v := range tb.Validators {
-		pubkey, err := tmtypes.PB2TM.PubKey(abci.PubKey{
-			Type: v.Validator.ABCIValidator.PubKey.Type,
-			Data: v.Validator.ABCIValidator.PubKey.Data,
-		})
-		check(err)
-		err = vs.SetValidator(ctx, v.Username, &Validator{
-			ABCIValidator: abci.Validator{
-				Address: v.Validator.ABCIValidator.Address,
-				Power:   v.Validator.ABCIValidator.Power,
-			},
-			PubKey:          pubkey,
-			Username:        v.Validator.Username,
-			Deposit:         v.Validator.Deposit,
-			AbsentCommit:    v.Validator.AbsentCommit,
-			ByzantineCommit: v.Validator.ByzantineCommit,
-			ProducedBlocks:  v.Validator.ProducedBlocks,
-			Link:            v.Validator.Link,
-		})
-		check(err)
-	}
-	// import ValidatorList
-	err := vs.SetValidatorList(ctx, &tb.ValidatorList.List)
-	check(err)
+	return utils.NewStoreMap(substores)
 }
 
 func GetValidatorKey(accKey types.AccountKey) []byte {
-	return append(validatorSubstore, accKey...)
+	return append(ValidatorSubstore, accKey...)
 }
 
 func GetValidatorListKey() []byte {
-	return validatorListSubstore
+	return ValidatorListSubstore
 }

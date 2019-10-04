@@ -6,8 +6,10 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/validator/model"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
@@ -580,11 +582,66 @@ func (vm ValidatorManager) getBestCandidate(ctx sdk.Context) (types.AccountKey, 
 }
 
 // Export storage state.
-func (vm ValidatorManager) Export(ctx sdk.Context) *model.ValidatorTables {
-	return vm.storage.Export(ctx)
+func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string, stakeinGetter func(user types.AccountKey) types.Coin) error {
+	state := &model.ValidatorTablesIR{
+		Version: 1,
+	}
+	// only oncall validators are exported.
+	vallist, err := vm.storage.GetValidatorList(ctx)
+	if err != nil {
+		return err
+	}
+	oncalls := vallist.OncallValidators
+	lowestOncallVotes := types.NewCoinFromInt64(0)
+
+	storeList := vm.storage.StoreMap(ctx)
+	storeList[string(model.ValidatorSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		validator := val.(*model.Validator)
+		if types.FindAccountInList(validator.Username, oncalls) == -1 {
+			// continue to skip not oncalls.
+			return false
+		}
+		stake := stakeinGetter(validator.Username)
+		// 1. add to state. validators
+		state.Validators = append(state.Validators, model.ValidatorIR{
+			ABCIValidator: model.ABCIValidatorIR{
+				Address: validator.ABCIValidator.Address,
+				Power:   validator.ABCIValidator.Power,
+			},
+			PubKey:          model.NewABCIPubKeyIRFromTM(validator.PubKey),
+			Username:        validator.Username,
+			ReceivedVotes:   stake,
+			HasRevoked:      false,
+			AbsentCommit:    validator.AbsentCommit,
+			ByzantineCommit: validator.ByzantineCommit,
+			ProducedBlocks:  validator.ProducedBlocks,
+			Link:            validator.Link,
+		})
+		// 2. add to states.vote as if they have voted for themselves.
+		state.Votes = append(state.Votes, model.ElectionVoteListIR{
+			Username: validator.Username,
+			ElectionVotes: []model.ElectionVoteIR{
+				{
+					ValidatorName: validator.Username,
+					Vote:          stake,
+				},
+			},
+		})
+		// 3. update lowest oncall votes
+		if stake.IsGT(lowestOncallVotes) {
+			lowestOncallVotes = stake
+		}
+		return false
+	})
+
+	// export validator list
+	state.List.Oncall = oncalls
+	state.List.LowestOncallVotes = lowestOncallVotes
+
+	return utils.Save(filepath, cdc, state)
 }
 
 // Import storage state.
-func (vm ValidatorManager) Import(ctx sdk.Context, tb *model.ValidatorTablesIR) {
-	vm.storage.Import(ctx, tb)
+func (vm ValidatorManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	panic("unimplemented")
 }
