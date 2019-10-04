@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/hex"
+	"strconv"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -107,9 +108,31 @@ func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, r
 	if err := linotypes.CheckPathContentAndMinLength(path, 2); err != nil {
 		return nil, err
 	}
-	bank, err := am.GetBank(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
+	isAddr := false
+	var e error
+	if len(path) == 3 {
+		isAddr, e = strconv.ParseBool(path[2])
+		if e != nil {
+			return nil, types.ErrQueryFailed()
+		}
+	}
+
+	var bank *model.AccountBank
+	var err sdk.Error
+	if isAddr {
+		addr, e := sdk.AccAddressFromBech32(path[0])
+		if e != nil {
+			return nil, types.ErrQueryFailed()
+		}
+		bank, err = am.GetBankByAddress(ctx, addr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		bank, err = am.GetBank(ctx, linotypes.AccountKey(path[0]))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	txAndSeq := model.TxAndSequenceNumber{
