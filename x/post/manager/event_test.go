@@ -1,26 +1,13 @@
 package manager
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 
 	linotypes "github.com/lino-network/lino/types"
 	types "github.com/lino-network/lino/x/post/types"
 )
 
-type PostManagerEventTestSuite struct {
-	*PostManagerTestSuite
-}
-
-func TestPostManagerEventTestSuite(t *testing.T) {
-	suite.Run(t, &PostManagerEventTestSuite{
-		PostManagerTestSuite: new(PostManagerTestSuite),
-	})
-}
-
-func (suite *PostManagerEventTestSuite) TestRewardEvent() {
+func (suite *PostManagerTestSuite) TestRewardEvent() {
 	user1 := suite.user1
 	user2 := suite.user2
 	app1 := suite.app1

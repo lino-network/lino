@@ -1,14 +1,15 @@
 package model
 
 import (
-	"github.com/lino-network/lino/types"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 )
 
 var (
-	voterSubstore = []byte{0x01}
+	VoterSubstore = []byte{0x01}
 )
 
 // VoteStorage - vote storage
@@ -67,86 +68,21 @@ func (vs VoteStorage) DeleteVoter(ctx sdk.Context, username types.AccountKey) sd
 	return nil
 }
 
-// Export - Export voter state
-func (vs VoteStorage) Export(ctx sdk.Context) *VoterTables {
-	tables := &VoterTables{}
+// StoreMap - map of all substores
+func (vs VoteStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
 	store := ctx.KVStore(vs.key)
-	// export table.voters
-	func() {
-		itr := sdk.KVStorePrefixIterator(store, voterSubstore)
-		defer itr.Close()
-		for ; itr.Valid(); itr.Next() {
-			k := itr.Key()
-			username := types.AccountKey(k[1:])
-			val, err := vs.GetVoter(ctx, username)
-			if err != nil {
-				panic("failed to read voter: " + err.Error())
-			}
-			row := VoterRow{
-				Username: username,
-				Voter:    *val,
-			}
-			tables.Voters = append(tables.Voters, row)
-		}
-	}()
-	// export table.Delegations
-	// func() {
-	// 	itr := sdk.KVStorePrefixIterator(store, delegationSubstore)
-	// 	defer itr.Close()
-	// 	for ; itr.Valid(); itr.Next() {
-	// 		k := itr.Key()
-	// 		meDelegator := string(k[1:])
-	// 		strs := strings.Split(meDelegator, types.KeySeparator)
-	// 		if len(strs) != 2 {
-	// 			panic("failed to split out meDelegator: " + meDelegator)
-	// 		}
-	// 		voter, delegator := types.AccountKey(strs[0]), types.AccountKey(strs[1])
-	// 		val, err := vs.GetDelegation(ctx, voter, delegator)
-	// 		if err != nil {
-	// 			panic("failed to read delegation: " + err.Error())
-	// 		}
-	// 		row := DelegationRow{
-	// 			Voter:      voter,
-	// 			Delegator:  delegator,
-	// 			Delegation: *val,
-	// 		}
-	// 		tables.Delegations = append(tables.Delegations, row)
-	// 	}
-	// }()
-
-	// list, err := vs.GetReferenceList(ctx)
-	// if err != nil {
-	// 	panic("failed to get Reference List: " + err.Error())
-	// }
-	// tables.ReferenceList = ReferenceListTable{
-	// 	List: *list,
-	// }
-	return tables
-}
-
-// Import - Import voter state
-func (vs VoteStorage) Import(ctx sdk.Context, ir *VoterTablesIR) {
-	check := func(e error) {
-		if e != nil {
-			panic("[vote] Failed to import: " + e.Error())
-		}
+	substores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     VoterSubstore,
+			ValCreator: func() interface{} { return new(Voter) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
 	}
-	// import table.Voters
-	for _, v := range ir.Voters {
-		err := vs.SetVoter(ctx, v.Username, &v.Voter)
-		check(err)
-	}
-	// import table.Delegations
-	// for _, v := range ir.Delegations {
-	// 	err := vs.SetDelegation(ctx, v.Voter, v.Delegator, &v.Delegation)
-	// 	check(err)
-	// }
-	// // import table.ReferenceList
-	// err := vs.SetReferenceList(ctx, &ir.ReferenceList.List)
-	// check(err)
+	return utils.NewStoreMap(substores)
 }
 
 // GetVoterKey - "voter substore" + "voter"
 func GetVoterKey(me types.AccountKey) []byte {
-	return append(voterSubstore, me...)
+	return append(VoterSubstore, me...)
 }

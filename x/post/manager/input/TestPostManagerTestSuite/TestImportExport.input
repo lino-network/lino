@@ -1,0 +1,87 @@
+[
+  {
+    "prefix": "0",
+    "key": "user1#postID",
+    "val": {
+      "type": "lino/post",
+      "value": {
+        "post_id": "postID",
+        "title": "title4",
+        "content": "content4",
+        "author": "user1",
+        "created_by": "user1",
+        "created_at": "0",
+        "updated_at": "0",
+        "is_deleted": false
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user1#postID2",
+    "val": {
+      "type": "lino/post",
+      "value": {
+        "post_id": "postID2",
+        "title": "title9",
+        "content": "content9",
+        "author": "user1",
+        "created_by": "user1",
+        "created_at": "0",
+        "updated_at": "0",
+        "is_deleted": false
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user1#postIDaffiliated",
+    "val": {
+      "type": "lino/post",
+      "value": {
+        "post_id": "postIDaffiliated",
+        "title": "created by affiliaed",
+        "content": "content9",
+        "author": "user1",
+        "created_by": "user1",
+        "created_at": "0",
+        "updated_at": "0",
+        "is_deleted": false
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user2#postID",
+    "val": {
+      "type": "lino/post",
+      "value": {
+        "post_id": "postID",
+        "title": "title5",
+        "content": "content5",
+        "author": "user2",
+        "created_by": "user2",
+        "created_at": "0",
+        "updated_at": "0",
+        "is_deleted": false
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user2#postID2",
+    "val": {
+      "type": "lino/post",
+      "value": {
+        "post_id": "postID2",
+        "title": "title8",
+        "content": "content8",
+        "author": "user2",
+        "created_by": "user2",
+        "created_at": "0",
+        "updated_at": "0",
+        "is_deleted": false
+      }
+    }
+  }
+]

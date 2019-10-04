@@ -1,15 +1,24 @@
 package manager
 
 import (
+	"fmt"
+
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	acc "github.com/lino-network/lino/x/account"
 	accmn "github.com/lino-network/lino/x/account/manager"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/x/vote/types"
+)
+
+const (
+	exportVersion = 1
+	importVersion = 1
 )
 
 // VoteManager - vote manager
@@ -309,11 +318,37 @@ func (vm VoteManager) GetVoter(ctx sdk.Context, username linotypes.AccountKey) (
 }
 
 // Export storage state.
-func (vm VoteManager) Export(ctx sdk.Context) *model.VoterTables {
-	return vm.storage.Export(ctx)
+func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.VoterTablesIR{
+		Version: exportVersion,
+	}
+	storeMap := vm.storage.StoreMap(ctx)
+	storeMap[string(model.VoterSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		voter := val.(*model.Voter)
+		state.Voters = append(state.Voters, model.VoterIR(*voter))
+		return false
+	})
+	return utils.Save(filepath, cdc, state)
 }
 
 // Import storage state.
-func (vm VoteManager) Import(ctx sdk.Context, voter *model.VoterTablesIR) {
-	vm.storage.Import(ctx, voter)
+func (vm VoteManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.VoterTablesIR{} })
+	if err != nil {
+		return err
+	}
+	table := rst.(*model.VoterTablesIR)
+
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
+	for _, voterir := range table.Voters {
+		voter := model.Voter(voterir)
+		_ = vm.storage.SetVoter(ctx, voter.Username, &voter)
+	}
+	return nil
 }

@@ -4,6 +4,8 @@ package mocks
 
 import (
 	linotypes "github.com/lino-network/lino/types"
+	amino "github.com/tendermint/go-amino"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/cosmos/cosmos-sdk/types"
@@ -37,13 +39,13 @@ func (_m *ReputationKeeper) DonateAt(ctx types.Context, username linotypes.Accou
 	return r0, r1
 }
 
-// ExportToFile provides a mock function with given fields: ctx, file
-func (_m *ReputationKeeper) ExportToFile(ctx types.Context, file string) error {
-	ret := _m.Called(ctx, file)
+// ExportToFile provides a mock function with given fields: ctx, cdc, file
+func (_m *ReputationKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, file string) error {
+	ret := _m.Called(ctx, cdc, file)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.Context, string) error); ok {
-		r0 = rf(ctx, file)
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, file)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -97,13 +99,13 @@ func (_m *ReputationKeeper) GetReputation(ctx types.Context, username linotypes.
 	return r0, r1
 }
 
-// ImportFromFile provides a mock function with given fields: ctx, file
-func (_m *ReputationKeeper) ImportFromFile(ctx types.Context, file string) error {
-	ret := _m.Called(ctx, file)
+// ImportFromFile provides a mock function with given fields: ctx, cdc, file
+func (_m *ReputationKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, file string) error {
+	ret := _m.Called(ctx, cdc, file)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.Context, string) error); ok {
-		r0 = rf(ctx, file)
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, file)
 	} else {
 		r0 = ret.Error(0)
 	}

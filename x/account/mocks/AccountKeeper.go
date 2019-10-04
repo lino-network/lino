@@ -153,6 +153,20 @@ func (_m *AccountKeeper) DoesAccountExist(ctx types.Context, username linotypes.
 	return r0
 }
 
+// ExportToFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *AccountKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetAddress provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetAddress(ctx types.Context, username linotypes.AccountKey) (types.AccAddress, types.Error) {
 	ret := _m.Called(ctx, username)

@@ -20,6 +20,9 @@ import (
 
 const (
 	maxAffiliatedAccount = 500
+
+	exportVersion = 1
+	importVersion = 1
 )
 
 type DeveloperManager struct {
@@ -613,8 +616,85 @@ func (dm DeveloperManager) GetIDAStats(ctx sdk.Context, app linotypes.AccountKey
 	return stats, nil
 }
 
-func (dm DeveloperManager) ExportToFile(ctx sdk.Context, filepath string) error {
-	panic("export developer unimplemented")
+func (dm DeveloperManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.DeveloperTablesIR{
+		Version: exportVersion,
+	}
+	stores := dm.storage.StoreMap(ctx)
+
+	// export developers
+	stores[string(model.DeveloperSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		dev := val.(*model.Developer)
+		state.Developers = append(state.Developers, model.DeveloperIR{
+			Username:       dev.Username,
+			AppConsumption: dev.AppConsumption,
+			Website:        dev.Website,
+			Description:    dev.Description,
+			AppMetaData:    dev.AppMetaData,
+			IsDeleted:      dev.IsDeleted,
+			NAffiliated:    dev.NAffiliated,
+		})
+		return false
+	})
+
+	// export IDAs
+	stores[string(model.IdaSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		ida := val.(*model.AppIDA)
+		state.IDAs = append(state.IDAs, model.AppIDAIR(*ida))
+		return false
+	})
+
+	// export ida balance
+	stores[string(model.IdaBalanceSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		app, user := model.ParseIDABalanceKey(key)
+		bank := val.(*model.IDABank)
+		state.IDABanks = append(state.IDABanks, model.IDABankIR{
+			App:      app,
+			User:     user,
+			Balance:  bank.Balance,
+			Unauthed: bank.Unauthed,
+		})
+		return false
+	})
+
+	// export reserve pool
+	stores[string(model.ReservePoolSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		pool := val.(*model.ReservePool)
+		state.ReservePool = model.ReservePoolIR(*pool)
+		return false
+	})
+
+	// export affiliated accounts
+	stores[string(model.AffiliatedAccSubstore)].Iterate(func(key []byte, _ interface{}) bool {
+		app, user := model.ParseAffiliatedAccKey(key)
+		state.AffiliatedAccs = append(state.AffiliatedAccs, model.AffiliatedAccIR{
+			App:  app,
+			User: user,
+		})
+		return false
+	})
+
+	// export UserRoles
+	stores[string(model.UserRoleSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		role := val.(*model.Role)
+		state.UserRoles = append(state.UserRoles, model.UserRoleIR{
+			User:          linotypes.AccountKey(key),
+			AffiliatedApp: role.AffiliatedApp,
+		})
+		return false
+	})
+
+	// export IDA stats
+	stores[string(model.IdaStatsSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		stats := val.(*model.AppIDAStats)
+		state.IDAStats = append(state.IDAStats, model.IDAStatsIR{
+			App:   linotypes.AccountKey(key),
+			Total: stats.Total,
+		})
+		return false
+	})
+
+	return utils.Save(filepath, cdc, state)
 }
 
 // Import from file
@@ -625,21 +705,61 @@ func (dm DeveloperManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, fil
 	}
 	table := rst.(*model.DeveloperTablesIR)
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	for _, v := range table.Developers {
-		dev := model.Developer{
-			Username: v.Developer.Username,
-			Deposit:  v.Developer.Deposit,
-			// upgrade3: remove unit conversion on upgrade3
-			AppConsumption: linotypes.NewMiniDollarFromTestnetCoin(v.Developer.AppConsumption),
-			Website:        v.Developer.Website,
-			Description:    v.Developer.Description,
-			AppMetaData:    v.Developer.AppMetaData,
-			IsDeleted:      false,
-			NAffiliated:    0,
-		}
-		dm.storage.SetDeveloper(ctx, dev)
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
-	ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
+	// import developers
+	for _, dev := range table.Developers {
+		dm.storage.SetDeveloper(ctx, model.Developer{
+			Username:       dev.Username,
+			AppConsumption: dev.AppConsumption,
+			Website:        dev.Website,
+			Description:    dev.Description,
+			AppMetaData:    dev.AppMetaData,
+			IsDeleted:      dev.IsDeleted,
+			NAffiliated:    dev.NAffiliated,
+		})
+	}
+
+	// import IDAs
+	for _, ida := range table.IDAs {
+		dm.storage.SetIDA(ctx, model.AppIDA(ida))
+	}
+
+	// import IDABanks
+	for _, bank := range table.IDABanks {
+		dm.storage.SetIDABank(ctx, bank.App, bank.User, &model.IDABank{
+			Balance:  bank.Balance,
+			Unauthed: bank.Unauthed,
+		})
+	}
+
+	// import reserve pool
+	pool := model.ReservePool(table.ReservePool)
+	dm.storage.SetReservePool(ctx, &pool)
+
+	// import affiliated accounts
+	for _, acc := range table.AffiliatedAccs {
+		dm.storage.SetAffiliatedAcc(ctx, acc.App, acc.User)
+	}
+
+	// import user roles
+	for _, role := range table.UserRoles {
+		dm.storage.SetUserRole(ctx, role.User, &model.Role{
+			AffiliatedApp: role.AffiliatedApp,
+		})
+	}
+
+	// import ida stats
+	for _, stat := range table.IDAStats {
+		dm.storage.SetIDAStats(ctx, stat.App, model.AppIDAStats{
+			Total: stat.Total,
+		})
+	}
+
 	return nil
 }

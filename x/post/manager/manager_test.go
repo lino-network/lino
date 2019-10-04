@@ -1,29 +1,36 @@
 package manager
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/lino-network/lino/testsuites"
+	"github.com/lino-network/lino/testutils"
 	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/post/model"
-	types "github.com/lino-network/lino/x/post/types"
-	"github.com/stretchr/testify/mock"
-
 	acc "github.com/lino-network/lino/x/account/mocks"
 	dev "github.com/lino-network/lino/x/developer/mocks"
 	global "github.com/lino-network/lino/x/global/mocks"
+	"github.com/lino-network/lino/x/post/model"
+	types "github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price/mocks"
 	rep "github.com/lino-network/lino/x/reputation/mocks"
 )
 
 // var dummyErr = linotypes.NewError(linotypes.CodeTestDummyError, "")
+var (
+	storeKey = sdk.NewKVStoreKey("post")
+)
 
 type PostManagerTestSuite struct {
-	testsuites.CtxTestSuite
+	testsuites.GoldenTestSuite
 	pm PostManager
 	// deps
 	am     *acc.AccountKeeper
@@ -44,19 +51,26 @@ type PostManagerTestSuite struct {
 	app1IDAPrice   linotypes.MiniDollar
 }
 
+type PostDumper struct{}
+
+func (dumper PostDumper) NewDumper() *testutils.Dumper {
+	return model.NewPostDumper(model.NewPostStorage(storeKey))
+}
+
 func TestPostManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(PostManagerTestSuite))
+	suite.Run(t, &PostManagerTestSuite{
+		GoldenTestSuite: testsuites.NewGoldenTestSuite(PostDumper{}, storeKey),
+	})
 }
 
 func (suite *PostManagerTestSuite) SetupTest() {
-	testPostKey := sdk.NewKVStoreKey("post")
-	suite.SetupCtx(0, time.Unix(0, 0), testPostKey)
+	suite.SetupCtx(0, time.Unix(0, 0), storeKey)
 	suite.am = &acc.AccountKeeper{}
 	suite.dev = &dev.DeveloperKeeper{}
 	suite.global = &global.GlobalKeeper{}
 	suite.price = &price.PriceKeeper{}
 	suite.rep = &rep.ReputationKeeper{}
-	suite.pm = NewPostManager(testPostKey, suite.am, suite.global, suite.dev, suite.rep, suite.price)
+	suite.pm = NewPostManager(storeKey, suite.am, suite.global, suite.dev, suite.rep, suite.price)
 
 	// background
 	suite.user1 = linotypes.AccountKey("user1")
@@ -725,4 +739,25 @@ func (suite *PostManagerTestSuite) TestIDADonateOK() {
 	suite.rep.AssertExpectations(suite.T())
 	suite.global.AssertExpectations(suite.T())
 	suite.am.AssertExpectations(suite.T())
+}
+
+func (suite *PostManagerTestSuite) TestImportExport() {
+	cdc := codec.New()
+	suite.LoadState(false)
+
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	err2 = suite.pm.ExportToFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	// reset all state.
+	suite.SetupTest()
+	err2 = suite.pm.ImportFromFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	suite.Golden()
+	suite.AssertStateUnchanged(false)
 }

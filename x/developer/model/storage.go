@@ -1,10 +1,13 @@
 package model
 
 import (
+	"strings"
+
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/developer/types"
 )
 
@@ -13,55 +16,67 @@ const (
 )
 
 var (
-	developerSubstore     = []byte{0x00}
-	idaSubstore           = []byte{0x01}
-	idaBalanceSubstore    = []byte{0x02}
-	reservePoolSubstore   = []byte{0x03}
-	affiliatedAccSubstore = []byte{0x04} // (app, user)
-	userRoleSubstore      = []byte{0x05} // user role.
-	idaStatsSubstore      = []byte{0x06}
+	DeveloperSubstore     = []byte{0x00}
+	IdaSubstore           = []byte{0x01}
+	IdaBalanceSubstore    = []byte{0x02}
+	ReservePoolSubstore   = []byte{0x03}
+	AffiliatedAccSubstore = []byte{0x04} // (app, user)
+	UserRoleSubstore      = []byte{0x05} // user role.
+	IdaStatsSubstore      = []byte{0x06}
 )
 
 // GetDeveloperKey - "developer substore" + "developer"
 func GetDeveloperKey(accKey linotypes.AccountKey) []byte {
-	return append(developerSubstore, accKey...)
+	return append(DeveloperSubstore, accKey...)
 }
 
 // GetIDAKey - "ida substore" + "developer"
 func GetIDAKey(accKey linotypes.AccountKey) []byte {
-	return append(idaSubstore, accKey...)
+	return append(IdaSubstore, accKey...)
 }
 
 // GetIDAStatsKey - "ida stats substore" + "developer"
 func GetIDAStatsKey(accKey linotypes.AccountKey) []byte {
-	return append(idaStatsSubstore, accKey...)
+	return append(IdaStatsSubstore, accKey...)
 }
 
 // GetIDABalanceKey - "ida balance substore" + "app" + "/" + "user"
 func GetIDABalanceKey(app linotypes.AccountKey, user linotypes.AccountKey) []byte {
-	prefix := append(idaBalanceSubstore, app...)
+	prefix := append(IdaBalanceSubstore, app...)
 	return append(append(prefix, []byte(linotypes.KeySeparator)...), user...)
+}
+
+// ParseIDABalanceKey parse balance key.
+func ParseIDABalanceKey(key []byte) (app linotypes.AccountKey, user linotypes.AccountKey) {
+	parsed := strings.Split(string(key), linotypes.KeySeparator)
+	return linotypes.AccountKey(parsed[0]), linotypes.AccountKey(parsed[1])
 }
 
 // GetAffiliatedAccAppPrefix - "affiliated account substore" + "app" + "/"
 func GetAffiliatedAccAppPrefix(app linotypes.AccountKey) []byte {
-	prefix := append(affiliatedAccSubstore, app...)
+	prefix := append(AffiliatedAccSubstore, app...)
 	return append(prefix, []byte(linotypes.KeySeparator)...)
 }
 
-// GetIDABalanceKey - "affiliated app prefix" + "user"
+// GetAffiliatedAccKey - "affiliated app prefix" + "user"
 func GetAffiliatedAccKey(app linotypes.AccountKey, user linotypes.AccountKey) []byte {
 	return append(GetAffiliatedAccAppPrefix(app), user...)
 }
 
+// ParseAffiliatedAccKey parse affiliated account key.
+func ParseAffiliatedAccKey(key []byte) (app linotypes.AccountKey, user linotypes.AccountKey) {
+	parsed := strings.Split(string(key), linotypes.KeySeparator)
+	return linotypes.AccountKey(parsed[0]), linotypes.AccountKey(parsed[1])
+}
+
 // GetUserRoleKey - "user" -> role
 func GetUserRoleKey(user linotypes.AccountKey) []byte {
-	return append(userRoleSubstore, user...)
+	return append(UserRoleSubstore, user...)
 }
 
 // GetReservePoolKey - reserve pool key
 func GetReservePoolKey() []byte {
-	return reservePoolSubstore
+	return ReservePoolSubstore
 }
 
 // DeveloperStorage - developer storage
@@ -110,7 +125,7 @@ func (ds DeveloperStorage) SetDeveloper(ctx sdk.Context, developer Developer) {
 func (ds DeveloperStorage) GetAllDevelopers(ctx sdk.Context) []Developer {
 	store := ctx.KVStore(ds.key)
 	rst := make([]Developer, 0)
-	itr := sdk.KVStorePrefixIterator(store, developerSubstore)
+	itr := sdk.KVStorePrefixIterator(store, DeveloperSubstore)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		dev := new(Developer)
@@ -258,4 +273,52 @@ func (ds DeveloperStorage) GetIDAStats(ctx sdk.Context, app linotypes.AccountKey
 	stats := new(AppIDAStats)
 	ds.cdc.MustUnmarshalBinaryLengthPrefixed(bz, stats)
 	return stats
+}
+
+func (ds DeveloperStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
+	store := ctx.KVStore(ds.key)
+	substores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     DeveloperSubstore,
+			ValCreator: func() interface{} { return new(Developer) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     IdaSubstore,
+			ValCreator: func() interface{} { return new(AppIDA) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     UserRoleSubstore,
+			ValCreator: func() interface{} { return new(Role) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     IdaBalanceSubstore,
+			ValCreator: func() interface{} { return new(IDABank) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     ReservePoolSubstore,
+			ValCreator: func() interface{} { return new(ReservePool) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     IdaStatsSubstore,
+			ValCreator: func() interface{} { return new(AppIDAStats) },
+			Decoder:    ds.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:   store,
+			Prefix:  AffiliatedAccSubstore,
+			NoValue: true,
+		},
+	}
+	return utils.NewStoreMap(substores)
 }
