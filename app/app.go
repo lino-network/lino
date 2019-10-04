@@ -239,8 +239,6 @@ func MakeCodec() *wire.Codec {
 
 func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterInterface((*types.Event)(nil), nil)
-	// TODO(yumin): remove this on upgrade3.
-	cdc.RegisterConcrete(posttypes.RewardEventV1{}, "lino/eventReward", nil)
 	cdc.RegisterConcrete(posttypes.RewardEvent{}, "lino/eventRewardV2", nil)
 	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)

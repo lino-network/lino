@@ -3,7 +3,6 @@ package model
 import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	linotypes "github.com/lino-network/lino/types"
 )
@@ -33,27 +32,6 @@ type ReceivedVotesStatus struct {
 
 type ElectionVoteList struct {
 	ElectionVotes []ElectionVote `json:"election_votes"`
-}
-
-// ToIR -
-func (v ValidatorV1) ToIR() ValidatorIR {
-	abciPubKey := tmtypes.TM2PB.PubKey(v.PubKey)
-	return ValidatorIR{
-		ABCIValidator: ABCIValidatorIR{
-			Address: v.ABCIValidator.Address,
-			PubKey: ABCIPubKeyIR{
-				Type: abciPubKey.Type,
-				Data: abciPubKey.Data,
-			},
-			Power: v.ABCIValidator.Power,
-		},
-		Username:        v.Username,
-		Deposit:         v.Deposit,
-		AbsentCommit:    v.AbsentCommit,
-		ByzantineCommit: v.ByzantineCommit,
-		ProducedBlocks:  v.ProducedBlocks,
-		Link:            v.Link,
-	}
 }
 
 // ValidatorList

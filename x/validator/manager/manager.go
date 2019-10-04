@@ -1,9 +1,11 @@
 package manager
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	crypto "github.com/tendermint/tendermint/crypto"
@@ -11,12 +13,18 @@ import (
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	acc "github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/validator/model"
 	"github.com/lino-network/lino/x/validator/types"
 	"github.com/lino-network/lino/x/vote"
 	votetypes "github.com/lino-network/lino/x/vote/types"
+)
+
+const (
+	exportVersion = 1
+	importVersion = 1
 )
 
 // ValidatorManager - validator manager
@@ -1068,12 +1076,104 @@ func (vm ValidatorManager) GetCommittingValidatorVoteStatus(ctx sdk.Context) []m
 	return res
 }
 
-// // Export storage state.
-// func (vm ValidatorManager) Export(ctx sdk.Context) *model.ValidatorTables {
-// 	return vm.storage.Export(ctx)
-// }
+// ExportToFile -
+func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	state := &model.ValidatorTablesIR{
+		Version: exportVersion,
+	}
+	substores := vm.storage.StoreMap(ctx)
 
-// // Import storage state.
-// func (vm ValidatorManager) Import(ctx sdk.Context, tb *model.ValidatorTablesIR) {
-// 	vm.storage.Import(ctx, tb)
-// }
+	// export validators
+	substores[string(model.ValidatorSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		validator := val.(*model.Validator)
+		state.Validators = append(state.Validators, model.ValidatorIR{
+			ABCIValidator: model.ABCIValidatorIR{
+				Address: validator.ABCIValidator.Address,
+				Power:   validator.ABCIValidator.Power,
+			},
+			PubKey:          model.NewABCIPubKeyIRFromTM(validator.PubKey),
+			Username:        validator.Username,
+			ReceivedVotes:   validator.ReceivedVotes,
+			HasRevoked:      validator.HasRevoked,
+			AbsentCommit:    validator.AbsentCommit,
+			ByzantineCommit: validator.ByzantineCommit,
+			ProducedBlocks:  validator.ProducedBlocks,
+			Link:            validator.Link,
+		})
+		return false
+	})
+
+	// export votes
+	substores[string(model.ValidatorListSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		user := linotypes.AccountKey(key)
+		votelist := val.(*model.ElectionVoteList)
+		votesIR := make([]model.ElectionVoteIR, 0)
+		for _, vote := range votelist.ElectionVotes {
+			votesIR = append(votesIR, model.ElectionVoteIR(vote))
+		}
+		state.Votes = append(state.Votes, model.ElectionVoteListIR{
+			Username:      user,
+			ElectionVotes: votesIR,
+		})
+		return false
+	})
+
+	// export validator list.
+	substores[string(model.ValidatorListSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		lst := val.(*model.ValidatorList)
+		state.List = model.ValidatorListIR(*lst)
+		return false
+	})
+
+	return utils.Save(filepath, cdc, state)
+}
+
+// ImportFromFile import state from file.
+func (vs ValidatorManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.ValidatorTablesIR{} })
+	if err != nil {
+		return err
+	}
+	table := rst.(*model.ValidatorTablesIR)
+
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
+	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+
+	// import validators.
+	for _, val := range table.Validators {
+		vs.storage.SetValidator(ctx, val.Username, &model.Validator{
+			ABCIValidator: abci.Validator{
+				Address: val.ABCIValidator.Address,
+				Power:   val.ABCIValidator.Power,
+			},
+			PubKey:          val.PubKey.ToTM(),
+			Username:        val.Username,
+			ReceivedVotes:   val.ReceivedVotes,
+			HasRevoked:      val.HasRevoked,
+			AbsentCommit:    val.AbsentCommit,
+			ByzantineCommit: val.ByzantineCommit,
+			ProducedBlocks:  val.ProducedBlocks,
+			Link:            val.Link,
+		})
+	}
+
+	// import votes.
+	for _, vote := range table.Votes {
+		votes := make([]model.ElectionVote, 0)
+		for _, v := range vote.ElectionVotes {
+			votes = append(votes, model.ElectionVote(v))
+		}
+		vs.storage.SetElectionVoteList(ctx, vote.Username, &model.ElectionVoteList{
+			ElectionVotes: votes,
+		})
+	}
+
+	// import validator list
+	validatorList := model.ValidatorList(table.List)
+	vs.storage.SetValidatorList(ctx, &validatorList)
+	return nil
+}
