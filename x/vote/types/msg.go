@@ -12,6 +12,7 @@ import (
 var _ types.Msg = StakeInMsg{}
 var _ types.Msg = StakeOutMsg{}
 var _ types.Msg = ClaimInterestMsg{}
+var _ types.Msg = StakeInForMsg{}
 
 // StakeInMsg - voter deposit
 type StakeInMsg struct {
@@ -28,6 +29,13 @@ type StakeOutMsg struct {
 // ClaimInterestMsg - claim interest generated from lino power
 type ClaimInterestMsg struct {
 	Username types.AccountKey `json:"username"`
+}
+
+// StakeInForMsg - stake in for other people
+type StakeInForMsg struct {
+	Sender   types.AccountKey `json:"username"`
+	Receiver types.AccountKey `json:"receiver"`
+	Deposit  types.LNO        `json:"deposit"`
 }
 
 // NewStakeInMsg - return a StakeInMsg
@@ -185,5 +193,61 @@ func (msg ClaimInterestMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implements types.Msg
 func (msg ClaimInterestMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
+// NewStakeInForMsg - return a StakeInForMsg
+func NewStakeInForMsg(sender, receiver string, deposit types.LNO) StakeInForMsg {
+	return StakeInForMsg{
+		Sender:   types.AccountKey(sender),
+		Receiver: types.AccountKey(receiver),
+		Deposit:  deposit,
+	}
+}
+
+// Route - implements sdk.Msg
+func (msg StakeInForMsg) Route() string { return RouterKey }
+
+// Type - implements sdk.Msg
+func (msg StakeInForMsg) Type() string { return "StakeInForMsg" }
+
+// ValidateBasic - implements sdk.Msg
+func (msg StakeInForMsg) ValidateBasic() sdk.Error {
+	if !msg.Sender.IsValid() || !msg.Receiver.IsValid() {
+		return ErrInvalidUsername()
+	}
+
+	_, err := types.LinoToCoin(msg.Deposit)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (msg StakeInForMsg) String() string {
+	return fmt.Sprintf("StakeInForMsg{Sender:%v, Receiver:%v, Deposit:%v}", msg.Sender, msg.Receiver, msg.Deposit)
+}
+
+// GetPermission - implements types.Msg
+func (msg StakeInForMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+// GetSignBytes - implements sdk.Msg
+func (msg StakeInForMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// GetSigners - implements sdk.Msg
+func (msg StakeInForMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Sender)}
+}
+
+// GetConsumeAmount - implement types.Msg
+func (msg StakeInForMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }

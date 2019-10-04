@@ -222,6 +222,22 @@ func (_m *VoteKeeper) StakeIn(ctx types.Context, username linotypes.AccountKey, 
 	return r0
 }
 
+// StakeInFor provides a mock function with given fields: ctx, sender, receiver, amount
+func (_m *VoteKeeper) StakeInFor(ctx types.Context, sender linotypes.AccountKey, receiver linotypes.AccountKey, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, sender, receiver, amount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, sender, receiver, amount)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // StakeOut provides a mock function with given fields: ctx, username, amount
 func (_m *VoteKeeper) StakeOut(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) types.Error {
 	ret := _m.Called(ctx, username, amount)
