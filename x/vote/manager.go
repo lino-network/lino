@@ -451,6 +451,7 @@ func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		})
 		return false
 	})
+	state.Voters = voters
 	return utils.Save(filepath, cdc, state)
 }
 
