@@ -628,6 +628,9 @@ func (vm ValidatorManager) onStandbyVotesInc(ctx sdk.Context, username linotypes
 }
 
 func (vm ValidatorManager) onOncallVotesInc(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	if err := vm.setOncallValidatorPower(ctx, username); err != nil {
+		return err
+	}
 	if err := vm.balanceValidatorList(ctx); err != nil {
 		return err
 	}
@@ -643,7 +646,6 @@ func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes
 
 	if !validator.ReceivedVotes.IsGTE(lst.LowestStandbyVotes) {
 		vm.removeValidatorFromStandbyList(ctx, username)
-
 		if err := vm.addValidatortToCandidateList(ctx, username); err != nil {
 			return err
 		}
@@ -656,6 +658,10 @@ func (vm ValidatorManager) onStandbyVotesDec(ctx sdk.Context, username linotypes
 }
 
 func (vm ValidatorManager) onOncallVotesDec(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
+	if err := vm.setOncallValidatorPower(ctx, username); err != nil {
+		return err
+	}
+
 	lst := vm.GetValidatorList(ctx)
 	validator, err := vm.GetValidator(ctx, username)
 	if err != nil {
@@ -842,24 +848,9 @@ func (vm ValidatorManager) removeValidatorFromJailList(ctx sdk.Context, username
 func (vm ValidatorManager) addValidatortToOncallList(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
 	lst := vm.storage.GetValidatorList(ctx)
 	lst.Oncall = append(lst.Oncall, username)
-	me, err := vm.storage.GetValidator(ctx, username)
-	if err != nil {
+	if err := vm.setOncallValidatorPower(ctx, username); err != nil {
 		return err
 	}
-
-	votesCoinInt64, err := me.ReceivedVotes.ToInt64()
-	if err != nil {
-		return err
-	}
-	// set oncall validator committing power equal to it's votes (lino)
-	powerLNO := votesCoinInt64 / linotypes.Decimals
-	if powerLNO > linotypes.ValidatorMaxPower {
-		me.ABCIValidator.Power = linotypes.ValidatorMaxPower
-	} else {
-		me.ABCIValidator.Power = powerLNO
-	}
-
-	vm.storage.SetValidator(ctx, username, me)
 	vm.storage.SetValidatorList(ctx, lst)
 	return nil
 }
@@ -1012,6 +1003,29 @@ func (vm ValidatorManager) updateLowestStandby(ctx sdk.Context) sdk.Error {
 	}
 
 	vm.storage.SetValidatorList(ctx, lst)
+	return nil
+}
+
+func (vm ValidatorManager) setOncallValidatorPower(ctx sdk.Context,
+	username linotypes.AccountKey) sdk.Error {
+	me, err := vm.storage.GetValidator(ctx, username)
+	if err != nil {
+		return err
+	}
+
+	votesCoinInt64, err := me.ReceivedVotes.ToInt64()
+	if err != nil {
+		return err
+	}
+	// set oncall validator committing power equal to it's votes (lino)
+	powerLNO := votesCoinInt64 / linotypes.Decimals
+	if powerLNO > linotypes.ValidatorMaxPower {
+		me.ABCIValidator.Power = linotypes.ValidatorMaxPower
+	} else {
+		me.ABCIValidator.Power = powerLNO
+	}
+
+	vm.storage.SetValidator(ctx, username, me)
 	return nil
 }
 
