@@ -1019,9 +1019,12 @@ func (vm ValidatorManager) setOncallValidatorPower(ctx sdk.Context,
 	}
 	// set oncall validator committing power equal to it's votes (lino)
 	powerLNO := votesCoinInt64 / linotypes.Decimals
-	if powerLNO > linotypes.ValidatorMaxPower {
+	switch {
+	case powerLNO > linotypes.ValidatorMaxPower:
 		me.ABCIValidator.Power = linotypes.ValidatorMaxPower
-	} else {
+	case powerLNO < 1:
+		me.ABCIValidator.Power = 1
+	default:
 		me.ABCIValidator.Power = powerLNO
 	}
 

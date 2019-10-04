@@ -2884,7 +2884,7 @@ func (suite *ValidatorManagerTestSuite) TestRegisterValidator() {
 			expectVal: model.Validator{
 				ABCIValidator: abci.Validator{
 					Address: valKey.Address(),
-					Power:   0,
+					Power:   1,
 				},
 				Link:          "web1",
 				PubKey:        valKey,
@@ -2977,7 +2977,7 @@ func (suite *ValidatorManagerTestSuite) TestRegisterFromRevoked() {
 			expectVal: model.Validator{
 				ABCIValidator: abci.Validator{
 					Address: valKey.Address(),
-					Power:   0,
+					Power:   1,
 				},
 				Link:          "web1",
 				PubKey:        valKey,
@@ -3069,7 +3069,7 @@ func (suite *ValidatorManagerTestSuite) TestRevokeValidator() {
 			expectVal: model.Validator{
 				ABCIValidator: abci.Validator{
 					Address: valKey.Address(),
-					Power:   0,
+					Power:   1,
 				},
 				Link:          "link",
 				PubKey:        valKey,
@@ -3091,7 +3091,7 @@ func (suite *ValidatorManagerTestSuite) TestRevokeValidator() {
 			expectVal: model.Validator{
 				ABCIValidator: abci.Validator{
 					Address: valKey.Address(),
-					Power:   0,
+					Power:   1,
 				},
 				Link:          "link",
 				PubKey:        valKey,
