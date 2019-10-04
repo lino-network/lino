@@ -49,6 +49,7 @@ type AccountKeeper interface {
 	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 var _ AccountKeeper = manager.AccountManager{}

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"sync"
+	// "io/ioutil"
 	"os"
 	"time"
 
@@ -29,14 +30,14 @@ import (
 	pricemn "github.com/lino-network/lino/x/price/manager"
 
 	infra "github.com/lino-network/lino/x/infra"
-	inframodel "github.com/lino-network/lino/x/infra/model"
+	// inframodel "github.com/lino-network/lino/x/infra/model"
 	"github.com/lino-network/lino/x/proposal"
 
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
-	valmodel "github.com/lino-network/lino/x/validator/model"
+	// valmodel "github.com/lino-network/lino/x/validator/model"
 	vote "github.com/lino-network/lino/x/vote"
-	votemodel "github.com/lino-network/lino/x/vote/model"
+	// votemodel "github.com/lino-network/lino/x/vote/model"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
@@ -671,6 +672,39 @@ func (lb *LinoBlockchain) syncInfoWithVoteManager(ctx sdk.Context) {
 	}
 }
 
+type importExportModule struct {
+	module interface {
+		ExportToFile(ctx sdk.Context, cdc *wire.Codec, filepath string) error
+		// ImportFromFile(ctx sdk.Context, cdc *wire.Codec, filepath string) error
+	}
+	filename string
+}
+
+func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
+	return []importExportModule{
+		{
+			module:   lb.accountManager,
+			filename: accountStateFile,
+		},
+		{
+			module:   lb.postManager,
+			filename: postStateFile,
+		},
+		{
+			module:   lb.developerManager,
+			filename: developerStateFile,
+		},
+		{
+			module:   &lb.globalManager,
+			filename: globalStateFile,
+		},
+		{
+			module:   lb.voteManager,
+			filename: voterStateFile,
+		},
+	}
+}
+
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := lb.NewContext(true, abci.Header{})
@@ -680,59 +714,60 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	if err != nil {
 		panic("failed to create export dir due to: " + err.Error())
 	}
-	// posts
-	if err := lb.postManager.ExportToFile(
-		ctx, lb.cdc, exportPath+postStateFile); err != nil {
-		panic(err)
-	}
-	// developers
-	if err := lb.developerManager.ExportToFile(
-		ctx, lb.cdc, exportPath+developerStateFile); err != nil {
-		panic(err)
+
+	var wg sync.WaitGroup
+	modules := lb.getImportExportModules()
+	for i := range modules {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			err := modules[i].module.ExportToFile(ctx, lb.cdc, exportPath+modules[i].filename)
+			if err != nil {
+				panic(err)
+			}
+		}(i)
 	}
 
-	exportToFile := func(filename string, exporter func(sdk.Context) interface{}) {
-		f, err := os.Create(exportPath + filename)
-		if err != nil {
-			panic("failed to create account")
-		}
-		defer f.Close()
-		jsonbytes, err := lb.cdc.MarshalJSON(exporter(ctx))
-		if err != nil {
-			panic("failed to marshal json for " + filename + " due to " + err.Error())
-		}
-		_, err = f.Write(jsonbytes)
+	// reputation
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := lb.reputationManager.ExportToFile(ctx,
+			exportPath + reputationStateFile,
+			DefaultNodeHome + "/" + prevStateFolder + reputationStateFile)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("export for %s done: %d bytes\n", filename, len(jsonbytes))
-		err = f.Sync()
-		if err != nil {
-			panic(err)
-		}
-	}
+	}()
 
-	// TODO(yumin): accountStateFile
-	// exportToFile(accountStateFile, func(ctx sdk.Context) interface{} {
-	// 	return lb.accountManager.Export(ctx).ToIR()
-	// })
-	// TODO(yumin): global export is not implemented yet.
-	// exportToFile(globalStateFile, func(ctx sdk.Context) interface{} {
-	// 	return lb.globalManager.Export(ctx).ToIR()
-	// })
-	exportToFile(infraStateFile, func(ctx sdk.Context) interface{} {
-		return lb.infraManager.Export(ctx).ToIR()
-	})
-	exportToFile(validatorStateFile, func(ctx sdk.Context) interface{} {
-		return lb.valManager.Export(ctx).ToIR()
-	})
-	exportToFile(voterStateFile, func(ctx sdk.Context) interface{} {
-		return lb.voteManager.Export(ctx).ToIR()
-	})
-	err = lb.reputationManager.ExportToFile(ctx, exportPath+"reputation")
+	// validator
+	lb.valManager.ExportToFile(ctx, lb.cdc,
+		exportPath + validatorStateFile, func(user types.AccountKey) types.Coin {
+			stake, err := lb.voteManager.GetLinoStake(ctx, user)
+			if err != nil {
+				panic(err)
+			}
+			return stake
+		})
+
+	// legacy infra
+	f, err := os.Create(exportPath + infraStateFile)
+	if err != nil {
+		panic("failed to create infra state file")
+	}
+	defer f.Close()
+	jsonbytes := lb.cdc.MustMarshalJSON(lb.infraManager.Export(ctx).ToIR())
+	_, err = f.Write(jsonbytes)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("export for %s done: %d bytes\n", "infra", len(jsonbytes))
+	err = f.Sync()
+	if err != nil {
+		panic(err)
+	}
+
+	wg.Wait()
 
 	genesisState := GenesisState{}
 
@@ -745,77 +780,78 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 // ImportFromFiles Custom logic for state export
 func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
-	check := func(err error) {
-		if err != nil {
-			panic("failed to unmarshal " + err.Error())
-		}
-	}
+	panic("not implemented")
+	// check := func(err error) {
+	// 	if err != nil {
+	// 		panic("failed to unmarshal " + err.Error())
+	// 	}
+	// }
 
-	prevStateDir := DefaultNodeHome + "/" + prevStateFolder
-	// import account
-	err := lb.accountManager.ImportFromFile(
-		ctx, lb.cdc, prevStateDir+accountStateFile)
-	if err != nil {
-		panic(err)
-	}
-	// import post.
-	err = lb.postManager.ImportFromFile(
-		ctx, lb.cdc, prevStateDir+postStateFile)
-	if err != nil {
-		panic(err)
-	}
-	// import dev
-	err = lb.developerManager.ImportFromFile(
-		ctx, lb.cdc, prevStateDir+developerStateFile)
-	if err != nil {
-		panic(err)
-	}
-	// import global
-	err = lb.globalManager.ImportFromFile(
-		ctx, lb.cdc, prevStateDir+globalStateFile)
-	if err != nil {
-		panic(err)
-	}
-	// import reputation
-	err = lb.reputationManager.ImportFromFile(
-		ctx, DefaultNodeHome+"/"+prevStateFolder+reputationStateFile)
-	if err != nil {
-		panic(err)
-	}
+	// prevStateDir := DefaultNodeHome + "/" + prevStateFolder
+	// // import account
+	// err := lb.accountManager.ImportFromFile(
+	// 	ctx, lb.cdc, prevStateDir+accountStateFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // import post.
+	// err = lb.postManager.ImportFromFile(
+	// 	ctx, lb.cdc, prevStateDir+postStateFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // import dev
+	// err = lb.developerManager.ImportFromFile(
+	// 	ctx, lb.cdc, prevStateDir+developerStateFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // import global
+	// err = lb.globalManager.ImportFromFile(
+	// 	ctx, lb.cdc, prevStateDir+globalStateFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // import reputation
+	// err = lb.reputationManager.ImportFromFile(
+	// 	ctx, DefaultNodeHome+"/"+prevStateFolder+reputationStateFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	importFromFile := func(filename string, tables interface{}) {
-		// XXX(yumin): does not support customized node home import.
-		f, err := os.Open(DefaultNodeHome + "/" + prevStateFolder + filename)
-		if err != nil {
-			panic("failed to open " + err.Error())
-		}
-		defer f.Close()
-		bytes, err := ioutil.ReadAll(f)
-		check(err)
-		// XXX(yumin): ugly, trying found a better way.
-		switch t := tables.(type) {
-		case *inframodel.InfraTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.infraManager.Import(ctx, t)
-		case *valmodel.ValidatorTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.valManager.Import(ctx, t)
-		case *votemodel.VoterTablesIR:
-			err = lb.cdc.UnmarshalJSON(bytes, t)
-			check(err)
-			fmt.Printf("%s state parsed: %T\n", filename, t)
-			lb.voteManager.Import(ctx, t)
-		default:
-			panic(fmt.Sprintf("Unknown import type: %T", t))
-		}
-		fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
-	}
+	// importFromFile := func(filename string, tables interface{}) {
+	// 	// XXX(yumin): does not support customized node home import.
+	// 	f, err := os.Open(DefaultNodeHome + "/" + prevStateFolder + filename)
+	// 	if err != nil {
+	// 		panic("failed to open " + err.Error())
+	// 	}
+	// 	defer f.Close()
+	// 	bytes, err := ioutil.ReadAll(f)
+	// 	check(err)
+	// 	// XXX(yumin): ugly, trying found a better way.
+	// 	switch t := tables.(type) {
+	// 	case *inframodel.InfraTablesIR:
+	// 		err = lb.cdc.UnmarshalJSON(bytes, t)
+	// 		check(err)
+	// 		fmt.Printf("%s state parsed: %T\n", filename, t)
+	// 		lb.infraManager.Import(ctx, t)
+	// 	case *valmodel.ValidatorTablesIR:
+	// 		err = lb.cdc.UnmarshalJSON(bytes, t)
+	// 		check(err)
+	// 		fmt.Printf("%s state parsed: %T\n", filename, t)
+	// 		lb.valManager.Import(ctx, t)
+	// 	case *votemodel.VoterTablesIR:
+	// 		err = lb.cdc.UnmarshalJSON(bytes, t)
+	// 		check(err)
+	// 		fmt.Printf("%s state parsed: %T\n", filename, t)
+	// 		lb.voteManager.Import(ctx, t)
+	// 	default:
+	// 		panic(fmt.Sprintf("Unknown import type: %T", t))
+	// 	}
+	// 	fmt.Printf("%s loaded, total %d bytes\n", filename, len(bytes))
+	// }
 
-	importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
-	importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
-	importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
+	// importFromFile(infraStateFile, &inframodel.InfraTablesIR{})
+	// importFromFile(validatorStateFile, &valmodel.ValidatorTablesIR{})
+	// importFromFile(voterStateFile, &votemodel.VoterTablesIR{})
 }

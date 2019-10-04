@@ -3,8 +3,6 @@ package model
 import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"

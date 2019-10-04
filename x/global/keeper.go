@@ -21,7 +21,8 @@ type GlobalKeeper interface {
 	PopDeveloperMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
 
 	// import export
-	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	// ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 var _ GlobalKeeper = &GlobalManager{}
