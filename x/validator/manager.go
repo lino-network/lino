@@ -602,11 +602,17 @@ func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filep
 			return false
 		}
 		stake := stakeinGetter(validator.Username)
+		// set oncall validator committing power equal to it's votes (lino)
+		powerCoin, err := stake.ToInt64()
+		if err != nil {
+			panic(err)
+		}
+		powerLNO := powerCoin / types.Decimals
 		// 1. add to state. validators
 		state.Validators = append(state.Validators, model.ValidatorIR{
 			ABCIValidator: model.ABCIValidatorIR{
 				Address: validator.ABCIValidator.Address,
-				Power:   validator.ABCIValidator.Power,
+				Power:   powerLNO,
 			},
 			PubKey:          model.NewABCIPubKeyIRFromTM(validator.PubKey),
 			Username:        validator.Username,
