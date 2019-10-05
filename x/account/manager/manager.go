@@ -533,18 +533,26 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 		Version: exportVersion,
 	}
 	substores := accManager.storage.StoreMap(ctx)
+	filladdr := func(addr []byte) []byte {
+		missing := sdk.AddrLen - len(addr)
+		for i := 0; i < missing; i++ {
+			addr = append(addr, byte('x'))
+		}
+		return addr
+	}
 
 	// export accounts
 	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		acc := val.(*model.AccountInfo)
 		addr := acc.Address
-		changed := false
 		// bypass address check.
-		for err := sdk.VerifyAddressFormat(addr); err != nil; addr = append(addr, addr...) {
-			changed = true
+		if len(addr) != sdk.AddrLen {
+			addr = filladdr(addr)
 		}
-		if changed {
-			ctx.Logger().Error(fmt.Sprintf("construct illeagal address: addr", addr))
+		// changed := false
+		if err := sdk.VerifyAddressFormat(addr); err != nil {
+			ctx.Logger().Error(fmt.Sprintf("construct illeagal address: %s", addr))
+			panic(err)
 		}
 		state.Accounts = append(state.Accounts, model.AccountIR{
 			Username:       acc.Username,
