@@ -662,17 +662,6 @@ func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 
 // XXX(yumin): if we want to add back the following codes, or handle the param change in the
 // same way as before, add back:
-//       cdc.RegisterInterface((*param.Parameter)(nil), nil)
-//       cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
-//       cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
-//       cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
-//       cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
-//       cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
-//       cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
-//       cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
-//       cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
-//       cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
-//       cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
 // in global's storage cdc.
 // or we can find a better way to do it.
 // get and set params
