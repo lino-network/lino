@@ -1,74 +1,66 @@
 package model
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/types"
 )
 
-// AccountRowIR account related information when migrate, pk: Username
-type AccountRowIR struct {
-	Username types.AccountKey `json:"username"`
-	Info     AccountInfoV1    `json:"info"`
-	Bank     AccountBankV1    `json:"bank"`
-	Meta     AccountMetaV1    `json:"meta"`
-	Reward   RewardV1         `json:"reward"`
+// AccountIR account related information when migrate, pk: Username
+type AccountIR struct {
+	Username       types.AccountKey `json:"username"`
+	CreatedAt      int64            `json:"created_at"`
+	SigningKey     crypto.PubKey    `json:"signing_key"`
+	TransactionKey crypto.PubKey    `json:"transaction_key"`
+	Address        sdk.AccAddress   `json:"address"`
 }
 
-// GrantPermissionIR - user grant permission to a user with a certain permission
-// XXX(yumin): note that there is a field name change during upgrade-1.
-type GrantPermissionIR struct {
-	Username   types.AccountKey `json:"username"`
+// AccountBankIR - user balance
+type AccountBankIR struct {
+	Address         []byte           `json:"address"` // pk
+	Saving          types.Coin       `json:"saving"`
+	FrozenMoneyList []FrozenMoneyIR  `json:"frozen_money_list"`
+	PubKey          crypto.PubKey    `json:"public_key"`
+	Sequence        uint64           `json:"sequence"`
+	Username        types.AccountKey `json:"username"`
+}
+
+// FrozenMoneyIR - frozen money
+type FrozenMoneyIR struct {
+	Amount   types.Coin `json:"amount"`
+	StartAt  int64      `json:"start_at"`
+	Times    int64      `json:"times"`
+	Interval int64      `json:"interval"`
+}
+
+type PermissionIR struct {
 	Permission types.Permission `json:"permission"`
 	CreatedAt  int64            `json:"created_at"`
 	ExpiresAt  int64            `json:"expires_at"`
 	Amount     types.Coin       `json:"amount"`
 }
 
-// GrantPubKeyRowIR also in account, pk: (Username, pubKey)
-type GrantPubKeyRowIR struct {
-	Username    types.AccountKey  `json:"username"`
-	PubKey      crypto.PubKey     `json:"pub_key"`
-	GrantPubKey GrantPermissionIR `json:"grant_pub_key"`
+// GrantPubKeyIR also in account, no pk.
+// must use AuthorizePermission for now. As this grant permission will be removed
+// very soon, it is okay to let this happen.
+type GrantPermissionIR struct {
+	Username    types.AccountKey `json:"username"`
+	GrantTo     types.AccountKey `json:"grant_to"`
+	Permissions []PermissionIR   `json:"permissions"`
+}
+
+// AccountMetaIR - stores optional fields.
+type AccountMetaIR struct {
+	Username types.AccountKey `json:"username"`
+	JSONMeta string           `json:"json_meta"`
 }
 
 // AccountTablesIR -
 type AccountTablesIR struct {
-	Accounts            []AccountRowIR     `json:"accounts"`
-	AccountGrantPubKeys []GrantPubKeyRowIR `json:"account_grant_pub_keys"`
-}
-
-// AccountInfoV1 - user information
-type AccountInfoV1 struct {
-	Username       types.AccountKey `json:"username"`
-	CreatedAt      int64            `json:"created_at"`
-	ResetKey       crypto.PubKey    `json:"reset_key"`
-	TransactionKey crypto.PubKey    `json:"transaction_key"`
-	AppKey         crypto.PubKey    `json:"app_key"`
-}
-
-// AccountBankV1 - user balance
-type AccountBankV1 struct {
-	Saving          types.Coin    `json:"saving"`
-	CoinDay         types.Coin    `json:"coin_day"`
-	FrozenMoneyList []FrozenMoney `json:"frozen_money_list"`
-}
-
-// AccountMetaV1 - stores tiny and frequently updated fields.
-type AccountMetaV1 struct {
-	Sequence             uint64     `json:"sequence"`
-	LastActivityAt       int64      `json:"last_activity_at"`
-	TransactionCapacity  types.Coin `json:"transaction_capacity"`
-	JSONMeta             string     `json:"json_meta"`
-	LastReportOrUpvoteAt int64      `json:"last_report_or_upvote_at"`
-	LastPostAt           int64      `json:"last_post_at"`
-}
-
-// RewardV1 - get from the inflation pool
-type RewardV1 struct {
-	TotalIncome     types.Coin `json:"total_income"`
-	OriginalIncome  types.Coin `json:"original_income"`
-	FrictionIncome  types.Coin `json:"friction_income"`
-	InflationIncome types.Coin `json:"inflation_income"`
-	UnclaimReward   types.Coin `json:"unclaim_reward"`
+	Version  int                 `json:"version"`
+	Accounts []AccountIR         `json:"accounts"`
+	Banks    []AccountBankIR     `json:"banks"`
+	Metas    []AccountMetaIR     `json:"metas"`
+	Grants   []GrantPermissionIR `json:"grants"`
 }

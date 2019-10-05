@@ -34,14 +34,6 @@ type TPS struct {
 	MaxTPS     sdk.Dec `json:"max_tps"`
 }
 
-// ToIR -
-func (t *TPS) ToIR() TPSIR {
-	return TPSIR{
-		CurrentTPS: t.CurrentTPS.String(),
-		MaxTPS:     t.MaxTPS.String(),
-	}
-}
-
 // InflationPool, determined by GlobalAllocation
 // InfraInflationPool inflation pool for infra
 // TotalContentCreatorInflationPool total inflation pool for content creator this year
@@ -63,17 +55,6 @@ type ConsumptionMeta struct {
 	ConsumptionWindow            types.MiniDollar `json:"consumption_window"`
 	ConsumptionRewardPool        types.Coin       `json:"consumption_reward_pool"`
 	ConsumptionFreezingPeriodSec int64            `json:"consumption_freezing_period_second"`
-}
-
-// ToIR -
-func (c *ConsumptionMeta) ToIR() ConsumptionMetaIR {
-	return ConsumptionMetaIR{
-		ConsumptionFrictionRate:       c.ConsumptionFrictionRate.String(),
-		ConsumptionWindow:             types.Coin{Amount: c.ConsumptionWindow.Int},
-		ConsumptionRewardPool:         c.ConsumptionRewardPool,
-		ConsumptionFreezingPeriodSec:  c.ConsumptionFreezingPeriodSec,
-		IsConsumptionWindowDollarUnit: true,
-	}
 }
 
 // InitParamList - genesis parameters

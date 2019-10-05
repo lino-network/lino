@@ -55,6 +55,9 @@ type AccountKeeper interface {
 	GetMeta(ctx sdk.Context, username types.AccountKey) (*model.AccountMeta, sdk.Error)
 	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
+
+	// import export
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 

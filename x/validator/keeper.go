@@ -3,6 +3,7 @@ package validator
 //go:generate mockery -name ValidatorKeeper
 
 import (
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -31,6 +32,10 @@ type ValidatorKeeper interface {
 	GetElectionVoteList(ctx sdk.Context, accKey linotypes.AccountKey) *model.ElectionVoteList
 	GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey
 	GetCommittingValidatorVoteStatus(ctx sdk.Context) []model.ReceivedVotesStatus
+
+	// import export
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 
 var _ ValidatorKeeper = votemn.ValidatorManager{}

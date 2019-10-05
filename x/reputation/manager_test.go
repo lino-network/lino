@@ -222,7 +222,7 @@ func (suite *reputationTestSuite) TestExportImport() {
 	defer os.RemoveAll(dir) // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
-	err2 = rep.ExportToFile(suite.ctx, tmpfn)
+	err2 = rep.ExportToFile(suite.ctx, nil, tmpfn)
 	suite.Nil(err2)
 
 	// clear everything
@@ -238,7 +238,7 @@ func (suite *reputationTestSuite) TestExportImport() {
 			types.NewMiniDollar(repv2.DefaultInitialReputation).String(), rv.String(), "%d", i)
 	}
 
-	err3 := rep.ImportFromFile(suite.ctx, tmpfn)
+	err3 := rep.ImportFromFile(suite.ctx, nil, tmpfn)
 	suite.Nil(err3)
 
 	// check reputation

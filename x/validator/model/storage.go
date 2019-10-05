@@ -5,13 +5,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/validator/types"
 )
 
 var (
-	validatorSubstore        = []byte{0x00}
-	validatorListSubstore    = []byte{0x01}
-	electionVoteListSubstore = []byte{0x02}
+	ValidatorSubstore        = []byte{0x00}
+	ValidatorListSubstore    = []byte{0x01}
+	ElectionVoteListSubstore = []byte{0x02}
 )
 
 type ValidatorStorage struct {
@@ -86,81 +87,39 @@ func (vs ValidatorStorage) SetElectionVoteList(ctx sdk.Context, accKey linotypes
 	store.Set(GetElectionVoteListKey(accKey), lstByte)
 }
 
-// Export state of validators.
-// func (vs ValidatorStorage) Export(ctx sdk.Context) *ValidatorTables {
-// 	tables := &ValidatorTables{}
-// 	store := ctx.KVStore(vs.key)
-// 	// export table.validators
-// 	func() {
-// 		itr := sdk.KVStorePrefixIterator(store, validatorSubstore)
-// 		defer itr.Close()
-// 		for ; itr.Valid(); itr.Next() {
-// 			k := itr.Key()
-// 			username := linotypes.AccountKey(k[1:])
-// 			val, err := vs.GetValidator(ctx, username)
-// 			if err != nil {
-// 				panic("failed to read validator: " + err.Error())
-// 			}
-// 			row := ValidatorRow{
-// 				Username:  username,
-// 				Validator: *val,
-// 			}
-// 			tables.Validators = append(tables.Validators, row)
-// 		}
-// 	}()
-// 	// export table.validatorList
-// 	list, err := vs.GetValidatorList(ctx)
-// 	if err != nil {
-// 		panic("failed to get validator list: " + err.Error())
-// 	}
-// 	tables.ValidatorList = ValidatorListRow{
-// 		List: *list,
-// 	}
-// 	return tables
-// }
-
-// Import from tablesIR.
-// func (vs ValidatorStorage) Import(ctx sdk.Context, tb *ValidatorTablesIR) {
-// 	check := func(e error) {
-// 		if e != nil {
-// 			panic("[vs] Failed to import: " + e.Error())
-// 		}
-// 	}
-// 	// import table.Validators
-// 	for _, v := range tb.Validators {
-// 		pubkey, err := tmtypes.PB2TM.PubKey(abci.PubKey{
-// 			Type: v.Validator.ABCIValidator.PubKey.Type,
-// 			Data: v.Validator.ABCIValidator.PubKey.Data,
-// 		})
-// 		check(err)
-// 		err = vs.SetValidator(ctx, v.Username, &ValidatorV1{
-// 			ABCIValidator: abci.Validator{
-// 				Address: v.Validator.ABCIValidator.Address,
-// 				Power:   v.Validator.ABCIValidator.Power,
-// 			},
-// 			PubKey:          pubkey,
-// 			Username:        v.Validator.Username,
-// 			Deposit:         v.Validator.Deposit,
-// 			AbsentCommit:    v.Validator.AbsentCommit,
-// 			ByzantineCommit: v.Validator.ByzantineCommit,
-// 			ProducedBlocks:  v.Validator.ProducedBlocks,
-// 			Link:            v.Validator.Link,
-// 		})
-// 		check(err)
-// 	}
-// 	// import ValidatorList
-// 	err := vs.SetValidatorList(ctx, &tb.ValidatorList.List)
-// 	check(err)
-// }
+func (vs ValidatorStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
+	store := ctx.KVStore(vs.key)
+	stores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     ValidatorSubstore,
+			ValCreator: func() interface{} { return new(Validator) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     ValidatorListSubstore,
+			ValCreator: func() interface{} { return new(ValidatorList) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     ElectionVoteListSubstore,
+			ValCreator: func() interface{} { return new(ElectionVoteList) },
+			Decoder:    vs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+	}
+	return utils.NewStoreMap(stores)
+}
 
 func GetValidatorKey(accKey linotypes.AccountKey) []byte {
-	return append(validatorSubstore, accKey...)
+	return append(ValidatorSubstore, accKey...)
 }
 
 func GetElectionVoteListKey(accKey linotypes.AccountKey) []byte {
-	return append(electionVoteListSubstore, accKey...)
+	return append(ElectionVoteListSubstore, accKey...)
 }
 
 func GetValidatorListKey() []byte {
-	return validatorListSubstore
+	return ValidatorListSubstore
 }

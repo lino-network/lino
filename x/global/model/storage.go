@@ -4,20 +4,20 @@ import (
 	"strconv"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/lino-network/lino/param"
-	"github.com/lino-network/lino/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 )
 
 var (
-	timeEventListSubStore   = []byte{0x00} // SubStore for time event list
-	globalMetaSubStore      = []byte{0x01} // SubStore for global meta
-	inflationPoolSubStore   = []byte{0x02} // SubStore for allocation
-	consumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
-	tpsSubStore             = []byte{0x04} // SubStore for tps
-	timeSubStore            = []byte{0x05} // SubStore for time
-	linoStakeStatSubStore   = []byte{0x06} // SubStore for lino power statistic
+	TimeEventListSubStore   = []byte{0x00} // SubStore for time event list
+	GlobalMetaSubStore      = []byte{0x01} // SubStore for global meta
+	InflationPoolSubStore   = []byte{0x02} // SubStore for allocation
+	ConsumptionMetaSubStore = []byte{0x03} // SubStore for consumption meta
+	TpsSubStore             = []byte{0x04} // SubStore for tps
+	TimeSubStore            = []byte{0x05} // SubStore for time
+	LinoStakeStatSubStore   = []byte{0x06} // SubStore for lino power statistic
 )
 
 // GlobalStorage - global storage
@@ -30,19 +30,8 @@ type GlobalStorage struct {
 // NewGlobalStorage - new global storage
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.New()
-	cdc.RegisterInterface((*param.Parameter)(nil), nil)
-	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
-	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
-	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
-	cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
-	cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
-	cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
-	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
-	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
-	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
-	cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
-
 	wire.RegisterCrypto(cdc)
+
 	return GlobalStorage{
 		key: key,
 		cdc: cdc,
@@ -297,6 +286,25 @@ func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) s
 	return nil
 }
 
+func (gs GlobalStorage) PartialStoreMap(ctx sdk.Context) utils.StoreMap {
+	store := ctx.KVStore(gs.key)
+	stores := []utils.SubStore{
+		{
+			Store:      store,
+			Prefix:     TimeEventListSubStore,
+			ValCreator: func() interface{} { return new(types.TimeEventList) },
+			Decoder:    gs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+		{
+			Store:      store,
+			Prefix:     LinoStakeStatSubStore,
+			ValCreator: func() interface{} { return new(LinoStakeStat) },
+			Decoder:    gs.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
+	}
+	return utils.NewStoreMap(stores)
+}
+
 // // Export - export global tables.
 // func (gs GlobalStorage) Export(ctx sdk.Context) *GlobalTables {
 // 	tables := &GlobalTables{}
@@ -379,35 +387,35 @@ func (gs GlobalStorage) SetGlobalTime(ctx sdk.Context, globalTime *GlobalTime) s
 
 // GetLinoStakeStatKey - get lino power statistic at day from KVStore
 func GetLinoStakeStatKey(day int64) []byte {
-	return append(linoStakeStatSubStore, strconv.FormatInt(day, 10)...)
+	return append(LinoStakeStatSubStore, strconv.FormatInt(day, 10)...)
 }
 
 // GetTimeEventListKey - get time event list from KVStore
 func GetTimeEventListKey(unixTime int64) []byte {
-	return append(timeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
+	return append(TimeEventListSubStore, strconv.FormatInt(unixTime, 10)...)
 }
 
 // GetGlobalMetaKey - "global meta substore"
 func GetGlobalMetaKey() []byte {
-	return globalMetaSubStore
+	return GlobalMetaSubStore
 }
 
 // GetInflationPoolKey - "inflation pool substore"
 func GetInflationPoolKey() []byte {
-	return inflationPoolSubStore
+	return InflationPoolSubStore
 }
 
 // GetConsumptionMetaKey - "consumption meta substore"
 func GetConsumptionMetaKey() []byte {
-	return consumptionMetaSubStore
+	return ConsumptionMetaSubStore
 }
 
 // GetTPSKey - "tps substore"
 func GetTPSKey() []byte {
-	return tpsSubStore
+	return TpsSubStore
 }
 
 // GetTimeKey - "time substore"
 func GetTimeKey() []byte {
-	return timeSubStore
+	return TimeSubStore
 }

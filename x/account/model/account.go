@@ -1,12 +1,11 @@
 package model
 
 import (
-	"github.com/lino-network/lino/types"
-
-	"github.com/tendermint/tendermint/crypto"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto"
 	ttypes "github.com/tendermint/tendermint/types"
+
+	"github.com/lino-network/lino/types"
 )
 
 // AccountInfo - user information
@@ -44,7 +43,7 @@ type GrantPermission struct {
 	Amount     types.Coin       `json:"amount"`
 }
 
-// AccountMeta - stores tiny and frequently updated fields.
+// AccountMeta - stores optional fields.
 type AccountMeta struct {
 	JSONMeta string `json:"json_meta"`
 }

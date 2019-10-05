@@ -65,6 +65,20 @@ func (_m *GlobalKeeper) AddToValidatorInflationPool(ctx types.Context, coin lino
 	return r0
 }
 
+// ExportToFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *GlobalKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetConsumptionFrictionRate provides a mock function with given fields: ctx
 func (_m *GlobalKeeper) GetConsumptionFrictionRate(ctx types.Context) (types.Dec, types.Error) {
 	ret := _m.Called(ctx)

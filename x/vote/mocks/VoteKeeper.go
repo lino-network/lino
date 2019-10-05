@@ -4,6 +4,8 @@ package mocks
 
 import (
 	linotypes "github.com/lino-network/lino/types"
+	amino "github.com/tendermint/go-amino"
+
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/lino-network/lino/x/vote/model"
@@ -96,6 +98,20 @@ func (_m *VoteKeeper) ExecUnassignDutyEvent(ctx types.Context, event votetypes.U
 	return r0
 }
 
+// ExportToFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *VoteKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetLinoStake provides a mock function with given fields: ctx, username
 func (_m *VoteKeeper) GetLinoStake(ctx types.Context, username linotypes.AccountKey) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -165,6 +181,20 @@ func (_m *VoteKeeper) GetVoterDuty(ctx types.Context, username linotypes.Account
 	}
 
 	return r0, r1
+}
+
+// ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *VoteKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // MinusStake provides a mock function with given fields: ctx, username, amount

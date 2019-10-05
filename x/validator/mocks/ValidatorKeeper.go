@@ -3,7 +3,9 @@
 package mocks
 
 import (
+	amino "github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+
 	crypto "github.com/tendermint/tendermint/crypto"
 
 	linotypes "github.com/lino-network/lino/types"
@@ -33,6 +35,20 @@ func (_m *ValidatorKeeper) DistributeInflationToValidator(ctx types.Context) typ
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
 		}
+	}
+
+	return r0
+}
+
+// ExportToFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *ValidatorKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
 	}
 
 	return r0
@@ -186,6 +202,20 @@ func (_m *ValidatorKeeper) Hooks() manager.Hooks {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(manager.Hooks)
+	}
+
+	return r0
+}
+
+// ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
+func (_m *ValidatorKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
+	ret := _m.Called(ctx, cdc, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.Context, *amino.Codec, string) error); ok {
+		r0 = rf(ctx, cdc, filepath)
+	} else {
+		r0 = ret.Error(0)
 	}
 
 	return r0
