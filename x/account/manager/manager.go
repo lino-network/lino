@@ -660,13 +660,20 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
+	banks := make(map[string]int)
 
 	// import accounts.
 	for _, v := range table.Accounts {
 		info := model.AccountInfo(v)
-		accManager.storage.SetInfo(ctx, v.Username, &info)
+		if _, err := accManager.storage.GetInfo(ctx, v.Username); err != nil {
+			accManager.storage.SetInfo(ctx, v.Username, &info)
+			if banks[string(v.Address)] != 0 {
+				panic(fmt.Errorf("used address: %s", v.Address))
+			}
+			banks[string(v.Address)] = 1
+		} else {
+			panic(fmt.Errorf("duplicated username: %s", v.Username))
+		}
 	}
 
 	// import banks
@@ -682,6 +689,10 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 			Sequence:        v.Sequence,
 			Username:        v.Username,
 		}
+		if banks[string(v.Address)] > 1 {
+			panic(fmt.Errorf("duplicated address: %s", v))
+		}
+		banks[string(v.Address)] = 2
 		accManager.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)
 	}
 
