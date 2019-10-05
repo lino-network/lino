@@ -690,6 +690,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			if err != nil {
 				panic(err)
 			}
+			fmt.Printf("Export %s Done\n", modules[i].filename)
 		}(i)
 	}
 
@@ -727,10 +728,12 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 
 	modules := lb.getImportExportModules()
 	for _, toImport := range modules {
+		ctx.Logger().Info(fmt.Sprintf("%s state parsed", toImport.filename))
 		err := toImport.module.ImportFromFile(ctx, lb.cdc, prevStateDir+toImport.filename)
 		if err != nil {
 			panic(err)
 		}
+		ctx.Logger().Info(fmt.Sprintf("%s state imported", toImport.filename))
 	}
 
 	// legacy

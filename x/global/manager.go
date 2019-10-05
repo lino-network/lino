@@ -607,9 +607,6 @@ func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
-
 	// import events
 	for _, v := range table.GlobalTimeEventLists {
 		err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
