@@ -1,19 +1,20 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 
 	"github.com/lino-network/lino/types"
 )
 
 // AccountIR account related information when migrate, pk: Username
+// CAN NOT use sdk.AccAddress, because there are illegal addresses in
+// the state since upgrade-2, and the AccAddress.unmarshalJSON will return err.
 type AccountIR struct {
 	Username       types.AccountKey `json:"username"`
 	CreatedAt      int64            `json:"created_at"`
 	SigningKey     crypto.PubKey    `json:"signing_key"`
 	TransactionKey crypto.PubKey    `json:"transaction_key"`
-	Address        sdk.AccAddress   `json:"address"`
+	Address        []byte           `json:"address"`
 }
 
 // AccountBankIR - user balance
