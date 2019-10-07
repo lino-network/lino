@@ -698,10 +698,6 @@ func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 			module:   &lb.globalManager,
 			filename: globalStateFile,
 		},
-		{
-			module:   lb.voteManager,
-			filename: voterStateFile,
-		},
 	}
 }
 
@@ -741,7 +737,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	}()
 
 	// validator
-	lb.valManager.ExportToFile(ctx, lb.cdc,
+	err = lb.valManager.ExportToFile(ctx, lb.cdc,
 		exportPath + validatorStateFile, func(user types.AccountKey) types.Coin {
 			stake, err := lb.voteManager.GetLinoStake(ctx, user)
 			if err != nil {
@@ -749,6 +745,24 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			}
 			return stake
 		})
+	if err != nil {
+		panic(err)
+	}
+
+	// vote
+	vallist, err := lb.valManager.GetValidatorList(ctx)
+	if err != nil {
+		panic(err)
+	}
+	oncalls := vallist.OncallValidators
+
+	// vote
+	err = lb.voteManager.ExportToFile(ctx, lb.cdc, exportPath + voterStateFile, func(acc types.AccountKey) bool {
+		return types.FindAccountInList(acc, oncalls) != -1
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	// legacy infra
 	f, err := os.Create(exportPath + infraStateFile)

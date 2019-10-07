@@ -431,7 +431,8 @@ func (vm VoteManager) AssignDuty(ctx sdk.Context, user linotypes.AccountKey, dut
 }
 
 // Export storage state.
-func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string,
+	isValidator func(acc linotypes.AccountKey) bool) error {
 	state := &model.VoterTablesIR{
 		Version: 1,
 	}
@@ -441,13 +442,19 @@ func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 	voters := make([]model.VoterIR, 0)
 	storeList[string(model.VoterSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		v := val.(*model.Voter)
+		frozenAmount := v.FrozenAmount
+		duty := v.Duty
+		if isValidator(v.Username) {
+			frozenAmount = linotypes.NewCoinFromInt64(20000000000)
+			duty = types.DutyValidator
+		}
 		voters = append(voters, model.VoterIR{
 			Username:          v.Username,
 			LinoStake:         v.LinoStake,
 			LastPowerChangeAt: v.LastPowerChangeAt,
 			Interest:          v.Interest,
-			Duty:              v.Duty,
-			FrozenAmount:      v.FrozenAmount,
+			Duty:              duty,
+			FrozenAmount:      frozenAmount,
 		})
 		return false
 	})
