@@ -634,7 +634,7 @@ func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filep
 			},
 		})
 		// 3. update lowest oncall votes
-		if !stake.IsGTE(lowestOncallVotes) {
+		if !stake.IsGTE(lowestOncallVotes) || lowestOncallVotes.IsZero() {
 			lowestOncallVotes = stake
 		}
 		return false
