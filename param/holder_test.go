@@ -37,7 +37,6 @@ func TestGlobalAllocationParam(t *testing.T) {
 	parameter := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
 		ContentCreatorAllocation: types.NewDecFromRat(1, 100),
-		InfraAllocation:          types.NewDecFromRat(1, 100),
 		DeveloperAllocation:      types.NewDecFromRat(1, 100),
 		ValidatorAllocation:      types.NewDecFromRat(97, 100),
 	}
@@ -47,21 +46,6 @@ func TestGlobalAllocationParam(t *testing.T) {
 	resultPtr, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, parameter, *resultPtr, "Global allocation param should be equal")
-}
-
-func TestInfraInternalAllocationParam(t *testing.T) {
-	ph := NewParamHolder(TestKVStoreKey)
-	ctx := getContext()
-	parameter := InfraInternalAllocationParam{
-		StorageAllocation: types.NewDecFromRat(50, 100),
-		CDNAllocation:     types.NewDecFromRat(50, 100),
-	}
-	err := ph.setInfraInternalAllocationParam(ctx, &parameter)
-	assert.Nil(t, err)
-
-	resultPtr, err := ph.GetInfraInternalAllocationParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Infra internal allocation param should be equal")
 }
 
 func TestDeveloperParam(t *testing.T) {
@@ -219,15 +203,9 @@ func TestInitParam(t *testing.T) {
 
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		InfraAllocation:          types.NewDecFromRat(20, 100),
 		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
-	}
-
-	infraInternalAllocationParam := InfraInternalAllocationParam{
-		StorageAllocation: types.NewDecFromRat(50, 100),
-		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 
 	developerParam := DeveloperParam{
@@ -318,7 +296,7 @@ func TestInitParam(t *testing.T) {
 		PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 	}
 
-	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
+	checkStorage(t, ctx, ph, globalAllocationParam,
 		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
@@ -328,15 +306,9 @@ func TestInitParamFromConfig(t *testing.T) {
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		InfraAllocation:          types.NewDecFromRat(20, 100),
 		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
-	}
-
-	infraInternalAllocationParam := InfraInternalAllocationParam{
-		StorageAllocation: types.NewDecFromRat(50, 100),
-		CDNAllocation:     types.NewDecFromRat(50, 100),
 	}
 
 	developerParam := DeveloperParam{
@@ -428,7 +400,6 @@ func TestInitParamFromConfig(t *testing.T) {
 
 	err := ph.InitParamFromConfig(
 		ctx, globalAllocationParam,
-		infraInternalAllocationParam,
 		postParam,
 		developerParam,
 		validatorParam,
@@ -442,13 +413,12 @@ func TestInitParamFromConfig(t *testing.T) {
 	)
 	assert.Nil(t, err)
 
-	checkStorage(t, ctx, ph, globalAllocationParam, infraInternalAllocationParam,
+	checkStorage(t, ctx, ph, globalAllocationParam,
 		developerParam, validatorParam, voteParam,
 		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
-	expectInfraInternalAllocationParam InfraInternalAllocationParam,
 	expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
 	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
@@ -460,10 +430,6 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectGlobalAllocationParam, *globalAllocationParam)
-
-	infraInternalAllocationParam, err := ph.GetInfraInternalAllocationParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectInfraInternalAllocationParam, *infraInternalAllocationParam)
 
 	developerParam, err := ph.GetDeveloperParam(ctx)
 	assert.Nil(t, err)

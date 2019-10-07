@@ -38,7 +38,6 @@ func getCmdAll(cdc *codec.Codec) *cobra.Command {
 				t    interface{}
 			}{
 				{types.QueryAllocationParam, &types.GlobalAllocationParam{}},
-				{types.QueryInfraInternalAllocationParam, &types.InfraInternalAllocationParam{}},
 				{types.QueryDeveloperParam, &types.DeveloperParam{}},
 				{types.QueryVoteParam, &types.VoteParam{}},
 				{types.QueryProposalParam, &types.ProposalParam{}},

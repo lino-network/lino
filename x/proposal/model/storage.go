@@ -29,7 +29,6 @@ func NewProposalStorage(key sdk.StoreKey) ProposalStorage {
 
 	cdc.RegisterInterface((*param.Parameter)(nil), nil)
 	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "allocation", nil)
-	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "infraAllocation", nil)
 	cdc.RegisterConcrete(param.VoteParam{}, "voteParam", nil)
 	cdc.RegisterConcrete(param.ProposalParam{}, "proposalParam", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "developerParam", nil)

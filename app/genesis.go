@@ -25,7 +25,6 @@ type GenesisState struct {
 	ReservePool    types.Coin                `json:"reserve_pool"`
 	InitCoinPrice  types.MiniDollar          `json:"init_coin_price"`
 	Developers     []GenesisAppDeveloper     `json:"developers"`
-	Infra          []GenesisInfraProvider    `json:"infra"`
 	GenesisParam   GenesisParam              `json:"genesis_param"`
 	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
 }
@@ -50,16 +49,11 @@ type GenesisAppDeveloper struct {
 	AppMetaData string `json:"app_meta_data"`
 }
 
-// GenesisInfraProvider - register infra provider in genesis phase
-type GenesisInfraProvider struct {
-	Name string `json:"name"`
-}
 
 // GenesisParam - genesis parameters
 type GenesisParam struct {
 	InitFromConfig bool `json:"init_from_config"`
 	param.GlobalAllocationParam
-	param.InfraInternalAllocationParam
 	param.VoteParam
 	param.ProposalParam
 	param.DeveloperParam
@@ -122,19 +116,13 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		ReservePool:    types.NewCoinFromInt64(0),
 		InitCoinPrice:  types.NewMiniDollar(1200),
 		Developers:     []GenesisAppDeveloper{},
-		Infra:          []GenesisInfraProvider{},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-				InfraAllocation:          types.NewDecFromRat(20, 100),
 				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
 				DeveloperAllocation:      types.NewDecFromRat(10, 100),
 				ValidatorAllocation:      types.NewDecFromRat(5, 100),
-			},
-			param.InfraInternalAllocationParam{
-				StorageAllocation: types.NewDecFromRat(50, 100),
-				CDNAllocation:     types.NewDecFromRat(50, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -242,10 +230,6 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		AppMetaData: "",
 	}
 	genesisState.Developers = append(genesisState.Developers, genesisAppDeveloper)
-	genesisInfraProvider := GenesisInfraProvider{
-		Name: "lino",
-	}
-	genesisState.Infra = append(genesisState.Infra, genesisInfraProvider)
 
 	appState, err = wire.MarshalJSONIndent(cdc, genesisState)
 	return

@@ -10,24 +10,14 @@ import (
 type Parameter interface{}
 
 // GlobalAllocationParam - global allocation parameters
-// InfraAllocation - percentage for all infra related allocation
 // ContentCreatorAllocation - percentage for all content creator related allocation
 // DeveloperAllocation - percentage of inflation for developers
 // ValidatorAllocation - percentage of inflation for validators
 type GlobalAllocationParam struct {
 	GlobalGrowthRate         sdk.Dec `json:"global_growth_rate"`
-	InfraAllocation          sdk.Dec `json:"infra_allocation"`
 	ContentCreatorAllocation sdk.Dec `json:"content_creator_allocation"`
 	DeveloperAllocation      sdk.Dec `json:"developer_allocation"`
 	ValidatorAllocation      sdk.Dec `json:"validator_allocation"`
-}
-
-// InfraInternalAllocationParam - infra internal allocation parameters
-// StorageAllocation - percentage for storage provider (not in use now)
-// CDNAllocation - percentage for CDN provider (not in use now)
-type InfraInternalAllocationParam struct {
-	StorageAllocation sdk.Dec `json:"storage_allocation"`
-	CDNAllocation     sdk.Dec `json:"CDN_allocation"`
 }
 
 // VoteParam - vote parameters

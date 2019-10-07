@@ -11,7 +11,6 @@ import (
 
 var (
 	allocationParamSubStore              = []byte{0x00} // SubStore for allocation
-	infraInternalAllocationParamSubStore = []byte{0x01} // SubStore for infra internal allocation
 	evaluateOfContentValueParamSubStore  = []byte{0x02} // Substore for evaluate of content value
 	developerParamSubStore               = []byte{0x03} // Substore for developer param
 	voteParamSubStore                    = []byte{0x04} // Substore for vote param
@@ -51,20 +50,11 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		InfraAllocation:          types.NewDecFromRat(20, 100),
 		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
 	if err := ph.setGlobalAllocationParam(ctx, globalAllocationParam); err != nil {
-		return err
-	}
-
-	infraInternalAllocationParam := &InfraInternalAllocationParam{
-		StorageAllocation: types.NewDecFromRat(50, 100),
-		CDNAllocation:     types.NewDecFromRat(50, 100),
-	}
-	if err := ph.setInfraInternalAllocationParam(ctx, infraInternalAllocationParam); err != nil {
 		return err
 	}
 
@@ -197,7 +187,6 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 func (ph ParamHolder) InitParamFromConfig(
 	ctx sdk.Context,
 	globalParam GlobalAllocationParam,
-	infraInternalParam InfraInternalAllocationParam,
 	postParam PostParam,
 	developerParam DeveloperParam,
 	validatorParam ValidatorParam,
@@ -209,10 +198,6 @@ func (ph ParamHolder) InitParamFromConfig(
 	repParam ReputationParam,
 	priceParam PriceParam) error {
 	if err := ph.setGlobalAllocationParam(ctx, &globalParam); err != nil {
-		return err
-	}
-
-	if err := ph.setInfraInternalAllocationParam(ctx, &infraInternalParam); err != nil {
 		return err
 	}
 
@@ -264,21 +249,6 @@ func (ph ParamHolder) GetGlobalAllocationParam(
 	allocation := new(GlobalAllocationParam)
 	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
 		return nil, ErrFailedToUnmarshalGlobalAllocationParam(err)
-	}
-	return allocation, nil
-}
-
-// GetInfraInternalAllocationParam - get infra internal allocation allocation param
-func (ph ParamHolder) GetInfraInternalAllocationParam(
-	ctx sdk.Context) (*InfraInternalAllocationParam, sdk.Error) {
-	store := ctx.KVStore(ph.key)
-	allocationBytes := store.Get(GetInfraInternalAllocationParamKey())
-	if allocationBytes == nil {
-		return nil, ErrInfraAllocationParamNotFound()
-	}
-	allocation := new(InfraInternalAllocationParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
-		return nil, ErrFailedToUnmarshalInfraInternalAllocationParam(err)
 	}
 	return allocation, nil
 }
@@ -464,17 +434,6 @@ func (ph ParamHolder) setGlobalAllocationParam(
 	return nil
 }
 
-func (ph ParamHolder) setInfraInternalAllocationParam(
-	ctx sdk.Context, allocation *InfraInternalAllocationParam) sdk.Error {
-	store := ctx.KVStore(ph.key)
-	allocationBytes, err := ph.cdc.MarshalBinaryLengthPrefixed(*allocation)
-	if err != nil {
-		return ErrFailedToMarshalInfraInternalAllocationParam(err)
-	}
-	store.Set(GetInfraInternalAllocationParamKey(), allocationBytes)
-	return nil
-}
-
 func (ph ParamHolder) setPostParam(
 	ctx sdk.Context, para *PostParam) sdk.Error {
 	store := ctx.KVStore(ph.key)
@@ -575,11 +534,6 @@ func GetEvaluateOfContentValueParamKey() []byte {
 // GetAllocationParamKey - "allocation param substore"
 func GetAllocationParamKey() []byte {
 	return allocationParamSubStore
-}
-
-// GetInfraInternalAllocationParamKey - "infra internal allocation param substore"
-func GetInfraInternalAllocationParamKey() []byte {
-	return infraInternalAllocationParamSubStore
 }
 
 // GetDeveloperParamKey - "developer param substore"

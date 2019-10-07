@@ -12,7 +12,6 @@ const (
 	ValidatorKVStoreKey    = "validator"
 	GlobalKVStoreKey       = "global"
 	VoteKVStoreKey         = "vote"
-	InfraKVStoreKey        = "infra"
 	DeveloperKVStoreKey    = "developer"
 	ParamKVStoreKey        = "param"
 	ProposalKVStoreKey     = "proposal"
@@ -54,12 +53,10 @@ const (
 	ClaimReward          = TransferDetailType(2)
 	ValidatorInflation   = TransferDetailType(3)
 	DeveloperInflation   = TransferDetailType(4)
-	InfraInflation       = TransferDetailType(5)
 	VoteReturnCoin       = TransferDetailType(6)
 	DelegationReturnCoin = TransferDetailType(7)
 	ValidatorReturnCoin  = TransferDetailType(8)
 	DeveloperReturnCoin  = TransferDetailType(9)
-	InfraReturnCoin      = TransferDetailType(10)
 	ProposalReturnCoin   = TransferDetailType(11)
 	GenesisCoin          = TransferDetailType(12)
 	ClaimInterest        = TransferDetailType(13)
@@ -71,7 +68,6 @@ const (
 	VoterDeposit     = TransferDetailType(23)
 	ValidatorDeposit = TransferDetailType(24)
 	DeveloperDeposit = TransferDetailType(25)
-	InfraDeposit     = TransferDetailType(26)
 	ProposalDeposit  = TransferDetailType(27)
 
 	// punishment type

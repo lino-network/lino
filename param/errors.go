@@ -58,11 +58,6 @@ func ErrGlobalAllocationParamNotFound() sdk.Error {
 	return types.NewError(types.CodeGlobalAllocationParamNotFound, fmt.Sprintf("global allocation param not found"))
 }
 
-// ErrInfraAllocationParamNotFound - error when infra allocation param is empty.
-func ErrInfraAllocationParamNotFound() sdk.Error {
-	return types.NewError(types.CodeInfraAllocationParamNotFound, fmt.Sprintf("infra internal allocation param not found"))
-}
-
 // ErrPostParamNotFound - error when post param is empty.
 func ErrPostParamNotFound() sdk.Error {
 	return types.NewError(types.CodePostParamNotFound, fmt.Sprintf("post param not found"))
@@ -96,11 +91,6 @@ func ErrFailedToUnmarshalValidatorParam(err error) sdk.Error {
 // ErrFailedToUnmarshalEvaluateOfContentValueParam - error when unmarshal evaluate of content value param failed.
 func ErrFailedToUnmarshalEvaluateOfContentValueParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalEvaluateOfContentValueParam, fmt.Sprintf("failed to unmarshal evaluate of content value param: %s", err.Error()))
-}
-
-// ErrFailedToUnmarshalInfraInternalAllocationParam - error when unmarshal infra internal allocation param failed.
-func ErrFailedToUnmarshalInfraInternalAllocationParam(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToUnmarshalInfraInternalAllocationParam, fmt.Sprintf("failed to unmarshal infra internal allocation param: %s", err.Error()))
 }
 
 // ErrFailedToUnmarshalDeveloperParam - error when unmarshal developer param failed.
@@ -156,11 +146,6 @@ func ErrFailedToMarshalValidatorParam(err error) sdk.Error {
 // ErrFailedToMarshalEvaluateOfContentValueParam - error when marshal evaluate of content value param failed.
 func ErrFailedToMarshalEvaluateOfContentValueParam(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToMarshalEvaluateOfContentValueParam, fmt.Sprintf("failed to marshal evaluate of content value param: %s", err.Error()))
-}
-
-// ErrFailedToMarshalInfraInternalAllocationParam - error when marshal infra internal allocation param failed.
-func ErrFailedToMarshalInfraInternalAllocationParam(err error) sdk.Error {
-	return types.NewError(types.CodeFailedToMarshalInfraInternalAllocationParam, fmt.Sprintf("failed to marshal infra internal allocation param: %s", err.Error()))
 }
 
 // ErrFailedToMarshalDeveloperParam - error when marshal developer param failed.

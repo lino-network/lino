@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -32,8 +31,6 @@ import (
 	votemn "github.com/lino-network/lino/x/vote/manager"
 	votetypes "github.com/lino-network/lino/x/vote/types"
 
-	infra "github.com/lino-network/lino/x/infra"
-	inframodel "github.com/lino-network/lino/x/infra/model"
 	"github.com/lino-network/lino/x/proposal"
 
 	rep "github.com/lino-network/lino/x/reputation"
@@ -63,7 +60,6 @@ const (
 	developerStateFile  = "developer"
 	postStateFile       = "post"
 	globalStateFile     = "global"
-	infraStateFile      = "infra"
 	validatorStateFile  = "validator"
 	reputationStateFile = "reputation"
 	voterStateFile      = "voter"
@@ -86,7 +82,6 @@ type LinoBlockchain struct {
 	CapKeyPostStore         *sdk.KVStoreKey
 	CapKeyValStore          *sdk.KVStoreKey
 	CapKeyVoteStore         *sdk.KVStoreKey
-	CapKeyInfraStore        *sdk.KVStoreKey
 	CapKeyDeveloperStore    *sdk.KVStoreKey
 	CapKeyIBCStore          *sdk.KVStoreKey
 	CapKeyGlobalStore       *sdk.KVStoreKey
@@ -102,7 +97,6 @@ type LinoBlockchain struct {
 	valManager        val.ValidatorKeeper
 	globalManager     global.GlobalManager
 	voteManager       vote.VoteKeeper
-	infraManager      infra.InfraManager
 	developerManager  dev.DeveloperKeeper
 	proposalManager   proposal.ProposalManager
 	reputationManager rep.ReputationKeeper
@@ -131,7 +125,6 @@ func NewLinoBlockchain(
 		CapKeyPostStore:         sdk.NewKVStoreKey(types.PostKVStoreKey),
 		CapKeyValStore:          sdk.NewKVStoreKey(types.ValidatorKVStoreKey),
 		CapKeyVoteStore:         sdk.NewKVStoreKey(types.VoteKVStoreKey),
-		CapKeyInfraStore:        sdk.NewKVStoreKey(types.InfraKVStoreKey),
 		CapKeyDeveloperStore:    sdk.NewKVStoreKey(types.DeveloperKVStoreKey),
 		CapKeyGlobalStore:       sdk.NewKVStoreKey(types.GlobalKVStoreKey),
 		CapKeyParamStore:        sdk.NewKVStoreKey(types.ParamKVStoreKey),
@@ -146,7 +139,6 @@ func NewLinoBlockchain(
 	registerEvent(lb.globalManager.WireCodec())
 	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
-	lb.infraManager = infra.NewInfraManager(lb.CapKeyInfraStore, lb.paramHolder)
 	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
 	// layer-2: middlewares
@@ -179,7 +171,6 @@ func NewLinoBlockchain(
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
 		AddRoute(proposal.RouterKey, proposal.NewHandler(
 			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
-		AddRoute(infra.RouterKey, infra.NewHandler(lb.infraManager)).
 		AddRoute(val.RouterKey, val.NewHandler(lb.valManager))
 
 	lb.QueryRouter().
@@ -188,7 +179,6 @@ func NewLinoBlockchain(
 		AddRoute(votetypes.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(devtypes.QuerierRoute, dev.NewQuerier(lb.developerManager)).
 		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
-		AddRoute(infra.QuerierRoute, infra.NewQuerier(lb.infraManager)).
 		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
@@ -205,7 +195,7 @@ func NewLinoBlockchain(
 
 	lb.MountStores(
 		lb.CapKeyMainStore, lb.CapKeyAccountStore, lb.CapKeyPostStore, lb.CapKeyValStore,
-		lb.CapKeyVoteStore, lb.CapKeyInfraStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
+		lb.CapKeyVoteStore, lb.CapKeyDeveloperStore, lb.CapKeyGlobalStore,
 		lb.CapKeyParamStore, lb.CapKeyProposalStore, lb.CapKeyReputationV2Store, lb.CapKeyBandwidthStore, lb.CapKeyPriceStore)
 	if err := lb.LoadLatestVersion(lb.CapKeyMainStore); err != nil {
 		panic(err)
@@ -227,7 +217,6 @@ func MakeCodec() *wire.Codec {
 	acctypes.RegisterWire(cdc)
 	posttypes.RegisterCodec(cdc)
 	devtypes.RegisterWire(cdc)
-	infra.RegisterWire(cdc)
 	votetypes.RegisterWire(cdc)
 	valtypes.RegisterCodec(cdc)
 	proposal.RegisterWire(cdc)
@@ -265,7 +254,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 		if err := lb.paramHolder.InitParamFromConfig(
 			ctx,
 			genesisState.GenesisParam.GlobalAllocationParam,
-			genesisState.GenesisParam.InfraInternalAllocationParam,
 			genesisState.GenesisParam.PostParam,
 			genesisState.GenesisParam.DeveloperParam,
 			genesisState.GenesisParam.ValidatorParam,
@@ -304,9 +292,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 	if err := lb.priceManager.InitGenesis(ctx, genesisState.InitCoinPrice); err != nil {
 		panic(err)
 	}
-	if err := lb.infraManager.InitGenesis(ctx); err != nil {
-		panic(err)
-	}
 	if err := lb.proposalManager.InitGenesis(ctx); err != nil {
 		panic(err)
 	}
@@ -333,12 +318,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			}
 		}
 
-		// init genesis infra
-		for _, infra := range genesisState.Infra {
-			if err := lb.toAppInfra(ctx, infra); err != nil {
-				panic(err)
-			}
-		}
 	}
 
 	// generate respoinse init message.
@@ -400,18 +379,6 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	// 	return err
 	// }
 	// return nil
-}
-
-// convert GenesisInfra to AppInfra
-func (lb *LinoBlockchain) toAppInfra(
-	ctx sdk.Context, infra GenesisInfraProvider) sdk.Error {
-	if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(infra.Name)) {
-		return ErrGenesisFailed("genesis infra account doesn't exist")
-	}
-	if err := lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey(infra.Name)); err != nil {
-		return err
-	}
-	return nil
 }
 
 // init process for a block, execute time events and fire incompetent validators
@@ -576,9 +543,8 @@ func (lb *LinoBlockchain) executeDailyEvent(ctx sdk.Context) {
 	}
 }
 
-// execute monthly event, distribute inflation to infra and application
+// execute monthly event, distribute inflation to applications.
 func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
-	lb.distributeInflationToInfraProvider(ctx)
 	// distributeInflationToDeveloper
 	err := lb.developerManager.DistributeDevInflation(ctx)
 	if err != nil {
@@ -589,44 +555,6 @@ func (lb *LinoBlockchain) executeMonthlyEvent(ctx sdk.Context) {
 
 func (lb *LinoBlockchain) executeAnnuallyEvent(ctx sdk.Context) { //nolint:unused
 	if err := lb.globalManager.SetTotalLinoAndRecalculateGrowthRate(ctx); err != nil {
-		panic(err)
-	}
-}
-
-// distribute inflation to infra provider monthly
-// TODO: encaptulate module event inside module
-func (lb *LinoBlockchain) distributeInflationToInfraProvider(ctx sdk.Context) {
-	inflation, err := lb.globalManager.GetInfraMonthlyInflation(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	lst, err := lb.infraManager.GetInfraProviderList(ctx)
-	if err != nil {
-		panic(err)
-	}
-	totalDistributedInflation := types.NewCoinFromInt64(0)
-	for idx, provider := range lst.AllInfraProviders {
-		if idx == (len(lst.AllInfraProviders) - 1) {
-			err := lb.accountManager.AddCoinToUsername(ctx, provider, inflation.Minus(totalDistributedInflation))
-			if err != nil {
-				panic(fmt.Errorf("%s: %s", err, provider))
-			}
-			break
-		}
-		percentage, err := lb.infraManager.GetUsageWeight(ctx, provider)
-		if err != nil {
-			panic(err)
-		}
-		myShareRat := inflation.ToDec().Mul(percentage)
-		myShareCoin := types.DecToCoin(myShareRat)
-		totalDistributedInflation = totalDistributedInflation.Plus(myShareCoin)
-		err = lb.accountManager.AddCoinToUsername(ctx, provider, myShareCoin)
-		if err != nil {
-			panic(err)
-		}
-	}
-	if err := lb.infraManager.ClearUsage(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -698,23 +626,6 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 	wg.Wait()
 
-	// legacy infra
-	f, err := os.Create(exportPath + infraStateFile)
-	if err != nil {
-		panic("failed to create infra state file")
-	}
-	defer f.Close()
-	jsonbytes := lb.cdc.MustMarshalJSON(lb.infraManager.Export(ctx).ToIR())
-	_, err = f.Write(jsonbytes)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("export for %s done: %d bytes\n", "infra", len(jsonbytes))
-	err = f.Sync()
-	if err != nil {
-		panic(err)
-	}
-
 	genesisState := GenesisState{}
 
 	appState, err = wire.MarshalJSONIndent(lb.cdc, genesisState)
@@ -737,18 +648,4 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		}
 		ctx.Logger().Info(fmt.Sprintf("imported: %s state", toImport.filename))
 	}
-
-	// legacy
-	f, err := os.Open(prevStateDir + infraStateFile)
-	if err != nil {
-		panic("failed to open " + err.Error())
-	}
-	defer f.Close()
-	bytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-	table := &inframodel.InfraTablesIR{}
-	lb.cdc.MustUnmarshalJSON(bytes, table)
-	lb.infraManager.Import(ctx, table)
 }

@@ -7,8 +7,6 @@ import (
 )
 
 type ParamKeeper interface {
-	GetInfraInternalAllocationParam(
-		ctx sdk.Context) (*InfraInternalAllocationParam, sdk.Error)
 	GetPostParam(ctx sdk.Context) (*PostParam, sdk.Error)
 	GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.Error)
 	GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error)
