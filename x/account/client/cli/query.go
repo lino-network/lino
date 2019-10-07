@@ -25,6 +25,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		getCmdInfo(cdc),
 		getCmdBank(cdc),
 		getCmdMeta(cdc),
+		getCmdBankByAddress(cdc),
 		getCmdListGrants(cdc),
 	)...)
 	return cmd
@@ -55,6 +56,22 @@ func getCmdBank(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			user := args[0]
 			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryAccountBank, user)
+			rst := model.AccountBank{}
+			return utils.CLIQueryJSONPrint(cdc, uri, nil,
+				func() interface{} { return &rst })
+		},
+	}
+}
+
+// getCmdBankByAddress -
+func getCmdBankByAddress(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "bank-by-address",
+		Short: "bank-by-address address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			address := args[0]
+			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryAccountBankByAddress, address)
 			rst := model.AccountBank{}
 			return utils.CLIQueryJSONPrint(cdc, uri, nil,
 				func() interface{} { return &rst })
