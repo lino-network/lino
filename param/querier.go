@@ -26,6 +26,7 @@ const (
 	QueryAccountParam                 = "account"
 	QueryPostParam                    = "post"
 	QueryReputationParam              = "reputation"
+	QueryPriceParam                   = "price"
 )
 
 // creates a querier for account REST endpoints
@@ -54,6 +55,8 @@ func NewQuerier(ph ParamHolder) sdk.Querier {
 			return queryPostParam(ctx, cdc, path[1:], req, ph)
 		case QueryReputationParam:
 			return queryReputationParam(ctx, cdc, path[1:], req, ph)
+		case QueryPriceParam:
+			return queryPriceParam(ctx, cdc, path[1:], req, ph)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown param query endpoint")
 		}
@@ -168,6 +171,15 @@ func queryPostParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.Re
 func queryReputationParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
 	repParam := ph.GetReputationParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(repParam)
+	if marshalErr != nil {
+		return nil, ErrQueryFailed()
+	}
+	return res, nil
+}
+
+func queryPriceParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
+	priceParam := ph.GetPriceParam(ctx)
+	res, marshalErr := cdc.MarshalJSON(priceParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}
