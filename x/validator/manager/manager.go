@@ -1157,9 +1157,6 @@ func (vs ValidatorManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, fil
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
-
 	// import validators.
 	for _, val := range table.Validators {
 		vs.storage.SetValidator(ctx, val.Username, &model.Validator{

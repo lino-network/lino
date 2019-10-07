@@ -377,8 +377,6 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
 	for _, v := range table.Posts {
 		pm.postStorage.SetPost(ctx, &model.Post{
 			PostID:    v.PostID,

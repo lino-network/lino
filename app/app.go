@@ -28,6 +28,7 @@ import (
 	posttypes "github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
+	pricetypes "github.com/lino-network/lino/x/price/types"
 	votemn "github.com/lino-network/lino/x/vote/manager"
 	votetypes "github.com/lino-network/lino/x/vote/types"
 
@@ -192,7 +193,8 @@ func NewLinoBlockchain(
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
 		AddRoute(bandwidthtypes.QuerierRoute, bandwidth.NewQuerier(lb.bandwidthManager)).
-		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager))
+		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager)).
+		AddRoute(pricetypes.QuerierRoute, price.NewQuerier(lb.priceManager))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)
@@ -690,6 +692,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			if err != nil {
 				panic(err)
 			}
+			fmt.Printf("Export %s Done\n", modules[i].filename)
 		}(i)
 	}
 
@@ -727,10 +730,12 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 
 	modules := lb.getImportExportModules()
 	for _, toImport := range modules {
+		ctx.Logger().Info(fmt.Sprintf("loading: %s state", toImport.filename))
 		err := toImport.module.ImportFromFile(ctx, lb.cdc, prevStateDir+toImport.filename)
 		if err != nil {
 			panic(err)
 		}
+		ctx.Logger().Info(fmt.Sprintf("imported: %s state", toImport.filename))
 	}
 
 	// legacy

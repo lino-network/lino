@@ -78,5 +78,74 @@
         "val3"
       ]
     }
+  },
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "20",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "10",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            },
+            {
+              "validator": "val2",
+              "price": "20",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            },
+            {
+              "validator": "val3",
+              "price": "30",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            }
+          ],
+          "update_at": "3600"
+        },
+        {
+          "price": "20",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "10",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            },
+            {
+              "validator": "val2",
+              "price": "20",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            },
+            {
+              "validator": "val3",
+              "price": "30",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            }
+          ],
+          "update_at": "7200"
+        }
+      ]
+    }
   }
 ]

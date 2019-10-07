@@ -70,5 +70,46 @@
         "val3"
       ]
     }
+  },
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "1200",
+          "feeded": null,
+          "update_at": "3600"
+        },
+        {
+          "price": "10",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "10",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            },
+            {
+              "validator": "val2",
+              "price": "10",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            }
+          ],
+          "update_at": "7200"
+        },
+        {
+          "price": "1200",
+          "feeded": null,
+          "update_at": "10800"
+        }
+      ]
+    }
   }
 ]

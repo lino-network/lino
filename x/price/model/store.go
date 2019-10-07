@@ -13,6 +13,7 @@ var (
 	priceHistorySubStore   = []byte{0x01} // hourly prices
 	currentPriceSubStore   = []byte{0x02} // current price
 	lastValidatorsSubStore = []byte{0x03} // validators in last update time.
+	feedHistorySubStore    = []byte{0x04} // fed history.
 )
 
 // GetFedPriceKey - price key.
@@ -33,6 +34,11 @@ func GetCurrentPriceKey() []byte {
 // GetLastValidatorsKey - get last validators.
 func GetLastValidatorsKey() []byte {
 	return lastValidatorsSubStore
+}
+
+// GetLastValidatorsKey - get last validators.
+func GetFeedHistoryKey() []byte {
+	return feedHistorySubStore
 }
 
 // PriceStorage - price storage
@@ -127,4 +133,22 @@ func (ps PriceStorage) SetLastValidators(ctx sdk.Context, last []linotypes.Accou
 	store := ctx.KVStore(ps.key)
 	bytes := ps.cdc.MustMarshalBinaryLengthPrefixed(last)
 	store.Set(GetLastValidatorsKey(), bytes)
+}
+
+func (ps PriceStorage) GetFeedHistory(ctx sdk.Context) []FeedHistory {
+	store := ctx.KVStore(ps.key)
+	key := GetFeedHistoryKey()
+	bytes := store.Get(key)
+	if bytes == nil {
+		return nil
+	}
+	history := make([]FeedHistory, 0)
+	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bytes, &history)
+	return history
+}
+
+func (ps PriceStorage) SetFeedHistory(ctx sdk.Context, history []FeedHistory) {
+	store := ctx.KVStore(ps.key)
+	bytes := ps.cdc.MustMarshalBinaryLengthPrefixed(history)
+	store.Set(GetFeedHistoryKey(), bytes)
 }
