@@ -6,6 +6,7 @@ import (
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"
 )
@@ -30,6 +31,18 @@ type GlobalStorage struct {
 // NewGlobalStorage - new global storage
 func NewGlobalStorage(key sdk.StoreKey) GlobalStorage {
 	cdc := wire.New()
+	cdc.RegisterInterface((*param.Parameter)(nil), nil)
+	cdc.RegisterConcrete(param.GlobalAllocationParam{}, "param/allocation", nil)
+	cdc.RegisterConcrete(param.InfraInternalAllocationParam{}, "param/infaAllocation", nil)
+	cdc.RegisterConcrete(param.VoteParam{}, "param/vote", nil)
+	cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
+	cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
+	cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
+	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
+	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
+	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
+	cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
+
 	wire.RegisterCrypto(cdc)
 
 	return GlobalStorage{

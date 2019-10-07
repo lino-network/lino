@@ -709,9 +709,6 @@ func (dm DeveloperManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, fil
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("%s state parsed", filepath))
-	defer ctx.Logger().Info(fmt.Sprintf("%s state imported", filepath))
-
 	// import developers
 	for _, dev := range table.Developers {
 		dm.storage.SetDeveloper(ctx, model.Developer{

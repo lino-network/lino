@@ -38,5 +38,19 @@
         "val3"
       ]
     }
+  },
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "1200",
+          "feeded": null,
+          "update_at": "3600"
+        }
+      ]
+    }
   }
 ]

@@ -24,6 +24,7 @@ const (
 	CodeInvalidQueryPath    sdk.CodeType = 111
 	CodeInvalidIDAAmount    sdk.CodeType = 112
 	CodeUnimplemented       sdk.CodeType = 113
+	CodeQueryFailed         sdk.CodeType = 114
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150

@@ -32,6 +32,7 @@ type weightedValidator struct {
 	validator linotypes.AccountKey
 	weight    linotypes.Coin
 	price     linotypes.MiniDollar
+	updatedAt int64
 }
 
 // set current price.
@@ -45,6 +46,12 @@ func (wm WeightedMedianPriceManager) InitGenesis(ctx sdk.Context, initPrice lino
 	}
 	wm.store.SetCurrentPrice(ctx, &priceTime)
 	wm.store.SetPriceHistory(ctx, []model.TimePrice{priceTime})
+	wm.store.SetFeedHistory(ctx, []model.FeedHistory{
+		{
+			Price:    initPrice,
+			UpdateAt: ctx.BlockTime().Unix(),
+		},
+	})
 	return nil
 }
 
@@ -67,6 +74,7 @@ func (wm WeightedMedianPriceManager) UpdatePrice(ctx sdk.Context) sdk.Error {
 		return err
 	}
 	var price linotypes.MiniDollar
+	var records []model.FedRecord
 	if len(wvals) == 0 {
 		// no valid price this hour, use the same price from last hour.
 		// this is irrelevant to testnet mode, CANNOT use CurrPrice.
@@ -78,12 +86,26 @@ func (wm WeightedMedianPriceManager) UpdatePrice(ctx sdk.Context) sdk.Error {
 		}
 		price = curr.Price
 	} else {
-		price = wm.calcWeightedMedian(wvals)
+		price, records = wm.calcWeightedMedian(wvals)
 	}
 	wm.updateNewPrice(ctx, model.TimePrice{
 		Price:    price,
 		UpdateAt: blocktime,
 	})
+
+	// update feed history.
+	history := wm.store.GetFeedHistory(ctx)
+	historyMaxLen := wm.param.GetPriceParam(ctx).HistoryMaxLen
+	if len(history)+1 > historyMaxLen {
+		history = history[len(history)+1-historyMaxLen:]
+	}
+	history = append(history, model.FeedHistory{
+		Price:    price,
+		Feeded:   records,
+		UpdateAt: blocktime,
+	})
+	wm.store.SetFeedHistory(ctx, history)
+
 	return nil
 }
 
@@ -146,6 +168,10 @@ func (wm WeightedMedianPriceManager) CurrPrice(ctx sdk.Context) (linotypes.MiniD
 		return linotypes.NewMiniDollar(0), err
 	}
 	return curr.Price, nil
+}
+
+func (wm WeightedMedianPriceManager) HistoryPrice(ctx sdk.Context) []model.FeedHistory {
+	return wm.store.GetFeedHistory(ctx)
 }
 
 func (wm WeightedMedianPriceManager) isValidator(ctx sdk.Context, user linotypes.AccountKey) bool {
@@ -223,6 +249,7 @@ func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []wei
 			}
 		} else {
 			wvals[i].price = fedPrice.Price
+			wvals[i].updatedAt = fedPrice.UpdateAt
 			rst = append(rst, wvals[i])
 		}
 	}
@@ -230,7 +257,8 @@ func (wm WeightedMedianPriceManager) filterAndSlash(ctx sdk.Context, wvals []wei
 }
 
 // calcWeightedMedian - return weighted median. pre: len(vals) > 0
-func (wm WeightedMedianPriceManager) calcWeightedMedian(wvals []weightedValidator) linotypes.MiniDollar {
+func (wm WeightedMedianPriceManager) calcWeightedMedian(wvals []weightedValidator) (linotypes.MiniDollar, []model.FedRecord) {
+	records := make([]model.FedRecord, 0)
 	// sort
 	sort.Slice(wvals, func(i, j int) bool {
 		left := wvals[i]
@@ -241,6 +269,16 @@ func (wm WeightedMedianPriceManager) calcWeightedMedian(wvals []weightedValidato
 		return !left.weight.IsGTE(right.weight)
 	})
 
+	// update records
+	for _, v := range wvals {
+		records = append(records, model.FedRecord{
+			Validator: v.validator,
+			Price:     v.price,
+			Power:     v.weight,
+			UpdateAt:  v.updatedAt,
+		})
+	}
+
 	totalPower := sdk.NewInt(0)
 	for _, v := range wvals {
 		totalPower = totalPower.Add(v.weight.Amount)
@@ -248,12 +286,12 @@ func (wm WeightedMedianPriceManager) calcWeightedMedian(wvals []weightedValidato
 	median := totalPower.QuoRaw(2)
 	for _, val := range wvals {
 		if median.LT(val.weight.Amount) {
-			return val.price
+			return val.price, records
 		}
 		median = median.Sub(val.weight.Amount)
 	}
 	// impossible to hit this path.
-	return wvals[0].price
+	return wvals[0].price, records
 }
 
 func (wm WeightedMedianPriceManager) lastRoundValidatorSet(ctx sdk.Context) map[linotypes.AccountKey]bool {

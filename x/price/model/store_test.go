@@ -164,3 +164,49 @@ func (suite *priceStoreTestSuite) TestGetSetLastValidators() {
 
 	suite.Golden()
 }
+
+func (suite *priceStoreTestSuite) TestGetSetFeedHistory() {
+	store := suite.store
+	ctx := suite.Ctx
+	record1 := FeedHistory{
+		Price: linotypes.NewMiniDollar(1235),
+		Feeded: []FedRecord{
+			{
+				Validator: "val1",
+				Price:     linotypes.NewMiniDollar(4567),
+				Power:     linotypes.NewCoinFromInt64(1000),
+				UpdateAt:  1234,
+			},
+			{
+				Validator: "val2",
+				Price:     linotypes.NewMiniDollar(1235),
+				Power:     linotypes.NewCoinFromInt64(1000),
+				UpdateAt:  1255,
+			},
+			{
+				Validator: "val3",
+				Price:     linotypes.NewMiniDollar(9999),
+				Power:     linotypes.NewCoinFromInt64(1000),
+				UpdateAt:  1299,
+			},
+		},
+		UpdateAt: 12345,
+	}
+	record2 := record1
+	record2.Feeded[1].Price = linotypes.NewMiniDollar(7777)
+	record2.Price = linotypes.NewMiniDollar(7777)
+	record2.UpdateAt = 567989
+
+	history1 := []FeedHistory{record1}
+	history2 := []FeedHistory{record1, record2}
+
+	history := store.GetFeedHistory(ctx)
+	suite.Equal([]FeedHistory(nil), history)
+
+	store.SetFeedHistory(ctx, history1)
+	suite.Equal(history1, store.GetFeedHistory(ctx))
+	store.SetFeedHistory(ctx, history2)
+	suite.Equal(history2, store.GetFeedHistory(ctx))
+
+	suite.Golden()
+}

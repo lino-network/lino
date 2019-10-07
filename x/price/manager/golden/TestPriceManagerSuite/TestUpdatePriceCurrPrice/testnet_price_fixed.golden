@@ -82,5 +82,104 @@
         "val3"
       ]
     }
+  },
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "1000",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "1000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            },
+            {
+              "validator": "val2",
+              "price": "1000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            },
+            {
+              "validator": "val3",
+              "price": "1000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "600"
+            }
+          ],
+          "update_at": "3600"
+        },
+        {
+          "price": "2000",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "2000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            },
+            {
+              "validator": "val2",
+              "price": "2000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            },
+            {
+              "validator": "val3",
+              "price": "2000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "4200"
+            }
+          ],
+          "update_at": "7200"
+        },
+        {
+          "price": "3000",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "3000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "7800"
+            },
+            {
+              "validator": "val2",
+              "price": "3000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "7800"
+            },
+            {
+              "validator": "val3",
+              "price": "3000",
+              "power": {
+                "amount": "100"
+              },
+              "update_at": "7800"
+            }
+          ],
+          "update_at": "10800"
+        }
+      ]
+    }
   }
 ]

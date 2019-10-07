@@ -26,6 +26,11 @@ func ErrInvalidQueryPath() sdk.Error {
 	return NewError(CodeInvalidQueryPath, "query path is invalid")
 }
 
+// ErrQueryFailed - error if query path length is incorrect or content is invalid
+func ErrQueryFailed(reason string) sdk.Error {
+	return NewError(CodeQueryFailed, "query failed: "+reason)
+}
+
 // ErrInvalidIDAAmount - error if the IDA amount is invalid.
 func ErrInvalidIDAAmount() sdk.Error {
 	return NewError(CodeInvalidIDAAmount, "Invalid IDA amount")
