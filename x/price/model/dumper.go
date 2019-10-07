@@ -13,5 +13,6 @@ func NewPriceDumper(store PriceStorage) *testutils.Dumper {
 	dumper.RegisterType(&[]TimePrice{}, "lino/price/history", priceHistorySubStore)
 	dumper.RegisterType(&TimePrice{}, "lino/price/current", currentPriceSubStore)
 	dumper.RegisterType(&[]linotypes.AccountKey{}, "lino/price/lastvals", lastValidatorsSubStore)
+	dumper.RegisterType(&[]FeedHistory{}, "lino/price/feedhistory", feedHistorySubStore)
 	return dumper
 }

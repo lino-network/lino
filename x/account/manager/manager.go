@@ -690,7 +690,7 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 			Username:        v.Username,
 		}
 		if banks[string(v.Address)] > 1 {
-			panic(fmt.Errorf("duplicated address: %s", v))
+			panic(fmt.Errorf("duplicated address: %+v", v))
 		}
 		banks[string(v.Address)] = 2
 		accManager.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)

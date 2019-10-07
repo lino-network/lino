@@ -28,6 +28,7 @@ import (
 	posttypes "github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
+	pricetypes "github.com/lino-network/lino/x/price/types"
 	votemn "github.com/lino-network/lino/x/vote/manager"
 	votetypes "github.com/lino-network/lino/x/vote/types"
 
@@ -192,7 +193,8 @@ func NewLinoBlockchain(
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
 		AddRoute(bandwidthtypes.QuerierRoute, bandwidth.NewQuerier(lb.bandwidthManager)).
-		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager))
+		AddRoute(rep.QuerierRoute, rep.NewQuerier(lb.reputationManager)).
+		AddRoute(pricetypes.QuerierRoute, price.NewQuerier(lb.priceManager))
 
 	lb.SetInitChainer(lb.initChainer)
 	lb.SetBeginBlocker(lb.beginBlocker)

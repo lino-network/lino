@@ -22,5 +22,19 @@
         "update_at": "0"
       }
     }
+  },
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "1234",
+          "feeded": null,
+          "update_at": "0"
+        }
+      ]
+    }
   }
 ]

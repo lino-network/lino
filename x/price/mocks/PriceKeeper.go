@@ -6,6 +6,8 @@ import (
 	linotypes "github.com/lino-network/lino/types"
 	mock "github.com/stretchr/testify/mock"
 
+	model "github.com/lino-network/lino/x/price/model"
+
 	types "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -37,6 +39,29 @@ func (_m *PriceKeeper) CoinToMiniDollar(ctx types.Context, coin linotypes.Coin) 
 	return r0, r1
 }
 
+// CurrPrice provides a mock function with given fields: ctx
+func (_m *PriceKeeper) CurrPrice(ctx types.Context) (linotypes.MiniDollar, types.Error) {
+	ret := _m.Called(ctx)
+
+	var r0 linotypes.MiniDollar
+	if rf, ok := ret.Get(0).(func(types.Context) linotypes.MiniDollar); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(linotypes.MiniDollar)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // FeedPrice provides a mock function with given fields: ctx, validator, _a2
 func (_m *PriceKeeper) FeedPrice(ctx types.Context, validator linotypes.AccountKey, _a2 linotypes.MiniDollar) types.Error {
 	ret := _m.Called(ctx, validator, _a2)
@@ -47,6 +72,22 @@ func (_m *PriceKeeper) FeedPrice(ctx types.Context, validator linotypes.AccountK
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// HistoryPrice provides a mock function with given fields: ctx
+func (_m *PriceKeeper) HistoryPrice(ctx types.Context) []model.FeedHistory {
+	ret := _m.Called(ctx)
+
+	var r0 []model.FeedHistory
+	if rf, ok := ret.Get(0).(func(types.Context) []model.FeedHistory); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.FeedHistory)
 		}
 	}
 

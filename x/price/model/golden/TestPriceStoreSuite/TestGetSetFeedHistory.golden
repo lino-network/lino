@@ -1,0 +1,71 @@
+[
+  {
+    "prefix": "4",
+    "key": "",
+    "val": {
+      "type": "lino/price/feedhistory",
+      "value": [
+        {
+          "price": "1235",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "4567",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1234"
+            },
+            {
+              "validator": "val2",
+              "price": "7777",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1255"
+            },
+            {
+              "validator": "val3",
+              "price": "9999",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1299"
+            }
+          ],
+          "update_at": "12345"
+        },
+        {
+          "price": "7777",
+          "feeded": [
+            {
+              "validator": "val1",
+              "price": "4567",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1234"
+            },
+            {
+              "validator": "val2",
+              "price": "7777",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1255"
+            },
+            {
+              "validator": "val3",
+              "price": "9999",
+              "power": {
+                "amount": "1000"
+              },
+              "update_at": "1299"
+            }
+          ],
+          "update_at": "567989"
+        }
+      ]
+    }
+  }
+]
