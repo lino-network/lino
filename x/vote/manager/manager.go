@@ -173,7 +173,7 @@ func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey,
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
 		return err
 	}
-	// add linoStake to global stat
+	// minus linoStake from global stat
 	if err := vm.gm.MinusLinoStakeFromStat(ctx, amount); err != nil {
 		return err
 	}
@@ -292,6 +292,10 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
 	if err := vm.storage.SetVoter(ctx, username, voter); err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+	// minus linoStake from global stat
+	if err := vm.gm.MinusLinoStakeFromStat(ctx, slashedAmount); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
 	if err := vm.AfterSlashing(ctx, username); err != nil {
