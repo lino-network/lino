@@ -6,7 +6,6 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	model "github.com/lino-network/lino/x/reputation/internal"
 	repv2 "github.com/lino-network/lino/x/reputation/repv2"
 )
 
@@ -37,21 +36,21 @@ func (rep ReputationManager) getHandlerV2(ctx sdk.Context) repv2.Reputation {
 	return handler
 }
 
-func (rep ReputationManager) checkUsername(uid model.Uid) sdk.Error {
+func (rep ReputationManager) checkUsername(uid repv2.Uid) sdk.Error {
 	if len(uid) == 0 {
 		return ErrAccountNotFound("")
 	}
 	return nil
 }
 
-func (rep ReputationManager) checkPost(pid model.Pid) sdk.Error {
+func (rep ReputationManager) checkPost(pid repv2.Pid) sdk.Error {
 	if len(pid) == 0 {
 		return ErrPostNotFound("")
 	}
 	return nil
 }
 
-func (rep ReputationManager) basicCheck(uid model.Uid, pid model.Pid) sdk.Error {
+func (rep ReputationManager) basicCheck(uid repv2.Uid, pid repv2.Pid) sdk.Error {
 	err := rep.checkUsername(uid)
 	if err != nil {
 		return err
@@ -66,7 +65,7 @@ func (rep ReputationManager) DonateAt(ctx sdk.Context,
 	username types.AccountKey, post types.Permlink, amount types.MiniDollar) (types.MiniDollar, sdk.Error) {
 	uid := string(username)
 	pid := string(post)
-	err := rep.basicCheck(uid, pid)
+	err := rep.basicCheck(repv2.Uid(uid), repv2.Pid(pid))
 	if err != nil {
 		return types.NewMiniDollar(0), err
 	}
@@ -87,7 +86,7 @@ func (rep ReputationManager) Update(ctx sdk.Context) sdk.Error {
 // GetRepution - return reputation of @p username, costomnerScore + freeScore.
 func (rep ReputationManager) GetReputation(ctx sdk.Context, username types.AccountKey) (types.MiniDollar, sdk.Error) {
 	uid := string(username)
-	err := rep.checkUsername(uid)
+	err := rep.checkUsername(repv2.Uid(uid))
 	if err != nil {
 		return types.NewMiniDollar(0), err
 	}
