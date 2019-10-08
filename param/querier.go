@@ -16,16 +16,16 @@ const (
 	// QuerierRoute is the querier route for param
 	QuerierRoute = ModuleName
 
-	QueryAllocationParam              = "allocation"
-	QueryDeveloperParam               = "developer"
-	QueryVoteParam                    = "vote"
-	QueryProposalParam                = "proposal"
-	QueryValidatorParam               = "validator"
-	QueryBandwidthParam               = "bandwidth"
-	QueryAccountParam                 = "account"
-	QueryPostParam                    = "post"
-	QueryReputationParam              = "reputation"
-	QueryPriceParam                   = "price"
+	QueryAllocationParam = "allocation"
+	QueryDeveloperParam  = "developer"
+	QueryVoteParam       = "vote"
+	QueryProposalParam   = "proposal"
+	QueryValidatorParam  = "validator"
+	QueryBandwidthParam  = "bandwidth"
+	QueryAccountParam    = "account"
+	QueryPostParam       = "post"
+	QueryReputationParam = "reputation"
+	QueryPriceParam      = "price"
 )
 
 // creates a querier for account REST endpoints

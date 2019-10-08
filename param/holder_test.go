@@ -203,7 +203,7 @@ func TestInitParam(t *testing.T) {
 
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(85, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
@@ -306,7 +306,7 @@ func TestInitParamFromConfig(t *testing.T) {
 	ctx := getContext()
 	globalAllocationParam := GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(85, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}

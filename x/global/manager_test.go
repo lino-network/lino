@@ -422,7 +422,6 @@ func TestDistributeHourlyInflation(t *testing.T) {
 	expectContentCreatorInflation := types.NewCoinFromInt64(0)
 	expectValidatorInflation := types.NewCoinFromInt64(0)
 	expectDeveloperInflation := types.NewCoinFromInt64(0)
-	expectInfraInflation := types.NewCoinFromInt64(0)
 
 	globalAllocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
@@ -449,11 +448,7 @@ func TestDistributeHourlyInflation(t *testing.T) {
 		expectDeveloperInflation =
 			expectDeveloperInflation.Plus(
 				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.DeveloperAllocation)))
-		expectInfraInflation =
-			expectInfraInflation.Plus(
-				types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.InfraAllocation)))
 		assert.True(t, expectContentCreatorInflation.IsEqual(consumptionMeta.ConsumptionRewardPool))
-		assert.True(t, expectInfraInflation.IsEqual(inflationPool.InfraInflationPool))
 		assert.True(t, expectDeveloperInflation.IsEqual(inflationPool.DeveloperInflationPool))
 		assert.True(t, expectValidatorInflation.IsEqual(inflationPool.ValidatorInflationPool))
 	}
@@ -758,25 +753,6 @@ func TestGetValidatorHourlyInflation(t *testing.T) {
 	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalValidatorInflation))
-}
-
-func TestGetInfraMonthlyInflation(t *testing.T) {
-	ctx, gm := setupTest(t)
-	totalInfraInflation := types.NewCoinFromInt64(10000 * 100)
-	inflationPool := &model.InflationPool{
-		InfraInflationPool: totalInfraInflation,
-	}
-	err := gm.storage.SetInflationPool(ctx, inflationPool)
-	assert.Nil(t, err)
-	coin, err := gm.GetInfraMonthlyInflation(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, totalInfraInflation, coin)
-	pool, err := gm.storage.GetInflationPool(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, types.NewCoinFromInt64(0), pool.InfraInflationPool)
-	globalMeta, err := gm.storage.GetGlobalMeta(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, globalMeta.TotalLinoCoin, types.NewCoinFromInt64(10000*types.Decimals).Plus(totalInfraInflation))
 }
 
 func TestPopDeveloperMonthlyInflation(t *testing.T) {

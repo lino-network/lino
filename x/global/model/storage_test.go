@@ -74,7 +74,6 @@ func TestGlobalStorageGenesis(t *testing.T) {
 		ConsumptionFreezingPeriodSec: 24 * 7 * 3600,
 	}
 	inflationPool := InflationPool{
-		InfraInflationPool:     types.NewCoinFromInt64(0),
 		DeveloperInflationPool: types.NewCoinFromInt64(0),
 		ValidatorInflationPool: types.NewCoinFromInt64(0),
 	}

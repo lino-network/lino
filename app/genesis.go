@@ -49,7 +49,6 @@ type GenesisAppDeveloper struct {
 	AppMetaData string `json:"app_meta_data"`
 }
 
-
 // GenesisParam - genesis parameters
 type GenesisParam struct {
 	InitFromConfig bool `json:"init_from_config"`

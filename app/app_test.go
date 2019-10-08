@@ -20,7 +20,6 @@ import (
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	globalModel "github.com/lino-network/lino/x/global/model"
-	infraModel "github.com/lino-network/lino/x/infra/model"
 	posttypes "github.com/lino-network/lino/x/post/types"
 )
 
@@ -117,9 +116,6 @@ func TestGenesisAcc(t *testing.T) {
 		{"developer", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
 			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			false, secp256k1.GenPrivKey().PubKey()},
-		{"infra", types.NewCoinFromInt64(500000000 * types.Decimals), secp256k1.GenPrivKey().PubKey(),
-			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			false, secp256k1.GenPrivKey().PubKey()},
 	}
 	genesisState := GenesisState{
 		InitCoinPrice: types.NewMiniDollar(1200),
@@ -145,11 +141,7 @@ func TestGenesisAcc(t *testing.T) {
 	// 	Description: "",
 	// 	AppMetaData: "",
 	// }
-	genesisInfraProvider := GenesisInfraProvider{
-		Name: "infra",
-	}
 	// genesisState.Developers = append(genesisState.Developers, genesisAppDeveloper)
-	genesisState.Infra = append(genesisState.Infra, genesisInfraProvider)
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
@@ -189,14 +181,9 @@ func TestGenesisFromConfig(t *testing.T) {
 		true,
 		param.GlobalAllocationParam{
 			GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-			InfraAllocation:          types.NewDecFromRat(20, 100),
-			ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+			ContentCreatorAllocation: types.NewDecFromRat(85, 100),
 			DeveloperAllocation:      types.NewDecFromRat(10, 100),
 			ValidatorAllocation:      types.NewDecFromRat(5, 100),
-		},
-		param.InfraInternalAllocationParam{
-			StorageAllocation: types.NewDecFromRat(50, 100),
-			CDNAllocation:     types.NewDecFromRat(50, 100),
 		},
 		param.VoteParam{
 			MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -317,9 +304,6 @@ func TestGenesisFromConfig(t *testing.T) {
 	globalParam, err := lb.paramHolder.GetGlobalAllocationParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, genesisState.GenesisParam.GlobalAllocationParam, *globalParam)
-	infraAllocationParam, err := lb.paramHolder.GetInfraInternalAllocationParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, genesisState.GenesisParam.InfraInternalAllocationParam, *infraAllocationParam)
 }
 
 func TestDistributeInflationToValidators(t *testing.T) {
@@ -439,151 +423,6 @@ func TestDistributeInflationToValidator(t *testing.T) {
 	}
 }
 
-func TestDistributeInflationToInfraProvider(t *testing.T) {
-	lb := newLinoBlockchain(t, 21)
-	cases := map[string]struct {
-		beforeDistributionInflationPool types.Coin
-		pastMinutes                     int64
-		numberOfInfraProvider           int
-		consumptionList                 []int64
-	}{
-		"first distribution": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth,
-			numberOfInfraProvider:           1,
-			consumptionList:                 []int64{0},
-		},
-		"test distribution need to be rounded case": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth,
-			numberOfInfraProvider:           3,
-			consumptionList:                 []int64{0, 0, 0},
-		},
-		"test distribution based on consumption": {
-			beforeDistributionInflationPool: types.NewCoinFromInt64(1000 * types.Decimals),
-			pastMinutes:                     types.MinutesPerMonth,
-			numberOfInfraProvider:           3,
-			consumptionList:                 []int64{10, 0, 20},
-		},
-	}
-	for testName, cs := range cases {
-		lb := newLinoBlockchain(t, 21)
-		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		infraStorage := infraModel.NewInfraProviderStorage(lb.CapKeyInfraStore)
-		totalWeight := int64(0)
-		for i := 0; i < cs.numberOfInfraProvider; i++ {
-			err := lb.accountManager.CreateAccount(
-				ctx, types.AccountKey("infra"+strconv.Itoa(i)),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-			if err != nil {
-				t.Errorf("%s: failed to register account, got err %v", testName, err)
-			}
-			err = lb.infraManager.RegisterInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
-			if err != nil {
-				t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
-			}
-			infra, _ := infraStorage.GetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
-			infra.Usage = cs.consumptionList[i]
-			err = infraStorage.SetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)), infra)
-			if err != nil {
-				panic(err)
-			}
-			totalWeight += cs.consumptionList[i]
-		}
-		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
-		err := globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
-			InfraInflationPool: cs.beforeDistributionInflationPool,
-		})
-		if err != nil {
-			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
-		}
-
-		lb.distributeInflationToInfraProvider(ctx)
-		inflationPool, err := globalStore.GetInflationPool(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
-		}
-
-		if !inflationPool.InfraInflationPool.IsZero() {
-			t.Errorf(
-				"%s: diff infra inflation pool, got %v, want %v",
-				testName, inflationPool.InfraInflationPool,
-				types.NewCoinFromInt64(0))
-			return
-		}
-
-		actualInflation := types.NewCoinFromInt64(0)
-		for i := 0; i < cs.numberOfInfraProvider; i++ {
-			saving, err :=
-				lb.accountManager.GetSavingFromUsername(
-					ctx, types.AccountKey("infra"+strconv.Itoa(i)))
-			assert.Nil(t, err)
-			var inflation types.Coin
-			if totalWeight == 0 {
-				inflation =
-					types.DecToCoin(
-						types.NewDecFromRat(1, int64(cs.numberOfInfraProvider)).
-							Mul(cs.beforeDistributionInflationPool.ToDec()))
-			} else {
-				inflation =
-					types.DecToCoin(
-						types.NewDecFromRat(cs.consumptionList[i], totalWeight).
-							Mul(cs.beforeDistributionInflationPool.ToDec()))
-			}
-			if i == (cs.numberOfInfraProvider - 1) {
-				inflation = cs.beforeDistributionInflationPool.Minus(actualInflation)
-			}
-			actualInflation = actualInflation.Plus(inflation)
-			if !saving.IsEqual(inflation) {
-				t.Errorf(
-					"%s: diff inflation for %v, got %v, want %v",
-					testName, "dev"+strconv.Itoa(i), inflation,
-					saving)
-				return
-			}
-			infra, err := infraStorage.GetInfraProvider(ctx, types.AccountKey("infra"+strconv.Itoa(i)))
-			assert.Nil(t, err)
-			assert.Equal(t, infra.Usage, int64(0))
-		}
-	}
-	for testName, cs := range cases {
-		ctx := lb.BaseApp.NewContext(true, abci.Header{})
-		err := lb.globalManager.SetPastMinutes(ctx, cs.pastMinutes)
-		if err != nil {
-			t.Errorf("%s: failed to set past minutes, got err %v", testName, err)
-		}
-		_ = lb.accountManager.CreateAccount(
-			ctx, types.AccountKey("lino"),
-			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-		err = lb.infraManager.RegisterInfraProvider(ctx, "lino")
-		if err != nil {
-			t.Errorf("%s: failed to register infra provider, got err %v", testName, err)
-		}
-
-		globalStore := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
-		err = globalStore.SetInflationPool(ctx, &globalModel.InflationPool{
-			InfraInflationPool: cs.beforeDistributionInflationPool,
-		})
-		if err != nil {
-			t.Errorf("%s: failed to set inflation pool, got err %v", testName, err)
-		}
-
-		lb.distributeInflationToInfraProvider(ctx)
-		inflationPool, err := globalStore.GetInflationPool(ctx)
-		if err != nil {
-			t.Errorf("%s: failed to get inflation pool, got err %v", testName, err)
-		}
-
-		if !inflationPool.InfraInflationPool.IsZero() {
-			t.Errorf(
-				"%s: diff infra inflation pool, got %v, want %v",
-				testName, inflationPool.InfraInflationPool,
-				types.NewCoinFromInt64(0))
-			return
-		}
-	}
-}
-
 func TestHourlyEvent(t *testing.T) {
 	lb := newLinoBlockchain(t, 21)
 	gs := globalModel.NewGlobalStorage(lb.CapKeyGlobalStore)
@@ -595,7 +434,6 @@ func TestHourlyEvent(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectConsumptionPool := types.NewCoinFromInt64(0)
-	expectInfraPool := types.NewCoinFromInt64(0)
 	for i := 1; i < types.MinutesPerMonth/10; i++ {
 		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
 		lb.increaseMinute(ctx)
@@ -614,19 +452,10 @@ func TestHourlyEvent(t *testing.T) {
 			expectConsumptionPool =
 				expectConsumptionPool.Plus(
 					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation)))
-			expectInfraPool =
-				expectInfraPool.Plus(
-					types.DecToCoin(hourlyInflation.ToDec().Mul(globalAllocation.InfraAllocation)))
 			assert.Equal(t, expectConsumptionPool, consumptionMeta.ConsumptionRewardPool)
 
 			inflationPool, _ := gs.GetInflationPool(ctx)
 			assert.Equal(t, types.NewCoinFromInt64(0), inflationPool.ValidatorInflationPool)
-
-			if i%types.MinutesPerMonth == 0 {
-				expectInfraPool = types.NewCoinFromInt64(0)
-			}
-
-			assert.Equal(t, expectInfraPool, inflationPool.InfraInflationPool)
 		}
 	}
 }

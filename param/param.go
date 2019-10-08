@@ -20,6 +20,14 @@ type GlobalAllocationParam struct {
 	ValidatorAllocation      sdk.Dec `json:"validator_allocation"`
 }
 
+func (gp GlobalAllocationParam) IsValid() bool {
+	sum := sdk.NewDec(0)
+	sum = sum.Add(gp.ContentCreatorAllocation)
+	sum = sum.Add(gp.DeveloperAllocation)
+	sum = sum.Add(gp.ValidatorAllocation)
+	return sum.Equal(sdk.NewDec(1))
+}
+
 // VoteParam - vote parameters
 // MinStakeIn - minimum stake for stake in msg
 // VoterCoinReturnIntervalSec - when withdraw or revoke, the deposit return to voter by return event

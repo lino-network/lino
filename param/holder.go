@@ -1,6 +1,7 @@
 package param
 
 import (
+	"fmt"
 	"time"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
@@ -10,18 +11,18 @@ import (
 )
 
 var (
-	allocationParamSubStore              = []byte{0x00} // SubStore for allocation
-	evaluateOfContentValueParamSubStore  = []byte{0x02} // Substore for evaluate of content value
-	developerParamSubStore               = []byte{0x03} // Substore for developer param
-	voteParamSubStore                    = []byte{0x04} // Substore for vote param
-	proposalParamSubStore                = []byte{0x05} // Substore for proposal param
-	validatorParamSubStore               = []byte{0x06} // Substore for validator param
-	coinDayParamSubStore                 = []byte{0x07} // Substore for coin day param
-	bandwidthParamSubStore               = []byte{0x08} // Substore for bandwidth param
-	accountParamSubstore                 = []byte{0x09} // Substore for account param
-	postParamSubStore                    = []byte{0x0a} // Substore for evaluate of content value
-	reputationParamSubStore              = []byte{0x0b} // Substore for reputation parameters
-	priceParamSubStore                   = []byte{0x0c} // Substore for price parameters
+	allocationParamSubStore             = []byte{0x00} // SubStore for allocation
+	evaluateOfContentValueParamSubStore = []byte{0x02} // Substore for evaluate of content value
+	developerParamSubStore              = []byte{0x03} // Substore for developer param
+	voteParamSubStore                   = []byte{0x04} // Substore for vote param
+	proposalParamSubStore               = []byte{0x05} // Substore for proposal param
+	validatorParamSubStore              = []byte{0x06} // Substore for validator param
+	coinDayParamSubStore                = []byte{0x07} // Substore for coin day param
+	bandwidthParamSubStore              = []byte{0x08} // Substore for bandwidth param
+	accountParamSubstore                = []byte{0x09} // Substore for account param
+	postParamSubStore                   = []byte{0x0a} // Substore for evaluate of content value
+	reputationParamSubStore             = []byte{0x0b} // Substore for reputation parameters
+	priceParamSubStore                  = []byte{0x0c} // Substore for price parameters
 
 	// AnnualInflationCeiling - annual inflation upper bound
 	AnnualInflationCeiling = types.NewDecFromRat(98, 1000)
@@ -50,7 +51,7 @@ func NewParamHolder(key sdk.StoreKey) ParamHolder {
 func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	globalAllocationParam := &GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(85, 100),
 		DeveloperAllocation:      types.NewDecFromRat(10, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
@@ -197,6 +198,9 @@ func (ph ParamHolder) InitParamFromConfig(
 	accParam AccountParam,
 	repParam ReputationParam,
 	priceParam PriceParam) error {
+	if !globalParam.IsValid() {
+		return fmt.Errorf("invalid global allocation param: %+v", globalParam)
+	}
 	if err := ph.setGlobalAllocationParam(ctx, &globalParam); err != nil {
 		return err
 	}
