@@ -180,7 +180,6 @@ const (
 	CodeInvalidValidator               sdk.CodeType = 512
 
 	// Lino global errors reserve 600 ~ 699
-	CodeInfraInflationCoinConversion           sdk.CodeType = 600
 	CodeContentCreatorCoinConversion           sdk.CodeType = 601
 	CodeDeveloperCoinConversion                sdk.CodeType = 602
 	CodeValidatorCoinConversion                sdk.CodeType = 603
@@ -230,16 +229,6 @@ const (
 	CodeFrozenAmountIsNotEmpty         sdk.CodeType = 717
 	CodeNoDuty                         sdk.CodeType = 718
 
-	// Lino infra errors reserve 800 ~ 899
-	CodeInfraProviderNotFound              sdk.CodeType = 800
-	CodeInfraProviderListNotFound          sdk.CodeType = 801
-	CodeFailedToMarshalInfraProvider       sdk.CodeType = 802
-	CodeFailedToMarshalInfraProviderList   sdk.CodeType = 803
-	CodeFailedToUnmarshalInfraProvider     sdk.CodeType = 804
-	CodeFailedToUnmarshalInfraProviderList sdk.CodeType = 805
-	CodeInvalidUsage                       sdk.CodeType = 806
-	CodeInfraQueryFailed                   sdk.CodeType = 807
-
 	// Lino developer errors reserve 900 ~ 999
 	CodeDeveloperListNotFound          sdk.CodeType = 900
 	CodeFailedToMarshalDeveloper       sdk.CodeType = 901
@@ -277,45 +266,42 @@ const (
 	CodeInsuffientReservePool          sdk.CodeType = 933
 
 	// Param errors reserve 1000 ~ 1099
-	CodeParamHolderGenesisError                       sdk.CodeType = 1000
-	CodeDeveloperParamNotFound                        sdk.CodeType = 1001
-	CodeValidatorParamNotFound                        sdk.CodeType = 1002
-	CodeCoinDayParamNotFound                          sdk.CodeType = 1003
-	CodeBandwidthParamNotFound                        sdk.CodeType = 1004
-	CodeAccountParamNotFound                          sdk.CodeType = 1005
-	CodeVoteParamNotFound                             sdk.CodeType = 1006
-	CodeProposalParamNotFound                         sdk.CodeType = 1007
-	CodeGlobalAllocationParamNotFound                 sdk.CodeType = 1008
-	CodeInfraAllocationParamNotFound                  sdk.CodeType = 1009
-	CodePostParamNotFound                             sdk.CodeType = 1010
-	CodeInvalidaParameter                             sdk.CodeType = 1011
-	CodeEvaluateOfContentValueParamNotFound           sdk.CodeType = 1012
-	CodeFailedToUnmarshalGlobalAllocationParam        sdk.CodeType = 1013
-	CodeFailedToUnmarshalPostParam                    sdk.CodeType = 1014
-	CodeFailedToUnmarshalValidatorParam               sdk.CodeType = 1015
-	CodeFailedToUnmarshalEvaluateOfContentValueParam  sdk.CodeType = 1016
-	CodeFailedToUnmarshalInfraInternalAllocationParam sdk.CodeType = 1017
-	CodeFailedToUnmarshalDeveloperParam               sdk.CodeType = 1018
-	CodeFailedToUnmarshalVoteParam                    sdk.CodeType = 1019
-	CodeFailedToUnmarshalProposalParam                sdk.CodeType = 1020
-	CodeFailedToUnmarshalCoinDayParam                 sdk.CodeType = 1021
-	CodeFailedToUnmarshalBandwidthParam               sdk.CodeType = 1022
-	CodeFailedToUnmarshalAccountParam                 sdk.CodeType = 1023
-	CodeFailedToMarshalGlobalAllocationParam          sdk.CodeType = 1024
-	CodeFailedToMarshalPostParam                      sdk.CodeType = 1025
-	CodeFailedToMarshalValidatorParam                 sdk.CodeType = 1026
-	CodeFailedToMarshalEvaluateOfContentValueParam    sdk.CodeType = 1027
-	CodeFailedToMarshalInfraInternalAllocationParam   sdk.CodeType = 1028
-	CodeFailedToMarshalDeveloperParam                 sdk.CodeType = 1029
-	CodeFailedToMarshalVoteParam                      sdk.CodeType = 1030
-	CodeFailedToMarshalProposalParam                  sdk.CodeType = 1031
-	CodeFailedToMarshalCoinDayParam                   sdk.CodeType = 1032
-	CodeFailedToMarshalBandwidthParam                 sdk.CodeType = 1033
-	CodeFailedToMarshalAccountParam                   sdk.CodeType = 1034
-	CodeFailedToMarshalReputationParam                sdk.CodeType = 1035
-	CodeFailedToUnmarshalReputationParam              sdk.CodeType = 1036
-	CodeReputationParamNotFound                       sdk.CodeType = 1037
-	CodeParamQueryFailed                              sdk.CodeType = 1038
+	CodeParamHolderGenesisError                      sdk.CodeType = 1000
+	CodeDeveloperParamNotFound                       sdk.CodeType = 1001
+	CodeValidatorParamNotFound                       sdk.CodeType = 1002
+	CodeCoinDayParamNotFound                         sdk.CodeType = 1003
+	CodeBandwidthParamNotFound                       sdk.CodeType = 1004
+	CodeAccountParamNotFound                         sdk.CodeType = 1005
+	CodeVoteParamNotFound                            sdk.CodeType = 1006
+	CodeProposalParamNotFound                        sdk.CodeType = 1007
+	CodeGlobalAllocationParamNotFound                sdk.CodeType = 1008
+	CodePostParamNotFound                            sdk.CodeType = 1010
+	CodeInvalidaParameter                            sdk.CodeType = 1011
+	CodeEvaluateOfContentValueParamNotFound          sdk.CodeType = 1012
+	CodeFailedToUnmarshalGlobalAllocationParam       sdk.CodeType = 1013
+	CodeFailedToUnmarshalPostParam                   sdk.CodeType = 1014
+	CodeFailedToUnmarshalValidatorParam              sdk.CodeType = 1015
+	CodeFailedToUnmarshalEvaluateOfContentValueParam sdk.CodeType = 1016
+	CodeFailedToUnmarshalDeveloperParam              sdk.CodeType = 1018
+	CodeFailedToUnmarshalVoteParam                   sdk.CodeType = 1019
+	CodeFailedToUnmarshalProposalParam               sdk.CodeType = 1020
+	CodeFailedToUnmarshalCoinDayParam                sdk.CodeType = 1021
+	CodeFailedToUnmarshalBandwidthParam              sdk.CodeType = 1022
+	CodeFailedToUnmarshalAccountParam                sdk.CodeType = 1023
+	CodeFailedToMarshalGlobalAllocationParam         sdk.CodeType = 1024
+	CodeFailedToMarshalPostParam                     sdk.CodeType = 1025
+	CodeFailedToMarshalValidatorParam                sdk.CodeType = 1026
+	CodeFailedToMarshalEvaluateOfContentValueParam   sdk.CodeType = 1027
+	CodeFailedToMarshalDeveloperParam                sdk.CodeType = 1029
+	CodeFailedToMarshalVoteParam                     sdk.CodeType = 1030
+	CodeFailedToMarshalProposalParam                 sdk.CodeType = 1031
+	CodeFailedToMarshalCoinDayParam                  sdk.CodeType = 1032
+	CodeFailedToMarshalBandwidthParam                sdk.CodeType = 1033
+	CodeFailedToMarshalAccountParam                  sdk.CodeType = 1034
+	CodeFailedToMarshalReputationParam               sdk.CodeType = 1035
+	CodeFailedToUnmarshalReputationParam             sdk.CodeType = 1036
+	CodeReputationParamNotFound                      sdk.CodeType = 1037
+	CodeParamQueryFailed                             sdk.CodeType = 1038
 
 	// Proposal errors reserve 1100 ~ 1199
 	CodeOngoingProposalNotFound         sdk.CodeType = 1100

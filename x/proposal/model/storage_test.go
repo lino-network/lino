@@ -47,7 +47,6 @@ func TestProposalList(t *testing.T) {
 		},
 		Param: param.GlobalAllocationParam{
 			GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-			InfraAllocation:          sdk.NewDec(0),
 			ContentCreatorAllocation: sdk.NewDec(0),
 			DeveloperAllocation:      sdk.NewDec(0),
 			ValidatorAllocation:      sdk.NewDec(0),
@@ -101,7 +100,6 @@ func TestProposal(t *testing.T) {
 				},
 				Param: param.GlobalAllocationParam{
 					GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-					InfraAllocation:          sdk.NewDec(0),
 					ContentCreatorAllocation: sdk.NewDec(0),
 					DeveloperAllocation:      sdk.NewDec(0),
 					ValidatorAllocation:      sdk.NewDec(0),

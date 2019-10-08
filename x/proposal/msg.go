@@ -13,7 +13,6 @@ import (
 var _ types.Msg = DeletePostContentMsg{}
 var _ types.Msg = UpgradeProtocolMsg{}
 var _ types.Msg = ChangeGlobalAllocationParamMsg{}
-var _ types.Msg = ChangeInfraInternalAllocationParamMsg{}
 var _ types.Msg = ChangeVoteParamMsg{}
 var _ types.Msg = ChangeProposalParamMsg{}
 var _ types.Msg = ChangeDeveloperParamMsg{}
@@ -24,7 +23,6 @@ var _ types.Msg = ChangePostParamMsg{}
 var _ types.Msg = VoteProposalMsg{}
 
 var _ ChangeParamMsg = ChangeGlobalAllocationParamMsg{}
-var _ ChangeParamMsg = ChangeInfraInternalAllocationParamMsg{}
 var _ ChangeParamMsg = ChangeVoteParamMsg{}
 var _ ChangeParamMsg = ChangeProposalParamMsg{}
 var _ ChangeParamMsg = ChangeDeveloperParamMsg{}
@@ -77,13 +75,6 @@ type ChangeGlobalAllocationParamMsg struct {
 	Creator   types.AccountKey            `json:"creator"`
 	Parameter param.GlobalAllocationParam `json:"parameter"`
 	Reason    string                      `json:"reason"`
-}
-
-// ChangeInfraInternalAllocationParamMsg - implement of change parameter msg
-type ChangeInfraInternalAllocationParamMsg struct {
-	Creator   types.AccountKey                   `json:"creator"`
-	Parameter param.InfraInternalAllocationParam `json:"parameter"`
-	Reason    string                             `json:"reason"`
 }
 
 // ChangeVoteParamMsg - implement of change parameter msg
@@ -319,14 +310,12 @@ func (msg ChangeGlobalAllocationParamMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidUsername()
 	}
 
-	if !msg.Parameter.InfraAllocation.
-		Add(msg.Parameter.ContentCreatorAllocation).
+	if !msg.Parameter.ContentCreatorAllocation.
 		Add(msg.Parameter.DeveloperAllocation).
 		Add(msg.Parameter.ValidatorAllocation).Equal(sdk.NewDec(1)) {
 		return ErrIllegalParameter()
 	}
-	if msg.Parameter.InfraAllocation.LT(sdk.ZeroDec()) ||
-		msg.Parameter.ContentCreatorAllocation.LT(sdk.ZeroDec()) ||
+	if msg.Parameter.ContentCreatorAllocation.LT(sdk.ZeroDec()) ||
 		msg.Parameter.DeveloperAllocation.LT(sdk.ZeroDec()) ||
 		msg.Parameter.ValidatorAllocation.LT(sdk.ZeroDec()) {
 		return ErrIllegalParameter()
@@ -366,83 +355,6 @@ func (msg ChangeGlobalAllocationParamMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implement types.Msg
 func (msg ChangeGlobalAllocationParamMsg) GetConsumeAmount() types.Coin {
-	return types.NewCoinFromInt64(0)
-}
-
-//----------------------------------------
-// ChangeInfraInternalAllocationParamMsg Msg Implementations
-
-func NewChangeInfraInternalAllocationParamMsg(
-	creator string, parameter param.InfraInternalAllocationParam, reason string) ChangeInfraInternalAllocationParamMsg {
-	return ChangeInfraInternalAllocationParamMsg{
-		Creator:   types.AccountKey(creator),
-		Parameter: parameter,
-		Reason:    reason,
-	}
-}
-
-// GetParameter - implement ChangeParamMsg
-func (msg ChangeInfraInternalAllocationParamMsg) GetParameter() param.Parameter { return msg.Parameter }
-
-// GetCreator - implement ChangeParamMsg
-func (msg ChangeInfraInternalAllocationParamMsg) GetCreator() types.AccountKey { return msg.Creator }
-
-// GetReason - implement ChangeParamMsg
-func (msg ChangeInfraInternalAllocationParamMsg) GetReason() string { return msg.Reason }
-
-// Route - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) Route() string { return RouterKey }
-
-// Type - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) Type() string {
-	return "ChangeInfraInternalAllocationParamMsg"
-}
-
-// ValidateBasic - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) ValidateBasic() sdk.Error {
-	if len(msg.Creator) < types.MinimumUsernameLength ||
-		len(msg.Creator) > types.MaximumUsernameLength {
-		return ErrInvalidUsername()
-	}
-
-	if !msg.Parameter.CDNAllocation.
-		Add(msg.Parameter.StorageAllocation).Equal(sdk.NewDec(1)) ||
-		msg.Parameter.CDNAllocation.LT(sdk.ZeroDec()) ||
-		msg.Parameter.StorageAllocation.LT(sdk.ZeroDec()) {
-		return ErrIllegalParameter()
-	}
-
-	if utf8.RuneCountInString(msg.Reason) > types.MaximumLengthOfProposalReason {
-		return ErrReasonTooLong()
-	}
-	return nil
-}
-
-func (msg ChangeInfraInternalAllocationParamMsg) String() string {
-	return fmt.Sprintf("ChangeInfraInternalAllocationParamMsg{Creator:%v}", msg.Creator)
-}
-
-// GetPermission - implement types.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) GetPermission() types.Permission {
-	return types.TransactionPermission
-}
-
-// GetSignBytes - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(msg) // XXX: ensure some canonical form
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// GetSigners - implement sdk.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.Creator)}
-}
-
-// GetConsumeAmount - implement types.Msg
-func (msg ChangeInfraInternalAllocationParamMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

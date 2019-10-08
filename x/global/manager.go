@@ -329,18 +329,15 @@ func (gm *GlobalManager) DistributeHourlyInflation(ctx sdk.Context) sdk.Error {
 		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ContentCreatorAllocation))
 	validatorInflation :=
 		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.ValidatorAllocation))
-	infraInflation :=
-		types.DecToCoin(thisHourInflation.ToDec().Mul(globalAllocation.InfraAllocation))
 	developerInflation :=
-		thisHourInflation.Minus(contentCreatorInflation).Minus(validatorInflation).Minus(infraInflation)
+		thisHourInflation.Minus(contentCreatorInflation).Minus(validatorInflation)
 	consumptionMeta.ConsumptionRewardPool = consumptionMeta.ConsumptionRewardPool.Plus(contentCreatorInflation)
 
 	if err := gm.storage.SetConsumptionMeta(ctx, consumptionMeta); err != nil {
 		return err
 	}
 
-	// distribute inflation to validator inflation pool
-	pool.InfraInflationPool = pool.InfraInflationPool.Plus(infraInflation)
+	// distribute inflation to validator, developer inflation pool
 	pool.ValidatorInflationPool = pool.ValidatorInflationPool.Plus(validatorInflation)
 	pool.DeveloperInflationPool = pool.DeveloperInflationPool.Plus(developerInflation)
 	if err := gm.storage.SetInflationPool(ctx, pool); err != nil {
@@ -435,24 +432,6 @@ func (gm *GlobalManager) GetValidatorHourlyInflation(ctx sdk.Context) (types.Coi
 
 	resCoin := pool.ValidatorInflationPool
 	pool.ValidatorInflationPool = types.NewCoinFromInt64(0)
-	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	if err := gm.storage.SetInflationPool(ctx, pool); err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-	return resCoin, nil
-}
-
-// GetInfraMonthlyInflation - get infra monthly inflation
-func (gm *GlobalManager) GetInfraMonthlyInflation(ctx sdk.Context) (types.Coin, sdk.Error) {
-	pool, err := gm.storage.GetInflationPool(ctx)
-	if err != nil {
-		return types.NewCoinFromInt64(0), err
-	}
-
-	resCoin := pool.InfraInflationPool
-	pool.InfraInflationPool = types.NewCoinFromInt64(0)
 	if err := gm.addTotalLinoCoin(ctx, resCoin); err != nil {
 		return types.NewCoinFromInt64(0), err
 	}
@@ -573,7 +552,10 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 	if err != nil {
 		return err
 	}
-	state.InflationPool = model.InflationPoolIR(*pool)
+	state.InflationPool = model.InflationPoolIR{
+		DeveloperInflationPool: pool.DeveloperInflationPool,
+		ValidatorInflationPool: pool.ValidatorInflationPool,
+	}
 
 	consumption, err := gm.storage.GetConsumptionMeta(ctx)
 	if err != nil {
@@ -630,7 +612,10 @@ func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 		return err
 	}
 
-	pool := model.InflationPool(table.InflationPool)
+	pool := model.InflationPool{
+		DeveloperInflationPool: table.InflationPool.DeveloperInflationPool,
+		ValidatorInflationPool: table.InflationPool.ValidatorInflationPool,
+	}
 	err = gm.storage.SetInflationPool(ctx, &pool)
 	if err != nil {
 		return err

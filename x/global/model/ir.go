@@ -14,7 +14,7 @@ type GlobalMetaIR struct {
 
 // InflationPoolIR -
 type InflationPoolIR struct {
-	InfraInflationPool     types.Coin `json:"infra_inflation_pool"`
+	InfraInflationPool     types.Coin `json:"infra_inflation_pool"` // deprecated
 	DeveloperInflationPool types.Coin `json:"developer_inflation_pool"`
 	ValidatorInflationPool types.Coin `json:"validator_inflation_pool"`
 }

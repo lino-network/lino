@@ -16,17 +16,16 @@ const (
 	// QuerierRoute is the querier route for param
 	QuerierRoute = ModuleName
 
-	QueryAllocationParam              = "allocation"
-	QueryInfraInternalAllocationParam = "infraInternal"
-	QueryDeveloperParam               = "developer"
-	QueryVoteParam                    = "vote"
-	QueryProposalParam                = "proposal"
-	QueryValidatorParam               = "validator"
-	QueryBandwidthParam               = "bandwidth"
-	QueryAccountParam                 = "account"
-	QueryPostParam                    = "post"
-	QueryReputationParam              = "reputation"
-	QueryPriceParam                   = "price"
+	QueryAllocationParam = "allocation"
+	QueryDeveloperParam  = "developer"
+	QueryVoteParam       = "vote"
+	QueryProposalParam   = "proposal"
+	QueryValidatorParam  = "validator"
+	QueryBandwidthParam  = "bandwidth"
+	QueryAccountParam    = "account"
+	QueryPostParam       = "post"
+	QueryReputationParam = "reputation"
+	QueryPriceParam      = "price"
 )
 
 // creates a querier for account REST endpoints
@@ -37,8 +36,6 @@ func NewQuerier(ph ParamHolder) sdk.Querier {
 		switch path[0] {
 		case QueryAllocationParam:
 			return queryAllocationParam(ctx, cdc, path[1:], req, ph)
-		case QueryInfraInternalAllocationParam:
-			return queryInfraInternalAllocationParam(ctx, cdc, path[1:], req, ph)
 		case QueryDeveloperParam:
 			return queryDeveloperParam(ctx, cdc, path[1:], req, ph)
 		case QueryVoteParam:
@@ -69,18 +66,6 @@ func queryAllocationParam(ctx sdk.Context, cdc *wire.Codec, path []string, req a
 		return nil, err
 	}
 	res, marshalErr := cdc.MarshalJSON(globalAllocationParam)
-	if marshalErr != nil {
-		return nil, ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryInfraInternalAllocationParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	infraInternalParam, err := ph.GetInfraInternalAllocationParam(ctx)
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(infraInternalParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
 	}

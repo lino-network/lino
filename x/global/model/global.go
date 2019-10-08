@@ -35,13 +35,9 @@ type TPS struct {
 }
 
 // InflationPool, determined by GlobalAllocation
-// InfraInflationPool inflation pool for infra
-// TotalContentCreatorInflationPool total inflation pool for content creator this year
-// DistributedContentCreatorInflationPool inflation alrady distributed
 // DeveloperInflationPool inflation pool for developer
 // ValidatorInflationPool inflation pool for validator
 type InflationPool struct {
-	InfraInflationPool     types.Coin `json:"infra_inflation_pool"`
 	DeveloperInflationPool types.Coin `json:"developer_inflation_pool"`
 	ValidatorInflationPool types.Coin `json:"validator_inflation_pool"`
 }

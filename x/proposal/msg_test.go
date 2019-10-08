@@ -70,8 +70,7 @@ func TestVoteProposalMsg(t *testing.T) {
 func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	p1 := param.GlobalAllocationParam{
 		GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-		InfraAllocation:          types.NewDecFromRat(20, 100),
-		ContentCreatorAllocation: types.NewDecFromRat(55, 100),
+		ContentCreatorAllocation: types.NewDecFromRat(75, 100),
 		DeveloperAllocation:      types.NewDecFromRat(20, 100),
 		ValidatorAllocation:      types.NewDecFromRat(5, 100),
 	}
@@ -123,66 +122,6 @@ func TestChangeGlobalAllocationParamMsg(t *testing.T) {
 	for _, tc := range testCases {
 		result := tc.ChangeGlobalAllocationParamMsg.ValidateBasic()
 		if !assert.Equal(t, tc.expectedError, result) {
-			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
-		}
-	}
-}
-
-func TestChangeInfraInternalAllocationParamMsg(t *testing.T) {
-	p1 := param.InfraInternalAllocationParam{
-		CDNAllocation:     types.NewDecFromRat(20, 100),
-		StorageAllocation: types.NewDecFromRat(80, 100),
-	}
-
-	p2 := p1
-	p2.StorageAllocation = types.NewDecFromRat(101, 100)
-
-	p3 := p1
-	p3.StorageAllocation = types.NewDecFromRat(-1, 100)
-	p3.CDNAllocation = types.NewDecFromRat(101, 100)
-
-	testCases := []struct {
-		testName                              string
-		ChangeInfraInternalAllocationParamMsg ChangeInfraInternalAllocationParamMsg
-		expectedError                         sdk.Error
-	}{
-		{
-			testName:                              "normal case",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p1, ""),
-			expectedError:                         nil,
-		},
-		{
-			testName:                              "illegal parameter (sum of allocation doesn't equal to 1)",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p2, ""),
-			expectedError:                         ErrIllegalParameter(),
-		},
-		{
-			testName:                              "illegal parameter (negative number)",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("user1", p3, ""),
-			expectedError:                         ErrIllegalParameter(),
-		},
-		{
-			testName:                              "empty username is illegal",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg("", p1, ""),
-			expectedError:                         ErrInvalidUsername(),
-		},
-		{
-			testName: "reason is too long",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg(
-				"user1", p1, string(make([]byte, types.MaximumLengthOfProposalReason+1))),
-			expectedError: ErrReasonTooLong(),
-		},
-		{
-			testName: "utf8 reason is too long",
-			ChangeInfraInternalAllocationParamMsg: NewChangeInfraInternalAllocationParamMsg(
-				"user1", p1, tooLongOfUTF8Reason),
-			expectedError: ErrReasonTooLong(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.ChangeInfraInternalAllocationParamMsg.ValidateBasic()
-		if !assert.Equal(t, result, tc.expectedError) {
 			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
 		}
 	}
@@ -914,15 +853,9 @@ func TestMsgPermission(t *testing.T) {
 			expectPermission: types.TransactionPermission,
 		},
 		{
-			testName: "change infra internal allocation param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
-			expectPermission: types.TransactionPermission,
-		},
-		{
 			testName: "change vote param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
+			msg: NewChangeVoteParamMsg(
+				"creator", param.VoteParam{}, ""),
 			expectPermission: types.TransactionPermission,
 		},
 		{
@@ -997,14 +930,9 @@ func TestGetSignBytes(t *testing.T) {
 				"creator", param.GlobalAllocationParam{}, ""),
 		},
 		{
-			testName: "change infra internal allocation param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
-		},
-		{
 			testName: "change vote param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
+			msg: NewChangeVoteParamMsg(
+				"creator", param.VoteParam{}, ""),
 		},
 		{
 			testName: "change proposal param msg",
@@ -1071,15 +999,9 @@ func TestGetSigners(t *testing.T) {
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{
-			testName: "change infra internal allocation param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
-			expectSigners: []types.AccountKey{"creator"},
-		},
-		{
 			testName: "change vote param msg",
-			msg: NewChangeInfraInternalAllocationParamMsg(
-				"creator", param.InfraInternalAllocationParam{}, ""),
+			msg: NewChangeVoteParamMsg(
+				"creator", param.VoteParam{}, ""),
 			expectSigners: []types.AccountKey{"creator"},
 		},
 		{

@@ -27,19 +27,13 @@
     },
     "init_coin_price": "1200",
     "developers": [],
-    "infra": [],
     "genesis_param": {
       "init_from_config": true,
       "GlobalAllocationParam": {
         "global_growth_rate": "0.005",
-        "infra_allocation": "0.2",
         "content_creator_allocation": "0.4",
-        "developer_allocation": "0.35",
+        "developer_allocation": "0.55",
         "validator_allocation": "0.05"
-      },
-      "InfraInternalAllocationParam": {
-        "storage_allocation": "0.5",
-        "CDN_allocation": "0.5"
       },
       "VoteParam": {
         "voter_coin_return_interval_second": "604800",

@@ -36,27 +36,18 @@ func TestGetGenesisJson(t *testing.T) {
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name: "Lino",
 	}
-	genesisInfraProvider := GenesisInfraProvider{
-		Name: "Lino",
-	}
 	genesisState := GenesisState{
 		Accounts:      []GenesisAccount{genesisAcc},
 		ReservePool:   types.NewCoinFromInt64(1000000),
 		InitCoinPrice: types.NewMiniDollar(1200),
 		Developers:    []GenesisAppDeveloper{genesisAppDeveloper},
-		Infra:         []GenesisInfraProvider{genesisInfraProvider},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-				InfraAllocation:          types.NewDecFromRat(20, 100),
-				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(85, 100),
 				DeveloperAllocation:      types.NewDecFromRat(10, 100),
 				ValidatorAllocation:      types.NewDecFromRat(5, 100),
-			},
-			param.InfraInternalAllocationParam{
-				StorageAllocation: types.NewDecFromRat(50, 100),
-				CDNAllocation:     types.NewDecFromRat(50, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -205,5 +196,4 @@ func TestLinoBlockchainGenState(t *testing.T) {
 		assert.Equal(t, gacc.Coin, coinPerValidator)
 	}
 	assert.Equal(t, 1, len(genesisState.Developers))
-	assert.Equal(t, 1, len(genesisState.Infra))
 }

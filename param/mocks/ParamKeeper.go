@@ -114,31 +114,6 @@ func (_m *ParamKeeper) GetDeveloperParam(ctx types.Context) (*param.DeveloperPar
 	return r0, r1
 }
 
-// GetInfraInternalAllocationParam provides a mock function with given fields: ctx
-func (_m *ParamKeeper) GetInfraInternalAllocationParam(ctx types.Context) (*param.InfraInternalAllocationParam, types.Error) {
-	ret := _m.Called(ctx)
-
-	var r0 *param.InfraInternalAllocationParam
-	if rf, ok := ret.Get(0).(func(types.Context) *param.InfraInternalAllocationParam); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*param.InfraInternalAllocationParam)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
 // GetPostParam provides a mock function with given fields: ctx
 func (_m *ParamKeeper) GetPostParam(ctx types.Context) (*param.PostParam, types.Error) {
 	ret := _m.Called(ctx)
