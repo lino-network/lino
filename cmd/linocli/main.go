@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-
-	// sdk "github.com/cosmos/cosmos-sdk/types"
-	// txutils "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/spf13/cobra"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -55,6 +55,17 @@ func main() {
 		client.ConfigCmd(app.DefaultCLIHome),
 		queryCmd(cdc),
 		txCmd(cdc),
+		client.LineBreak,
+		&cobra.Command{
+			Use:   "now",
+			Short: "now",
+			Args:  cobra.NoArgs,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				str, _ := cdc.MarshalJSON(time.Now())
+				fmt.Println(string(str))
+				return nil
+			},
+		},
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "NS", app.DefaultCLIHome)
