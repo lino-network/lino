@@ -568,6 +568,10 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 	substores[string(model.AccountBankSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		bank := val.(*model.AccountBank)
 		addr := key
+		// bypass address check.
+		if len(addr) != sdk.AddrLen {
+			addr = filladdr(addr)
+		}
 		frozens := make([]model.FrozenMoneyIR, len(bank.FrozenMoneyList))
 		for i, v := range bank.FrozenMoneyList {
 			frozens[i] = model.FrozenMoneyIR(v)
