@@ -12,10 +12,6 @@ all: get_tools install build test
 get_tools:
 	cd scripts && ./install_cleveldb.sh
 
-# apply_patch:
-# 	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fullnode/tendermint-cached-txindexer.patch); exit 0
-# 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
-
 update_mocks:
 	GO111MODULE=$(GO111MODULE) go generate ./...
 
