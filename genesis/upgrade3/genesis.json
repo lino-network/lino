@@ -1,6 +1,5 @@
-// TODO: add genesis time
 {
-  "genesis_time": "TODO",
+  "genesis_time": "2019-10-09T21:12:31.003806668Z",
   "chain_id": "lino-testnet-upgrade3",
   "consensus_params": {
     "block": {
