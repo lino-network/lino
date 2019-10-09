@@ -2,7 +2,7 @@
 
 ### update golang to latest.
 sudo rm -rf /usr/local/go
-GOSOURCE=https://dl.google.com/go/go1.12.9.linux-amd64.tar.gz
+GOSOURCE=https://dl.google.com/go/go1.12.10.linux-amd64.tar.gz
 GOTARGET=/usr/local
 GOPATH=\$HOME/go
 PROFILE=/home/ubuntu/.profile
