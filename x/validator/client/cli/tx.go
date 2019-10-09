@@ -36,6 +36,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.AddCommand(client.PostCommands(
 		GetCmdRegister(cdc),
 		GetCmdRevoke(cdc),
+		GetCmdVote(cdc),
 	)...)
 
 	return cmd

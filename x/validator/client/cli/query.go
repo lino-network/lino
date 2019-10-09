@@ -24,6 +24,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.AddCommand(client.GetCommands(
 		getCmdShow(cdc),
 		getCmdList(cdc),
+		getCmdVoteInfo(cdc),
 	)...)
 	return cmd
 }
@@ -53,6 +54,22 @@ func getCmdList(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uri := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryValidatorList)
 			rst := model.ValidatorList{}
+			return utils.CLIQueryJSONPrint(cdc, uri, nil,
+				func() interface{} { return &rst })
+		},
+	}
+}
+
+// GetCmdVoteInfo
+func getCmdVoteInfo(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "voteinfo",
+		Short: "voteinfo <username>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			user := linotypes.AccountKey(args[0])
+			uri := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryElectionVoteList, user)
+			rst := model.ElectionVoteList{}
 			return utils.CLIQueryJSONPrint(cdc, uri, nil,
 				func() interface{} { return &rst })
 		},
