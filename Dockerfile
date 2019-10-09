@@ -14,7 +14,7 @@ RUN lino init
 COPY genesis/upgrade3/config.toml  /root/.lino/config/config.toml
 COPY genesis/upgrade3/genesis.json /root/.lino/config/genesis.json
 RUN cd /root/.lino && wget https://lino-blockchain-opendata.s3.amazonaws.com/prd/prevstates.tar.gz
-run cd /root/.lino && tar -xf prevstates.tar.gz
+RUN cd /root/.lino && tar -xf prevstates.tar.gz
 
 # prometheus if enabled
 EXPOSE 26660
