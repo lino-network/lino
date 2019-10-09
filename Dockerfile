@@ -25,4 +25,5 @@ EXPOSE 26657
 # abci app
 EXPOSE 26658
 
+CMD ["lino", "unsafe-reset-all"]
 CMD ["lino", "start"]
