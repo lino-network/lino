@@ -1,3 +1,4 @@
+NAME=lino
 GOPATH ?= $(shell $(GO) env GOPATH)
 COMMIT := $(shell git --no-pager describe --tags --always --dirty)
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
@@ -10,10 +11,6 @@ all: get_tools install build test
 
 get_tools:
 	cd scripts && ./install_cleveldb.sh
-
-# apply_patch:
-# 	(cd vendor/github.com/tendermint/tendermint && patch -p1 -t < ../../../../patches/fullnode/tendermint-cached-txindexer.patch); exit 0
-# 	(cd vendor/github.com/cosmos/cosmos-sdk     && patch -p1 -t < ../../../../patches/fixes/cosmos-cleveldb-close-batch.patch); exit 0
 
 update_mocks:
 	GO111MODULE=$(GO111MODULE) go generate ./...
@@ -43,6 +40,21 @@ test:
 
 benchmark:
 	@go test -bench=. $(PACKAGES)
+
+docker-build:
+	docker build -t $(NAME) .
+
+docker-build-nc:
+	docker build --no-cache -t $(NAME) .
+
+docker-run:
+	docker run --name=$(NAME) -it $(NAME)
+
+docker-up: docker-build docker-run
+
+docker-clean:
+	docker stop $(NAME)
+	docker rm $(NAME)
 
 # lint
 GOLANGCI_LINT_VERSION := v1.17.1

@@ -2,7 +2,7 @@
 
 ### install golang
 
-GOSOURCE=https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz
+GOSOURCE=https://dl.google.com/go/go1.12.10.linux-amd64.tar.gz
 GOTARGET=/usr/local
 GOPATH=\$HOME/go
 PROFILE=/home/ubuntu/.profile
