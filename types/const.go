@@ -174,6 +174,9 @@ const (
 	// ValidatorMaxPower - the max power of validator can have
 	ValidatorMaxPower = int64(100000000000)
 
+	// Upgrade3Update1 - lower register fee.
+	Upgrade3Update1 = 27000
+
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
