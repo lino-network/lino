@@ -15,6 +15,8 @@ var (
 	AccountBankSubstore        = []byte{0x01}
 	AccountMetaSubstore        = []byte{0x02}
 	AccountGrantPubKeySubstore = []byte{0x03}
+	AccountPoolSubstore        = []byte{0x04}
+	AccountSupplySubstore      = []byte{0x05}
 )
 
 // AccountStorage - account storage
@@ -170,8 +172,48 @@ func (as AccountStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
 			ValCreator: func() interface{} { return new([]*GrantPermission) },
 			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
 		},
+		{
+			Store:      store,
+			Prefix:     AccountPoolSubstore,
+			ValCreator: func() interface{} { return new(Pool) },
+			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
+		},
 	}
 	return utils.NewStoreMap(stores)
+}
+
+func (as AccountStorage) SetPool(ctx sdk.Context, pool *Pool) {
+	store := ctx.KVStore(as.key)
+	bz := as.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(GetAccountPoolKey(pool.Name), bz)
+}
+
+func (as AccountStorage) GetPool(ctx sdk.Context, name types.PoolName) (*Pool, sdk.Error) {
+	store := ctx.KVStore(as.key)
+	bz := store.Get(GetAccountPoolKey(name))
+	if bz == nil {
+		return nil, ErrPoolNotFound()
+	}
+	pool := new(Pool)
+	as.cdc.MustUnmarshalBinaryLengthPrefixed(bz, pool)
+	return pool, nil
+}
+
+func (as AccountStorage) GetSupply(ctx sdk.Context) *Supply {
+	store := ctx.KVStore(as.key)
+	bz := store.Get(GetAccountSupplyKey())
+	if bz == nil {
+		panic("Lino Supply Not Initialized")
+	}
+	supply := new(Supply)
+	as.cdc.MustUnmarshalBinaryLengthPrefixed(bz, supply)
+	return supply
+}
+
+func (as AccountStorage) SetSupply(ctx sdk.Context, supply *Supply) {
+	store := ctx.KVStore(as.key)
+	bz := as.cdc.MustMarshalBinaryLengthPrefixed(supply)
+	store.Set(GetAccountSupplyKey(), bz)
 }
 
 // GetAccountInfoPrefix - "account info substore"
@@ -192,6 +234,16 @@ func GetAccountBankKey(addr sdk.Address) []byte {
 // GetAccountMetaKey - "account meta substore" + "username"
 func GetAccountMetaKey(accKey types.AccountKey) []byte {
 	return append(AccountMetaSubstore, accKey...)
+}
+
+// GetAccountPoolKey - "AccountPoolSubstore" + "pool name"
+func GetAccountPoolKey(poolname types.PoolName) []byte {
+	return append(AccountPoolSubstore, poolname...)
+}
+
+// GetAccountSupplyKey - AccountSupplySubstore
+func GetAccountSupplyKey() []byte {
+	return AccountSupplySubstore
 }
 
 func getGrantPermPrefix(me types.AccountKey) []byte {

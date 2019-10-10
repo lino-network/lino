@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	PostSubStore = []byte{0x00} // SubStore for all post info
+	PostSubStore              = []byte{0x00} // SubStore for all post info
+	ConsumptionWindowSubStore = []byte{0x01} // SubStore for consumption window.
 )
 
 func GetAuthorPrefix(author linotypes.AccountKey) []byte {
@@ -20,6 +21,11 @@ func GetAuthorPrefix(author linotypes.AccountKey) []byte {
 // GetPostInfoKey - "post info substore" + "permlink"
 func GetPostInfoKey(permlink linotypes.Permlink) []byte {
 	return append(PostSubStore, permlink...)
+}
+
+// GetConsumptionWindowKey - "consumption window substore"
+func GetConsumptionWindowKey() []byte {
+	return ConsumptionWindowSubStore
 }
 
 // PostStorage - post storage
@@ -64,6 +70,23 @@ func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 	store := ctx.KVStore(ps.key)
 	infoByte := ps.cdc.MustMarshalBinaryLengthPrefixed(*postInfo)
 	store.Set(GetPostInfoKey(linotypes.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
+}
+
+func (ps PostStorage) GetConsumptionWindow(ctx sdk.Context) linotypes.MiniDollar {
+	store := ctx.KVStore(ps.key)
+	bz := store.Get(GetConsumptionWindowKey())
+	if bz == nil {
+		return linotypes.NewMiniDollar(0)
+	}
+	consumption := linotypes.NewMiniDollar(0)
+	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &consumption)
+	return consumption
+}
+
+func (ps PostStorage) SetConsumptionWindow(ctx sdk.Context, consumption linotypes.MiniDollar) {
+	store := ctx.KVStore(ps.key)
+	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(consumption)
+	store.Set(GetConsumptionWindowKey(), bz)
 }
 
 // Post cannot be deleted in the store. you can mark it as deleted.

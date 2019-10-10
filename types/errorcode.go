@@ -25,6 +25,7 @@ const (
 	CodeInvalidIDAAmount    sdk.CodeType = 112
 	CodeUnimplemented       sdk.CodeType = 113
 	CodeQueryFailed         sdk.CodeType = 114
+	CodeUnknownEvent        sdk.CodeType = 115
 
 	// Lino authenticate errors reserve 150 ~ 199
 	CodeIncorrectStdTxType   sdk.CodeType = 150
@@ -110,6 +111,8 @@ const (
 	CodeGetSigningKeyFailed                  sdk.CodeType = 364
 	CodeGetAddressFailed                     sdk.CodeType = 365
 	CodeAddressIsTaken                       sdk.CodeType = 366
+	CodePoolNotFound                         sdk.CodeType = 367
+	CodePoolNotEnough                        sdk.CodeType = 368
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400
@@ -207,6 +210,7 @@ const (
 	CodePastDayIsNegative                      sdk.CodeType = 625
 	CodeFailedToParseEventCacheList            sdk.CodeType = 626
 	CodeGlobalQueryFailed                      sdk.CodeType = 627
+	CodeRegisterInvalidEvent                   sdk.CodeType = 628
 
 	// Vote errors reserve 700 ~ 799
 	CodeVoterNotFound                  sdk.CodeType = 700
@@ -228,6 +232,7 @@ const (
 	CodeInsufficientStake              sdk.CodeType = 716
 	CodeFrozenAmountIsNotEmpty         sdk.CodeType = 717
 	CodeNoDuty                         sdk.CodeType = 718
+	CodeStakeStatNotFound              sdk.CodeType = 719
 
 	// Lino developer errors reserve 900 ~ 999
 	CodeDeveloperListNotFound          sdk.CodeType = 900

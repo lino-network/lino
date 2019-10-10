@@ -51,7 +51,7 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.SetupCtx(0, time.Unix(0, 0), testAccountKey)
 	suite.ph = &param.ParamKeeper{}
 	suite.global = &global.GlobalKeeper{}
-	suite.am = NewAccountManager(testAccountKey, suite.ph, suite.global)
+	suite.am = NewAccountManager(testAccountKey, suite.ph)
 
 	// background
 	suite.userWithoutBalance = model.AccountInfo{
@@ -84,11 +84,10 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 
 	err = suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
 	suite.NoError(err)
-	err = suite.am.AddCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
+	err = suite.am.addCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
 	suite.NoError(err)
 
-	err = suite.am.AddCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
-	suite.NoError(err)
+	suite.am.addCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
 
 	suite.ph.On("GetAccountParam", mock.Anything).Return(&parammodel.AccountParam{
 		RegisterFee:       suite.registerFee,
@@ -188,8 +187,7 @@ func (suite *AccountManagerTestSuite) TestAddCoinToAddress() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.am.AddCoinToAddress(suite.Ctx, tc.address, tc.amount)
-		suite.Nil(err, "%s: failed to add coin, got err: %v", tc.testName, err)
+		suite.am.addCoinToAddress(suite.Ctx, tc.address, tc.amount)
 		suite.checkBankKVByAddress(tc.testName, tc.address, tc.expectBank)
 	}
 }
@@ -226,7 +224,7 @@ func (suite *AccountManagerTestSuite) TestAddCoinToUsername() {
 	}
 
 	for _, tc := range testCases {
-		err := suite.am.AddCoinToUsername(suite.Ctx, tc.username, tc.amount)
+		err := suite.am.addCoinToUsername(suite.Ctx, tc.username, tc.amount)
 		suite.Equal(
 			tc.expectErr, err,
 			"%s: failed to add coin to user %s, expect err %v, got %v",
@@ -301,7 +299,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.am.MinusCoinFromAddress(suite.Ctx, tc.address, tc.amount)
+		err := suite.am.minusCoinFromAddress(suite.Ctx, tc.address, tc.amount)
 		suite.Equal(
 			tc.expectErr, err,
 			"%s: failed to minus coin from address %s, expect err %v, got %v",
@@ -366,7 +364,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromUsername() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.am.MinusCoinFromUsername(suite.Ctx, tc.username, tc.amount)
+		err := suite.am.minusCoinFromUsername(suite.Ctx, tc.username, tc.amount)
 		suite.Equal(
 			tc.expectErr, err,
 			"%s: failed to minus coin from user %s, expect err %v, got %v",
@@ -486,7 +484,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 }
 
 func TestUpdateJSONMeta(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am := setupTest(t, 1)
 
 	accKey := types.AccountKey("accKey")
 	createTestAccount(ctx, am, string(accKey))
@@ -691,7 +689,7 @@ func (suite *AccountManagerTestSuite) TestMoveCoinAccOrAddr() {
 		},
 	}
 	for _, tc := range testCases {
-		err := suite.am.MoveCoinAccOrAddr(suite.Ctx, tc.sender, tc.receiver, tc.amount)
+		err := suite.am.MoveCoin(suite.Ctx, tc.sender, tc.receiver, tc.amount)
 		suite.Equal(tc.expectErr, err)
 		if !tc.sender.IsAddr {
 			saving, _ := suite.am.GetSavingFromUsername(suite.Ctx, tc.sender.AccountKey)
@@ -878,7 +876,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwner() {
 func TestRevokePermission(t *testing.T) {
 	testName := "TestRevokePermission"
 
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	userWithAppPermission := types.AccountKey("userWithAppPermission")
@@ -948,7 +946,7 @@ func TestRevokePermission(t *testing.T) {
 }
 
 func TestAuthorizePermission(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 	user2 := types.AccountKey("user2")
 	user3 := types.AccountKey("user32")
@@ -1082,7 +1080,7 @@ func TestAuthorizePermission(t *testing.T) {
 }
 
 func TestIncreaseSequenceByOne(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 
 	createTestAccount(ctx, am, string(user1))
@@ -1127,7 +1125,7 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 }
 
 func TestAddFrozenMoney(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
+	ctx, am := setupTest(t, 1)
 	user1 := types.AccountKey("user1")
 
 	createTestAccount(ctx, am, string(user1))

@@ -1,5 +1,5 @@
 //nolint:unused,deadcode
-package global
+package manager
 
 import (
 	"testing"

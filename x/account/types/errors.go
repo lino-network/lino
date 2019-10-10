@@ -200,6 +200,11 @@ func ErrAccountSavingCoinNotEnough() sdk.Error {
 	return types.NewError(types.CodeAccountSavingCoinNotEnough, fmt.Sprintf("account bank's saving coins not enough"))
 }
 
+// ErrPoolNotEnough - error if pool balance is not enough.
+func ErrPoolNotEnough(name types.PoolName) sdk.Error {
+	return types.NewError(types.CodePoolNotFound, fmt.Sprintf("not enough balance: %s", name))
+}
+
 // ErrInvalidUsername - error when username is invalid
 func ErrInvalidUsername(msg string) sdk.Error {
 	return types.NewError(types.CodeInvalidUsername, msg)

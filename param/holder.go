@@ -244,18 +244,15 @@ func (ph ParamHolder) InitParamFromConfig(
 }
 
 // GetGlobalAllocationParam - get global allocation param
-func (ph ParamHolder) GetGlobalAllocationParam(
-	ctx sdk.Context) (*GlobalAllocationParam, sdk.Error) {
+func (ph ParamHolder) GetGlobalAllocationParam(ctx sdk.Context) *GlobalAllocationParam {
 	store := ctx.KVStore(ph.key)
 	allocationBytes := store.Get(GetAllocationParamKey())
 	if allocationBytes == nil {
-		return nil, ErrGlobalAllocationParamNotFound()
+		panic("Global Allocation Param Not Initialized")
 	}
 	allocation := new(GlobalAllocationParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(allocationBytes, allocation); err != nil {
-		return nil, ErrFailedToUnmarshalGlobalAllocationParam(err)
-	}
-	return allocation, nil
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(allocationBytes, allocation)
+	return allocation
 }
 
 // GetPostParam - get post param
@@ -287,17 +284,15 @@ func (ph ParamHolder) GetDeveloperParam(ctx sdk.Context) (*DeveloperParam, sdk.E
 }
 
 // GetVoteParam - get vote param
-func (ph ParamHolder) GetVoteParam(ctx sdk.Context) (*VoteParam, sdk.Error) {
+func (ph ParamHolder) GetVoteParam(ctx sdk.Context) *VoteParam {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetVoteParamKey())
 	if paramBytes == nil {
-		return nil, ErrVoteParamNotFound()
+		panic("Vote Param Not Initialized")
 	}
 	param := new(VoteParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
-		return nil, ErrFailedToUnmarshalVoteParam(err)
-	}
-	return param, nil
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
 }
 
 // GetProposalParam - get proposal param
@@ -355,17 +350,15 @@ func (ph ParamHolder) GetBandwidthParam(ctx sdk.Context) (*BandwidthParam, sdk.E
 }
 
 // GetAccountParam - get account param
-func (ph ParamHolder) GetAccountParam(ctx sdk.Context) (*AccountParam, sdk.Error) {
+func (ph ParamHolder) GetAccountParam(ctx sdk.Context) *AccountParam {
 	store := ctx.KVStore(ph.key)
 	paramBytes := store.Get(GetAccountParamKey())
 	if paramBytes == nil {
-		return nil, ErrAccountParamNotFound()
+		panic("Account Param Not Initialized")
 	}
 	param := new(AccountParam)
-	if err := ph.cdc.UnmarshalBinaryLengthPrefixed(paramBytes, param); err != nil {
-		return nil, ErrFailedToUnmarshalAccountParam(err)
-	}
-	return param, nil
+	ph.cdc.MustUnmarshalBinaryLengthPrefixed(paramBytes, param)
+	return param
 }
 
 // GetReputationParam - get reputation param

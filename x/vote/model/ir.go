@@ -15,8 +15,24 @@ type VoterIR struct {
 	FrozenAmount      linotypes.Coin       `json:"frozen_amount"`
 }
 
+// LinoStakeStatIR - records the information needed by
+// lino power deposit, update and store daily.
+type LinoStakeStatIR struct {
+	TotalConsumptionFriction linotypes.Coin `json:"total_consumption_friction"`
+	UnclaimedFriction        linotypes.Coin `json:"unclaimed_friction"`
+	TotalLinoStake           linotypes.Coin `json:"total_lino_power"`
+	UnclaimedLinoStake       linotypes.Coin `json:"unclaimed_lino_power"`
+}
+
+// StakeStatDayIR - stake stats of a day, pk: day
+type StakeStatDayIR struct {
+	Day       int64           `json:"day"`
+	StakeStat LinoStakeStatIR `json:"stake_stat"`
+}
+
 // VoterTablesIR - state of voter
 type VoterTablesIR struct {
-	Version int       `json:"version"`
-	Voters  []VoterIR `json:"voters"`
+	Version    int              `json:"version"`
+	Voters     []VoterIR        `json:"voters"`
+	StakeStats []StakeStatDayIR `json:"stake_stats"`
 }

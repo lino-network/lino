@@ -23,6 +23,11 @@ func ErrAccountMetaNotFound() sdk.Error {
 	return types.NewError(types.CodeAccountMetaNotFound, fmt.Sprintf("account meta is not found"))
 }
 
+// ErrPoolNotFound - error if pool is not found
+func ErrPoolNotFound() sdk.Error {
+	return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool is not found"))
+}
+
 // ErrRewardNotFound - error if reward is not found
 func ErrRewardNotFound() sdk.Error {
 	return types.NewError(types.CodeRewardNotFound, fmt.Sprintf("reward is not found"))

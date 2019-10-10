@@ -1,4 +1,4 @@
-package global
+package types
 
 import (
 	"fmt"
@@ -25,4 +25,10 @@ func ErrParseEventCacheList() sdk.Error {
 // ErrQueryFailed - error when query global store failed
 func ErrQueryFailed() sdk.Error {
 	return types.NewError(types.CodeGlobalQueryFailed, fmt.Sprintf("query global store failed"))
+}
+
+// ErrRegisterInvalidEvent -
+func ErrRegisterInvalidEvent() sdk.Error {
+	return types.NewError(
+		types.CodeRegisterInvalidEvent, fmt.Sprintf("event is invalid, cannot be wired"))
 }

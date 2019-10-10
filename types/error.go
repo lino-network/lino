@@ -45,3 +45,8 @@ func ErrUnimplemented(msg string) sdk.Error {
 func ErrInvalidUsername(username AccountKey) sdk.Error {
 	return NewError(CodeInvalidUsername, fmt.Sprintf("Invalid username: %s", username))
 }
+
+// ErrUnknownEvent - unknown event.
+func ErrUnknownEvent() sdk.Error {
+	return NewError(CodeUnknownEvent, "unknown event")
+}

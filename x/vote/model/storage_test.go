@@ -38,10 +38,7 @@ func TestDoesVoterExist(t *testing.T) {
 		Username:  user,
 		LinoStake: linotypes.NewCoinFromInt64(1000),
 	}
-	err := vs.SetVoter(ctx, user, voter)
-	if err != nil {
-		t.Errorf("%s: failed to set voter, got err %v", "TestDoesVoterExist", err)
-	}
+	vs.SetVoter(ctx, user, voter)
 
 	testCases := []struct {
 		testName  string
@@ -79,18 +76,9 @@ func TestVoter(t *testing.T) {
 		Interest:          linotypes.NewCoinFromInt64(0),
 		FrozenAmount:      linotypes.NewCoinFromInt64(10),
 	}
-	err := vs.SetVoter(ctx, user, &voter)
-	assert.Nil(t, err)
+	vs.SetVoter(ctx, user, &voter)
 
 	voterPtr, err := vs.GetVoter(ctx, user)
 	assert.Nil(t, err)
 	assert.Equal(t, voter, *voterPtr, "voter should be equal")
-
-	err = vs.DeleteVoter(ctx, user)
-	if err != nil {
-		panic(err)
-	}
-	voterPtr, err = vs.GetVoter(ctx, user)
-	assert.Nil(t, voterPtr)
-	assert.Equal(t, ErrVoterNotFound(), err)
 }

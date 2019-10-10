@@ -9,6 +9,9 @@ import (
 // AccountKey key format in KVStore
 type AccountKey string
 
+// PoolName is the name of a lino pool.
+type PoolName string
+
 // Permlink key format in KVStore
 type Permlink string
 

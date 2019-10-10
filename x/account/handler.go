@@ -39,7 +39,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountKeeper, msg types.TransferMsg)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinAccOrAddr(ctx,
+	if err := am.MoveCoin(ctx,
 		linotypes.NewAccOrAddrFromAcc(msg.Sender),
 		linotypes.NewAccOrAddrFromAcc(msg.Receiver),
 		coin); err != nil {
@@ -54,7 +54,7 @@ func handleTransferV2Msg(ctx sdk.Context, am AccountKeeper, msg types.TransferV2
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinAccOrAddr(ctx, msg.Sender, msg.Receiver, coin); err != nil {
+	if err := am.MoveCoin(ctx, msg.Sender, msg.Receiver, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

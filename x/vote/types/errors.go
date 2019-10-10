@@ -66,3 +66,9 @@ func ErrFrozenAmountIsNotEmpty() sdk.Error {
 func ErrInsufficientStake() sdk.Error {
 	return types.NewError(types.CodeInsufficientStake, fmt.Sprintf("stake is not enough"))
 }
+
+// ErrStakeStatNotFound -
+func ErrStakeStatNotFound(day int64) sdk.Error {
+	return types.NewError(
+		types.CodeStakeStatNotFound, fmt.Sprintf("stake stats not found: %d", day))
+}

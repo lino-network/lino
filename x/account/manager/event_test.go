@@ -11,7 +11,7 @@ import (
 
 func TestCreateCoinReturnEvents(t *testing.T) {
 	assert := assert.New(t)
-	ctx, _, _ := setupTest(t, 1)
+	ctx, _ := setupTest(t, 1)
 	testCases := []struct {
 		testName     string
 		username     types.AccountKey
@@ -106,8 +106,8 @@ func TestCreateCoinReturnEvents(t *testing.T) {
 }
 
 func TestReturnCoinEvent(t *testing.T) {
-	ctx, am, _ := setupTest(t, 1)
-	accParam, _ := am.paramHolder.GetAccountParam(ctx)
+	ctx, am := setupTest(t, 1)
+	accParam := am.paramHolder.GetAccountParam(ctx)
 
 	createTestAccount(ctx, am, "user1")
 

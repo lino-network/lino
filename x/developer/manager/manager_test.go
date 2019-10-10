@@ -21,7 +21,6 @@ import (
 	maccount "github.com/lino-network/lino/x/account/mocks"
 	"github.com/lino-network/lino/x/developer/model"
 	"github.com/lino-network/lino/x/developer/types"
-	mglobal "github.com/lino-network/lino/x/global/mocks"
 	mprice "github.com/lino-network/lino/x/price/mocks"
 	mvote "github.com/lino-network/lino/x/vote/mocks"
 	votetypes "github.com/lino-network/lino/x/vote/types"
@@ -49,7 +48,6 @@ type DeveloperManagerSuite struct {
 	mVoteKeeper    *mvote.VoteKeeper
 	mAccountKeeper *maccount.AccountKeeper
 	mPriceKeeper   *mprice.PriceKeeper
-	mGlobalKeeper  *mglobal.GlobalKeeper
 }
 
 func NewDeveloperManagerSuite() *DeveloperManagerSuite {
@@ -63,8 +61,7 @@ func (suite *DeveloperManagerSuite) SetupTest() {
 	suite.mVoteKeeper = new(mvote.VoteKeeper)
 	suite.mAccountKeeper = new(maccount.AccountKeeper)
 	suite.mPriceKeeper = new(mprice.PriceKeeper)
-	suite.mGlobalKeeper = new(mglobal.GlobalKeeper)
-	suite.manager = NewDeveloperManager(storeKey, suite.mParamKeeper, suite.mVoteKeeper, suite.mAccountKeeper, suite.mPriceKeeper, suite.mGlobalKeeper)
+	suite.manager = NewDeveloperManager(storeKey, suite.mParamKeeper, suite.mVoteKeeper, suite.mAccountKeeper, suite.mPriceKeeper)
 	suite.SetupCtx(0, time.Unix(0, 0), storeKey)
 }
 
@@ -1379,7 +1376,7 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 		addCoinError        sdk.Error
 	}{
 		{
-			name:                "Fail error from global.PopDeveloperMonthlyInflation",
+			name:                "Fail error from acc get inflation pool",
 			expected:            sdk.ErrInternal(""),
 			totalInflation:      &zeroCoin,
 			totalInflationError: sdk.ErrInternal(""),
@@ -1436,10 +1433,16 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 	for _, c := range testCases {
 		suite.Run(c.name, func() {
 			if c.totalInflation != nil {
-				suite.mGlobalKeeper.On("PopDeveloperMonthlyInflation", mock.Anything).Return(*c.totalInflation, c.totalInflationError).Once()
+				suite.mAccountKeeper.On("GetPool",
+					mock.Anything, linotypes.InflationDeveloperPool).Return(
+					*c.totalInflation, c.totalInflationError).Once()
 			}
 			for i, share := range c.shares {
-				suite.mAccountKeeper.On("AddCoinToUsername", mock.Anything, linotypes.AccountKey(fmt.Sprintf("testapp-%d", i)), share).Return(c.addCoinError).Once()
+				suite.mAccountKeeper.On("MoveFromPool", mock.Anything,
+					linotypes.InflationDeveloperPool,
+					linotypes.NewAccOrAddrFromAcc(
+						linotypes.AccountKey(fmt.Sprintf("testapp-%d", i))),
+					share).Return(c.addCoinError).Once()
 			}
 			suite.LoadState(true)
 			suite.Equal(c.expected, suite.manager.DistributeDevInflation(suite.Ctx))
@@ -1447,7 +1450,6 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 			if !c.stateChange {
 				suite.AssertStateUnchanged(true)
 			}
-			suite.mGlobalKeeper.AssertExpectations(suite.T())
 			suite.mAccountKeeper.AssertExpectations(suite.T())
 		})
 	}
