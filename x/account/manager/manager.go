@@ -55,6 +55,9 @@ func (accManager AccountManager) RegisterAccount(
 	if minRegFee.IsGT(registerFee) {
 		return types.ErrRegisterFeeInsufficient()
 	}
+	if ctx.BlockHeight() >= linotypes.Upgrade3Update1 {
+		minRegFee = linotypes.NewCoinFromInt64(10000)
+	}
 	if !referrer.IsAddr {
 		if err := accManager.MinusCoinFromUsername(
 			ctx, referrer.AccountKey, registerFee); err != nil {
