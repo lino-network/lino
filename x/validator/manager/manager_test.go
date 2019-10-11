@@ -85,6 +85,7 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 		OncallInflationWeight:          int64(2),
 		StandbyInflationWeight:         int64(1),
 		MaxVotedValidators:             int64(3),
+		SlashLimitation:                int64(5),
 	}, nil).Maybe()
 
 }
@@ -3227,5 +3228,79 @@ func (suite *ValidatorManagerTestSuite) TestUpdateValidator() {
 		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
 		suite.NoError(err)
 		suite.Equal(tc.expectVal, *val, "%s", tc.testName)
+	}
+}
+func (suite *ValidatorManagerTestSuite) TestPunishCommittingValidator() {
+	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("abs2")).Return(
+		linotypes.NewCoinFromInt64(200000*linotypes.Decimals), nil).Maybe()
+	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("abs2"),
+		linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(
+		linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
+	absKey := secp256k1.GenPrivKey().PubKey()
+	abs := linotypes.AccountKey("abs2")
+	absVal := model.Validator{
+		ABCIValidator: abci.Validator{
+			Address: absKey.Address(),
+			Power:   linotypes.TendermintValidatorPower,
+		},
+		PubKey:        absKey,
+		Username:      abs,
+		ReceivedVotes: linotypes.NewCoinFromInt64(2000),
+		AbsentCommit:  1,
+		NumSlash:      5,
+	}
+	suite.vm.storage.SetValidator(suite.Ctx, abs, &absVal)
+
+	testCases := []struct {
+		testName     string
+		prevList     model.ValidatorList
+		expectedList model.ValidatorList
+		expectedVal  model.Validator
+		username     linotypes.AccountKey
+	}{
+		{
+			testName: "punish validator",
+			prevList: model.ValidatorList{
+				Oncall: []linotypes.AccountKey{
+					linotypes.AccountKey("abs2"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(200),
+				LowestOncall:       linotypes.AccountKey("abs2"),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			expectedList: model.ValidatorList{
+				Jail: []linotypes.AccountKey{
+					linotypes.AccountKey("abs2"),
+				},
+				LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
+				LowestOncall:       linotypes.AccountKey(""),
+				LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
+				LowestStandby:      linotypes.AccountKey(""),
+			},
+			expectedVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: absKey.Address(),
+					Power:   0,
+				},
+				PubKey:        absKey,
+				Username:      abs,
+				ReceivedVotes: linotypes.NewCoinFromInt64(2000),
+				AbsentCommit:  0,
+				NumSlash:      0,
+			},
+			username: linotypes.AccountKey("abs2"),
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
+		err := suite.vm.PunishCommittingValidator(suite.Ctx, tc.username, linotypes.NewCoinFromInt64(200*linotypes.Decimals), linotypes.PunishNoPriceFed)
+		suite.NoError(err)
+		actualList := suite.vm.storage.GetValidatorList(suite.Ctx)
+		suite.Equal(tc.expectedList, *actualList, "%s", tc.testName)
+		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
+		suite.NoError(err)
+		suite.Equal(tc.expectedVal, *val, "%s", tc.testName)
 	}
 }

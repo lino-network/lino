@@ -97,6 +97,7 @@ type DeveloperParam struct {
 // OncallInflationWeight - oncall validator's weight when distributing inflation
 // StandbyInflationWeight - standby validator's weight when distributing inflation
 // MaxVotedValidators - the number of max validators one voter can vote
+// SlashLimitation - slash limitation till into jail
 type ValidatorParam struct {
 	ValidatorMinDeposit            types.Coin `json:"validator_min_deposit"`
 	ValidatorCoinReturnIntervalSec int64      `json:"validator_coin_return_second"`
@@ -110,6 +111,7 @@ type ValidatorParam struct {
 	OncallInflationWeight          int64      `json:"oncall_inflation_weight"`
 	StandbyInflationWeight         int64      `json:"standby_inflation_weight"`
 	MaxVotedValidators             int64      `json:"max_voted_validators"`
+	SlashLimitation                int64      `json:"slash_limitation"`
 }
 
 // CoinDayParam - coin day parameters

@@ -9,15 +9,15 @@ import (
 
 // Validator is basic structure records all validator information
 type Validator struct {
-	ABCIValidator   abci.Validator       `json:"abci_validator"`
-	PubKey          crypto.PubKey        `json:"pubkey"`
-	Username        linotypes.AccountKey `json:"username"`
-	ReceivedVotes   linotypes.Coin       `json:"received_votes"`
-	HasRevoked      bool                 `json:"has_revoked"`
-	AbsentCommit    int64                `json:"absent_commit"`
-	ByzantineCommit int64                `json:"byzantine_commit"`
-	ProducedBlocks  int64                `json:"produced_blocks"`
-	Link            string               `json:"link"`
+	ABCIValidator  abci.Validator       `json:"abci_validator"`
+	PubKey         crypto.PubKey        `json:"pubkey"`
+	Username       linotypes.AccountKey `json:"username"`
+	ReceivedVotes  linotypes.Coin       `json:"received_votes"`
+	HasRevoked     bool                 `json:"has_revoked"`
+	AbsentCommit   int64                `json:"absent_commit"`
+	ProducedBlocks int64                `json:"produced_blocks"`
+	Link           string               `json:"link"`
+	NumSlash       int64                `json:"num_slash"`
 }
 
 type ElectionVote struct {
