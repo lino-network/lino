@@ -9,8 +9,8 @@ import (
 
 	// linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"
-	types "github.com/lino-network/lino/x/proposal"
 	"github.com/lino-network/lino/x/proposal/model"
+	"github.com/lino-network/lino/x/proposal/types"
 )
 
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {

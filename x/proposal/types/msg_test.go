@@ -1,5 +1,5 @@
 //nolint:deadcode,unused
-package proposal
+package types
 
 import (
 	"testing"

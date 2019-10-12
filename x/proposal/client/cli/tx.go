@@ -7,7 +7,7 @@ import (
 
 	"github.com/lino-network/lino/client"
 	linotypes "github.com/lino-network/lino/types"
-	types "github.com/lino-network/lino/x/proposal"
+	"github.com/lino-network/lino/x/proposal/types"
 )
 
 const (

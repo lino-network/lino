@@ -1,4 +1,4 @@
-package proposal
+package manager
 
 // import (
 // 	"testing"

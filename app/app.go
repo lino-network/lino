@@ -28,16 +28,16 @@ import (
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
 	pricetypes "github.com/lino-network/lino/x/price/types"
-	votemn "github.com/lino-network/lino/x/vote/manager"
-	votetypes "github.com/lino-network/lino/x/vote/types"
-
 	"github.com/lino-network/lino/x/proposal"
-
+	proposalmn "github.com/lino-network/lino/x/proposal/manager"
+	proposaltypes "github.com/lino-network/lino/x/proposal/types"
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
 	valmn "github.com/lino-network/lino/x/validator/manager"
 	valtypes "github.com/lino-network/lino/x/validator/types"
 	vote "github.com/lino-network/lino/x/vote"
+	votemn "github.com/lino-network/lino/x/vote/manager"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
@@ -98,7 +98,7 @@ type LinoBlockchain struct {
 	globalManager     global.GlobalManager
 	voteManager       vote.VoteKeeper
 	developerManager  dev.DeveloperKeeper
-	proposalManager   proposal.ProposalManager
+	proposalManager   proposal.ProposalKeeper
 	reputationManager rep.ReputationKeeper
 	bandwidthManager  bandwidth.BandwidthKeeper
 	priceManager      price.PriceKeeper
@@ -139,7 +139,6 @@ func NewLinoBlockchain(
 	registerEvent(lb.globalManager.WireCodec())
 	lb.accountManager = accmn.NewAccountManager(lb.CapKeyAccountStore, lb.paramHolder, &lb.globalManager)
 	lb.reputationManager = rep.NewReputationManager(lb.CapKeyReputationV2Store, lb.paramHolder)
-	lb.proposalManager = proposal.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder)
 
 	// layer-2: middlewares
 	//// vote <--> validator
@@ -148,6 +147,8 @@ func NewLinoBlockchain(
 	lb.voteManager = *voteManager.SetHooks(votemn.NewMultiStakingHooks(lb.valManager.Hooks()))
 	//// price -> vote, validator
 	lb.priceManager = pricemn.NewWeightedMedianPriceManager(lb.CapKeyPriceStore, lb.valManager, lb.paramHolder)
+	lb.proposalManager = proposalmn.NewProposalManager(lb.CapKeyProposalStore, lb.paramHolder, lb.voteManager,
+		&lb.globalManager, lb.accountManager, lb.postManager)
 
 	// layer-3: applications
 	lb.developerManager = devmn.NewDeveloperManager(
@@ -169,8 +170,7 @@ func NewLinoBlockchain(
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(votetypes.RouterKey, vote.NewHandler(lb.voteManager)).
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
-		AddRoute(proposal.RouterKey, proposal.NewHandler(
-			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
+		AddRoute(proposaltypes.RouterKey, proposal.NewHandler(lb.proposalManager)).
 		AddRoute(val.RouterKey, val.NewHandler(lb.valManager))
 
 	lb.QueryRouter().
@@ -178,7 +178,7 @@ func NewLinoBlockchain(
 		AddRoute(posttypes.QuerierRoute, post.NewQuerier(lb.postManager)).
 		AddRoute(votetypes.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(devtypes.QuerierRoute, dev.NewQuerier(lb.developerManager)).
-		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
+		AddRoute(proposaltypes.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
 		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
@@ -219,7 +219,7 @@ func MakeCodec() *wire.Codec {
 	devtypes.RegisterWire(cdc)
 	votetypes.RegisterWire(cdc)
 	valtypes.RegisterCodec(cdc)
-	proposal.RegisterWire(cdc)
+	proposaltypes.RegisterWire(cdc)
 	registerEvent(cdc)
 
 	cdc.Seal()
@@ -232,7 +232,7 @@ func registerEvent(cdc *wire.Codec) {
 	cdc.RegisterConcrete(posttypes.RewardEvent{}, "lino/eventRewardV2", nil)
 	cdc.RegisterConcrete(accmn.ReturnCoinEvent{}, "lino/eventReturn", nil)
 	cdc.RegisterConcrete(param.ChangeParamEvent{}, "lino/eventCpe", nil)
-	cdc.RegisterConcrete(proposal.DecideProposalEvent{}, "lino/eventDpe", nil)
+	cdc.RegisterConcrete(proposalmn.DecideProposalEvent{}, "lino/eventDpe", nil)
 	cdc.RegisterConcrete(votetypes.UnassignDutyEvent{}, "lino/eventUde", nil)
 }
 
@@ -450,9 +450,9 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 			if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
 				panic(err)
 			}
-		case proposal.DecideProposalEvent:
+		case proposalmn.DecideProposalEvent:
 			if err := e.Execute(
-				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager,
+				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager.(proposalmn.ProposalManager),
 				lb.postManager, &lb.globalManager); err != nil {
 				panic(err)
 			}
