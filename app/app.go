@@ -169,8 +169,8 @@ func NewLinoBlockchain(
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(votetypes.RouterKey, vote.NewHandler(lb.voteManager)).
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
-		AddRoute(proposal.RouterKey, proposal.NewHandler(
-			lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
+		// AddRoute(proposal.RouterKey, proposal.NewHandler(
+		// 	lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
 		AddRoute(val.RouterKey, val.NewHandler(lb.valManager))
 
 	lb.QueryRouter().
@@ -178,7 +178,7 @@ func NewLinoBlockchain(
 		AddRoute(posttypes.QuerierRoute, post.NewQuerier(lb.postManager)).
 		AddRoute(votetypes.QuerierRoute, vote.NewQuerier(lb.voteManager)).
 		AddRoute(devtypes.QuerierRoute, dev.NewQuerier(lb.developerManager)).
-		AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
+		// AddRoute(proposal.QuerierRoute, proposal.NewQuerier(lb.proposalManager)).
 		AddRoute(val.QuerierRoute, val.NewQuerier(lb.valManager)).
 		AddRoute(global.QuerierRoute, global.NewQuerier(lb.globalManager)).
 		AddRoute(param.QuerierRoute, param.NewQuerier(lb.paramHolder)).
