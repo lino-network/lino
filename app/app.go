@@ -411,7 +411,6 @@ func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlo
 		}
 	}
 
-	global.BeginBlocker(ctx, req, &lb.globalManager)
 	bandwidth.BeginBlocker(ctx, req, lb.bandwidthManager)
 	val.BeginBlocker(ctx, req, lb.valManager)
 
@@ -473,7 +472,6 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 // udpate validator set and renew reputation round
 func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	rep.EndBlocker(ctx, req, lb.reputationManager)
-	global.EndBlocker(ctx, req, &lb.globalManager)
 	bandwidth.EndBlocker(ctx, req, lb.bandwidthManager)
 
 	// update last block time
