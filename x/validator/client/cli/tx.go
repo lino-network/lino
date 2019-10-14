@@ -37,6 +37,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdRegister(cdc),
 		GetCmdRevoke(cdc),
 		GetCmdVote(cdc),
+		GetCmdUpdate(cdc),
 	)...)
 
 	return cmd
@@ -121,5 +122,23 @@ func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(FlagValidators, "", "a comma-separated string, the list of validators")
 	_ = cmd.MarkFlagRequired(FlagValidators)
+	return cmd
+}
+
+// GetCmdRegister -
+func GetCmdUpdate(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "update user --link <link>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
+			validator := args[0]
+			link := viper.GetString(FlagLink)
+			msg := types.NewValidatorUpdateMsg(validator, link)
+			return ctx.DoTxPrintResponse(msg)
+		},
+	}
+	cmd.Flags().String(FlagLink, "", "link of the validator")
 	return cmd
 }

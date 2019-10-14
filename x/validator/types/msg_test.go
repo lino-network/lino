@@ -68,6 +68,27 @@ func TestValidatorRegisterMsg(t *testing.T) {
 	}
 }
 
+func TestValidatorUpdateMsg(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		validatorUpdateMsg ValidatorUpdateMsg
+		expectedError      sdk.Error
+	}{
+		{
+			testName:           "normal case",
+			validatorUpdateMsg: NewValidatorUpdateMsg("user1", "123123"),
+			expectedError:      nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		result := tc.validatorUpdateMsg.ValidateBasic()
+		if !assert.Equal(t, result, tc.expectedError) {
+			t.Errorf("%s: diff result, got %v, want %v", tc.testName, result, tc.expectedError)
+		}
+	}
+}
+
 func TestVoteValidatorMsg(t *testing.T) {
 	testCases := []struct {
 		testName      string
@@ -121,6 +142,11 @@ func TestMsgPermission(t *testing.T) {
 			msg:                NewVoteValidatorMsg("test", []string{"val1"}),
 			expectedPermission: types.TransactionPermission,
 		},
+		{
+			testName:           "uddate validator msg",
+			msg:                NewValidatorUpdateMsg("test", "asd"),
+			expectedPermission: types.TransactionPermission,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -138,7 +164,7 @@ func TestGetSignBytes(t *testing.T) {
 		msg      types.Msg
 	}{
 		{
-			testName: "validator deposit msg",
+			testName: "validator register msg",
 			msg: NewValidatorRegisterMsg(
 				"test", secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
 		},
@@ -149,6 +175,11 @@ func TestGetSignBytes(t *testing.T) {
 		{
 			testName: "vote validator msg",
 			msg:      NewVoteValidatorMsg("test", []string{"val1", "val2"}),
+		},
+		{
+			testName: "validator update msg",
+			msg: NewValidatorUpdateMsg(
+				"test", "https://lino.network"),
 		},
 	}
 
@@ -164,7 +195,7 @@ func TestGetSigners(t *testing.T) {
 		expectSigners []types.AccountKey
 	}{
 		{
-			testName: "validator deposit msg",
+			testName: "validator register msg",
 			msg: NewValidatorRegisterMsg(
 				"test", secp256k1.GenPrivKey().PubKey(), "https://lino.network"),
 			expectSigners: []types.AccountKey{"test"},
@@ -177,6 +208,11 @@ func TestGetSigners(t *testing.T) {
 		{
 			testName:      "vote validator msg",
 			msg:           NewVoteValidatorMsg("test", []string{"val1", "val2"}),
+			expectSigners: []types.AccountKey{"test"},
+		},
+		{
+			testName:      "validator update msg",
+			msg:           NewValidatorUpdateMsg("test", "https://lino.network"),
 			expectSigners: []types.AccountKey{"test"},
 		},
 	}

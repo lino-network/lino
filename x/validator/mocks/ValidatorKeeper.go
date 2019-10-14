@@ -279,6 +279,22 @@ func (_m *ValidatorKeeper) RevokeValidator(ctx types.Context, username linotypes
 	return r0
 }
 
+// UpdateValidator provides a mock function with given fields: ctx, username, link
+func (_m *ValidatorKeeper) UpdateValidator(ctx types.Context, username linotypes.AccountKey, link string) types.Error {
+	ret := _m.Called(ctx, username, link)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, string) types.Error); ok {
+		r0 = rf(ctx, username, link)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // VoteValidator provides a mock function with given fields: ctx, username, votedValidators
 func (_m *ValidatorKeeper) VoteValidator(ctx types.Context, username linotypes.AccountKey, votedValidators []linotypes.AccountKey) types.Error {
 	ret := _m.Called(ctx, username, votedValidators)

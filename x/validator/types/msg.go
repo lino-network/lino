@@ -13,6 +13,7 @@ import (
 var _ types.Msg = ValidatorRegisterMsg{}
 var _ types.Msg = ValidatorRevokeMsg{}
 var _ types.Msg = VoteValidatorMsg{}
+var _ types.Msg = ValidatorUpdateMsg{}
 
 // ValidatorRegisterMsg - register to become validator
 type ValidatorRegisterMsg struct {
@@ -188,6 +189,63 @@ func (msg VoteValidatorMsg) GetSigners() []sdk.AccAddress {
 
 // GetConsumeAmount - implement types.Msg
 func (msg VoteValidatorMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
+// ValidatorUpdateMsg - register to become validator
+type ValidatorUpdateMsg struct {
+	Username types.AccountKey `json:"username"`
+	Link     string           `json:"link"`
+}
+
+// ValidatorUpdateMsg Msg Implementations
+func NewValidatorUpdateMsg(validator string, link string) ValidatorUpdateMsg {
+	return ValidatorUpdateMsg{
+		Username: types.AccountKey(validator),
+		Link:     link,
+	}
+}
+
+// Route - implement sdk.Msg
+func (msg ValidatorUpdateMsg) Route() string { return RouterKey }
+
+// Type - implement sdk.Msg
+func (msg ValidatorUpdateMsg) Type() string { return "ValidatorUpdateMsg" }
+
+// ValidateBasic - implement sdk.Msg
+func (msg ValidatorUpdateMsg) ValidateBasic() sdk.Error {
+	if !msg.Username.IsValid() {
+		return ErrInvalidUsername()
+	}
+
+	if len(msg.Link) > types.MaximumLinkURL {
+		return ErrInvalidWebsite()
+	}
+
+	return nil
+}
+
+func (msg ValidatorUpdateMsg) String() string {
+	return fmt.Sprintf("ValidatorUpdateMsg{Username:%v, Link:%v}", msg.Username, msg.Link)
+}
+
+// GetPermission - implement types.Msg
+func (msg ValidatorUpdateMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+// GetSignBytes - implement sdk.Msg
+func (msg ValidatorUpdateMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+// GetSigners - implement sdk.Msg
+func (msg ValidatorUpdateMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// GetConsumeAmount - implement types.Msg
+func (msg ValidatorUpdateMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 

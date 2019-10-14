@@ -89,6 +89,10 @@ func (vm VoteManager) StakeInFor(ctx sdk.Context, sender linotypes.AccountKey,
 }
 
 func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	if !vm.am.DoesAccountExist(ctx, username) {
+		return types.ErrAccountNotFound()
+	}
+
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		if err.Code() != linotypes.CodeVoterNotFound {

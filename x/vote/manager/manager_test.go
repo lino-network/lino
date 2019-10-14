@@ -94,6 +94,7 @@ func (suite *VoteManagerTestSuite) SetupTest() {
 
 func (suite *VoteManagerTestSuite) TestStakeIn() {
 	suite.am.On("MinusCoinFromUsername", mock.Anything, suite.user1, suite.stakeInAmount).Return(nil).Maybe()
+	suite.am.On("DoesAccountExist", mock.Anything, suite.user1).Return(true).Maybe()
 	suite.global.On(
 		"GetInterestSince", mock.Anything, int64(100),
 		linotypes.NewCoinFromInt64(0)).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()
@@ -158,6 +159,7 @@ func (suite *VoteManagerTestSuite) TestStakeIn() {
 
 func (suite *VoteManagerTestSuite) TestStakeInFor() {
 	suite.am.On("MinusCoinFromUsername", mock.Anything, suite.user1, suite.stakeInAmount).Return(nil).Maybe()
+	suite.am.On("DoesAccountExist", mock.Anything, suite.user2).Return(true).Maybe()
 	suite.global.On(
 		"GetInterestSince", mock.Anything, int64(100),
 		linotypes.NewCoinFromInt64(0)).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()

@@ -124,7 +124,7 @@ const (
 	MaximumLinkIdentifier = 20
 
 	// MaximumLinkURL - maximum length of Links URL
-	MaximumLinkURL = 100
+	MaximumLinkURL = 300
 
 	// MaximumLengthOfPostID - maximum length of post ID
 	MaximumLengthOfPostID = 50

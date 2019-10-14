@@ -23,6 +23,7 @@ type ValidatorKeeper interface {
 	PunishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
 		penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error
 	Hooks() votemn.Hooks
+	UpdateValidator(ctx sdk.Context, username linotypes.AccountKey, link string) sdk.Error
 
 	// getters
 	GetInitValidators(ctx sdk.Context) ([]abci.ValidatorUpdate, sdk.Error)

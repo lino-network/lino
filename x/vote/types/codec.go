@@ -9,6 +9,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(StakeInMsg{}, "lino/stakeIn", nil)
 	cdc.RegisterConcrete(StakeOutMsg{}, "lino/stakeOut", nil)
 	cdc.RegisterConcrete(ClaimInterestMsg{}, "lino/claimInterest", nil)
+	cdc.RegisterConcrete(StakeInForMsg{}, "lino/stakeInFor", nil)
 }
 
 var msgCdc = wire.New()
