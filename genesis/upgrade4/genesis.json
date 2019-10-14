@@ -112,7 +112,7 @@
         "general_msg_ema_factor": "0.025",
         "app_msg_quota_ratio": "0.8",
         "app_msg_ema_factor": "0.025",
-        "expected_max_mps": "300",
+        "expected_max_mps": "150",
         "msg_fee_factor_a": "6",
         "msg_fee_factor_b": "10",
         "max_mps_decay_rate": "0.99",
