@@ -1121,7 +1121,7 @@ func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filep
 	})
 
 	// export votes
-	substores[string(model.ValidatorListSubstore)].Iterate(func(key []byte, val interface{}) bool {
+	substores[string(model.ElectionVoteListSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		user := linotypes.AccountKey(key)
 		votelist := val.(*model.ElectionVoteList)
 		votesIR := make([]model.ElectionVoteIR, 0)
