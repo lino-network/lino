@@ -21,9 +21,8 @@ const (
 
 // GlobalManager - encapsulates all basic struct
 type GlobalManager struct {
-	storage                 model.GlobalStorage
-	paramHolder             param.ParamHolder
-	deliverTxEventCacheList []*model.EventCache
+	storage     model.GlobalStorage
+	paramHolder param.ParamHolder
 }
 
 // NewGlobalManager - return the global manager
@@ -54,20 +53,15 @@ func (gm *GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, ev
 	if unixTime < ctx.BlockHeader().Time.Unix() {
 		return ErrRegisterExpiredEvent(unixTime)
 	}
-	if ctx.IsCheckTx() {
-		return nil
+	events, err := gm.storage.GetTimeEventList(ctx, unixTime)
+	if err != nil {
+		return err
 	}
-	for _, eventCache := range gm.deliverTxEventCacheList {
-		if unixTime == eventCache.UnixTime {
-			eventCache.EventList = append(eventCache.EventList, event)
-			return nil
-		}
+	if events == nil {
+		events = &types.TimeEventList{}
 	}
-	gm.deliverTxEventCacheList = append(gm.deliverTxEventCacheList, &model.EventCache{
-		UnixTime:  unixTime,
-		EventList: []types.Event{event},
-	})
-	return nil
+	events.Events = append(events.Events, event)
+	return gm.storage.SetTimeEventList(ctx, unixTime, events)
 }
 
 // GetTimeEventListAtTime - get time event list at given time
@@ -479,33 +473,6 @@ func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Erro
 		return sdk.ZeroDec(), err
 	}
 	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
-}
-
-// CommitEvent - append event to event list
-// Commit event cache will only be committed at the endblocker
-func (gm *GlobalManager) CommitEventCache(ctx sdk.Context) sdk.Error {
-	for _, eventCache := range gm.deliverTxEventCacheList {
-		eventList, err := gm.storage.GetTimeEventList(ctx, eventCache.UnixTime)
-		if err != nil {
-			return err
-		}
-		if eventList == nil {
-			eventList = &types.TimeEventList{Events: []types.Event{}}
-		}
-		eventList.Events = append(eventList.Events, eventCache.EventList...)
-		if err := gm.storage.SetTimeEventList(ctx, eventCache.UnixTime, eventList); err != nil {
-			return err
-		}
-	}
-	gm.deliverTxEventCacheList = []*model.EventCache{}
-	return nil
-}
-
-// ClearEventCache - clear event cache
-// clear event cache will only be committed at the beginblocker
-func (gm *GlobalManager) ClearEventCache(ctx sdk.Context) sdk.Error {
-	gm.deliverTxEventCacheList = []*model.EventCache{}
-	return nil
 }
 
 func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
