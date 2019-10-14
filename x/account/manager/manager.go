@@ -610,7 +610,7 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 		state.Banks = append(state.Banks, model.AccountBankIR{
 			Address:         addr,
 			Saving:          bank.Saving,
-			FrozenMoneyList: frozens,
+			FrozenMoneyList: nil,
 			PubKey:          bank.PubKey,
 			Sequence:        bank.Sequence,
 			Username:        bank.Username,
