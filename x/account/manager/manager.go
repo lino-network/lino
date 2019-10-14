@@ -583,7 +583,7 @@ func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username li
 }
 
 // ExportToFile -
-func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string, ongoings map[linotypes.AccountKey]linotypes.Coin) error {
 	state := &model.AccountTablesIR{
 		Version: exportVersion,
 	}
@@ -603,6 +603,9 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 		frozens := make([]model.FrozenMoneyIR, len(bank.FrozenMoneyList))
 		for i, v := range bank.FrozenMoneyList {
 			frozens[i] = model.FrozenMoneyIR(v)
+		}
+		if balance, ok := ongoings[bank.Username]; ok {
+			bank.Saving = bank.Saving.Plus(balance)
 		}
 		state.Banks = append(state.Banks, model.AccountBankIR{
 			Address:         addr,

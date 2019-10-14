@@ -57,7 +57,7 @@ type AccountKeeper interface {
 	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 
 	// import export
-	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string, ongoings map[types.AccountKey]types.Coin) error
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 

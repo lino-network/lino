@@ -447,9 +447,10 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 				panic(err)
 			}
 		case accmn.ReturnCoinEvent:
-			if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
-				panic(err)
-			}
+			// skipped
+			// if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
+			// 	panic(err)
+			// }
 		case proposal.DecideProposalEvent:
 			if err := e.Execute(
 				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager,
@@ -569,10 +570,10 @@ type importExportModule struct {
 
 func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 	return []importExportModule{
-		{
-			module:   lb.accountManager,
-			filename: accountStateFile,
-		},
+		// {
+		// 	module:   lb.accountManager,
+		// 	filename: accountStateFile,
+		// },
 		{
 			module:   lb.postManager,
 			filename: postStateFile,
@@ -623,6 +624,9 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 			fmt.Printf("Export %s Done\n", modules[i].filename)
 		}(i)
 	}
+
+	returnCoinEvents := lb.globalManager.OngoingCoinReturns(ctx)
+	lb.accountManager.ExportToFile(ctx, lb.cdc, exportPath+accountStateFile, returnCoinEvents)
 
 	wg.Wait()
 

@@ -521,6 +521,16 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 			panic(err)
 		}
 		events := val.(*types.TimeEventList)
+		newEvents := make([]types.Event, 0)
+		for _, event := range events.Events {
+			switch v := event.(type) {
+			case types.ReturnCoinEvent:
+				ctx.Logger().Info(fmt.Sprintf("skip: %+v", v))
+			default:
+				newEvents = append(newEvents, event)
+			}
+		}
+		events.Events = newEvents
 		state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
 			UnixTime:      ts,
 			TimeEventList: *events,
@@ -576,6 +586,30 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 	state.Time = model.GlobalTimeIR(*globalt)
 
 	return utils.Save(filepath, cdc, state)
+}
+
+func (gm *GlobalManager) OngoingCoinReturns(ctx sdk.Context) map[types.AccountKey]types.Coin {
+	rst := make(map[types.AccountKey]types.Coin)
+	storeMap := gm.storage.PartialStoreMap(ctx)
+	storeMap[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		_, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		events := val.(*types.TimeEventList)
+		for _, event := range events.Events {
+			switch v := event.(type) {
+			case types.ReturnCoinEvent:
+				if _, ok := rst[v.Username]; ok {
+					rst[v.Username] = rst[v.Username].Plus(v.Amount)
+				} else {
+					rst[v.Username] = v.Amount
+				}
+			}
+		}
+		return false
+	})
+	return rst
 }
 
 func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
