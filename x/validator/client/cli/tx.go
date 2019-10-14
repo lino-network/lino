@@ -47,7 +47,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register",
-		Short: "register user --amount <amount> --link <link>",
+		Short: "register user --link <link>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -61,11 +61,7 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
-	cmd.Flags().String(FlagAmount, "", "amount of the donation")
 	cmd.Flags().String(FlagLink, "", "link of the validator")
-	for _, v := range []string{FlagUser, FlagAmount, FlagLink} {
-		_ = cmd.MarkFlagRequired(v)
-	}
 	return cmd
 }
 
