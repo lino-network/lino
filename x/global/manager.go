@@ -525,7 +525,7 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 		for _, event := range events.Events {
 			switch v := event.(type) {
 			case types.ReturnCoinEvent:
-				ctx.Logger().Info(fmt.Sprintf("skip: %+v", v))
+				ctx.Logger().Error(fmt.Sprintf("skip: %+v", v))
 			default:
 				newEvents = append(newEvents, event)
 			}
