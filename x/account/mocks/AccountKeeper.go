@@ -319,6 +319,29 @@ func (_m *AccountKeeper) GetMeta(ctx types.Context, username linotypes.AccountKe
 	return r0, r1
 }
 
+// GetPool provides a mock function with given fields: ctx, poolName
+func (_m *AccountKeeper) GetPool(ctx types.Context, poolName linotypes.PoolName) (linotypes.Coin, types.Error) {
+	ret := _m.Called(ctx, poolName)
+
+	var r0 linotypes.Coin
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName) linotypes.Coin); ok {
+		r0 = rf(ctx, poolName)
+	} else {
+		r0 = ret.Get(0).(linotypes.Coin)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.PoolName) types.Error); ok {
+		r1 = rf(ctx, poolName)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // GetSavingFromUsername provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetSavingFromUsername(ctx types.Context, username linotypes.AccountKey) (linotypes.Coin, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -452,6 +475,22 @@ func (_m *AccountKeeper) Mint(ctx types.Context) types.Error {
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
 		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// MoveBetweenPools provides a mock function with given fields: ctx, from, to, amount
+func (_m *AccountKeeper) MoveBetweenPools(ctx types.Context, from linotypes.PoolName, to linotypes.PoolName, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, from, to, amount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName, linotypes.PoolName, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, from, to, amount)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)

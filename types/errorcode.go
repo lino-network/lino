@@ -113,6 +113,7 @@ const (
 	CodeAddressIsTaken                       sdk.CodeType = 366
 	CodePoolNotFound                         sdk.CodeType = 367
 	CodePoolNotEnough                        sdk.CodeType = 368
+	CodeNegativeMoveAmount                   sdk.CodeType = 369
 
 	// Lino post errors reserve 400 ~ 499
 	CodePostMetaNotFound                     sdk.CodeType = 400

@@ -17,52 +17,9 @@ type GlobalKeeper struct {
 	mock.Mock
 }
 
-// AddFrictionAndRegisterContentRewardEvent provides a mock function with given fields: ctx, event, friction, evaluate
-func (_m *GlobalKeeper) AddFrictionAndRegisterContentRewardEvent(ctx types.Context, event linotypes.Event, friction linotypes.Coin, evaluate linotypes.MiniDollar) types.Error {
-	ret := _m.Called(ctx, event, friction, evaluate)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Event, linotypes.Coin, linotypes.MiniDollar) types.Error); ok {
-		r0 = rf(ctx, event, friction, evaluate)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// AddLinoStakeToStat provides a mock function with given fields: ctx, linoStake
-func (_m *GlobalKeeper) AddLinoStakeToStat(ctx types.Context, linoStake linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, linoStake)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, linoStake)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// AddToValidatorInflationPool provides a mock function with given fields: ctx, coin
-func (_m *GlobalKeeper) AddToValidatorInflationPool(ctx types.Context, coin linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, coin)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, coin)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
+// ExecuteEvents provides a mock function with given fields: ctx, exec
+func (_m *GlobalKeeper) ExecuteEvents(ctx types.Context, exec func(types.Context, linotypes.Event) types.Error) {
+	_m.Called(ctx, exec)
 }
 
 // ExportToFile provides a mock function with given fields: ctx, cdc, filepath
@@ -79,54 +36,8 @@ func (_m *GlobalKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepa
 	return r0
 }
 
-// GetConsumptionFrictionRate provides a mock function with given fields: ctx
-func (_m *GlobalKeeper) GetConsumptionFrictionRate(ctx types.Context) (types.Dec, types.Error) {
-	ret := _m.Called(ctx)
-
-	var r0 types.Dec
-	if rf, ok := ret.Get(0).(func(types.Context) types.Dec); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(types.Dec)
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
-// GetInterestSince provides a mock function with given fields: ctx, unixTime, linoStake
-func (_m *GlobalKeeper) GetInterestSince(ctx types.Context, unixTime int64, linoStake linotypes.Coin) (linotypes.Coin, types.Error) {
-	ret := _m.Called(ctx, unixTime, linoStake)
-
-	var r0 linotypes.Coin
-	if rf, ok := ret.Get(0).(func(types.Context, int64, linotypes.Coin) linotypes.Coin); ok {
-		r0 = rf(ctx, unixTime, linoStake)
-	} else {
-		r0 = ret.Get(0).(linotypes.Coin)
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, int64, linotypes.Coin) types.Error); ok {
-		r1 = rf(ctx, unixTime, linoStake)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
 // GetLastBlockTime provides a mock function with given fields: ctx
-func (_m *GlobalKeeper) GetLastBlockTime(ctx types.Context) (int64, types.Error) {
+func (_m *GlobalKeeper) GetLastBlockTime(ctx types.Context) int64 {
 	ret := _m.Called(ctx)
 
 	var r0 int64
@@ -136,62 +47,21 @@ func (_m *GlobalKeeper) GetLastBlockTime(ctx types.Context) (int64, types.Error)
 		r0 = ret.Get(0).(int64)
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
-// GetRewardAndPopFromWindow provides a mock function with given fields: ctx, evaluate
-func (_m *GlobalKeeper) GetRewardAndPopFromWindow(ctx types.Context, evaluate linotypes.MiniDollar) (linotypes.Coin, types.Error) {
-	ret := _m.Called(ctx, evaluate)
+// GetPastDay provides a mock function with given fields: ctx, unixTime
+func (_m *GlobalKeeper) GetPastDay(ctx types.Context, unixTime int64) int64 {
+	ret := _m.Called(ctx, unixTime)
 
-	var r0 linotypes.Coin
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.MiniDollar) linotypes.Coin); ok {
-		r0 = rf(ctx, evaluate)
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(types.Context, int64) int64); ok {
+		r0 = rf(ctx, unixTime)
 	} else {
-		r0 = ret.Get(0).(linotypes.Coin)
+		r0 = ret.Get(0).(int64)
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.MiniDollar) types.Error); ok {
-		r1 = rf(ctx, evaluate)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
-// GetValidatorHourlyInflation provides a mock function with given fields: ctx
-func (_m *GlobalKeeper) GetValidatorHourlyInflation(ctx types.Context) (linotypes.Coin, types.Error) {
-	ret := _m.Called(ctx)
-
-	var r0 linotypes.Coin
-	if rf, ok := ret.Get(0).(func(types.Context) linotypes.Coin); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(linotypes.Coin)
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
@@ -208,59 +78,19 @@ func (_m *GlobalKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, file
 	return r0
 }
 
-// MinusLinoStakeFromStat provides a mock function with given fields: ctx, linoStake
-func (_m *GlobalKeeper) MinusLinoStakeFromStat(ctx types.Context, linoStake linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, linoStake)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, linoStake)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
+// InitGenesis provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) InitGenesis(ctx types.Context) {
+	_m.Called(ctx)
 }
 
-// PopDeveloperMonthlyInflation provides a mock function with given fields: ctx
-func (_m *GlobalKeeper) PopDeveloperMonthlyInflation(ctx types.Context) (linotypes.Coin, types.Error) {
-	ret := _m.Called(ctx)
-
-	var r0 linotypes.Coin
-	if rf, ok := ret.Get(0).(func(types.Context) linotypes.Coin); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(linotypes.Coin)
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+// OnBeginBlock provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) OnBeginBlock(ctx types.Context) {
+	_m.Called(ctx)
 }
 
-// RegisterCoinReturnEvent provides a mock function with given fields: ctx, events, times, intervalSec
-func (_m *GlobalKeeper) RegisterCoinReturnEvent(ctx types.Context, events []linotypes.Event, times int64, intervalSec int64) types.Error {
-	ret := _m.Called(ctx, events, times, intervalSec)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, []linotypes.Event, int64, int64) types.Error); ok {
-		r0 = rf(ctx, events, times, intervalSec)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
+// OnEndBlock provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) OnEndBlock(ctx types.Context) {
+	_m.Called(ctx)
 }
 
 // RegisterEventAtTime provides a mock function with given fields: ctx, unixTime, event

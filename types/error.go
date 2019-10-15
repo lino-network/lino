@@ -50,3 +50,8 @@ func ErrInvalidUsername(username AccountKey) sdk.Error {
 func ErrUnknownEvent() sdk.Error {
 	return NewError(CodeUnknownEvent, "unknown event")
 }
+
+// ErrTestOnlyDummyError -
+func ErrTestDummyError() sdk.Error {
+	return NewError(CodeTestDummyError, fmt.Sprintf(""))
+}

@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	exportVersion = 1
-	importVersion = 1
+	exportVersion = 2
+	importVersion = 2
 )
 
 // VoteManager - vote manager
@@ -79,7 +79,7 @@ func (vm VoteManager) StakeIn(ctx sdk.Context, username linotypes.AccountKey, am
 		return err
 	}
 
-	return vm.AddStake(ctx, username, amount)
+	return vm.addStake(ctx, username, amount)
 }
 
 func (vm VoteManager) StakeInFor(ctx sdk.Context, sender linotypes.AccountKey,
@@ -95,10 +95,10 @@ func (vm VoteManager) StakeInFor(ctx sdk.Context, sender linotypes.AccountKey,
 		return err
 	}
 
-	return vm.AddStake(ctx, receiver, amount)
+	return vm.addStake(ctx, receiver, amount)
 }
 
-func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+func (vm VoteManager) addStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	if !vm.am.DoesAccountExist(ctx, username) {
 		return types.ErrAccountNotFound()
 	}
@@ -125,8 +125,8 @@ func (vm VoteManager) AddStake(ctx sdk.Context, username linotypes.AccountKey, a
 	voter.LinoStake = voter.LinoStake.Plus(amount)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
-	vm.storage.SetVoter(ctx, username, voter)
-	// add linoStake to global stat
+	vm.storage.SetVoter(ctx, voter)
+	// add linoStake to stats
 	if err := vm.updateLinoStakeStat(ctx, amount, true); err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 	}
 
 	// minus stake stats
-	if err := vm.MinusStake(ctx, username, amount); err != nil {
+	if err := vm.minusStake(ctx, username, amount); err != nil {
 		return err
 	}
 
@@ -170,7 +170,7 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 	return nil
 }
 
-func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+func (vm VoteManager) minusStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
@@ -188,9 +188,9 @@ func (vm VoteManager) MinusStake(ctx sdk.Context, username linotypes.AccountKey,
 	voter.Interest = voter.Interest.Plus(interest)
 	voter.LinoStake = voter.LinoStake.Minus(amount)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-	vm.storage.SetVoter(ctx, username, voter)
+	vm.storage.SetVoter(ctx, voter)
 
-	// minus linoStake from global stat
+	// minus linoStake from stats
 	if err := vm.updateLinoStakeStat(ctx, amount, false); err != nil {
 		return err
 	}
@@ -217,7 +217,7 @@ func (vm VoteManager) ClaimInterest(ctx sdk.Context, username linotypes.AccountK
 
 	voter.Interest = linotypes.NewCoinFromInt64(0)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-	vm.storage.SetVoter(ctx, username, voter)
+	vm.storage.SetVoter(ctx, voter)
 	return nil
 }
 
@@ -267,7 +267,7 @@ func (vm VoteManager) AssignDuty(
 	// voter.LinoStake = voter.LinoStake.Minus(frozenAmount)
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
-	vm.storage.SetVoter(ctx, username, voter)
+	vm.storage.SetVoter(ctx, voter)
 	return nil
 }
 
@@ -281,11 +281,12 @@ func (vm VoteManager) UnassignDuty(ctx sdk.Context, username linotypes.AccountKe
 		return types.ErrNoDuty()
 	}
 	if err := vm.gm.RegisterEventAtTime(
-		ctx, ctx.BlockHeader().Time.Unix()+waitingPeriodSec, types.UnassignDutyEvent{Username: username}); err != nil {
+		ctx, ctx.BlockHeader().Time.Unix()+waitingPeriodSec,
+		types.UnassignDutyEvent{Username: username}); err != nil {
 		return err
 	}
 	voter.Duty = types.DutyPending
-	vm.storage.SetVoter(ctx, username, voter)
+	vm.storage.SetVoter(ctx, voter)
 	return nil
 }
 
@@ -311,7 +312,7 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 	}
 	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
 
-	vm.storage.SetVoter(ctx, username, voter)
+	vm.storage.SetVoter(ctx, voter)
 	// minus linoStake from global stat
 	if err := vm.updateLinoStakeStat(ctx, slashedAmount, false); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
@@ -332,7 +333,7 @@ func (vm VoteManager) ExecUnassignDutyEvent(ctx sdk.Context, event types.Unassig
 	// set frozen amount to zero and duty to voter
 	voter.FrozenAmount = linotypes.NewCoinFromInt64(0)
 	voter.Duty = types.DutyVoter
-	vm.storage.SetVoter(ctx, event.Username, voter)
+	vm.storage.SetVoter(ctx, voter)
 	return nil
 }
 
@@ -346,7 +347,8 @@ func (vm VoteManager) popInterestSince(ctx sdk.Context, unixTime int64, linoStak
 		if err != nil {
 			return linotypes.NewCoinFromInt64(0), err
 		}
-		if linoStakeStat.UnclaimedLinoStake.IsZero() || !linoStakeStat.UnclaimedLinoStake.IsGTE(linoStake) {
+		if linoStakeStat.UnclaimedLinoStake.IsZero() ||
+			!linoStakeStat.UnclaimedLinoStake.IsGTE(linoStake) {
 			continue
 		}
 		interest :=
@@ -392,7 +394,7 @@ func (vm VoteManager) RecordFriction(ctx sdk.Context, friction linotypes.Coin) s
 
 // AdvanceLinoStakeStats - save consumption and lino power to LinoStakeStat of a new day.
 // It need to be executed daily.
-func (vm VoteManager) AdvanceLinoStakeStats(ctx sdk.Context) sdk.Error {
+func (vm VoteManager) DailyAdvanceLinoStakeStats(ctx sdk.Context) sdk.Error {
 	nDay := vm.gm.GetPastDay(ctx, ctx.BlockTime().Unix())
 	if nDay < 1 {
 		return nil
@@ -442,7 +444,7 @@ func (vm VoteManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 
 	for _, voterir := range table.Voters {
 		voter := model.Voter(voterir)
-		vm.storage.SetVoter(ctx, voter.Username, &voter)
+		vm.storage.SetVoter(ctx, &voter)
 	}
 	return nil
 }

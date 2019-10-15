@@ -15,9 +15,7 @@ import (
 type VoteKeeper interface {
 	DoesVoterExist(ctx sdk.Context, username linotypes.AccountKey) bool
 	StakeIn(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error
-	AddStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error
 	StakeOut(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error
-	MinusStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error
 	ClaimInterest(ctx sdk.Context, username linotypes.AccountKey) sdk.Error
 	GetVoterDuty(ctx sdk.Context, username linotypes.AccountKey) (types.VoterDuty, sdk.Error)
 	AssignDuty(
@@ -27,6 +25,8 @@ type VoteKeeper interface {
 	ExecUnassignDutyEvent(ctx sdk.Context, event types.UnassignDutyEvent) sdk.Error
 	GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error)
 	StakeInFor(ctx sdk.Context, sender linotypes.AccountKey, receiver linotypes.AccountKey, amount linotypes.Coin) sdk.Error
+	RecordFriction(ctx sdk.Context, friction linotypes.Coin) sdk.Error
+	DailyAdvanceLinoStakeStats(ctx sdk.Context) sdk.Error
 	// Getter
 	GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error)
 

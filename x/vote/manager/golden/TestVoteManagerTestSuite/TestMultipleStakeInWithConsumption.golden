@@ -1,0 +1,212 @@
+[
+  {
+    "prefix": "1",
+    "key": "user1",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user1",
+        "lino_stake": {
+          "amount": "5000"
+        },
+        "last_power_change_at": "7",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "user2",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user2",
+        "lino_stake": {
+          "amount": "6000"
+        },
+        "last_power_change_at": "6",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "0",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "222"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "1000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "1",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "444"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "5000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "2",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "888"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "2000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "3",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "100"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "2000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "4",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "500"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "6000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "5",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "300"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "7000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "6",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "0"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "11000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "6000"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "7",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "300"
+        },
+        "unclaimed_friction": {
+          "amount": "300"
+        },
+        "total_lino_power": {
+          "amount": "11000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "11000"
+        }
+      }
+    }
+  }
+]

@@ -4,25 +4,36 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	parammodel "github.com/lino-network/lino/param"
 	param "github.com/lino-network/lino/param/mocks"
 	"github.com/lino-network/lino/testsuites"
+	"github.com/lino-network/lino/testutils"
 	linotypes "github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account/mocks"
 	global "github.com/lino-network/lino/x/global/mocks"
 	hk "github.com/lino-network/lino/x/vote/manager/mocks"
 	"github.com/lino-network/lino/x/vote/model"
 	"github.com/lino-network/lino/x/vote/types"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
+var (
+	storeKeyStr = "testVoterStore"
+	kvStoreKey  = sdk.NewKVStoreKey(storeKeyStr)
+)
+
+type VoteStoreDumper struct{}
+
+func (dumper VoteStoreDumper) NewDumper() *testutils.Dumper {
+	return model.NewVoteDumper(model.NewVoteStorage(kvStoreKey))
+}
+
 type VoteManagerTestSuite struct {
-	testsuites.CtxTestSuite
+	testsuites.GoldenTestSuite
 	vm     VoteManager
 	ph     *param.ParamKeeper
 	am     *acc.AccountKeeper
@@ -37,208 +48,378 @@ type VoteManagerTestSuite struct {
 	voter2 model.Voter
 	voter3 model.Voter
 
-	stakeInAmount linotypes.Coin
-	interest      linotypes.Coin
+	minStakeInAmount linotypes.Coin
 }
 
-func TestPostManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(VoteManagerTestSuite))
+func TestVoteManagerTestSuite(t *testing.T) {
+	suite.Run(t, &VoteManagerTestSuite{
+		GoldenTestSuite: testsuites.NewGoldenTestSuite(VoteStoreDumper{}, kvStoreKey),
+	})
 }
 
 func (suite *VoteManagerTestSuite) SetupTest() {
-	testVoteKey := sdk.NewKVStoreKey("vote")
-	suite.SetupCtx(0, time.Unix(0, 0), testVoteKey)
+	suite.SetupCtx(0, time.Unix(0, 0), kvStoreKey)
 	suite.am = &acc.AccountKeeper{}
 	suite.ph = &param.ParamKeeper{}
 	suite.global = &global.GlobalKeeper{}
 	suite.hooks = &hk.StakingHooks{}
-	suite.vm = NewVoteManager(testVoteKey, suite.ph, suite.am, suite.global)
+	suite.vm = NewVoteManager(kvStoreKey, suite.ph, suite.am, suite.global)
 	suite.vm = *suite.vm.SetHooks(suite.hooks)
-	suite.user1 = linotypes.AccountKey("user1")
-	suite.user2 = linotypes.AccountKey("user2")
-	suite.user3 = linotypes.AccountKey("user3")
-	suite.stakeInAmount = linotypes.NewCoinFromInt64(1000 * linotypes.Decimals)
-	suite.interest = linotypes.NewCoinFromInt64(20 * linotypes.Decimals)
+	suite.minStakeInAmount = linotypes.NewCoinFromInt64(1000 * linotypes.Decimals)
 
-	suite.voter2 = model.Voter{
-		Username:  suite.user2,
-		LinoStake: suite.stakeInAmount,
-		Duty:      types.DutyVoter,
-	}
-	suite.voter3 = model.Voter{
-		Username:     suite.user3,
-		LinoStake:    suite.stakeInAmount,
-		FrozenAmount: suite.stakeInAmount,
-		Duty:         types.DutyValidator,
-	}
+	// suite.voter2 = model.Voter{
+	// 	Username:  suite.user2,
+	// 	LinoStake: suite.stakeInAmount,
+	// 	Duty:      types.DutyVoter,
+	// }
+	// suite.voter3 = model.Voter{
+	// 	Username:     suite.user3,
+	// 	LinoStake:    suite.stakeInAmount,
+	// 	FrozenAmount: suite.stakeInAmount,
+	// 	Duty:         types.DutyValidator,
+	// }
 
 	suite.ph.On("GetVoteParam", mock.Anything).Return(&parammodel.VoteParam{
-		MinStakeIn:                 suite.stakeInAmount,
+		MinStakeIn:                 suite.minStakeInAmount,
 		VoterCoinReturnIntervalSec: 100,
 		VoterCoinReturnTimes:       1,
-	}, nil).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(0),
-		linotypes.NewCoinFromInt64(0)).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(0),
-		suite.stakeInAmount).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()
-	suite.global.On("AddLinoStakeToStat", mock.Anything, suite.stakeInAmount).Return(nil).Maybe()
-	suite.global.On("MinusLinoStakeFromStat", mock.Anything, suite.stakeInAmount).Return(nil).Maybe()
-	suite.global.On(
-		"RegisterCoinReturnEvent", mock.Anything, mock.Anything, int64(1), int64(100)).Return(nil).Maybe()
+	}).Maybe()
+	// set initial stake stats for day 0.
+	suite.vm.InitGenesis(suite.Ctx)
+}
 
-	suite.hooks.On("AfterAddingStake", mock.Anything, suite.user1).Return(nil).Maybe()
-	suite.hooks.On("AfterAddingStake", mock.Anything, suite.user2).Return(nil).Maybe()
+func (suite *VoteManagerTestSuite) ResetGlobal() {
+	suite.global = &global.GlobalKeeper{}
+	suite.vm = NewVoteManager(kvStoreKey, suite.ph, suite.am, suite.global)
+	suite.vm = *suite.vm.SetHooks(suite.hooks)
+}
+
+func (suite *VoteManagerTestSuite) ResetParam() {
+	suite.ph = &param.ParamKeeper{}
+	suite.vm = NewVoteManager(kvStoreKey, suite.ph, suite.am, suite.global)
+	suite.vm = *suite.vm.SetHooks(suite.hooks)
 }
 
 func (suite *VoteManagerTestSuite) TestStakeIn() {
-	suite.am.On("MinusCoinFromUsername", mock.Anything, suite.user1, suite.stakeInAmount).Return(nil).Maybe()
-	suite.am.On("DoesAccountExist", mock.Anything, suite.user1).Return(true).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(100),
-		linotypes.NewCoinFromInt64(0)).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(100), suite.stakeInAmount).Return(suite.interest, nil).Maybe()
+	user1 := linotypes.AccountKey("user1")
+
 	testCases := []struct {
-		testName    string
-		username    linotypes.AccountKey
-		amount      linotypes.Coin
-		atWhen      time.Time
-		expectErr   sdk.Error
-		expectVoter *model.Voter
+		testName     string
+		username     linotypes.AccountKey
+		amount       linotypes.Coin
+		lessThanMin  bool
+		moveErr      sdk.Error
+		atWhen       time.Time
+		expectErr    sdk.Error
+		expectVoter  *model.Voter
+		expetecStats *model.LinoStakeStat
 	}{
 		{
 			testName:    "stake in amount less than minimum requirement",
-			username:    suite.user1,
-			amount:      suite.stakeInAmount.Minus(linotypes.NewCoinFromInt64(1)),
-			atWhen:      time.Unix(0, 0),
+			username:    user1,
+			amount:      suite.minStakeInAmount.Minus(linotypes.NewCoinFromInt64(1)),
+			lessThanMin: true,
 			expectErr:   types.ErrInsufficientDeposit(),
-			expectVoter: nil,
+		},
+		{
+			testName:  "stake in with insufficient balance",
+			username:  user1,
+			amount:    suite.minStakeInAmount,
+			moveErr:   linotypes.ErrTestDummyError(), // just a mock, any error is fine
+			expectErr: linotypes.ErrTestDummyError(),
 		},
 		{
 			testName:  "stake in minimum requirement",
-			username:  suite.user1,
-			amount:    suite.stakeInAmount,
+			username:  user1,
+			amount:    suite.minStakeInAmount,
 			atWhen:    time.Unix(100, 0),
 			expectErr: nil,
 			expectVoter: &model.Voter{
-				Username:          suite.user1,
-				LinoStake:         suite.stakeInAmount,
+				Username:          user1,
+				LinoStake:         suite.minStakeInAmount,
 				Interest:          linotypes.NewCoinFromInt64(0),
 				Duty:              types.DutyVoter,
 				FrozenAmount:      linotypes.NewCoinFromInt64(0),
 				LastPowerChangeAt: 100,
 			},
-		},
-		{
-			testName:  "stake in again minimum requirement with interest",
-			username:  suite.user1,
-			amount:    suite.stakeInAmount,
-			atWhen:    time.Unix(200, 0),
-			expectErr: nil,
-			expectVoter: &model.Voter{
-				Username:          suite.user1,
-				LinoStake:         suite.stakeInAmount.Plus(suite.stakeInAmount),
-				Interest:          suite.interest,
-				Duty:              types.DutyVoter,
-				FrozenAmount:      linotypes.NewCoinFromInt64(0),
-				LastPowerChangeAt: 200,
+			expetecStats: &model.LinoStakeStat{
+				TotalConsumptionFriction: linotypes.NewCoinFromInt64(0),
+				UnclaimedFriction:        linotypes.NewCoinFromInt64(0),
+				TotalLinoStake:           suite.minStakeInAmount,
+				UnclaimedLinoStake:       suite.minStakeInAmount,
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		ctx := suite.Ctx.WithBlockHeader(abci.Header{Time: tc.atWhen})
-		err := suite.vm.StakeIn(ctx, tc.username, tc.amount)
-		suite.Equal(tc.expectErr, err, "%s", tc.testName)
-		voter, _ := suite.vm.GetVoter(ctx, tc.username)
-		suite.Equal(tc.expectVoter, voter, "%s", tc.testName)
+		suite.Run(tc.testName, func() {
+			suite.hooks.On("AfterAddingStake", mock.Anything, tc.username).Return(nil).Maybe()
+			suite.NextBlock(tc.atWhen)
+			if !tc.lessThanMin {
+				suite.am.On("MoveToPool", mock.Anything, linotypes.VoteStakeInPool,
+					linotypes.NewAccOrAddrFromAcc(tc.username), tc.amount).Return(tc.moveErr).Once()
+			}
+			suite.global.On("GetPastDay", mock.Anything, int64(100)).Return(int64(0)).Maybe()
+			err := suite.vm.StakeIn(suite.Ctx, tc.username, tc.amount)
+			suite.Equal(tc.expectErr, err)
+			if tc.expectErr == nil {
+				voter, err := suite.vm.GetVoter(suite.Ctx, tc.username)
+				suite.Nil(err)
+				suite.Equal(tc.expectVoter, voter)
+				stats, err := suite.vm.storage.GetLinoStakeStat(suite.Ctx, 0)
+				suite.Nil(err)
+				suite.Equal(tc.expetecStats, stats)
+			}
+
+			suite.global.AssertExpectations(suite.T())
+			suite.am.AssertExpectations(suite.T())
+
+			suite.Golden()
+		})
 	}
 }
 
 func (suite *VoteManagerTestSuite) TestStakeInFor() {
-	suite.am.On("MinusCoinFromUsername", mock.Anything, suite.user1, suite.stakeInAmount).Return(nil).Maybe()
-	suite.am.On("DoesAccountExist", mock.Anything, suite.user2).Return(true).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(100),
-		linotypes.NewCoinFromInt64(0)).Return(linotypes.NewCoinFromInt64(0), nil).Maybe()
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(100), suite.stakeInAmount).Return(suite.interest, nil).Maybe()
+	user1 := linotypes.AccountKey("user1")
+	user2 := linotypes.AccountKey("user2")
+
 	testCases := []struct {
-		testName    string
-		sender      linotypes.AccountKey
-		receiver    linotypes.AccountKey
-		amount      linotypes.Coin
-		atWhen      time.Time
-		expectErr   sdk.Error
-		expectVoter *model.Voter
+		testName     string
+		username     linotypes.AccountKey
+		stakeInFor   linotypes.AccountKey
+		amount       linotypes.Coin
+		lessThanMin  bool
+		moveErr      sdk.Error
+		atWhen       time.Time
+		expectErr    sdk.Error
+		expectVoter  *model.Voter
+		expetecStats *model.LinoStakeStat
 	}{
 		{
 			testName:    "stake in amount less than minimum requirement",
-			sender:      suite.user1,
-			receiver:    suite.user2,
-			amount:      suite.stakeInAmount.Minus(linotypes.NewCoinFromInt64(1)),
-			atWhen:      time.Unix(0, 0),
+			username:    user1,
+			stakeInFor:  user2,
+			amount:      suite.minStakeInAmount.Minus(linotypes.NewCoinFromInt64(1)),
+			lessThanMin: true,
 			expectErr:   types.ErrInsufficientDeposit(),
-			expectVoter: nil,
 		},
 		{
-			testName:  "stake in minimum requirement",
-			sender:    suite.user1,
-			receiver:  suite.user2,
-			amount:    suite.stakeInAmount,
-			atWhen:    time.Unix(100, 0),
-			expectErr: nil,
+			testName:   "stake in with insufficient balance",
+			username:   user1,
+			stakeInFor: user2,
+			amount:     suite.minStakeInAmount,
+			moveErr:    linotypes.ErrTestDummyError(), // just a mock, any error is fine
+			expectErr:  linotypes.ErrTestDummyError(),
+		},
+		{
+			testName:   "stake in minimum requirement",
+			username:   user1,
+			stakeInFor: user2,
+			amount:     suite.minStakeInAmount,
+			atWhen:     time.Unix(100, 0),
+			expectErr:  nil,
 			expectVoter: &model.Voter{
-				Username:          suite.user2,
-				LinoStake:         suite.stakeInAmount,
+				Username:          user2,
+				LinoStake:         suite.minStakeInAmount,
 				Interest:          linotypes.NewCoinFromInt64(0),
 				Duty:              types.DutyVoter,
 				FrozenAmount:      linotypes.NewCoinFromInt64(0),
 				LastPowerChangeAt: 100,
 			},
-		},
-		{
-			testName:  "stake in again minimum requirement with interest",
-			sender:    suite.user1,
-			receiver:  suite.user2,
-			amount:    suite.stakeInAmount,
-			atWhen:    time.Unix(200, 0),
-			expectErr: nil,
-			expectVoter: &model.Voter{
-				Username:          suite.user2,
-				LinoStake:         suite.stakeInAmount.Plus(suite.stakeInAmount),
-				Interest:          suite.interest,
-				Duty:              types.DutyVoter,
-				FrozenAmount:      linotypes.NewCoinFromInt64(0),
-				LastPowerChangeAt: 200,
+			expetecStats: &model.LinoStakeStat{
+				TotalConsumptionFriction: linotypes.NewCoinFromInt64(0),
+				UnclaimedFriction:        linotypes.NewCoinFromInt64(0),
+				TotalLinoStake:           suite.minStakeInAmount,
+				UnclaimedLinoStake:       suite.minStakeInAmount,
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		ctx := suite.Ctx.WithBlockHeader(abci.Header{Time: tc.atWhen})
-		err := suite.vm.StakeInFor(ctx, tc.sender, tc.receiver, tc.amount)
-		suite.Equal(tc.expectErr, err, "%s", tc.testName)
-		voter, _ := suite.vm.GetVoter(ctx, tc.receiver)
-		suite.Equal(tc.expectVoter, voter, "%s", tc.testName)
+		suite.Run(tc.testName, func() {
+			suite.hooks.On("AfterAddingStake", mock.Anything, tc.stakeInFor).Return(nil).Maybe()
+			suite.NextBlock(tc.atWhen)
+			if !tc.lessThanMin {
+				suite.am.On("MoveToPool", mock.Anything, linotypes.VoteStakeInPool,
+					linotypes.NewAccOrAddrFromAcc(tc.username), tc.amount).Return(tc.moveErr).Once()
+			}
+			suite.global.On("GetPastDay", mock.Anything, int64(100)).Return(int64(0)).Maybe()
+			err := suite.vm.StakeInFor(suite.Ctx, tc.username, tc.stakeInFor, tc.amount)
+			suite.Equal(tc.expectErr, err)
+			if tc.expectErr == nil {
+				_, err := suite.vm.GetVoter(suite.Ctx, tc.username)
+				suite.NotNil(err)
+				voter, err := suite.vm.GetVoter(suite.Ctx, tc.stakeInFor)
+				suite.Nil(err)
+				suite.Equal(tc.expectVoter, voter)
+				stats, err := suite.vm.storage.GetLinoStakeStat(suite.Ctx, 0)
+				suite.Nil(err)
+				suite.Equal(tc.expetecStats, stats)
+			}
+
+			suite.global.AssertExpectations(suite.T())
+			suite.am.AssertExpectations(suite.T())
+
+			suite.Golden()
+		})
 	}
+
+}
+
+// TestMultipleStakeInWithConsumption
+// script: (0.claim. 1.stake-in  2.consumption 3.end of day)
+//       user1    user2    consumption   user1-calim  user2-claim
+// day0  1000     0        222           x            x
+// day1  2000     2000     444           222          x
+// day2  -2000    -1000    888           x            x
+// day3  0        0        100           x            x
+// day4  2000     2000     500           760          672
+// day5  0        1000     300           250          250         // all claimed
+// day6  2000     2000     0             x            171         // 300 * (4/7)
+// day7  0        0        300           129          0           // 1 - 300 * (4/7)
+func (suite *VoteManagerTestSuite) TestMultipleStakeInWithConsumption() {
+	// setup global for PastDay calculation
+	suite.ResetGlobal()
+	for i := 0; i <= 100; i++ {
+		suite.global.On("GetPastDay", mock.Anything, int64(i)).Return(int64(i))
+	}
+	suite.global.On("RegisterEventAtTime",
+		mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	suite.ResetParam()
+	suite.ph.On("GetVoteParam", mock.Anything).Return(&parammodel.VoteParam{
+		MinStakeIn:                 linotypes.NewCoinFromInt64(1),
+		VoterCoinReturnIntervalSec: 100,
+		VoterCoinReturnTimes:       1,
+	}).Maybe()
+
+	user1 := linotypes.AccountKey("user1")
+	user2 := linotypes.AccountKey("user2")
+	suite.hooks.On("AfterAddingStake", mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.hooks.On("AfterSubtractingStake", mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.am.On("AddFrozenMoney", mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, int64(100), int64(1)).Return(nil)
+	// linotypes.VoteReturnCoin, linotypes.VoteStakeReturnPool
+	suite.am.On("MoveToPool", mock.Anything, linotypes.VoteStakeInPool,
+		mock.Anything, mock.Anything).Return(nil)
+	suite.am.On("MoveBetweenPools", mock.Anything,
+		linotypes.VoteStakeInPool, linotypes.VoteStakeReturnPool, mock.Anything).Return(nil)
+
+	newCoin := func(n int64) *linotypes.Coin {
+		coin := linotypes.NewCoinFromInt64(n)
+		return &coin
+	}
+
+	for i, tc := range []struct {
+		user1claim   *linotypes.Coin
+		user2claim   *linotypes.Coin
+		user1stakein *linotypes.Coin
+		user2stakein *linotypes.Coin
+		consumption  linotypes.Coin
+	}{
+		{
+			// day0
+			user1stakein: newCoin(1000),
+			consumption:  *newCoin(222),
+		},
+		{
+			// day1
+			user1claim:   newCoin(222),
+			user1stakein: newCoin(2000),
+			user2stakein: newCoin(2000),
+			consumption:  *newCoin(444),
+		},
+		{
+			// day2
+			user1stakein: newCoin(-2000),
+			user2stakein: newCoin(-1000),
+			consumption:  *newCoin(888),
+		},
+		{
+			// day3
+			consumption: *newCoin(100),
+		},
+		{
+
+			// day4
+			user1claim:   newCoin(760),
+			user2claim:   newCoin(672),
+			user1stakein: newCoin(2000),
+			user2stakein: newCoin(2000),
+			consumption:  *newCoin(500),
+		},
+		{
+			// day5
+			user1claim:   newCoin(250),
+			user2claim:   newCoin(250),
+			user2stakein: newCoin(1000),
+			consumption:  *newCoin(300),
+		},
+		{
+			// day6
+			user2claim:   newCoin(171),
+			user1stakein: newCoin(2000),
+			user2stakein: newCoin(2000),
+			consumption:  *newCoin(0),
+		},
+		{
+			// day7
+			user1claim:  newCoin(129),
+			consumption: *newCoin(300),
+		},
+	} {
+		suite.NextBlock(time.Unix(int64(i), 0))
+		if i != 0 {
+			err := suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+			suite.Nil(err)
+		}
+		if tc.user1claim != nil {
+			suite.am.On("MoveFromPool", mock.Anything, linotypes.VoteFrictionPool,
+				linotypes.NewAccOrAddrFromAcc(user1), *tc.user1claim).Return(nil).Once()
+			err := suite.vm.ClaimInterest(suite.Ctx, user1)
+			suite.Nil(err)
+		}
+		if tc.user2claim != nil {
+			suite.am.On("MoveFromPool", mock.Anything, linotypes.VoteFrictionPool,
+				linotypes.NewAccOrAddrFromAcc(user2), *tc.user2claim).Return(nil).Once()
+			err := suite.vm.ClaimInterest(suite.Ctx, user2)
+			suite.Nil(err)
+		}
+		if tc.user1stakein != nil {
+			if tc.user1stakein.IsPositive() {
+				err := suite.vm.StakeIn(suite.Ctx, user1, *tc.user1stakein)
+				suite.Nil(err)
+			} else {
+				err := suite.vm.StakeOut(suite.Ctx, user1, tc.user1stakein.Neg())
+				suite.Nil(err)
+			}
+		}
+		if tc.user2stakein != nil {
+			if tc.user2stakein.IsPositive() {
+				err := suite.vm.StakeIn(suite.Ctx, user2, *tc.user2stakein)
+				suite.Nil(err)
+			} else {
+				err := suite.vm.StakeOut(suite.Ctx, user2, tc.user2stakein.Neg())
+				suite.Nil(err)
+			}
+		}
+		err := suite.vm.RecordFriction(suite.Ctx, tc.consumption)
+		suite.Nil(err)
+	}
+	suite.Golden()
 }
 
 func (suite *VoteManagerTestSuite) TestStakeOut() {
 	suite.hooks.On("AfterSubtractingStake", mock.Anything, suite.user2).Return(nil).Maybe()
 	suite.am.On(
-		"AddFrozenMoney", mock.Anything, suite.user2, suite.stakeInAmount,
+		"AddFrozenMoney", mock.Anything, suite.user2, suite.minStakeInAmount,
 		int64(300), int64(100), int64(1)).Return(nil).Maybe()
 
 	// add stake to user2
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and frozon amount to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		testName    string
@@ -251,20 +432,20 @@ func (suite *VoteManagerTestSuite) TestStakeOut() {
 		{
 			testName:    "stake out from user without stake",
 			username:    suite.user1,
-			amount:      suite.stakeInAmount,
+			amount:      suite.minStakeInAmount,
 			atWhen:      time.Unix(0, 0),
-			expectErr:   model.ErrVoterNotFound(),
+			expectErr:   types.ErrVoterNotFound(),
 			expectVoter: nil,
 		},
 		{
 			testName:  "stake out amount more than user has",
 			username:  suite.user2,
-			amount:    suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
+			amount:    suite.minStakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
 			atWhen:    time.Unix(100, 0),
 			expectErr: types.ErrInsufficientStake(),
 			expectVoter: &model.Voter{
 				Username:          suite.user2,
-				LinoStake:         suite.stakeInAmount,
+				LinoStake:         suite.minStakeInAmount,
 				Interest:          linotypes.NewCoinFromInt64(0),
 				Duty:              types.DutyVoter,
 				FrozenAmount:      linotypes.NewCoinFromInt64(0),
@@ -274,21 +455,21 @@ func (suite *VoteManagerTestSuite) TestStakeOut() {
 		{
 			testName:  "stake out from user with all stake frozen",
 			username:  suite.user3,
-			amount:    suite.stakeInAmount,
+			amount:    suite.minStakeInAmount,
 			atWhen:    time.Unix(200, 0),
 			expectErr: types.ErrInsufficientStake(),
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyValidator,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 		{
 			testName:  "stake out from user with sufficient stake",
 			username:  suite.user2,
-			amount:    suite.stakeInAmount,
+			amount:    suite.minStakeInAmount,
 			atWhen:    time.Unix(300, 0),
 			expectErr: nil,
 			expectVoter: &model.Voter{
@@ -311,82 +492,78 @@ func (suite *VoteManagerTestSuite) TestStakeOut() {
 	}
 }
 
-func (suite *VoteManagerTestSuite) TestClaimInterest() {
-	suite.global.On(
-		"GetInterestSince", mock.Anything, int64(500),
-		suite.stakeInAmount).Return(suite.interest, nil).Twice()
-	suite.am.On(
-		"AddCoinToUsername", mock.Anything, suite.user2,
-		suite.interest).Return(nil).Once()
-	suite.am.On(
-		"AddCoinToUsername", mock.Anything, suite.user3,
-		suite.interest.Plus(suite.interest)).Return(nil).Once()
+// func (suite *VoteManagerTestSuite) TestClaimInterest() {
+// 	suite.global.On(
+// 		"GetInterestSince", mock.Anything, int64(500),
+// 		suite.minStakeInAmount).Return(suite.interest, nil).Twice()
+// 	suite.am.On(
+// 		"AddCoinToUsername", mock.Anything, suite.user2,
+// 		suite.interest).Return(nil).Once()
+// 	suite.am.On(
+// 		"AddCoinToUsername", mock.Anything, suite.user3,
+// 		suite.interest.Plus(suite.interest)).Return(nil).Once()
 
-	// add stake to user2
-	suite.voter2.LastPowerChangeAt = 500
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+// 	// add stake to user2
+// 	suite.voter2.LastPowerChangeAt = 500
+// 	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
-	// add stake and interest to user3
-	suite.voter3.Interest = suite.interest
-	suite.voter3.LastPowerChangeAt = 500
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+// 	// add stake and interest to user3
+// 	suite.voter3.Interest = suite.interest
+// 	suite.voter3.LastPowerChangeAt = 500
+// 	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
-	testCases := []struct {
-		testName    string
-		username    linotypes.AccountKey
-		atWhen      time.Time
-		expectErr   sdk.Error
-		expectVoter *model.Voter
-	}{
-		{
-			testName:  "claim interest from user without interest in voter struct",
-			username:  suite.user2,
-			atWhen:    time.Unix(600, 0),
-			expectErr: nil,
-			expectVoter: &model.Voter{
-				Username:          suite.user2,
-				LinoStake:         suite.stakeInAmount,
-				Interest:          linotypes.NewCoinFromInt64(0),
-				Duty:              types.DutyVoter,
-				FrozenAmount:      linotypes.NewCoinFromInt64(0),
-				LastPowerChangeAt: 600,
-			},
-		},
-		{
-			testName:  "claim interest from user with interest in voter struct",
-			username:  suite.user3,
-			atWhen:    time.Unix(600, 0),
-			expectErr: nil,
-			expectVoter: &model.Voter{
-				Username:          suite.user3,
-				LinoStake:         suite.stakeInAmount,
-				Interest:          linotypes.NewCoinFromInt64(0),
-				Duty:              types.DutyValidator,
-				FrozenAmount:      suite.stakeInAmount,
-				LastPowerChangeAt: 600,
-			},
-		},
-	}
+// 	testCases := []struct {
+// 		testName    string
+// 		username    linotypes.AccountKey
+// 		atWhen      time.Time
+// 		expectErr   sdk.Error
+// 		expectVoter *model.Voter
+// 	}{
+// 		{
+// 			testName:  "claim interest from user without interest in voter struct",
+// 			username:  suite.user2,
+// 			atWhen:    time.Unix(600, 0),
+// 			expectErr: nil,
+// 			expectVoter: &model.Voter{
+// 				Username:          suite.user2,
+// 				LinoStake:         suite.minStakeInAmount,
+// 				Interest:          linotypes.NewCoinFromInt64(0),
+// 				Duty:              types.DutyVoter,
+// 				FrozenAmount:      linotypes.NewCoinFromInt64(0),
+// 				LastPowerChangeAt: 600,
+// 			},
+// 		},
+// 		{
+// 			testName:  "claim interest from user with interest in voter struct",
+// 			username:  suite.user3,
+// 			atWhen:    time.Unix(600, 0),
+// 			expectErr: nil,
+// 			expectVoter: &model.Voter{
+// 				Username:          suite.user3,
+// 				LinoStake:         suite.minStakeInAmount,
+// 				Interest:          linotypes.NewCoinFromInt64(0),
+// 				Duty:              types.DutyValidator,
+// 				FrozenAmount:      suite.minStakeInAmount,
+// 				LastPowerChangeAt: 600,
+// 			},
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		ctx := suite.Ctx.WithBlockHeader(abci.Header{Time: tc.atWhen})
-		err := suite.vm.ClaimInterest(ctx, tc.username)
-		suite.Equal(tc.expectErr, err, "%s", tc.testName)
-		voter, _ := suite.vm.GetVoter(ctx, tc.username)
-		suite.Equal(tc.expectVoter, voter, "%s", tc.testName)
-	}
-}
+// 	for _, tc := range testCases {
+// 		ctx := suite.Ctx.WithBlockHeader(abci.Header{Time: tc.atWhen})
+// 		err := suite.vm.ClaimInterest(ctx, tc.username)
+// 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
+// 		voter, _ := suite.vm.GetVoter(ctx, tc.username)
+// 		suite.Equal(tc.expectVoter, voter, "%s", tc.testName)
+// 	}
+// }
 
 func (suite *VoteManagerTestSuite) TestAssignDuty() {
 	// add stake to user2
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and interest to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		testName     string
@@ -401,7 +578,7 @@ func (suite *VoteManagerTestSuite) TestAssignDuty() {
 			username:     suite.user1,
 			duty:         types.DutyValidator,
 			frozenAmount: linotypes.NewCoinFromInt64(1),
-			expectErr:    model.ErrVoterNotFound(),
+			expectErr:    types.ErrVoterNotFound(),
 			expectVoter:  nil,
 		},
 		{
@@ -412,21 +589,21 @@ func (suite *VoteManagerTestSuite) TestAssignDuty() {
 			expectErr:    types.ErrNotAVoterOrHasDuty(),
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyValidator,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 		{
 			testName:     "frozen money larger than stake",
 			username:     suite.user2,
 			duty:         types.DutyValidator,
-			frozenAmount: suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
+			frozenAmount: suite.minStakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
 			expectErr:    types.ErrInsufficientStake(),
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyVoter,
 				FrozenAmount: linotypes.NewCoinFromInt64(0),
@@ -436,14 +613,14 @@ func (suite *VoteManagerTestSuite) TestAssignDuty() {
 			testName:     "assign duty successfully",
 			username:     suite.user2,
 			duty:         types.DutyValidator,
-			frozenAmount: suite.stakeInAmount,
+			frozenAmount: suite.minStakeInAmount,
 			expectErr:    nil,
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyValidator,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 	}
@@ -463,12 +640,10 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 		types.UnassignDutyEvent{Username: suite.user3}).Return(nil).Once()
 
 	// add stake to user2
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and interest to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		testName    string
@@ -479,7 +654,7 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 		{
 			testName:    "unassign duty from user without stake",
 			username:    suite.user1,
-			expectErr:   model.ErrVoterNotFound(),
+			expectErr:   types.ErrVoterNotFound(),
 			expectVoter: nil,
 		},
 		{
@@ -488,7 +663,7 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 			expectErr: types.ErrNoDuty(),
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyVoter,
 				FrozenAmount: linotypes.NewCoinFromInt64(0),
@@ -500,10 +675,10 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 			expectErr: nil,
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyPending,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 		{
@@ -512,10 +687,10 @@ func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 			expectErr: types.ErrNoDuty(),
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyPending,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 	}
@@ -532,12 +707,10 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 	suite.hooks.On("AfterSlashing", mock.Anything, suite.user2).Return(nil).Maybe()
 	suite.hooks.On("AfterSlashing", mock.Anything, suite.user3).Return(nil).Maybe()
 	// add stake to user2
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and interest to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		testName            string
@@ -551,16 +724,16 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 			testName:            "slash stake from user without stake",
 			username:            suite.user1,
 			amount:              linotypes.NewCoinFromInt64(1),
-			expectErr:           model.ErrVoterNotFound(),
+			expectErr:           types.ErrVoterNotFound(),
 			expectSlashedAmount: linotypes.NewCoinFromInt64(0),
 			expectVoter:         nil,
 		},
 		{
 			testName:            "slash more than user's stake",
 			username:            suite.user2,
-			amount:              suite.stakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
+			amount:              suite.minStakeInAmount.Plus(linotypes.NewCoinFromInt64(1)),
 			expectErr:           nil,
-			expectSlashedAmount: suite.stakeInAmount,
+			expectSlashedAmount: suite.minStakeInAmount,
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
 				LinoStake:    linotypes.NewCoinFromInt64(0),
@@ -572,15 +745,15 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 		{
 			testName:            "slash user's stake with frozen",
 			username:            suite.user3,
-			amount:              suite.stakeInAmount,
+			amount:              suite.minStakeInAmount,
 			expectErr:           nil,
-			expectSlashedAmount: suite.stakeInAmount,
+			expectSlashedAmount: suite.minStakeInAmount,
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
 				LinoStake:    linotypes.NewCoinFromInt64(0),
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyValidator,
-				FrozenAmount: suite.stakeInAmount,
+				FrozenAmount: suite.minStakeInAmount,
 			},
 		},
 	}
@@ -595,12 +768,10 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 }
 
 func (suite *VoteManagerTestSuite) TestExecUnassignDutyEvent() {
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and interest to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		testName    string
@@ -611,7 +782,7 @@ func (suite *VoteManagerTestSuite) TestExecUnassignDutyEvent() {
 		{
 			testName:    "execute event on non exist voter",
 			event:       types.UnassignDutyEvent{Username: suite.user1},
-			expectErr:   model.ErrVoterNotFound(),
+			expectErr:   types.ErrVoterNotFound(),
 			expectVoter: nil,
 		},
 		{
@@ -620,7 +791,7 @@ func (suite *VoteManagerTestSuite) TestExecUnassignDutyEvent() {
 			expectErr: nil,
 			expectVoter: &model.Voter{
 				Username:     suite.user2,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyVoter,
 				FrozenAmount: linotypes.NewCoinFromInt64(0),
@@ -632,7 +803,7 @@ func (suite *VoteManagerTestSuite) TestExecUnassignDutyEvent() {
 			expectErr: nil,
 			expectVoter: &model.Voter{
 				Username:     suite.user3,
-				LinoStake:    suite.stakeInAmount,
+				LinoStake:    suite.minStakeInAmount,
 				Interest:     linotypes.NewCoinFromInt64(0),
 				Duty:         types.DutyVoter,
 				FrozenAmount: linotypes.NewCoinFromInt64(0),
@@ -649,12 +820,10 @@ func (suite *VoteManagerTestSuite) TestExecUnassignDutyEvent() {
 }
 
 func (suite *VoteManagerTestSuite) TestGetLinoStakeAndDuty() {
-	e := suite.vm.storage.SetVoter(suite.Ctx, suite.user2, &suite.voter2)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter2)
 
 	// add stake and interest to user3
-	e = suite.vm.storage.SetVoter(suite.Ctx, suite.user3, &suite.voter3)
-	suite.Nil(e)
+	suite.vm.storage.SetVoter(suite.Ctx, &suite.voter3)
 
 	testCases := []struct {
 		username linotypes.AccountKey
@@ -663,12 +832,12 @@ func (suite *VoteManagerTestSuite) TestGetLinoStakeAndDuty() {
 	}{
 		{
 			username: suite.user2,
-			stake:    suite.stakeInAmount,
+			stake:    suite.minStakeInAmount,
 			duty:     types.DutyVoter,
 		},
 		{
 			username: suite.user3,
-			stake:    suite.stakeInAmount,
+			stake:    suite.minStakeInAmount,
 			duty:     types.DutyValidator,
 		},
 	}

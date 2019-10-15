@@ -1,0 +1,23 @@
+[
+  {
+    "prefix": "2",
+    "key": "0",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "0"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "0"
+        },
+        "unclaimed_lino_power": {
+          "amount": "0"
+        }
+      }
+    }
+  }
+]

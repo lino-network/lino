@@ -229,3 +229,9 @@ func ErrQueryFailed() sdk.Error {
 func ErrQueryTxFailed(msg string) sdk.Error {
 	return types.NewError(types.CodeAccountQueryFailed, fmt.Sprintf("query tx failed, err: %s", msg))
 }
+
+// ErrNegativeMoveAmount -
+func ErrNegativeMoveAmount(amount types.Coin) sdk.Error {
+	return types.NewError(
+		types.CodeNegativeMoveAmount, fmt.Sprintf("negative amount: %+v", amount))
+}
