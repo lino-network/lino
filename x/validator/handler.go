@@ -19,6 +19,8 @@ func NewHandler(vm ValidatorKeeper) sdk.Handler {
 			return handleValidatorRevokeMsg(ctx, vm, msg)
 		case types.VoteValidatorMsg:
 			return handleVoteValidatorMsg(ctx, vm, msg)
+		case types.ValidatorUpdateMsg:
+			return handleValidatorUpdateMsg(ctx, vm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -44,6 +46,13 @@ func handleValidatorRevokeMsg(
 func handleVoteValidatorMsg(
 	ctx sdk.Context, vm ValidatorKeeper, msg types.VoteValidatorMsg) sdk.Result {
 	if err := vm.VoteValidator(ctx, msg.Username, msg.VotedValidators); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleValidatorUpdateMsg(ctx sdk.Context, vm ValidatorKeeper, msg types.ValidatorUpdateMsg) sdk.Result {
+	if err := vm.UpdateValidator(ctx, msg.Username, msg.Link); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

@@ -3190,3 +3190,42 @@ func (suite *ValidatorManagerTestSuite) TestGetCommittingValidatorsVotes() {
 		suite.Equal(tc.expectRes, lst, "%s", tc.testName)
 	}
 }
+
+func (suite *ValidatorManagerTestSuite) TestUpdateValidator() {
+	valKey := secp256k1.GenPrivKey().PubKey()
+	val := linotypes.AccountKey("val")
+
+	testCases := []struct {
+		testName  string
+		username  linotypes.AccountKey
+		link      string
+		expectVal model.Validator
+	}{
+		{
+			testName: "update validator",
+			link:     "web1111111",
+			username: val,
+			expectVal: model.Validator{
+				ABCIValidator: abci.Validator{
+					Address: valKey.Address(),
+					Power:   1,
+				},
+				Link:          "web1111111",
+				PubKey:        valKey,
+				Username:      val,
+				ReceivedVotes: linotypes.NewCoinFromInt64(300),
+			},
+		},
+	}
+	for _, tc := range testCases {
+		err := suite.vm.RegisterValidator(suite.Ctx, tc.username, valKey, tc.link)
+		suite.NoError(err)
+
+		err = suite.vm.UpdateValidator(suite.Ctx, tc.username, tc.link)
+		suite.NoError(err)
+
+		val, err := suite.vm.storage.GetValidator(suite.Ctx, tc.username)
+		suite.NoError(err)
+		suite.Equal(tc.expectVal, *val, "%s", tc.testName)
+	}
+}

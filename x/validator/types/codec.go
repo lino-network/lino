@@ -9,6 +9,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(ValidatorRegisterMsg{}, "lino/valRegister", nil)
 	cdc.RegisterConcrete(ValidatorRevokeMsg{}, "lino/valRevoke", nil)
 	cdc.RegisterConcrete(VoteValidatorMsg{}, "lino/voteValidator", nil)
+	cdc.RegisterConcrete(ValidatorUpdateMsg{}, "lino/valUpdate", nil)
 }
 
 // ModuleCdc is the module codec

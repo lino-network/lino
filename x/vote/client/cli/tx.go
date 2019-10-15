@@ -12,6 +12,7 @@ import (
 
 const (
 	FlagAmount = "amount"
+	FlagTo     = "to"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -26,6 +27,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.AddCommand(client.PostCommands(
 		GetCmdStakein(cdc),
 		GetCmdStakeout(cdc),
+		GetCmdClaimInterest(cdc),
+		GetCmdStakeinFor(cdc),
 	)...)
 
 	return cmd
@@ -90,5 +93,31 @@ func GetCmdClaimInterest(cdc *codec.Codec) *cobra.Command {
 			return ctx.DoTxPrintResponse(msg)
 		},
 	}
+	return cmd
+}
+
+// GetCmdStakeinFor - stakeinFor
+func GetCmdStakeinFor(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stake-in-for",
+		Short: "stake-in-for <from> --to <bar> --amount <lino>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
+			from := linotypes.AccountKey(args[0])
+			to := linotypes.AccountKey(viper.GetString(FlagTo))
+			amount := viper.GetString(FlagAmount)
+			msg := types.StakeInForMsg{
+				Sender:   from,
+				Deposit:  amount,
+				Receiver: to,
+			}
+			return ctx.DoTxPrintResponse(msg)
+		},
+	}
+	cmd.Flags().String(FlagAmount, "", "amount of stake in")
+	cmd.Flags().String(FlagTo, "", "receiver username")
+	_ = cmd.MarkFlagRequired(FlagTo)
+	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }

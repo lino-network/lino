@@ -76,6 +76,16 @@ func (vm ValidatorManager) OnBeginBlock(ctx sdk.Context, req abci.RequestBeginBl
 	}
 }
 
+func (vm ValidatorManager) UpdateValidator(ctx sdk.Context, username linotypes.AccountKey, link string) sdk.Error {
+	val, err := vm.storage.GetValidator(ctx, username)
+	if err != nil {
+		return err
+	}
+	val.Link = link
+	vm.storage.SetValidator(ctx, username, val)
+	return nil
+}
+
 // RegisterValidator - register a validator.
 func (vm ValidatorManager) RegisterValidator(ctx sdk.Context, username linotypes.AccountKey, valPubKey crypto.PubKey, link string) sdk.Error {
 	lst := vm.storage.GetValidatorList(ctx)
