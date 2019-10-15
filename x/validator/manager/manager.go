@@ -490,33 +490,34 @@ func (vm ValidatorManager) PunishCommittingValidator(ctx sdk.Context, username l
 	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
 		return err
 	}
-
-	if punishType == linotypes.PunishAbsentCommit {
-		// reset absent commit
-		validator, err := vm.storage.GetValidator(ctx, username)
-		if err != nil {
-			return err
-		}
-		validator.AbsentCommit = 0
-		vm.storage.SetValidator(ctx, username, validator)
+	validator, err := vm.storage.GetValidator(ctx, username)
+	if err != nil {
+		return err
 	}
+	validator.NumSlash++
+	// reset absent commit
+	if punishType == linotypes.PunishAbsentCommit {
+		validator.AbsentCommit = 0
+	}
+	vm.storage.SetValidator(ctx, username, validator)
 
 	totalStake, err := vm.vote.GetLinoStake(ctx, username)
 	if err != nil {
 		return err
 	}
-
 	// remove this validator and put into jail if its remaining stake is not enough
-	// OR, we explicitly want to fire this validator
+	// OR, this is byzantine validator
+	// OR, the num of slash exceeds limit
 	param := vm.paramHolder.GetValidatorParam(ctx)
-	if punishType == linotypes.PunishByzantine || !totalStake.IsGTE(param.ValidatorMinDeposit) {
+	if punishType == linotypes.PunishByzantine ||
+		!totalStake.IsGTE(param.ValidatorMinDeposit) ||
+		validator.NumSlash > param.SlashLimitation {
 		if err := vm.removeValidatorFromAllLists(ctx, username); err != nil {
 			return err
 		}
 		if err := vm.addValidatortToJailList(ctx, username); err != nil {
 			return err
 		}
-
 		if err := vm.balanceValidatorList(ctx); err != nil {
 			return err
 		}
@@ -911,8 +912,10 @@ func (vm ValidatorManager) addValidatortToJailList(ctx sdk.Context, username lin
 		return err
 	}
 
-	// set oncall validator committing power equal to 0
+	// set oncall validator committing power equal to 0 and clear all stats
 	me.ABCIValidator.Power = 0
+	me.AbsentCommit = 0
+	me.NumSlash = 0
 	vm.storage.SetValidator(ctx, username, me)
 	vm.storage.SetValidatorList(ctx, lst)
 	return nil
@@ -1118,14 +1121,13 @@ func (vm ValidatorManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filep
 				Address: validator.ABCIValidator.Address,
 				Power:   validator.ABCIValidator.Power,
 			},
-			PubKey:          model.NewABCIPubKeyIRFromTM(validator.PubKey),
-			Username:        validator.Username,
-			ReceivedVotes:   validator.ReceivedVotes,
-			HasRevoked:      validator.HasRevoked,
-			AbsentCommit:    validator.AbsentCommit,
-			ByzantineCommit: validator.ByzantineCommit,
-			ProducedBlocks:  validator.ProducedBlocks,
-			Link:            validator.Link,
+			PubKey:         model.NewABCIPubKeyIRFromTM(validator.PubKey),
+			Username:       validator.Username,
+			ReceivedVotes:  validator.ReceivedVotes,
+			HasRevoked:     validator.HasRevoked,
+			AbsentCommit:   validator.AbsentCommit,
+			ProducedBlocks: validator.ProducedBlocks,
+			Link:           validator.Link,
 		})
 		return false
 	})
@@ -1174,14 +1176,13 @@ func (vs ValidatorManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, fil
 				Address: val.ABCIValidator.Address,
 				Power:   val.ABCIValidator.Power,
 			},
-			PubKey:          val.PubKey.ToTM(),
-			Username:        val.Username,
-			ReceivedVotes:   val.ReceivedVotes,
-			HasRevoked:      val.HasRevoked,
-			AbsentCommit:    val.AbsentCommit,
-			ByzantineCommit: val.ByzantineCommit,
-			ProducedBlocks:  val.ProducedBlocks,
-			Link:            val.Link,
+			PubKey:         val.PubKey.ToTM(),
+			Username:       val.Username,
+			ReceivedVotes:  val.ReceivedVotes,
+			HasRevoked:     val.HasRevoked,
+			AbsentCommit:   val.AbsentCommit,
+			ProducedBlocks: val.ProducedBlocks,
+			Link:           val.Link,
 		})
 	}
 

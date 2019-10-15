@@ -95,7 +95,8 @@
         "validator_revoke_pending_sec": "604800",
         "oncall_inflation_weight": "2",
         "standby_inflation_weight": "1",
-        "max_voted_validators": "3"
+        "max_voted_validators": "3",
+        "slash_limitation": "10"
       },
       "CoinDayParam": {
         "seconds_to_recover_coin_day": "604800"

@@ -41,15 +41,14 @@ type ABCIValidatorIR struct {
 
 // ValidatorIR
 type ValidatorIR struct {
-	ABCIValidator   ABCIValidatorIR  `json:"abci_validator"`
-	PubKey          ABCIPubKeyIR     `json:"pub_key"`
-	Username        types.AccountKey `json:"username"`
-	ReceivedVotes   types.Coin       `json:"received_votes"`
-	HasRevoked      bool             `json:"has_revoked"`
-	AbsentCommit    int64            `json:"absent_commit"`
-	ByzantineCommit int64            `json:"byzantine_commit"`
-	ProducedBlocks  int64            `json:"produced_blocks"`
-	Link            string           `json:"link"`
+	ABCIValidator  ABCIValidatorIR  `json:"abci_validator"`
+	PubKey         ABCIPubKeyIR     `json:"pub_key"`
+	Username       types.AccountKey `json:"username"`
+	ReceivedVotes  types.Coin       `json:"received_votes"`
+	HasRevoked     bool             `json:"has_revoked"`
+	AbsentCommit   int64            `json:"absent_commit"`
+	ProducedBlocks int64            `json:"produced_blocks"`
+	Link           string           `json:"link"`
 }
 
 type ElectionVoteIR struct {
