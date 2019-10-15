@@ -2,83 +2,118 @@ package model
 
 import (
 	"testing"
-
-	"github.com/cosmos/cosmos-sdk/store"
-	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/vote/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/log"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/lino-network/lino/testsuites"
+	"github.com/lino-network/lino/testutils"
+	linotypes "github.com/lino-network/lino/types"
+
+	"github.com/lino-network/lino/x/vote/types"
 )
 
 var (
-	TestKVStoreKey = sdk.NewKVStoreKey("vote")
+	storeKeyStr = "testVoterStore"
+	kvStoreKey  = sdk.NewKVStoreKey(storeKeyStr)
 )
 
-func setup(t *testing.T) (sdk.Context, VoteStorage) {
-	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(TestKVStoreKey, sdk.StoreTypeIAVL, db)
-	err := ms.LoadLatestVersion()
-	if err != nil {
-		panic(err)
-	}
-	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-	vs := NewVoteStorage(TestKVStoreKey)
-	return ctx, vs
+type VoteStoreDumper struct{}
+
+func (dumper VoteStoreDumper) NewDumper() *testutils.Dumper {
+	return NewVoteDumper(NewVoteStorage(kvStoreKey))
 }
 
-func TestDoesVoterExist(t *testing.T) {
-	ctx, vs := setup(t)
-	user := linotypes.AccountKey("user")
-	voter := &Voter{
-		Username:  user,
-		LinoStake: linotypes.NewCoinFromInt64(1000),
-	}
-	vs.SetVoter(ctx, user, voter)
+type voteStoreTestSuite struct {
+	testsuites.GoldenTestSuite
+	store VoteStorage
+}
 
-	testCases := []struct {
-		testName  string
-		accKey    linotypes.AccountKey
-		wantExist bool
-	}{
-		{
-			testName:  "voter exist",
-			accKey:    user,
-			wantExist: true,
-		},
-		{
-			testName:  "voter doesn't exist",
-			accKey:    linotypes.AccountKey("acc"),
-			wantExist: false,
-		},
-	}
-	for _, tc := range testCases {
-		gotExist := vs.DoesVoterExist(ctx, tc.accKey)
-		if gotExist != tc.wantExist {
-			t.Errorf("%s: diff result, got %v, want %v", tc.testName, gotExist, tc.wantExist)
-		}
+func NewVoteStoreTestSuite() *voteStoreTestSuite {
+	return &voteStoreTestSuite{
+		GoldenTestSuite: testsuites.NewGoldenTestSuite(VoteStoreDumper{}, kvStoreKey),
 	}
 }
 
-func TestVoter(t *testing.T) {
-	ctx, vs := setup(t)
+func (suite *voteStoreTestSuite) SetupTest() {
+	suite.SetupCtx(0, time.Unix(0, 0), kvStoreKey)
+	suite.store = NewVoteStorage(kvStoreKey)
+}
 
-	user := linotypes.AccountKey("user")
-	voter := Voter{
-		Username:          user,
-		LinoStake:         linotypes.NewCoinFromInt64(1000),
-		LastPowerChangeAt: 0,
+func TestVoteStoreSuite(t *testing.T) {
+	suite.Run(t, NewVoteStoreTestSuite())
+}
+
+func (suite *voteStoreTestSuite) TestGetSetVoter() {
+	store := suite.store
+	ctx := suite.Ctx
+	user1 := linotypes.AccountKey("user1")
+	user2 := linotypes.AccountKey("user2")
+	voter1 := Voter{
+		Username:          user1,
+		LinoStake:         linotypes.NewCoinFromInt64(123),
+		LastPowerChangeAt: 777,
+		Interest:          linotypes.NewCoinFromInt64(234),
 		Duty:              types.DutyValidator,
-		Interest:          linotypes.NewCoinFromInt64(0),
-		FrozenAmount:      linotypes.NewCoinFromInt64(10),
+		FrozenAmount:      linotypes.NewCoinFromInt64(9),
 	}
-	vs.SetVoter(ctx, user, &voter)
+	voter2 := Voter{
+		Username:          user2,
+		LinoStake:         linotypes.NewCoinFromInt64(345),
+		LastPowerChangeAt: 888,
+		Interest:          linotypes.NewCoinFromInt64(456),
+		Duty:              types.DutyValidator,
+		FrozenAmount:      linotypes.NewCoinFromInt64(12),
+	}
 
-	voterPtr, err := vs.GetVoter(ctx, user)
-	assert.Nil(t, err)
-	assert.Equal(t, voter, *voterPtr, "voter should be equal")
+	suite.False(store.DoesVoterExist(ctx, user1))
+	_, err := store.GetVoter(ctx, user1)
+	suite.Equal(types.ErrVoterNotFound(), err)
+
+	suite.store.SetVoter(ctx, &voter1)
+	suite.store.SetVoter(ctx, &voter2)
+
+	v1, err := store.GetVoter(ctx, user1)
+	suite.Nil(err)
+	suite.Equal(&voter1, v1)
+
+	v2, err := store.GetVoter(ctx, user2)
+	suite.Nil(err)
+	suite.Equal(&voter2, v2)
+
+	suite.Golden()
+}
+
+func (suite *voteStoreTestSuite) TestGetSetLinoStakeStats() {
+	store := suite.store
+	ctx := suite.Ctx
+	stats1 := LinoStakeStat{
+		TotalConsumptionFriction: linotypes.NewCoinFromInt64(123),
+		UnclaimedFriction:        linotypes.NewCoinFromInt64(456),
+		TotalLinoStake:           linotypes.NewCoinFromInt64(789),
+		UnclaimedLinoStake:       linotypes.NewCoinFromInt64(999),
+	}
+	stats2 := LinoStakeStat{
+		TotalConsumptionFriction: linotypes.NewCoinFromInt64(888),
+		UnclaimedFriction:        linotypes.NewCoinFromInt64(888),
+		TotalLinoStake:           linotypes.NewCoinFromInt64(888),
+		UnclaimedLinoStake:       linotypes.NewCoinFromInt64(888),
+	}
+
+	_, err := store.GetLinoStakeStat(ctx, 1)
+	suite.Equal(types.ErrStakeStatNotFound(1), err)
+
+	suite.store.SetLinoStakeStat(ctx, 1, &stats1)
+	suite.store.SetLinoStakeStat(ctx, 2, &stats2)
+
+	v1, err := store.GetLinoStakeStat(ctx, 1)
+	suite.Nil(err)
+	suite.Equal(&stats1, v1)
+
+	v2, err := store.GetLinoStakeStat(ctx, 2)
+	suite.Nil(err)
+	suite.Equal(&stats2, v2)
+
+	suite.Golden()
 }

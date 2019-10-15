@@ -55,10 +55,10 @@ func (vs VoteStorage) GetVoter(ctx sdk.Context, accKey linotypes.AccountKey) (*V
 }
 
 // SetVoter - set voter to KVStore
-func (vs VoteStorage) SetVoter(ctx sdk.Context, accKey linotypes.AccountKey, voter *Voter) {
+func (vs VoteStorage) SetVoter(ctx sdk.Context, voter *Voter) {
 	store := ctx.KVStore(vs.key)
 	voterByte := vs.cdc.MustMarshalBinaryLengthPrefixed(*voter)
-	store.Set(GetVoterKey(accKey), voterByte)
+	store.Set(GetVoterKey(voter.Username), voterByte)
 }
 
 // // DeleteVoter - delete voter from KVStore

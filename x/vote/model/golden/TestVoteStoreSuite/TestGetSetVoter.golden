@@ -1,0 +1,44 @@
+[
+  {
+    "prefix": "1",
+    "key": "user1",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user1",
+        "lino_stake": {
+          "amount": "123"
+        },
+        "last_power_change_at": "777",
+        "interest": {
+          "amount": "234"
+        },
+        "duty": "2",
+        "frozen_amount": {
+          "amount": "9"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "user2",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user2",
+        "lino_stake": {
+          "amount": "345"
+        },
+        "last_power_change_at": "888",
+        "interest": {
+          "amount": "456"
+        },
+        "duty": "2",
+        "frozen_amount": {
+          "amount": "12"
+        }
+      }
+    }
+  }
+]
