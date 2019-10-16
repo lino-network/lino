@@ -30,7 +30,7 @@ type VoteManager struct {
 	am          acc.AccountKeeper
 	gm          global.GlobalKeeper
 
-	// state
+	// mutable hooks
 	hooks StakingHooks
 }
 
@@ -134,15 +134,15 @@ func (vm VoteManager) addStake(ctx sdk.Context, username linotypes.AccountKey, a
 }
 
 func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	// minus stake stats
+	if err := vm.minusStake(ctx, username, amount); err != nil {
+		return err
+	}
+
 	// move stake to stake return pool.
 	err := vm.am.MoveBetweenPools(
 		ctx, linotypes.VoteStakeInPool, linotypes.VoteStakeReturnPool, amount)
 	if err != nil {
-		return err
-	}
-
-	// minus stake stats
-	if err := vm.minusStake(ctx, username, amount); err != nil {
 		return err
 	}
 
@@ -221,25 +221,11 @@ func (vm VoteManager) ClaimInterest(ctx sdk.Context, username linotypes.AccountK
 	return nil
 }
 
-func (vm VoteManager) GetVoterDuty(ctx sdk.Context, username linotypes.AccountKey) (types.VoterDuty, sdk.Error) {
-	voter, err := vm.storage.GetVoter(ctx, username)
-	if err != nil {
-		return types.DutyVoter, err
-	}
-	return voter.Duty, nil
-}
-
-func (vm VoteManager) GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
-	voter, err := vm.storage.GetVoter(ctx, username)
-	if err != nil {
-		return linotypes.NewCoinFromInt64(0), err
-	}
-	return voter.LinoStake, nil
-}
-
 // AssignDuty froze some amount of stake and assign a duty to user.
-func (vm VoteManager) AssignDuty(
-	ctx sdk.Context, username linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error {
+func (vm VoteManager) AssignDuty(ctx sdk.Context, username linotypes.AccountKey, duty types.VoterDuty, frozenAmount linotypes.Coin) sdk.Error {
+	if frozenAmount.IsNegative() {
+		return types.ErrNegativeFrozenAmount()
+	}
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return err
@@ -256,17 +242,8 @@ func (vm VoteManager) AssignDuty(
 		return types.ErrInsufficientStake()
 	}
 
-	interest, err := vm.popInterestSince(ctx, voter.LastPowerChangeAt, voter.LinoStake)
-	if err != nil {
-		return err
-	}
-
-	voter.Interest = voter.Interest.Plus(interest)
 	voter.Duty = duty
 	voter.FrozenAmount = frozenAmount
-	// voter.LinoStake = voter.LinoStake.Minus(frozenAmount)
-	voter.LastPowerChangeAt = ctx.BlockHeader().Time.Unix()
-
 	vm.storage.SetVoter(ctx, voter)
 	return nil
 }
@@ -414,6 +391,22 @@ func (vm VoteManager) DailyAdvanceLinoStakeStats(ctx sdk.Context) sdk.Error {
 
 func (vm VoteManager) GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error) {
 	return vm.storage.GetVoter(ctx, username)
+}
+
+func (vm VoteManager) GetVoterDuty(ctx sdk.Context, username linotypes.AccountKey) (types.VoterDuty, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return types.DutyVoter, err
+	}
+	return voter.Duty, nil
+}
+
+func (vm VoteManager) GetLinoStake(ctx sdk.Context, username linotypes.AccountKey) (linotypes.Coin, sdk.Error) {
+	voter, err := vm.storage.GetVoter(ctx, username)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+	return voter.LinoStake, nil
 }
 
 // Export storage state.
