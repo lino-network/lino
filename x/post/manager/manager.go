@@ -15,6 +15,7 @@ import (
 	"github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price"
 	rep "github.com/lino-network/lino/x/reputation"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 const (
@@ -30,17 +31,19 @@ type PostManager struct {
 	gm    global.GlobalKeeper
 	dev   dev.DeveloperKeeper
 	rep   rep.ReputationKeeper
+	vote  vote.VoteKeeper
 	price price.PriceKeeper
 }
 
 // NewPostManager - create a new post manager
-func NewPostManager(key sdk.StoreKey, am acc.AccountKeeper, gm global.GlobalKeeper, dev dev.DeveloperKeeper, rep rep.ReputationKeeper, price price.PriceKeeper) PostManager {
+func NewPostManager(key sdk.StoreKey, am acc.AccountKeeper, gm global.GlobalKeeper, dev dev.DeveloperKeeper, rep rep.ReputationKeeper, price price.PriceKeeper, vote vote.VoteKeeper) PostManager {
 	return PostManager{
 		postStorage: model.NewPostStorage(key),
 		am:          am,
 		gm:          gm,
 		dev:         dev,
 		rep:         rep,
+		vote:        vote,
 		price:       price,
 	}
 }
@@ -249,7 +252,7 @@ func (pm PostManager) afterDonation(ctx sdk.Context, author linotypes.AccountKey
 	pm.postStorage.SetConsumptionWindow(ctx, consumptionWindow.Plus(impact))
 
 	// record friction stats.
-	err = pm.gm.RecordFriction(ctx, friction)
+	err = pm.vote.RecordFriction(ctx, friction)
 	if err != nil {
 		return err
 	}
@@ -349,8 +352,7 @@ func (pm PostManager) allocContentBonus(ctx sdk.Context, impact linotypes.MiniDo
 		return nil
 	}
 
-	// get consumption window and update the window, this mutation is the reason why
-	// this function is called "pop***"
+	// get consumption window and update the window
 	consumptionWindow := pm.postStorage.GetConsumptionWindow(ctx)
 	pm.postStorage.SetConsumptionWindow(ctx, consumptionWindow.Minus(impact))
 
@@ -366,8 +368,9 @@ func (pm PostManager) allocContentBonus(ctx sdk.Context, impact linotypes.MiniDo
 		return err
 	}
 	// reward = (consumption reward pool) * (consumptionRatio)
-	reward := types.DecToCoin(rewardPool.ToDec().Mul(consumptionRatio))
-	return pm.am.MoveFromPool(ctx, linotypes.InflationConsumptionPool, author, reward)
+	reward := linotypes.DecToCoin(rewardPool.ToDec().Mul(consumptionRatio))
+	return pm.am.MoveFromPool(ctx,
+		linotypes.InflationConsumptionPool, linotypes.NewAccOrAddrFromAcc(author), reward)
 }
 
 // Export - to file.

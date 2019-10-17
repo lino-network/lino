@@ -234,6 +234,7 @@ const (
 	CodeFrozenAmountIsNotEmpty         sdk.CodeType = 717
 	CodeNoDuty                         sdk.CodeType = 718
 	CodeStakeStatNotFound              sdk.CodeType = 719
+	CodeNegativeFrozenAmount           sdk.CodeType = 717
 
 	// Lino developer errors reserve 900 ~ 999
 	CodeDeveloperListNotFound          sdk.CodeType = 900

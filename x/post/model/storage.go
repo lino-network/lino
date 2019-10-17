@@ -72,6 +72,13 @@ func (ps PostStorage) SetPost(ctx sdk.Context, postInfo *Post) {
 	store.Set(GetPostInfoKey(linotypes.GetPermlink(postInfo.Author, postInfo.PostID)), infoByte)
 }
 
+// Post cannot be deleted in the store. you can mark it as deleted.
+// // SetPostInfo - set post info to KVStore
+// func (ps PostStorage) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) {
+// 	store := ctx.KVStore(ps.key)
+// 	store.Delete(GetPostInfoKey(permlink))
+// }
+
 func (ps PostStorage) GetConsumptionWindow(ctx sdk.Context) linotypes.MiniDollar {
 	store := ctx.KVStore(ps.key)
 	bz := store.Get(GetConsumptionWindowKey())
@@ -88,13 +95,6 @@ func (ps PostStorage) SetConsumptionWindow(ctx sdk.Context, consumption linotype
 	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(consumption)
 	store.Set(GetConsumptionWindowKey(), bz)
 }
-
-// Post cannot be deleted in the store. you can mark it as deleted.
-// // SetPostInfo - set post info to KVStore
-// func (ps PostStorage) DeletePost(ctx sdk.Context, permlink linotypes.Permlink) {
-// 	store := ctx.KVStore(ps.key)
-// 	store.Delete(GetPostInfoKey(permlink))
-// }
 
 func (ps PostStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
 	store := ctx.KVStore(ps.key)

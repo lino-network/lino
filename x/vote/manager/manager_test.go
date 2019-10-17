@@ -849,6 +849,7 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 	}
 
 	// all cases are assumed to happen at day2 to test poping interests upon slash.
+	var destPool linotypes.PoolName = "dest"
 	for _, tc := range testCases {
 		suite.Run(tc.testName, func() {
 			suite.SetupTest()
@@ -860,15 +861,19 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 			suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
 			if tc.expectErr == nil {
 				suite.hooks.On("AfterSlashing", mock.Anything, tc.username).Return(nil).Once()
+				suite.am.On("MoveBetweenPools", mock.Anything,
+					linotypes.VoteStakeInPool, destPool, tc.expectSlashedAmount).Return(nil).Once()
 			}
 
-			amount, err := suite.vm.SlashStake(suite.Ctx, tc.username, tc.amount)
+			amount, err := suite.vm.SlashStake(suite.Ctx, tc.username, tc.amount, destPool)
 			suite.Equal(tc.expectErr, err)
 			suite.Equal(tc.expectSlashedAmount, amount, "%s vs %s", tc.expectSlashedAmount, amount)
 			if tc.expectVoter != nil {
 				voter, _ := suite.vm.GetVoter(suite.Ctx, tc.username)
 				suite.Equal(tc.expectVoter, voter)
 			}
+
+			suite.am.AssertExpectations(suite.T())
 			suite.hooks.AssertExpectations(suite.T())
 			suite.Golden() // ensure stake-stats are correct.
 		})

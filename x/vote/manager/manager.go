@@ -268,7 +268,7 @@ func (vm VoteManager) UnassignDuty(ctx sdk.Context, username linotypes.AccountKe
 }
 
 // SlashStake - slash as much as it can, regardless of frozen money
-func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) (slashedAmount linotypes.Coin, err sdk.Error) {
+func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin, destPool linotypes.PoolName) (slashedAmount linotypes.Coin, err sdk.Error) {
 	voter, err := vm.storage.GetVoter(ctx, username)
 	if err != nil {
 		return linotypes.NewCoinFromInt64(0), err
@@ -294,6 +294,13 @@ func (vm VoteManager) SlashStake(ctx sdk.Context, username linotypes.AccountKey,
 	if err := vm.updateLinoStakeStat(ctx, slashedAmount, false); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}
+
+	// move slashed coins to destination pool.
+	err = vm.am.MoveBetweenPools(ctx, linotypes.VoteStakeInPool, destPool, slashedAmount)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+
 	if err := vm.AfterSlashing(ctx, username); err != nil {
 		return linotypes.NewCoinFromInt64(0), err
 	}

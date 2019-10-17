@@ -483,11 +483,8 @@ func (vm ValidatorManager) updateSigningStats(ctx sdk.Context, voteInfos []abci.
 func (vm ValidatorManager) PunishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
 	penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error {
 	// slash and add slashed coin back into validator inflation pool
-	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
+	_, err := vm.vote.SlashStake(ctx, username, penalty, linotypes.InflationValidatorPool)
 	if err != nil {
-		return err
-	}
-	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
 		return err
 	}
 	validator, err := vm.storage.GetValidator(ctx, username)

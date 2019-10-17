@@ -62,7 +62,7 @@ func (am AccountManager) GetPool(
 
 // MoveCoin move coins from the acc/addr to the acc/addr.
 func (am AccountManager) MoveCoin(ctx sdk.Context, sender, receiver linotypes.AccOrAddr, coin linotypes.Coin) sdk.Error {
-	if coin.Amount.IsNegative() {
+	if coin.IsNegative() {
 		return types.ErrNegativeMoveAmount(coin)
 	}
 	err := am.minusCoin(ctx, sender, coin)
@@ -75,7 +75,7 @@ func (am AccountManager) MoveCoin(ctx sdk.Context, sender, receiver linotypes.Ac
 
 // MoveFromPool - move coin from pool to an address or user.
 func (am AccountManager) MoveFromPool(ctx sdk.Context, poolName linotypes.PoolName, dest linotypes.AccOrAddr, amount linotypes.Coin) sdk.Error {
-	if amount.Amount.IsNegative() {
+	if amount.IsNegative() {
 		return types.ErrNegativeMoveAmount(amount)
 	}
 
@@ -93,7 +93,7 @@ func (am AccountManager) MoveFromPool(ctx sdk.Context, poolName linotypes.PoolNa
 
 // MoveToPool - move coin from an address or account to pool
 func (am AccountManager) MoveToPool(ctx sdk.Context, poolName linotypes.PoolName, from linotypes.AccOrAddr, amount linotypes.Coin) sdk.Error {
-	if amount.Amount.IsNegative() {
+	if amount.IsNegative() {
 		return types.ErrNegativeMoveAmount(amount)
 	}
 
@@ -112,7 +112,7 @@ func (am AccountManager) MoveToPool(ctx sdk.Context, poolName linotypes.PoolName
 
 // MoveBetweenPools, move coin between pools.
 func (am AccountManager) MoveBetweenPools(ctx sdk.Context, from, to linotypes.PoolName, amount linotypes.Coin) sdk.Error {
-	if amount.Amount.IsNegative() {
+	if amount.IsNegative() {
 		return types.ErrNegativeMoveAmount(amount)
 	}
 

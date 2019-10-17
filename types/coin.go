@@ -110,7 +110,12 @@ func (coin Coin) IsEqual(other Coin) bool {
 
 // IsPositive - returns true if coin amount is positive
 func (coin Coin) IsPositive() bool {
-	return coin.Amount.Sign() > 0
+	return coin.Amount.IsPositive()
+}
+
+// IsPositive - returns true if coin amount is positive
+func (coin Coin) IsNegative() bool {
+	return coin.Amount.IsNegative()
 }
 
 // IsNotNegative - returns true if coin amount is not negative
