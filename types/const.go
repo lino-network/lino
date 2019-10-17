@@ -177,4 +177,7 @@ const (
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
+
+	// Upgrade4Update1 - lower minimum stake in requirement.
+	Upgrade4Update1 = 46000
 )

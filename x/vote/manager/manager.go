@@ -60,6 +60,10 @@ func (vm VoteManager) StakeIn(ctx sdk.Context, username linotypes.AccountKey, am
 	if err != nil {
 		return err
 	}
+	// set minimum stake in requirement to 1 Lino
+	if ctx.BlockHeader().Height > linotypes.Upgrade4Update1 {
+		param.MinStakeIn = linotypes.NewCoinFromInt64(100000)
+	}
 	if param.MinStakeIn.IsGT(amount) {
 		return types.ErrInsufficientDeposit()
 	}
@@ -76,6 +80,10 @@ func (vm VoteManager) StakeInFor(ctx sdk.Context, sender linotypes.AccountKey,
 	param, err := vm.paramHolder.GetVoteParam(ctx)
 	if err != nil {
 		return err
+	}
+	// set minimum stake in requirement to 1 Lino
+	if ctx.BlockHeader().Height > linotypes.Upgrade4Update1 {
+		param.MinStakeIn = linotypes.NewCoinFromInt64(100000)
 	}
 	if param.MinStakeIn.IsGT(amount) {
 		return types.ErrInsufficientDeposit()
