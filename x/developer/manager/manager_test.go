@@ -489,10 +489,13 @@ func (suite *DeveloperManagerSuite) TestMintIDA() {
 	for _, c := range testCases {
 		suite.Run(c.name, func() {
 			if c.coinToMiniDollar != nil {
-				suite.mPriceKeeper.On("CoinToMiniDollar", mock.Anything, c.amount).Return(*c.coinToMiniDollar, nil).Once()
+				suite.mPriceKeeper.On("CoinToMiniDollar", mock.Anything,
+					c.amount).Return(*c.coinToMiniDollar, nil).Once()
 			}
 			if c.minusCoinFromUserCalled {
-				suite.mAccountKeeper.On("MinusCoinFromUsername", mock.Anything, c.appName, c.amount).Return(c.minusCoinFromUser).Once()
+				suite.mAccountKeeper.On("MoveToPool", mock.Anything,
+					linotypes.DevIDAReservePool, linotypes.NewAccOrAddrFromAcc(c.appName),
+					c.amount).Return(c.minusCoinFromUser).Once()
 			}
 			suite.LoadState(false)
 			suite.Equal(c.expected, suite.manager.MintIDA(suite.Ctx, c.appName, c.amount))
@@ -1006,6 +1009,11 @@ func (suite *DeveloperManagerSuite) TestBurnIDA() {
 			if c.bought != nil {
 				suite.mPriceKeeper.On("MiniDollarToCoin", mock.Anything, c.amount).Return(*c.bought, *c.used, nil).Once()
 			}
+			if c.expectedCoin.IsPositive() {
+				suite.mAccountKeeper.On("MoveFromPool", mock.Anything,
+					linotypes.DevIDAReservePool, linotypes.NewAccOrAddrFromAcc(c.user),
+					c.expectedCoin).Return(nil).Once()
+			}
 			suite.LoadState(false, "IDABasic")
 			coin, err := suite.manager.BurnIDA(suite.Ctx, c.app, c.user, c.amount)
 			suite.Equal(c.expectedCoin, coin)
@@ -1363,7 +1371,7 @@ func (suite *DeveloperManagerSuite) TestReportConsumption() {
 	}
 }
 
-func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
+func (suite *DeveloperManagerSuite) TestMonthlyDistributeDevInflation() {
 	zeroCoin := linotypes.NewCoinFromInt64(0)
 	inflation := linotypes.NewCoinFromInt64(100)
 	testCases := []struct {
@@ -1372,17 +1380,16 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 		totalInflation      *linotypes.Coin
 		totalInflationError sdk.Error
 		shares              []linotypes.Coin
-		stateChange         bool
 		addCoinError        sdk.Error
 	}{
 		{
-			name:                "Fail error from acc get inflation pool",
+			name:                "Fail error get inflation pool",
 			expected:            sdk.ErrInternal(""),
 			totalInflation:      &zeroCoin,
 			totalInflationError: sdk.ErrInternal(""),
 		},
 		{
-			name:                "Fail error from acc.AddCoinToUsername",
+			name:                "Fail error when move coin to account",
 			expected:            sdk.ErrInternal(""),
 			totalInflation:      &inflation,
 			totalInflationError: nil,
@@ -1415,7 +1422,6 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 				linotypes.NewCoinFromInt64(33),
 				linotypes.NewCoinFromInt64(34),
 			},
-			stateChange: true,
 		},
 		{
 			name:                "Success distribute according to consumption",
@@ -1427,7 +1433,6 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 				linotypes.NewCoinFromInt64(29),
 				linotypes.NewCoinFromInt64(57),
 			},
-			stateChange: true,
 		},
 	}
 	for _, c := range testCases {
@@ -1445,11 +1450,8 @@ func (suite *DeveloperManagerSuite) TestDistributeDevInflation() {
 					share).Return(c.addCoinError).Once()
 			}
 			suite.LoadState(true)
-			suite.Equal(c.expected, suite.manager.DistributeDevInflation(suite.Ctx))
+			suite.Equal(c.expected, suite.manager.MonthlyDistributeDevInflation(suite.Ctx))
 			suite.Golden()
-			if !c.stateChange {
-				suite.AssertStateUnchanged(true)
-			}
 			suite.mAccountKeeper.AssertExpectations(suite.T())
 		})
 	}
