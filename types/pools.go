@@ -16,7 +16,4 @@ const (
 
 	// developer
 	DevIDAReservePool PoolName = "dev/ida-reserve-pool"
-
-	// // post
-	// PostContentBon
 )

@@ -409,7 +409,7 @@ func (lb *LinoBlockchain) toAppDeveloper(
 // init process for a block, execute time events and fire incompetent validators
 func (lb *LinoBlockchain) beginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// blockchain scheduled events
-	lb.globalManager.OnBeginBlock(ctx)
+	lb.globalManager.OnBeginBlock(ctx) // MUST BE THE FIRST ONE
 	bandwidth.BeginBlocker(ctx, req, lb.bandwidthManager)
 	val.BeginBlocker(ctx, req, lb.valManager)
 	// module events

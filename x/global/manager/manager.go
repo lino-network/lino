@@ -67,25 +67,34 @@ func (gm GlobalManager) OnBeginBlock(ctx sdk.Context) {
 	pastMinutes := globalTime.PastMinutes
 	nowMinutes := (blockTime - globalTime.ChainStartTime) / 60
 	for next := pastMinutes + 1; next <= nowMinutes; next++ {
-		gm.execBeginBlockEventsAt(ctx, next)
+		gm.execBCEventsAt(ctx, next)
 	}
 	globalTime.PastMinutes = nowMinutes
 	gm.storage.SetGlobalTime(ctx, globalTime)
 }
 
-func (gm GlobalManager) execBeginBlockEventsAt(ctx sdk.Context, pastMinutes int64) {
+// execBCEventsAt - execute blockchain events.
+func (gm GlobalManager) execBCEventsAt(ctx sdk.Context, pastMinutes int64) {
 	if pastMinutes%60 == 0 && gm.hourly != nil {
-		gm.hourly(ctx)
+		gm.appendBCErr(ctx, gm.hourly(ctx)...)
 	}
 	if pastMinutes%linotypes.MinutesPerDay == 0 && gm.daily != nil {
-		gm.daily(ctx)
+		gm.appendBCErr(ctx, gm.daily(ctx)...)
 	}
 	if pastMinutes%linotypes.MinutesPerMonth == 0 && gm.monthly != nil {
-		gm.monthly(ctx)
+		gm.appendBCErr(ctx, gm.monthly(ctx)...)
 	}
 	if pastMinutes%linotypes.MinutesPerYear == 0 && gm.yearly != nil {
-		gm.yearly(ctx)
+		gm.appendBCErr(ctx, gm.yearly(ctx)...)
 	}
+}
+
+func (gm GlobalManager) appendBCErr(ctx sdk.Context, newErrs ...linotypes.BCEventErr) {
+	errs := gm.storage.GetBCErrors(ctx)
+	for _, e := range newErrs {
+		errs = append(errs, e)
+	}
+	gm.storage.SetBCErrors(ctx, errs)
 }
 
 // OnEndBlock - update last block time.
@@ -114,18 +123,25 @@ func (gm GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, eve
 	return nil
 }
 
-// ExecuteEvents - execute events, log errors to storage.
+func (gm GlobalManager) runEventIsolated(ctx sdk.Context, exec types.EventExec, event linotypes.Event) sdk.Error {
+	cachedCtx, write := ctx.CacheContext()
+	err := exec(cachedCtx, event)
+	if err == nil {
+		write()
+		return nil
+	}
+	return err
+}
+
+// ExecuteEvents - execute events, log errors to storage, up to current time (exclusively).
 func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
 	currentTime := ctx.BlockHeader().Time.Unix()
 	lastBlockTime := gm.storage.GetGlobalTime(ctx).LastBlockTime
 	for i := lastBlockTime; i < currentTime; i++ {
 		events := gm.storage.GetTimeEventList(ctx, i)
 		for _, event := range events.Events {
-			cachedCtx, write := ctx.CacheContext()
-			err := exec(cacheCtx, event)
-			if err == nil {
-				write()
-			} else {
+			err := gm.runEventIsolated(ctx, exec, event)
+			if err != nil {
 				errs := gm.storage.GetEventErrors(ctx)
 				errs = append(errs, model.EventError{
 					Time:    i,
@@ -139,19 +155,9 @@ func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
 	}
 }
 
-// GetTimeEventListAtTime - get time event list at given time
-func (gm GlobalManager) GetTimeEventListAtTime(ctx sdk.Context, unixTime int64) linotypes.TimeEventList {
-	eventList := gm.storage.GetTimeEventList(ctx, unixTime)
-	return *eventList
-}
-
 // GetLastBlockTime - get last block time from KVStore
 func (gm *GlobalManager) GetLastBlockTime(ctx sdk.Context) int64 {
-	globalTime, err := gm.storage.GetGlobalTime(ctx)
-	if err != nil {
-		panic("Global Time Not Initialized at Genesis")
-	}
-	return globalTime.LastBlockTime
+	return gm.storage.GetGlobalTime(ctx).LastBlockTime
 }
 
 // GetPastDay - get start time from KVStore to calculate past day
@@ -165,6 +171,7 @@ func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) int64 {
 }
 
 func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	return nil
 	// state := &model.GlobalTablesIR{
 	// 	Version: exportVersion,
 	// }
@@ -235,6 +242,7 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 }
 
 func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+	return nil
 	// rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
 	// if err != nil {
 	// 	return err
@@ -291,40 +299,3 @@ func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 
 	// return nil
 }
-
-// XXX(yumin): if we want to add back the following codes, or handle the param change in the
-// same way as before, add back:
-// in global's storage cdc.
-// or we can find a better way to do it.
-// get and set params
-// TODO add more change methods
-// func (gm *GlobalManager) ChangeGlobalInflationParam(ctx sdk.Context, InfraAllocation sdk.Dec,
-// 	ContentCreatorAllocation sdk.Dec, DeveloperAllocation sdk.Dec, ValidatorAllocation sdk.Dec) sdk.Error {
-// 	allocation, err := gm.paramHolder.GetGlobalAllocationParam(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	allocation.ContentCreatorAllocation = ContentCreatorAllocation
-// 	allocation.DeveloperAllocation = DeveloperAllocation
-// 	allocation.InfraAllocation = InfraAllocation
-// 	allocation.ValidatorAllocation = ValidatorAllocation
-//
-// 	if err := gm.paramHolder.SetGlobalAllocationParam(ctx, allocation); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-//
-// func (gm *GlobalManager) ChangeInfraInternalInflationParam(
-// 	ctx sdk.Context, StorageAllocation sdk.Dec, CDNAllocation sdk.Dec) sdk.Error {
-// 	allocation, err := gm.storage.GetInfraInternalAllocationParam(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	allocation.CDNAllocation = CDNAllocation
-// 	allocation.StorageAllocation = StorageAllocation
-// 	if err := gm.storage.SetInfraInternalAllocationParam(ctx, allocation); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }

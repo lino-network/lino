@@ -10,7 +10,6 @@ import (
 	"github.com/lino-network/lino/testsuites"
 	"github.com/lino-network/lino/testutils"
 	linotypes "github.com/lino-network/lino/types"
-
 	"github.com/lino-network/lino/x/vote/types"
 )
 

@@ -131,12 +131,6 @@ func (gs GlobalStorage) PartialStoreMap(ctx sdk.Context) utils.StoreMap {
 			ValCreator: func() interface{} { return new(types.TimeEventList) },
 			Decoder:    gs.cdc.MustUnmarshalBinaryLengthPrefixed,
 		},
-		{
-			Store:      store,
-			Prefix:     LinoStakeStatSubStore,
-			ValCreator: func() interface{} { return new(LinoStakeStat) },
-			Decoder:    gs.cdc.MustUnmarshalBinaryLengthPrefixed,
-		},
 	}
 	return utils.NewStoreMap(stores)
 }

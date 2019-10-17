@@ -10,4 +10,4 @@ import (
 type EventExec = func(ctx sdk.Context, event linotypes.Event) sdk.Error
 
 // BCEvent execute blockchain scheduled events.
-type BCEventExec = func(ctx sdk.Context) linotypes.BCEventErr
+type BCEventExec = func(ctx sdk.Context) []linotypes.BCEventErr

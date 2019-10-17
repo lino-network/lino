@@ -14,13 +14,15 @@ type TimeEventList struct {
 
 // BCEventErrReason - blockchain event error. deterministic.
 type BCEventErr struct {
+	Time         int64             `json:"time"`
 	ErrCode      sdk.CodeType      `json:"err_code"`
 	ErrCodeSpace sdk.CodespaceType `json:"err_code_space"`
 	Reason       string            `json:"module"`
 }
 
-func NewBCEventErr(err sdk.Error, reason string) *BCEventErr {
-	return &BCEventErr{
+func NewBCEventErr(ctx sdk.Context, err sdk.Error, reason string) BCEventErr {
+	return BCEventErr{
+		Time:         ctx.BlockTime().Unix(),
 		ErrCode:      err.Code(),
 		ErrCodeSpace: err.Codespace(),
 		Reason:       reason,
