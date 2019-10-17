@@ -61,14 +61,11 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 		linotypes.NewCoinFromInt64(200000*linotypes.Decimals)).Return(nil).Maybe()
 	suite.vote.On("UnassignDuty", suite.Ctx, linotypes.AccountKey("val"), mock.Anything).Return(nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("abs"),
-		linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
+		linotypes.NewCoinFromInt64(200*linotypes.Decimals), linotypes.InflationValidatorPool).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("byz"),
-		linotypes.NewCoinFromInt64(1000*linotypes.Decimals)).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
+		linotypes.NewCoinFromInt64(1000*linotypes.Decimals), linotypes.InflationValidatorPool).Return(linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 
 	suite.vote.On("ClaimInterest", suite.Ctx, mock.Anything).Return(nil).Maybe()
-
-	suite.global.On("AddToValidatorInflationPool", suite.Ctx, linotypes.NewCoinFromInt64(1000000*linotypes.Decimals)).Return(nil).Maybe()
-	suite.global.On("AddToValidatorInflationPool", suite.Ctx, linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(nil).Maybe()
 
 	suite.vm = NewValidatorManager(testValidatorKey, suite.ph, suite.vote, suite.global, suite.acc)
 	suite.vm.InitGenesis(suite.Ctx)
@@ -3000,20 +2997,33 @@ func (suite *ValidatorManagerTestSuite) TestRegisterFromRevoked() {
 }
 
 func (suite *ValidatorManagerTestSuite) TestDistributeInflationToValidator() {
-	suite.acc.On(
-		"AddCoinToUsername", mock.Anything, linotypes.AccountKey("oncall1"),
-		linotypes.NewCoinFromInt64(2)).Return(nil).Once()
-	suite.acc.On(
-		"AddCoinToUsername", mock.Anything, linotypes.AccountKey("oncall2"),
-		linotypes.NewCoinFromInt64(2)).Return(nil).Once()
-	suite.acc.On(
-		"AddCoinToUsername", mock.Anything, linotypes.AccountKey("standby1"),
-		linotypes.NewCoinFromInt64(1)).Return(nil).Once()
-	suite.acc.On(
-		"AddCoinToUsername", mock.Anything, linotypes.AccountKey("standby2"),
-		linotypes.NewCoinFromInt64(1)).Return(nil).Once()
-	suite.global.On(
-		"GetValidatorHourlyInflation", mock.Anything).Return((linotypes.NewCoinFromInt64(6)), nil).Once()
+	suite.acc.On("GetPool", mock.Anything, linotypes.InflationValidatorPool).Return(
+		(linotypes.NewCoinFromInt64(6)), nil).Once()
+	for _, v := range []struct {
+		validator linotypes.AccountKey
+		amount    linotypes.Coin
+	}{
+		{
+			linotypes.AccountKey("oncall1"),
+			linotypes.NewCoinFromInt64(2),
+		},
+		{
+			linotypes.AccountKey("oncall2"),
+			linotypes.NewCoinFromInt64(2),
+		},
+		{
+			linotypes.AccountKey("standby1"),
+			linotypes.NewCoinFromInt64(1),
+		},
+		{
+			linotypes.AccountKey("standby2"),
+			linotypes.NewCoinFromInt64(1),
+		},
+	} {
+		suite.acc.On(
+			"MoveFromPool", mock.Anything, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAcc(v.validator), v.amount).Return(nil).Once()
+	}
 
 	testCases := []struct {
 		testName string
@@ -3041,7 +3051,7 @@ func (suite *ValidatorManagerTestSuite) TestDistributeInflationToValidator() {
 		suite.vm.storage.SetValidatorList(suite.Ctx, &tc.prevList)
 		err := suite.vm.DistributeInflationToValidator(suite.Ctx)
 		suite.NoError(err)
-
+		suite.acc.AssertExpectations(suite.T())
 	}
 }
 

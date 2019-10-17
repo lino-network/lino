@@ -202,11 +202,10 @@ func (vm ValidatorManager) VoteValidator(ctx sdk.Context, username linotypes.Acc
 }
 
 func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.Error {
-	coin, err := vm.global.GetValidatorHourlyInflation(ctx)
+	coin, err := vm.acc.GetPool(ctx, linotypes.InflationValidatorPool)
 	if err != nil {
 		return err
 	}
-
 	param := vm.paramHolder.GetValidatorParam(ctx)
 	lst := vm.storage.GetValidatorList(ctx)
 	totalWeight := int64(len(lst.Oncall))*param.OncallInflationWeight +
@@ -215,7 +214,9 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 	// give inflation to each validator according it's weight
 	for _, oncall := range lst.Oncall {
 		ratPerOncall := coin.ToDec().Mul(sdk.NewDec(param.OncallInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
-		err := vm.acc.AddCoinToUsername(ctx, oncall, linotypes.DecToCoin(ratPerOncall))
+		err := vm.acc.MoveFromPool(ctx, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAcc(oncall),
+			linotypes.DecToCoin(ratPerOncall))
 		if err != nil {
 			return err
 		}
@@ -225,7 +226,9 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 
 	for _, standby := range lst.Standby {
 		ratPerStandby := coin.ToDec().Mul(sdk.NewDec(param.StandbyInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
-		err := vm.acc.AddCoinToUsername(ctx, standby, linotypes.DecToCoin(ratPerStandby))
+		err := vm.acc.MoveFromPool(ctx, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAcc(standby),
+			linotypes.DecToCoin(ratPerStandby))
 		if err != nil {
 			return err
 		}
