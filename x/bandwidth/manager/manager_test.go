@@ -81,9 +81,9 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	}, nil).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.AccountKey("AppY"), nil).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("UserX")).Return(linotypes.AccountKey("dummy"), types.ErrUserMsgFeeNotEnough()).Maybe()
-	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
-	suite.global.On("AddToValidatorInflationPool", mock.Anything, mock.Anything).Return(nil).Maybe()
-	suite.am.On("MinusCoinFromAddress", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix()).Maybe()
+	suite.am.On("MoveToPool", mock.Anything, linotypes.InflationValidatorPool,
+		mock.Anything, mock.Anything).Return(nil).Maybe()
 	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("appYAddr")).Return(&accmodel.AccountBank{
 		Username: "AppY",
 	}, nil).Maybe()
