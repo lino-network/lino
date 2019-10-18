@@ -119,6 +119,22 @@ func (_m *AccountKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filep
 	return r0
 }
 
+// GenesisAccount provides a mock function with given fields: ctx, username, signingKey, transactionKey
+func (_m *AccountKeeper) GenesisAccount(ctx types.Context, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
+	ret := _m.Called(ctx, username, signingKey, transactionKey)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
+		r0 = rf(ctx, username, signingKey, transactionKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // GetAddress provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetAddress(ctx types.Context, username linotypes.AccountKey) (types.AccAddress, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -413,6 +429,20 @@ func (_m *AccountKeeper) GetSigningKey(ctx types.Context, username linotypes.Acc
 	return r0, r1
 }
 
+// GetSupply provides a mock function with given fields: ctx
+func (_m *AccountKeeper) GetSupply(ctx types.Context) model.Supply {
+	ret := _m.Called(ctx)
+
+	var r0 model.Supply
+	if rf, ok := ret.Get(0).(func(types.Context) model.Supply); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(model.Supply)
+	}
+
+	return r0
+}
+
 // GetTransactionKey provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetTransactionKey(ctx types.Context, username linotypes.AccountKey) (crypto.PubKey, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -466,6 +496,11 @@ func (_m *AccountKeeper) IncreaseSequenceByOne(ctx types.Context, address types.
 	}
 
 	return r0
+}
+
+// InitGenesis provides a mock function with given fields: ctx, total, pools
+func (_m *AccountKeeper) InitGenesis(ctx types.Context, total linotypes.Coin, pools []model.Pool) {
+	_m.Called(ctx, total, pools)
 }
 
 // Mint provides a mock function with given fields: ctx

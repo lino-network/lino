@@ -20,7 +20,7 @@ func TestRecoverAccount(t *testing.T) {
 	newSigningPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

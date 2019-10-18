@@ -24,7 +24,7 @@ package proposal
 // 	accountName2 := "newuser2"
 // 	validatorPriv2 := secp256k1.GenPrivKey()
 
-// 	baseT := time.Now().Add(100 * time.Second)
+// 	baseT := time.Unix(0,0).Add(100 * time.Second)
 // 	baseTime := baseT.Unix()
 // 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

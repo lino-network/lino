@@ -21,7 +21,7 @@ func TestMsgFee(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
 	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
-	baseT := time.Now()
+	baseT := time.Unix(0,0)
 	baseTime := baseT.Unix()
 
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)

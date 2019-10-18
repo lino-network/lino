@@ -22,7 +22,7 @@ func TestValidatorRegister(t *testing.T) {
 	newAccountName := "newuser"
 	newValidatorPriv := secp256k1.GenPrivKey()
 
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0,0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -48,7 +48,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	testName := "TestRegisterValidatorOneByOne"
 
 	// start with 1 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0,0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, 1, baseT)
 
@@ -117,7 +117,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 
 func TestRemoveTheSameLowestDepositValidator(t *testing.T) {
 	// start with 22 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0,0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -148,7 +148,7 @@ func TestFireIncompetentValidator(t *testing.T) {
 	testName := "TestFireIncompetentValidator"
 
 	// start with 21 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0,0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -235,7 +235,7 @@ func TestFireIncompetentValidator2(t *testing.T) {
 	testName := "TestFireIncompetentValidator2"
 
 	// start with 22 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0,0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

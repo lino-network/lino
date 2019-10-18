@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"fmt"
+
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -60,6 +62,13 @@ func (gm GlobalManager) InitGenesis(ctx sdk.Context) {
 func (gm GlobalManager) OnBeginBlock(ctx sdk.Context) {
 	blockTime := ctx.BlockHeader().Time.Unix()
 	globalTime := gm.storage.GetGlobalTime(ctx)
+	if blockTime < globalTime.LastBlockTime {
+		// our simulation does not follows tendermint's spec that
+		// the BFT Time H2.Time > H1.Time, if H2 = H1 + 1.
+		// specific, we use a same time point all the time.
+		// panic("Premise of BFT time is BROKEN")
+		return
+	}
 	pastMinutes := globalTime.PastMinutes
 	nowMinutes := (blockTime - globalTime.ChainStartTime) / 60
 	for next := pastMinutes + 1; next <= nowMinutes; next++ {
@@ -88,6 +97,7 @@ func (gm GlobalManager) execBCEventsAt(ctx sdk.Context, pastMinutes int64) {
 func (gm GlobalManager) appendBCErr(ctx sdk.Context, newErrs ...linotypes.BCEventErr) {
 	errs := gm.storage.GetBCErrors(ctx)
 	for _, e := range newErrs {
+		ctx.Logger().Error(fmt.Sprintf("eventErr: %+v", e))
 		errs = append(errs, e)
 	}
 	gm.storage.SetBCErrors(ctx, errs)
@@ -131,7 +141,7 @@ func (gm GlobalManager) runEventIsolated(ctx sdk.Context, exec types.EventExec, 
 
 // ExecuteEvents - execute events, log errors to storage, up to current time (exclusively).
 func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
-	currentTime := ctx.BlockHeader().Time.Unix()
+	currentTime := ctx.BlockTime().Unix()
 	lastBlockTime := gm.storage.GetGlobalTime(ctx).LastBlockTime
 	for i := lastBlockTime; i < currentTime; i++ {
 		events := gm.storage.GetTimeEventList(ctx, i)

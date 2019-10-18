@@ -135,6 +135,29 @@ func (_m *VoteKeeper) GetLinoStake(ctx types.Context, username linotypes.Account
 	return r0, r1
 }
 
+// GetStakeStatsOfDay provides a mock function with given fields: ctx, day
+func (_m *VoteKeeper) GetStakeStatsOfDay(ctx types.Context, day int64) (model.LinoStakeStat, types.Error) {
+	ret := _m.Called(ctx, day)
+
+	var r0 model.LinoStakeStat
+	if rf, ok := ret.Get(0).(func(types.Context, int64) model.LinoStakeStat); ok {
+		r0 = rf(ctx, day)
+	} else {
+		r0 = ret.Get(0).(model.LinoStakeStat)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, int64) types.Error); ok {
+		r1 = rf(ctx, day)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // GetVoter provides a mock function with given fields: ctx, username
 func (_m *VoteKeeper) GetVoter(ctx types.Context, username linotypes.AccountKey) (*model.Voter, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -195,6 +218,11 @@ func (_m *VoteKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepa
 	}
 
 	return r0
+}
+
+// InitGenesis provides a mock function with given fields: ctx
+func (_m *VoteKeeper) InitGenesis(ctx types.Context) {
+	_m.Called(ctx)
 }
 
 // RecordFriction provides a mock function with given fields: ctx, friction
