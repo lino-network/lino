@@ -1316,41 +1316,130 @@ func TestRecordConsumptionAndLinoStake(t *testing.T) {
 	}
 }
 
-func TestRegisterParamChangeEvent(t *testing.T) {
-	ctx, gm := setupTest(t)
-	baseTime := time.Now().Unix()
+// func TestRegisterParamChangeEvent(t *testing.T) {
+// 	ctx, gm := setupTest(t)
+// 	baseTime := time.Now().Unix()
 
-	testCases := []struct {
-		testName        string
-		atTime          int64
-		expectEventList []types.Event
-	}{
-		{
-			testName: "register parameter change event at empty time slot",
-			atTime:   baseTime,
-			expectEventList: []types.Event{
-				testEvent{},
-			},
-		},
-		{
-			testName: "register second parameter change event",
-			atTime:   baseTime,
-			expectEventList: []types.Event{
-				testEvent{},
-				testEvent{},
-			},
-		},
-	}
+// 	testCases := []struct {
+// 		testName        string
+// 		atTime          int64
+// 		expectEventList []types.Event
+// 	}{
+// 		{
+// 			testName: "register parameter change event at empty time slot",
+// 			atTime:   baseTime,
+// 			expectEventList: []types.Event{
+// 				testEvent{},
+// 			},
+// 		},
+// 		{
+// 			testName: "register second parameter change event",
+// 			atTime:   baseTime,
+// 			expectEventList: []types.Event{
+// 				testEvent{},
+// 				testEvent{},
+// 			},
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atTime, 0)})
-		err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, testEvent{})
-		if err != nil {
-			t.Errorf("%s: failed to register parameter change event, got err %v", tc.testName, err)
-		}
+// 	for _, tc := range testCases {
+// 		ctx = ctx.WithBlockHeader(abci.Header{Time: time.Unix(tc.atTime, 0)})
+// 		err := gm.RegisterEventAtTime(ctx, ctx.BlockHeader().Time.Unix()+types.ParamChangeTimeout, testEvent{})
+// 		if err != nil {
+// 			t.Errorf("%s: failed to register parameter change event, got err %v", tc.testName, err)
+// 		}
 
-		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.atTime+types.ParamChangeTimeout)
-		assert.NotNil(t, timeEventList)
-		assert.Equal(t, timeEventList.Events, tc.expectEventList)
-	}
-}
+// 		timeEventList := gm.GetTimeEventListAtTime(ctx, tc.atTime+types.ParamChangeTimeout)
+// 		assert.NotNil(t, timeEventList)
+// 		assert.Equal(t, timeEventList.Events, tc.expectEventList)
+// 	}
+// }
+
+// moved from app.
+// func TestGlobalTime(t *testing.T) {
+// 	logger, db := loggerAndDB()
+// 	lb := NewLinoBlockchain(logger, db, nil)
+
+// 	genesisState := GenesisState{
+// 		InitCoinPrice: types.NewMiniDollar(1200),
+// 		Accounts: []GenesisAccount{
+// 			{
+// 				Name:           user1,
+// 				Coin:           coinPerValidator,
+// 				ResetKey:       priv1.PubKey(),
+// 				TransactionKey: secp256k1.GenPrivKey().PubKey(),
+// 				IsValidator:    true,
+// 				ValPubKey:      priv2.PubKey(),
+// 			},
+// 		},
+// 	}
+
+// 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
+// 	assert.Nil(t, err)
+
+// 	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
+// 	lb.Commit()
+
+// 	baseTime := time.Now().Unix()
+
+// 	cases := []struct {
+// 		testName            string
+// 		baseTime            int64
+// 		expectStartTime     int64
+// 		expectPastMintues   int64
+// 		expectLastBlockTime int64
+// 	}{
+// 		{
+// 			testName:            "init start time",
+// 			baseTime:            baseTime,
+// 			expectStartTime:     baseTime,
+// 			expectPastMintues:   0,
+// 			expectLastBlockTime: baseTime,
+// 		},
+// 		{
+// 			testName:            "past minutes",
+// 			baseTime:            baseTime + 61,
+// 			expectStartTime:     baseTime,
+// 			expectPastMintues:   1,
+// 			expectLastBlockTime: baseTime + 61,
+// 		},
+// 		{
+// 			testName:            "past two minutes",
+// 			baseTime:            baseTime + 121,
+// 			expectStartTime:     baseTime,
+// 			expectPastMintues:   2,
+// 			expectLastBlockTime: baseTime + 121,
+// 		},
+// 		{
+// 			testName:            "past an hour minutes",
+// 			baseTime:            baseTime + 3601,
+// 			expectStartTime:     baseTime,
+// 			expectPastMintues:   60,
+// 			expectLastBlockTime: baseTime + 3601,
+// 		},
+// 	}
+// 	for _, cs := range cases {
+// 		lb := NewLinoBlockchain(logger, db, nil)
+// 		// XXX(yumin): db is shared among all cases, so height is 2..3
+// 		lb.BeginBlock(abci.RequestBeginBlock{
+// 			Header: abci.Header{Height: lb.LastBlockHeight() + 1, ChainID: "Lino", Time: time.Unix(cs.baseTime, 0)}})
+// 		lb.EndBlock(abci.RequestEndBlock{})
+// 		lb.Commit()
+// 		ctx := lb.BaseApp.NewContext(true, abci.Header{})
+// 		startTime, err := lb.globalManager.GetChainStartTime(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s: failed to get chain start time, got err %v", cs.testName, err)
+// 		}
+// 		pastMinutes, err := lb.globalManager.GetPastMinutes(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s:failed to get past minutes, got err %v", cs.testName, err)
+// 		}
+// 		lastBlockTime, err := lb.globalManager.GetLastBlockTime(ctx)
+// 		if err != nil {
+// 			t.Errorf("%s:failed to get last block time, got err %v", cs.testName, err)
+// 		}
+// 		assert.Equal(t, cs.expectStartTime, startTime)
+// 		assert.Equal(t, cs.expectPastMintues, pastMinutes)
+// 		assert.Equal(t, cs.expectLastBlockTime, lastBlockTime)
+// 	}
+// }

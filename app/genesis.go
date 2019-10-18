@@ -9,24 +9,69 @@ import (
 	"time"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	globalModel "github.com/lino-network/lino/x/global/model"
 	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+type GenesisPool struct {
+	Name   types.PoolName `json:"name"`
+	Amount types.Coin     `json:"amount"`
+}
+
+type GenesisPools struct {
+	Pools []GenesisPool `json:"pools"`
+	Total types.Coin    `json:"total"`
+}
+
+func (g GenesisPools) IsValid() error {
+	poolMap := make(map[types.PoolName]bool)
+	poolMap[types.InflationDeveloperPool] = true
+	poolMap[types.InflationValidatorPool] = true
+	poolMap[types.InflationConsumptionPool] = true
+	poolMap[types.AccountVestingPool] = true
+	poolMap[types.VoteStakeInPool] = true
+	poolMap[types.VoteStakeReturnPool] = true
+	poolMap[types.VoteFrictionPool] = true
+	poolMap[types.DevIDAReservePool] = true
+
+	// checks
+	if len(g.Pools) != len(poolMap) {
+		return fmt.Errorf("expected number of pools: %d, actual: %d", len(poolMap), len(g.Pools))
+	}
+
+	total := types.NewCoinFromInt64(0)
+	for _, pool := range g.Pools {
+		if !poolMap[pool.Name] {
+			return fmt.Errorf("unknown pool: %s", pool.Name)
+		}
+		total = total.Plus(pool.Amount)
+	}
+	if !total.IsEqual(g.Total) {
+		return fmt.Errorf("expected total: %s, actual: %s", g.Total, total)
+	}
+	return nil
+}
+
+func (g GenesisPools) ReservePool() types.Coin {
+	for _, pool := range g.Pools {
+		if pool.Name == types.DevIDAReservePool {
+			return pool.Amount
+		}
+	}
+	panic("reserve pool not found in genesis file")
+}
+
 // genesis state for blockchain
 type GenesisState struct {
-	LoadPrevStates bool                      `json:"load_prev_states"`
-	Accounts       []GenesisAccount          `json:"accounts"`
-	ReservePool    types.Coin                `json:"reserve_pool"`
-	InitCoinPrice  types.MiniDollar          `json:"init_coin_price"`
-	Developers     []GenesisAppDeveloper     `json:"developers"`
-	GenesisParam   GenesisParam              `json:"genesis_param"`
-	InitGlobalMeta globalModel.InitParamList `json:"init_global_meta"`
+	LoadPrevStates bool                  `json:"load_prev_states"`
+	GenesisPools   GenesisPools          `json:"genesis_pools"`
+	InitCoinPrice  types.MiniDollar      `json:"init_coin_price"`
+	Accounts       []GenesisAccount      `json:"accounts"`
+	Developers     []GenesisAppDeveloper `json:"developers"`
+	GenesisParam   GenesisParam          `json:"genesis_param"`
 }
 
 // genesis account will get coin to the address and register user
@@ -36,7 +81,6 @@ type GenesisAccount struct {
 	Coin           types.Coin    `json:"coin"`
 	ResetKey       crypto.PubKey `json:"reset_key"`
 	TransactionKey crypto.PubKey `json:"transaction_key"`
-	AppKey         crypto.PubKey `json:"app_key"`
 	IsValidator    bool          `json:"is_validator"`
 	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
 }
@@ -70,11 +114,9 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	resetPriv := secp256k1.GenPrivKey()
 	transactionPriv := secp256k1.GenPrivKey()
-	appPriv := secp256k1.GenPrivKey()
 
 	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
 	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
-	fmt.Println("app private key is:", strings.ToUpper(hex.EncodeToString(appPriv.Bytes())))
 
 	totalCoin := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
@@ -82,7 +124,6 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 		Coin:           totalCoin,
 		ResetKey:       resetPriv.PubKey(),
 		TransactionKey: transactionPriv.PubKey(),
-		AppKey:         appPriv.PubKey(),
 		IsValidator:    true,
 		ValPubKey:      pk,
 	}
@@ -111,10 +152,28 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 	// totalLino := "10000000000"
 	genesisState := GenesisState{
 		LoadPrevStates: false,
-		Accounts:       []GenesisAccount{},
-		ReservePool:    types.NewCoinFromInt64(0),
-		InitCoinPrice:  types.NewMiniDollar(1200),
-		Developers:     []GenesisAppDeveloper{},
+		GenesisPools: GenesisPools{
+			Pools: []GenesisPool{
+				{Name: types.InflationDeveloperPool},
+				{Name: types.InflationValidatorPool},
+				{Name: types.InflationConsumptionPool},
+				{Name: types.VoteStakeInPool},
+				{Name: types.VoteStakeReturnPool},
+				{Name: types.VoteFrictionPool},
+				{
+					Name:   types.DevIDAReservePool,
+					Amount: types.MustLinoToCoin("2000000000"),
+				},
+				{
+					Name:   types.AccountVestingPool,
+					Amount: types.MustLinoToCoin("8000000000"),
+				},
+			},
+			Total: types.MustLinoToCoin("10000000000"),
+		},
+		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []GenesisAccount{},
+		Developers:    []GenesisAppDeveloper{},
 		GenesisParam: GenesisParam{
 			true,
 			param.GlobalAllocationParam{
@@ -207,11 +266,6 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				HistoryMaxLen:   71,
 				PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 			},
-		},
-		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS:                       sdk.NewDec(1000),
-			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
 		},
 	}
 

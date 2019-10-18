@@ -416,6 +416,11 @@ func (vm VoteManager) GetLinoStake(ctx sdk.Context, username linotypes.AccountKe
 	return voter.LinoStake, nil
 }
 
+func (vm VoteManager) GetStakeStatsOfDay(ctx sdk.Context, day int64) (model.LinoStakeStat, sdk.Error) {
+	stats, err := vm.storage.GetLinoStakeStat(ctx, day)
+	return *stats, err
+}
+
 // Export storage state.
 func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.VoterTablesIR{

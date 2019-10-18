@@ -1,15 +1,12 @@
 package manager
 
 import (
-	"fmt"
-	"strconv"
-
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/utils"
+	// "github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/x/global/types"
 )
@@ -51,7 +48,11 @@ func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder, cdc *codec.Cod
 
 func (gm GlobalManager) InitGenesis(ctx sdk.Context) {
 	// will be updated on the first OnBeginBlock.
-	gm.storage.SetGlobalTime(ctx, &model.GlobalTime{})
+	gm.storage.SetGlobalTime(ctx, &model.GlobalTime{
+		ChainStartTime: ctx.BlockTime().Unix(),
+		LastBlockTime:  ctx.BlockTime().Unix(),
+		PastMinutes:    0,
+	})
 }
 
 // OnBeginBlock - update internal time related fields and execute
@@ -59,11 +60,6 @@ func (gm GlobalManager) InitGenesis(ctx sdk.Context) {
 func (gm GlobalManager) OnBeginBlock(ctx sdk.Context) {
 	blockTime := ctx.BlockHeader().Time.Unix()
 	globalTime := gm.storage.GetGlobalTime(ctx)
-	if globalTime.ChainStartTime == 0 {
-		globalTime.ChainStartTime = blockTime
-		globalTime.LastBlockTime = blockTime
-	}
-
 	pastMinutes := globalTime.PastMinutes
 	nowMinutes := (blockTime - globalTime.ChainStartTime) / 60
 	for next := pastMinutes + 1; next <= nowMinutes; next++ {
@@ -156,7 +152,7 @@ func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
 }
 
 // GetLastBlockTime - get last block time from KVStore
-func (gm *GlobalManager) GetLastBlockTime(ctx sdk.Context) int64 {
+func (gm GlobalManager) GetLastBlockTime(ctx sdk.Context) int64 {
 	return gm.storage.GetGlobalTime(ctx).LastBlockTime
 }
 
@@ -170,7 +166,7 @@ func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) int64 {
 	return pastDay
 }
 
-func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (gm GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	return nil
 	// state := &model.GlobalTablesIR{
 	// 	Version: exportVersion,
@@ -241,7 +237,7 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 	// return utils.Save(filepath, cdc, state)
 }
 
-func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (gm GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	return nil
 	// rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
 	// if err != nil {

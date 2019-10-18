@@ -51,7 +51,7 @@ var (
 	ParamChangeExecutionSec      int64 = 24 * 3600
 	CoinReturnIntervalSec        int64 = 24 * 7 * 3600
 	CoinReturnTimes              int64 = 7
-	ConsumptionFrictionRate            = types.NewDecFromRat(5, 100)
+	ConsumptionFrictionRate      int64 = types.NewDecFromRat(5, 100)
 	ConsumptionFreezingPeriodSec int64 = 24 * 7 * 3600
 	PostIntervalSec              int64 = 600
 )
@@ -66,6 +66,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 	logger, db := loggerAndDB()
 	lb := app.NewLinoBlockchain(logger, db, nil)
 	genesisState := app.GenesisState{
+		// Fix here.
 		InitCoinPrice: types.NewMiniDollar(1200),
 		Accounts:      []app.GenesisAccount{},
 	}
@@ -77,7 +78,6 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 			Coin:           CoinPerValidator,
 			ResetKey:       secp256k1.GenPrivKey().PubKey(),
 			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			AppKey:         secp256k1.GenPrivKey().PubKey(),
 			IsValidator:    true,
 			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
 		}
@@ -90,17 +90,11 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 		Coin:           initLNO,
 		ResetKey:       GenesisPriv.PubKey(),
 		TransactionKey: GenesisTransactionPriv.PubKey(),
-		AppKey:         GenesisAppPriv.PubKey(),
 		IsValidator:    false,
 		ValPubKey:      GenesisPriv.PubKey(),
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
-	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS:                       sdk.NewDec(1000),
-		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
-	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
 
@@ -117,8 +111,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocation param.GlobalAllocationParam) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	allocation, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
+	allocation := ph.GetGlobalAllocationParam(ctx)
 	assert.Equal(t, expectAllocation, *allocation)
 }
 

@@ -21,7 +21,7 @@ import (
 	globalcli "github.com/lino-network/lino/x/global/client/cli"
 	postcli "github.com/lino-network/lino/x/post/client/cli"
 	pricecli "github.com/lino-network/lino/x/price/client/cli"
-	proposalcli "github.com/lino-network/lino/x/proposal/client/cli"
+	// proposalcli "github.com/lino-network/lino/x/proposal/client/cli"
 	repcli "github.com/lino-network/lino/x/reputation/client/cli"
 	validatorcli "github.com/lino-network/lino/x/validator/client/cli"
 	votecli "github.com/lino-network/lino/x/vote/client/cli"
@@ -88,7 +88,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		devcli.GetQueryCmd(cdc),
 		acccli.GetQueryCmd(cdc),
 		postcli.GetQueryCmd(cdc),
-		proposalcli.GetQueryCmd(cdc),
+		// proposalcli.GetQueryCmd(cdc),
 		validatorcli.GetQueryCmd(cdc),
 		globalcli.GetQueryCmd(cdc),
 		bwcli.GetQueryCmd(cdc),
@@ -113,7 +113,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		devcli.GetTxCmd(cdc),
 		acccli.GetTxCmd(cdc),
 		postcli.GetTxCmd(cdc),
-		proposalcli.GetTxCmd(cdc),
+		// proposalcli.GetTxCmd(cdc),
 		validatorcli.GetTxCmd(cdc),
 		votecli.GetTxCmd(cdc),
 		client.LineBreak,

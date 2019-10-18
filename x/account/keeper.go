@@ -13,6 +13,7 @@ import (
 )
 
 type AccountKeeper interface {
+	InitGenesis(ctx sdk.Context, total types.Coin, pools []model.Pool)
 	// core bank APIs.
 	MoveCoin(ctx sdk.Context, sender, receiver types.AccOrAddr, coin types.Coin) sdk.Error
 	MoveFromPool(
@@ -23,6 +24,8 @@ type AccountKeeper interface {
 	Mint(ctx sdk.Context) sdk.Error
 
 	DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool
+	GenesisAccount(ctx sdk.Context, username types.AccountKey,
+		signingKey, transactionKey crypto.PubKey) sdk.Error
 	RegisterAccount(
 		ctx sdk.Context, referrer types.AccOrAddr, registerFee types.Coin,
 		username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
@@ -34,6 +37,7 @@ type AccountKeeper interface {
 	GetSequence(ctx sdk.Context, address sdk.Address) (uint64, sdk.Error)
 	GetAddress(ctx sdk.Context, username types.AccountKey) (sdk.AccAddress, sdk.Error)
 	GetFrozenMoneyList(ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error)
+	GetSupply(ctx sdk.Context) model.Supply
 	IncreaseSequenceByOne(ctx sdk.Context, address sdk.Address) sdk.Error
 	AddFrozenMoney(
 		ctx sdk.Context, username types.AccountKey, amount types.Coin, start, interval, times int64) sdk.Error

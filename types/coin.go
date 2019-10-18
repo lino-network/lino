@@ -63,6 +63,14 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	return DecToCoin(rat.Mul(sdk.NewDec(Decimals))), nil
 }
 
+func MustLinoToCoin(lino LNO) (Coin) {
+	c, err := LinoToCoin(lino)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
 // DecToCoin - convert sdk.Dec to LNO coin
 // XXX(yumin): the unit of @p rat must be coin.
 func DecToCoin(rat sdk.Dec) Coin {

@@ -40,15 +40,28 @@ func NewAccountManager(key sdk.StoreKey, holder param.ParamKeeper) AccountManage
 	}
 }
 
-func (am AccountManager) Init(ctx sdk.Context) {
-	// globalMeta := &GlobalMeta{
-	// 	TotalLinoCoin:         totalLino,
-	// 	LastYearTotalLinoCoin: totalLino,
-	// }
-	// if err := gs.SetGlobalMeta(ctx, globalMeta); err != nil {
-	// 	return err
-	// }
-
+func (am AccountManager) InitGenesis(ctx sdk.Context, total linotypes.Coin, pools []model.Pool) {
+	neverInited := false
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				neverInited = true
+			}
+		}()
+		am.storage.GetSupply(ctx)
+	}()
+	if !neverInited {
+		panic("Account Module Already Inited")
+	}
+	am.storage.SetSupply(ctx, &model.Supply{
+		LastYearTotal:     total,
+		Total:             total,
+		ChainStartTime:    ctx.BlockTime().Unix(),
+		LastInflationTime: ctx.BlockTime().Unix(),
+	})
+	for _, pool := range pools {
+		am.storage.SetPool(ctx, &pool)
+	}
 }
 
 func (am AccountManager) GetPool(
@@ -156,6 +169,7 @@ func (am AccountManager) Mint(ctx sdk.Context) sdk.Error {
 
 	nLastInflation := (lastInflation - chainStartTime) / nSecOfOneHour
 	nCurrent := (blockTime - chainStartTime) / nSecOfOneHour
+
 	if nCurrent <= nLastInflation {
 		return nil
 	}
@@ -286,7 +300,7 @@ func (am AccountManager) RegisterAccount(ctx sdk.Context, referrer linotypes.Acc
 		return types.ErrRegisterFeeInsufficient()
 	}
 
-	if err := am.CreateAccount(ctx, username, signingKey, transactionKey); err != nil {
+	if err := am.createAccount(ctx, username, signingKey, transactionKey); err != nil {
 		return err
 	}
 
@@ -300,8 +314,12 @@ func (am AccountManager) RegisterAccount(ctx sdk.Context, referrer linotypes.Acc
 	return err
 }
 
+func (am AccountManager) GenesisAccount(ctx sdk.Context, username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
+	return am.createAccount(ctx, username, signingKey, transactionKey)
+}
+
 // CreateAccount - create account, caller should make sure the register fee is valid
-func (am AccountManager) CreateAccount(ctx sdk.Context, username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
+func (am AccountManager) createAccount(ctx sdk.Context, username linotypes.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error {
 	if am.storage.DoesAccountExist(ctx, username) {
 		return types.ErrAccountAlreadyExists(username)
 	}
@@ -697,6 +715,10 @@ func (accManager AccountManager) GetGrantPubKeys(ctx sdk.Context, username, gran
 
 func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
 	return accManager.storage.GetAllGrantPermissions(ctx, username)
+}
+
+func (accManager AccountManager) GetSupply(ctx sdk.Context) model.Supply {
+	return *accManager.storage.GetSupply(ctx)
 }
 
 // ExportToFile -
