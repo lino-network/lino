@@ -148,6 +148,8 @@ func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
 		for _, event := range events.Events {
 			err := gm.runEventIsolated(ctx, exec, event)
 			if err != nil {
+				ctx.Logger().Error(fmt.Sprintf(
+					"ExecEventErr: %+v, code: %d", event, err.Code()))
 				errs := gm.storage.GetEventErrors(ctx)
 				errs = append(errs, model.EventError{
 					Time:    i,
