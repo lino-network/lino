@@ -383,16 +383,36 @@ func (vm VoteManager) DailyAdvanceLinoStakeStats(ctx sdk.Context) sdk.Error {
 	if nDay < 1 {
 		return nil
 	}
-	lastLinoStakeStat, err := vm.storage.GetLinoStakeStat(ctx, nDay-1)
-	if err != nil {
-		return err
+	// XXX(yumin): CANNOT use nDay - 1 as the last day, because there might be
+	// skipped days if the chain has down for > 24 hours. In those cases,
+	// in the last version, claim interests will fail due to lino stake stats of
+	// those days are missing. Here, we set all of them of the default value to avoid it.
+	prev := nDay - 1
+	var lastStats *model.LinoStakeStat
+	for prev >= 0 {
+		stats, err := vm.storage.GetLinoStakeStat(ctx, prev)
+		if err != nil {
+			prev = prev - 1
+		} else {
+			lastStats = stats
+			break
+		}
 	}
+
 	// If lino stake exist last day, the consumption will keep for lino stake holder that day
-	if !lastLinoStakeStat.TotalLinoStake.IsZero() {
-		lastLinoStakeStat.TotalConsumptionFriction = linotypes.NewCoinFromInt64(0)
-		lastLinoStakeStat.UnclaimedFriction = linotypes.NewCoinFromInt64(0)
+	// Otherwise, moved to the next day. It's fine to have a stake stats that has zero total
+	// stake but consumption, as no one can claim interests from that day.
+	// XXX(yumin): the above statement means that, if you want to aggregate consumtionps of days,
+	// MUST skip those days where TotalLinoStake is Zero.
+	if !lastStats.TotalLinoStake.IsZero() {
+		lastStats.TotalConsumptionFriction = linotypes.NewCoinFromInt64(0)
+		lastStats.UnclaimedFriction = linotypes.NewCoinFromInt64(0)
 	}
-	vm.storage.SetLinoStakeStat(ctx, nDay, lastLinoStakeStat)
+
+	for day := prev + 1; day <= nDay; day++ {
+		vm.storage.SetLinoStakeStat(ctx, day, lastStats)
+	}
+
 	return nil
 }
 

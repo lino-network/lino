@@ -948,6 +948,18 @@ func (suite *VoteManagerTestSuite) TestGetLinoStakeAndDuty() {
 	}
 }
 
+func (suite *VoteManagerTestSuite) TestDailyAdvanceLinoStakeStats() {
+	// the skipped day case
+	suite.global.On("GetPastDay", mock.Anything, int64(0)).Return(int64(0)).Once()
+	suite.vm.RecordFriction(suite.Ctx, linotypes.NewCoinFromInt64(100))
+	t := time.Unix(3600*8, 0)
+	suite.NextBlock(t)
+	suite.global.On("GetPastDay", mock.Anything, t.Unix()).Return(int64(8)).Once()
+	suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+	// should see 8 days of consumtions 100.
+	suite.Golden()
+}
+
 func newCoin(n int64) *linotypes.Coin {
 	coin := linotypes.NewCoinFromInt64(n)
 	return &coin
