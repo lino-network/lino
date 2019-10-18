@@ -546,4 +546,3 @@ func TestDailyEvents(t *testing.T) {
 		}
 	}
 }
-
