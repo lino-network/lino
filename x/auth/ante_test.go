@@ -27,13 +27,14 @@ import (
 
 	// bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	// dev "github.com/lino-network/lino/x/developer"
-	devmn "github.com/lino-network/lino/x/developer/manager"
-	"github.com/lino-network/lino/x/global"
-	post "github.com/lino-network/lino/x/post"
-	postmn "github.com/lino-network/lino/x/post/manager"
-	pricemn "github.com/lino-network/lino/x/price/manager"
-	valmn "github.com/lino-network/lino/x/validator/manager"
-	votemn "github.com/lino-network/lino/x/vote/manager"
+	// devmn "github.com/lino-network/lino/x/developer/manager"
+	// global "github.com/lino-network/lino/x/global"
+	// globalmn "github.com/lino-network/lino/x/global/manager"
+	// post "github.com/lino-network/lino/x/post"
+	// postmn "github.com/lino-network/lino/x/post/manager"
+	// pricemn "github.com/lino-network/lino/x/price/manager"
+	// valmn "github.com/lino-network/lino/x/validator/manager"
+	// votemn "github.com/lino-network/lino/x/vote/manager"
 )
 
 type TestMsg struct {
@@ -88,15 +89,15 @@ func newTestTx(
 	return tx
 }
 
-func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
-}
+// func initGlobalManager(ctx sdk.Context, gm global.GlobalKeeper) error {
+// 	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
+// }
 
 type AnteTestSuite struct {
 	suite.Suite
 	am   acc.AccountKeeper
-	pm   post.PostKeeper
-	gm   global.GlobalManager
+	// pm   post.PostKeeper
+	// gm   global.GlobalKeeper
 	ph   param.ParamHolder
 	ctx  sdk.Context
 	ante sdk.AnteHandler
@@ -130,33 +131,33 @@ func (suite *AnteTestSuite) SetupTest() {
 		panic(err)
 	}
 	ctx := sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
+		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	err = ph.InitParam(ctx)
 	if err != nil {
 		panic(err)
 	}
-	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
+	// gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
 
-	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
-	vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
-	valm := valmn.NewValidatorManager(TestValidatorKVStoreKey, ph, vm, &gm, am)
-	price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, ph)
-	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
-	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
+	// vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
+	// valm := valmn.NewValidatorManager(TestValidatorKVStoreKey, ph, vm, &gm, am)
+	// price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, ph)
+	// dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
+	// pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
 
+	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph)
 	bm := &bandwidthmock.BandwidthKeeper{}
 
-	err = initGlobalManager(ctx, gm)
-	if err != nil {
-		panic(err)
-	}
+	// err = initGlobalManager(ctx, gm)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	anteHandler := NewAnteHandler(am, bm)
 
 	suite.am = am
-	suite.pm = pm
-	suite.gm = gm
+	// suite.pm = pm
+	// suite.gm = gm
 	suite.ph = ph
 	suite.ctx = ctx
 	suite.ante = anteHandler
@@ -179,17 +180,17 @@ func (suite *AnteTestSuite) createTestAccount(username string) (secp256k1.PrivKe
 	return signingKey, transactionKey, types.AccountKey(username)
 }
 
-func (suite *AnteTestSuite) createTestPost(postid string, author types.AccountKey) {
-	msg := post.CreatePostMsg{
-		PostID:    postid,
-		Title:     "testTitle",
-		Content:   "qqqqqqq",
-		Author:    author,
-		CreatedBy: author,
-	}
-	err := suite.pm.CreatePost(suite.ctx, msg.Author, msg.PostID, msg.CreatedBy, msg.Content, msg.Title)
-	suite.Require().Nil(err)
-}
+// func (suite *AnteTestSuite) createTestPost(postid string, author types.AccountKey) {
+// 	msg := post.CreatePostMsg{
+// 		PostID:    postid,
+// 		Title:     "testTitle",
+// 		Content:   "qqqqqqq",
+// 		Author:    author,
+// 		CreatedBy: author,
+// 	}
+// 	err := suite.pm.CreatePost(suite.ctx, msg.Author, msg.PostID, msg.CreatedBy, msg.Content, msg.Title)
+// 	suite.Require().Nil(err)
+// }
 
 // run the tx through the anteHandler and ensure its valid
 func (suite *AnteTestSuite) checkValidTx(tx sdk.Tx) {
