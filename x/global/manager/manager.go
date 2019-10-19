@@ -22,25 +22,25 @@ const (
 // and store errors of executed events.
 type GlobalManager struct {
 	storage     model.GlobalStorage
-	paramHolder param.ParamHolder
+	paramHolder param.ParamKeeper
 
 	// events
-	hourly  types.BCEventExec
-	daily   types.BCEventExec
-	monthly types.BCEventExec
-	yearly  types.BCEventExec
+	hourly  linotypes.BCEventExec
+	daily   linotypes.BCEventExec
+	monthly linotypes.BCEventExec
+	yearly  linotypes.BCEventExec
 }
 
 // NewGlobalManager - return the global manager
-func NewGlobalManager(key sdk.StoreKey, holder param.ParamHolder, cdc *codec.Codec,
-	hourly types.BCEventExec,
-	daily types.BCEventExec,
-	monthly types.BCEventExec,
-	yearly types.BCEventExec,
+func NewGlobalManager(key sdk.StoreKey, keeper param.ParamKeeper, cdc *codec.Codec,
+	hourly linotypes.BCEventExec,
+	daily linotypes.BCEventExec,
+	monthly linotypes.BCEventExec,
+	yearly linotypes.BCEventExec,
 ) GlobalManager {
 	return GlobalManager{
 		storage:     model.NewGlobalStorage(key, cdc),
-		paramHolder: holder,
+		paramHolder: keeper,
 		hourly:      hourly,
 		daily:       daily,
 		monthly:     monthly,
@@ -63,9 +63,9 @@ func (gm GlobalManager) OnBeginBlock(ctx sdk.Context) {
 	blockTime := ctx.BlockHeader().Time.Unix()
 	globalTime := gm.storage.GetGlobalTime(ctx)
 	if blockTime < globalTime.LastBlockTime {
-		// our simulation does not follows tendermint's spec that
+		// our simulation tests do not follow tendermint's spec that
 		// the BFT Time H2.Time > H1.Time, if H2 = H1 + 1.
-		// specific, we use a same time point all the time.
+		// precisely, we use a same time point all the time.
 		// panic("Premise of BFT time is BROKEN")
 		return
 	}
@@ -129,7 +129,7 @@ func (gm GlobalManager) RegisterEventAtTime(ctx sdk.Context, unixTime int64, eve
 	return nil
 }
 
-func (gm GlobalManager) runEventIsolated(ctx sdk.Context, exec types.EventExec, event linotypes.Event) sdk.Error {
+func (gm GlobalManager) runEventIsolated(ctx sdk.Context, exec linotypes.EventExec, event linotypes.Event) sdk.Error {
 	cachedCtx, write := ctx.CacheContext()
 	err := exec(cachedCtx, event)
 	if err == nil {
@@ -140,7 +140,7 @@ func (gm GlobalManager) runEventIsolated(ctx sdk.Context, exec types.EventExec, 
 }
 
 // ExecuteEvents - execute events, log errors to storage, up to current time (exclusively).
-func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec types.EventExec) {
+func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec linotypes.EventExec) {
 	currentTime := ctx.BlockTime().Unix()
 	lastBlockTime := gm.storage.GetGlobalTime(ctx).LastBlockTime
 	for i := lastBlockTime; i < currentTime; i++ {
@@ -176,6 +176,18 @@ func (gm GlobalManager) GetPastDay(ctx sdk.Context, unixTime int64) int64 {
 		return 0
 	}
 	return pastDay
+}
+
+func (gm GlobalManager) GetBCEventErrors(ctx sdk.Context) []linotypes.BCEventErr {
+	return gm.storage.GetBCErrors(ctx)
+}
+
+func (gm GlobalManager) GetEventErrors(ctx sdk.Context) []model.EventError {
+	return gm.storage.GetEventErrors(ctx)
+}
+
+func (gm GlobalManager) GetGlobalTime(ctx sdk.Context) model.GlobalTime {
+	return *gm.storage.GetGlobalTime(ctx)
 }
 
 func (gm GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {

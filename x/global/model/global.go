@@ -1,8 +1,6 @@
 package model
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/lino-network/lino/types"
 )
 
@@ -13,9 +11,4 @@ type GlobalTime struct {
 	PastMinutes    int64 `json:"past_minutes"`
 }
 
-// EventError - event and errors
-type EventError struct {
-	Time    int64        `json:"time"`
-	Event   types.Event  `json:"event"`
-	ErrCode sdk.CodeType `json:"err_code"`
-}
+type EventError = types.EventError

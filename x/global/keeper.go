@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/global/types"
+	"github.com/lino-network/lino/x/global/model"
 )
 
 // GlobalKeeper - aka global event manager.
@@ -20,13 +20,15 @@ type GlobalKeeper interface {
 
 	// module events
 	RegisterEventAtTime(ctx sdk.Context, unixTime int64, event linotypes.Event) sdk.Error
-	ExecuteEvents(ctx sdk.Context, exec types.EventExec)
+	ExecuteEvents(ctx sdk.Context, exec linotypes.EventExec)
 
-	// global time
+	// Getter
+	//// global time
 	GetLastBlockTime(ctx sdk.Context) int64
 	GetPastDay(ctx sdk.Context, unixTime int64) int64
-
-	// Querier
+	GetBCEventErrors(ctx sdk.Context) []linotypes.BCEventErr
+	GetEventErrors(ctx sdk.Context) []model.EventError
+	GetGlobalTime(ctx sdk.Context) model.GlobalTime
 
 	// import export
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error

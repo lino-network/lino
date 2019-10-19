@@ -1,0 +1,33 @@
+[
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/global/time",
+      "value": {
+        "chain_start_time": "123456",
+        "last_block_time": "123456",
+        "past_minutes": "0"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "",
+    "val": {
+      "type": "lino/global/eventerr",
+      "value": [
+        {
+          "time": "123486",
+          "event": {
+            "type": "lino/testevent",
+            "value": {
+              "id": "0"
+            }
+          },
+          "err_code": 100000
+        }
+      ]
+    }
+  }
+]

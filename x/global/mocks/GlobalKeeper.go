@@ -9,6 +9,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	model "github.com/lino-network/lino/x/global/model"
+
 	types "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,6 +33,52 @@ func (_m *GlobalKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepa
 		r0 = rf(ctx, cdc, filepath)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetBCEventErrors provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) GetBCEventErrors(ctx types.Context) []linotypes.BCEventErr {
+	ret := _m.Called(ctx)
+
+	var r0 []linotypes.BCEventErr
+	if rf, ok := ret.Get(0).(func(types.Context) []linotypes.BCEventErr); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]linotypes.BCEventErr)
+		}
+	}
+
+	return r0
+}
+
+// GetEventErrors provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) GetEventErrors(ctx types.Context) []linotypes.EventError {
+	ret := _m.Called(ctx)
+
+	var r0 []linotypes.EventError
+	if rf, ok := ret.Get(0).(func(types.Context) []linotypes.EventError); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]linotypes.EventError)
+		}
+	}
+
+	return r0
+}
+
+// GetGlobalTime provides a mock function with given fields: ctx
+func (_m *GlobalKeeper) GetGlobalTime(ctx types.Context) model.GlobalTime {
+	ret := _m.Called(ctx)
+
+	var r0 model.GlobalTime
+	if rf, ok := ret.Get(0).(func(types.Context) model.GlobalTime); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(model.GlobalTime)
 	}
 
 	return r0

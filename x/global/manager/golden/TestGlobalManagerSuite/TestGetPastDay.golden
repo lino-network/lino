@@ -1,0 +1,14 @@
+[
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/global/time",
+      "value": {
+        "chain_start_time": "123456",
+        "last_block_time": "123456",
+        "past_minutes": "0"
+      }
+    }
+  }
+]
