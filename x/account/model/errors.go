@@ -102,4 +102,3 @@ func ErrFailedToUnmarshalPendingCoinDayQueue(err error) sdk.Error {
 func ErrFailedToUnmarshalGrantPubKey(err error) sdk.Error {
 	return types.NewError(types.CodeFailedToUnmarshalGrantPubKey, fmt.Sprintf("failed to unmarshal grant pub key: %s", err.Error()))
 }
-

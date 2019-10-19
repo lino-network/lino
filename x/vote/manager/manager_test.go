@@ -56,7 +56,7 @@ type VoteManagerTestSuite struct {
 	userNotVoter    linotypes.AccountKey
 	userPendingDuty linotypes.AccountKey
 
-	// exmaple data
+	// example data
 	minStakeInAmount  linotypes.Coin
 	returnIntervalSec int64
 	returnTimes       int64
@@ -858,7 +858,8 @@ func (suite *VoteManagerTestSuite) TestSlashStake() {
 				suite.global.On("GetPastDay", mock.Anything, i).Return(i).Maybe()
 			}
 			suite.NextBlock(time.Unix(2, 0))
-			suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+			err := suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+			suite.Nil(err)
 			if tc.expectErr == nil {
 				suite.hooks.On("AfterSlashing", mock.Anything, tc.username).Return(nil).Once()
 				suite.am.On("MoveBetweenPools", mock.Anything,
@@ -951,11 +952,13 @@ func (suite *VoteManagerTestSuite) TestGetLinoStakeAndDuty() {
 func (suite *VoteManagerTestSuite) TestDailyAdvanceLinoStakeStats() {
 	// the skipped day case
 	suite.global.On("GetPastDay", mock.Anything, int64(0)).Return(int64(0)).Once()
-	suite.vm.RecordFriction(suite.Ctx, linotypes.NewCoinFromInt64(100))
+	err := suite.vm.RecordFriction(suite.Ctx, linotypes.NewCoinFromInt64(100))
+	suite.Nil(err)
 	t := time.Unix(3600*8, 0)
 	suite.NextBlock(t)
 	suite.global.On("GetPastDay", mock.Anything, t.Unix()).Return(int64(8)).Once()
-	suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+	err = suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
+	suite.Nil(err)
 	// should see 8 days of consumtions 100.
 	suite.Golden()
 }

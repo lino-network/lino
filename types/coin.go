@@ -63,7 +63,7 @@ func LinoToCoin(lino LNO) (Coin, sdk.Error) {
 	return DecToCoin(rat.Mul(sdk.NewDec(Decimals))), nil
 }
 
-func MustLinoToCoin(lino LNO) (Coin) {
+func MustLinoToCoin(lino LNO) Coin {
 	c, err := LinoToCoin(lino)
 	if err != nil {
 		panic(err)

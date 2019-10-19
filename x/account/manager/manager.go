@@ -83,7 +83,6 @@ func (am AccountManager) MoveCoin(ctx sdk.Context, sender, receiver linotypes.Ac
 		return err
 	}
 	return am.addCoin(ctx, receiver, coin)
-	return nil
 }
 
 // MoveFromPool - move coin from pool to an address or user.

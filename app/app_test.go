@@ -92,7 +92,10 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 	result, err := wire.MarshalJSONIndent(lb.cdc, genesisState)
 	assert.Nil(t, err)
 
-	lb.InitChain(abci.RequestInitChain{AppStateBytes: json.RawMessage(result)})
+	lb.InitChain(abci.RequestInitChain{
+		Time:          time.Unix(0, 0),
+		AppStateBytes: json.RawMessage(result),
+	})
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{Height: 1, ChainID: "Lino", Time: time.Unix(0, 0)}})
 	lb.EndBlock(abci.RequestEndBlock{})
@@ -462,7 +465,7 @@ func TestHourlyInflation(t *testing.T) {
 
 	expectConsumptionPool := types.NewCoinFromInt64(0)
 	lb.globalManager.OnBeginBlock(ctx) // initialize genesis.
-	for i := 1; i <= types.MinutesPerMonth/10 ; i++ {
+	for i := 1; i <= types.MinutesPerMonth/10; i++ {
 		supply := lb.accountManager.GetSupply(ctx)
 		ctx = lb.BaseApp.NewContext(true, abci.Header{Time: time.Unix(int64(i*60), 0)})
 		// functhat that handles previous hourly inflation.

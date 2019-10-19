@@ -19,7 +19,7 @@ func TestVoteStandby(t *testing.T) {
 	// testName := "TestVoteStandby"
 
 	// start with 22 genesis validator
-	baseT := time.Unix(0,0).Add(100 * time.Second)
+	baseT := time.Unix(0, 0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

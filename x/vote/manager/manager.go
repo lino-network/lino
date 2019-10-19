@@ -392,7 +392,7 @@ func (vm VoteManager) DailyAdvanceLinoStakeStats(ctx sdk.Context) sdk.Error {
 	for prev >= 0 {
 		stats, err := vm.storage.GetLinoStakeStat(ctx, prev)
 		if err != nil {
-			prev = prev - 1
+			prev--
 		} else {
 			lastStats = stats
 			break

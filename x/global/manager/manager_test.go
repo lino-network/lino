@@ -142,7 +142,6 @@ func (suite *globalManagerTestSuite) TestRegisterEventsAndExec() {
 	suite.mApp.On("Monthly", mock.Anything).Return(nil)
 	suite.mApp.On("Yearly", mock.Anything).Return(nil)
 
-
 	// a simple counter event
 	nExecuted := int64(0)
 	exec := func(ctx sdk.Context, event linotypes.Event) sdk.Error {
@@ -160,12 +159,14 @@ func (suite *globalManagerTestSuite) TestRegisterEventsAndExec() {
 	// events will be executed starting from an hour later
 	nScheduled := int64(0)
 	for i := init + 3; i <= init+7*3600; i += 600 {
-		suite.global.RegisterEventAtTime(suite.Ctx, i, testEvent{Id: nScheduled})
+		err := suite.global.RegisterEventAtTime(suite.Ctx, i, testEvent{Id: nScheduled})
+		suite.Nil(err)
 		nScheduled++
 	}
 	// events can be scheduled at same time
 	for i := init + 3 + 600*4; i <= init+7*3600; i += 600 {
-		suite.global.RegisterEventAtTime(suite.Ctx, i, testEvent{Id: nScheduled})
+		err := suite.global.RegisterEventAtTime(suite.Ctx, i, testEvent{Id: nScheduled})
+		suite.Nil(err)
 		nScheduled++
 	}
 
@@ -174,7 +175,8 @@ func (suite *globalManagerTestSuite) TestRegisterEventsAndExec() {
 		suite.NextBlock(time.Unix(i, 0))
 		suite.global.OnBeginBlock(suite.Ctx)
 		suite.global.ExecuteEvents(suite.Ctx, exec)
-		suite.global.RegisterEventAtTime(suite.Ctx, i+10000000000, testEvent{Id: -1})
+		err := suite.global.RegisterEventAtTime(suite.Ctx, i+10000000000, testEvent{Id: -1})
+		suite.Nil(err)
 		suite.global.OnEndBlock(suite.Ctx)
 	}
 

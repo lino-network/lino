@@ -21,7 +21,7 @@ type GlobalTimeEventsIR struct {
 
 // GlobalTablesIR - state
 type GlobalTablesIR struct {
-	Version              int                    `json:"version"`
-	GlobalTimeEventLists []GlobalTimeEventsIR   `json:"global_time_event_lists"`
-	Time                 GlobalTimeIR           `json:"time"`
+	Version              int                  `json:"version"`
+	GlobalTimeEventLists []GlobalTimeEventsIR `json:"global_time_event_lists"`
+	Time                 GlobalTimeIR         `json:"time"`
 }

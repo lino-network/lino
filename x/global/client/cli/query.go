@@ -9,8 +9,8 @@ import (
 
 	// linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"
-	types "github.com/lino-network/lino/x/global/types"
 	"github.com/lino-network/lino/x/global/model"
+	types "github.com/lino-network/lino/x/global/types"
 )
 
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -22,11 +22,11 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	cmd.AddCommand(client.GetCommands(
-	// 	getCmdListEvents(cdc),
-	// 	getCmdMeta(cdc),
-	// 	getCmdInflationPool(cdc),
-	// 	getCmdConsumption(cdc),
-	// 	getCmdTPS(cdc),
+		// 	getCmdListEvents(cdc),
+		// 	getCmdMeta(cdc),
+		// 	getCmdInflationPool(cdc),
+		// 	getCmdConsumption(cdc),
+		// 	getCmdTPS(cdc),
 		getCmdTime(cdc),
 		// getCmdStakeStats(cdc),
 	)...)

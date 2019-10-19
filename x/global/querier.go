@@ -8,7 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	// linotypes "github.com/lino-network/lino/types"
-	// "github.com/lino-network/lino/x/global/types"
+	"github.com/lino-network/lino/x/global/types"
 )
 
 // creates a querier for global REST endpoints
@@ -19,8 +19,8 @@ func NewQuerier(gm GlobalKeeper) sdk.Querier {
 		switch path[0] {
 		// case types.QueryTimeEventList:
 		// 	return queryTimeEventList(ctx, cdc, path[1:], req, gm)
-		// case types.QueryGlobalTime:
-		// 	return queryGlobalTime(ctx, cdc, path[1:], req, gm)
+		case types.QueryGlobalTime:
+			return queryGlobalTime(ctx, cdc, path[1:], req, gm)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown global query endpoint")
 		}
@@ -46,14 +46,11 @@ func NewQuerier(gm GlobalKeeper) sdk.Querier {
 // 	return res, nil
 // }
 
-// func queryGlobalTime(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, gm GlobalManager) ([]byte, sdk.Error) {
-// 	globalTime, err := gm.storage.GetGlobalTime(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	res, marshalErr := cdc.MarshalJSON(globalTime)
-// 	if marshalErr != nil {
-// 		return nil, ErrQueryFailed()
-// 	}
-// 	return res, nil
-// }
+func queryGlobalTime(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, gm GlobalKeeper) ([]byte, sdk.Error) {
+	globalTime := gm.GetGlobalTime(ctx)
+	res, marshalErr := cdc.MarshalJSON(globalTime)
+	if marshalErr != nil {
+		return nil, types.ErrQueryFailed()
+	}
+	return res, nil
+}

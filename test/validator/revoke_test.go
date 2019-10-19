@@ -18,7 +18,7 @@ func TestRevoke(t *testing.T) {
 	// testName := "TestRegisterValidatorOneByOne"
 
 	// start with 1 genesis validator
-	baseT := time.Unix(0,0).Add(100 * time.Second)
+	baseT := time.Unix(0, 0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, 1, baseT)
 

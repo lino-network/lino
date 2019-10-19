@@ -492,7 +492,7 @@ func (lb *LinoBlockchain) hourlyBCEvent(ctx sdk.Context) (errs []types.BCEventEr
 		errs = append(errs, types.NewBCEventErr(ctx, err, "validator/inflation"))
 	}
 	if err := lb.bandwidthManager.ReCalculateAppBandwidthInfo(ctx); err != nil {
-		errs = append(errs, types.NewBCEventErr(ctx, err, "bandwith/recalculate"))
+		errs = append(errs, types.NewBCEventErr(ctx, err, "bandwidth/recalculate"))
 	}
 	if err := lb.priceManager.UpdatePrice(ctx); err != nil {
 		errs = append(errs, types.NewBCEventErr(ctx, err, "price/update"))

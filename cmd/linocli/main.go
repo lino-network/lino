@@ -21,6 +21,7 @@ import (
 	globalcli "github.com/lino-network/lino/x/global/client/cli"
 	postcli "github.com/lino-network/lino/x/post/client/cli"
 	pricecli "github.com/lino-network/lino/x/price/client/cli"
+
 	// proposalcli "github.com/lino-network/lino/x/proposal/client/cli"
 	repcli "github.com/lino-network/lino/x/reputation/client/cli"
 	validatorcli "github.com/lino-network/lino/x/validator/client/cli"

@@ -153,7 +153,7 @@ func TestReturnCoinEvent(t *testing.T) {
 				Username:   "user1",
 				Amount:     types.NewCoinFromInt64(0),
 				ReturnType: types.VoteReturnCoin,
-				FromPool: types.AccountVestingPool,
+				FromPool:   types.AccountVestingPool,
 			},
 			atWhen:       baseTime,
 			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
