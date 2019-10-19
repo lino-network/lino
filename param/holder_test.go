@@ -43,8 +43,7 @@ func TestGlobalAllocationParam(t *testing.T) {
 	err := ph.setGlobalAllocationParam(ctx, &parameter)
 	assert.Nil(t, err)
 
-	resultPtr, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
+	resultPtr := ph.GetGlobalAllocationParam(ctx)
 	assert.Equal(t, parameter, *resultPtr, "Global allocation param should be equal")
 }
 
@@ -102,8 +101,7 @@ func TestVoteParam(t *testing.T) {
 	err := ph.setVoteParam(ctx, &parameter)
 	assert.Nil(t, err)
 
-	resultPtr, err := ph.GetVoteParam(ctx)
-	assert.Nil(t, err)
+	resultPtr := ph.GetVoteParam(ctx)
 	assert.Equal(t, parameter, *resultPtr, "Voter param should be equal")
 }
 
@@ -188,8 +186,7 @@ func TestAccountParam(t *testing.T) {
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
 
-	resultPtr, err := ph.GetAccountParam(ctx)
-	assert.Nil(t, err)
+	resultPtr := ph.GetAccountParam(ctx)
 	assert.Equal(t, parameter, *resultPtr, "Account param should be equal")
 }
 
@@ -430,8 +427,7 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	expectedRepParam ReputationParam,
 	expectedPriceParam PriceParam,
 ) {
-	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
+	globalAllocationParam := ph.GetGlobalAllocationParam(ctx)
 	assert.Equal(t, expectGlobalAllocationParam, *globalAllocationParam)
 
 	developerParam, err := ph.GetDeveloperParam(ctx)
@@ -441,8 +437,7 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	validatorParam := ph.GetValidatorParam(ctx)
 	assert.Equal(t, expectValidatorParam, *validatorParam)
 
-	voteParam, err := ph.GetVoteParam(ctx)
-	assert.Nil(t, err)
+	voteParam := ph.GetVoteParam(ctx)
 	assert.Equal(t, expectVoteParam, *voteParam)
 
 	proposalParam, err := ph.GetProposalParam(ctx)
@@ -457,8 +452,7 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	assert.Nil(t, err)
 	assert.Equal(t, expectBandwidthParam, *bandwidthParam)
 
-	accountParam, err := ph.GetAccountParam(ctx)
-	assert.Nil(t, err)
+	accountParam := ph.GetAccountParam(ctx)
 	assert.Equal(t, expectAccountParam, *accountParam)
 
 	postParam, err := ph.GetPostParam(ctx)
@@ -505,8 +499,7 @@ func TestUpdateGlobalGrowthRate(t *testing.T) {
 		assert.Nil(t, err)
 		err = ph.UpdateGlobalGrowthRate(ctx, tc.updateGrowthRate)
 		assert.Nil(t, err)
-		globalParam, err = ph.GetGlobalAllocationParam(ctx)
-		assert.Nil(t, err)
+		globalParam = ph.GetGlobalAllocationParam(ctx)
 		assert.Equal(t, globalParam.GlobalGrowthRate, tc.expectGrowthRate)
 	}
 }
