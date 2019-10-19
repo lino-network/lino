@@ -9,13 +9,13 @@
           "time": "123",
           "err_code": 123,
           "err_code_space": "̕",
-          "module": "inflation failed"
+          "reason": "inflation failed"
         },
         {
           "time": "456",
           "err_code": 34,
           "err_code_space": "ر",
-          "module": "validator failed"
+          "reason": "validator failed"
         }
       ]
     }
