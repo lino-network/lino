@@ -192,7 +192,7 @@ func (as AccountStorage) GetPool(ctx sdk.Context, name types.PoolName) (*Pool, s
 	store := ctx.KVStore(as.key)
 	bz := store.Get(GetAccountPoolKey(name))
 	if bz == nil {
-		return nil, ErrPoolNotFound()
+		return nil, ErrPoolNotFound(name)
 	}
 	pool := new(Pool)
 	as.cdc.MustUnmarshalBinaryLengthPrefixed(bz, pool)

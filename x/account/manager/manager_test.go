@@ -11,7 +11,6 @@ import (
 	"github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
-	global "github.com/lino-network/lino/x/global/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,8 +26,6 @@ type AccountManagerTestSuite struct {
 	testsuites.CtxTestSuite
 	am AccountManager
 	ph *param.ParamKeeper
-	// deps
-	global *global.GlobalKeeper
 
 	// mock data
 	userWithoutBalance model.AccountInfo
@@ -50,7 +47,6 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	testAccountKey := sdk.NewKVStoreKey("account")
 	suite.SetupCtx(0, time.Unix(0, 0), testAccountKey)
 	suite.ph = &param.ParamKeeper{}
-	suite.global = &global.GlobalKeeper{}
 	suite.am = NewAccountManager(testAccountKey, suite.ph)
 
 	// background
@@ -79,10 +75,10 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.unregSaving = types.NewCoinFromInt64(1 * types.Decimals)
 	suite.registerFee = types.NewCoinFromInt64(100 * types.Decimals)
 
-	err := suite.am.CreateAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SigningKey, suite.userWithoutBalance.TransactionKey)
+	err := suite.am.GenesisAccount(suite.Ctx, suite.userWithoutBalance.Username, suite.userWithoutBalance.SigningKey, suite.userWithoutBalance.TransactionKey)
 	suite.NoError(err)
 
-	err = suite.am.CreateAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
+	err = suite.am.GenesisAccount(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalance.SigningKey, suite.userWithBalance.TransactionKey)
 	suite.NoError(err)
 	err = suite.am.addCoinToUsername(suite.Ctx, suite.userWithBalance.Username, suite.userWithBalanceSaving)
 	suite.NoError(err)
@@ -469,7 +465,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 	}
 	// normal test
 	for _, tc := range testCases {
-		err := suite.am.CreateAccount(suite.Ctx, tc.username, tc.signingKey, tc.txKey)
+		err := suite.am.GenesisAccount(suite.Ctx, tc.username, tc.signingKey, tc.txKey)
 		suite.Equal(
 			tc.expectErr, err,
 			"%s: failed to create account for user %s, expect err %v, got %v",
@@ -514,9 +510,13 @@ func TestUpdateJSONMeta(t *testing.T) {
 }
 
 func (suite *AccountManagerTestSuite) TestRegisterAccount() {
+	suite.am.storage.SetPool(suite.Ctx, &model.Pool{
+		Name:    types.InflationValidatorPool,
+		Balance: types.MustLinoToCoin("10000000000"),
+	})
+
 	txPrivKeys := []crypto.PrivKey{secp256k1.GenPrivKey(), secp256k1.GenPrivKey()}
 	signingPrivKeys := []crypto.PrivKey{secp256k1.GenPrivKey(), secp256k1.GenPrivKey()}
-	suite.global.On("AddToValidatorInflationPool", mock.Anything, suite.registerFee).Return(nil).Maybe()
 
 	testCases := []struct {
 		testName    string

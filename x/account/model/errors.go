@@ -24,8 +24,8 @@ func ErrAccountMetaNotFound() sdk.Error {
 }
 
 // ErrPoolNotFound - error if pool is not found
-func ErrPoolNotFound() sdk.Error {
-	return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool is not found"))
+func ErrPoolNotFound(name types.PoolName) sdk.Error {
+	return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool not found: %s", name))
 }
 
 // ErrRewardNotFound - error if reward is not found

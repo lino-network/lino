@@ -231,7 +231,7 @@ func (am AccountManager) addCoin(ctx sdk.Context, dest linotypes.AccOrAddr, amou
 func (am AccountManager) addCoinToUsername(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	accInfo, err := am.storage.GetInfo(ctx, username)
 	if err != nil {
-		return err
+		return types.ErrAccountNotFound(username)
 	}
 	am.addCoinToAddress(ctx, accInfo.Address, coin)
 	return nil
@@ -265,7 +265,7 @@ func (am AccountManager) minusCoin(ctx sdk.Context, from linotypes.AccOrAddr, am
 func (am AccountManager) minusCoinFromUsername(ctx sdk.Context, username linotypes.AccountKey, coin linotypes.Coin) sdk.Error {
 	accInfo, err := am.storage.GetInfo(ctx, username)
 	if err != nil {
-		return err
+		return types.ErrAccountNotFound(username)
 	}
 	return am.minusCoinFromAddress(ctx, accInfo.Address, coin)
 }
