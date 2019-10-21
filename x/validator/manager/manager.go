@@ -333,11 +333,13 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 			fmt.Printf("update.ValidatorName: %+v\n", update.ValidatorName)
 			fmt.Printf("lst.Oncall: %+v\n", lst.Oncall)
 			if linotypes.FindAccountInList(update.ValidatorName, lst.Oncall) != -1 {
+				fmt.Println("FindAccountInList, lst.oncall")
 				if err := vm.onOncallVotesInc(ctx, update.ValidatorName); err != nil {
 					return err
 				}
 			}
 			if linotypes.FindAccountInList(update.ValidatorName, lst.Standby) != -1 {
+				fmt.Printf("onStandbyVotesInc.lst.0: %+v\n", vm.GetValidatorList(ctx))
 				if err := vm.onStandbyVotesInc(ctx, update.ValidatorName); err != nil {
 					return err
 				}
