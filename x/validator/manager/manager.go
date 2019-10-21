@@ -311,8 +311,8 @@ func (vm ValidatorManager) getElectionVoteListUpdates(ctx sdk.Context, username 
 }
 
 func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates []*model.ElectionVote) sdk.Error {
-	lst := vm.storage.GetValidatorList(ctx)
 	for _, update := range updates {
+		lst := vm.storage.GetValidatorList(ctx)
 		if update.Vote.IsZero() {
 			continue
 		}
