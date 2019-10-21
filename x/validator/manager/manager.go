@@ -1074,6 +1074,13 @@ func (vm ValidatorManager) GetValidatorList(ctx sdk.Context) *model.ValidatorLis
 }
 
 func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.ValidatorList) {
+	showed := make(map[linotypes.AccountKey]bool)
+	for _, oncall := range lst.Oncall {
+		if showed[oncall] == true {
+			panic("duplicated oncalls")
+		}
+		showed[oncall] = true
+	}
 	vm.storage.SetValidatorList(ctx, lst)
 }
 
