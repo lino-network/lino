@@ -324,7 +324,7 @@ func (am AccountManager) createAccount(ctx sdk.Context, username linotypes.Accou
 	}
 
 	// get address from tx key
-	addr := sdk.AccAddress(transactionKey.Address().Bytes())
+	addr := sdk.AccAddress(transactionKey.Address())
 	bank, err := am.storage.GetBank(ctx, addr)
 	if err != nil {
 		bank = &model.AccountBank{}
@@ -345,7 +345,7 @@ func (am AccountManager) createAccount(ctx sdk.Context, username linotypes.Accou
 		SigningKey:     signingKey,
 		Address:        addr,
 	}
-	am.storage.SetInfo(ctx, username, accountInfo)
+	am.storage.SetInfo(ctx, accountInfo)
 	return nil
 }
 
@@ -459,7 +459,7 @@ func (accManager AccountManager) AuthorizePermission(
 	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
 	if err != nil {
 		// if grant permission list is empty, create a new one
-		if err.Code() == model.ErrGrantPubKeyNotFound().Code() {
+		if err.Code() == types.ErrGrantPubKeyNotFound().Code() {
 			accManager.storage.SetGrantPermissions(
 				ctx, me, grantTo, []*model.GrantPermission{&newGrantPubKey})
 			return nil
@@ -500,7 +500,7 @@ func (accManager AccountManager) RevokePermission(
 			return nil
 		}
 	}
-	return model.ErrGrantPubKeyNotFound()
+	return types.ErrGrantPubKeyNotFound()
 }
 
 // CheckSigningPubKeyOwner - given a public key, check if it is valid for given permission
@@ -598,10 +598,10 @@ func (accManager AccountManager) RecoverAccount(
 		return err
 	}
 
-	newAddr := sdk.AccAddress(newTransactionPubKey.Address().Bytes())
+	newAddr := sdk.AccAddress(newTransactionPubKey.Address())
 	newBank, err := accManager.storage.GetBank(ctx, newAddr)
 	if err != nil {
-		if err.Code() != model.ErrAccountBankNotFound().Code() {
+		if err.Code() != types.ErrAccountBankNotFound(newAddr).Code() {
 			return err
 		}
 		newBank = &model.AccountBank{
@@ -638,7 +638,7 @@ func (accManager AccountManager) RecoverAccount(
 
 	oldBank.FrozenMoneyList = nil
 
-	accManager.storage.SetInfo(ctx, username, accInfo)
+	accManager.storage.SetInfo(ctx, accInfo)
 	accManager.storage.SetBank(ctx, newAddr, newBank)
 	accManager.storage.SetBank(ctx, oldAddr, oldBank)
 	return nil
@@ -725,7 +725,7 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 	state := &model.AccountTablesIR{
 		Version: exportVersion,
 	}
-	substores := accManager.storage.StoreMap(ctx)
+	substores := accManager.storage.PartialStoreMap(ctx)
 
 	// export accounts
 	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
@@ -807,7 +807,7 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 	for _, v := range table.Accounts {
 		info := model.AccountInfo(v)
 		if _, err := accManager.storage.GetInfo(ctx, v.Username); err != nil {
-			accManager.storage.SetInfo(ctx, v.Username, &info)
+			accManager.storage.SetInfo(ctx, &info)
 			if banks[string(v.Address)] != 0 {
 				panic(fmt.Errorf("used address: %s", v.Address))
 			}

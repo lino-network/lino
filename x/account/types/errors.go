@@ -23,6 +23,11 @@ func ErrAccountNotFound(username types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeAccountNotFound, fmt.Sprintf("account %s not found", username))
 }
 
+// ErrAccountBankNotFound - error if account bank is not found
+func ErrAccountBankNotFound(addr sdk.Address) sdk.Error {
+	return types.NewError(types.CodeAccountBankNotFound, fmt.Sprintf("account bank not found: %s", addr))
+}
+
 // ErrReferrerNotFound - error when referrer is not found
 func ErrReferrerNotFound(username types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeReferrerNotFound, fmt.Sprintf("referrer %s not found", username))
@@ -138,6 +143,12 @@ func ErrCheckGrantAppKey() sdk.Error {
 	return types.NewError(types.CodeCheckGrantAppKey, fmt.Sprintf("only user's own app key or above can sign grant or revoke app permission msg"))
 }
 
+// ErrGrantPubKeyNotFound - error if grant public key is not found
+func ErrGrantPubKeyNotFound() sdk.Error {
+	return types.NewError(
+		types.CodeGrantPubKeyNotFound, fmt.Sprintf("grant public key is not found"))
+}
+
 // ErrCheckAuthenticatePubKeyOwner - error when transaction signed by invalid public key
 func ErrCheckAuthenticatePubKeyOwner(accKey types.AccountKey) sdk.Error {
 	return types.NewError(types.CodeCheckAuthenticatePubKeyOwner, fmt.Sprintf("user %v authenticate public key match failed", accKey))
@@ -234,4 +245,9 @@ func ErrQueryTxFailed(msg string) sdk.Error {
 func ErrNegativeMoveAmount(amount types.Coin) sdk.Error {
 	return types.NewError(
 		types.CodeNegativeMoveAmount, fmt.Sprintf("negative amount: %+v", amount))
+}
+
+// ErrPoolNotFound - error if pool is not found
+func ErrPoolNotFound(name types.PoolName) sdk.Error {
+       return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool not found: %s", name))
 }

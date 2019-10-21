@@ -1,0 +1,49 @@
+[
+  {
+    "prefix": "1",
+    "key": "\ufffd!N\ufffd\ufffd\ufffd֪'\ufffd\u001c\ufffd\ufffd\ufffd\ufffd\u000fS\ufffd\u0008\ufffd",
+    "val": {
+      "type": "lino/account/bank",
+      "value": {
+        "saving": {
+          "amount": "2345"
+        },
+        "frozen_money_list": [
+          {
+            "amount": {
+              "amount": "99"
+            },
+            "start_at": "123",
+            "times": "1",
+            "interval": "77"
+          }
+        ],
+        "public_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
+        },
+        "sequence": "456",
+        "username": "user2"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "\ufffd\ufffd\u0001phS\ufffdՖ\ufffd\ufffd\u0017\ufffd@\ufffd\\\ufffd\ufffd\ufffd\u0002",
+    "val": {
+      "type": "lino/account/bank",
+      "value": {
+        "saving": {
+          "amount": "1234"
+        },
+        "frozen_money_list": null,
+        "public_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aot3u5m7vuxUOszkS6IZW5XYVu6ATvZsfSQIjtQo9tML"
+        },
+        "sequence": "123",
+        "username": "user1"
+      }
+    }
+  }
+]

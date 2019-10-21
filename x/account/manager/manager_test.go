@@ -289,7 +289,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 		{
 			testName:   "minus saving coin from empty address",
 			address:    emptyAddress,
-			expectErr:  model.ErrAccountBankNotFound(),
+			expectErr:  acctypes.ErrAccountBankNotFound(emptyAddress),
 			amount:     coin1,
 			expectBank: nil,
 		},
@@ -723,7 +723,8 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			address:       sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
 			signKey:       txPrivKeys[0].PubKey(),
 			isPaid:        false,
-			expectErr:     model.ErrAccountBankNotFound(),
+			expectErr:     acctypes.ErrAccountBankNotFound(
+				sdk.AccAddress(txPrivKeys[0].PubKey().Address())),
 			expectAccBank: nil,
 		},
 		{
@@ -805,7 +806,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwner() {
 			signKey:      txPrivKeys[0].PubKey(),
 			permission:   types.PreAuthorizationPermission,
 			amount:       types.NewCoinFromInt64(1),
-			expectErr:    model.ErrAccountInfoNotFound(),
+			expectErr:    acctypes.ErrAccountNotFound(suite.unreg.Username),
 			expectSigner: "",
 		},
 		{
@@ -924,7 +925,7 @@ func TestRevokePermission(t *testing.T) {
 			revokeFrom:   userWithAppPermission,
 			permission:   types.AppPermission,
 			atWhen:       baseTime,
-			expectResult: model.ErrGrantPubKeyNotFound(),
+			expectResult: acctypes.ErrGrantPubKeyNotFound(),
 		},
 		{
 			testName:     "normal revoke preauth permission",
@@ -1221,7 +1222,7 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			username:         suite.unreg.Username,
 			newTxPubKey:      secp256k1.GenPrivKey().PubKey(),
 			newSigningPubKey: nil,
-			expectErr:        model.ErrAccountInfoNotFound(),
+			expectErr:        acctypes.ErrAccountNotFound(suite.unreg.Username),
 			oldAddr:          sdk.AccAddress(suite.unreg.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
 				Saving: suite.unregSaving,
