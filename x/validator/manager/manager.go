@@ -445,6 +445,9 @@ func (vm ValidatorManager) GetValidatorUpdates(ctx sdk.Context) ([]abci.Validato
 		})
 
 	}
+	ctx.Logger().Error(fmt.Sprintf("list: %+v", committingValidators))
+	ctx.Logger().Error(fmt.Sprintf("%+v", updates))
+	panic("stop")
 	return updates, nil
 }
 
