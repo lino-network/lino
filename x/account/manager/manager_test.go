@@ -719,11 +719,11 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 		expectAccBank *model.AccountBank
 	}{
 		{
-			testName:      "bank doesn't exist",
-			address:       sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
-			signKey:       txPrivKeys[0].PubKey(),
-			isPaid:        false,
-			expectErr:     acctypes.ErrAccountBankNotFound(
+			testName: "bank doesn't exist",
+			address:  sdk.AccAddress(txPrivKeys[0].PubKey().Address()),
+			signKey:  txPrivKeys[0].PubKey(),
+			isPaid:   false,
+			expectErr: acctypes.ErrAccountBankNotFound(
 				sdk.AccAddress(txPrivKeys[0].PubKey().Address())),
 			expectAccBank: nil,
 		},
