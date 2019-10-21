@@ -639,8 +639,10 @@ func (vm ValidatorManager) onStandbyVotesInc(ctx sdk.Context, username linotypes
 
 	// join the oncall validator list
 	lst := vm.GetValidatorList(ctx)
+	fmt.Printf("onStandbyVotesInc.lst.1: %+v\n", vm.GetValidatorList(ctx))
 	if me.ReceivedVotes.IsGT(lst.LowestOncallVotes) {
 		vm.removeValidatorFromStandbyList(ctx, username)
+		fmt.Printf("onStandbyVotesInc.lst.2: %+v\n", vm.GetValidatorList(ctx))
 		if err := vm.addValidatortToOncallList(ctx, username); err != nil {
 			return err
 		}
