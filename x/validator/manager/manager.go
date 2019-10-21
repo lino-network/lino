@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"runtime/debug"
 
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -1077,7 +1078,7 @@ func (vm ValidatorManager) SetValidatorList(ctx sdk.Context, lst *model.Validato
 	showed := make(map[linotypes.AccountKey]bool)
 	for _, oncall := range lst.Oncall {
 		if showed[oncall] == true {
-			panic("duplicated oncalls")
+			debug.PrintStack()
 		}
 		showed[oncall] = true
 	}
