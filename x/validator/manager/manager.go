@@ -1069,6 +1069,8 @@ func (vm ValidatorManager) GetAllValidators(ctx sdk.Context) []linotypes.Account
 
 func (vm ValidatorManager) GetCommittingValidators(ctx sdk.Context) []linotypes.AccountKey {
 	lst := vm.GetValidatorList(ctx)
+	fmt.Println("oncall", lst.Oncall)
+	fmt.Println("standby", lst.Standby)
 	return append(lst.Oncall, lst.Standby...)
 }
 
