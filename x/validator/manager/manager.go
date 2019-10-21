@@ -315,7 +315,8 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 	fmt.Printf("updates: %+v\n", updates)
 	lst := vm.storage.GetValidatorList(ctx)
 	fmt.Printf("validator lst: %+v\n", lst)
-	for _, update := range updates {
+	for i, update := range updates {
+		fmt.Printf("%d: %+v\n", i, update)
 		if update.Vote.IsZero() {
 			continue
 		}
@@ -332,6 +333,7 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 		if update.Vote.IsPositive() {
 			fmt.Printf("update.ValidatorName: %+v\n", update.ValidatorName)
 			fmt.Printf("lst.Oncall: %+v\n", lst.Oncall)
+			fmt.Printf("onStandbyVotesInc.lst.-2: %+v\n", vm.GetValidatorList(ctx))
 			if linotypes.FindAccountInList(update.ValidatorName, lst.Oncall) != -1 {
 				fmt.Println("FindAccountInList, lst.oncall")
 				if err := vm.onOncallVotesInc(ctx, update.ValidatorName); err != nil {
