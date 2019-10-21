@@ -338,6 +338,7 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 					return err
 				}
 			}
+			fmt.Printf("onStandbyVotesInc.lst.-1: %+v\n", vm.GetValidatorList(ctx))
 			if linotypes.FindAccountInList(update.ValidatorName, lst.Standby) != -1 {
 				fmt.Printf("onStandbyVotesInc.lst.0: %+v\n", vm.GetValidatorList(ctx))
 				if err := vm.onStandbyVotesInc(ctx, update.ValidatorName); err != nil {
