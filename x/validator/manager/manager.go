@@ -55,7 +55,7 @@ func (vm ValidatorManager) InitGenesis(ctx sdk.Context) {
 		LowestOncallVotes:  linotypes.NewCoinFromInt64(0),
 		LowestStandbyVotes: linotypes.NewCoinFromInt64(0),
 	}
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) OnBeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
@@ -843,25 +843,25 @@ func (vm ValidatorManager) removeValidatorFromAllLists(ctx sdk.Context, username
 func (vm ValidatorManager) removeValidatorFromOncallList(ctx sdk.Context, username linotypes.AccountKey) {
 	lst := vm.storage.GetValidatorList(ctx)
 	lst.Oncall = removeFromList(username, lst.Oncall)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) removeValidatorFromStandbyList(ctx sdk.Context, username linotypes.AccountKey) {
 	lst := vm.storage.GetValidatorList(ctx)
 	lst.Standby = removeFromList(username, lst.Standby)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) removeValidatorFromCandidateList(ctx sdk.Context, username linotypes.AccountKey) {
 	lst := vm.storage.GetValidatorList(ctx)
 	lst.Candidates = removeFromList(username, lst.Candidates)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) removeValidatorFromJailList(ctx sdk.Context, username linotypes.AccountKey) {
 	lst := vm.storage.GetValidatorList(ctx)
 	lst.Jail = removeFromList(username, lst.Jail)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 }
 
 func (vm ValidatorManager) addValidatortToOncallList(ctx sdk.Context, username linotypes.AccountKey) sdk.Error {
@@ -870,7 +870,7 @@ func (vm ValidatorManager) addValidatortToOncallList(ctx sdk.Context, username l
 	if err := vm.setOncallValidatorPower(ctx, username); err != nil {
 		return err
 	}
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
@@ -885,7 +885,7 @@ func (vm ValidatorManager) addValidatortToStandbyList(ctx sdk.Context, username 
 	// set oncall validator committing power equal to 1
 	me.ABCIValidator.Power = 1
 	vm.storage.SetValidator(ctx, username, me)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
@@ -900,7 +900,7 @@ func (vm ValidatorManager) addValidatortToCandidateList(ctx sdk.Context, usernam
 	// set oncall validator committing power equal to 0
 	me.ABCIValidator.Power = 0
 	vm.storage.SetValidator(ctx, username, me)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
@@ -917,7 +917,7 @@ func (vm ValidatorManager) addValidatortToJailList(ctx sdk.Context, username lin
 	me.AbsentCommit = 0
 	me.NumSlash = 0
 	vm.storage.SetValidator(ctx, username, me)
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
@@ -992,7 +992,7 @@ func (vm ValidatorManager) updateLowestOncall(ctx sdk.Context) sdk.Error {
 		lst.LowestOncall = newLowestValidator
 	}
 
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
@@ -1023,7 +1023,7 @@ func (vm ValidatorManager) updateLowestStandby(ctx sdk.Context) sdk.Error {
 		lst.LowestStandby = newLowestValidator
 	}
 
-	vm.storage.SetValidatorList(ctx, lst)
+	vm.SetValidatorList(ctx, lst)
 	return nil
 }
 
