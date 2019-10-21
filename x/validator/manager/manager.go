@@ -312,7 +312,9 @@ func (vm ValidatorManager) getElectionVoteListUpdates(ctx sdk.Context, username 
 }
 
 func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates []*model.ElectionVote) sdk.Error {
+	fmt.Printf("updates: %+v", updates)
 	lst := vm.storage.GetValidatorList(ctx)
+	fmt.Printf("validator lst: %+v", lst)
 	for _, update := range updates {
 		if update.Vote.IsZero() {
 			continue
@@ -328,6 +330,8 @@ func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates
 
 		// the corresponding validator's received votes increase
 		if update.Vote.IsPositive() {
+			fmt.Printf("update.ValidatorName: %+v", update.ValidatorName)
+			fmt.Printf("lst.Oncall: %+v", lst.Oncall)
 			if linotypes.FindAccountInList(update.ValidatorName, lst.Oncall) != -1 {
 				if err := vm.onOncallVotesInc(ctx, update.ValidatorName); err != nil {
 					return err
