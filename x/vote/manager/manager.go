@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"strconv"
 
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -443,12 +444,30 @@ func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		Version: exportVersion,
 	}
 	storeMap := vm.storage.StoreMap(ctx)
+
+	// export voters
 	storeMap[string(model.VoterSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		voter := val.(*model.Voter)
 		state.Voters = append(state.Voters, model.VoterIR(*voter))
 		return false
 	})
+
+	// export stakes
+	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		day, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		stakeStats := val.(*model.LinoStakeStat)
+		state.StakeStats = append(state.StakeStats, model.StakeStatDayIR{
+			Day:       day,
+			StakeStat: model.LinoStakeStatIR(*stakeStats),
+		})
+		return false
+	})
+
 	return utils.Save(filepath, cdc, state)
+
 }
 
 // Import storage state.
@@ -467,5 +486,12 @@ func (vm VoteManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 		voter := model.Voter(voterir)
 		vm.storage.SetVoter(ctx, &voter)
 	}
+
+	// import table.GlobalStakeStats
+	for _, v := range table.StakeStats {
+		stat := model.LinoStakeStat(v.StakeStat)
+		vm.storage.SetLinoStakeStat(ctx, v.Day, &stat)
+	}
+
 	return nil
 }

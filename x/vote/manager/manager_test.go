@@ -1,9 +1,13 @@
 package manager
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -958,7 +962,55 @@ func (suite *VoteManagerTestSuite) TestDailyAdvanceLinoStakeStats() {
 	suite.global.On("GetPastDay", mock.Anything, t.Unix()).Return(int64(8)).Once()
 	err = suite.vm.DailyAdvanceLinoStakeStats(suite.Ctx)
 	suite.Nil(err)
-	// should see 8 days of consumtions 100.
+	// should see 8 days of consumption 100.
+	suite.Golden()
+}
+
+func (suite *VoteManagerTestSuite) TestImportExport() {
+	// background data
+	suite.vm.storage.SetVoter(suite.Ctx, &model.Voter{
+		Username:          "voter1",
+		LinoStake:         *newCoin(1234),
+		LastPowerChangeAt: 123,
+		Interest:          *newCoin(2345),
+		Duty:              types.DutyValidator,
+		FrozenAmount:      *newCoin(999),
+	})
+	suite.vm.storage.SetVoter(suite.Ctx, &model.Voter{
+		Username:          "voter2",
+		LinoStake:         *newCoin(567),
+		LastPowerChangeAt: 3,
+		Interest:          *newCoin(0),
+		Duty:              types.DutyVoter,
+		FrozenAmount:      *newCoin(0),
+	})
+	suite.vm.storage.SetLinoStakeStat(suite.Ctx, 0, &model.LinoStakeStat{
+		TotalConsumptionFriction: *newCoin(123),
+		UnclaimedFriction:        *newCoin(456),
+		TotalLinoStake:           *newCoin(789),
+		UnclaimedLinoStake:       *newCoin(1230),
+	})
+	suite.vm.storage.SetLinoStakeStat(suite.Ctx, 1, &model.LinoStakeStat{
+		TotalConsumptionFriction: *newCoin(1123),
+		UnclaimedFriction:        *newCoin(1456),
+		TotalLinoStake:           *newCoin(1789),
+		UnclaimedLinoStake:       *newCoin(11230),
+	})
+
+	cdc := codec.New()
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	err2 = suite.vm.ExportToFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	// reset all state.
+	suite.SetupTest()
+	err2 = suite.vm.ImportFromFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
 	suite.Golden()
 }
 
