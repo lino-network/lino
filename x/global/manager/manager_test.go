@@ -1,11 +1,11 @@
 package manager
 
 import (
-	"testing"
-	"time"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"testing"
+	"time"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -244,11 +244,11 @@ func (suite *globalManagerTestSuite) TestImportExport() {
 	suite.NextBlock(time.Unix(init, 0))
 	suite.global.InitGenesis(suite.Ctx)
 
-	err := suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id:1})
+	err := suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id: 1})
 	suite.Nil(err)
-	err = suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id:2})
+	err = suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id: 2})
 	suite.Nil(err)
-	err = suite.global.RegisterEventAtTime(suite.Ctx, init+45, testEvent{Id:3})
+	err = suite.global.RegisterEventAtTime(suite.Ctx, init+45, testEvent{Id: 3})
 	suite.Nil(err)
 
 	cdc := testCodec()
