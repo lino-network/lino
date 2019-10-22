@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	exportVersion = 1
-	importVersion = 1
+	exportVersion = 2
+	importVersion = 2
 )
 
 type PostManager struct {
@@ -378,7 +378,7 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 	state := &model.PostTablesIR{
 		Version: exportVersion,
 	}
-	storeList := pm.postStorage.StoreMap(ctx)
+	storeList := pm.postStorage.PartialStoreMap(ctx)
 
 	// export posts
 	posts := make([]model.PostIR, 0)
@@ -389,6 +389,9 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		return false
 	})
 	state.Posts = posts
+
+	// consumption window
+	state.ConsumptionWindow = pm.postStorage.GetConsumptionWindow(ctx)
 
 	return utils.Save(filepath, cdc, state)
 }
@@ -417,5 +420,7 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 			IsDeleted: v.IsDeleted,
 		})
 	}
+
+	pm.postStorage.SetConsumptionWindow(ctx, table.ConsumptionWindow)
 	return nil
 }

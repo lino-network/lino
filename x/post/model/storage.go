@@ -96,7 +96,7 @@ func (ps PostStorage) SetConsumptionWindow(ctx sdk.Context, consumption linotype
 	store.Set(GetConsumptionWindowKey(), bz)
 }
 
-func (ps PostStorage) StoreMap(ctx sdk.Context) utils.StoreMap {
+func (ps PostStorage) PartialStoreMap(ctx sdk.Context) utils.StoreMap {
 	store := ctx.KVStore(ps.key)
 	stores := []utils.SubStore{
 		{

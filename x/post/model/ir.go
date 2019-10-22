@@ -18,6 +18,7 @@ type PostIR struct {
 
 // PostTablesIR - is the Post State.
 type PostTablesIR struct {
-	Version int      `json:"version"`
-	Posts   []PostIR `json:"posts"`
+	Version           int              `json:"version"`
+	Posts             []PostIR         `json:"posts"`
+	ConsumptionWindow types.MiniDollar `json:"consumption_window"`
 }
