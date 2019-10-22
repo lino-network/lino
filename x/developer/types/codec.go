@@ -9,8 +9,6 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(DeveloperRegisterMsg{}, "lino/devRegister", nil)
 	cdc.RegisterConcrete(DeveloperUpdateMsg{}, "lino/devUpdate", nil)
 	cdc.RegisterConcrete(DeveloperRevokeMsg{}, "lino/devRevoke", nil)
-	cdc.RegisterConcrete(GrantPermissionMsg{}, "lino/grantPermission", nil)
-	cdc.RegisterConcrete(RevokePermissionMsg{}, "lino/revokePermission", nil)
 	cdc.RegisterConcrete(IDAIssueMsg{}, "lino/IDAIssue", nil)
 	cdc.RegisterConcrete(IDAMintMsg{}, "lino/IDAMint", nil)
 	cdc.RegisterConcrete(IDATransferMsg{}, "lino/IDATransfer", nil)

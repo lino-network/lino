@@ -294,7 +294,7 @@ func TestMsgPermission(t *testing.T) {
 		"recover": {
 			msg: NewRecoverMsg(
 				"userA", secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
-			expectPermission: types.ResetPermission,
+			expectPermission: types.TransactionPermission,
 		},
 		"register msg": {
 			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
@@ -303,7 +303,7 @@ func TestMsgPermission(t *testing.T) {
 		},
 		"update msg": {
 			msg:              NewUpdateAccountMsg("user", "{'test':'test'}"),
-			expectPermission: types.AppPermission,
+			expectPermission: types.TransactionPermission,
 		},
 	}
 

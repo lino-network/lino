@@ -45,7 +45,7 @@ func (msg CreatePostMsg) GetSignBytes() []byte {
 // GetPermission - implements types.Msg
 func (msg CreatePostMsg) GetPermission() types.Permission {
 	if msg.Preauth {
-		return types.AppPermission
+		return types.TransactionPermission
 	}
 	if msg.CreatedBy == msg.Author {
 		return types.TransactionPermission
@@ -235,7 +235,7 @@ func (msg DonateMsg) ValidateBasic() sdk.Error {
 
 // GetPermission - implements types.Msg
 func (msg DonateMsg) GetPermission() types.Permission {
-	return types.PreAuthorizationPermission
+	return types.TransactionPermission
 }
 
 // GetSignBytes - implements sdk.Msg

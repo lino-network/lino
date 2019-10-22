@@ -28,10 +28,6 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 			return queryAccountBankByAddress(ctx, cdc, path[1:], req, am)
 		case types.QueryAccountMeta:
 			return queryAccountMeta(ctx, cdc, path[1:], req, am)
-		case types.QueryAccountGrantPubKeys:
-			return queryAccountGrantPubKeys(ctx, cdc, path[1:], req, am)
-		case types.QueryAccountAllGrantPubKeys:
-			return queryAccountAllGrantPubKeys(ctx, cdc, path[1:], req, am)
 		case types.QueryTxAndAccountSequence:
 			return queryTxAndSequenceNumber(ctx, cdc, path[1:], req, am)
 		default:
@@ -157,36 +153,6 @@ func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, r
 		}
 	}
 	res, marshalErr := cdc.MarshalJSON(txAndSeq)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 2); err != nil {
-		return nil, err
-	}
-	grantPubKeys, err := am.GetGrantPubKeys(ctx, linotypes.AccountKey(path[0]), linotypes.AccountKey(path[1]))
-	if err != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	res, marshalErr := cdc.MarshalJSON(grantPubKeys)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountAllGrantPubKeys(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	pubKeys, err := am.GetAllGrantPubKeys(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	res, marshalErr := cdc.MarshalJSON(pubKeys)
 	if marshalErr != nil {
 		return nil, types.ErrQueryFailed()
 	}

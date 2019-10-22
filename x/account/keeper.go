@@ -42,15 +42,9 @@ type AccountKeeper interface {
 	AddFrozenMoney(
 		ctx sdk.Context, username types.AccountKey, amount types.Coin, start, interval, times int64) sdk.Error
 	CheckSigningPubKeyOwner(
-		ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey,
-		permission types.Permission, amount types.Coin) (types.AccountKey, sdk.Error)
+		ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey) (types.AccountKey, sdk.Error)
 	CheckSigningPubKeyOwnerByAddress(
 		ctx sdk.Context, addr sdk.AccAddress, signkey crypto.PubKey, isPaid bool) sdk.Error
-	AuthorizePermission(
-		ctx sdk.Context, me types.AccountKey, grantTo types.AccountKey,
-		validityPeriod int64, grantLevel types.Permission, amount types.Coin) sdk.Error
-	RevokePermission(
-		ctx sdk.Context, me, grantTo types.AccountKey, permission types.Permission) sdk.Error
 	RecoverAccount(
 		ctx sdk.Context, username types.AccountKey, newTransactionPubKey, newSigningKey crypto.PubKey) sdk.Error
 
@@ -59,8 +53,6 @@ type AccountKeeper interface {
 	GetBank(ctx sdk.Context, username types.AccountKey) (*model.AccountBank, sdk.Error)
 	GetBankByAddress(ctx sdk.Context, addr sdk.AccAddress) (*model.AccountBank, sdk.Error)
 	GetMeta(ctx sdk.Context, username types.AccountKey) (*model.AccountMeta, sdk.Error)
-	GetGrantPubKeys(ctx sdk.Context, username, grantTo types.AccountKey) ([]*model.GrantPermission, sdk.Error)
-	GetAllGrantPubKeys(ctx sdk.Context, username types.AccountKey) ([]*model.GrantPermission, sdk.Error)
 
 	// import export
 	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error

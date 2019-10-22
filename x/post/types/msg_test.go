@@ -247,7 +247,7 @@ func (suite *PostMsgTestSuite) TestCreatePostMsgPermission() {
 				CreatedBy: app,
 				Preauth:   true,
 			},
-			expected: types.AppPermission,
+			expected: types.TransactionPermission,
 		},
 	}
 	for _, tc := range testCases {
@@ -687,31 +687,31 @@ func (suite *PostMsgTestSuite) TestIDADonateMsgValidateBasic() {
 // 				},
 // 				RedistributionSplitRate: "0.5",
 // 			},
-// 			expectedPermission: types.AppPermission,
+// 			expectedPermission: types.TransactionPermission,
 // 		},
 // 		{
 // 			testName: "view post",
 // 			msg: NewViewMsg(
 // 				"test", "author", "postID"),
-// 			expectedPermission: types.AppPermission,
+// 			expectedPermission: types.TransactionPermission,
 // 		},
 // 		{
 // 			testName: "report post",
 // 			msg: NewReportOrUpvoteMsg(
 // 				"test", "author", "postID", true),
-// 			expectedPermission: types.AppPermission,
+// 			expectedPermission: types.TransactionPermission,
 // 		},
 // 		{
 // 			testName: "upvote post",
 // 			msg: NewReportOrUpvoteMsg(
 // 				"test", "author", "postID", false),
-// 			expectedPermission: types.AppPermission,
+// 			expectedPermission: types.TransactionPermission,
 // 		},
 // 		{
 // 			testName: "update post",
 // 			msg: NewUpdatePostMsg(
 // 				"author", "postID", "title", "content", []types.IDToURLMapping{}),
-// 			expectedPermission: types.AppPermission,
+// 			expectedPermission: types.TransactionPermission,
 // 		},
 // 	}
 
