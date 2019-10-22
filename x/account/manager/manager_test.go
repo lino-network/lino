@@ -2,6 +2,9 @@ package manager
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -1777,6 +1780,46 @@ func (suite *AccountManagerTestSuite) checkBankKVByUsername(testName string, use
 	info, err := suite.am.storage.GetInfo(suite.Ctx, username)
 	suite.Nil(err, "%s, failed to get info, got err %v", testName, err)
 	suite.checkBankKVByAddress(testName, info.Address, bank)
+}
+
+func (suite *AccountManagerTestSuite) TestImportExport() {
+	// background data
+	suite.NextBlock(time.Unix(123, 0))
+	am := suite.am
+	ctx := suite.Ctx
+	total := linotypes.NewCoinFromInt64(2000000)
+	am.InitGenesis(ctx, total, []model.Pool{
+		{
+			Name:    linotypes.InflationValidatorPool,
+			Balance: linotypes.NewCoinFromInt64(123),
+		},
+		{
+			Name:    linotypes.AccountVestingPool,
+			Balance: linotypes.NewCoinFromInt64(1000000),
+		},
+	})
+	err := am.UpdateJSONMeta(ctx, suite.userWithoutBalance.Username, `{"key":"value"}`)
+	suite.Nil(err)
+
+	cdc := wire.New()
+	wire.RegisterCrypto(cdc)
+
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	err2 = suite.am.ExportToFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	// reset state
+	suite.SetupCtx(0, time.Unix(0, 0), kvStoreKey)
+	suite.ph = &param.ParamKeeper{}
+	suite.am = NewAccountManager(kvStoreKey, suite.ph)
+	err2 = suite.am.ImportFromFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	suite.Golden()
 }
 
 // cdc := wire.New()

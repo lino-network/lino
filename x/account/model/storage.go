@@ -204,12 +204,6 @@ func (as AccountStorage) PartialStoreMap(ctx sdk.Context) utils.StoreMap {
 		},
 		{
 			Store:      store,
-			Prefix:     AccountGrantPubKeySubstore,
-			ValCreator: func() interface{} { return new([]*GrantPermission) },
-			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,
-		},
-		{
-			Store:      store,
 			Prefix:     AccountPoolSubstore,
 			ValCreator: func() interface{} { return new(Pool) },
 			Decoder:    as.cdc.MustUnmarshalBinaryLengthPrefixed,

@@ -22,8 +22,8 @@ const (
 	// HoursPerYear - as defined by a julian year of 365.25 days
 	nHourOfOneYear = 8766
 
-	exportVersion = 1
-	importVersion = 1
+	exportVersion = 2
+	importVersion = 2
 )
 
 // AccountManager - account manager
@@ -721,11 +721,11 @@ func (accManager AccountManager) GetSupply(ctx sdk.Context) model.Supply {
 }
 
 // ExportToFile -
-func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (am AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.AccountTablesIR{
 		Version: exportVersion,
 	}
-	substores := accManager.storage.PartialStoreMap(ctx)
+	substores := am.storage.PartialStoreMap(ctx)
 
 	// export accounts
 	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
@@ -764,33 +764,21 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 		return false
 	})
 
-	// export grants
-	substores[string(model.AccountGrantPubKeySubstore)].Iterate(
-		func(key []byte, val interface{}) bool {
-			grants := val.(*([]*model.GrantPermission))
-			acc, grantTo := model.ParseGrantKey(key)
-			permissions := make([]model.PermissionIR, 0)
-			for _, grant := range *grants {
-				permissions = append(permissions, model.PermissionIR{
-					Permission: grant.Permission,
-					CreatedAt:  grant.CreatedAt,
-					ExpiresAt:  grant.ExpiresAt,
-					Amount:     grant.Amount,
-				})
-			}
-			state.Grants = append(state.Grants, model.GrantPermissionIR{
-				Username:    acc,
-				GrantTo:     grantTo,
-				Permissions: permissions,
-			})
-			return false
-		})
+	// pools
+	substores[string(model.AccountPoolSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		pool := val.(*model.Pool)
+		state.Pools = append(state.Pools, model.PoolIR(*pool))
+		return false
+	})
+
+	// supply
+	state.Supply = model.SupplyIR(*am.storage.GetSupply(ctx))
 
 	return utils.Save(filepath, cdc, state)
 }
 
 // ImportFromFile import state from file.
-func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (am AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.AccountTablesIR{} })
 	if err != nil {
 		return err
@@ -806,8 +794,8 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 	// import accounts.
 	for _, v := range table.Accounts {
 		info := model.AccountInfo(v)
-		if _, err := accManager.storage.GetInfo(ctx, v.Username); err != nil {
-			accManager.storage.SetInfo(ctx, &info)
+		if _, err := am.storage.GetInfo(ctx, v.Username); err != nil {
+			am.storage.SetInfo(ctx, &info)
 			if banks[string(v.Address)] != 0 {
 				panic(fmt.Errorf("used address: %s", v.Address))
 			}
@@ -834,22 +822,23 @@ func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Code
 			panic(fmt.Errorf("duplicated address: %+v", v))
 		}
 		banks[string(v.Address)] = 2
-		accManager.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)
+		am.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)
 	}
 
-	// import grant permissions.
-	for _, v := range table.Grants {
-		perms := make([]*model.GrantPermission, 0)
-		for _, p := range v.Permissions {
-			perms = append(perms, &model.GrantPermission{
-				GrantTo:    v.GrantTo,
-				Permission: p.Permission,
-				CreatedAt:  p.CreatedAt,
-				ExpiresAt:  p.ExpiresAt,
-				Amount:     p.Amount,
-			})
-		}
-		accManager.storage.SetGrantPermissions(ctx, v.Username, v.GrantTo, perms)
+	// import meta
+	for _, meta := range table.Metas {
+		am.storage.SetMeta(ctx, meta.Username, &model.AccountMeta{
+			JSONMeta: meta.JSONMeta,
+		})
 	}
+
+	// import pools
+	for _, poolir := range table.Pools {
+		am.storage.SetPool(ctx, (*model.Pool)(&poolir))
+	}
+
+	// import supply
+	am.storage.SetSupply(ctx, (*model.Supply)(&table.Supply))
+
 	return nil
 }
