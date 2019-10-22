@@ -743,11 +743,10 @@ func (suite *VoteManagerTestSuite) TestAssignDuty() {
 
 func (suite *VoteManagerTestSuite) TestUnassignDuty() {
 	testCases := []struct {
-		testName          string
-		username          linotypes.AccountKey
-		expectErr         sdk.Error
-		testDoubleUnassin bool
-		expectVoter       *model.Voter
+		testName    string
+		username    linotypes.AccountKey
+		expectErr   sdk.Error
+		expectVoter *model.Voter
 	}{
 		{
 			testName:  "unassign duty from user without stake",

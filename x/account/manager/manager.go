@@ -149,16 +149,6 @@ func (am AccountManager) MoveBetweenPools(ctx sdk.Context, from, to linotypes.Po
 	return nil
 }
 
-func (am AccountManager) mintToPool(ctx sdk.Context, poolName linotypes.PoolName, amount linotypes.Coin) sdk.Error {
-	pool, err := am.storage.GetPool(ctx, poolName)
-	if err != nil {
-		return err
-	}
-	pool.Balance = pool.Balance.Plus(amount)
-	am.storage.SetPool(ctx, pool)
-	return nil
-}
-
 // Mint - distribute the inflation to pools hourly.
 func (am AccountManager) Mint(ctx sdk.Context) sdk.Error {
 	supply := am.storage.GetSupply(ctx)
@@ -214,6 +204,16 @@ func (am AccountManager) hourlyMintOn(ctx sdk.Context, supply *model.Supply) sdk
 		return err
 	}
 	supply.Total = supply.Total.Plus(minted)
+	return nil
+}
+
+func (am AccountManager) mintToPool(ctx sdk.Context, poolName linotypes.PoolName, amount linotypes.Coin) sdk.Error {
+	pool, err := am.storage.GetPool(ctx, poolName)
+	if err != nil {
+		return err
+	}
+	pool.Balance = pool.Balance.Plus(amount)
+	am.storage.SetPool(ctx, pool)
 	return nil
 }
 

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"strconv"
 
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,7 +10,7 @@ import (
 	"github.com/lino-network/lino/param"
 	linotypes "github.com/lino-network/lino/types"
 
-	// "github.com/lino-network/lino/utils"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/x/global/types"
 )
@@ -192,26 +193,26 @@ func (gm GlobalManager) GetGlobalTime(ctx sdk.Context) model.GlobalTime {
 }
 
 func (gm GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
-	return nil
-	// state := &model.GlobalTablesIR{
-	// 	Version: exportVersion,
-	// }
-	// storeMap := gm.storage.PartialStoreMap(ctx)
+	state := &model.GlobalTablesIR{
+		Version: exportVersion,
+	}
+	storeMap := gm.storage.PartialStoreMap(ctx)
 
-	// // export events
-	// storeMap[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
-	// 	ts, err := strconv.ParseInt(string(key), 10, 64)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	events := val.(*types.TimeEventList)
-	// 	state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
-	// 		UnixTime:      ts,
-	// 		TimeEventList: *events,
-	// 	})
-	// 	return false
-	// })
+	// export events
+	storeMap[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		ts, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		events := val.(*linotypes.TimeEventList)
+		state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
+			UnixTime:      ts,
+			TimeEventList: *events,
+		})
+		return false
+	})
 
+	panic("unimplemented")
 	// // export stakes
 	// storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
 	// 	day, err := strconv.ParseInt(string(key), 10, 64)
@@ -263,17 +264,17 @@ func (gm GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath
 }
 
 func (gm GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
-	return nil
-	// rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
-	// if err != nil {
-	// 	return err
-	// }
-	// table := rst.(*model.GlobalTablesIR)
+	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
+	if err != nil {
+		return err
+	}
+	table := rst.(*model.GlobalTablesIR)
 
-	// if table.Version != importVersion {
-	// 	return fmt.Errorf("unsupported import version: %d", table.Version)
-	// }
+	if table.Version != importVersion {
+		return fmt.Errorf("unsupported import version: %d", table.Version)
+	}
 
+	panic("unimplemented")
 	// // import events
 	// for _, v := range table.GlobalTimeEventLists {
 	// 	err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)

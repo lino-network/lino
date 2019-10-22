@@ -249,5 +249,5 @@ func ErrNegativeMoveAmount(amount types.Coin) sdk.Error {
 
 // ErrPoolNotFound - error if pool is not found
 func ErrPoolNotFound(name types.PoolName) sdk.Error {
-       return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool not found: %s", name))
+	return types.NewError(types.CodePoolNotFound, fmt.Sprintf("pool not found: %s", name))
 }

@@ -5,25 +5,38 @@ import (
 	"testing"
 	"time"
 
-	parammodel "github.com/lino-network/lino/param"
-	param "github.com/lino-network/lino/param/mocks"
-	"github.com/lino-network/lino/testsuites"
-	"github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/account/model"
-	acctypes "github.com/lino-network/lino/x/account/types"
-
+	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	parammodel "github.com/lino-network/lino/param"
+	param "github.com/lino-network/lino/param/mocks"
+	"github.com/lino-network/lino/testsuites"
+	"github.com/lino-network/lino/testutils"
+	"github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/account/model"
+	acctypes "github.com/lino-network/lino/x/account/types"
 )
 
+var (
+	storeKeyStr = "testAccountStore"
+	kvStoreKey  = sdk.NewKVStoreKey(storeKeyStr)
+)
+
+type AccountStoreDumper struct{}
+
+func (dumper AccountStoreDumper) NewDumper() *testutils.Dumper {
+	return model.NewAccountDumper(model.NewAccountStorage(kvStoreKey))
+}
+
 type AccountManagerTestSuite struct {
-	testsuites.CtxTestSuite
+	testsuites.GoldenTestSuite
 	am AccountManager
 	ph *param.ParamKeeper
 
@@ -40,34 +53,35 @@ type AccountManagerTestSuite struct {
 }
 
 func TestAccountManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(AccountManagerTestSuite))
+	suite.Run(t, &AccountManagerTestSuite{
+		GoldenTestSuite: testsuites.NewGoldenTestSuite(AccountStoreDumper{}, kvStoreKey),
+	})
 }
 
 func (suite *AccountManagerTestSuite) SetupTest() {
-	testAccountKey := sdk.NewKVStoreKey("account")
-	suite.SetupCtx(0, time.Unix(0, 0), testAccountKey)
+	suite.SetupCtx(0, time.Unix(0, 0), kvStoreKey)
 	suite.ph = &param.ParamKeeper{}
-	suite.am = NewAccountManager(testAccountKey, suite.ph)
+	suite.am = NewAccountManager(kvStoreKey, suite.ph)
 
 	// background
 	suite.userWithoutBalance = model.AccountInfo{
 		Username:       types.AccountKey("userwithoutbalance"),
-		SigningKey:     secp256k1.GenPrivKey().PubKey(),
-		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     sampleKeys()[0],
+		TransactionKey: sampleKeys()[1],
 	}
 	suite.userWithoutBalance.Address = sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address())
 
 	suite.userWithBalance = model.AccountInfo{
 		Username:       types.AccountKey("userwithbalance"),
-		SigningKey:     secp256k1.GenPrivKey().PubKey(),
-		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     sampleKeys()[2],
+		TransactionKey: sampleKeys()[3],
 	}
 	suite.userWithBalance.Address = sdk.AccAddress(suite.userWithBalance.TransactionKey.Address())
 
 	suite.unreg = model.AccountInfo{
 		Username:       types.AccountKey("unreg"),
-		SigningKey:     secp256k1.GenPrivKey().PubKey(),
-		TransactionKey: secp256k1.GenPrivKey().PubKey(),
+		SigningKey:     sampleKeys()[4],
+		TransactionKey: sampleKeys()[5],
 	}
 	suite.unreg.Address = sdk.AccAddress(suite.unreg.TransactionKey.Address())
 
@@ -90,32 +104,445 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 		MinimumBalance:    types.NewCoinFromInt64(0),
 		MaxNumFrozenMoney: 10,
 	}, nil).Maybe()
+}
 
-	// // reg accounts
-	// for _, v := range []types.AccountKey{suite.user1, suite.user2, suite.app1, suite.app2, suite.app3} {
-	// 	suite.am.On("DoesAccountExist", mock.Anything, v).Return(true).Maybe()
-	// }
-	// // unreg accounts
-	// for _, v := range []types.AccountKey{suite.unreg} {
-	// 	suite.am.On("DoesAccountExist", mock.Anything, v).Return(false).Maybe()
-	// }
+func (suite *AccountManagerTestSuite) TestInitGenesis() {
+	suite.NextBlock(time.Unix(123, 0))
+	am := suite.am
+	ctx := suite.Ctx
 
-	// // reg dev
-	// for _, v := range []types.AccountKey{suite.app1, suite.app2, suite.app3} {
-	// 	suite.dev.On("DoesDeveloperExist", mock.Anything, v).Return(true).Maybe()
-	// }
-	// // unreg devs
-	// for _, v := range []types.AccountKey{suite.unreg, suite.user1, suite.user2} {
-	// 	suite.dev.On("DoesDeveloperExist", mock.Anything, v).Return(false).Maybe()
-	// }
+	total := linotypes.NewCoinFromInt64(2000000)
 
-	// rate, err := sdk.NewDecFromStr("0.099")
-	// suite.Require().Nil(err)
-	// suite.global.On("GetConsumptionFrictionRate", mock.Anything).Return(rate, nil).Maybe()
-	// suite.rate = rate
-	// // app1, app2 has issued IDA
-	// suite.dev.On("GetIDAPrice", suite.Ctx, suite.app1).Return(types.NewMiniDollar(10),nil)
-	// suite.dev.On("GetIDAPrice", suite.Ctx, suite.app2).Return(types.NewMiniDollar(7),nil)
+	am.InitGenesis(ctx, total, []model.Pool{
+		{
+			Name:    linotypes.InflationValidatorPool,
+			Balance: linotypes.NewCoinFromInt64(123),
+		},
+		{
+			Name:    linotypes.AccountVestingPool,
+			Balance: linotypes.NewCoinFromInt64(1000000),
+		},
+	})
+
+	supply := am.GetSupply(ctx)
+	suite.Equal(model.Supply{
+		LastYearTotal:     total,
+		Total:             total,
+		ChainStartTime:    ctx.BlockTime().Unix(),
+		LastInflationTime: ctx.BlockTime().Unix(),
+	}, supply)
+
+	pool1, err := am.GetPool(ctx, linotypes.InflationValidatorPool)
+	suite.Nil(err)
+	suite.Equal(linotypes.NewCoinFromInt64(123), pool1)
+
+	pool2, err := am.GetPool(ctx, linotypes.AccountVestingPool)
+	suite.Nil(err)
+	suite.Equal(linotypes.NewCoinFromInt64(1000000), pool2)
+
+	_, err = am.GetPool(ctx, "not-a-pool")
+	suite.NotNil(err)
+
+	suite.Panics(func() {
+		am.InitGenesis(ctx, total, nil)
+	})
+
+	suite.Golden()
+}
+
+func (suite *AccountManagerTestSuite) TestMoveFromPools() {
+	initBackground := func() {
+		suite.NextBlock(time.Unix(123, 0))
+		am := suite.am
+		ctx := suite.Ctx
+
+		total := linotypes.NewCoinFromInt64(2000000)
+
+		am.InitGenesis(ctx, total, []model.Pool{
+			{
+				Name:    linotypes.InflationValidatorPool,
+				Balance: linotypes.NewCoinFromInt64(123),
+			},
+			{
+				Name:    linotypes.AccountVestingPool,
+				Balance: linotypes.NewCoinFromInt64(1000000),
+			},
+		})
+	}
+	cases := []struct {
+		name             string
+		pool             linotypes.PoolName
+		to               linotypes.AccOrAddr
+		amount           linotypes.Coin
+		expectedErr      sdk.Error
+		expectedBalance  linotypes.Coin
+		expectedPoolLeft linotypes.Coin
+	}{
+		{
+			name:        "move negative amount",
+			pool:        linotypes.AccountVestingPool,
+			to:          linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithoutbalance")),
+			amount:      linotypes.NewCoinFromInt64(-1),
+			expectedErr: acctypes.ErrNegativeMoveAmount(linotypes.NewCoinFromInt64(-1)),
+		},
+		{
+			name:        "pool not enough",
+			pool:        linotypes.InflationValidatorPool,
+			to:          linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithoutbalance")),
+			amount:      linotypes.NewCoinFromInt64(124),
+			expectedErr: acctypes.ErrPoolNotEnough(linotypes.InflationValidatorPool),
+		},
+		{
+			name:        "pool not exists",
+			pool:        "poolnotexists",
+			to:          linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithoutbalance")),
+			amount:      linotypes.NewCoinFromInt64(124),
+			expectedErr: acctypes.ErrPoolNotFound("poolnotexists"),
+		},
+		{
+			name:             "succ move to account",
+			pool:             linotypes.InflationValidatorPool,
+			to:               linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithoutbalance")),
+			amount:           linotypes.NewCoinFromInt64(100),
+			expectedBalance:  linotypes.NewCoinFromInt64(100),
+			expectedPoolLeft: linotypes.NewCoinFromInt64(23),
+		},
+		{
+			name:             "succ move to addr",
+			pool:             linotypes.AccountVestingPool,
+			to:               linotypes.NewAccOrAddrFromAddr(suite.userWithoutBalance.Address),
+			amount:           linotypes.NewCoinFromInt64(1000000),
+			expectedBalance:  linotypes.NewCoinFromInt64(1000000),
+			expectedPoolLeft: linotypes.NewCoinFromInt64(0),
+		},
+	}
+
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			initBackground()
+			err := suite.am.MoveFromPool(suite.Ctx, tc.pool, tc.to, tc.amount)
+			suite.Equal(tc.expectedErr, err)
+			if tc.expectedErr == nil {
+				if tc.to.IsAddr {
+					bank, err := suite.am.GetBankByAddress(suite.Ctx, tc.to.Addr)
+					suite.Nil(err)
+					suite.Equal(tc.expectedBalance, bank.Saving)
+				} else {
+					bank, err := suite.am.GetBank(suite.Ctx, tc.to.AccountKey)
+					suite.Nil(err)
+					suite.Equal(tc.expectedBalance, bank.Saving)
+				}
+				pool, err := suite.am.GetPool(suite.Ctx, tc.pool)
+				suite.Nil(err)
+				suite.Equal(tc.expectedPoolLeft, pool)
+			}
+			suite.Golden()
+		})
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestMoveToPools() {
+	initBackground := func() {
+		suite.NextBlock(time.Unix(123, 0))
+		am := suite.am
+		ctx := suite.Ctx
+
+		total := linotypes.NewCoinFromInt64(2000000)
+
+		am.InitGenesis(ctx, total, []model.Pool{
+			{
+				Name:    linotypes.InflationValidatorPool,
+				Balance: linotypes.NewCoinFromInt64(123),
+			},
+			{
+				Name:    linotypes.AccountVestingPool,
+				Balance: linotypes.NewCoinFromInt64(1000000),
+			},
+		})
+	}
+	cases := []struct {
+		name             string
+		pool             linotypes.PoolName
+		from             linotypes.AccOrAddr
+		amount           linotypes.Coin
+		expectedErr      sdk.Error
+		expectedBalance  linotypes.Coin
+		expectedPoolLeft linotypes.Coin
+	}{
+		{
+			name:        "move negative amount",
+			pool:        linotypes.AccountVestingPool,
+			from:        linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithbalance")),
+			amount:      linotypes.NewCoinFromInt64(-1),
+			expectedErr: acctypes.ErrNegativeMoveAmount(linotypes.NewCoinFromInt64(-1)),
+		},
+		{
+			name:        "balance not enough",
+			pool:        linotypes.InflationValidatorPool,
+			from:        linotypes.NewAccOrAddrFromAcc(suite.userWithBalance.Username),
+			amount:      suite.userWithBalanceSaving.Plus(linotypes.NewCoinFromInt64(1)),
+			expectedErr: acctypes.ErrAccountSavingCoinNotEnough(),
+		},
+		{
+			name:        "pool not exists",
+			pool:        "poolnotexists",
+			from:        linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithbalance")),
+			amount:      linotypes.NewCoinFromInt64(1),
+			expectedErr: acctypes.ErrPoolNotFound("poolnotexists"),
+		},
+		{
+			name:             "succ move from account",
+			pool:             linotypes.InflationValidatorPool,
+			from:             linotypes.NewAccOrAddrFromAcc(types.AccountKey("userwithbalance")),
+			amount:           suite.userWithBalanceSaving,
+			expectedBalance:  linotypes.NewCoinFromInt64(0),
+			expectedPoolLeft: suite.userWithBalanceSaving.Plus(linotypes.NewCoinFromInt64(123)),
+		},
+		{
+			name:             "succ move from addr",
+			pool:             linotypes.AccountVestingPool,
+			from:             linotypes.NewAccOrAddrFromAddr(suite.userWithBalance.Address),
+			amount:           suite.userWithBalanceSaving.Minus(linotypes.NewCoinFromInt64(1)),
+			expectedBalance:  linotypes.NewCoinFromInt64(1),
+			expectedPoolLeft: linotypes.NewCoinFromInt64(1000000).Plus(suite.userWithBalanceSaving.Minus(linotypes.NewCoinFromInt64(1))),
+		},
+	}
+
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			initBackground()
+			err := suite.am.MoveToPool(suite.Ctx, tc.pool, tc.from, tc.amount)
+			suite.Equal(tc.expectedErr, err)
+			if tc.expectedErr == nil {
+				if tc.from.IsAddr {
+					bank, err := suite.am.GetBankByAddress(suite.Ctx, tc.from.Addr)
+					suite.Nil(err)
+					suite.Equal(tc.expectedBalance, bank.Saving)
+				} else {
+					bank, err := suite.am.GetBank(suite.Ctx, tc.from.AccountKey)
+					suite.Nil(err)
+					suite.Equal(tc.expectedBalance, bank.Saving)
+				}
+				pool, err := suite.am.GetPool(suite.Ctx, tc.pool)
+				suite.Nil(err)
+				suite.Equal(tc.expectedPoolLeft, pool)
+			}
+			suite.Golden()
+		})
+	}
+}
+
+func (suite *AccountManagerTestSuite) TestBetweenPools() {
+	initBackground := func() {
+		suite.NextBlock(time.Unix(123, 0))
+		am := suite.am
+		ctx := suite.Ctx
+
+		total := linotypes.NewCoinFromInt64(2000000)
+
+		am.InitGenesis(ctx, total, []model.Pool{
+			{
+				Name:    linotypes.InflationValidatorPool,
+				Balance: linotypes.NewCoinFromInt64(123),
+			},
+			{
+				Name:    linotypes.AccountVestingPool,
+				Balance: linotypes.NewCoinFromInt64(1000000),
+			},
+		})
+	}
+	cases := []struct {
+		name         string
+		from         linotypes.PoolName
+		to           linotypes.PoolName
+		amount       linotypes.Coin
+		expectedErr  sdk.Error
+		expectedFrom linotypes.Coin
+		expectedTo   linotypes.Coin
+	}{
+		{
+			name:        "move negative amount",
+			from:        linotypes.AccountVestingPool,
+			to:          linotypes.AccountVestingPool,
+			amount:      linotypes.NewCoinFromInt64(-1),
+			expectedErr: acctypes.ErrNegativeMoveAmount(linotypes.NewCoinFromInt64(-1)),
+		},
+		{
+			name:        "from pool not exists",
+			from:        "poolnotexists",
+			to:          linotypes.AccountVestingPool,
+			amount:      linotypes.NewCoinFromInt64(1),
+			expectedErr: acctypes.ErrPoolNotFound("poolnotexists"),
+		},
+		{
+			name:        "to pool not exists",
+			from:        linotypes.AccountVestingPool,
+			to:          "poolnotexists",
+			amount:      linotypes.NewCoinFromInt64(1),
+			expectedErr: acctypes.ErrPoolNotFound("poolnotexists"),
+		},
+		{
+			name:        "balance not enough",
+			from:        linotypes.InflationValidatorPool,
+			to:          linotypes.AccountVestingPool,
+			amount:      linotypes.NewCoinFromInt64(124),
+			expectedErr: acctypes.ErrPoolNotEnough(linotypes.InflationValidatorPool),
+		},
+		{
+			name:         "succ",
+			from:         linotypes.InflationValidatorPool,
+			to:           linotypes.AccountVestingPool,
+			amount:       linotypes.NewCoinFromInt64(1),
+			expectedFrom: linotypes.NewCoinFromInt64(122),
+			expectedTo:   linotypes.NewCoinFromInt64(1000001),
+		},
+	}
+
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			initBackground()
+			err := suite.am.MoveBetweenPools(suite.Ctx, tc.from, tc.to, tc.amount)
+			suite.Equal(tc.expectedErr, err)
+			if tc.expectedErr == nil {
+				poolFrom, _ := suite.am.GetPool(suite.Ctx, tc.from)
+				suite.Equal(tc.expectedFrom, poolFrom)
+				poolTo, _ := suite.am.GetPool(suite.Ctx, tc.to)
+				suite.Equal(tc.expectedTo, poolTo)
+			}
+			suite.Golden()
+		})
+	}
+}
+
+// test mint schedule
+func (suite *AccountManagerTestSuite) TestMint() {
+	// Genesis
+	init := int64(123)
+	suite.NextBlock(time.Unix(init, 0))
+	am := suite.am
+
+	total := linotypes.MustLinoToCoin("10000000000")
+	am.InitGenesis(suite.Ctx, total, []model.Pool{
+		{
+			Name:    linotypes.InflationValidatorPool,
+			Balance: linotypes.NewCoinFromInt64(0),
+		},
+		{
+			Name:    linotypes.InflationDeveloperPool,
+			Balance: linotypes.NewCoinFromInt64(0),
+		},
+		{
+			Name:    linotypes.InflationConsumptionPool,
+			Balance: linotypes.NewCoinFromInt64(0),
+		},
+		{
+			Name:    linotypes.AccountVestingPool,
+			Balance: total,
+		},
+	})
+
+	// param
+	rate := sdk.MustNewDecFromStr("0.065")
+	cc := sdk.MustNewDecFromStr("0.10")
+	dev := sdk.MustNewDecFromStr("0.75")
+	val := sdk.MustNewDecFromStr("0.15")
+	suite.ph.On("GetGlobalAllocationParam", mock.Anything).Return(
+		&parammodel.GlobalAllocationParam{
+			GlobalGrowthRate:         rate,
+			ContentCreatorAllocation: cc,
+			DeveloperAllocation:      dev,
+			ValidatorAllocation:      val,
+		})
+
+	computeHourly := func(total linotypes.Coin, growth sdk.Dec) (linotypes.Coin, linotypes.Coin, linotypes.Coin) {
+		amount := linotypes.DecToCoin(total.ToDec().Mul(growth).Mul(
+			linotypes.NewDecFromRat(1, nHourOfOneYear)))
+		ccAmount := linotypes.DecToCoin(amount.ToDec().Mul(cc))
+		valAmount := linotypes.DecToCoin(amount.ToDec().Mul(val))
+		devAmount := amount.Minus(ccAmount).Minus(valAmount)
+		return ccAmount, valAmount, devAmount
+	}
+
+	getPools := func(ctx sdk.Context) (linotypes.Coin, linotypes.Coin, linotypes.Coin) {
+		cpool, _ := suite.am.GetPool(ctx, linotypes.InflationConsumptionPool)
+		vpool, _ := suite.am.GetPool(ctx, linotypes.InflationValidatorPool)
+		dpool, _ := suite.am.GetPool(ctx, linotypes.InflationDeveloperPool)
+		return cpool, vpool, dpool
+	}
+
+	checkPool := func(ctx sdk.Context, cc, val, dev linotypes.Coin) {
+		cpool, vpool, dpool := getPools(ctx)
+		suite.Equal(cc, cpool)
+		suite.Equal(val, vpool)
+		suite.Equal(dev, dpool)
+	}
+
+	// test first hour
+	firstYearOneHourCC := linotypes.MustLinoToCoin("7415.01255")
+	firstYearOneHourVal := linotypes.MustLinoToCoin("11122.51882")
+	firstYearOneHourDev := linotypes.MustLinoToCoin("55612.59411")
+	base := total
+	t := init + nSecOfOneHour
+	suite.NextBlock(time.Unix(t, 0))
+	err := am.Mint(suite.Ctx)
+	suite.Nil(err)
+	checkPool(suite.Ctx, firstYearOneHourCC, firstYearOneHourVal, firstYearOneHourDev)
+
+	// same time again, won't mint
+	err = am.Mint(suite.Ctx)
+	suite.Nil(err)
+	checkPool(suite.Ctx, firstYearOneHourCC, firstYearOneHourVal, firstYearOneHourDev)
+
+	// test first 50 hours
+	for ; t <= init+50*nSecOfOneHour; t += 5 {
+		suite.NextBlock(time.Unix(t, 0))
+		err := am.Mint(suite.Ctx)
+		suite.Nil(err)
+		if (t-init)%nSecOfOneHour == 0 {
+			n := (t - init) / nSecOfOneHour
+			checkPool(suite.Ctx,
+				linotypes.DecToCoin(firstYearOneHourCC.ToDec().Mul(sdk.NewDec(n))),
+				linotypes.DecToCoin(firstYearOneHourVal.ToDec().Mul(sdk.NewDec(n))),
+				linotypes.DecToCoin(firstYearOneHourDev.ToDec().Mul(sdk.NewDec(n))),
+			)
+		}
+	}
+
+	// first year, 123 + nSecOfOneHour * nHourOfOneYear, is the first year
+	// math check
+	hourSum := firstYearOneHourCC.Plus(firstYearOneHourVal).Plus(firstYearOneHourDev)
+	oneYearComputedMint := linotypes.DecToCoin(hourSum.ToDec().Mul(sdk.NewDec(nHourOfOneYear)))
+	oneYearTotal := linotypes.MustLinoToCoin("10649999999.95768")
+	suite.Equal(oneYearTotal.Minus(base), oneYearComputedMint)
+
+	t = init + nSecOfOneHour*nHourOfOneYear
+	suite.NextBlock(time.Unix(t, 0))
+	err = suite.am.Mint(suite.Ctx)
+	suite.Nil(err)
+	supply := suite.am.GetSupply(suite.Ctx)
+	suite.Equal(oneYearTotal, supply.LastYearTotal)
+	suite.Equal(oneYearTotal, supply.Total)
+	// cc1, val1, dev1 := getPools(suite.Ctx)
+	// fmt.Println(cc1, val1, dev1)
+	// fmt.Println(cc1.Plus(val1).Plus(dev1))
+
+	// second year, 123 + 2 * (nSecOfOneHour * nHourOfOneYear), is the second year
+	// next year first hour
+	base = oneYearTotal
+	lastYearCC, lastYearVal, lastYearDev := getPools(suite.Ctx)
+	ccAmount, valAmount, devAmount := computeHourly(base, rate)
+	t += nSecOfOneHour
+	suite.NextBlock(time.Unix(t, 0))
+	err = suite.am.Mint(suite.Ctx)
+	suite.Nil(err)
+	checkPool(suite.Ctx,
+		lastYearCC.Plus(ccAmount),
+		lastYearVal.Plus(valAmount),
+		lastYearDev.Plus(devAmount),
+	)
 }
 
 func (suite *AccountManagerTestSuite) TestDoesAccountExist() {
@@ -629,6 +1056,15 @@ func (suite *AccountManagerTestSuite) TestMoveCoinAccOrAddr() {
 		expectSenderBalance   types.Coin
 		expectReceiverBalance types.Coin
 	}{
+		{
+			testName:              "negative amount",
+			sender:                types.NewAccOrAddrFromAcc("movecointest"),
+			receiver:              types.NewAccOrAddrFromAcc(suite.userWithoutBalance.Username),
+			amount:                types.NewCoinFromInt64(-1),
+			expectErr:             acctypes.ErrNegativeMoveAmount(types.NewCoinFromInt64(-1)),
+			expectSenderBalance:   types.Coin{},
+			expectReceiverBalance: types.NewCoinFromInt64(0),
+		},
 		{
 			testName:              "sender doesnt exist",
 			sender:                types.NewAccOrAddrFromAcc("movecointest"),
@@ -1341,4 +1777,23 @@ func (suite *AccountManagerTestSuite) checkBankKVByUsername(testName string, use
 	info, err := suite.am.storage.GetInfo(suite.Ctx, username)
 	suite.Nil(err, "%s, failed to get info, got err %v", testName, err)
 	suite.checkBankKVByAddress(testName, info.Address, bank)
+}
+
+// cdc := wire.New()
+// wire.RegisterCrypto(cdc)
+// keys := make([]crypto.PubKey, 0)
+// for i := 0 ; i < 10; i++ {
+// keys = append(keys, secp256k1.GenPrivKey().PubKey())
+// }
+// fmt.Print(string(cdc.MustMarshalJSON(keys)))
+func sampleKeys() []crypto.PubKey {
+	json := `
+[{"type":"tendermint/PubKeySecp256k1","value":"Aot3u5m7vuxUOszkS6IZW5XYVu6ATvZsfSQIjtQo9tML"},{"type":"tendermint/PubKeySecp256k1","value":"AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"},{"type":"tendermint/PubKeySecp256k1","value":"Aj/1EOLKUKUPhp+mx3fLNoZOEEsY+tjPeTW4nOPbqwwq"},{"type":"tendermint/PubKeySecp256k1","value":"A1SxTVyDiXljmHeimniCQiNZQ3dcDsgppP0gDCMgJtdp"},{"type":"tendermint/PubKeySecp256k1","value":"Ax8b6HzTh9el9/NfE8fI4awCvMZWGQkjl+rYOGWeGJc9"},{"type":"tendermint/PubKeySecp256k1","value":"A4r+RjYEc2V9p43J4CovoktRTXNY9vvcQbx0aOW9bhoq"},{"type":"tendermint/PubKeySecp256k1","value":"AwFSpofxlQGAQv167WveHyeUvTh/3fukkJU7gkEW+iMm"},{"type":"tendermint/PubKeySecp256k1","value":"AjglddkWGGlMZck7uvWMDCtyqpNWSBy9HmnJV9vPnu2k"},{"type":"tendermint/PubKeySecp256k1","value":"A+KW7obJ0BpKqUWmY33svTBxGdTfRhmOym7A5imWWwGm"},{"type":"tendermint/PubKeySecp256k1","value":"A6P8IUdt9DKrYCe3/Tflt7DBdgFokRcCKkixt+UbhjZ8"}]
+`
+
+	keys := make([]crypto.PubKey, 0)
+	cdc := wire.New()
+	wire.RegisterCrypto(cdc)
+	cdc.MustUnmarshalJSON([]byte(json), &keys)
+	return keys
 }

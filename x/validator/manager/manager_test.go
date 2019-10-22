@@ -3244,7 +3244,8 @@ func (suite *ValidatorManagerTestSuite) TestPunishCommittingValidator() {
 	suite.vote.On("GetLinoStake", suite.Ctx, linotypes.AccountKey("abs2")).Return(
 		linotypes.NewCoinFromInt64(200000*linotypes.Decimals), nil).Maybe()
 	suite.vote.On("SlashStake", suite.Ctx, linotypes.AccountKey("abs2"),
-		linotypes.NewCoinFromInt64(200*linotypes.Decimals)).Return(
+		linotypes.NewCoinFromInt64(200*linotypes.Decimals),
+		linotypes.InflationValidatorPool).Return(
 		linotypes.NewCoinFromInt64(200*linotypes.Decimals), nil).Maybe()
 	absKey := secp256k1.GenPrivKey().PubKey()
 	abs := linotypes.AccountKey("abs2")

@@ -16,6 +16,7 @@ import (
 	linotypes "github.com/lino-network/lino/types"
 	account "github.com/lino-network/lino/x/account/mocks"
 	accmodel "github.com/lino-network/lino/x/account/model"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/bandwidth/types"
 	developer "github.com/lino-network/lino/x/developer/mocks"
@@ -90,7 +91,8 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("userXAddr")).Return(&accmodel.AccountBank{
 		Username: "UserX",
 	}, nil).Maybe()
-	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("emptyAddr")).Return(nil, accmodel.ErrAccountBankNotFound()).Maybe()
+	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("emptyAddr")).Return(
+		nil, acctypes.ErrAccountBankNotFound(sdk.AccAddress("emptyAddr"))).Maybe()
 }
 
 func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
@@ -994,7 +996,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 				CurMsgFee:            linotypes.NewCoinFromInt64(100),
 				CurU:                 sdk.NewDec(1),
 			},
-			expectedErr: accmodel.ErrAccountBankNotFound(),
+			expectedErr: acctypes.ErrAccountBankNotFound(sdk.AccAddress("emptyAddr")),
 		},
 	}
 

@@ -45,8 +45,6 @@ const (
 
 	// Lino account errors reserve 300 ~ 399
 	CodeRewardNotFound                       sdk.CodeType = 300
-	CodeAccountMetaNotFound                  sdk.CodeType = 301
-	CodeAccountInfoNotFound                  sdk.CodeType = 302
 	CodeAccountBankNotFound                  sdk.CodeType = 303
 	CodePendingCoinDayQueueNotFound          sdk.CodeType = 304
 	CodeGrantPubKeyNotFound                  sdk.CodeType = 305

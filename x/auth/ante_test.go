@@ -427,10 +427,11 @@ func (suite *AnteTestSuite) TestCheckAddrSigner() {
 			expectErr: nil,
 		},
 		{
-			testName:  "sign key without bank struct",
-			signer:    sdk.AccAddress(newPrivKey.PubKey().Address()),
-			signKey:   newPrivKey.PubKey(),
-			expectErr: accmodel.ErrAccountBankNotFound(),
+			testName: "sign key without bank struct",
+			signer:   sdk.AccAddress(newPrivKey.PubKey().Address()),
+			signKey:  newPrivKey.PubKey(),
+			expectErr: acctypes.ErrAccountBankNotFound(
+				sdk.AccAddress(newPrivKey.PubKey().Address())),
 		},
 		{
 			testName:  "sign key without bank struct but paid",
