@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	exportVersion = 1
-	importVersion = 1
+	exportVersion = 2
+	importVersion = 2
 )
 
 // GlobalManager - a event manager module, it schedules event, execute events
@@ -212,55 +212,14 @@ func (gm GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath
 		return false
 	})
 
-	panic("unimplemented")
-	// // export stakes
-	// storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
-	// 	day, err := strconv.ParseInt(string(key), 10, 64)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	stakeStats := val.(*model.LinoStakeStat)
-	// 	state.GlobalStakeStats = append(state.GlobalStakeStats, model.GlobalStakeStatDayIR{
-	// 		Day:       day,
-	// 		StakeStat: model.LinoStakeStatIR(*stakeStats),
-	// 	})
-	// 	return false
-	// })
+	globalt := gm.storage.GetGlobalTime(ctx)
+	state.Time = model.GlobalTimeIR(*globalt)
 
-	// meta, err := gm.storage.GetGlobalMeta(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// state.Meta = model.GlobalMetaIR(*meta)
+	// errors are not export, because we are performing an upgrade, why not fix the errors?
+	// EventErrorSubStore
+	// BCErrorSubStore
 
-	// pool, err := gm.storage.GetInflationPool(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// state.InflationPool = model.InflationPoolIR{
-	// 	DeveloperInflationPool: pool.DeveloperInflationPool,
-	// 	ValidatorInflationPool: pool.ValidatorInflationPool,
-	// }
-
-	// consumption, err := gm.storage.GetConsumptionMeta(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// state.ConsumptionMeta = model.ConsumptionMetaIR(*consumption)
-
-	// tps, err := gm.storage.GetTPS(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// state.TPS = model.TPSIR(*tps)
-
-	// globalt, err := gm.storage.GetGlobalTime(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// state.Time = model.GlobalTimeIR(*globalt)
-
-	// return utils.Save(filepath, cdc, state)
+	return utils.Save(filepath, cdc, state)
 }
 
 func (gm GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
@@ -274,50 +233,12 @@ func (gm GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepa
 		return fmt.Errorf("unsupported import version: %d", table.Version)
 	}
 
-	panic("unimplemented")
-	// // import events
-	// for _, v := range table.GlobalTimeEventLists {
-	// 	err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	// import events
+	for _, v := range table.GlobalTimeEventLists {
+		gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
+	}
 
-	// // import table.GlobalStakeStats
-	// for _, v := range table.GlobalStakeStats {
-	// 	stat := model.LinoStakeStat(v.StakeStat)
-	// 	err := gm.storage.SetLinoStakeStat(ctx, v.Day, &stat)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// meta := model.GlobalMeta(table.Meta)
-	// err = gm.storage.SetGlobalMeta(ctx, &meta)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// pool := model.InflationPool{
-	// 	DeveloperInflationPool: table.InflationPool.DeveloperInflationPool,
-	// 	ValidatorInflationPool: table.InflationPool.ValidatorInflationPool,
-	// }
-	// err = gm.storage.SetInflationPool(ctx, &pool)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// consumption := model.ConsumptionMeta(table.ConsumptionMeta)
-	// err = gm.storage.SetConsumptionMeta(ctx, &consumption)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// t := model.GlobalTime(table.Time)
-	// err = gm.storage.SetGlobalTime(ctx, &t)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return nil
+	t := model.GlobalTime(table.Time)
+	gm.storage.SetGlobalTime(ctx, &t)
+	return nil
 }

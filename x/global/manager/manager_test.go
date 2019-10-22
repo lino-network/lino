@@ -3,6 +3,9 @@ package manager
 import (
 	"testing"
 	"time"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -184,6 +187,33 @@ func (suite *globalManagerTestSuite) TestRegisterEventsAndExec() {
 	suite.Golden()
 }
 
+func (suite *globalManagerTestSuite) TestEventOKWrite() {
+	init := int64(123456)
+	suite.NextBlock(time.Unix(init, 0))
+	suite.global.InitGenesis(suite.Ctx)
+	suite.mApp.On("Hourly", mock.Anything).Return(nil)
+	suite.mApp.On("Daily", mock.Anything).Return(nil)
+	suite.mApp.On("Monthly", mock.Anything).Return(nil)
+	suite.mApp.On("Yearly", mock.Anything).Return(nil)
+
+	bad := func(ctx sdk.Context, event linotypes.Event) sdk.Error {
+		// this bad exec will reset global time to zero while return an error.
+		suite.global.storage.SetGlobalTime(ctx, &model.GlobalTime{
+			ChainStartTime: 999,
+		})
+		return nil
+	}
+
+	err := suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{})
+	suite.Nil(err)
+
+	suite.NextBlock(time.Unix(init+30+10, 0))
+	suite.global.ExecuteEvents(suite.Ctx, bad)
+	suite.Equal(int64(999),
+		suite.global.GetGlobalTime(suite.Ctx).ChainStartTime) // state not changed
+	// suite.Golden()
+}
+
 func (suite *globalManagerTestSuite) TestEventErrIsolation() {
 	init := int64(123456)
 	suite.NextBlock(time.Unix(init, 0))
@@ -206,5 +236,35 @@ func (suite *globalManagerTestSuite) TestEventErrIsolation() {
 	suite.global.ExecuteEvents(suite.Ctx, bad)
 	suite.Equal(1, len(suite.global.GetEventErrors(suite.Ctx)))             // err logged
 	suite.Equal(init, suite.global.GetGlobalTime(suite.Ctx).ChainStartTime) // state not changed
+	suite.Golden()
+}
+
+func (suite *globalManagerTestSuite) TestImportExport() {
+	init := int64(123456)
+	suite.NextBlock(time.Unix(init, 0))
+	suite.global.InitGenesis(suite.Ctx)
+
+	err := suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id:1})
+	suite.Nil(err)
+	err = suite.global.RegisterEventAtTime(suite.Ctx, init+30, testEvent{Id:2})
+	suite.Nil(err)
+	err = suite.global.RegisterEventAtTime(suite.Ctx, init+45, testEvent{Id:3})
+	suite.Nil(err)
+
+	cdc := testCodec()
+
+	dir, err2 := ioutil.TempDir("", "test")
+	suite.Require().Nil(err2)
+	defer os.RemoveAll(dir) // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	err2 = suite.global.ExportToFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
+	// reset state
+	suite.SetupTest()
+	err2 = suite.global.ImportFromFile(suite.Ctx, cdc, tmpfn)
+	suite.Nil(err2)
+
 	suite.Golden()
 }
