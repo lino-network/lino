@@ -53,7 +53,7 @@ func NewCoreContextFromViper() core.CoreContext {
 	ctx = ctx.WithFees(viper.GetString(FlagFees))
 
 	hasKey := false
-	for _, keyFlag := range []string{FlagPrivKey, FlagPrivKey2} {
+	for _, keyFlag := range []string{FlagPrivKey} {
 		key := viper.GetString(keyFlag)
 		if key != "" {
 			pk, err := parsePrivKey(key)

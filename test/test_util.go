@@ -224,25 +224,29 @@ func CheckCurBlockInfo(
 // CreateAccount - register account on test blockchain
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
-	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
+	txPriv, signPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
-	registerMsg := acctypes.NewRegisterMsg(
-		GenesisUser, accountName, numOfLino,
-		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, 0)
+	registerMsg := acctypes.NewRegisterV2Msg(
+		types.NewAccOrAddrFromAcc(types.AccountKey(GenesisUser)), accountName, numOfLino,
+		txPriv.PubKey(), signPriv.PubKey())
+	SignCheckDeliverWithMultiSig(t, lb, registerMsg,
+		[]uint64{seq, 0}, true,
+		[]secp256k1.PrivKeySecp256k1{GenesisTransactionPriv, txPriv}, 0)
 }
 
 // CreateAccountWithTime - register account on test blockchain
 func CreateAccountWithTime(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
-	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
+	txPriv, signPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string, blockTime int64) {
 
-	registerMsg := acctypes.NewRegisterMsg(
-		GenesisUser, accountName, numOfLino,
-		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, blockTime)
+	registerMsg := acctypes.NewRegisterV2Msg(
+		types.NewAccOrAddrFromAcc(types.AccountKey(GenesisUser)), accountName, numOfLino,
+		txPriv.PubKey(), signPriv.PubKey())
+	SignCheckDeliverWithMultiSig(t, lb, registerMsg,
+		[]uint64{seq, 0}, true,
+		[]secp256k1.PrivKeySecp256k1{GenesisTransactionPriv, txPriv}, blockTime)
 }
 
 // GetGenesisAccountCoin - get genesis account coin

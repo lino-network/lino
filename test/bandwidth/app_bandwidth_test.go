@@ -17,20 +17,19 @@ import (
 // test validator deposit
 func TestAppBandwidth(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
-	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 	baseT := time.Unix(0, 0)
 	baseTime := time.Unix(0, 0).Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "5000000000")
+		secp256k1.GenPrivKey(), newAccountTransactionPriv, "5000000000")
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("3000000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	registerAppMsg := devtypes.NewDeveloperRegisterMsg(newAccountName, "dummy", "dummy", "dummy")
-	test.SignCheckDeliver(t, lb, registerAppMsg, 1, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, registerAppMsg, 2, true, newAccountTransactionPriv, baseTime)
 
 	// the tx will fail since app bandwidth info will be updated hourly
 	voteDepositSmallMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("1000"))
@@ -38,7 +37,7 @@ func TestAppBandwidth(t *testing.T) {
 
 	// the tx will success after one hour
 	test.SimulateOneBlock(lb, baseTime+3600)
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2, true, newAccountTransactionPriv, baseTime+3603, 1000)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 3, true, newAccountTransactionPriv, baseTime+3603, 1000)
 	curCredit := "910.849417274954801802"
 	curCreditDec, _ := sdk.NewDecFromStr(curCredit)
 	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
@@ -50,7 +49,7 @@ func TestAppBandwidth(t *testing.T) {
 		LastRefilledAt:     baseTime + 3603,
 	}, linotypes.AccountKey(newAccountName), lb)
 
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 1002, true, newAccountTransactionPriv, baseTime+3603+3, 1000)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 1003, true, newAccountTransactionPriv, baseTime+3603+3, 1000)
 	curCredit = "7.099448771136388802"
 	curCreditDec, _ = sdk.NewDecFromStr(curCredit)
 	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
@@ -64,7 +63,7 @@ func TestAppBandwidth(t *testing.T) {
 
 	curCredit = "301.600990083371031122"
 	curCreditDec, _ = sdk.NewDecFromStr(curCredit)
-	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2002, true, newAccountTransactionPriv, baseTime+3603+3+3, 720)
+	test.RepeatSignCheckDeliver(t, lb, voteDepositSmallMsg, 2003, true, newAccountTransactionPriv, baseTime+3603+3+3, 720)
 	test.CheckAppBandwidthInfo(t, bandwidthmodel.AppBandwidthInfo{
 		Username:           "newuser",
 		MaxBandwidthCredit: sdk.NewDec(2400),
