@@ -600,6 +600,25 @@ func (lb *LinoBlockchain) addPendingAmountAccounts(ctx sdk.Context) {
 	}
 }
 
+var whitelistedAccounts = []types.AccountKey{
+	"admin",
+	"bounty",
+	"contentmining",
+	"dev",
+	"dlivebank",
+	"dlivetv",
+	"lino",
+	"linowallet",
+	"validator1",
+	"validator2",
+	"validator3",
+	"validator4",
+	"validator5",
+	"validator6",
+	"validator7",
+	"lino-co1",
+}
+
 func (lb *LinoBlockchain) convertToIDA(ctx sdk.Context) {
 	upper, err := types.LinoToCoin("10000000")
 	if err != nil {
@@ -609,7 +628,12 @@ func (lb *LinoBlockchain) convertToIDA(ctx sdk.Context) {
 	if err != nil {
 		panic(err)
 	}
+
 	whitelist := make(map[types.AccountKey]bool)
+	for _, v := range whitelistedAccounts {
+		whitelist[v] = true
+	}
+
 	todos := make(map[types.AccountKey]types.Coin)
 	lb.accountManager.ItrAccounts(ctx, func(acc *accmodel.AccountInfo) {
 		if whitelist[acc.Username] {
@@ -621,7 +645,7 @@ func (lb *LinoBlockchain) convertToIDA(ctx sdk.Context) {
 		}
 		// if > 10000000 lino but not white listed, panic
 		if bank.Saving.IsGTE(upper) {
-			panic(fmt.Sprintf("%+v, has %+v, too much", *acc, *bank))
+			fmt.Printf("WARNING: %+v, has %+v, too much, not whitelisted, skipped\n", *acc, *bank)
 		}
 
 		if bank.Saving.IsGT(left) {
@@ -712,7 +736,7 @@ func (lb *LinoBlockchain) voteStateStats(ctx sdk.Context) (rst []votemodel.Stake
 	stats, days := lb.globalManager.StakeStats(ctx)
 	for i := 0; i < len(stats); i++ {
 		rst = append(rst, votemodel.StakeStatDayIR{
-			Day: days[i],
+			Day:       days[i],
 			StakeStat: votemodel.LinoStakeStatIR(stats[i]),
 		})
 	}
@@ -743,6 +767,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		supply := lb.exportSupply(ctx)
 		pools := lb.exportPools(ctx)
 
@@ -754,6 +779,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		stakestats := lb.voteStateStats(ctx)
 		err = lb.voteManager.ExportToFile(ctx, lb.cdc, stakestats, exportPath+voterStateFile)
 		if err != nil {
@@ -763,6 +789,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		consumtionWindow := lb.globalManager.ConsumptionWindow(ctx)
 		err = lb.postManager.ExportToFile(ctx, lb.cdc, consumtionWindow, exportPath+postStateFile)
 		if err != nil {
