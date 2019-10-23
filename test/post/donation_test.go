@@ -21,8 +21,7 @@ func TestNormalDonation(t *testing.T) {
 
 	newDonateUserTransactionPriv := secp256k1.GenPrivKey()
 	newDonateUser := "donator"
-	// recover some coin day
-	baseT := time.Now().Add(3600 * time.Second)
+	baseT := time.Unix(0, 0).Add(3600 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -43,12 +42,5 @@ func TestNormalDonation(t *testing.T) {
 	test.SignCheckDeliver(t, lb, donateMsg, 0, true, newDonateUserTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(49*types.Decimals))
-	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
-
-	// claimMsg := acc.NewClaimMsg(newPostUser)
-	// test.SignCheckDeliver(t, lb, claimMsg, 1, true, newPostUserTransactionPriv, baseTime)
-	// test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4750000))
-	// test.SignCheckDeliver(
-	// 	t, lb, claimMsg, 2, true, newPostUserTransactionPriv, baseTime+test.ConsumptionFreezingPeriodSec+1)
-	// test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(1228089028362))
+	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4505000)) // 90.1% * 50
 }

@@ -41,7 +41,7 @@ type DeveloperKeeper interface {
 	// consumption stats
 	ReportConsumption(
 		ctx sdk.Context, username linotypes.AccountKey, consumption linotypes.MiniDollar) sdk.Error
-	DistributeDevInflation(ctx sdk.Context) sdk.Error
+	MonthlyDistributeDevInflation(ctx sdk.Context) sdk.Error
 
 	// permissions, will be removed in upgrade3.
 	RevokePermission(ctx sdk.Context, user, app linotypes.AccountKey, perm linotypes.Permission) sdk.Error

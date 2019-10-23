@@ -171,6 +171,12 @@ const (
 	// MaxVotedValidator - the max validators a voter can vote
 	MaxVotedValidators = 50
 
+	// ConsumptionFreezingPeriodSec - content bonus release period.
+	ConsumptionFreezingPeriodSec = 604800
+
+	// ConsumptionFrictionRate - the friction rate of a donation.
+	ConsumptionFrictionRate = "0.099"
+
 	// ValidatorMaxPower - the max power of validator can have
 	ValidatorMaxPower = int64(100000000000)
 

@@ -83,5 +83,14 @@
         "is_deleted": false
       }
     }
+  },
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/minidollar",
+      "value": "1234"
+    }
   }
+
 ]

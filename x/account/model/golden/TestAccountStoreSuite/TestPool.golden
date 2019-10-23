@@ -1,0 +1,28 @@
+[
+  {
+    "prefix": "4",
+    "key": "inflation/developer",
+    "val": {
+      "type": "lino/account/pool",
+      "value": {
+        "name": "inflation/developer",
+        "balance": {
+          "amount": "45567"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "inflation/validator",
+    "val": {
+      "type": "lino/account/pool",
+      "value": {
+        "name": "inflation/validator",
+        "balance": {
+          "amount": "1234"
+        }
+      }
+    }
+  }
+]

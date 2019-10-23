@@ -1,0 +1,86 @@
+[
+  {
+    "prefix": "1",
+    "key": "voter1",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "voter1",
+        "lino_stake": {
+          "amount": "1234"
+        },
+        "last_power_change_at": "123",
+        "interest": {
+          "amount": "2345"
+        },
+        "duty": "2",
+        "frozen_amount": {
+          "amount": "999"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "voter2",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "voter2",
+        "lino_stake": {
+          "amount": "567"
+        },
+        "last_power_change_at": "3",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "0",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "123"
+        },
+        "unclaimed_friction": {
+          "amount": "456"
+        },
+        "total_lino_power": {
+          "amount": "789"
+        },
+        "unclaimed_lino_power": {
+          "amount": "1230"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "1",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "1123"
+        },
+        "unclaimed_friction": {
+          "amount": "1456"
+        },
+        "total_lino_power": {
+          "amount": "1789"
+        },
+        "unclaimed_lino_power": {
+          "amount": "11230"
+        }
+      }
+    }
+  }
+]

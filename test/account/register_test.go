@@ -13,7 +13,6 @@ import (
 	accmn "github.com/lino-network/lino/x/account/manager"
 	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
-	"github.com/lino-network/lino/x/global"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -25,7 +24,7 @@ func TestRegisterAccount(t *testing.T) {
 	newSigningPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -52,7 +51,7 @@ func TestRegisterAccountFailed(t *testing.T) {
 	newAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 	registerMsg := acctypes.NewRegisterMsg(test.GenesisUser, newAccountName, "0.1",
@@ -61,8 +60,7 @@ func TestRegisterAccountFailed(t *testing.T) {
 
 	ctx := lb.BaseApp.NewContext(true, abci.Header{})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
-	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph)
 	assert.False(t, accManager.DoesAccountExist(ctx, types.AccountKey(newAccountName)))
 	test.CheckBalance(t, test.GenesisUser, lb, test.GetGenesisAccountCoin(test.DefaultNumOfVal))
 }
@@ -72,7 +70,7 @@ func TestRegisterAccountV2(t *testing.T) {
 	newSigningPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

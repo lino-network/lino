@@ -26,6 +26,20 @@ type AccountBank struct {
 	Username        types.AccountKey `json:"username"`
 }
 
+// Pool - the pool for modules
+type Pool struct {
+	Name    types.PoolName `json:"name"`
+	Balance types.Coin     `json:"balance"`
+}
+
+// Supply - stats of lino supply.
+type Supply struct {
+	LastYearTotal     types.Coin `json:"last_year_total"`
+	Total             types.Coin `json:"total"`
+	ChainStartTime    int64      `json:"chain_start_time"`
+	LastInflationTime int64      `json:"last_inflation_time"`
+}
+
 // FrozenMoney - frozen money
 type FrozenMoney struct {
 	Amount   types.Coin `json:"amount"`

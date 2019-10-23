@@ -58,22 +58,6 @@ func (_m *DeveloperKeeper) BurnIDA(ctx types.Context, app linotypes.AccountKey, 
 	return r0, r1
 }
 
-// DistributeDevInflation provides a mock function with given fields: ctx
-func (_m *DeveloperKeeper) DistributeDevInflation(ctx types.Context) types.Error {
-	ret := _m.Called(ctx)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
 // DoesDeveloperExist provides a mock function with given fields: ctx, username
 func (_m *DeveloperKeeper) DoesDeveloperExist(ctx types.Context, username linotypes.AccountKey) bool {
 	ret := _m.Called(ctx, username)
@@ -355,6 +339,22 @@ func (_m *DeveloperKeeper) MintIDA(ctx types.Context, appname linotypes.AccountK
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
 		r0 = rf(ctx, appname, amount)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// MonthlyDistributeDevInflation provides a mock function with given fields: ctx
+func (_m *DeveloperKeeper) MonthlyDistributeDevInflation(ctx types.Context) types.Error {
+	ret := _m.Called(ctx)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)

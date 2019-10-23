@@ -1,0 +1,128 @@
+[
+  {
+    "prefix": "1",
+    "key": "user1",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user1",
+        "lino_stake": {
+          "amount": "200000000"
+        },
+        "last_power_change_at": "0",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "user2",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user2",
+        "lino_stake": {
+          "amount": "100000000"
+        },
+        "last_power_change_at": "1",
+        "interest": {
+          "amount": "10000000"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "user3",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user3",
+        "lino_stake": {
+          "amount": "200000000"
+        },
+        "last_power_change_at": "1",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "2",
+        "frozen_amount": {
+          "amount": "100000000"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "pendingdutyuser",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "pendingdutyuser",
+        "lino_stake": {
+          "amount": "0"
+        },
+        "last_power_change_at": "0",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "3",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "0",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "88800000"
+        },
+        "unclaimed_friction": {
+          "amount": "88800000"
+        },
+        "total_lino_power": {
+          "amount": "200000000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "200000000"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "1",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "99900000"
+        },
+        "unclaimed_friction": {
+          "amount": "99900000"
+        },
+        "total_lino_power": {
+          "amount": "500000000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "500000000"
+        }
+      }
+    }
+  }
+]

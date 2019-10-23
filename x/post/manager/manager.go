@@ -15,11 +15,12 @@ import (
 	"github.com/lino-network/lino/x/post/types"
 	price "github.com/lino-network/lino/x/price"
 	rep "github.com/lino-network/lino/x/reputation"
+	vote "github.com/lino-network/lino/x/vote"
 )
 
 const (
-	exportVersion = 1
-	importVersion = 1
+	exportVersion = 2
+	importVersion = 2
 )
 
 type PostManager struct {
@@ -30,17 +31,19 @@ type PostManager struct {
 	gm    global.GlobalKeeper
 	dev   dev.DeveloperKeeper
 	rep   rep.ReputationKeeper
+	vote  vote.VoteKeeper
 	price price.PriceKeeper
 }
 
 // NewPostManager - create a new post manager
-func NewPostManager(key sdk.StoreKey, am acc.AccountKeeper, gm global.GlobalKeeper, dev dev.DeveloperKeeper, rep rep.ReputationKeeper, price price.PriceKeeper) PostManager {
+func NewPostManager(key sdk.StoreKey, am acc.AccountKeeper, gm global.GlobalKeeper, dev dev.DeveloperKeeper, rep rep.ReputationKeeper, price price.PriceKeeper, vote vote.VoteKeeper) PostManager {
 	return PostManager{
 		postStorage: model.NewPostStorage(key),
 		am:          am,
 		gm:          gm,
 		dev:         dev,
 		rep:         rep,
+		vote:        vote,
 		price:       price,
 	}
 }
@@ -164,45 +167,30 @@ func (pm PostManager) LinoDonate(ctx sdk.Context, from linotypes.AccountKey, amo
 		return err
 	}
 	// donation.
-	permlink := linotypes.GetPermlink(author, postID)
-	rate, err := pm.gm.GetConsumptionFrictionRate(ctx)
-	if err != nil {
-		return err
-	}
+	rate := sdk.MustNewDecFromStr(linotypes.ConsumptionFrictionRate)
 	frictionCoin := linotypes.DecToCoin(amount.ToDec().Mul(rate))
 	if frictionCoin.IsZero() {
 		return types.ErrDonateAmountTooLittle()
 	}
-	// dp is the evaluated consumption.
-	mdamount, err := pm.price.CoinToMiniDollar(ctx, amount)
-	if err != nil {
-		return err
-	}
-	dp, err := pm.rep.DonateAt(ctx, from, permlink, mdamount)
+	// friction goes to the friction pool for voters.
+	err := pm.am.MoveToPool(ctx,
+		linotypes.VoteFrictionPool, linotypes.NewAccOrAddrFromAcc(from), frictionCoin)
 	if err != nil {
 		return err
 	}
 
-	rewardEvent := types.RewardEvent{
-		PostAuthor: author,
-		PostID:     postID,
-		Consumer:   from,
-		Evaluate:   dp,
-		FromApp:    app,
-	}
-	if err := pm.gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, frictionCoin, dp); err != nil {
-		return err
-	}
-	err = pm.am.MinusCoinFromUsername(ctx, from, amount)
+	// rest goes to the author.
+	err = pm.am.MoveCoin(ctx, linotypes.NewAccOrAddrFromAcc(from),
+		linotypes.NewAccOrAddrFromAcc(author), amount.Minus(frictionCoin))
 	if err != nil {
 		return err
 	}
-	directDeposit := amount.Minus(frictionCoin)
-	if err := pm.am.AddCoinToUsername(ctx, author, directDeposit); err != nil {
+
+	mdamount, err := pm.price.CoinToMiniDollar(ctx, amount)
+	if err != nil {
 		return err
 	}
-	return nil
+	return pm.afterDonation(ctx, author, postID, from, mdamount, frictionCoin, app)
 }
 
 // IDADonate - handle IDA donation.
@@ -214,12 +202,7 @@ func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n li
 	if err != nil || signerApp != app {
 		return types.ErrInvalidSigner()
 	}
-	permlink := linotypes.GetPermlink(author, postID)
 	idaPrice, err := pm.dev.GetMiniIDAPrice(ctx, app)
-	if err != nil {
-		return err
-	}
-	rate, err := pm.gm.GetConsumptionFrictionRate(ctx)
 	if err != nil {
 		return err
 	}
@@ -227,12 +210,13 @@ func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n li
 	// amount = tax + dollarTransfer
 	// tax: burned to lino
 	// dollarTransfer: moved from sender to receipient.
+	rate := sdk.MustNewDecFromStr(linotypes.ConsumptionFrictionRate)
 	dollarAmount := linotypes.MiniIDAToMiniDollar(n, idaPrice) // unit conversion
 	tax := linotypes.NewMiniDollarFromInt(dollarAmount.ToDec().Mul(rate).TruncateInt())
-	dollarTransfer := dollarAmount.Minus(tax)
 
 	// burn and check taxable coins.
-	// tax will be subtracted from @p from's IDA account, and converted to coins out.
+	// tax will be subtracted from @p from's IDA account, and converted to coins and
+	// saved in the account.
 	taxcoins, err := pm.dev.BurnIDA(ctx, app, from, tax)
 	if err != nil {
 		return err
@@ -241,23 +225,48 @@ func (pm PostManager) IDADonate(ctx sdk.Context, from linotypes.AccountKey, n li
 		return types.ErrDonateAmountTooLittle()
 	}
 
-	// dp is the evaluated consumption.
-	dp, err := pm.rep.DonateAt(ctx, from, permlink, dollarAmount)
+	// friction goes to the friction pool for voters.
+	err = pm.am.MoveToPool(ctx,
+		linotypes.VoteFrictionPool, linotypes.NewAccOrAddrFromAcc(from), taxcoins)
 	if err != nil {
 		return err
 	}
+
+	// rest goes to the author
+	if err := pm.dev.MoveIDA(ctx, app, from, author, dollarAmount.Minus(tax)); err != nil {
+		return err
+	}
+
+	return pm.afterDonation(ctx, author, postID, from, dollarAmount, taxcoins, app)
+}
+
+func (pm PostManager) afterDonation(ctx sdk.Context, author linotypes.AccountKey, postID string, from linotypes.AccountKey, damount linotypes.MiniDollar, friction linotypes.Coin, app linotypes.AccountKey) sdk.Error {
+	// impact is the evaluated consumption.
+	impact, err := pm.rep.DonateAt(ctx, from, linotypes.GetPermlink(author, postID), damount)
+	if err != nil {
+		return err
+	}
+
+	// update consumptionm window
+	consumptionWindow := pm.postStorage.GetConsumptionWindow(ctx)
+	pm.postStorage.SetConsumptionWindow(ctx, consumptionWindow.Plus(impact))
+
+	// record friction stats.
+	err = pm.vote.RecordFriction(ctx, friction)
+	if err != nil {
+		return err
+	}
+
+	// add content bonus return event.
 	rewardEvent := types.RewardEvent{
 		PostAuthor: author,
 		PostID:     postID,
 		Consumer:   from,
-		Evaluate:   dp,
+		Evaluate:   impact,
 		FromApp:    app,
 	}
-	if err := pm.gm.AddFrictionAndRegisterContentRewardEvent(
-		ctx, rewardEvent, taxcoins, dp); err != nil {
-		return err
-	}
-	if err := pm.dev.MoveIDA(ctx, app, from, author, dollarTransfer); err != nil {
+	eventTime := ctx.BlockHeader().Time.Unix() + linotypes.ConsumptionFreezingPeriodSec
+	if err := pm.gm.RegisterEventAtTime(ctx, eventTime, rewardEvent); err != nil {
 		return err
 	}
 	return nil
@@ -329,20 +338,39 @@ func (pm PostManager) ExecRewardEvent(ctx sdk.Context, event types.RewardEvent) 
 		return nil
 	}
 
-	// pop out rewards
-	reward, err := pm.gm.GetRewardAndPopFromWindow(ctx, event.Evaluate)
-	if err != nil {
-		return err
-	}
 	// if developer exist, add to developer consumption
 	if pm.dev.DoesDeveloperExist(ctx, event.FromApp) {
 		// ignore report consumption err.
 		_ = pm.dev.ReportConsumption(ctx, event.FromApp, event.Evaluate)
 	}
 
-	// previsously rewards were added to account's reward, now it's added directly to balance.
-	err = pm.am.AddCoinToUsername(ctx, event.PostAuthor, reward)
-	return err
+	return pm.allocContentBonus(ctx, event.Evaluate, event.PostAuthor)
+}
+
+func (pm PostManager) allocContentBonus(ctx sdk.Context, impact linotypes.MiniDollar, author linotypes.AccountKey) sdk.Error {
+	if impact.IsZero() {
+		return nil
+	}
+
+	// get consumption window and update the window
+	consumptionWindow := pm.postStorage.GetConsumptionWindow(ctx)
+	pm.postStorage.SetConsumptionWindow(ctx, consumptionWindow.Minus(impact))
+
+	// XXX(yumin): the ratio is zero when the window is zero, because the consumption window
+	// as the sum of past donation impacts, shall be large than zero as the @p impact is nonzero.
+	// consumptionRatio = (this consumption * penalty score) / (total consumption in 7 days window)
+	consumptionRatio := sdk.ZeroDec()
+	if !consumptionWindow.ToDec().IsZero() {
+		consumptionRatio = impact.ToDec().Quo(consumptionWindow.ToDec())
+	}
+	rewardPool, err := pm.am.GetPool(ctx, linotypes.InflationConsumptionPool)
+	if err != nil {
+		return err
+	}
+	// reward = (consumption reward pool) * (consumptionRatio)
+	reward := linotypes.DecToCoin(rewardPool.ToDec().Mul(consumptionRatio))
+	return pm.am.MoveFromPool(ctx,
+		linotypes.InflationConsumptionPool, linotypes.NewAccOrAddrFromAcc(author), reward)
 }
 
 // Export - to file.
@@ -350,7 +378,7 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 	state := &model.PostTablesIR{
 		Version: exportVersion,
 	}
-	storeList := pm.postStorage.StoreMap(ctx)
+	storeList := pm.postStorage.PartialStoreMap(ctx)
 
 	// export posts
 	posts := make([]model.PostIR, 0)
@@ -361,6 +389,9 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		return false
 	})
 	state.Posts = posts
+
+	// consumption window
+	state.ConsumptionWindow = pm.postStorage.GetConsumptionWindow(ctx)
 
 	return utils.Save(filepath, cdc, state)
 }
@@ -389,5 +420,7 @@ func (pm PostManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath
 			IsDeleted: v.IsDeleted,
 		})
 	}
+
+	pm.postStorage.SetConsumptionWindow(ctx, table.ConsumptionWindow)
 	return nil
 }

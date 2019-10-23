@@ -1,0 +1,139 @@
+[
+  {
+    "prefix": "0",
+    "key": "userwithbalance",
+    "val": {
+      "type": "lino/account/info",
+      "value": {
+        "username": "userwithbalance",
+        "created_at": "0",
+        "signing_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aj/1EOLKUKUPhp+mx3fLNoZOEEsY+tjPeTW4nOPbqwwq"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A1SxTVyDiXljmHeimniCQiNZQ3dcDsgppP0gDCMgJtdp"
+        },
+        "address": "cosmos1htu5gllvm3e4javrtdudhk0pyryzzj4lttefch"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "userwithoutbalance",
+    "val": {
+      "type": "lino/account/info",
+      "value": {
+        "username": "userwithoutbalance",
+        "created_at": "0",
+        "signing_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aot3u5m7vuxUOszkS6IZW5XYVu6ATvZsfSQIjtQo9tML"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
+        },
+        "address": "cosmos1j5s5a4lfu0t25f77rj6c0v4wpafa6z9g7ks5uw"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "\ufffd!N\ufffd\ufffd\ufffd֪'\ufffd\u001c\ufffd\ufffd\ufffd\ufffd\u000fS\ufffd\u0008\ufffd",
+    "val": {
+      "type": "lino/account/bank",
+      "value": {
+        "saving": {
+          "amount": "1000000"
+        },
+        "frozen_money_list": null,
+        "public_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
+        },
+        "sequence": "0",
+        "username": "userwithoutbalance"
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "\ufffdē3!mA\u000e\ufffd;1\ufffd\u0002\ufffdq\ufffd\u0011\u0010\u001e\ufffd",
+    "val": {
+      "type": "lino/account/bank",
+      "value": {
+        "saving": {
+          "amount": "100000"
+        },
+        "frozen_money_list": null,
+        "public_key": null,
+        "sequence": "0",
+        "username": ""
+      }
+    }
+  },
+  {
+    "prefix": "1",
+    "key": "\ufffd\ufffdD\ufffd\ufffdsYu\ufffd[x\ufffd\ufffd\ufffd \ufffd!J\ufffd",
+    "val": {
+      "type": "lino/account/bank",
+      "value": {
+        "saving": {
+          "amount": "100000000"
+        },
+        "frozen_money_list": null,
+        "public_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A1SxTVyDiXljmHeimniCQiNZQ3dcDsgppP0gDCMgJtdp"
+        },
+        "sequence": "0",
+        "username": "userwithbalance"
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "account/vesting",
+    "val": {
+      "type": "lino/account/pool",
+      "value": {
+        "name": "account/vesting",
+        "balance": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "4",
+    "key": "inflation/validator",
+    "val": {
+      "type": "lino/account/pool",
+      "value": {
+        "name": "inflation/validator",
+        "balance": {
+          "amount": "123"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "5",
+    "key": "",
+    "val": {
+      "type": "lino/account/supply",
+      "value": {
+        "last_year_total": {
+          "amount": "2000000"
+        },
+        "total": {
+          "amount": "2000000"
+        },
+        "chain_start_time": "123",
+        "last_inflation_time": "123"
+      }
+    }
+  }
+]

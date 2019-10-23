@@ -8,38 +8,72 @@ import (
 
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
-	globalModel "github.com/lino-network/lino/x/global/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	// sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGetGenesisJson(t *testing.T) {
 	resetPriv := secp256k1.GenPrivKey()
 	transactionPriv := secp256k1.GenPrivKey()
-	appPriv := secp256k1.GenPrivKey()
 	validatorPriv := secp256k1.GenPrivKey()
 
 	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
-		Name:           "Lino",
-		Coin:           totalLino,
-		ResetKey:       resetPriv.PubKey(),
-		TransactionKey: transactionPriv.PubKey(),
-		AppKey:         appPriv.PubKey(),
-		IsValidator:    true,
-		ValPubKey:      validatorPriv.PubKey(),
+		Name:        "Lino",
+		Coin:        totalLino,
+		TxKey:       resetPriv.PubKey(),
+		SignKey:     transactionPriv.PubKey(),
+		IsValidator: true,
+		ValPubKey:   validatorPriv.PubKey(),
 	}
 
 	genesisAppDeveloper := GenesisAppDeveloper{
 		Name: "Lino",
 	}
 	genesisState := GenesisState{
-		Accounts:      []GenesisAccount{genesisAcc},
-		ReservePool:   types.NewCoinFromInt64(1000000),
+		LoadPrevStates: false,
+		GenesisPools: GenesisPools{
+			Pools: []GenesisPool{
+				{
+					Name:   types.InflationDeveloperPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.InflationValidatorPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.InflationConsumptionPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.VoteStakeInPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.VoteStakeReturnPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.VoteFrictionPool,
+					Amount: types.NewCoinFromInt64(0),
+				},
+				{
+					Name:   types.DevIDAReservePool,
+					Amount: types.MustLinoToCoin("2000000000"),
+				},
+				{
+					Name:   types.AccountVestingPool,
+					Amount: types.MustLinoToCoin("8000000000"),
+				},
+			},
+			Total: types.MustLinoToCoin("10000000000"),
+		},
 		InitCoinPrice: types.NewMiniDollar(1200),
+		Accounts:      []GenesisAccount{genesisAcc},
 		Developers:    []GenesisAppDeveloper{genesisAppDeveloper},
 		GenesisParam: GenesisParam{
 			true,
@@ -134,11 +168,6 @@ func TestGetGenesisJson(t *testing.T) {
 				PenaltyMissFeed: types.NewCoinFromInt64(10000 * types.Decimals),
 			},
 		},
-		InitGlobalMeta: globalModel.InitParamList{
-			MaxTPS:                       sdk.NewDec(1000),
-			ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-			ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
-		},
 	}
 
 	cdc := wire.New()
@@ -173,13 +202,12 @@ func TestLinoBlockchainGenState(t *testing.T) {
 	coinPerValidator := types.NewCoinFromInt64(100000000 * types.Decimals)
 	for i := 1; i < 21; i++ {
 		genesisAcc := GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Coin:           coinPerValidator,
-			ResetKey:       secp256k1.GenPrivKey().PubKey(),
-			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			AppKey:         secp256k1.GenPrivKey().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
+			Name:        "validator" + strconv.Itoa(i),
+			Coin:        coinPerValidator,
+			TxKey:       secp256k1.GenPrivKey().PubKey(),
+			SignKey:     secp256k1.GenPrivKey().PubKey(),
+			IsValidator: true,
+			ValPubKey:   secp256k1.GenPrivKey().PubKey(),
 		}
 		marshalResult, err := wire.MarshalJSONIndent(cdc, genesisAcc)
 		assert.Nil(t, err)

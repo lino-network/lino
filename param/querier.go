@@ -61,10 +61,7 @@ func NewQuerier(ph ParamHolder) sdk.Querier {
 }
 
 func queryAllocationParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	globalAllocationParam, err := ph.GetGlobalAllocationParam(ctx)
-	if err != nil {
-		return nil, err
-	}
+	globalAllocationParam := ph.GetGlobalAllocationParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(globalAllocationParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
@@ -85,10 +82,7 @@ func queryDeveloperParam(ctx sdk.Context, cdc *wire.Codec, path []string, req ab
 }
 
 func queryVoteParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	voteParam, err := ph.GetVoteParam(ctx)
-	if err != nil {
-		return nil, err
-	}
+	voteParam := ph.GetVoteParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(voteParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()
@@ -130,10 +124,7 @@ func queryBandwidthParam(ctx sdk.Context, cdc *wire.Codec, path []string, req ab
 }
 
 func queryAccountParam(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, ph ParamHolder) ([]byte, sdk.Error) {
-	accParam, err := ph.GetAccountParam(ctx)
-	if err != nil {
-		return nil, err
-	}
+	accParam := ph.GetAccountParam(ctx)
 	res, marshalErr := cdc.MarshalJSON(accParam)
 	if marshalErr != nil {
 		return nil, ErrQueryFailed()

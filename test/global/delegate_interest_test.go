@@ -26,7 +26,7 @@ package global
 // 	postID := "New Post"
 
 // 	// to recover the coin day
-// 	baseT := time.Now().Add(7200 * time.Second)
+// 	baseT := time.Unix(0,0).Add(7200 * time.Second)
 // 	baseTime := baseT.Unix()
 // 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

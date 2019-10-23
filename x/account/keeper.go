@@ -13,25 +13,31 @@ import (
 )
 
 type AccountKeeper interface {
+	InitGenesis(ctx sdk.Context, total types.Coin, pools []model.Pool)
+	// core bank APIs.
+	MoveCoin(ctx sdk.Context, sender, receiver types.AccOrAddr, coin types.Coin) sdk.Error
+	MoveFromPool(
+		ctx sdk.Context, poolName types.PoolName, dest types.AccOrAddr, amount types.Coin) sdk.Error
+	MoveToPool(
+		ctx sdk.Context, poolName types.PoolName, from types.AccOrAddr, amount types.Coin) sdk.Error
+	MoveBetweenPools(ctx sdk.Context, from, to types.PoolName, amount types.Coin) sdk.Error
+	Mint(ctx sdk.Context) sdk.Error
+
 	DoesAccountExist(ctx sdk.Context, username types.AccountKey) bool
+	GenesisAccount(ctx sdk.Context, username types.AccountKey,
+		signingKey, transactionKey crypto.PubKey) sdk.Error
 	RegisterAccount(
 		ctx sdk.Context, referrer types.AccOrAddr, registerFee types.Coin,
 		username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
-	CreateAccount(
-		ctx sdk.Context, username types.AccountKey, signingKey, transactionKey crypto.PubKey) sdk.Error
-	MoveCoinAccOrAddr(
-		ctx sdk.Context, sender, receiver types.AccOrAddr, coin types.Coin) sdk.Error
-	AddCoinToUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error
-	AddCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, coin types.Coin) sdk.Error
-	MinusCoinFromUsername(ctx sdk.Context, username types.AccountKey, coin types.Coin) sdk.Error
-	MinusCoinFromAddress(ctx sdk.Context, addr sdk.AccAddress, coin types.Coin) sdk.Error
 	UpdateJSONMeta(ctx sdk.Context, username types.AccountKey, JSONMeta string) sdk.Error
+	GetPool(ctx sdk.Context, poolName types.PoolName) (types.Coin, sdk.Error)
 	GetTransactionKey(ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error)
 	GetSigningKey(ctx sdk.Context, username types.AccountKey) (crypto.PubKey, sdk.Error)
 	GetSavingFromUsername(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error)
 	GetSequence(ctx sdk.Context, address sdk.Address) (uint64, sdk.Error)
 	GetAddress(ctx sdk.Context, username types.AccountKey) (sdk.AccAddress, sdk.Error)
 	GetFrozenMoneyList(ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error)
+	GetSupply(ctx sdk.Context) model.Supply
 	IncreaseSequenceByOne(ctx sdk.Context, address sdk.Address) sdk.Error
 	AddFrozenMoney(
 		ctx sdk.Context, username types.AccountKey, amount types.Coin, start, interval, times int64) sdk.Error

@@ -12,7 +12,6 @@ import (
 	"github.com/lino-network/lino/x/account"
 	"github.com/lino-network/lino/x/developer/model"
 	"github.com/lino-network/lino/x/developer/types"
-	"github.com/lino-network/lino/x/global"
 	"github.com/lino-network/lino/x/price"
 	"github.com/lino-network/lino/x/vote"
 	votetypes "github.com/lino-network/lino/x/vote/types"
@@ -32,18 +31,16 @@ type DeveloperManager struct {
 	vote        vote.VoteKeeper
 	acc         account.AccountKeeper
 	price       price.PriceKeeper
-	global      global.GlobalKeeper
 }
 
 // NewDeveloperManager - create new developer manager
-func NewDeveloperManager(key sdk.StoreKey, holder param.ParamKeeper, vote vote.VoteKeeper, acc account.AccountKeeper, price price.PriceKeeper, g global.GlobalKeeper) DeveloperManager {
+func NewDeveloperManager(key sdk.StoreKey, holder param.ParamKeeper, vote vote.VoteKeeper, acc account.AccountKeeper, price price.PriceKeeper) DeveloperManager {
 	return DeveloperManager{
 		storage:     model.NewDeveloperStorage(key),
 		paramHolder: holder,
 		vote:        vote,
 		acc:         acc,
 		price:       price,
-		global:      g,
 	}
 }
 
@@ -214,10 +211,9 @@ func (dm DeveloperManager) MintIDA(ctx sdk.Context, appname linotypes.AccountKey
 	return nil
 }
 
-// exchangeMinidollar - exchange Minidollar with @p amount coin, return max exchanged minidollar.
+// exchangeMinidollar - exchange Minidollar with @p amount coin, return the exchanged minidollar.
 // Return minidollar must be added to somewhere, otherwise it's burned.
-// 1. minus account saving.
-// 2. sending coin to reserve pool.
+// 1. move @p amount from account saving to reserve pool.
 func (dm DeveloperManager) exchangeMiniDollar(ctx sdk.Context, appname linotypes.AccountKey, amount linotypes.Coin) (linotypes.MiniDollar, sdk.Error) {
 	bought, err := dm.price.CoinToMiniDollar(ctx, amount)
 	if err != nil {
@@ -227,7 +223,8 @@ func (dm DeveloperManager) exchangeMiniDollar(ctx sdk.Context, appname linotypes
 		return linotypes.NewMiniDollar(0), types.ErrExchangeMiniDollarZeroAmount()
 	}
 	// exchange
-	err = dm.acc.MinusCoinFromUsername(ctx, appname, amount)
+	err = dm.acc.MoveToPool(ctx,
+		linotypes.DevIDAReservePool, linotypes.NewAccOrAddrFromAcc(appname), amount)
 	if err != nil {
 		return linotypes.NewMiniDollar(0), err
 	}
@@ -316,8 +313,10 @@ func (dm DeveloperManager) GetMiniIDAPrice(ctx sdk.Context, app linotypes.Accoun
 	return ida.MiniIDAPrice, nil
 }
 
-// BurnIDA - Burn some @p amount of IDA on @p user's account and return coins
-// poped from reserve pool. NOTE: cannot burn 0 coins.
+// BurnIDA - Burn some @p amount of IDA on @p user's account, burned IDA will be converted to
+// LINO and saved onto the user's account. Return the amount of coins
+// removed from reserve pool. The coins can has been . NOTE: cannot burn @p amount so little
+// that can only can only buy less than 1 coin, i.e. zero.
 func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountKey, amount linotypes.MiniDollar) (linotypes.Coin, sdk.Error) {
 	bank, err := dm.GetIDABank(ctx, app, user)
 	if err != nil {
@@ -336,6 +335,8 @@ func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountK
 	if !bought.IsPositive() {
 		return linotypes.NewCoinFromInt64(0), types.ErrBurnZeroIDA()
 	}
+
+	// internal reserve pool check
 	pool := dm.storage.GetReservePool(ctx)
 	if !pool.Total.IsGTE(bought) {
 		return linotypes.NewCoinFromInt64(0), types.ErrInsuffientReservePool()
@@ -343,11 +344,26 @@ func (dm DeveloperManager) BurnIDA(ctx sdk.Context, app, user linotypes.AccountK
 	pool.Total = pool.Total.Minus(bought)
 	pool.TotalMiniDollar = pool.TotalMiniDollar.Minus(used)
 	dm.storage.SetReservePool(ctx, pool)
+
+	// ida stats update
 	idaStats := dm.storage.GetIDAStats(ctx, app)
 	idaStats.Total = idaStats.Total.Minus(used)
 	dm.storage.SetIDAStats(ctx, app, *idaStats)
+
+	// ida bank update
 	bank.Balance = bank.Balance.Minus(used)
 	dm.storage.SetIDABank(ctx, app, user, &bank)
+
+	// external
+	// after burn, move coins from the reserve pool to the user's account.
+	// only called upon donation, so the newly added coins will then be moved
+	// to the vote's frictions pool.
+	err = dm.acc.MoveFromPool(ctx,
+		linotypes.DevIDAReservePool, linotypes.NewAccOrAddrFromAcc(user), bought)
+	if err != nil {
+		return linotypes.NewCoinFromInt64(0), err
+	}
+
 	return bought, nil
 }
 
@@ -495,13 +511,13 @@ func (dm DeveloperManager) ReportConsumption(ctx sdk.Context, app linotypes.Acco
 }
 
 // DistributeDevInflation - distribute monthly app inflation.
-func (dm DeveloperManager) DistributeDevInflation(ctx sdk.Context) sdk.Error {
+func (dm DeveloperManager) MonthlyDistributeDevInflation(ctx sdk.Context) sdk.Error {
 	// No-op if there is no developer, leave inflations in pool.
 	devs := dm.GetLiveDevelopers(ctx)
 	if len(devs) == 0 {
 		return nil
 	}
-	inflation, err := dm.global.PopDeveloperMonthlyInflation(ctx)
+	inflation, err := dm.acc.GetPool(ctx, linotypes.InflationDeveloperPool)
 	if err != nil {
 		return err
 	}
@@ -524,8 +540,9 @@ func (dm DeveloperManager) DistributeDevInflation(ctx sdk.Context) sdk.Error {
 	distributed := linotypes.NewCoinFromInt64(0)
 	for i, developer := range devs {
 		if i == (len(devs) - 1) {
-			if err := dm.acc.AddCoinToUsername(
-				ctx, developer.Username, inflation.Minus(distributed)); err != nil {
+			if err := dm.acc.MoveFromPool(ctx, linotypes.InflationDeveloperPool,
+				linotypes.NewAccOrAddrFromAcc(developer.Username),
+				inflation.Minus(distributed)); err != nil {
 				return err
 			}
 			break
@@ -534,7 +551,9 @@ func (dm DeveloperManager) DistributeDevInflation(ctx sdk.Context) sdk.Error {
 		myShareRat := inflation.ToDec().Mul(percentage)
 		myShareCoin := linotypes.DecToCoin(myShareRat)
 		distributed = distributed.Plus(myShareCoin)
-		if err := dm.acc.AddCoinToUsername(ctx, developer.Username, myShareCoin); err != nil {
+		if err := dm.acc.MoveFromPool(ctx, linotypes.InflationDeveloperPool,
+			linotypes.NewAccOrAddrFromAcc(developer.Username),
+			myShareCoin); err != nil {
 			return err
 		}
 	}

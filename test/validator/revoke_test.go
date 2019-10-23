@@ -18,7 +18,7 @@ func TestRevoke(t *testing.T) {
 	// testName := "TestRegisterValidatorOneByOne"
 
 	// start with 1 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0, 0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, 1, baseT)
 
@@ -32,8 +32,8 @@ func TestRevoke(t *testing.T) {
 	newAccountName := "validator"
 	newAccountName += strconv.Itoa(1)
 
-	test.CreateAccount(t, newAccountName, lb, uint64(0),
-		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+	test.CreateAccountWithTime(t, newAccountName, lb, uint64(0),
+		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000", baseTime)
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, strconv.Itoa(300000))
 	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
@@ -48,8 +48,8 @@ func TestRevoke(t *testing.T) {
 	newVoterAppPriv := secp256k1.GenPrivKey()
 	newVoterName := "voter"
 
-	test.CreateAccount(t, newVoterName, lb, uint64(1),
-		newVoterResetPriv, newVoterTransactionPriv, newVoterAppPriv, "500000")
+	test.CreateAccountWithTime(t, newVoterName, lb, uint64(1),
+		newVoterResetPriv, newVoterTransactionPriv, newVoterAppPriv, "500000", baseTime)
 	voterDepositMsg := types.NewStakeInMsg(newVoterName, linotypes.LNO("100000"))
 	test.SignCheckDeliver(t, lb, voterDepositMsg, 0, true, newVoterTransactionPriv, baseTime)
 
@@ -71,7 +71,7 @@ func TestRevoke(t *testing.T) {
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 
 	// after pending period, can register again
-	ctx := lb.BaseApp.NewContext(true, abci.Header{})
+	ctx := lb.BaseApp.NewContext(true, abci.Header{Time: baseT})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
 	param := ph.GetValidatorParam(ctx)
 	test.SimulateOneBlock(lb, baseTime+param.ValidatorRevokePendingSec+1)

@@ -1,0 +1,95 @@
+[
+  {
+    "prefix": "1",
+    "key": "",
+    "val": {
+      "type": "lino/global/time",
+      "value": {
+        "chain_start_time": "123456",
+        "last_block_time": "31681056",
+        "past_minutes": "525960"
+      }
+    }
+  },
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/global/bceventerr",
+      "value": [
+        {
+          "time": "2755056",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "5383056",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "8014656",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "10642656",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "13274256",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "15902256",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "18533856",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "21161856",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "23793456",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "26421456",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "29053056",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        },
+        {
+          "time": "31681056",
+          "err_code": 100000,
+          "err_code_space": "lino",
+          "reason": "test"
+        }
+      ]
+    }
+  }
+]

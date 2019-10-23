@@ -19,8 +19,8 @@ func TestAppBandwidth(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
 	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
-	baseT := time.Now()
-	baseTime := time.Now().Unix()
+	baseT := time.Unix(0, 0)
+	baseTime := time.Unix(0, 0).Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
@@ -34,7 +34,7 @@ func TestAppBandwidth(t *testing.T) {
 
 	// the tx will fail since app bandwidth info will be updated hourly
 	voteDepositSmallMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("1000"))
-	test.SignCheckDeliver(t, lb, voteDepositSmallMsg, 2, false, newAccountTransactionPriv, baseTime)
+	test.SignCheckTxFail(t, lb, voteDepositSmallMsg, 2, newAccountTransactionPriv)
 
 	// the tx will success after one hour
 	test.SimulateOneBlock(lb, baseTime+3600)

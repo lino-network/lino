@@ -1,0 +1,19 @@
+[
+  {
+    "prefix": "5",
+    "key": "",
+    "val": {
+      "type": "lino/account/supply",
+      "value": {
+        "last_year_total": {
+          "amount": "10000"
+        },
+        "total": {
+          "amount": "512354"
+        },
+        "chain_start_time": "123",
+        "last_inflation_time": "3245"
+      }
+    }
+  }
+]

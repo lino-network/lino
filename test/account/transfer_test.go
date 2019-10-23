@@ -16,7 +16,7 @@ import (
 func TestTransferToAccount(t *testing.T) {
 	newAccountName := "newuser"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -38,7 +38,7 @@ func TestTransferToAddress(t *testing.T) {
 	newAccountName := "newuser"
 	newReceiver := "newreceiver"
 
-	baseT := time.Now()
+	baseT := time.Unix(0, 0)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 

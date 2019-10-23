@@ -24,16 +24,6 @@ import (
 	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidthmock "github.com/lino-network/lino/x/bandwidth/mocks"
-
-	// bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
-	// dev "github.com/lino-network/lino/x/developer"
-	devmn "github.com/lino-network/lino/x/developer/manager"
-	"github.com/lino-network/lino/x/global"
-	post "github.com/lino-network/lino/x/post"
-	postmn "github.com/lino-network/lino/x/post/manager"
-	pricemn "github.com/lino-network/lino/x/price/manager"
-	valmn "github.com/lino-network/lino/x/validator/manager"
-	votemn "github.com/lino-network/lino/x/vote/manager"
 )
 
 type TestMsg struct {
@@ -79,24 +69,27 @@ func newTestTx(
 	sigs := make([]auth.StdSignature, len(privs))
 
 	for i, priv := range privs {
-		signBytes := auth.StdSignBytes(ctx.ChainID(), 0, seqs[i], auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, msgs, "")
+		signBytes := auth.StdSignBytes(
+			ctx.ChainID(), 0, seqs[i],
+			auth.StdFee{
+				Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000))),
+			},
+			msgs, "")
 		bz, _ := priv.Sign(signBytes)
 		sigs[i] = auth.StdSignature{
 			PubKey: priv.PubKey(), Signature: bz}
 	}
-	tx := auth.NewStdTx(msgs, auth.StdFee{Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000)))}, sigs, "")
+	tx := auth.NewStdTx(
+		msgs,
+		auth.StdFee{
+			Amount: sdk.NewCoins(sdk.NewCoin(types.LinoCoinDenom, sdk.NewInt(10000000))),
+		}, sigs, "")
 	return tx
-}
-
-func initGlobalManager(ctx sdk.Context, gm global.GlobalManager) error {
-	return gm.InitGlobalManager(ctx, types.NewCoinFromInt64(10000*types.Decimals))
 }
 
 type AnteTestSuite struct {
 	suite.Suite
 	am   acc.AccountKeeper
-	pm   post.PostKeeper
-	gm   global.GlobalManager
 	ph   param.ParamHolder
 	ctx  sdk.Context
 	ante sdk.AnteHandler
@@ -130,65 +123,47 @@ func (suite *AnteTestSuite) SetupTest() {
 		panic(err)
 	}
 	ctx := sdk.NewContext(
-		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Now()}, false, log.NewNopLogger())
+		ms, abci.Header{ChainID: "Lino", Height: 1, Time: time.Unix(0, 0)}, false, log.NewNopLogger())
 
 	ph := param.NewParamHolder(TestParamKVStoreKey)
 	err = ph.InitParam(ctx)
 	if err != nil {
 		panic(err)
 	}
-	gm := global.NewGlobalManager(TestGlobalKVStoreKey, ph)
-
-	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph, &gm)
-	vm := votemn.NewVoteManager(TestVoteKVStoreKey, ph, am, &gm)
-	valm := valmn.NewValidatorManager(TestValidatorKVStoreKey, ph, vm, &gm, am)
-	price := pricemn.NewWeightedMedianPriceManager(TestPriceKVStoreKey, valm, ph)
-	dm := devmn.NewDeveloperManager(TestDeveloperKVStoreKey, ph, vm, am, price, &gm)
-	pm := postmn.NewPostManager(TestPostKVStoreKey, am, &gm, dm, nil, price)
+	am := accmn.NewAccountManager(TestAccountKVStoreKey, ph)
+	am.InitGenesis(ctx, types.MustLinoToCoin("10000000000"), []accmodel.Pool{
+		{
+			Name:    types.AccountVestingPool,
+			Balance: types.MustLinoToCoin("10000000000"),
+		},
+	})
 
 	bm := &bandwidthmock.BandwidthKeeper{}
-
-	err = initGlobalManager(ctx, gm)
-	if err != nil {
-		panic(err)
-	}
+	bm.On("CheckBandwidth", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	anteHandler := NewAnteHandler(am, bm)
 
 	suite.am = am
-	suite.pm = pm
-	suite.gm = gm
 	suite.ph = ph
 	suite.ctx = ctx
 	suite.ante = anteHandler
-	bm.On("CheckBandwidth", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 }
 
 func (suite *AnteTestSuite) createTestAccount(username string) (secp256k1.PrivKeySecp256k1, secp256k1.PrivKeySecp256k1, types.AccountKey) {
 	signingKey := secp256k1.GenPrivKey()
 	transactionKey := secp256k1.GenPrivKey()
-	accParams, _ := suite.ph.GetAccountParam(suite.ctx)
-	err := suite.am.CreateAccount(suite.ctx, types.AccountKey(username),
+	accParams := suite.ph.GetAccountParam(suite.ctx)
+	err := suite.am.GenesisAccount(suite.ctx, types.AccountKey(username),
 		signingKey.PubKey(), transactionKey.PubKey())
 	if err != nil {
 		panic(err)
 	}
-	err = suite.am.AddCoinToUsername(suite.ctx, types.AccountKey(username), accParams.RegisterFee)
+	err = suite.am.MoveFromPool(suite.ctx,
+		types.AccountVestingPool,
+		types.NewAccOrAddrFromAcc(types.AccountKey(username)), accParams.RegisterFee)
 	if err != nil {
 		panic(err)
 	}
 	return signingKey, transactionKey, types.AccountKey(username)
-}
-
-func (suite *AnteTestSuite) createTestPost(postid string, author types.AccountKey) {
-	msg := post.CreatePostMsg{
-		PostID:    postid,
-		Title:     "testTitle",
-		Content:   "qqqqqqq",
-		Author:    author,
-		CreatedBy: author,
-	}
-	err := suite.pm.CreatePost(suite.ctx, msg.Author, msg.PostID, msg.CreatedBy, msg.Content, msg.Title)
-	suite.Require().Nil(err)
 }
 
 // run the tx through the anteHandler and ensure its valid
@@ -364,7 +339,11 @@ func (suite *AnteTestSuite) TestCheckAccountSigner() {
 	_, transaction1, user1 := suite.createTestAccount("user1")
 	_, transaction2, user2 := suite.createTestAccount("user2")
 	privKey := secp256k1.GenPrivKey()
-	err := suite.am.AddCoinToAddress(suite.ctx, sdk.AccAddress(privKey.PubKey().Address()), types.NewCoinFromInt64(1000))
+	err := suite.am.MoveFromPool(
+		suite.ctx,
+		types.AccountVestingPool,
+		types.NewAccOrAddrFromAddr(sdk.AccAddress(privKey.PubKey().Address())),
+		types.NewCoinFromInt64(1000))
 	suite.Nil(err)
 
 	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
@@ -423,7 +402,10 @@ func (suite *AnteTestSuite) TestCheckAddrSigner() {
 	_, _, user1 := suite.createTestAccount("user1")
 	_, _, user2 := suite.createTestAccount("user2")
 	privKey := secp256k1.GenPrivKey()
-	err := suite.am.AddCoinToAddress(suite.ctx, sdk.AccAddress(privKey.PubKey().Address()), types.NewCoinFromInt64(1000))
+	err := suite.am.MoveFromPool(suite.ctx,
+		types.AccountVestingPool,
+		types.NewAccOrAddrFromAddr(sdk.AccAddress(privKey.PubKey().Address())),
+		types.NewCoinFromInt64(1000))
 	suite.Nil(err)
 
 	newPrivKey := secp256k1.GenPrivKey()
@@ -445,10 +427,11 @@ func (suite *AnteTestSuite) TestCheckAddrSigner() {
 			expectErr: nil,
 		},
 		{
-			testName:  "sign key without bank struct",
-			signer:    sdk.AccAddress(newPrivKey.PubKey().Address()),
-			signKey:   newPrivKey.PubKey(),
-			expectErr: accmodel.ErrAccountBankNotFound(),
+			testName: "sign key without bank struct",
+			signer:   sdk.AccAddress(newPrivKey.PubKey().Address()),
+			signKey:  newPrivKey.PubKey(),
+			expectErr: acctypes.ErrAccountBankNotFound(
+				sdk.AccAddress(newPrivKey.PubKey().Address())),
 		},
 		{
 			testName:  "sign key without bank struct but paid",
