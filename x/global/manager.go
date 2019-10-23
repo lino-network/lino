@@ -608,6 +608,9 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 			}
 		}
 		events.Events = newEvents
+		if len(events.Events) == 0 {
+			return false
+		}
 		state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
 			UnixTime:      ts,
 			TimeEventList: *events,
