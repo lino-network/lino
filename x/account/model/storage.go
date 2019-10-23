@@ -1,8 +1,6 @@
 package model
 
 import (
-	"strings"
-
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -12,12 +10,11 @@ import (
 )
 
 var (
-	AccountInfoSubstore        = []byte{0x00}
-	AccountBankSubstore        = []byte{0x01}
-	AccountMetaSubstore        = []byte{0x02}
-	AccountGrantPubKeySubstore = []byte{0x03}
-	AccountPoolSubstore        = []byte{0x04}
-	AccountSupplySubstore      = []byte{0x05}
+	AccountInfoSubstore   = []byte{0x00}
+	AccountBankSubstore   = []byte{0x01}
+	AccountMetaSubstore   = []byte{0x02}
+	AccountPoolSubstore   = []byte{0x04}
+	AccountSupplySubstore = []byte{0x05}
 )
 
 // AccountStorage - account storage
@@ -104,47 +101,6 @@ func (as AccountStorage) SetMeta(ctx sdk.Context, accKey linotypes.AccountKey, a
 	store := ctx.KVStore(as.key)
 	metaByte := as.cdc.MustMarshalBinaryLengthPrefixed(*accMeta)
 	store.Set(GetAccountMetaKey(accKey), metaByte)
-}
-
-// DeleteAllGrantPermissions - deletes all grant pubkeys from a granted user in KV.
-func (as AccountStorage) DeleteAllGrantPermissions(ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey) {
-	store := ctx.KVStore(as.key)
-	store.Delete(getGrantPermKey(me, grantTo))
-	return
-}
-
-// GetGrantPermissions - returns grant user info keyed with pubkey.
-func (as AccountStorage) GetGrantPermissions(ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey) ([]*GrantPermission, sdk.Error) {
-	store := ctx.KVStore(as.key)
-	grantPubKeyByte := store.Get(getGrantPermKey(me, grantTo))
-	if grantPubKeyByte == nil {
-		return nil, types.ErrGrantPubKeyNotFound()
-	}
-	grantPubKeys := new([]*GrantPermission)
-	as.cdc.MustUnmarshalBinaryLengthPrefixed(grantPubKeyByte, grantPubKeys)
-	return *grantPubKeys, nil
-}
-
-// GetAllGrantPermissions - returns grant user info keyed with pubkey.
-func (as AccountStorage) GetAllGrantPermissions(ctx sdk.Context, me linotypes.AccountKey) ([]*GrantPermission, sdk.Error) {
-	grantPermissions := make([]*GrantPermission, 0)
-	store := ctx.KVStore(as.key)
-	iter := sdk.KVStorePrefixIterator(store, getGrantPermPrefix(me))
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		val := iter.Value()
-		grantPermList := new([]*GrantPermission)
-		as.cdc.MustUnmarshalBinaryLengthPrefixed(val, grantPermList)
-		grantPermissions = append(grantPermissions, *grantPermList...)
-	}
-	return grantPermissions, nil
-}
-
-// SetGrantPermissions - sets a grant user to KV. Key is pubkey and value is grant user info
-func (as AccountStorage) SetGrantPermissions(ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey, grantPubKeys []*GrantPermission) {
-	store := ctx.KVStore(as.key)
-	grantPermByte := as.cdc.MustMarshalBinaryLengthPrefixed(grantPubKeys)
-	store.Set(getGrantPermKey(me, grantTo), grantPermByte)
 }
 
 func (as AccountStorage) SetPool(ctx sdk.Context, pool *Pool) {
@@ -240,21 +196,4 @@ func GetAccountPoolKey(poolname linotypes.PoolName) []byte {
 // GetAccountSupplyKey - AccountSupplySubstore
 func GetAccountSupplyKey() []byte {
 	return AccountSupplySubstore
-}
-
-func getGrantPermPrefix(me linotypes.AccountKey) []byte {
-	return append(append(AccountGrantPubKeySubstore, me...), linotypes.KeySeparator...)
-}
-
-func getGrantPermKey(me linotypes.AccountKey, grantTo linotypes.AccountKey) []byte {
-	return append(append(getGrantPermPrefix(me), grantTo...), linotypes.KeySeparator...)
-}
-
-func ParseGrantKey(key []byte) (user linotypes.AccountKey, grantTo linotypes.AccountKey) {
-	parsed := strings.Split(string(key), linotypes.KeySeparator)
-	// see above for why 3, instead of 2.
-	if len(parsed) != 3 {
-		panic("illeage grankey:" + string(key))
-	}
-	return linotypes.AccountKey(parsed[0]), linotypes.AccountKey(parsed[1])
 }

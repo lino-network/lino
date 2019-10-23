@@ -174,7 +174,7 @@ func (msg ClaimInterestMsg) String() string {
 
 // GetPermission - implements types.Msg
 func (msg ClaimInterestMsg) GetPermission() types.Permission {
-	return types.AppPermission
+	return types.TransactionPermission
 }
 
 // GetSignBytes - implements sdk.Msg

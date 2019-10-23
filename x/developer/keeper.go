@@ -43,10 +43,6 @@ type DeveloperKeeper interface {
 		ctx sdk.Context, username linotypes.AccountKey, consumption linotypes.MiniDollar) sdk.Error
 	MonthlyDistributeDevInflation(ctx sdk.Context) sdk.Error
 
-	// permissions, will be removed in upgrade3.
-	RevokePermission(ctx sdk.Context, user, app linotypes.AccountKey, perm linotypes.Permission) sdk.Error
-	GrantPermission(ctx sdk.Context, app, user linotypes.AccountKey, duration int64, level linotypes.Permission, amount linotypes.LNO) sdk.Error
-
 	// Genesis
 	InitGenesis(ctx sdk.Context, reservePoolAmount linotypes.Coin) sdk.Error
 

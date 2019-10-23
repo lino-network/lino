@@ -59,7 +59,7 @@ func (msg TestMsg) GetConsumeAmount() types.Coin {
 func newTestMsg(accKeys ...types.AccountKey) TestMsg {
 	return TestMsg{
 		Signers:    accKeys,
-		Permission: types.AppPermission,
+		Permission: types.TransactionPermission,
 		Amount:     types.NewCoinFromInt64(10),
 	}
 }
@@ -251,93 +251,11 @@ func (suite *AnteTestSuite) TestAnteHandlerNormalTx() {
 	suite.checkInvalidTx(tx, ErrWrongNumberOfSigners().Result())
 }
 
-// Test grant authentication.
-func (suite *AnteTestSuite) TestGrantAuthenticationTx() {
-	// keys and username
-	_, transaction1, user1 := suite.createTestAccount("user1")
-	_, transaction2, user2 := suite.createTestAccount("user2")
-	_, transaction3, user3 := suite.createTestAccount("user3")
-
-	// msg and signatures
-	var tx sdk.Tx
-	msg := newTestMsg(user1)
-
-	// test valid transaction
-	privs, seqs := []crypto.PrivKey{transaction1}, []uint64{0}
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkValidTx(tx)
-	addr1, err := suite.am.GetAddress(suite.ctx, user1)
-	suite.Nil(err)
-	addr2, err := suite.am.GetAddress(suite.ctx, user2)
-	suite.Nil(err)
-	seq, err := suite.am.GetSequence(suite.ctx, addr1)
-	suite.Nil(err)
-	suite.Equal(seq, uint64(1))
-
-	// test wrong priv key
-	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
-
-	privs, seqs = []crypto.PrivKey{transaction3}, []uint64{1}
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
-
-	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.AppPermission, types.NewCoinFromInt64(0))
-	suite.Nil(err)
-
-	privs, seqs = []crypto.PrivKey{transaction2}, []uint64{1}
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkValidTx(tx)
-
-	// should pass authentication check after grant the app permission
-	// privs, seqs = []crypto.PrivKey{post2}, []uint64{1}
-	// tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	// suite.checkValidTx(tx)
-	seq, err = suite.am.GetSequence(suite.ctx, addr2)
-	suite.Nil(err)
-	suite.Equal(seq, uint64(0))
-	seq, err = suite.am.GetSequence(suite.ctx, addr1)
-	suite.Nil(err)
-	suite.Equal(seq, uint64(2))
-
-	suite.ctx = suite.ctx.WithBlockHeader(abci.Header{
-		ChainID: "Lino", Height: 2,
-		Time: suite.ctx.BlockHeader().Time.Add(time.Duration(3601) * time.Second)})
-	suite.checkInvalidTx(tx, acctypes.ErrCheckAuthenticatePubKeyOwner(user1).Result())
-
-	// test pre authorization permission
-	err = suite.am.AuthorizePermission(suite.ctx, user1, user3, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
-	suite.Nil(err)
-	msg.Permission = types.PreAuthorizationPermission
-	msg.Amount = types.NewCoinFromInt64(100)
-	// privs, seqs = []crypto.PrivKey{post3}, []uint64{2}
-	// tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	// suite.checkInvalidTx(tx, acc.ErrCheckAuthenticatePubKeyOwner(user1).Result())
-
-	privs, seqs = []crypto.PrivKey{transaction3}, []uint64{2}
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkValidTx(tx)
-	// seq, err = suite.am.GetSequence(suite.ctx, user3)
-	// suite.Nil(err)
-	// suite.Equal(seq, uint64(0))
-	// seq, err = suite.am.GetSequence(suite.ctx, user1)
-	// suite.Nil(err)
-	// suite.Equal(seq, uint64(3))
-
-	// test pre authorization exceeds limitation
-	tx = newTestTx(suite.ctx, []sdk.Msg{msg}, privs, seqs)
-	suite.checkInvalidTx(
-		tx,
-		acctypes.ErrPreAuthAmountInsufficient(
-			user3, types.NewCoinFromInt64(0), msg.Amount).Result())
-}
-
 // TestCheckAccountSigner
 func (suite *AnteTestSuite) TestCheckAccountSigner() {
 	// keys and username
 	_, transaction1, user1 := suite.createTestAccount("user1")
-	_, transaction2, user2 := suite.createTestAccount("user2")
+	_, transaction2, _ := suite.createTestAccount("user2")
 	privKey := secp256k1.GenPrivKey()
 	err := suite.am.MoveFromPool(
 		suite.ctx,
@@ -346,52 +264,33 @@ func (suite *AnteTestSuite) TestCheckAccountSigner() {
 		types.NewCoinFromInt64(1000))
 	suite.Nil(err)
 
-	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
-	suite.Nil(err)
-
 	testCases := []struct {
-		testName            string
-		signer              types.AccountKey
-		signKey             crypto.PubKey
-		permission          types.Permission
-		expectSignerAddr    sdk.AccAddress
-		expectMsgSignerAddr sdk.AccAddress
-		expectErr           sdk.Error
+		testName         string
+		signer           types.AccountKey
+		signKey          crypto.PubKey
+		expectSignerAddr sdk.AccAddress
+		expectErr        sdk.Error
 	}{
 		{
-			testName:            "get signer from username",
-			signer:              user1,
-			signKey:             transaction1.PubKey(),
-			permission:          types.PreAuthorizationPermission,
-			expectSignerAddr:    sdk.AccAddress(transaction1.PubKey().Address()),
-			expectMsgSignerAddr: sdk.AccAddress(transaction1.PubKey().Address()),
-			expectErr:           nil,
+			testName:         "get signer from username",
+			signer:           user1,
+			signKey:          transaction1.PubKey(),
+			expectSignerAddr: sdk.AccAddress(transaction1.PubKey().Address()),
+			expectErr:        nil,
 		},
 		{
-			testName:            "actual signer and original signer are different",
-			signer:              user1,
-			signKey:             transaction2.PubKey(),
-			permission:          types.PreAuthorizationPermission,
-			expectSignerAddr:    sdk.AccAddress(transaction2.PubKey().Address()),
-			expectMsgSignerAddr: sdk.AccAddress(transaction1.PubKey().Address()),
-			expectErr:           nil,
-		},
-		{
-			testName:            "no permission",
-			signer:              user1,
-			signKey:             transaction2.PubKey(),
-			permission:          types.AppPermission,
-			expectSignerAddr:    nil,
-			expectMsgSignerAddr: nil,
-			expectErr:           acctypes.ErrCheckAuthenticatePubKeyOwner(user1),
+			testName:         "no permission",
+			signer:           user1,
+			signKey:          transaction2.PubKey(),
+			expectSignerAddr: nil,
+			expectErr:        acctypes.ErrCheckAuthenticatePubKeyOwner(user1),
 		},
 	}
 
 	for _, tc := range testCases {
-		signerAddr, msgSignerAddr, err := checkAccountSigner(
-			suite.ctx, suite.am, tc.signer, tc.signKey, tc.permission, types.NewCoinFromInt64(0))
+		signerAddr, err := checkAccountSigner(
+			suite.ctx, suite.am, tc.signer, tc.signKey)
 		suite.Equal(tc.expectSignerAddr, signerAddr, "%s", tc.testName)
-		suite.Equal(tc.expectMsgSignerAddr, msgSignerAddr, "%s", tc.testName)
 		suite.Equal(tc.expectErr, err, "%s", tc.testName)
 	}
 }
@@ -399,8 +298,6 @@ func (suite *AnteTestSuite) TestCheckAccountSigner() {
 // Test address signer.
 func (suite *AnteTestSuite) TestCheckAddrSigner() {
 	// keys and username
-	_, _, user1 := suite.createTestAccount("user1")
-	_, _, user2 := suite.createTestAccount("user2")
 	privKey := secp256k1.GenPrivKey()
 	err := suite.am.MoveFromPool(suite.ctx,
 		types.AccountVestingPool,
@@ -409,9 +306,6 @@ func (suite *AnteTestSuite) TestCheckAddrSigner() {
 	suite.Nil(err)
 
 	newPrivKey := secp256k1.GenPrivKey()
-
-	err = suite.am.AuthorizePermission(suite.ctx, user1, user2, 3600, types.PreAuthorizationPermission, types.NewCoinFromInt64(100))
-	suite.Nil(err)
 
 	testCases := []struct {
 		testName  string

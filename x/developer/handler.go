@@ -30,10 +30,6 @@ func NewHandler(dm DeveloperKeeper) sdk.Handler {
 			return handleIDAAuthorizeMsg(ctx, dm, msg)
 		case types.UpdateAffiliatedMsg:
 			return handleUpdateAffiliatedMsg(ctx, dm, msg)
-		case types.GrantPermissionMsg:
-			return handleGrantPermissionMsg(ctx, dm, msg)
-		case types.RevokePermissionMsg:
-			return handleRevokePermissionMsg(ctx, dm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -133,18 +129,3 @@ func handleIDAAuthorizeMsg(ctx sdk.Context, dm DeveloperKeeper, msg types.IDAAut
 // 	}
 // 	return sdk.Result{}
 // }
-
-func handleGrantPermissionMsg(
-	ctx sdk.Context, dm DeveloperKeeper, msg types.GrantPermissionMsg) sdk.Result {
-	if err := dm.GrantPermission(ctx, msg.AuthorizedApp, msg.Username, msg.ValidityPeriodSec, msg.GrantLevel, msg.Amount); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-func handleRevokePermissionMsg(ctx sdk.Context, dm DeveloperKeeper, msg types.RevokePermissionMsg) sdk.Result {
-	if err := dm.RevokePermission(ctx, msg.Username, msg.RevokeFrom, msg.Permission); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}

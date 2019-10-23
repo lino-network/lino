@@ -20,14 +20,10 @@ const (
 	PriceKVStoreKey        = "price"
 	LinoCoinDenom          = "linocoin"
 
+	// legacy, permissions are no longer used.
 	// Different permission level for msg
-	UnknownPermission                = Permission(0)
-	AppPermission                    = Permission(1)
-	TransactionPermission            = Permission(2)
-	ResetPermission                  = Permission(3)
-	GrantAppPermission               = Permission(4)
-	PreAuthorizationPermission       = Permission(5)
-	AppAndPreAuthorizationPermission = Permission(6)
+	UnknownPermission     = Permission(0)
+	TransactionPermission = Permission(2)
 
 	// since upgrade2
 	// signed by the app or its affiliated accounts.

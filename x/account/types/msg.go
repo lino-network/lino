@@ -191,7 +191,7 @@ func (msg RecoverMsg) String() string {
 
 // GetPermission - implements types.Msg
 func (msg RecoverMsg) GetPermission() types.Permission {
-	return types.ResetPermission
+	return types.TransactionPermission
 }
 
 // GetSignBytes - implements sdk.Msg
@@ -332,7 +332,7 @@ func (msg UpdateAccountMsg) String() string {
 
 // GetPermission - implements types.Msg
 func (msg UpdateAccountMsg) GetPermission() types.Permission {
-	return types.AppPermission
+	return types.TransactionPermission
 }
 
 // GetSignBytes - implements sdk.Msg

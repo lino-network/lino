@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"time"
 
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -439,74 +438,8 @@ func (accManager AccountManager) IncreaseSequenceByOne(ctx sdk.Context, address 
 	return nil
 }
 
-// AuthorizePermission - userA authorize permission to userB (currently only support auth to a developer)
-func (accManager AccountManager) AuthorizePermission(
-	ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey,
-	validityPeriod int64, grantLevel linotypes.Permission, amount linotypes.Coin) sdk.Error {
-	if !accManager.storage.DoesAccountExist(ctx, grantTo) {
-		return types.ErrAccountNotFound(grantTo)
-	}
-	if grantLevel != linotypes.PreAuthorizationPermission && grantLevel != linotypes.AppPermission {
-		return types.ErrUnsupportGrantLevel()
-	}
-	newGrantPubKey := model.GrantPermission{
-		GrantTo:    grantTo,
-		Permission: grantLevel,
-		CreatedAt:  ctx.BlockHeader().Time.Unix(),
-		ExpiresAt:  ctx.BlockHeader().Time.Add(time.Duration(validityPeriod) * time.Second).Unix(),
-		Amount:     amount,
-	}
-	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
-	if err != nil {
-		// if grant permission list is empty, create a new one
-		if err.Code() == types.ErrGrantPubKeyNotFound().Code() {
-			accManager.storage.SetGrantPermissions(
-				ctx, me, grantTo, []*model.GrantPermission{&newGrantPubKey})
-			return nil
-		}
-		return err
-	}
-
-	// iterate grant public key list
-	for i, pubkey := range pubkeys {
-		if pubkey.Permission == grantLevel {
-			pubkeys[i] = &newGrantPubKey
-			accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
-			return nil
-		}
-	}
-	// If grant permission doesn't have record in store, add to grant public key list
-	pubkeys = append(pubkeys, &newGrantPubKey)
-	accManager.storage.SetGrantPermissions(ctx, me, grantTo, pubkeys)
-	return nil
-}
-
-// RevokePermission - revoke permission from a developer
-func (accManager AccountManager) RevokePermission(
-	ctx sdk.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey, permission linotypes.Permission) sdk.Error {
-	pubkeys, err := accManager.storage.GetGrantPermissions(ctx, me, grantTo)
-	if err != nil {
-		return err
-	}
-
-	// iterate grant public key list
-	for i, pubkey := range pubkeys {
-		if pubkey.Permission == permission {
-			if len(pubkeys) == 1 {
-				accManager.storage.DeleteAllGrantPermissions(ctx, me, grantTo)
-				return nil
-			}
-			accManager.storage.SetGrantPermissions(ctx, me, grantTo, append(pubkeys[:i], pubkeys[i+1:]...))
-			return nil
-		}
-	}
-	return types.ErrGrantPubKeyNotFound()
-}
-
-// CheckSigningPubKeyOwner - given a public key, check if it is valid for given permission
-func (accManager AccountManager) CheckSigningPubKeyOwner(
-	ctx sdk.Context, me linotypes.AccountKey, signKey crypto.PubKey,
-	permission linotypes.Permission, amount linotypes.Coin) (linotypes.AccountKey, sdk.Error) {
+// CheckSigningPubKeyOwner - given a public key, check if it is valid for the user.
+func (accManager AccountManager) CheckSigningPubKeyOwner(ctx sdk.Context, me linotypes.AccountKey, signKey crypto.PubKey) (linotypes.AccountKey, sdk.Error) {
 	accInfo, err := accManager.storage.GetInfo(ctx, me)
 	if err != nil {
 		return "", err
@@ -521,44 +454,6 @@ func (accManager AccountManager) CheckSigningPubKeyOwner(
 		return me, nil
 	}
 
-	// if user doesn't use his own key, check his grant user pubkey
-	grantPubKeys, err := accManager.storage.GetAllGrantPermissions(ctx, me)
-	if err != nil {
-		return "", err
-	}
-
-	for _, pubKey := range grantPubKeys {
-		if pubKey.ExpiresAt < ctx.BlockHeader().Time.Unix() {
-			continue
-		}
-		if permission != pubKey.Permission {
-			continue
-		}
-		signingKey, err := accManager.GetSigningKey(ctx, pubKey.GrantTo)
-		if err != nil {
-			return "", err
-		}
-		if !reflect.DeepEqual(signKey, signingKey) {
-			// check tx key instead
-			txKey, err := accManager.GetTransactionKey(ctx, pubKey.GrantTo)
-			if err != nil {
-				return "", err
-			}
-			if !reflect.DeepEqual(signKey, txKey) {
-				return "", types.ErrCheckAuthenticatePubKeyOwner(me)
-			}
-		}
-		if permission == linotypes.PreAuthorizationPermission {
-			if amount.IsGT(pubKey.Amount) {
-				return "", types.ErrPreAuthAmountInsufficient(pubKey.GrantTo, pubKey.Amount, amount)
-			}
-			// override previous grant public key
-			if err := accManager.AuthorizePermission(ctx, me, pubKey.GrantTo, pubKey.ExpiresAt-ctx.BlockHeader().Time.Unix(), pubKey.Permission, pubKey.Amount.Minus(amount)); err != nil {
-				return "", err
-			}
-		}
-		return pubKey.GrantTo, nil
-	}
 	return "", types.ErrCheckAuthenticatePubKeyOwner(me)
 }
 
@@ -706,14 +601,6 @@ func (accManager AccountManager) GetBankByAddress(ctx sdk.Context, addr sdk.AccA
 
 func (accManager AccountManager) GetMeta(ctx sdk.Context, username linotypes.AccountKey) (*model.AccountMeta, sdk.Error) {
 	return accManager.storage.GetMeta(ctx, username), nil
-}
-
-func (accManager AccountManager) GetGrantPubKeys(ctx sdk.Context, username, grantTo linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
-	return accManager.storage.GetGrantPermissions(ctx, username, grantTo)
-}
-
-func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username linotypes.AccountKey) ([]*model.GrantPermission, sdk.Error) {
-	return accManager.storage.GetAllGrantPermissions(ctx, username)
 }
 
 func (accManager AccountManager) GetSupply(ctx sdk.Context) model.Supply {

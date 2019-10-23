@@ -250,6 +250,7 @@ func (dm DeveloperManager) AppTransferIDA(ctx sdk.Context, appname, signer linot
 	if !dm.acc.DoesAccountExist(ctx, from) || !dm.acc.DoesAccountExist(ctx, to) {
 		return types.ErrAccountNotFound()
 	}
+	// singer must be the affiliated of the app to be able to move IDAs.
 	signerApp, err := dm.GetAffiliatingApp(ctx, signer)
 	if err != nil || signerApp != appname {
 		return types.ErrInvalidSigner()
@@ -568,59 +569,6 @@ func (dm DeveloperManager) clearConsumption(ctx sdk.Context) {
 		dev.AppConsumption = linotypes.NewMiniDollar(0)
 		dm.storage.SetDeveloper(ctx, dev)
 	}
-}
-
-// Permissions: will be removed in upgrade3.
-// GrantPermission
-func (dm DeveloperManager) GrantPermission(ctx sdk.Context, app, user linotypes.AccountKey, duration int64, level linotypes.Permission, amount linotypes.LNO) sdk.Error {
-	if !dm.DoesDeveloperExist(ctx, app) {
-		return types.ErrDeveloperNotFound()
-	}
-	if !dm.acc.DoesAccountExist(ctx, user) {
-		return types.ErrAccountNotFound()
-	}
-
-	switch level {
-	case linotypes.AppPermission:
-		if err := dm.acc.AuthorizePermission(
-			ctx, user, app, duration, level, linotypes.NewCoinFromInt64(0)); err != nil {
-			return err
-		}
-	case linotypes.PreAuthorizationPermission:
-		coin, err := linotypes.LinoToCoin(amount)
-		if err != nil {
-			return err
-		}
-		if err := dm.acc.AuthorizePermission(ctx, user, app, duration, level, coin); err != nil {
-			return err
-		}
-	case linotypes.AppAndPreAuthorizationPermission:
-		if err := dm.acc.AuthorizePermission(
-			ctx, user, app, duration, linotypes.AppPermission, linotypes.NewCoinFromInt64(0)); err != nil {
-			return err
-		}
-		coin, err := linotypes.LinoToCoin(amount)
-		if err != nil {
-			return err
-		}
-		if err := dm.acc.AuthorizePermission(
-			ctx, user, app, duration, linotypes.PreAuthorizationPermission, coin); err != nil {
-			return err
-		}
-	default:
-		return types.ErrInvalidGrantPermission()
-	}
-	return nil
-}
-
-func (dm DeveloperManager) RevokePermission(ctx sdk.Context, user, app linotypes.AccountKey, perm linotypes.Permission) sdk.Error {
-	if !dm.acc.DoesAccountExist(ctx, user) {
-		return types.ErrAccountNotFound()
-	}
-	if err := dm.acc.RevokePermission(ctx, user, app, perm); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (dm DeveloperManager) GetReservePool(ctx sdk.Context) model.ReservePool {
