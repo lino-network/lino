@@ -22,12 +22,12 @@ func TestGetGenesisJson(t *testing.T) {
 
 	totalLino := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
-		Name:           "Lino",
-		Coin:           totalLino,
-		ResetKey:       resetPriv.PubKey(),
-		TransactionKey: transactionPriv.PubKey(),
-		IsValidator:    true,
-		ValPubKey:      validatorPriv.PubKey(),
+		Name:        "Lino",
+		Coin:        totalLino,
+		TxKey:       resetPriv.PubKey(),
+		SignKey:     transactionPriv.PubKey(),
+		IsValidator: true,
+		ValPubKey:   validatorPriv.PubKey(),
 	}
 
 	genesisAppDeveloper := GenesisAppDeveloper{
@@ -202,12 +202,12 @@ func TestLinoBlockchainGenState(t *testing.T) {
 	coinPerValidator := types.NewCoinFromInt64(100000000 * types.Decimals)
 	for i := 1; i < 21; i++ {
 		genesisAcc := GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Coin:           coinPerValidator,
-			ResetKey:       secp256k1.GenPrivKey().PubKey(),
-			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
+			Name:        "validator" + strconv.Itoa(i),
+			Coin:        coinPerValidator,
+			TxKey:       secp256k1.GenPrivKey().PubKey(),
+			SignKey:     secp256k1.GenPrivKey().PubKey(),
+			IsValidator: true,
+			ValPubKey:   secp256k1.GenPrivKey().PubKey(),
 		}
 		marshalResult, err := wire.MarshalJSONIndent(cdc, genesisAcc)
 		assert.Nil(t, err)

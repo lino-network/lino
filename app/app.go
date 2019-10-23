@@ -375,7 +375,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 		panic(fmt.Errorf("genesis account already exist"))
 	}
 	if err := lb.accountManager.GenesisAccount(
-		ctx, types.AccountKey(ga.Name), ga.TransactionKey, ga.ResetKey); err != nil {
+		ctx, types.AccountKey(ga.Name), ga.SignKey, ga.TxKey); err != nil {
 		panic(err)
 	}
 	if err := lb.accountManager.MoveFromPool(ctx,

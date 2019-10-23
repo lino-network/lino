@@ -70,22 +70,22 @@ func newLinoBlockchain(t *testing.T, numOfValidators int) *LinoBlockchain {
 
 	// Generate 21 validators
 	genesisAcc := GenesisAccount{
-		Name:           user1,
-		Coin:           coinPerValidator,
-		ResetKey:       priv1.PubKey(),
-		TransactionKey: secp256k1.GenPrivKey().PubKey(),
-		IsValidator:    true,
-		ValPubKey:      priv2.PubKey(),
+		Name:        user1,
+		Coin:        coinPerValidator,
+		TxKey:       priv1.PubKey(),
+		SignKey:     secp256k1.GenPrivKey().PubKey(),
+		IsValidator: true,
+		ValPubKey:   priv2.PubKey(),
 	}
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	for i := 1; i < numOfValidators; i++ {
 		genesisAcc := GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Coin:           coinPerValidator,
-			ResetKey:       secp256k1.GenPrivKey().PubKey(),
-			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
+			Name:        "validator" + strconv.Itoa(i),
+			Coin:        coinPerValidator,
+			TxKey:       secp256k1.GenPrivKey().PubKey(),
+			SignKey:     secp256k1.GenPrivKey().PubKey(),
+			IsValidator: true,
+			ValPubKey:   secp256k1.GenPrivKey().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
@@ -153,12 +153,12 @@ func TestGenesisAcc(t *testing.T) {
 	}
 	for _, acc := range accs {
 		genesisAcc := GenesisAccount{
-			Name:           acc.genesisAccountName,
-			Coin:           acc.coin,
-			ResetKey:       acc.resetKey,
-			TransactionKey: acc.transactionKey,
-			IsValidator:    acc.isValidator,
-			ValPubKey:      acc.valPubKey,
+			Name:        acc.genesisAccountName,
+			Coin:        acc.coin,
+			TxKey:       acc.resetKey,
+			SignKey:     acc.transactionKey,
+			IsValidator: acc.isValidator,
+			ValPubKey:   acc.valPubKey,
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}

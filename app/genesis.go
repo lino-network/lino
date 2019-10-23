@@ -77,12 +77,12 @@ type GenesisState struct {
 // genesis account will get coin to the address and register user
 // if genesis account is validator, it will be added to validator list automatically
 type GenesisAccount struct {
-	Name           string        `json:"name"`
-	Coin           types.Coin    `json:"coin"`
-	ResetKey       crypto.PubKey `json:"reset_key"`
-	TransactionKey crypto.PubKey `json:"transaction_key"`
-	IsValidator    bool          `json:"is_validator"`
-	ValPubKey      crypto.PubKey `json:"validator_pub_key"`
+	Name        string        `json:"name"`
+	Coin        types.Coin    `json:"coin"`
+	TxKey       crypto.PubKey `json:"tx_key"`
+	SignKey     crypto.PubKey `json:"sign_key"`
+	IsValidator bool          `json:"is_validator"`
+	ValPubKey   crypto.PubKey `json:"validator_pub_key"`
 }
 
 // GenesisAppDeveloper - register developer in genesis phase
@@ -112,20 +112,20 @@ type GenesisParam struct {
 // LinoBlockchainGenTx - init genesis account
 func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
-	resetPriv := secp256k1.GenPrivKey()
-	transactionPriv := secp256k1.GenPrivKey()
+	txKey := secp256k1.GenPrivKey()
+	signKey := secp256k1.GenPrivKey()
 
-	fmt.Println("reset private key is:", strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
-	fmt.Println("transaction private key is:", strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+	fmt.Println("tx private key is:", strings.ToUpper(hex.EncodeToString(txKey.Bytes())))
+	fmt.Println("sign private key is:", strings.ToUpper(hex.EncodeToString(signKey.Bytes())))
 
 	totalCoin := types.NewCoinFromInt64(10000000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
-		Name:           "lino",
-		Coin:           totalCoin,
-		ResetKey:       resetPriv.PubKey(),
-		TransactionKey: transactionPriv.PubKey(),
-		IsValidator:    true,
-		ValPubKey:      pk,
+		Name:        "lino",
+		Coin:        totalCoin,
+		TxKey:       txKey.PubKey(),
+		SignKey:     signKey.PubKey(),
+		IsValidator: true,
+		ValPubKey:   pk,
 	}
 
 	var bz []byte

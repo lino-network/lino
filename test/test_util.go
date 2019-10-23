@@ -89,24 +89,24 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 	// Generate 21 validators
 	for i := 0; i < numOfValidators; i++ {
 		genesisAcc := app.GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Coin:           CoinPerValidator,
-			ResetKey:       secp256k1.GenPrivKey().PubKey(),
-			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
+			Name:        "validator" + strconv.Itoa(i),
+			Coin:        CoinPerValidator,
+			TxKey:       secp256k1.GenPrivKey().PubKey(),
+			SignKey:     secp256k1.GenPrivKey().PubKey(),
+			IsValidator: true,
+			ValPubKey:   secp256k1.GenPrivKey().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
 	initLNO := GetGenesisAccountCoin(numOfValidators)
 	genesisAcc := app.GenesisAccount{
-		Name:           GenesisUser,
-		Coin:           initLNO,
-		ResetKey:       GenesisPriv.PubKey(),
-		TransactionKey: GenesisTransactionPriv.PubKey(),
-		IsValidator:    false,
-		ValPubKey:      GenesisPriv.PubKey(),
+		Name:        GenesisUser,
+		Coin:        initLNO,
+		TxKey:       GenesisPriv.PubKey(),
+		SignKey:     GenesisTransactionPriv.PubKey(),
+		IsValidator: false,
+		ValPubKey:   GenesisPriv.PubKey(),
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
